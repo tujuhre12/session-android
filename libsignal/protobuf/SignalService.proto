@@ -43,6 +43,11 @@ message UnsendRequest {
 }
 
 message Content {
+  enum ExpirationType {
+    DELETE_AFTER_SEND = 1;
+    DELETE_AFTER_READ = 2;
+  }
+
   optional DataMessage                dataMessage                = 1;
   optional CallMessage                callMessage                = 3;
   optional ReceiptMessage             receiptMessage             = 5;
@@ -51,6 +56,14 @@ message Content {
   optional DataExtractionNotification dataExtractionNotification = 8;
   optional UnsendRequest              unsendRequest              = 9;
   optional MessageRequestResponse     messageRequestResponse     = 10;
+  optional ExpirationType             expirationType             = 11;
+  optional uint32                     expirationTimer            = 12;
+  optional uint64         lastDisappearingMessageChangeTimestamp = 13;
+}
+
+message SyncedExpiry {
+  required string serverHash          = 1;
+  required uint64 expirationTimestamp = 2;
 }
 
 message KeyPair {
