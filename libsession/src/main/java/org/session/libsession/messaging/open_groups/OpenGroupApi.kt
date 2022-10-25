@@ -255,7 +255,6 @@ object OpenGroupApi {
         val queryParameters: Map<String, String> = mapOf(),
         val parameters: Any? = null,
         val headers: Map<String, String> = mapOf(),
-        val isAuthRequired: Boolean = true,
         val body: ByteArray? = null,
         /**
          * Always `true` under normal circumstances. You might want to disable
@@ -301,73 +300,71 @@ object OpenGroupApi {
                 ?: return Promise.ofFail(Error.NoEd25519KeyPair)
             val urlRequest = urlBuilder.toString()
             val headers = request.headers.toMutableMap()
-            if (request.isAuthRequired) {
-                val nonce = sodium.nonce(16)
-                val timestamp = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis())
-                var pubKey = ""
-                var signature = ByteArray(Sign.BYTES)
-                var bodyHash = ByteArray(0)
-                if (request.parameters != null) {
-                    val parameterBytes = JsonUtil.toJson(request.parameters).toByteArray()
-                    val parameterHash = ByteArray(GenericHash.BYTES_MAX)
-                    if (sodium.cryptoGenericHash(
-                            parameterHash,
-                            parameterHash.size,
-                            parameterBytes,
-                            parameterBytes.size.toLong()
-                        )
-                    ) {
-                        bodyHash = parameterHash
-                    }
-                } else if (request.body != null) {
-                    val byteHash = ByteArray(GenericHash.BYTES_MAX)
-                    if (sodium.cryptoGenericHash(
-                            byteHash,
-                            byteHash.size,
-                            request.body,
-                            request.body.size.toLong()
-                        )
-                    ) {
-                        bodyHash = byteHash
-                    }
-                }
-                val messageBytes = Hex.fromStringCondensed(publicKey)
-                    .plus(nonce)
-                    .plus("$timestamp".toByteArray(Charsets.US_ASCII))
-                    .plus(request.verb.rawValue.toByteArray())
-                    .plus("/${request.endpoint.value}".toByteArray())
-                    .plus(bodyHash)
-                if (serverCapabilities.contains(Capability.BLIND.name.lowercase())) {
-                    SodiumUtilities.blindedKeyPair(publicKey, ed25519KeyPair)?.let { keyPair ->
-                        pubKey = SessionId(
-                            IdPrefix.BLINDED,
-                            keyPair.publicKey.asBytes
-                        ).hexString
-
-                        signature = SodiumUtilities.sogsSignature(
-                            messageBytes,
-                            ed25519KeyPair.secretKey.asBytes,
-                            keyPair.secretKey.asBytes,
-                            keyPair.publicKey.asBytes
-                        ) ?: return Promise.ofFail(Error.SigningFailed)
-                    } ?: return Promise.ofFail(Error.SigningFailed)
-                } else {
-                    pubKey = SessionId(
-                        IdPrefix.UN_BLINDED,
-                        ed25519KeyPair.publicKey.asBytes
-                    ).hexString
-                    sodium.cryptoSignDetached(
-                        signature,
-                        messageBytes,
-                        messageBytes.size.toLong(),
-                        ed25519KeyPair.secretKey.asBytes
+            val nonce = sodium.nonce(16)
+            val timestamp = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis())
+            var pubKey = ""
+            var signature = ByteArray(Sign.BYTES)
+            var bodyHash = ByteArray(0)
+            if (request.parameters != null) {
+                val parameterBytes = JsonUtil.toJson(request.parameters).toByteArray()
+                val parameterHash = ByteArray(GenericHash.BYTES_MAX)
+                if (sodium.cryptoGenericHash(
+                        parameterHash,
+                        parameterHash.size,
+                        parameterBytes,
+                        parameterBytes.size.toLong()
                     )
+                ) {
+                    bodyHash = parameterHash
                 }
-                headers["X-SOGS-Nonce"] = encodeBytes(nonce)
-                headers["X-SOGS-Timestamp"] = "$timestamp"
-                headers["X-SOGS-Pubkey"] = pubKey
-                headers["X-SOGS-Signature"] = encodeBytes(signature)
+            } else if (request.body != null) {
+                val byteHash = ByteArray(GenericHash.BYTES_MAX)
+                if (sodium.cryptoGenericHash(
+                        byteHash,
+                        byteHash.size,
+                        request.body,
+                        request.body.size.toLong()
+                    )
+                ) {
+                    bodyHash = byteHash
+                }
             }
+            val messageBytes = Hex.fromStringCondensed(publicKey)
+                .plus(nonce)
+                .plus("$timestamp".toByteArray(Charsets.US_ASCII))
+                .plus(request.verb.rawValue.toByteArray())
+                .plus("/${request.endpoint.value}".toByteArray())
+                .plus(bodyHash)
+            if (serverCapabilities.isEmpty() || serverCapabilities.contains(Capability.BLIND.name.lowercase())) {
+                SodiumUtilities.blindedKeyPair(publicKey, ed25519KeyPair)?.let { keyPair ->
+                    pubKey = SessionId(
+                        IdPrefix.BLINDED,
+                        keyPair.publicKey.asBytes
+                    ).hexString
+
+                    signature = SodiumUtilities.sogsSignature(
+                        messageBytes,
+                        ed25519KeyPair.secretKey.asBytes,
+                        keyPair.secretKey.asBytes,
+                        keyPair.publicKey.asBytes
+                    ) ?: return Promise.ofFail(Error.SigningFailed)
+                } ?: return Promise.ofFail(Error.SigningFailed)
+            } else {
+                pubKey = SessionId(
+                    IdPrefix.UN_BLINDED,
+                    ed25519KeyPair.publicKey.asBytes
+                ).hexString
+                sodium.cryptoSignDetached(
+                    signature,
+                    messageBytes,
+                    messageBytes.size.toLong(),
+                    ed25519KeyPair.secretKey.asBytes
+                )
+            }
+            headers["X-SOGS-Nonce"] = encodeBytes(nonce)
+            headers["X-SOGS-Timestamp"] = "$timestamp"
+            headers["X-SOGS-Pubkey"] = pubKey
+            headers["X-SOGS-Signature"] = encodeBytes(signature)
 
             val requestBuilder = okhttp3.Request.Builder()
                 .url(urlRequest)
@@ -794,16 +791,14 @@ object OpenGroupApi {
 
     private fun sequentialBatch(
         server: String,
-        requests: MutableList<BatchRequestInfo<*>>,
-        authRequired: Boolean = true
+        requests: MutableList<BatchRequestInfo<*>>
     ): Promise<List<BatchResponse<*>>, Exception> {
         val request = Request(
             verb = POST,
             room = null,
             server = server,
             endpoint = Endpoint.Sequence,
-            parameters = requests.map { it.request },
-            isAuthRequired = authRequired
+            parameters = requests.map { it.request }
         )
         return getBatchResponseJson(request, requests)
     }
@@ -904,7 +899,7 @@ object OpenGroupApi {
     }
 
     fun getCapabilities(server: String): Promise<Capabilities, Exception> {
-        val request = Request(verb = GET, room = null, server = server, endpoint = Endpoint.Capabilities, isAuthRequired = false)
+        val request = Request(verb = GET, room = null, server = server, endpoint = Endpoint.Capabilities)
         return getResponseBody(request).map { response ->
             JsonUtil.fromJson(response, Capabilities::class.java)
         }
@@ -912,8 +907,7 @@ object OpenGroupApi {
 
     fun getCapabilitiesAndRoomInfo(
         room: String,
-        server: String,
-        authRequired: Boolean = true
+        server: String
     ): Promise<Pair<Capabilities, RoomInfo>, Exception> {
         val requests = mutableListOf<BatchRequestInfo<*>>(
             BatchRequestInfo(
@@ -933,7 +927,7 @@ object OpenGroupApi {
                 responseType = object : TypeReference<RoomInfo>(){}
             )
         )
-        return sequentialBatch(server, requests, authRequired).map {
+        return sequentialBatch(server, requests).map {
             val capabilities = it.firstOrNull()?.body as? Capabilities ?: throw Error.ParsingFailed
             val roomInfo = it.lastOrNull()?.body as? RoomInfo ?: throw Error.ParsingFailed
             capabilities to roomInfo
