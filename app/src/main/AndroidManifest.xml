@@ -172,6 +172,9 @@
             android:screenOrientation="portrait" />
         <activity android:name="org.thoughtcrime.securesms.preferences.appearance.AppearanceSettingsActivity"
             android:screenOrientation="portrait"/>
+        <activity android:name="org.thoughtcrime.securesms.conversation.expiration.ExpirationSettingsActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Session.DayNight.NoActionBar" />
 
         <activity
             android:name="org.thoughtcrime.securesms.ShareActivity"

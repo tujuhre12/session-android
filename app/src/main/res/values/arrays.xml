@@ -236,4 +236,40 @@
         <item>@string/notify_type_mentions</item>
     </string-array>
 
+    <integer-array name="read_expiration_time_names">
+        <item>@string/arrays__off</item>
+        <item>@string/arrays__five_minutes</item>
+        <item>@string/arrays__one_hour</item>
+        <item>@string/arrays__twelve_hours</item>
+        <item>@string/arrays__one_day</item>
+        <item>@string/arrays__one_week</item>
+        <item>@string/arrays__two_weeks</item>
+    </integer-array>
+
+    <integer-array name="read_expiration_time_values">
+        <item>0</item>
+        <item>300</item>
+        <item>3600</item>
+        <item>43200</item>
+        <item>86400</item>
+        <item>604800</item>
+        <item>1209600</item>
+    </integer-array>
+
+    <integer-array name="send_expiration_time_names">
+        <item>@string/arrays__off</item>
+        <item>@string/arrays__twelve_hours</item>
+        <item>@string/arrays__one_day</item>
+        <item>@string/arrays__one_week</item>
+        <item>@string/arrays__two_weeks</item>
+    </integer-array>
+
+    <integer-array name="send_expiration_time_values">
+        <item>0</item>
+        <item>43200</item>
+        <item>86400</item>
+        <item>604800</item>
+        <item>1209600</item>
+    </integer-array>
+
 </resources>

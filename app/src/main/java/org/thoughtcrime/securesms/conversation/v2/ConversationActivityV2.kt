@@ -56,7 +56,6 @@ import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.mentions.Mention
 import org.session.libsession.messaging.mentions.MentionsManager
 import org.session.libsession.messaging.messages.control.DataExtractionNotification
-import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage
 import org.session.libsession.messaging.messages.signal.OutgoingTextMessage
 import org.session.libsession.messaging.messages.visible.Reaction
@@ -78,18 +77,19 @@ import org.session.libsession.utilities.concurrent.SimpleTask
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientModifiedListener
 import org.session.libsignal.crypto.MnemonicCodec
+import org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.ListenableFuture
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
 import org.session.libsignal.utilities.hexEncodedPrivateKey
 import org.thoughtcrime.securesms.ApplicationContext
-import org.thoughtcrime.securesms.ExpirationDialog
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.attachments.ScreenshotObserver
 import org.thoughtcrime.securesms.audio.AudioRecorder
 import org.thoughtcrime.securesms.contacts.SelectContactsActivity.Companion.selectedContactsKey
 import org.thoughtcrime.securesms.contactshare.SimpleTextWatcher
+import org.thoughtcrime.securesms.conversation.expiration.ExpirationSettingsActivity
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnActionSelectedListener
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnReactionSelectedListener
 import org.thoughtcrime.securesms.conversation.v2.dialogs.BlockedDialog
@@ -154,6 +154,7 @@ import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.MediaUtil
 import org.thoughtcrime.securesms.util.SaveAttachmentTask
 import org.thoughtcrime.securesms.util.push
+import org.thoughtcrime.securesms.util.show
 import org.thoughtcrime.securesms.util.toPx
 import java.util.Locale
 import java.util.concurrent.ExecutionException
@@ -988,16 +989,11 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             val group = groupDb.getGroup(thread.address.toGroupString()).orNull()
             if (group?.isActive == false) { return }
         }
-        ExpirationDialog.show(this, thread.expireMessages) { expirationTime: Int ->
-            recipientDb.setExpireMessages(thread, expirationTime)
-            val message = ExpirationTimerUpdate(expirationTime)
-            message.recipient = thread.address.serialize()
-            message.sentTimestamp = System.currentTimeMillis()
-            val expiringMessageManager = ApplicationContext.getInstance(this).expiringMessageManager
-            expiringMessageManager.setExpirationTimer(message)
-            MessageSender.send(message, thread.address)
-            invalidateOptionsMenu()
+        val expirationIntent = Intent(this, ExpirationSettingsActivity::class.java)
+        if (thread.isLocalNumber || thread.isClosedGroupRecipient) {
+            expirationIntent.putExtra(ExpirationSettingsActivity.EXTRA_EXPIRATION_TYPE, ExpirationType.DELETE_AFTER_SEND_VALUE)
         }
+        show(expirationIntent, true)
     }
 
     override fun unblock() {
