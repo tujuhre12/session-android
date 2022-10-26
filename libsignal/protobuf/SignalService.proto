@@ -207,6 +207,19 @@ message CallMessage {
   required string uuid            = 5;
 }
 
+message SharedConfigMessage {
+  enum Type {
+    USER                    = 1;
+    CLOSED_GROUP_INFO       = 2;
+    ENCRYPTION_KEYS         = 3;
+    CONVERSATION_READ_STATE = 4;
+  }
+
+  // @required
+  required Type              type             = 1;
+  required bytes             data             = 2;
+}
+
 message ConfigurationMessage {
 
   message ClosedGroup {

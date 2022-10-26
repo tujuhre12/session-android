@@ -17819,6 +17819,643 @@ public final class SignalServiceProtos {
     // @@protoc_insertion_point(class_scope:signalservice.CallMessage)
   }
 
+  public interface SharedConfigMessageOrBuilder
+      extends com.google.protobuf.MessageOrBuilder {
+
+    // required .signalservice.SharedConfigMessage.Type type = 1;
+    /**
+     * <code>required .signalservice.SharedConfigMessage.Type type = 1;</code>
+     *
+     * <pre>
+     * @required
+     * </pre>
+     */
+    boolean hasType();
+    /**
+     * <code>required .signalservice.SharedConfigMessage.Type type = 1;</code>
+     *
+     * <pre>
+     * @required
+     * </pre>
+     */
+    org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage.Type getType();
+
+    // required bytes data = 2;
+    /**
+     * <code>required bytes data = 2;</code>
+     */
+    boolean hasData();
+    /**
+     * <code>required bytes data = 2;</code>
+     */
+    com.google.protobuf.ByteString getData();
+  }
+  /**
+   * Protobuf type {@code signalservice.SharedConfigMessage}
+   */
+  public static final class SharedConfigMessage extends
+      com.google.protobuf.GeneratedMessage
+      implements SharedConfigMessageOrBuilder {
+    // Use SharedConfigMessage.newBuilder() to construct.
+    private SharedConfigMessage(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+      this.unknownFields = builder.getUnknownFields();
+    }
+    private SharedConfigMessage(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+    private static final SharedConfigMessage defaultInstance;
+    public static SharedConfigMessage getDefaultInstance() {
+      return defaultInstance;
+    }
+
+    public SharedConfigMessage getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+
+    private final com.google.protobuf.UnknownFieldSet unknownFields;
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+        getUnknownFields() {
+      return this.unknownFields;
+    }
+    private SharedConfigMessage(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      initFields();
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!parseUnknownField(input, unknownFields,
+                                     extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+            case 8: {
+              int rawValue = input.readEnum();
+              org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage.Type value = org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage.Type.valueOf(rawValue);
+              if (value == null) {
+                unknownFields.mergeVarintField(1, rawValue);
+              } else {
+                bitField0_ |= 0x00000001;
+                type_ = value;
+              }
+              break;
+            }
+            case 18: {
+              bitField0_ |= 0x00000002;
+              data_ = input.readBytes();
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e.getMessage()).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return org.session.libsignal.protos.SignalServiceProtos.internal_static_signalservice_SharedConfigMessage_descriptor;
+    }
+
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return org.session.libsignal.protos.SignalServiceProtos.internal_static_signalservice_SharedConfigMessage_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage.class, org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage.Builder.class);
+    }
+
+    public static com.google.protobuf.Parser<SharedConfigMessage> PARSER =
+        new com.google.protobuf.AbstractParser<SharedConfigMessage>() {
+      public SharedConfigMessage parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new SharedConfigMessage(input, extensionRegistry);
+      }
+    };
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<SharedConfigMessage> getParserForType() {
+      return PARSER;
+    }
+
+    /**
+     * Protobuf enum {@code signalservice.SharedConfigMessage.Type}
+     */
+    public enum Type
+        implements com.google.protobuf.ProtocolMessageEnum {
+      /**
+       * <code>USER = 1;</code>
+       */
+      USER(0, 1),
+      /**
+       * <code>CLOSED_GROUP_INFO = 2;</code>
+       */
+      CLOSED_GROUP_INFO(1, 2),
+      /**
+       * <code>ENCRYPTION_KEYS = 3;</code>
+       */
+      ENCRYPTION_KEYS(2, 3),
+      /**
+       * <code>CONVERSATION_READ_STATE = 4;</code>
+       */
+      CONVERSATION_READ_STATE(3, 4),
+      ;
+
+      /**
+       * <code>USER = 1;</code>
+       */
+      public static final int USER_VALUE = 1;
+      /**
+       * <code>CLOSED_GROUP_INFO = 2;</code>
+       */
+      public static final int CLOSED_GROUP_INFO_VALUE = 2;
+      /**
+       * <code>ENCRYPTION_KEYS = 3;</code>
+       */
+      public static final int ENCRYPTION_KEYS_VALUE = 3;
+      /**
+       * <code>CONVERSATION_READ_STATE = 4;</code>
+       */
+      public static final int CONVERSATION_READ_STATE_VALUE = 4;
+
+
+      public final int getNumber() { return value; }
+
+      public static Type valueOf(int value) {
+        switch (value) {
+          case 1: return USER;
+          case 2: return CLOSED_GROUP_INFO;
+          case 3: return ENCRYPTION_KEYS;
+          case 4: return CONVERSATION_READ_STATE;
+          default: return null;
+        }
+      }
+
+      public static com.google.protobuf.Internal.EnumLiteMap<Type>
+          internalGetValueMap() {
+        return internalValueMap;
+      }
+      private static com.google.protobuf.Internal.EnumLiteMap<Type>
+          internalValueMap =
+            new com.google.protobuf.Internal.EnumLiteMap<Type>() {
+              public Type findValueByNumber(int number) {
+                return Type.valueOf(number);
+              }
+            };
+
+      public final com.google.protobuf.Descriptors.EnumValueDescriptor
+          getValueDescriptor() {
+        return getDescriptor().getValues().get(index);
+      }
+      public final com.google.protobuf.Descriptors.EnumDescriptor
+          getDescriptorForType() {
+        return getDescriptor();
+      }
+      public static final com.google.protobuf.Descriptors.EnumDescriptor
+          getDescriptor() {
+        return org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage.getDescriptor().getEnumTypes().get(0);
+      }
+
+      private static final Type[] VALUES = values();
+
+      public static Type valueOf(
+          com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
+        if (desc.getType() != getDescriptor()) {
+          throw new java.lang.IllegalArgumentException(
+            "EnumValueDescriptor is not for this type.");
+        }
+        return VALUES[desc.getIndex()];
+      }
+
+      private final int index;
+      private final int value;
+
+      private Type(int index, int value) {
+        this.index = index;
+        this.value = value;
+      }
+
+      // @@protoc_insertion_point(enum_scope:signalservice.SharedConfigMessage.Type)
+    }
+
+    private int bitField0_;
+    // required .signalservice.SharedConfigMessage.Type type = 1;
+    public static final int TYPE_FIELD_NUMBER = 1;
+    private org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage.Type type_;
+    /**
+     * <code>required .signalservice.SharedConfigMessage.Type type = 1;</code>
+     *
+     * <pre>
+     * @required
+     * </pre>
+     */
+    public boolean hasType() {
+      return ((bitField0_ & 0x00000001) == 0x00000001);
+    }
+    /**
+     * <code>required .signalservice.SharedConfigMessage.Type type = 1;</code>
+     *
+     * <pre>
+     * @required
+     * </pre>
+     */
+    public org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage.Type getType() {
+      return type_;
+    }
+
+    // required bytes data = 2;
+    public static final int DATA_FIELD_NUMBER = 2;
+    private com.google.protobuf.ByteString data_;
+    /**
+     * <code>required bytes data = 2;</code>
+     */
+    public boolean hasData() {
+      return ((bitField0_ & 0x00000002) == 0x00000002);
+    }
+    /**
+     * <code>required bytes data = 2;</code>
+     */
+    public com.google.protobuf.ByteString getData() {
+      return data_;
+    }
+
+    private void initFields() {
+      type_ = org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage.Type.USER;
+      data_ = com.google.protobuf.ByteString.EMPTY;
+    }
+    private byte memoizedIsInitialized = -1;
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized != -1) return isInitialized == 1;
+
+      if (!hasType()) {
+        memoizedIsInitialized = 0;
+        return false;
+      }
+      if (!hasData()) {
+        memoizedIsInitialized = 0;
+        return false;
+      }
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getSerializedSize();
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        output.writeEnum(1, type_.getNumber());
+      }
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        output.writeBytes(2, data_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    private int memoizedSerializedSize = -1;
+    public int getSerializedSize() {
+      int size = memoizedSerializedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeEnumSize(1, type_.getNumber());
+      }
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(2, data_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
+      return size;
+    }
+
+    private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
+    }
+
+    public static org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+    public static org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input);
+    }
+    public static org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    }
+    public static org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code signalservice.SharedConfigMessage}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder>
+       implements org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessageOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return org.session.libsignal.protos.SignalServiceProtos.internal_static_signalservice_SharedConfigMessage_descriptor;
+      }
+
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return org.session.libsignal.protos.SignalServiceProtos.internal_static_signalservice_SharedConfigMessage_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage.class, org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage.Builder.class);
+      }
+
+      // Construct using org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        }
+      }
+      private static Builder create() {
+        return new Builder();
+      }
+
+      public Builder clear() {
+        super.clear();
+        type_ = org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage.Type.USER;
+        bitField0_ = (bitField0_ & ~0x00000001);
+        data_ = com.google.protobuf.ByteString.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000002);
+        return this;
+      }
+
+      public Builder clone() {
+        return create().mergeFrom(buildPartial());
+      }
+
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return org.session.libsignal.protos.SignalServiceProtos.internal_static_signalservice_SharedConfigMessage_descriptor;
+      }
+
+      public org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage getDefaultInstanceForType() {
+        return org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage.getDefaultInstance();
+      }
+
+      public org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage build() {
+        org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      public org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage buildPartial() {
+        org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage result = new org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage(this);
+        int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+          to_bitField0_ |= 0x00000001;
+        }
+        result.type_ = type_;
+        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
+          to_bitField0_ |= 0x00000002;
+        }
+        result.data_ = data_;
+        result.bitField0_ = to_bitField0_;
+        onBuilt();
+        return result;
+      }
+
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage) {
+          return mergeFrom((org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage other) {
+        if (other == org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage.getDefaultInstance()) return this;
+        if (other.hasType()) {
+          setType(other.getType());
+        }
+        if (other.hasData()) {
+          setData(other.getData());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        return this;
+      }
+
+      public final boolean isInitialized() {
+        if (!hasType()) {
+          
+          return false;
+        }
+        if (!hasData()) {
+          
+          return false;
+        }
+        return true;
+      }
+
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage) e.getUnfinishedMessage();
+          throw e;
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      private int bitField0_;
+
+      // required .signalservice.SharedConfigMessage.Type type = 1;
+      private org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage.Type type_ = org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage.Type.USER;
+      /**
+       * <code>required .signalservice.SharedConfigMessage.Type type = 1;</code>
+       *
+       * <pre>
+       * @required
+       * </pre>
+       */
+      public boolean hasType() {
+        return ((bitField0_ & 0x00000001) == 0x00000001);
+      }
+      /**
+       * <code>required .signalservice.SharedConfigMessage.Type type = 1;</code>
+       *
+       * <pre>
+       * @required
+       * </pre>
+       */
+      public org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage.Type getType() {
+        return type_;
+      }
+      /**
+       * <code>required .signalservice.SharedConfigMessage.Type type = 1;</code>
+       *
+       * <pre>
+       * @required
+       * </pre>
+       */
+      public Builder setType(org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage.Type value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        bitField0_ |= 0x00000001;
+        type_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>required .signalservice.SharedConfigMessage.Type type = 1;</code>
+       *
+       * <pre>
+       * @required
+       * </pre>
+       */
+      public Builder clearType() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        type_ = org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage.Type.USER;
+        onChanged();
+        return this;
+      }
+
+      // required bytes data = 2;
+      private com.google.protobuf.ByteString data_ = com.google.protobuf.ByteString.EMPTY;
+      /**
+       * <code>required bytes data = 2;</code>
+       */
+      public boolean hasData() {
+        return ((bitField0_ & 0x00000002) == 0x00000002);
+      }
+      /**
+       * <code>required bytes data = 2;</code>
+       */
+      public com.google.protobuf.ByteString getData() {
+        return data_;
+      }
+      /**
+       * <code>required bytes data = 2;</code>
+       */
+      public Builder setData(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000002;
+        data_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>required bytes data = 2;</code>
+       */
+      public Builder clearData() {
+        bitField0_ = (bitField0_ & ~0x00000002);
+        data_ = getDefaultInstance().getData();
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:signalservice.SharedConfigMessage)
+    }
+
+    static {
+      defaultInstance = new SharedConfigMessage(true);
+      defaultInstance.initFields();
+    }
+
+    // @@protoc_insertion_point(class_scope:signalservice.SharedConfigMessage)
+  }
+
   public interface ConfigurationMessageOrBuilder
       extends com.google.protobuf.MessageOrBuilder {
 
@@ -26039,6 +26676,11 @@ public final class SignalServiceProtos {
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_signalservice_CallMessage_fieldAccessorTable;
   private static com.google.protobuf.Descriptors.Descriptor
+    internal_static_signalservice_SharedConfigMessage_descriptor;
+  private static
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_signalservice_SharedConfigMessage_fieldAccessorTable;
+  private static com.google.protobuf.Descriptors.Descriptor
     internal_static_signalservice_ConfigurationMessage_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
@@ -26163,39 +26805,43 @@ public final class SignalServiceProtos {
       "ndexes\030\003 \003(\r\022\017\n\007sdpMids\030\004 \003(\t\022\014\n\004uuid\030\005 " +
       "\002(\t\"f\n\004Type\022\r\n\tPRE_OFFER\020\006\022\t\n\005OFFER\020\001\022\n\n",
       "\006ANSWER\020\002\022\026\n\022PROVISIONAL_ANSWER\020\003\022\022\n\016ICE" +
-      "_CANDIDATES\020\004\022\014\n\010END_CALL\020\005\"\245\004\n\024Configur" +
-      "ationMessage\022E\n\014closedGroups\030\001 \003(\0132/.sig" +
-      "nalservice.ConfigurationMessage.ClosedGr" +
-      "oup\022\022\n\nopenGroups\030\002 \003(\t\022\023\n\013displayName\030\003" +
-      " \001(\t\022\026\n\016profilePicture\030\004 \001(\t\022\022\n\nprofileK" +
-      "ey\030\005 \001(\014\022=\n\010contacts\030\006 \003(\0132+.signalservi" +
-      "ce.ConfigurationMessage.Contact\032\233\001\n\013Clos" +
-      "edGroup\022\021\n\tpublicKey\030\001 \001(\014\022\014\n\004name\030\002 \001(\t" +
-      "\0221\n\021encryptionKeyPair\030\003 \001(\0132\026.signalserv",
-      "ice.KeyPair\022\017\n\007members\030\004 \003(\014\022\016\n\006admins\030\005" +
-      " \003(\014\022\027\n\017expirationTimer\030\006 \001(\r\032\223\001\n\007Contac" +
-      "t\022\021\n\tpublicKey\030\001 \002(\014\022\014\n\004name\030\002 \002(\t\022\026\n\016pr" +
-      "ofilePicture\030\003 \001(\t\022\022\n\nprofileKey\030\004 \001(\014\022\022" +
-      "\n\nisApproved\030\005 \001(\010\022\021\n\tisBlocked\030\006 \001(\010\022\024\n" +
-      "\014didApproveMe\030\007 \001(\010\",\n\026MessageRequestRes" +
-      "ponse\022\022\n\nisApproved\030\001 \002(\010\"u\n\016ReceiptMess" +
-      "age\0220\n\004type\030\001 \002(\0162\".signalservice.Receip" +
-      "tMessage.Type\022\021\n\ttimestamp\030\002 \003(\004\"\036\n\004Type" +
-      "\022\014\n\010DELIVERY\020\000\022\010\n\004READ\020\001\"\354\001\n\021AttachmentP",
-      "ointer\022\n\n\002id\030\001 \002(\006\022\023\n\013contentType\030\002 \001(\t\022" +
-      "\013\n\003key\030\003 \001(\014\022\014\n\004size\030\004 \001(\r\022\021\n\tthumbnail\030" +
-      "\005 \001(\014\022\016\n\006digest\030\006 \001(\014\022\020\n\010fileName\030\007 \001(\t\022" +
-      "\r\n\005flags\030\010 \001(\r\022\r\n\005width\030\t \001(\r\022\016\n\006height\030" +
-      "\n \001(\r\022\017\n\007caption\030\013 \001(\t\022\013\n\003url\030e \001(\t\"\032\n\005F" +
-      "lags\022\021\n\rVOICE_MESSAGE\020\001\"\365\001\n\014GroupContext" +
-      "\022\n\n\002id\030\001 \001(\014\022.\n\004type\030\002 \001(\0162 .signalservi" +
-      "ce.GroupContext.Type\022\014\n\004name\030\003 \001(\t\022\017\n\007me" +
-      "mbers\030\004 \003(\t\0220\n\006avatar\030\005 \001(\0132 .signalserv" +
-      "ice.AttachmentPointer\022\016\n\006admins\030\006 \003(\t\"H\n",
-      "\004Type\022\013\n\007UNKNOWN\020\000\022\n\n\006UPDATE\020\001\022\013\n\007DELIVE" +
-      "R\020\002\022\010\n\004QUIT\020\003\022\020\n\014REQUEST_INFO\020\004B3\n\034org.s" +
-      "ession.libsignal.protosB\023SignalServicePr" +
-      "otos"
+      "_CANDIDATES\020\004\022\014\n\010END_CALL\020\005\"\265\001\n\023SharedCo" +
+      "nfigMessage\0225\n\004type\030\001 \002(\0162\'.signalservic" +
+      "e.SharedConfigMessage.Type\022\014\n\004data\030\002 \002(\014" +
+      "\"Y\n\004Type\022\010\n\004USER\020\001\022\025\n\021CLOSED_GROUP_INFO\020" +
+      "\002\022\023\n\017ENCRYPTION_KEYS\020\003\022\033\n\027CONVERSATION_R" +
+      "EAD_STATE\020\004\"\245\004\n\024ConfigurationMessage\022E\n\014" +
+      "closedGroups\030\001 \003(\0132/.signalservice.Confi" +
+      "gurationMessage.ClosedGroup\022\022\n\nopenGroup" +
+      "s\030\002 \003(\t\022\023\n\013displayName\030\003 \001(\t\022\026\n\016profileP",
+      "icture\030\004 \001(\t\022\022\n\nprofileKey\030\005 \001(\014\022=\n\010cont" +
+      "acts\030\006 \003(\0132+.signalservice.Configuration" +
+      "Message.Contact\032\233\001\n\013ClosedGroup\022\021\n\tpubli" +
+      "cKey\030\001 \001(\014\022\014\n\004name\030\002 \001(\t\0221\n\021encryptionKe" +
+      "yPair\030\003 \001(\0132\026.signalservice.KeyPair\022\017\n\007m" +
+      "embers\030\004 \003(\014\022\016\n\006admins\030\005 \003(\014\022\027\n\017expirati" +
+      "onTimer\030\006 \001(\r\032\223\001\n\007Contact\022\021\n\tpublicKey\030\001" +
+      " \002(\014\022\014\n\004name\030\002 \002(\t\022\026\n\016profilePicture\030\003 \001" +
+      "(\t\022\022\n\nprofileKey\030\004 \001(\014\022\022\n\nisApproved\030\005 \001" +
+      "(\010\022\021\n\tisBlocked\030\006 \001(\010\022\024\n\014didApproveMe\030\007 ",
+      "\001(\010\",\n\026MessageRequestResponse\022\022\n\nisAppro" +
+      "ved\030\001 \002(\010\"u\n\016ReceiptMessage\0220\n\004type\030\001 \002(" +
+      "\0162\".signalservice.ReceiptMessage.Type\022\021\n" +
+      "\ttimestamp\030\002 \003(\004\"\036\n\004Type\022\014\n\010DELIVERY\020\000\022\010" +
+      "\n\004READ\020\001\"\354\001\n\021AttachmentPointer\022\n\n\002id\030\001 \002" +
+      "(\006\022\023\n\013contentType\030\002 \001(\t\022\013\n\003key\030\003 \001(\014\022\014\n\004" +
+      "size\030\004 \001(\r\022\021\n\tthumbnail\030\005 \001(\014\022\016\n\006digest\030" +
+      "\006 \001(\014\022\020\n\010fileName\030\007 \001(\t\022\r\n\005flags\030\010 \001(\r\022\r" +
+      "\n\005width\030\t \001(\r\022\016\n\006height\030\n \001(\r\022\017\n\007caption" +
+      "\030\013 \001(\t\022\013\n\003url\030e \001(\t\"\032\n\005Flags\022\021\n\rVOICE_ME",
+      "SSAGE\020\001\"\365\001\n\014GroupContext\022\n\n\002id\030\001 \001(\014\022.\n\004" +
+      "type\030\002 \001(\0162 .signalservice.GroupContext." +
+      "Type\022\014\n\004name\030\003 \001(\t\022\017\n\007members\030\004 \003(\t\0220\n\006a" +
+      "vatar\030\005 \001(\0132 .signalservice.AttachmentPo" +
+      "inter\022\016\n\006admins\030\006 \003(\t\"H\n\004Type\022\013\n\007UNKNOWN" +
+      "\020\000\022\n\n\006UPDATE\020\001\022\013\n\007DELIVER\020\002\022\010\n\004QUIT\020\003\022\020\n" +
+      "\014REQUEST_INFO\020\004B3\n\034org.session.libsignal" +
+      ".protosB\023SignalServiceProtos"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -26298,8 +26944,14 @@ public final class SignalServiceProtos {
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_signalservice_CallMessage_descriptor,
               new java.lang.String[] { "Type", "Sdps", "SdpMLineIndexes", "SdpMids", "Uuid", });
-          internal_static_signalservice_ConfigurationMessage_descriptor =
+          internal_static_signalservice_SharedConfigMessage_descriptor =
             getDescriptor().getMessageTypes().get(8);
+          internal_static_signalservice_SharedConfigMessage_fieldAccessorTable = new
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+              internal_static_signalservice_SharedConfigMessage_descriptor,
+              new java.lang.String[] { "Type", "Data", });
+          internal_static_signalservice_ConfigurationMessage_descriptor =
+            getDescriptor().getMessageTypes().get(9);
           internal_static_signalservice_ConfigurationMessage_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_signalservice_ConfigurationMessage_descriptor,
@@ -26317,25 +26969,25 @@ public final class SignalServiceProtos {
               internal_static_signalservice_ConfigurationMessage_Contact_descriptor,
               new java.lang.String[] { "PublicKey", "Name", "ProfilePicture", "ProfileKey", "IsApproved", "IsBlocked", "DidApproveMe", });
           internal_static_signalservice_MessageRequestResponse_descriptor =
-            getDescriptor().getMessageTypes().get(9);
+            getDescriptor().getMessageTypes().get(10);
           internal_static_signalservice_MessageRequestResponse_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_signalservice_MessageRequestResponse_descriptor,
               new java.lang.String[] { "IsApproved", });
           internal_static_signalservice_ReceiptMessage_descriptor =
-            getDescriptor().getMessageTypes().get(10);
+            getDescriptor().getMessageTypes().get(11);
           internal_static_signalservice_ReceiptMessage_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_signalservice_ReceiptMessage_descriptor,
               new java.lang.String[] { "Type", "Timestamp", });
           internal_static_signalservice_AttachmentPointer_descriptor =
-            getDescriptor().getMessageTypes().get(11);
+            getDescriptor().getMessageTypes().get(12);
           internal_static_signalservice_AttachmentPointer_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_signalservice_AttachmentPointer_descriptor,
               new java.lang.String[] { "Id", "ContentType", "Key", "Size", "Thumbnail", "Digest", "FileName", "Flags", "Width", "Height", "Caption", "Url", });
           internal_static_signalservice_GroupContext_descriptor =
-            getDescriptor().getMessageTypes().get(12);
+            getDescriptor().getMessageTypes().get(13);
           internal_static_signalservice_GroupContext_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_signalservice_GroupContext_descriptor,
