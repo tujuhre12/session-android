@@ -3,25 +3,48 @@ package org.thoughtcrime.securesms.conversation.expiration
 import android.os.Bundle
 import android.os.Parcelable
 import android.util.SparseArray
+import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityExpirationSettingsBinding
 import org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
+import org.thoughtcrime.securesms.database.RecipientDatabase
+import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.preferences.RadioOption
 import org.thoughtcrime.securesms.preferences.RadioOptionAdapter
+import javax.inject.Inject
+import kotlin.math.max
 
 @AndroidEntryPoint
 class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
 
     private lateinit var binding : ActivityExpirationSettingsBinding
 
+    @Inject lateinit var recipientDb: RecipientDatabase
+    @Inject lateinit var threadDb: ThreadDatabase
+    @Inject lateinit var viewModelFactory: ExpirationSettingsViewModel.AssistedFactory
+
+    private val threadId: Long by lazy {
+        intent.getLongExtra(THREAD_ID, -1)
+    }
+
     private val expirationType: ExpirationType? by lazy {
-        ExpirationType.valueOf(intent.getIntExtra(EXTRA_EXPIRATION_TYPE, -1))
+        ExpirationType.valueOf(intent.getIntExtra(EXPIRATION_TYPE, -1))
+    }
+
+    private val viewModel: ExpirationSettingsViewModel by viewModels {
+        val afterReadOptions = resources.getIntArray(R.array.read_expiration_time_values).map(Int::toString)
+            .zip(resources.getStringArray(R.array.read_expiration_time_names)) { value, name -> RadioOption(value, name)}
+        val afterSendOptions = resources.getIntArray(R.array.send_expiration_time_values).map(Int::toString)
+            .zip(resources.getStringArray(R.array.send_expiration_time_names)) { value, name -> RadioOption(value, name)}
+        viewModelFactory.create(threadId, expirationType, afterReadOptions, afterSendOptions)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -45,25 +68,26 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
             }
         }
 
-        val options = if (expirationType == ExpirationType.DELETE_AFTER_SEND) {
-            val values = resources.getIntArray(R.array.send_expiration_time_values).map(Int::toString)
-            val names = resources.getStringArray(R.array.send_expiration_time_names)
-            values.zip(names) { value, name -> RadioOption(value, name)}
-        } else {
-            listOf(
-                RadioOption("off", getString(R.string.expiration_off)),
-                RadioOption("read", getString(R.string.expiration_type_disappear_after_read)),
-                RadioOption("send", getString(R.string.expiration_type_disappear_after_send))
+        val deleteTypeOptions = listOf(
+            RadioOption("off", getString(R.string.expiration_off)),
+            RadioOption(
+                value = ExpirationType.DELETE_AFTER_READ_VALUE.toString(),
+                title = getString(R.string.expiration_type_disappear_after_read),
+                subtitle = getString(R.string.expiration_type_disappear_after_read_description)
+            ),
+            RadioOption(
+                value = ExpirationType.DELETE_AFTER_SEND_VALUE.toString(),
+                title = getString(R.string.expiration_type_disappear_after_send),
+                subtitle = getString(R.string.expiration_type_disappear_after_send_description)
             )
-        }
-        val optionAdapter = RadioOptionAdapter {
-
+        )
+        val deleteTypeOptionAdapter = RadioOptionAdapter {
+            viewModel.onExpirationTypeSelected(it)
         }
         binding.textViewDeleteType.isVisible = expirationType == null
-        binding.textViewTimer.isVisible = expirationType == null
-        binding.layoutTimer.isVisible = expirationType == null
-        binding.recyclerView.apply {
-            adapter = optionAdapter
+        binding.layoutDeleteTypes.isVisible = expirationType == null
+        binding.recyclerViewDeleteTypes.apply {
+            adapter = deleteTypeOptionAdapter
             addItemDecoration(ContextCompat.getDrawable(this@ExpirationSettingsActivity, R.drawable.conversation_menu_divider)!!.let {
                 DividerItemDecoration(this@ExpirationSettingsActivity, RecyclerView.VERTICAL).apply {
                     setDrawable(it)
@@ -71,7 +95,34 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
             })
             setHasFixedSize(true)
         }
-        optionAdapter.submitList(options)
+        deleteTypeOptionAdapter.submitList(deleteTypeOptions)
+
+        val timerOptionAdapter = RadioOptionAdapter {
+            viewModel.onExpirationTimerSelected(it)
+        }
+        binding.recyclerViewTimerOptions.apply {
+            adapter = timerOptionAdapter
+            addItemDecoration(ContextCompat.getDrawable(this@ExpirationSettingsActivity, R.drawable.conversation_menu_divider)!!.let {
+                DividerItemDecoration(this@ExpirationSettingsActivity, RecyclerView.VERTICAL).apply {
+                    setDrawable(it)
+                }
+            })
+        }
+        lifecycleScope.launchWhenStarted {
+            launch {
+                viewModel.selectedExpirationType.collect { type ->
+                    val position = deleteTypeOptions.indexOfFirst { it.value.toIntOrNull() == type?.number }
+                    deleteTypeOptionAdapter.setSelectedPosition(max(0, position))
+                }
+            }
+            launch {
+                viewModel.expirationTimerOptions.collect { options ->
+                    binding.textViewTimer.isVisible = options.isNotEmpty() && expirationType == null
+                    binding.layoutTimer.isVisible = options.isNotEmpty()
+                    timerOptionAdapter.submitList(options)
+                }
+            }
+        }
 
     }
 
@@ -87,10 +138,12 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
         actionBar.setDisplayHomeAsUpEnabled(true)
         actionBar.setHomeButtonEnabled(true)
     }
+
     companion object {
         private const val SCROLL_PARCEL = "scroll_parcel"
-        const val EXTRA_EXPIRATION_TYPE = "expiration_type"
-        const val EXTRA_READ_ONLY = "read_only"
+        const val THREAD_ID = "thread_id"
+        const val EXPIRATION_TYPE = "expiration_type"
+        const val READ_ONLY = "read_only"
     }
 
 }

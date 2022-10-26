@@ -875,7 +875,9 @@
     <string name="activity_expiration_settings_subtitle">This setting applies to everyone in this conversation.</string>
     <string name="activity_expiration_settings_subtitle_sent">Messages disappear after they have been sent.</string>
     <string name="expiration_type_disappear_after_read">Disappear After Read</string>
+    <string name="expiration_type_disappear_after_read_description">Messages delete after they have been read.</string>
     <string name="expiration_type_disappear_after_send">Disappear After Send</string>
+    <string name="expiration_type_disappear_after_send_description">Messages delete after they have been sent.</string>
     <string name="expiration_settings_set_button_title">Set</string>
     <string name="activity_expiration_settings_delete_type">Delete Type</string>
     <string name="activity_expiration_settings_timer">Timer</string>

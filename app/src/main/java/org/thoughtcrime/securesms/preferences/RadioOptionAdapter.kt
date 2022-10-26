@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.preferences
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -11,7 +12,7 @@ import network.loki.messenger.databinding.ItemSelectableBinding
 import org.thoughtcrime.securesms.mms.GlideApp
 
 class RadioOptionAdapter(
-    var selectedOptionPosition: Int = 0,
+    private var selectedOptionPosition: Int = 0,
     private val onClickListener: (RadioOption) -> Unit
 ) : ListAdapter<RadioOption, RadioOptionAdapter.ViewHolder>(RadioOptionDiffer()) {
 
@@ -35,6 +36,11 @@ class RadioOptionAdapter(
         }
     }
 
+    fun setSelectedPosition(selectedPosition: Int) {
+        selectedOptionPosition = selectedPosition
+        notifyDataSetChanged()
+    }
+
     class ViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
 
         val glide = GlideApp.with(itemView)
@@ -42,6 +48,8 @@ class RadioOptionAdapter(
 
         fun bind(option: RadioOption, isSelected: Boolean, toggleSelection: (RadioOption) -> Unit) {
             binding.titleTextView.text = option.title
+            binding.subtitleTextView.text = option.subtitle
+            binding.subtitleTextView.isVisible = !option.subtitle.isNullOrEmpty()
             binding.root.setOnClickListener { toggleSelection(option) }
             binding.selectButton.isSelected = isSelected
         }
@@ -51,5 +59,6 @@ class RadioOptionAdapter(
 
 data class RadioOption(
     val value: String,
-    val title: String
+    val title: String,
+    val subtitle: String? = null
 )

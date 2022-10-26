@@ -990,8 +990,9 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             if (group?.isActive == false) { return }
         }
         val expirationIntent = Intent(this, ExpirationSettingsActivity::class.java)
+        expirationIntent.putExtra(ExpirationSettingsActivity.THREAD_ID, viewModel.threadId)
         if (thread.isLocalNumber || thread.isClosedGroupRecipient) {
-            expirationIntent.putExtra(ExpirationSettingsActivity.EXTRA_EXPIRATION_TYPE, ExpirationType.DELETE_AFTER_SEND_VALUE)
+            expirationIntent.putExtra(ExpirationSettingsActivity.EXPIRATION_TYPE, ExpirationType.DELETE_AFTER_SEND_VALUE)
         }
         show(expirationIntent, true)
     }
