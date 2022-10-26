@@ -117,6 +117,7 @@ class OpenGroupMigrationTests {
     fun `test migration thread DB calls legacy and returns if no legacy official groups`() {
         val mockedThreadDb = mock<ThreadDatabase> {
             on { legacyOxenOpenGroups } doReturn emptyList()
+            on { httpOxenOpenGroups } doReturn emptyList()
         }
         val mockedDbComponent = mock<DatabaseComponent> {
             on { threadDatabase() } doReturn mockedThreadDb
@@ -126,6 +127,7 @@ class OpenGroupMigrationTests {
 
         verify(mockedDbComponent).threadDatabase()
         verify(mockedThreadDb).legacyOxenOpenGroups
+        verify(mockedThreadDb).httpOxenOpenGroups
         verifyNoMoreInteractions(mockedThreadDb)
     }
 

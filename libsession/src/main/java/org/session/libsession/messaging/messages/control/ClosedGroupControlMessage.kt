@@ -6,10 +6,10 @@ import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage
-import org.session.libsignal.utilities.removingIdPrefixIfNeeded
-import org.session.libsignal.utilities.toHexString
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.Log
+import org.session.libsignal.utilities.removingIdPrefixIfNeeded
+import org.session.libsignal.utilities.toHexString
 
 class ClosedGroupControlMessage() : ControlMessage() {
     var kind: Kind? = null
@@ -113,6 +113,11 @@ class ClosedGroupControlMessage() : ControlMessage() {
                 DataMessage.ClosedGroupControlMessage.Type.MEMBER_LEFT -> {
                     kind = Kind.MemberLeft()
                 }
+                DataMessage.ClosedGroupControlMessage.Type.INVITE -> TODO()
+                DataMessage.ClosedGroupControlMessage.Type.PROMOTE -> TODO()
+                DataMessage.ClosedGroupControlMessage.Type.DELETE_GROUP -> TODO()
+                DataMessage.ClosedGroupControlMessage.Type.DELETE_MESSAGES -> TODO()
+                DataMessage.ClosedGroupControlMessage.Type.DELETE_ATTACHMENTS -> TODO()
             }
             return ClosedGroupControlMessage(kind)
         }

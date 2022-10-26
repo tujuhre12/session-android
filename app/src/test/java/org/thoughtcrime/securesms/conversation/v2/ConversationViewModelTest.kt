@@ -5,7 +5,6 @@ import kotlinx.coroutines.flow.first
 import org.hamcrest.CoreMatchers.endsWith
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.MatcherAssert.assertThat
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito.anyLong
@@ -37,13 +36,7 @@ class ConversationViewModelTest: BaseViewModelTest() {
     @Before
     fun setUp() {
         recipient = mock(Recipient::class.java)
-        whenever(repository.isOxenHostedOpenGroup(anyLong())).thenReturn(true)
         whenever(repository.maybeGetRecipientForThreadId(anyLong())).thenReturn(recipient)
-    }
-
-    @Test
-    fun `should emit group type on init`() = runBlockingTest {
-        assertTrue(viewModel.uiState.first().isOxenHostedOpenGroup)
     }
 
     @Test
