@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.notifications
 
 import android.content.Context
+import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -17,5 +18,12 @@ object FirebasePushModule {
     fun provideFirebasePushManager(
         @ApplicationContext context: Context,
         prefs: TextSecurePreferences,
-    ): PushManager = FirebasePushManager(context, prefs)
+    ) = FirebasePushManager(context, prefs)
+}
+
+@Module
+@InstallIn(SingletonComponent::class)
+abstract class FirebaseBindingModule {
+    @Binds
+    abstract fun bindPushManager(firebasePushManager: FirebasePushManager): PushManager
 }

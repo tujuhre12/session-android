@@ -17,7 +17,7 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class PushNotificationService : FirebaseMessagingService() {
 
-    @Inject lateinit var pushManager: PushManager
+    @Inject lateinit var pushManager: FirebasePushManager
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
@@ -32,7 +32,7 @@ class PushNotificationService : FirebaseMessagingService() {
             // assume this is the new push notification content
             // deal with the enc payload (probably decrypting through the PushManager?
             Log.d("Loki", "TODO: deal with the enc_payload\n${message.data["enc_payload"]}")
-            pushManager.decrypt(message.data)
+            pushManager.decrypt(Base64.decode(message.data["enc_payload"]))
             return
         }
         val base64EncodedData = message.data?.get("ENCRYPTED_DATA")

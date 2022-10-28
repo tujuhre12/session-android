@@ -19,11 +19,16 @@ import okhttp3.RequestBody
 import org.session.libsession.messaging.sending_receiving.notifications.PushNotificationAPI
 import org.session.libsession.messaging.sending_receiving.notifications.SubscriptionRequest
 import org.session.libsession.messaging.sending_receiving.notifications.SubscriptionResponse
+import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.Version
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocalNumber
+import org.session.libsession.utilities.bencode.Bencode
+import org.session.libsession.utilities.bencode.BencodeDict
+import org.session.libsession.utilities.bencode.BencodeList
+import org.session.libsession.utilities.bencode.BencodeString
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Namespace
@@ -53,6 +58,37 @@ class FirebasePushManager(private val context: Context, private val prefs: TextS
                 IdentityKeyUtil.NOTIFICATION_KEY
             )
         )
+    }
+
+    fun decrypt(encPayload: ByteArray) {
+        val encKey = getOrCreateNotificationKey()
+        val nonce = encPayload.take(AEAD.XCHACHA20POLY1305_IETF_NPUBBYTES).toByteArray()
+        val payload = encPayload.drop(AEAD.XCHACHA20POLY1305_IETF_NPUBBYTES).toByteArray()
+        val decrypted = SodiumUtilities.decrypt(payload, encKey.asBytes, nonce)
+            ?: return Log.e("Loki", "Failed to decrypt push notification")
+        val bencoded = Bencode.Decoder(decrypted)
+        val expectedList = (bencoded.decode() as? BencodeList)
+            ?: return Log.e("Loki", "Failed to decode bencoded list from payload")
+
+        val (metadata, content) = expectedList.values
+        val metadataDict = (metadata as? BencodeDict)?.values
+            ?: return Log.e("Loki", "Failed to decode metadata dict")
+
+        val push = """
+            Push metadata received was:
+                @: ${metadataDict["@"]}
+                #: ${metadataDict["#"]}
+                n: ${metadataDict["n"]}
+                l: ${metadataDict["l"]}
+                B: ${metadataDict["B"]}
+        """.trimIndent()
+
+        Log.d("Loki", "push")
+
+        val contentBytes = (content as? BencodeString)?.value
+            ?: return Log.e("Loki", "Failed to decode content string")
+
+        // TODO: something with contentBytes
     }
 
     override fun register(force: Boolean) {
