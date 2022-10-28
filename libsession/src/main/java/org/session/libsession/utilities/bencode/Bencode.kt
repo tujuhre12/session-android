@@ -2,7 +2,7 @@ package org.session.libsession.utilities.bencode
 
 import java.util.LinkedList
 
-object Bencoder {
+object Bencode {
     class Decoder(source: CharArray) {
 
         private val iterator = LinkedList<Char>().apply {
@@ -101,6 +101,10 @@ object Bencoder {
 sealed class BencodeElement {
     abstract fun encode(): CharArray
 }
+
+fun String.bencode() = BencodeString(this)
+fun Int.bencode() = BencodeInteger(this)
+
 data class BencodeString(val value: String): BencodeElement() {
     override fun encode(): CharArray = buildString {
         append(value.length.toString())
@@ -116,6 +120,9 @@ data class BencodeInteger(val value: Int): BencodeElement() {
     }.toCharArray()
 }
 data class BencodeList(val values: List<BencodeElement>): BencodeElement() {
+
+    constructor(vararg values: BencodeElement) : this(values.toList())
+
     override fun encode(): CharArray = buildString {
         append('l')
         for (value in values) {
@@ -125,6 +132,9 @@ data class BencodeList(val values: List<BencodeElement>): BencodeElement() {
     }.toCharArray()
 }
 data class BencodeDict(val values: Map<String, BencodeElement>): BencodeElement() {
+
+    constructor(vararg values: Pair<String, BencodeElement>) : this(values.toMap())
+
     override fun encode(): CharArray = buildString {
         append('d')
         for ((key, value) in values) {
