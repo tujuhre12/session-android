@@ -1,11 +1,14 @@
 package org.session.libsession.utilities.bencode
 
+import org.session.libsession.utilities.bencode.Bencode.Decoder.Companion.DICT_INDICATOR
+import org.session.libsession.utilities.bencode.Bencode.Decoder.Companion.END_INDICATOR
+import org.session.libsession.utilities.bencode.Bencode.Decoder.Companion.LIST_INDICATOR
 import java.util.LinkedList
 
 object Bencode {
-    class Decoder(source: CharArray) {
+    class Decoder(source: ByteArray) {
 
-        private val iterator = LinkedList<Char>().apply {
+        private val iterator = LinkedList<Byte>().apply {
             addAll(source.asIterable())
         }
 
@@ -29,14 +32,14 @@ object Bencode {
          * Decode a string element from iterator assumed to have structure `{length}:{data}`
          */
         private fun decodeString(): BencodeString? {
-            val lengthStrings = buildString {
+            val lengthStrings = buildList<Byte> {
                 while (iterator.isNotEmpty() && iterator.peek() != SEPARATOR) {
-                    append(iterator.pop())
+                    add(iterator.pop())
                 }
-            }.toCharArray()
+            }.toByteArray()
             iterator.pop() // drop `:`
-            val length = String(lengthStrings).toIntOrNull(10) ?: return null
-            val remaining = (0 until length).map { iterator.pop() }.toCharArray()
+            val length = lengthStrings.decodeToString().toIntOrNull(10) ?: return null
+            val remaining = (0 until length).map { iterator.pop() }.toByteArray()
             return BencodeString(String(remaining))
         }
 
@@ -45,12 +48,12 @@ object Bencode {
          */
         private fun decodeInt(): BencodeElement? {
             iterator.pop() // drop `i`
-            val intString = buildString {
+            val intString = buildList<Byte> {
                 while (iterator.isNotEmpty() && iterator.peek() != END_INDICATOR) {
-                    append(iterator.pop())
+                    add(iterator.pop())
                 }
-            }
-            val asInt = intString.toIntOrNull(10) ?: return null
+            }.toByteArray()
+            val asInt = intString.decodeToString().toIntOrNull(10) ?: return null
             iterator.pop() // drop `e`
             return BencodeInteger(asInt)
         }
@@ -86,12 +89,12 @@ object Bencode {
         }
 
         companion object {
-            private val NUMBERS = arrayOf('0', '1', '2', '3', '4', '5', '6', '7', '8', '9')
-            private const val INT_INDICATOR = 'i'
-            private const val LIST_INDICATOR = 'l'
-            private const val DICT_INDICATOR = 'd'
-            private const val END_INDICATOR = 'e'
-            private const val SEPARATOR = ':'
+            val NUMBERS = arrayOf('0', '1', '2', '3', '4', '5', '6', '7', '8', '9').map { it.code.toByte() }
+            const val INT_INDICATOR = 'i'.code.toByte()
+            const val LIST_INDICATOR = 'l'.code.toByte()
+            const val DICT_INDICATOR = 'd'.code.toByte()
+            const val END_INDICATOR = 'e'.code.toByte()
+            const val SEPARATOR = ':'.code.toByte()
         }
 
     }
@@ -99,48 +102,50 @@ object Bencode {
 }
 
 sealed class BencodeElement {
-    abstract fun encode(): CharArray
+    abstract fun encode(): ByteArray
 }
 
 fun String.bencode() = BencodeString(this)
 fun Int.bencode() = BencodeInteger(this)
 
 data class BencodeString(val value: String): BencodeElement() {
-    override fun encode(): CharArray = buildString {
+    override fun encode(): ByteArray = buildString {
         append(value.length.toString())
         append(':')
         append(value)
-    }.toCharArray()
+    }.toByteArray()
 }
 data class BencodeInteger(val value: Int): BencodeElement() {
-    override fun encode(): CharArray = buildString {
+    override fun encode(): ByteArray = buildString {
         append('i')
         append(value)
         append('e')
-    }.toCharArray()
+    }.toByteArray()
 }
+
 data class BencodeList(val values: List<BencodeElement>): BencodeElement() {
 
     constructor(vararg values: BencodeElement) : this(values.toList())
 
-    override fun encode(): CharArray = buildString {
-        append('l')
+    override fun encode(): ByteArray = buildList {
+        add(LIST_INDICATOR)
         for (value in values) {
-            append(value.encode())
+            addAll(value.encode().toTypedArray())
         }
-        append('e')
-    }.toCharArray()
+        add(END_INDICATOR)
+    }.toByteArray()
 }
+
 data class BencodeDict(val values: Map<String, BencodeElement>): BencodeElement() {
 
     constructor(vararg values: Pair<String, BencodeElement>) : this(values.toMap())
 
-    override fun encode(): CharArray = buildString {
-        append('d')
+    override fun encode(): ByteArray = buildList {
+        add(DICT_INDICATOR)
         for ((key, value) in values) {
-            append(BencodeString(key).encode())
-            append(value.encode())
+            addAll(BencodeString(key).encode().toTypedArray())
+            addAll(value.encode().toTypedArray())
         }
-        append('e')
-    }.toCharArray()
+        add(END_INDICATOR)
+    }.toByteArray()
 }
