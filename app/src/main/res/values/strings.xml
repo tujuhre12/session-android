@@ -881,4 +881,5 @@
     <string name="expiration_settings_set_button_title">Set</string>
     <string name="activity_expiration_settings_delete_type">Delete Type</string>
     <string name="activity_expiration_settings_timer">Timer</string>
+    <string name="activity_expiration_settings_group_footer"><![CDATA[This setting applies to everyone in this conversation.<br/>Only group admins can change this setting.]]></string>
 </resources>

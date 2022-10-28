@@ -5,6 +5,7 @@ import android.os.Parcelable
 import android.util.SparseArray
 import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
+import androidx.core.text.HtmlCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DividerItemDecoration
@@ -35,16 +36,12 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
         intent.getLongExtra(THREAD_ID, -1)
     }
 
-    private val expirationType: ExpirationType? by lazy {
-        ExpirationType.valueOf(intent.getIntExtra(EXPIRATION_TYPE, -1))
-    }
-
     private val viewModel: ExpirationSettingsViewModel by viewModels {
         val afterReadOptions = resources.getIntArray(R.array.read_expiration_time_values).map(Int::toString)
             .zip(resources.getStringArray(R.array.read_expiration_time_names)) { value, name -> RadioOption(value, name)}
         val afterSendOptions = resources.getIntArray(R.array.send_expiration_time_values).map(Int::toString)
             .zip(resources.getStringArray(R.array.send_expiration_time_names)) { value, name -> RadioOption(value, name)}
-        viewModelFactory.create(threadId, expirationType, afterReadOptions, afterSendOptions)
+        viewModelFactory.create(threadId, afterReadOptions, afterSendOptions)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -84,8 +81,6 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
         val deleteTypeOptionAdapter = RadioOptionAdapter {
             viewModel.onExpirationTypeSelected(it)
         }
-        binding.textViewDeleteType.isVisible = expirationType == null
-        binding.layoutDeleteTypes.isVisible = expirationType == null
         binding.recyclerViewDeleteTypes.apply {
             adapter = deleteTypeOptionAdapter
             addItemDecoration(ContextCompat.getDrawable(this@ExpirationSettingsActivity, R.drawable.conversation_menu_divider)!!.let {
@@ -117,9 +112,17 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
             }
             launch {
                 viewModel.expirationTimerOptions.collect { options ->
-                    binding.textViewTimer.isVisible = options.isNotEmpty() && expirationType == null
+                    binding.textViewTimer.isVisible = options.isNotEmpty() && viewModel.showExpirationTypeSelector
                     binding.layoutTimer.isVisible = options.isNotEmpty()
                     timerOptionAdapter.submitList(options)
+                }
+            }
+            launch {
+                viewModel.recipient.collect {
+                    binding.textViewDeleteType.isVisible = viewModel.showExpirationTypeSelector
+                    binding.layoutDeleteTypes.isVisible = viewModel.showExpirationTypeSelector
+                    binding.textViewFooter.isVisible = it?.isClosedGroupRecipient == true
+                    binding.textViewFooter.text = HtmlCompat.fromHtml(getString(R.string.activity_expiration_settings_group_footer), HtmlCompat.FROM_HTML_MODE_COMPACT)
                 }
             }
         }
@@ -130,7 +133,7 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
         setSupportActionBar(binding.toolbar)
         val actionBar = supportActionBar ?: return
         actionBar.title = getString(R.string.activity_expiration_settings_title)
-        actionBar.subtitle = if (expirationType == ExpirationType.DELETE_AFTER_SEND) {
+        actionBar.subtitle = if (viewModel.selectedExpirationType.value == ExpirationType.DELETE_AFTER_SEND) {
             getString(R.string.activity_expiration_settings_subtitle_sent)
         } else {
             getString(R.string.activity_expiration_settings_subtitle)
@@ -142,8 +145,6 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
     companion object {
         private const val SCROLL_PARCEL = "scroll_parcel"
         const val THREAD_ID = "thread_id"
-        const val EXPIRATION_TYPE = "expiration_type"
-        const val READ_ONLY = "read_only"
     }
 
 }

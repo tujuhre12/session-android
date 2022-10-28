@@ -72,7 +72,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="@dimen/small_spacing"
-                android:layout_marginBottom="@dimen/massive_spacing"
                 android:background="@drawable/preference_single"
                 android:paddingHorizontal="@dimen/large_spacing"
                 android:paddingVertical="@dimen/medium_spacing">
@@ -86,6 +85,20 @@
                     tools:itemCount="3"
                     tools:listitem="@layout/item_selectable" />
             </LinearLayout>
+
+            <TextView
+                android:id="@+id/text_view_footer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/massive_spacing"
+                android:paddingHorizontal="@dimen/very_large_spacing"
+                android:paddingVertical="@dimen/small_spacing"
+                android:gravity="center_horizontal"
+                android:text="@string/activity_expiration_settings_group_footer"
+                android:textColor="?android:textColorTertiary"
+                android:textSize="@dimen/very_small_font_size"
+                android:visibility="gone"
+                tools:visibility="visible"/>
 
         </LinearLayout>
 
