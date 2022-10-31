@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.viewModels
+import androidx.core.view.isVisible
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.databinding.ActivityConversationSettingsBinding
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
@@ -28,5 +29,9 @@ class ConversationSettingsActivity: PassphraseRequiredActionBarActivity(), Activ
     override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
         super.onCreate(savedInstanceState, ready)
         binding = ActivityConversationSettingsBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        with (binding) {
+            adminControlsGroup.isVisible = false
+        }
     }
 }

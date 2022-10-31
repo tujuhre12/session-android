@@ -149,5 +149,6 @@
     <dimen name="preference_corner_radius" />
     <dimen name="radial_size">34dp</dimen>
     <dimen name="small_radial_size">24dp</dimen>
+    <dimen name="setting_image_size">26dp</dimen>
 
 </resources>

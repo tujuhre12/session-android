@@ -864,4 +864,16 @@
     <string name="fragment_enter_community_url_join_button_title">Join</string>
     <string name="new_conversation_dialog_back_button_content_description">Navigate Back</string>
     <string name="new_conversation_dialog_close_button_content_description">Close Dialog</string>
+    <string name="conversation_settings_search">Search Conversation</string>
+    <string name="conversation_settings_all_media">All Media</string>
+    <string name="conversation_settings_pin_conversation">Pin Conversation</string>
+    <string name="conversation_settings_notifications">Notifications</string>
+    <string name="conversation_settings_auto_download_title">Auto-download Media</string>
+    <string name="conversation_settings_auto_download_summary">Automatically download media and files from this chat.</string>
+    <string name="conversation_settings_admin_settings_title">Admin Settings</string>
+    <string name="conversation_settings_disappearing_messages">Disappearing Messages</string>
+    <string name="conversation_settings_edit_group">Edit Group</string>
+    <string name="conversation_settings_add_admins">Add Admins</string>
+    <string name="conversation_settings_clear_messages">Clear Messages</string>
+    <string name="conversation_settings_leave_group">Leave Group</string>
 </resources>

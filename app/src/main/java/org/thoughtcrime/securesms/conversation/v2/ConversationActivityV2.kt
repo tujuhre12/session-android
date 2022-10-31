@@ -90,6 +90,7 @@ import org.thoughtcrime.securesms.attachments.ScreenshotObserver
 import org.thoughtcrime.securesms.audio.AudioRecorder
 import org.thoughtcrime.securesms.contacts.SelectContactsActivity.Companion.selectedContactsKey
 import org.thoughtcrime.securesms.contactshare.SimpleTextWatcher
+import org.thoughtcrime.securesms.conversation.settings.ConversationSettingsActivity
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnActionSelectedListener
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnReactionSelectedListener
 import org.thoughtcrime.securesms.conversation.v2.dialogs.BlockedDialog
@@ -174,7 +175,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     ConversationActionModeCallbackDelegate, VisibleMessageViewDelegate, RecipientModifiedListener,
     SearchBottomBar.EventListener, LoaderManager.LoaderCallbacks<Cursor>,
     OnReactionSelectedListener, ReactWithAnyEmojiDialogFragment.Callback, ReactionsDialogFragment.Callback,
-    ConversationMenuHelper.ConversationMenuListener {
+    ConversationMenuHelper.ConversationMenuListener, View.OnClickListener {
 
     private var binding: ActivityConversationV2Binding? = null
 
@@ -474,9 +475,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         binding!!.toolbarContent.profilePictureView.root.glide = glide
         MentionManagerUtilities.populateUserPublicKeyCacheIfNeeded(viewModel.threadId, this)
         val profilePictureView = binding!!.toolbarContent.profilePictureView.root
-        viewModel.recipient?.let { recipient ->
-            profilePictureView.update(recipient)
-        }
+        profilePictureView.update(recipient)
+        profilePictureView.setOnClickListener(this)
     }
 
     // called from onCreate
@@ -958,6 +958,14 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         return viewModel.recipient?.let { recipient ->
             ConversationMenuHelper.onOptionItemSelected(this, item, recipient)
         } ?: false
+    }
+
+    override fun onClick(v: View?) {
+        if (v === binding?.toolbarContent?.profilePictureView?.root) {
+            // open conversation settings
+            val intent = Intent(this, ConversationSettingsActivity::class.java)
+            startActivity(intent)
+        }
     }
 
     override fun block(deleteThread: Boolean) {
