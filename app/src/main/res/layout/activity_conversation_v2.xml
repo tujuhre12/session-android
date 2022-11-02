@@ -16,8 +16,10 @@
         android:background="?colorPrimary"
         app:contentInsetStart="0dp">
 
-        <include android:id="@+id/toolbarContent"
-            layout="@layout/activity_conversation_v2_action_bar" />
+        <org.thoughtcrime.securesms.conversation.ConversationActionBarView
+            android:id="@+id/toolbarContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
 
     </androidx.appcompat.widget.Toolbar>
 

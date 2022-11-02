@@ -28,11 +28,9 @@ import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
-import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import android.widget.Toast
 import androidx.activity.viewModels
-import androidx.annotation.DimenRes
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.drawToBitmap
 import androidx.core.view.isVisible
@@ -88,6 +86,8 @@ import org.thoughtcrime.securesms.attachments.ScreenshotObserver
 import org.thoughtcrime.securesms.audio.AudioRecorder
 import org.thoughtcrime.securesms.contacts.SelectContactsActivity.Companion.selectedContactsKey
 import org.thoughtcrime.securesms.contactshare.SimpleTextWatcher
+import org.thoughtcrime.securesms.conversation.ConversationActionBarDelegate
+import org.thoughtcrime.securesms.conversation.ConversationSetting
 import org.thoughtcrime.securesms.conversation.expiration.ExpirationSettingsActivity
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnActionSelectedListener
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnReactionSelectedListener
@@ -107,19 +107,16 @@ import org.thoughtcrime.securesms.conversation.v2.search.SearchBottomBar
 import org.thoughtcrime.securesms.conversation.v2.search.SearchViewModel
 import org.thoughtcrime.securesms.conversation.v2.utilities.AttachmentManager
 import org.thoughtcrime.securesms.conversation.v2.utilities.BaseDialog
-import org.thoughtcrime.securesms.conversation.v2.utilities.MentionManagerUtilities
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.conversation.v2.utilities.ResendMessageUtilities
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.crypto.MnemonicUtilities
 import org.thoughtcrime.securesms.database.GroupDatabase
-import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.ReactionDatabase
-import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.SessionContactDatabase
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.Storage
@@ -172,7 +169,7 @@ import kotlin.math.sqrt
 class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDelegate,
     InputBarRecordingViewDelegate, AttachmentManager.AttachmentListener, ActivityDispatcher,
     ConversationActionModeCallbackDelegate, VisibleMessageViewDelegate, RecipientModifiedListener,
-    SearchBottomBar.EventListener, LoaderManager.LoaderCallbacks<Cursor>,
+    SearchBottomBar.EventListener, LoaderManager.LoaderCallbacks<Cursor>, ConversationActionBarDelegate,
     OnReactionSelectedListener, ReactWithAnyEmojiDialogFragment.Callback, ReactionsDialogFragment.Callback,
     ConversationMenuHelper.ConversationMenuListener {
 
@@ -184,8 +181,6 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     @Inject lateinit var lokiThreadDb: LokiThreadDatabase
     @Inject lateinit var sessionContactDb: SessionContactDatabase
     @Inject lateinit var groupDb: GroupDatabase
-    @Inject lateinit var recipientDb: RecipientDatabase
-    @Inject lateinit var lokiApiDb: LokiAPIDatabase
     @Inject lateinit var smsDb: SmsDatabase
     @Inject lateinit var mmsDb: MmsDatabase
     @Inject lateinit var lokiMessageDb: LokiMessageDatabase
@@ -363,7 +358,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         updateUnreadCountIndicator()
         setUpTypingObserver()
         setUpRecipientObserver()
-        updateSubtitle()
+        binding?.toolbarContent?.updateSubtitle(viewModel.recipient!!)
         getLatestOpenGroupInfoIfNeeded()
         setUpBlockedBanner()
         binding!!.searchBottomBar.setEventListener(this)
@@ -460,23 +455,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         actionBar.title = ""
         actionBar.setDisplayHomeAsUpEnabled(true)
         actionBar.setHomeButtonEnabled(true)
-        binding!!.toolbarContent.conversationTitleView.text = when {
-            recipient.isLocalNumber -> getString(R.string.note_to_self)
-            else -> recipient.toShortString()
-        }
-        @DimenRes val sizeID: Int = if (viewModel.recipient?.isClosedGroupRecipient == true) {
-            R.dimen.medium_profile_picture_size
-        } else {
-            R.dimen.small_profile_picture_size
-        }
-        val size = resources.getDimension(sizeID).roundToInt()
-        binding!!.toolbarContent.profilePictureView.root.layoutParams = LinearLayout.LayoutParams(size, size)
-        binding!!.toolbarContent.profilePictureView.root.glide = glide
-        MentionManagerUtilities.populateUserPublicKeyCacheIfNeeded(viewModel.threadId, this)
-        val profilePictureView = binding!!.toolbarContent.profilePictureView.root
-        viewModel.recipient?.let { recipient ->
-            profilePictureView.update(recipient)
-        }
+        binding!!.toolbarContent.bind(viewModel.threadId, recipient, glide)
     }
 
     // called from onCreate
@@ -566,8 +545,10 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     }
 
     private fun getLatestOpenGroupInfoIfNeeded() {
-        viewModel.openGroup?.let {
-            OpenGroupApi.getMemberCount(it.room, it.server).successUi { updateSubtitle() }
+        viewModel.openGroup?.let { openGroup ->
+            OpenGroupApi.getMemberCount(openGroup.room, openGroup.server).successUi {
+                binding?.toolbarContent?.updateSubtitle(viewModel.recipient!!, openGroup)
+            }
         }
     }
 
@@ -631,9 +612,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                 menu,
                 menuInflater,
                 recipient,
-                viewModel.threadId,
                 this
-            ) { onOptionsItemSelected(it) }
+            )
         }
         super.onPrepareOptionsMenu(menu)
         return true
@@ -657,13 +637,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             }
             setUpMessageRequestsBar()
             invalidateOptionsMenu()
-            updateSubtitle()
             showOrHideInputIfNeeded()
-            binding?.toolbarContent?.profilePictureView?.root?.update(threadRecipient)
-            binding!!.toolbarContent.conversationTitleView.text = when {
-                threadRecipient.isLocalNumber -> getString(R.string.note_to_self)
-                else -> threadRecipient.toShortString()
-            }
+            binding?.toolbarContent?.update(threadRecipient)
         }
     }
 
@@ -924,33 +899,13 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         binding.unreadCountIndicator.isVisible = (unreadCount != 0)
     }
 
-    private fun updateSubtitle() {
-        val actionBarBinding = binding?.toolbarContent ?: return
-        val recipient = viewModel.recipient ?: return
-        actionBarBinding.muteIconImageView.isVisible = recipient.isMuted
-        actionBarBinding.conversationSubtitleView.isVisible = true
-        if (recipient.isMuted) {
-            if (recipient.mutedUntil != Long.MAX_VALUE) {
-                actionBarBinding.conversationSubtitleView.text = getString(R.string.ConversationActivity_muted_until_date, DateUtils.getFormattedDateTime(recipient.mutedUntil, "EEE, MMM d, yyyy HH:mm", Locale.getDefault()))
-            } else {
-                actionBarBinding.conversationSubtitleView.text = getString(R.string.ConversationActivity_muted_forever)
-            }
-        } else if (recipient.isGroupRecipient) {
-            viewModel.openGroup?.let { openGroup ->
-                val userCount = lokiApiDb.getUserCount(openGroup.room, openGroup.server) ?: 0
-                actionBarBinding.conversationSubtitleView.text = getString(R.string.ConversationActivity_active_member_count, userCount)
-            } ?: run {
-                val userCount = groupDb.getGroupMemberAddresses(recipient.address.toGroupString(), true).size
-                actionBarBinding.conversationSubtitleView.text = getString(R.string.ConversationActivity_member_count, userCount)
-            }
-            viewModel
-        } else {
-            actionBarBinding.conversationSubtitleView.isVisible = false
-        }
-    }
     // endregion
 
     // region Interaction
+    override fun onExpirationSettingClicked() {
+        viewModel.recipient?.let { showExpirationSettings(it) }
+    }
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == android.R.id.home) {
             return false
@@ -983,7 +938,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         Toast.makeText(this, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show()
     }
 
-    override fun showExpiringMessagesDialog(thread: Recipient) {
+    override fun showExpirationSettings(thread: Recipient) {
         if (thread.isClosedGroupRecipient) {
             val group = groupDb.getGroup(thread.address.toGroupString()).orNull()
             if (group?.isActive == false) { return }

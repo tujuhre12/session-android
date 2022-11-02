@@ -4,16 +4,11 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
-import android.graphics.PorterDuff
-import android.graphics.PorterDuffColorFilter
 import android.os.AsyncTask
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
-import android.widget.ImageView
-import android.widget.TextView
 import android.widget.Toast
-import androidx.annotation.ColorInt
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.view.ContextThemeWrapper
@@ -25,10 +20,8 @@ import androidx.core.graphics.drawable.IconCompat
 import network.loki.messenger.R
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.leave
-import org.session.libsession.utilities.ExpirationUtil
 import org.session.libsession.utilities.GroupUtil.doubleDecodeGroupID
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.guava.Optional
 import org.session.libsignal.utilities.toHexString
@@ -53,31 +46,13 @@ object ConversationMenuHelper {
         menu: Menu,
         inflater: MenuInflater,
         thread: Recipient,
-        threadId: Long,
-        context: Context,
-        onOptionsItemSelected: (MenuItem) -> Unit
+        context: Context
     ) {
         // Prepare
         menu.clear()
         val isOpenGroup = thread.isOpenGroupRecipient
         // Base menu (options that should always be present)
         inflater.inflate(R.menu.menu_conversation, menu)
-        // Expiring messages
-        if (!isOpenGroup && (thread.hasApprovedMe() || thread.isClosedGroupRecipient || thread.isLocalNumber)) {
-            if (thread.expireMessages > 0) {
-                inflater.inflate(R.menu.menu_conversation_expiration_on, menu)
-                val item = menu.findItem(R.id.menu_expiring_messages)
-                val actionView = item.actionView
-                val iconView = actionView.findViewById<ImageView>(R.id.menu_badge_icon)
-                val badgeView = actionView.findViewById<TextView>(R.id.expiration_badge)
-                @ColorInt val color = context.getColorFromAttr(android.R.attr.textColorPrimary)
-                iconView.colorFilter = PorterDuffColorFilter(color, PorterDuff.Mode.MULTIPLY)
-                badgeView.text = ExpirationUtil.getExpirationAbbreviatedDisplayValue(context, thread.expireMessages)
-                actionView.setOnClickListener { onOptionsItemSelected(item) }
-            } else {
-                inflater.inflate(R.menu.menu_conversation_expiration_off, menu)
-            }
-        }
         // One-on-one chat menu (options that should only be present for one-on-one chats)
         if (thread.isContactRecipient) {
             if (thread.isBlocked) {
@@ -148,8 +123,6 @@ object ConversationMenuHelper {
             R.id.menu_view_all_media -> { showAllMedia(context, thread) }
             R.id.menu_search -> { search(context) }
             R.id.menu_add_shortcut -> { addShortcut(context, thread) }
-            R.id.menu_expiring_messages -> { showExpiringMessagesDialog(context, thread) }
-            R.id.menu_expiring_messages_off -> { showExpiringMessagesDialog(context, thread) }
             R.id.menu_unblock -> { unblock(context, thread) }
             R.id.menu_block -> { block(context, thread, deleteThread = false) }
             R.id.menu_block_delete -> { blockAndDelete(context, thread) }
@@ -241,9 +214,9 @@ object ConversationMenuHelper {
         }.execute()
     }
 
-    private fun showExpiringMessagesDialog(context: Context, thread: Recipient) {
+    private fun showExpirationSettings(context: Context, thread: Recipient) {
         val listener = context as? ConversationMenuListener ?: return
-        listener.showExpiringMessagesDialog(thread)
+        listener.showExpirationSettings(thread)
     }
 
     private fun unblock(context: Context, thread: Recipient) {
@@ -344,7 +317,7 @@ object ConversationMenuHelper {
         fun block(deleteThread: Boolean = false)
         fun unblock()
         fun copySessionID(sessionId: String)
-        fun showExpiringMessagesDialog(thread: Recipient)
+        fun showExpirationSettings(thread: Recipient)
     }
 
 }
