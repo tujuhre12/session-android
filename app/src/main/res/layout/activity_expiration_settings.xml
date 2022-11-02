@@ -23,9 +23,11 @@
             app:title="@string/activity_expiration_settings_title" />
 
         <LinearLayout
+            android:id="@+id/layout_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/toolbar"
+            android:layout_marginBottom="@dimen/massive_spacing"
             android:orientation="vertical">
 
             <TextView
@@ -90,7 +92,6 @@
                 android:id="@+id/text_view_footer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/massive_spacing"
                 android:paddingHorizontal="@dimen/very_large_spacing"
                 android:paddingVertical="@dimen/small_spacing"
                 android:gravity="center_horizontal"
