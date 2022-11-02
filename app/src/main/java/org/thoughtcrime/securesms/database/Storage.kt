@@ -705,7 +705,15 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         return mmsSmsDb.getConversationCount(threadID)
     }
 
+    override fun setThreadPinned(threadID: Long, isPinned: Boolean) {
+        val threadDb = DatabaseComponent.get(context).threadDatabase()
+        threadDb.setPinned(threadID, isPinned)
+    }
 
+    override fun isThreadPinned(threadID: Long): Boolean {
+        val threadDb = DatabaseComponent.get(context).threadDatabase()
+        return threadDb.getPinned(threadID)
+    }
 
     override fun getAttachmentDataUri(attachmentId: AttachmentId): Uri {
         return PartAuthority.getAttachmentDataUri(attachmentId)

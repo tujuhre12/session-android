@@ -9,16 +9,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <androidx.constraintlayout.widget.Group
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/groupOptions"/>
-        <androidx.constraintlayout.widget.Group
-            android:id="@+id/adminControlsGroup"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:constraint_referenced_ids="adminContainer,adminSettingsTitle"/>
-
         <include
             android:id="@+id/profilePictureView"
             layout="@layout/view_large_profile_picture"
@@ -205,6 +195,12 @@
         </LinearLayout>
 
         <!-- Admin settings -->
+        <androidx.constraintlayout.widget.Group
+            android:id="@+id/adminControlsGroup"
+            android:visibility="gone"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:constraint_referenced_ids="adminContainer,adminSettingsTitle"/>
         <TextView
             style="@style/TextAppearance.Session.ConversationSettings.Subtitle"
             android:text="@string/conversation_settings_admin_settings_title"

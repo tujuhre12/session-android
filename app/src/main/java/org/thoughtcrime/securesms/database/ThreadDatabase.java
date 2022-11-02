@@ -711,6 +711,13 @@ public class ThreadDatabase extends Database {
     notifyConversationListeners(threadId);
   }
 
+  public boolean getPinned(long threadId) {
+    Cursor cursor = databaseHelper.getReadableDatabase().query(TABLE_NAME, new String[]{IS_PINNED}, ID_WHERE, new String[] {""+threadId},null, null, null);
+    boolean isPinned = cursor.moveToNext() && cursor.getInt(0) == 1;
+    cursor.close();
+    return isPinned;
+  }
+
   public void markAllAsRead(long threadId, boolean isGroupRecipient) {
     List<MarkedMessageInfo> messages = setRead(threadId, true);
     if (isGroupRecipient) {

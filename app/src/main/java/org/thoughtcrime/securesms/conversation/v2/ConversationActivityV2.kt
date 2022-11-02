@@ -90,7 +90,8 @@ import org.thoughtcrime.securesms.attachments.ScreenshotObserver
 import org.thoughtcrime.securesms.audio.AudioRecorder
 import org.thoughtcrime.securesms.contacts.SelectContactsActivity.Companion.selectedContactsKey
 import org.thoughtcrime.securesms.contactshare.SimpleTextWatcher
-import org.thoughtcrime.securesms.conversation.settings.ConversationSettingsActivity
+import org.thoughtcrime.securesms.conversation.settings.ConversationSettingsActivityContract
+import org.thoughtcrime.securesms.conversation.settings.ConversationSettingsActivityResult
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnActionSelectedListener
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnReactionSelectedListener
 import org.thoughtcrime.securesms.conversation.v2.dialogs.BlockedDialog
@@ -198,6 +199,13 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         ScreenshotObserver(this, Handler(Looper.getMainLooper())) {
             // post screenshot message
             sendScreenshotNotification()
+        }
+    }
+
+    private val conversationSettingsCallback = registerForActivityResult(ConversationSettingsActivityContract()) { result ->
+        if (result is ConversationSettingsActivityResult.SearchConversation) {
+            // open search
+            binding?.toolbar?.menu?.findItem(R.id.menu_search)?.expandActionView()
         }
     }
 
@@ -329,7 +337,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         const val PICK_GIF = 10
         const val PICK_FROM_LIBRARY = 12
         const val INVITE_CONTACTS = 124
-
+        const val CONVERSATION_SETTINGS = 125 // used to open conversation search on result
     }
     // endregion
 
@@ -963,8 +971,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     override fun onClick(v: View?) {
         if (v === binding?.toolbarContent?.profilePictureView?.root) {
             // open conversation settings
-            val intent = Intent(this, ConversationSettingsActivity::class.java)
-            startActivity(intent)
+            conversationSettingsCallback.launch(viewModel.threadId)
         }
     }
 

@@ -867,6 +867,7 @@
     <string name="conversation_settings_search">Search Conversation</string>
     <string name="conversation_settings_all_media">All Media</string>
     <string name="conversation_settings_pin_conversation">Pin Conversation</string>
+    <string name="conversation_settings_unpin_conversation">Unpin Conversation</string>
     <string name="conversation_settings_notifications">Notifications</string>
     <string name="conversation_settings_auto_download_title">Auto-download Media</string>
     <string name="conversation_settings_auto_download_summary">Automatically download media and files from this chat.</string>

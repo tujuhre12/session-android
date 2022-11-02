@@ -153,6 +153,8 @@ interface StorageProtocol {
     fun trimThread(threadID: Long, threadLimit: Int)
     fun trimThreadBefore(threadID: Long, timestamp: Long)
     fun getMessageCount(threadID: Long): Long
+    fun setThreadPinned(threadID: Long, isPinned: Boolean)
+    fun isThreadPinned(threadID: Long): Boolean
 
     // Contacts
     fun getContactWithSessionID(sessionID: String): Contact?
