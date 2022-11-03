@@ -87,7 +87,6 @@ import org.thoughtcrime.securesms.audio.AudioRecorder
 import org.thoughtcrime.securesms.contacts.SelectContactsActivity.Companion.selectedContactsKey
 import org.thoughtcrime.securesms.contactshare.SimpleTextWatcher
 import org.thoughtcrime.securesms.conversation.ConversationActionBarDelegate
-import org.thoughtcrime.securesms.conversation.ConversationSetting
 import org.thoughtcrime.securesms.conversation.expiration.ExpirationSettingsActivity
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnActionSelectedListener
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnReactionSelectedListener
@@ -455,7 +454,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         actionBar.title = ""
         actionBar.setDisplayHomeAsUpEnabled(true)
         actionBar.setHomeButtonEnabled(true)
-        binding!!.toolbarContent.bind(viewModel.threadId, recipient, glide)
+        binding!!.toolbarContent.bind(viewModel.threadId, recipient, glide, this)
     }
 
     // called from onCreate

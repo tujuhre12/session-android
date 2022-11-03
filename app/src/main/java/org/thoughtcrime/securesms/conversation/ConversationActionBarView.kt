@@ -54,7 +54,8 @@ class ConversationActionBarView : LinearLayout {
         mediator.attach()
     }
 
-    fun bind(threadId: Long, recipient: Recipient, glide: GlideRequests) {
+    fun bind(threadId: Long, recipient: Recipient, glide: GlideRequests, delegate: ConversationActionBarDelegate) {
+        this.delegate = delegate
         binding.conversationTitleView.text = when {
             recipient.isLocalNumber -> context.getString(R.string.note_to_self)
             else -> recipient.toShortString()
