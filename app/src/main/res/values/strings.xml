@@ -748,8 +748,9 @@
     <string name="dialog_send_seed_title">Warning</string>
     <string name="dialog_send_seed_explanation">This is your recovery phrase. If you send it to someone they\'ll have full access to your account.</string>
     <string name="dialog_send_seed_send_button_title">Send</string>
-    <string name="notify_type_all">All</string>
-    <string name="notify_type_mentions">Mentions</string>
+    <string name="notify_type_all">All Messages</string>
+    <string name="notify_type_mentions">Mentions Only</string>
+    <string name="notify_type_mute">Mute</string>
     <string name="deleted_message">This message has been deleted</string>
     <string name="delete_message_for_me">Delete just for me</string>
     <string name="delete_message_for_everyone">Delete for everyone</string>
@@ -877,4 +878,6 @@
     <string name="conversation_settings_add_admins">Add Admins</string>
     <string name="conversation_settings_clear_messages">Clear Messages</string>
     <string name="conversation_settings_leave_group">Leave Group</string>
+    <string name="conversation_settings_group_members">Group Members</string>
+    <string name="conversation_settings_delete_group">Delete Group</string>
 </resources>

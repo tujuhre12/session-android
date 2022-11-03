@@ -685,6 +685,21 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         }
     }
 
+    override fun isContactTrusted(recipient: Recipient): Boolean {
+        val sessionID = recipient.address.toString()
+        val contactDb = DatabaseComponent.get(context).sessionContactDatabase()
+        val contact = contactDb.getContactWithSessionID(sessionID) ?: return false
+        return contact.isTrusted
+    }
+
+    override fun setContactTrusted(recipient: Recipient, isTrusted: Boolean) {
+        val sessionID = recipient.address.toString()
+        val contactDb = DatabaseComponent.get(context).sessionContactDatabase()
+        val contact = contactDb.getContactWithSessionID(sessionID) ?: return
+        val threadID = DatabaseComponent.get(context).threadDatabase().getThreadIdIfExistsFor(recipient)
+        contactDb.setContactIsTrusted(contact, isTrusted, threadID)
+    }
+
     override fun getLastUpdated(threadID: Long): Long {
         val threadDB = DatabaseComponent.get(context).threadDatabase()
         return threadDB.getLastUpdated(threadID)

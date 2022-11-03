@@ -27,6 +27,18 @@ class ConversationSettingsActivity: PassphraseRequiredActionBarActivity(), View.
 
     lateinit var binding: ActivityConversationSettingsBinding
 
+    private val groupOptions: List<View>
+    get() = with(binding) {
+        listOf(
+            groupMembers,
+            groupMembersDivider.root,
+            editGroup,
+            editGroupDivider.root,
+            leaveGroup,
+            leaveGroupDivider.root
+        )
+    }
+
     @Inject lateinit var threadDb: ThreadDatabase
     @Inject lateinit var lokiThreadDb: LokiThreadDatabase
     @Inject lateinit var viewModelFactory: ConversationSettingsViewModel.AssistedFactory
@@ -38,6 +50,10 @@ class ConversationSettingsActivity: PassphraseRequiredActionBarActivity(), View.
         viewModelFactory.create(threadId)
     }
 
+    private val notificationActivityCallback = registerForActivityResult(ConversationNotificationSettingsActivityContract()) {
+        updateRecipientDisplay()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
         super.onCreate(savedInstanceState, ready)
         binding = ActivityConversationSettingsBinding.inflate(layoutInflater)
@@ -47,16 +63,12 @@ class ConversationSettingsActivity: PassphraseRequiredActionBarActivity(), View.
         binding.searchConversation.setOnClickListener(this)
         binding.allMedia.setOnClickListener(this)
         binding.pinConversation.setOnClickListener(this)
-    }
-
-    override fun onResume() {
-        super.onResume()
-
-    }
-
-    override fun onPause() {
-        super.onPause()
-
+        binding.notificationSettings.setOnClickListener(this)
+        binding.back.setOnClickListener(this)
+        binding.autoDownloadMediaSwitch.setOnCheckedChangeListener { _, isChecked ->
+            viewModel.setTrusted(isChecked)
+            updateRecipientDisplay()
+        }
     }
 
     private fun updateRecipientDisplay() {
@@ -72,35 +84,66 @@ class ConversationSettingsActivity: PassphraseRequiredActionBarActivity(), View.
         binding.conversationSubtitle.isVisible = recipient.isClosedGroupRecipient.apply {
             binding.conversationSubtitle.text = "TODO: This is a test for group descriptions"
         }
+
         // Toggle group-specific settings
+        val areGroupOptionsVisible = recipient.isClosedGroupRecipient
+        groupOptions.forEach { v ->
+            v.isVisible = areGroupOptionsVisible
+        }
+
+        // Group admin settings
+        val isUserGroupAdmin = areGroupOptionsVisible && viewModel.isUserGroupAdmin()
+        with (binding) {
+            groupMembersDivider.root.isVisible = areGroupOptionsVisible && !isUserGroupAdmin
+            groupMembers.isVisible = areGroupOptionsVisible && !isUserGroupAdmin
+            adminControlsGroup.isVisible = isUserGroupAdmin
+            deleteGroup.isVisible = isUserGroupAdmin
+            clearMessagesDivider.root.isVisible = isUserGroupAdmin
+        }
 
         // Set pinned state
         binding.pinConversation.setText(
             if (viewModel.isPinned()) R.string.conversation_settings_unpin_conversation
             else R.string.conversation_settings_pin_conversation
         )
+
         // Set auto-download state
+        val trusted = viewModel.isTrusted()
+        binding.autoDownloadMediaSwitch.isChecked = trusted
+
+        // Set notification type
+        val notifyTypes = resources.getStringArray(R.array.notify_types)
+        val summary = notifyTypes.getOrNull(recipient.notifyType)
+        binding.notificationsValue.text = summary
     }
 
     override fun onClick(v: View?) {
-        if (v === binding.searchConversation) {
-            setResult(RESULT_SEARCH)
-            finish()
-        } else if (v === binding.allMedia) {
-            val threadRecipient = viewModel.recipient ?: return
-            val intent = Intent(this, MediaOverviewActivity::class.java).apply {
-                putExtra(MediaOverviewActivity.ADDRESS_EXTRA, threadRecipient.address)
+        when {
+            v === binding.searchConversation -> {
+                setResult(RESULT_SEARCH)
+                finish()
             }
-            startActivity(intent)
-        } else if (v === binding.pinConversation) {
-            viewModel.togglePin().invokeOnCompletion { e ->
-                if (e != null) {
-                    // something happened
-                    Log.e("ConversationSettings", "Failed to toggle pin on thread", e)
-                } else {
-                    updateRecipientDisplay()
+            v === binding.allMedia -> {
+                val threadRecipient = viewModel.recipient ?: return
+                val intent = Intent(this, MediaOverviewActivity::class.java).apply {
+                    putExtra(MediaOverviewActivity.ADDRESS_EXTRA, threadRecipient.address)
+                }
+                startActivity(intent)
+            }
+            v === binding.pinConversation -> {
+                viewModel.togglePin().invokeOnCompletion { e ->
+                    if (e != null) {
+                        // something happened
+                        Log.e("ConversationSettings", "Failed to toggle pin on thread", e)
+                    } else {
+                        updateRecipientDisplay()
+                    }
                 }
             }
+            v === binding.notificationSettings -> {
+                notificationActivityCallback.launch(viewModel.threadId)
+            }
+            v === binding.back -> onBackPressed()
         }
     }
 }

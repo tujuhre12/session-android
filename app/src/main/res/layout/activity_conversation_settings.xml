@@ -9,6 +9,16 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
+        <ImageView
+            android:id="@+id/back"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            android:src="@drawable/ic_baseline_arrow_back_24"
+            android:scaleType="centerInside"
+            android:layout_width="?android:actionBarSize"
+            android:layout_height="?android:actionBarSize"
+            app:tint="?android:textColorPrimary" />
+
         <include
             android:id="@+id/profilePictureView"
             layout="@layout/view_large_profile_picture"
@@ -66,6 +76,21 @@
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/setting_button_height"/>
             <include
+                android:layout_marginHorizontal="@dimen/large_spacing"
+                layout="@layout/preference_divider"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                />
+            <TextView
+                android:background="?selectableItemBackground"
+                app:drawableStartCompat="@drawable/ic_edit_group"
+                style="@style/TextAppearance.Session.ConversationSettings.Option"
+                android:text="@string/conversation_settings_group_members"
+                android:id="@+id/groupMembers"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/setting_button_height"/>
+            <include
+                android:id="@+id/groupMembersDivider"
                 android:layout_marginHorizontal="@dimen/large_spacing"
                 layout="@layout/preference_divider"
                 android:layout_width="match_parent"
@@ -235,6 +260,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/setting_button_height"/>
             <include
+                android:id="@+id/editGroupDivider"
                 android:layout_marginHorizontal="@dimen/large_spacing"
                 layout="@layout/preference_divider"
                 android:layout_width="match_parent"
@@ -319,6 +345,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/setting_button_height"/>
             <include
+                android:id="@+id/clearMessagesDivider"
                 android:layout_marginHorizontal="@dimen/large_spacing"
                 layout="@layout/preference_divider"
                 android:layout_width="match_parent"
@@ -333,6 +360,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/setting_button_height"/>
             <include
+                android:id="@+id/leaveGroupDivider"
                 android:layout_marginHorizontal="@dimen/large_spacing"
                 layout="@layout/preference_divider"
                 android:layout_width="match_parent"
@@ -342,7 +370,7 @@
                 android:background="?selectableItemBackground"
                 app:drawableStartCompat="@drawable/ic_delete"
                 style="@style/TextAppearance.Session.ConversationSettings.Option.Destructive"
-                android:text="@string/conversation_settings_edit_group"
+                android:text="@string/conversation_settings_delete_group"
                 android:id="@+id/deleteGroup"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/setting_button_height"/>
