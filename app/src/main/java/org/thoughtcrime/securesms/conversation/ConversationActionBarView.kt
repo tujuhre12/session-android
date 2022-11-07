@@ -5,7 +5,6 @@ import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.LinearLayout
-import androidx.annotation.DimenRes
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -18,14 +17,11 @@ import network.loki.messenger.databinding.ViewConversationSettingBinding
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.utilities.ExpirationUtil
 import org.session.libsession.utilities.recipients.Recipient
-import org.thoughtcrime.securesms.conversation.v2.utilities.MentionManagerUtilities
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
-import org.thoughtcrime.securesms.mms.GlideRequests
 import org.thoughtcrime.securesms.util.DateUtils
 import java.util.Locale
 import javax.inject.Inject
-import kotlin.math.roundToInt
 
 @AndroidEntryPoint
 class ConversationActionBarView : LinearLayout {
@@ -54,26 +50,12 @@ class ConversationActionBarView : LinearLayout {
         mediator.attach()
     }
 
-    fun bind(threadId: Long, recipient: Recipient, glide: GlideRequests, delegate: ConversationActionBarDelegate) {
+    fun bind(recipient: Recipient, delegate: ConversationActionBarDelegate) {
         this.delegate = delegate
-        binding.conversationTitleView.text = when {
-            recipient.isLocalNumber -> context.getString(R.string.note_to_self)
-            else -> recipient.toShortString()
-        }
-        @DimenRes val sizeID: Int = if (recipient.isClosedGroupRecipient) {
-            R.dimen.medium_profile_picture_size
-        } else {
-            R.dimen.small_profile_picture_size
-        }
-        val size = resources.getDimension(sizeID).roundToInt()
-        binding.profilePictureView.root.layoutParams = LayoutParams(size, size)
-        binding.profilePictureView.root.glide = glide
-        MentionManagerUtilities.populateUserPublicKeyCacheIfNeeded(threadId, context)
-        binding.profilePictureView.root.update(recipient)
+        update(recipient)
     }
 
     fun update(recipient: Recipient) {
-        binding.profilePictureView.root.update(recipient)
         binding.conversationTitleView.text = when {
             recipient.isLocalNumber -> context.getString(R.string.note_to_self)
             else -> recipient.toShortString()

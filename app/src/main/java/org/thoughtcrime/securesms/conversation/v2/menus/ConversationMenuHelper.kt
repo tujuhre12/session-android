@@ -43,16 +43,25 @@ import java.io.IOException
 object ConversationMenuHelper {
     
     fun onPrepareOptionsMenu(
-        menu: Menu,
+        mainMenu: Menu,
         inflater: MenuInflater,
         thread: Recipient,
-        context: Context
+        context: Context,
+        onOptionsItemSelected: (MenuItem) -> Unit
     ) {
         // Prepare
-        menu.clear()
+        mainMenu.clear()
         val isOpenGroup = thread.isOpenGroupRecipient
         // Base menu (options that should always be present)
-        inflater.inflate(R.menu.menu_conversation, menu)
+        inflater.inflate(R.menu.menu_conversation, mainMenu)
+        val item = mainMenu.findItem(R.id.menu_overflow)
+        if (thread.isGroupRecipient) {
+            item.setIcon(R.drawable.ic_outline_settings_24)
+        } else {
+            item.setActionView(R.layout.view_profile_overflow)
+            item.actionView.setOnClickListener { onOptionsItemSelected(item) }
+        }
+        val menu = item.subMenu
         // One-on-one chat menu (options that should only be present for one-on-one chats)
         if (thread.isContactRecipient) {
             if (thread.isBlocked) {

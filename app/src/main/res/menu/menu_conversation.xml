@@ -4,17 +4,29 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
-        android:title="@string/conversation__menu_view_all_media"
-        android:id="@+id/menu_view_all_media" />
+        android:id="@+id/menu_overflow"
+        android:icon="@drawable/ic_outline_settings_24"
+        android:title="@string/conversation_context__menu_call"
+        app:showAsAction="always">
 
-    <item
-        android:title="@string/SearchToolbar_search"
-        android:id="@+id/menu_search"
-        app:actionViewClass="androidx.appcompat.widget.SearchView"
-        app:showAsAction="collapseActionView" />
+        <menu>
 
-    <item
-        android:title="@string/conversation__menu_add_shortcut"
-        android:id="@+id/menu_add_shortcut" />
+            <item
+                android:title="@string/conversation__menu_view_all_media"
+                android:id="@+id/menu_view_all_media" />
+
+            <item
+                android:title="@string/SearchToolbar_search"
+                android:id="@+id/menu_search"
+                app:actionViewClass="androidx.appcompat.widget.SearchView"
+                app:showAsAction="collapseActionView" />
+
+            <item
+                android:title="@string/conversation__menu_add_shortcut"
+                android:id="@+id/menu_add_shortcut" />
+
+        </menu>
+
+    </item>
 
 </menu>

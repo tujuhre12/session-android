@@ -84,6 +84,7 @@ import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.attachments.ScreenshotObserver
 import org.thoughtcrime.securesms.audio.AudioRecorder
+import org.thoughtcrime.securesms.components.ProfilePictureView
 import org.thoughtcrime.securesms.contacts.SelectContactsActivity.Companion.selectedContactsKey
 import org.thoughtcrime.securesms.contactshare.SimpleTextWatcher
 import org.thoughtcrime.securesms.conversation.ConversationActionBarDelegate
@@ -106,6 +107,7 @@ import org.thoughtcrime.securesms.conversation.v2.search.SearchBottomBar
 import org.thoughtcrime.securesms.conversation.v2.search.SearchViewModel
 import org.thoughtcrime.securesms.conversation.v2.utilities.AttachmentManager
 import org.thoughtcrime.securesms.conversation.v2.utilities.BaseDialog
+import org.thoughtcrime.securesms.conversation.v2.utilities.MentionManagerUtilities
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.conversation.v2.utilities.ResendMessageUtilities
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
@@ -173,6 +175,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     ConversationMenuHelper.ConversationMenuListener {
 
     private var binding: ActivityConversationV2Binding? = null
+    private var overflowMenuItem: MenuItem? = null
 
     @Inject lateinit var textSecurePreferences: TextSecurePreferences
     @Inject lateinit var threadDb: ThreadDatabase
@@ -357,7 +360,6 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         updateUnreadCountIndicator()
         setUpTypingObserver()
         setUpRecipientObserver()
-        binding?.toolbarContent?.updateSubtitle(viewModel.recipient!!)
         getLatestOpenGroupInfoIfNeeded()
         setUpBlockedBanner()
         binding!!.searchBottomBar.setEventListener(this)
@@ -454,7 +456,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         actionBar.title = ""
         actionBar.setDisplayHomeAsUpEnabled(true)
         actionBar.setHomeButtonEnabled(true)
-        binding!!.toolbarContent.bind(viewModel.threadId, recipient, glide, this)
+        binding!!.toolbarContent.bind(recipient, this)
+        maybeUpdateToolbar(recipient)
     }
 
     // called from onCreate
@@ -547,6 +550,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         viewModel.openGroup?.let { openGroup ->
             OpenGroupApi.getMemberCount(openGroup.room, openGroup.server).successUi {
                 binding?.toolbarContent?.updateSubtitle(viewModel.recipient!!, openGroup)
+                maybeUpdateToolbar(viewModel.recipient!!)
             }
         }
     }
@@ -612,8 +616,10 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                 menuInflater,
                 recipient,
                 this
-            )
+            ) { onOptionsItemSelected(it) }
         }
+        overflowMenuItem = menu.findItem(R.id.menu_overflow)
+        viewModel.recipient?.let { maybeUpdateToolbar(it) }
         super.onPrepareOptionsMenu(menu)
         return true
     }
@@ -623,7 +629,6 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         tearDownRecipientObserver()
         super.onDestroy()
         binding = null
-//        actionBarBinding = null
     }
     // endregion
 
@@ -637,8 +642,16 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             setUpMessageRequestsBar()
             invalidateOptionsMenu()
             showOrHideInputIfNeeded()
-            binding?.toolbarContent?.update(threadRecipient)
+            maybeUpdateToolbar(threadRecipient)
         }
+    }
+
+    private fun maybeUpdateToolbar(recipient: Recipient) {
+        binding?.toolbarContent?.update(recipient)
+        val profilePictureView = overflowMenuItem?.actionView?.findViewById<ProfilePictureView>(R.id.profilePictureView)
+        profilePictureView?.glide = glide
+        MentionManagerUtilities.populateUserPublicKeyCacheIfNeeded(viewModel.threadId, this)
+        profilePictureView?.update(recipient)
     }
 
     private fun showOrHideInputIfNeeded() {
@@ -907,6 +920,10 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == android.R.id.home) {
+            return false
+        }
+        else if (item.itemId == R.id.menu_overflow) {
+            binding?.toolbar?.showOverflowMenu()
             return false
         }
         return viewModel.recipient?.let { recipient ->
