@@ -30,6 +30,8 @@ class ConversationSettingsViewModel(
         storage.isContactTrusted(recipient)
     } ?: false
 
+    fun autoDownloadAttachments() = isTrusted()
+
     fun setTrusted(isTrusted: Boolean) {
         val recipient = recipient ?: return
         storage.setContactTrusted(recipient, isTrusted)
