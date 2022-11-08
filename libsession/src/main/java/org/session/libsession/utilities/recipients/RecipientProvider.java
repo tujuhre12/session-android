@@ -159,6 +159,7 @@ class RecipientProvider {
     @Nullable final Uri                    callRingtone;
               final long                   mutedUntil;
               final int                    notifyType;
+              final boolean                autoDownloadAttachments;
     @Nullable final VibrateState           messageVibrateState;
     @Nullable final VibrateState           callVibrateState;
               final boolean                blocked;
@@ -191,6 +192,7 @@ class RecipientProvider {
       this.callRingtone                    = settings     != null ? settings.getCallRingtone() : null;
       this.mutedUntil                      = settings     != null ? settings.getMuteUntil() : 0;
       this.notifyType                      = settings     != null ? settings.getNotifyType() : 0;
+      this.autoDownloadAttachments         = settings     != null && settings.getAutoDownloadAttachments();
       this.messageVibrateState             = settings     != null ? settings.getMessageVibrateState() : null;
       this.callVibrateState                = settings     != null ? settings.getCallVibrateState() : null;
       this.blocked                         = settings     != null && settings.isBlocked();

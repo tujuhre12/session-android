@@ -99,7 +99,7 @@ class AttachmentDownloadJob(val attachmentID: Long, val databaseMessageID: Long)
             handleFailure(Error.NoSender, null)
             return
         }
-        if (!threadRecipient.isGroupRecipient && (!contact.isTrusted && storage.getUserPublicKey() != sender)) {
+        if (!threadRecipient.isGroupRecipient && (!threadRecipient.autoDownloadAttachments && storage.getUserPublicKey() != sender)) {
             // if we aren't receiving a group message, a message from ourselves (self-send) and the contact sending is not trusted:
             // do not continue, but do not fail
             return

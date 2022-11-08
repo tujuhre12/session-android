@@ -172,8 +172,6 @@ class ClosedGroupControlMessage() : ControlMessage() {
             val contentProto = SignalServiceProtos.Content.newBuilder()
             val dataMessageProto = DataMessage.newBuilder()
             dataMessageProto.closedGroupControlMessage = closedGroupControlMessage.build()
-            // Group context
-            setGroupContext(dataMessageProto)
             contentProto.dataMessage = dataMessageProto.build()
             return contentProto.build()
         } catch (e: Exception) {

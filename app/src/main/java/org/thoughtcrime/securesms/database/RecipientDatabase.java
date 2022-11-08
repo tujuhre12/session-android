@@ -62,13 +62,14 @@ public class RecipientDatabase extends Database {
   private static final String UNIDENTIFIED_ACCESS_MODE = "unidentified_access_mode";
   private static final String FORCE_SMS_SELECTION      = "force_sms_selection";
   private static final String NOTIFY_TYPE              = "notify_type"; // all, mentions only, none
+  private static final String AUTO_DOWNLOAD            = "auto_download"; // 1 / 0 flag for whether to auto-download in a conversation
 
   private static final String[] RECIPIENT_PROJECTION = new String[] {
       BLOCK, APPROVED, APPROVED_ME, NOTIFICATION, CALL_RINGTONE, VIBRATE, CALL_VIBRATE, MUTE_UNTIL, COLOR, SEEN_INVITE_REMINDER, DEFAULT_SUBSCRIPTION_ID, EXPIRE_MESSAGES, REGISTERED,
       PROFILE_KEY, SYSTEM_DISPLAY_NAME, SYSTEM_PHOTO_URI, SYSTEM_PHONE_LABEL, SYSTEM_CONTACT_URI,
       SIGNAL_PROFILE_NAME, SIGNAL_PROFILE_AVATAR, PROFILE_SHARING, NOTIFICATION_CHANNEL,
       UNIDENTIFIED_ACCESS_MODE,
-      FORCE_SMS_SELECTION, NOTIFY_TYPE,
+      FORCE_SMS_SELECTION, NOTIFY_TYPE, AUTO_DOWNLOAD,
   };
 
   static final List<String> TYPED_RECIPIENT_PROJECTION = Stream.of(RECIPIENT_PROJECTION)
@@ -105,6 +106,17 @@ public class RecipientDatabase extends Database {
   public static String getCreateNotificationTypeCommand() {
     return "ALTER TABLE "+ TABLE_NAME + " " +
             "ADD COLUMN " + NOTIFY_TYPE + " INTEGER DEFAULT 0;";
+  }
+
+  public static String getCreateAutoDownloadCommand() {
+    return "ALTER TABLE "+ TABLE_NAME + " " +
+          "ADD COLUMN " + AUTO_DOWNLOAD + " INTEGER DEFAULT 0;";
+  }
+
+  public static String getUpdateAutoDownloadValuesCommand() {
+    return "UPDATE "+TABLE_NAME+" SET "+AUTO_DOWNLOAD+" = 1 "+
+            "WHERE "+ADDRESS+" IN (SELECT "+SessionContactDatabase.sessionContactTable+"."+SessionContactDatabase.sessionID+" "+
+            "FROM "+SessionContactDatabase.sessionContactTable+" WHERE ("+SessionContactDatabase.isTrusted+" != 0))";
   }
 
   public static String getCreateApprovedCommand() {
@@ -170,30 +182,31 @@ public class RecipientDatabase extends Database {
   }
 
   Optional<RecipientSettings> getRecipientSettings(@NonNull Cursor cursor) {
-    boolean blocked                = cursor.getInt(cursor.getColumnIndexOrThrow(BLOCK))                == 1;
-    boolean approved               = cursor.getInt(cursor.getColumnIndexOrThrow(APPROVED))             == 1;
-    boolean approvedMe             = cursor.getInt(cursor.getColumnIndexOrThrow(APPROVED_ME))          == 1;
-    String  messageRingtone        = cursor.getString(cursor.getColumnIndexOrThrow(NOTIFICATION));
-    String  callRingtone           = cursor.getString(cursor.getColumnIndexOrThrow(CALL_RINGTONE));
-    int     messageVibrateState    = cursor.getInt(cursor.getColumnIndexOrThrow(VIBRATE));
-    int     callVibrateState       = cursor.getInt(cursor.getColumnIndexOrThrow(CALL_VIBRATE));
-    long    muteUntil              = cursor.getLong(cursor.getColumnIndexOrThrow(MUTE_UNTIL));
-    int     notifyType             = cursor.getInt(cursor.getColumnIndexOrThrow(NOTIFY_TYPE));
-    String  serializedColor        = cursor.getString(cursor.getColumnIndexOrThrow(COLOR));
-    int     defaultSubscriptionId  = cursor.getInt(cursor.getColumnIndexOrThrow(DEFAULT_SUBSCRIPTION_ID));
-    int     expireMessages         = cursor.getInt(cursor.getColumnIndexOrThrow(EXPIRE_MESSAGES));
-    int     registeredState        = cursor.getInt(cursor.getColumnIndexOrThrow(REGISTERED));
-    String  profileKeyString       = cursor.getString(cursor.getColumnIndexOrThrow(PROFILE_KEY));
-    String  systemDisplayName      = cursor.getString(cursor.getColumnIndexOrThrow(SYSTEM_DISPLAY_NAME));
-    String  systemContactPhoto     = cursor.getString(cursor.getColumnIndexOrThrow(SYSTEM_PHOTO_URI));
-    String  systemPhoneLabel       = cursor.getString(cursor.getColumnIndexOrThrow(SYSTEM_PHONE_LABEL));
-    String  systemContactUri       = cursor.getString(cursor.getColumnIndexOrThrow(SYSTEM_CONTACT_URI));
-    String  signalProfileName      = cursor.getString(cursor.getColumnIndexOrThrow(SIGNAL_PROFILE_NAME));
-    String  signalProfileAvatar    = cursor.getString(cursor.getColumnIndexOrThrow(SIGNAL_PROFILE_AVATAR));
-    boolean profileSharing         = cursor.getInt(cursor.getColumnIndexOrThrow(PROFILE_SHARING))      == 1;
-    String  notificationChannel    = cursor.getString(cursor.getColumnIndexOrThrow(NOTIFICATION_CHANNEL));
-    int     unidentifiedAccessMode = cursor.getInt(cursor.getColumnIndexOrThrow(UNIDENTIFIED_ACCESS_MODE));
-    boolean forceSmsSelection      = cursor.getInt(cursor.getColumnIndexOrThrow(FORCE_SMS_SELECTION))  == 1;
+    boolean blocked                 = cursor.getInt(cursor.getColumnIndexOrThrow(BLOCK))                == 1;
+    boolean approved                = cursor.getInt(cursor.getColumnIndexOrThrow(APPROVED))             == 1;
+    boolean approvedMe              = cursor.getInt(cursor.getColumnIndexOrThrow(APPROVED_ME))          == 1;
+    String  messageRingtone         = cursor.getString(cursor.getColumnIndexOrThrow(NOTIFICATION));
+    String  callRingtone            = cursor.getString(cursor.getColumnIndexOrThrow(CALL_RINGTONE));
+    int     messageVibrateState     = cursor.getInt(cursor.getColumnIndexOrThrow(VIBRATE));
+    int     callVibrateState        = cursor.getInt(cursor.getColumnIndexOrThrow(CALL_VIBRATE));
+    long    muteUntil               = cursor.getLong(cursor.getColumnIndexOrThrow(MUTE_UNTIL));
+    int     notifyType              = cursor.getInt(cursor.getColumnIndexOrThrow(NOTIFY_TYPE));
+    boolean autoDownloadAttachments = cursor.getInt(cursor.getColumnIndexOrThrow(AUTO_DOWNLOAD))        == 1;
+    String  serializedColor         = cursor.getString(cursor.getColumnIndexOrThrow(COLOR));
+    int     defaultSubscriptionId   = cursor.getInt(cursor.getColumnIndexOrThrow(DEFAULT_SUBSCRIPTION_ID));
+    int     expireMessages          = cursor.getInt(cursor.getColumnIndexOrThrow(EXPIRE_MESSAGES));
+    int     registeredState         = cursor.getInt(cursor.getColumnIndexOrThrow(REGISTERED));
+    String  profileKeyString        = cursor.getString(cursor.getColumnIndexOrThrow(PROFILE_KEY));
+    String  systemDisplayName       = cursor.getString(cursor.getColumnIndexOrThrow(SYSTEM_DISPLAY_NAME));
+    String  systemContactPhoto      = cursor.getString(cursor.getColumnIndexOrThrow(SYSTEM_PHOTO_URI));
+    String  systemPhoneLabel        = cursor.getString(cursor.getColumnIndexOrThrow(SYSTEM_PHONE_LABEL));
+    String  systemContactUri        = cursor.getString(cursor.getColumnIndexOrThrow(SYSTEM_CONTACT_URI));
+    String  signalProfileName       = cursor.getString(cursor.getColumnIndexOrThrow(SIGNAL_PROFILE_NAME));
+    String  signalProfileAvatar     = cursor.getString(cursor.getColumnIndexOrThrow(SIGNAL_PROFILE_AVATAR));
+    boolean profileSharing          = cursor.getInt(cursor.getColumnIndexOrThrow(PROFILE_SHARING))      == 1;
+    String  notificationChannel     = cursor.getString(cursor.getColumnIndexOrThrow(NOTIFICATION_CHANNEL));
+    int     unidentifiedAccessMode  = cursor.getInt(cursor.getColumnIndexOrThrow(UNIDENTIFIED_ACCESS_MODE));
+    boolean forceSmsSelection       = cursor.getInt(cursor.getColumnIndexOrThrow(FORCE_SMS_SELECTION))  == 1;
 
     MaterialColor color;
     byte[] profileKey = null;
@@ -215,7 +228,7 @@ public class RecipientDatabase extends Database {
     }
 
     return Optional.of(new RecipientSettings(blocked, approved, approvedMe, muteUntil,
-                                             notifyType,
+                                             notifyType, autoDownloadAttachments,
                                              Recipient.VibrateState.fromId(messageVibrateState),
                                              Recipient.VibrateState.fromId(callVibrateState),
                                              Util.uri(messageRingtone), Util.uri(callRingtone),

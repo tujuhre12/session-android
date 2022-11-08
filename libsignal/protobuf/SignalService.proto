@@ -171,7 +171,6 @@ message DataMessage {
 
   optional string                    body                      = 1;
   repeated AttachmentPointer         attachments               = 2;
-  optional GroupContext              group                     = 3;
   optional uint32                    flags                     = 4;
   optional uint32                    expireTimer               = 5;
   optional bytes                     profileKey                = 6;
@@ -287,24 +286,4 @@ message AttachmentPointer {
   optional uint32  height      = 10;
   optional string  caption     = 11;
   optional string  url         = 101;
-}
-
-message GroupContext {
-
-  enum Type {
-    UNKNOWN      = 0;
-    UPDATE       = 1;
-    DELIVER      = 2;
-    QUIT         = 3;
-    REQUEST_INFO = 4;
-  }
-
-  // @required
-  optional bytes             id      = 1;
-  // @required
-  optional Type              type    = 2;
-  optional string            name    = 3;
-  repeated string            members = 4;
-  optional AttachmentPointer avatar  = 5;
-  repeated string            admins  = 6;
 }

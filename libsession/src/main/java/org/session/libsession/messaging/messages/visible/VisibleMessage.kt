@@ -129,15 +129,6 @@ class VisibleMessage : Message()  {
             Recipient.from(context, Address.fromSerialized(recipient!!), false).expireMessages
         }
         dataMessage.expireTimer = expiration
-        // Group context
-        if (storage.isClosedGroup(recipient!!)) {
-            try {
-                setGroupContext(dataMessage)
-            } catch (e: Exception) {
-                Log.w(TAG, "Couldn't construct visible message proto from: $this")
-                return null
-            }
-        }
         // Sync target
         if (syncTarget != null) {
             dataMessage.syncTarget = syncTarget

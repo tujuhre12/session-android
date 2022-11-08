@@ -26,15 +26,10 @@ class ConversationSettingsViewModel(
         storage.setThreadPinned(threadId, !isPinned)
     }
 
-    fun isTrusted() = recipient?.let { recipient ->
-        storage.isContactTrusted(recipient)
-    } ?: false
+    fun autoDownloadAttachments() = recipient?.let { recipient -> storage.shouldAutoDownloadAttachments(recipient) } ?: false
 
-    fun autoDownloadAttachments() = isTrusted()
-
-    fun setTrusted(isTrusted: Boolean) {
-        val recipient = recipient ?: return
-        storage.setContactTrusted(recipient, isTrusted)
+    fun setAutoDownloadAttachments(shouldDownload: Boolean) {
+        recipient?.let { recipient -> storage.setAutoDownloadAttachments(recipient, shouldDownload) }
     }
 
     fun isUserGroupAdmin(): Boolean = recipient?.let { recipient ->

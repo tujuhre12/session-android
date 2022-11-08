@@ -79,18 +79,19 @@ public class Recipient implements RecipientModifiedListener {
   private @Nullable Uri                  systemContactPhoto;
   private @Nullable Long                 groupAvatarId;
   private           Uri                  contactUri;
-  private @Nullable Uri                  messageRingtone       = null;
-  private @Nullable Uri                  callRingtone          = null;
-  public            long                 mutedUntil            = 0;
-  public            int                  notifyType            = 0;
-  private           boolean              blocked               = false;
-  private           boolean              approved              = false;
-  private           boolean              approvedMe            = false;
-  private           VibrateState         messageVibrate        = VibrateState.DEFAULT;
-  private           VibrateState         callVibrate           = VibrateState.DEFAULT;
-  private           int                  expireMessages        = 0;
-  private           Optional<Integer>    defaultSubscriptionId = Optional.absent();
-  private @NonNull  RegisteredState      registered            = RegisteredState.UNKNOWN;
+  private @Nullable Uri                  messageRingtone         = null;
+  private @Nullable Uri                  callRingtone            = null;
+  public            long                 mutedUntil              = 0;
+  public            int                  notifyType              = 0;
+  private           boolean              autoDownloadAttachments = false;
+  private           boolean              blocked                 = false;
+  private           boolean              approved                = false;
+  private           boolean              approvedMe              = false;
+  private           VibrateState         messageVibrate          = VibrateState.DEFAULT;
+  private           VibrateState         callVibrate             = VibrateState.DEFAULT;
+  private           int                  expireMessages          = 0;
+  private           Optional<Integer>    defaultSubscriptionId   = Optional.absent();
+  private @NonNull  RegisteredState      registered              = RegisteredState.UNKNOWN;
 
   private @Nullable MaterialColor  color;
   private @Nullable byte[]         profileKey;
@@ -135,62 +136,64 @@ public class Recipient implements RecipientModifiedListener {
     this.resolving = true;
 
     if (stale != null) {
-      this.name                   = stale.name;
-      this.contactUri             = stale.contactUri;
-      this.systemContactPhoto     = stale.systemContactPhoto;
-      this.groupAvatarId          = stale.groupAvatarId;
-      this.isLocalNumber          = stale.isLocalNumber;
-      this.color                  = stale.color;
-      this.customLabel            = stale.customLabel;
-      this.messageRingtone        = stale.messageRingtone;
-      this.callRingtone           = stale.callRingtone;
-      this.mutedUntil             = stale.mutedUntil;
-      this.blocked                = stale.blocked;
-      this.approved               = stale.approved;
-      this.approvedMe             = stale.approvedMe;
-      this.messageVibrate         = stale.messageVibrate;
-      this.callVibrate            = stale.callVibrate;
-      this.expireMessages         = stale.expireMessages;
-      this.defaultSubscriptionId  = stale.defaultSubscriptionId;
-      this.registered             = stale.registered;
-      this.notificationChannel    = stale.notificationChannel;
-      this.profileKey             = stale.profileKey;
-      this.profileName            = stale.profileName;
-      this.profileAvatar          = stale.profileAvatar;
-      this.profileSharing         = stale.profileSharing;
-      this.unidentifiedAccessMode = stale.unidentifiedAccessMode;
-      this.forceSmsSelection      = stale.forceSmsSelection;
-      this.notifyType             = stale.notifyType;
+      this.name                    = stale.name;
+      this.contactUri              = stale.contactUri;
+      this.systemContactPhoto      = stale.systemContactPhoto;
+      this.groupAvatarId           = stale.groupAvatarId;
+      this.isLocalNumber           = stale.isLocalNumber;
+      this.color                   = stale.color;
+      this.customLabel             = stale.customLabel;
+      this.messageRingtone         = stale.messageRingtone;
+      this.callRingtone            = stale.callRingtone;
+      this.mutedUntil              = stale.mutedUntil;
+      this.blocked                 = stale.blocked;
+      this.approved                = stale.approved;
+      this.approvedMe              = stale.approvedMe;
+      this.messageVibrate          = stale.messageVibrate;
+      this.callVibrate             = stale.callVibrate;
+      this.expireMessages          = stale.expireMessages;
+      this.defaultSubscriptionId   = stale.defaultSubscriptionId;
+      this.registered              = stale.registered;
+      this.notificationChannel     = stale.notificationChannel;
+      this.profileKey              = stale.profileKey;
+      this.profileName             = stale.profileName;
+      this.profileAvatar           = stale.profileAvatar;
+      this.profileSharing          = stale.profileSharing;
+      this.unidentifiedAccessMode  = stale.unidentifiedAccessMode;
+      this.forceSmsSelection       = stale.forceSmsSelection;
+      this.notifyType              = stale.notifyType;
+      this.autoDownloadAttachments = stale.autoDownloadAttachments;
 
       this.participants.clear();
       this.participants.addAll(stale.participants);
     }
 
     if (details.isPresent()) {
-      this.name                   = details.get().name;
-      this.systemContactPhoto     = details.get().systemContactPhoto;
-      this.groupAvatarId          = details.get().groupAvatarId;
-      this.isLocalNumber          = details.get().isLocalNumber;
-      this.color                  = details.get().color;
-      this.messageRingtone        = details.get().messageRingtone;
-      this.callRingtone           = details.get().callRingtone;
-      this.mutedUntil             = details.get().mutedUntil;
-      this.blocked                = details.get().blocked;
-      this.approved               = details.get().approved;
-      this.approvedMe             = details.get().approvedMe;
-      this.messageVibrate         = details.get().messageVibrateState;
-      this.callVibrate            = details.get().callVibrateState;
-      this.expireMessages         = details.get().expireMessages;
-      this.defaultSubscriptionId  = details.get().defaultSubscriptionId;
-      this.registered             = details.get().registered;
-      this.notificationChannel    = details.get().notificationChannel;
-      this.profileKey             = details.get().profileKey;
-      this.profileName            = details.get().profileName;
-      this.profileAvatar          = details.get().profileAvatar;
-      this.profileSharing         = details.get().profileSharing;
-      this.unidentifiedAccessMode = details.get().unidentifiedAccessMode;
-      this.forceSmsSelection      = details.get().forceSmsSelection;
-      this.notifyType             = details.get().notifyType;
+      this.name                    = details.get().name;
+      this.systemContactPhoto      = details.get().systemContactPhoto;
+      this.groupAvatarId           = details.get().groupAvatarId;
+      this.isLocalNumber           = details.get().isLocalNumber;
+      this.color                   = details.get().color;
+      this.messageRingtone         = details.get().messageRingtone;
+      this.callRingtone            = details.get().callRingtone;
+      this.mutedUntil              = details.get().mutedUntil;
+      this.blocked                 = details.get().blocked;
+      this.approved                = details.get().approved;
+      this.approvedMe              = details.get().approvedMe;
+      this.messageVibrate          = details.get().messageVibrateState;
+      this.callVibrate             = details.get().callVibrateState;
+      this.expireMessages          = details.get().expireMessages;
+      this.defaultSubscriptionId   = details.get().defaultSubscriptionId;
+      this.registered              = details.get().registered;
+      this.notificationChannel     = details.get().notificationChannel;
+      this.profileKey              = details.get().profileKey;
+      this.profileName             = details.get().profileName;
+      this.profileAvatar           = details.get().profileAvatar;
+      this.profileSharing          = details.get().profileSharing;
+      this.unidentifiedAccessMode  = details.get().unidentifiedAccessMode;
+      this.forceSmsSelection       = details.get().forceSmsSelection;
+      this.notifyType              = details.get().notifyType;
+      this.autoDownloadAttachments = details.get().autoDownloadAttachments;
 
       this.participants.clear();
       this.participants.addAll(details.get().participants);
@@ -201,32 +204,33 @@ public class Recipient implements RecipientModifiedListener {
       public void onSuccess(RecipientDetails result) {
         if (result != null) {
           synchronized (Recipient.this) {
-            Recipient.this.name                   = result.name;
-            Recipient.this.contactUri             = result.contactUri;
-            Recipient.this.systemContactPhoto     = result.systemContactPhoto;
-            Recipient.this.groupAvatarId          = result.groupAvatarId;
-            Recipient.this.isLocalNumber          = result.isLocalNumber;
-            Recipient.this.color                  = result.color;
-            Recipient.this.customLabel            = result.customLabel;
-            Recipient.this.messageRingtone        = result.messageRingtone;
-            Recipient.this.callRingtone           = result.callRingtone;
-            Recipient.this.mutedUntil             = result.mutedUntil;
-            Recipient.this.blocked                = result.blocked;
-            Recipient.this.approved               = result.approved;
-            Recipient.this.approvedMe             = result.approvedMe;
-            Recipient.this.messageVibrate         = result.messageVibrateState;
-            Recipient.this.callVibrate            = result.callVibrateState;
-            Recipient.this.expireMessages         = result.expireMessages;
-            Recipient.this.defaultSubscriptionId  = result.defaultSubscriptionId;
-            Recipient.this.registered             = result.registered;
-            Recipient.this.notificationChannel    = result.notificationChannel;
-            Recipient.this.profileKey             = result.profileKey;
-            Recipient.this.profileName            = result.profileName;
-            Recipient.this.profileAvatar          = result.profileAvatar;
-            Recipient.this.profileSharing         = result.profileSharing;
-            Recipient.this.unidentifiedAccessMode = result.unidentifiedAccessMode;
-            Recipient.this.forceSmsSelection      = result.forceSmsSelection;
-            Recipient.this.notifyType             = result.notifyType;
+            Recipient.this.name                    = result.name;
+            Recipient.this.contactUri              = result.contactUri;
+            Recipient.this.systemContactPhoto      = result.systemContactPhoto;
+            Recipient.this.groupAvatarId           = result.groupAvatarId;
+            Recipient.this.isLocalNumber           = result.isLocalNumber;
+            Recipient.this.color                   = result.color;
+            Recipient.this.customLabel             = result.customLabel;
+            Recipient.this.messageRingtone         = result.messageRingtone;
+            Recipient.this.callRingtone            = result.callRingtone;
+            Recipient.this.mutedUntil              = result.mutedUntil;
+            Recipient.this.blocked                 = result.blocked;
+            Recipient.this.approved                = result.approved;
+            Recipient.this.approvedMe              = result.approvedMe;
+            Recipient.this.messageVibrate          = result.messageVibrateState;
+            Recipient.this.callVibrate             = result.callVibrateState;
+            Recipient.this.expireMessages          = result.expireMessages;
+            Recipient.this.defaultSubscriptionId   = result.defaultSubscriptionId;
+            Recipient.this.registered              = result.registered;
+            Recipient.this.notificationChannel     = result.notificationChannel;
+            Recipient.this.profileKey              = result.profileKey;
+            Recipient.this.profileName             = result.profileName;
+            Recipient.this.profileAvatar           = result.profileAvatar;
+            Recipient.this.profileSharing          = result.profileSharing;
+            Recipient.this.unidentifiedAccessMode  = result.unidentifiedAccessMode;
+            Recipient.this.forceSmsSelection       = result.forceSmsSelection;
+            Recipient.this.notifyType              = result.notifyType;
+            Recipient.this.autoDownloadAttachments = result.autoDownloadAttachments;
 
             Recipient.this.participants.clear();
             Recipient.this.participants.addAll(result.participants);
@@ -251,34 +255,35 @@ public class Recipient implements RecipientModifiedListener {
   }
 
   Recipient(@NonNull Context context, @NonNull Address address, @NonNull RecipientDetails details) {
-    this.context                = context;
-    this.address                = address;
-    this.contactUri             = details.contactUri;
-    this.name                   = details.name;
-    this.systemContactPhoto     = details.systemContactPhoto;
-    this.groupAvatarId          = details.groupAvatarId;
-    this.isLocalNumber          = details.isLocalNumber;
-    this.color                  = details.color;
-    this.customLabel            = details.customLabel;
-    this.messageRingtone        = details.messageRingtone;
-    this.callRingtone           = details.callRingtone;
-    this.mutedUntil             = details.mutedUntil;
-    this.notifyType             = details.notifyType;
-    this.blocked                = details.blocked;
-    this.approved               = details.approved;
-    this.approvedMe             = details.approvedMe;
-    this.messageVibrate         = details.messageVibrateState;
-    this.callVibrate            = details.callVibrateState;
-    this.expireMessages         = details.expireMessages;
-    this.defaultSubscriptionId  = details.defaultSubscriptionId;
-    this.registered             = details.registered;
-    this.notificationChannel    = details.notificationChannel;
-    this.profileKey             = details.profileKey;
-    this.profileName            = details.profileName;
-    this.profileAvatar          = details.profileAvatar;
-    this.profileSharing         = details.profileSharing;
-    this.unidentifiedAccessMode = details.unidentifiedAccessMode;
-    this.forceSmsSelection      = details.forceSmsSelection;
+    this.context                 = context;
+    this.address                 = address;
+    this.contactUri              = details.contactUri;
+    this.name                    = details.name;
+    this.systemContactPhoto      = details.systemContactPhoto;
+    this.groupAvatarId           = details.groupAvatarId;
+    this.isLocalNumber           = details.isLocalNumber;
+    this.color                   = details.color;
+    this.customLabel             = details.customLabel;
+    this.messageRingtone         = details.messageRingtone;
+    this.callRingtone            = details.callRingtone;
+    this.mutedUntil              = details.mutedUntil;
+    this.notifyType              = details.notifyType;
+    this.autoDownloadAttachments = details.autoDownloadAttachments;
+    this.blocked                 = details.blocked;
+    this.approved                = details.approved;
+    this.approvedMe              = details.approvedMe;
+    this.messageVibrate          = details.messageVibrateState;
+    this.callVibrate             = details.callVibrateState;
+    this.expireMessages          = details.expireMessages;
+    this.defaultSubscriptionId   = details.defaultSubscriptionId;
+    this.registered              = details.registered;
+    this.notificationChannel     = details.notificationChannel;
+    this.profileKey              = details.profileKey;
+    this.profileName             = details.profileName;
+    this.profileAvatar           = details.profileAvatar;
+    this.profileSharing          = details.profileSharing;
+    this.unidentifiedAccessMode  = details.unidentifiedAccessMode;
+    this.forceSmsSelection       = details.forceSmsSelection;
 
     this.participants.addAll(details.participants);
     this.resolving    = false;
@@ -581,6 +586,18 @@ public class Recipient implements RecipientModifiedListener {
     notifyListeners();
   }
 
+  public boolean getAutoDownloadAttachments() {
+    return autoDownloadAttachments;
+  }
+
+  public void setAutoDownloadAttachments(boolean autoDownloadAttachments) {
+    synchronized (this) {
+      this.autoDownloadAttachments = autoDownloadAttachments;
+    }
+
+    notifyListeners();
+  }
+
   public synchronized boolean isBlocked() {
     return blocked;
   }
@@ -829,6 +846,7 @@ public class Recipient implements RecipientModifiedListener {
     private final boolean                approvedMe;
     private final long                   muteUntil;
     private final int                    notifyType;
+    private final boolean                autoDownloadAttachments;
     private final VibrateState           messageVibrateState;
     private final VibrateState           callVibrateState;
     private final Uri                    messageRingtone;
@@ -851,6 +869,7 @@ public class Recipient implements RecipientModifiedListener {
 
     public RecipientSettings(boolean blocked, boolean approved, boolean approvedMe, long muteUntil,
                       int notifyType,
+                      boolean autoDownloadAttachments,
                       @NonNull VibrateState messageVibrateState,
                       @NonNull VibrateState callVibrateState,
                       @Nullable Uri messageRingtone,
@@ -871,30 +890,31 @@ public class Recipient implements RecipientModifiedListener {
                       @NonNull UnidentifiedAccessMode unidentifiedAccessMode,
                       boolean forceSmsSelection)
     {
-      this.blocked                = blocked;
-      this.approved               = approved;
-      this.approvedMe             = approvedMe;
-      this.muteUntil              = muteUntil;
-      this.notifyType             = notifyType;
-      this.messageVibrateState    = messageVibrateState;
-      this.callVibrateState       = callVibrateState;
-      this.messageRingtone        = messageRingtone;
-      this.callRingtone           = callRingtone;
-      this.color                  = color;
-      this.defaultSubscriptionId  = defaultSubscriptionId;
-      this.expireMessages         = expireMessages;
-      this.registered             = registered;
-      this.profileKey             = profileKey;
-      this.systemDisplayName      = systemDisplayName;
-      this.systemContactPhoto     = systemContactPhoto;
-      this.systemPhoneLabel       = systemPhoneLabel;
-      this.systemContactUri       = systemContactUri;
-      this.signalProfileName      = signalProfileName;
-      this.signalProfileAvatar    = signalProfileAvatar;
-      this.profileSharing         = profileSharing;
-      this.notificationChannel    = notificationChannel;
-      this.unidentifiedAccessMode = unidentifiedAccessMode;
-      this.forceSmsSelection      = forceSmsSelection;
+      this.blocked                 = blocked;
+      this.approved                = approved;
+      this.approvedMe              = approvedMe;
+      this.muteUntil               = muteUntil;
+      this.notifyType              = notifyType;
+      this.autoDownloadAttachments = autoDownloadAttachments;
+      this.messageVibrateState     = messageVibrateState;
+      this.callVibrateState        = callVibrateState;
+      this.messageRingtone         = messageRingtone;
+      this.callRingtone            = callRingtone;
+      this.color                   = color;
+      this.defaultSubscriptionId   = defaultSubscriptionId;
+      this.expireMessages          = expireMessages;
+      this.registered              = registered;
+      this.profileKey              = profileKey;
+      this.systemDisplayName       = systemDisplayName;
+      this.systemContactPhoto      = systemContactPhoto;
+      this.systemPhoneLabel        = systemPhoneLabel;
+      this.systemContactUri        = systemContactUri;
+      this.signalProfileName       = signalProfileName;
+      this.signalProfileAvatar     = signalProfileAvatar;
+      this.profileSharing          = profileSharing;
+      this.notificationChannel     = notificationChannel;
+      this.unidentifiedAccessMode  = unidentifiedAccessMode;
+      this.forceSmsSelection       = forceSmsSelection;
     }
 
     public @Nullable MaterialColor getColor() {
@@ -919,6 +939,10 @@ public class Recipient implements RecipientModifiedListener {
 
     public int getNotifyType() {
       return notifyType;
+    }
+
+    public boolean getAutoDownloadAttachments() {
+      return autoDownloadAttachments;
     }
 
     public @NonNull VibrateState getMessageVibrateState() {

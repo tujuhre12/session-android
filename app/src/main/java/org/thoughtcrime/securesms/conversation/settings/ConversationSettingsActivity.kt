@@ -66,7 +66,7 @@ class ConversationSettingsActivity: PassphraseRequiredActionBarActivity(), View.
         binding.notificationSettings.setOnClickListener(this)
         binding.back.setOnClickListener(this)
         binding.autoDownloadMediaSwitch.setOnCheckedChangeListener { _, isChecked ->
-            viewModel.setTrusted(isChecked)
+            viewModel.setAutoDownloadAttachments(isChecked)
             updateRecipientDisplay()
         }
     }
@@ -108,7 +108,7 @@ class ConversationSettingsActivity: PassphraseRequiredActionBarActivity(), View.
         )
 
         // Set auto-download state
-        val trusted = viewModel.isTrusted()
+        val trusted = viewModel.autoDownloadAttachments()
         binding.autoDownloadMediaSwitch.isChecked = trusted
 
         // Set notification type

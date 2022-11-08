@@ -163,8 +163,8 @@ interface StorageProtocol {
     fun getRecipientForThread(threadId: Long): Recipient?
     fun getRecipientSettings(address: Address): RecipientSettings?
     fun addContacts(contacts: List<ConfigurationMessage.Contact>)
-    fun isContactTrusted(recipient: Recipient): Boolean
-    fun setContactTrusted(recipient: Recipient, isTrusted: Boolean)
+    fun shouldAutoDownloadAttachments(recipient: Recipient): Boolean
+    fun setAutoDownloadAttachments(recipient: Recipient, shouldAutoDownloadAttachments: Boolean)
 
     // Attachments
     fun getAttachmentDataUri(attachmentId: AttachmentId): Uri

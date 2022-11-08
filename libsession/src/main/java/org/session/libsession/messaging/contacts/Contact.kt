@@ -19,10 +19,6 @@ class Contact(val sessionID: String) {
      * The ID of the thread associated with this contact.
      */
     var threadID: Long? = null
-    /**
-     * This flag is used to determine whether we should auto-download files sent by this contact.
-     */
-    var isTrusted = false
 
     // region Name
     /**

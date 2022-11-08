@@ -1,9 +1,7 @@
 package org.session.libsession.messaging.messages.control
 
-import org.session.libsession.messaging.MessagingModuleConfiguration
-import org.session.libsession.messaging.messages.visible.VisibleMessage
-import org.session.libsignal.utilities.Log
 import org.session.libsignal.protos.SignalServiceProtos
+import org.session.libsignal.utilities.Log
 
 class ExpirationTimerUpdate() : ControlMessage() {
     /** In the case of a sync message, the public key of the person the message was targeted at.
@@ -55,15 +53,6 @@ class ExpirationTimerUpdate() : ControlMessage() {
         // Sync target
         if (syncTarget != null) {
             dataMessageProto.syncTarget = syncTarget
-        }
-        // Group context
-        if (MessagingModuleConfiguration.shared.storage.isClosedGroup(recipient!!)) {
-            try {
-                setGroupContext(dataMessageProto)
-            } catch(e: Exception) {
-                Log.w(VisibleMessage.TAG, "Couldn't construct visible message proto from: $this")
-                return null
-            }
         }
         val contentProto = SignalServiceProtos.Content.newBuilder()
         try {
