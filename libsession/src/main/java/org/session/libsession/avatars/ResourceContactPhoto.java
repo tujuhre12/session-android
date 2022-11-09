@@ -40,10 +40,7 @@ public class ResourceContactPhoto implements FallbackContactPhoto {
       foreground.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
     }
 
-    Drawable gradient = context.getResources().getDrawable(ThemeUtil.isDarkTheme(context) ? R.drawable.avatar_gradient_dark
-                                                                                          : R.drawable.avatar_gradient_light);
-
-    return new ExpandingLayerDrawable(new Drawable[] {background, foreground, gradient});
+    return new ExpandingLayerDrawable(new Drawable[] {background, foreground});
   }
 
   private static class ExpandingLayerDrawable extends LayerDrawable {

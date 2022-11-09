@@ -306,6 +306,20 @@ public class RecipientDatabase extends Database {
     notifyRecipientListeners();
   }
 
+  public void setAutoDownloadAttachments(@NonNull Recipient recipient, boolean shouldAutoDownloadAttachments) {
+    SQLiteDatabase db = getWritableDatabase();
+    db.beginTransaction();
+    try {
+      ContentValues values = new ContentValues();
+      values.put(AUTO_DOWNLOAD, shouldAutoDownloadAttachments ? 1 : 0);
+      db.update(TABLE_NAME, values, ADDRESS+ " = ?", new String[]{recipient.getAddress().serialize()});
+      recipient.resolve().setAutoDownloadAttachments(true);
+    } finally {
+      db.endTransaction();
+    }
+    notifyRecipientListeners();
+  }
+
   public void setMuted(@NonNull Recipient recipient, long until) {
     ContentValues values = new ContentValues();
     values.put(MUTE_UNTIL, until);
