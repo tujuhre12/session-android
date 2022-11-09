@@ -191,6 +191,8 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     executeStatements(db, GroupReceiptDatabase.CREATE_INDEXES);
 
     executeStatements(db, ReactionDatabase.CREATE_REACTION_TRIGGERS);
+    db.execSQL(RecipientDatabase.getCreateAutoDownloadCommand());
+    db.execSQL(RecipientDatabase.getUpdateAutoDownloadValuesCommand());
   }
 
   @Override
