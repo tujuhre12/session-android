@@ -685,13 +685,16 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         }
     }
 
-    override fun shouldAutoDownloadAttachments(recipient: Recipient): Boolean = true
+    override fun shouldAutoDownloadAttachments(recipient: Recipient): Boolean {
+        return recipient.autoDownloadAttachments
+    }
 
     override fun setAutoDownloadAttachments(
         recipient: Recipient,
         shouldAutoDownloadAttachments: Boolean
     ) {
-        TODO("Not yet implemented")
+        val recipientDb = DatabaseComponent.get(context).recipientDatabase()
+        recipientDb.setAutoDownloadAttachments(recipient, shouldAutoDownloadAttachments)
     }
 
     override fun getLastUpdated(threadID: Long): Long {
