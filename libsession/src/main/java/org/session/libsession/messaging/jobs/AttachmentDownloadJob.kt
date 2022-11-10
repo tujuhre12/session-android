@@ -100,8 +100,9 @@ class AttachmentDownloadJob(val attachmentID: Long, val databaseMessageID: Long)
             return
         }
         if (!threadRecipient.isGroupRecipient && (!threadRecipient.autoDownloadAttachments && storage.getUserPublicKey() != sender)) {
-            // if we aren't receiving a group message, a message from ourselves (self-send) and the contact sending is not trusted:
-            // do not continue, but do not fail
+            // if we aren't receiving a group message, a message from ourselves (self-send) and the thread does not auto-download:
+            // do not continue, but do not fail (it will be restarted later)
+            // TODO: probably remove this logic and just re-trigger based on attachment ID in future
             return
         }
 
