@@ -119,6 +119,13 @@ message DataMessage {
     required string name = 3;
   }
 
+  message GroupMessage {
+    optional GroupDeleteMessage     deleteMessage     = 31;
+    optional GroupMemberLeftMessage memberLeftMessage = 32;
+    optional GroupInviteMessage     inviteMessage     = 33;
+    optional GroupPromoteMessage    promoteMessage    = 34;
+  }
+
   message ClosedGroupControlMessage {
 
     enum Type {
@@ -182,6 +189,34 @@ message DataMessage {
   optional OpenGroupInvitation       openGroupInvitation       = 102;
   optional ClosedGroupControlMessage closedGroupControlMessage = 104;
   optional string                    syncTarget                = 105;
+  optional GroupMessage              groupMessage              = 120;
+}
+
+message GroupDeleteMessage {
+  // @required
+  required bytes          publicKey         = 1; // the identity public key of the group to be deleted
+  // @required
+  required bytes          lastEncryptionKey = 2; // used by members to make sure incoming admin action can be trusted
+}
+
+message GroupMemberLeftMessage {
+  // the pubkey of the member left is included as part of the closed group encryption logic (senderIdentity on desktop)
+}
+
+message GroupInviteMessage {
+  // @required
+  required bytes          publicKey         = 1; // this is the group public key
+  // @required
+  required string         name              = 2;
+  // @required
+  required bytes          memberPrivateKey  = 3;
+}
+
+message GroupPromoteMessage {
+  // @required
+  required bytes          publicKey           = 1; // this is the session id for the user that should be promoted
+  // @required
+  required bytes          encryptedPrivateKey = 2; // this is the group admins key
 }
 
 message CallMessage {

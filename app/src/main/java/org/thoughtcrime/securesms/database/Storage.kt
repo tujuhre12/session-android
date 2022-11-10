@@ -685,9 +685,7 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         }
     }
 
-    override fun shouldAutoDownloadAttachments(recipient: Recipient): Boolean {
-        TODO("Not yet implemented")
-    }
+    override fun shouldAutoDownloadAttachments(recipient: Recipient): Boolean = true
 
     override fun setAutoDownloadAttachments(
         recipient: Recipient,

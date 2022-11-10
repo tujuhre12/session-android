@@ -15,13 +15,14 @@ import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.conversation.v2.utilities.BaseDialog
 import org.thoughtcrime.securesms.database.SessionContactDatabase
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import javax.inject.Inject
 
 /** Shown when receiving media from a contact for the first time, to confirm that
  * they are to be trusted and files sent by them are to be downloaded. */
 @AndroidEntryPoint
-class DownloadDialog(private val recipient: Recipient) : BaseDialog() {
+class DownloadDialog(private val recipient: Recipient,
+                     private val
+) : BaseDialog() {
 
     @Inject lateinit var contactDB: SessionContactDatabase
 
@@ -43,10 +44,6 @@ class DownloadDialog(private val recipient: Recipient) : BaseDialog() {
     }
 
     private fun trust() {
-        val sessionID = recipient.address.toString()
-        val contact = contactDB.getContactWithSessionID(sessionID) ?: return
-        val threadID = DatabaseComponent.get(requireContext()).threadDatabase().getThreadIdIfExistsFor(recipient)
-        contactDB.setContactIsTrusted(contact, true, threadID)
         JobQueue.shared.resumePendingJobs(AttachmentDownloadJob.KEY)
         dismiss()
     }

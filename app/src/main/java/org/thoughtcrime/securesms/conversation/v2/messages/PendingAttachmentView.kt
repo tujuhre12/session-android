@@ -6,19 +6,22 @@ import android.widget.LinearLayout
 import androidx.annotation.ColorInt
 import androidx.core.content.ContextCompat
 import network.loki.messenger.R
-import network.loki.messenger.databinding.ViewUntrustedAttachmentBinding
+import network.loki.messenger.databinding.ViewPendingAttachmentBinding
+import org.session.libsession.messaging.sending_receiving.attachments.AttachmentId
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.conversation.v2.dialogs.DownloadDialog
 import org.thoughtcrime.securesms.util.ActivityDispatcher
 import java.util.Locale
 
-class UntrustedAttachmentView: LinearLayout {
-    private val binding: ViewUntrustedAttachmentBinding by lazy { ViewUntrustedAttachmentBinding.bind(this) }
+class PendingAttachmentView: LinearLayout {
+    private val binding by lazy { ViewPendingAttachmentBinding.bind(this) }
     enum class AttachmentType {
         AUDIO,
         DOCUMENT,
         MEDIA
     }
+
+    private var attachmentId: AttachmentId? = null
 
     // region Lifecycle
     constructor(context: Context) : super(context)
@@ -28,7 +31,7 @@ class UntrustedAttachmentView: LinearLayout {
     // endregion
 
     // region Updating
-    fun bind(attachmentType: AttachmentType, @ColorInt textColor: Int) {
+    fun bind(attachmentType: AttachmentType, @ColorInt textColor: Int, attachmentId: AttachmentId) {
         val (iconRes, stringRes) = when (attachmentType) {
             AttachmentType.AUDIO -> R.drawable.ic_microphone to R.string.Slide_audio
             AttachmentType.DOCUMENT -> R.drawable.ic_document_large_light to R.string.document
@@ -40,12 +43,15 @@ class UntrustedAttachmentView: LinearLayout {
 
         binding.untrustedAttachmentIcon.setImageDrawable(iconDrawable)
         binding.untrustedAttachmentTitle.text = text
+        this.attachmentId = attachmentId
     }
     // endregion
 
     // region Interaction
-    fun showTrustDialog(recipient: Recipient) {
-        ActivityDispatcher.get(context)?.showDialog(DownloadDialog(recipient))
+    fun showDownloadDialog(threadRecipient: Recipient) {
+        attachmentId?.let { attachmentId ->
+            ActivityDispatcher.get(context)?.showDialog(DownloadDialog(threadRecipient, attachmentId))
+        }
     }
 
 }
