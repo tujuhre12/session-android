@@ -313,7 +313,7 @@ public class RecipientDatabase extends Database {
       ContentValues values = new ContentValues();
       values.put(AUTO_DOWNLOAD, shouldAutoDownloadAttachments ? 1 : 0);
       db.update(TABLE_NAME, values, ADDRESS+ " = ?", new String[]{recipient.getAddress().serialize()});
-      recipient.resolve().setAutoDownloadAttachments(true);
+      recipient.resolve().setAutoDownloadAttachments(shouldAutoDownloadAttachments);
     } finally {
       db.endTransaction();
     }

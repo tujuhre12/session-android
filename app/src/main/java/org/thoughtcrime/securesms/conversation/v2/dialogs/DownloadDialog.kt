@@ -47,7 +47,6 @@ class DownloadDialog(private val recipient: Recipient,
     }
 
     private fun download() {
-        // TODO: add attachment download job trigger with attachmentID and databaseMessageID
         JobQueue.shared.createAndStartAttachmentDownload(databaseAttachment)
         dismiss()
     }
