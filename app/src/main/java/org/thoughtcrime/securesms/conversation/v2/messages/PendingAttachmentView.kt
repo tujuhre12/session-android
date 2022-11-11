@@ -4,7 +4,6 @@ import android.content.Context
 import android.util.AttributeSet
 import android.widget.LinearLayout
 import androidx.annotation.ColorInt
-import androidx.core.content.ContextCompat
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewPendingAttachmentBinding
@@ -15,6 +14,7 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.conversation.v2.dialogs.AutoDownloadDialog
 import org.thoughtcrime.securesms.util.ActivityDispatcher
 import org.thoughtcrime.securesms.util.createAndStartAttachmentDownload
+import org.thoughtcrime.securesms.util.displaySize
 import java.util.Locale
 import javax.inject.Inject
 
@@ -24,7 +24,8 @@ class PendingAttachmentView: LinearLayout {
     enum class AttachmentType {
         AUDIO,
         DOCUMENT,
-        MEDIA
+        IMAGE,
+        VIDEO,
     }
 
     // region Lifecycle
@@ -37,17 +38,18 @@ class PendingAttachmentView: LinearLayout {
 
     // region Updating
     fun bind(attachmentType: AttachmentType, @ColorInt textColor: Int, attachment: DatabaseAttachment) {
-        val (iconRes, stringRes) = when (attachmentType) {
-            AttachmentType.AUDIO -> R.drawable.ic_microphone to R.string.Slide_audio
-            AttachmentType.DOCUMENT -> R.drawable.ic_document_large_light to R.string.document
-            AttachmentType.MEDIA -> R.drawable.ic_image_white_24dp to R.string.media
+        val stringRes = when (attachmentType) {
+            AttachmentType.AUDIO -> R.string.Slide_audio
+            AttachmentType.DOCUMENT -> R.string.document
+            AttachmentType.IMAGE -> R.string.image
+            AttachmentType.VIDEO -> R.string.video
         }
-        val iconDrawable = ContextCompat.getDrawable(context,iconRes)!!
-        iconDrawable.mutate().setTint(textColor)
-        val text = context.getString(R.string.UntrustedAttachmentView_download_attachment, context.getString(stringRes).toLowerCase(Locale.ROOT))
 
-        binding.untrustedAttachmentIcon.setImageDrawable(iconDrawable)
-        binding.untrustedAttachmentTitle.text = text
+        val text = context.getString(R.string.UntrustedAttachmentView_download_attachment, context.getString(stringRes).lowercase(Locale.ROOT))
+
+        binding.pendingDownloadIcon.setColorFilter(textColor)
+        binding.pendingDownloadSize.text = attachment.displaySize()
+        binding.pendingDownloadTitle.text = text
     }
     // endregion
 

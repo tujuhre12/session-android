@@ -880,4 +880,6 @@
     <string name="conversation_settings_leave_group">Leave Group</string>
     <string name="conversation_settings_group_members">Group Members</string>
     <string name="conversation_settings_delete_group">Delete Group</string>
+    <string name="image">image</string>
+    <string name="video">video</string>
 </resources>

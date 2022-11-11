@@ -192,7 +192,7 @@ class VisibleMessageContentView : LinearLayout {
                     val firstAttachment = message.slideDeck.asAttachments().first() as? DatabaseAttachment
                     firstAttachment?.let { attachment ->
                         binding.pendingAttachmentView.root.bind(
-                            PendingAttachmentView.AttachmentType.MEDIA,
+                            PendingAttachmentView.AttachmentType.IMAGE,
                             getTextColor(context,message),
                             attachment
                             )
