@@ -149,13 +149,13 @@ class VisibleMessageContentView : LinearLayout {
                             getTextColor(context,message),
                             attachment
                         )
-                        onContentClick.add { binding.pendingAttachmentView.root.showDownloadDialog(message.recipient, attachment) }
+                        onContentClick.add { binding.pendingAttachmentView.root.showDownloadDialog(thread, attachment) }
                     }
                 }
             }
             // DOCUMENT
             message is MmsMessageRecord && message.slideDeck.documentSlide != null -> {
-                hideBody = true
+                hideBody = true // TODO: check if this is still the logic we want
                 // Document attachment
                 if (mediaDownloaded || mediaInProgress || message.isOutgoing) {
                     binding.documentView.root.bind(message, getTextColor(context, message))
@@ -166,7 +166,7 @@ class VisibleMessageContentView : LinearLayout {
                             getTextColor(context,message),
                             attachment
                             )
-                        onContentClick.add { binding.pendingAttachmentView.root.showDownloadDialog(message.recipient, attachment) }
+                        onContentClick.add { binding.pendingAttachmentView.root.showDownloadDialog(thread, attachment) }
                     }
                 }
             }
@@ -188,7 +188,6 @@ class VisibleMessageContentView : LinearLayout {
                         binding.albumThumbnailView.calculateHitObject(event, message, thread)
                     }
                 } else {
-                    hideBody = true
                     binding.albumThumbnailView.clearViews()
                     val firstAttachment = message.slideDeck.asAttachments().first() as? DatabaseAttachment
                     firstAttachment?.let { attachment ->
@@ -198,7 +197,7 @@ class VisibleMessageContentView : LinearLayout {
                             attachment
                             )
                         onContentClick.add {
-                            binding.pendingAttachmentView.root.showDownloadDialog(message.recipient, attachment)
+                            binding.pendingAttachmentView.root.showDownloadDialog(thread, attachment)
                         }
                     }
                 }
