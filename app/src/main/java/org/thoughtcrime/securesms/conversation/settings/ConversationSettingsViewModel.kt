@@ -9,7 +9,6 @@ import kotlinx.coroutines.launch
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
-import org.thoughtcrime.securesms.database.Storage
 
 class ConversationSettingsViewModel(
     val threadId: Long,
@@ -46,7 +45,7 @@ class ConversationSettingsViewModel(
     }
     class Factory @AssistedInject constructor(
         @Assisted private val threadId: Long,
-        private val storage: Storage,
+        private val storage: StorageProtocol,
         private val prefs: TextSecurePreferences
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")

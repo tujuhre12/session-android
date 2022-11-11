@@ -5,6 +5,7 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import org.session.libsession.database.MessageDataProvider
+import org.session.libsession.database.StorageProtocol
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.database.*
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
@@ -42,7 +43,7 @@ interface DatabaseComponent {
     fun sessionContactDatabase(): SessionContactDatabase
     fun reactionDatabase(): ReactionDatabase
     fun emojiSearchDatabase(): EmojiSearchDatabase
-    fun storage(): Storage
+    fun storage(): StorageProtocol
     fun attachmentProvider(): MessageDataProvider
     fun blindedIdMappingDatabase(): BlindedIdMappingDatabase
     fun groupMemberDatabase(): GroupMemberDatabase

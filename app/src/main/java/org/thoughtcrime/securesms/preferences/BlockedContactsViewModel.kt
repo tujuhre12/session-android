@@ -17,13 +17,13 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 import kotlinx.coroutines.withContext
+import org.session.libsession.database.StorageProtocol
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
-import org.thoughtcrime.securesms.database.Storage
 import javax.inject.Inject
 
 @HiltViewModel
-class BlockedContactsViewModel @Inject constructor(private val storage: Storage): ViewModel() {
+class BlockedContactsViewModel @Inject constructor(private val storage: StorageProtocol): ViewModel() {
 
     private val executor = viewModelScope + SupervisorJob()
 

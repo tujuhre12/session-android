@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.utilities.SessionId
@@ -17,7 +18,6 @@ import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import java.util.UUID
@@ -26,7 +26,7 @@ class ConversationViewModel(
     val threadId: Long,
     val edKeyPair: KeyPair?,
     private val repository: ConversationRepository,
-    private val storage: Storage
+    private val storage: StorageProtocol
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ConversationUiState())
@@ -170,7 +170,7 @@ class ConversationViewModel(
         @Assisted private val threadId: Long,
         @Assisted private val edKeyPair: KeyPair?,
         private val repository: ConversationRepository,
-        private val storage: Storage
+        private val storage: StorageProtocol
     ) : ViewModelProvider.Factory {
 
         override fun <T : ViewModel> create(modelClass: Class<T>): T {

@@ -5,6 +5,7 @@ import android.view.View
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityMessageDetailBinding
+import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.utilities.SessionId
@@ -15,7 +16,6 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.IdPrefix
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.conversation.v2.utilities.ResendMessageUtilities
-import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.util.DateUtils
@@ -30,7 +30,7 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
     var messageRecord: MessageRecord? = null
 
     @Inject
-    lateinit var storage: Storage
+    lateinit var storage: StorageProtocol
 
     // region Settings
     companion object {

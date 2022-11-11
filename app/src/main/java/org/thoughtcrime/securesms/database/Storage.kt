@@ -644,6 +644,10 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         return if (recipientSettings.isPresent) { recipientSettings.get() } else null
     }
 
+    override fun hasAutoDownloadFlagBeenSet(recipient: Recipient): Boolean {
+        return DatabaseComponent.get(context).recipientDatabase().isAutoDownloadFlagSet(recipient)
+    }
+
     override fun addContacts(contacts: List<ConfigurationMessage.Contact>) {
         val recipientDatabase = DatabaseComponent.get(context).recipientDatabase()
         val threadDatabase = DatabaseComponent.get(context).threadDatabase()

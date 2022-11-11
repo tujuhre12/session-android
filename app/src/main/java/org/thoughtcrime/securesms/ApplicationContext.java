@@ -34,6 +34,7 @@ import androidx.lifecycle.ProcessLifecycleOwner;
 import org.conscrypt.Conscrypt;
 import org.session.libsession.avatars.AvatarHelper;
 import org.session.libsession.database.MessageDataProvider;
+import org.session.libsession.database.StorageProtocol;
 import org.session.libsession.messaging.MessagingModuleConfiguration;
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier;
 import org.session.libsession.messaging.sending_receiving.pollers.ClosedGroupPollerV2;
@@ -56,7 +57,6 @@ import org.thoughtcrime.securesms.crypto.KeyPairUtilities;
 import org.thoughtcrime.securesms.database.EmojiSearchDatabase;
 import org.thoughtcrime.securesms.database.JobDatabase;
 import org.thoughtcrime.securesms.database.LokiAPIDatabase;
-import org.thoughtcrime.securesms.database.Storage;
 import org.thoughtcrime.securesms.database.model.EmojiSearchData;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 import org.thoughtcrime.securesms.dependencies.DatabaseModule;
@@ -143,7 +143,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     private PersistentLogger persistentLogger;
 
     @Inject LokiAPIDatabase lokiAPIDatabase;
-    @Inject Storage storage;
+    @Inject StorageProtocol storage;
     @Inject MessageDataProvider messageDataProvider;
     @Inject JobDatabase jobDatabase;
     @Inject TextSecurePreferences textSecurePreferences;
