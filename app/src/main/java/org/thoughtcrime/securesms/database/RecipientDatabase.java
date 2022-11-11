@@ -62,7 +62,7 @@ public class RecipientDatabase extends Database {
   private static final String UNIDENTIFIED_ACCESS_MODE = "unidentified_access_mode";
   private static final String FORCE_SMS_SELECTION      = "force_sms_selection";
   private static final String NOTIFY_TYPE              = "notify_type"; // all, mentions only, none
-  private static final String AUTO_DOWNLOAD            = "auto_download"; // 1 / 0 flag for whether to auto-download in a conversation
+  private static final String AUTO_DOWNLOAD            = "auto_download"; // 1 / 0 / -1 flag for whether to auto-download in a conversation, or if the user hasn't selected a preference
 
   private static final String[] RECIPIENT_PROJECTION = new String[] {
       BLOCK, APPROVED, APPROVED_ME, NOTIFICATION, CALL_RINGTONE, VIBRATE, CALL_VIBRATE, MUTE_UNTIL, COLOR, SEEN_INVITE_REMINDER, DEFAULT_SUBSCRIPTION_ID, EXPIRE_MESSAGES, REGISTERED,
@@ -110,7 +110,7 @@ public class RecipientDatabase extends Database {
 
   public static String getCreateAutoDownloadCommand() {
     return "ALTER TABLE "+ TABLE_NAME + " " +
-          "ADD COLUMN " + AUTO_DOWNLOAD + " INTEGER DEFAULT 0;";
+          "ADD COLUMN " + AUTO_DOWNLOAD + " INTEGER DEFAULT -1;";
   }
 
   public static String getUpdateAutoDownloadValuesCommand() {
@@ -241,6 +241,22 @@ public class RecipientDatabase extends Database {
                                              forceSmsSelection));
   }
 
+  public boolean isAutoDownloadFlagSet(Recipient recipient) {
+    SQLiteDatabase db = getReadableDatabase();
+    Cursor cursor = db.query(TABLE_NAME, new String[]{ AUTO_DOWNLOAD }, ADDRESS+" = ?", new String[]{ recipient.getAddress().serialize() }, null, null, null);
+    boolean flagUnset = false;
+    try {
+      if (cursor.moveToFirst()) {
+        // flag isn't set if it is -1
+        flagUnset = cursor.getInt(cursor.getColumnIndexOrThrow(AUTO_DOWNLOAD)) == -1;
+      }
+    } finally {
+      cursor.close();
+    }
+    // negate result (is flag set)
+    return !flagUnset;
+  }
+
   public void setColor(@NonNull Recipient recipient, @NonNull MaterialColor color) {
     ContentValues values = new ContentValues();
     values.put(COLOR, color.serialize());
@@ -314,6 +330,7 @@ public class RecipientDatabase extends Database {
       values.put(AUTO_DOWNLOAD, shouldAutoDownloadAttachments ? 1 : 0);
       db.update(TABLE_NAME, values, ADDRESS+ " = ?", new String[]{recipient.getAddress().serialize()});
       recipient.resolve().setAutoDownloadAttachments(shouldAutoDownloadAttachments);
+      db.setTransactionSuccessful();
     } finally {
       db.endTransaction();
     }
