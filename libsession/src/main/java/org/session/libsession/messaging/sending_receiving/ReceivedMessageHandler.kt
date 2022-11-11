@@ -3,6 +3,7 @@ package org.session.libsession.messaging.sending_receiving
 import android.text.TextUtils
 import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.messaging.jobs.AttachmentDownloadJob
 import org.session.libsession.messaging.jobs.BackgroundGroupAddJob
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.messages.Message
@@ -325,6 +326,16 @@ fun MessageReceiver.handleVisibleMessage(message: VisibleMessage,
             storage.persist(message, quoteModel, linkPreviews, message.groupPublicKey, openGroupID,
          attachments, runIncrement, runThreadUpdate
         ) ?: return null
+        // Parse & persist attachments
+        // Start attachment downloads if needed
+        if (threadRecipient?.autoDownloadAttachments == true || messageSender == userPublicKey) {
+            storage.getAttachmentsForMessage(messageID).iterator().forEach { attachment ->
+                attachment.attachmentId?.let { id ->
+                    val downloadJob = AttachmentDownloadJob(id.rowId, messageID)
+                    JobQueue.shared.add(downloadJob)
+                }
+            }
+        }
         val openGroupServerID = message.openGroupServerMessageID
         if (openGroupServerID != null) {
             val isSms = !(message.isMediaMessage() || attachments.isNotEmpty())

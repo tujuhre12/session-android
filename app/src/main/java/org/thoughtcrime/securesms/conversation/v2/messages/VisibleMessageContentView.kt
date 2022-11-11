@@ -26,9 +26,6 @@ import androidx.core.view.isVisible
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
 import okhttp3.HttpUrl
-import org.session.libsession.messaging.MessagingModuleConfiguration
-import org.session.libsession.messaging.jobs.AttachmentDownloadJob
-import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentTransferProgress
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.getColorFromAttr
@@ -65,7 +62,7 @@ class VisibleMessageContentView : LinearLayout {
 
     // region Updating
     fun bind(message: MessageRecord, isStartOfMessageCluster: Boolean, isEndOfMessageCluster: Boolean,
-             glide: GlideRequests, thread: Recipient, searchQuery: String?, autoDownloadAttachments: Boolean) {
+             glide: GlideRequests, thread: Recipient, searchQuery: String?) {
         // Background
         val background = getBackground(message.isOutgoing)
         val color = if (message.isOutgoing) context.getAccentColor()
@@ -75,6 +72,7 @@ class VisibleMessageContentView : LinearLayout {
         binding.contentParent.background = background
 
         val mediaDownloaded = message is MmsMessageRecord && message.slideDeck.asAttachments().all { it.transferState == AttachmentTransferProgress.TRANSFER_PROGRESS_DONE }
+        val mediaInProgress = message is MmsMessageRecord && message.slideDeck.asAttachments().any { it.isInProgress }
         val mediaThumbnailMessage = message is MmsMessageRecord && message.slideDeck.thumbnailSlide != null
 
         // reset visibilities / containers
@@ -89,7 +87,7 @@ class VisibleMessageContentView : LinearLayout {
         } else {
             binding.deletedMessageView.root.isVisible = false
         }
-        // clear the
+        // clear the body
         binding.bodyTextView.text = null
 
 
@@ -97,9 +95,9 @@ class VisibleMessageContentView : LinearLayout {
 
         binding.linkPreviewView.isVisible = message is MmsMessageRecord && message.linkPreviews.isNotEmpty()
 
-        binding.pendingAttachmentView.root.isVisible = !mediaDownloaded && message is MmsMessageRecord && message.quote == null && message.linkPreviews.isEmpty()
-        binding.voiceMessageView.root.isVisible = mediaDownloaded && message is MmsMessageRecord && message.slideDeck.audioSlide != null
-        binding.documentView.root.isVisible = mediaDownloaded && message is MmsMessageRecord && message.slideDeck.documentSlide != null
+        binding.pendingAttachmentView.root.isVisible = !mediaDownloaded && !mediaInProgress && message is MmsMessageRecord && message.quote == null && message.linkPreviews.isEmpty()
+        binding.voiceMessageView.root.isVisible = (mediaDownloaded || mediaInProgress) && message is MmsMessageRecord && message.slideDeck.audioSlide != null
+        binding.documentView.root.isVisible = (mediaDownloaded || mediaInProgress) && message is MmsMessageRecord && message.slideDeck.documentSlide != null
         binding.albumThumbnailView.isVisible = mediaThumbnailMessage
         binding.openGroupInvitationView.root.isVisible = message.isOpenGroupInvitation
 
@@ -125,36 +123,18 @@ class VisibleMessageContentView : LinearLayout {
             }
         }
 
-        if (message is MmsMessageRecord) {
-            message.slideDeck.asAttachments().forEach { attach ->
-                val dbAttachment = attach as? DatabaseAttachment ?: return@forEach
-                val attachmentId = dbAttachment.attachmentId.rowId
-                if (attach.transferState == AttachmentTransferProgress.TRANSFER_PROGRESS_PENDING
-                    && MessagingModuleConfiguration.shared.storage.getAttachmentUploadJob(attachmentId) == null) {
-                    // start download
-                    JobQueue.shared.add(AttachmentDownloadJob(attachmentId, dbAttachment.mmsId))
-                }
-            }
-            message.linkPreviews.forEach { preview ->
-                val previewThumbnail = preview.getThumbnail().orNull() as? DatabaseAttachment ?: return@forEach
-                val attachmentId = previewThumbnail.attachmentId.rowId
-                if (previewThumbnail.transferState == AttachmentTransferProgress.TRANSFER_PROGRESS_PENDING
-                    && MessagingModuleConfiguration.shared.storage.getAttachmentUploadJob(attachmentId) == null) {
-                    JobQueue.shared.add(AttachmentDownloadJob(attachmentId, previewThumbnail.mmsId))
-                }
-            }
-        }
-
         when {
+            // LINK PREVIEW
             message is MmsMessageRecord && message.linkPreviews.isNotEmpty() -> {
                 binding.linkPreviewView.bind(message, glide, isStartOfMessageCluster, isEndOfMessageCluster)
                 onContentClick.add { event -> binding.linkPreviewView.calculateHit(event) }
                 // Body text view is inside the link preview for layout convenience
             }
+            // AUDIO
             message is MmsMessageRecord && message.slideDeck.audioSlide != null -> {
                 hideBody = true
                 // Audio attachment
-                if (mediaDownloaded || message.isOutgoing) {
+                if (mediaDownloaded || mediaInProgress || message.isOutgoing) {
                     binding.voiceMessageView.root.indexInAdapter = indexInAdapter
                     binding.voiceMessageView.root.delegate = context as? ConversationActivityV2
                     binding.voiceMessageView.root.bind(message, isStartOfMessageCluster, isEndOfMessageCluster)
@@ -163,33 +143,36 @@ class VisibleMessageContentView : LinearLayout {
                     onContentClick.add { binding.voiceMessageView.root.togglePlayback() }
                     onContentDoubleTap = { binding.voiceMessageView.root.handleDoubleTap() }
                 } else {
-                    binding.pendingAttachmentView.root.bind(
-                        PendingAttachmentView.AttachmentType.AUDIO,
-                        getTextColor(context,message),
-
-                    )
-                    onContentClick.add { binding.pendingAttachmentView.root.showDownloadDialog(message.recipient) }
+                    (message.slideDeck.audioSlide?.asAttachment() as? DatabaseAttachment)?.let { attachment ->
+                        binding.pendingAttachmentView.root.bind(
+                            PendingAttachmentView.AttachmentType.AUDIO,
+                            getTextColor(context,message),
+                            attachment
+                        )
+                        onContentClick.add { binding.pendingAttachmentView.root.showDownloadDialog(message.recipient, attachment) }
+                    }
                 }
             }
+            // DOCUMENT
             message is MmsMessageRecord && message.slideDeck.documentSlide != null -> {
                 hideBody = true
                 // Document attachment
-                if (mediaDownloaded || message.isOutgoing) {
+                if (mediaDownloaded || mediaInProgress || message.isOutgoing) {
                     binding.documentView.root.bind(message, getTextColor(context, message))
                 } else {
-                    binding.pendingAttachmentView.root.bind(
-                        PendingAttachmentView.AttachmentType.DOCUMENT,
-                        getTextColor(context,message),
-
-                    )
-                    onContentClick.add { binding.pendingAttachmentView.root.showDownloadDialog(message.recipient) }
+                    (message.slideDeck.documentSlide?.asAttachment() as? DatabaseAttachment)?.let { attachment ->
+                        binding.pendingAttachmentView.root.bind(
+                            PendingAttachmentView.AttachmentType.DOCUMENT,
+                            getTextColor(context,message),
+                            attachment
+                            )
+                        onContentClick.add { binding.pendingAttachmentView.root.showDownloadDialog(message.recipient, attachment) }
+                    }
                 }
             }
+            // IMAGE / VIDEO
             message is MmsMessageRecord && message.slideDeck.asAttachments().isNotEmpty() -> {
-                /*
-                 *    Images / Video attachment
-                 */
-                if (mediaDownloaded || message.isOutgoing) {
+                if (mediaDownloaded || mediaInProgress || message.isOutgoing) {
                     // isStart and isEnd of cluster needed for calculating the mask for full bubble image groups
                     // bind after add view because views are inflated and calculated during bind
                     binding.albumThumbnailView.bind(
@@ -207,12 +190,17 @@ class VisibleMessageContentView : LinearLayout {
                 } else {
                     hideBody = true
                     binding.albumThumbnailView.clearViews()
-                    binding.pendingAttachmentView.root.bind(
-                        PendingAttachmentView.AttachmentType.MEDIA,
-                        getTextColor(context,message),
-
-                    )
-                    onContentClick.add { binding.pendingAttachmentView.root.showDownloadDialog(message.recipient) }
+                    val firstAttachment = message.slideDeck.asAttachments().first() as? DatabaseAttachment
+                    firstAttachment?.let { attachment ->
+                        binding.pendingAttachmentView.root.bind(
+                            PendingAttachmentView.AttachmentType.MEDIA,
+                            getTextColor(context,message),
+                            attachment
+                            )
+                        onContentClick.add {
+                            binding.pendingAttachmentView.root.showDownloadDialog(message.recipient, attachment)
+                        }
+                    }
                 }
             }
             message.isOpenGroupInvitation -> {

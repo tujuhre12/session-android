@@ -7,7 +7,7 @@ import androidx.annotation.ColorInt
 import androidx.core.content.ContextCompat
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewPendingAttachmentBinding
-import org.session.libsession.messaging.sending_receiving.attachments.AttachmentId
+import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.conversation.v2.dialogs.DownloadDialog
 import org.thoughtcrime.securesms.util.ActivityDispatcher
@@ -21,8 +21,6 @@ class PendingAttachmentView: LinearLayout {
         MEDIA
     }
 
-    private var attachmentId: AttachmentId? = null
-
     // region Lifecycle
     constructor(context: Context) : super(context)
     constructor(context: Context, attrs: AttributeSet) : super(context, attrs)
@@ -31,7 +29,7 @@ class PendingAttachmentView: LinearLayout {
     // endregion
 
     // region Updating
-    fun bind(attachmentType: AttachmentType, @ColorInt textColor: Int, attachmentId: AttachmentId) {
+    fun bind(attachmentType: AttachmentType, @ColorInt textColor: Int, attachment: DatabaseAttachment) {
         val (iconRes, stringRes) = when (attachmentType) {
             AttachmentType.AUDIO -> R.drawable.ic_microphone to R.string.Slide_audio
             AttachmentType.DOCUMENT -> R.drawable.ic_document_large_light to R.string.document
@@ -43,15 +41,12 @@ class PendingAttachmentView: LinearLayout {
 
         binding.untrustedAttachmentIcon.setImageDrawable(iconDrawable)
         binding.untrustedAttachmentTitle.text = text
-        this.attachmentId = attachmentId
     }
     // endregion
 
     // region Interaction
-    fun showDownloadDialog(threadRecipient: Recipient) {
-        attachmentId?.let { attachmentId ->
-            ActivityDispatcher.get(context)?.showDialog(DownloadDialog(threadRecipient, attachmentId))
-        }
+    fun showDownloadDialog(threadRecipient: Recipient, attachment: DatabaseAttachment) {
+        ActivityDispatcher.get(context)?.showDialog(DownloadDialog(threadRecipient, attachment))
     }
 
 }

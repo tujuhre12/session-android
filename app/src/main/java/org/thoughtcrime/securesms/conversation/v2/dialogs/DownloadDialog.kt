@@ -10,11 +10,12 @@ import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.DialogDownloadBinding
 import org.session.libsession.messaging.contacts.Contact
-import org.session.libsession.messaging.jobs.AttachmentDownloadJob
+import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.conversation.v2.utilities.BaseDialog
 import org.thoughtcrime.securesms.database.SessionContactDatabase
+import org.thoughtcrime.securesms.util.createAndStartAttachmentDownload
 import org.thoughtcrime.securesms.util.displaySize
 import javax.inject.Inject
 
@@ -47,7 +48,7 @@ class DownloadDialog(private val recipient: Recipient,
 
     private fun download() {
         // TODO: add attachment download job trigger with attachmentID and databaseMessageID
-        val downloadJob = AttachmentDownloadJob()
+        JobQueue.shared.createAndStartAttachmentDownload(databaseAttachment)
         dismiss()
     }
 }

@@ -229,8 +229,7 @@ class VisibleMessageView : LinearLayout {
             isEndOfMessageCluster,
             glide,
             thread,
-            searchQuery,
-            message.isOutgoing || (thread.autoDownloadAttachments)
+            searchQuery
         )
         binding.messageContentView.delegate = delegate
         onDoubleTap = { binding.messageContentView.onContentDoubleTap?.invoke() }
