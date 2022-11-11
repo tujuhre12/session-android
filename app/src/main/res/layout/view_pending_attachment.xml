@@ -12,8 +12,8 @@
 
     <ImageView
         android:id="@+id/pendingDownloadIcon"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
+        android:layout_width="16dp"
+        android:layout_height="16dp"
         android:src="@drawable/ic_media"
         app:tint="?android:textColorPrimary" />
 
@@ -32,7 +32,6 @@
         android:layout_width="2dp"
         android:layout_height="2dp"
         android:src="@drawable/circle_tintable"
-        android:layout_gravity="center"
         android:layout_marginHorizontal="6dp"
         app:tint="?android:textColorPrimary" />
 

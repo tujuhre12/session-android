@@ -143,6 +143,7 @@ class VisibleMessageContentView : LinearLayout {
                     onContentClick.add { binding.voiceMessageView.root.togglePlayback() }
                     onContentDoubleTap = { binding.voiceMessageView.root.handleDoubleTap() }
                 } else {
+                    hideBody = true
                     (message.slideDeck.audioSlide?.asAttachment() as? DatabaseAttachment)?.let { attachment ->
                         binding.pendingAttachmentView.root.bind(
                             PendingAttachmentView.AttachmentType.AUDIO,
@@ -160,6 +161,7 @@ class VisibleMessageContentView : LinearLayout {
                 if (mediaDownloaded || mediaInProgress || message.isOutgoing) {
                     binding.documentView.root.bind(message, getTextColor(context, message))
                 } else {
+                    hideBody = true
                     (message.slideDeck.documentSlide?.asAttachment() as? DatabaseAttachment)?.let { attachment ->
                         binding.pendingAttachmentView.root.bind(
                             PendingAttachmentView.AttachmentType.DOCUMENT,
@@ -188,6 +190,7 @@ class VisibleMessageContentView : LinearLayout {
                         binding.albumThumbnailView.calculateHitObject(event, message, thread)
                     }
                 } else {
+                    hideBody = true
                     binding.albumThumbnailView.clearViews()
                     val firstAttachment = message.slideDeck.asAttachments().first() as? DatabaseAttachment
                     firstAttachment?.let { attachment ->
