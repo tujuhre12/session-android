@@ -155,6 +155,7 @@ interface StorageProtocol {
     fun getMessageCount(threadID: Long): Long
     fun setThreadPinned(threadID: Long, isPinned: Boolean)
     fun isThreadPinned(threadID: Long): Boolean
+    fun clearMessages(threadID: Long): Boolean
 
     // Contacts
     fun getContactWithSessionID(sessionID: String): Contact?

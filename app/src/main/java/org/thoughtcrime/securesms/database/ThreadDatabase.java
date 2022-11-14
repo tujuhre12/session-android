@@ -466,7 +466,7 @@ public class ThreadDatabase extends Database {
   }
 
   public Cursor getApprovedConversationList() {
-    String where  = "((" + MESSAGE_COUNT + " != 0 AND (" + HAS_SENT + " = 1 OR " + RecipientDatabase.APPROVED + " = 1 OR "+ GroupDatabase.TABLE_NAME +"."+GROUP_ID+" LIKE '"+CLOSED_GROUP_PREFIX+"%')) OR " + GroupDatabase.TABLE_NAME + "." + GROUP_ID + " LIKE '" + OPEN_GROUP_PREFIX + "%') " +
+    String where  = "((" + HAS_SENT + " = 1 OR " + RecipientDatabase.APPROVED + " = 1 OR "+ GroupDatabase.TABLE_NAME +"."+GROUP_ID+" LIKE '"+CLOSED_GROUP_PREFIX+"%') OR " + GroupDatabase.TABLE_NAME + "." + GROUP_ID + " LIKE '" + OPEN_GROUP_PREFIX + "%') " +
             "AND " + ARCHIVED + " = 0 ";
     return getConversationList(where);
   }
@@ -692,6 +692,8 @@ public class ThreadDatabase extends Database {
           deleteThread(threadId);
           notifyConversationListListeners();
           return true;
+        } else {
+          updateThread(threadId, 0, "", null, System.currentTimeMillis(), 0, 0, 0, false, 0, 0);
         }
         return false;
       }
@@ -731,8 +733,9 @@ public class ThreadDatabase extends Database {
   }
 
   private boolean deleteThreadOnEmpty(long threadId) {
-    Recipient threadRecipient = getRecipientForThreadId(threadId);
-    return threadRecipient != null && !threadRecipient.isOpenGroupRecipient();
+    return false; // TODO: test the deletion / clearing logic here to make sure this is the desired functionality
+//    Recipient threadRecipient = getRecipientForThreadId(threadId);
+//    return threadRecipient != null && !threadRecipient.isOpenGroupRecipient();
   }
 
   private @NonNull String getFormattedBodyFor(@NonNull MessageRecord messageRecord) {

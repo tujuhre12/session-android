@@ -11,6 +11,7 @@ import network.loki.messenger.databinding.ActivityConversationSettingsBinding
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.MediaOverviewActivity
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
+import org.thoughtcrime.securesms.conversation.settings.ClearAllMessagesDialog.Option
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
@@ -61,6 +62,7 @@ class ConversationSettingsActivity: PassphraseRequiredActionBarActivity(), View.
         binding.profilePictureView.root.glide = GlideApp.with(this)
         updateRecipientDisplay()
         binding.searchConversation.setOnClickListener(this)
+        binding.clearMessages.setOnClickListener(this)
         binding.allMedia.setOnClickListener(this)
         binding.pinConversation.setOnClickListener(this)
         binding.notificationSettings.setOnClickListener(this)
@@ -144,6 +146,11 @@ class ConversationSettingsActivity: PassphraseRequiredActionBarActivity(), View.
                 notificationActivityCallback.launch(viewModel.threadId)
             }
             v === binding.back -> onBackPressed()
+            v === binding.clearMessages -> {
+                ClearAllMessagesDialog(viewModel.isUserGroupAdmin()) { option ->
+                    viewModel.clearMessages(option == Option.FOR_EVERYONE)
+                }.show(supportFragmentManager, "Clear messages dialog")
+            }
         }
     }
 }

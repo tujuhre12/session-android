@@ -882,4 +882,14 @@
     <string name="conversation_settings_delete_group">Delete Group</string>
     <string name="image">image</string>
     <string name="video">video</string>
+    <string name="dialog_clear_all_messages_title">Clear All Messages</string>
+    <string name="dialog_clear_all_media_title">Clear All Media</string>
+    <string name="dialog_clear_all_messages_message">Are you sure you want to clear all group messages?</string>
+    <string name="dialog_clear_all_media_message">Are you sure you want to clear all media and files? This will also delete all messages with attachments.</string>
+    <string name="dialog_clear_all_messages_local_message">Are you sure you want to clear %s messages from your device?</string>
+    <string name="dialog_clear_all_messages_for_me">For Me</string>
+    <string name="dialog_clear_all_messages_for_everyone">For Everyone</string>
+    <string name="dialog_clear_all_messages_clear">Clear</string>
+    <string name="dialog_clear_all_messages_cancel">Cancel</string>
+    <string name="media_overview_activity__clear_media">Clear All</string>
 </resources>

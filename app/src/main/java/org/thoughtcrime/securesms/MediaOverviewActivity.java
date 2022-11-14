@@ -52,9 +52,18 @@ import androidx.viewpager.widget.ViewPager;
 import com.codewaves.stickyheadergrid.StickyHeaderGridLayoutManager;
 import com.google.android.material.tabs.TabLayout;
 
+import org.session.libsession.messaging.MessagingModuleConfiguration;
 import org.session.libsession.messaging.messages.control.DataExtractionNotification;
 import org.session.libsession.messaging.sending_receiving.MessageSender;
 import org.session.libsession.utilities.Address;
+import org.session.libsession.utilities.GroupRecord;
+import org.session.libsession.utilities.TextSecurePreferences;
+import org.session.libsession.utilities.Util;
+import org.session.libsession.utilities.ViewUtil;
+import org.session.libsession.utilities.recipients.Recipient;
+import org.session.libsession.utilities.task.ProgressDialogAsyncTask;
+import org.session.libsignal.utilities.Log;
+import org.thoughtcrime.securesms.conversation.settings.ClearAllMediaDialog;
 import org.thoughtcrime.securesms.database.CursorRecyclerViewAdapter;
 import org.thoughtcrime.securesms.database.MediaDatabase;
 import org.thoughtcrime.securesms.database.loaders.BucketedThreadMediaLoader;
@@ -62,25 +71,22 @@ import org.thoughtcrime.securesms.database.loaders.BucketedThreadMediaLoader.Buc
 import org.thoughtcrime.securesms.database.loaders.ThreadMediaLoader;
 import org.thoughtcrime.securesms.mms.GlideApp;
 import org.thoughtcrime.securesms.permissions.Permissions;
-import org.session.libsession.utilities.recipients.Recipient;
 import org.thoughtcrime.securesms.util.AttachmentUtil;
 import org.thoughtcrime.securesms.util.SaveAttachmentTask;
 import org.thoughtcrime.securesms.util.StickyHeaderDecoration;
-import org.session.libsession.utilities.Util;
-import org.session.libsession.utilities.ViewUtil;
-import org.session.libsession.utilities.task.ProgressDialogAsyncTask;
 
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 
+import kotlin.Unit;
 import network.loki.messenger.R;
 
 /**
  * Activity for displaying media attachments in-app
  */
-public class MediaOverviewActivity extends PassphraseRequiredActionBarActivity {
+public class MediaOverviewActivity extends PassphraseRequiredActionBarActivity implements View.OnClickListener {
 
   @SuppressWarnings("unused")
   private final static String TAG = MediaOverviewActivity.class.getSimpleName();
@@ -132,11 +138,37 @@ public class MediaOverviewActivity extends PassphraseRequiredActionBarActivity {
     this.recipient.addListener(recipient -> {
       Util.runOnMain(() -> actionBar.setTitle(recipient.toShortString()));
     });
+    View clearButton = toolbar.findViewById(R.id.clearMedia);
+    if (!this.recipient.isClosedGroupRecipient()) {
+      clearButton.setVisibility(View.GONE);
+    } else {
+      String userPublicKey = TextSecurePreferences.getLocalNumber(this);
+      GroupRecord groupRecord = MessagingModuleConfiguration.getShared().getStorage().getGroup(this.recipient.getAddress().toGroupString());
+      if (userPublicKey == null || groupRecord == null) {
+        clearButton.setVisibility(View.GONE);
+      } else {
+        boolean isUserAdmin = groupRecord.getAdmins().contains(Address.fromSerialized(userPublicKey));
+        clearButton.setVisibility(isUserAdmin ? View.VISIBLE : View.GONE);
+        clearButton.setOnClickListener(this);
+      }
+    }
   }
 
   public void onEnterMultiSelect() {
     tabLayout.setEnabled(false);
     viewPager.setEnabled(false);
+  }
+
+  @Override
+  public void onClick(View v) {
+    if (v.getId() == R.id.clearMedia) {
+      FragmentManager fm = getSupportFragmentManager();
+      ClearAllMediaDialog dialog = new ClearAllMediaDialog(() -> {
+        Log.d("Loki", "Clear all the media");
+        return Unit.INSTANCE;
+      });
+      dialog.show(fm, "ClearAllMedia");
+    }
   }
 
   public void onExitMultiSelect() {

@@ -32,11 +32,26 @@ class ConversationSettingsViewModel(
     }
 
     fun isUserGroupAdmin(): Boolean = recipient?.let { recipient ->
-        if (!recipient.isGroupRecipient) return@let false
+        if (!recipient.isClosedGroupRecipient) return@let false
         val localUserAddress = prefs.getLocalNumber() ?: return@let false
         val group = storage.getGroup(recipient.address.toGroupString())
         group?.admins?.contains(Address.fromSerialized(localUserAddress)) ?: false // this will have to be replaced for new closed groups
     } ?: false
+
+    fun clearMessages(forAll: Boolean) {
+        if (forAll && !isUserGroupAdmin()) return
+
+        if (!forAll) {
+            viewModelScope.launch {
+                storage.clearMessages(threadId)
+            }
+        } else {
+            // do a send message here and on success do a clear messages
+            viewModelScope.launch {
+                storage.clearMessages(threadId)
+            }
+        }
+    }
 
     // DI-related
     @dagger.assisted.AssistedFactory
