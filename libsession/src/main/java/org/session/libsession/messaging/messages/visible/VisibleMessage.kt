@@ -4,9 +4,6 @@ import com.goterl.lazysodium.BuildConfig
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
-import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.GroupUtil
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.Log
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment as SignalAttachment
@@ -119,17 +116,9 @@ class VisibleMessage : Message()  {
         dataMessage.addAllAttachments(pointers)
         // TODO: Contact
         // Expiration timer
-        // TODO: We * want * expiration timer updates to be explicit. But currently Android will disable the expiration timer for a conversation
-        //       if it receives a message without the current expiration timer value attached to it...
-        val storage = MessagingModuleConfiguration.shared.storage
-        val context = MessagingModuleConfiguration.shared.context
-        val expiration = if (storage.isClosedGroup(recipient!!)) {
-            Recipient.from(context, Address.fromSerialized(GroupUtil.doubleEncodeGroupID(recipient!!)), false).expireMessages
-        } else {
-            Recipient.from(context, Address.fromSerialized(recipient!!), false).expireMessages
-        }
-        dataMessage.expireTimer = expiration
+        setExpirationSettingsConfigIfNeeded(proto)
         // Group context
+        val storage = MessagingModuleConfiguration.shared.storage
         if (storage.isClosedGroup(recipient!!)) {
             try {
                 setGroupContext(dataMessage)

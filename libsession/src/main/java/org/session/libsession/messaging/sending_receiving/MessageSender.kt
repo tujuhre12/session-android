@@ -32,6 +32,7 @@ import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsignal.crypto.PushTransportDetails
 import org.session.libsignal.protos.SignalServiceProtos
+import org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Namespace
@@ -171,7 +172,12 @@ object MessageSender {
             val base64EncodedData = Base64.encodeBytes(wrappedMessage)
             // Send the result
             val timestamp = messageSendTime + SnodeAPI.clockOffset
-            val snodeMessage = SnodeMessage(message.recipient!!, base64EncodedData, message.ttl, timestamp)
+            val snodeMessage = SnodeMessage(
+                recipient = message.recipient!!,
+                data = base64EncodedData,
+                ttl = getSpecifiedTtl(message, isSyncMessage) ?: message.ttl,
+                timestamp = timestamp
+            )
             if (destination is Destination.Contact && message is VisibleMessage && !isSelfSend) {
                 SnodeModule.shared.broadcaster.broadcast("sendingMessage", messageSendTime)
             }
@@ -212,6 +218,19 @@ object MessageSender {
             handleFailure(exception)
         }
         return promise
+    }
+
+    private fun getSpecifiedTtl(message: Message, isSyncMessage: Boolean): Long? {
+        val storage = MessagingModuleConfiguration.shared.storage
+        val threadId = message.threadID
+            ?: run {
+                val address = if (isSyncMessage && message is VisibleMessage) message.syncTarget else message.recipient
+                storage.getOrCreateThreadIdFor(address!!)
+            }
+        val config = storage.getExpirationSettingsConfiguration(threadId) ?: return null
+        return if (config.isEnabled && (config.expirationType == ExpirationType.DELETE_AFTER_SEND || isSyncMessage)) {
+            config.durationSeconds * 1000L
+        } else null
     }
 
     // Open Groups

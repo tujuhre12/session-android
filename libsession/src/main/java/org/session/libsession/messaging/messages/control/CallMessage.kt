@@ -14,10 +14,10 @@ class CallMessage(): ControlMessage() {
 
     override val isSelfSendValid: Boolean get() = type in arrayOf(ANSWER, END_CALL)
 
-    override val ttl: Long = 300000L // 5m
+    override val defaultTtl: Long = 300000L // 5m
 
     override fun isValid(): Boolean = super.isValid() && type != null && callId != null
-            && (!sdps.isNullOrEmpty() || type in listOf(END_CALL, PRE_OFFER))
+            && (sdps.isNotEmpty() || type in listOf(END_CALL, PRE_OFFER))
 
     constructor(type: SignalServiceProtos.CallMessage.Type,
                 sdps: List<String>,
@@ -81,10 +81,11 @@ class CallMessage(): ControlMessage() {
             .addAllSdpMids(sdpMids)
             .setUuid(callId!!.toString())
 
-        return SignalServiceProtos.Content.newBuilder()
-            .setCallMessage(
-                callMessage
-            )
+        val content = SignalServiceProtos.Content.newBuilder()
+        setExpirationSettingsConfigIfNeeded(content)
+
+        return content
+            .setCallMessage(callMessage)
             .build()
     }
 

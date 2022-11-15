@@ -6,7 +6,7 @@ import org.session.libsignal.utilities.Log
 class TypingIndicator() : ControlMessage() {
     var kind: Kind? = null
 
-    override val ttl: Long = 20 * 1000
+    override val defaultTtl: Long = 20 * 1000
 
     override fun isValid(): Boolean {
         if (!super.isValid()) return false
@@ -58,12 +58,13 @@ class TypingIndicator() : ControlMessage() {
         typingIndicatorProto.timestamp = timestamp
         typingIndicatorProto.action = kind.toProto()
         val contentProto = SignalServiceProtos.Content.newBuilder()
-        try {
+        return try {
             contentProto.typingMessage = typingIndicatorProto.build()
-            return contentProto.build()
+            setExpirationSettingsConfigIfNeeded(contentProto)
+            contentProto.build()
         } catch (e: Exception) {
             Log.w(TAG, "Couldn't construct typing indicator proto from: $this")
-            return null
+            null
         }
     }
 }

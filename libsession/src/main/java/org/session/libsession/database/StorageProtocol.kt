@@ -8,6 +8,7 @@ import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.jobs.AttachmentUploadJob
 import org.session.libsession.messaging.jobs.Job
 import org.session.libsession.messaging.jobs.MessageSendJob
+import org.session.libsession.messaging.messages.ExpirationSettingsConfiguration
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.ConfigurationMessage
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
@@ -144,7 +145,7 @@ interface StorageProtocol {
 
     // Thread
     fun getOrCreateThreadIdFor(address: Address): Long
-    fun getOrCreateThreadIdFor(publicKey: String, groupPublicKey: String?, openGroupID: String?): Long
+    fun getOrCreateThreadIdFor(publicKey: String, groupPublicKey: String? = null, openGroupID: String? = null): Long
     fun getThreadId(publicKeyOrOpenGroupID: String): Long?
     fun getThreadId(address: Address): Long?
     fun getThreadId(recipient: Recipient): Long?
@@ -198,4 +199,7 @@ interface StorageProtocol {
     fun deleteReactions(messageId: Long, mms: Boolean)
     fun unblock(toUnblock: List<Recipient>)
     fun blockedContacts(): List<Recipient>
+    fun getExpirationSettingsConfiguration(threadId: Long): ExpirationSettingsConfiguration?
+    fun addExpirationSettingsConfiguration(config: ExpirationSettingsConfiguration)
+    fun getExpiringMessages(messageIds: LongArray): List<Pair<String, Int>>
 }

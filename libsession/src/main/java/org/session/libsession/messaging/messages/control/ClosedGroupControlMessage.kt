@@ -14,7 +14,7 @@ import org.session.libsignal.utilities.Log
 class ClosedGroupControlMessage() : ControlMessage() {
     var kind: Kind? = null
 
-    override val ttl: Long get() {
+    override val defaultTtl: Long get() {
         return when (kind) {
             is Kind.EncryptionKeyPair -> 14 * 24 * 60 * 60 * 1000
             else -> 14 * 24 * 60 * 60 * 1000
@@ -167,6 +167,8 @@ class ClosedGroupControlMessage() : ControlMessage() {
             val contentProto = SignalServiceProtos.Content.newBuilder()
             val dataMessageProto = DataMessage.newBuilder()
             dataMessageProto.closedGroupControlMessage = closedGroupControlMessage.build()
+            // Expiration timer
+            setExpirationSettingsConfigIfNeeded(contentProto)
             // Group context
             setGroupContext(dataMessageProto)
             contentProto.dataMessage = dataMessageProto.build()

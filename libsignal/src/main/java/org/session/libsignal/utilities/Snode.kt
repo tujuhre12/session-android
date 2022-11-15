@@ -10,7 +10,8 @@ class Snode(val address: String, val port: Int, val publicKeySet: KeySet?) {
         DeleteMessage("delete"),
         OxenDaemonRPCCall("oxend_request"),
         Info("info"),
-        DeleteAll("delete_all")
+        DeleteAll("delete_all"),
+        Expire("expire")
     }
 
     data class KeySet(val ed25519Key: String, val x25519Key: String)

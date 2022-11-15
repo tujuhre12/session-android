@@ -12,6 +12,7 @@ import org.session.libsession.messaging.jobs.Job
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.jobs.MessageReceiveJob
 import org.session.libsession.messaging.jobs.MessageSendJob
+import org.session.libsession.messaging.messages.ExpirationSettingsConfiguration
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.ConfigurationMessage
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
@@ -959,6 +960,18 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
     override fun blockedContacts(): List<Recipient> {
         val recipientDb = DatabaseComponent.get(context).recipientDatabase()
         return recipientDb.blockedContacts
+    }
+
+    override fun getExpirationSettingsConfiguration(threadId: Long): ExpirationSettingsConfiguration? {
+        return null
+    }
+
+    override fun addExpirationSettingsConfiguration(config: ExpirationSettingsConfiguration) {
+
+    }
+
+    override fun getExpiringMessages(messageIds: LongArray): List<Pair<String, Int>> {
+        return emptyList()
     }
 
 }

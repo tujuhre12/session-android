@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityExpirationSettingsBinding
 import org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType
@@ -41,7 +42,15 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
             .zip(resources.getStringArray(R.array.read_expiration_time_names)) { value, name -> RadioOption(value, name)}
         val afterSendOptions = resources.getIntArray(R.array.send_expiration_time_values).map(Int::toString)
             .zip(resources.getStringArray(R.array.send_expiration_time_names)) { value, name -> RadioOption(value, name)}
-        viewModelFactory.create(threadId, afterReadOptions, afterSendOptions)
+        viewModelFactory.create(threadId, mayAddTestExpiryOption(afterReadOptions), mayAddTestExpiryOption(afterSendOptions))
+    }
+
+    private fun mayAddTestExpiryOption(expiryOptions: List<RadioOption>): List<RadioOption> {
+        return if (BuildConfig.DEBUG) {
+            val options = expiryOptions.toMutableList()
+            options.add(1, RadioOption("60", "1 Minute"))
+            options
+        } else expiryOptions
     }
 
     override fun onSaveInstanceState(outState: Bundle) {

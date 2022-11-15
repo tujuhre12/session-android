@@ -1,6 +1,7 @@
 package org.session.libsession.messaging.messages
 
 import com.google.protobuf.ByteString
+import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsignal.protos.SignalServiceProtos
 
@@ -14,8 +15,10 @@ abstract class Message {
     var groupPublicKey: String? = null
     var openGroupServerMessageID: Long? = null
     var serverHash: String? = null
+    var specifiedTtl: Long? = null
 
-    open val ttl: Long = 14 * 24 * 60 * 60 * 1000
+    open val defaultTtl: Long = 14 * 24 * 60 * 60 * 1000
+    val ttl: Long get() = specifiedTtl ?: defaultTtl
     open val isSelfSendValid: Boolean = false
 
     open fun isValid(): Boolean {
@@ -36,4 +39,13 @@ abstract class Message {
         dataMessage.group = groupProto.build()
     }
 
+    fun setExpirationSettingsConfigIfNeeded(builder: SignalServiceProtos.Content.Builder) {
+        val threadId = threadID ?: return
+        val config = MessagingModuleConfiguration.shared.storage.getExpirationSettingsConfiguration(threadId) ?: return
+        builder.expirationTimer = config.durationSeconds
+        if (config.isEnabled) {
+            builder.expirationType = config.expirationType
+            builder.lastDisappearingMessageChangeTimestamp = config.lastChangeTimestampMs
+        }
+    }
 }

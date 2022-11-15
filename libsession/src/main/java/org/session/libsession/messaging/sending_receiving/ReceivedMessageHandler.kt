@@ -5,6 +5,7 @@ import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.jobs.BackgroundGroupAddJob
 import org.session.libsession.messaging.jobs.JobQueue
+import org.session.libsession.messaging.messages.ExpirationSettingsConfiguration
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.CallMessage
 import org.session.libsession.messaging.messages.control.ClosedGroupControlMessage
@@ -13,6 +14,7 @@ import org.session.libsession.messaging.messages.control.DataExtractionNotificat
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
 import org.session.libsession.messaging.messages.control.ReadReceipt
+import org.session.libsession.messaging.messages.control.SyncedExpiriesMessage
 import org.session.libsession.messaging.messages.control.TypingIndicator
 import org.session.libsession.messaging.messages.control.UnsendRequest
 import org.session.libsession.messaging.messages.visible.Attachment
@@ -58,6 +60,7 @@ internal fun MessageReceiver.isBlocked(publicKey: String): Boolean {
 }
 
 fun MessageReceiver.handle(message: Message, proto: SignalServiceProtos.Content, openGroupID: String?) {
+    updateExpirationSettingsConfigIfNeeded(message, proto, openGroupID)
     when (message) {
         is ReadReceipt -> handleReadReceipt(message)
         is TypingIndicator -> handleTypingIndicator(message)
@@ -73,7 +76,28 @@ fun MessageReceiver.handle(message: Message, proto: SignalServiceProtos.Content,
             runProfileUpdate = true
         )
         is CallMessage -> handleCallMessage(message)
+        is SyncedExpiriesMessage -> handleSyncedExpiriesMessage(message)
     }
+}
+
+fun updateExpirationSettingsConfigIfNeeded(message: Message, proto: SignalServiceProtos.Content, openGroupID: String?) {
+    if (!proto.hasLastDisappearingMessageChangeTimestamp()) return
+    val storage = MessagingModuleConfiguration.shared.storage
+    val threadID = storage.getOrCreateThreadIdFor(message.sender!!, message.groupPublicKey, openGroupID)
+    if (threadID <= 0) return
+    val localConfig = storage.getExpirationSettingsConfiguration(threadID)
+    if (localConfig == null || localConfig.lastChangeTimestampMs < proto.lastDisappearingMessageChangeTimestamp) return
+    val durationSeconds = if (proto.hasExpirationTimer()) proto.expirationTimer else 0
+    val isEnabled = durationSeconds != 0
+    val type = if (proto.hasExpirationType()) proto.expirationType else null
+    val remoteConfig = ExpirationSettingsConfiguration(
+        threadID,
+        isEnabled,
+        durationSeconds,
+        type,
+        proto.lastDisappearingMessageChangeTimestamp
+    )
+    storage.addExpirationSettingsConfiguration(remoteConfig)
 }
 
 // region Control Messages
@@ -85,6 +109,19 @@ private fun MessageReceiver.handleReadReceipt(message: ReadReceipt) {
 private fun MessageReceiver.handleCallMessage(message: CallMessage) {
     // TODO: refactor this out to persistence, just to help debug the flow and send/receive in synchronous testing
     WebRtcUtils.SIGNAL_QUEUE.trySend(message)
+}
+
+private fun MessageReceiver.handleSyncedExpiriesMessage(message: SyncedExpiriesMessage) {
+    val storage = MessagingModuleConfiguration.shared.storage
+    val userPublicKey = storage.getUserPublicKey() ?: return
+    if (userPublicKey != message.sender) return
+    message.conversationExpiries.forEach { (syncTarget, syncedExpiries) ->
+        val config = storage.getExpirationSettingsConfiguration(storage.getOrCreateThreadIdFor(syncTarget)) ?: return@forEach
+        syncedExpiries.forEach { syncedExpiry ->
+            val startedAtMs = syncedExpiry.expirationTimestamp!! - config.durationSeconds * 1000
+            SSKEnvironment.shared.messageExpirationManager.startAnyExpiration(startedAtMs, syncTarget)
+        }
+    }
 }
 
 private fun MessageReceiver.handleTypingIndicator(message: TypingIndicator) {

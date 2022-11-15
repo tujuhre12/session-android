@@ -10,10 +10,11 @@ class MessageRequestResponse(val isApproved: Boolean) : ControlMessage() {
     override fun toProto(): SignalServiceProtos.Content? {
         val messageRequestResponseProto = SignalServiceProtos.MessageRequestResponse.newBuilder()
             .setIsApproved(isApproved)
+        val contentProto = SignalServiceProtos.Content.newBuilder()
         return try {
-            SignalServiceProtos.Content.newBuilder()
-                .setMessageRequestResponse(messageRequestResponseProto.build())
-                .build()
+            contentProto.messageRequestResponse = messageRequestResponseProto.build()
+            setExpirationSettingsConfigIfNeeded(contentProto)
+            contentProto.build()
         } catch (e: Exception) {
             Log.w(TAG, "Couldn't construct message request response proto from: $this")
             null

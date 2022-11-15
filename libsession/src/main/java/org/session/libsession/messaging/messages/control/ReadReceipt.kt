@@ -39,12 +39,13 @@ class ReadReceipt() : ControlMessage() {
         receiptProto.type = SignalServiceProtos.ReceiptMessage.Type.READ
         receiptProto.addAllTimestamp(timestamps.asIterable())
         val contentProto = SignalServiceProtos.Content.newBuilder()
-        try {
+        return try {
             contentProto.receiptMessage = receiptProto.build()
-            return contentProto.build()
+            setExpirationSettingsConfigIfNeeded(contentProto)
+            contentProto.build()
         } catch (e: Exception) {
             Log.w(TAG, "Couldn't construct read receipt proto from: $this")
-            return null
+            null
         }
     }
 }
