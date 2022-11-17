@@ -8,7 +8,7 @@ import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.jobs.AttachmentUploadJob
 import org.session.libsession.messaging.jobs.Job
 import org.session.libsession.messaging.jobs.MessageSendJob
-import org.session.libsession.messaging.messages.ExpirationSettingsConfiguration
+import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.ConfigurationMessage
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
@@ -199,7 +199,7 @@ interface StorageProtocol {
     fun deleteReactions(messageId: Long, mms: Boolean)
     fun unblock(toUnblock: List<Recipient>)
     fun blockedContacts(): List<Recipient>
-    fun getExpirationSettingsConfiguration(threadId: Long): ExpirationSettingsConfiguration?
-    fun addExpirationSettingsConfiguration(config: ExpirationSettingsConfiguration)
+    fun getExpirationConfiguration(threadId: Long): ExpirationConfiguration?
+    fun updateExpirationConfiguration(config: ExpirationConfiguration)
     fun getExpiringMessages(messageIds: LongArray): List<Pair<String, Int>>
 }

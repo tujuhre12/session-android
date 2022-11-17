@@ -11,8 +11,10 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType
+import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.preferences.RadioOption
 
@@ -20,11 +22,14 @@ class ExpirationSettingsViewModel(
     private val threadId: Long,
     private val afterReadOptions: List<RadioOption>,
     private val afterSendOptions: List<RadioOption>,
-    private val threadDb: ThreadDatabase
+    private val threadDb: ThreadDatabase,
+    private val storage: Storage
 ) : ViewModel() {
 
     var showExpirationTypeSelector: Boolean = false
         private set
+
+    private var expirationConfig: ExpirationConfiguration? = null
 
     private val _recipient = MutableStateFlow<Recipient?>(null)
     val recipient: StateFlow<Recipient?> = _recipient
@@ -32,17 +37,22 @@ class ExpirationSettingsViewModel(
     private val _selectedExpirationType = MutableStateFlow<ExpirationType?>(null)
     val selectedExpirationType: StateFlow<ExpirationType?> = _selectedExpirationType
 
+    private val _selectedExpirationTimer = MutableStateFlow(0)
+    val selectedExpirationTimer: StateFlow<Int> = _selectedExpirationTimer
+
     private val _expirationTimerOptions = MutableStateFlow<List<RadioOption>>(emptyList())
     val expirationTimerOptions: StateFlow<List<RadioOption>> = _expirationTimerOptions
 
     init {
         viewModelScope.launch {
+            expirationConfig = storage.getExpirationConfiguration(threadId)
             val recipient = threadDb.getRecipientForThreadId(threadId)
             _recipient.value = recipient
             showExpirationTypeSelector = recipient?.isContactRecipient == true && recipient.isLocalNumber == false
-        }
-        if (recipient.value?.isLocalNumber == true || recipient.value?.isClosedGroupRecipient == true) {
-            _selectedExpirationType.value = ExpirationType.DELETE_AFTER_SEND
+            if (recipient?.isLocalNumber == true || recipient?.isClosedGroupRecipient == true) {
+                _selectedExpirationType.value = ExpirationType.DELETE_AFTER_SEND
+            }
+            _selectedExpirationTimer.value = expirationConfig?.durationSeconds ?: 0
         }
         selectedExpirationType.mapLatest {
             when (it) {
@@ -60,7 +70,14 @@ class ExpirationSettingsViewModel(
     }
 
     fun onExpirationTimerSelected(option: RadioOption) {
+        _selectedExpirationTimer.value = option.value.toIntOrNull() ?: 0
+    }
 
+    fun onSetClick() = viewModelScope.launch {
+        val expiresIn = _selectedExpirationTimer.value
+        val expiryType = _selectedExpirationType.value?.number ?: 0
+        val expiryChangeTimestamp = System.currentTimeMillis()
+        threadDb.updateExpiryConfig(threadId, expiresIn, expiryType, expiryChangeTimestamp)
     }
 
     @dagger.assisted.AssistedFactory
@@ -77,7 +94,8 @@ class ExpirationSettingsViewModel(
         @Assisted private val threadId: Long,
         @Assisted("afterRead") private val afterReadOptions: List<RadioOption>,
         @Assisted("afterSend") private val afterSendOptions: List<RadioOption>,
-        private val threadDb: ThreadDatabase
+        private val threadDb: ThreadDatabase,
+        private val storage: Storage
     ) : ViewModelProvider.Factory {
 
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -85,7 +103,8 @@ class ExpirationSettingsViewModel(
                 threadId,
                 afterReadOptions,
                 afterSendOptions,
-                threadDb
+                threadDb,
+                storage
             ) as T
         }
     }

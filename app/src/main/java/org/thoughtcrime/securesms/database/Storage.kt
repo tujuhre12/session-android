@@ -12,7 +12,7 @@ import org.session.libsession.messaging.jobs.Job
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.jobs.MessageReceiveJob
 import org.session.libsession.messaging.jobs.MessageSendJob
-import org.session.libsession.messaging.messages.ExpirationSettingsConfiguration
+import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.ConfigurationMessage
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
@@ -962,12 +962,31 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         return recipientDb.blockedContacts
     }
 
-    override fun getExpirationSettingsConfiguration(threadId: Long): ExpirationSettingsConfiguration? {
+    override fun getExpirationConfiguration(threadId: Long): ExpirationConfiguration? {
+        val threadDb = DatabaseComponent.get(context).threadDatabase()
+        threadDb.readerFor(threadDb.conversationList).use { reader ->
+            while (reader.next != null) {
+                val thread = reader.current
+                if (thread.recipient.isClosedGroupRecipient || thread.recipient.isContactRecipient) {
+                    return ExpirationConfiguration(
+                        thread.threadId,
+                        thread.expiresIn.toInt(),
+                        thread.expiryType,
+                        thread.expiryChangeTimestamp
+                    )
+                }
+            }
+        }
         return null
     }
 
-    override fun addExpirationSettingsConfiguration(config: ExpirationSettingsConfiguration) {
-
+    override fun updateExpirationConfiguration(config: ExpirationConfiguration) {
+        DatabaseComponent.get(context).threadDatabase().updateExpiryConfig(
+            config.threadId,
+            config.durationSeconds,
+            config.expirationType?.number ?: 0,
+            config.lastChangeTimestampMs
+        )
     }
 
     override fun getExpiringMessages(messageIds: LongArray): List<Pair<String, Int>> {

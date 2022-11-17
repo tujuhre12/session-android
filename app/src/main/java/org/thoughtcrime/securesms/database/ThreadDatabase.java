@@ -18,6 +18,7 @@
 package org.thoughtcrime.securesms.database;
 
 import static org.session.libsession.utilities.GroupUtil.CLOSED_GROUP_PREFIX;
+import static org.session.libsession.utilities.GroupUtil.OPEN_GROUP_INBOX_PREFIX;
 import static org.session.libsession.utilities.GroupUtil.OPEN_GROUP_PREFIX;
 import static org.thoughtcrime.securesms.database.GroupDatabase.GROUP_ID;
 
@@ -96,6 +97,8 @@ public class ThreadDatabase extends Database {
   public  static final String DELIVERY_RECEIPT_COUNT = "delivery_receipt_count";
   public  static final String READ_RECEIPT_COUNT     = "read_receipt_count";
   public  static final String EXPIRES_IN             = "expires_in";
+  public  static final String EXPIRY_TYPE            = "expiry_type";
+  public  static final String EXPIRY_CHANGE_TIMESTAMP= "expiry_change_timestamp";
   public  static final String LAST_SEEN              = "last_seen";
   public static final String HAS_SENT               = "has_sent";
   public  static final String IS_PINNED              = "is_pinned";
@@ -118,7 +121,8 @@ public class ThreadDatabase extends Database {
 
   private static final String[] THREAD_PROJECTION = {
       ID, DATE, MESSAGE_COUNT, ADDRESS, SNIPPET, SNIPPET_CHARSET, READ, UNREAD_COUNT, TYPE, ERROR, SNIPPET_TYPE,
-      SNIPPET_URI, ARCHIVED, STATUS, DELIVERY_RECEIPT_COUNT, EXPIRES_IN, LAST_SEEN, READ_RECEIPT_COUNT, IS_PINNED
+      SNIPPET_URI, ARCHIVED, STATUS, DELIVERY_RECEIPT_COUNT, EXPIRES_IN, LAST_SEEN, READ_RECEIPT_COUNT, IS_PINNED,
+      EXPIRY_TYPE, EXPIRY_CHANGE_TIMESTAMP
   };
 
   private static final List<String> TYPED_THREAD_PROJECTION = Stream.of(THREAD_PROJECTION)
@@ -133,6 +137,30 @@ public class ThreadDatabase extends Database {
   public static String getCreatePinnedCommand() {
     return "ALTER TABLE "+ TABLE_NAME + " " +
             "ADD COLUMN " + IS_PINNED + " INTEGER DEFAULT 0;";
+  }
+
+  public static String getCreateExpiryTypeCommand() {
+    return "ALTER TABLE "+ TABLE_NAME + " " +
+            "ADD COLUMN " + EXPIRY_TYPE + " INTEGER DEFAULT 0;";
+  }
+
+  public static String getCreateExpiryChangeTimestampCommand() {
+    return "ALTER TABLE "+ TABLE_NAME + " " +
+            "ADD COLUMN " + EXPIRY_CHANGE_TIMESTAMP + " INTEGER DEFAULT 0;";
+  }
+
+  public static String getUpdateGroupConversationExpiryTypeCommand() {
+    return "UPDATE " + TABLE_NAME + " SET " + EXPIRY_TYPE + " = 1 " +
+            "WHERE " + ADDRESS + " LIKE '" + CLOSED_GROUP_PREFIX + "%'" +
+            "AND " + EXPIRES_IN + " > 0";
+  }
+
+  public static String getUpdateOneToOneConversationExpiryTypeCommand() {
+    return "UPDATE " + TABLE_NAME + " SET " + EXPIRY_TYPE + " = 2 " +
+            "WHERE " + ADDRESS + " NOT LIKE '" + CLOSED_GROUP_PREFIX + "%'" +
+            "AND " + ADDRESS + " NOT LIKE '" + OPEN_GROUP_PREFIX + "%'" +
+            "AND " + ADDRESS + " NOT LIKE '" + OPEN_GROUP_INBOX_PREFIX + "%'" +
+            "AND " + EXPIRES_IN + " > 0";
   }
 
   public ThreadDatabase(Context context, SQLCipherOpenHelper databaseHelper) {
@@ -194,6 +222,18 @@ public class ThreadDatabase extends Database {
     if (unarchive) {
       contentValues.put(ARCHIVED, 0);
     }
+
+    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    db.update(TABLE_NAME, contentValues, ID + " = ?", new String[] {threadId + ""});
+    notifyConversationListListeners();
+  }
+
+  public void updateExpiryConfig(long threadId, int expiresIn, int expiryType, long expiryChangeTimestamp) {
+    ContentValues contentValues = new ContentValues(3);
+
+    contentValues.put(EXPIRES_IN, expiresIn);
+    contentValues.put(EXPIRY_TYPE, expiryType);
+    contentValues.put(EXPIRY_CHANGE_TIMESTAMP, expiryChangeTimestamp);
 
     SQLiteDatabase db = databaseHelper.getWritableDatabase();
     db.update(TABLE_NAME, contentValues, ID + " = ?", new String[] {threadId + ""});
@@ -909,6 +949,8 @@ public class ThreadDatabase extends Database {
       int                deliveryReceiptCount = cursor.getInt(cursor.getColumnIndexOrThrow(ThreadDatabase.DELIVERY_RECEIPT_COUNT));
       int                readReceiptCount     = cursor.getInt(cursor.getColumnIndexOrThrow(ThreadDatabase.READ_RECEIPT_COUNT));
       long               expiresIn            = cursor.getLong(cursor.getColumnIndexOrThrow(ThreadDatabase.EXPIRES_IN));
+      int                expiryType           = cursor.getInt(cursor.getColumnIndexOrThrow(ThreadDatabase.EXPIRY_TYPE));
+      long               expiryChangeTimestamp = cursor.getLong(cursor.getColumnIndexOrThrow(ThreadDatabase.EXPIRY_CHANGE_TIMESTAMP));
       long               lastSeen             = cursor.getLong(cursor.getColumnIndexOrThrow(ThreadDatabase.LAST_SEEN));
       Uri                snippetUri           = getSnippetUri(cursor);
       boolean            pinned              = cursor.getInt(cursor.getColumnIndexOrThrow(ThreadDatabase.IS_PINNED)) != 0;
@@ -919,7 +961,7 @@ public class ThreadDatabase extends Database {
 
       return new ThreadRecord(body, snippetUri, recipient, date, count,
                               unreadCount, threadId, deliveryReceiptCount, status, type,
-                              distributionType, archived, expiresIn, lastSeen, readReceiptCount, pinned);
+                              distributionType, archived, expiresIn, lastSeen, readReceiptCount, pinned, expiryType, expiryChangeTimestamp);
     }
 
     private @Nullable Uri getSnippetUri(Cursor cursor) {

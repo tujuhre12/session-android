@@ -112,11 +112,20 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
                 }
             })
         }
+        binding.buttonSet.setOnClickListener {
+            viewModel.onSetClick()
+        }
         lifecycleScope.launchWhenStarted {
             launch {
                 viewModel.selectedExpirationType.collect { type ->
                     val position = deleteTypeOptions.indexOfFirst { it.value.toIntOrNull() == type?.number }
                     deleteTypeOptionAdapter.setSelectedPosition(max(0, position))
+                }
+            }
+            launch {
+                viewModel.selectedExpirationTimer.collect { expirationTimer ->
+                    val position = deleteTypeOptions.indexOfFirst { it.value.toIntOrNull() == expirationTimer }
+                    timerOptionAdapter.setSelectedPosition(max(0, position))
                 }
             }
             launch {

@@ -227,7 +227,7 @@ object MessageSender {
                 val address = if (isSyncMessage && message is VisibleMessage) message.syncTarget else message.recipient
                 storage.getOrCreateThreadIdFor(address!!)
             }
-        val config = storage.getExpirationSettingsConfiguration(threadId) ?: return null
+        val config = storage.getExpirationConfiguration(threadId) ?: return null
         return if (config.isEnabled && (config.expirationType == ExpirationType.DELETE_AFTER_SEND || isSyncMessage)) {
             config.durationSeconds * 1000L
         } else null
