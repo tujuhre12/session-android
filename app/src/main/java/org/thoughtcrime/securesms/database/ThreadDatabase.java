@@ -150,9 +150,12 @@ public class ThreadDatabase extends Database {
   }
 
   public static String getUpdateGroupConversationExpiryTypeCommand() {
-    return "UPDATE " + TABLE_NAME + " SET " + EXPIRY_TYPE + " = 1 " +
-            "WHERE " + ADDRESS + " LIKE '" + CLOSED_GROUP_PREFIX + "%'" +
-            "AND " + EXPIRES_IN + " > 0";
+    return "UPDATE " + TABLE_NAME + " SET " + EXPIRY_TYPE + " = 1, " +
+            EXPIRES_IN + " = (SELECT " + RecipientDatabase.EXPIRE_MESSAGES + " FROM " + RecipientDatabase.TABLE_NAME +
+                              " WHERE " + TABLE_NAME + "." + ADDRESS + " = " + RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.ADDRESS + " AND " + RecipientDatabase.EXPIRE_MESSAGES + " > 0 )" +
+            "WHERE " + TABLE_NAME + "." +  ADDRESS + " LIKE '" + CLOSED_GROUP_PREFIX + "%' " +
+            "AND EXISTS (SELECT " + RecipientDatabase.EXPIRE_MESSAGES + " FROM " + RecipientDatabase.TABLE_NAME +
+                          " WHERE " + TABLE_NAME + "." + ADDRESS + " = " + RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.ADDRESS + " AND " + RecipientDatabase.EXPIRE_MESSAGES + " > 0 )";
   }
 
   public static String getUpdateOneToOneConversationExpiryTypeCommand() {

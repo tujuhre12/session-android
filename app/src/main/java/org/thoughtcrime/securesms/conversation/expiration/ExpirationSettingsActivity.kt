@@ -48,7 +48,7 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
     private fun mayAddTestExpiryOption(expiryOptions: List<RadioOption>): List<RadioOption> {
         return if (BuildConfig.DEBUG) {
             val options = expiryOptions.toMutableList()
-            options.add(1, RadioOption("60", "1 Minute"))
+            options.add(1, RadioOption("60", "1 Minute (for testing purposes)"))
             options
         } else expiryOptions
     }
@@ -123,8 +123,8 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
                 }
             }
             launch {
-                viewModel.selectedExpirationTimer.collect { expirationTimer ->
-                    val position = deleteTypeOptions.indexOfFirst { it.value.toIntOrNull() == expirationTimer }
+                viewModel.selectedExpirationTimer.collect { option ->
+                    val position = viewModel.expirationTimerOptions.value.indexOfFirst { it.value == option?.value }
                     timerOptionAdapter.setSelectedPosition(max(0, position))
                 }
             }

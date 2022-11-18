@@ -46,7 +46,7 @@ public class RecipientDatabase extends Database {
   private static final String COLOR                    = "color";
   private static final String SEEN_INVITE_REMINDER     = "seen_invite_reminder";
   private static final String DEFAULT_SUBSCRIPTION_ID  = "default_subscription_id";
-  private static final String EXPIRE_MESSAGES          = "expire_messages";
+          static final String EXPIRE_MESSAGES          = "expire_messages";
   private static final String REGISTERED               = "registered";
   private static final String PROFILE_KEY              = "profile_key";
   private static final String SYSTEM_DISPLAY_NAME      = "system_display_name";

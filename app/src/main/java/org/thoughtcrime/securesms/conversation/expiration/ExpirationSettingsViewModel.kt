@@ -37,8 +37,8 @@ class ExpirationSettingsViewModel(
     private val _selectedExpirationType = MutableStateFlow<ExpirationType?>(null)
     val selectedExpirationType: StateFlow<ExpirationType?> = _selectedExpirationType
 
-    private val _selectedExpirationTimer = MutableStateFlow(0)
-    val selectedExpirationTimer: StateFlow<Int> = _selectedExpirationTimer
+    private val _selectedExpirationTimer = MutableStateFlow(afterSendOptions.firstOrNull())
+    val selectedExpirationTimer: StateFlow<RadioOption?> = _selectedExpirationTimer
 
     private val _expirationTimerOptions = MutableStateFlow<List<RadioOption>>(emptyList())
     val expirationTimerOptions: StateFlow<List<RadioOption>> = _expirationTimerOptions
@@ -52,7 +52,11 @@ class ExpirationSettingsViewModel(
             if (recipient?.isLocalNumber == true || recipient?.isClosedGroupRecipient == true) {
                 _selectedExpirationType.value = ExpirationType.DELETE_AFTER_SEND
             }
-            _selectedExpirationTimer.value = expirationConfig?.durationSeconds ?: 0
+            _selectedExpirationTimer.value = when(expirationConfig?.expirationType) {
+                ExpirationType.DELETE_AFTER_SEND -> afterSendOptions.find { it.value.toIntOrNull() == expirationConfig?.durationSeconds }
+                ExpirationType.DELETE_AFTER_READ -> afterReadOptions.find { it.value.toIntOrNull() == expirationConfig?.durationSeconds }
+                else -> afterSendOptions.firstOrNull()
+            }
         }
         selectedExpirationType.mapLatest {
             when (it) {
@@ -70,11 +74,11 @@ class ExpirationSettingsViewModel(
     }
 
     fun onExpirationTimerSelected(option: RadioOption) {
-        _selectedExpirationTimer.value = option.value.toIntOrNull() ?: 0
+        _selectedExpirationTimer.value = option
     }
 
     fun onSetClick() = viewModelScope.launch {
-        val expiresIn = _selectedExpirationTimer.value
+        val expiresIn = _selectedExpirationTimer.value?.value?.toIntOrNull() ?: 0
         val expiryType = _selectedExpirationType.value?.number ?: 0
         val expiryChangeTimestamp = System.currentTimeMillis()
         threadDb.updateExpiryConfig(threadId, expiresIn, expiryType, expiryChangeTimestamp)
