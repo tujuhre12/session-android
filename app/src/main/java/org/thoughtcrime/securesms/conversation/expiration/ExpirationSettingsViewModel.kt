@@ -51,6 +51,8 @@ class ExpirationSettingsViewModel(
             showExpirationTypeSelector = recipient?.isContactRecipient == true && recipient.isLocalNumber == false
             if (recipient?.isLocalNumber == true || recipient?.isClosedGroupRecipient == true) {
                 _selectedExpirationType.value = ExpirationType.DELETE_AFTER_SEND
+            } else {
+                _selectedExpirationType.value = expirationConfig?.expirationType
             }
             _selectedExpirationTimer.value = when(expirationConfig?.expirationType) {
                 ExpirationType.DELETE_AFTER_SEND -> afterSendOptions.find { it.value.toIntOrNull() == expirationConfig?.durationSeconds }

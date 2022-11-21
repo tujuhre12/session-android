@@ -159,11 +159,14 @@ public class ThreadDatabase extends Database {
   }
 
   public static String getUpdateOneToOneConversationExpiryTypeCommand() {
-    return "UPDATE " + TABLE_NAME + " SET " + EXPIRY_TYPE + " = 2 " +
+    return "UPDATE " + TABLE_NAME + " SET " + EXPIRY_TYPE + " = 2, " +
+            EXPIRES_IN + " = (SELECT " + RecipientDatabase.EXPIRE_MESSAGES + " FROM " + RecipientDatabase.TABLE_NAME +
+                              " WHERE " + TABLE_NAME + "." + ADDRESS + " = " + RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.ADDRESS + " AND " + RecipientDatabase.EXPIRE_MESSAGES + " > 0 )" +
             "WHERE " + ADDRESS + " NOT LIKE '" + CLOSED_GROUP_PREFIX + "%'" +
             "AND " + ADDRESS + " NOT LIKE '" + OPEN_GROUP_PREFIX + "%'" +
             "AND " + ADDRESS + " NOT LIKE '" + OPEN_GROUP_INBOX_PREFIX + "%'" +
-            "AND " + EXPIRES_IN + " > 0";
+            "AND EXISTS (SELECT " + RecipientDatabase.EXPIRE_MESSAGES + " FROM " + RecipientDatabase.TABLE_NAME +
+                        " WHERE " + TABLE_NAME + "." + ADDRESS + " = " + RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.ADDRESS + " AND " + RecipientDatabase.EXPIRE_MESSAGES + " > 0 )";
   }
 
   public ThreadDatabase(Context context, SQLCipherOpenHelper databaseHelper) {

@@ -967,7 +967,9 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         threadDb.readerFor(threadDb.conversationList).use { reader ->
             while (reader.next != null) {
                 val thread = reader.current
-                if (thread.recipient.isClosedGroupRecipient || thread.recipient.isContactRecipient) {
+                if (thread.threadId == threadId &&
+                    (thread.recipient.isClosedGroupRecipient || thread.recipient.isContactRecipient)
+                ) {
                     return ExpirationConfiguration(
                         thread.threadId,
                         thread.expiresIn.toInt(),
