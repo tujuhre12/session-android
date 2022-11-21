@@ -62,13 +62,13 @@ import org.session.libsession.utilities.Util;
 import org.session.libsession.utilities.ViewUtil;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsession.utilities.task.ProgressDialogAsyncTask;
-import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.conversation.settings.ClearAllMediaDialog;
 import org.thoughtcrime.securesms.database.CursorRecyclerViewAdapter;
 import org.thoughtcrime.securesms.database.MediaDatabase;
 import org.thoughtcrime.securesms.database.loaders.BucketedThreadMediaLoader;
 import org.thoughtcrime.securesms.database.loaders.BucketedThreadMediaLoader.BucketedThreadMedia;
 import org.thoughtcrime.securesms.database.loaders.ThreadMediaLoader;
+import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 import org.thoughtcrime.securesms.mms.GlideApp;
 import org.thoughtcrime.securesms.permissions.Permissions;
 import org.thoughtcrime.securesms.util.AttachmentUtil;
@@ -164,7 +164,7 @@ public class MediaOverviewActivity extends PassphraseRequiredActionBarActivity i
     if (v.getId() == R.id.clearMedia) {
       FragmentManager fm = getSupportFragmentManager();
       ClearAllMediaDialog dialog = new ClearAllMediaDialog(() -> {
-        Log.d("Loki", "Clear all the media");
+        MediaDatabase mediaDb = DatabaseComponent.get(this).mediaDatabase();
         return Unit.INSTANCE;
       });
       dialog.show(fm, "ClearAllMedia");
