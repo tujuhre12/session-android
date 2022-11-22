@@ -60,7 +60,7 @@ class TypingIndicator() : ControlMessage() {
         val contentProto = SignalServiceProtos.Content.newBuilder()
         return try {
             contentProto.typingMessage = typingIndicatorProto.build()
-            setExpirationSettingsConfigIfNeeded(contentProto)
+            setExpirationConfigurationIfNeeded(contentProto)
             contentProto.build()
         } catch (e: Exception) {
             Log.w(TAG, "Couldn't construct typing indicator proto from: $this")

@@ -50,7 +50,7 @@ class SyncedExpiriesMessage(): ControlMessage() {
         val contentProto = SignalServiceProtos.Content.newBuilder()
         return try {
             contentProto.syncedExpiries = syncedExpiriesProto.build()
-            setExpirationSettingsConfigIfNeeded(contentProto)
+            setExpirationConfigurationIfNeeded(contentProto)
             contentProto.build()
         } catch (e: Exception) {
             Log.w(TAG, "Couldn't construct synced expiries proto from: $this")

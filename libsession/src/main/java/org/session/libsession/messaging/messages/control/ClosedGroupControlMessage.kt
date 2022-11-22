@@ -168,7 +168,7 @@ class ClosedGroupControlMessage() : ControlMessage() {
             val dataMessageProto = DataMessage.newBuilder()
             dataMessageProto.closedGroupControlMessage = closedGroupControlMessage.build()
             // Expiration timer
-            setExpirationSettingsConfigIfNeeded(contentProto)
+            setExpirationConfigurationIfNeeded(contentProto)
             // Group context
             setGroupContext(dataMessageProto)
             contentProto.dataMessage = dataMessageProto.build()

@@ -66,12 +66,13 @@ class ExpirationTimerUpdate() : ControlMessage() {
             }
         }
         val contentProto = SignalServiceProtos.Content.newBuilder()
-        try {
+        return try {
             contentProto.dataMessage = dataMessageProto.build()
-            return contentProto.build()
+            setExpirationConfigurationIfNeeded(contentProto)
+            contentProto.build()
         } catch (e: Exception) {
             Log.w(TAG, "Couldn't construct expiration timer update proto from: $this")
-            return null
+            null
         }
     }
 }

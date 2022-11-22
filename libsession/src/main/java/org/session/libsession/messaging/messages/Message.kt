@@ -39,7 +39,7 @@ abstract class Message {
         dataMessage.group = groupProto.build()
     }
 
-    fun setExpirationSettingsConfigIfNeeded(builder: SignalServiceProtos.Content.Builder) {
+    fun setExpirationConfigurationIfNeeded(builder: SignalServiceProtos.Content.Builder) {
         val threadId = threadID ?: return
         val config = MessagingModuleConfiguration.shared.storage.getExpirationConfiguration(threadId) ?: return
         builder.expirationTimer = config.durationSeconds

@@ -41,7 +41,7 @@ class ReadReceipt() : ControlMessage() {
         val contentProto = SignalServiceProtos.Content.newBuilder()
         return try {
             contentProto.receiptMessage = receiptProto.build()
-            setExpirationSettingsConfigIfNeeded(contentProto)
+            setExpirationConfigurationIfNeeded(contentProto)
             contentProto.build()
         } catch (e: Exception) {
             Log.w(TAG, "Couldn't construct read receipt proto from: $this")
