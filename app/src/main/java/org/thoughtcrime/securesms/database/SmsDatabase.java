@@ -638,9 +638,14 @@ public class SmsDatabase extends MessagingDatabase {
     }
   }
 
-  /*package */void deleteThread(long threadId) {
+  void deleteThread(long threadId) {
     SQLiteDatabase db = databaseHelper.getWritableDatabase();
     db.delete(TABLE_NAME, THREAD_ID + " = ?", new String[] {threadId+""});
+  }
+
+  void deleteMessagesFrom(long threadId, String fromUser) {
+    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    db.delete(TABLE_NAME, THREAD_ID+" = ? AND "+ADDRESS+" = ?", new String[]{threadId+"", fromUser});
   }
 
   /*package*/void deleteMessagesInThreadBeforeDate(long threadId, long date) {

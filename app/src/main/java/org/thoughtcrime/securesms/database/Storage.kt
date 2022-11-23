@@ -731,13 +731,24 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         return threadDb.getPinned(threadID)
     }
 
-    override fun clearMessages(threadID: Long): Boolean {
+    override fun clearMessages(threadID: Long, fromUser: Address?): Boolean {
         val smsDb = DatabaseComponent.get(context).smsDatabase()
         val mmsDb = DatabaseComponent.get(context).mmsDatabase()
         val threadDb = DatabaseComponent.get(context).threadDatabase()
-        smsDb.deleteThread(threadID)
-        mmsDb.deleteThread(threadID) // threadDB update called from within
-        threadDb.update(threadID, false)
+        if (fromUser == null) {
+            smsDb.deleteThread(threadID)
+            mmsDb.deleteThread(threadID) // threadDB update called from within
+        } else {
+            smsDb.deleteMessagesFrom(threadID, fromUser.serialize())
+            mmsDb.deleteMessagesFrom(threadID, fromUser.serialize())
+            threadDb.update(threadID, false)
+        }
+        return true
+    }
+
+    override fun clearMedia(threadID: Long, fromUser: Address?): Boolean {
+        val mmsDb = DatabaseComponent.get(context).mmsDatabase()
+        mmsDb.deleteMediaFor(threadID, fromUser?.serialize())
         return true
     }
 

@@ -52,6 +52,7 @@ import androidx.viewpager.widget.ViewPager;
 import com.codewaves.stickyheadergrid.StickyHeaderGridLayoutManager;
 import com.google.android.material.tabs.TabLayout;
 
+import org.session.libsession.database.StorageProtocol;
 import org.session.libsession.messaging.MessagingModuleConfiguration;
 import org.session.libsession.messaging.messages.control.DataExtractionNotification;
 import org.session.libsession.messaging.sending_receiving.MessageSender;
@@ -68,7 +69,6 @@ import org.thoughtcrime.securesms.database.MediaDatabase;
 import org.thoughtcrime.securesms.database.loaders.BucketedThreadMediaLoader;
 import org.thoughtcrime.securesms.database.loaders.BucketedThreadMediaLoader.BucketedThreadMedia;
 import org.thoughtcrime.securesms.database.loaders.ThreadMediaLoader;
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 import org.thoughtcrime.securesms.mms.GlideApp;
 import org.thoughtcrime.securesms.permissions.Permissions;
 import org.thoughtcrime.securesms.util.AttachmentUtil;
@@ -164,7 +164,11 @@ public class MediaOverviewActivity extends PassphraseRequiredActionBarActivity i
     if (v.getId() == R.id.clearMedia) {
       FragmentManager fm = getSupportFragmentManager();
       ClearAllMediaDialog dialog = new ClearAllMediaDialog(() -> {
-        MediaDatabase mediaDb = DatabaseComponent.get(this).mediaDatabase();
+        StorageProtocol storage = MessagingModuleConfiguration.getShared().getStorage();
+        Long threadId = storage.getThreadId(recipient);
+        if (threadId != null) {
+          storage.clearMedia(threadId, null);
+        }
         return Unit.INSTANCE;
       });
       dialog.show(fm, "ClearAllMedia");

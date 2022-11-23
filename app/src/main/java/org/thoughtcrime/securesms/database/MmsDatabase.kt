@@ -933,23 +933,6 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
         }
     }
 
-    private fun deleteQuotedFromMessages(toDeleteRecords: List<MessageRecord>) {
-        if (toDeleteRecords.isEmpty()) return
-        val queryBuilder = StringBuilder()
-        for (i in toDeleteRecords.indices) {
-            queryBuilder.append("$QUOTE_ID = ").append(toDeleteRecords[i].getId())
-            if (i + 1 < toDeleteRecords.size) {
-                queryBuilder.append(" OR ")
-            }
-        }
-        val query = queryBuilder.toString()
-        val db = databaseHelper.writableDatabase
-        val values = ContentValues(2)
-        values.put(QUOTE_MISSING, 1)
-        values.put(QUOTE_AUTHOR, "")
-        db!!.update(TABLE_NAME, values, query, null)
-    }
-
     /**
      * Delete all the messages in single queries where possible
      * @param messageIds a String array representation of regularly Long types representing message IDs
@@ -1014,6 +997,62 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
 
     fun deleteThread(threadId: Long) {
         deleteThreads(setOf(threadId))
+    }
+
+    fun deleteMediaFor(threadId: Long, fromUser: String? = null) {
+        val db = databaseHelper.writableDatabase
+        val whereString =
+            if (fromUser == null) "$THREAD_ID = ? AND $LINK_PREVIEWS IS NULL"
+            else "$THREAD_ID = ? AND $ADDRESS = ? AND $LINK_PREVIEWS IS NULL"
+        val whereArgs = if (fromUser == null) arrayOf(threadId.toString()) else arrayOf(threadId.toString(), fromUser)
+        var cursor: Cursor? = null
+        try {
+            cursor = db.query(TABLE_NAME, arrayOf(ID), whereString, whereArgs, null, null, null, null)
+            val toDeleteStringMessageIds = mutableListOf<String>()
+            while (cursor.moveToNext()) {
+                toDeleteStringMessageIds += cursor.getLong(0).toString() // get the ID as a string
+            }
+            // TODO: this can probably be optimized out,
+            //  currently attachmentDB uses MmsID not threadID which makes it difficult to delete
+            //  and clean up on threadID alone
+            toDeleteStringMessageIds.toList().chunked(50).forEach { sublist ->
+                deleteMessages(sublist.toTypedArray())
+            }
+        } finally {
+            cursor?.close()
+        }
+        val threadDb = get(context).threadDatabase()
+        threadDb.update(threadId, false)
+        notifyConversationListeners(threadId)
+        notifyStickerListeners()
+        notifyStickerPackListeners()
+    }
+
+    fun deleteMessagesFrom(threadId: Long, fromUser: String) { // copied from deleteThreads implementation
+        val db = databaseHelper.writableDatabase
+        var cursor: Cursor? = null
+        val whereString = "$THREAD_ID = ? AND $ADDRESS = ?"
+        try {
+            cursor =
+                db!!.query(TABLE_NAME, arrayOf<String?>(ID), whereString, arrayOf(threadId.toString(), fromUser), null, null, null)
+            val toDeleteStringMessageIds = mutableListOf<String>()
+            while (cursor.moveToNext()) {
+                toDeleteStringMessageIds += cursor.getLong(0).toString() // get the ID as a string
+            }
+            // TODO: this can probably be optimized out,
+            //  currently attachmentDB uses MmsID not threadID which makes it difficult to delete
+            //  and clean up on threadID alone
+            toDeleteStringMessageIds.toList().chunked(50).forEach { sublist ->
+                deleteMessages(sublist.toTypedArray())
+            }
+        } finally {
+            cursor?.close()
+        }
+        val threadDb = get(context).threadDatabase()
+        threadDb.update(threadId, false)
+        notifyConversationListeners(threadId)
+        notifyStickerListeners()
+        notifyStickerPackListeners()
     }
 
     private fun getSerializedSharedContacts(
@@ -1159,7 +1198,6 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
         return false
     }
 
-    /*package*/
     private fun deleteThreads(threadIds: Set<Long>) {
         val db = databaseHelper.writableDatabase
         val where = StringBuilder()
