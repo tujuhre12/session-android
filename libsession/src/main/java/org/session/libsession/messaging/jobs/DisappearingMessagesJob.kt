@@ -8,7 +8,7 @@ import org.session.libsession.messaging.utilities.Data
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
 
-class DisappearingMessagesJob(val messageIds: LongArray, val startedAtMs: Long): Job {
+class DisappearingMessagesJob(val messageIds: LongArray = longArrayOf(), val startedAtMs: Long = 0): Job {
 
     override var delegate: JobDelegate? = null
     override var id: String? = null

@@ -4,6 +4,7 @@ import android.text.TextUtils
 import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.jobs.BackgroundGroupAddJob
+import org.session.libsession.messaging.jobs.DisappearingMessagesJob
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.Message
@@ -78,6 +79,7 @@ fun MessageReceiver.handle(message: Message, proto: SignalServiceProtos.Content,
         is CallMessage -> handleCallMessage(message)
         is SyncedExpiriesMessage -> handleSyncedExpiriesMessage(message)
     }
+    JobQueue.shared.add(DisappearingMessagesJob())
 }
 
 fun updateExpirationConfigurationIfNeeded(message: Message, proto: SignalServiceProtos.Content, openGroupID: String?) {

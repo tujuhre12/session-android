@@ -2747,31 +2747,31 @@ public final class SignalServiceProtos {
     public enum ExpirationType
         implements com.google.protobuf.ProtocolMessageEnum {
       /**
-       * <code>DELETE_AFTER_SEND = 1;</code>
+       * <code>DELETE_AFTER_READ = 1;</code>
        */
-      DELETE_AFTER_SEND(0, 1),
+      DELETE_AFTER_READ(0, 1),
       /**
-       * <code>DELETE_AFTER_READ = 2;</code>
+       * <code>DELETE_AFTER_SEND = 2;</code>
        */
-      DELETE_AFTER_READ(1, 2),
+      DELETE_AFTER_SEND(1, 2),
       ;
 
       /**
-       * <code>DELETE_AFTER_SEND = 1;</code>
+       * <code>DELETE_AFTER_READ = 1;</code>
        */
-      public static final int DELETE_AFTER_SEND_VALUE = 1;
+      public static final int DELETE_AFTER_READ_VALUE = 1;
       /**
-       * <code>DELETE_AFTER_READ = 2;</code>
+       * <code>DELETE_AFTER_SEND = 2;</code>
        */
-      public static final int DELETE_AFTER_READ_VALUE = 2;
+      public static final int DELETE_AFTER_SEND_VALUE = 2;
 
 
       public final int getNumber() { return value; }
 
       public static ExpirationType valueOf(int value) {
         switch (value) {
-          case 1: return DELETE_AFTER_SEND;
-          case 2: return DELETE_AFTER_READ;
+          case 1: return DELETE_AFTER_READ;
+          case 2: return DELETE_AFTER_SEND;
           default: return null;
         }
       }
@@ -3079,7 +3079,7 @@ public final class SignalServiceProtos {
       dataExtractionNotification_ = org.session.libsignal.protos.SignalServiceProtos.DataExtractionNotification.getDefaultInstance();
       unsendRequest_ = org.session.libsignal.protos.SignalServiceProtos.UnsendRequest.getDefaultInstance();
       messageRequestResponse_ = org.session.libsignal.protos.SignalServiceProtos.MessageRequestResponse.getDefaultInstance();
-      expirationType_ = org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType.DELETE_AFTER_SEND;
+      expirationType_ = org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType.DELETE_AFTER_READ;
       expirationTimer_ = 0;
       lastDisappearingMessageChangeTimestamp_ = 0L;
       syncedExpiries_ = org.session.libsignal.protos.SignalServiceProtos.SyncedExpiries.getDefaultInstance();
@@ -3416,7 +3416,7 @@ public final class SignalServiceProtos {
           messageRequestResponseBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000080);
-        expirationType_ = org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType.DELETE_AFTER_SEND;
+        expirationType_ = org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType.DELETE_AFTER_READ;
         bitField0_ = (bitField0_ & ~0x00000100);
         expirationTimer_ = 0;
         bitField0_ = (bitField0_ & ~0x00000200);
@@ -4610,7 +4610,7 @@ public final class SignalServiceProtos {
       }
 
       // optional .signalservice.Content.ExpirationType expirationType = 11;
-      private org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType expirationType_ = org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType.DELETE_AFTER_SEND;
+      private org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType expirationType_ = org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType.DELETE_AFTER_READ;
       /**
        * <code>optional .signalservice.Content.ExpirationType expirationType = 11;</code>
        */
@@ -4640,7 +4640,7 @@ public final class SignalServiceProtos {
        */
       public Builder clearExpirationType() {
         bitField0_ = (bitField0_ & ~0x00000100);
-        expirationType_ = org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType.DELETE_AFTER_SEND;
+        expirationType_ = org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType.DELETE_AFTER_READ;
         onChanged();
         return this;
       }
@@ -28645,8 +28645,8 @@ public final class SignalServiceProtos {
       "\022.\n&lastDisappearingMessageChangeTimesta" +
       "mp\030\r \001(\004\0225\n\016syncedExpiries\030\016 \001(\0132\035.signa" +
       "lservice.SyncedExpiries\">\n\016ExpirationTyp" +
-      "e\022\025\n\021DELETE_AFTER_SEND\020\001\022\025\n\021DELETE_AFTER" +
-      "_READ\020\002\"\265\002\n\016SyncedExpiries\022V\n\024conversati",
+      "e\022\025\n\021DELETE_AFTER_READ\020\001\022\025\n\021DELETE_AFTER" +
+      "_SEND\020\002\"\265\002\n\016SyncedExpiries\022V\n\024conversati",
       "onExpiries\030\001 \003(\01328.signalservice.SyncedE" +
       "xpiries.SyncedConversationExpiries\032\312\001\n\032S" +
       "yncedConversationExpiries\022\022\n\nsyncTarget\030" +
