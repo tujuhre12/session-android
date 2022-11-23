@@ -75,7 +75,9 @@ import org.thoughtcrime.securesms.util.AttachmentUtil;
 import org.thoughtcrime.securesms.util.SaveAttachmentTask;
 import org.thoughtcrime.securesms.util.StickyHeaderDecoration;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -244,7 +246,7 @@ public class MediaOverviewActivity extends PassphraseRequiredActionBarActivity i
   }
 
   public static class MediaOverviewGalleryFragment
-      extends MediaOverviewFragment<BucketedThreadMedia>
+      extends MediaOverviewFragment<ThreadMediaLoader>
       implements MediaGalleryAdapter.ItemClickListener
   {
 
@@ -260,11 +262,7 @@ public class MediaOverviewActivity extends PassphraseRequiredActionBarActivity i
       this.noMedia      = ViewUtil.findById(view, R.id.no_images);
       this.gridManager  = new StickyHeaderGridLayoutManager(getResources().getInteger(R.integer.media_overview_cols));
 
-      this.recyclerView.setAdapter(new MediaGalleryAdapter(getContext(),
-                                                           GlideApp.with(this),
-                                                           new BucketedThreadMedia(getContext()),
-                                                           locale,
-                                                           this));
+      this.recyclerView.setAdapter(new MediaGalleryAdapter(this));
       this.recyclerView.setLayoutManager(gridManager);
       this.recyclerView.setHasFixedSize(true);
 
@@ -281,22 +279,21 @@ public class MediaOverviewActivity extends PassphraseRequiredActionBarActivity i
     }
 
     @Override
-    public @NonNull Loader<BucketedThreadMedia> onCreateLoader(int i, Bundle bundle) {
-      return new BucketedThreadMediaLoader(getContext(), recipient.getAddress());
+    public @NonNull Loader<ThreadMediaLoader> onCreateLoader(int i, Bundle bundle) {
+      return new ThreadMediaLoader(getContext(), recipient.getAddress(), true);
     }
 
     @Override
-    public void onLoadFinished(@NonNull Loader<BucketedThreadMedia> loader, BucketedThreadMedia bucketedThreadMedia) {
-      ((MediaGalleryAdapter) recyclerView.getAdapter()).setMedia(bucketedThreadMedia);
-      ((MediaGalleryAdapter) recyclerView.getAdapter()).notifyAllSectionsDataSetChanged();
+    public void onLoadFinished(@NonNull Loader<ThreadMediaLoader> loader, ThreadMediaLoader threadMedia) {
+      ((MediaGalleryAdapter) recyclerView.getAdapter()).setItems(threadMedia.);
 
       noMedia.setVisibility(recyclerView.getAdapter().getItemCount() > 0 ? View.GONE : View.VISIBLE);
       getActivity().invalidateOptionsMenu();
     }
 
     @Override
-    public void onLoaderReset(@NonNull Loader<BucketedThreadMedia> cursorLoader) {
-      ((MediaGalleryAdapter) recyclerView.getAdapter()).setMedia(new BucketedThreadMedia(getContext()));
+    public void onLoaderReset(@NonNull Loader<ThreadMediaLoader> cursorLoader) {
+      ((MediaGalleryAdapter) recyclerView.getAdapter()).setItems(new ArrayList<>());
     }
 
     @Override
