@@ -456,7 +456,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         actionBar.title = ""
         actionBar.setDisplayHomeAsUpEnabled(true)
         actionBar.setHomeButtonEnabled(true)
-        binding!!.toolbarContent.bind(recipient, this)
+        binding!!.toolbarContent.bind(this, recipient, viewModel.openGroup)
         maybeUpdateToolbar(recipient)
     }
 
@@ -647,7 +647,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     }
 
     private fun maybeUpdateToolbar(recipient: Recipient) {
-        binding?.toolbarContent?.update(recipient)
+        binding?.toolbarContent?.update(recipient, viewModel.openGroup)
         val profilePictureView = overflowMenuItem?.actionView?.findViewById<ProfilePictureView>(R.id.profilePictureView)
         profilePictureView?.glide = glide
         MentionManagerUtilities.populateUserPublicKeyCacheIfNeeded(viewModel.threadId, this)

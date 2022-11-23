@@ -50,17 +50,17 @@ class ConversationActionBarView : LinearLayout {
         mediator.attach()
     }
 
-    fun bind(recipient: Recipient, delegate: ConversationActionBarDelegate) {
+    fun bind(delegate: ConversationActionBarDelegate, recipient: Recipient, openGroup: OpenGroup? = null) {
         this.delegate = delegate
-        update(recipient)
+        update(recipient, openGroup)
     }
 
-    fun update(recipient: Recipient) {
+    fun update(recipient: Recipient, openGroup: OpenGroup? = null) {
         binding.conversationTitleView.text = when {
             recipient.isLocalNumber -> context.getString(R.string.note_to_self)
             else -> recipient.toShortString()
         }
-        updateSubtitle(recipient)
+        updateSubtitle(recipient, openGroup)
     }
 
     fun updateSubtitle(recipient: Recipient, openGroup: OpenGroup? = null) {
@@ -88,15 +88,16 @@ class ConversationActionBarView : LinearLayout {
             )
         }
         if (recipient.isGroupRecipient) {
+            val title = if (recipient.isOpenGroupRecipient) {
+                val userCount = openGroup?.let { lokiApiDb.getUserCount(it.room, it.server) } ?: 0
+                context.getString(R.string.ConversationActivity_active_member_count, userCount)
+            } else {
+                val userCount = groupDb.getGroupMemberAddresses(recipient.address.toGroupString(), true).size
+                context.getString(R.string.ConversationActivity_member_count, userCount)
+            }
             settings.add(
                 ConversationSetting(
-                openGroup?.let {
-                    val userCount = lokiApiDb.getUserCount(it.room, it.server) ?: 0
-                    context.getString(R.string.ConversationActivity_active_member_count, userCount)
-                } ?: run {
-                        val userCount = groupDb.getGroupMemberAddresses(recipient.address.toGroupString(), true).size
-                        context.getString(R.string.ConversationActivity_member_count, userCount)
-                    },
+                    title,
                     ConversationSettingType.MEMBER_COUNT,
                 )
             )
