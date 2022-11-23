@@ -34,6 +34,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -246,7 +247,7 @@ public class MediaOverviewActivity extends PassphraseRequiredActionBarActivity i
   }
 
   public static class MediaOverviewGalleryFragment
-      extends MediaOverviewFragment<ThreadMediaLoader>
+      extends MediaOverviewFragment<Cursor>
       implements MediaGalleryAdapter.ItemClickListener
   {
 
@@ -279,12 +280,12 @@ public class MediaOverviewActivity extends PassphraseRequiredActionBarActivity i
     }
 
     @Override
-    public @NonNull Loader<ThreadMediaLoader> onCreateLoader(int i, Bundle bundle) {
+    public @NonNull Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
       return new ThreadMediaLoader(getContext(), recipient.getAddress(), true);
     }
 
     @Override
-    public void onLoadFinished(@NonNull Loader<ThreadMediaLoader> loader, ThreadMediaLoader threadMedia) {
+    public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor threadMedia) {
       ((MediaGalleryAdapter) recyclerView.getAdapter()).setItems(threadMedia.);
 
       noMedia.setVisibility(recyclerView.getAdapter().getItemCount() > 0 ? View.GONE : View.VISIBLE);
@@ -292,7 +293,7 @@ public class MediaOverviewActivity extends PassphraseRequiredActionBarActivity i
     }
 
     @Override
-    public void onLoaderReset(@NonNull Loader<ThreadMediaLoader> cursorLoader) {
+    public void onLoaderReset(@NonNull Loader<Cursor> cursorLoader) {
       ((MediaGalleryAdapter) recyclerView.getAdapter()).setItems(new ArrayList<>());
     }
 
