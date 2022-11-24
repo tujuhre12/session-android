@@ -15,6 +15,7 @@ import org.thoughtcrime.securesms.conversation.settings.ClearAllMessagesDialog.O
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.groups.EditClosedGroupActivity
 import org.thoughtcrime.securesms.mms.GlideApp
 import javax.inject.Inject
 
@@ -66,6 +67,8 @@ class ConversationSettingsActivity: PassphraseRequiredActionBarActivity(), View.
         binding.allMedia.setOnClickListener(this)
         binding.pinConversation.setOnClickListener(this)
         binding.notificationSettings.setOnClickListener(this)
+        binding.editGroup.setOnClickListener(this)
+        binding.addAdmins.setOnClickListener(this)
         binding.back.setOnClickListener(this)
         binding.autoDownloadMediaSwitch.setOnCheckedChangeListener { _, isChecked ->
             viewModel.setAutoDownloadAttachments(isChecked)
@@ -150,6 +153,14 @@ class ConversationSettingsActivity: PassphraseRequiredActionBarActivity(), View.
                 ClearAllMessagesDialog(viewModel.isUserGroupAdmin()) { option ->
                     viewModel.clearMessages(option == Option.FOR_EVERYONE)
                 }.show(supportFragmentManager, "Clear messages dialog")
+            }
+            v === binding.editGroup -> {
+                val recipient = viewModel.recipient ?: return
+                if (!recipient.isClosedGroupRecipient) return
+                val intent = Intent(this, EditClosedGroupActivity::class.java)
+                val groupID: String = recipient.address.toGroupString()
+                intent.putExtra(EditClosedGroupActivity.groupIDKey, groupID)
+                startActivity(intent)
             }
         }
     }
