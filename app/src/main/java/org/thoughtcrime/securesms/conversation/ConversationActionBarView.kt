@@ -137,8 +137,12 @@ class ConversationActionBarView : LinearLayout {
         }
 
         class SettingsDiffer: DiffUtil.ItemCallback<ConversationSetting>() {
-            override fun areItemsTheSame(oldItem: ConversationSetting, newItem: ConversationSetting) = oldItem === newItem
-            override fun areContentsTheSame(oldItem: ConversationSetting, newItem: ConversationSetting) = oldItem == newItem
+            override fun areItemsTheSame(oldItem: ConversationSetting, newItem: ConversationSetting): Boolean {
+                return oldItem.settingType === newItem.settingType
+            }
+            override fun areContentsTheSame(oldItem: ConversationSetting, newItem: ConversationSetting): Boolean {
+                return oldItem == newItem
+            }
         }
 
     }
