@@ -284,8 +284,7 @@ public class MediaOverviewActivity extends PassphraseRequiredActionBarActivity i
         @Override
         public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor cursor) {
             List<MediaDatabase.MediaRecord> mediaRecords = new ArrayList<>();
-            if (cursor != null) {
-                cursor.moveToFirst();
+            if (cursor != null && cursor.moveToFirst()) {
                 do {
                     mediaRecords.add(MediaDatabase.MediaRecord.from(requireContext(), cursor));
                 } while (cursor.moveToNext());
