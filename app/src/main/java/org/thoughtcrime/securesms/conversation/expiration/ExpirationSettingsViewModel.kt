@@ -66,8 +66,12 @@ class ExpirationSettingsViewModel(
                 ExpirationType.DELETE_AFTER_READ -> afterReadOptions
                 else -> emptyList()
             }
-        }.onEach {
-            _expirationTimerOptions.value = it
+        }.onEach { options ->
+            _expirationTimerOptions.value = if (recipient.value?.isLocalNumber == true || recipient.value?.isClosedGroupRecipient == true) {
+                options
+            } else {
+                options.slice(1 until options.size)
+            }
         }.launchIn(viewModelScope)
     }
 
