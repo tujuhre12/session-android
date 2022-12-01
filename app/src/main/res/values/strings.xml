@@ -873,6 +873,8 @@
     <string name="new_conversation_dialog_close_button_content_description">Close Dialog</string>
     <string name="activity_expiration_settings_title">Disappearing Messages</string>
     <string name="activity_expiration_settings_subtitle">This setting applies to everyone in this conversation.</string>
+    <string name="expiration_type_disappear_legacy_description">Use the original version of disappearing messages.</string>
+    <string name="expiration_type_disappear_legacy">Legacy</string>
     <string name="activity_expiration_settings_subtitle_sent">Messages disappear after they have been sent.</string>
     <string name="expiration_type_disappear_after_read">Disappear After Read</string>
     <string name="expiration_type_disappear_after_read_description">Messages delete after they have been read.</string>
@@ -882,4 +884,5 @@
     <string name="activity_expiration_settings_delete_type">Delete Type</string>
     <string name="activity_expiration_settings_timer">Timer</string>
     <string name="activity_expiration_settings_group_footer"><![CDATA[This setting applies to everyone in this conversation.<br/>Only group admins can change this setting.]]></string>
+    <string name="activity_conversation_outdated_client_banner_text">This user\'s client is outdated.</string>
 </resources>

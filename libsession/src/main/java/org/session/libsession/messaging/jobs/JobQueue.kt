@@ -115,7 +115,7 @@ class JobQueue : JobDelegate {
 
             while (isActive) {
                 when (val job = queue.receive()) {
-                    is NotifyPNServerJob, is AttachmentUploadJob, is MessageSendJob -> {
+                    is NotifyPNServerJob, is AttachmentUploadJob, is MessageSendJob, is DisappearingMessagesJob -> {
                         txQueue.send(job)
                     }
                     is AttachmentDownloadJob -> {
@@ -136,7 +136,7 @@ class JobQueue : JobDelegate {
                         }
                     }
                     else -> {
-                        throw IllegalStateException("Unexpected job type.")
+                        throw IllegalStateException("Unexpected job type: ${job.getFactoryKey()}")
                     }
                 }
             }

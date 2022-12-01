@@ -362,6 +362,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         setUpRecipientObserver()
         getLatestOpenGroupInfoIfNeeded()
         setUpBlockedBanner()
+        setUpOutdatedClientBanner();
         binding!!.searchBottomBar.setEventListener(this)
         setUpSearchResultObserver()
         scrollToFirstUnreadMessageIfNeeded()
@@ -565,6 +566,13 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         binding?.blockedBannerTextView?.text = resources.getString(R.string.activity_conversation_blocked_banner_text, name)
         binding?.blockedBanner?.isVisible = recipient.isBlocked
         binding?.blockedBanner?.setOnClickListener { viewModel.unblock() }
+    }
+
+    private fun setUpOutdatedClientBanner() {
+        val recipient = viewModel.recipient ?: return
+        if (recipient.expireMessages == 0) { return }
+        binding?.outdatedBannerTextView?.text = resources.getString(R.string.activity_conversation_outdated_client_banner_text)
+        binding?.outdatedBanner?.isVisible = true
     }
 
     private fun setUpLinkPreviewObserver() {

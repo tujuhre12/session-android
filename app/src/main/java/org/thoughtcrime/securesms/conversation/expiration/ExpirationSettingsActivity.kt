@@ -75,7 +75,12 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
         }
 
         val deleteTypeOptions = listOf(
-            RadioOption("off", getString(R.string.expiration_off)),
+            RadioOption(value = "-1", title = getString(R.string.expiration_off)),
+            RadioOption(
+                value = "0",
+                title = getString(R.string.expiration_type_disappear_legacy),
+                subtitle = getString(R.string.expiration_type_disappear_legacy_description)
+            ),
             RadioOption(
                 value = ExpirationType.DELETE_AFTER_READ_VALUE.toString(),
                 title = getString(R.string.expiration_type_disappear_after_read),

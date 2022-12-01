@@ -159,4 +159,6 @@
 
     <color name="danger">#EA5545</color>
 
+    <color name="outdated_client_banner_background_color">#00F782</color>
+
 </resources>
