@@ -62,6 +62,12 @@ object ConversationMenuHelper {
             item.actionView.setOnClickListener { onOptionsItemSelected(item) }
         }
         val menu = item.subMenu
+        // Expiring messages
+        if (thread.expireMessages == 0 && !isOpenGroup &&
+            (thread.hasApprovedMe() || thread.isClosedGroupRecipient || thread.isLocalNumber)
+        ) {
+            inflater.inflate(R.menu.menu_conversation_expiration_off, menu)
+        }
         // One-on-one chat menu (options that should only be present for one-on-one chats)
         if (thread.isContactRecipient) {
             if (thread.isBlocked) {
@@ -132,6 +138,7 @@ object ConversationMenuHelper {
             R.id.menu_view_all_media -> { showAllMedia(context, thread) }
             R.id.menu_search -> { search(context) }
             R.id.menu_add_shortcut -> { addShortcut(context, thread) }
+            R.id.menu_expiring_messages_off -> { showExpirationSettings(context, thread) }
             R.id.menu_unblock -> { unblock(context, thread) }
             R.id.menu_block -> { block(context, thread, deleteThread = false) }
             R.id.menu_block_delete -> { blockAndDelete(context, thread) }
