@@ -963,32 +963,11 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
     }
 
     override fun getExpirationConfiguration(threadId: Long): ExpirationConfiguration? {
-        val threadDb = DatabaseComponent.get(context).threadDatabase()
-        threadDb.readerFor(threadDb.conversationList).use { reader ->
-            while (reader.next != null) {
-                val thread = reader.current
-                if (thread.threadId == threadId &&
-                    (thread.recipient.isClosedGroupRecipient || thread.recipient.isContactRecipient)
-                ) {
-                    return ExpirationConfiguration(
-                        thread.threadId,
-                        thread.expiresIn.toInt(),
-                        thread.expiryType,
-                        thread.expiryChangeTimestamp
-                    )
-                }
-            }
-        }
-        return null
+        return DatabaseComponent.get(context).expirationConfigurationDatabase().getExpirationConfiguration(threadId)
     }
 
-    override fun updateExpirationConfiguration(config: ExpirationConfiguration) {
-        DatabaseComponent.get(context).threadDatabase().updateExpiryConfig(
-            config.threadId,
-            config.durationSeconds,
-            config.expirationType?.number ?: 0,
-            config.lastChangeTimestampMs
-        )
+    override fun addExpirationConfiguration(config: ExpirationConfiguration) {
+        DatabaseComponent.get(context).expirationConfigurationDatabase().addExpirationConfiguration(config)
     }
 
     override fun getExpiringMessages(messageIds: LongArray): List<Pair<String, Int>> {

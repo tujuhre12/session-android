@@ -6,7 +6,7 @@ class ExpirationConfiguration(
     val threadId: Long = -1,
     val durationSeconds: Int = 0,
     val expirationType: ExpirationType? = null,
-    val lastChangeTimestampMs: Long = 0
+    val updatedTimestampMs: Long = 0
 ) {
     val isEnabled = durationSeconds > 0
 }

@@ -29,7 +29,6 @@ import androidx.annotation.Nullable;
 
 import org.session.libsession.utilities.ExpirationUtil;
 import org.session.libsession.utilities.recipients.Recipient;
-import org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType;
 import org.thoughtcrime.securesms.database.MmsSmsColumns;
 import org.thoughtcrime.securesms.database.SmsDatabase;
 
@@ -49,8 +48,6 @@ public class ThreadRecord extends DisplayRecord {
   private           final int     distributionType;
   private           final boolean archived;
   private           final long    expiresIn;
-  private           final int    expiryType;
-  private           final long    expiryChangeTimestamp;
   private           final long    lastSeen;
   private           final boolean pinned;
   private           final int     recipientHash;
@@ -59,7 +56,7 @@ public class ThreadRecord extends DisplayRecord {
                       @NonNull Recipient recipient, long date, long count, int unreadCount,
                       long threadId, int deliveryReceiptCount, int status, long snippetType,
                       int distributionType, boolean archived, long expiresIn, long lastSeen,
-                      int readReceiptCount, boolean pinned, int expiryType, long expiryChangeTimestamp)
+                      int readReceiptCount, boolean pinned)
   {
     super(body, recipient, date, date, threadId, status, deliveryReceiptCount, snippetType, readReceiptCount);
     this.snippetUri       = snippetUri;
@@ -68,8 +65,6 @@ public class ThreadRecord extends DisplayRecord {
     this.distributionType = distributionType;
     this.archived         = archived;
     this.expiresIn        = expiresIn;
-    this.expiryType       = expiryType;
-    this.expiryChangeTimestamp = expiryChangeTimestamp;
     this.lastSeen         = lastSeen;
     this.pinned           = pinned;
     this.recipientHash    = recipient.hashCode();
@@ -172,15 +167,6 @@ public class ThreadRecord extends DisplayRecord {
 
   public long getExpiresIn() {
     return expiresIn;
-  }
-
-  @Nullable
-  public ExpirationType getExpiryType() {
-    return ExpirationType.valueOf(expiryType);
-  }
-
-  public long getExpiryChangeTimestamp() {
-    return expiryChangeTimestamp;
   }
 
   public long getLastSeen() {

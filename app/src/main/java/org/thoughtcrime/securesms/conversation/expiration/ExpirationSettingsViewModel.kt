@@ -85,9 +85,9 @@ class ExpirationSettingsViewModel(
 
     fun onSetClick() = viewModelScope.launch {
         val expiresIn = _selectedExpirationTimer.value?.value?.toIntOrNull() ?: 0
-        val expiryType = _selectedExpirationType.value?.number ?: 0
-        val expiryChangeTimestamp = System.currentTimeMillis()
-        threadDb.updateExpiryConfig(threadId, expiresIn, expiryType, expiryChangeTimestamp)
+        val expiryType = _selectedExpirationType.value
+        val expiryChangeTimestampMs = System.currentTimeMillis()
+        storage.addExpirationConfiguration(ExpirationConfiguration(threadId, expiresIn, expiryType, expiryChangeTimestampMs))
     }
 
     @dagger.assisted.AssistedFactory

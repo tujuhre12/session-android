@@ -135,6 +135,10 @@ object DatabaseModule {
 
     @Provides
     @Singleton
+    fun provideExpirationConfigurationDatabase(@ApplicationContext context: Context, openHelper: SQLCipherOpenHelper) = ExpirationConfigurationDatabase(context, openHelper)
+
+    @Provides
+    @Singleton
     fun provideStorage(@ApplicationContext context: Context, openHelper: SQLCipherOpenHelper) = Storage(context,openHelper)
 
     @Provides

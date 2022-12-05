@@ -17,6 +17,7 @@ import org.thoughtcrime.securesms.database.AttachmentDatabase;
 import org.thoughtcrime.securesms.database.BlindedIdMappingDatabase;
 import org.thoughtcrime.securesms.database.DraftDatabase;
 import org.thoughtcrime.securesms.database.EmojiSearchDatabase;
+import org.thoughtcrime.securesms.database.ExpirationConfigurationDatabase;
 import org.thoughtcrime.securesms.database.GroupDatabase;
 import org.thoughtcrime.securesms.database.GroupMemberDatabase;
 import org.thoughtcrime.securesms.database.GroupReceiptDatabase;
@@ -181,8 +182,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     db.execSQL(LokiAPIDatabase.RESET_SEQ_NO); // probably not needed but consistent with all migrations
     db.execSQL(EmojiSearchDatabase.CREATE_EMOJI_SEARCH_TABLE_COMMAND);
     db.execSQL(ReactionDatabase.CREATE_REACTION_TABLE_COMMAND);
-    db.execSQL(ThreadDatabase.getCreateExpiryTypeCommand());
-    db.execSQL(ThreadDatabase.getCreateExpiryChangeTimestampCommand());
+    db.execSQL(ExpirationConfigurationDatabase.CREATE_EXPIRATION_CONFIGURATION_TABLE_COMMAND);
 
     executeStatements(db, SmsDatabase.CREATE_INDEXS);
     executeStatements(db, MmsDatabase.CREATE_INDEXS);
@@ -418,10 +418,9 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
       }
 
       if (oldVersion < lokiV39) {
-        db.execSQL(ThreadDatabase.getCreateExpiryTypeCommand());
-        db.execSQL(ThreadDatabase.getCreateExpiryChangeTimestampCommand());
-        db.execSQL(ThreadDatabase.getUpdateGroupConversationExpiryTypeCommand());
-        db.execSQL(ThreadDatabase.getUpdateOneToOneConversationExpiryTypeCommand());
+        db.execSQL(ExpirationConfigurationDatabase.CREATE_EXPIRATION_CONFIGURATION_TABLE_COMMAND);
+        db.execSQL(ExpirationConfigurationDatabase.MIGRATE_GROUP_CONVERSATION_EXPIRY_TYPE_COMMAND);
+        db.execSQL(ExpirationConfigurationDatabase.MIGRATE_ONE_TO_ONE_CONVERSATION_EXPIRY_TYPE_COMMAND);
       }
 
       db.setTransactionSuccessful();
