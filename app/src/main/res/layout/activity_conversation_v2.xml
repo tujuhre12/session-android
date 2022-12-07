@@ -212,10 +212,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:layout_margin="@dimen/medium_spacing"
+            android:layout_marginVertical="@dimen/very_small_spacing"
+            android:layout_marginHorizontal="@dimen/medium_spacing"
             android:textColor="@color/black"
-            android:textSize="@dimen/small_font_size"
-            android:textStyle="bold"
+            android:textSize="@dimen/tiny_font_size"
             tools:text="This user's client is outdated, things may not work as expected" />
 
     </RelativeLayout>
