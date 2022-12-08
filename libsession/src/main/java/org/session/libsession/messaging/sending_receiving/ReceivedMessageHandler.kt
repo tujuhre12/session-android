@@ -39,6 +39,7 @@ import org.session.libsession.utilities.ProfileKeyUtil
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.Recipient.DisappearingState
 import org.session.libsignal.crypto.ecc.DjbECPrivateKey
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
@@ -83,8 +84,10 @@ fun MessageReceiver.handle(message: Message, proto: SignalServiceProtos.Content,
 }
 
 fun updateExpirationConfigurationIfNeeded(message: Message, proto: SignalServiceProtos.Content, openGroupID: String?) {
-    if (!proto.hasLastDisappearingMessageChangeTimestamp()) return
     val storage = MessagingModuleConfiguration.shared.storage
+    val disappearingState = if (proto.hasExpirationTimer()) DisappearingState.UPDATED else DisappearingState.LEGACY
+    storage.updateDisappearingState(message.sender!!, disappearingState)
+    if (!proto.hasLastDisappearingMessageChangeTimestamp() || !ExpirationConfiguration.isNewConfigEnabled) return
     val threadID = storage.getOrCreateThreadIdFor(message.sender!!, message.groupPublicKey, openGroupID)
     if (threadID <= 0) return
     val localConfig = storage.getExpirationConfiguration(threadID)

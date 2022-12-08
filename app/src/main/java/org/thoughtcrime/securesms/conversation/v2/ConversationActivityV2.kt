@@ -53,6 +53,7 @@ import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.mentions.Mention
 import org.session.libsession.messaging.mentions.MentionsManager
+import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.control.DataExtractionNotification
 import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage
 import org.session.libsession.messaging.messages.signal.OutgoingTextMessage
@@ -570,7 +571,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     private fun setUpOutdatedClientBanner() {
         val recipient = viewModel.recipient ?: return
-        if (recipient.expireMessages == 0) { return }
+        if (recipient.expireMessages == 0 || !ExpirationConfiguration.isNewConfigEnabled) { return }
         binding?.outdatedBannerTextView?.text =
             resources.getString(R.string.activity_conversation_outdated_client_banner_text, recipient.name)
         binding?.outdatedBanner?.isVisible = true

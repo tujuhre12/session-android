@@ -1,6 +1,7 @@
 package org.session.libsession.messaging.messages.control
 
 import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.protos.SignalServiceProtos
@@ -17,7 +18,7 @@ class ExpirationTimerUpdate() : ControlMessage() {
 
     override fun isValid(): Boolean {
         if (!super.isValid()) return false
-        return duration != null
+        return duration != null || ExpirationConfiguration.isNewConfigEnabled
     }
 
     companion object {
@@ -28,7 +29,7 @@ class ExpirationTimerUpdate() : ControlMessage() {
             val isExpirationTimerUpdate = dataMessageProto.flags.and(SignalServiceProtos.DataMessage.Flags.EXPIRATION_TIMER_UPDATE_VALUE) != 0
             if (!isExpirationTimerUpdate) return null
             val syncTarget = dataMessageProto.syncTarget
-            val duration = dataMessageProto.expireTimer
+            val duration = if (proto.hasExpirationTimer()) proto.expirationTimer else dataMessageProto.expireTimer
             return ExpirationTimerUpdate(syncTarget, duration)
         }
     }
@@ -44,14 +45,9 @@ class ExpirationTimerUpdate() : ControlMessage() {
     }
 
     override fun toProto(): SignalServiceProtos.Content? {
-        val duration = duration
-        if (duration == null) {
-            Log.w(TAG, "Couldn't construct expiration timer update proto from: $this")
-            return null
-        }
         val dataMessageProto = SignalServiceProtos.DataMessage.newBuilder()
         dataMessageProto.flags = SignalServiceProtos.DataMessage.Flags.EXPIRATION_TIMER_UPDATE_VALUE
-        dataMessageProto.expireTimer = duration
+        duration?.let { dataMessageProto.expireTimer = it }
         // Sync target
         if (syncTarget != null) {
             dataMessageProto.syncTarget = syncTarget

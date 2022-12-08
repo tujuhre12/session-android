@@ -86,6 +86,7 @@ public class Recipient implements RecipientModifiedListener {
   private           boolean              blocked               = false;
   private           boolean              approved              = false;
   private           boolean              approvedMe            = false;
+  private           DisappearingState    disappearingState     = DisappearingState.LEGACY;
   private           VibrateState         messageVibrate        = VibrateState.DEFAULT;
   private           VibrateState         callVibrate           = VibrateState.DEFAULT;
   private           int                  expireMessages        = 0;
@@ -653,6 +654,18 @@ public class Recipient implements RecipientModifiedListener {
     notifyListeners();
   }
 
+  public synchronized DisappearingState getDisappearingState() {
+    return disappearingState;
+  }
+
+  public void setDisappearingState(DisappearingState disappearingState) {
+    synchronized (this) {
+      this.disappearingState = disappearingState;
+    }
+
+    notifyListeners();
+  }
+
   public synchronized RegisteredState getRegistered() {
     if      (isPushGroupRecipient()) return RegisteredState.REGISTERED;
 
@@ -783,6 +796,24 @@ public class Recipient implements RecipientModifiedListener {
     }
 
     public static VibrateState fromId(int id) {
+      return values()[id];
+    }
+  }
+
+  public enum DisappearingState {
+    LEGACY(0), UPDATED(1);
+
+    private final int id;
+
+    DisappearingState(int id) {
+      this.id = id;
+    }
+
+    public int getId() {
+      return id;
+    }
+
+    public static DisappearingState fromId(int id) {
       return values()[id];
     }
   }

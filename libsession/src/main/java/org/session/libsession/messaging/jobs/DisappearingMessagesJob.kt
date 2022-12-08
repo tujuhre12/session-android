@@ -1,6 +1,7 @@
 package org.session.libsession.messaging.jobs
 
 import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.control.SyncedExpiriesMessage
 import org.session.libsession.messaging.messages.control.SyncedExpiry
 import org.session.libsession.messaging.sending_receiving.MessageSender
@@ -16,6 +17,7 @@ class DisappearingMessagesJob(val messageIds: LongArray = longArrayOf(), val sta
     override val maxFailureCount: Int = 1
 
     override fun execute() {
+        if (!ExpirationConfiguration.isNewConfigEnabled) return
         val userPublicKey = MessagingModuleConfiguration.shared.storage.getUserPublicKey() ?: return
         val module = MessagingModuleConfiguration.shared
         try {

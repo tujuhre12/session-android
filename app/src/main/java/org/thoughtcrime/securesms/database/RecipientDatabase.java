@@ -13,6 +13,7 @@ import com.annimon.stream.Stream;
 
 import net.sqlcipher.database.SQLiteDatabase;
 
+import org.jetbrains.annotations.NotNull;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.MaterialColor;
 import org.session.libsession.utilities.Util;
@@ -47,6 +48,7 @@ public class RecipientDatabase extends Database {
   private static final String SEEN_INVITE_REMINDER     = "seen_invite_reminder";
   private static final String DEFAULT_SUBSCRIPTION_ID  = "default_subscription_id";
           static final String EXPIRE_MESSAGES          = "expire_messages";
+  private static final String DISAPPEARING_STATE       = "disappearing_state";
   private static final String REGISTERED               = "registered";
   private static final String PROFILE_KEY              = "profile_key";
   private static final String SYSTEM_DISPLAY_NAME      = "system_display_name";
@@ -413,6 +415,14 @@ public class RecipientDatabase extends Database {
     }
     reader.close();
     return returnList;
+  }
+
+  public void setDisappearingState(@NotNull Recipient recipient, @NotNull Recipient.DisappearingState disappearingState) {
+    ContentValues values = new ContentValues();
+    values.put(DISAPPEARING_STATE, disappearingState.getId());
+    updateOrInsert(recipient.getAddress(), values);
+    recipient.resolve().setDisappearingState(disappearingState);
+    notifyRecipientListeners();
   }
 
   public static class RecipientReader implements Closeable {

@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.BlindedIdMapping
+import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.jobs.AttachmentUploadJob
@@ -974,4 +975,8 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         return emptyList()
     }
 
+    override fun updateDisappearingState(address: String, disappearingState: Recipient.DisappearingState) {
+        val recipient = Recipient.from(MessagingModuleConfiguration.shared.context, fromSerialized(address), false)
+        DatabaseComponent.get(context).recipientDatabase().setDisappearingState(recipient, disappearingState);
+    }
 }
