@@ -72,7 +72,7 @@ class ExpirationConfigurationDatabase(context: Context, helper: SQLCipherOpenHel
         return mappings.firstOrNull()
     }
 
-    fun addExpirationConfiguration(configuration: ExpirationConfiguration) {
+    fun setExpirationConfiguration(configuration: ExpirationConfiguration) {
         writableDatabase.beginTransaction()
         try {
             val values = ContentValues().apply {

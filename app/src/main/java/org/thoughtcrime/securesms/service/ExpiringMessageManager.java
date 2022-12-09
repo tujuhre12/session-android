@@ -3,6 +3,8 @@ package org.thoughtcrime.securesms.service;
 import android.content.Context;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.session.libsession.messaging.messages.ExpirationConfiguration;
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate;
 import org.session.libsession.messaging.messages.signal.IncomingMediaMessage;
 import org.session.libsession.messaging.messages.signal.OutgoingExpirationUpdateMessage;
@@ -12,6 +14,7 @@ import org.session.libsession.utilities.SSKEnvironment;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.messages.SignalServiceGroup;
+import org.session.libsignal.protos.SignalServiceProtos;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.guava.Optional;
 import org.thoughtcrime.securesms.database.MmsDatabase;
@@ -66,7 +69,19 @@ public class ExpiringMessageManager implements SSKEnvironment.MessageExpirationM
   }
 
   @Override
-  public void setExpirationTimer(@NotNull ExpirationTimerUpdate message) {
+  public void setExpirationTimer(@NotNull ExpirationTimerUpdate message, @Nullable SignalServiceProtos.Content.ExpirationType type) {
+    try {
+      long threadId = message.getThreadID();
+      if (message.getGroupPublicKey() != null) {
+        Recipient recipient =  Recipient.from(context, Address.fromSerialized(GroupUtil.doubleEncodeGroupID(message.getGroupPublicKey())), false);
+        threadId = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(recipient);
+      }
+      DatabaseComponent.get(context).expirationConfigurationDatabase().setExpirationConfiguration(
+              new ExpirationConfiguration(threadId, message.getDuration(), type, System.currentTimeMillis())
+      );
+    } catch (Exception e) {
+      Log.e("Loki", "Failed to update expiration configuration.");
+    }
     String userPublicKey = TextSecurePreferences.getLocalNumber(context);
     String senderPublicKey = message.getSender();
 
@@ -120,10 +135,6 @@ public class ExpiringMessageManager implements SSKEnvironment.MessageExpirationM
               Optional.absent());
       //insert the timer update message
       database.insertSecureDecryptedMessageInbox(mediaMessage, -1, true, true);
-
-      //set the timer to the conversation
-      DatabaseComponent.get(context).recipientDatabase().setExpireMessages(recipient, duration);
-
     } catch (IOException | MmsException ioe) {
       Log.e("Loki", "Failed to insert expiration update message.");
     }
@@ -142,22 +153,9 @@ public class ExpiringMessageManager implements SSKEnvironment.MessageExpirationM
     try {
       OutgoingExpirationUpdateMessage timerUpdateMessage = new OutgoingExpirationUpdateMessage(recipient, sentTimestamp, duration * 1000L, groupId);
       database.insertSecureDecryptedMessageOutbox(timerUpdateMessage, -1, sentTimestamp, true);
-
-      if (groupId != null) {
-        // we need the group ID as recipient for setExpireMessages below
-        recipient = Recipient.from(context, Address.fromSerialized(GroupUtil.doubleEncodeGroupID(groupId)), false);
-      }
-      //set the timer to the conversation
-      DatabaseComponent.get(context).recipientDatabase().setExpireMessages(recipient, duration);
-
-    } catch (MmsException | IOException ioe) {
+    } catch (MmsException e) {
       Log.e("Loki", "Failed to insert expiration update message.");
     }
-  }
-
-  @Override
-  public void disableExpirationTimer(@NotNull ExpirationTimerUpdate message) {
-    setExpirationTimer(message);
   }
 
   @Override

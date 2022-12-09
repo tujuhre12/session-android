@@ -45,6 +45,7 @@ import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.protos.SignalServiceProtos
+import org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
@@ -156,11 +157,14 @@ fun MessageReceiver.cancelTypingIndicatorsIfNeeded(senderPublicKey: String) {
 }
 
 private fun MessageReceiver.handleExpirationTimerUpdate(message: ExpirationTimerUpdate) {
-    if (message.duration!! > 0) {
-        SSKEnvironment.shared.messageExpirationManager.setExpirationTimer(message)
-    } else {
-        SSKEnvironment.shared.messageExpirationManager.disableExpirationTimer(message)
+    if (ExpirationConfiguration.isNewConfigEnabled) return
+    val recipient = Recipient.from(MessagingModuleConfiguration.shared.context, Address.fromSerialized(message.sender!!), false)
+    val type = when {
+        recipient.isLocalNumber -> ExpirationType.DELETE_AFTER_READ
+        recipient.isContactRecipient || recipient.isGroupRecipient -> ExpirationType.DELETE_AFTER_SEND
+        else -> null
     }
+    SSKEnvironment.shared.messageExpirationManager.setExpirationTimer(message, type)
 }
 
 private fun MessageReceiver.handleDataExtractionNotification(message: DataExtractionNotification) {

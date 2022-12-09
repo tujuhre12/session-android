@@ -48,6 +48,7 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceAttachmentPointer
 import org.session.libsignal.messages.SignalServiceGroup
+import org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.KeyHelper
 import org.session.libsignal.utilities.guava.Optional
@@ -541,7 +542,10 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
 
     override fun setExpirationTimer(groupID: String, duration: Int) {
         val recipient = Recipient.from(context, fromSerialized(groupID), false)
-        DatabaseComponent.get(context).recipientDatabase().setExpireMessages(recipient, duration);
+        val threadId = DatabaseComponent.get(context).threadDatabase().getThreadIdIfExistsFor(recipient)
+        DatabaseComponent.get(context).expirationConfigurationDatabase().setExpirationConfiguration(
+            ExpirationConfiguration(threadId, duration, ExpirationType.DELETE_AFTER_SEND, System.currentTimeMillis())
+        )
     }
 
     override fun setServerCapabilities(server: String, capabilities: List<String>) {
@@ -968,7 +972,7 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
     }
 
     override fun addExpirationConfiguration(config: ExpirationConfiguration) {
-        DatabaseComponent.get(context).expirationConfigurationDatabase().addExpirationConfiguration(config)
+        DatabaseComponent.get(context).expirationConfigurationDatabase().setExpirationConfiguration(config)
     }
 
     override fun getExpiringMessages(messageIds: LongArray): List<Pair<String, Int>> {

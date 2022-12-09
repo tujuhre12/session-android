@@ -3,8 +3,8 @@ package org.session.libsession.utilities
 import android.content.Context
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
-import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType
 
 class SSKEnvironment(
     val typingIndicators: TypingIndicatorsProtocol,
@@ -37,8 +37,7 @@ class SSKEnvironment(
     }
 
     interface MessageExpirationManagerProtocol {
-        fun setExpirationTimer(message: ExpirationTimerUpdate)
-        fun disableExpirationTimer(message: ExpirationTimerUpdate)
+        fun setExpirationTimer(message: ExpirationTimerUpdate, type: ExpirationType?)
         fun startAnyExpiration(timestamp: Long, author: String)
     }
 

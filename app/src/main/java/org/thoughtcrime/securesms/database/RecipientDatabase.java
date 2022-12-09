@@ -317,16 +317,6 @@ public class RecipientDatabase extends Database {
     notifyRecipientListeners();
   }
 
-  public void setExpireMessages(@NonNull Recipient recipient, int expiration) {
-    recipient.setExpireMessages(expiration);
-
-    ContentValues values = new ContentValues(1);
-    values.put(EXPIRE_MESSAGES, expiration);
-    updateOrInsert(recipient.getAddress(), values);
-    recipient.resolve().setExpireMessages(expiration);
-    notifyRecipientListeners();
-  }
-
   public void setUnidentifiedAccessMode(@NonNull Recipient recipient, @NonNull UnidentifiedAccessMode unidentifiedAccessMode) {
     ContentValues values = new ContentValues(1);
     values.put(UNIDENTIFIED_ACCESS_MODE, unidentifiedAccessMode.getMode());
