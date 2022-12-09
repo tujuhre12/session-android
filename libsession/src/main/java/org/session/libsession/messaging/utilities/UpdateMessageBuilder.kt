@@ -5,8 +5,11 @@ import org.session.libsession.R
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.messaging.contacts.Contact
+import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ExpirationUtil
+import org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType
 
 object UpdateMessageBuilder {
 
@@ -84,12 +87,40 @@ object UpdateMessageBuilder {
             storage.getContactWithSessionID(sender!!)?.displayName(Contact.ContactContext.REGULAR) ?: sender
         } else { context.getString(R.string.MessageRecord_you) }
         return if (duration <= 0) {
-            if (isOutgoing) context.getString(R.string.MessageRecord_you_disabled_disappearing_messages)
-            else context.getString(R.string.MessageRecord_s_disabled_disappearing_messages, senderName)
+            if (isOutgoing) {
+                if (ExpirationConfiguration.isNewConfigEnabled) {
+                    context.getString(R.string.MessageRecord_you_turned_off_disappearing_messages)
+                } else {
+                    context.getString(R.string.MessageRecord_you_disabled_disappearing_messages)
+                }
+            } else {
+                if (ExpirationConfiguration.isNewConfigEnabled) {
+                    context.getString(R.string.MessageRecord_s_turned_off_disappearing_messages)
+                } else {
+                    context.getString(R.string.MessageRecord_s_disabled_disappearing_messages, senderName)
+                }
+            }
         } else {
             val time = ExpirationUtil.getExpirationDisplayValue(context, duration.toInt())
-            if (isOutgoing)context.getString(R.string.MessageRecord_you_set_disappearing_message_time_to_s, time)
-            else context.getString(R.string.MessageRecord_s_set_disappearing_message_time_to_s, senderName, time)
+            val config = storage.getExpirationConfiguration(storage.getOrCreateThreadIdFor(Address.fromSerialized(sender!!)))
+            val state = when (config?.expirationType) {
+                ExpirationType.DELETE_AFTER_SEND -> context.getString(R.string.MessageRecord_state_sent)
+                ExpirationType.DELETE_AFTER_READ -> context.getString(R.string.MessageRecord_state_read)
+                else -> ""
+            }
+            if (isOutgoing) {
+                if (ExpirationConfiguration.isNewConfigEnabled) {
+                    context.getString(R.string.MessageRecord_you_set_messages_to_disappear_s_after_s, time, state)
+                } else {
+                    context.getString(R.string.MessageRecord_you_set_disappearing_message_time_to_s, time)
+                }
+            } else {
+                if (ExpirationConfiguration.isNewConfigEnabled) {
+                    context.getString(R.string.MessageRecord_s_set_messages_to_disappear_s_after_s, senderName, time, state)
+                } else {
+                    context.getString(R.string.MessageRecord_s_set_disappearing_message_time_to_s, senderName, time)
+                }
+            }
         }
     }
 
