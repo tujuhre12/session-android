@@ -932,10 +932,6 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         if (item.itemId == android.R.id.home) {
             return false
         }
-        else if (item.itemId == R.id.menu_overflow) {
-            binding?.toolbar?.showOverflowMenu()
-            return false
-        }
         return viewModel.recipient?.let { recipient ->
             ConversationMenuHelper.onOptionItemSelected(this, item, recipient)
         } ?: false

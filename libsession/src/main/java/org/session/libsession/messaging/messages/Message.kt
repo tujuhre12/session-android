@@ -40,8 +40,11 @@ abstract class Message {
     }
 
     fun setExpirationConfigurationIfNeeded(builder: SignalServiceProtos.Content.Builder) {
-        val threadId = threadID ?: return
-        val config = MessagingModuleConfiguration.shared.storage.getExpirationConfiguration(threadId) ?: return
+        val config = threadID?.let { MessagingModuleConfiguration.shared.storage.getExpirationConfiguration(it) }
+            ?: run {
+                builder.expirationTimer = 0
+                return
+            }
         builder.expirationTimer = config.durationSeconds
         if (config.isEnabled) {
             builder.expirationType = config.expirationType

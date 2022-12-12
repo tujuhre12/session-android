@@ -971,7 +971,7 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         return DatabaseComponent.get(context).expirationConfigurationDatabase().getExpirationConfiguration(threadId)
     }
 
-    override fun addExpirationConfiguration(config: ExpirationConfiguration) {
+    override fun setExpirationConfiguration(config: ExpirationConfiguration) {
         DatabaseComponent.get(context).expirationConfigurationDatabase().setExpirationConfiguration(config)
     }
 

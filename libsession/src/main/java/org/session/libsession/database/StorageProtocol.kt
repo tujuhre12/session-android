@@ -200,7 +200,7 @@ interface StorageProtocol {
     fun unblock(toUnblock: List<Recipient>)
     fun blockedContacts(): List<Recipient>
     fun getExpirationConfiguration(threadId: Long): ExpirationConfiguration?
-    fun addExpirationConfiguration(config: ExpirationConfiguration)
+    fun setExpirationConfiguration(config: ExpirationConfiguration)
     fun getExpiringMessages(messageIds: LongArray): List<Pair<String, Int>>
     fun updateDisappearingState(address: String, disappearingState: Recipient.DisappearingState)
 }

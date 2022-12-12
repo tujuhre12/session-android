@@ -87,7 +87,8 @@ class ExpirationSettingsViewModel(
         val expiresIn = _selectedExpirationTimer.value?.value?.toIntOrNull() ?: 0
         val expiryType = _selectedExpirationType.value
         val expiryChangeTimestampMs = System.currentTimeMillis()
-        storage.addExpirationConfiguration(ExpirationConfiguration(threadId, expiresIn, expiryType, expiryChangeTimestampMs))
+        storage.setExpirationConfiguration(ExpirationConfiguration(threadId, expiresIn, expiryType, expiryChangeTimestampMs))
+
     }
 
     @dagger.assisted.AssistedFactory

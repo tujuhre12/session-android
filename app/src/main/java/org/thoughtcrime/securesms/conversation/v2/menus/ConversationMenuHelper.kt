@@ -58,8 +58,8 @@ object ConversationMenuHelper {
         if (thread.isGroupRecipient) {
             item.setIcon(R.drawable.ic_outline_settings_24)
         } else {
-            item.setActionView(R.layout.view_profile_overflow)
-            item.actionView.setOnClickListener { onOptionsItemSelected(item) }
+            /*TODO: item.setActionView(R.layout.view_profile_overflow)
+            item.actionView.setOnClickListener { onOptionsItemSelected(item) }*/
         }
         val menu = item.subMenu
         // Expiring messages

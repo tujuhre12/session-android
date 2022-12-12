@@ -101,7 +101,7 @@ fun updateExpirationConfigurationIfNeeded(message: Message, proto: SignalService
         type,
         proto.lastDisappearingMessageChangeTimestamp
     )
-    storage.addExpirationConfiguration(remoteConfig)
+    storage.setExpirationConfiguration(remoteConfig)
 }
 
 // region Control Messages
