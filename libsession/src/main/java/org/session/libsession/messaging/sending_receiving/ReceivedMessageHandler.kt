@@ -98,7 +98,7 @@ fun updateExpirationConfigurationIfNeeded(message: Message, proto: SignalService
     val remoteConfig = ExpirationConfiguration(
         threadID,
         durationSeconds,
-        type,
+        type?.number,
         proto.lastDisappearingMessageChangeTimestamp
     )
     storage.setExpirationConfiguration(remoteConfig)
@@ -164,7 +164,7 @@ private fun MessageReceiver.handleExpirationTimerUpdate(message: ExpirationTimer
         recipient.isContactRecipient || recipient.isGroupRecipient -> ExpirationType.DELETE_AFTER_SEND
         else -> null
     }
-    SSKEnvironment.shared.messageExpirationManager.setExpirationTimer(message, type)
+    SSKEnvironment.shared.messageExpirationManager.setExpirationTimer(message, type?.number)
 }
 
 private fun MessageReceiver.handleDataExtractionNotification(message: DataExtractionNotification) {

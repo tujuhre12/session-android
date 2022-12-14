@@ -7,7 +7,6 @@ import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.utilities.GroupUtil.CLOSED_GROUP_PREFIX
 import org.session.libsession.utilities.GroupUtil.OPEN_GROUP_INBOX_PREFIX
 import org.session.libsession.utilities.GroupUtil.OPEN_GROUP_PREFIX
-import org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 
 class ExpirationConfigurationDatabase(context: Context, helper: SQLCipherOpenHelper) : Database(context, helper) {
@@ -51,7 +50,7 @@ class ExpirationConfigurationDatabase(context: Context, helper: SQLCipherOpenHel
             return ExpirationConfiguration(
                 threadId = cursor.getLong(cursor.getColumnIndexOrThrow(THREAD_ID)),
                 durationSeconds = cursor.getInt(cursor.getColumnIndexOrThrow(DURATION_SECONDS)),
-                expirationType = ExpirationType.valueOf(cursor.getInt(cursor.getColumnIndexOrThrow(EXPIRATION_TYPE))),
+                expirationTypeValue = cursor.getInt(cursor.getColumnIndexOrThrow(EXPIRATION_TYPE)),
                 updatedTimestampMs = cursor.getLong(cursor.getColumnIndexOrThrow(UPDATED_TIMESTAMP_MS))
             )
         }
@@ -78,7 +77,7 @@ class ExpirationConfigurationDatabase(context: Context, helper: SQLCipherOpenHel
             val values = ContentValues().apply {
                 put(THREAD_ID, configuration.threadId)
                 put(DURATION_SECONDS, configuration.durationSeconds)
-                put(EXPIRATION_TYPE, configuration.expirationType?.number)
+                put(EXPIRATION_TYPE, configuration.expirationTypeValue)
                 put(UPDATED_TIMESTAMP_MS, configuration.updatedTimestampMs)
             }
 

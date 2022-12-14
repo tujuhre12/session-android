@@ -544,7 +544,7 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         val recipient = Recipient.from(context, fromSerialized(groupID), false)
         val threadId = DatabaseComponent.get(context).threadDatabase().getThreadIdIfExistsFor(recipient)
         DatabaseComponent.get(context).expirationConfigurationDatabase().setExpirationConfiguration(
-            ExpirationConfiguration(threadId, duration, ExpirationType.DELETE_AFTER_SEND, System.currentTimeMillis())
+            ExpirationConfiguration(threadId, duration, ExpirationType.DELETE_AFTER_SEND.number, System.currentTimeMillis())
         )
     }
 

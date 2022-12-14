@@ -34,8 +34,8 @@ class ExpirationSettingsViewModel(
     private val _recipient = MutableStateFlow<Recipient?>(null)
     val recipient: StateFlow<Recipient?> = _recipient
 
-    private val _selectedExpirationType = MutableStateFlow<ExpirationType?>(null)
-    val selectedExpirationType: StateFlow<ExpirationType?> = _selectedExpirationType
+    private val _selectedExpirationType = MutableStateFlow<Int?>(null)
+    val selectedExpirationType: StateFlow<Int?> = _selectedExpirationType
 
     private val _selectedExpirationTimer = MutableStateFlow(afterSendOptions.firstOrNull())
     val selectedExpirationTimer: StateFlow<RadioOption?> = _selectedExpirationTimer
@@ -49,10 +49,10 @@ class ExpirationSettingsViewModel(
             val recipient = threadDb.getRecipientForThreadId(threadId)
             _recipient.value = recipient
             showExpirationTypeSelector = !ExpirationConfiguration.isNewConfigEnabled || (recipient?.isContactRecipient == true && !recipient.isLocalNumber)
-            if (recipient?.isLocalNumber == true || recipient?.isClosedGroupRecipient == true) {
-                _selectedExpirationType.value = ExpirationType.DELETE_AFTER_SEND
+            if (ExpirationConfiguration.isNewConfigEnabled && (recipient?.isLocalNumber == true || recipient?.isClosedGroupRecipient == true)) {
+                _selectedExpirationType.value = ExpirationType.DELETE_AFTER_SEND.number
             } else {
-                _selectedExpirationType.value = expirationConfig?.expirationType
+                _selectedExpirationType.value = expirationConfig?.expirationTypeValue
             }
             _selectedExpirationTimer.value = when(expirationConfig?.expirationType) {
                 ExpirationType.DELETE_AFTER_SEND -> afterSendOptions.find { it.value.toIntOrNull() == expirationConfig?.durationSeconds }
@@ -62,8 +62,8 @@ class ExpirationSettingsViewModel(
         }
         selectedExpirationType.mapLatest {
             when (it) {
-                ExpirationType.DELETE_AFTER_SEND -> afterSendOptions
-                ExpirationType.DELETE_AFTER_READ -> afterReadOptions
+                0, ExpirationType.DELETE_AFTER_SEND.number -> afterSendOptions
+                ExpirationType.DELETE_AFTER_READ.number -> afterReadOptions
                 else -> emptyList()
             }
         }.onEach { options ->
@@ -76,7 +76,7 @@ class ExpirationSettingsViewModel(
     }
 
     fun onExpirationTypeSelected(option: RadioOption) {
-        _selectedExpirationType.value = option.value.toIntOrNull()?.let { ExpirationType.valueOf(it) }
+        _selectedExpirationType.value = option.value.toIntOrNull()
     }
 
     fun onExpirationTimerSelected(option: RadioOption) {

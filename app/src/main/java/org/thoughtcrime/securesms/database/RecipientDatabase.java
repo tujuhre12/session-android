@@ -138,6 +138,11 @@ public class RecipientDatabase extends Database {
             "OR "+ADDRESS+" IN (SELECT "+GroupDatabase.TABLE_NAME+"."+GroupDatabase.ADMINS+" FROM "+GroupDatabase.TABLE_NAME+")))";
   }
 
+  public static String getCreateDisappearingStateCommand() {
+    return "ALTER TABLE "+ TABLE_NAME + " " +
+            "ADD COLUMN " + DISAPPEARING_STATE + " INTEGER DEFAULT 0;";
+  }
+
   public static final int NOTIFY_TYPE_ALL = 0;
   public static final int NOTIFY_TYPE_MENTIONS = 1;
   public static final int NOTIFY_TYPE_NONE = 2;

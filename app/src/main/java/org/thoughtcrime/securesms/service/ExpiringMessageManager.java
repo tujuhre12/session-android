@@ -14,7 +14,6 @@ import org.session.libsession.utilities.SSKEnvironment;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.messages.SignalServiceGroup;
-import org.session.libsignal.protos.SignalServiceProtos;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.guava.Optional;
 import org.thoughtcrime.securesms.database.MmsDatabase;
@@ -69,7 +68,7 @@ public class ExpiringMessageManager implements SSKEnvironment.MessageExpirationM
   }
 
   @Override
-  public void setExpirationTimer(@NotNull ExpirationTimerUpdate message, @Nullable SignalServiceProtos.Content.ExpirationType type) {
+  public void setExpirationTimer(@NotNull ExpirationTimerUpdate message, @Nullable Integer expirationType) {
     try {
       long threadId = message.getThreadID();
       if (message.getGroupPublicKey() != null) {
@@ -77,7 +76,7 @@ public class ExpiringMessageManager implements SSKEnvironment.MessageExpirationM
         threadId = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(recipient);
       }
       DatabaseComponent.get(context).expirationConfigurationDatabase().setExpirationConfiguration(
-              new ExpirationConfiguration(threadId, message.getDuration(), type, System.currentTimeMillis())
+              new ExpirationConfiguration(threadId, message.getDuration(), expirationType, System.currentTimeMillis())
       );
     } catch (Exception e) {
       Log.e("Loki", "Failed to update expiration configuration.");

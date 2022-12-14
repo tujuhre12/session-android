@@ -107,7 +107,7 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
         lifecycleScope.launchWhenStarted {
             launch {
                 viewModel.selectedExpirationType.collect { type ->
-                    val position = deleteTypeOptions.indexOfFirst { it.value.toIntOrNull() == type?.number }
+                    val position = deleteTypeOptions.indexOfFirst { it.value.toIntOrNull() == type }
                     deleteTypeOptionAdapter.setSelectedPosition(max(0, position))
                 }
             }
@@ -208,7 +208,7 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
         setSupportActionBar(binding.toolbar)
         val actionBar = supportActionBar ?: return
         actionBar.title = getString(R.string.activity_expiration_settings_title)
-        actionBar.subtitle = if (viewModel.selectedExpirationType.value == ExpirationType.DELETE_AFTER_SEND) {
+        actionBar.subtitle = if (viewModel.selectedExpirationType.value == ExpirationType.DELETE_AFTER_SEND.number) {
             getString(R.string.activity_expiration_settings_subtitle_sent)
         } else {
             getString(R.string.activity_expiration_settings_subtitle)

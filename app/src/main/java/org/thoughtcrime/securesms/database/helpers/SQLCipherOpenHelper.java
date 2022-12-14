@@ -165,6 +165,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     db.execSQL(GroupDatabase.getCreateUpdatedTimestampCommand());
     db.execSQL(RecipientDatabase.getCreateApprovedCommand());
     db.execSQL(RecipientDatabase.getCreateApprovedMeCommand());
+    db.execSQL(RecipientDatabase.getCreateDisappearingStateCommand());
     db.execSQL(MmsDatabase.CREATE_MESSAGE_REQUEST_RESPONSE_COMMAND);
     db.execSQL(MmsDatabase.CREATE_REACTIONS_UNREAD_COMMAND);
     db.execSQL(SmsDatabase.CREATE_REACTIONS_UNREAD_COMMAND);
@@ -418,6 +419,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
       }
 
       if (oldVersion < lokiV39) {
+        db.execSQL(RecipientDatabase.getCreateDisappearingStateCommand());
         db.execSQL(ExpirationConfigurationDatabase.CREATE_EXPIRATION_CONFIGURATION_TABLE_COMMAND);
         db.execSQL(ExpirationConfigurationDatabase.MIGRATE_GROUP_CONVERSATION_EXPIRY_TYPE_COMMAND);
         db.execSQL(ExpirationConfigurationDatabase.MIGRATE_ONE_TO_ONE_CONVERSATION_EXPIRY_TYPE_COMMAND);

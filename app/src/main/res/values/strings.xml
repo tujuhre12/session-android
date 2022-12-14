@@ -873,7 +873,7 @@
     <string name="new_conversation_dialog_close_button_content_description">Close Dialog</string>
     <string name="activity_expiration_settings_title">Disappearing Messages</string>
     <string name="activity_expiration_settings_subtitle">This setting applies to everyone in this conversation.</string>
-    <string name="expiration_type_disappear_legacy_description">Use the original version of disappearing messages.</string>
+    <string name="expiration_type_disappear_legacy_description">Original version of disappearing messages.</string>
     <string name="expiration_type_disappear_legacy">Legacy</string>
     <string name="activity_expiration_settings_subtitle_sent">Messages disappear after they have been sent.</string>
     <string name="expiration_type_disappear_after_read">Disappear After Read</string>
