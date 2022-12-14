@@ -47,11 +47,19 @@ class RadioOptionAdapter(
         val binding = ItemSelectableBinding.bind(itemView)
 
         fun bind(option: RadioOption, isSelected: Boolean, toggleSelection: (RadioOption) -> Unit) {
+            val alpha = if (option.enabled) 1f else 0.5f
+            binding.root.isEnabled = option.enabled
+            binding.titleTextView.alpha = alpha
+            binding.subtitleTextView.alpha = alpha
+            binding.selectButton.alpha = alpha
+
             binding.titleTextView.text = option.title
             binding.subtitleTextView.text = option.subtitle
             binding.subtitleTextView.isVisible = !option.subtitle.isNullOrEmpty()
-            binding.root.setOnClickListener { toggleSelection(option) }
             binding.selectButton.isSelected = isSelected
+            if (option.enabled) {
+                binding.root.setOnClickListener { toggleSelection(option) }
+            }
         }
     }
 
@@ -60,5 +68,6 @@ class RadioOptionAdapter(
 data class RadioOption(
     val value: String,
     val title: String,
-    val subtitle: String? = null
+    val subtitle: String? = null,
+    val enabled: Boolean = true
 )

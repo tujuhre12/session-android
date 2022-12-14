@@ -48,7 +48,7 @@ class ExpirationSettingsViewModel(
             expirationConfig = storage.getExpirationConfiguration(threadId)
             val recipient = threadDb.getRecipientForThreadId(threadId)
             _recipient.value = recipient
-            showExpirationTypeSelector = recipient?.isContactRecipient == true && recipient.isLocalNumber == false
+            showExpirationTypeSelector = !ExpirationConfiguration.isNewConfigEnabled || (recipient?.isContactRecipient == true && !recipient.isLocalNumber)
             if (recipient?.isLocalNumber == true || recipient?.isClosedGroupRecipient == true) {
                 _selectedExpirationType.value = ExpirationType.DELETE_AFTER_SEND
             } else {
@@ -67,7 +67,7 @@ class ExpirationSettingsViewModel(
                 else -> emptyList()
             }
         }.onEach { options ->
-            _expirationTimerOptions.value = if (recipient.value?.isLocalNumber == true || recipient.value?.isClosedGroupRecipient == true) {
+            _expirationTimerOptions.value = if (ExpirationConfiguration.isNewConfigEnabled && (recipient.value?.isLocalNumber == true || recipient.value?.isClosedGroupRecipient == true)) {
                 options
             } else {
                 options.slice(1 until options.size)

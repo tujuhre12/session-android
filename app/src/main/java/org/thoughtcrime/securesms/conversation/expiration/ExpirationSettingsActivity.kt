@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityExpirationSettingsBinding
+import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.database.RecipientDatabase
@@ -74,24 +75,7 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
             }
         }
 
-        val deleteTypeOptions = listOf(
-            RadioOption(value = "-1", title = getString(R.string.expiration_off)),
-            RadioOption(
-                value = "0",
-                title = getString(R.string.expiration_type_disappear_legacy),
-                subtitle = getString(R.string.expiration_type_disappear_legacy_description)
-            ),
-            RadioOption(
-                value = ExpirationType.DELETE_AFTER_READ_VALUE.toString(),
-                title = getString(R.string.expiration_type_disappear_after_read),
-                subtitle = getString(R.string.expiration_type_disappear_after_read_description)
-            ),
-            RadioOption(
-                value = ExpirationType.DELETE_AFTER_SEND_VALUE.toString(),
-                title = getString(R.string.expiration_type_disappear_after_send),
-                subtitle = getString(R.string.expiration_type_disappear_after_send_description)
-            )
-        )
+        val deleteTypeOptions = getDeleteOptions()
         val deleteTypeOptionAdapter = RadioOptionAdapter {
             viewModel.onExpirationTypeSelected(it)
         }
@@ -150,6 +134,74 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
             }
         }
 
+    }
+
+    private fun getDeleteOptions(): List<RadioOption> {
+        if (!viewModel.showExpirationTypeSelector) return emptyList()
+
+        val deleteTypeOptions = mutableListOf<RadioOption>()
+        if (ExpirationConfiguration.isNewConfigEnabled) {
+            if (viewModel.recipient.value?.isContactRecipient == true && viewModel.recipient.value?.isLocalNumber == false) {
+                deleteTypeOptions.addAll(
+                    listOf(
+                        RadioOption(value = "-1", title = getString(R.string.expiration_off)),
+                        RadioOption(
+                            value = ExpirationType.DELETE_AFTER_READ_VALUE.toString(),
+                            title = getString(R.string.expiration_type_disappear_after_read),
+                            subtitle = getString(R.string.expiration_type_disappear_after_read_description)
+                        ),
+                        RadioOption(
+                            value = ExpirationType.DELETE_AFTER_SEND_VALUE.toString(),
+                            title = getString(R.string.expiration_type_disappear_after_send),
+                            subtitle = getString(R.string.expiration_type_disappear_after_send_description)
+                        )
+                    )
+                )
+            }
+        } else {
+            if (viewModel.recipient.value?.isContactRecipient == true && viewModel.recipient.value?.isLocalNumber == false) {
+                deleteTypeOptions.addAll(
+                    listOf(
+                        RadioOption(value = "-1", title = getString(R.string.expiration_off)),
+                        RadioOption(
+                            value = "0",
+                            title = getString(R.string.expiration_type_disappear_legacy),
+                            subtitle = getString(R.string.expiration_type_disappear_legacy_description)
+                        ),
+                        RadioOption(
+                            value = ExpirationType.DELETE_AFTER_READ_VALUE.toString(),
+                            title = getString(R.string.expiration_type_disappear_after_read),
+                            subtitle = getString(R.string.expiration_type_disappear_after_read_description),
+                            enabled = false
+                        ),
+                        RadioOption(
+                            value = ExpirationType.DELETE_AFTER_SEND_VALUE.toString(),
+                            title = getString(R.string.expiration_type_disappear_after_send),
+                            subtitle = getString(R.string.expiration_type_disappear_after_send_description),
+                            enabled = false
+                        )
+                    )
+                )
+            } else {
+                deleteTypeOptions.addAll(
+                    listOf(
+                        RadioOption(value = "-1", title = getString(R.string.expiration_off)),
+                        RadioOption(
+                            value = "0",
+                            title = getString(R.string.expiration_type_disappear_legacy),
+                            subtitle = getString(R.string.expiration_type_disappear_legacy_description)
+                        ),
+                        RadioOption(
+                            value = ExpirationType.DELETE_AFTER_SEND_VALUE.toString(),
+                            title = getString(R.string.expiration_type_disappear_after_send),
+                            subtitle = getString(R.string.expiration_type_disappear_after_send_description),
+                            enabled = false
+                        )
+                    )
+                )
+            }
+        }
+        return deleteTypeOptions
     }
 
     private fun setUpToolbar() {

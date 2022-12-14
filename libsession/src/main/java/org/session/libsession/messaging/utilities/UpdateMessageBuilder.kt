@@ -95,7 +95,7 @@ object UpdateMessageBuilder {
                 }
             } else {
                 if (ExpirationConfiguration.isNewConfigEnabled) {
-                    context.getString(R.string.MessageRecord_s_turned_off_disappearing_messages)
+                    context.getString(R.string.MessageRecord_s_turned_off_disappearing_messages, senderName)
                 } else {
                     context.getString(R.string.MessageRecord_s_disabled_disappearing_messages, senderName)
                 }
