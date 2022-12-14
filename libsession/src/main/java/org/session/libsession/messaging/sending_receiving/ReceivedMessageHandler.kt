@@ -98,7 +98,7 @@ fun updateExpirationConfigurationIfNeeded(message: Message, proto: SignalService
     val remoteConfig = ExpirationConfiguration(
         threadID,
         durationSeconds,
-        type?.number,
+        type?.number ?: -1,
         proto.lastDisappearingMessageChangeTimestamp
     )
     storage.setExpirationConfiguration(remoteConfig)
