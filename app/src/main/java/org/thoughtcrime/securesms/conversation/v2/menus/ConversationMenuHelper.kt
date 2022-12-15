@@ -43,25 +43,16 @@ import java.io.IOException
 object ConversationMenuHelper {
     
     fun onPrepareOptionsMenu(
-        mainMenu: Menu,
+        menu: Menu,
         inflater: MenuInflater,
         thread: Recipient,
-        context: Context,
-        onOptionsItemSelected: (MenuItem) -> Unit
+        context: Context
     ) {
         // Prepare
-        mainMenu.clear()
+        menu.clear()
         val isOpenGroup = thread.isOpenGroupRecipient
         // Base menu (options that should always be present)
-        inflater.inflate(R.menu.menu_conversation, mainMenu)
-        val item = mainMenu.findItem(R.id.menu_overflow)
-        if (thread.isGroupRecipient) {
-            item.setIcon(R.drawable.ic_outline_settings_24)
-        } else {
-            /*TODO: item.setActionView(R.layout.view_profile_overflow)
-            item.actionView.setOnClickListener { onOptionsItemSelected(item) }*/
-        }
-        val menu = item.subMenu
+        inflater.inflate(R.menu.menu_conversation, menu)
         // Expiring messages
         if (thread.expireMessages == 0 && !isOpenGroup &&
             (thread.hasApprovedMe() || thread.isClosedGroupRecipient || thread.isLocalNumber)
