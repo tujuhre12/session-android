@@ -10,6 +10,7 @@ import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback
 import com.google.android.material.tabs.TabLayoutMediator
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
@@ -49,6 +50,21 @@ class ConversationActionBarView : LinearLayout {
 
     private fun initialize() {
         binding = ViewConversationActionBarBinding.inflate(LayoutInflater.from(context), this, true)
+        var previousState: Int
+        var currentState = 0
+        binding.settingsPager.registerOnPageChangeCallback(object : OnPageChangeCallback() {
+            override fun onPageScrollStateChanged(state: Int) {
+                val currentPage: Int = binding.settingsPager.currentItem
+                val lastPage = maxOf( (binding.settingsPager.adapter?.itemCount ?: 0) - 1, 0)
+                if (currentPage == lastPage || currentPage == 0) {
+                    previousState = currentState
+                    currentState = state
+                    if (previousState == 1 && currentState == 0) {
+                        binding.settingsPager.setCurrentItem(if (currentPage == 0) lastPage else 0, true)
+                    }
+                }
+            }
+        })
         binding.settingsPager.adapter = settingsAdapter
         val mediator = TabLayoutMediator(binding.settingsTabLayout, binding.settingsPager) { _, _ -> }
         mediator.attach()
