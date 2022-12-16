@@ -12,10 +12,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.databinding.DialogClearAllDataBinding
+import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.conversation.v2.utilities.BaseDialog
+import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 
 class ClearAllDataDialog : BaseDialog() {
@@ -108,6 +110,10 @@ class ClearAllDataDialog : BaseDialog() {
             } else {
                 // finish
                 val result = try {
+                    val openGroups = DatabaseComponent.get(requireContext()).lokiThreadDatabase().getAllOpenGroups()
+                    openGroups.map { it.value.server }.toSet().forEach { server ->
+                        OpenGroupApi.deleteAllInboxMessages(server).get()
+                    }
                     SnodeAPI.deleteAllMessages().get()
                 } catch (e: Exception) {
                     null
