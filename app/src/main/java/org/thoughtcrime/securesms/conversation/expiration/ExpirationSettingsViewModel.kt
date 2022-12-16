@@ -12,6 +12,8 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.session.libsession.messaging.messages.ExpirationConfiguration
+import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
+import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType
 import org.thoughtcrime.securesms.database.Storage
@@ -98,6 +100,11 @@ class ExpirationSettingsViewModel(
         val expiryChangeTimestampMs = System.currentTimeMillis()
         storage.setExpirationConfiguration(ExpirationConfiguration(threadId, expiresIn, expiryType, expiryChangeTimestampMs))
 
+        val message = ExpirationTimerUpdate(expiresIn)
+        val address = recipient.value?.address ?: return@launch
+        message.recipient = address.serialize()
+        message.sentTimestamp = System.currentTimeMillis()
+        MessageSender.send(message, address)
     }
 
     @dagger.assisted.AssistedFactory

@@ -18,6 +18,7 @@ import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.guava.Optional;
 import org.thoughtcrime.securesms.database.MmsDatabase;
 import org.thoughtcrime.securesms.database.SmsDatabase;
+import org.thoughtcrime.securesms.database.ThreadDatabase;
 import org.thoughtcrime.securesms.database.model.MessageRecord;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 import org.thoughtcrime.securesms.mms.MmsException;
@@ -70,10 +71,11 @@ public class ExpiringMessageManager implements SSKEnvironment.MessageExpirationM
   @Override
   public void setExpirationTimer(@NotNull ExpirationTimerUpdate message, @Nullable Integer expirationType) {
     try {
-      long threadId = message.getThreadID();
+      ThreadDatabase threadDb = DatabaseComponent.get(context).threadDatabase();
+      long threadId = threadDb.getOrCreateThreadIdFor(Recipient.from(context, Address.fromSerialized(message.getSender()), false));
       if (message.getGroupPublicKey() != null) {
         Recipient recipient =  Recipient.from(context, Address.fromSerialized(GroupUtil.doubleEncodeGroupID(message.getGroupPublicKey())), false);
-        threadId = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(recipient);
+        threadId = threadDb.getOrCreateThreadIdFor(recipient);
       }
       DatabaseComponent.get(context).expirationConfigurationDatabase().setExpirationConfiguration(
               new ExpirationConfiguration(threadId, message.getDuration(), expirationType, System.currentTimeMillis())

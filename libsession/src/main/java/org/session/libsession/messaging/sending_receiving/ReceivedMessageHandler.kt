@@ -92,7 +92,7 @@ fun updateExpirationConfigurationIfNeeded(message: Message, proto: SignalService
     val threadID = storage.getOrCreateThreadIdFor(message.sender!!, message.groupPublicKey, openGroupID)
     if (threadID <= 0) return
     val localConfig = storage.getExpirationConfiguration(threadID)
-    if (localConfig == null || localConfig.updatedTimestampMs < proto.lastDisappearingMessageChangeTimestamp) return
+    if (localConfig == null || localConfig.updatedTimestampMs > proto.lastDisappearingMessageChangeTimestamp) return
     val durationSeconds = if (proto.hasExpirationTimer()) proto.expirationTimer else 0
     val type = if (proto.hasExpirationType()) proto.expirationType else null
     val remoteConfig = ExpirationConfiguration(
@@ -157,7 +157,7 @@ fun MessageReceiver.cancelTypingIndicatorsIfNeeded(senderPublicKey: String) {
 }
 
 private fun MessageReceiver.handleExpirationTimerUpdate(message: ExpirationTimerUpdate) {
-    if (ExpirationConfiguration.isNewConfigEnabled) return
+    if (!ExpirationConfiguration.isNewConfigEnabled) return
     val recipient = Recipient.from(MessagingModuleConfiguration.shared.context, Address.fromSerialized(message.sender!!), false)
     val type = when {
         recipient.isLocalNumber -> ExpirationType.DELETE_AFTER_READ
