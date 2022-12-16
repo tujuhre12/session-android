@@ -133,8 +133,8 @@ fun MessageSender.addMembers(groupPublicKey: String, membersToAdd: List<String>)
         Log.d("Loki", "Can't add members to nonexistent closed group.")
         throw Error.NoThread
     }
-    val recipient = Recipient.from(context, fromSerialized(groupID), false)
-    val expireTimer = recipient.expireMessages
+    val threadId = storage.getOrCreateThreadIdFor(fromSerialized(groupID))
+    val expireTimer = storage.getExpirationConfiguration(threadId)?.durationSeconds ?: 0
     if (membersToAdd.isEmpty()) {
         Log.d("Loki", "Invalid closed group update.")
         throw Error.InvalidClosedGroupUpdate

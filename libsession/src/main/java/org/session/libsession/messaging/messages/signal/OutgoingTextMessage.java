@@ -1,5 +1,6 @@
 package org.session.libsession.messaging.messages.signal;
 
+import org.session.libsession.messaging.messages.ExpirationConfiguration;
 import org.session.libsession.messaging.messages.visible.OpenGroupInvitation;
 import org.session.libsession.messaging.messages.visible.VisibleMessage;
 import org.session.libsession.utilities.recipients.Recipient;
@@ -21,8 +22,8 @@ public class OutgoingTextMessage {
     this.sentTimestampMillis = sentTimestampMillis;
   }
 
-  public static OutgoingTextMessage from(VisibleMessage message, Recipient recipient) {
-    return new OutgoingTextMessage(recipient, message.getText(), recipient.getExpireMessages() * 1000, -1, message.getSentTimestamp());
+  public static OutgoingTextMessage from(VisibleMessage message, Recipient recipient, long expiresInMillis) {
+    return new OutgoingTextMessage(recipient, message.getText(), expiresInMillis, -1, message.getSentTimestamp());
   }
 
   public static OutgoingTextMessage fromOpenGroupInvitation(OpenGroupInvitation openGroupInvitation, Recipient recipient, Long sentTimestamp) {

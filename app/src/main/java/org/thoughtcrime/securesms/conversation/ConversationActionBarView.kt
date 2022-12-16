@@ -16,6 +16,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewConversationActionBarBinding
 import network.loki.messenger.databinding.ViewConversationSettingBinding
+import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.utilities.ExpirationUtil
 import org.session.libsession.utilities.recipients.Recipient
@@ -74,6 +75,7 @@ class ConversationActionBarView : LinearLayout {
         delegate: ConversationActionBarDelegate,
         threadId: Long,
         recipient: Recipient,
+        config: ExpirationConfiguration? = null,
         openGroup: OpenGroup? = null,
         glide: GlideRequests
     ) {
@@ -87,24 +89,24 @@ class ConversationActionBarView : LinearLayout {
         binding.profilePictureView.root.layoutParams = LayoutParams(size, size)
         binding.profilePictureView.root.glide = glide
         MentionManagerUtilities.populateUserPublicKeyCacheIfNeeded(threadId, context)
-        update(recipient, openGroup)
+        update(recipient, openGroup, config)
     }
 
-    fun update(recipient: Recipient, openGroup: OpenGroup? = null) {
+    fun update(recipient: Recipient, openGroup: OpenGroup? = null, config: ExpirationConfiguration? = null) {
         binding.profilePictureView.root.update(recipient)
         binding.conversationTitleView.text = when {
             recipient.isLocalNumber -> context.getString(R.string.note_to_self)
             else -> recipient.toShortString()
         }
-        updateSubtitle(recipient, openGroup)
+        updateSubtitle(recipient, openGroup, config)
     }
 
-    fun updateSubtitle(recipient: Recipient, openGroup: OpenGroup? = null) {
+    fun updateSubtitle(recipient: Recipient, openGroup: OpenGroup? = null, config: ExpirationConfiguration? = null) {
         val settings = mutableListOf<ConversationSetting>()
-        if (recipient.expireMessages > 0) {
+        if (config?.isEnabled == true) {
             settings.add(
                 ConversationSetting(
-                    "${context.getString(R.string.expiration_type_disappear_after_read)} - ${ExpirationUtil.getExpirationAbbreviatedDisplayValue(context, recipient.expireMessages)}" ,
+                    "${context.getString(R.string.expiration_type_disappear_after_read)} - ${ExpirationUtil.getExpirationAbbreviatedDisplayValue(context, config?.durationSeconds ?: 0)}" ,
                     ConversationSettingType.EXPIRATION,
                     R.drawable.ic_timer
                 )

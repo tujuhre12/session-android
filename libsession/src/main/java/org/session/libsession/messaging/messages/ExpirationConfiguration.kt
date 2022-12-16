@@ -12,6 +12,6 @@ class ExpirationConfiguration(
     val expirationType: ExpirationType? = ExpirationType.valueOf(expirationTypeValue)
 
     companion object {
-        val isNewConfigEnabled = System.currentTimeMillis() > 1_674_000_000_000 // 18/01/2023
+        val isNewConfigEnabled = true//System.currentTimeMillis() > 1_674_000_000_000 // 18/01/2023
     }
 }

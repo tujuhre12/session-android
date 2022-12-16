@@ -162,14 +162,14 @@ public class ExpiringMessageManager implements SSKEnvironment.MessageExpirationM
     MessageRecord messageRecord = DatabaseComponent.get(context).mmsSmsDatabase().getMessageFor(timestamp, author);
     if (messageRecord != null) {
       boolean mms = messageRecord.isMms();
-      Recipient recipient = messageRecord.getRecipient();
-      if (recipient.getExpireMessages() <= 0) return;
+      ExpirationConfiguration config = DatabaseComponent.get(context).expirationConfigurationDatabase().getExpirationConfiguration(messageRecord.getThreadId());
+      if (config == null || !config.isEnabled()) return;
       if (mms) {
         mmsDatabase.markExpireStarted(messageRecord.getId());
       } else {
         smsDatabase.markExpireStarted(messageRecord.getId());
       }
-      scheduleDeletion(messageRecord.getId(), mms, recipient.getExpireMessages() * 1000);
+      scheduleDeletion(messageRecord.getId(), mms, config.getDurationSeconds() * 1000L);
     }
   }
 

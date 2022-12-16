@@ -60,15 +60,15 @@ class ExpirationConfigurationDatabase(context: Context, helper: SQLCipherOpenHel
         val query = "$THREAD_ID = ?"
         val args = arrayOf("$threadId")
 
-        val mappings: MutableList<ExpirationConfiguration> = mutableListOf()
+        val configurations: MutableList<ExpirationConfiguration> = mutableListOf()
 
         readableDatabase.query(TABLE_NAME, null, query, args, null, null, null).use { cursor ->
             while (cursor.moveToNext()) {
-                mappings += readExpirationConfiguration(cursor)
+                configurations += readExpirationConfiguration(cursor)
             }
         }
 
-        return mappings.firstOrNull()
+        return configurations.firstOrNull()
     }
 
     fun setExpirationConfiguration(configuration: ExpirationConfiguration) {

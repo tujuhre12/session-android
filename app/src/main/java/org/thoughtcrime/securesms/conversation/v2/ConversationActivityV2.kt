@@ -455,7 +455,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         actionBar.title = ""
         actionBar.setDisplayHomeAsUpEnabled(true)
         actionBar.setHomeButtonEnabled(true)
-        binding!!.toolbarContent.bind(this, viewModel.threadId, recipient, viewModel.openGroup, glide)
+        binding!!.toolbarContent.bind(this, viewModel.threadId, recipient, viewModel.expirationConfiguration, viewModel.openGroup, glide)
         maybeUpdateToolbar(recipient)
     }
 
@@ -548,7 +548,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     private fun getLatestOpenGroupInfoIfNeeded() {
         viewModel.openGroup?.let { openGroup ->
             OpenGroupApi.getMemberCount(openGroup.room, openGroup.server).successUi {
-                binding?.toolbarContent?.updateSubtitle(viewModel.recipient!!, openGroup)
+                binding?.toolbarContent?.updateSubtitle(viewModel.recipient!!, openGroup, viewModel.expirationConfiguration)
                 maybeUpdateToolbar(viewModel.recipient!!)
             }
         }
@@ -568,7 +568,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     private fun setUpOutdatedClientBanner() {
         val recipient = viewModel.recipient ?: return
-        if (recipient.expireMessages == 0 || !ExpirationConfiguration.isNewConfigEnabled) { return }
+        if (viewModel.expirationConfiguration?.isEnabled != true || !ExpirationConfiguration.isNewConfigEnabled) { return }
         binding?.outdatedBannerTextView?.text =
             resources.getString(R.string.activity_conversation_outdated_client_banner_text, recipient.name)
         binding?.outdatedBanner?.isVisible = true
@@ -622,7 +622,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                 menu,
                 menuInflater,
                 recipient,
-                this
+                this,
+                viewModel.expirationConfiguration
             )
         }
         viewModel.recipient?.let { maybeUpdateToolbar(it) }
@@ -653,7 +654,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     }
 
     private fun maybeUpdateToolbar(recipient: Recipient) {
-        binding?.toolbarContent?.update(recipient, viewModel.openGroup)
+        binding?.toolbarContent?.update(recipient, viewModel.openGroup, viewModel.expirationConfiguration)
     }
 
     private fun showOrHideInputIfNeeded() {
@@ -1347,7 +1348,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         val message = VisibleMessage()
         message.sentTimestamp = System.currentTimeMillis()
         message.text = text
-        val outgoingTextMessage = OutgoingTextMessage.from(message, recipient)
+        val expiresInMillis = (viewModel.expirationConfiguration?.durationSeconds ?: 0) * 1000L
+        val outgoingTextMessage = OutgoingTextMessage.from(message, recipient, expiresInMillis)
         // Clear the input bar
         binding?.inputBar?.text = ""
         binding?.inputBar?.cancelQuoteDraft()
@@ -1384,7 +1386,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                 else it.individualRecipient.address
             quote?.copy(author = sender)
         }
-        val outgoingTextMessage = OutgoingMediaMessage.from(message, recipient, attachments, localQuote, linkPreview)
+        val expiresInMillis = (viewModel.expirationConfiguration?.durationSeconds ?: 0) * 1000L
+        val outgoingTextMessage = OutgoingMediaMessage.from(message, recipient, attachments, localQuote, linkPreview, expiresInMillis)
         // Clear the input bar
         binding?.inputBar?.text = ""
         binding?.inputBar?.cancelQuoteDraft()

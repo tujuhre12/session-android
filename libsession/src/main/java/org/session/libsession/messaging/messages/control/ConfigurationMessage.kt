@@ -128,8 +128,9 @@ class ConfigurationMessage(var closedGroups: List<ClosedGroup>, var openGroups: 
                     if (!group.members.contains(Address.fromSerialized(storage.getUserPublicKey()!!))) continue
                     val groupPublicKey = GroupUtil.doubleDecodeGroupID(group.encodedId).toHexString()
                     val encryptionKeyPair = storage.getLatestClosedGroupEncryptionKeyPair(groupPublicKey) ?: continue
-                    val recipient = Recipient.from(context, Address.fromSerialized(group.encodedId), false)
-                    val closedGroup = ClosedGroup(groupPublicKey, group.title, encryptionKeyPair, group.members.map { it.serialize() }, group.admins.map { it.serialize() }, recipient.expireMessages)
+                    val threadID = storage.getOrCreateThreadIdFor(Address.fromSerialized(group.encodedId))
+                    val expiryConfig = storage.getExpirationConfiguration(threadID)
+                    val closedGroup = ClosedGroup(groupPublicKey, group.title, encryptionKeyPair, group.members.map { it.serialize() }, group.admins.map { it.serialize() }, expiryConfig?.durationSeconds ?: 0)
                     closedGroups.add(closedGroup)
                 }
                 if (group.isOpenGroup) {

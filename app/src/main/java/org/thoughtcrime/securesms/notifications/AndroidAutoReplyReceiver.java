@@ -26,6 +26,7 @@ import android.os.Bundle;
 
 import androidx.core.app.RemoteInput;
 
+import org.session.libsession.messaging.messages.ExpirationConfiguration;
 import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage;
 import org.session.libsession.messaging.messages.signal.OutgoingTextMessage;
 import org.session.libsession.messaging.messages.visible.VisibleMessage;
@@ -84,10 +85,12 @@ public class AndroidAutoReplyReceiver extends BroadcastReceiver {
           message.setText(responseText.toString());
           message.setSentTimestamp(System.currentTimeMillis());
           MessageSender.send(message, recipient.getAddress());
+          ExpirationConfiguration config = DatabaseComponent.get(context).expirationConfigurationDatabase().getExpirationConfiguration(threadId);
+          long expiresInMillis = config == null ? 0 : config.getDurationSeconds() * 1000L;
 
           if (recipient.isGroupRecipient()) {
             Log.w("AndroidAutoReplyReceiver", "GroupRecipient, Sending media message");
-            OutgoingMediaMessage reply = OutgoingMediaMessage.from(message, recipient, Collections.emptyList(), null, null);
+            OutgoingMediaMessage reply = OutgoingMediaMessage.from(message, recipient, Collections.emptyList(), null, null, expiresInMillis);
             try {
               DatabaseComponent.get(context).mmsDatabase().insertMessageOutbox(reply, replyThreadId, false, null, true);
             } catch (MmsException e) {
@@ -95,7 +98,7 @@ public class AndroidAutoReplyReceiver extends BroadcastReceiver {
             }
           } else {
             Log.w("AndroidAutoReplyReceiver", "Sending regular message ");
-            OutgoingTextMessage reply = OutgoingTextMessage.from(message, recipient);
+            OutgoingTextMessage reply = OutgoingTextMessage.from(message, recipient, expiresInMillis);
             DatabaseComponent.get(context).smsDatabase().insertMessageOutbox(replyThreadId, reply, false, System.currentTimeMillis(), null, true);
           }
 

@@ -26,6 +26,7 @@ import android.os.Bundle;
 
 import androidx.core.app.RemoteInput;
 
+import org.session.libsession.messaging.messages.ExpirationConfiguration;
 import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage;
 import org.session.libsession.messaging.messages.signal.OutgoingTextMessage;
 import org.session.libsession.messaging.messages.visible.VisibleMessage;
@@ -78,10 +79,11 @@ public class RemoteReplyReceiver extends BroadcastReceiver {
           VisibleMessage message = new VisibleMessage();
           message.setSentTimestamp(System.currentTimeMillis());
           message.setText(responseText.toString());
-
+          ExpirationConfiguration config = DatabaseComponent.get(context).expirationConfigurationDatabase().getExpirationConfiguration(threadId);
+          long expiresInMillis = config == null ? 0 : config.getDurationSeconds() * 1000L;
           switch (replyMethod) {
             case GroupMessage: {
-              OutgoingMediaMessage reply = OutgoingMediaMessage.from(message, recipient, Collections.emptyList(), null, null);
+              OutgoingMediaMessage reply = OutgoingMediaMessage.from(message, recipient, Collections.emptyList(), null, null, expiresInMillis);
               try {
                 DatabaseComponent.get(context).mmsDatabase().insertMessageOutbox(reply, threadId, false, null, true);
                 MessageSender.send(message, address);
@@ -91,7 +93,7 @@ public class RemoteReplyReceiver extends BroadcastReceiver {
               break;
             }
             case SecureMessage: {
-              OutgoingTextMessage reply = OutgoingTextMessage.from(message, recipient);
+              OutgoingTextMessage reply = OutgoingTextMessage.from(message, recipient, expiresInMillis);
               DatabaseComponent.get(context).smsDatabase().insertMessageOutbox(threadId, reply, false, System.currentTimeMillis(), null, true);
               MessageSender.send(message, address);
               break;

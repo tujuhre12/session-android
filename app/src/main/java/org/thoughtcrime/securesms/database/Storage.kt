@@ -168,19 +168,27 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
                 recipientDb.setApprovedMe(targetRecipient, true)
             }
         }
+        val expiresIn = getExpirationConfiguration(message.threadID ?: -1)?.durationSeconds ?: 0
         if (message.isMediaMessage() || attachments.isNotEmpty()) {
             val quote: Optional<QuoteModel> = if (quotes != null) Optional.of(quotes) else Optional.absent()
             val linkPreviews: Optional<List<LinkPreview>> = if (linkPreview.isEmpty()) Optional.absent() else Optional.of(linkPreview.mapNotNull { it!! })
             val mmsDatabase = DatabaseComponent.get(context).mmsDatabase()
             val insertResult = if (isUserSender || isUserBlindedSender) {
-                val mediaMessage = OutgoingMediaMessage.from(message, targetRecipient, pointers, quote.orNull(), linkPreviews.orNull()?.firstOrNull())
+                val mediaMessage = OutgoingMediaMessage.from(
+                    message,
+                    targetRecipient,
+                    pointers,
+                    quote.orNull(),
+                    linkPreviews.orNull()?.firstOrNull(),
+                    expiresIn * 1000L
+                )
                 mmsDatabase.insertSecureDecryptedMessageOutbox(mediaMessage, message.threadID ?: -1, message.sentTimestamp!!, runThreadUpdate)
             } else {
                 // It seems like we have replaced SignalServiceAttachment with SessionServiceAttachment
                 val signalServiceAttachments = attachments.mapNotNull {
                     it.toSignalPointer()
                 }
-                val mediaMessage = IncomingMediaMessage.from(message, senderAddress, targetRecipient.expireMessages * 1000L, group, signalServiceAttachments, quote, linkPreviews)
+                val mediaMessage = IncomingMediaMessage.from(message, senderAddress, expiresIn * 1000L, group, signalServiceAttachments, quote, linkPreviews)
                 mmsDatabase.insertSecureDecryptedMessageInbox(mediaMessage, message.threadID ?: -1, message.receivedTimestamp ?: 0, runIncrement, runThreadUpdate)
             }
             if (insertResult.isPresent) {
@@ -192,11 +200,11 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
 
             val insertResult = if (isUserSender || isUserBlindedSender) {
                 val textMessage = if (isOpenGroupInvitation) OutgoingTextMessage.fromOpenGroupInvitation(message.openGroupInvitation, targetRecipient, message.sentTimestamp)
-                else OutgoingTextMessage.from(message, targetRecipient)
+                else OutgoingTextMessage.from(message, targetRecipient, expiresIn * 1000L)
                 smsDatabase.insertMessageOutbox(message.threadID ?: -1, textMessage, message.sentTimestamp!!, runThreadUpdate)
             } else {
                 val textMessage = if (isOpenGroupInvitation) IncomingTextMessage.fromOpenGroupInvitation(message.openGroupInvitation, senderAddress, message.sentTimestamp)
-                else IncomingTextMessage.from(message, senderAddress, group, targetRecipient.expireMessages * 1000L)
+                else IncomingTextMessage.from(message, senderAddress, group, expiresIn * 1000L)
                 val encrypted = IncomingEncryptedMessage(textMessage, textMessage.messageBody)
                 smsDatabase.insertMessageInbox(encrypted, message.receivedTimestamp ?: 0, runIncrement, runThreadUpdate)
             }
@@ -542,7 +550,7 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
 
     override fun setExpirationTimer(groupID: String, duration: Int) {
         val recipient = Recipient.from(context, fromSerialized(groupID), false)
-        val threadId = DatabaseComponent.get(context).threadDatabase().getThreadIdIfExistsFor(recipient)
+        val threadId = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(recipient)
         DatabaseComponent.get(context).expirationConfigurationDatabase().setExpirationConfiguration(
             ExpirationConfiguration(threadId, duration, ExpirationType.DELETE_AFTER_SEND.number, System.currentTimeMillis())
         )

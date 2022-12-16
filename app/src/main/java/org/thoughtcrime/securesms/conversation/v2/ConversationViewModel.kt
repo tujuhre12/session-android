@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.utilities.SessionId
@@ -31,6 +32,9 @@ class ConversationViewModel(
 
     private val _uiState = MutableStateFlow(ConversationUiState())
     val uiState: StateFlow<ConversationUiState> = _uiState
+
+    val expirationConfiguration: ExpirationConfiguration?
+        get() = storage.getExpirationConfiguration(threadId)
 
     val recipient: Recipient?
         get() = repository.maybeGetRecipientForThreadId(threadId)

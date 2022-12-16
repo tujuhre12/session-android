@@ -18,6 +18,7 @@ import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import network.loki.messenger.R
+import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.leave
 import org.session.libsession.utilities.GroupUtil.doubleDecodeGroupID
@@ -46,7 +47,8 @@ object ConversationMenuHelper {
         menu: Menu,
         inflater: MenuInflater,
         thread: Recipient,
-        context: Context
+        context: Context,
+        config: ExpirationConfiguration?
     ) {
         // Prepare
         menu.clear()
@@ -54,7 +56,7 @@ object ConversationMenuHelper {
         // Base menu (options that should always be present)
         inflater.inflate(R.menu.menu_conversation, menu)
         // Expiring messages
-        if (thread.expireMessages == 0 && !isOpenGroup &&
+        if (config?.isEnabled != true && !isOpenGroup &&
             (thread.hasApprovedMe() || thread.isClosedGroupRecipient || thread.isLocalNumber)
         ) {
             inflater.inflate(R.menu.menu_conversation_expiration_off, menu)
