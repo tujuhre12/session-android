@@ -157,11 +157,11 @@ fun MessageReceiver.cancelTypingIndicatorsIfNeeded(senderPublicKey: String) {
 }
 
 private fun MessageReceiver.handleExpirationTimerUpdate(message: ExpirationTimerUpdate) {
-    if (!ExpirationConfiguration.isNewConfigEnabled) return
+    if (ExpirationConfiguration.isNewConfigEnabled) return
     val recipient = Recipient.from(MessagingModuleConfiguration.shared.context, Address.fromSerialized(message.sender!!), false)
     val type = when {
-        recipient.isLocalNumber -> ExpirationType.DELETE_AFTER_READ
-        recipient.isContactRecipient || recipient.isGroupRecipient -> ExpirationType.DELETE_AFTER_SEND
+        recipient.isContactRecipient -> ExpirationType.DELETE_AFTER_READ
+        recipient.isGroupRecipient -> ExpirationType.DELETE_AFTER_SEND
         else -> null
     }
     SSKEnvironment.shared.messageExpirationManager.setExpirationTimer(message, type?.number)
