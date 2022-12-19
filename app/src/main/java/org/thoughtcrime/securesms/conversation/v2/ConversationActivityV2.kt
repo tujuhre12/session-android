@@ -74,6 +74,7 @@ import org.session.libsession.utilities.Stub
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.concurrent.SimpleTask
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.Recipient.DisappearingState
 import org.session.libsession.utilities.recipients.RecipientModifiedListener
 import org.session.libsignal.crypto.MnemonicCodec
 import org.session.libsignal.utilities.IdPrefix
@@ -389,6 +390,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             true,
             screenshotObserver
         )
+        binding?.toolbarContent?.update(recipient, viewModel.openGroup, viewModel.expirationConfiguration)
     }
 
     override fun onPause() {
@@ -568,10 +570,14 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     private fun setUpOutdatedClientBanner() {
         val recipient = viewModel.recipient ?: return
-        if (viewModel.expirationConfiguration?.isEnabled != true || !ExpirationConfiguration.isNewConfigEnabled) { return }
-        binding?.outdatedBannerTextView?.text =
-            resources.getString(R.string.activity_conversation_outdated_client_banner_text, recipient.name)
-        binding?.outdatedBanner?.isVisible = true
+        if (viewModel.recipient?.disappearingState == DisappearingState.LEGACY &&
+            viewModel.expirationConfiguration?.isEnabled == true &&
+            !ExpirationConfiguration.isNewConfigEnabled
+        ) {
+            binding?.outdatedBannerTextView?.text =
+                resources.getString(R.string.activity_conversation_outdated_client_banner_text, recipient.name)
+            binding?.outdatedBanner?.isVisible = true
+        }
     }
 
     private fun setUpLinkPreviewObserver() {
