@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
@@ -28,8 +29,8 @@ class ExpirationSettingsViewModel(
     private val storage: Storage
 ) : ViewModel() {
 
-    var showExpirationTypeSelector: Boolean = false
-        private set
+    private val _uiState = MutableStateFlow(ExpirationSettingsUiState())
+    val uiState: StateFlow<ExpirationSettingsUiState> = _uiState
 
     private var expirationConfig: ExpirationConfiguration? = null
 
@@ -50,7 +51,9 @@ class ExpirationSettingsViewModel(
             expirationConfig = storage.getExpirationConfiguration(threadId)
             val recipient = threadDb.getRecipientForThreadId(threadId)
             _recipient.value = recipient
-            showExpirationTypeSelector = !ExpirationConfiguration.isNewConfigEnabled || (recipient?.isContactRecipient == true && !recipient.isLocalNumber)
+            _uiState.update {
+                it.copy(showExpirationTypeSelector = !ExpirationConfiguration.isNewConfigEnabled || (recipient?.isContactRecipient == true && !recipient.isLocalNumber))
+            }
             if (ExpirationConfiguration.isNewConfigEnabled && (recipient?.isLocalNumber == true || recipient?.isClosedGroupRecipient == true)) {
                 _selectedExpirationType.value = ExpirationType.DELETE_AFTER_SEND.number
             } else {
@@ -105,6 +108,9 @@ class ExpirationSettingsViewModel(
         message.recipient = address.serialize()
         message.sentTimestamp = System.currentTimeMillis()
         MessageSender.send(message, address)
+        _uiState.update {
+            it.copy(settingsSaved = true)
+        }
     }
 
     @dagger.assisted.AssistedFactory
@@ -136,3 +142,8 @@ class ExpirationSettingsViewModel(
         }
     }
 }
+
+data class ExpirationSettingsUiState(
+    val showExpirationTypeSelector: Boolean = false,
+    val settingsSaved: Boolean? = null
+)

@@ -106,6 +106,13 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
         }
         lifecycleScope.launchWhenStarted {
             launch {
+                viewModel.uiState.collect { uiState ->
+                    if (uiState.settingsSaved == true) {
+                        finish()
+                    }
+                }
+            }
+            launch {
                 viewModel.selectedExpirationType.collect { type ->
                     val position = deleteTypeOptions.indexOfFirst { it.value.toIntOrNull() == type }
                     deleteTypeOptionAdapter.setSelectedPosition(max(0, position))
@@ -119,15 +126,15 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
             }
             launch {
                 viewModel.expirationTimerOptions.collect { options ->
-                    binding.textViewTimer.isVisible = options.isNotEmpty() && viewModel.showExpirationTypeSelector
+                    binding.textViewTimer.isVisible = options.isNotEmpty() && viewModel.uiState.value.showExpirationTypeSelector
                     binding.layoutTimer.isVisible = options.isNotEmpty()
                     timerOptionAdapter.submitList(options)
                 }
             }
             launch {
                 viewModel.recipient.collect {
-                    binding.textViewDeleteType.isVisible = viewModel.showExpirationTypeSelector
-                    binding.layoutDeleteTypes.isVisible = viewModel.showExpirationTypeSelector
+                    binding.textViewDeleteType.isVisible = viewModel.uiState.value.showExpirationTypeSelector
+                    binding.layoutDeleteTypes.isVisible = viewModel.uiState.value.showExpirationTypeSelector
                     binding.textViewFooter.isVisible = it?.isClosedGroupRecipient == true
                     binding.textViewFooter.text = HtmlCompat.fromHtml(getString(R.string.activity_expiration_settings_group_footer), HtmlCompat.FROM_HTML_MODE_COMPACT)
                 }
@@ -137,7 +144,7 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
     }
 
     private fun getDeleteOptions(): List<RadioOption> {
-        if (!viewModel.showExpirationTypeSelector) return emptyList()
+        if (!viewModel.uiState.value.showExpirationTypeSelector) return emptyList()
 
         val deleteTypeOptions = mutableListOf<RadioOption>()
         if (ExpirationConfiguration.isNewConfigEnabled) {
