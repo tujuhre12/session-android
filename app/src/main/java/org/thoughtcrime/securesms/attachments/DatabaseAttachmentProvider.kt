@@ -201,6 +201,11 @@ class DatabaseAttachmentProvider(context: Context, helper: SQLCipherOpenHelper) 
         return messageDB.getMessageServerHash(messageID)
     }
 
+    override fun getServerHashForMessages(messageIDs: List<Long>): List<Pair<Long, String?>> {
+        val messageDB = DatabaseComponent.get(context).lokiMessageDatabase()
+        return messageDB.getMessageServerHashes(messageIDs)
+    }
+
     override fun getDatabaseAttachment(attachmentId: Long): DatabaseAttachment? {
         val attachmentDatabase = DatabaseComponent.get(context).attachmentDatabase()
         return attachmentDatabase.getAttachment(AttachmentId(attachmentId, 0))

@@ -983,8 +983,25 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         DatabaseComponent.get(context).expirationConfigurationDatabase().setExpirationConfiguration(config)
     }
 
-    override fun getExpiringMessages(messageIds: LongArray): List<Pair<String, Int>> {
-        return emptyList()
+    override fun getExpiringMessages(messageIds: List<Long>): List<Pair<Long, Long>> {
+        val expiringMessages = mutableListOf<Pair<Long, Long>>()
+        val smsDb = DatabaseComponent.get(context).smsDatabase()
+        smsDb.readerFor(smsDb.expirationNotStartedMessages).use { reader ->
+            while (reader.next != null) {
+                if (reader.current.id in messageIds) {
+                    expiringMessages.add(reader.current.id to reader.current.expiresIn)
+                }
+            }
+        }
+        val mmsDb = DatabaseComponent.get(context).mmsDatabase()
+        mmsDb.expireNotStartedMessages.use { reader ->
+            while (reader.next != null) {
+                if (reader.current.id in messageIds) {
+                    expiringMessages.add(reader.current.id to reader.current.expiresIn)
+                }
+            }
+        }
+        return expiringMessages
     }
 
     override fun updateDisappearingState(address: String, disappearingState: Recipient.DisappearingState) {

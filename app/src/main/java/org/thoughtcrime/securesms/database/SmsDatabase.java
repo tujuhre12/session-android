@@ -50,6 +50,7 @@ import org.thoughtcrime.securesms.database.model.ReactionRecord;
 import org.thoughtcrime.securesms.database.model.SmsMessageRecord;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.Collections;
@@ -567,6 +568,11 @@ public class SmsDatabase extends MessagingDatabase {
     return rawQuery(where, null);
   }
 
+  public Cursor getExpirationNotStartedMessages() {
+    String         where = EXPIRES_IN + " > 0 AND " + EXPIRE_STARTED + " = 0";
+    return rawQuery(where, null);
+  }
+
   public SmsMessageRecord getMessage(long messageId) throws NoSuchMessageException {
     Cursor         cursor = rawQuery(ID_WHERE, new String[]{messageId + ""});
     Reader         reader = new Reader(cursor);
@@ -740,7 +746,7 @@ public class SmsDatabase extends MessagingDatabase {
     }
   }
 
-  public class Reader {
+  public class Reader implements Closeable {
 
     private final Cursor cursor;
 
@@ -805,8 +811,11 @@ public class SmsDatabase extends MessagingDatabase {
       return new LinkedList<>();
     }
 
+    @Override
     public void close() {
-      cursor.close();
+      if (cursor != null) {
+        cursor.close();
+      }
     }
   }
 

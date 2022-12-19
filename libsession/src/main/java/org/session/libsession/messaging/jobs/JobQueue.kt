@@ -115,7 +115,8 @@ class JobQueue : JobDelegate {
 
             while (isActive) {
                 when (val job = queue.receive()) {
-                    is NotifyPNServerJob, is AttachmentUploadJob, is MessageSendJob, is DisappearingMessagesJob -> {
+                    is NotifyPNServerJob, is AttachmentUploadJob, is MessageSendJob, is DisappearingMessagesJob,
+                    is SyncedExpiriesJob -> {
                         txQueue.send(job)
                     }
                     is AttachmentDownloadJob -> {

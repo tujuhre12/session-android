@@ -2,14 +2,13 @@ package org.session.libsession.messaging.jobs
 
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.messages.ExpirationConfiguration
-import org.session.libsession.messaging.messages.control.SyncedExpiriesMessage
-import org.session.libsession.messaging.messages.control.SyncedExpiry
-import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.utilities.Data
-import org.session.libsession.snode.SnodeAPI
-import org.session.libsession.utilities.Address
 
-class DisappearingMessagesJob(val messageIds: LongArray = longArrayOf(), val startedAtMs: Long = 0): Job {
+class DisappearingMessagesJob(
+    val messageIds: List<Long> = listOf(),
+    val startedAtMs: Long = 0,
+    val threadId: Long = 0
+) : Job {
 
     override var delegate: JobDelegate? = null
     override var id: String? = null
@@ -18,20 +17,10 @@ class DisappearingMessagesJob(val messageIds: LongArray = longArrayOf(), val sta
 
     override fun execute() {
         if (!ExpirationConfiguration.isNewConfigEnabled) return
-        val userPublicKey = MessagingModuleConfiguration.shared.storage.getUserPublicKey() ?: return
-        val module = MessagingModuleConfiguration.shared
         try {
-            module.storage.getExpiringMessages(messageIds).groupBy { it.second }.forEach { (expiresInSeconds, messages) ->
-                val serverHashes = messages.map { it.first }
-                if (serverHashes.isEmpty()) return
-                val expirationTimestamp = startedAtMs + expiresInSeconds * 1000
-                val syncTarget = ""
-                val syncedExpiriesMessage = SyncedExpiriesMessage()
-                syncedExpiriesMessage.conversationExpiries = mapOf(
-                    syncTarget to serverHashes.map { serverHash -> SyncedExpiry(serverHash, expirationTimestamp) }
-                )
-                MessageSender.send(syncedExpiriesMessage, Address.fromSerialized(userPublicKey))
-                SnodeAPI.updateExpiry(expirationTimestamp, serverHashes)
+            val ids = MessagingModuleConfiguration.shared.storage.getExpiringMessages(messageIds).map { it.first }
+            if (ids.isNotEmpty()) {
+                JobQueue.shared.add(SyncedExpiriesJob(ids, startedAtMs, threadId))
             }
         } catch (e: Exception) {
             delegate?.handleJobFailed(this, e)
@@ -41,8 +30,9 @@ class DisappearingMessagesJob(val messageIds: LongArray = longArrayOf(), val sta
     }
 
     override fun serialize(): Data = Data.Builder()
-        .putLongArray(MESSAGE_IDS, messageIds)
+        .putLongArray(MESSAGE_IDS, messageIds.toLongArray())
         .putLong(STARTED_AT_MS, startedAtMs)
+        .putLong(THREAD_ID, threadId)
         .build()
 
     override fun getFactoryKey(): String = KEY
@@ -50,8 +40,9 @@ class DisappearingMessagesJob(val messageIds: LongArray = longArrayOf(), val sta
     class Factory : Job.Factory<DisappearingMessagesJob> {
         override fun create(data: Data): DisappearingMessagesJob {
             return DisappearingMessagesJob(
-                data.getLongArray(MESSAGE_IDS),
-                data.getLong(STARTED_AT_MS)
+                data.getLongArray(MESSAGE_IDS).toList(),
+                data.getLong(STARTED_AT_MS),
+                data.getLong(THREAD_ID)
             )
         }
     }
@@ -61,6 +52,7 @@ class DisappearingMessagesJob(val messageIds: LongArray = longArrayOf(), val sta
 
         private const val MESSAGE_IDS = "messageIds"
         private const val STARTED_AT_MS = "startedAtMs"
+        private const val THREAD_ID = "threadId"
     }
 
 }

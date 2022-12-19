@@ -288,6 +288,12 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
             return readerFor(rawQuery(where, null))!!
         }
 
+    val expireNotStartedMessages: Reader
+        get() {
+            val where = "$EXPIRES_IN > 0 AND $EXPIRE_STARTED = 0"
+            return readerFor(rawQuery(where, null))!!
+        }
+
     private fun updateMailboxBitmask(
         id: Long,
         maskOff: Long,
