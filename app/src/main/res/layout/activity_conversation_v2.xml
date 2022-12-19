@@ -211,6 +211,7 @@
             android:id="@+id/outdatedBannerTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
             android:layout_centerInParent="true"
             android:layout_marginVertical="@dimen/very_small_spacing"
             android:layout_marginHorizontal="@dimen/medium_spacing"
