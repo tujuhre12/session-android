@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.sending_receiving.MessageSender
+import org.session.libsession.utilities.SSKEnvironment.MessageExpirationManagerProtocol
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType
 import org.thoughtcrime.securesms.database.Storage
@@ -25,6 +26,7 @@ class ExpirationSettingsViewModel(
     private val threadId: Long,
     private val afterReadOptions: List<RadioOption>,
     private val afterSendOptions: List<RadioOption>,
+    private val messageExpirationManager: MessageExpirationManagerProtocol,
     private val threadDb: ThreadDatabase,
     private val storage: Storage
 ) : ViewModel() {
@@ -53,11 +55,6 @@ class ExpirationSettingsViewModel(
             _recipient.value = recipient
             _uiState.update {
                 it.copy(showExpirationTypeSelector = !ExpirationConfiguration.isNewConfigEnabled || (recipient?.isContactRecipient == true && !recipient.isLocalNumber))
-            }
-            if (ExpirationConfiguration.isNewConfigEnabled && (recipient?.isLocalNumber == true || recipient?.isClosedGroupRecipient == true)) {
-                _selectedExpirationType.value = ExpirationType.DELETE_AFTER_SEND.number
-            } else {
-                _selectedExpirationType.value = expirationConfig?.expirationTypeValue ?: -1
             }
             _selectedExpirationType.value = if (ExpirationConfiguration.isNewConfigEnabled) {
                 if (recipient?.isLocalNumber == true || recipient?.isClosedGroupRecipient == true) {
@@ -108,6 +105,8 @@ class ExpirationSettingsViewModel(
         val address = recipient.value?.address ?: return@launch
         message.recipient = address.serialize()
         message.sentTimestamp = System.currentTimeMillis()
+        messageExpirationManager.setExpirationTimer(message)
+
         MessageSender.send(message, address)
         _uiState.update {
             it.copy(settingsSaved = true)
@@ -128,6 +127,7 @@ class ExpirationSettingsViewModel(
         @Assisted private val threadId: Long,
         @Assisted("afterRead") private val afterReadOptions: List<RadioOption>,
         @Assisted("afterSend") private val afterSendOptions: List<RadioOption>,
+        private val messageExpirationManager: MessageExpirationManagerProtocol,
         private val threadDb: ThreadDatabase,
         private val storage: Storage
     ) : ViewModelProvider.Factory {
@@ -137,6 +137,7 @@ class ExpirationSettingsViewModel(
                 threadId,
                 afterReadOptions,
                 afterSendOptions,
+                messageExpirationManager,
                 threadDb,
                 storage
             ) as T

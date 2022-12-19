@@ -20,6 +20,7 @@ import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.utilities.ExpirationUtil
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.protos.SignalServiceProtos
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionManagerUtilities
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
@@ -104,9 +105,14 @@ class ConversationActionBarView : LinearLayout {
     fun updateSubtitle(recipient: Recipient, openGroup: OpenGroup? = null, config: ExpirationConfiguration? = null) {
         val settings = mutableListOf<ConversationSetting>()
         if (config?.isEnabled == true) {
+            val prefix = if (config.expirationType == SignalServiceProtos.Content.ExpirationType.DELETE_AFTER_READ) {
+                context.getString(R.string.expiration_type_disappear_after_read)
+            } else {
+                context.getString(R.string.expiration_type_disappear_after_send)
+            }
             settings.add(
                 ConversationSetting(
-                    "${context.getString(R.string.expiration_type_disappear_after_read)} - ${ExpirationUtil.getExpirationAbbreviatedDisplayValue(context, config?.durationSeconds ?: 0)}" ,
+                    "$prefix - ${ExpirationUtil.getExpirationAbbreviatedDisplayValue(context, config.durationSeconds)}" ,
                     ConversationSettingType.EXPIRATION,
                     R.drawable.ic_timer
                 )

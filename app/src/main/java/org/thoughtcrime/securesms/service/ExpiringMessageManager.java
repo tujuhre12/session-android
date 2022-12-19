@@ -69,20 +69,7 @@ public class ExpiringMessageManager implements SSKEnvironment.MessageExpirationM
   }
 
   @Override
-  public void setExpirationTimer(@NotNull ExpirationTimerUpdate message, @Nullable Integer expirationType) {
-    try {
-      ThreadDatabase threadDb = DatabaseComponent.get(context).threadDatabase();
-      long threadId = threadDb.getOrCreateThreadIdFor(Recipient.from(context, Address.fromSerialized(message.getSender()), false));
-      if (message.getGroupPublicKey() != null) {
-        Recipient recipient =  Recipient.from(context, Address.fromSerialized(GroupUtil.doubleEncodeGroupID(message.getGroupPublicKey())), false);
-        threadId = threadDb.getOrCreateThreadIdFor(recipient);
-      }
-      DatabaseComponent.get(context).expirationConfigurationDatabase().setExpirationConfiguration(
-              new ExpirationConfiguration(threadId, message.getDuration(), expirationType, System.currentTimeMillis())
-      );
-    } catch (Exception e) {
-      Log.e("Loki", "Failed to update expiration configuration.");
-    }
+  public void setExpirationTimer(@NotNull ExpirationTimerUpdate message) {
     String userPublicKey = TextSecurePreferences.getLocalNumber(context);
     String senderPublicKey = message.getSender();
 

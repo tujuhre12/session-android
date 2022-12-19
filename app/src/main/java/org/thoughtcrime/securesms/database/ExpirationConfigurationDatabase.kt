@@ -83,6 +83,7 @@ class ExpirationConfigurationDatabase(context: Context, helper: SQLCipherOpenHel
 
             writableDatabase.insert(TABLE_NAME, null, values)
             writableDatabase.setTransactionSuccessful()
+            notifyConversationListeners(configuration.threadId)
         } finally {
             writableDatabase.endTransaction()
         }

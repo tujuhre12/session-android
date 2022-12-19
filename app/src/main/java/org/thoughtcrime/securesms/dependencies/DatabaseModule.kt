@@ -8,12 +8,14 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import net.sqlcipher.database.SQLiteDatabase
 import org.session.libsession.database.MessageDataProvider
+import org.session.libsession.utilities.SSKEnvironment
 import org.thoughtcrime.securesms.attachments.DatabaseAttachmentProvider
 import org.thoughtcrime.securesms.crypto.AttachmentSecret
 import org.thoughtcrime.securesms.crypto.AttachmentSecretProvider
 import org.thoughtcrime.securesms.crypto.DatabaseSecretProvider
 import org.thoughtcrime.securesms.database.*
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
+import org.thoughtcrime.securesms.service.ExpiringMessageManager
 import javax.inject.Singleton
 
 @Module
@@ -24,6 +26,10 @@ object DatabaseModule {
     fun init(context: Context) {
         SQLiteDatabase.loadLibs(context)
     }
+
+    @Provides
+    @Singleton
+    fun provideMessageExpirationManagerProtocol(@ApplicationContext context: Context): SSKEnvironment.MessageExpirationManagerProtocol = ExpiringMessageManager(context)
 
     @Provides
     @Singleton
