@@ -98,8 +98,9 @@ class ExpirationSettingsViewModel(
     }
 
     fun onSetClick() = viewModelScope.launch {
-        val expiresIn = _selectedExpirationTimer.value?.value?.toIntOrNull() ?: 0
         val expiryType = _selectedExpirationType.value
+        val firstOption = _expirationTimerOptions.value.firstOrNull()?.value?.toIntOrNull() ?: 0
+        val expiresIn = _selectedExpirationTimer.value?.value?.toIntOrNull() ?: if (expiryType >= 0) firstOption else 0
         val expiryChangeTimestampMs = System.currentTimeMillis()
         storage.setExpirationConfiguration(ExpirationConfiguration(threadId, expiresIn, expiryType, expiryChangeTimestampMs))
 

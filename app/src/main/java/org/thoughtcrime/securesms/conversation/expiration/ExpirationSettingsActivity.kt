@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.conversation.expiration
 import android.os.Bundle
 import android.os.Parcelable
 import android.util.SparseArray
+import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
 import androidx.core.text.HtmlCompat
@@ -108,6 +109,7 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
             launch {
                 viewModel.uiState.collect { uiState ->
                     if (uiState.settingsSaved == true) {
+                        Toast.makeText(this@ExpirationSettingsActivity, getString(R.string.ExpirationSettingsActivity_settings_saved), Toast.LENGTH_SHORT).show()
                         finish()
                     }
                 }

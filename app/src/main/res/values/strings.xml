@@ -885,4 +885,5 @@
     <string name="activity_expiration_settings_timer">Timer</string>
     <string name="activity_expiration_settings_group_footer"><![CDATA[This setting applies to everyone in this conversation.<br/>Only group admins can change this setting.]]></string>
     <string name="activity_conversation_outdated_client_banner_text">%s is using an outdated client. Disappearing messages may not work as expected.</string>
+    <string name="ExpirationSettingsActivity_settings_saved">Settings saved</string>
 </resources>
