@@ -3,21 +3,13 @@ package org.thoughtcrime.securesms.conversation.v2
 import android.Manifest
 import android.animation.FloatEvaluator
 import android.animation.ValueAnimator
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
-import android.content.DialogInterface
-import android.content.Intent
+import android.content.*
 import android.content.res.Resources
 import android.database.Cursor
 import android.graphics.Rect
 import android.graphics.Typeface
 import android.net.Uri
-import android.os.AsyncTask
-import android.os.Build
-import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
+import android.os.*
 import android.provider.MediaStore
 import android.text.TextUtils
 import android.util.Pair
@@ -66,12 +58,8 @@ import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
 import org.session.libsession.messaging.utilities.SessionId
-import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.*
 import org.session.libsession.utilities.Address.Companion.fromSerialized
-import org.session.libsession.utilities.GroupUtil
-import org.session.libsession.utilities.MediaTypes
-import org.session.libsession.utilities.Stub
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.concurrent.SimpleTask
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.Recipient.DisappearingState
@@ -134,14 +122,7 @@ import org.thoughtcrime.securesms.linkpreview.LinkPreviewViewModel
 import org.thoughtcrime.securesms.linkpreview.LinkPreviewViewModel.LinkPreviewState
 import org.thoughtcrime.securesms.mediasend.Media
 import org.thoughtcrime.securesms.mediasend.MediaSendActivity
-import org.thoughtcrime.securesms.mms.AudioSlide
-import org.thoughtcrime.securesms.mms.GifSlide
-import org.thoughtcrime.securesms.mms.GlideApp
-import org.thoughtcrime.securesms.mms.ImageSlide
-import org.thoughtcrime.securesms.mms.MediaConstraints
-import org.thoughtcrime.securesms.mms.Slide
-import org.thoughtcrime.securesms.mms.SlideDeck
-import org.thoughtcrime.securesms.mms.VideoSlide
+import org.thoughtcrime.securesms.mms.*
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.reactions.ReactionsDialogFragment
 import org.thoughtcrime.securesms.reactions.any.ReactWithAnyEmojiDialogFragment
@@ -633,7 +614,6 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             )
         }
         viewModel.recipient?.let { maybeUpdateToolbar(it) }
-        super.onPrepareOptionsMenu(menu)
         return true
     }
 
@@ -1760,6 +1740,10 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         endActionMode()
     }
 
+    override fun destroyActionMode() {
+        this.actionMode = null
+    }
+
     private fun sendScreenshotNotification() {
         val recipient = viewModel.recipient ?: return
         if (recipient.isGroupRecipient) return
@@ -1805,7 +1789,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             if (result == null) return@Observer
             if (result.getResults().isNotEmpty()) {
                 result.getResults()[result.position]?.let {
-                    jumpToMessage(it.messageRecipient.address, it.receivedTimestampMs) {
+                    jumpToMessage(it.messageRecipient.address, it.sentTimestampMs) {
                         searchViewModel.onMissingResult() }
                 }
             }
@@ -1871,7 +1855,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                 ConversationReactionOverlay.Action.DELETE -> deleteMessages(selectedItems)
                 ConversationReactionOverlay.Action.BAN_AND_DELETE_ALL -> banAndDeleteAll(selectedItems)
                 ConversationReactionOverlay.Action.BAN_USER -> banUser(selectedItems)
-                ConversationReactionOverlay.Action.COPY_SESSION_ID -> TODO()
+                ConversationReactionOverlay.Action.COPY_SESSION_ID -> copySessionID(selectedItems)
             }
         }
     }

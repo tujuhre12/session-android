@@ -17,13 +17,7 @@ import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.ConfigurationMessage
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
-import org.session.libsession.messaging.messages.signal.IncomingEncryptedMessage
-import org.session.libsession.messaging.messages.signal.IncomingGroupMessage
-import org.session.libsession.messaging.messages.signal.IncomingMediaMessage
-import org.session.libsession.messaging.messages.signal.IncomingTextMessage
-import org.session.libsession.messaging.messages.signal.OutgoingGroupMediaMessage
-import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage
-import org.session.libsession.messaging.messages.signal.OutgoingTextMessage
+import org.session.libsession.messaging.messages.signal.*
 import org.session.libsession.messaging.messages.visible.Attachment
 import org.session.libsession.messaging.messages.visible.Reaction
 import org.session.libsession.messaging.messages.visible.VisibleMessage
@@ -38,12 +32,8 @@ import org.session.libsession.messaging.utilities.SessionId
 import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.snode.OnionRequestAPI
-import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.*
 import org.session.libsession.utilities.Address.Companion.fromSerialized
-import org.session.libsession.utilities.GroupRecord
-import org.session.libsession.utilities.GroupUtil
-import org.session.libsession.utilities.ProfileKeyUtil
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceAttachmentPointer
@@ -437,6 +427,11 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         } else {
             DatabaseComponent.get(context).lokiMessageDatabase().setErrorMessage(messageRecord.getId(), error.javaClass.simpleName)
         }
+    }
+
+    override fun clearErrorMessage(messageID: Long) {
+        val db = DatabaseComponent.get(context).lokiMessageDatabase()
+        db.clearErrorMessage(messageID)
     }
 
     override fun setMessageServerHash(messageID: Long, serverHash: String) {

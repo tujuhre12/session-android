@@ -368,6 +368,8 @@ fun MessageReceiver.handleVisibleMessage(message: VisibleMessage,
             return@mapNotNull attachment
         }
     }
+    // Cancel any typing indicators if needed
+    cancelTypingIndicatorsIfNeeded(message.sender!!)
     // Parse reaction if needed
     val threadIsGroup = threadRecipient?.isGroupRecipient == true
     message.reaction?.let { reaction ->
@@ -393,8 +395,6 @@ fun MessageReceiver.handleVisibleMessage(message: VisibleMessage,
         }
         return messageID
     }
-    // Cancel any typing indicators if needed
-    cancelTypingIndicatorsIfNeeded(message.sender!!)
     return null
 }
 
@@ -510,7 +510,7 @@ private fun handleNewClosedGroup(sender: String, sentTimestamp: Long, groupPubli
         storage.updateTitle(groupID, name)
         storage.updateMembers(groupID, members.map { Address.fromSerialized(it) })
     } else {
-        storage.createGroup(groupID, name, LinkedList(members.map { Address.fromSerialized(it) }),
+        storage.createGroup(groupID, name, LinkedList(members.map { fromSerialized(it) }),
             null, null, LinkedList(admins.map { Address.fromSerialized(it) }), formationTimestamp)
     }
     storage.setProfileSharing(Address.fromSerialized(groupID), true)
