@@ -88,6 +88,7 @@ class ExpirationSettingsViewModel(
 
     fun onExpirationTypeSelected(option: RadioOption) {
         _selectedExpirationType.value = option.value.toIntOrNull() ?: -1
+        _selectedExpirationTimer.value = _expirationTimerOptions.value.firstOrNull()
     }
 
     fun onExpirationTimerSelected(option: RadioOption) {
@@ -96,16 +97,22 @@ class ExpirationSettingsViewModel(
 
     fun onSetClick() = viewModelScope.launch {
         val expiryType = _selectedExpirationType.value
-        val firstOption = _expirationTimerOptions.value.firstOrNull()?.value?.toIntOrNull() ?: 0
-        val expiresIn = _selectedExpirationTimer.value?.value?.toIntOrNull() ?: if (expiryType >= 0) firstOption else 0
-        val expiryChangeTimestampMs = System.currentTimeMillis()
-        storage.setExpirationConfiguration(ExpirationConfiguration(threadId, expiresIn, expiryType, expiryChangeTimestampMs))
+        val expirationTimer = _selectedExpirationTimer.value?.value?.toIntOrNull() ?: 0
+        val address = recipient.value?.address
+        if (address == null || (expirationConfig?.expirationTypeValue == expiryType && expirationConfig?.durationSeconds == expirationTimer)) {
+            _uiState.update {
+                it.copy(settingsSaved = false)
+            }
+            return@launch
+        }
 
-        val message = ExpirationTimerUpdate(expiresIn)
-        val address = recipient.value?.address ?: return@launch
+        val expiryChangeTimestampMs = System.currentTimeMillis()
+        storage.setExpirationConfiguration(ExpirationConfiguration(threadId, expirationTimer, expiryType, expiryChangeTimestampMs))
+
+        val message = ExpirationTimerUpdate(expirationTimer)
         message.recipient = address.serialize()
-        message.sentTimestamp = System.currentTimeMillis()
-        messageExpirationManager.setExpirationTimer(message)
+        message.sentTimestamp = expiryChangeTimestampMs
+        messageExpirationManager.setExpirationTimer(message, expiryType)
 
         MessageSender.send(message, address)
         _uiState.update {

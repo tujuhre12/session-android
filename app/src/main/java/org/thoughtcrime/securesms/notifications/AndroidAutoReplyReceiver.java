@@ -90,7 +90,7 @@ public class AndroidAutoReplyReceiver extends BroadcastReceiver {
 
           if (recipient.isGroupRecipient()) {
             Log.w("AndroidAutoReplyReceiver", "GroupRecipient, Sending media message");
-            OutgoingMediaMessage reply = OutgoingMediaMessage.from(message, recipient, Collections.emptyList(), null, null, expiresInMillis);
+            OutgoingMediaMessage reply = OutgoingMediaMessage.from(message, recipient, Collections.emptyList(), null, null, expiresInMillis, 0);
             try {
               DatabaseComponent.get(context).mmsDatabase().insertMessageOutbox(reply, replyThreadId, false, null, true);
             } catch (MmsException e) {

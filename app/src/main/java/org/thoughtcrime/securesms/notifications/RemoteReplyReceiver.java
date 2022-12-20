@@ -83,7 +83,7 @@ public class RemoteReplyReceiver extends BroadcastReceiver {
           long expiresInMillis = config == null ? 0 : config.getDurationSeconds() * 1000L;
           switch (replyMethod) {
             case GroupMessage: {
-              OutgoingMediaMessage reply = OutgoingMediaMessage.from(message, recipient, Collections.emptyList(), null, null, expiresInMillis);
+              OutgoingMediaMessage reply = OutgoingMediaMessage.from(message, recipient, Collections.emptyList(), null, null, expiresInMillis, 0);
               try {
                 DatabaseComponent.get(context).mmsDatabase().insertMessageOutbox(reply, threadId, false, null, true);
                 MessageSender.send(message, address);

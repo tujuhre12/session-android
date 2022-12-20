@@ -105,7 +105,7 @@ fun updateExpirationConfigurationIfNeeded(message: Message, proto: SignalService
     )
     storage.setExpirationConfiguration(remoteConfig)
     if (message is ExpirationTimerUpdate) {
-        SSKEnvironment.shared.messageExpirationManager.setExpirationTimer(message)
+        SSKEnvironment.shared.messageExpirationManager.setExpirationTimer(message, type?.number ?: -1)
     }
 }
 
@@ -181,7 +181,7 @@ private fun MessageReceiver.handleExpirationTimerUpdate(message: ExpirationTimer
     } catch (e: Exception) {
         Log.e("Loki", "Failed to update expiration configuration.")
     }
-    SSKEnvironment.shared.messageExpirationManager.setExpirationTimer(message)
+    SSKEnvironment.shared.messageExpirationManager.setExpirationTimer(message, type?.number ?: -1)
 }
 
 private fun MessageReceiver.handleDataExtractionNotification(message: DataExtractionNotification) {

@@ -26,6 +26,7 @@ public class IncomingMediaMessage {
   private final long          sentTimeMillis;
   private final int           subscriptionId;
   private final long          expiresIn;
+  private final long          expireStartedAt;
   private final boolean       expirationUpdate;
   private final boolean       unidentified;
   private final boolean       messageRequestResponse;
@@ -41,6 +42,7 @@ public class IncomingMediaMessage {
                               long sentTimeMillis,
                               int subscriptionId,
                               long expiresIn,
+                              long expireStartedAt,
                               boolean expirationUpdate,
                               boolean unidentified,
                               boolean messageRequestResponse,
@@ -58,6 +60,7 @@ public class IncomingMediaMessage {
     this.body                       = body.orNull();
     this.subscriptionId             = subscriptionId;
     this.expiresIn                  = expiresIn;
+    this.expireStartedAt                  = expireStartedAt;
     this.expirationUpdate           = expirationUpdate;
     this.dataExtractionNotification = dataExtractionNotification.orNull();
     this.quote                      = quote.orNull();
@@ -75,12 +78,13 @@ public class IncomingMediaMessage {
   public static IncomingMediaMessage from(VisibleMessage message,
                                           Address from,
                                           long expiresIn,
+                                          long expireStartedAt,
                                           Optional<SignalServiceGroup> group,
                                           List<SignalServiceAttachment> attachments,
                                           Optional<QuoteModel> quote,
                                           Optional<List<LinkPreview>> linkPreviews)
   {
-    return new IncomingMediaMessage(from, message.getSentTimestamp(), -1, expiresIn, false,
+    return new IncomingMediaMessage(from, message.getSentTimestamp(), -1, expiresIn, expireStartedAt, false,
             false, false, Optional.fromNullable(message.getText()), group, Optional.fromNullable(attachments), quote, Optional.absent(), linkPreviews, Optional.absent());
   }
 
@@ -118,6 +122,10 @@ public class IncomingMediaMessage {
 
   public long getExpiresIn() {
     return expiresIn;
+  }
+
+  public long getExpireStartedAt() {
+    return expireStartedAt;
   }
 
   public boolean isGroupMessage() {

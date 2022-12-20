@@ -158,7 +158,11 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
                 recipientDb.setApprovedMe(targetRecipient, true)
             }
         }
-        val expiresIn = getExpirationConfiguration(message.threadID ?: -1)?.durationSeconds ?: 0
+        val expirationConfig = getExpirationConfiguration(message.threadID ?: -1)
+        val expiresIn = expirationConfig?.durationSeconds ?: 0
+        val expireStartedAt = if (expirationConfig?.expirationType == ExpirationType.DELETE_AFTER_SEND) {
+            message.sentTimestamp!! + (expirationConfig.durationSeconds * 1000L)
+        } else 0
         if (message.isMediaMessage() || attachments.isNotEmpty()) {
             val quote: Optional<QuoteModel> = if (quotes != null) Optional.of(quotes) else Optional.absent()
             val linkPreviews: Optional<List<LinkPreview>> = if (linkPreview.isEmpty()) Optional.absent() else Optional.of(linkPreview.mapNotNull { it!! })
@@ -170,7 +174,8 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
                     pointers,
                     quote.orNull(),
                     linkPreviews.orNull()?.firstOrNull(),
-                    expiresIn * 1000L
+                    expiresIn * 1000L,
+                    expireStartedAt
                 )
                 mmsDatabase.insertSecureDecryptedMessageOutbox(mediaMessage, message.threadID ?: -1, message.sentTimestamp!!, runThreadUpdate)
             } else {
@@ -178,7 +183,7 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
                 val signalServiceAttachments = attachments.mapNotNull {
                     it.toSignalPointer()
                 }
-                val mediaMessage = IncomingMediaMessage.from(message, senderAddress, expiresIn * 1000L, group, signalServiceAttachments, quote, linkPreviews)
+                val mediaMessage = IncomingMediaMessage.from(message, senderAddress, expiresIn * 1000L, expireStartedAt, group, signalServiceAttachments, quote, linkPreviews)
                 mmsDatabase.insertSecureDecryptedMessageInbox(mediaMessage, message.threadID ?: -1, message.receivedTimestamp ?: 0, runIncrement, runThreadUpdate)
             }
             if (insertResult.isPresent) {
@@ -485,7 +490,7 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         val recipient = Recipient.from(context, fromSerialized(groupID), false)
 
         val updateData = UpdateMessageData.buildGroupUpdate(type, name, members)?.toJSON() ?: ""
-        val infoMessage = OutgoingGroupMediaMessage(recipient, updateData, groupID, null, sentTimestamp, 0, true, null, listOf(), listOf())
+        val infoMessage = OutgoingGroupMediaMessage(recipient, updateData, groupID, null, sentTimestamp, 0, 0, true, null, listOf(), listOf())
         val mmsDB = DatabaseComponent.get(context).mmsDatabase()
         val mmsSmsDB = DatabaseComponent.get(context).mmsSmsDatabase()
         if (mmsSmsDB.getMessageFor(sentTimestamp, userPublicKey) != null) return
@@ -736,6 +741,7 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
             sentTimestamp,
             -1,
             0,
+            0,
             false,
             false,
             false,
@@ -809,6 +815,7 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
                 sender.address,
                 response.sentTimestamp!!,
                 -1,
+                0,
                 0,
                 false,
                 false,

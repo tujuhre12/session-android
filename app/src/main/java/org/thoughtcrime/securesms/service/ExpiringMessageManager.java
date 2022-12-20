@@ -3,7 +3,6 @@ package org.thoughtcrime.securesms.service;
 import android.content.Context;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.session.libsession.messaging.messages.ExpirationConfiguration;
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate;
 import org.session.libsession.messaging.messages.signal.IncomingMediaMessage;
@@ -14,11 +13,11 @@ import org.session.libsession.utilities.SSKEnvironment;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.messages.SignalServiceGroup;
+import org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.guava.Optional;
 import org.thoughtcrime.securesms.database.MmsDatabase;
 import org.thoughtcrime.securesms.database.SmsDatabase;
-import org.thoughtcrime.securesms.database.ThreadDatabase;
 import org.thoughtcrime.securesms.database.model.MessageRecord;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 import org.thoughtcrime.securesms.mms.MmsException;
@@ -69,16 +68,18 @@ public class ExpiringMessageManager implements SSKEnvironment.MessageExpirationM
   }
 
   @Override
-  public void setExpirationTimer(@NotNull ExpirationTimerUpdate message) {
+  public void setExpirationTimer(@NotNull ExpirationTimerUpdate message, int expiryType) {
     String userPublicKey = TextSecurePreferences.getLocalNumber(context);
     String senderPublicKey = message.getSender();
+    long expireStartedAt = ExpirationType.DELETE_AFTER_SEND_VALUE != expiryType
+            ? 0 : message.getSentTimestamp() + (message.getDuration() * 1000L);
 
     // Notify the user
     if (senderPublicKey == null || userPublicKey.equals(senderPublicKey)) {
       // sender is self or a linked device
-      insertOutgoingExpirationTimerMessage(message);
+      insertOutgoingExpirationTimerMessage(message, expireStartedAt);
     } else {
-      insertIncomingExpirationTimerMessage(message);
+      insertIncomingExpirationTimerMessage(message, expireStartedAt);
     }
 
     if (message.getId() != null) {
@@ -86,7 +87,7 @@ public class ExpiringMessageManager implements SSKEnvironment.MessageExpirationM
     }
   }
 
-  private void insertIncomingExpirationTimerMessage(ExpirationTimerUpdate message) {
+  private void insertIncomingExpirationTimerMessage(ExpirationTimerUpdate message, long expireStartedAt) {
     MmsDatabase database = DatabaseComponent.get(context).mmsDatabase();
 
     String senderPublicKey = message.getSender();
@@ -111,7 +112,7 @@ public class ExpiringMessageManager implements SSKEnvironment.MessageExpirationM
       }
 
       IncomingMediaMessage mediaMessage = new IncomingMediaMessage(address, sentTimestamp, -1,
-              duration * 1000L, true,
+              duration * 1000L, expireStartedAt, true,
               false,
               false,
               Optional.absent(),
@@ -128,7 +129,7 @@ public class ExpiringMessageManager implements SSKEnvironment.MessageExpirationM
     }
   }
 
-  private void insertOutgoingExpirationTimerMessage(ExpirationTimerUpdate message) {
+  private void insertOutgoingExpirationTimerMessage(ExpirationTimerUpdate message, long expireStartedAt) {
     MmsDatabase database = DatabaseComponent.get(context).mmsDatabase();
 
     Long sentTimestamp = message.getSentTimestamp();
@@ -139,7 +140,7 @@ public class ExpiringMessageManager implements SSKEnvironment.MessageExpirationM
     Recipient recipient = Recipient.from(context, address, false);
 
     try {
-      OutgoingExpirationUpdateMessage timerUpdateMessage = new OutgoingExpirationUpdateMessage(recipient, sentTimestamp, duration * 1000L, groupId);
+      OutgoingExpirationUpdateMessage timerUpdateMessage = new OutgoingExpirationUpdateMessage(recipient, sentTimestamp, duration * 1000L, expireStartedAt, groupId);
       database.insertSecureDecryptedMessageOutbox(timerUpdateMessage, -1, sentTimestamp, true);
     } catch (MmsException e) {
       Log.e("Loki", "Failed to insert expiration update message.");

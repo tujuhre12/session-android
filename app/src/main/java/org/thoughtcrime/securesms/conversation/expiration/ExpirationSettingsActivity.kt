@@ -108,9 +108,13 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
         lifecycleScope.launchWhenStarted {
             launch {
                 viewModel.uiState.collect { uiState ->
-                    if (uiState.settingsSaved == true) {
-                        Toast.makeText(this@ExpirationSettingsActivity, getString(R.string.ExpirationSettingsActivity_settings_saved), Toast.LENGTH_SHORT).show()
-                        finish()
+                    when (uiState.settingsSaved) {
+                        true -> {
+                            showToast(getString(R.string.ExpirationSettingsActivity_settings_updated))
+                            finish()
+                        }
+                        false -> showToast(getString(R.string.ExpirationSettingsActivity_settings_not_updated))
+                        else -> {}
                     }
                 }
             }
@@ -143,6 +147,10 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
             }
         }
 
+    }
+
+    private fun showToast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
     private fun getDeleteOptions(): List<RadioOption> {

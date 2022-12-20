@@ -467,6 +467,7 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
                 val timestamp = cursor.getLong(cursor.getColumnIndexOrThrow(NORMALIZED_DATE_SENT))
                 val subscriptionId = cursor.getInt(cursor.getColumnIndexOrThrow(SUBSCRIPTION_ID))
                 val expiresIn = cursor.getLong(cursor.getColumnIndexOrThrow(EXPIRES_IN))
+                val expireStartedAt = cursor.getLong(cursor.getColumnIndexOrThrow(EXPIRE_STARTED))
                 val address = cursor.getString(cursor.getColumnIndexOrThrow(ADDRESS))
                 val threadId = cursor.getLong(cursor.getColumnIndexOrThrow(THREAD_ID))
                 val distributionType = get(context).threadDatabase().getDistributionType(threadId)
@@ -535,6 +536,7 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
                     timestamp,
                     subscriptionId,
                     expiresIn,
+                    expireStartedAt,
                     distributionType,
                     quote,
                     contacts,
@@ -663,6 +665,7 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
         contentValues.put(PART_COUNT, retrieved.attachments.size)
         contentValues.put(SUBSCRIPTION_ID, retrieved.subscriptionId)
         contentValues.put(EXPIRES_IN, retrieved.expiresIn)
+        contentValues.put(EXPIRE_STARTED, retrieved.expireStartedAt)
         contentValues.put(READ, if (retrieved.isExpirationUpdate) 1 else 0)
         contentValues.put(UNIDENTIFIED, retrieved.isUnidentified)
         contentValues.put(MESSAGE_REQUEST_RESPONSE, retrieved.isMessageRequestResponse)
@@ -805,6 +808,7 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
         contentValues.put(DATE_RECEIVED, receivedTimestamp)
         contentValues.put(SUBSCRIPTION_ID, message.subscriptionId)
         contentValues.put(EXPIRES_IN, message.expiresIn)
+        contentValues.put(EXPIRE_STARTED, message.expireStartedAt)
         contentValues.put(ADDRESS, message.recipient.address.serialize())
         contentValues.put(
             DELIVERY_RECEIPT_COUNT,

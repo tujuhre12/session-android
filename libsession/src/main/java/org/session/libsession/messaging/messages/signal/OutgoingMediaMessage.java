@@ -26,6 +26,7 @@ public class OutgoingMediaMessage {
   private   final int                       distributionType;
   private   final int                       subscriptionId;
   private   final long                      expiresIn;
+  private   final long                      expireStartedAt;
   private   final QuoteModel                outgoingQuote;
 
   private   final List<NetworkFailure>      networkFailures       = new LinkedList<>();
@@ -35,7 +36,7 @@ public class OutgoingMediaMessage {
 
   public OutgoingMediaMessage(Recipient recipient, String message,
                               List<Attachment> attachments, long sentTimeMillis,
-                              int subscriptionId, long expiresIn,
+                              int subscriptionId, long expiresIn, long expireStartedAt,
                               int distributionType,
                               @Nullable QuoteModel outgoingQuote,
                               @NonNull List<Contact> contacts,
@@ -50,6 +51,7 @@ public class OutgoingMediaMessage {
     this.attachments           = attachments;
     this.subscriptionId        = subscriptionId;
     this.expiresIn             = expiresIn;
+    this.expireStartedAt       = expireStartedAt;
     this.outgoingQuote         = outgoingQuote;
 
     this.contacts.addAll(contacts);
@@ -66,6 +68,7 @@ public class OutgoingMediaMessage {
     this.sentTimeMillis      = that.sentTimeMillis;
     this.subscriptionId      = that.subscriptionId;
     this.expiresIn           = that.expiresIn;
+    this.expireStartedAt     = that.expireStartedAt;
     this.outgoingQuote       = that.outgoingQuote;
 
     this.identityKeyMismatches.addAll(that.identityKeyMismatches);
@@ -79,14 +82,15 @@ public class OutgoingMediaMessage {
                                           List<Attachment> attachments,
                                           @Nullable QuoteModel outgoingQuote,
                                           @Nullable LinkPreview linkPreview,
-                                          long expiresInMillis)
+                                          long expiresInMillis,
+                                          long expireStartedAt)
   {
     List<LinkPreview> previews = Collections.emptyList();
     if (linkPreview != null) {
       previews = Collections.singletonList(linkPreview);
     }
     return new OutgoingMediaMessage(recipient, message.getText(), attachments, message.getSentTimestamp(), -1,
-            expiresInMillis, DistributionTypes.DEFAULT, outgoingQuote, Collections.emptyList(),
+            expiresInMillis, expireStartedAt, DistributionTypes.DEFAULT, outgoingQuote, Collections.emptyList(),
             previews, Collections.emptyList(), Collections.emptyList());
   }
 
@@ -122,6 +126,10 @@ public class OutgoingMediaMessage {
 
   public long getExpiresIn() {
     return expiresIn;
+  }
+
+  public long getExpireStartedAt() {
+    return expireStartedAt;
   }
 
   public @Nullable QuoteModel getOutgoingQuote() {
