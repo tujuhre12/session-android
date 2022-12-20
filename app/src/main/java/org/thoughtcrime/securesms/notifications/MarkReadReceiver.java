@@ -95,8 +95,8 @@ public class MarkReadReceiver extends BroadcastReceiver {
     if (expirationInfo.getExpiresIn() > 0 && expirationInfo.getExpireStarted() <= 0) {
       ExpiringMessageManager expirationManager = ApplicationContext.getInstance(context).getExpiringMessageManager();
 
-      if (expirationInfo.isMms()) DatabaseComponent.get(context).mmsDatabase().markExpireStarted(expirationInfo.getId());
-      else                        DatabaseComponent.get(context).smsDatabase().markExpireStarted(expirationInfo.getId());
+      if (expirationInfo.isMms()) DatabaseComponent.get(context).mmsDatabase().markExpireStarted(expirationInfo.getId(), System.currentTimeMillis());
+      else                        DatabaseComponent.get(context).smsDatabase().markExpireStarted(expirationInfo.getId(), System.currentTimeMillis());
 
       expirationManager.scheduleDeletion(expirationInfo.getId(), expirationInfo.isMms(), expirationInfo.getExpiresIn());
     }

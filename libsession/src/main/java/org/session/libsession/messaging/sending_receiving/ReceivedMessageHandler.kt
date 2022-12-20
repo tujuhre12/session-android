@@ -128,7 +128,7 @@ private fun MessageReceiver.handleSyncedExpiriesMessage(message: SyncedExpiriesM
         val config = storage.getExpirationConfiguration(storage.getOrCreateThreadIdFor(syncTarget)) ?: return@forEach
         syncedExpiries.forEach { syncedExpiry ->
             val startedAtMs = syncedExpiry.expirationTimestamp!! - config.durationSeconds * 1000
-            SSKEnvironment.shared.messageExpirationManager.startAnyExpiration(startedAtMs, syncTarget)
+            SSKEnvironment.shared.messageExpirationManager.startAnyExpiration(startedAtMs, syncTarget, System.currentTimeMillis())
         }
     }
 }

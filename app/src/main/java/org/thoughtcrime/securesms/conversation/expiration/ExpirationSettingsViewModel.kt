@@ -16,6 +16,7 @@ import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.utilities.SSKEnvironment.MessageExpirationManagerProtocol
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType
 import org.thoughtcrime.securesms.database.Storage
@@ -26,6 +27,7 @@ class ExpirationSettingsViewModel(
     private val threadId: Long,
     private val afterReadOptions: List<RadioOption>,
     private val afterSendOptions: List<RadioOption>,
+    private val textSecurePreferences: TextSecurePreferences,
     private val messageExpirationManager: MessageExpirationManagerProtocol,
     private val threadDb: ThreadDatabase,
     private val storage: Storage
@@ -110,6 +112,7 @@ class ExpirationSettingsViewModel(
         storage.setExpirationConfiguration(ExpirationConfiguration(threadId, expirationTimer, expiryType, expiryChangeTimestampMs))
 
         val message = ExpirationTimerUpdate(expirationTimer)
+        message.sender = textSecurePreferences.getLocalNumber()
         message.recipient = address.serialize()
         message.sentTimestamp = expiryChangeTimestampMs
         messageExpirationManager.setExpirationTimer(message, expiryType)
@@ -134,6 +137,7 @@ class ExpirationSettingsViewModel(
         @Assisted private val threadId: Long,
         @Assisted("afterRead") private val afterReadOptions: List<RadioOption>,
         @Assisted("afterSend") private val afterSendOptions: List<RadioOption>,
+        private val textSecurePreferences: TextSecurePreferences,
         private val messageExpirationManager: MessageExpirationManagerProtocol,
         private val threadDb: ThreadDatabase,
         private val storage: Storage
@@ -144,6 +148,7 @@ class ExpirationSettingsViewModel(
                 threadId,
                 afterReadOptions,
                 afterSendOptions,
+                textSecurePreferences,
                 messageExpirationManager,
                 threadDb,
                 storage

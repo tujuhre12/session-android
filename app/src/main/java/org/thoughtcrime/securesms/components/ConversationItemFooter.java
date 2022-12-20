@@ -117,8 +117,8 @@ public class ConversationItemFooter extends LinearLayout {
             long                   id                = messageRecord.getId();
             boolean                mms               = messageRecord.isMms();
 
-            if (mms) DatabaseComponent.get(getContext()).mmsDatabase().markExpireStarted(id);
-            else     DatabaseComponent.get(getContext()).smsDatabase().markExpireStarted(id);
+            if (mms) DatabaseComponent.get(getContext()).mmsDatabase().markExpireStarted(id, System.currentTimeMillis());
+            else     DatabaseComponent.get(getContext()).smsDatabase().markExpireStarted(id, System.currentTimeMillis());
 
             expirationManager.scheduleDeletion(id, mms, messageRecord.getExpiresIn());
             return null;

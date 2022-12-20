@@ -19,6 +19,7 @@ package org.thoughtcrime.securesms.database
 import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
+import android.provider.ContactsContract.CommonDataKinds.BaseTypes
 import com.annimon.stream.Stream
 import com.google.android.mms.pdu_alt.NotificationInd
 import com.google.android.mms.pdu_alt.PduHeaders
@@ -645,6 +646,7 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
                 if (threadId == -1L) throw MmsException(e)
             }
         }
+        deleteExpirationTimerMessages(threadId)
         val contentValues = ContentValues()
         contentValues.put(DATE_SENT, retrieved.sentTimeMillis)
         contentValues.put(ADDRESS, retrieved.from.serialize())
@@ -737,6 +739,7 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
                 threadId = get(context).threadDatabase().getOrCreateThreadIdFor(retrieved.recipient)
             }
         }
+        deleteExpirationTimerMessages(threadId)
         val messageId = insertMessageOutbox(retrieved, threadId, false, null, serverTimestamp, runThreadUpdate)
         if (messageId == -1L) {
             return Optional.absent()
@@ -1250,6 +1253,12 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
             "$ID = ?",
             arrayOf<String?>(messageId.toString())
         )
+    }
+
+    fun deleteExpirationTimerMessages(threadId: Long) {
+        val where = "$THREAD_ID = ? AND ($MESSAGE_BOX & ${MmsSmsColumns.Types.EXPIRATION_TIMER_UPDATE_BIT}) <> 0"
+        val updated = writableDatabase.delete(TABLE_NAME, where, arrayOf("$threadId"))
+        notifyConversationListeners(threadId)
     }
 
     object Status {

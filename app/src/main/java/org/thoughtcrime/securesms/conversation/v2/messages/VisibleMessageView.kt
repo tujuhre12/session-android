@@ -295,7 +295,11 @@ class VisibleMessageView : LinearLayout {
                     val expirationManager = ApplicationContext.getInstance(context).expiringMessageManager
                     val id = message.getId()
                     val mms = message.isMms
-                    if (mms) mmsDb.markExpireStarted(id) else smsDb.markExpireStarted(id)
+                    if (mms) {
+                        mmsDb.markExpireStarted(id, System.currentTimeMillis())
+                    } else {
+                        smsDb.markExpireStarted(id, System.currentTimeMillis())
+                    }
                     expirationManager.scheduleDeletion(id, mms, message.expiresIn)
                 }
             } else {

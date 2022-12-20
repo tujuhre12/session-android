@@ -81,7 +81,9 @@ public class ExpiringMessageManager implements SSKEnvironment.MessageExpirationM
     } else {
       insertIncomingExpirationTimerMessage(message, expireStartedAt);
     }
-
+    if (message.getSentTimestamp() != null && senderPublicKey != null) {
+      startAnyExpiration(message.getSentTimestamp(), senderPublicKey, expireStartedAt);
+    }
     if (message.getId() != null) {
       DatabaseComponent.get(context).smsDatabase().deleteMessage(message.getId());
     }
@@ -148,16 +150,16 @@ public class ExpiringMessageManager implements SSKEnvironment.MessageExpirationM
   }
 
   @Override
-  public void startAnyExpiration(long timestamp, @NotNull String author) {
+  public void startAnyExpiration(long timestamp, @NotNull String author, long expireStartedAt) {
     MessageRecord messageRecord = DatabaseComponent.get(context).mmsSmsDatabase().getMessageFor(timestamp, author);
     if (messageRecord != null) {
       boolean mms = messageRecord.isMms();
       ExpirationConfiguration config = DatabaseComponent.get(context).expirationConfigurationDatabase().getExpirationConfiguration(messageRecord.getThreadId());
       if (config == null || !config.isEnabled()) return;
       if (mms) {
-        mmsDatabase.markExpireStarted(messageRecord.getId());
+        mmsDatabase.markExpireStarted(messageRecord.getId(), expireStartedAt);
       } else {
-        smsDatabase.markExpireStarted(messageRecord.getId());
+        smsDatabase.markExpireStarted(messageRecord.getId(), expireStartedAt);
       }
       scheduleDeletion(messageRecord.getId(), mms, config.getDurationSeconds() * 1000L);
     }
