@@ -10,7 +10,7 @@ import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
 
 class SyncedExpiriesJob(
-    val messageIds: List<Long> = listOf(),
+    val messageIds: List<Long> = emptyList(),
     val startedAtMs: Long = 0,
     val threadId: Long = 0
 ) : Job {

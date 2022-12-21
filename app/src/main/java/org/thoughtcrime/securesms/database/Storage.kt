@@ -990,7 +990,7 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         val smsDb = DatabaseComponent.get(context).smsDatabase()
         smsDb.readerFor(smsDb.expirationNotStartedMessages).use { reader ->
             while (reader.next != null) {
-                if (reader.current.id in messageIds) {
+                if (messageIds.isEmpty() || reader.current.id in messageIds) {
                     expiringMessages.add(reader.current.id to reader.current.expiresIn)
                 }
             }
@@ -998,7 +998,7 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         val mmsDb = DatabaseComponent.get(context).mmsDatabase()
         mmsDb.expireNotStartedMessages.use { reader ->
             while (reader.next != null) {
-                if (reader.current.id in messageIds) {
+                if (messageIds.isEmpty() || reader.current.id in messageIds) {
                     expiringMessages.add(reader.current.id to reader.current.expiresIn)
                 }
             }

@@ -202,6 +202,6 @@ interface StorageProtocol {
     fun blockedContacts(): List<Recipient>
     fun getExpirationConfiguration(threadId: Long): ExpirationConfiguration?
     fun setExpirationConfiguration(config: ExpirationConfiguration)
-    fun getExpiringMessages(messageIds: List<Long>): List<Pair<Long, Long>>
+    fun getExpiringMessages(messageIds: List<Long> = emptyList()): List<Pair<Long, Long>>
     fun updateDisappearingState(address: String, disappearingState: Recipient.DisappearingState)
 }

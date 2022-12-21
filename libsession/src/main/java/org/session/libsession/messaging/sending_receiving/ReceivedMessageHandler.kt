@@ -121,14 +121,16 @@ private fun MessageReceiver.handleCallMessage(message: CallMessage) {
 }
 
 private fun MessageReceiver.handleSyncedExpiriesMessage(message: SyncedExpiriesMessage) {
-    val storage = MessagingModuleConfiguration.shared.storage
-    val userPublicKey = storage.getUserPublicKey() ?: return
+    val module = MessagingModuleConfiguration.shared
+    val userPublicKey = module.storage.getUserPublicKey() ?: return
     if (userPublicKey != message.sender) return
     message.conversationExpiries.forEach { (syncTarget, syncedExpiries) ->
-        val config = storage.getExpirationConfiguration(storage.getOrCreateThreadIdFor(syncTarget)) ?: return@forEach
+        val config = module.storage.getExpirationConfiguration(module.storage.getOrCreateThreadIdFor(syncTarget)) ?: return@forEach
         syncedExpiries.forEach { syncedExpiry ->
-            val startedAtMs = syncedExpiry.expirationTimestamp!! - config.durationSeconds * 1000
-            SSKEnvironment.shared.messageExpirationManager.startAnyExpiration(startedAtMs, syncTarget, System.currentTimeMillis())
+            module.messageDataProvider.getMessageTimestampForServerHash(syncedExpiry.serverHash!!)?.let { timestamp ->
+                val startedAtMs = syncedExpiry.expirationTimestamp!! - config.durationSeconds * 1000
+                SSKEnvironment.shared.messageExpirationManager.startAnyExpiration(timestamp, syncTarget, startedAtMs)
+            }
         }
     }
 }
@@ -388,6 +390,7 @@ fun MessageReceiver.handleVisibleMessage(message: VisibleMessage,
             storage.persist(message, quoteModel, linkPreviews, message.groupPublicKey, openGroupID,
          attachments, runIncrement, runThreadUpdate
         ) ?: return null
+        JobQueue.shared.add(DisappearingMessagesJob())
         val openGroupServerID = message.openGroupServerMessageID
         if (openGroupServerID != null) {
             val isSms = !(message.isMediaMessage() || attachments.isNotEmpty())

@@ -197,4 +197,9 @@ class LokiMessageDatabase(context: Context, helper: SQLCipherOpenHelper) : Datab
         database.update(messageThreadMappingTable, contentValues, "$threadID = ?", arrayOf(legacyThreadId.toString()))
     }
 
+    fun getMessageIdForServerHash(serverHash: String): Long? {
+        return readableDatabase.get(messageHashTable, "$serverHash = ?", arrayOf(serverHash)) { cursor ->
+            cursor.getLong(messageID)
+        }
+    }
 }

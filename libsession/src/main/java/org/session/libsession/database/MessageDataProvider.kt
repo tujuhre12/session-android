@@ -24,6 +24,7 @@ interface MessageDataProvider {
     fun updateMessageAsDeleted(timestamp: Long, author: String)
     fun getServerHashForMessage(messageID: Long): String?
     fun getServerHashForMessages(messageIDs: List<Long>): List<Pair<Long, String?>>
+    fun getMessageTimestampForServerHash(serverHash: String): Long?
     fun getDatabaseAttachment(attachmentId: Long): DatabaseAttachment?
     fun getAttachmentStream(attachmentId: Long): SessionServiceAttachmentStream?
     fun getAttachmentPointer(attachmentId: Long): SessionServiceAttachmentPointer?

@@ -5,7 +5,7 @@ import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.utilities.Data
 
 class DisappearingMessagesJob(
-    val messageIds: List<Long> = listOf(),
+    val messageIds: List<Long> = emptyList(),
     val startedAtMs: Long = 0,
     val threadId: Long = 0
 ) : Job {
