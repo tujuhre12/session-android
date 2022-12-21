@@ -14,8 +14,10 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.database.DraftDatabase
+import org.thoughtcrime.securesms.database.ExpirationConfigurationDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.MmsDatabase
@@ -82,7 +84,8 @@ class DefaultConversationRepository @Inject constructor(
     private val mmsSmsDb: MmsSmsDatabase,
     private val recipientDb: RecipientDatabase,
     private val lokiMessageDb: LokiMessageDatabase,
-    private val sessionJobDb: SessionJobDatabase
+    private val sessionJobDb: SessionJobDatabase,
+    private val configDb: ExpirationConfigurationDatabase
 ) : ConversationRepository {
 
     override fun maybeGetRecipientForThreadId(threadId: Long): Recipient? {
@@ -111,10 +114,17 @@ class DefaultConversationRepository @Inject constructor(
             openGroupInvitation.name = openGroup.name
             openGroupInvitation.url = openGroup.joinURL
             message.openGroupInvitation = openGroupInvitation
+            val expirationConfig = configDb.getExpirationConfiguration(threadId)
+            val expiresInMillis = (expirationConfig?.durationSeconds ?: 0) * 1000L
+            val expireStartedAt = if (expirationConfig?.expirationType == SignalServiceProtos.Content.ExpirationType.DELETE_AFTER_SEND) {
+                message.sentTimestamp!!
+            } else 0
             val outgoingTextMessage = OutgoingTextMessage.fromOpenGroupInvitation(
                 openGroupInvitation,
                 contact,
-                message.sentTimestamp
+                message.sentTimestamp,
+                expiresInMillis,
+                expireStartedAt
             )
             smsDb.insertMessageOutbox(-1, outgoingTextMessage, message.sentTimestamp!!, true)
             MessageSender.send(message, contact.address)

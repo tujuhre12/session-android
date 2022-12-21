@@ -444,6 +444,7 @@ public class SmsDatabase extends MessagingDatabase {
     values.put(READ, unread ? 0 : 1);
     values.put(SUBSCRIPTION_ID, message.getSubscriptionId());
     values.put(EXPIRES_IN, message.getExpiresIn());
+    values.put(EXPIRE_STARTED, message.getExpireStartedAt());
     values.put(UNIDENTIFIED, message.isUnidentified());
 
     if (!TextUtils.isEmpty(message.getPseudoSubject()))
@@ -528,6 +529,7 @@ public class SmsDatabase extends MessagingDatabase {
     contentValues.put(TYPE, type);
     contentValues.put(SUBSCRIPTION_ID, message.getSubscriptionId());
     contentValues.put(EXPIRES_IN, message.getExpiresIn());
+    contentValues.put(EXPIRE_STARTED, message.getExpireStartedAt());
     contentValues.put(DELIVERY_RECEIPT_COUNT, Stream.of(earlyDeliveryReceipts.values()).mapToLong(Long::longValue).sum());
     contentValues.put(READ_RECEIPT_COUNT, Stream.of(earlyReadReceipts.values()).mapToLong(Long::longValue).sum());
 

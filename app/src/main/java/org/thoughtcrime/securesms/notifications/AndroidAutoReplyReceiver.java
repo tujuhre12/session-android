@@ -31,8 +31,10 @@ import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage;
 import org.session.libsession.messaging.messages.signal.OutgoingTextMessage;
 import org.session.libsession.messaging.messages.visible.VisibleMessage;
 import org.session.libsession.messaging.sending_receiving.MessageSender;
+import org.session.libsession.snode.SnodeAPI;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.recipients.Recipient;
+import org.session.libsignal.protos.SignalServiceProtos;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.ApplicationContext;
 import org.thoughtcrime.securesms.database.MessagingDatabase.MarkedMessageInfo;
@@ -83,10 +85,11 @@ public class AndroidAutoReplyReceiver extends BroadcastReceiver {
 
           VisibleMessage message = new VisibleMessage();
           message.setText(responseText.toString());
-          message.setSentTimestamp(System.currentTimeMillis());
+          message.setSentTimestamp(System.currentTimeMillis() + SnodeAPI.INSTANCE.getClockOffset());
           MessageSender.send(message, recipient.getAddress());
           ExpirationConfiguration config = DatabaseComponent.get(context).expirationConfigurationDatabase().getExpirationConfiguration(threadId);
           long expiresInMillis = config == null ? 0 : config.getDurationSeconds() * 1000L;
+          long expireStartedAt = config.getExpirationType() == SignalServiceProtos.Content.ExpirationType.DELETE_AFTER_SEND ? message.getSentTimestamp() : 0L;
 
           if (recipient.isGroupRecipient()) {
             Log.w("AndroidAutoReplyReceiver", "GroupRecipient, Sending media message");
@@ -98,7 +101,7 @@ public class AndroidAutoReplyReceiver extends BroadcastReceiver {
             }
           } else {
             Log.w("AndroidAutoReplyReceiver", "Sending regular message ");
-            OutgoingTextMessage reply = OutgoingTextMessage.from(message, recipient, expiresInMillis);
+            OutgoingTextMessage reply = OutgoingTextMessage.from(message, recipient, expiresInMillis, expireStartedAt);
             DatabaseComponent.get(context).smsDatabase().insertMessageOutbox(replyThreadId, reply, false, System.currentTimeMillis(), null, true);
           }
 

@@ -41,6 +41,7 @@ public class IncomingTextMessage implements Parcelable {
   private final boolean push;
   private final int     subscriptionId;
   private final long    expiresInMillis;
+  private final long    expireStartedAt;
   private final boolean unidentified;
   private final int     callType;
 
@@ -48,19 +49,19 @@ public class IncomingTextMessage implements Parcelable {
 
   public IncomingTextMessage(Address sender, int senderDeviceId, long sentTimestampMillis,
                            String encodedBody, Optional<SignalServiceGroup> group,
-                           long expiresInMillis, boolean unidentified) {
-    this(sender, senderDeviceId, sentTimestampMillis, encodedBody, group, expiresInMillis, unidentified, -1);
+                           long expiresInMillis, long expireStartedAt, boolean unidentified) {
+    this(sender, senderDeviceId, sentTimestampMillis, encodedBody, group, expiresInMillis, expireStartedAt, unidentified, -1);
   }
 
   public IncomingTextMessage(Address sender, int senderDeviceId, long sentTimestampMillis,
                              String encodedBody, Optional<SignalServiceGroup> group,
-                             long expiresInMillis, boolean unidentified, int callType) {
-    this(sender, senderDeviceId, sentTimestampMillis, encodedBody, group, expiresInMillis, unidentified, callType, true);
+                             long expiresInMillis, long expireStartedAt, boolean unidentified, int callType) {
+    this(sender, senderDeviceId, sentTimestampMillis, encodedBody, group, expiresInMillis, expireStartedAt, unidentified, callType, true);
   }
 
   public IncomingTextMessage(Address sender, int senderDeviceId, long sentTimestampMillis,
                              String encodedBody, Optional<SignalServiceGroup> group,
-                             long expiresInMillis, boolean unidentified, int callType, boolean isPush) {
+                             long expiresInMillis, long expireStartedAt, boolean unidentified, int callType, boolean isPush) {
     this.message              = encodedBody;
     this.sender               = sender;
     this.senderDeviceId       = senderDeviceId;
@@ -72,6 +73,7 @@ public class IncomingTextMessage implements Parcelable {
     this.push                 = isPush;
     this.subscriptionId       = -1;
     this.expiresInMillis      = expiresInMillis;
+    this.expireStartedAt      = expireStartedAt;
     this.unidentified         = unidentified;
     this.callType             = callType;
 
@@ -95,6 +97,7 @@ public class IncomingTextMessage implements Parcelable {
     this.push                  = (in.readInt() == 1);
     this.subscriptionId        = in.readInt();
     this.expiresInMillis       = in.readLong();
+    this.expireStartedAt       = in.readLong();
     this.unidentified          = in.readInt() == 1;
     this.isOpenGroupInvitation = in.readInt() == 1;
     this.callType              = in.readInt();
@@ -113,6 +116,7 @@ public class IncomingTextMessage implements Parcelable {
     this.push                  = base.isPush();
     this.subscriptionId        = base.getSubscriptionId();
     this.expiresInMillis       = base.getExpiresIn();
+    this.expireStartedAt       = base.getExpireStartedAt();
     this.unidentified          = base.isUnidentified();
     this.isOpenGroupInvitation = base.isOpenGroupInvitation();
     this.callType              = base.callType;
@@ -121,19 +125,23 @@ public class IncomingTextMessage implements Parcelable {
   public static IncomingTextMessage from(VisibleMessage message,
                                          Address sender,
                                          Optional<SignalServiceGroup> group,
-                                         long expiresInMillis)
+                                         long expiresInMillis,
+                                         long expireStartedAt)
   {
-    return new IncomingTextMessage(sender, 1, message.getSentTimestamp(), message.getText(), group, expiresInMillis, false);
+    return new IncomingTextMessage(sender, 1, message.getSentTimestamp(), message.getText(), group, expiresInMillis, expireStartedAt, false);
   }
 
-  public static IncomingTextMessage fromOpenGroupInvitation(OpenGroupInvitation openGroupInvitation, Address sender, Long sentTimestamp)
-  {
+  public static IncomingTextMessage fromOpenGroupInvitation(OpenGroupInvitation openGroupInvitation,
+                                                            Address sender,
+                                                            Long sentTimestamp,
+                                                            long expiresInMillis,
+                                                            long expireStartedAt) {
     String url = openGroupInvitation.getUrl();
     String name = openGroupInvitation.getName();
     if (url == null || name == null) { return null; }
     // FIXME: Doing toJSON() to get the body here is weird
     String body = UpdateMessageData.Companion.buildOpenGroupInvitation(url, name).toJSON();
-    IncomingTextMessage incomingTextMessage = new IncomingTextMessage(sender, 1, sentTimestamp, body, Optional.absent(), 0, false);
+    IncomingTextMessage incomingTextMessage = new IncomingTextMessage(sender, 1, sentTimestamp, body, Optional.absent(), expiresInMillis, expireStartedAt, false);
     incomingTextMessage.isOpenGroupInvitation = true;
     return incomingTextMessage;
   }
@@ -141,8 +149,10 @@ public class IncomingTextMessage implements Parcelable {
   public static IncomingTextMessage fromCallInfo(CallMessageType callMessageType,
                                                  Address sender,
                                                  Optional<SignalServiceGroup> group,
-                                                 long sentTimestamp) {
-    return new IncomingTextMessage(sender, 1, sentTimestamp, null, group, 0, false, callMessageType.ordinal(), false);
+                                                 long sentTimestamp,
+                                                 long expiresInMillis,
+                                                 long expireStartedAt) {
+    return new IncomingTextMessage(sender, 1, sentTimestamp, null, group, expiresInMillis, expireStartedAt, false, callMessageType.ordinal(), false);
   }
 
   public int getSubscriptionId() {
@@ -151,6 +161,10 @@ public class IncomingTextMessage implements Parcelable {
 
   public long getExpiresIn() {
     return expiresInMillis;
+  }
+
+  public long getExpireStartedAt() {
+    return expireStartedAt;
   }
 
   public long getSentTimestampMillis() {

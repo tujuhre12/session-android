@@ -159,7 +159,7 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
             }
         }
         val expirationConfig = getExpirationConfiguration(message.threadID ?: -1)
-        val expiresIn = expirationConfig?.durationSeconds ?: 0
+        val expiresInMillis = (expirationConfig?.durationSeconds ?: 0) * 1000L
         val expireStartedAt = if (expirationConfig?.expirationType == ExpirationType.DELETE_AFTER_SEND) {
             message.sentTimestamp!!
         } else 0
@@ -174,7 +174,7 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
                     pointers,
                     quote.orNull(),
                     linkPreviews.orNull()?.firstOrNull(),
-                    expiresIn * 1000L,
+                    expiresInMillis,
                     expireStartedAt
                 )
                 mmsDatabase.insertSecureDecryptedMessageOutbox(mediaMessage, message.threadID ?: -1, message.sentTimestamp!!, runThreadUpdate)
@@ -183,7 +183,7 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
                 val signalServiceAttachments = attachments.mapNotNull {
                     it.toSignalPointer()
                 }
-                val mediaMessage = IncomingMediaMessage.from(message, senderAddress, expiresIn * 1000L, expireStartedAt, group, signalServiceAttachments, quote, linkPreviews)
+                val mediaMessage = IncomingMediaMessage.from(message, senderAddress, expiresInMillis, expireStartedAt, group, signalServiceAttachments, quote, linkPreviews)
                 mmsDatabase.insertSecureDecryptedMessageInbox(mediaMessage, message.threadID ?: -1, message.receivedTimestamp ?: 0, runIncrement, runThreadUpdate)
             }
             if (insertResult.isPresent) {
@@ -194,12 +194,12 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
             val isOpenGroupInvitation = (message.openGroupInvitation != null)
 
             val insertResult = if (isUserSender || isUserBlindedSender) {
-                val textMessage = if (isOpenGroupInvitation) OutgoingTextMessage.fromOpenGroupInvitation(message.openGroupInvitation, targetRecipient, message.sentTimestamp)
-                else OutgoingTextMessage.from(message, targetRecipient, expiresIn * 1000L)
+                val textMessage = if (isOpenGroupInvitation) OutgoingTextMessage.fromOpenGroupInvitation(message.openGroupInvitation, targetRecipient, message.sentTimestamp, expiresInMillis, expireStartedAt)
+                else OutgoingTextMessage.from(message, targetRecipient, expiresInMillis, expireStartedAt)
                 smsDatabase.insertMessageOutbox(message.threadID ?: -1, textMessage, message.sentTimestamp!!, runThreadUpdate)
             } else {
-                val textMessage = if (isOpenGroupInvitation) IncomingTextMessage.fromOpenGroupInvitation(message.openGroupInvitation, senderAddress, message.sentTimestamp)
-                else IncomingTextMessage.from(message, senderAddress, group, expiresIn * 1000L)
+                val textMessage = if (isOpenGroupInvitation) IncomingTextMessage.fromOpenGroupInvitation(message.openGroupInvitation, senderAddress, message.sentTimestamp, expiresInMillis, expireStartedAt)
+                else IncomingTextMessage.from(message, senderAddress, group, expiresInMillis, expireStartedAt)
                 val encrypted = IncomingEncryptedMessage(textMessage, textMessage.messageBody)
                 smsDatabase.insertMessageInbox(encrypted, message.receivedTimestamp ?: 0, runIncrement, runThreadUpdate)
             }
@@ -479,24 +479,38 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
 
     override fun insertIncomingInfoMessage(context: Context, senderPublicKey: String, groupID: String, type: SignalServiceGroup.Type, name: String, members: Collection<String>, admins: Collection<String>, sentTimestamp: Long) {
         val group = SignalServiceGroup(type, GroupUtil.getDecodedGroupIDAsData(groupID), SignalServiceGroup.GroupType.SIGNAL, name, members.toList(), null, admins.toList())
-        val m = IncomingTextMessage(fromSerialized(senderPublicKey), 1, sentTimestamp, "", Optional.of(group), 0, true)
+        val recipient = Recipient.from(context, fromSerialized(groupID), false)
+        val threadId = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(recipient)
+        val expirationConfig = getExpirationConfiguration(threadId)
+        val expiresInMillis = (expirationConfig?.durationSeconds ?: 0) * 100L
+        val expireStartedAt = if (expirationConfig?.expirationType == ExpirationType.DELETE_AFTER_SEND) {
+            sentTimestamp
+        } else 0
+        val m = IncomingTextMessage(fromSerialized(senderPublicKey), 1, sentTimestamp, "", Optional.of(group), expiresInMillis, expireStartedAt, true)
         val updateData = UpdateMessageData.buildGroupUpdate(type, name, members)?.toJSON()
         val infoMessage = IncomingGroupMessage(m, groupID, updateData, true)
         val smsDB = DatabaseComponent.get(context).smsDatabase()
         smsDB.insertMessageInbox(infoMessage, true, true)
+        SSKEnvironment.shared.messageExpirationManager.startAnyExpiration(sentTimestamp, senderPublicKey, expireStartedAt)
     }
 
     override fun insertOutgoingInfoMessage(context: Context, groupID: String, type: SignalServiceGroup.Type, name: String, members: Collection<String>, admins: Collection<String>, threadID: Long, sentTimestamp: Long) {
         val userPublicKey = getUserPublicKey()
         val recipient = Recipient.from(context, fromSerialized(groupID), false)
-
+        val threadId = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(recipient)
+        val expirationConfig = getExpirationConfiguration(threadId)
+        val expiresInMillis = (expirationConfig?.durationSeconds ?: 0) * 100L
+        val expireStartedAt = if (expirationConfig?.expirationType == ExpirationType.DELETE_AFTER_SEND) {
+            sentTimestamp
+        } else 0
         val updateData = UpdateMessageData.buildGroupUpdate(type, name, members)?.toJSON() ?: ""
-        val infoMessage = OutgoingGroupMediaMessage(recipient, updateData, groupID, null, sentTimestamp, 0, 0, true, null, listOf(), listOf())
+        val infoMessage = OutgoingGroupMediaMessage(recipient, updateData, groupID, null, sentTimestamp, expiresInMillis, expireStartedAt, true, null, listOf(), listOf())
         val mmsDB = DatabaseComponent.get(context).mmsDatabase()
         val mmsSmsDB = DatabaseComponent.get(context).mmsSmsDatabase()
         if (mmsSmsDB.getMessageFor(sentTimestamp, userPublicKey) != null) return
         val infoMessageID = mmsDB.insertMessageOutbox(infoMessage, threadID, false, null, runThreadUpdate = true)
         mmsDB.markAsSent(infoMessageID, true)
+        SSKEnvironment.shared.messageExpirationManager.startAnyExpiration(sentTimestamp, userPublicKey!!, expireStartedAt)
     }
 
     override fun isClosedGroup(publicKey: String): Boolean {
@@ -844,8 +858,16 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
     override fun insertCallMessage(senderPublicKey: String, callMessageType: CallMessageType, sentTimestamp: Long) {
         val database = DatabaseComponent.get(context).smsDatabase()
         val address = fromSerialized(senderPublicKey)
-        val callMessage = IncomingTextMessage.fromCallInfo(callMessageType, address, Optional.absent(), sentTimestamp)
+        val recipient = Recipient.from(context, address, false)
+        val threadId = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(recipient)
+        val expirationConfig = getExpirationConfiguration(threadId)
+        val expiresInMillis = (expirationConfig?.durationSeconds ?: 0) * 100L
+        val expireStartedAt = if (expirationConfig?.expirationType == ExpirationType.DELETE_AFTER_SEND) {
+            sentTimestamp
+        } else 0
+        val callMessage = IncomingTextMessage.fromCallInfo(callMessageType, address, Optional.absent(), sentTimestamp, expiresInMillis, expireStartedAt)
         database.insertCallMessage(callMessage)
+        SSKEnvironment.shared.messageExpirationManager.startAnyExpiration(sentTimestamp, senderPublicKey, expireStartedAt)
     }
 
     override fun conversationHasOutgoing(userPublicKey: String): Boolean {

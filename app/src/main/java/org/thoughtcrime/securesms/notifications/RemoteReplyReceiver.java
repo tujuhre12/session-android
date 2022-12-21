@@ -31,8 +31,10 @@ import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage;
 import org.session.libsession.messaging.messages.signal.OutgoingTextMessage;
 import org.session.libsession.messaging.messages.visible.VisibleMessage;
 import org.session.libsession.messaging.sending_receiving.MessageSender;
+import org.session.libsession.snode.SnodeAPI;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.recipients.Recipient;
+import org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.ApplicationContext;
 import org.thoughtcrime.securesms.database.MessagingDatabase.MarkedMessageInfo;
@@ -77,10 +79,11 @@ public class RemoteReplyReceiver extends BroadcastReceiver {
           ThreadDatabase threadDatabase = DatabaseComponent.get(context).threadDatabase();
           long threadId = threadDatabase.getOrCreateThreadIdFor(recipient);
           VisibleMessage message = new VisibleMessage();
-          message.setSentTimestamp(System.currentTimeMillis());
+          message.setSentTimestamp(System.currentTimeMillis() + SnodeAPI.INSTANCE.getClockOffset());
           message.setText(responseText.toString());
           ExpirationConfiguration config = DatabaseComponent.get(context).expirationConfigurationDatabase().getExpirationConfiguration(threadId);
           long expiresInMillis = config == null ? 0 : config.getDurationSeconds() * 1000L;
+          long expireStartedAt = config.getExpirationType() == ExpirationType.DELETE_AFTER_SEND ? message.getSentTimestamp() : 0L;
           switch (replyMethod) {
             case GroupMessage: {
               OutgoingMediaMessage reply = OutgoingMediaMessage.from(message, recipient, Collections.emptyList(), null, null, expiresInMillis, 0);
@@ -93,7 +96,7 @@ public class RemoteReplyReceiver extends BroadcastReceiver {
               break;
             }
             case SecureMessage: {
-              OutgoingTextMessage reply = OutgoingTextMessage.from(message, recipient, expiresInMillis);
+              OutgoingTextMessage reply = OutgoingTextMessage.from(message, recipient, expiresInMillis, expireStartedAt);
               DatabaseComponent.get(context).smsDatabase().insertMessageOutbox(threadId, reply, false, System.currentTimeMillis(), null, true);
               MessageSender.send(message, address);
               break;

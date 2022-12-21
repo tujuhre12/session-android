@@ -1355,7 +1355,10 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         message.sentTimestamp = System.currentTimeMillis() + SnodeAPI.clockOffset
         message.text = text
         val expiresInMillis = (viewModel.expirationConfiguration?.durationSeconds ?: 0) * 1000L
-        val outgoingTextMessage = OutgoingTextMessage.from(message, recipient, expiresInMillis)
+        val expireStartedAt = if (viewModel.expirationConfiguration?.expirationType == ExpirationType.DELETE_AFTER_SEND) {
+            message.sentTimestamp!!
+        } else 0
+        val outgoingTextMessage = OutgoingTextMessage.from(message, recipient, expiresInMillis, expireStartedAt)
         // Clear the input bar
         binding?.inputBar?.text = ""
         binding?.inputBar?.cancelQuoteDraft()
