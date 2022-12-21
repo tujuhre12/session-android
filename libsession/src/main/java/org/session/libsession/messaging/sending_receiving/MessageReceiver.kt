@@ -9,7 +9,6 @@ import org.session.libsession.messaging.messages.control.DataExtractionNotificat
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
 import org.session.libsession.messaging.messages.control.ReadReceipt
-import org.session.libsession.messaging.messages.control.SyncedExpiriesMessage
 import org.session.libsession.messaging.messages.control.TypingIndicator
 import org.session.libsession.messaging.messages.control.UnsendRequest
 import org.session.libsession.messaging.messages.visible.VisibleMessage
@@ -139,7 +138,6 @@ object MessageReceiver {
             UnsendRequest.fromProto(proto) ?:
             MessageRequestResponse.fromProto(proto) ?:
             CallMessage.fromProto(proto) ?:
-            SyncedExpiriesMessage.fromProto(proto) ?:
             VisibleMessage.fromProto(proto) ?: run {
             throw Error.UnknownMessage
         }

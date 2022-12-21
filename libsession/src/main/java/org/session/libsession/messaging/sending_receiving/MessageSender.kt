@@ -12,7 +12,6 @@ import org.session.libsession.messaging.messages.control.CallMessage
 import org.session.libsession.messaging.messages.control.ClosedGroupControlMessage
 import org.session.libsession.messaging.messages.control.ConfigurationMessage
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
-import org.session.libsession.messaging.messages.control.SyncedExpiriesMessage
 import org.session.libsession.messaging.messages.control.UnsendRequest
 import org.session.libsession.messaging.messages.visible.LinkPreview
 import org.session.libsession.messaging.messages.visible.Profile
@@ -127,11 +126,7 @@ object MessageSender {
             // Convert it to protobuf
             val proto = message.toProto() ?: throw Error.ProtoConversionFailed
             // Serialize the protobuf
-            val plaintext = if (message is SyncedExpiriesMessage) {
-                proto.toByteArray()
-            } else {
-                PushTransportDetails.getPaddedMessageBody(proto.toByteArray())
-            }
+            val plaintext = PushTransportDetails.getPaddedMessageBody(proto.toByteArray())
             // Encrypt the serialized protobuf
             val ciphertext = when (destination) {
                 is Destination.Contact -> MessageEncrypter.encrypt(plaintext, destination.publicKey)

@@ -4,7 +4,6 @@ import android.text.TextUtils
 import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.jobs.BackgroundGroupAddJob
-import org.session.libsession.messaging.jobs.DisappearingMessagesJob
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.Message
@@ -15,7 +14,6 @@ import org.session.libsession.messaging.messages.control.DataExtractionNotificat
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
 import org.session.libsession.messaging.messages.control.ReadReceipt
-import org.session.libsession.messaging.messages.control.SyncedExpiriesMessage
 import org.session.libsession.messaging.messages.control.TypingIndicator
 import org.session.libsession.messaging.messages.control.UnsendRequest
 import org.session.libsession.messaging.messages.visible.Attachment
@@ -81,9 +79,7 @@ fun MessageReceiver.handle(message: Message, proto: SignalServiceProtos.Content,
             runProfileUpdate = true
         )
         is CallMessage -> handleCallMessage(message)
-        is SyncedExpiriesMessage -> handleSyncedExpiriesMessage(message)
     }
-    JobQueue.shared.add(DisappearingMessagesJob())
 }
 
 fun MessageReceiver.updateExpirationConfigurationIfNeeded(message: Message, proto: SignalServiceProtos.Content, openGroupID: String?) {
@@ -118,21 +114,6 @@ private fun MessageReceiver.handleReadReceipt(message: ReadReceipt) {
 private fun MessageReceiver.handleCallMessage(message: CallMessage) {
     // TODO: refactor this out to persistence, just to help debug the flow and send/receive in synchronous testing
     WebRtcUtils.SIGNAL_QUEUE.trySend(message)
-}
-
-private fun MessageReceiver.handleSyncedExpiriesMessage(message: SyncedExpiriesMessage) {
-    val module = MessagingModuleConfiguration.shared
-    val userPublicKey = module.storage.getUserPublicKey() ?: return
-    if (userPublicKey != message.sender) return
-    message.conversationExpiries.forEach { (syncTarget, syncedExpiries) ->
-        val config = module.storage.getExpirationConfiguration(module.storage.getOrCreateThreadIdFor(syncTarget)) ?: return@forEach
-        syncedExpiries.forEach { syncedExpiry ->
-            module.messageDataProvider.getMessageTimestampForServerHash(syncedExpiry.serverHash!!)?.let { timestamp ->
-                val startedAtMs = syncedExpiry.expirationTimestamp!! - config.durationSeconds * 1000
-                SSKEnvironment.shared.messageExpirationManager.startAnyExpiration(timestamp, syncTarget, startedAtMs)
-            }
-        }
-    }
 }
 
 private fun MessageReceiver.handleTypingIndicator(message: TypingIndicator) {
@@ -390,7 +371,6 @@ fun MessageReceiver.handleVisibleMessage(message: VisibleMessage,
             storage.persist(message, quoteModel, linkPreviews, message.groupPublicKey, openGroupID,
          attachments, runIncrement, runThreadUpdate
         ) ?: return null
-        JobQueue.shared.add(DisappearingMessagesJob())
         val openGroupServerID = message.openGroupServerMessageID
         if (openGroupServerID != null) {
             val isSms = !(message.isMediaMessage() || attachments.isNotEmpty())
