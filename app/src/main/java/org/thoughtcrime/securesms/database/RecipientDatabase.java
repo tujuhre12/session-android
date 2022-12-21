@@ -70,7 +70,7 @@ public class RecipientDatabase extends Database {
       PROFILE_KEY, SYSTEM_DISPLAY_NAME, SYSTEM_PHOTO_URI, SYSTEM_PHONE_LABEL, SYSTEM_CONTACT_URI,
       SIGNAL_PROFILE_NAME, SIGNAL_PROFILE_AVATAR, PROFILE_SHARING, NOTIFICATION_CHANNEL,
       UNIDENTIFIED_ACCESS_MODE,
-      FORCE_SMS_SELECTION, NOTIFY_TYPE,
+      FORCE_SMS_SELECTION, NOTIFY_TYPE, DISAPPEARING_STATE
   };
 
   static final List<String> TYPED_RECIPIENT_PROJECTION = Stream.of(RECIPIENT_PROJECTION)
@@ -182,6 +182,7 @@ public class RecipientDatabase extends Database {
     boolean approvedMe             = cursor.getInt(cursor.getColumnIndexOrThrow(APPROVED_ME))          == 1;
     String  messageRingtone        = cursor.getString(cursor.getColumnIndexOrThrow(NOTIFICATION));
     String  callRingtone           = cursor.getString(cursor.getColumnIndexOrThrow(CALL_RINGTONE));
+    int     disappearingState      = cursor.getInt(cursor.getColumnIndexOrThrow(DISAPPEARING_STATE));
     int     messageVibrateState    = cursor.getInt(cursor.getColumnIndexOrThrow(VIBRATE));
     int     callVibrateState       = cursor.getInt(cursor.getColumnIndexOrThrow(CALL_VIBRATE));
     long    muteUntil              = cursor.getLong(cursor.getColumnIndexOrThrow(MUTE_UNTIL));
@@ -223,6 +224,7 @@ public class RecipientDatabase extends Database {
 
     return Optional.of(new RecipientSettings(blocked, approved, approvedMe, muteUntil,
                                              notifyType,
+                                             Recipient.DisappearingState.fromId(disappearingState),
                                              Recipient.VibrateState.fromId(messageVibrateState),
                                              Recipient.VibrateState.fromId(callVibrateState),
                                              Util.uri(messageRingtone), Util.uri(callRingtone),

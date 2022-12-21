@@ -86,7 +86,7 @@ public class Recipient implements RecipientModifiedListener {
   private           boolean              blocked               = false;
   private           boolean              approved              = false;
   private           boolean              approvedMe            = false;
-  private           DisappearingState    disappearingState     = DisappearingState.LEGACY;
+  private           DisappearingState    disappearingState     = null;
   private           VibrateState         messageVibrate        = VibrateState.DEFAULT;
   private           VibrateState         callVibrate           = VibrateState.DEFAULT;
   private           int                  expireMessages        = 0;
@@ -162,6 +162,7 @@ public class Recipient implements RecipientModifiedListener {
       this.unidentifiedAccessMode = stale.unidentifiedAccessMode;
       this.forceSmsSelection      = stale.forceSmsSelection;
       this.notifyType             = stale.notifyType;
+      this.disappearingState      = stale.disappearingState;
 
       this.participants.clear();
       this.participants.addAll(stale.participants);
@@ -192,6 +193,7 @@ public class Recipient implements RecipientModifiedListener {
       this.unidentifiedAccessMode = details.get().unidentifiedAccessMode;
       this.forceSmsSelection      = details.get().forceSmsSelection;
       this.notifyType             = details.get().notifyType;
+      this.disappearingState      = details.get().disappearingState;
 
       this.participants.clear();
       this.participants.addAll(details.get().participants);
@@ -228,6 +230,7 @@ public class Recipient implements RecipientModifiedListener {
             Recipient.this.unidentifiedAccessMode = result.unidentifiedAccessMode;
             Recipient.this.forceSmsSelection      = result.forceSmsSelection;
             Recipient.this.notifyType             = result.notifyType;
+            Recipient.this.disappearingState      = result.disappearingState;
 
             Recipient.this.participants.clear();
             Recipient.this.participants.addAll(result.participants);
@@ -860,6 +863,7 @@ public class Recipient implements RecipientModifiedListener {
     private final boolean                approvedMe;
     private final long                   muteUntil;
     private final int                    notifyType;
+    private final DisappearingState      disappearingState;
     private final VibrateState           messageVibrateState;
     private final VibrateState           callVibrateState;
     private final Uri                    messageRingtone;
@@ -882,6 +886,7 @@ public class Recipient implements RecipientModifiedListener {
 
     public RecipientSettings(boolean blocked, boolean approved, boolean approvedMe, long muteUntil,
                       int notifyType,
+                      @NonNull DisappearingState disappearingState,
                       @NonNull VibrateState messageVibrateState,
                       @NonNull VibrateState callVibrateState,
                       @Nullable Uri messageRingtone,
@@ -907,6 +912,7 @@ public class Recipient implements RecipientModifiedListener {
       this.approvedMe             = approvedMe;
       this.muteUntil              = muteUntil;
       this.notifyType             = notifyType;
+      this.disappearingState      = disappearingState;
       this.messageVibrateState    = messageVibrateState;
       this.callVibrateState       = callVibrateState;
       this.messageRingtone        = messageRingtone;
@@ -950,6 +956,10 @@ public class Recipient implements RecipientModifiedListener {
 
     public int getNotifyType() {
       return notifyType;
+    }
+
+    public @NonNull DisappearingState getDisappearingState() {
+      return disappearingState;
     }
 
     public @NonNull VibrateState getMessageVibrateState() {
