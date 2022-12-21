@@ -170,13 +170,6 @@ class LokiMessageDatabase(context: Context, helper: SQLCipherOpenHelper) : Datab
         }
     }
 
-    fun getMessageServerHashes(messageIDs: List<Long>): List<Pair<Long, String?>> {
-        val database = databaseHelper.readableDatabase
-        return database.getAll(messageHashTable, "${Companion.messageID} IN (?)", arrayOf(messageIDs.joinToString(","))) { cursor ->
-            cursor.getLong(messageID) to cursor.getStringOrNull(serverHash)
-        }
-    }
-
     fun setMessageServerHash(messageID: Long, serverHash: String) {
         val database = databaseHelper.writableDatabase
         val contentValues = ContentValues(2)
@@ -197,9 +190,4 @@ class LokiMessageDatabase(context: Context, helper: SQLCipherOpenHelper) : Datab
         database.update(messageThreadMappingTable, contentValues, "$threadID = ?", arrayOf(legacyThreadId.toString()))
     }
 
-    fun getMessageIdForServerHash(serverHash: String): Long? {
-        return readableDatabase.get(messageHashTable, "$serverHash = ?", arrayOf(serverHash)) { cursor ->
-            cursor.getLong(messageID)
-        }
-    }
 }
