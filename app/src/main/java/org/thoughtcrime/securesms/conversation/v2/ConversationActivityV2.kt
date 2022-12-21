@@ -554,7 +554,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         val recipient = viewModel.recipient ?: return
         if (viewModel.recipient?.disappearingState == DisappearingState.LEGACY &&
             viewModel.expirationConfiguration?.isEnabled == true &&
-            !ExpirationConfiguration.isNewConfigEnabled
+            ExpirationConfiguration.isNewConfigEnabled
         ) {
             binding?.outdatedBannerTextView?.text =
                 resources.getString(R.string.activity_conversation_outdated_client_banner_text, recipient.name)

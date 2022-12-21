@@ -161,7 +161,7 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         val expirationConfig = getExpirationConfiguration(message.threadID ?: -1)
         val expiresIn = expirationConfig?.durationSeconds ?: 0
         val expireStartedAt = if (expirationConfig?.expirationType == ExpirationType.DELETE_AFTER_SEND) {
-            message.sentTimestamp!! + (expirationConfig.durationSeconds * 1000L)
+            message.sentTimestamp!! + (expiresIn * 1000L)
         } else 0
         if (message.isMediaMessage() || attachments.isNotEmpty()) {
             val quote: Optional<QuoteModel> = if (quotes != null) Optional.of(quotes) else Optional.absent()
@@ -212,6 +212,7 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
                 DatabaseComponent.get(context).lokiMessageDatabase().setMessageServerHash(id, serverHash)
             }
         }
+        SSKEnvironment.shared.messageExpirationManager.startAnyExpiration(message.sentTimestamp!!, message.sender!!, expireStartedAt)
         return messageID
     }
 
