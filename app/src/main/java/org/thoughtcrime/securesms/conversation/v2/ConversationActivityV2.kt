@@ -610,8 +610,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                 menu,
                 menuInflater,
                 recipient,
-                this,
-                viewModel.expirationConfiguration
+                this
             )
         }
         viewModel.recipient?.let { maybeUpdateToolbar(it) }

@@ -47,8 +47,7 @@ object ConversationMenuHelper {
         menu: Menu,
         inflater: MenuInflater,
         thread: Recipient,
-        context: Context,
-        config: ExpirationConfiguration?
+        context: Context
     ) {
         // Prepare
         menu.clear()
@@ -57,11 +56,7 @@ object ConversationMenuHelper {
         inflater.inflate(R.menu.menu_conversation, menu)
         // Expiring messages
         if (!isOpenGroup && (thread.hasApprovedMe() || thread.isClosedGroupRecipient || thread.isLocalNumber)) {
-            if (config?.isEnabled != true) {
-                inflater.inflate(R.menu.menu_conversation_expiration_off, menu)
-            } else {
-                inflater.inflate(R.menu.menu_conversation_expiration_on, menu)
-            }
+            inflater.inflate(R.menu.menu_conversation_expiration, menu)
         }
         // One-on-one chat menu (options that should only be present for one-on-one chats)
         if (thread.isContactRecipient) {
@@ -134,7 +129,6 @@ object ConversationMenuHelper {
             R.id.menu_search -> { search(context) }
             R.id.menu_add_shortcut -> { addShortcut(context, thread) }
             R.id.menu_expiring_messages -> { showExpirationSettings(context, thread) }
-            R.id.menu_expiring_messages_off -> { showExpirationSettings(context, thread) }
             R.id.menu_unblock -> { unblock(context, thread) }
             R.id.menu_block -> { block(context, thread, deleteThread = false) }
             R.id.menu_block_delete -> { blockAndDelete(context, thread) }
