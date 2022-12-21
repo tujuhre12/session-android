@@ -3,13 +3,21 @@ package org.thoughtcrime.securesms.conversation.v2
 import android.Manifest
 import android.animation.FloatEvaluator
 import android.animation.ValueAnimator
-import android.content.*
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.content.DialogInterface
+import android.content.Intent
 import android.content.res.Resources
 import android.database.Cursor
 import android.graphics.Rect
 import android.graphics.Typeface
 import android.net.Uri
-import android.os.*
+import android.os.AsyncTask
+import android.os.Build
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.MediaStore
 import android.text.TextUtils
 import android.util.Pair
@@ -58,8 +66,13 @@ import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
 import org.session.libsession.messaging.utilities.SessionId
-import org.session.libsession.utilities.*
+import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
+import org.session.libsession.utilities.GroupUtil
+import org.session.libsession.utilities.MediaTypes
+import org.session.libsession.utilities.Stub
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.concurrent.SimpleTask
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.Recipient.DisappearingState
@@ -123,7 +136,14 @@ import org.thoughtcrime.securesms.linkpreview.LinkPreviewViewModel
 import org.thoughtcrime.securesms.linkpreview.LinkPreviewViewModel.LinkPreviewState
 import org.thoughtcrime.securesms.mediasend.Media
 import org.thoughtcrime.securesms.mediasend.MediaSendActivity
-import org.thoughtcrime.securesms.mms.*
+import org.thoughtcrime.securesms.mms.AudioSlide
+import org.thoughtcrime.securesms.mms.GifSlide
+import org.thoughtcrime.securesms.mms.GlideApp
+import org.thoughtcrime.securesms.mms.ImageSlide
+import org.thoughtcrime.securesms.mms.MediaConstraints
+import org.thoughtcrime.securesms.mms.Slide
+import org.thoughtcrime.securesms.mms.SlideDeck
+import org.thoughtcrime.securesms.mms.VideoSlide
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.reactions.ReactionsDialogFragment
 import org.thoughtcrime.securesms.reactions.any.ReactWithAnyEmojiDialogFragment
@@ -1070,7 +1090,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         // Create the message
         val recipient = viewModel.recipient ?: return
         val reactionMessage = VisibleMessage()
-        val emojiTimestamp = System.currentTimeMillis()
+        val emojiTimestamp = System.currentTimeMillis() + SnodeAPI.clockOffset
         reactionMessage.sentTimestamp = emojiTimestamp
         val author = textSecurePreferences.getLocalNumber()!!
         // Put the message in the database
@@ -1103,7 +1123,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     private fun sendEmojiRemoval(emoji: String, originalMessage: MessageRecord) {
         val recipient = viewModel.recipient ?: return
         val message = VisibleMessage()
-        val emojiTimestamp = System.currentTimeMillis()
+        val emojiTimestamp = System.currentTimeMillis() + SnodeAPI.clockOffset
         message.sentTimestamp = emojiTimestamp
         val author = textSecurePreferences.getLocalNumber()!!
         reactionDb.deleteReaction(emoji, MessageId(originalMessage.id, originalMessage.isMms), author, false)
@@ -1332,7 +1352,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         }
         // Create the message
         val message = VisibleMessage()
-        message.sentTimestamp = System.currentTimeMillis()
+        message.sentTimestamp = System.currentTimeMillis() + SnodeAPI.clockOffset
         message.text = text
         val expiresInMillis = (viewModel.expirationConfiguration?.durationSeconds ?: 0) * 1000L
         val outgoingTextMessage = OutgoingTextMessage.from(message, recipient, expiresInMillis)
@@ -1356,7 +1376,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         val recipient = viewModel.recipient ?: return
         processMessageRequestApproval()
         // Create the message
-        val sentTimestampMs = System.currentTimeMillis()
+        val sentTimestampMs = System.currentTimeMillis() + SnodeAPI.clockOffset
         val message = VisibleMessage()
         message.sentTimestamp = sentTimestampMs
         message.text = body
@@ -1375,7 +1395,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         }
         val expiresInMs = (viewModel.expirationConfiguration?.durationSeconds ?: 0) * 1000L
         val expireStartedAtMs = if (viewModel.expirationConfiguration?.expirationType == ExpirationType.DELETE_AFTER_SEND) {
-            sentTimestampMs + expiresInMs
+            sentTimestampMs
         } else 0
         val outgoingTextMessage = OutgoingMediaMessage.from(message, recipient, attachments, localQuote, linkPreview, expiresInMs, expireStartedAtMs)
         // Clear the input bar

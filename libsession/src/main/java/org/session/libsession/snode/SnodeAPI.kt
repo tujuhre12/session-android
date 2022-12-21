@@ -55,7 +55,7 @@ object SnodeAPI {
      * The offset between the user's clock and the Service Node's clock. Used in cases where the
      * user's clock is incorrect.
      */
-    internal var clockOffset = 0L
+    var clockOffset = 0L
     internal var forkInfo by observable(database.getForkInfo()) { _, oldValue, newValue ->
         if (newValue > oldValue) {
             Log.d("Loki", "Setting new fork info new: $newValue, old: $oldValue")

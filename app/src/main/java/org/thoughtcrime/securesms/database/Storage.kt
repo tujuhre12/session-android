@@ -161,7 +161,7 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         val expirationConfig = getExpirationConfiguration(message.threadID ?: -1)
         val expiresIn = expirationConfig?.durationSeconds ?: 0
         val expireStartedAt = if (expirationConfig?.expirationType == ExpirationType.DELETE_AFTER_SEND) {
-            message.sentTimestamp!! + (expiresIn * 1000L)
+            message.sentTimestamp!!
         } else 0
         if (message.isMediaMessage() || attachments.isNotEmpty()) {
             val quote: Optional<QuoteModel> = if (quotes != null) Optional.of(quotes) else Optional.absent()

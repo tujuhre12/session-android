@@ -72,7 +72,7 @@ public class ExpiringMessageManager implements SSKEnvironment.MessageExpirationM
     String userPublicKey = TextSecurePreferences.getLocalNumber(context);
     String senderPublicKey = message.getSender();
     long expireStartedAt = ExpirationType.DELETE_AFTER_SEND_VALUE != expiryType
-            ? 0 : message.getSentTimestamp() + (message.getDuration() * 1000L);
+            ? 0 : message.getSentTimestamp();
 
     // Notify the user
     if (senderPublicKey == null || userPublicKey.equals(senderPublicKey)) {
@@ -161,7 +161,7 @@ public class ExpiringMessageManager implements SSKEnvironment.MessageExpirationM
       } else {
         smsDatabase.markExpireStarted(messageRecord.getId(), expireStartedAt);
       }
-      scheduleDeletion(messageRecord.getId(), mms, config.getDurationSeconds() * 1000L);
+      scheduleDeletion(messageRecord.getId(), mms, expireStartedAt, config.getDurationSeconds() * 1000L);
     }
   }
 

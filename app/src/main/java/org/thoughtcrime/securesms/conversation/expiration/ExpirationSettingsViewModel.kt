@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.sending_receiving.MessageSender
+import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.SSKEnvironment.MessageExpirationManagerProtocol
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
@@ -108,7 +109,7 @@ class ExpirationSettingsViewModel(
             return@launch
         }
 
-        val expiryChangeTimestampMs = System.currentTimeMillis()
+        val expiryChangeTimestampMs = System.currentTimeMillis() + SnodeAPI.clockOffset
         storage.setExpirationConfiguration(ExpirationConfiguration(threadId, expirationTimer, expiryType, expiryChangeTimestampMs))
 
         val message = ExpirationTimerUpdate(expirationTimer)
