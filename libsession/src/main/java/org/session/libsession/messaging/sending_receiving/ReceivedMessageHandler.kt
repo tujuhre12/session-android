@@ -86,7 +86,7 @@ fun MessageReceiver.handle(message: Message, proto: SignalServiceProtos.Content,
     JobQueue.shared.add(DisappearingMessagesJob())
 }
 
-fun updateExpirationConfigurationIfNeeded(message: Message, proto: SignalServiceProtos.Content, openGroupID: String?) {
+fun MessageReceiver.updateExpirationConfigurationIfNeeded(message: Message, proto: SignalServiceProtos.Content, openGroupID: String?) {
     val storage = MessagingModuleConfiguration.shared.storage
     val disappearingState = if (proto.hasExpirationTimer()) DisappearingState.UPDATED else DisappearingState.LEGACY
     storage.updateDisappearingState(message.sender!!, disappearingState)
