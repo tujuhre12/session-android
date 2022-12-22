@@ -116,7 +116,7 @@ class VisibleMessage : Message()  {
         dataMessage.addAllAttachments(pointers)
         // TODO: Contact
         // Expiration timer
-        setExpirationConfigurationIfNeeded(proto)
+        proto.setExpirationConfigurationIfNeeded(threadID)
         // Group context
         val storage = MessagingModuleConfiguration.shared.storage
         if (storage.isClosedGroup(recipient!!)) {

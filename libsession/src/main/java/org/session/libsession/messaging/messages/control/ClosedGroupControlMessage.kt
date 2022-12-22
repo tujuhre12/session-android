@@ -1,18 +1,21 @@
 package org.session.libsession.messaging.messages.control
 
 import com.google.protobuf.ByteString
+import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.utilities.Address
 import org.session.libsignal.crypto.ecc.DjbECPrivateKey
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage
-import org.session.libsignal.utilities.removingIdPrefixIfNeeded
-import org.session.libsignal.utilities.toHexString
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.Log
+import org.session.libsignal.utilities.removingIdPrefixIfNeeded
+import org.session.libsignal.utilities.toHexString
 
 class ClosedGroupControlMessage() : ControlMessage() {
     var kind: Kind? = null
+    var groupID: String? = null
 
     override val defaultTtl: Long get() {
         return when (kind) {
@@ -118,8 +121,9 @@ class ClosedGroupControlMessage() : ControlMessage() {
         }
     }
 
-    internal constructor(kind: Kind?) : this() {
+    internal constructor(kind: Kind?, groupID: String? = null) : this() {
         this.kind = kind
+        this.groupID = groupID
     }
 
     override fun toProto(): SignalServiceProtos.Content? {
@@ -167,11 +171,12 @@ class ClosedGroupControlMessage() : ControlMessage() {
             val contentProto = SignalServiceProtos.Content.newBuilder()
             val dataMessageProto = DataMessage.newBuilder()
             dataMessageProto.closedGroupControlMessage = closedGroupControlMessage.build()
-            // Expiration timer
-            setExpirationConfigurationIfNeeded(contentProto)
             // Group context
             setGroupContext(dataMessageProto)
             contentProto.dataMessage = dataMessageProto.build()
+            // Expiration timer
+            val threadId = groupID?.let { MessagingModuleConfiguration.shared.storage.getOrCreateThreadIdFor(Address.fromSerialized(it)) }
+            contentProto.setExpirationConfigurationIfNeeded(threadId)
             return contentProto.build()
         } catch (e: Exception) {
             Log.w(TAG, "Couldn't construct closed group control message proto from: $this.")

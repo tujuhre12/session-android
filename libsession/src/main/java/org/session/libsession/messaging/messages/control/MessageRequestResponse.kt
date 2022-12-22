@@ -13,7 +13,7 @@ class MessageRequestResponse(val isApproved: Boolean) : ControlMessage() {
         val contentProto = SignalServiceProtos.Content.newBuilder()
         return try {
             contentProto.messageRequestResponse = messageRequestResponseProto.build()
-            setExpirationConfigurationIfNeeded(contentProto)
+            contentProto.setExpirationConfigurationIfNeeded(threadID)
             contentProto.build()
         } catch (e: Exception) {
             Log.w(TAG, "Couldn't construct message request response proto from: $this")

@@ -15,18 +15,17 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.crypto.ecc.Curve
 import org.session.libsignal.crypto.ecc.ECKeyPair
-import org.session.libsignal.utilities.guava.Optional
 import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.protos.SignalServiceProtos
+import org.session.libsignal.utilities.Hex
+import org.session.libsignal.utilities.Log
+import org.session.libsignal.utilities.ThreadUtils
+import org.session.libsignal.utilities.guava.Optional
 import org.session.libsignal.utilities.hexEncodedPublicKey
 import org.session.libsignal.utilities.removingIdPrefixIfNeeded
-import org.session.libsignal.utilities.Hex
-import org.session.libsignal.utilities.ThreadUtils
-import org.session.libsignal.utilities.Log
-import java.util.*
+import java.util.LinkedList
 import java.util.concurrent.ConcurrentHashMap
 
 const val groupSizeLimit = 100
@@ -49,14 +48,14 @@ fun MessageSender.create(name: String, members: Collection<String>): Promise<Str
         val groupID = GroupUtil.doubleEncodeGroupID(groupPublicKey)
         val admins = setOf( userPublicKey )
         val adminsAsData = admins.map { ByteString.copyFrom(Hex.fromStringCondensed(it)) }
-        storage.createGroup(groupID, name, LinkedList(members.map { Address.fromSerialized(it) }),
+        storage.createGroup(groupID, name, LinkedList(members.map { fromSerialized(it) }),
             null, null, LinkedList(admins.map { Address.fromSerialized(it) }), System.currentTimeMillis())
         storage.setProfileSharing(Address.fromSerialized(groupID), true)
         // Send a closed group update message to all members individually
         val closedGroupUpdateKind = ClosedGroupControlMessage.Kind.New(ByteString.copyFrom(Hex.fromStringCondensed(groupPublicKey)), name, encryptionKeyPair, membersAsData, adminsAsData, 0)
         val sentTime = System.currentTimeMillis() + SnodeAPI.clockOffset
         for (member in members) {
-            val closedGroupControlMessage = ClosedGroupControlMessage(closedGroupUpdateKind)
+            val closedGroupControlMessage = ClosedGroupControlMessage(closedGroupUpdateKind, groupID)
             closedGroupControlMessage.sentTimestamp = sentTime
             try {
                 sendNonDurably(closedGroupControlMessage, Address.fromSerialized(member)).get()
@@ -115,7 +114,7 @@ fun MessageSender.setName(groupPublicKey: String, newName: String) {
     // Send the update to the group
     val kind = ClosedGroupControlMessage.Kind.NameChange(newName)
     val sentTime = System.currentTimeMillis() + SnodeAPI.clockOffset
-    val closedGroupControlMessage = ClosedGroupControlMessage(kind)
+    val closedGroupControlMessage = ClosedGroupControlMessage(kind, groupID)
     closedGroupControlMessage.sentTimestamp = sentTime
     send(closedGroupControlMessage, Address.fromSerialized(groupID))
     // Update the group
@@ -155,13 +154,13 @@ fun MessageSender.addMembers(groupPublicKey: String, membersToAdd: List<String>)
     // Send the update to the group
     val memberUpdateKind = ClosedGroupControlMessage.Kind.MembersAdded(newMembersAsData)
     val sentTime = System.currentTimeMillis() + SnodeAPI.clockOffset
-    val closedGroupControlMessage = ClosedGroupControlMessage(memberUpdateKind)
+    val closedGroupControlMessage = ClosedGroupControlMessage(memberUpdateKind, groupID)
     closedGroupControlMessage.sentTimestamp = sentTime
     send(closedGroupControlMessage, Address.fromSerialized(groupID))
     // Send closed group update messages to any new members individually
     for (member in membersToAdd) {
         val closedGroupNewKind = ClosedGroupControlMessage.Kind.New(ByteString.copyFrom(Hex.fromStringCondensed(groupPublicKey)), name, encryptionKeyPair, membersAsData, adminsAsData, expireTimer)
-        val closedGroupControlMessage = ClosedGroupControlMessage(closedGroupNewKind)
+        val closedGroupControlMessage = ClosedGroupControlMessage(closedGroupNewKind, groupID)
         // It's important that the sent timestamp of this message is greater than the sent timestamp
         // of the `MembersAdded` message above. The reason is that upon receiving this `New` message,
         // the recipient will update the closed group formation timestamp and ignore any closed group
@@ -210,7 +209,7 @@ fun MessageSender.removeMembers(groupPublicKey: String, membersToRemove: List<St
     // Send the update to the group
     val memberUpdateKind = ClosedGroupControlMessage.Kind.MembersRemoved(removeMembersAsData)
     val sentTime = System.currentTimeMillis() + SnodeAPI.clockOffset
-    val closedGroupControlMessage = ClosedGroupControlMessage(memberUpdateKind)
+    val closedGroupControlMessage = ClosedGroupControlMessage(memberUpdateKind, groupID)
     closedGroupControlMessage.sentTimestamp = sentTime
     send(closedGroupControlMessage, Address.fromSerialized(groupID))
     // Send the new encryption key pair to the remaining group members.
@@ -239,7 +238,7 @@ fun MessageSender.leave(groupPublicKey: String, notifyUser: Boolean = true): Pro
         val admins = group.admins.map { it.serialize() }
         val name = group.title
         // Send the update to the group
-        val closedGroupControlMessage = ClosedGroupControlMessage(ClosedGroupControlMessage.Kind.MemberLeft())
+        val closedGroupControlMessage = ClosedGroupControlMessage(ClosedGroupControlMessage.Kind.MemberLeft(), groupID)
         val sentTime = System.currentTimeMillis() + SnodeAPI.clockOffset
         closedGroupControlMessage.sentTimestamp = sentTime
         storage.setActive(groupID, false)
@@ -300,7 +299,7 @@ fun MessageSender.sendEncryptionKeyPair(groupPublicKey: String, newKeyPair: ECKe
     }
     val kind = ClosedGroupControlMessage.Kind.EncryptionKeyPair(ByteString.copyFrom(Hex.fromStringCondensed(groupPublicKey)), wrappers)
     val sentTime = System.currentTimeMillis() + SnodeAPI.clockOffset
-    val closedGroupControlMessage = ClosedGroupControlMessage(kind)
+    val closedGroupControlMessage = ClosedGroupControlMessage(kind, null)
     closedGroupControlMessage.sentTimestamp = sentTime
     return if (force) {
         MessageSender.sendNonDurably(closedGroupControlMessage, Address.fromSerialized(destination))
@@ -334,6 +333,6 @@ fun MessageSender.sendLatestEncryptionKeyPair(publicKey: String, groupPublicKey:
     Log.d("Loki", "Sending latest encryption key pair to: $publicKey.")
     val wrapper = ClosedGroupControlMessage.KeyPairWrapper(publicKey, ByteString.copyFrom(ciphertext))
     val kind = ClosedGroupControlMessage.Kind.EncryptionKeyPair(ByteString.copyFrom(Hex.fromStringCondensed(groupPublicKey)), listOf(wrapper))
-    val closedGroupControlMessage = ClosedGroupControlMessage(kind)
+    val closedGroupControlMessage = ClosedGroupControlMessage(kind, groupID)
     MessageSender.send(closedGroupControlMessage, Address.fromSerialized(publicKey))
 }
