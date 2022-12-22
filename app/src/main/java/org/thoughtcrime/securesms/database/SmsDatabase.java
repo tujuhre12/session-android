@@ -383,6 +383,24 @@ public class SmsDatabase extends MessagingDatabase {
   }
 
   protected Optional<InsertResult> insertMessageInbox(IncomingTextMessage message, long type, long serverTimestamp, boolean runIncrement, boolean runThreadUpdate) {
+    Recipient recipient = Recipient.from(context, message.getSender(), true);
+
+    Recipient groupRecipient;
+
+    if (message.getGroupId() == null) {
+      groupRecipient = null;
+    } else {
+      groupRecipient = Recipient.from(context, message.getGroupId(), true);
+    }
+
+    boolean    unread     = (Util.isDefaultSmsProvider(context) ||
+            message.isSecureMessage() || message.isGroup() || message.isCallInfo());
+
+    long       threadId;
+
+    if (groupRecipient == null) threadId = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(recipient);
+    else                        threadId = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(groupRecipient);
+
     if (message.isSecureMessage()) {
       type |= Types.SECURE_MESSAGE_BIT;
     } else if (message.isGroup()) {
@@ -396,39 +414,10 @@ public class SmsDatabase extends MessagingDatabase {
 
     CallMessageType callMessageType = message.getCallType();
     if (callMessageType != null) {
-      switch (callMessageType) {
-        case CALL_OUTGOING:
-          type |= Types.OUTGOING_CALL_TYPE;
-          break;
-        case CALL_INCOMING:
-          type |= Types.INCOMING_CALL_TYPE;
-          break;
-        case CALL_MISSED:
-          type |= Types.MISSED_CALL_TYPE;
-          break;
-        case CALL_FIRST_MISSED:
-          type |= Types.FIRST_MISSED_CALL_TYPE;
-          break;
-      }
+      long callMessageTypeMask = getCallMessageTypeMask(callMessageType);
+      type |= callMessageTypeMask;
+      deleteInfoMessages(threadId, callMessageTypeMask);
     }
-
-    Recipient recipient = Recipient.from(context, message.getSender(), true);
-
-    Recipient groupRecipient;
-
-    if (message.getGroupId() == null) {
-      groupRecipient = null;
-    } else {
-      groupRecipient = Recipient.from(context, message.getGroupId(), true);
-    }
-
-    boolean    unread     = (Util.isDefaultSmsProvider(context) ||
-                            message.isSecureMessage() || message.isGroup() || message.isCallInfo());
-
-    long       threadId;
-
-    if (groupRecipient == null) threadId = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(recipient);
-    else                        threadId = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(groupRecipient);
 
     ContentValues values = new ContentValues(6);
     values.put(ADDRESS, message.getSender().serialize());
@@ -477,6 +466,25 @@ public class SmsDatabase extends MessagingDatabase {
 
       return Optional.of(new InsertResult(messageId, threadId));
     }
+  }
+
+  private long getCallMessageTypeMask(CallMessageType callMessageType) {
+    long typeMask = 0;
+    switch (callMessageType) {
+      case CALL_OUTGOING:
+        typeMask = Types.OUTGOING_CALL_TYPE;
+        break;
+      case CALL_INCOMING:
+        typeMask = Types.INCOMING_CALL_TYPE;
+        break;
+      case CALL_MISSED:
+        typeMask = Types.MISSED_CALL_TYPE;
+        break;
+      case CALL_FIRST_MISSED:
+        typeMask = Types.FIRST_MISSED_CALL_TYPE;
+        break;
+    }
+    return typeMask;
   }
 
   public Optional<InsertResult> insertMessageInbox(IncomingTextMessage message, boolean runIncrement, boolean runThreadUpdate) {
@@ -616,6 +624,12 @@ public class SmsDatabase extends MessagingDatabase {
   @Override
   public MessageRecord getMessageRecord(long messageId) throws NoSuchMessageException {
     return getMessage(messageId);
+  }
+
+  public void deleteInfoMessages(long threadId, long type) {
+    String where = THREAD_ID + " = ? AND (" + TYPE + " & " + type + ") <> 0";
+    int updated = getWritableDatabase().delete(TABLE_NAME, where, new String[] {threadId+""});
+    notifyConversationListeners(threadId);
   }
 
   private boolean isDuplicate(IncomingTextMessage message, long threadId) {
