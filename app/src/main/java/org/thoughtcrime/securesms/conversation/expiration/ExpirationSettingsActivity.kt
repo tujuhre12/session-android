@@ -41,9 +41,13 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
 
     private val viewModel: ExpirationSettingsViewModel by viewModels {
         val afterReadOptions = resources.getIntArray(R.array.read_expiration_time_values).map(Int::toString)
-            .zip(resources.getStringArray(R.array.read_expiration_time_names)) { value, name -> RadioOption(value, name)}
+            .zip(resources.getStringArray(R.array.read_expiration_time_names)) { value, name ->
+                RadioOption(value, name, getString(R.string.AccessibilityId_time_option))
+            }
         val afterSendOptions = resources.getIntArray(R.array.send_expiration_time_values).map(Int::toString)
-            .zip(resources.getStringArray(R.array.send_expiration_time_names)) { value, name -> RadioOption(value, name)}
+            .zip(resources.getStringArray(R.array.send_expiration_time_names)) { value, name ->
+                RadioOption(value, name, getString(R.string.AccessibilityId_time_option))
+            }
         viewModelFactory.create(threadId, mayAddTestExpiryOption(afterReadOptions), mayAddTestExpiryOption(afterSendOptions))
     }
 
@@ -161,16 +165,22 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
             if (viewModel.recipient.value?.isContactRecipient == true && viewModel.recipient.value?.isLocalNumber == false) {
                 deleteTypeOptions.addAll(
                     listOf(
-                        RadioOption(value = "-1", title = getString(R.string.expiration_off)),
+                        RadioOption(
+                            value = "-1",
+                            title = getString(R.string.expiration_off),
+                            contentDescription = getString(R.string.AccessibilityId_disable_disappearing_messages)
+                        ),
                         RadioOption(
                             value = ExpirationType.DELETE_AFTER_READ_VALUE.toString(),
                             title = getString(R.string.expiration_type_disappear_after_read),
-                            subtitle = getString(R.string.expiration_type_disappear_after_read_description)
+                            subtitle = getString(R.string.expiration_type_disappear_after_read_description),
+                            contentDescription = getString(R.string.AccessibilityId_disappear_after_read_option)
                         ),
                         RadioOption(
                             value = ExpirationType.DELETE_AFTER_SEND_VALUE.toString(),
                             title = getString(R.string.expiration_type_disappear_after_send),
-                            subtitle = getString(R.string.expiration_type_disappear_after_send_description)
+                            subtitle = getString(R.string.expiration_type_disappear_after_send_description),
+                            contentDescription = getString(R.string.AccessibilityId_disappear_after_send_option)
                         )
                     )
                 )
@@ -179,7 +189,11 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
             if (viewModel.recipient.value?.isContactRecipient == true && viewModel.recipient.value?.isLocalNumber == false) {
                 deleteTypeOptions.addAll(
                     listOf(
-                        RadioOption(value = "-1", title = getString(R.string.expiration_off)),
+                        RadioOption(
+                            value = "-1",
+                            title = getString(R.string.expiration_off),
+                            contentDescription = getString(R.string.AccessibilityId_disable_disappearing_messages)
+                        ),
                         RadioOption(
                             value = "0",
                             title = getString(R.string.expiration_type_disappear_legacy),
@@ -189,13 +203,15 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
                             value = ExpirationType.DELETE_AFTER_READ_VALUE.toString(),
                             title = getString(R.string.expiration_type_disappear_after_read),
                             subtitle = getString(R.string.expiration_type_disappear_after_read_description),
-                            enabled = false
+                            enabled = false,
+                            contentDescription = getString(R.string.AccessibilityId_disappear_after_read_option)
                         ),
                         RadioOption(
                             value = ExpirationType.DELETE_AFTER_SEND_VALUE.toString(),
                             title = getString(R.string.expiration_type_disappear_after_send),
                             subtitle = getString(R.string.expiration_type_disappear_after_send_description),
-                            enabled = false
+                            enabled = false,
+                            contentDescription = getString(R.string.AccessibilityId_disappear_after_send_option)
                         )
                     )
                 )
@@ -212,7 +228,8 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
                             value = ExpirationType.DELETE_AFTER_SEND_VALUE.toString(),
                             title = getString(R.string.expiration_type_disappear_after_send),
                             subtitle = getString(R.string.expiration_type_disappear_after_send_description),
-                            enabled = false
+                            enabled = false,
+                            contentDescription = getString(R.string.AccessibilityId_disappear_after_send_option)
                         )
                     )
                 )

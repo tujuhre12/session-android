@@ -49,6 +49,7 @@ class RadioOptionAdapter(
         fun bind(option: RadioOption, isSelected: Boolean, toggleSelection: (RadioOption) -> Unit) {
             val alpha = if (option.enabled) 1f else 0.5f
             binding.root.isEnabled = option.enabled
+            binding.root.contentDescription = option.contentDescription
             binding.titleTextView.alpha = alpha
             binding.subtitleTextView.alpha = alpha
             binding.selectButton.alpha = alpha
@@ -69,5 +70,6 @@ data class RadioOption(
     val value: String,
     val title: String,
     val subtitle: String? = null,
-    val enabled: Boolean = true
+    val enabled: Boolean = true,
+    val contentDescription: String = ""
 )

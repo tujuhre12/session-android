@@ -171,6 +171,7 @@ class ConversationActionBarView : LinearLayout {
 
             fun bind(setting: ConversationSetting, itemCount: Int, listener: (ConversationSetting) -> Unit) {
                 binding.root.setOnClickListener { listener.invoke(setting) }
+                binding.root.contentDescription = setting.contentDescription
                 binding.iconImageView.setImageResource(setting.iconResId)
                 binding.iconImageView.isVisible = setting.iconResId > 0
                 binding.titleView.text = setting.title
@@ -201,7 +202,8 @@ fun interface ConversationActionBarDelegate {
 data class ConversationSetting(
     val title: String,
     val settingType: ConversationSettingType,
-    val iconResId: Int = 0
+    val iconResId: Int = 0,
+    val contentDescription: String = ""
 )
 
 enum class ConversationSettingType {

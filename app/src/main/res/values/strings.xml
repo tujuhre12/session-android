@@ -9,6 +9,17 @@
     <string name="save">Save</string>
     <string name="note_to_self">Note to Self</string>
     <string name="version_s">Version %s</string>
+
+    <!-- Disappearing messages -->
+    <string name="AccessibilityId_disappear_after_read_option">Disappear after read option</string>
+    <string name="AccessibilityId_disappear_after_send_option">Disappear after send option</string>
+    <string name="AccessibilityId_disappearing_messages_timer">Disappearing messages timer</string>
+    <string name="AccessibilityId_set_button">Set button</string>
+    <string name="AccessibilityId_time_option">Time option</string>
+    <string name="AccessibilityId_disable_disappearing_messages">Disable disappearing messages (Off option)</string>
+    <string name="AccessibilityId_configuration_message">Configuration message</string>
+    <string name="AccessibilityId_disappearing_messages_type_and_time">Disappearing messages type and time</string>
+    <string name="AccessibilityId_conversation_header_name">Conversation header name</string>
     <!-- AbstractNotificationBuilder -->
     <string name="AbstractNotificationBuilder_new_message">New message</string>
     <!-- AlbumThumbnailView -->
