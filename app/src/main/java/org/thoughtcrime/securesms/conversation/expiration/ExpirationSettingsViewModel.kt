@@ -20,6 +20,7 @@ import org.session.libsession.utilities.SSKEnvironment.MessageExpirationManagerP
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType
+import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.preferences.RadioOption
@@ -31,6 +32,7 @@ class ExpirationSettingsViewModel(
     private val textSecurePreferences: TextSecurePreferences,
     private val messageExpirationManager: MessageExpirationManagerProtocol,
     private val threadDb: ThreadDatabase,
+    private val groupDb: GroupDatabase,
     private val storage: Storage
 ) : ViewModel() {
 
@@ -56,8 +58,14 @@ class ExpirationSettingsViewModel(
             expirationConfig = storage.getExpirationConfiguration(threadId)
             val recipient = threadDb.getRecipientForThreadId(threadId)
             _recipient.value = recipient
-            _uiState.update {
-                it.copy(showExpirationTypeSelector = !ExpirationConfiguration.isNewConfigEnabled || (recipient?.isContactRecipient == true && !recipient.isLocalNumber))
+            val groupInfo = if (recipient?.isClosedGroupRecipient == true) {
+                groupDb.getGroup(recipient.address.toGroupString()).orNull()
+            } else null
+            _uiState.update { currentUiState ->
+                currentUiState.copy(
+                    isSelfAdmin = groupInfo?.admins?.any{ it.serialize() == textSecurePreferences.getLocalNumber() } == true,
+                    showExpirationTypeSelector = !ExpirationConfiguration.isNewConfigEnabled || (recipient?.isContactRecipient == true && !recipient.isLocalNumber)
+                )
             }
             _selectedExpirationType.value = if (ExpirationConfiguration.isNewConfigEnabled) {
                 if (recipient?.isLocalNumber == true || recipient?.isClosedGroupRecipient == true) {
@@ -82,9 +90,9 @@ class ExpirationSettingsViewModel(
             }
         }.onEach { options ->
             _expirationTimerOptions.value = if (ExpirationConfiguration.isNewConfigEnabled && (recipient.value?.isLocalNumber == true || recipient.value?.isClosedGroupRecipient == true)) {
-                options
+                options.map { it.copy(enabled = _uiState.value.isSelfAdmin) }
             } else {
-                options.slice(1 until options.size)
+                options.slice(1 until options.size).map { it.copy(enabled = _uiState.value.isSelfAdmin) }
             }
         }.launchIn(viewModelScope)
     }
@@ -141,6 +149,7 @@ class ExpirationSettingsViewModel(
         private val textSecurePreferences: TextSecurePreferences,
         private val messageExpirationManager: MessageExpirationManagerProtocol,
         private val threadDb: ThreadDatabase,
+        private val groupDb: GroupDatabase,
         private val storage: Storage
     ) : ViewModelProvider.Factory {
 
@@ -152,6 +161,7 @@ class ExpirationSettingsViewModel(
                 textSecurePreferences,
                 messageExpirationManager,
                 threadDb,
+                groupDb,
                 storage
             ) as T
         }
@@ -159,6 +169,7 @@ class ExpirationSettingsViewModel(
 }
 
 data class ExpirationSettingsUiState(
+    val isSelfAdmin: Boolean = false,
     val showExpirationTypeSelector: Boolean = false,
     val settingsSaved: Boolean? = null
 )

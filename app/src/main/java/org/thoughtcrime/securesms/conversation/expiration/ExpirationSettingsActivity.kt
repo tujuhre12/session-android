@@ -168,18 +168,21 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
                         RadioOption(
                             value = "-1",
                             title = getString(R.string.expiration_off),
+                            enabled = viewModel.uiState.value.isSelfAdmin,
                             contentDescription = getString(R.string.AccessibilityId_disable_disappearing_messages)
                         ),
                         RadioOption(
                             value = ExpirationType.DELETE_AFTER_READ_VALUE.toString(),
                             title = getString(R.string.expiration_type_disappear_after_read),
                             subtitle = getString(R.string.expiration_type_disappear_after_read_description),
+                            enabled = viewModel.uiState.value.isSelfAdmin,
                             contentDescription = getString(R.string.AccessibilityId_disappear_after_read_option)
                         ),
                         RadioOption(
                             value = ExpirationType.DELETE_AFTER_SEND_VALUE.toString(),
                             title = getString(R.string.expiration_type_disappear_after_send),
                             subtitle = getString(R.string.expiration_type_disappear_after_send_description),
+                            enabled = viewModel.uiState.value.isSelfAdmin,
                             contentDescription = getString(R.string.AccessibilityId_disappear_after_send_option)
                         )
                     )
