@@ -668,7 +668,6 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
         contentValues.put(SUBSCRIPTION_ID, retrieved.subscriptionId)
         contentValues.put(EXPIRES_IN, retrieved.expiresIn)
         contentValues.put(EXPIRE_STARTED, retrieved.expireStartedAt)
-        contentValues.put(READ, if (retrieved.isExpirationUpdate) 1 else 0)
         contentValues.put(UNIDENTIFIED, retrieved.isUnidentified)
         contentValues.put(MESSAGE_REQUEST_RESPONSE, retrieved.isMessageRequestResponse)
         if (!contentValues.containsKey(DATE_SENT)) {

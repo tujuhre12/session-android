@@ -332,12 +332,10 @@ public class SmsDatabase extends MessagingDatabase {
       cursor = database.query(TABLE_NAME, new String[] {ID, ADDRESS, DATE_SENT, TYPE, EXPIRES_IN, EXPIRE_STARTED}, where, arguments, null, null, null);
 
       while (cursor != null && cursor.moveToNext()) {
-        if (Types.isSecureType(cursor.getLong(3))) {
-          SyncMessageId  syncMessageId  = new SyncMessageId(Address.fromSerialized(cursor.getString(1)), cursor.getLong(2));
-          ExpirationInfo expirationInfo = new ExpirationInfo(cursor.getLong(0), cursor.getLong(4), cursor.getLong(5), false);
+        SyncMessageId  syncMessageId  = new SyncMessageId(Address.fromSerialized(cursor.getString(1)), cursor.getLong(2));
+        ExpirationInfo expirationInfo = new ExpirationInfo(cursor.getLong(0), cursor.getLong(4), cursor.getLong(5), false);
 
-          results.add(new MarkedMessageInfo(syncMessageId, expirationInfo));
-        }
+        results.add(new MarkedMessageInfo(syncMessageId, expirationInfo));
       }
 
       ContentValues contentValues = new ContentValues();

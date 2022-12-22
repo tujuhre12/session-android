@@ -71,8 +71,8 @@ public class ExpiringMessageManager implements SSKEnvironment.MessageExpirationM
   public void setExpirationTimer(@NotNull ExpirationTimerUpdate message, int expiryType) {
     String userPublicKey = TextSecurePreferences.getLocalNumber(context);
     String senderPublicKey = message.getSender();
-    long expireStartedAt = ExpirationType.DELETE_AFTER_SEND_VALUE != expiryType
-            ? 0 : message.getSentTimestamp();
+    long expireStartedAt = expiryType == ExpirationType.DELETE_AFTER_SEND_VALUE
+            ? message.getSentTimestamp() : 0;
 
     // Notify the user
     if (senderPublicKey == null || userPublicKey.equals(senderPublicKey)) {
@@ -81,7 +81,7 @@ public class ExpiringMessageManager implements SSKEnvironment.MessageExpirationM
     } else {
       insertIncomingExpirationTimerMessage(message, expireStartedAt);
     }
-    if (message.getSentTimestamp() != null && senderPublicKey != null) {
+    if (expiryType == ExpirationType.DELETE_AFTER_SEND_VALUE && message.getSentTimestamp() != null && senderPublicKey != null) {
       startAnyExpiration(message.getSentTimestamp(), senderPublicKey, expireStartedAt);
     }
     if (message.getId() != null) {
