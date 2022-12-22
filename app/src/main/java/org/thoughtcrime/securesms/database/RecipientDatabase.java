@@ -13,7 +13,6 @@ import com.annimon.stream.Stream;
 
 import net.sqlcipher.database.SQLiteDatabase;
 
-import org.jetbrains.annotations.NotNull;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.MaterialColor;
 import org.session.libsession.utilities.Util;
@@ -414,7 +413,7 @@ public class RecipientDatabase extends Database {
     return returnList;
   }
 
-  public void setDisappearingState(@NotNull Recipient recipient, @NotNull Recipient.DisappearingState disappearingState) {
+  public void setDisappearingState(@NonNull Recipient recipient, @NonNull Recipient.DisappearingState disappearingState) {
     ContentValues values = new ContentValues();
     values.put(DISAPPEARING_STATE, disappearingState.getId());
     updateOrInsert(recipient.getAddress(), values);

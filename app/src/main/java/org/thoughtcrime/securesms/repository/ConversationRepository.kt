@@ -14,7 +14,7 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsignal.protos.SignalServiceProtos
+import org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType
 import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.database.DraftDatabase
 import org.thoughtcrime.securesms.database.ExpirationConfigurationDatabase
@@ -116,9 +116,7 @@ class DefaultConversationRepository @Inject constructor(
             message.openGroupInvitation = openGroupInvitation
             val expirationConfig = configDb.getExpirationConfiguration(threadId)
             val expiresInMillis = (expirationConfig?.durationSeconds ?: 0) * 1000L
-            val expireStartedAt = if (expirationConfig?.expirationType == SignalServiceProtos.Content.ExpirationType.DELETE_AFTER_SEND) {
-                message.sentTimestamp!!
-            } else 0
+            val expireStartedAt = if (expirationConfig?.expirationType == ExpirationType.DELETE_AFTER_SEND) message.sentTimestamp!! else 0
             val outgoingTextMessage = OutgoingTextMessage.fromOpenGroupInvitation(
                 openGroupInvitation,
                 contact,

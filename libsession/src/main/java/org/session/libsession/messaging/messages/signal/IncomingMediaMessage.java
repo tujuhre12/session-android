@@ -60,7 +60,7 @@ public class IncomingMediaMessage {
     this.body                       = body.orNull();
     this.subscriptionId             = subscriptionId;
     this.expiresIn                  = expiresIn;
-    this.expireStartedAt                  = expireStartedAt;
+    this.expireStartedAt            = expireStartedAt;
     this.expirationUpdate           = expirationUpdate;
     this.dataExtractionNotification = dataExtractionNotification.orNull();
     this.quote                      = quote.orNull();
