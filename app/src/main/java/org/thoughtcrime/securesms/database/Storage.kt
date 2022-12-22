@@ -750,13 +750,18 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         val recipient = Recipient.from(context, address, false)
 
         if (recipient.isBlocked) return
-
+        val threadId = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(recipient)
+        val expirationConfig = getExpirationConfiguration(threadId)
+        val expiresInMillis = (expirationConfig?.durationSeconds ?: 0) * 100L
+        val expireStartedAt = if (expirationConfig?.expirationType == ExpirationType.DELETE_AFTER_SEND) {
+            sentTimestamp
+        } else 0
         val mediaMessage = IncomingMediaMessage(
             address,
             sentTimestamp,
             -1,
-            0,
-            0,
+            expiresInMillis,
+            expireStartedAt,
             false,
             false,
             false,
@@ -770,6 +775,7 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         )
 
         database.insertSecureDecryptedMessageInbox(mediaMessage, -1, runIncrement = true, runThreadUpdate = true)
+        SSKEnvironment.shared.messageExpirationManager.startAnyExpiration(sentTimestamp, senderPublicKey, expireStartedAt)
     }
 
     override fun insertMessageRequestResponse(response: MessageRequestResponse) {
@@ -825,13 +831,17 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
             }
             recipientDb.setApproved(sender, true)
             recipientDb.setApprovedMe(sender, true)
-
+            val expirationConfig = getExpirationConfiguration(threadId)
+            val expiresInMillis = (expirationConfig?.durationSeconds ?: 0) * 100L
+            val expireStartedAt = if (expirationConfig?.expirationType == ExpirationType.DELETE_AFTER_SEND) {
+                response.sentTimestamp!!
+            } else 0
             val message = IncomingMediaMessage(
                 sender.address,
                 response.sentTimestamp!!,
                 -1,
-                0,
-                0,
+                expiresInMillis,
+                expireStartedAt,
                 false,
                 false,
                 true,

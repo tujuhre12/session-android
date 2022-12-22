@@ -95,7 +95,7 @@ public class ExpiringMessageManager implements SSKEnvironment.MessageExpirationM
     String senderPublicKey = message.getSender();
     Long sentTimestamp = message.getSentTimestamp();
     String groupId = message.getGroupPublicKey();
-    int duration = message.getDuration();
+    long expiresInMillis = message.getDuration() * 1000L;
 
     Optional<SignalServiceGroup> groupInfo = Optional.absent();
     Address address = Address.fromSerialized(senderPublicKey);
@@ -114,7 +114,7 @@ public class ExpiringMessageManager implements SSKEnvironment.MessageExpirationM
       }
 
       IncomingMediaMessage mediaMessage = new IncomingMediaMessage(address, sentTimestamp, -1,
-              duration * 1000L, expireStartedAt, true,
+              expiresInMillis, expireStartedAt, true,
               false,
               false,
               Optional.absent(),
