@@ -63,7 +63,7 @@ class ExpirationSettingsViewModel(
             } else null
             _uiState.update { currentUiState ->
                 currentUiState.copy(
-                    isSelfAdmin = groupInfo?.admins?.any{ it.serialize() == textSecurePreferences.getLocalNumber() } == true,
+                    isSelfAdmin = groupInfo == null || groupInfo.admins.any{ it.serialize() == textSecurePreferences.getLocalNumber() },
                     showExpirationTypeSelector = !ExpirationConfiguration.isNewConfigEnabled || (recipient?.isContactRecipient == true && !recipient.isLocalNumber)
                 )
             }
