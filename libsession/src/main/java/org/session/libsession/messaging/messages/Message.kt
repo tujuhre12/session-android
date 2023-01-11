@@ -45,9 +45,9 @@ abstract class Message {
                 expirationTimer = 0
                 return
             }
-        expirationTimer = config.durationSeconds
-        lastDisappearingMessageChangeTimestamp = config.updatedTimestampMs
         if (config.isEnabled) {
+            expirationTimer = config.durationSeconds
+            lastDisappearingMessageChangeTimestamp = config.updatedTimestampMs
             expirationType = config.expirationType
         }
     }

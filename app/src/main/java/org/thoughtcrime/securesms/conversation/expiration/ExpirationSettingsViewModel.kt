@@ -77,7 +77,7 @@ class ExpirationSettingsViewModel(
                 expirationConfig?.expirationTypeValue?.let { 0 /* Legacy */ } ?: -1
             }
             _selectedExpirationTimer.value = when(expirationConfig?.expirationType) {
-                ExpirationType.DELETE_AFTER_SEND -> afterSendOptions.find { it.value.toIntOrNull() == expirationConfig?.durationSeconds }
+                null, ExpirationType.DELETE_AFTER_SEND -> afterSendOptions.find { it.value.toIntOrNull() == expirationConfig?.durationSeconds }
                 ExpirationType.DELETE_AFTER_READ -> afterReadOptions.find { it.value.toIntOrNull() == expirationConfig?.durationSeconds }
                 else -> afterSendOptions.firstOrNull()
             }
@@ -107,7 +107,11 @@ class ExpirationSettingsViewModel(
     }
 
     fun onSetClick() = viewModelScope.launch {
-        val expiryType = _selectedExpirationType.value
+        var typeValue = _selectedExpirationType.value
+        if (typeValue == 0) {
+            typeValue = ExpirationType.DELETE_AFTER_READ_VALUE
+        }
+        val expiryType = typeValue
         val expirationTimer = _selectedExpirationTimer.value?.value?.toIntOrNull() ?: 0
         val address = recipient.value?.address
         if (address == null || (expirationConfig?.expirationTypeValue == expiryType && expirationConfig?.durationSeconds == expirationTimer)) {

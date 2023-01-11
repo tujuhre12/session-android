@@ -8,10 +8,10 @@ class ExpirationConfiguration(
     val expirationTypeValue: Int = -1,
     val updatedTimestampMs: Long = 0
 ) {
-    val isEnabled = durationSeconds > 0
     val expirationType: ExpirationType? = ExpirationType.valueOf(expirationTypeValue)
+    val isEnabled = durationSeconds > 0 && expirationType != null
 
     companion object {
-        val isNewConfigEnabled = true /* TODO: System.currentTimeMillis() > 1_676_851_200_000 // 13/02/2023 */
+        val isNewConfigEnabled = false /* TODO: System.currentTimeMillis() > 1_676_851_200_000 // 13/02/2023 */
     }
 }

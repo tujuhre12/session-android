@@ -363,7 +363,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         setUpRecipientObserver()
         getLatestOpenGroupInfoIfNeeded()
         setUpBlockedBanner()
-        setUpOutdatedClientBanner();
+        setUpOutdatedClientBanner()
         binding!!.searchBottomBar.setEventListener(this)
         setUpSearchResultObserver()
         scrollToFirstUnreadMessageIfNeeded()
