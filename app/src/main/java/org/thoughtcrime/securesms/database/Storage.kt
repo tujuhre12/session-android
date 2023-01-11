@@ -4,15 +4,9 @@ import android.content.Context
 import android.net.Uri
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.BlindedIdMapping
-import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.messaging.contacts.Contact
-import org.session.libsession.messaging.jobs.AttachmentUploadJob
-import org.session.libsession.messaging.jobs.GroupAvatarDownloadJob
-import org.session.libsession.messaging.jobs.Job
-import org.session.libsession.messaging.jobs.JobQueue
-import org.session.libsession.messaging.jobs.MessageReceiveJob
-import org.session.libsession.messaging.jobs.MessageSendJob
+import org.session.libsession.messaging.jobs.*
 import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.ConfigurationMessage
@@ -1039,8 +1033,10 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         return expiringMessages
     }
 
-    override fun updateDisappearingState(address: String, disappearingState: Recipient.DisappearingState) {
-        val recipient = Recipient.from(MessagingModuleConfiguration.shared.context, fromSerialized(address), false)
-        DatabaseComponent.get(context).recipientDatabase().setDisappearingState(recipient, disappearingState);
+    override fun updateDisappearingState(threadID: Long, disappearingState: Recipient.DisappearingState) {
+        val threadDb = DatabaseComponent.get(context).threadDatabase()
+        val recipient = threadDb.getRecipientForThreadId(threadID) ?: return
+        val recipientDb = DatabaseComponent.get(context).recipientDatabase()
+        recipientDb.setDisappearingState(recipient, disappearingState);
     }
 }

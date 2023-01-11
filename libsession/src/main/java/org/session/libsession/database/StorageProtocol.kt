@@ -203,5 +203,5 @@ interface StorageProtocol {
     fun getExpirationConfiguration(threadId: Long): ExpirationConfiguration?
     fun setExpirationConfiguration(config: ExpirationConfiguration)
     fun getExpiringMessages(messageIds: List<Long> = emptyList()): List<Pair<Long, Long>>
-    fun updateDisappearingState(address: String, disappearingState: Recipient.DisappearingState)
+    fun updateDisappearingState(threadID: Long, disappearingState: Recipient.DisappearingState)
 }
