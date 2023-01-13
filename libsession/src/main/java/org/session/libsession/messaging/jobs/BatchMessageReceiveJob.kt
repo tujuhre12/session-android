@@ -18,7 +18,7 @@ import org.session.libsession.messaging.sending_receiving.MessageReceiver
 import org.session.libsession.messaging.sending_receiving.handle
 import org.session.libsession.messaging.sending_receiving.handleOpenGroupReactions
 import org.session.libsession.messaging.sending_receiving.handleVisibleMessage
-import org.session.libsession.messaging.sending_receiving.updateExpirationConfigurationIfNeeded
+import org.session.libsession.messaging.sending_receiving.updateExpiryIfNeeded
 import org.session.libsession.messaging.utilities.Data
 import org.session.libsession.messaging.utilities.SessionId
 import org.session.libsession.messaging.utilities.SodiumUtilities
@@ -113,7 +113,7 @@ class BatchMessageReceiveJob(
                         messages.forEach { (parameters, message, proto) ->
                             try {
                                 if (message is VisibleMessage) {
-                                    MessageReceiver.updateExpirationConfigurationIfNeeded(message, proto, openGroupID)
+                                    MessageReceiver.updateExpiryIfNeeded(message, proto, openGroupID)
                                     val messageId = MessageReceiver.handleVisibleMessage(message, proto, openGroupID,
                                         runIncrement = false,
                                         runThreadUpdate = false,

@@ -572,7 +572,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     private fun setUpOutdatedClientBanner() {
         val recipient = viewModel.recipient ?: return
-        if (!ExpirationConfiguration.isNewConfigEnabled && recipient.isContactRecipient &&
+        if (ExpirationConfiguration.isNewConfigEnabled && recipient.isContactRecipient &&
             recipient.disappearingState == DisappearingState.LEGACY &&
             viewModel.expirationConfiguration?.isEnabled == true
         ) {

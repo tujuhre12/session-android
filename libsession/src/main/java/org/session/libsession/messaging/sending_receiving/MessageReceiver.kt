@@ -35,11 +35,12 @@ object MessageReceiver {
         object InvalidGroupPublicKey: Error("Invalid group public key.")
         object NoGroupKeyPair: Error("Missing group key pair.")
         object NoUserED25519KeyPair : Error("Couldn't find user ED25519 key pair.")
+        object ExpiredMessage: Error("Message has already expired, prevent adding")
 
         internal val isRetryable: Boolean = when (this) {
             is DuplicateMessage, is InvalidMessage, is UnknownMessage,
             is UnknownEnvelopeType, is InvalidSignature, is NoData,
-            is SenderBlocked, is SelfSend -> false
+            is SenderBlocked, is SelfSend, is ExpiredMessage -> false
             else -> true
         }
     }
@@ -49,7 +50,7 @@ object MessageReceiver {
         openGroupServerID: Long?,
         isOutgoing: Boolean? = null,
         otherBlindedPublicKey: String? = null,
-        openGroupPublicKey: String? = null,
+        openGroupPublicKey: String? = null
     ): Pair<Message, SignalServiceProtos.Content> {
         val storage = MessagingModuleConfiguration.shared.storage
         val userPublicKey = storage.getUserPublicKey()
@@ -179,4 +180,5 @@ object MessageReceiver {
         // Return
         return Pair(message, proto)
     }
+
 }

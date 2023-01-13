@@ -39,7 +39,6 @@ import org.session.libsession.utilities.ProfileKeyUtil
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsession.utilities.recipients.Recipient.DisappearingState
 import org.session.libsignal.crypto.ecc.DjbECPrivateKey
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
@@ -63,7 +62,7 @@ internal fun MessageReceiver.isBlocked(publicKey: String): Boolean {
 }
 
 fun MessageReceiver.handle(message: Message, proto: SignalServiceProtos.Content, openGroupID: String?) {
-    updateExpirationConfigurationIfNeeded(message, proto, openGroupID)
+    MessageReceiver.updateExpiryIfNeeded(message, proto, openGroupID)
     when (message) {
         is ReadReceipt -> handleReadReceipt(message)
         is TypingIndicator -> handleTypingIndicator(message)
@@ -79,29 +78,6 @@ fun MessageReceiver.handle(message: Message, proto: SignalServiceProtos.Content,
             runProfileUpdate = true
         )
         is CallMessage -> handleCallMessage(message)
-    }
-}
-
-fun MessageReceiver.updateExpirationConfigurationIfNeeded(message: Message, proto: SignalServiceProtos.Content, openGroupID: String?) {
-    val storage = MessagingModuleConfiguration.shared.storage
-    val disappearingState = if (proto.hasExpirationTimer()) DisappearingState.UPDATED else DisappearingState.LEGACY
-    if (!proto.hasLastDisappearingMessageChangeTimestamp() || !ExpirationConfiguration.isNewConfigEnabled) return
-    val threadID = storage.getOrCreateThreadIdFor(message.sender!!, message.groupPublicKey, openGroupID)
-    if (threadID <= 0) return
-    storage.updateDisappearingState(threadID, disappearingState)
-    val localConfig = storage.getExpirationConfiguration(threadID)
-    if (localConfig != null && localConfig.updatedTimestampMs > proto.lastDisappearingMessageChangeTimestamp) return
-    val durationSeconds = if (proto.hasExpirationTimer()) proto.expirationTimer else 0
-    val type = if (proto.hasExpirationType()) proto.expirationType else null
-    val remoteConfig = ExpirationConfiguration(
-        threadID,
-        durationSeconds,
-        type?.number ?: -1,
-        proto.lastDisappearingMessageChangeTimestamp
-    )
-    storage.setExpirationConfiguration(remoteConfig)
-    if (message is ExpirationTimerUpdate) {
-        SSKEnvironment.shared.messageExpirationManager.setExpirationTimer(message, type?.number ?: -1)
     }
 }
 
@@ -255,6 +231,63 @@ fun handleMessageRequestResponse(message: MessageRequestResponse) {
     MessagingModuleConfiguration.shared.storage.insertMessageRequestResponse(message)
 }
 //endregion
+
+fun MessageReceiver.updateExpiryIfNeeded(message: Message, proto: SignalServiceProtos.Content, openGroupID: String?) {
+    val storage = MessagingModuleConfiguration.shared.storage
+    val sentTime = message.sentTimestamp ?: throw MessageReceiver.Error.InvalidMessage
+    if (!proto.hasLastDisappearingMessageChangeTimestamp()) return
+    val threadID = storage.getOrCreateThreadIdFor(message.sender!!, message.groupPublicKey, openGroupID)
+    if (threadID <= 0) throw MessageReceiver.Error.NoThread
+
+    val localConfig = storage.getExpirationConfiguration(threadID)
+
+    val durationSeconds = if (proto.hasExpirationTimer()) proto.expirationTimer else 0
+    val type = if (proto.hasExpirationType()) proto.expirationType else null
+    val remoteConfig = ExpirationConfiguration(
+        threadID,
+        durationSeconds,
+        type?.number ?: -1,
+        proto.lastDisappearingMessageChangeTimestamp
+    )
+
+    val (shouldUpdateConfig, configToUse) =
+        if (localConfig != null && localConfig.updatedTimestampMs > proto.lastDisappearingMessageChangeTimestamp) {
+            false to localConfig
+        } else {
+            true to remoteConfig
+        }
+
+    val recipient = storage.getRecipientForThread(threadID) ?: throw MessageReceiver.Error.NoThread
+
+    // don't update any values for open groups
+    if (recipient.isOpenGroupRecipient && type != null) throw MessageReceiver.Error.InvalidMessage
+    if ((recipient.isGroupRecipient || recipient.isLocalNumber)
+        && type == ExpirationType.DELETE_AFTER_READ) {
+        // don't allow deleteAfterRead if we are sending to note to self or a group, treat the entire message as invalid
+        throw MessageReceiver.Error.InvalidMessage
+    }
+
+    // handle a delete after send expired fetch
+    if (type == ExpirationType.DELETE_AFTER_SEND
+        && sentTime + configToUse.durationSeconds <= SnodeAPI.nowWithClockOffset) {
+        throw MessageReceiver.Error.ExpiredMessage
+    }
+    // handle a delete after read last known config value (test) TODO: actually implement this with shared config library
+    if (type == ExpirationType.DELETE_AFTER_READ
+        && sentTime + configToUse.durationSeconds <= ExpirationConfiguration.LAST_READ_TEST) {
+        throw MessageReceiver.Error.ExpiredMessage
+    }
+
+    if (shouldUpdateConfig) {
+        val disappearingState = if (proto.hasExpirationType()) Recipient.DisappearingState.UPDATED else Recipient.DisappearingState.LEGACY
+        storage.updateDisappearingState(threadID, disappearingState)
+        storage.setExpirationConfiguration(configToUse)
+    }
+
+    if (message is ExpirationTimerUpdate) {
+        SSKEnvironment.shared.messageExpirationManager.setExpirationTimer(message, type?.number ?: -1)
+    }
+}
 
 fun MessageReceiver.handleVisibleMessage(message: VisibleMessage,
                                          proto: SignalServiceProtos.Content,

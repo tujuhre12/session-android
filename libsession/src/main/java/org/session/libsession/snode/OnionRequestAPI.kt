@@ -25,7 +25,6 @@ import org.session.libsignal.utilities.Snode
 import org.session.libsignal.utilities.ThreadUtils
 import org.session.libsignal.utilities.recover
 import org.session.libsignal.utilities.toHexString
-import java.util.Date
 import kotlin.collections.set
 
 private typealias Path = List<Snode>
@@ -594,7 +593,7 @@ object OnionRequestAPI {
                             }
                             if (body["t"] != null) {
                                 val timestamp = body["t"] as Long
-                                val offset = timestamp - Date().time
+                                val offset = timestamp - System.currentTimeMillis()
                                 SnodeAPI.clockOffset = offset
                             }
                             if (body.containsKey("hf")) {

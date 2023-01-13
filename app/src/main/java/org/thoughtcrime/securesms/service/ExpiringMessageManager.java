@@ -84,9 +84,6 @@ public class ExpiringMessageManager implements SSKEnvironment.MessageExpirationM
     if (expiryType == ExpirationType.DELETE_AFTER_SEND_VALUE && message.getSentTimestamp() != null && senderPublicKey != null) {
       startAnyExpiration(message.getSentTimestamp(), senderPublicKey, expireStartedAt);
     }
-    if (message.getId() != null) {
-      DatabaseComponent.get(context).smsDatabase().deleteMessage(message.getId());
-    }
   }
 
   private void insertIncomingExpirationTimerMessage(ExpirationTimerUpdate message, long expireStartedAt) {

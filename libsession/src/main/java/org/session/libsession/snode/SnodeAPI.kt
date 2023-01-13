@@ -56,6 +56,10 @@ object SnodeAPI {
      * user's clock is incorrect.
      */
     var clockOffset = 0L
+
+    val nowWithClockOffset
+        get() = System.currentTimeMillis() + clockOffset
+
     internal var forkInfo by observable(database.getForkInfo()) { _, oldValue, newValue ->
         if (newValue > oldValue) {
             Log.d("Loki", "Setting new fork info new: $newValue, old: $oldValue")
