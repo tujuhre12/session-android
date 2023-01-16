@@ -750,6 +750,10 @@ public class Recipient implements RecipientModifiedListener {
     return this;
   }
 
+  public synchronized boolean showCallMenu() {
+    return !isGroupRecipient() && hasApprovedMe();
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;

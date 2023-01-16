@@ -100,6 +100,15 @@ class ConversationActionBarView : LinearLayout {
             else -> recipient.toShortString()
         }
         updateSubtitle(recipient, openGroup, config)
+
+        val marginEnd = if (recipient.showCallMenu()) {
+            0
+        } else {
+            binding.profilePictureView.root.width
+        }
+        val lp = binding.conversationTitleContainer.layoutParams as MarginLayoutParams
+        lp.marginEnd = marginEnd
+        binding.conversationTitleContainer.layoutParams = lp
     }
 
     fun updateSubtitle(recipient: Recipient, openGroup: OpenGroup? = null, config: ExpirationConfiguration? = null) {

@@ -173,7 +173,7 @@ private fun handleConfigurationMessage(message: ConfigurationMessage) {
         if (allClosedGroupPublicKeys.contains(closedGroup.publicKey)) {
             // just handle the closed group encryption key pairs to avoid sync'd devices getting out of sync
             storage.addClosedGroupEncryptionKeyPair(closedGroup.encryptionKeyPair!!, closedGroup.publicKey)
-        } else if (firstTimeSync) {
+        } else {
             // only handle new closed group if it's first time sync
             handleNewClosedGroup(message.sender!!, message.sentTimestamp!!, closedGroup.publicKey, closedGroup.name,
                 closedGroup.encryptionKeyPair!!, closedGroup.members, closedGroup.admins, message.sentTimestamp!!, closedGroup.expirationTimer)
@@ -502,7 +502,7 @@ private fun MessageReceiver.handleClosedGroupControlMessage(message: ClosedGroup
 private fun MessageReceiver.handleNewClosedGroup(message: ClosedGroupControlMessage) {
     val kind = message.kind!! as? ClosedGroupControlMessage.Kind.New ?: return
     val recipient = Recipient.from(MessagingModuleConfiguration.shared.context, Address.fromSerialized(message.sender!!), false)
-    if (!recipient.isApproved) return
+    if (!recipient.isApproved && !recipient.isLocalNumber) return
     val groupPublicKey = kind.publicKey.toByteArray().toHexString()
     val members = kind.members.map { it.toByteArray().toHexString() }
     val admins = kind.admins.map { it.toByteArray().toHexString() }

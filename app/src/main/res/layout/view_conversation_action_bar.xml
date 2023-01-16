@@ -13,6 +13,7 @@
         android:layout_height="@dimen/medium_profile_picture_size" />
 
     <LinearLayout
+        android:id="@+id/conversationTitleContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center_horizontal|center_vertical"

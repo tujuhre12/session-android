@@ -18,7 +18,6 @@ import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import network.loki.messenger.R
-import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.leave
 import org.session.libsession.utilities.GroupUtil.doubleDecodeGroupID
@@ -85,7 +84,7 @@ object ConversationMenuHelper {
             inflater.inflate(R.menu.menu_conversation_notification_settings, menu)
         }
 
-        if (!thread.isGroupRecipient && thread.hasApprovedMe()) {
+        if (thread.showCallMenu()) {
             inflater.inflate(R.menu.menu_conversation_call, menu)
         }
 
