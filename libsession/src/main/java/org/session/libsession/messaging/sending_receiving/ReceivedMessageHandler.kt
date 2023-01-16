@@ -238,6 +238,7 @@ fun MessageReceiver.updateExpiryIfNeeded(message: Message, proto: SignalServiceP
     if (!proto.hasLastDisappearingMessageChangeTimestamp()) return
     val threadID = storage.getOrCreateThreadIdFor(message.sender!!, message.groupPublicKey, openGroupID)
     if (threadID <= 0) throw MessageReceiver.Error.NoThread
+    val recipient = storage.getRecipientForThread(threadID) ?: throw MessageReceiver.Error.NoThread
 
     val localConfig = storage.getExpirationConfiguration(threadID)
 
@@ -257,14 +258,17 @@ fun MessageReceiver.updateExpiryIfNeeded(message: Message, proto: SignalServiceP
             true to remoteConfig
         }
 
-    val recipient = storage.getRecipientForThread(threadID) ?: throw MessageReceiver.Error.NoThread
-
     // don't update any values for open groups
     if (recipient.isOpenGroupRecipient && type != null) throw MessageReceiver.Error.InvalidMessage
     if ((recipient.isGroupRecipient || recipient.isLocalNumber)
         && type == ExpirationType.DELETE_AFTER_READ) {
         // don't allow deleteAfterRead if we are sending to note to self or a group, treat the entire message as invalid
         throw MessageReceiver.Error.InvalidMessage
+    }
+
+    if (!recipient.isGroupRecipient && !recipient.isLocalNumber) {
+        val disappearingState = if (proto.hasExpirationType()) Recipient.DisappearingState.UPDATED else Recipient.DisappearingState.LEGACY
+        storage.updateDisappearingState(threadID, disappearingState)
     }
 
     // handle a delete after send expired fetch
@@ -279,8 +283,6 @@ fun MessageReceiver.updateExpiryIfNeeded(message: Message, proto: SignalServiceP
     }
 
     if (shouldUpdateConfig) {
-        val disappearingState = if (proto.hasExpirationType()) Recipient.DisappearingState.UPDATED else Recipient.DisappearingState.LEGACY
-        storage.updateDisappearingState(threadID, disappearingState)
         storage.setExpirationConfiguration(configToUse)
     }
 
