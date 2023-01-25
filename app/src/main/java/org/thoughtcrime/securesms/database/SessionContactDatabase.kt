@@ -3,7 +3,7 @@ package org.thoughtcrime.securesms.database
 import android.content.ContentValues
 import android.content.Context
 import androidx.core.database.getStringOrNull
-import net.sqlcipher.Cursor
+import android.database.Cursor
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsignal.utilities.Base64
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
