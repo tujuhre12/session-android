@@ -10,10 +10,8 @@ import android.text.style.ForegroundColorSpan
 import android.text.style.URLSpan
 import android.text.util.Linkify
 import android.util.AttributeSet
-import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
-import android.widget.LinearLayout
 import androidx.annotation.ColorInt
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -26,6 +24,7 @@ import androidx.core.view.isVisible
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
 import okhttp3.HttpUrl
+import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentTransferProgress
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.getColorFromAttr
@@ -64,7 +63,6 @@ class VisibleMessageContentView : ConstraintLayout {
         glide: GlideRequests,
         thread: Recipient,
         searchQuery: String?,
-        contactIsTrusted: Boolean,
         onAttachmentNeedsDownload: (Long, Long) -> Unit
     ) {
         // Background
@@ -90,7 +88,6 @@ class VisibleMessageContentView : ConstraintLayout {
             binding.bodyTextView.isVisible = false
             binding.quoteView.root.isVisible = false
             binding.linkPreviewView.root.isVisible = false
-            binding.untrustedView.root.isVisible = false
             binding.voiceMessageView.root.isVisible = false
             binding.documentView.root.isVisible = false
             binding.albumThumbnailView.root.isVisible = false
