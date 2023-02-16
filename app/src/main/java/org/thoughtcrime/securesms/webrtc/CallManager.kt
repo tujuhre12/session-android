@@ -590,6 +590,10 @@ class CallManager(context: Context, audioManager: AudioManagerCompat, private va
         }
     }
 
+    fun handleSwapVideoView(swapped: Boolean) {
+        
+    }
+
     fun handleSetMuteAudio(muted: Boolean) {
         _audioEvents.value = AudioEnabled(!muted)
         peerConnection?.setAudioEnabled(!muted)

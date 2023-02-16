@@ -126,6 +126,12 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
             supportActionBar?.setDisplayHomeAsUpEnabled(false)
         }
 
+        binding.localRendererContainer.setOnClickListener {
+            val swapVideoViewIntent =
+                WebRtcCallService.swapVideoViews(this, viewModel.videoViewSwapped)
+            startService(swapVideoViewIntent)
+        }
+
         binding.microphoneButton.setOnClickListener {
             val audioEnabledIntent =
                 WebRtcCallService.microphoneIntent(this, !viewModel.microphoneEnabled)

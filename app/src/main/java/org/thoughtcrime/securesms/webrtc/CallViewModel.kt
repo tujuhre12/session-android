@@ -40,6 +40,11 @@ class CallViewModel @Inject constructor(private val callManager: CallManager): V
     val videoEnabled: Boolean
         get() = _videoEnabled
 
+    private var _videoViewSwapped: Boolean = false
+
+    val videoViewSwapped: Boolean
+        get() = _videoViewSwapped
+
     private var _microphoneEnabled: Boolean = true
 
     val microphoneEnabled: Boolean
