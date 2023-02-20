@@ -22,6 +22,12 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_gravity="center"/>
+
+        <FrameLayout
+            android:id="@+id/local_renderer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"/>
     </FrameLayout>
     <ImageView
         android:id="@+id/remote_recipient"
@@ -111,7 +117,7 @@
         android:layout_height="wrap_content"/>
 
     <FrameLayout
-        android:id="@+id/local_renderer_container"
+        android:id="@+id/floating_renderer_container"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintDimensionRatio="h,9:16"
@@ -127,7 +133,12 @@
             android:layout_gravity="center"/>
         <FrameLayout
             android:elevation="8dp"
-            android:id="@+id/local_renderer"
+            android:id="@+id/local_floating_renderer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+        <FrameLayout
+            android:elevation="8dp"
+            android:id="@+id/remote_floating_renderer"
             android:layout_width="match_parent"
             android:layout_height="match_parent"/>
         <com.github.ybq.android.spinkit.SpinKitView

@@ -126,7 +126,7 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
             supportActionBar?.setDisplayHomeAsUpEnabled(false)
         }
 
-        binding.localRendererContainer.setOnClickListener {
+        binding.floatingRendererContainer.setOnClickListener {
             val swapVideoViewIntent =
                 WebRtcCallService.swapVideoViews(this, viewModel.videoViewSwapped)
             startService(swapVideoViewIntent)
@@ -341,14 +341,20 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
 
             launch {
                 viewModel.localVideoEnabledState.collect { isEnabled ->
+                    binding.localFloatingRenderer.removeAllViews()
                     binding.localRenderer.removeAllViews()
                     if (isEnabled) {
                         viewModel.localRenderer?.let { surfaceView ->
-                            surfaceView.setZOrderOnTop(true)
                             binding.localRenderer.addView(surfaceView)
                         }
+                        viewModel.localFloatingRenderer?.let { surfaceView ->
+                            surfaceView.setZOrderOnTop(true)
+                            binding.localFloatingRenderer.addView(surfaceView)
+
+                        }
                     }
-                    binding.localRenderer.isVisible = isEnabled
+                    binding.localFloatingRenderer.isVisible = isEnabled && !viewModel.videoViewSwapped
+                    binding.localRenderer.isVisible = isEnabled && viewModel.videoViewSwapped
                     binding.enableCameraButton.isSelected = isEnabled
                 }
             }
@@ -356,13 +362,27 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
             launch {
                 viewModel.remoteVideoEnabledState.collect { isEnabled ->
                     binding.remoteRenderer.removeAllViews()
+                    binding.remoteFloatingRenderer.removeAllViews()
                     if (isEnabled) {
                         viewModel.remoteRenderer?.let { surfaceView ->
                             binding.remoteRenderer.addView(surfaceView)
                         }
+                        viewModel.remoteFloatingRenderer?.let { surfaceView ->
+                            surfaceView.setZOrderOnTop(true)
+                            binding.remoteFloatingRenderer.addView(surfaceView)
+                        }
                     }
-                    binding.remoteRenderer.isVisible = isEnabled
-                    binding.remoteRecipient.isVisible = !isEnabled
+                    binding.remoteRenderer.isVisible = isEnabled && !viewModel.videoViewSwapped
+                    binding.remoteFloatingRenderer.isVisible = isEnabled && viewModel.videoViewSwapped
+                }
+            }
+
+            launch {
+                viewModel.videoViewSwappedState.collect{ isSwapped ->
+                    binding.remoteRenderer.isVisible = !isSwapped
+                    binding.remoteFloatingRenderer.isVisible = isSwapped
+                    binding.localFloatingRenderer.isVisible = !isSwapped
+                    binding.localRenderer.isVisible = isSwapped
                 }
             }
         }
@@ -377,6 +397,7 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
     override fun onStop() {
         super.onStop()
         uiJob?.cancel()
+        binding.remoteFloatingRenderer.removeAllViews()
         binding.remoteRenderer.removeAllViews()
         binding.localRenderer.removeAllViews()
     }
