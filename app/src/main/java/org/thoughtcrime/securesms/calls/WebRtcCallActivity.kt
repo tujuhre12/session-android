@@ -356,6 +356,7 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
                     binding.localFloatingRenderer.isVisible = isEnabled && !viewModel.videoViewSwapped
                     binding.localRenderer.isVisible = isEnabled && viewModel.videoViewSwapped
                     binding.enableCameraButton.isSelected = isEnabled
+                    binding.floatingRendererContainer.isVisible = binding.localFloatingRenderer.isVisible
                     binding.videocamOffIcon.isVisible = !binding.localFloatingRenderer.isVisible
                     binding.swapViewIcon.bringToFront()
                 }
@@ -377,6 +378,7 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
                     binding.remoteRenderer.isVisible = isEnabled && !viewModel.videoViewSwapped
                     binding.remoteFloatingRenderer.isVisible = isEnabled && viewModel.videoViewSwapped
                     binding.videocamOffIcon.isVisible = !binding.remoteFloatingRenderer.isVisible
+                    binding.floatingRendererContainer.isVisible = binding.remoteFloatingRenderer.isVisible
                     binding.swapViewIcon.bringToFront()
                 }
             }
@@ -387,6 +389,7 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
                     binding.remoteFloatingRenderer.isVisible = isSwapped && viewModel.remoteVideoEnabled
                     binding.localFloatingRenderer.isVisible = !isSwapped && viewModel.videoEnabled
                     binding.localRenderer.isVisible = isSwapped && viewModel.videoEnabled
+                    binding.floatingRendererContainer.isVisible = binding.localFloatingRenderer.isVisible || binding.remoteFloatingRenderer.isVisible
                 }
             }
         }
