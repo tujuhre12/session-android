@@ -46,6 +46,11 @@ class CallViewModel @Inject constructor(private val callManager: CallManager): V
     val videoEnabled: Boolean
         get() = _videoEnabled
 
+    private var _remoteVideoEnabled: Boolean = false
+
+    val remoteVideoEnabled: Boolean
+        get() = _remoteVideoEnabled
+
     private var _videoViewSwapped: Boolean = false
 
     val videoViewSwapped: Boolean
@@ -76,7 +81,9 @@ class CallViewModel @Inject constructor(private val callManager: CallManager): V
                 .onEach { _videoEnabled = it }
 
     val remoteVideoEnabledState
-        get() = callManager.remoteVideoEvents.map { it.isEnabled }
+        get() = callManager.remoteVideoEvents
+                .map { it.isEnabled }
+                .onEach { _remoteVideoEnabled = it }
 
     val videoViewSwappedState
         get() = callManager.videoViewSwappedEvents

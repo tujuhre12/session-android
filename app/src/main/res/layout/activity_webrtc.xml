@@ -127,6 +127,7 @@
         android:layout_height="0dp"
         android:layout_width="0dp">
         <ImageView
+            android:id="@+id/videocam_off_icon"
             android:src="@drawable/ic_baseline_videocam_off_24"
             android:layout_width="32dp"
             android:layout_height="32dp"
@@ -151,6 +152,7 @@
             tools:visibility="visible"
             android:visibility="gone" />
         <ImageView
+            android:id="@+id/swap_view_icon"
             android:src="@drawable/ic_baseline_screen_rotation_alt_24"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
