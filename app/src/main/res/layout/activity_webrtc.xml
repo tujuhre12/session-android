@@ -126,7 +126,8 @@
         app:layout_constraintWidth_percent="0.2"
         android:layout_height="0dp"
         android:layout_width="0dp"
-        android:visibility="invisible">
+        android:visibility="invisible"
+        android:background="@color/black">
         <ImageView
             android:id="@+id/videocam_off_icon"
             android:src="@drawable/ic_baseline_videocam_off_24"

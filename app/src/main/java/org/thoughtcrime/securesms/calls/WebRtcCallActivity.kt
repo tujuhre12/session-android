@@ -358,6 +358,7 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
                     binding.enableCameraButton.isSelected = isEnabled
                     binding.floatingRendererContainer.isVisible = binding.localFloatingRenderer.isVisible
                     binding.videocamOffIcon.isVisible = !binding.localFloatingRenderer.isVisible
+                    binding.remoteRecipient.isVisible = !(binding.remoteRenderer.isVisible || binding.localRenderer.isVisible)
                     binding.swapViewIcon.bringToFront()
                 }
             }
@@ -379,6 +380,7 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
                     binding.remoteFloatingRenderer.isVisible = isEnabled && viewModel.videoViewSwapped
                     binding.videocamOffIcon.isVisible = !binding.remoteFloatingRenderer.isVisible
                     binding.floatingRendererContainer.isVisible = binding.remoteFloatingRenderer.isVisible
+                    binding.remoteRecipient.isVisible = !(binding.remoteRenderer.isVisible || binding.localRenderer.isVisible)
                     binding.swapViewIcon.bringToFront()
                 }
             }
