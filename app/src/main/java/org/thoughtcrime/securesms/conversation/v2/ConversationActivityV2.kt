@@ -34,6 +34,7 @@ import com.annimon.stream.Stream
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityConversationV2Binding
 import network.loki.messenger.databinding.ViewVisibleMessageBinding
@@ -113,6 +114,7 @@ import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.reactions.ReactionsDialogFragment
 import org.thoughtcrime.securesms.reactions.any.ReactWithAnyEmojiDialogFragment
 import org.thoughtcrime.securesms.util.*
+import java.lang.ref.WeakReference
 import java.util.*
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.atomic.AtomicLong
@@ -304,12 +306,13 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         // messageIdToScroll
         messageToScrollTimestamp.set(intent.getLongExtra(SCROLL_MESSAGE_ID, -1))
         messageToScrollAuthor.set(intent.getParcelableExtra(SCROLL_MESSAGE_AUTHOR))
-        val thread = threadDb.getRecipientForThreadId(viewModel.threadId)
-        if (thread == null) {
+        val recipient = viewModel.recipient
+        val openGroup = recipient.let { viewModel.openGroup }
+        if (recipient == null || (recipient.isOpenGroupRecipient && openGroup == null)) {
             Toast.makeText(this, "This thread has been deleted.", Toast.LENGTH_LONG).show()
             return finish()
         }
-        setUpRecyclerView()
+
         setUpToolBar()
         setUpInputBar()
         setUpLinkPreviewObserver()
@@ -336,22 +339,31 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                 }
             }
         }
-        unreadCount = mmsSmsDb.getUnreadCount(viewModel.threadId)
+
         updateUnreadCountIndicator()
-        setUpTypingObserver()
-        setUpRecipientObserver()
         updateSubtitle()
-        getLatestOpenGroupInfoIfNeeded()
         setUpBlockedBanner()
         binding!!.searchBottomBar.setEventListener(this)
-        setUpSearchResultObserver()
-        scrollToFirstUnreadMessageIfNeeded()
         showOrHideInputIfNeeded()
         setUpMessageRequestsBar()
-        viewModel.recipient?.let { recipient ->
-            if (recipient.isOpenGroupRecipient && viewModel.openGroup == null) {
-                Toast.makeText(this, "This thread has been deleted.", Toast.LENGTH_LONG).show()
-                return finish()
+
+        val weakActivity = WeakReference(this)
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            unreadCount = mmsSmsDb.getUnreadCount(viewModel.threadId)
+            
+            // Note: We are accessing the `adapter` property because we want it to be loaded on
+            // the background thread to avoid blocking the UI thread and potentially hanging when
+            // transitioning to the activity
+            weakActivity.get()?.adapter ?: return@launch
+
+            withContext(Dispatchers.Main) {
+                setUpRecyclerView()
+                setUpTypingObserver()
+                setUpRecipientObserver()
+                getLatestOpenGroupInfoIfNeeded()
+                setUpSearchResultObserver()
+                scrollToFirstUnreadMessageIfNeeded()
             }
         }
 
@@ -631,6 +643,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     // region Animation & Updating
     override fun onModified(recipient: Recipient) {
+        viewModel.updateRecipient()
+
         runOnUiThread {
             val threadRecipient = viewModel.recipient ?: return@runOnUiThread
             if (threadRecipient.isContactRecipient) {
