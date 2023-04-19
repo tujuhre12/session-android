@@ -15,7 +15,7 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.retryIfNeeded
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 
-object LokiPushNotificationManager {
+object PushNotificationManager {
     private val maxRetryCount = 4
     private val tokenExpirationInterval = 12 * 60 * 60 * 1000
 

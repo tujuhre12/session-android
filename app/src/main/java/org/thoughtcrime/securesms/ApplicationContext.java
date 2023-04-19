@@ -76,7 +76,7 @@ import org.thoughtcrime.securesms.logging.UncaughtExceptionLogger;
 import org.thoughtcrime.securesms.notifications.BackgroundPollWorker;
 import org.thoughtcrime.securesms.notifications.DefaultMessageNotifier;
 import org.thoughtcrime.securesms.notifications.FcmUtils;
-import org.thoughtcrime.securesms.notifications.LokiPushNotificationManager;
+import org.thoughtcrime.securesms.notifications.PushNotificationManager;
 import org.thoughtcrime.securesms.notifications.NotificationChannels;
 import org.thoughtcrime.securesms.notifications.OptimizedMessageNotifier;
 import org.thoughtcrime.securesms.providers.BlobProvider;
@@ -455,9 +455,9 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
 
             AsyncTask.THREAD_POOL_EXECUTOR.execute(() -> {
                 if (TextSecurePreferences.isUsingFCM(this)) {
-                    LokiPushNotificationManager.register(token, userPublicKey, this, force);
+                    PushNotificationManager.register(token, userPublicKey, this, force);
                 } else {
-                    LokiPushNotificationManager.unregister(token, this);
+                    PushNotificationManager.unregister(token, this);
                 }
             });
 
@@ -536,7 +536,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     public void clearAllData(boolean isMigratingToV2KeyPair) {
         String token = TextSecurePreferences.getFCMToken(this);
         if (token != null && !token.isEmpty()) {
-            LokiPushNotificationManager.unregister(token, this);
+            PushNotificationManager.unregister(token, this);
         }
         if (firebaseInstanceIdJob != null && firebaseInstanceIdJob.isActive()) {
             firebaseInstanceIdJob.cancel(null);

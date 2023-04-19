@@ -18,7 +18,7 @@ class PushNotificationService : FirebaseMessagingService() {
         super.onNewToken(token)
         Log.d("Loki", "New FCM token: $token.")
         val userPublicKey = TextSecurePreferences.getLocalNumber(this) ?: return
-        LokiPushNotificationManager.register(token, userPublicKey, this, false)
+        PushNotificationManager.register(token, userPublicKey, this, false)
     }
 
     override fun onMessageReceived(message: RemoteMessage) {
@@ -53,6 +53,6 @@ class PushNotificationService : FirebaseMessagingService() {
         super.onDeletedMessages()
         val token = TextSecurePreferences.getFCMToken(this)!!
         val userPublicKey = TextSecurePreferences.getLocalNumber(this) ?: return
-        LokiPushNotificationManager.register(token, userPublicKey, this, true)
+        PushNotificationManager.register(token, userPublicKey, this, true)
     }
 }
