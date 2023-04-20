@@ -1,6 +1,14 @@
 package org.session.libsession.messaging.sending_receiving.notifications
 
+import com.goterl.lazysodium.utils.Key
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+
+/**
+ * N.B. all of these variable names will be named the same as the actual JSON utf-8 request/responses expected from the server.
+ * Changing the variable names will break how data is serialized/deserialized.
+ * If it's less than ideally named we can use [SerialName]
+ */
 
 @Serializable
 data class SubscriptionRequest(
@@ -9,7 +17,7 @@ data class SubscriptionRequest(
     /** when the pubkey starts with 05 (i.e. a session ID) this is the ed25519 32-byte pubkey associated with the session ID */
     val session_ed25519: String?,
     /** 32-byte swarm authentication subkey; omitted (or null) when not using subkey auth (new closed groups) */
-    val subkey_tag: String?,
+    val subkey_tag: String? = null,
     /** array of integer namespaces to subscribe to, **must be sorted in ascending order** */
     val namespaces: List<Int>,
     /** if provided and true then notifications will include the body of the message (as long as it isn't too large) */
@@ -46,7 +54,18 @@ data class SubscriptionResponse(
         const val GENERIC_ERROR = 4
     }
     fun isSuccess() = success == true && error == null
-    fun errorInfo() = if (success == false && error != null) {
-        true to message
-    } else false to null
+    fun errorInfo() = if (success != true && error != null) {
+        error to message
+    } else null to null
+}
+
+@Serializable
+data class PushNotificationServerObject(
+    val enc_payload: String,
+    val spns: Int,
+) {
+    fun decryptPayload(key: Key): Any {
+
+        TODO()
+    }
 }

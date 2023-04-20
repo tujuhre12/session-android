@@ -75,14 +75,13 @@ import org.thoughtcrime.securesms.logging.PersistentLogger;
 import org.thoughtcrime.securesms.logging.UncaughtExceptionLogger;
 import org.thoughtcrime.securesms.notifications.BackgroundPollWorker;
 import org.thoughtcrime.securesms.notifications.DefaultMessageNotifier;
-import org.thoughtcrime.securesms.notifications.FcmUtils;
-import org.thoughtcrime.securesms.notifications.PushNotificationManager;
 import org.thoughtcrime.securesms.notifications.NotificationChannels;
 import org.thoughtcrime.securesms.notifications.OptimizedMessageNotifier;
+import org.thoughtcrime.securesms.notifications.PushManager;
+import org.thoughtcrime.securesms.notifications.PushNotificationManager;
 import org.thoughtcrime.securesms.providers.BlobProvider;
 import org.thoughtcrime.securesms.service.ExpiringMessageManager;
 import org.thoughtcrime.securesms.service.KeyCachingService;
-import org.thoughtcrime.securesms.service.UpdateApkRefreshListener;
 import org.thoughtcrime.securesms.sskenvironment.ProfileManager;
 import org.thoughtcrime.securesms.sskenvironment.ReadReceiptManager;
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository;
@@ -149,6 +148,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     @Inject MessageDataProvider messageDataProvider;
     @Inject JobDatabase jobDatabase;
     @Inject TextSecurePreferences textSecurePreferences;
+    @Inject PushManager pushManager;
     CallMessageProcessor callMessageProcessor;
     MessagingModuleConfiguration messagingModuleConfiguration;
 
@@ -220,7 +220,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         SnodeModule.Companion.configure(apiDB, broadcaster);
         String userPublicKey = TextSecurePreferences.getLocalNumber(this);
         if (userPublicKey != null) {
-            registerForFCMIfNeeded(false);
+            registerForPnIfNeeded(false);
         }
         initializeExpiringMessageManager();
         initializeTypingStatusRepository();
@@ -386,7 +386,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         BackgroundPollWorker.schedulePeriodic(this);
 
         if (BuildConfig.PLAY_STORE_DISABLED) {
-            UpdateApkRefreshListener.schedule(this);
+            // possibly add update apk job
         }
     }
 
@@ -439,30 +439,8 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
 
     private static class ProviderInitializationException extends RuntimeException { }
 
-    public void registerForFCMIfNeeded(final Boolean force) {
-        if (firebaseInstanceIdJob != null && firebaseInstanceIdJob.isActive() && !force) return;
-        if (force && firebaseInstanceIdJob != null) {
-            firebaseInstanceIdJob.cancel(null);
-        }
-        firebaseInstanceIdJob = FcmUtils.getFcmInstanceId(task->{
-            if (!task.isSuccessful()) {
-                Log.w("Loki", "FirebaseInstanceId.getInstance().getInstanceId() failed." + task.getException());
-                return Unit.INSTANCE;
-            }
-            String token = task.getResult().getToken();
-            String userPublicKey = TextSecurePreferences.getLocalNumber(this);
-            if (userPublicKey == null) return Unit.INSTANCE;
-
-            AsyncTask.THREAD_POOL_EXECUTOR.execute(() -> {
-                if (TextSecurePreferences.isUsingFCM(this)) {
-                    PushNotificationManager.register(token, userPublicKey, this, force);
-                } else {
-                    PushNotificationManager.unregister(token, this);
-                }
-            });
-
-            return Unit.INSTANCE;
-        });
+    public void registerForPnIfNeeded(final Boolean force) {
+        pushManager.register(force);
     }
 
     private void setUpPollingIfNeeded() {

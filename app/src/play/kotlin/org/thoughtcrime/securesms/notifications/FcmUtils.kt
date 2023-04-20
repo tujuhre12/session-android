@@ -13,7 +13,5 @@ fun getFcmInstanceId(body: (Task<InstanceIdResult>)->Unit): Job = MainScope().la
         // wait for task to complete while we are active
     }
     if (!isActive) return@launch // don't 'complete' task if we were canceled
-    withContext(Dispatchers.Main) {
-        body(task)
-    }
+    body(task)
 }

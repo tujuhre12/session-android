@@ -1,11 +1,11 @@
 package org.thoughtcrime.securesms.home
 
 import android.content.BroadcastReceiver
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.ClipData
-import android.content.ClipboardManager
 import android.os.Bundle
 import android.text.SpannableString
 import android.widget.Toast
@@ -199,7 +199,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                 // update things based on TextSecurePrefs (profile info etc)
                 // Set up remaining components if needed
                 val application = ApplicationContext.getInstance(this@HomeActivity)
-                application.registerForFCMIfNeeded(false)
+                application.registerForPnIfNeeded(false)
                 if (textSecurePreferences.getLocalNumber() != null) {
                     OpenGroupManager.startPolling()
                     JobQueue.shared.resumePendingJobs()

@@ -9,15 +9,17 @@ import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.Version
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsignal.utilities.retryIfNeeded
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
+import org.session.libsignal.utilities.retryIfNeeded
 
 @SuppressLint("StaticFieldLeak")
 object PushNotificationAPI {
     val context = MessagingModuleConfiguration.shared.context
     val server = "https://push.getsession.org"
     val serverPublicKey: String = TODO("get the new server pubkey here")
+    private val legacyServer = "https://live.apns.getsession.org"
+    private val legacyServerPublicKey = "642a6585919742e5a2d4dc51244964fbcd8bcab2b75612407de58b810740d049"
     private val maxRetryCount = 4
     private val tokenExpirationInterval = 12 * 60 * 60 * 1000
 
@@ -94,7 +96,7 @@ object PushNotificationAPI {
         val body = RequestBody.create(MediaType.get("application/json"), JsonUtil.toJson(parameters))
         val request = Request.Builder().url(url).post(body)
         retryIfNeeded(maxRetryCount) {
-            OnionRequestAPI.sendOnionRequest(request.build(), server, serverPublicKey, Version.V2).map { response ->
+            OnionRequestAPI.sendOnionRequest(request.build(), legacyServer, legacyServerPublicKey, Version.V2).map { response ->
                 val code = response.info["code"] as? Int
                 if (code == null || code == 0) {
                     Log.d("Loki", "Couldn't subscribe/unsubscribe closed group: $closedGroupPublicKey due to error: ${response.info["message"] as? String ?: "null"}.")
