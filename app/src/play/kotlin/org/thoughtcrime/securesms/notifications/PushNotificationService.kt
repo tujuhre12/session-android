@@ -28,6 +28,13 @@ class PushNotificationService : FirebaseMessagingService() {
 
     override fun onMessageReceived(message: RemoteMessage) {
         Log.d("Loki", "Received a push notification.")
+        if (message.data.containsKey("spns")) {
+            // assume this is the new push notification content
+            // deal with the enc payload (probably decrypting through the PushManager?
+            Log.d("Loki", "TODO: deal with the enc_payload\n${message.data["enc_payload"]}")
+            pushManager.decrypt(message.data)
+            return
+        }
         val base64EncodedData = message.data?.get("ENCRYPTED_DATA")
         val data = base64EncodedData?.let { Base64.decode(it) }
         if (data != null) {
