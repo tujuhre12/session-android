@@ -13,6 +13,7 @@ import org.thoughtcrime.securesms.jobmanager.persistence.DependencySpec;
 import org.thoughtcrime.securesms.jobmanager.persistence.FullSpec;
 import org.thoughtcrime.securesms.jobmanager.persistence.JobSpec;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -21,6 +22,8 @@ public class JobDatabase extends Database {
   public static final String[] CREATE_TABLE = new String[] { Jobs.CREATE_TABLE,
                                                              Constraints.CREATE_TABLE,
                                                              Dependencies.CREATE_TABLE };
+
+  private static final ArrayList<String> runningJobs = new ArrayList<>();
 
   public static final class Jobs {
     public  static final String TABLE_NAME            = "job_spec";
@@ -113,18 +116,17 @@ public class JobDatabase extends Database {
   }
 
   public synchronized void updateJobRunningState(@NonNull String id, boolean isRunning) {
-    ContentValues contentValues = new ContentValues();
-    contentValues.put(Jobs.IS_RUNNING, isRunning ? 1 : 0);
-
-    String   query = Jobs.JOB_SPEC_ID + " = ?";
-    String[] args  = new String[]{ id };
-
-    databaseHelper.getWritableDatabase().update(Jobs.TABLE_NAME, contentValues, query, args);
+    if (!isRunning) {
+      JobDatabase.runningJobs.remove(id);
+    } else if (!JobDatabase.runningJobs.contains(id)) {
+      JobDatabase.runningJobs.add(id);
+    }
   }
 
   public synchronized void updateJobAfterRetry(@NonNull String id, boolean isRunning, int runAttempt, long nextRunAttemptTime) {
+    updateJobRunningState(id, isRunning);
+
     ContentValues contentValues = new ContentValues();
-    contentValues.put(Jobs.IS_RUNNING, isRunning ? 1 : 0);
     contentValues.put(Jobs.RUN_ATTEMPT, runAttempt);
     contentValues.put(Jobs.NEXT_RUN_ATTEMPT_TIME, nextRunAttemptTime);
 
@@ -135,13 +137,7 @@ public class JobDatabase extends Database {
   }
 
   public synchronized void updateAllJobsToBePending() {
-    ContentValues contentValues = new ContentValues();
-    contentValues.put(Jobs.IS_RUNNING, 0);
-
-    String   query = Jobs.IS_RUNNING + " = ?";
-    String[] args = new String[] { "1" };
-
-    databaseHelper.getWritableDatabase().update(Jobs.TABLE_NAME, contentValues, query, args);
+    JobDatabase.runningJobs.clear();
   }
 
   public synchronized void deleteJobs(@NonNull List<String> jobIds) {
@@ -202,7 +198,7 @@ public class JobDatabase extends Database {
     contentValues.put(Jobs.MAX_INSTANCES, job.getMaxInstances());
     contentValues.put(Jobs.LIFESPAN, job.getLifespan());
     contentValues.put(Jobs.SERIALIZED_DATA, job.getSerializedData());
-    contentValues.put(Jobs.IS_RUNNING, job.isRunning() ? 1 : 0);
+    updateJobRunningState(job.getId(), job.isRunning());
 
     db.insertWithOnConflict(Jobs.TABLE_NAME, null, contentValues, SQLiteDatabase.CONFLICT_IGNORE);
   }
@@ -226,7 +222,8 @@ public class JobDatabase extends Database {
   }
 
   private @NonNull JobSpec jobSpecFromCursor(@NonNull Cursor cursor) {
-    return new JobSpec(cursor.getString(cursor.getColumnIndexOrThrow(Jobs.JOB_SPEC_ID)),
+    String jobId = cursor.getString(cursor.getColumnIndexOrThrow(Jobs.JOB_SPEC_ID));
+    return new JobSpec(jobId,
                        cursor.getString(cursor.getColumnIndexOrThrow(Jobs.FACTORY_KEY)),
                        cursor.getString(cursor.getColumnIndexOrThrow(Jobs.QUEUE_KEY)),
                        cursor.getLong(cursor.getColumnIndexOrThrow(Jobs.CREATE_TIME)),
@@ -237,7 +234,7 @@ public class JobDatabase extends Database {
                        cursor.getLong(cursor.getColumnIndexOrThrow(Jobs.LIFESPAN)),
                        cursor.getInt(cursor.getColumnIndexOrThrow(Jobs.MAX_INSTANCES)),
                        cursor.getString(cursor.getColumnIndexOrThrow(Jobs.SERIALIZED_DATA)),
-                       cursor.getInt(cursor.getColumnIndexOrThrow(Jobs.IS_RUNNING)) == 1);
+                       JobDatabase.runningJobs.contains(jobId));
   }
 
   private @NonNull ConstraintSpec constraintSpecFromCursor(@NonNull Cursor cursor) {

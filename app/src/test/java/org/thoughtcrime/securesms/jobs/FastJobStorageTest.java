@@ -75,16 +75,6 @@ public class FastJobStorageTest {
   }
 
   @Test
-  public void updateAllJobsToBePending_writesToDatabase() {
-    JobDatabase    database = noopDatabase();
-    FastJobStorage subject  = new FastJobStorage(database);
-
-    subject.updateAllJobsToBePending();
-
-    verify(database).updateAllJobsToBePending();
-  }
-
-  @Test
   public void updateAllJobsToBePending_allArePending() {
     FullSpec fullSpec1 = new FullSpec(new JobSpec("1", AvatarDownloadJob.KEY, null, 1, 1, 1, 1, 1, 1, 1, EMPTY_DATA, true),
                                       Collections.emptyList(),
