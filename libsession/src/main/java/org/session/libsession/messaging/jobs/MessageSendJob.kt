@@ -34,6 +34,8 @@ class MessageSendJob(val message: Message, val destination: Destination) : Job {
     }
 
     override fun execute(dispatcherName: String) {
+        Log.d(TAG, "MessageSendJob#execute() called with: dispatcherName = $dispatcherName")
+
         val messageDataProvider = MessagingModuleConfiguration.shared.messageDataProvider
         val message = message as? VisibleMessage
         val storage = MessagingModuleConfiguration.shared.storage

@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.conversation.v2.utilities
 
 import android.content.Context
 import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.visible.LinkPreview
 import org.session.libsession.messaging.messages.visible.OpenGroupInvitation
 import org.session.libsession.messaging.messages.visible.Quote
@@ -10,12 +11,16 @@ import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 
+private val TAG = ResendMessageUtilities.javaClass.simpleName
+
 object ResendMessageUtilities {
 
-    fun resend(context: Context, messageRecord: MessageRecord, userBlindedKey: String?) {
+    fun resend(context: Context, messageRecord: MessageRecord, userBlindedKey: String?, isResync: Boolean = false) {
+        Log.d(TAG, "resend() called with: context = $context, messageRecord = $messageRecord, userBlindedKey = $userBlindedKey, isResync = $isResync")
         val recipient: Recipient = messageRecord.recipient
         val message = VisibleMessage()
         message.id = messageRecord.getId()
@@ -55,8 +60,13 @@ object ResendMessageUtilities {
         val sentTimestamp = message.sentTimestamp
         val sender = MessagingModuleConfiguration.shared.storage.getUserPublicKey()
         if (sentTimestamp != null && sender != null) {
-            MessagingModuleConfiguration.shared.storage.markAsSending(sentTimestamp, sender)
+            if (isResync) {
+                MessagingModuleConfiguration.shared.storage.markAsResyncing(sentTimestamp, sender)
+                MessageSender.send(message, Destination.from(recipient.address), isSyncMessage = true)
+            } else {
+                MessagingModuleConfiguration.shared.storage.markAsSending(sentTimestamp, sender)
+                MessageSender.send(message, recipient.address)
+            }
         }
-        MessageSender.send(message, recipient.address)
     }
 }
