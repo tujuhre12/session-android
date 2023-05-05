@@ -51,6 +51,9 @@ public final class KeyStoreHelper {
     SecretKey secretKey = getOrCreateKeyStoreEntry();
 
     try {
+      // Cipher operations are not thread-safe so we synchronize over them through doFinal to
+      // prevent crashes with quickly repeated encrypt/decrypt operations
+      // https://github.com/mozilla-mobile/android-components/issues/5342
       synchronized (lock) {
         Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
         cipher.init(Cipher.ENCRYPT_MODE, secretKey);
@@ -69,6 +72,9 @@ public final class KeyStoreHelper {
     SecretKey secretKey = getKeyStoreEntry();
 
     try {
+      // Cipher operations are not thread-safe so we synchronize over them through doFinal to
+      // prevent crashes with quickly repeated encrypt/decrypt operations
+      // https://github.com/mozilla-mobile/android-components/issues/5342
       synchronized (lock) {
         Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
         cipher.init(Cipher.DECRYPT_MODE, secretKey, new GCMParameterSpec(128, sealedData.iv));
