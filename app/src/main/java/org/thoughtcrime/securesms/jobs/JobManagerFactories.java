@@ -29,9 +29,9 @@ public final class JobManagerFactories {
   public static Map<String, Job.Factory> getJobFactories(@NonNull Application application) {
     HashMap<String, Job.Factory> factoryHashMap = new HashMap<String, Job.Factory>() {{
       put(AvatarDownloadJob.KEY,                     new AvatarDownloadJob.Factory());
-      put(LocalBackupJob.KEY,                        new LocalBackupJob.Factory());
+      put(LocalBackupJob.Companion.getKEY(),         new LocalBackupJob.Factory());
       put(RetrieveProfileAvatarJob.KEY,              new RetrieveProfileAvatarJob.Factory(application));
-      put(UpdateApkJob.KEY,                          new UpdateApkJob.Factory());
+      put(UpdateApkJob.Companion.getKEY(),           new UpdateApkJob.Factory());
       put(PrepareAttachmentAudioExtrasJob.KEY,       new PrepareAttachmentAudioExtrasJob.Factory());
     }};
     factoryKeys.addAll(factoryHashMap.keySet());

@@ -3,6 +3,8 @@ package org.thoughtcrime.securesms.service;
 
 import android.content.Context;
 import android.content.Intent;
+
+import org.session.libsession.messaging.jobs.JobQueue;
 import org.session.libsignal.utilities.Log;
 
 import org.thoughtcrime.securesms.ApplicationContext;

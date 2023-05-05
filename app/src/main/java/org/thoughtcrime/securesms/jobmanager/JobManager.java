@@ -79,35 +79,6 @@ public class JobManager implements ConstraintObserver.Notifier {
   }
 
   /**
-   * Begins the creation of a job chain with a single job.
-   * @see Chain
-   */
-  public Chain startChain(@NonNull Job job) {
-    return new Chain(this, Collections.singletonList(job));
-  }
-
-  /**
-   * Begins the creation of a job chain with a set of jobs that can be run in parallel.
-   * @see Chain
-   */
-  public Chain startChain(@NonNull List<? extends Job> jobs) {
-    return new Chain(this, jobs);
-  }
-
-  /**
-   * Retrieves a string representing the state of the job queue. Intended for debugging.
-   */
-  public @NonNull String getDebugInfo() {
-    Future<String> result = executor.submit(jobController::getDebugInfo);
-    try {
-      return result.get();
-    } catch (ExecutionException | InterruptedException e) {
-      Log.w(TAG, "Failed to retrieve Job info.", e);
-      return "Failed to retrieve Job info.";
-    }
-  }
-
-  /**
    * Adds a listener to that will be notified when the job queue has been drained.
    */
   void addOnEmptyQueueListener(@NonNull EmptyQueueListener listener) {
@@ -260,16 +231,6 @@ public class JobManager implements ConstraintObserver.Notifier {
       private List<ConstraintObserver>        constraintObservers = new ArrayList<>();
       private Data.Serializer                 dataSerializer      = new JsonDataSerializer();
       private JobStorage                      jobStorage          = null;
-
-      public @NonNull Builder setJobThreadCount(int jobThreadCount) {
-        this.jobThreadCount = jobThreadCount;
-        return this;
-      }
-
-      public @NonNull Builder setExecutorFactory(@NonNull ExecutorFactory executorFactory) {
-        this.executorFactory = executorFactory;
-        return this;
-      }
 
       public @NonNull Builder setJobFactories(@NonNull Map<String, Job.Factory> jobFactories) {
         this.jobFactories = jobFactories;
