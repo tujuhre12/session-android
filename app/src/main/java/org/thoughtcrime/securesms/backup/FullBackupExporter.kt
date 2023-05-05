@@ -279,7 +279,7 @@ object FullBackupExporter {
         return false
     }
 
-    private class BackupFrameOutputStream : Closeable, Flushable {
+    private class BackupFrameOutputStream(outputStream: OutputStream, passphrase: String) : Closeable, Flushable {
 
         private val outputStream: OutputStream
         private var cipher: Cipher
@@ -290,7 +290,7 @@ object FullBackupExporter {
 
         private var counter: Int = 0
 
-        private constructor(outputStream: OutputStream, passphrase: String) : super() {
+        init {
             try {
                 val salt = Util.getSecretBytes(32)
                 val key = BackupUtil.computeBackupKey(passphrase, salt)
