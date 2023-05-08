@@ -41,7 +41,6 @@ import org.session.libsignal.messages.SignalServiceAttachmentPointer
 import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.KeyHelper
-import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
@@ -53,8 +52,6 @@ import org.thoughtcrime.securesms.jobs.RetrieveProfileAvatarJob
 import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
 import java.security.MessageDigest
-
-private val TAG = Storage::class.java.simpleName
 
 class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context, helper), StorageProtocol {
     
@@ -359,8 +356,6 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         openGroupSentTimestamp: Long,
         threadId: Long
     ) {
-        Log.d(TAG, "updateSentTimestamp() called with: messageID = $messageID, isMms = $isMms, openGroupSentTimestamp = $openGroupSentTimestamp, threadId = $threadId")
-
         if (isMms) {
             val mmsDb = DatabaseComponent.get(context).mmsDatabase()
             mmsDb.updateSentTimestamp(messageID, openGroupSentTimestamp, threadId)
@@ -371,8 +366,6 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
     }
 
     override fun markAsSent(timestamp: Long, author: String) {
-        Log.d(TAG, "markAsSent() called with: timestamp = $timestamp, author = $author")
-
         val database = DatabaseComponent.get(context).mmsSmsDatabase()
         val messageRecord = database.getMessageFor(timestamp, author) ?: return
         if (messageRecord.isMms) {
@@ -385,8 +378,6 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
     }
 
     override fun markAsSyncing(timestamp: Long, author: String) {
-        Log.d(TAG, "markAsSyncing() called with: timestamp = $timestamp, author = $author")
-
         DatabaseComponent.get(context).mmsSmsDatabase()
             .getMessageFor(timestamp, author)
             ?.run { getMmsDatabaseElseSms(isMms).markAsSyncing(id) }
@@ -397,16 +388,12 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         else DatabaseComponent.get(context).smsDatabase()
 
     override fun markAsResyncing(timestamp: Long, author: String) {
-        Log.d(TAG, "markAsResyncing() called with: timestamp = $timestamp, author = $author")
-
         DatabaseComponent.get(context).mmsSmsDatabase()
             .getMessageFor(timestamp, author)
             ?.run { getMmsDatabaseElseSms(isMms).markAsResyncing(id) }
     }
 
     override fun markAsSending(timestamp: Long, author: String) {
-        Log.d(TAG, "markAsSending() called with: timestamp = $timestamp, author = $author")
-
         val database = DatabaseComponent.get(context).mmsSmsDatabase()
         val messageRecord = database.getMessageFor(timestamp, author) ?: return
         if (messageRecord.isMms) {
@@ -432,8 +419,6 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
     }
 
     override fun markAsSentFailed(timestamp: Long, author: String, error: Exception) {
-        Log.d(TAG, "markAsSentFailed() called with: timestamp = $timestamp, author = $author, error = $error")
-
         val database = DatabaseComponent.get(context).mmsSmsDatabase()
         val messageRecord = database.getMessageFor(timestamp, author) ?: return
         if (messageRecord.isMms) {
@@ -457,8 +442,6 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
     }
 
     override fun markAsSyncFailed(timestamp: Long, author: String, error: Exception) {
-        Log.d(TAG, "markAsSyncFailed() called with: timestamp = $timestamp, author = $author, error = $error")
-
         val database = DatabaseComponent.get(context).mmsSmsDatabase()
         val messageRecord = database.getMessageFor(timestamp, author) ?: return
 

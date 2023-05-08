@@ -11,16 +11,12 @@ import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
-
-private val TAG = ResendMessageUtilities.javaClass.simpleName
 
 object ResendMessageUtilities {
 
     fun resend(context: Context, messageRecord: MessageRecord, userBlindedKey: String?, isResync: Boolean = false) {
-        Log.d(TAG, "resend() called with: context = $context, messageRecord = $messageRecord, userBlindedKey = $userBlindedKey, isResync = $isResync")
         val recipient: Recipient = messageRecord.recipient
         val message = VisibleMessage()
         message.id = messageRecord.getId()
