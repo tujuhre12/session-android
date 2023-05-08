@@ -31,9 +31,9 @@ public class UpdateApkRefreshListener extends PersistentAlarmManagerListener {
 
     if (scheduledTime != 0 && BuildConfig.PLAY_STORE_DISABLED) {
       Log.i(TAG, "Queueing APK update job...");
-      ApplicationContext.getInstance(context)
-                        .getJobManager()
-                        .add(new UpdateApkJob());
+      UpdateApkJob job = new UpdateApkJob();
+      job.context = context;
+      JobQueue.getShared().add(job);
     }
 
     long newTime = System.currentTimeMillis() + INTERVAL;

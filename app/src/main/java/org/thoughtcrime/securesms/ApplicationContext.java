@@ -66,9 +66,7 @@ import org.thoughtcrime.securesms.emoji.EmojiSource;
 import org.thoughtcrime.securesms.groups.OpenGroupManager;
 import org.thoughtcrime.securesms.home.HomeActivity;
 import org.thoughtcrime.securesms.jobmanager.JobManager;
-import org.thoughtcrime.securesms.jobmanager.impl.JsonDataSerializer;
 import org.thoughtcrime.securesms.jobmanager.impl.NetworkConstraint;
-import org.thoughtcrime.securesms.jobs.FastJobStorage;
 import org.thoughtcrime.securesms.jobs.JobManagerFactories;
 import org.thoughtcrime.securesms.logging.AndroidLogger;
 import org.thoughtcrime.securesms.logging.PersistentLogger;
@@ -354,11 +352,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
 
     private void initializeJobManager() {
         this.jobManager = new JobManager(this, new JobManager.Configuration.Builder()
-            .setDataSerializer(new JsonDataSerializer())
-            .setJobFactories(JobManagerFactories.getJobFactories())
-            .setConstraintFactories(JobManagerFactories.getConstraintFactories(this))
             .setConstraintObservers(JobManagerFactories.getConstraintObservers(this))
-            .setJobStorage(new FastJobStorage(jobDatabase))
             .build());
     }
 

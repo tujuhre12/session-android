@@ -75,8 +75,7 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
             Recipient.from(context, it, false)
         }
         TextSecurePreferences.setProfilePictureURL(context, newValue)
-        RetrieveProfileAvatarJob(ourRecipient, newValue)
-        ApplicationContext.getInstance(context).jobManager.add(RetrieveProfileAvatarJob(ourRecipient, newValue))
+        JobQueue.shared.add(RetrieveProfileAvatarJob(newValue, ourRecipient.address))
     }
 
     override fun getOrGenerateRegistrationID(): Int {
