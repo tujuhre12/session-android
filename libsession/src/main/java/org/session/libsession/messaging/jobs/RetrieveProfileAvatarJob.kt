@@ -1,10 +1,9 @@
-package org.thoughtcrime.securesms.jobs
+package org.session.libsession.messaging.jobs
 
 import android.content.Context
 import android.text.TextUtils
 import org.session.libsession.avatars.AvatarHelper
-import org.session.libsession.messaging.jobs.Job
-import org.session.libsession.messaging.jobs.JobDelegate
+import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.utilities.Data
 import org.session.libsession.utilities.DownloadUtilities.downloadFile
 import org.session.libsession.utilities.TextSecurePreferences.Companion.setProfileAvatarId
@@ -27,8 +26,6 @@ class RetrieveProfileAvatarJob(val profileAvatar: String, val recipientAddress: 
     override var failureCount: Int = 0
     override val maxFailureCount: Int = 0
 
-    lateinit var context: Context
-
     companion object {
         val TAG = RetrieveProfileAvatarJob::class.simpleName
         val KEY: String = "RetrieveProfileAvatarJob"
@@ -39,8 +36,9 @@ class RetrieveProfileAvatarJob(val profileAvatar: String, val recipientAddress: 
     }
 
     override fun execute(dispatcherName: String) {
+        val context = MessagingModuleConfiguration.shared.context
+        val storage = MessagingModuleConfiguration.shared.storage
         val recipient = Recipient.from(context, recipientAddress, true)
-        val database = get(context).recipientDatabase()
         val profileKey = recipient.resolve().profileKey
 
         if (profileKey == null || (profileKey.size != 32 && profileKey.size != 16)) {
@@ -56,7 +54,7 @@ class RetrieveProfileAvatarJob(val profileAvatar: String, val recipientAddress: 
         if (TextUtils.isEmpty(profileAvatar)) {
             Log.w(TAG, "Removing profile avatar for: " + recipient.address.serialize())
             AvatarHelper.delete(context, recipient.address)
-            database.setProfileAvatar(recipient, profileAvatar)
+            storage.setProfileAvatar(recipient, profileAvatar)
             return
         }
 
@@ -75,7 +73,7 @@ class RetrieveProfileAvatarJob(val profileAvatar: String, val recipientAddress: 
         if (recipient.isLocalNumber) {
             setProfileAvatarId(context, SecureRandom().nextInt())
         }
-        database.setProfileAvatar(recipient, profileAvatar)
+        storage.setProfileAvatar(recipient, profileAvatar)
     }
 
     override fun serialize(): Data {
