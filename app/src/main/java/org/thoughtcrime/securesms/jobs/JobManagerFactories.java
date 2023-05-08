@@ -4,9 +4,9 @@ import android.app.Application;
 
 import androidx.annotation.NonNull;
 
+import org.session.libsession.messaging.jobs.Job;
 import org.thoughtcrime.securesms.jobmanager.Constraint;
 import org.thoughtcrime.securesms.jobmanager.ConstraintObserver;
-import org.thoughtcrime.securesms.jobmanager.Job;
 import org.thoughtcrime.securesms.jobmanager.impl.CellServiceConstraint;
 import org.thoughtcrime.securesms.jobmanager.impl.CellServiceConstraintObserver;
 import org.thoughtcrime.securesms.jobmanager.impl.NetworkConstraint;
@@ -28,11 +28,9 @@ public final class JobManagerFactories {
 
   public static Map<String, Job.Factory> getJobFactories(@NonNull Application application) {
     HashMap<String, Job.Factory> factoryHashMap = new HashMap<String, Job.Factory>() {{
-      put(AvatarDownloadJob.KEY,                     new AvatarDownloadJob.Factory());
-      put(LocalBackupJob.Companion.getKEY(),         new LocalBackupJob.Factory());
-      put(RetrieveProfileAvatarJob.KEY,              new RetrieveProfileAvatarJob.Factory(application));
-      put(UpdateApkJob.Companion.getKEY(),           new UpdateApkJob.Factory());
-      put(PrepareAttachmentAudioExtrasJob.KEY,       new PrepareAttachmentAudioExtrasJob.Factory());
+      put(LocalBackupJob.Companion.getKEY(),            new LocalBackupJob.Factory());
+      put(RetrieveProfileAvatarJob.Companion.getKEY(),  new RetrieveProfileAvatarJob.Factory());
+      put(UpdateApkJob.Companion.getKEY(),              new UpdateApkJob.Factory());
     }};
     factoryKeys.addAll(factoryHashMap.keySet());
     return factoryHashMap;

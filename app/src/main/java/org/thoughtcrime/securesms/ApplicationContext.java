@@ -355,7 +355,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     private void initializeJobManager() {
         this.jobManager = new JobManager(this, new JobManager.Configuration.Builder()
             .setDataSerializer(new JsonDataSerializer())
-            .setJobFactories(JobManagerFactories.getJobFactories(this))
+            .setJobFactories(JobManagerFactories.getJobFactories())
             .setConstraintFactories(JobManagerFactories.getConstraintFactories(this))
             .setConstraintObservers(JobManagerFactories.getConstraintObservers(this))
             .setJobStorage(new FastJobStorage(jobDatabase))
