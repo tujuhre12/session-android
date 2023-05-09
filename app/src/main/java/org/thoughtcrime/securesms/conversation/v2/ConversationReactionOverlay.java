@@ -660,7 +660,8 @@ public final class ConversationReactionOverlay extends FrameLayout {
     items.add(new ActionItem(R.attr.menu_select_icon, getContext().getResources().getString(R.string.conversation_context__menu_select), () -> handleActionItemClicked(Action.SELECT),
             getContext().getResources().getString(R.string.AccessibilityId_select)));
     // Reply
-    if (!message.isPending() && !message.isFailed()) {
+    boolean canWrite = openGroup == null || openGroup.getCanWrite();
+    if (canWrite && !message.isPending() && !message.isFailed()) {
       items.add(
               new ActionItem(R.attr.menu_reply_icon, getContext().getResources().getString(R.string.conversation_context__menu_reply), () -> handleActionItemClicked(Action.REPLY),
                      getContext().getResources().getString(R.string.AccessibilityId_reply_message))
