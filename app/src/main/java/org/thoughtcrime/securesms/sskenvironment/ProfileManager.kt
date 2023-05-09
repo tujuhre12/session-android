@@ -41,7 +41,6 @@ class ProfileManager : SSKEnvironment.ProfileManagerProtocol {
 
     override fun setProfilePictureURL(context: Context, recipient: Recipient, profilePictureURL: String) {
         val job = RetrieveProfileAvatarJob(profilePictureURL, recipient.address)
-        job.context = context
         JobQueue.shared.add(job)
         val sessionID = recipient.address.serialize()
         val contactDatabase = DatabaseComponent.get(context).sessionContactDatabase()

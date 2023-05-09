@@ -1,6 +1,5 @@
 package org.session.libsession.messaging.jobs
 
-import android.content.Context
 import android.text.TextUtils
 import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.messaging.MessagingModuleConfiguration
@@ -13,7 +12,6 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.streams.ProfileCipherInputStream
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent.Companion.get
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream

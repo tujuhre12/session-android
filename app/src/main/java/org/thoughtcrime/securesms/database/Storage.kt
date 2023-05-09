@@ -77,6 +77,11 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         JobQueue.shared.add(RetrieveProfileAvatarJob(newValue, ourRecipient.address))
     }
 
+    override fun setProfileAvatar(recipient: Recipient, profileAvatar: String) {
+        val database = DatabaseComponent.get(context).recipientDatabase()
+        database.setProfileAvatar(recipient, profileAvatar)
+    }
+
     override fun getOrGenerateRegistrationID(): Int {
         var registrationID = TextSecurePreferences.getLocalRegistrationId(context)
         if (registrationID == 0) {
