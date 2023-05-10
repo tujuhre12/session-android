@@ -55,7 +55,6 @@ import org.signal.aesgcmprovider.AesGcmProvider;
 import org.thoughtcrime.securesms.components.TypingStatusSender;
 import org.thoughtcrime.securesms.crypto.KeyPairUtilities;
 import org.thoughtcrime.securesms.database.EmojiSearchDatabase;
-import org.thoughtcrime.securesms.database.JobDatabase;
 import org.thoughtcrime.securesms.database.LokiAPIDatabase;
 import org.thoughtcrime.securesms.database.Storage;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
@@ -78,7 +77,6 @@ import org.thoughtcrime.securesms.notifications.OptimizedMessageNotifier;
 import org.thoughtcrime.securesms.providers.BlobProvider;
 import org.thoughtcrime.securesms.service.ExpiringMessageManager;
 import org.thoughtcrime.securesms.service.KeyCachingService;
-import org.thoughtcrime.securesms.service.UpdateApkRefreshListener;
 import org.thoughtcrime.securesms.sskenvironment.ProfileManager;
 import org.thoughtcrime.securesms.sskenvironment.ReadReceiptManager;
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository;
@@ -142,7 +140,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     @Inject LokiAPIDatabase lokiAPIDatabase;
     @Inject Storage storage;
     @Inject MessageDataProvider messageDataProvider;
-    @Inject JobDatabase jobDatabase;
     @Inject TextSecurePreferences textSecurePreferences;
     CallMessageProcessor callMessageProcessor;
     MessagingModuleConfiguration messagingModuleConfiguration;
@@ -364,10 +361,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
 
     private void initializePeriodicTasks() {
         BackgroundPollWorker.schedulePeriodic(this);
-
-        if (BuildConfig.PLAY_STORE_DISABLED) {
-            UpdateApkRefreshListener.schedule(this);
-        }
     }
 
     private void initializeWebRtc() {
