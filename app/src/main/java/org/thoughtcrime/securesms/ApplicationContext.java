@@ -106,7 +106,6 @@ import dagger.hilt.EntryPoints;
 import dagger.hilt.android.HiltAndroidApp;
 import kotlin.Unit;
 import kotlinx.coroutines.Job;
-import network.loki.messenger.BuildConfig;
 
 /**
  * Will be called once when the TextSecure process is created.
@@ -156,10 +155,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
 
     public static ApplicationContext getInstance(Context context) {
         return (ApplicationContext) context.getApplicationContext();
-    }
-
-    public TextSecurePreferences getPrefs() {
-        return textSecurePreferences;
     }
 
     public DatabaseComponent getDatabaseComponent() {
