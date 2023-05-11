@@ -1754,6 +1754,13 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         endActionMode()
     }
 
+    override fun resyncMessage(messages: Set<MessageRecord>) {
+        messages.iterator().forEach { messageRecord ->
+            ResendMessageUtilities.resend(this, messageRecord, viewModel.blindedPublicKey, isResync = true)
+        }
+        endActionMode()
+    }
+
     override fun resendMessage(messages: Set<MessageRecord>) {
         messages.iterator().forEach { messageRecord ->
             ResendMessageUtilities.resend(this, messageRecord, viewModel.blindedPublicKey)
@@ -1914,6 +1921,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             val selectedItems = setOf(message)
             when (action) {
                 ConversationReactionOverlay.Action.REPLY -> reply(selectedItems)
+                ConversationReactionOverlay.Action.RESYNC -> resyncMessage(selectedItems)
                 ConversationReactionOverlay.Action.RESEND -> resendMessage(selectedItems)
                 ConversationReactionOverlay.Action.DOWNLOAD -> saveAttachment(selectedItems)
                 ConversationReactionOverlay.Action.COPY_MESSAGE -> copyMessages(selectedItems)
