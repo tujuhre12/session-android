@@ -211,10 +211,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     var searchViewItem: MenuItem? = null
 
     private val isScrolledToBottom: Boolean
-        get() {
-            val position = layoutManager?.findFirstCompletelyVisibleItemPosition() ?: 0
-            return position == 0
-        }
+        get() = binding?.conversationRecyclerView?.isScrolledToBottom ?: true
 
     private val layoutManager: LinearLayoutManager?
         get() { return binding?.conversationRecyclerView?.layoutManager as LinearLayoutManager? }
