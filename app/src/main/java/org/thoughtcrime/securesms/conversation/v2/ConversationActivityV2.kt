@@ -1105,12 +1105,11 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             }
 
         })
-        val contentBounds = Rect()
-        visibleMessageView.messageContentView.getGlobalVisibleRect(contentBounds)
+        val topLeft = intArrayOf(0, 0).also { visibleMessageView.messageContentView.getLocationInWindow(it) }
         val selectedConversationModel = SelectedConversationModel(
             messageContentBitmap,
-            contentBounds.left.toFloat(),
-            contentBounds.top.toFloat(),
+            topLeft[0].toFloat(),
+            topLeft[1].toFloat(),
             visibleMessageView.messageContentView.width,
             message.isOutgoing,
             visibleMessageView.messageContentView
