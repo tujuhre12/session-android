@@ -28,15 +28,19 @@ class PushNotificationService : FirebaseMessagingService() {
 
     override fun onMessageReceived(message: RemoteMessage) {
         Log.d("Loki", "Received a push notification.")
-        if (message.data.containsKey("spns")) {
-            // assume this is the new push notification content
-            // deal with the enc payload (probably decrypting through the PushManager?
-            Log.d("Loki", "TODO: deal with the enc_payload\n${message.data["enc_payload"]}")
-            pushManager.decrypt(Base64.decode(message.data["enc_payload"]))
-            return
+        val data: ByteArray? = if (message.data.containsKey("spns")) {
+            // this is a v2 push notification
+            try {
+                pushManager.decrypt(Base64.decode(message.data["enc_payload"]))
+            } catch(e: Exception) {
+                Log.e("Loki", "Invalid push notification: ${e.message}")
+                return
+            }
+        } else {
+            // old v1 push notification; we still need this for receiving legacy closed group notifications
+            val base64EncodedData = message.data?.get("ENCRYPTED_DATA")
+            base64EncodedData?.let { Base64.decode(it) }
         }
-        val base64EncodedData = message.data?.get("ENCRYPTED_DATA")
-        val data = base64EncodedData?.let { Base64.decode(it) }
         if (data != null) {
             try {
                 val envelopeAsData = MessageWrapper.unwrap(data).toByteArray()

@@ -7,7 +7,8 @@ import kotlinx.serialization.Serializable
 /**
  * N.B. all of these variable names will be named the same as the actual JSON utf-8 request/responses expected from the server.
  * Changing the variable names will break how data is serialized/deserialized.
- * If it's less than ideally named we can use [SerialName]
+ * If it's less than ideally named we can use [SerialName], such as for the push metadata which uses
+ * single-letter keys to be as compact as possible.
  */
 
 @Serializable
@@ -37,11 +38,11 @@ data class SubscriptionRequest(
 
 @Serializable
 data class SubscriptionResponse(
-    val error: Int?,
-    val message: String?,
-    val success: Boolean?,
-    val added: Boolean?,
-    val updated: Boolean?,
+    val error: Int? = null,
+    val message: String? = null,
+    val success: Boolean? = null,
+    val added: Boolean? = null,
+    val updated: Boolean? = null,
 ) {
     companion object {
         /** invalid values, missing reuqired arguments etc, details in message */
@@ -58,6 +59,32 @@ data class SubscriptionResponse(
         error to message
     } else null to null
 }
+
+@Serializable
+data class PushNotificationMetadata(
+        /** Account ID (such as Session ID or closed group ID) where the message arrived **/
+        @SerialName("@")
+        val account: String,
+
+        /** The hash of the message in the swarm. */
+        @SerialName("#")
+        val msg_hash: String,
+
+        /** The swarm namespace in which this message arrived. */
+        @SerialName("n")
+        val namespace: Int,
+
+        /** The length of the message data.  This is always included, even if the message content
+         * itself was too large to fit into the push notification. */
+        @SerialName("l")
+        val data_len: Int,
+
+        /** This will be true if the data was omitted because it was too long to fit in a push
+         * notification (around 2.5kB of raw data), in which case the push notification includes
+         * only this metadata but not the message content itself. */
+        @SerialName("B")
+        val data_too_long : Boolean = false
+)
 
 @Serializable
 data class PushNotificationServerObject(

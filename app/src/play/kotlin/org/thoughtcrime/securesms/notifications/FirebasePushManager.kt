@@ -8,6 +8,7 @@ import com.goterl.lazysodium.interfaces.Sign
 import com.goterl.lazysodium.utils.Key
 import com.goterl.lazysodium.utils.KeyPair
 import kotlinx.coroutines.Job
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
@@ -17,6 +18,7 @@ import okhttp3.MediaType
 import okhttp3.Request
 import okhttp3.RequestBody
 import org.session.libsession.messaging.sending_receiving.notifications.PushNotificationAPI
+import org.session.libsession.messaging.sending_receiving.notifications.PushNotificationMetadata
 import org.session.libsession.messaging.sending_receiving.notifications.SubscriptionRequest
 import org.session.libsession.messaging.sending_receiving.notifications.SubscriptionResponse
 import org.session.libsession.messaging.utilities.SodiumUtilities
@@ -26,7 +28,6 @@ import org.session.libsession.snode.Version
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocalNumber
 import org.session.libsession.utilities.bencode.Bencode
-import org.session.libsession.utilities.bencode.BencodeDict
 import org.session.libsession.utilities.bencode.BencodeList
 import org.session.libsession.utilities.bencode.BencodeString
 import org.session.libsignal.utilities.Base64
@@ -60,35 +61,32 @@ class FirebasePushManager(private val context: Context, private val prefs: TextS
         )
     }
 
-    fun decrypt(encPayload: ByteArray) {
+    fun decrypt(encPayload: ByteArray): ByteArray? {
         val encKey = getOrCreateNotificationKey()
         val nonce = encPayload.take(AEAD.XCHACHA20POLY1305_IETF_NPUBBYTES).toByteArray()
         val payload = encPayload.drop(AEAD.XCHACHA20POLY1305_IETF_NPUBBYTES).toByteArray()
-        val decrypted = SodiumUtilities.decrypt(payload, encKey.asBytes, nonce)
-            ?: return Log.e("Loki", "Failed to decrypt push notification")
+        val padded = SodiumUtilities.decrypt(payload, encKey.asBytes, nonce)
+            ?: error("Failed to decrypt push notification")
+        val decrypted = padded.dropLastWhile { it.toInt() == 0 }.toByteArray()
         val bencoded = Bencode.Decoder(decrypted)
-        val expectedList = (bencoded.decode() as? BencodeList)
-            ?: return Log.e("Loki", "Failed to decode bencoded list from payload")
+        val expectedList = (bencoded.decode() as? BencodeList)?.values
+            ?: error("Failed to decode bencoded list from payload")
 
-        val (metadata, content) = expectedList.values
-        val metadataDict = (metadata as? BencodeDict)?.values
-            ?: return Log.e("Loki", "Failed to decode metadata dict")
+        val metadataJson = (expectedList[0] as? BencodeString)?.value
+                ?: error("no metadata")
+        val metadata:PushNotificationMetadata = Json.decodeFromString(String(metadataJson))
 
-        val push = """
-            Push metadata received was:
-                @: ${metadataDict["@"]}
-                #: ${metadataDict["#"]}
-                n: ${metadataDict["n"]}
-                l: ${metadataDict["l"]}
-                B: ${metadataDict["B"]}
-        """.trimIndent()
+        val content: ByteArray? = if (expectedList.size >= 2) (expectedList[1] as? BencodeString)?.value else null
+        // null content is valid only if we got a "data_too_long" flag
+        if (content == null)
+            check(metadata.data_too_long) { "missing message data, but no too-long flag" }
+        else
+            check(metadata.data_len == content.size) { "wrong message data size" }
 
-        Log.d("Loki", "push")
+        Log.d("Loki",
+                "Received push for ${metadata.account}/${metadata.namespace}, msg ${metadata.msg_hash}, ${metadata.data_len}B")
 
-        val contentBytes = (content as? BencodeString)?.value
-            ?: return Log.e("Loki", "Failed to decode content string")
-
-        // TODO: something with contentBytes
+        return content
     }
 
     override fun register(force: Boolean) {
@@ -158,10 +156,10 @@ class FirebasePushManager(private val context: Context, private val prefs: TextS
                     TextSecurePreferences.setLastFCMUploadTime(context, System.currentTimeMillis())
                 } else {
                     val (_, message) = response.errorInfo()
-                    Log.d("Loki", "Couldn't register for FCM due to error: $message.")
+                    Log.e("Loki", "Couldn't register for FCM due to error: $message.")
                 }
             }.fail { exception ->
-                Log.d("Loki", "Couldn't register for FCM due to error: ${exception}.")
+                Log.e("Loki", "Couldn't register for FCM due to error: ${exception}.")
             }
         }
     }
