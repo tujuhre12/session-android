@@ -11,16 +11,14 @@ import network.loki.messenger.databinding.BlockedContactLayoutBinding
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.mms.GlideApp
 
-class BlockedContactsAdapter: ListAdapter<Recipient,BlockedContactsAdapter.ViewHolder>(RecipientDiffer()) {
+class BlockedContactsAdapter(val viewModel: BlockedContactsViewModel) : ListAdapter<Recipient,BlockedContactsAdapter.ViewHolder>(RecipientDiffer()) {
 
     class RecipientDiffer: DiffUtil.ItemCallback<Recipient>() {
         override fun areItemsTheSame(oldItem: Recipient, newItem: Recipient) = oldItem === newItem
         override fun areContentsTheSame(oldItem: Recipient, newItem: Recipient) = oldItem == newItem
     }
 
-    private val selectedItems = mutableListOf<Recipient>()
-
-    fun getSelectedItems() = selectedItems
+    fun getSelectedItems() = viewModel.state.selectedItems
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val itemView = LayoutInflater.from(parent.context).inflate(R.layout.blocked_contact_layout, parent, false)
@@ -28,19 +26,15 @@ class BlockedContactsAdapter: ListAdapter<Recipient,BlockedContactsAdapter.ViewH
     }
 
     private fun toggleSelection(recipient: Recipient, isSelected: Boolean, position: Int) {
-        if (isSelected) {
-            selectedItems -= recipient
-        } else {
-            selectedItems += recipient
-        }
+        viewModel.select(recipient, isSelected)
         notifyItemChanged(position)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val recipient = getItem(position)
-        val isSelected = recipient in selectedItems
+        val isSelected = recipient in viewModel.state.selectedItems
         holder.bind(recipient, isSelected) {
-            toggleSelection(recipient, isSelected, position)
+            toggleSelection(recipient, !isSelected, position)
         }
     }
 

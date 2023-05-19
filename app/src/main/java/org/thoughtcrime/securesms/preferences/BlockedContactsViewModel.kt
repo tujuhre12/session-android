@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 import kotlinx.coroutines.withContext
+import network.loki.messenger.R
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.Storage
@@ -29,7 +30,9 @@ class BlockedContactsViewModel @Inject constructor(private val storage: Storage)
 
     private val listUpdateChannel = Channel<Unit>(capacity = Channel.CONFLATED)
 
-    private val _contacts = MutableLiveData(BlockedContactsViewState(emptyList()))
+    private val _state = MutableLiveData(BlockedContactsViewState(emptyList(), emptySet()))
+
+    val state get() = _state.value!!
 
     fun subscribe(context: Context): LiveData<BlockedContactsViewState> {
         executor.launch(IO) {
@@ -45,21 +48,66 @@ class BlockedContactsViewModel @Inject constructor(private val storage: Storage)
         }
         executor.launch(IO) {
             for (update in listUpdateChannel) {
-                val blockedContactState = BlockedContactsViewState(storage.blockedContacts().sortedBy { it.name })
+                val blockedContactState = state.copy(
+                    blockedContacts = storage.blockedContacts().sortedBy { it.name }
+                )
                 withContext(Main) {
-                    _contacts.value = blockedContactState
+                    _state.value = blockedContactState
                 }
             }
         }
-        return _contacts
+        return _state
     }
 
-    fun unblock(toUnblock: List<Recipient>) {
-        storage.unblock(toUnblock)
+    fun unblock() {
+        storage.unblock(state.selectedItems)
+        _state.value = state.copy(selectedItems = emptySet())
+    }
+
+    fun select(selectedItem: Recipient, isSelected: Boolean) {
+        _state.value = state.run {
+            if (isSelected) copy(selectedItems = selectedItems + selectedItem)
+            else copy(selectedItems = selectedItems - selectedItem)
+        }
+    }
+
+    fun getTitle(context: Context): String =
+        if (state.selectedItems.size == 1) {
+            context.getString(R.string.Unblock_dialog__title_single, state.selectedItems.first().name)
+        } else {
+            context.getString(R.string.Unblock_dialog__title_multiple)
+        }
+
+    fun getMessage(context: Context): String {
+        if (state.selectedItems.size == 1) {
+            return context.getString(R.string.Unblock_dialog__message, state.selectedItems.first().name)
+        }
+        val stringBuilder = StringBuilder()
+        val iterator = state.selectedItems.iterator()
+        var numberAdded = 0
+        while (iterator.hasNext() && numberAdded < 3) {
+            val nextRecipient = iterator.next()
+            if (numberAdded > 0) stringBuilder.append(", ")
+
+            stringBuilder.append(nextRecipient.name)
+            numberAdded++
+        }
+        val overflow = state.selectedItems.size - numberAdded
+        if (overflow > 0) {
+            stringBuilder.append(" ")
+            val string = context.resources.getQuantityString(R.plurals.Unblock_dialog__message_multiple_overflow, overflow)
+            stringBuilder.append(string.format(overflow))
+        }
+       return context.getString(R.string.Unblock_dialog__message, stringBuilder.toString())
     }
 
     data class BlockedContactsViewState(
-        val blockedContacts: List<Recipient>
-    )
-
+        val blockedContacts: List<Recipient>,
+        val selectedItems: Set<Recipient>
+    ) {
+        val isEmpty get() = blockedContacts.isEmpty()
+        val unblockButtonEnabled get() = selectedItems.isNotEmpty()
+        val emptyStateMessageTextViewVisible get() = blockedContacts.isEmpty()
+        val nonEmptyStateGroupVisible get() = blockedContacts.isNotEmpty()
+    }
 }
