@@ -18,8 +18,6 @@ class BlockedContactsAdapter(val viewModel: BlockedContactsViewModel) : ListAdap
         override fun areContentsTheSame(oldItem: Recipient, newItem: Recipient) = oldItem == newItem
     }
 
-    fun getSelectedItems() = viewModel.state.selectedItems
-
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val itemView = LayoutInflater.from(parent.context).inflate(R.layout.blocked_contact_layout, parent, false)
         return ViewHolder(itemView)
