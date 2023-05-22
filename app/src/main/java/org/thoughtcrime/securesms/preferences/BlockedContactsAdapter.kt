@@ -32,6 +32,12 @@ class BlockedContactsAdapter(val viewModel: BlockedContactsViewModel) : ListAdap
         holder.bind(selectable, viewModel::toggle)
     }
 
+    override fun onBindViewHolder(holder: ViewHolder, position: Int, payloads: MutableList<Any>) {
+        val selectable = getItem(position)
+        if (payloads.isEmpty()) holder.bind(selectable, viewModel::toggle)
+        else holder.select(selectable.isSelected)
+    }
+
     override fun onViewRecycled(holder: ViewHolder) {
         super.onViewRecycled(holder)
         holder.binding.profilePictureView.root.recycle()
@@ -50,6 +56,10 @@ class BlockedContactsAdapter(val viewModel: BlockedContactsViewModel) : ListAdap
             }
             binding.root.setOnClickListener { toggle(selectable) }
             binding.selectButton.isSelected = selectable.isSelected
+        }
+
+        fun select(isSelected: Boolean) {
+            binding.selectButton.isSelected = isSelected
         }
     }
 }

@@ -104,7 +104,7 @@ class BlockedContactsViewModel @Inject constructor(private val storage: Storage)
 
     fun toggle(selectable: SelectableItem<Recipient>) {
         _state.value = state.run {
-            if (selectable.isSelected) copy(selectedItems = selectedItems - selectable.item)
+            if (selectable.item in selectedItems) copy(selectedItems = selectedItems - selectable.item)
             else copy(selectedItems = selectedItems + selectable.item)
         }
     }
