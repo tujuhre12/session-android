@@ -21,6 +21,7 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.Storage
+import org.thoughtcrime.securesms.util.adapter.SelectableItem
 import javax.inject.Inject
 
 @HiltViewModel
@@ -101,10 +102,19 @@ class BlockedContactsViewModel @Inject constructor(private val storage: Storage)
        return context.getString(R.string.Unblock_dialog__message, stringBuilder.toString())
     }
 
+    fun toggle(selectable: SelectableItem<Recipient>) {
+        _state.value = state.run {
+            if (selectable.isSelected) copy(selectedItems = selectedItems - selectable.item)
+            else copy(selectedItems = selectedItems + selectable.item)
+        }
+    }
+
     data class BlockedContactsViewState(
         val blockedContacts: List<Recipient>,
         val selectedItems: Set<Recipient>
     ) {
+        val items = blockedContacts.map { SelectableItem(it, it in selectedItems) }
+
         val isEmpty get() = blockedContacts.isEmpty()
         val unblockButtonEnabled get() = selectedItems.isNotEmpty()
         val emptyStateMessageTextViewVisible get() = blockedContacts.isEmpty()

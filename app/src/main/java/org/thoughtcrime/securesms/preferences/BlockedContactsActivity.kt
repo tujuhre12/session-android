@@ -27,13 +27,8 @@ class BlockedContactsActivity: PassphraseRequiredActionBarActivity() {
         AlertDialog.Builder(this)
             .setTitle(title)
             .setMessage(message)
-            .setPositiveButton(R.string.continue_2) { d, _ ->
-                viewModel.unblock()
-                d.dismiss()
-            }
-            .setNegativeButton(R.string.cancel) { d, _ ->
-                d.dismiss()
-            }
+            .setPositiveButton(R.string.continue_2) { _, _ -> viewModel.unblock() }
+            .setNegativeButton(R.string.cancel) { _, _ -> }
             .show()
     }
 
@@ -46,7 +41,7 @@ class BlockedContactsActivity: PassphraseRequiredActionBarActivity() {
 
         viewModel.subscribe(this)
             .observe(this) { state ->
-                adapter.submitList(state.blockedContacts)
+                adapter.submitList(state.items)
                 binding.emptyStateMessageTextView.isVisible = state.emptyStateMessageTextViewVisible
                 binding.nonEmptyStateGroup.isVisible = state.nonEmptyStateGroupVisible
                 binding.unblockButton.isEnabled = state.unblockButtonEnabled
