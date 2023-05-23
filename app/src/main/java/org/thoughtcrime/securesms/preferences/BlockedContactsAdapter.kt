@@ -28,14 +28,12 @@ class BlockedContactsAdapter(val viewModel: BlockedContactsViewModel) : ListAdap
             .let(::ViewHolder)
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val selectable = getItem(position)
-        holder.bind(selectable, viewModel::toggle)
+        holder.bind(getItem(position), viewModel::toggle)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int, payloads: MutableList<Any>) {
-        val selectable = getItem(position)
-        if (payloads.isEmpty()) holder.bind(selectable, viewModel::toggle)
-        else holder.select(selectable.isSelected)
+        if (payloads.isEmpty()) holder.bind(getItem(position), viewModel::toggle)
+        else holder.select(getItem(position).isSelected)
     }
 
     override fun onViewRecycled(holder: ViewHolder) {

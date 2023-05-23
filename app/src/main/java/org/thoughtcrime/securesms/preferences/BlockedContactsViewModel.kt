@@ -31,7 +31,7 @@ class BlockedContactsViewModel @Inject constructor(private val storage: Storage)
 
     private val listUpdateChannel = Channel<Unit>(capacity = Channel.CONFLATED)
 
-    private val _state = MutableLiveData(BlockedContactsViewState(emptyList(), emptySet()))
+    private val _state = MutableLiveData(BlockedContactsViewState())
 
     val state get() = _state.value!!
 
@@ -110,12 +110,11 @@ class BlockedContactsViewModel @Inject constructor(private val storage: Storage)
     }
 
     data class BlockedContactsViewState(
-        val blockedContacts: List<Recipient>,
-        val selectedItems: Set<Recipient>
+        val blockedContacts: List<Recipient> = emptyList(),
+        val selectedItems: Set<Recipient> = emptySet()
     ) {
         val items = blockedContacts.map { SelectableItem(it, it in selectedItems) }
 
-        val isEmpty get() = blockedContacts.isEmpty()
         val unblockButtonEnabled get() = selectedItems.isNotEmpty()
         val emptyStateMessageTextViewVisible get() = blockedContacts.isEmpty()
         val nonEmptyStateGroupVisible get() = blockedContacts.isNotEmpty()
