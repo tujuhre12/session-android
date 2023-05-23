@@ -8,11 +8,13 @@
         android:layout_gravity="center"
         android:background="?colorDividerBackground"
         android:layout_width="match_parent"
-        android:layout_height="1px"/>
+        android:layout_height="1dp"/>
 
     <FrameLayout
         android:layout_gravity="center"
         android:background="@drawable/view_separator"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
         android:layout_width="wrap_content"
