@@ -21,7 +21,6 @@ import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.annotation.DimenRes
 import androidx.appcompat.app.AlertDialog
-import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
@@ -113,6 +112,7 @@ import org.thoughtcrime.securesms.mms.*
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.reactions.ReactionsDialogFragment
 import org.thoughtcrime.securesms.reactions.any.ReactWithAnyEmojiDialogFragment
+import org.thoughtcrime.securesms.sessionDialog
 import org.thoughtcrime.securesms.util.*
 import java.lang.ref.WeakReference
 import java.util.*
@@ -962,21 +962,20 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     }
 
     override fun block(deleteThread: Boolean) {
-        val title = R.string.RecipientPreferenceActivity_block_this_contact_question
-        val message = R.string.RecipientPreferenceActivity_you_will_no_longer_receive_messages_and_calls_from_this_contact
-        val dialog = AlertDialog.Builder(this)
-            .setTitle(title)
-            .setMessage(message)
-            .setNegativeButton(android.R.string.cancel, null)
-            .setPositiveButton(R.string.RecipientPreferenceActivity_block) { _, _ ->
-                viewModel.block()
-                if (deleteThread) {
-                    viewModel.deleteThread()
-                    finish()
+        sessionDialog {
+            title(R.string.RecipientPreferenceActivity_block_this_contact_question)
+            text(R.string.RecipientPreferenceActivity_you_will_no_longer_receive_messages_and_calls_from_this_contact)
+            buttons {
+                destructiveButton(R.string.RecipientPreferenceActivity_block, R.string.AccessibilityId_block_confirm) {
+                    viewModel.block()
+                    if (deleteThread) {
+                        viewModel.deleteThread()
+                        finish()
+                    }
                 }
-            }.show()
-        val button = dialog.getButton(DialogInterface.BUTTON_POSITIVE)
-        button.setContentDescription("Confirm block")
+                cancelButton()
+            }
+        }
     }
 
     override fun copySessionID(sessionId: String) {
@@ -1016,15 +1015,17 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     }
 
     override fun unblock() {
-        val title = R.string.ConversationActivity_unblock_this_contact_question
-        val message = R.string.ConversationActivity_you_will_once_again_be_able_to_receive_messages_and_calls_from_this_contact
-        AlertDialog.Builder(this)
-            .setTitle(title)
-            .setMessage(message)
-            .setNegativeButton(android.R.string.cancel, null)
-            .setPositiveButton(R.string.ConversationActivity_unblock) { _, _ ->
-                viewModel.unblock()
-            }.show()
+        sessionDialog {
+            title(R.string.ConversationActivity_unblock_this_contact_question)
+            text(R.string.ConversationActivity_you_will_once_again_be_able_to_receive_messages_and_calls_from_this_contact)
+            buttons {
+                destructiveButton(
+                    R.string.ConversationActivity_unblock,
+                    R.string.AccessibilityId_block_confirm
+                ) { viewModel.unblock() }
+                cancelButton()
+            }
+        }
     }
 
     // `position` is the adapter position; not the visual position
