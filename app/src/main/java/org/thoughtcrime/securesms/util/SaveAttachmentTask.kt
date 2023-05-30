@@ -18,6 +18,7 @@ import org.session.libsession.utilities.task.ProgressDialogAsyncTask
 import org.session.libsignal.utilities.ExternalStorageUtil
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.mms.PartAuthority
+import org.thoughtcrime.securesms.sessionDialog
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -41,18 +42,19 @@ class SaveAttachmentTask : ProgressDialogAsyncTask<SaveAttachmentTask.Attachment
 
         @JvmStatic
         @JvmOverloads
-        fun showWarningDialog(context: Context, onAcceptListener: OnClickListener, count: Int = 1) {
-            val builder = AlertDialog.Builder(context)
-            builder.setTitle(R.string.ConversationFragment_save_to_sd_card)
-            builder.setIconAttribute(R.attr.dialog_alert_icon)
-            builder.setCancelable(true)
-            builder.setMessage(context.resources.getQuantityString(
+        fun showWarningDialog(context: Context, count: Int = 1, onAcceptListener: () -> Unit) {
+            context.sessionDialog {
+                title(R.string.ConversationFragment_save_to_sd_card)
+                setIconAttribute(R.attr.dialog_alert_icon)
+                text(context.resources.getQuantityString(
                     R.plurals.ConversationFragment_saving_n_media_to_storage_warning,
                     count,
                     count))
-            builder.setPositiveButton(R.string.yes, onAcceptListener)
-            builder.setNegativeButton(R.string.no, null)
-            builder.show()
+                buttons {
+                    button(R.string.yes) { onAcceptListener() }
+                    button(R.string.no)
+                }
+            }
         }
     }
 

@@ -38,6 +38,7 @@ import org.thoughtcrime.securesms.mms.GlideRequests
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.appearance.AppearanceSettingsActivity
 import org.thoughtcrime.securesms.profiles.ProfileMediaConstraints
+import org.thoughtcrime.securesms.sessionDialog
 import org.thoughtcrime.securesms.util.BitmapDecodingException
 import org.thoughtcrime.securesms.util.BitmapUtil
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
@@ -260,21 +261,19 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
     }
 
     private fun showEditProfilePictureUI() {
-        AlertDialog.Builder(this)
-            .setTitle(R.string.activity_settings_set_display_picture)
-            .setView(R.layout.dialog_change_avatar)
-            .setPositiveButton(R.string.activity_settings_upload) { _, _ ->
-                startAvatarSelection()
-            }
-            .setNegativeButton(R.string.cancel) { _, _ -> }
-            .apply {
+        sessionDialog {
+            title(R.string.activity_settings_set_display_picture)
+            view(R.layout.dialog_change_avatar)
+            buttons {
+                button(R.string.activity_settings_upload) { startAvatarSelection() }
                 if (TextSecurePreferences.getProfileAvatarId(context) != 0) {
-                    setNeutralButton(R.string.activity_settings_remove) { _, _ -> removeAvatar() }
+                    button(R.string.activity_settings_remove) { removeAvatar() }
                 }
+                cancelButton()
             }
-            .show().apply {
-                findViewById<ProfilePictureView>(R.id.profile_picture_view)?.let(::setupProfilePictureView)
-            }
+        }.apply {
+            findViewById<ProfilePictureView>(R.id.profile_picture_view)?.let(::setupProfilePictureView)
+        }
     }
 
     private fun removeAvatar() {

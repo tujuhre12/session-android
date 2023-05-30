@@ -63,6 +63,7 @@ import org.thoughtcrime.securesms.mms.GlideRequests
 import org.thoughtcrime.securesms.onboarding.SeedActivity
 import org.thoughtcrime.securesms.onboarding.SeedReminderViewDelegate
 import org.thoughtcrime.securesms.preferences.SettingsActivity
+import org.thoughtcrime.securesms.sessionDialog
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.IP2Country
@@ -488,52 +489,56 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
     }
 
     private fun blockConversation(thread: ThreadRecord) {
-        AlertDialog.Builder(this)
-                .setTitle(R.string.RecipientPreferenceActivity_block_this_contact_question)
-                .setMessage(R.string.RecipientPreferenceActivity_you_will_no_longer_receive_messages_and_calls_from_this_contact)
-                .setNegativeButton(android.R.string.cancel, null)
-                .setPositiveButton(R.string.RecipientPreferenceActivity_block) { dialog, _ ->
+        sessionDialog {
+            title(R.string.RecipientPreferenceActivity_block_this_contact_question)
+            text(R.string.RecipientPreferenceActivity_you_will_no_longer_receive_messages_and_calls_from_this_contact)
+            buttons {
+                button(R.string.RecipientPreferenceActivity_block) {
                     lifecycleScope.launch(Dispatchers.IO) {
                         recipientDatabase.setBlocked(thread.recipient, true)
                         withContext(Dispatchers.Main) {
-                            binding.recyclerView.adapter!!.notifyDataSetChanged()
-                            dialog.dismiss()
+                            binding.recyclerView.adapter?.notifyDataSetChanged()
                         }
                     }
-                }.show()
+                }
+                cancelButton()
+            }
+        }
     }
 
     private fun unblockConversation(thread: ThreadRecord) {
-        AlertDialog.Builder(this)
-                .setTitle(R.string.RecipientPreferenceActivity_unblock_this_contact_question)
-                .setMessage(R.string.RecipientPreferenceActivity_you_will_once_again_be_able_to_receive_messages_and_calls_from_this_contact)
-                .setNegativeButton(android.R.string.cancel, null)
-                .setPositiveButton(R.string.RecipientPreferenceActivity_unblock) { dialog, _ ->
+        sessionDialog {
+            title(R.string.RecipientPreferenceActivity_unblock_this_contact_question)
+            text(R.string.RecipientPreferenceActivity_you_will_once_again_be_able_to_receive_messages_and_calls_from_this_contact)
+            buttons {
+                button(R.string.RecipientPreferenceActivity_unblock) {
                     lifecycleScope.launch(Dispatchers.IO) {
                         recipientDatabase.setBlocked(thread.recipient, false)
                         withContext(Dispatchers.Main) {
-                            binding.recyclerView.adapter!!.notifyDataSetChanged()
-                            dialog.dismiss()
+                            binding.recyclerView.adapter?.notifyDataSetChanged()
                         }
                     }
-                }.show()
+                }
+                cancelButton()
+            }
+        }
     }
 
     private fun setConversationMuted(thread: ThreadRecord, isMuted: Boolean) {
-        if (!isMuted) {
-            lifecycleScope.launch(Dispatchers.IO) {
-                recipientDatabase.setMuted(thread.recipient, 0)
-                withContext(Dispatchers.Main) {
-                    binding.recyclerView.adapter!!.notifyDataSetChanged()
-                }
-            }
-        } else {
+        if (isMuted) {
             MuteDialog.show(this) { until: Long ->
                 lifecycleScope.launch(Dispatchers.IO) {
                     recipientDatabase.setMuted(thread.recipient, until)
                     withContext(Dispatchers.Main) {
                         binding.recyclerView.adapter!!.notifyDataSetChanged()
                     }
+                }
+            }
+        } else {
+            lifecycleScope.launch(Dispatchers.IO) {
+                recipientDatabase.setMuted(thread.recipient, 0)
+                withContext(Dispatchers.Main) {
+                    binding.recyclerView.adapter!!.notifyDataSetChanged()
                 }
             }
         }
@@ -574,48 +579,64 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         } else {
             resources.getString(R.string.activity_home_delete_conversation_dialog_message)
         }
-        val dialog = AlertDialog.Builder(this)
-        dialog.setMessage(message)
-        dialog.setPositiveButton(R.string.yes) { _, _ ->
-            lifecycleScope.launch(Dispatchers.Main) {
-                val context = this@HomeActivity as Context
-                // Cancel any outstanding jobs
-                DatabaseComponent.get(context).sessionJobDatabase().cancelPendingMessageSendJobs(threadID)
-                // Send a leave group message if this is an active closed group
-                if (recipient.address.isClosedGroup && DatabaseComponent.get(context).groupDatabase().isActive(recipient.address.toGroupString())) {
-                    var isClosedGroup: Boolean
-                    var groupPublicKey: String?
-                    try {
-                        groupPublicKey = GroupUtil.doubleDecodeGroupID(recipient.address.toString()).toHexString()
-                        isClosedGroup = DatabaseComponent.get(context).lokiAPIDatabase().isClosedGroup(groupPublicKey)
-                    } catch (e: IOException) {
-                        groupPublicKey = null
-                        isClosedGroup = false
-                    }
-                    if (isClosedGroup) {
-                        MessageSender.explicitLeave(groupPublicKey!!, false)
+
+        sessionDialog {
+            text(message)
+            buttons {
+                button(R.string.yes) {
+                    lifecycleScope.launch(Dispatchers.Main) {
+                        val context = this@HomeActivity as Context
+                        // Cancel any outstanding jobs
+                        DatabaseComponent.get(context).sessionJobDatabase()
+                            .cancelPendingMessageSendJobs(threadID)
+                        // Send a leave group message if this is an active closed group
+                        if (recipient.address.isClosedGroup && DatabaseComponent.get(context)
+                                .groupDatabase().isActive(recipient.address.toGroupString())
+                        ) {
+                            var isClosedGroup: Boolean
+                            var groupPublicKey: String?
+                            try {
+                                groupPublicKey =
+                                    GroupUtil.doubleDecodeGroupID(recipient.address.toString())
+                                        .toHexString()
+                                isClosedGroup = DatabaseComponent.get(context).lokiAPIDatabase()
+                                    .isClosedGroup(groupPublicKey)
+                            } catch (e: IOException) {
+                                groupPublicKey = null
+                                isClosedGroup = false
+                            }
+                            if (isClosedGroup) {
+                                MessageSender.explicitLeave(groupPublicKey!!, false)
+                            }
+                        }
+                        // Delete the conversation
+                        val v2OpenGroup =
+                            DatabaseComponent.get(this@HomeActivity).lokiThreadDatabase()
+                                .getOpenGroupChat(threadID)
+                        if (v2OpenGroup != null) {
+                            OpenGroupManager.delete(
+                                v2OpenGroup.server,
+                                v2OpenGroup.room,
+                                this@HomeActivity
+                            )
+                        } else {
+                            lifecycleScope.launch(Dispatchers.IO) {
+                                threadDb.deleteConversation(threadID)
+                            }
+                        }
+                        // Update the badge count
+                        ApplicationContext.getInstance(context).messageNotifier.updateNotification(
+                            context
+                        )
+                        // Notify the user
+                        val toastMessage =
+                            if (recipient.isGroupRecipient) R.string.MessageRecord_left_group else R.string.activity_home_conversation_deleted_message
+                        Toast.makeText(context, toastMessage, Toast.LENGTH_LONG).show()
                     }
                 }
-                // Delete the conversation
-                val v2OpenGroup = DatabaseComponent.get(this@HomeActivity).lokiThreadDatabase().getOpenGroupChat(threadID)
-                if (v2OpenGroup != null) {
-                    OpenGroupManager.delete(v2OpenGroup.server, v2OpenGroup.room, this@HomeActivity)
-                } else {
-                    lifecycleScope.launch(Dispatchers.IO) {
-                        threadDb.deleteConversation(threadID)
-                    }
-                }
-                // Update the badge count
-                ApplicationContext.getInstance(context).messageNotifier.updateNotification(context)
-                // Notify the user
-                val toastMessage = if (recipient.isGroupRecipient) R.string.MessageRecord_left_group else R.string.activity_home_conversation_deleted_message
-                Toast.makeText(context, toastMessage, Toast.LENGTH_LONG).show()
+                button(R.string.no)
             }
         }
-        dialog.setNegativeButton(R.string.no) { _, _ ->
-            // Do nothing
-        }
-        dialog.create().show()
     }
 
     private fun openSettings() {
@@ -624,22 +645,21 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
     }
 
     private fun showMessageRequests() {
-        val intent = Intent(this, MessageRequestsActivity::class.java)
-        push(intent)
+        Intent(this, MessageRequestsActivity::class.java).let(::push)
     }
 
     private fun hideMessageRequests() {
-        AlertDialog.Builder(this)
-            .setMessage("Hide message requests?")
-            .setPositiveButton(R.string.yes) { _, _ ->
-                textSecurePreferences.setHasHiddenMessageRequests()
-                setupMessageRequestsBanner()
-                homeViewModel.tryUpdateChannel()
+        sessionDialog {
+            text("Hide message requests?")
+            buttons {
+                button(R.string.yes) {
+                    textSecurePreferences.setHasHiddenMessageRequests()
+                    setupMessageRequestsBanner()
+                    homeViewModel.tryUpdateChannel()
+                }
+                button(R.string.no)
             }
-            .setNegativeButton(R.string.no) { _, _ ->
-                // Do nothing
-            }
-            .create().show()
+        }
     }
 
     private fun showNewConversation() {

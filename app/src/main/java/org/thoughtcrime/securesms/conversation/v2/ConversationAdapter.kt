@@ -31,6 +31,7 @@ import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.mms.GlideRequests
 import org.thoughtcrime.securesms.preferences.PrivacySettingsActivity
+import org.thoughtcrime.securesms.sessionDialog
 
 class ConversationAdapter(
     context: Context,
@@ -146,17 +147,17 @@ class ConversationAdapter(
                 viewHolder.view.bind(message, messageBefore)
                 if (message.isCallLog && message.isFirstMissedCall) {
                     viewHolder.view.setOnClickListener {
-                        AlertDialog.Builder(context)
-                            .setTitle(R.string.CallNotificationBuilder_first_call_title)
-                            .setMessage(R.string.CallNotificationBuilder_first_call_message)
-                            .setPositiveButton(R.string.activity_settings_title) { _, _ ->
-                                val intent = Intent(context, PrivacySettingsActivity::class.java)
-                                context.startActivity(intent)
+                        context.sessionDialog {
+                            title(R.string.CallNotificationBuilder_first_call_title)
+                            text(R.string.CallNotificationBuilder_first_call_message)
+                            buttons {
+                                button(R.string.activity_settings_title) {
+                                    Intent(context, PrivacySettingsActivity::class.java)
+                                        .let(context::startActivity)
+                                }
+                                cancelButton()
                             }
-                            .setNeutralButton(R.string.cancel) { d, _ ->
-                                d.dismiss()
-                            }
-                            .show()
+                        }
                     }
                 } else {
                     viewHolder.view.setOnClickListener(null)

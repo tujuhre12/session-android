@@ -9,6 +9,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityBlockedContactsBinding
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
+import org.thoughtcrime.securesms.sessionDialog
 
 @AndroidEntryPoint
 class BlockedContactsActivity: PassphraseRequiredActionBarActivity(), View.OnClickListener {
@@ -51,17 +52,14 @@ class BlockedContactsActivity: PassphraseRequiredActionBarActivity(), View.OnCli
                 getString(R.string.Unblock_dialog__message, stringBuilder.toString())
             }
 
-            AlertDialog.Builder(this)
-                .setTitle(title)
-                .setMessage(message)
-                .setPositiveButton(R.string.continue_2) { d, _ ->
-                    viewModel.unblock(contactsToUnblock)
-                    d.dismiss()
+            sessionDialog {
+                title(title)
+                text(message)
+                buttons {
+                    button(R.string.continue_2) { viewModel.unblock(contactsToUnblock) }
+                    cancelButton()
                 }
-                .setNegativeButton(R.string.cancel) { d, _ ->
-                    d.dismiss()
-                }
-                .show()
+            }
         }
     }
 

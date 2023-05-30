@@ -20,6 +20,7 @@ import org.session.libsession.utilities.ThemeUtil
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.home.HomeActivity
+import org.thoughtcrime.securesms.sessionDialog
 import org.thoughtcrime.securesms.util.GlowViewUtilities
 import org.thoughtcrime.securesms.util.PNModeView
 import org.thoughtcrime.securesms.util.disableClipping
@@ -151,12 +152,15 @@ class PNModeActivity : BaseActionBarActivity() {
 
     private fun register() {
         if (selectedOptionView == null) {
-            val dialog = AlertDialog.Builder(this)
-            dialog.setTitle(R.string.activity_pn_mode_no_option_picked_dialog_title)
-            dialog.setPositiveButton(R.string.ok) { _, _ -> }
-            dialog.create().show()
+            sessionDialog {
+                title(R.string.activity_pn_mode_no_option_picked_dialog_title)
+                buttons {
+                    button(R.string.ok)
+                }
+            }
             return
         }
+
         TextSecurePreferences.setIsUsingFCM(this, (selectedOptionView == binding.fcmOptionView))
         val application = ApplicationContext.getInstance(this)
         application.startPollingIfNeeded()

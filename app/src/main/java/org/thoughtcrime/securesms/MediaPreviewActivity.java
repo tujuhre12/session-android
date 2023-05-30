@@ -85,6 +85,7 @@ import java.io.IOException;
 import java.util.Locale;
 import java.util.WeakHashMap;
 
+import kotlin.Unit;
 import network.loki.messenger.R;
 
 /**
@@ -416,7 +417,7 @@ public class MediaPreviewActivity extends PassphraseRequiredActionBarActivity im
     MediaItem mediaItem = getCurrentMediaItem();
     if (mediaItem == null) return;
 
-    SaveAttachmentTask.showWarningDialog(this, (dialogInterface, i) -> {
+    SaveAttachmentTask.showWarningDialog(this, () -> {
       Permissions.with(this)
               .request(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
               .maxSdkVersion(Build.VERSION_CODES.P)
@@ -433,6 +434,7 @@ public class MediaPreviewActivity extends PassphraseRequiredActionBarActivity im
                 }
               })
               .execute();
+      return Unit.INSTANCE;
     });
   }
 
