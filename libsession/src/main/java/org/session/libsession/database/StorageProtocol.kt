@@ -37,8 +37,7 @@ interface StorageProtocol {
     fun getUserPublicKey(): String?
     fun getUserX25519KeyPair(): ECKeyPair
     fun getUserProfile(): Profile
-    fun setUserProfilePictureURL(newProfilePicture: String)
-    fun setProfileAvatar(recipient: Recipient, profileAvatar: String)
+    fun setProfileAvatar(recipient: Recipient, profileAvatar: String?)
     // Signal
     fun getOrGenerateRegistrationID(): Int
 

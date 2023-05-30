@@ -9,6 +9,8 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.setProfi
 import org.session.libsession.utilities.Util.copy
 import org.session.libsession.utilities.Util.equals
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.TextSecurePreferences.Companion.setProfilePictureURL
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.streams.ProfileCipherInputStream
 import org.session.libsignal.utilities.Log
@@ -18,7 +20,7 @@ import java.io.FileOutputStream
 import java.io.InputStream
 import java.security.SecureRandom
 
-class RetrieveProfileAvatarJob(val profileAvatar: String, val recipientAddress: Address): Job {
+class RetrieveProfileAvatarJob(val profileAvatar: String?, val recipientAddress: Address): Job {
     override var delegate: JobDelegate? = null
     override var id: String? = null
     override var failureCount: Int = 0
@@ -49,10 +51,16 @@ class RetrieveProfileAvatarJob(val profileAvatar: String, val recipientAddress: 
             return
         }
 
-        if (TextUtils.isEmpty(profileAvatar)) {
+        if (profileAvatar.isNullOrEmpty()) {
             Log.w(TAG, "Removing profile avatar for: " + recipient.address.serialize())
+
+            if (recipient.isLocalNumber) {
+                setProfileAvatarId(context, SecureRandom().nextInt())
+                setProfilePictureURL(context, null)
+            }
+
             AvatarHelper.delete(context, recipient.address)
-            storage.setProfileAvatar(recipient, profileAvatar)
+            storage.setProfileAvatar(recipient, null)
             return
         }
 
@@ -70,7 +78,9 @@ class RetrieveProfileAvatarJob(val profileAvatar: String, val recipientAddress: 
 
         if (recipient.isLocalNumber) {
             setProfileAvatarId(context, SecureRandom().nextInt())
+            setProfilePictureURL(context, profileAvatar)
         }
+
         storage.setProfileAvatar(recipient, profileAvatar)
     }
 
