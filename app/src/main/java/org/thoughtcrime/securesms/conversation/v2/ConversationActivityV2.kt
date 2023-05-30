@@ -21,7 +21,6 @@ import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.annotation.DimenRes
 import androidx.appcompat.app.AlertDialog
-import androidx.core.view.drawToBitmap
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.lifecycle.Observer
@@ -212,10 +211,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     var searchViewItem: MenuItem? = null
 
     private val isScrolledToBottom: Boolean
-        get() {
-            val position = layoutManager?.findFirstCompletelyVisibleItemPosition() ?: 0
-            return position == 0
-        }
+        get() = binding?.conversationRecyclerView?.isScrolledToBottom ?: true
 
     private val layoutManager: LinearLayoutManager?
         get() { return binding?.conversationRecyclerView?.layoutManager as LinearLayoutManager? }
@@ -667,7 +663,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     }
 
     private fun updateSendAfterApprovalText() {
-        binding?.textSendAfterApproval?.isGone = viewModel.recipient?.hasApprovedMe() ?: true
+        binding?.textSendAfterApproval?.isVisible = viewModel.showSendAfterApprovalText
     }
 
     private fun showOrHideInputIfNeeded() {
@@ -1109,12 +1105,11 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             }
 
         })
-        val contentBounds = Rect()
-        visibleMessageView.messageContentView.getGlobalVisibleRect(contentBounds)
+        val topLeft = intArrayOf(0, 0).also { visibleMessageView.messageContentView.getLocationInWindow(it) }
         val selectedConversationModel = SelectedConversationModel(
             messageContentBitmap,
-            contentBounds.left.toFloat(),
-            contentBounds.top.toFloat(),
+            topLeft[0].toFloat(),
+            topLeft[1].toFloat(),
             visibleMessageView.messageContentView.width,
             message.isOutgoing,
             visibleMessageView.messageContentView
@@ -1755,6 +1750,13 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         endActionMode()
     }
 
+    override fun resyncMessage(messages: Set<MessageRecord>) {
+        messages.iterator().forEach { messageRecord ->
+            ResendMessageUtilities.resend(this, messageRecord, viewModel.blindedPublicKey, isResync = true)
+        }
+        endActionMode()
+    }
+
     override fun resendMessage(messages: Set<MessageRecord>) {
         messages.iterator().forEach { messageRecord ->
             ResendMessageUtilities.resend(this, messageRecord, viewModel.blindedPublicKey)
@@ -1915,6 +1917,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             val selectedItems = setOf(message)
             when (action) {
                 ConversationReactionOverlay.Action.REPLY -> reply(selectedItems)
+                ConversationReactionOverlay.Action.RESYNC -> resyncMessage(selectedItems)
                 ConversationReactionOverlay.Action.RESEND -> resendMessage(selectedItems)
                 ConversationReactionOverlay.Action.DOWNLOAD -> saveAttachment(selectedItems)
                 ConversationReactionOverlay.Action.COPY_MESSAGE -> copyMessages(selectedItems)
