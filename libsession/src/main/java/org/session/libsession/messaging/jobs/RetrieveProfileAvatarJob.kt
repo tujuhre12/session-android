@@ -20,7 +20,7 @@ import java.io.FileOutputStream
 import java.io.InputStream
 import java.security.SecureRandom
 
-class RetrieveProfileAvatarJob(val profileAvatar: String?, val recipientAddress: Address): Job {
+class RetrieveProfileAvatarJob(private val profileAvatar: String?, private val recipientAddress: Address): Job {
     override var delegate: JobDelegate? = null
     override var id: String? = null
     override var failureCount: Int = 0
@@ -31,8 +31,8 @@ class RetrieveProfileAvatarJob(val profileAvatar: String?, val recipientAddress:
         val KEY: String = "RetrieveProfileAvatarJob"
 
         // Keys used for database storage
-        private val PROFILE_AVATAR_KEY = "profileAvatar"
-        private val RECEIPIENT_ADDRESS_KEY = "recipient"
+        private const val PROFILE_AVATAR_KEY = "profileAvatar"
+        private const val RECEIPIENT_ADDRESS_KEY = "recipient"
     }
 
     override fun execute(dispatcherName: String) {
@@ -97,7 +97,7 @@ class RetrieveProfileAvatarJob(val profileAvatar: String?, val recipientAddress:
 
     class Factory: Job.Factory<RetrieveProfileAvatarJob> {
         override fun create(data: Data): RetrieveProfileAvatarJob {
-            val profileAvatar = data.getString(PROFILE_AVATAR_KEY)
+            val profileAvatar = if (data.hasString(PROFILE_AVATAR_KEY)) { data.getString(PROFILE_AVATAR_KEY) } else { null }
             val recipientAddress = Address.fromSerialized(data.getString(RECEIPIENT_ADDRESS_KEY))
             return RetrieveProfileAvatarJob(profileAvatar, recipientAddress)
         }
