@@ -150,13 +150,11 @@ class ConversationAdapter(
                         context.sessionDialog {
                             title(R.string.CallNotificationBuilder_first_call_title)
                             text(R.string.CallNotificationBuilder_first_call_message)
-                            buttons {
-                                button(R.string.activity_settings_title) {
-                                    Intent(context, PrivacySettingsActivity::class.java)
-                                        .let(context::startActivity)
-                                }
-                                cancelButton()
+                            button(R.string.activity_settings_title) {
+                                Intent(context, PrivacySettingsActivity::class.java)
+                                    .let(context::startActivity)
                             }
+                            cancelButton()
                         }
                     }
                 } else {

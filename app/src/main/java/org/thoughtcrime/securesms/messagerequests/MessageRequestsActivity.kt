@@ -86,10 +86,8 @@ class MessageRequestsActivity : PassphraseRequiredActionBarActivity(), Conversat
         sessionDialog {
             title(R.string.RecipientPreferenceActivity_block_this_contact_question)
                 text(R.string.message_requests_block_message)
-                buttons {
-                    button(R.string.recipient_preferences__block) { doBlock() }
-                    button(R.string.no)
-                }
+                button(R.string.recipient_preferences__block) { doBlock() }
+                button(R.string.no)
         }
     }
 
@@ -105,10 +103,8 @@ class MessageRequestsActivity : PassphraseRequiredActionBarActivity(), Conversat
         sessionDialog {
             title(R.string.decline)
             text(resources.getString(R.string.message_requests_decline_message))
-            buttons {
-                button(R.string.decline) { doDecline() }
-                button(R.string.no)
-            }
+            button(R.string.decline) { doDecline() }
+            button(R.string.no)
         }
     }
 
@@ -129,10 +125,8 @@ class MessageRequestsActivity : PassphraseRequiredActionBarActivity(), Conversat
 
         sessionDialog {
             text(resources.getString(R.string.message_requests_clear_all_message))
-            buttons {
-                button(R.string.yes) { doDeleteAllAndBlock() }
-                button(R.string.no)
-            }
+            button(R.string.yes) { doDeleteAllAndBlock() }
+            button(R.string.no)
         }
     }
 }

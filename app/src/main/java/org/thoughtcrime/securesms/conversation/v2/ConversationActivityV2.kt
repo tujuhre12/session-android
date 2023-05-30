@@ -965,16 +965,14 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         sessionDialog {
             title(R.string.RecipientPreferenceActivity_block_this_contact_question)
             text(R.string.RecipientPreferenceActivity_you_will_no_longer_receive_messages_and_calls_from_this_contact)
-            buttons {
-                destructiveButton(R.string.RecipientPreferenceActivity_block, R.string.AccessibilityId_block_confirm) {
-                    viewModel.block()
-                    if (deleteThread) {
-                        viewModel.deleteThread()
-                        finish()
-                    }
+            destructiveButton(R.string.RecipientPreferenceActivity_block, R.string.AccessibilityId_block_confirm) {
+                viewModel.block()
+                if (deleteThread) {
+                    viewModel.deleteThread()
+                    finish()
                 }
-                cancelButton()
             }
+            cancelButton()
         }
     }
 
@@ -1018,13 +1016,11 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         sessionDialog {
             title(R.string.ConversationActivity_unblock_this_contact_question)
             text(R.string.ConversationActivity_you_will_once_again_be_able_to_receive_messages_and_calls_from_this_contact)
-            buttons {
-                destructiveButton(
-                    R.string.ConversationActivity_unblock,
-                    R.string.AccessibilityId_block_confirm
-                ) { viewModel.unblock() }
-                cancelButton()
-            }
+            destructiveButton(
+                R.string.ConversationActivity_unblock,
+                R.string.AccessibilityId_block_confirm
+            ) { viewModel.unblock() }
+            cancelButton()
         }
     }
 
@@ -1464,13 +1460,11 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             sessionDialog {
                 title(R.string.giphy_permission_title)
                 text(R.string.giphy_permission_message)
-                buttons {
-                    button(R.string.continue_2) {
-                        textSecurePreferences.setHasSeenGIFMetaDataWarning()
-                        selectGif()
-                    }
-                    cancelButton()
+                button(R.string.continue_2) {
+                    textSecurePreferences.setHasSeenGIFMetaDataWarning()
+                    selectGif()
                 }
+                cancelButton()
             }
         } else {
             selectGif()
@@ -1629,10 +1623,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             sessionDialog {
                 title(resources.getQuantityString(R.plurals.ConversationFragment_delete_selected_messages, messageCount, messageCount))
                 text(resources.getQuantityString(R.plurals.ConversationFragment_this_will_permanently_delete_all_n_selected_messages, messageCount, messageCount))
-                buttons {
-                    button(R.string.delete) { messages.forEach(viewModel::deleteForEveryone); endActionMode() }
-                    cancelButton { endActionMode() }
-                }
+                button(R.string.delete) { messages.forEach(viewModel::deleteForEveryone); endActionMode() }
+                cancelButton { endActionMode() }
             }
         } else if (allSentByCurrentUser && allHasHash) {
             val bottomSheet = DeleteOptionsBottomSheet()
@@ -1658,10 +1650,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             sessionDialog {
                 title(resources.getQuantityString(R.plurals.ConversationFragment_delete_selected_messages, messageCount, messageCount))
                 text(resources.getQuantityString(R.plurals.ConversationFragment_this_will_permanently_delete_all_n_selected_messages, messageCount, messageCount))
-                buttons {
-                    button(R.string.delete) { messages.forEach(viewModel::deleteLocally); endActionMode() }
-                    cancelButton(::endActionMode)
-                }
+                button(R.string.delete) { messages.forEach(viewModel::deleteLocally); endActionMode() }
+                cancelButton(::endActionMode)
             }
         }
     }
@@ -1670,10 +1660,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         sessionDialog {
             title(R.string.ConversationFragment_ban_selected_user)
             text("This will ban the selected user from this room. It won't ban them from other rooms.")
-            buttons {
-                button(R.string.ban) { viewModel.banUser(messages.first().individualRecipient); endActionMode() }
-                cancelButton(::endActionMode)
-            }
+            button(R.string.ban) { viewModel.banUser(messages.first().individualRecipient); endActionMode() }
+            cancelButton(::endActionMode)
         }
     }
 
@@ -1681,10 +1669,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         sessionDialog {
             title(R.string.ConversationFragment_ban_selected_user)
             text("This will ban the selected user from this room and delete all messages sent by them. It won't ban them from other rooms or delete the messages they sent there.")
-            buttons {
-                button(R.string.ban) { viewModel.banAndDeleteAll(messages.first().individualRecipient); endActionMode() }
-                cancelButton(::endActionMode)
-            }
+            button(R.string.ban) { viewModel.banAndDeleteAll(messages.first().individualRecipient); endActionMode() }
+            cancelButton(::endActionMode)
         }
     }
 

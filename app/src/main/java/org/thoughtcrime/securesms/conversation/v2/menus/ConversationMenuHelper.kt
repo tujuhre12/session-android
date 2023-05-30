@@ -190,12 +190,10 @@ object ConversationMenuHelper {
             context.sessionDialog {
                 title(R.string.ConversationActivity_call_title)
                 text(R.string.ConversationActivity_call_prompt)
-                buttons {
-                    button(R.string.activity_settings_title, R.string.AccessibilityId_settings) {
-                        Intent(context, PrivacySettingsActivity::class.java).let(context::startActivity)
-                    }
-                    cancelButton()
+                button(R.string.activity_settings_title, R.string.AccessibilityId_settings) {
+                    Intent(context, PrivacySettingsActivity::class.java).let(context::startActivity)
                 }
+                cancelButton()
             }
             return
         }
@@ -308,20 +306,18 @@ object ConversationMenuHelper {
         context.sessionDialog {
             title(R.string.ConversationActivity_leave_group)
             text(message)
-            buttons {
-                button(R.string.yes) {
-                    try {
-                        val groupPublicKey = doubleDecodeGroupID(thread.address.toString()).toHexString()
-                        val isClosedGroup = DatabaseComponent.get(context).lokiAPIDatabase().isClosedGroup(groupPublicKey)
+            button(R.string.yes) {
+                try {
+                    val groupPublicKey = doubleDecodeGroupID(thread.address.toString()).toHexString()
+                    val isClosedGroup = DatabaseComponent.get(context).lokiAPIDatabase().isClosedGroup(groupPublicKey)
 
-                        if (isClosedGroup) MessageSender.leave(groupPublicKey, true)
-                        else onLeaveFailed()
-                    } catch (e: Exception) {
-                        onLeaveFailed()
-                    }
+                    if (isClosedGroup) MessageSender.leave(groupPublicKey, true)
+                    else onLeaveFailed()
+                } catch (e: Exception) {
+                    onLeaveFailed()
                 }
-                button(R.string.no)
             }
+            button(R.string.no)
         }
     }
 

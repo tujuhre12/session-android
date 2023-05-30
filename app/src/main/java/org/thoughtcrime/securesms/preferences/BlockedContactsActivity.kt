@@ -55,10 +55,8 @@ class BlockedContactsActivity: PassphraseRequiredActionBarActivity(), View.OnCli
             sessionDialog {
                 title(title)
                 text(message)
-                buttons {
-                    button(R.string.continue_2) { viewModel.unblock(contactsToUnblock) }
-                    cancelButton()
-                }
+                button(R.string.continue_2) { viewModel.unblock(contactsToUnblock) }
+                cancelButton()
             }
         }
     }

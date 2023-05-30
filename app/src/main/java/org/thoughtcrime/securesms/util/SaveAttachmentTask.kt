@@ -3,7 +3,6 @@ package org.thoughtcrime.securesms.util
 import android.content.ContentResolver
 import android.content.ContentValues
 import android.content.Context
-import android.content.DialogInterface.OnClickListener
 import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Build
@@ -12,7 +11,6 @@ import android.provider.MediaStore
 import android.text.TextUtils
 import android.webkit.MimeTypeMap
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import network.loki.messenger.R
 import org.session.libsession.utilities.task.ProgressDialogAsyncTask
 import org.session.libsignal.utilities.ExternalStorageUtil
@@ -31,7 +29,12 @@ import java.util.concurrent.TimeUnit
  * Saves attachment files to an external storage using [MediaStore] API.
  * Requires [android.Manifest.permission.WRITE_EXTERNAL_STORAGE] on API 28 and below.
  */
-class SaveAttachmentTask : ProgressDialogAsyncTask<SaveAttachmentTask.Attachment, Void, Pair<Int, String?>> {
+class SaveAttachmentTask @JvmOverloads constructor(context: Context, count: Int = 1) :
+    ProgressDialogAsyncTask<SaveAttachmentTask.Attachment, Void, Pair<Int, String?>>(
+        context,
+        context.resources.getQuantityString(R.plurals.ConversationFragment_saving_n_attachments, count, count),
+        context.resources.getQuantityString(R.plurals.ConversationFragment_saving_n_attachments_to_sd_card, count, count)
+    ) {
 
     companion object {
         @JvmStatic
@@ -42,31 +45,25 @@ class SaveAttachmentTask : ProgressDialogAsyncTask<SaveAttachmentTask.Attachment
 
         @JvmStatic
         @JvmOverloads
-        fun showWarningDialog(context: Context, count: Int = 1, onAcceptListener: () -> Unit) {
+        fun showWarningDialog(context: Context, count: Int = 1, onAcceptListener: () -> Unit = {}) {
             context.sessionDialog {
                 title(R.string.ConversationFragment_save_to_sd_card)
-                setIconAttribute(R.attr.dialog_alert_icon)
+                iconAttribute(R.attr.dialog_alert_icon)
                 text(context.resources.getQuantityString(
                     R.plurals.ConversationFragment_saving_n_media_to_storage_warning,
                     count,
                     count))
-                buttons {
-                    button(R.string.yes) { onAcceptListener() }
-                    button(R.string.no)
-                }
+                button(R.string.yes) { onAcceptListener() }
+                button(R.string.no)
             }
         }
     }
 
     private val contextReference: WeakReference<Context>
-    private val attachmentCount: Int
+    private val attachmentCount: Int = count
 
-    @JvmOverloads
-    constructor(context: Context, count: Int = 1): super(context,
-            context.resources.getQuantityString(R.plurals.ConversationFragment_saving_n_attachments, count, count),
-            context.resources.getQuantityString(R.plurals.ConversationFragment_saving_n_attachments_to_sd_card, count, count)) {
+    init {
         this.contextReference = WeakReference(context)
-        this.attachmentCount = count
     }
 
     override fun doInBackground(vararg attachments: Attachment?): Pair<Int, String?> {

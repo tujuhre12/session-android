@@ -264,13 +264,11 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
         sessionDialog {
             title(R.string.activity_settings_set_display_picture)
             view(R.layout.dialog_change_avatar)
-            buttons {
-                button(R.string.activity_settings_upload) { startAvatarSelection() }
-                if (TextSecurePreferences.getProfileAvatarId(context) != 0) {
-                    button(R.string.activity_settings_remove) { removeAvatar() }
-                }
-                cancelButton()
+            button(R.string.activity_settings_upload) { startAvatarSelection() }
+            if (TextSecurePreferences.getProfileAvatarId(context) != 0) {
+                button(R.string.activity_settings_remove) { removeAvatar() }
             }
+            cancelButton()
         }.apply {
             findViewById<ProfilePictureView>(R.id.profile_picture_view)?.let(::setupProfilePictureView)
         }

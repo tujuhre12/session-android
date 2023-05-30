@@ -154,9 +154,7 @@ class PNModeActivity : BaseActionBarActivity() {
         if (selectedOptionView == null) {
             sessionDialog {
                 title(R.string.activity_pn_mode_no_option_picked_dialog_title)
-                buttons {
-                    button(R.string.ok)
-                }
+                button(R.string.ok)
             }
             return
         }
