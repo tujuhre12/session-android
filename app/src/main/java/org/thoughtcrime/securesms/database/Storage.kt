@@ -380,6 +380,22 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         }
     }
 
+    override fun markAsSyncing(timestamp: Long, author: String) {
+        DatabaseComponent.get(context).mmsSmsDatabase()
+            .getMessageFor(timestamp, author)
+            ?.run { getMmsDatabaseElseSms(isMms).markAsSyncing(id) }
+    }
+
+    private fun getMmsDatabaseElseSms(isMms: Boolean) =
+        if (isMms) DatabaseComponent.get(context).mmsDatabase()
+        else DatabaseComponent.get(context).smsDatabase()
+
+    override fun markAsResyncing(timestamp: Long, author: String) {
+        DatabaseComponent.get(context).mmsSmsDatabase()
+            .getMessageFor(timestamp, author)
+            ?.run { getMmsDatabaseElseSms(isMms).markAsResyncing(id) }
+    }
+
     override fun markAsSending(timestamp: Long, author: String) {
         val database = DatabaseComponent.get(context).mmsSmsDatabase()
         val messageRecord = database.getMessageFor(timestamp, author) ?: return
@@ -405,7 +421,7 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         }
     }
 
-    override fun setErrorMessage(timestamp: Long, author: String, error: Exception) {
+    override fun markAsSentFailed(timestamp: Long, author: String, error: Exception) {
         val database = DatabaseComponent.get(context).mmsSmsDatabase()
         val messageRecord = database.getMessageFor(timestamp, author) ?: return
         if (messageRecord.isMms) {
@@ -415,6 +431,26 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
             val smsDatabase = DatabaseComponent.get(context).smsDatabase()
             smsDatabase.markAsSentFailed(messageRecord.getId())
         }
+        if (error.localizedMessage != null) {
+            val message: String
+            if (error is OnionRequestAPI.HTTPRequestFailedAtDestinationException && error.statusCode == 429) {
+                message = "429: Rate limited."
+            } else {
+                message = error.localizedMessage!!
+            }
+            DatabaseComponent.get(context).lokiMessageDatabase().setErrorMessage(messageRecord.getId(), message)
+        } else {
+            DatabaseComponent.get(context).lokiMessageDatabase().setErrorMessage(messageRecord.getId(), error.javaClass.simpleName)
+        }
+    }
+
+    override fun markAsSyncFailed(timestamp: Long, author: String, error: Exception) {
+        val database = DatabaseComponent.get(context).mmsSmsDatabase()
+        val messageRecord = database.getMessageFor(timestamp, author) ?: return
+
+        database.getMessageFor(timestamp, author)
+            ?.run { getMmsDatabaseElseSms(isMms).markAsSyncFailed(id) }
+
         if (error.localizedMessage != null) {
             val message: String
             if (error is OnionRequestAPI.HTTPRequestFailedAtDestinationException && error.statusCode == 429) {
@@ -977,7 +1013,7 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         DatabaseComponent.get(context).reactionDatabase().deleteMessageReactions(MessageId(messageId, mms))
     }
 
-    override fun unblock(toUnblock: List<Recipient>) {
+    override fun unblock(toUnblock: Iterable<Recipient>) {
         val recipientDb = DatabaseComponent.get(context).recipientDatabase()
         recipientDb.setBlocked(toUnblock, false)
     }
@@ -986,5 +1022,4 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         val recipientDb = DatabaseComponent.get(context).recipientDatabase()
         return recipientDb.blockedContacts
     }
-
 }
