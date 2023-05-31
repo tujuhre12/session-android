@@ -1,21 +1,17 @@
 package org.thoughtcrime.securesms.preferences;
 
-import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.KeyguardManager;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.widget.Button;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.view.ContextThemeWrapper;
-import androidx.fragment.app.Fragment;
 import androidx.preference.Preference;
 
 import org.session.libsession.utilities.TextSecurePreferences;
@@ -26,7 +22,6 @@ import org.thoughtcrime.securesms.service.KeyCachingService;
 import org.thoughtcrime.securesms.util.CallNotificationBuilder;
 import org.thoughtcrime.securesms.util.IntentUtils;
 
-import kotlin.jvm.functions.Function1;
 import network.loki.messenger.BuildConfig;
 import network.loki.messenger.R;
 
@@ -152,51 +147,6 @@ public class PrivacySettingsPreferenceFragment extends ListSummaryPreferenceFrag
     @Override
     public boolean onPreferenceChange(Preference preference, Object newValue) {
       return true;
-    }
-  }
-
-  private class CallToggleListener implements Preference.OnPreferenceChangeListener {
-
-    private final Fragment context;
-    private final Function1<Boolean, Void> setCallback;
-
-    private CallToggleListener(Fragment context, Function1<Boolean,Void> setCallback) {
-      this.context = context;
-      this.setCallback = setCallback;
-    }
-
-    private void requestMicrophonePermission() {
-      Permissions.with(context)
-              .request(Manifest.permission.RECORD_AUDIO)
-              .onAllGranted(() -> {
-                TextSecurePreferences.setBooleanPreference(context.requireContext(), TextSecurePreferences.CALL_NOTIFICATIONS_ENABLED, true);
-                setCallback.invoke(true);
-              })
-              .onAnyDenied(() -> setCallback.invoke(false))
-              .execute();
-    }
-
-    @Override
-    public boolean onPreferenceChange(Preference preference, Object newValue) {
-      boolean val = (boolean) newValue;
-      if (val) {
-        // check if we've shown the info dialog and check for microphone permissions
-        AlertDialog dialog = new AlertDialog.Builder(new ContextThemeWrapper(context.requireContext(), R.style.ThemeOverlay_Session_AlertDialog))
-                .setTitle(R.string.dialog_voice_video_title)
-                .setMessage(R.string.dialog_voice_video_message)
-                .setPositiveButton(R.string.dialog_link_preview_enable_button_title, (d, w) -> {
-                  requestMicrophonePermission();
-                })
-                .setNegativeButton(R.string.cancel, (d, w) -> {
-
-                })
-                .show();
-          Button positiveButton = dialog.getButton(DialogInterface.BUTTON_POSITIVE);
-          positiveButton.setContentDescription("Enable");
-      return false;
-      } else {
-        return true;
-      }
     }
   }
 
