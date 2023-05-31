@@ -70,9 +70,7 @@ import org.session.libsignal.utilities.ListenableFuture
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
 import org.session.libsignal.utilities.hexEncodedPrivateKey
-import org.thoughtcrime.securesms.ApplicationContext
-import org.thoughtcrime.securesms.ExpirationDialog
-import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
+import org.thoughtcrime.securesms.*
 import org.thoughtcrime.securesms.attachments.ScreenshotObserver
 import org.thoughtcrime.securesms.audio.AudioRecorder
 import org.thoughtcrime.securesms.contacts.SelectContactsActivity.Companion.selectedContactsKey
@@ -113,7 +111,6 @@ import org.thoughtcrime.securesms.mms.*
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.reactions.ReactionsDialogFragment
 import org.thoughtcrime.securesms.reactions.any.ReactWithAnyEmojiDialogFragment
-import org.thoughtcrime.securesms.sessionDialog
 import org.thoughtcrime.securesms.util.*
 import java.lang.ref.WeakReference
 import java.util.*
@@ -1001,13 +998,13 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             val group = groupDb.getGroup(thread.address.toGroupString()).orNull()
             if (group?.isActive == false) { return }
         }
-        ExpirationDialog.show(this, thread.expireMessages) { expirationTime: Int ->
+        showExpirationDialog(thread.expireMessages) { expirationTime ->
             recipientDb.setExpireMessages(thread, expirationTime)
             val message = ExpirationTimerUpdate(expirationTime)
             message.recipient = thread.address.serialize()
             message.sentTimestamp = SnodeAPI.nowWithOffset
-            val expiringMessageManager = ApplicationContext.getInstance(this).expiringMessageManager
-            expiringMessageManager.setExpirationTimer(message)
+            ApplicationContext.getInstance(this)
+                .expiringMessageManager.setExpirationTimer(message)
             MessageSender.send(message, thread.address)
             invalidateOptionsMenu()
         }

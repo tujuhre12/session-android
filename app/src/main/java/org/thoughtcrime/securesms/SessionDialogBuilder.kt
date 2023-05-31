@@ -29,8 +29,8 @@ annotation class DialogDsl
 @DialogDsl
 class SessionDialogBuilder(val context: Context) {
 
-    val dp20 = toPx(20, context.resources)
-    val dp40 = toPx(40, context.resources)
+    private val dp20 = toPx(20, context.resources)
+    private val dp40 = toPx(40, context.resources)
 
     private val dialogBuilder: AlertDialog.Builder = AlertDialog.Builder(context)
 
@@ -114,6 +114,7 @@ class SessionDialogBuilder(val context: Context) {
         listener
     )
 
+    fun okButton(listener: (() -> Unit) = {}) = button(android.R.string.ok, listener = listener)
     fun cancelButton(listener: (() -> Unit) = {}) = button(android.R.string.cancel, R.string.AccessibilityId_cancel_button, listener = listener)
 
     fun button(
@@ -132,8 +133,8 @@ class SessionDialogBuilder(val context: Context) {
             }
         }.let(buttonLayout::addView)
 
-    fun create(): AlertDialog = dialogBuilder.create()
-    fun show(): AlertDialog = dialogBuilder.show()
+    fun create(): AlertDialog = dialogBuilder.create().also { dialog = it }
+    fun show(): AlertDialog = dialogBuilder.show().also { dialog = it }
 }
 
 fun Context.sessionDialog(build: SessionDialogBuilder.() -> Unit): AlertDialog =
