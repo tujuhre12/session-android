@@ -96,6 +96,13 @@ class SessionDialogBuilder(val context: Context) {
         currentSelected
     ) { dialog, it -> onSelect(it); dialog.dismiss() }
 
+    fun items(
+        options: Array<String>,
+        onSelect: (Int) -> Unit
+    ): AlertDialog.Builder = dialogBuilder.setItems(
+        options,
+    ) { dialog, it -> onSelect(it); dialog.dismiss() }
+
     fun destructiveButton(
         @StringRes text: Int,
         @StringRes contentDescription: Int,

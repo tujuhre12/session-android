@@ -34,7 +34,6 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.guava.Optional
 import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.MediaOverviewActivity
-import org.thoughtcrime.securesms.MuteDialog
 import org.thoughtcrime.securesms.ShortcutLauncherActivity
 import org.thoughtcrime.securesms.calls.WebRtcCallActivity
 import org.thoughtcrime.securesms.contacts.SelectContactsActivity
@@ -46,6 +45,7 @@ import org.thoughtcrime.securesms.groups.EditClosedGroupActivity.Companion.group
 import org.thoughtcrime.securesms.preferences.PrivacySettingsActivity
 import org.thoughtcrime.securesms.service.WebRtcCallService
 import org.thoughtcrime.securesms.sessionDialog
+import org.thoughtcrime.securesms.showMuteDialog
 import org.thoughtcrime.securesms.util.BitmapUtil
 import java.io.IOException
 
@@ -333,7 +333,7 @@ object ConversationMenuHelper {
     }
 
     private fun mute(context: Context, thread: Recipient) {
-        MuteDialog.show(ContextThemeWrapper(context, context.theme)) { until: Long ->
+        showMuteDialog(ContextThemeWrapper(context, context.theme)) { until ->
             DatabaseComponent.get(context).recipientDatabase().setMuted(thread, until)
         }
     }

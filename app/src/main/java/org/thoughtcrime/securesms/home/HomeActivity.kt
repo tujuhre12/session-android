@@ -41,7 +41,6 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.ThreadUtils
 import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.ApplicationContext
-import org.thoughtcrime.securesms.MuteDialog
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.conversation.start.NewConversationFragment
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
@@ -64,6 +63,7 @@ import org.thoughtcrime.securesms.onboarding.SeedActivity
 import org.thoughtcrime.securesms.onboarding.SeedReminderViewDelegate
 import org.thoughtcrime.securesms.preferences.SettingsActivity
 import org.thoughtcrime.securesms.sessionDialog
+import org.thoughtcrime.securesms.showMuteDialog
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.IP2Country
@@ -522,7 +522,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
 
     private fun setConversationMuted(thread: ThreadRecord, isMuted: Boolean) {
         if (isMuted) {
-            MuteDialog.show(this) { until: Long ->
+            showMuteDialog(this) { until ->
                 lifecycleScope.launch(Dispatchers.IO) {
                     recipientDatabase.setMuted(thread.recipient, until)
                     withContext(Dispatchers.Main) {
