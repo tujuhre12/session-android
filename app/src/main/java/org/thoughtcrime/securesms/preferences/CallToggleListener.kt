@@ -11,7 +11,7 @@ import org.thoughtcrime.securesms.sessionDialog
 
 internal class CallToggleListener(
     private val context: Fragment,
-    private val setCallback: Function1<Boolean?, Void>
+    private val setCallback: (Boolean) -> Unit
 ) : Preference.OnPreferenceChangeListener {
 
     override fun onPreferenceChange(preference: Preference, newValue: Any): Boolean {
