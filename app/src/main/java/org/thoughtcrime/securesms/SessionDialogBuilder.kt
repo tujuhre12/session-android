@@ -17,6 +17,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.view.setMargins
 import androidx.core.view.setPadding
 import androidx.core.view.updateMargins
+import androidx.fragment.app.Fragment
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.util.toPx
 
@@ -27,6 +28,9 @@ annotation class DialogDsl
 
 @DialogDsl
 class SessionDialogBuilder(val context: Context) {
+
+    val dp20 = toPx(20, context.resources)
+    val dp40 = toPx(40, context.resources)
 
     private val dialogBuilder: AlertDialog.Builder = AlertDialog.Builder(context)
 
@@ -49,19 +53,19 @@ class SessionDialogBuilder(val context: Context) {
 
     fun title(text: CharSequence?) = title(text?.toString())
     fun title(text: String?) {
-        text(text, R.style.TextAppearance_AppCompat_Title) { setPadding(toPx(20, resources)) }
+        text(text, R.style.TextAppearance_AppCompat_Title) { setPadding(dp20) }
     }
 
     fun text(@StringRes id: Int, style: Int = 0) = text(context.getString(id), style)
-    fun text(text: CharSequence?) = text(text?.toString())
-    fun text(text: String?, @StyleRes style: Int = 0) {
+    fun text(text: CharSequence?, @StyleRes style: Int = 0) {
         text(text, style) {
             layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT)
-                .apply { toPx(40, resources).let { updateMargins(it, 0, it, 0) } }
+                .apply { updateMargins(dp40, 0, dp40, dp20) }
         }
     }
 
-    private fun text(text: String?, @StyleRes style: Int, modify: TextView.() -> Unit) {
+
+    private fun text(text: CharSequence?, @StyleRes style: Int, modify: TextView.() -> Unit) {
         text ?: return
         TextView(context, null, 0, style)
             .apply {
@@ -78,8 +82,14 @@ class SessionDialogBuilder(val context: Context) {
     fun iconAttribute(@AttrRes icon: Int): AlertDialog.Builder = dialogBuilder.setIconAttribute(icon)
 
     fun singleChoiceItems(
+        options: Collection<String>,
+        currentSelected: Int = 0,
+        onSelect: (Int) -> Unit
+    ) = singleChoiceItems(options.toTypedArray(), currentSelected, onSelect)
+
+    fun singleChoiceItems(
         options: Array<String>,
-        currentSelected: Int,
+        currentSelected: Int = 0,
         onSelect: (Int) -> Unit
     ): AlertDialog.Builder = dialogBuilder.setSingleChoiceItems(
         options,
@@ -101,7 +111,7 @@ class SessionDialogBuilder(val context: Context) {
 
     fun button(
         @StringRes text: Int,
-        @StringRes contentDescriptionRes: Int = 0,
+        @StringRes contentDescriptionRes: Int = text,
         @StyleRes style: Int = R.style.Widget_Session_Button_Dialog_UnimportantText,
         listener: (() -> Unit) = {}
     ) = Button(context, null, 0, style).apply {
@@ -115,8 +125,12 @@ class SessionDialogBuilder(val context: Context) {
             }
         }.let(buttonLayout::addView)
 
+    fun create(): AlertDialog = dialogBuilder.create()
     fun show(): AlertDialog = dialogBuilder.show()
 }
 
 fun Context.sessionDialog(build: SessionDialogBuilder.() -> Unit): AlertDialog =
     SessionDialogBuilder(this).apply { build() }.show()
+
+fun Fragment.sessionDialog(build: SessionDialogBuilder.() -> Unit): AlertDialog =
+    SessionDialogBuilder(requireContext()).apply { build() }.create()

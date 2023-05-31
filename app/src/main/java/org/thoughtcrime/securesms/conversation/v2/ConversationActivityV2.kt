@@ -22,6 +22,7 @@ import androidx.activity.viewModels
 import androidx.annotation.DimenRes
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
+import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -405,8 +406,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         push(intent, false)
     }
 
-    override fun showDialog(baseDialog: BaseDialog, tag: String?) {
-        baseDialog.show(supportFragmentManager, tag)
+    override fun showDialog(dialogFragment: DialogFragment, tag: String?) {
+        dialogFragment.show(supportFragmentManager, tag)
     }
 
     override fun onCreateLoader(id: Int, bundle: Bundle?): Loader<Cursor> {
