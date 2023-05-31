@@ -12,14 +12,14 @@ import network.loki.messenger.R
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.utilities.OpenGroupUrlParser
 import org.session.libsignal.utilities.ThreadUtils
+import org.thoughtcrime.securesms.createSessionDialog
 import org.thoughtcrime.securesms.groups.OpenGroupManager
-import org.thoughtcrime.securesms.sessionDialog
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 
 /** Shown upon tapping an open group invitation. */
 class JoinOpenGroupDialog(private val name: String, private val url: String) : DialogFragment() {
 
-    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog = sessionDialog {
+    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog = createSessionDialog {
         title(resources.getString(R.string.dialog_join_open_group_title, name))
         val explanation = resources.getString(R.string.dialog_join_open_group_explanation, name)
         val spannable = SpannableStringBuilder(explanation)

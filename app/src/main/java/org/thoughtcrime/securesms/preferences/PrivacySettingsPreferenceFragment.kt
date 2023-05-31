@@ -1,15 +1,12 @@
 package org.thoughtcrime.securesms.preferences
 
-import android.app.AlertDialog
 import android.app.KeyguardManager
 import android.content.Context
-import android.content.DialogInterface
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
-import androidx.appcompat.view.ContextThemeWrapper
 import androidx.preference.Preference
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
@@ -20,22 +17,19 @@ import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.components.SwitchPreferenceCompat
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.service.KeyCachingService
+import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.util.CallNotificationBuilder.Companion.areNotificationsEnabled
 import org.thoughtcrime.securesms.util.IntentUtils
 
 class PrivacySettingsPreferenceFragment : ListSummaryPreferenceFragment() {
     override fun onCreate(paramBundle: Bundle?) {
         super.onCreate(paramBundle)
-        findPreference<Preference>(TextSecurePreferences.SCREEN_LOCK)!!.onPreferenceChangeListener =
-            ScreenLockListener()
-        findPreference<Preference>(TextSecurePreferences.READ_RECEIPTS_PREF)!!.onPreferenceChangeListener =
-            ReadReceiptToggleListener()
-        findPreference<Preference>(TextSecurePreferences.TYPING_INDICATORS)!!.onPreferenceChangeListener =
-            TypingIndicatorsToggleListener()
-        findPreference<Preference>(TextSecurePreferences.LINK_PREVIEWS)!!.onPreferenceChangeListener =
-            LinkPreviewToggleListener()
-        findPreference<Preference>(TextSecurePreferences.CALL_NOTIFICATIONS_ENABLED)!!.onPreferenceChangeListener =
-            CallToggleListener(this) { setCall(it) }
+        findPreference<Preference>(TextSecurePreferences.SCREEN_LOCK)!!
+            .onPreferenceChangeListener = ScreenLockListener()
+        findPreference<Preference>(TextSecurePreferences.TYPING_INDICATORS)!!
+            .onPreferenceChangeListener = TypingIndicatorsToggleListener()
+        findPreference<Preference>(TextSecurePreferences.CALL_NOTIFICATIONS_ENABLED)!!
+            .onPreferenceChangeListener = CallToggleListener(this) { setCall(it) }
         initializeVisibility()
     }
 
@@ -44,37 +38,24 @@ class PrivacySettingsPreferenceFragment : ListSummaryPreferenceFragment() {
             isEnabled
         if (isEnabled && !areNotificationsEnabled(requireActivity())) {
             // show a dialog saying that calls won't work properly if you don't have notifications on at a system level
-            AlertDialog.Builder(
-                ContextThemeWrapper(
-                    requireActivity(),
-                    R.style.ThemeOverlay_Session_AlertDialog
-                )
-            )
-                .setTitle(R.string.CallNotificationBuilder_system_notification_title)
-                .setMessage(R.string.CallNotificationBuilder_system_notification_message)
-                .setPositiveButton(R.string.activity_notification_settings_title) { d: DialogInterface, w: Int ->
+            showSessionDialog {
+                title(R.string.CallNotificationBuilder_system_notification_title)
+                text(R.string.CallNotificationBuilder_system_notification_message)
+                button(R.string.activity_notification_settings_title) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        val settingsIntent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
                             .putExtra(Settings.EXTRA_APP_PACKAGE, BuildConfig.APPLICATION_ID)
-                        if (IntentUtils.isResolvable(requireContext(), settingsIntent)) {
-                            startActivity(settingsIntent)
-                        }
                     } else {
-                        val settingsIntent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                             .setData(Uri.parse("package:" + BuildConfig.APPLICATION_ID))
-                        if (IntentUtils.isResolvable(requireContext(), settingsIntent)) {
-                            startActivity(settingsIntent)
-                        }
                     }
-                    d.dismiss()
+                        .apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
+                        .takeIf { IntentUtils.isResolvable(requireContext(), it) }.let {
+                        startActivity(it)
+                    }
                 }
-                .setNeutralButton(R.string.dismiss) { d: DialogInterface, w: Int ->
-                    // do nothing, user might have broken notifications
-                    d.dismiss()
-                }
-                .show()
+                button(R.string.dismiss)
+            }
         }
     }
 
@@ -96,19 +77,16 @@ class PrivacySettingsPreferenceFragment : ListSummaryPreferenceFragment() {
     }
 
     private fun initializeVisibility() {
-        if (isPasswordDisabled(context!!)) {
+        if (isPasswordDisabled(requireContext())) {
             val keyguardManager =
-                context!!.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+                requireContext().getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
             if (!keyguardManager.isKeyguardSecure) {
-                (findPreference<Preference>(TextSecurePreferences.SCREEN_LOCK) as SwitchPreferenceCompat?)!!.isChecked =
-                    false
-                findPreference<Preference>(TextSecurePreferences.SCREEN_LOCK)!!.isEnabled =
-                    false
+                findPreference<SwitchPreferenceCompat>(TextSecurePreferences.SCREEN_LOCK)!!.isChecked = false
+                findPreference<Preference>(TextSecurePreferences.SCREEN_LOCK)!!.isEnabled = false
             }
         } else {
             findPreference<Preference>(TextSecurePreferences.SCREEN_LOCK)!!.isVisible = false
-            findPreference<Preference>(TextSecurePreferences.SCREEN_LOCK_TIMEOUT)!!.isVisible =
-                false
+            findPreference<Preference>(TextSecurePreferences.SCREEN_LOCK_TIMEOUT)!!.isVisible = false
         }
     }
 
@@ -123,12 +101,6 @@ class PrivacySettingsPreferenceFragment : ListSummaryPreferenceFragment() {
         }
     }
 
-    private inner class ReadReceiptToggleListener : Preference.OnPreferenceChangeListener {
-        override fun onPreferenceChange(preference: Preference, newValue: Any): Boolean {
-            return true
-        }
-    }
-
     private inner class TypingIndicatorsToggleListener : Preference.OnPreferenceChangeListener {
         override fun onPreferenceChange(preference: Preference, newValue: Any): Boolean {
             val enabled = newValue as Boolean
@@ -139,9 +111,4 @@ class PrivacySettingsPreferenceFragment : ListSummaryPreferenceFragment() {
         }
     }
 
-    private inner class LinkPreviewToggleListener : Preference.OnPreferenceChangeListener {
-        override fun onPreferenceChange(preference: Preference, newValue: Any): Boolean {
-            return true
-        }
-    }
 }

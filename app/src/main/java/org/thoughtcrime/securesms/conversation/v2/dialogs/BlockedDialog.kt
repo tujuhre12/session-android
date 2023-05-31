@@ -10,13 +10,13 @@ import androidx.fragment.app.DialogFragment
 import network.loki.messenger.R
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.utilities.recipients.Recipient
+import org.thoughtcrime.securesms.createSessionDialog
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
-import org.thoughtcrime.securesms.sessionDialog
 
 /** Shown upon sending a message to a user that's blocked. */
 class BlockedDialog(private val recipient: Recipient) : DialogFragment() {
 
-    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog = sessionDialog {
+    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog = createSessionDialog {
         val contactDB = DatabaseComponent.get(requireContext()).sessionContactDatabase()
         val sessionID = recipient.address.toString()
         val contact = contactDB.getContactWithSessionID(sessionID)

@@ -10,6 +10,7 @@ import androidx.fragment.app.DialogFragment
 import network.loki.messenger.R
 import org.session.libsignal.crypto.MnemonicCodec
 import org.session.libsignal.utilities.hexEncodedPrivateKey
+import org.thoughtcrime.securesms.createSessionDialog
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.crypto.MnemonicUtilities
 import org.thoughtcrime.securesms.sessionDialog
@@ -23,7 +24,7 @@ class SeedDialog: DialogFragment() {
             .encode(hexEncodedSeed, MnemonicCodec.Language.Configuration.english)
     }
 
-    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog = sessionDialog {
+    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog = createSessionDialog {
         title(R.string.dialog_seed_title)
         text(R.string.dialog_seed_explanation)
         text(seed, R.style.SessionIDTextView)

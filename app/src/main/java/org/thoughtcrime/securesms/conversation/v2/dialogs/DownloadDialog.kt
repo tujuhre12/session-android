@@ -13,9 +13,9 @@ import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.jobs.AttachmentDownloadJob
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.utilities.recipients.Recipient
+import org.thoughtcrime.securesms.createSessionDialog
 import org.thoughtcrime.securesms.database.SessionContactDatabase
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
-import org.thoughtcrime.securesms.sessionDialog
 import javax.inject.Inject
 
 /** Shown when receiving media from a contact for the first time, to confirm that
@@ -25,7 +25,7 @@ class DownloadDialog(private val recipient: Recipient) : DialogFragment() {
 
     @Inject lateinit var contactDB: SessionContactDatabase
 
-    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog = sessionDialog {
+    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog = createSessionDialog {
         val sessionID = recipient.address.toString()
         val contact = contactDB.getContactWithSessionID(sessionID)
         val name = contact?.displayName(Contact.ContactContext.REGULAR) ?: sessionID

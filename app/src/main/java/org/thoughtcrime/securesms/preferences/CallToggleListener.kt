@@ -6,8 +6,10 @@ import androidx.preference.Preference
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.setBooleanPreference
+import org.thoughtcrime.securesms.createSessionDialog
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.sessionDialog
+import org.thoughtcrime.securesms.showSessionDialog
 
 internal class CallToggleListener(
     private val context: Fragment,
@@ -18,7 +20,7 @@ internal class CallToggleListener(
         if (newValue == false) return true
 
         // check if we've shown the info dialog and check for microphone permissions
-        context.sessionDialog {
+        context.showSessionDialog {
             title(R.string.dialog_voice_video_title)
             text(R.string.dialog_voice_video_message)
             button(R.string.dialog_link_preview_enable_button_title, R.string.AccessibilityId_enable) { requestMicrophonePermission() }

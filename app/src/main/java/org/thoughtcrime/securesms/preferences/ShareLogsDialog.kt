@@ -24,7 +24,7 @@ import network.loki.messenger.R
 import org.session.libsignal.utilities.ExternalStorageUtil
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
-import org.thoughtcrime.securesms.sessionDialog
+import org.thoughtcrime.securesms.createSessionDialog
 import org.thoughtcrime.securesms.util.FileProviderUtil
 import org.thoughtcrime.securesms.util.StreamUtil
 import java.io.File
@@ -37,7 +37,7 @@ class ShareLogsDialog : DialogFragment() {
 
     private var shareJob: Job? = null
 
-    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog = sessionDialog {
+    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog = createSessionDialog {
         title(R.string.dialog_share_logs_title)
         text(R.string.dialog_share_logs_explanation)
         button(R.string.share) { shareLogs() }
