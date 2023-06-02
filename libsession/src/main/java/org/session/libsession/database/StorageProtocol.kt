@@ -159,6 +159,7 @@ interface StorageProtocol {
     fun trimThread(threadID: Long, threadLimit: Int)
     fun trimThreadBefore(threadID: Long, timestamp: Long)
     fun getMessageCount(threadID: Long): Long
+    fun deleteConversation(threadId: Long)
 
     // Contacts
     fun getContactWithSessionID(sessionID: String): Contact?

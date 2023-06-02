@@ -738,6 +738,11 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         return mmsSmsDb.getConversationCount(threadID)
     }
 
+    override fun deleteConversation(threadId: Long) {
+        val threadDB = DatabaseComponent.get(context).threadDatabase()
+        threadDB.deleteConversation(threadId)
+    }
+
 
 
     override fun getAttachmentDataUri(attachmentId: AttachmentId): Uri {
