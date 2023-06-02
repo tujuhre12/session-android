@@ -82,6 +82,7 @@ public final class ConversationReactionOverlay extends FrameLayout {
   private View             dropdownAnchor;
   private LinearLayout     conversationItem;
   private View             conversationBubble;
+  private TextView         conversationTimestamp;
   private View             backgroundView;
   private ConstraintLayout foregroundView;
   private EmojiImageView[] emojiViews;
@@ -118,6 +119,7 @@ public final class ConversationReactionOverlay extends FrameLayout {
     dropdownAnchor   = findViewById(R.id.dropdown_anchor);
     conversationItem = findViewById(R.id.conversation_item);
     conversationBubble = conversationItem.findViewById(R.id.conversation_item_bubble);
+    conversationTimestamp = conversationItem.findViewById(R.id.conversation_item_timestamp);
     backgroundView   = findViewById(R.id.conversation_reaction_scrubber_background);
     foregroundView   = findViewById(R.id.conversation_reaction_scrubber_foreground);
 
@@ -169,7 +171,6 @@ public final class ConversationReactionOverlay extends FrameLayout {
 
     conversationBubble.setLayoutParams(new LinearLayout.LayoutParams(conversationItemSnapshot.getWidth(), conversationItemSnapshot.getHeight()));
     conversationBubble.setBackground(new BitmapDrawable(getResources(), conversationItemSnapshot));
-    TextView conversationTimestamp = conversationItem.findViewById(R.id.conversation_item_timestamp);
     conversationTimestamp.setText(DateUtils.getDisplayFormattedTimeSpanString(getContext(), Locale.getDefault(), messageRecord.getTimestamp()));
 
     updateConversationTimestamp(messageRecord);
@@ -191,12 +192,8 @@ public final class ConversationReactionOverlay extends FrameLayout {
   }
 
   private void updateConversationTimestamp(MessageRecord message) {
-    View bubble = conversationItem.findViewById(R.id.conversation_item_bubble);
-    View timestamp = conversationItem.findViewById(R.id.conversation_item_timestamp);
-    conversationItem.removeAllViewsInLayout();
-    conversationItem.addView(message.isOutgoing() ? timestamp : bubble);
-    conversationItem.addView(message.isOutgoing() ? bubble : timestamp);
-    conversationItem.requestLayout();
+    if (message.isOutgoing()) conversationBubble.bringToFront();
+    else conversationTimestamp.bringToFront();
   }
 
   private void showAfterLayout(@NonNull MessageRecord messageRecord,
