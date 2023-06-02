@@ -255,7 +255,7 @@ public class Permissions {
     resultListener.onResult(permissions, grantResults, shouldShowRationaleDialog);
   }
 
-  private static Intent getApplicationSettingsIntent(@NonNull Context context) {
+  static Intent getApplicationSettingsIntent(@NonNull Context context) {
     Intent intent = new Intent();
     intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
     Uri uri = Uri.fromParts("package", context.getPackageName(), null);
@@ -352,20 +352,8 @@ public class Permissions {
     @Override
     public void run() {
       Context context = this.context.get();
-
-      if (context != null) {
-        AlertDialog alertDialog = new AlertDialog.Builder(context, R.style.ThemeOverlay_Session_AlertDialog)
-            .setTitle(R.string.Permissions_permission_required)
-            .setMessage(message)
-            .setPositiveButton(R.string.Permissions_continue, (dialog, which) -> context.startActivity(getApplicationSettingsIntent(context)))
-            .setNegativeButton(android.R.string.cancel, null)
-            .create();
-        Button positiveButton = alertDialog.getButton(DialogInterface.BUTTON_POSITIVE);
-        if (positiveButton != null) {
-          positiveButton.setContentDescription(context.getString(R.string.AccessibilityId_continue));
-        }
-        alertDialog.show();
-      }
+      if (context == null) return;
+      SettingsDialog.show(context, message);
     }
   }
 }
