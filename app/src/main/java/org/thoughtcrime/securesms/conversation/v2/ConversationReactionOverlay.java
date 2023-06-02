@@ -81,6 +81,7 @@ public final class ConversationReactionOverlay extends FrameLayout {
 
   private View             dropdownAnchor;
   private LinearLayout     conversationItem;
+  private View             conversationBubble;
   private View             backgroundView;
   private ConstraintLayout foregroundView;
   private EmojiImageView[] emojiViews;
@@ -116,6 +117,7 @@ public final class ConversationReactionOverlay extends FrameLayout {
 
     dropdownAnchor   = findViewById(R.id.dropdown_anchor);
     conversationItem = findViewById(R.id.conversation_item);
+    conversationBubble = conversationItem.findViewById(R.id.conversation_item_bubble);
     backgroundView   = findViewById(R.id.conversation_reaction_scrubber_background);
     foregroundView   = findViewById(R.id.conversation_reaction_scrubber_foreground);
 
@@ -165,7 +167,6 @@ public final class ConversationReactionOverlay extends FrameLayout {
 
     Bitmap conversationItemSnapshot = selectedConversationModel.getBitmap();
 
-    View conversationBubble = conversationItem.findViewById(R.id.conversation_item_bubble);
     conversationBubble.setLayoutParams(new LinearLayout.LayoutParams(conversationItemSnapshot.getWidth(), conversationItemSnapshot.getHeight()));
     conversationBubble.setBackground(new BitmapDrawable(getResources(), conversationItemSnapshot));
     TextView conversationTimestamp = conversationItem.findViewById(R.id.conversation_item_timestamp);
@@ -351,11 +352,14 @@ public final class ConversationReactionOverlay extends FrameLayout {
 
     int revealDuration = getContext().getResources().getInteger(R.integer.reaction_scrubber_reveal_duration);
 
+    conversationBubble.animate()
+            .scaleX(endScale)
+            .scaleY(endScale)
+            .setDuration(revealDuration);
+
     conversationItem.animate()
             .x(endX)
             .y(endY)
-            .scaleX(endScale)
-            .scaleY(endScale)
             .setDuration(revealDuration);
   }
 
