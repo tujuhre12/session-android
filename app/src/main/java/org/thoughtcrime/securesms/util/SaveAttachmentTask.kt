@@ -16,7 +16,7 @@ import org.session.libsession.utilities.task.ProgressDialogAsyncTask
 import org.session.libsignal.utilities.ExternalStorageUtil
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.mms.PartAuthority
-import org.thoughtcrime.securesms.sessionDialog
+import org.thoughtcrime.securesms.showSessionDialog
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -46,7 +46,7 @@ class SaveAttachmentTask @JvmOverloads constructor(context: Context, count: Int 
         @JvmStatic
         @JvmOverloads
         fun showWarningDialog(context: Context, count: Int = 1, onAcceptListener: () -> Unit = {}) {
-            context.sessionDialog {
+            context.showSessionDialog {
                 title(R.string.ConversationFragment_save_to_sd_card)
                 iconAttribute(R.attr.dialog_alert_icon)
                 text(context.resources.getQuantityString(

@@ -1,19 +1,15 @@
 package org.thoughtcrime.securesms
 
 import android.content.Context
-import android.content.DialogInterface
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
 import network.loki.messenger.R
-import java.math.BigInteger
-import java.time.Instant
-import java.util.*
 import java.util.concurrent.TimeUnit
 
 fun showMuteDialog(
     context: Context,
     onMuteDuration: (Long) -> Unit
-): AlertDialog = context.sessionDialog {
+): AlertDialog = context.showSessionDialog {
     title(R.string.MuteDialog_mute_notifications)
     items(Option.values().map { it.stringRes }.map(context::getString).toTypedArray()) {
         onMuteDuration(Option.values()[it].getTime())

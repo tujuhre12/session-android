@@ -2,7 +2,6 @@ package org.thoughtcrime.securesms.conversation.v2.menus
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.DialogInterface
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.graphics.PorterDuff
@@ -15,7 +14,6 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.ColorInt
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.appcompat.widget.SearchView
@@ -44,7 +42,7 @@ import org.thoughtcrime.securesms.groups.EditClosedGroupActivity
 import org.thoughtcrime.securesms.groups.EditClosedGroupActivity.Companion.groupIDKey
 import org.thoughtcrime.securesms.preferences.PrivacySettingsActivity
 import org.thoughtcrime.securesms.service.WebRtcCallService
-import org.thoughtcrime.securesms.sessionDialog
+import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.showMuteDialog
 import org.thoughtcrime.securesms.util.BitmapUtil
 import java.io.IOException
@@ -187,7 +185,7 @@ object ConversationMenuHelper {
     private fun call(context: Context, thread: Recipient) {
 
         if (!TextSecurePreferences.isCallNotificationsEnabled(context)) {
-            context.sessionDialog {
+            context.showSessionDialog {
                 title(R.string.ConversationActivity_call_title)
                 text(R.string.ConversationActivity_call_prompt)
                 button(R.string.activity_settings_title, R.string.AccessibilityId_settings) {
@@ -303,7 +301,7 @@ object ConversationMenuHelper {
 
         fun onLeaveFailed() = Toast.makeText(context, R.string.ConversationActivity_error_leaving_group, Toast.LENGTH_LONG).show()
 
-        context.sessionDialog {
+        context.showSessionDialog {
             title(R.string.ConversationActivity_leave_group)
             text(message)
             button(R.string.yes) {

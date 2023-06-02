@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.conversation.v2
 
-import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.database.Cursor
@@ -31,7 +30,7 @@ import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.mms.GlideRequests
 import org.thoughtcrime.securesms.preferences.PrivacySettingsActivity
-import org.thoughtcrime.securesms.sessionDialog
+import org.thoughtcrime.securesms.showSessionDialog
 
 class ConversationAdapter(
     context: Context,
@@ -147,7 +146,7 @@ class ConversationAdapter(
                 viewHolder.view.bind(message, messageBefore)
                 if (message.isCallLog && message.isFirstMissedCall) {
                     viewHolder.view.setOnClickListener {
-                        context.sessionDialog {
+                        context.showSessionDialog {
                             title(R.string.CallNotificationBuilder_first_call_title)
                             text(R.string.CallNotificationBuilder_first_call_message)
                             button(R.string.activity_settings_title) {

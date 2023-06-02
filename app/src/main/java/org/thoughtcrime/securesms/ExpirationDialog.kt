@@ -44,7 +44,7 @@ fun Context.showExpirationDialog(
 
     updateText(selectedIndex)
 
-    return sessionDialog {
+    return showSessionDialog {
         title(getString(R.string.ExpirationDialog_disappearing_messages))
         view(view)
         okButton { onExpirationTime(numberPickerView.let { expirationTimes[it.value] }) }

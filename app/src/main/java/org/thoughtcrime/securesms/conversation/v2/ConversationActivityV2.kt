@@ -20,7 +20,6 @@ import android.widget.RelativeLayout
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.annotation.DimenRes
-import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.Observer
@@ -960,7 +959,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     }
 
     override fun block(deleteThread: Boolean) {
-        sessionDialog {
+        showSessionDialog {
             title(R.string.RecipientPreferenceActivity_block_this_contact_question)
             text(R.string.RecipientPreferenceActivity_you_will_no_longer_receive_messages_and_calls_from_this_contact)
             destructiveButton(R.string.RecipientPreferenceActivity_block, R.string.AccessibilityId_block_confirm) {
@@ -1011,7 +1010,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     }
 
     override fun unblock() {
-        sessionDialog {
+        showSessionDialog {
             title(R.string.ConversationActivity_unblock_this_contact_question)
             text(R.string.ConversationActivity_you_will_once_again_be_able_to_receive_messages_and_calls_from_this_contact)
             destructiveButton(
@@ -1455,7 +1454,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     private fun showGIFPicker() {
         val hasSeenGIFMetaDataWarning: Boolean = textSecurePreferences.hasSeenGIFMetaDataWarning()
         if (!hasSeenGIFMetaDataWarning) {
-            sessionDialog {
+            showSessionDialog {
                 title(R.string.giphy_permission_title)
                 text(R.string.giphy_permission_message)
                 button(R.string.continue_2) {
@@ -1618,7 +1617,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         if (recipient.isOpenGroupRecipient) {
             val messageCount = 1
 
-            sessionDialog {
+            showSessionDialog {
                 title(resources.getQuantityString(R.plurals.ConversationFragment_delete_selected_messages, messageCount, messageCount))
                 text(resources.getQuantityString(R.plurals.ConversationFragment_this_will_permanently_delete_all_n_selected_messages, messageCount, messageCount))
                 button(R.string.delete) { messages.forEach(viewModel::deleteForEveryone); endActionMode() }
@@ -1645,7 +1644,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         } else {
             val messageCount = 1
 
-            sessionDialog {
+            showSessionDialog {
                 title(resources.getQuantityString(R.plurals.ConversationFragment_delete_selected_messages, messageCount, messageCount))
                 text(resources.getQuantityString(R.plurals.ConversationFragment_this_will_permanently_delete_all_n_selected_messages, messageCount, messageCount))
                 button(R.string.delete) { messages.forEach(viewModel::deleteLocally); endActionMode() }
@@ -1655,7 +1654,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     }
 
     override fun banUser(messages: Set<MessageRecord>) {
-        sessionDialog {
+        showSessionDialog {
             title(R.string.ConversationFragment_ban_selected_user)
             text("This will ban the selected user from this room. It won't ban them from other rooms.")
             button(R.string.ban) { viewModel.banUser(messages.first().individualRecipient); endActionMode() }
@@ -1664,7 +1663,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     }
 
     override fun banAndDeleteAll(messages: Set<MessageRecord>) {
-        sessionDialog {
+        showSessionDialog {
             title(R.string.ConversationFragment_ban_selected_user)
             text("This will ban the selected user from this room and delete all messages sent by them. It won't ban them from other rooms or delete the messages they sent there.")
             button(R.string.ban) { viewModel.banAndDeleteAll(messages.first().individualRecipient); endActionMode() }

@@ -16,7 +16,6 @@ import android.view.MenuItem
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
@@ -38,7 +37,7 @@ import org.thoughtcrime.securesms.mms.GlideRequests
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.appearance.AppearanceSettingsActivity
 import org.thoughtcrime.securesms.profiles.ProfileMediaConstraints
-import org.thoughtcrime.securesms.sessionDialog
+import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.util.BitmapDecodingException
 import org.thoughtcrime.securesms.util.BitmapUtil
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
@@ -261,7 +260,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
     }
 
     private fun showEditProfilePictureUI() {
-        sessionDialog {
+        showSessionDialog {
             title(R.string.activity_settings_set_display_picture)
             view(R.layout.dialog_change_avatar)
             button(R.string.activity_settings_upload) { startAvatarSelection() }

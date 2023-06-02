@@ -162,15 +162,13 @@ public class Permissions {
       request.onResult(requestedPermissions, grantResults, new boolean[requestedPermissions.length]);
     }
 
-    @SuppressWarnings("ConstantConditions")
     private void executePermissionsRequestWithRationale(PermissionsRequest request) {
-      AlertDialog dialog = RationaleDialog.createFor(permissionObject.getContext(), rationaleDialogMessage, rationalDialogHeader)
-              .setPositiveButton(R.string.Permissions_continue, (d, which) -> executePermissionsRequest(request))
-              .setNegativeButton(R.string.Permissions_not_now, (d, which) -> executeNoPermissionsRequest(request))
-              .show();
-      dialog.getWindow().setLayout((int)(permissionObject.getWindowWidth() * .75), ViewGroup.LayoutParams.WRAP_CONTENT);
-      Button positiveButton = dialog.getButton(DialogInterface.BUTTON_POSITIVE);
-      positiveButton.setContentDescription("Continue");
+      RationaleDialog.show(
+        permissionObject.getContext(),
+        rationaleDialogMessage,
+        () -> executePermissionsRequest(request),
+        () -> executeNoPermissionsRequest(request),
+        rationalDialogHeader);
     }
 
     private void executePermissionsRequest(PermissionsRequest request) {

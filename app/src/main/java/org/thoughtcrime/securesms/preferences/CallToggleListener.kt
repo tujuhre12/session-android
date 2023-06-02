@@ -6,9 +6,7 @@ import androidx.preference.Preference
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.setBooleanPreference
-import org.thoughtcrime.securesms.createSessionDialog
 import org.thoughtcrime.securesms.permissions.Permissions
-import org.thoughtcrime.securesms.sessionDialog
 import org.thoughtcrime.securesms.showSessionDialog
 
 internal class CallToggleListener(

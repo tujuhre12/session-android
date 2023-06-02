@@ -3,14 +3,14 @@ package org.thoughtcrime.securesms.preferences
 import android.content.Context
 import androidx.appcompat.app.AlertDialog
 import androidx.preference.ListPreference
-import org.thoughtcrime.securesms.sessionDialog
+import org.thoughtcrime.securesms.showSessionDialog
 
 fun listPreferenceDialog(
     context: Context,
     listPreference: ListPreference,
     onChange: () -> Unit
 ) : AlertDialog = listPreference.run {
-    context.sessionDialog {
+    context.showSessionDialog {
         val index = entryValues.indexOf(value)
         val options = entries.map(CharSequence::toString).toTypedArray()
 

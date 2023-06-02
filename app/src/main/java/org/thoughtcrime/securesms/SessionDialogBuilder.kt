@@ -137,7 +137,7 @@ class SessionDialogBuilder(val context: Context) {
     fun show(): AlertDialog = dialogBuilder.show().also { dialog = it }
 }
 
-fun Context.sessionDialog(build: SessionDialogBuilder.() -> Unit): AlertDialog =
+fun Context.showSessionDialog(build: SessionDialogBuilder.() -> Unit): AlertDialog =
     SessionDialogBuilder(this).apply { build() }.show()
 
 fun Fragment.showSessionDialog(build: SessionDialogBuilder.() -> Unit): AlertDialog =

@@ -13,7 +13,6 @@ import org.session.libsignal.utilities.hexEncodedPrivateKey
 import org.thoughtcrime.securesms.createSessionDialog
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.crypto.MnemonicUtilities
-import org.thoughtcrime.securesms.sessionDialog
 
 class SeedDialog: DialogFragment() {
     private val seed by lazy {

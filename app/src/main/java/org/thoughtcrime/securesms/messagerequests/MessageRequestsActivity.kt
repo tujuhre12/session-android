@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.messagerequests
 
-import android.app.AlertDialog
 import android.content.Intent
 import android.database.Cursor
 import android.os.Bundle
@@ -20,7 +19,7 @@ import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.mms.GlideApp
 import org.thoughtcrime.securesms.mms.GlideRequests
-import org.thoughtcrime.securesms.sessionDialog
+import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 import org.thoughtcrime.securesms.util.push
 import javax.inject.Inject
@@ -83,7 +82,7 @@ class MessageRequestsActivity : PassphraseRequiredActionBarActivity(), Conversat
             LoaderManager.getInstance(this).restartLoader(0, null, this)
         }
 
-        sessionDialog {
+        showSessionDialog {
             title(R.string.RecipientPreferenceActivity_block_this_contact_question)
                 text(R.string.message_requests_block_message)
                 button(R.string.recipient_preferences__block) { doBlock() }
@@ -100,7 +99,7 @@ class MessageRequestsActivity : PassphraseRequiredActionBarActivity(), Conversat
             }
         }
 
-        sessionDialog {
+        showSessionDialog {
             title(R.string.decline)
             text(resources.getString(R.string.message_requests_decline_message))
             button(R.string.decline) { doDecline() }
@@ -123,7 +122,7 @@ class MessageRequestsActivity : PassphraseRequiredActionBarActivity(), Conversat
             }
         }
 
-        sessionDialog {
+        showSessionDialog {
             text(resources.getString(R.string.message_requests_clear_all_message))
             button(R.string.yes) { doDeleteAllAndBlock() }
             button(R.string.no)

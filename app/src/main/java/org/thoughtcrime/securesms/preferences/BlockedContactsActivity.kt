@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.preferences
 
-import android.app.AlertDialog
 import android.os.Bundle
 import android.view.View
 import androidx.activity.viewModels
@@ -9,7 +8,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityBlockedContactsBinding
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
-import org.thoughtcrime.securesms.sessionDialog
+import org.thoughtcrime.securesms.showSessionDialog
 
 @AndroidEntryPoint
 class BlockedContactsActivity: PassphraseRequiredActionBarActivity(), View.OnClickListener {
@@ -52,7 +51,7 @@ class BlockedContactsActivity: PassphraseRequiredActionBarActivity(), View.OnCli
                 getString(R.string.Unblock_dialog__message, stringBuilder.toString())
             }
 
-            sessionDialog {
+            showSessionDialog {
                 title(title)
                 text(message)
                 button(R.string.continue_2) { viewModel.unblock(contactsToUnblock) }

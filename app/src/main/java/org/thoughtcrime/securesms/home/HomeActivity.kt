@@ -10,7 +10,6 @@ import android.os.Bundle
 import android.text.SpannableString
 import android.widget.Toast
 import androidx.activity.viewModels
-import androidx.appcompat.app.AlertDialog
 import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
@@ -62,7 +61,7 @@ import org.thoughtcrime.securesms.mms.GlideRequests
 import org.thoughtcrime.securesms.onboarding.SeedActivity
 import org.thoughtcrime.securesms.onboarding.SeedReminderViewDelegate
 import org.thoughtcrime.securesms.preferences.SettingsActivity
-import org.thoughtcrime.securesms.sessionDialog
+import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.showMuteDialog
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 import org.thoughtcrime.securesms.util.DateUtils
@@ -489,7 +488,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
     }
 
     private fun blockConversation(thread: ThreadRecord) {
-        sessionDialog {
+        showSessionDialog {
             title(R.string.RecipientPreferenceActivity_block_this_contact_question)
             text(R.string.RecipientPreferenceActivity_you_will_no_longer_receive_messages_and_calls_from_this_contact)
             button(R.string.RecipientPreferenceActivity_block) {
@@ -505,7 +504,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
     }
 
     private fun unblockConversation(thread: ThreadRecord) {
-        sessionDialog {
+        showSessionDialog {
             title(R.string.RecipientPreferenceActivity_unblock_this_contact_question)
             text(R.string.RecipientPreferenceActivity_you_will_once_again_be_able_to_receive_messages_and_calls_from_this_contact)
             button(R.string.RecipientPreferenceActivity_unblock) {
@@ -576,7 +575,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             resources.getString(R.string.activity_home_delete_conversation_dialog_message)
         }
 
-        sessionDialog {
+        showSessionDialog {
             text(message)
             button(R.string.yes) {
                 lifecycleScope.launch(Dispatchers.Main) {
@@ -643,7 +642,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
     }
 
     private fun hideMessageRequests() {
-        sessionDialog {
+        showSessionDialog {
             text("Hide message requests?")
             button(R.string.yes) {
                 textSecurePreferences.setHasHiddenMessageRequests()
