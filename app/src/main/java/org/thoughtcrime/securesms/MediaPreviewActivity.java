@@ -451,29 +451,20 @@ public class MediaPreviewActivity extends PassphraseRequiredActionBarActivity im
       return;
     }
 
-    AlertDialog.Builder builder = new AlertDialog.Builder(this);
-    builder.setIconAttribute(R.attr.dialog_alert_icon);
-    builder.setTitle(R.string.MediaPreviewActivity_media_delete_confirmation_title);
-    builder.setMessage(R.string.MediaPreviewActivity_media_delete_confirmation_message);
-    builder.setCancelable(true);
-
-    builder.setPositiveButton(R.string.delete, (dialogInterface, which) -> {
-      new AsyncTask<Void, Void, Void>() {
-        @Override
-        protected Void doInBackground(Void... voids) {
-          if (mediaItem.attachment == null) {
-            return null;
-          }
-          AttachmentUtil.deleteAttachment(MediaPreviewActivity.this.getApplicationContext(),
-                                          mediaItem.attachment);
-          return null;
-        }
-      }.execute();
+    DeleteMediaPreviewDialog.show(this, () -> {
+            new AsyncTask<Void, Void, Void>() {
+              @Override
+              protected Void doInBackground(Void... voids) {
+                DatabaseAttachment attachment = mediaItem.attachment;
+                if (attachment != null) {
+                  AttachmentUtil.deleteAttachment(getApplicationContext(), attachment);
+                }
+                return null;
+              }
+            }.execute();
 
       finish();
     });
-    builder.setNegativeButton(android.R.string.cancel, null);
-    builder.show();
   }
 
   @Override
