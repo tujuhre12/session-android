@@ -708,8 +708,10 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
                 recipientDatabase.setApproved(recipient, true)
                 threadDatabase.setHasSent(threadId, true)
             }
-            if (contact.isBlocked == true) {
-                recipientDatabase.setBlocked(recipient, true)
+
+            val contactIsBlocked: Boolean? = contact.isBlocked
+            if (contactIsBlocked != null && recipient.isBlocked != contactIsBlocked) {
+                recipientDatabase.setBlocked(recipient, contactIsBlocked)
                 threadDatabase.deleteConversation(threadId)
             }
         }
