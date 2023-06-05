@@ -42,13 +42,12 @@ import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.KeyHelper
 import org.session.libsignal.utilities.guava.Optional
-import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.groups.OpenGroupManager
-import org.thoughtcrime.securesms.jobs.RetrieveProfileAvatarJob
+import org.session.libsession.messaging.jobs.RetrieveProfileAvatarJob
 import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
 import java.security.MessageDigest
@@ -70,13 +69,9 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         return Profile(displayName, profileKey, profilePictureUrl)
     }
 
-    override fun setUserProfilePictureURL(newValue: String) {
-        val ourRecipient = fromSerialized(getUserPublicKey()!!).let {
-            Recipient.from(context, it, false)
-        }
-        TextSecurePreferences.setProfilePictureURL(context, newValue)
-        RetrieveProfileAvatarJob(ourRecipient, newValue)
-        ApplicationContext.getInstance(context).jobManager.add(RetrieveProfileAvatarJob(ourRecipient, newValue))
+    override fun setProfileAvatar(recipient: Recipient, profileAvatar: String?) {
+        val database = DatabaseComponent.get(context).recipientDatabase()
+        database.setProfileAvatar(recipient, profileAvatar)
     }
 
     override fun getOrGenerateRegistrationID(): Int {
@@ -211,7 +206,7 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
     }
 
     override fun getAllPendingJobs(type: String): Map<String, Job?> {
-        return DatabaseComponent.get(context).sessionJobDatabase().getAllPendingJobs(type)
+        return DatabaseComponent.get(context).sessionJobDatabase().getAllJobs(type)
     }
 
     override fun getAttachmentUploadJob(attachmentID: Long): AttachmentUploadJob? {
@@ -377,6 +372,22 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         }
     }
 
+    override fun markAsSyncing(timestamp: Long, author: String) {
+        DatabaseComponent.get(context).mmsSmsDatabase()
+            .getMessageFor(timestamp, author)
+            ?.run { getMmsDatabaseElseSms(isMms).markAsSyncing(id) }
+    }
+
+    private fun getMmsDatabaseElseSms(isMms: Boolean) =
+        if (isMms) DatabaseComponent.get(context).mmsDatabase()
+        else DatabaseComponent.get(context).smsDatabase()
+
+    override fun markAsResyncing(timestamp: Long, author: String) {
+        DatabaseComponent.get(context).mmsSmsDatabase()
+            .getMessageFor(timestamp, author)
+            ?.run { getMmsDatabaseElseSms(isMms).markAsResyncing(id) }
+    }
+
     override fun markAsSending(timestamp: Long, author: String) {
         val database = DatabaseComponent.get(context).mmsSmsDatabase()
         val messageRecord = database.getMessageFor(timestamp, author) ?: return
@@ -402,7 +413,7 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         }
     }
 
-    override fun setErrorMessage(timestamp: Long, author: String, error: Exception) {
+    override fun markAsSentFailed(timestamp: Long, author: String, error: Exception) {
         val database = DatabaseComponent.get(context).mmsSmsDatabase()
         val messageRecord = database.getMessageFor(timestamp, author) ?: return
         if (messageRecord.isMms) {
@@ -412,6 +423,26 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
             val smsDatabase = DatabaseComponent.get(context).smsDatabase()
             smsDatabase.markAsSentFailed(messageRecord.getId())
         }
+        if (error.localizedMessage != null) {
+            val message: String
+            if (error is OnionRequestAPI.HTTPRequestFailedAtDestinationException && error.statusCode == 429) {
+                message = "429: Rate limited."
+            } else {
+                message = error.localizedMessage!!
+            }
+            DatabaseComponent.get(context).lokiMessageDatabase().setErrorMessage(messageRecord.getId(), message)
+        } else {
+            DatabaseComponent.get(context).lokiMessageDatabase().setErrorMessage(messageRecord.getId(), error.javaClass.simpleName)
+        }
+    }
+
+    override fun markAsSyncFailed(timestamp: Long, author: String, error: Exception) {
+        val database = DatabaseComponent.get(context).mmsSmsDatabase()
+        val messageRecord = database.getMessageFor(timestamp, author) ?: return
+
+        database.getMessageFor(timestamp, author)
+            ?.run { getMmsDatabaseElseSms(isMms).markAsSyncFailed(id) }
+
         if (error.localizedMessage != null) {
             val message: String
             if (error is OnionRequestAPI.HTTPRequestFailedAtDestinationException && error.statusCode == 429) {
@@ -677,8 +708,10 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
                 recipientDatabase.setApproved(recipient, true)
                 threadDatabase.setHasSent(threadId, true)
             }
-            if (contact.isBlocked == true) {
-                recipientDatabase.setBlocked(recipient, true)
+
+            val contactIsBlocked: Boolean? = contact.isBlocked
+            if (contactIsBlocked != null && recipient.isBlocked != contactIsBlocked) {
+                recipientDatabase.setBlocked(recipient, contactIsBlocked)
                 threadDatabase.deleteConversation(threadId)
             }
         }
@@ -705,6 +738,11 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
     override fun getMessageCount(threadID: Long): Long {
         val mmsSmsDb = DatabaseComponent.get(context).mmsSmsDatabase()
         return mmsSmsDb.getConversationCount(threadID)
+    }
+
+    override fun deleteConversation(threadId: Long) {
+        val threadDB = DatabaseComponent.get(context).threadDatabase()
+        threadDB.deleteConversation(threadId)
     }
 
 
@@ -974,7 +1012,7 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         DatabaseComponent.get(context).reactionDatabase().deleteMessageReactions(MessageId(messageId, mms))
     }
 
-    override fun unblock(toUnblock: List<Recipient>) {
+    override fun unblock(toUnblock: Iterable<Recipient>) {
         val recipientDb = DatabaseComponent.get(context).recipientDatabase()
         recipientDb.setBlocked(toUnblock, false)
     }
@@ -983,5 +1021,4 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         val recipientDb = DatabaseComponent.get(context).recipientDatabase()
         return recipientDb.blockedContacts
     }
-
 }
