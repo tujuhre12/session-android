@@ -246,12 +246,8 @@
         <item name="windowActionModeOverlay">true</item>
     </style>
 
-    <style name="Theme.TextSecure.Dialog.Rationale" parent="Theme.AppCompat.DayNight.Dialog.Alert">
-        <item name="android:windowBackground">@drawable/default_dialog_background</item>
-    </style>
-
     <style name="Theme.TextSecure.Dialog.MediaSendProgress" parent="@android:style/Theme.Dialog">
-        <item name="android:background">@drawable/default_dialog_background</item>
+        <item name="android:colorBackground">?attr/dialog_background_color</item>
         <item name="android:windowNoTitle">true</item>
     </style>
 
