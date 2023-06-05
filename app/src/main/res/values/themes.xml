@@ -54,6 +54,7 @@
        <item name="menu_unpin_icon">@drawable/ic_outline_pin_off_24</item>
        <item name="menu_mark_all_as_read">@drawable/ic_outline_mark_chat_read_24</item>
        <item name="emoji_show_less_icon">@drawable/ic_chevron_up_light</item>
+       <item name="accentColor">?colorAccent</item>
        <item name="prominentButtonColor">?colorAccent</item>
        <item name="attachment_document_icon_small">@drawable/ic_document_small_dark</item>
        <item name="attachment_document_icon_large">@drawable/ic_document_large_dark</item>
@@ -342,6 +343,7 @@
         <item name="actionBarWidgetTheme">@null</item>
         <item name="actionBarTheme">@style/ThemeOverlay.AppCompat.Dark.ActionBar</item>
         <item name="actionBarStyle">@style/Widget.Session.ActionBar</item>
+        <item name="accentColor">?colorAccent</item>
         <item name="prominentButtonColor">?colorAccent</item>
         <item name="elementBorderColor">@color/classic_dark_3</item>
 
@@ -417,6 +419,7 @@
         <item name="actionBarWidgetTheme">@null</item>
         <item name="actionBarTheme">@style/ThemeOverlay.AppCompat.ActionBar</item>
         <item name="actionBarStyle">@style/Widget.Session.ActionBar</item>
+        <item name="accentColor">?colorAccent</item>
         <item name="prominentButtonColor">?android:textColorPrimary</item>
         <item name="elementBorderColor">@color/classic_light_3</item>
 
@@ -503,6 +506,7 @@
         <item name="actionBarWidgetTheme">@null</item>
         <item name="actionBarTheme">@style/ThemeOverlay.AppCompat.Dark.ActionBar</item>
         <item name="actionBarStyle">@style/Widget.Session.ActionBar</item>
+        <item name="accentColor">?colorAccent</item>
         <item name="prominentButtonColor">?colorAccent</item>
         <item name="elementBorderColor">@color/ocean_dark_4</item>
 
@@ -583,6 +587,7 @@
         <item name="actionBarWidgetTheme">@null</item>
         <item name="actionBarTheme">@style/ThemeOverlay.AppCompat.ActionBar</item>
         <item name="actionBarStyle">@style/Widget.Session.ActionBar</item>
+        <item name="accentColor">?colorAccent</item>
         <item name="prominentButtonColor">?android:textColorPrimary</item>
         <item name="elementBorderColor">@color/ocean_light_3</item>
 
