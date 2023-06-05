@@ -5,6 +5,31 @@
     android:layout_height="wrap_content"
     android:layout_width="match_parent">
 
+    <FrameLayout
+        android:layout_gravity="center"
+        android:id="@+id/ic_pictures"
+        android:background="@drawable/circle_tintable"
+        android:backgroundTint="@color/classic_dark_3"
+        android:layout_width="@dimen/large_profile_picture_size"
+        android:layout_height="@dimen/large_profile_picture_size">
+
+        <ImageView
+            android:layout_gravity="center"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_pictures"/>
+
+        <View
+            android:foreground="@drawable/ic_plus"
+            android:layout_gravity="bottom|end"
+            android:background="@drawable/circle_tintable"
+            android:backgroundTint="@color/accent_green"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            />
+
+    </FrameLayout>
+
     <include layout="@layout/view_profile_picture"
         android:layout_margin="30dp"
         android:id="@+id/profile_picture_view"
