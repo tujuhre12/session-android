@@ -77,7 +77,7 @@ class SessionDialogBuilder(val context: Context) {
 
     fun view(view: View) = contentView.addView(view)
 
-    fun view(@LayoutRes layout: Int) = contentView.addView(LayoutInflater.from(context).inflate(layout, contentView))
+    fun view(@LayoutRes layout: Int): View = LayoutInflater.from(context).inflate(layout, contentView)
 
     fun iconAttribute(@AttrRes icon: Int): AlertDialog.Builder = dialogBuilder.setIconAttribute(icon)
 
