@@ -14,7 +14,6 @@ open class BaseDialog : DialogFragment() {
         val builder = AlertDialog.Builder(requireContext())
         setContentView(builder)
         val result = builder.create()
-        result.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         val isLightMode = UiModeUtilities.isDayUiMode(requireContext())
         result.window?.setDimAmount(if (isLightMode) 0.1f else 0.75f)
         return result
