@@ -69,7 +69,8 @@ import org.session.libsignal.utilities.ListenableFuture
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
 import org.session.libsignal.utilities.hexEncodedPrivateKey
-import org.thoughtcrime.securesms.*
+import org.thoughtcrime.securesms.ApplicationContext
+import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.attachments.ScreenshotObserver
 import org.thoughtcrime.securesms.audio.AudioRecorder
 import org.thoughtcrime.securesms.contacts.SelectContactsActivity.Companion.selectedContactsKey
@@ -110,6 +111,8 @@ import org.thoughtcrime.securesms.mms.*
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.reactions.ReactionsDialogFragment
 import org.thoughtcrime.securesms.reactions.any.ReactWithAnyEmojiDialogFragment
+import org.thoughtcrime.securesms.showExpirationDialog
+import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.util.*
 import java.lang.ref.WeakReference
 import java.util.*
@@ -206,6 +209,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     // Search
     val searchViewModel: SearchViewModel by viewModels()
     var searchViewItem: MenuItem? = null
+
+    private var emojiPickerVisible = false
 
     private val isScrolledToBottom: Boolean
         get() = binding?.conversationRecyclerView?.isScrolledToBottom ?: true
@@ -438,17 +443,22 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                 handleRecyclerViewScrolled()
             }
         })
+
+        binding!!.conversationRecyclerView.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+            showScrollToBottomButtonIfApplicable()
+        }
     }
 
     // called from onCreate
     private fun setUpToolBar() {
-        setSupportActionBar(binding?.toolbar)
+        val binding = binding ?: return
+        setSupportActionBar(binding.toolbar)
         val actionBar = supportActionBar ?: return
         val recipient = viewModel.recipient ?: return
         actionBar.title = ""
         actionBar.setDisplayHomeAsUpEnabled(true)
         actionBar.setHomeButtonEnabled(true)
-        binding!!.toolbarContent.conversationTitleView.text = when {
+        binding.toolbarContent.conversationTitleView.text = when {
             recipient.isLocalNumber -> getString(R.string.note_to_self)
             else -> recipient.toShortString()
         }
@@ -458,13 +468,11 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             R.dimen.small_profile_picture_size
         }
         val size = resources.getDimension(sizeID).roundToInt()
-        binding!!.toolbarContent.profilePictureView.root.layoutParams = LinearLayout.LayoutParams(size, size)
-        binding!!.toolbarContent.profilePictureView.root.glide = glide
+        binding.toolbarContent.profilePictureView.root.layoutParams = LinearLayout.LayoutParams(size, size)
+        binding.toolbarContent.profilePictureView.root.glide = glide
         MentionManagerUtilities.populateUserPublicKeyCacheIfNeeded(viewModel.threadId, this)
-        val profilePictureView = binding!!.toolbarContent.profilePictureView.root
-        viewModel.recipient?.let { recipient ->
-            profilePictureView.update(recipient)
-        }
+        val profilePictureView = binding.toolbarContent.profilePictureView.root
+        viewModel.recipient?.let(profilePictureView::update)
     }
 
     // called from onCreate
@@ -569,7 +577,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         val name = contact?.displayName(Contact.ContactContext.REGULAR) ?: sessionID
         binding?.blockedBannerTextView?.text = resources.getString(R.string.activity_conversation_blocked_banner_text, name)
         binding?.blockedBanner?.isVisible = recipient.isBlocked
-        binding?.blockedBanner?.setOnClickListener { viewModel.unblock() }
+        binding?.blockedBanner?.setOnClickListener { viewModel.unblock(this@ConversationActivityV2) }
     }
 
     private fun setUpLinkPreviewObserver() {
@@ -901,15 +909,14 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         val binding = binding ?: return
         val wasTypingIndicatorVisibleBefore = binding.typingIndicatorViewContainer.isVisible
         binding.typingIndicatorViewContainer.isVisible = wasTypingIndicatorVisibleBefore && isScrolledToBottom
-        binding.typingIndicatorViewContainer.isVisible
-        showOrHidScrollToBottomButton()
+        showScrollToBottomButtonIfApplicable()
         val firstVisiblePosition = layoutManager?.findFirstVisibleItemPosition() ?: -1
         unreadCount = min(unreadCount, firstVisiblePosition).coerceAtLeast(0)
         updateUnreadCountIndicator()
     }
 
-    private fun showOrHidScrollToBottomButton(show: Boolean = true) {
-        binding?.scrollToBottomButton?.isVisible = show && !isScrolledToBottom && adapter.itemCount > 0
+    private fun showScrollToBottomButtonIfApplicable() {
+        binding?.scrollToBottomButton?.isVisible = !emojiPickerVisible && !isScrolledToBottom && adapter.itemCount > 0
     }
 
     private fun updateUnreadCountIndicator() {
@@ -963,7 +970,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             title(R.string.RecipientPreferenceActivity_block_this_contact_question)
             text(R.string.RecipientPreferenceActivity_you_will_no_longer_receive_messages_and_calls_from_this_contact)
             destructiveButton(R.string.RecipientPreferenceActivity_block, R.string.AccessibilityId_block_confirm) {
-                viewModel.block()
+                viewModel.block(this@ConversationActivityV2)
                 if (deleteThread) {
                     viewModel.deleteThread()
                     finish()
@@ -1002,8 +1009,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             val message = ExpirationTimerUpdate(expirationTime)
             message.recipient = thread.address.serialize()
             message.sentTimestamp = SnodeAPI.nowWithOffset
-            ApplicationContext.getInstance(this)
-                .expiringMessageManager.setExpirationTimer(message)
+            ApplicationContext.getInstance(this).expiringMessageManager.setExpirationTimer(message)
             MessageSender.send(message, thread.address)
             invalidateOptionsMenu()
         }
@@ -1016,7 +1022,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             destructiveButton(
                 R.string.ConversationActivity_unblock,
                 R.string.AccessibilityId_block_confirm
-            ) { viewModel.unblock() }
+            ) { viewModel.unblock(this@ConversationActivityV2) }
             cancelButton()
         }
     }
@@ -1078,21 +1084,26 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             Log.e("Loki", "Failed to show emoji picker", e)
             return
         }
+
+        val binding = binding ?: return
+
+        emojiPickerVisible = true
         ViewUtil.hideKeyboard(this, visibleMessageView)
-        binding?.reactionsShade?.isVisible = true
-        showOrHidScrollToBottomButton(false)
-        binding?.conversationRecyclerView?.suppressLayout(true)
+        binding.reactionsShade.isVisible = true
+        binding.scrollToBottomButton.isVisible = false
+        binding.conversationRecyclerView.suppressLayout(true)
         reactionDelegate.setOnActionSelectedListener(ReactionsToolbarListener(message))
         reactionDelegate.setOnHideListener(object: ConversationReactionOverlay.OnHideListener {
             override fun startHide() {
-                binding?.reactionsShade?.let {
+                emojiPickerVisible = false
+                binding.reactionsShade.let {
                     ViewUtil.fadeOut(it, resources.getInteger(R.integer.reaction_scrubber_hide_duration), View.GONE)
                 }
-                showOrHidScrollToBottomButton(true)
+                showScrollToBottomButtonIfApplicable()
             }
 
             override fun onHide() {
-                binding?.conversationRecyclerView?.suppressLayout(false)
+                binding.conversationRecyclerView.suppressLayout(false)
 
                 WindowUtil.setLightStatusBarFromTheme(this@ConversationActivityV2);
                 WindowUtil.setLightNavigationBarFromTheme(this@ConversationActivityV2);
@@ -1353,7 +1364,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     override fun sendMessage() {
         val recipient = viewModel.recipient ?: return
         if (recipient.isContactRecipient && recipient.isBlocked) {
-            BlockedDialog(recipient).show(supportFragmentManager, "Blocked Dialog")
+            BlockedDialog(recipient, this).show(supportFragmentManager, "Blocked Dialog")
             return
         }
         val binding = binding ?: return

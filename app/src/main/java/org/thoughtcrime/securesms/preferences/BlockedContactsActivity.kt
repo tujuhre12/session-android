@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.preferences
 
 import android.os.Bundle
-import android.view.View
 import androidx.activity.viewModels
 import androidx.core.view.isVisible
 import dagger.hilt.android.AndroidEntryPoint
@@ -11,52 +10,20 @@ import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.showSessionDialog
 
 @AndroidEntryPoint
-class BlockedContactsActivity: PassphraseRequiredActionBarActivity(), View.OnClickListener {
+class BlockedContactsActivity: PassphraseRequiredActionBarActivity() {
 
     lateinit var binding: ActivityBlockedContactsBinding
 
     val viewModel: BlockedContactsViewModel by viewModels()
 
-    val adapter = BlockedContactsAdapter()
+    val adapter: BlockedContactsAdapter by lazy { BlockedContactsAdapter(viewModel) }
 
-    override fun onClick(v: View?) {
-        if (v === binding.unblockButton && adapter.getSelectedItems().isNotEmpty()) {
-            val contactsToUnblock = adapter.getSelectedItems()
-            // show dialog
-            val title = if (contactsToUnblock.size == 1) {
-                getString(R.string.Unblock_dialog__title_single, contactsToUnblock.first().name)
-            } else {
-                getString(R.string.Unblock_dialog__title_multiple)
-            }
-
-            val message = if (contactsToUnblock.size == 1) {
-                getString(R.string.Unblock_dialog__message, contactsToUnblock.first().name)
-            } else {
-                val stringBuilder = StringBuilder()
-                val iterator = contactsToUnblock.iterator()
-                var numberAdded = 0
-                while (iterator.hasNext() && numberAdded < 3) {
-                    val nextRecipient = iterator.next()
-                    if (numberAdded > 0) stringBuilder.append(", ")
-                    
-                    stringBuilder.append(nextRecipient.name)
-                    numberAdded++
-                }
-                val overflow = contactsToUnblock.size - numberAdded
-                if (overflow > 0) {
-                    stringBuilder.append(" ")
-                    val string = resources.getQuantityString(R.plurals.Unblock_dialog__message_multiple_overflow, overflow)
-                    stringBuilder.append(string.format(overflow))
-                }
-                getString(R.string.Unblock_dialog__message, stringBuilder.toString())
-            }
-
-            showSessionDialog {
-                title(title)
-                text(message)
-                button(R.string.continue_2) { viewModel.unblock(contactsToUnblock) }
-                cancelButton()
-            }
+    fun unblock() {
+        showSessionDialog {
+            title(viewModel.getTitle(this@BlockedContactsActivity))
+            text(viewModel.getMessage(this@BlockedContactsActivity))
+            button(R.string.continue_2) { viewModel.unblock(this@BlockedContactsActivity) }
+            cancelButton()
         }
     }
 
@@ -68,15 +35,14 @@ class BlockedContactsActivity: PassphraseRequiredActionBarActivity(), View.OnCli
         binding.recyclerView.adapter = adapter
 
         viewModel.subscribe(this)
-            .observe(this) { newState ->
-                adapter.submitList(newState.blockedContacts)
-                val isEmpty = newState.blockedContacts.isEmpty()
-                binding.emptyStateMessageTextView.isVisible = isEmpty
-                binding.nonEmptyStateGroup.isVisible = !isEmpty
+            .observe(this) { state ->
+                adapter.submitList(state.items)
+                binding.emptyStateMessageTextView.isVisible = state.emptyStateMessageTextViewVisible
+                binding.nonEmptyStateGroup.isVisible = state.nonEmptyStateGroupVisible
+                binding.unblockButton.isEnabled = state.unblockButtonEnabled
             }
 
-        binding.unblockButton.setOnClickListener(this)
+        binding.unblockButton.setOnClickListener { unblock() }
 
     }
-
 }

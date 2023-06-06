@@ -494,8 +494,10 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             button(R.string.RecipientPreferenceActivity_block) {
                 lifecycleScope.launch(Dispatchers.IO) {
                     recipientDatabase.setBlocked(thread.recipient, true)
+                    // TODO: Remove in UserConfig branch
+                    ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(this@HomeActivity)
                     withContext(Dispatchers.Main) {
-                        binding.recyclerView.adapter?.notifyDataSetChanged()
+                        binding.recyclerView.adapter!!.notifyDataSetChanged()
                     }
                 }
             }
@@ -510,8 +512,10 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             button(R.string.RecipientPreferenceActivity_unblock) {
                 lifecycleScope.launch(Dispatchers.IO) {
                     recipientDatabase.setBlocked(thread.recipient, false)
+                    // TODO: Remove in UserConfig branch
+                    ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(this@HomeActivity)
                     withContext(Dispatchers.Main) {
-                        binding.recyclerView.adapter?.notifyDataSetChanged()
+                        binding.recyclerView.adapter!!.notifyDataSetChanged()
                     }
                 }
             }
@@ -520,20 +524,20 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
     }
 
     private fun setConversationMuted(thread: ThreadRecord, isMuted: Boolean) {
-        if (isMuted) {
+        if (!isMuted) {
+            lifecycleScope.launch(Dispatchers.IO) {
+                recipientDatabase.setMuted(thread.recipient, 0)
+                withContext(Dispatchers.Main) {
+                    binding.recyclerView.adapter!!.notifyDataSetChanged()
+                }
+            }
+        } else {
             showMuteDialog(this) { until ->
                 lifecycleScope.launch(Dispatchers.IO) {
                     recipientDatabase.setMuted(thread.recipient, until)
                     withContext(Dispatchers.Main) {
                         binding.recyclerView.adapter!!.notifyDataSetChanged()
                     }
-                }
-            }
-        } else {
-            lifecycleScope.launch(Dispatchers.IO) {
-                recipientDatabase.setMuted(thread.recipient, 0)
-                withContext(Dispatchers.Main) {
-                    binding.recyclerView.adapter!!.notifyDataSetChanged()
                 }
             }
         }
@@ -579,52 +583,31 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             text(message)
             button(R.string.yes) {
                 lifecycleScope.launch(Dispatchers.Main) {
-                    val context = this@HomeActivity as Context
+                    val context = this@HomeActivity
                     // Cancel any outstanding jobs
-                    DatabaseComponent.get(context).sessionJobDatabase()
-                        .cancelPendingMessageSendJobs(threadID)
+                    DatabaseComponent.get(context).sessionJobDatabase().cancelPendingMessageSendJobs(threadID)
                     // Send a leave group message if this is an active closed group
-                    if (recipient.address.isClosedGroup && DatabaseComponent.get(context)
-                            .groupDatabase().isActive(recipient.address.toGroupString())
-                    ) {
-                        var isClosedGroup: Boolean
-                        var groupPublicKey: String?
+                    if (recipient.address.isClosedGroup && DatabaseComponent.get(context).groupDatabase().isActive(recipient.address.toGroupString())) {
                         try {
-                            groupPublicKey =
-                                GroupUtil.doubleDecodeGroupID(recipient.address.toString())
-                                    .toHexString()
-                            isClosedGroup = DatabaseComponent.get(context).lokiAPIDatabase()
-                                .isClosedGroup(groupPublicKey)
-                        } catch (e: IOException) {
-                            groupPublicKey = null
-                            isClosedGroup = false
-                        }
-                        if (isClosedGroup) {
-                            MessageSender.explicitLeave(groupPublicKey!!, false)
+                            GroupUtil.doubleDecodeGroupID(recipient.address.toString()).toHexString()
+                                .takeIf(DatabaseComponent.get(context).lokiAPIDatabase()::isClosedGroup)
+                                ?.let { MessageSender.explicitLeave(it, false) }
+                        } catch (_: IOException) {
                         }
                     }
                     // Delete the conversation
-                    val v2OpenGroup =
-                        DatabaseComponent.get(this@HomeActivity).lokiThreadDatabase()
-                            .getOpenGroupChat(threadID)
+                    val v2OpenGroup = DatabaseComponent.get(context).lokiThreadDatabase().getOpenGroupChat(threadID)
                     if (v2OpenGroup != null) {
-                        OpenGroupManager.delete(
-                            v2OpenGroup.server,
-                            v2OpenGroup.room,
-                            this@HomeActivity
-                        )
+                        v2OpenGroup.apply { OpenGroupManager.delete(server, room, context) }
                     } else {
                         lifecycleScope.launch(Dispatchers.IO) {
                             threadDb.deleteConversation(threadID)
                         }
                     }
                     // Update the badge count
-                    ApplicationContext.getInstance(context).messageNotifier.updateNotification(
-                        context
-                    )
+                    ApplicationContext.getInstance(context).messageNotifier.updateNotification(context)
                     // Notify the user
-                    val toastMessage =
-                        if (recipient.isGroupRecipient) R.string.MessageRecord_left_group else R.string.activity_home_conversation_deleted_message
+                    val toastMessage = if (recipient.isGroupRecipient) R.string.MessageRecord_left_group else R.string.activity_home_conversation_deleted_message
                     Toast.makeText(context, toastMessage, Toast.LENGTH_LONG).show()
                 }
             }
@@ -638,7 +621,8 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
     }
 
     private fun showMessageRequests() {
-        Intent(this, MessageRequestsActivity::class.java).let(::push)
+        val intent = Intent(this, MessageRequestsActivity::class.java)
+        push(intent)
     }
 
     private fun hideMessageRequests() {
