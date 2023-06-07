@@ -15,7 +15,7 @@ import java.util.concurrent.Executors
 
 object OpenGroupManager {
     private val executorService = Executors.newScheduledThreadPool(4)
-    private var pollers = mutableMapOf<String, OpenGroupPoller>() // One for each server
+    private val pollers = mutableMapOf<String, OpenGroupPoller>() // One for each server
     private var isPolling = false
     private val pollUpdaterLock = Any()
 
@@ -44,9 +44,7 @@ object OpenGroupManager {
         synchronized(pollUpdaterLock) {
             servers.forEach { server ->
                 pollers[server]?.stop() // Shouldn't be necessary
-                val poller = OpenGroupPoller(server, executorService)
-                poller.startIfNeeded()
-                pollers[server] = poller
+                pollers[server] = OpenGroupPoller(server, executorService).apply { startIfNeeded() }
             }
         }
     }

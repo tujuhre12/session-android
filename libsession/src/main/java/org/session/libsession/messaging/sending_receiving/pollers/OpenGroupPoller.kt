@@ -40,7 +40,7 @@ class OpenGroupPoller(private val server: String, private val executorService: S
     var isCaughtUp = false
     var secondToLastJob: MessageReceiveJob? = null
     private var future: ScheduledFuture<*>? = null
-    private var runId: UUID = UUID.randomUUID()
+    @Volatile private var runId: UUID = UUID.randomUUID()
 
     companion object {
         private const val pollInterval: Long = 4000L
@@ -59,16 +59,20 @@ class OpenGroupPoller(private val server: String, private val executorService: S
 
             // If we don't have an existing group and don't have a 'createGroupIfMissingWithPublicKey'
             // value then don't process the poll info
-            val publicKey = ((existingOpenGroup?.publicKey ?: createGroupIfMissingWithPublicKey) ?: return)
+            val publicKey = existingOpenGroup?.publicKey ?: createGroupIfMissingWithPublicKey
+            val name = pollInfo.details?.name ?: existingOpenGroup?.name
+            val infoUpdates = pollInfo.details?.infoUpdates ?: existingOpenGroup?.infoUpdates
+
+            if (publicKey == null) return
 
             val openGroup = OpenGroup(
                 server = server,
                 room = pollInfo.token,
-                name = ((pollInfo.details?.name ?: existingOpenGroup?.name) ?: ""),
+                name = name ?: "",
                 publicKey = publicKey,
                 imageId = (pollInfo.details?.imageId ?: existingOpenGroup?.imageId),
                 canWrite = pollInfo.write,
-                infoUpdates = ((pollInfo.details?.infoUpdates ?: existingOpenGroup?.infoUpdates) ?: 0)
+                infoUpdates = infoUpdates ?: 0
             )
             // - Open Group changes
             storage.updateOpenGroup(openGroup)

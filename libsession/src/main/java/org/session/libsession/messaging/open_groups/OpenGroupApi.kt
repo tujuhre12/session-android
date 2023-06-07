@@ -110,24 +110,22 @@ object OpenGroupApi {
         val upload: Boolean = false,
         val defaultUpload: Boolean = false,
     ) {
-        fun toPollInfo(): RoomPollInfo {
-            return RoomPollInfo(
-                token = token,
-                activeUsers = activeUsers,
-                admin = admin,
-                globalAdmin = globalAdmin,
-                moderator = moderator,
-                globalModerator = globalModerator,
-                read = read,
-                defaultRead = defaultRead,
-                defaultAccessible = defaultAccessible,
-                write = write,
-                defaultWrite = defaultWrite,
-                upload = upload,
-                defaultUpload = defaultUpload,
-                details = this
-            )
-        }
+        fun toPollInfo() = RoomPollInfo(
+            token = token,
+            activeUsers = activeUsers,
+            admin = admin,
+            globalAdmin = globalAdmin,
+            moderator = moderator,
+            globalModerator = globalModerator,
+            read = read,
+            defaultRead = defaultRead,
+            defaultAccessible = defaultAccessible,
+            write = write,
+            defaultWrite = defaultWrite,
+            upload = upload,
+            defaultUpload = defaultUpload,
+            details = this
+        )
     }
 
     @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy::class)
