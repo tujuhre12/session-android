@@ -478,7 +478,7 @@ private fun handleNewClosedGroup(sender: String, sentTimestamp: Long, groupPubli
     // Set expiration timer
     storage.setExpirationTimer(groupID, expireTimer)
     // Notify the PN server
-    PushNotificationAPI.subscribeGroup(groupPublicKey, userPublicKey)
+    PushNotificationAPI.subscribeGroup(groupPublicKey)
     // Notify the user
     if (userPublicKey == sender && !groupExists) {
         val threadID = storage.getOrCreateThreadIdFor(Address.fromSerialized(groupID))

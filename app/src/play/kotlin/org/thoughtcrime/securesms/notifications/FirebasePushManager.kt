@@ -143,7 +143,6 @@ class FirebasePushManager(private val context: Context, private val prefs: TextS
         retryIfNeeded(maxRetryCount) {
             getResponseBody<UnsubscribeResponse>(request.build()).map { response ->
                 if (response.success == true) {
-                    TextSecurePreferences.setIsUsingFCM(context, false)
                     TextSecurePreferences.setFCMToken(context, null)
                     Log.d("Loki", "Unsubscribe FCM success")
                 } else {

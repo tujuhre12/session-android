@@ -986,7 +986,6 @@ interface TextSecurePreferences {
         fun clearAll(context: Context) {
             getDefaultSharedPreferences(context).edit().clear().commit()
         }
-
     }
 }
 

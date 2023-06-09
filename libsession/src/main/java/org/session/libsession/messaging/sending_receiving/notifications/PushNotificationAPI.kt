@@ -59,38 +59,22 @@ object PushNotificationAPI {
     fun subscribeGroup(
         closedGroupPublicKey: String,
         publicKey: String = MessagingModuleConfiguration.shared.storage.getUserPublicKey()!!
-    ) {
-        performGroupOperation(ClosedGroupOperation.Subscribe, closedGroupPublicKey, publicKey)
-    }
+    ) = performGroupOperation(ClosedGroupOperation.Subscribe, closedGroupPublicKey, publicKey)
 
     private fun subscribeGroups(
         closedGroupPublicKeys: Collection<String> = MessagingModuleConfiguration.shared.storage.getAllClosedGroupPublicKeys(),
         publicKey: String = MessagingModuleConfiguration.shared.storage.getUserPublicKey()!!
-    ) {
-        performGroupOperations(ClosedGroupOperation.Subscribe, closedGroupPublicKeys, publicKey)
-    }
+    ) = closedGroupPublicKeys.forEach { performGroupOperation(ClosedGroupOperation.Subscribe, it, publicKey) }
 
     fun unsubscribeGroup(
         closedGroupPublicKey: String,
         publicKey: String = MessagingModuleConfiguration.shared.storage.getUserPublicKey()!!
-    ) {
-        performGroupOperation(ClosedGroupOperation.Unsubscribe, closedGroupPublicKey, publicKey)
-    }
+    ) = performGroupOperation(ClosedGroupOperation.Unsubscribe, closedGroupPublicKey, publicKey)
 
     private fun unsubscribeGroups(
         closedGroupPublicKeys: Collection<String> = MessagingModuleConfiguration.shared.storage.getAllClosedGroupPublicKeys(),
         publicKey: String = MessagingModuleConfiguration.shared.storage.getUserPublicKey()!!
-    ) {
-        performGroupOperations(ClosedGroupOperation.Unsubscribe, closedGroupPublicKeys, publicKey)
-    }
-
-    private fun performGroupOperations(
-        operation: ClosedGroupOperation,
-        closedGroupPublicKeys: Collection<String>,
-        publicKey: String
-    ) {
-        closedGroupPublicKeys.forEach { performGroupOperation(operation, it, publicKey) }
-    }
+    ) = closedGroupPublicKeys.forEach { performGroupOperation(ClosedGroupOperation.Unsubscribe, it, publicKey) }
 
     private fun performGroupOperation(
         operation: ClosedGroupOperation,
