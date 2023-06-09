@@ -37,6 +37,24 @@ data class SubscriptionRequest(
 )
 
 @Serializable
+data class UnsubscriptionRequest(
+    /** the 33-byte account being subscribed to; typically a session ID */
+    val pubkey: String,
+    /** when the pubkey starts with 05 (i.e. a session ID) this is the ed25519 32-byte pubkey associated with the session ID */
+    val session_ed25519: String?,
+    /** 32-byte swarm authentication subkey; omitted (or null) when not using subkey auth (new closed groups) */
+    val subkey_tag: String? = null,
+    /** the signature unix timestamp in seconds, not ms */
+    val sig_ts: Long,
+    /** the 64-byte ed25519 signature */
+    val signature: String,
+    /** the string identifying the notification service, "firebase" for android (currently) */
+    val service: String,
+    /** dict of service-specific data, currently just "token" field with device-specific token but different services might have other requirements */
+    val service_info: Map<String, String>,
+)
+
+@Serializable
 data class SubscriptionResponse(
     val error: Int? = null,
     val message: String? = null,
@@ -59,6 +77,14 @@ data class SubscriptionResponse(
         error to message
     } else null to null
 }
+
+@Serializable
+data class UnsubscribeResponse(
+    val error: Int? = null,
+    val message: String? = null,
+    val success: Boolean? = null,
+    val removed: Boolean? = null,
+)
 
 @Serializable
 data class PushNotificationMetadata(

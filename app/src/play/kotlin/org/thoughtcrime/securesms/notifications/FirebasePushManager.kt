@@ -1,6 +1,8 @@
 package org.thoughtcrime.securesms.notifications
 
 import android.content.Context
+import com.google.android.gms.tasks.Task
+import com.google.firebase.iid.InstanceIdResult
 import com.goterl.lazysodium.LazySodiumAndroid
 import com.goterl.lazysodium.SodiumAndroid
 import com.goterl.lazysodium.interfaces.AEAD
@@ -21,6 +23,8 @@ import org.session.libsession.messaging.sending_receiving.notifications.PushNoti
 import org.session.libsession.messaging.sending_receiving.notifications.PushNotificationMetadata
 import org.session.libsession.messaging.sending_receiving.notifications.SubscriptionRequest
 import org.session.libsession.messaging.sending_receiving.notifications.SubscriptionResponse
+import org.session.libsession.messaging.sending_receiving.notifications.UnsubscribeResponse
+import org.session.libsession.messaging.sending_receiving.notifications.UnsubscriptionRequest
 import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.SnodeAPI
@@ -74,7 +78,7 @@ class FirebasePushManager(private val context: Context, private val prefs: TextS
 
         val metadataJson = (expectedList[0] as? BencodeString)?.value
                 ?: error("no metadata")
-        val metadata:PushNotificationMetadata = Json.decodeFromString(String(metadataJson))
+        val metadata: PushNotificationMetadata = Json.decodeFromString(String(metadataJson))
 
         val content: ByteArray? = if (expectedList.size >= 2) (expectedList[1] as? BencodeString)?.value else null
         // null content is valid only if we got a "data_too_long" flag
@@ -90,41 +94,71 @@ class FirebasePushManager(private val context: Context, private val prefs: TextS
     }
 
     override fun register(force: Boolean) {
-        val currentInstanceIdJob = firebaseInstanceIdJob
-        if (currentInstanceIdJob != null && currentInstanceIdJob.isActive && !force) return
-
-        if (force && currentInstanceIdJob != null) {
-            currentInstanceIdJob.cancel(null)
+        firebaseInstanceIdJob?.apply {
+            if (force) cancel() else if (isActive) return
         }
 
-        firebaseInstanceIdJob = getFcmInstanceId { task ->
-            // context in here is Dispatchers.IO
-            if (!task.isSuccessful) {
-                Log.w(
-                    "Loki",
-                    "FirebaseInstanceId.getInstance().getInstanceId() failed." + task.exception
-                )
-                return@getFcmInstanceId
-            }
-            val token: String = task.result?.token ?: return@getFcmInstanceId
-            val userPublicKey = getLocalNumber(context) ?: return@getFcmInstanceId
-            val userEdKey = KeyPairUtilities.getUserED25519KeyPair(context) ?: return@getFcmInstanceId
-            if (prefs.isUsingFCM()) {
-                register(token, userPublicKey, userEdKey, force)
-            } else {
-                unregister(token)
+        firebaseInstanceIdJob = getFcmInstanceId { register(it, force) }
+    }
+
+    private fun register(task: Task<InstanceIdResult>, force: Boolean) {
+        // context in here is Dispatchers.IO
+        if (!task.isSuccessful) {
+            Log.w(
+                "Loki",
+                "FirebaseInstanceId.getInstance().getInstanceId() failed." + task.exception
+            )
+            return
+        }
+
+        val token: String = task.result?.token ?: return
+        val userPublicKey = getLocalNumber(context) ?: return
+        val userEdKey = KeyPairUtilities.getUserED25519KeyPair(context) ?: return
+
+        when {
+            prefs.isUsingFCM() -> register(token, userPublicKey, userEdKey, force)
+            prefs.getFCMToken() != null -> unregister(token, userPublicKey, userEdKey)
+        }
+    }
+
+    private fun unregister(token: String, userPublicKey: String, userEdKey: KeyPair) {
+        val timestamp = SnodeAPI.nowWithOffset / 1000 // get timestamp in ms -> s
+        // if we want to support passing namespace list, here is the place to do it
+        val sigData = "UNSUBSCRIBE${userPublicKey}${timestamp}".encodeToByteArray()
+        val signature = ByteArray(Sign.BYTES)
+        sodium.cryptoSignDetached(signature, sigData, sigData.size.toLong(), userEdKey.secretKey.asBytes)
+
+        val requestParameters = UnsubscriptionRequest(
+            pubkey = userPublicKey,
+            session_ed25519 = userEdKey.publicKey.asHexString,
+            service = "firebase",
+            sig_ts = timestamp,
+            signature = Base64.encodeBytes(signature),
+            service_info = mapOf("token" to token),
+        )
+
+        val url = "${PushNotificationAPI.server}/unsubscribe"
+        val body = RequestBody.create(MediaType.get("application/json"), Json.encodeToString(requestParameters))
+        val request = Request.Builder().url(url).post(body)
+        retryIfNeeded(maxRetryCount) {
+            getResponseBody<UnsubscribeResponse>(request.build()).map { response ->
+                if (response.success == true) {
+                    TextSecurePreferences.setIsUsingFCM(context, false)
+                    TextSecurePreferences.setFCMToken(context, null)
+                    Log.d("Loki", "Unsubscribe FCM success")
+                } else {
+                    Log.e("Loki", "Couldn't unregister for FCM due to error: ${response.message}")
+                }
+            }.fail { exception ->
+                Log.e("Loki", "Couldn't unregister for FCM due to error: ${exception}.", exception)
             }
         }
     }
 
-    override fun unregister(token: String) {
-        TODO("Not yet implemented")
-    }
-
-    fun register(token: String, publicKey: String, userEd25519Key: KeyPair, force: Boolean, namespaces: List<Int> = listOf(Namespace.DEFAULT)) {
+    private fun register(token: String, publicKey: String, userEd25519Key: KeyPair, force: Boolean, namespaces: List<Int> = listOf(Namespace.DEFAULT)) {
         val oldToken = TextSecurePreferences.getFCMToken(context)
         val lastUploadDate = TextSecurePreferences.getLastFCMUploadTime(context)
-        if (!force && token == oldToken && System.currentTimeMillis() - lastUploadDate < tokenExpirationInterval) { return }
+        if (!force && token == oldToken && System.currentTimeMillis() - lastUploadDate < tokenExpirationInterval) return
 
         val pnKey = getOrCreateNotificationKey()
 
@@ -133,7 +167,7 @@ class FirebasePushManager(private val context: Context, private val prefs: TextS
         val sigData = "MONITOR${publicKey}${timestamp}1${namespaces.joinToString(separator = ",")}".encodeToByteArray()
         val signature = ByteArray(Sign.BYTES)
         sodium.cryptoSignDetached(signature, sigData, sigData.size.toLong(), userEd25519Key.secretKey.asBytes)
-        val requestParameters = SubscriptionRequest (
+        val requestParameters = SubscriptionRequest(
             pubkey = publicKey,
             session_ed25519 = userEd25519Key.publicKey.asHexString,
             namespaces = listOf(Namespace.DEFAULT),
@@ -149,9 +183,8 @@ class FirebasePushManager(private val context: Context, private val prefs: TextS
         val body = RequestBody.create(MediaType.get("application/json"), Json.encodeToString(requestParameters))
         val request = Request.Builder().url(url).post(body)
         retryIfNeeded(maxRetryCount) {
-            getResponseBody(request.build()).map { response ->
+            getResponseBody<SubscriptionResponse>(request.build()).map { response ->
                 if (response.isSuccess()) {
-                    TextSecurePreferences.setIsUsingFCM(context, true)
                     TextSecurePreferences.setFCMToken(context, token)
                     TextSecurePreferences.setLastFCMUploadTime(context, System.currentTimeMillis())
                 } else {
@@ -159,18 +192,16 @@ class FirebasePushManager(private val context: Context, private val prefs: TextS
                     Log.e("Loki", "Couldn't register for FCM due to error: $message.")
                 }
             }.fail { exception ->
-                Log.e("Loki", "Couldn't register for FCM due to error: ${exception}.")
+                Log.e("Loki", "Couldn't register for FCM due to error: ${exception}.", exception)
             }
         }
     }
 
-    private fun getResponseBody(request: Request): Promise<SubscriptionResponse, Exception> {
-        return OnionRequestAPI.sendOnionRequest(request,
+    private inline fun <reified T> getResponseBody(request: Request): Promise<T, Exception> =
+        OnionRequestAPI.sendOnionRequest(
+            request,
             PushNotificationAPI.server,
-            PushNotificationAPI.serverPublicKey, Version.V4).map { response ->
-            Json.decodeFromStream(response.body!!.inputStream())
-        }
-    }
-
-
+            PushNotificationAPI.serverPublicKey,
+            Version.V4
+        ).map { response -> Json.decodeFromStream(response.body!!.inputStream()) }
 }

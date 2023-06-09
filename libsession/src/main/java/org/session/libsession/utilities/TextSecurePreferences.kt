@@ -318,7 +318,7 @@ interface TextSecurePreferences {
         }
 
         @JvmStatic
-        fun setFCMToken(context: Context, value: String) {
+        fun setFCMToken(context: Context, value: String?) {
             setStringPreference(context, FCM_TOKEN, value)
         }
 
