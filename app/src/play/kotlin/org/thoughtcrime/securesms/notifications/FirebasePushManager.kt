@@ -41,6 +41,8 @@ import org.session.libsignal.utilities.retryIfNeeded
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.crypto.KeyPairUtilities
 
+private const val TAG = "FirebasePushManager"
+
 class FirebasePushManager(private val context: Context, private val prefs: TextSecurePreferences): PushManager {
 
     companion object {
@@ -87,8 +89,7 @@ class FirebasePushManager(private val context: Context, private val prefs: TextS
         else
             check(metadata.data_len == content.size) { "wrong message data size" }
 
-        Log.d("Loki",
-                "Received push for ${metadata.account}/${metadata.namespace}, msg ${metadata.msg_hash}, ${metadata.data_len}B")
+        Log.d(TAG, "Received push for ${metadata.account}/${metadata.namespace}, msg ${metadata.msg_hash}, ${metadata.data_len}B")
 
         return content
     }
@@ -102,11 +103,11 @@ class FirebasePushManager(private val context: Context, private val prefs: TextS
     }
 
     private fun refresh(task: Task<InstanceIdResult>, force: Boolean) {
+        Log.d(TAG, "refresh")
+
         // context in here is Dispatchers.IO
         if (!task.isSuccessful) {
-            Log.w(
-                "Loki",
-                "FirebaseInstanceId.getInstance().getInstanceId() failed." + task.exception
+            Log.w(TAG, "FirebaseInstanceId.getInstance().getInstanceId() failed." + task.exception
             )
             return
         }
@@ -143,18 +144,21 @@ class FirebasePushManager(private val context: Context, private val prefs: TextS
         retryIfNeeded(maxRetryCount) {
             getResponseBody<UnsubscribeResponse>(request.build()).map { response ->
                 if (response.success == true) {
+                    Log.d(TAG, "Unsubscribe FCM success")
                     TextSecurePreferences.setFCMToken(context, null)
-                    Log.d("Loki", "Unsubscribe FCM success")
+                    PushNotificationAPI.unregister(token)
                 } else {
-                    Log.e("Loki", "Couldn't unregister for FCM due to error: ${response.message}")
+                    Log.e(TAG, "Couldn't unregister for FCM due to error: ${response.message}")
                 }
             }.fail { exception ->
-                Log.e("Loki", "Couldn't unregister for FCM due to error: ${exception}.", exception)
+                Log.e(TAG, "Couldn't unregister for FCM due to error: ${exception}.", exception)
             }
         }
     }
 
     private fun register(token: String, publicKey: String, userEd25519Key: KeyPair, force: Boolean, namespaces: List<Int> = listOf(Namespace.DEFAULT)) {
+        Log.d(TAG, "register token: $token")
+
         val oldToken = TextSecurePreferences.getFCMToken(context)
         val lastUploadDate = TextSecurePreferences.getLastFCMUploadTime(context)
         if (!force && token == oldToken && System.currentTimeMillis() - lastUploadDate < tokenExpirationInterval) return
@@ -184,14 +188,16 @@ class FirebasePushManager(private val context: Context, private val prefs: TextS
         retryIfNeeded(maxRetryCount) {
             getResponseBody<SubscriptionResponse>(request.build()).map { response ->
                 if (response.isSuccess()) {
+                    Log.d(TAG, "Success $token")
                     TextSecurePreferences.setFCMToken(context, token)
                     TextSecurePreferences.setLastFCMUploadTime(context, System.currentTimeMillis())
+                    PushNotificationAPI.register(token)
                 } else {
                     val (_, message) = response.errorInfo()
-                    Log.e("Loki", "Couldn't register for FCM due to error: $message.")
+                    Log.e(TAG, "Couldn't register for FCM due to error: $message.")
                 }
             }.fail { exception ->
-                Log.e("Loki", "Couldn't register for FCM due to error: ${exception}.", exception)
+                Log.e(TAG, "Couldn't register for FCM due to error: ${exception}.", exception)
             }
         }
     }

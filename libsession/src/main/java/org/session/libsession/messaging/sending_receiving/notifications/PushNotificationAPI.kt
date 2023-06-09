@@ -15,6 +15,8 @@ import org.session.libsignal.utilities.retryIfNeeded
 
 @SuppressLint("StaticFieldLeak")
 object PushNotificationAPI {
+    private const val TAG = "PushNotificationAPI"
+
     val context = MessagingModuleConfiguration.shared.context
     const val server = "https://push.getsession.org"
     const val serverPublicKey: String = "d7557fe563e2610de876c0ac7341b62f3c82d5eea4b62c702392ea4368f51b3b"
@@ -28,28 +30,33 @@ object PushNotificationAPI {
     }
 
     fun register(token: String? = TextSecurePreferences.getFCMToken(context)) {
+        Log.d(TAG, "register: $token")
+
         token?.let(::unregisterV1)
         subscribeGroups()
     }
 
     @JvmStatic
     fun unregister(token: String) {
+        Log.d(TAG, "unregister: $token")
+
         unregisterV1(token)
         unsubscribeGroups()
     }
 
     private fun unregisterV1(token: String) {
         val parameters = mapOf( "token" to token )
-        val url = "$server/unregister"
+        val url = "$legacyServer/unregister"
         val body = RequestBody.create(MediaType.get("application/json"), JsonUtil.toJson(parameters))
-        val request = Request.Builder().url(url).post(body)
+        val request = Request.Builder().url(url).post(body).build()
         retryIfNeeded(maxRetryCount) {
-            OnionRequestAPI.sendOnionRequest(request.build(), server, serverPublicKey, Version.V2).map { response ->
+            OnionRequestAPI.sendOnionRequest(request, legacyServer, legacyServerPublicKey, Version.V2).map { response ->
                 when (response.info["code"]) {
-                    null, 0 -> Log.d("Loki", "Couldn't disable FCM due to error: ${response.info["message"]}.")
+                    null, 0 -> Log.d(TAG, "Couldn't disable FCM due to error: ${response.info["message"]}.")
+                    else -> Log.d(TAG, "unregisterV1 success token: $token")
                 }
             }.fail { exception ->
-                Log.d("Loki", "Couldn't disable FCM due to error: ${exception}.")
+                Log.d(TAG, "Couldn't disable FCM due to error: ${exception}.")
             }
         }
     }
@@ -86,15 +93,16 @@ object PushNotificationAPI {
         val parameters = mapOf( "closedGroupPublicKey" to closedGroupPublicKey, "pubKey" to publicKey )
         val url = "$legacyServer/${operation.rawValue}"
         val body = RequestBody.create(MediaType.get("application/json"), JsonUtil.toJson(parameters))
-        val request = Request.Builder().url(url).post(body)
+        val request = Request.Builder().url(url).post(body).build()
 
         retryIfNeeded(maxRetryCount) {
-            OnionRequestAPI.sendOnionRequest(request.build(), legacyServer, legacyServerPublicKey, Version.V2).map { response ->
+            OnionRequestAPI.sendOnionRequest(request, legacyServer, legacyServerPublicKey, Version.V2).map { response ->
                 when (response.info["code"]) {
-                    null, 0 -> Log.d("Loki", "Couldn't subscribe/unsubscribe closed group: $closedGroupPublicKey due to error: ${response.info["message"]}.")
+                    null, 0 -> Log.d(TAG, "performGroupOperation fail: ${operation.rawValue}: $closedGroupPublicKey due to error: ${response.info["message"]}.")
+                    else -> Log.d(TAG, "performGroupOperation success: ${operation.rawValue}")
                 }
             }.fail { exception ->
-                Log.d("Loki", "Couldn't subscribe/unsubscribe closed group: $closedGroupPublicKey due to error: ${exception}.")
+                Log.d(TAG, "Couldn't ${operation.rawValue}: $closedGroupPublicKey due to error: ${exception}.")
             }
         }
     }
