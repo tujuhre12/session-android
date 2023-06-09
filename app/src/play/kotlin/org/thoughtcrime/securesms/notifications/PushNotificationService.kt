@@ -8,6 +8,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.jobs.MessageReceiveParameters
+import org.session.libsession.messaging.sending_receiving.notifications.PushNotificationAPI
 import org.session.libsession.messaging.utilities.MessageWrapper
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Base64
@@ -23,7 +24,7 @@ class PushNotificationService : FirebaseMessagingService() {
         super.onNewToken(token)
         Log.d("Loki", "New FCM token: $token.")
         TextSecurePreferences.getLocalNumber(this) ?: return
-        pushManager.register(true)
+        pushManager.refresh(true)
     }
 
     override fun onMessageReceived(message: RemoteMessage) {
@@ -53,22 +54,18 @@ class PushNotificationService : FirebaseMessagingService() {
             Log.d("Loki", "Failed to decode data for message.")
             val builder = NotificationCompat.Builder(this, NotificationChannels.OTHER)
                 .setSmallIcon(network.loki.messenger.R.drawable.ic_notification)
-                .setColor(this.getResources().getColor(network.loki.messenger.R.color.textsecure_primary))
+                .setColor(resources.getColor(network.loki.messenger.R.color.textsecure_primary))
                 .setContentTitle("Session")
                 .setContentText("You've got a new message.")
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setAutoCancel(true)
-            with(NotificationManagerCompat.from(this)) {
-                notify(11111, builder.build())
-            }
+            NotificationManagerCompat.from(this).notify(11111, builder.build())
         }
     }
 
     override fun onDeletedMessages() {
         Log.d("Loki", "Called onDeletedMessages.")
         super.onDeletedMessages()
-        val token = TextSecurePreferences.getFCMToken(this)!!
-        val userPublicKey = TextSecurePreferences.getLocalNumber(this) ?: return
-        PushNotificationManager.register(token, userPublicKey, this, true)
+        PushNotificationAPI.register()
     }
 }

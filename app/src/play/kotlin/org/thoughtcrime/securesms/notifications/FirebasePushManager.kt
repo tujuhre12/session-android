@@ -93,15 +93,15 @@ class FirebasePushManager(private val context: Context, private val prefs: TextS
         return content
     }
 
-    override fun register(force: Boolean) {
+    override fun refresh(force: Boolean) {
         firebaseInstanceIdJob?.apply {
             if (force) cancel() else if (isActive) return
         }
 
-        firebaseInstanceIdJob = getFcmInstanceId { register(it, force) }
+        firebaseInstanceIdJob = getFcmInstanceId { refresh(it, force) }
     }
 
-    private fun register(task: Task<InstanceIdResult>, force: Boolean) {
+    private fun refresh(task: Task<InstanceIdResult>, force: Boolean) {
         // context in here is Dispatchers.IO
         if (!task.isSuccessful) {
             Log.w(

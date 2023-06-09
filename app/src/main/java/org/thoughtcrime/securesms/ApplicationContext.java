@@ -36,6 +36,7 @@ import org.session.libsession.avatars.AvatarHelper;
 import org.session.libsession.database.MessageDataProvider;
 import org.session.libsession.messaging.MessagingModuleConfiguration;
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier;
+import org.session.libsession.messaging.sending_receiving.notifications.PushNotificationAPI;
 import org.session.libsession.messaging.sending_receiving.pollers.ClosedGroupPollerV2;
 import org.session.libsession.messaging.sending_receiving.pollers.Poller;
 import org.session.libsession.snode.SnodeModule;
@@ -78,7 +79,6 @@ import org.thoughtcrime.securesms.notifications.DefaultMessageNotifier;
 import org.thoughtcrime.securesms.notifications.NotificationChannels;
 import org.thoughtcrime.securesms.notifications.OptimizedMessageNotifier;
 import org.thoughtcrime.securesms.notifications.PushManager;
-import org.thoughtcrime.securesms.notifications.PushNotificationManager;
 import org.thoughtcrime.securesms.providers.BlobProvider;
 import org.thoughtcrime.securesms.service.ExpiringMessageManager;
 import org.thoughtcrime.securesms.service.KeyCachingService;
@@ -440,7 +440,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     private static class ProviderInitializationException extends RuntimeException { }
 
     public void registerForPnIfNeeded(final Boolean force) {
-        pushManager.register(force);
+        pushManager.refresh(force);
     }
 
     private void setUpPollingIfNeeded() {
@@ -514,7 +514,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     public void clearAllData(boolean isMigratingToV2KeyPair) {
         String token = TextSecurePreferences.getFCMToken(this);
         if (token != null && !token.isEmpty()) {
-            PushNotificationManager.unregister(token, this);
+            PushNotificationAPI.unregister(token);
         }
         if (firebaseInstanceIdJob != null && firebaseInstanceIdJob.isActive()) {
             firebaseInstanceIdJob.cancel(null);

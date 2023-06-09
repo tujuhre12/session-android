@@ -74,7 +74,7 @@ fun MessageSender.create(name: String, members: Collection<String>): Promise<Str
         val threadID = storage.getOrCreateThreadIdFor(Address.fromSerialized(groupID))
         storage.insertOutgoingInfoMessage(context, groupID, SignalServiceGroup.Type.CREATION, name, members, admins, threadID, sentTime)
         // Notify the PN server
-        PushNotificationAPI.performOperation(PushNotificationAPI.ClosedGroupOperation.Subscribe, groupPublicKey, userPublicKey)
+        PushNotificationAPI.subscribeGroup(groupPublicKey, userPublicKey)
         // Start polling
         ClosedGroupPollerV2.shared.startPolling(groupPublicKey)
         // Fulfill the promise
@@ -95,10 +95,10 @@ fun MessageSender.update(groupPublicKey: String, members: List<String>, name: St
     // Update name if needed
     if (name != group.title) { setName(groupPublicKey, name) }
     // Add members if needed
-    val addedMembers = members - group.members.map { it.serialize() }
-    if (!addedMembers.isEmpty()) { addMembers(groupPublicKey, addedMembers) }
+    val addedMembers = members - group.members.map { it.serialize() }.toSet()
+    if (addedMembers.isNotEmpty()) { addMembers(groupPublicKey, addedMembers) }
     // Remove members if needed
-    val removedMembers = group.members.map { it.serialize() } - members
+    val removedMembers = group.members.map { it.serialize() } - members.toSet()
     if (removedMembers.isEmpty()) { removeMembers(groupPublicKey, removedMembers) }
 }
 
@@ -195,7 +195,7 @@ fun MessageSender.removeMembers(groupPublicKey: String, membersToRemove: List<St
         Log.d("Loki", "Only an admin can remove members from a group.")
         throw Error.InvalidClosedGroupUpdate
     }
-    val updatedMembers = group.members.map { it.serialize() }.toSet() - membersToRemove
+    val updatedMembers = group.members.map { it.serialize() }.toSet() - membersToRemove.toSet()
     if (membersToRemove.any { it in admins } && updatedMembers.isNotEmpty()) {
         Log.d("Loki", "Can't remove admin from closed group unless the group is destroyed entirely.")
         throw Error.InvalidClosedGroupUpdate

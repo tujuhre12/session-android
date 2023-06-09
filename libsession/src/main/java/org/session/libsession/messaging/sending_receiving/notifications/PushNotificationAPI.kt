@@ -16,69 +16,98 @@ import org.session.libsignal.utilities.retryIfNeeded
 @SuppressLint("StaticFieldLeak")
 object PushNotificationAPI {
     val context = MessagingModuleConfiguration.shared.context
-    val server = "https://push.getsession.org"
-    val serverPublicKey: String = "d7557fe563e2610de876c0ac7341b62f3c82d5eea4b62c702392ea4368f51b3b"
-    private val legacyServer = "https://live.apns.getsession.org"
-    private val legacyServerPublicKey = "642a6585919742e5a2d4dc51244964fbcd8bcab2b75612407de58b810740d049"
-    private val maxRetryCount = 4
-    private val tokenExpirationInterval = 12 * 60 * 60 * 1000
+    const val server = "https://push.getsession.org"
+    const val serverPublicKey: String = "d7557fe563e2610de876c0ac7341b62f3c82d5eea4b62c702392ea4368f51b3b"
+    private const val legacyServer = "https://live.apns.getsession.org"
+    private const val legacyServerPublicKey = "642a6585919742e5a2d4dc51244964fbcd8bcab2b75612407de58b810740d049"
+    private const val maxRetryCount = 4
 
-    enum class ClosedGroupOperation {
-        Subscribe, Unsubscribe;
-
-        val rawValue: String
-            get() {
-                return when (this) {
-                    Subscribe -> "subscribe_closed_group"
-                    Unsubscribe -> "unsubscribe_closed_group"
-                }
-            }
+    private enum class ClosedGroupOperation(val rawValue: String) {
+        Subscribe("subscribe_closed_group"),
+        Unsubscribe("unsubscribe_closed_group");
     }
 
+    fun register(token: String? = TextSecurePreferences.getFCMToken(context)) {
+        token?.let(::unregisterV1)
+        subscribeGroups()
+    }
+
+    @JvmStatic
     fun unregister(token: String) {
+        unregisterV1(token)
+        unsubscribeGroups()
+    }
+
+    private fun unregisterV1(token: String) {
         val parameters = mapOf( "token" to token )
         val url = "$server/unregister"
         val body = RequestBody.create(MediaType.get("application/json"), JsonUtil.toJson(parameters))
         val request = Request.Builder().url(url).post(body)
         retryIfNeeded(maxRetryCount) {
             OnionRequestAPI.sendOnionRequest(request.build(), server, serverPublicKey, Version.V2).map { response ->
-                val code = response.info["code"] as? Int
-                if (code != null && code != 0) {
-                    TextSecurePreferences.setIsUsingFCM(context, false)
-                } else {
-                    Log.d("Loki", "Couldn't disable FCM due to error: ${response.info["message"] as? String ?: "null"}.")
+                when (response.info["code"]) {
+                    null, 0 -> Log.d("Loki", "Couldn't disable FCM due to error: ${response.info["message"]}.")
                 }
             }.fail { exception ->
                 Log.d("Loki", "Couldn't disable FCM due to error: ${exception}.")
             }
         }
-        // Unsubscribe from all closed groups
-        val allClosedGroupPublicKeys = MessagingModuleConfiguration.shared.storage.getAllClosedGroupPublicKeys()
-        val userPublicKey = MessagingModuleConfiguration.shared.storage.getUserPublicKey()!!
-        allClosedGroupPublicKeys.iterator().forEach { closedGroup ->
-            performOperation(ClosedGroupOperation.Unsubscribe, closedGroup, userPublicKey)
-        }
     }
 
-    fun register(token: String, publicKey: String, force: Boolean) {
-        // Subscribe to all closed groups
-        val allClosedGroupPublicKeys = MessagingModuleConfiguration.shared.storage.getAllClosedGroupPublicKeys()
-        allClosedGroupPublicKeys.iterator().forEach { closedGroup ->
-            performOperation(ClosedGroupOperation.Subscribe, closedGroup, publicKey)
-        }
+    // Legacy Closed Groups
+
+    fun subscribeGroup(
+        closedGroupPublicKey: String,
+        publicKey: String = MessagingModuleConfiguration.shared.storage.getUserPublicKey()!!
+    ) {
+        performGroupOperation(ClosedGroupOperation.Subscribe, closedGroupPublicKey, publicKey)
     }
 
-    fun performOperation(operation: ClosedGroupOperation, closedGroupPublicKey: String, publicKey: String) {
-        if (!TextSecurePreferences.isUsingFCM(context)) { return }
+    private fun subscribeGroups(
+        closedGroupPublicKeys: Collection<String> = MessagingModuleConfiguration.shared.storage.getAllClosedGroupPublicKeys(),
+        publicKey: String = MessagingModuleConfiguration.shared.storage.getUserPublicKey()!!
+    ) {
+        performGroupOperations(ClosedGroupOperation.Subscribe, closedGroupPublicKeys, publicKey)
+    }
+
+    fun unsubscribeGroup(
+        closedGroupPublicKey: String,
+        publicKey: String = MessagingModuleConfiguration.shared.storage.getUserPublicKey()!!
+    ) {
+        performGroupOperation(ClosedGroupOperation.Unsubscribe, closedGroupPublicKey, publicKey)
+    }
+
+    private fun unsubscribeGroups(
+        closedGroupPublicKeys: Collection<String> = MessagingModuleConfiguration.shared.storage.getAllClosedGroupPublicKeys(),
+        publicKey: String = MessagingModuleConfiguration.shared.storage.getUserPublicKey()!!
+    ) {
+        performGroupOperations(ClosedGroupOperation.Unsubscribe, closedGroupPublicKeys, publicKey)
+    }
+
+    private fun performGroupOperations(
+        operation: ClosedGroupOperation,
+        closedGroupPublicKeys: Collection<String>,
+        publicKey: String
+    ) {
+        closedGroupPublicKeys.forEach { performGroupOperation(operation, it, publicKey) }
+    }
+
+    private fun performGroupOperation(
+        operation: ClosedGroupOperation,
+        closedGroupPublicKey: String,
+        publicKey: String
+    ) {
+        if (!TextSecurePreferences.isUsingFCM(context)) return
+
         val parameters = mapOf( "closedGroupPublicKey" to closedGroupPublicKey, "pubKey" to publicKey )
         val url = "$legacyServer/${operation.rawValue}"
         val body = RequestBody.create(MediaType.get("application/json"), JsonUtil.toJson(parameters))
         val request = Request.Builder().url(url).post(body)
+
         retryIfNeeded(maxRetryCount) {
             OnionRequestAPI.sendOnionRequest(request.build(), legacyServer, legacyServerPublicKey, Version.V2).map { response ->
-                val code = response.info["code"] as? Int
-                if (code == null || code == 0) {
-                    Log.d("Loki", "Couldn't subscribe/unsubscribe closed group: $closedGroupPublicKey due to error: ${response.info["message"] as? String ?: "null"}.")
+                when (response.info["code"]) {
+                    null, 0 -> Log.d("Loki", "Couldn't subscribe/unsubscribe closed group: $closedGroupPublicKey due to error: ${response.info["message"]}.")
                 }
             }.fail { exception ->
                 Log.d("Loki", "Couldn't subscribe/unsubscribe closed group: $closedGroupPublicKey due to error: ${exception}.")

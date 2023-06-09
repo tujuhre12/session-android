@@ -478,7 +478,7 @@ private fun handleNewClosedGroup(sender: String, sentTimestamp: Long, groupPubli
     // Set expiration timer
     storage.setExpirationTimer(groupID, expireTimer)
     // Notify the PN server
-    PushNotificationAPI.performOperation(PushNotificationAPI.ClosedGroupOperation.Subscribe, groupPublicKey, storage.getUserPublicKey()!!)
+    PushNotificationAPI.subscribeGroup(groupPublicKey, userPublicKey)
     // Notify the user
     if (userPublicKey == sender && !groupExists) {
         val threadID = storage.getOrCreateThreadIdFor(Address.fromSerialized(groupID))
@@ -771,7 +771,7 @@ fun MessageReceiver.disableLocalGroupAndUnsubscribe(groupPublicKey: String, grou
     storage.setActive(groupID, false)
     storage.removeMember(groupID, Address.fromSerialized(userPublicKey))
     // Notify the PN server
-    PushNotificationAPI.performOperation(PushNotificationAPI.ClosedGroupOperation.Unsubscribe, groupPublicKey, userPublicKey)
+    PushNotificationAPI.unsubscribeGroup(groupPublicKey, userPublicKey)
     // Stop polling
     ClosedGroupPollerV2.shared.stopPolling(groupPublicKey)
 }
