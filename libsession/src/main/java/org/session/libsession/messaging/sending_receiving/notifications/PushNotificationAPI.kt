@@ -52,11 +52,11 @@ object PushNotificationAPI {
         retryIfNeeded(maxRetryCount) {
             OnionRequestAPI.sendOnionRequest(request, legacyServer, legacyServerPublicKey, Version.V2).map { response ->
                 when (response.info["code"]) {
-                    null, 0 -> Log.d(TAG, "Couldn't disable FCM due to error: ${response.info["message"]}.")
+                    null, 0 -> Log.d(TAG, "Couldn't disable FCM with token: $token due to error: ${response.info["message"]}.")
                     else -> Log.d(TAG, "unregisterV1 success token: $token")
                 }
             }.fail { exception ->
-                Log.d(TAG, "Couldn't disable FCM due to error: ${exception}.")
+                Log.d(TAG, "Couldn't disable FCM with token: $token due to error: ${exception}.")
             }
         }
     }
