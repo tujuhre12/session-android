@@ -32,7 +32,7 @@ object PushNotificationAPI {
     fun register(token: String? = TextSecurePreferences.getFCMToken(context)) {
         Log.d(TAG, "register: $token")
 
-        token?.let(::unregisterV1)
+        unregisterV1IfRequired()
         subscribeGroups()
     }
 
@@ -40,11 +40,16 @@ object PushNotificationAPI {
     fun unregister(token: String) {
         Log.d(TAG, "unregister: $token")
 
-        unregisterV1(token)
+        unregisterV1IfRequired()
         unsubscribeGroups()
     }
 
-    private fun unregisterV1(token: String) {
+    /**
+     * Unregister push notifications for 1-1 conversations as this is now done in FirebasePushManager.
+     */
+    private fun unregisterV1IfRequired() {
+        val token = TextSecurePreferences.getLegacyFCMToken(context) ?: return
+
         val parameters = mapOf( "token" to token )
         val url = "$legacyServer/unregister"
         val body = RequestBody.create(MediaType.get("application/json"), JsonUtil.toJson(parameters))
@@ -53,7 +58,10 @@ object PushNotificationAPI {
             OnionRequestAPI.sendOnionRequest(request, legacyServer, legacyServerPublicKey, Version.V2).map { response ->
                 when (response.info["code"]) {
                     null, 0 -> Log.d(TAG, "Couldn't disable FCM with token: $token due to error: ${response.info["message"]}.")
-                    else -> Log.d(TAG, "unregisterV1 success token: $token")
+                    else -> {
+                        TextSecurePreferences.clearLegacyFCMToken(context)
+                        Log.d(TAG, "unregisterV1 success token: $token")
+                    }
                 }
             }.fail { exception ->
                 Log.d(TAG, "Couldn't disable FCM with token: $token due to error: ${exception}.")
