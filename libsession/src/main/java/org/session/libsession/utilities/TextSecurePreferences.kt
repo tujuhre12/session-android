@@ -319,6 +319,11 @@ interface TextSecurePreferences {
         }
 
         @JvmStatic
+        fun setLegacyFCMToken(context: Context, token: String?) {
+            setStringPreference(context, FCM_TOKEN_LEGACY, token)
+        }
+
+        @JvmStatic
         fun clearLegacyFCMToken(context: Context) {
             removePreference(context, FCM_TOKEN_LEGACY)
         }

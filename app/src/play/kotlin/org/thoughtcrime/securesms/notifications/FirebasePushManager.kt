@@ -146,7 +146,7 @@ class FirebasePushManager(private val context: Context, private val prefs: TextS
                 if (response.success == true) {
                     Log.d(TAG, "Unsubscribe FCM success")
                     TextSecurePreferences.setFCMToken(context, null)
-                    PushNotificationAPI.unregister(token)
+                    PushNotificationAPI.unregister()
                 } else {
                     Log.e(TAG, "Couldn't unregister for FCM due to error: ${response.message}")
                 }
@@ -161,7 +161,10 @@ class FirebasePushManager(private val context: Context, private val prefs: TextS
 
         val oldToken = TextSecurePreferences.getFCMToken(context)
         val lastUploadDate = TextSecurePreferences.getLastFCMUploadTime(context)
-        if (!force && token == oldToken && System.currentTimeMillis() - lastUploadDate < tokenExpirationInterval) return
+//        if (!force && token == oldToken && System.currentTimeMillis() - lastUploadDate < tokenExpirationInterval) {
+//            Log.d(TAG, "not registering now... not forced or expired")
+//            return
+//        }
 
         val pnKey = getOrCreateNotificationKey()
 

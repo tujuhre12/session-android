@@ -218,10 +218,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         broadcaster = new Broadcaster(this);
         LokiAPIDatabase apiDB = getDatabaseComponent().lokiAPIDatabase();
         SnodeModule.Companion.configure(apiDB, broadcaster);
-        String userPublicKey = TextSecurePreferences.getLocalNumber(this);
-        if (userPublicKey != null) {
-            registerForPnIfNeeded(false);
-        }
         initializeExpiringMessageManager();
         initializeTypingStatusRepository();
         initializeTypingStatusSender();
@@ -512,10 +508,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     }
 
     public void clearAllData(boolean isMigratingToV2KeyPair) {
-        String token = TextSecurePreferences.getFCMToken(this);
-        if (token != null && !token.isEmpty()) {
-            PushNotificationAPI.unregister(token);
-        }
+        PushNotificationAPI.unregister();
         if (firebaseInstanceIdJob != null && firebaseInstanceIdJob.isActive()) {
             firebaseInstanceIdJob.cancel(null);
         }

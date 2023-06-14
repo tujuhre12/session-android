@@ -24,7 +24,9 @@ class PushNotificationService : FirebaseMessagingService() {
         super.onNewToken(token)
         Log.d("Loki", "New FCM token: $token.")
         TextSecurePreferences.getLocalNumber(this) ?: return
-        pushManager.refresh(true)
+        if (TextSecurePreferences.getLocalNumber(this) != token) {
+            pushManager.refresh(true)
+        }
     }
 
     override fun onMessageReceived(message: RemoteMessage) {

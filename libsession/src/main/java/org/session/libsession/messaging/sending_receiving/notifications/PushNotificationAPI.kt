@@ -29,25 +29,43 @@ object PushNotificationAPI {
         Unsubscribe("unsubscribe_closed_group");
     }
 
-    fun register(token: String? = TextSecurePreferences.getFCMToken(context)) {
+    fun register(token: String? = TextSecurePreferences.getLegacyFCMToken(context)) {
         Log.d(TAG, "register: $token")
 
-        unregisterV1IfRequired()
+        register(token, TextSecurePreferences.getLocalNumber(context))
         subscribeGroups()
     }
 
-    @JvmStatic
-    fun unregister(token: String) {
-        Log.d(TAG, "unregister: $token")
+    fun register(token: String?, publicKey: String?) {
+        Log.d(TAG, "register($token)")
 
-        unregisterV1IfRequired()
-        unsubscribeGroups()
+        token ?: return
+        publicKey ?: return
+        val parameters = mapOf("token" to token, "pubKey" to publicKey)
+        val url = "$legacyServer/register"
+        val body =
+            RequestBody.create(MediaType.get("application/json"), JsonUtil.toJson(parameters))
+        val request = Request.Builder().url(url).post(body)
+        retryIfNeeded(maxRetryCount) {
+            OnionRequestAPI.sendOnionRequest(request.build(), legacyServer, legacyServerPublicKey, Version.V2)
+                .map { response ->
+                    val code = response.info["code"] as? Int
+                    if (code != null && code != 0) {
+                        TextSecurePreferences.setLegacyFCMToken(context, token)
+                    } else {
+                        Log.d(TAG, "Couldn't register for FCM due to error: ${response.info["message"] as? String ?: "null"}.")
+                    }
+                }.fail { exception ->
+                Log.d(TAG, "Couldn't register for FCM due to error: ${exception}.")
+            }
+        }
     }
 
     /**
      * Unregister push notifications for 1-1 conversations as this is now done in FirebasePushManager.
      */
-    private fun unregisterV1IfRequired() {
+    @JvmStatic
+    fun unregister() {
         val token = TextSecurePreferences.getLegacyFCMToken(context) ?: return
 
         val parameters = mapOf( "token" to token )
@@ -56,17 +74,17 @@ object PushNotificationAPI {
         val request = Request.Builder().url(url).post(body).build()
         retryIfNeeded(maxRetryCount) {
             OnionRequestAPI.sendOnionRequest(request, legacyServer, legacyServerPublicKey, Version.V2).map { response ->
+                TextSecurePreferences.clearLegacyFCMToken(context)
                 when (response.info["code"]) {
                     null, 0 -> Log.d(TAG, "Couldn't disable FCM with token: $token due to error: ${response.info["message"]}.")
-                    else -> {
-                        TextSecurePreferences.clearLegacyFCMToken(context)
-                        Log.d(TAG, "unregisterV1 success token: $token")
-                    }
+                    else -> Log.d(TAG, "unregisterV1 success token: $token")
                 }
             }.fail { exception ->
                 Log.d(TAG, "Couldn't disable FCM with token: $token due to error: ${exception}.")
             }
         }
+
+        unsubscribeGroups()
     }
 
     // Legacy Closed Groups
@@ -110,7 +128,7 @@ object PushNotificationAPI {
                     else -> Log.d(TAG, "performGroupOperation success: ${operation.rawValue}")
                 }
             }.fail { exception ->
-                Log.d(TAG, "Couldn't ${operation.rawValue}: $closedGroupPublicKey due to error: ${exception}.")
+                Log.d(TAG, "performGroupOperation fail: ${operation.rawValue}: $closedGroupPublicKey due to error: ${exception}.")
             }
         }
     }
