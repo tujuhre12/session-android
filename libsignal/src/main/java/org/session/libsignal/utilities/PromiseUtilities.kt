@@ -3,7 +3,11 @@ package org.session.libsignal.utilities
 
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.deferred
+import nl.komponents.kovenant.task
 import java.util.concurrent.TimeoutException
+
+fun emptyPromise() = EMPTY_PROMISE
+private val EMPTY_PROMISE: Promise<*, java.lang.Exception> = task {}
 
 fun <V, E : Throwable> Promise<V, E>.get(defaultValue: V): V {
     return try {

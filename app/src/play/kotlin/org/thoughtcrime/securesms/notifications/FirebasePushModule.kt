@@ -17,8 +17,7 @@ object FirebasePushModule {
     @Singleton
     fun provideFirebasePushManager(
         @ApplicationContext context: Context,
-        prefs: TextSecurePreferences,
-    ) = FirebasePushManager(context, prefs)
+    ) = FirebasePushManager(context)
 }
 
 @Module

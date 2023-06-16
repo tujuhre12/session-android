@@ -54,37 +54,39 @@ data class UnsubscriptionRequest(
     val service_info: Map<String, String>,
 )
 
+/** invalid values, missing reuqired arguments etc, details in message */
+private const val UNPARSEABLE_ERROR = 1
+/** the "service" value is not active / valid */
+private const val SERVICE_NOT_AVAILABLE = 2
+/** something getting wrong internally talking to the backend */
+private const val SERVICE_TIMEOUT = 3
+/** other error processing the subscription (details in the message) */
+private const val GENERIC_ERROR = 4
+
 @Serializable
 data class SubscriptionResponse(
-    val error: Int? = null,
-    val message: String? = null,
-    val success: Boolean? = null,
+    override val error: Int? = null,
+    override val message: String? = null,
+    override val success: Boolean? = null,
     val added: Boolean? = null,
     val updated: Boolean? = null,
-) {
-    companion object {
-        /** invalid values, missing reuqired arguments etc, details in message */
-        const val UNPARSEABLE_ERROR = 1
-        /** the "service" value is not active / valid */
-        const val SERVICE_NOT_AVAILABLE = 2
-        /** something getting wrong internally talking to the backend */
-        const val SERVICE_TIMEOUT = 3
-        /** other error processing the subscription (details in the message) */
-        const val GENERIC_ERROR = 4
-    }
-    fun isSuccess() = success == true && error == null
-    fun errorInfo() = if (success != true && error != null) {
-        error to message
-    } else null to null
-}
+): Response
 
 @Serializable
 data class UnsubscribeResponse(
-    val error: Int? = null,
-    val message: String? = null,
-    val success: Boolean? = null,
+    override val error: Int? = null,
+    override val message: String? = null,
+    override val success: Boolean? = null,
     val removed: Boolean? = null,
-)
+): Response
+
+interface Response {
+    val error: Int?
+    val message: String?
+    val success: Boolean?
+    fun isSuccess() = success == true && error == null
+    fun isFailure() = !isSuccess()
+}
 
 @Serializable
 data class PushNotificationMetadata(

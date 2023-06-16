@@ -1,8 +1,6 @@
 package org.thoughtcrime.securesms.notifications
 
 import android.content.Context
-import com.google.android.gms.tasks.Task
-import com.google.firebase.iid.InstanceIdResult
 import com.goterl.lazysodium.LazySodiumAndroid
 import com.goterl.lazysodium.SodiumAndroid
 import com.goterl.lazysodium.interfaces.AEAD
@@ -15,12 +13,14 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import nl.komponents.kovenant.Promise
+import nl.komponents.kovenant.combine.and
 import nl.komponents.kovenant.functional.map
 import okhttp3.MediaType
 import okhttp3.Request
 import okhttp3.RequestBody
 import org.session.libsession.messaging.sending_receiving.notifications.PushNotificationAPI
 import org.session.libsession.messaging.sending_receiving.notifications.PushNotificationMetadata
+import org.session.libsession.messaging.sending_receiving.notifications.Response
 import org.session.libsession.messaging.sending_receiving.notifications.SubscriptionRequest
 import org.session.libsession.messaging.sending_receiving.notifications.SubscriptionResponse
 import org.session.libsession.messaging.sending_receiving.notifications.UnsubscribeResponse
@@ -29,7 +29,6 @@ import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.Version
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocalNumber
 import org.session.libsession.utilities.bencode.Bencode
 import org.session.libsession.utilities.bencode.BencodeList
@@ -37,19 +36,20 @@ import org.session.libsession.utilities.bencode.BencodeString
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Namespace
+import org.session.libsignal.utilities.emptyPromise
 import org.session.libsignal.utilities.retryIfNeeded
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.crypto.KeyPairUtilities
 
 private const val TAG = "FirebasePushManager"
 
-class FirebasePushManager(private val context: Context, private val prefs: TextSecurePreferences): PushManager {
+class FirebasePushManager (private val context: Context): PushManager {
 
     companion object {
         private const val maxRetryCount = 4
-        private const val tokenExpirationInterval = 12 * 60 * 60 * 1000
     }
 
+    private val tokenManager = FcmTokenManager(context, ExpiryManager(context))
     private var firebaseInstanceIdJob: Job? = null
     private val sodium = LazySodiumAndroid(SodiumAndroid())
 
@@ -59,12 +59,7 @@ class FirebasePushManager(private val context: Context, private val prefs: TextS
             val key = sodium.keygen(AEAD.Method.XCHACHA20_POLY1305_IETF)
             IdentityKeyUtil.save(context, IdentityKeyUtil.NOTIFICATION_KEY, key.asHexString)
         }
-        return Key.fromHexString(
-            IdentityKeyUtil.retrieve(
-                context,
-                IdentityKeyUtil.NOTIFICATION_KEY
-            )
-        )
+        return Key.fromHexString(IdentityKeyUtil.retrieve(context, IdentityKeyUtil.NOTIFICATION_KEY))
     }
 
     fun decrypt(encPayload: ByteArray): ByteArray? {
@@ -78,8 +73,7 @@ class FirebasePushManager(private val context: Context, private val prefs: TextS
         val expectedList = (bencoded.decode() as? BencodeList)?.values
             ?: error("Failed to decode bencoded list from payload")
 
-        val metadataJson = (expectedList[0] as? BencodeString)?.value
-                ?: error("no metadata")
+        val metadataJson = (expectedList[0] as? BencodeString)?.value ?: error("no metadata")
         val metadata: PushNotificationMetadata = Json.decodeFromString(String(metadataJson))
 
         val content: ByteArray? = if (expectedList.size >= 2) (expectedList[1] as? BencodeString)?.value else null
@@ -94,78 +88,81 @@ class FirebasePushManager(private val context: Context, private val prefs: TextS
         return content
     }
 
+    @Synchronized
     override fun refresh(force: Boolean) {
         firebaseInstanceIdJob?.apply {
             if (force) cancel() else if (isActive) return
         }
 
-        firebaseInstanceIdJob = getFcmInstanceId { refresh(it, force) }
-    }
-
-    private fun refresh(task: Task<InstanceIdResult>, force: Boolean) {
-        Log.d(TAG, "refresh")
-
-        // context in here is Dispatchers.IO
-        if (!task.isSuccessful) {
-            Log.w(TAG, "FirebaseInstanceId.getInstance().getInstanceId() failed." + task.exception
-            )
-            return
-        }
-
-        val token: String = task.result?.token ?: return
-        val userPublicKey = getLocalNumber(context) ?: return
-        val userEdKey = KeyPairUtilities.getUserED25519KeyPair(context) ?: return
-
-        when {
-            prefs.isUsingFCM() -> register(token, userPublicKey, userEdKey, force)
-            prefs.getFCMToken() != null -> unregister(token, userPublicKey, userEdKey)
-        }
-    }
-
-    private fun unregister(token: String, userPublicKey: String, userEdKey: KeyPair) {
-        val timestamp = SnodeAPI.nowWithOffset / 1000 // get timestamp in ms -> s
-        // if we want to support passing namespace list, here is the place to do it
-        val sigData = "UNSUBSCRIBE${userPublicKey}${timestamp}".encodeToByteArray()
-        val signature = ByteArray(Sign.BYTES)
-        sodium.cryptoSignDetached(signature, sigData, sigData.size.toLong(), userEdKey.secretKey.asBytes)
-
-        val requestParameters = UnsubscriptionRequest(
-            pubkey = userPublicKey,
-            session_ed25519 = userEdKey.publicKey.asHexString,
-            service = "firebase",
-            sig_ts = timestamp,
-            signature = Base64.encodeBytes(signature),
-            service_info = mapOf("token" to token),
-        )
-
-        val url = "${PushNotificationAPI.server}/unsubscribe"
-        val body = RequestBody.create(MediaType.get("application/json"), Json.encodeToString(requestParameters))
-        val request = Request.Builder().url(url).post(body)
-        retryIfNeeded(maxRetryCount) {
-            getResponseBody<UnsubscribeResponse>(request.build()).map { response ->
-                if (response.success == true) {
-                    Log.d(TAG, "Unsubscribe FCM success")
-                    TextSecurePreferences.setFCMToken(context, null)
-                    PushNotificationAPI.unregister()
-                } else {
-                    Log.e(TAG, "Couldn't unregister for FCM due to error: ${response.message}")
-                }
-            }.fail { exception ->
-                Log.e(TAG, "Couldn't unregister for FCM due to error: ${exception}.", exception)
+        firebaseInstanceIdJob = getFcmInstanceId { task ->
+            when {
+                task.isSuccessful -> task.result?.token?.let { refresh(it, force).get() }
+                else -> Log.w(TAG, "getFcmInstanceId failed." + task.exception)
             }
         }
     }
 
-    private fun register(token: String, publicKey: String, userEd25519Key: KeyPair, force: Boolean, namespaces: List<Int> = listOf(Namespace.DEFAULT)) {
-        Log.d(TAG, "register token: $token")
+    private fun refresh(token: String, force: Boolean): Promise<*, Exception> {
+        val userPublicKey = getLocalNumber(context) ?: return emptyPromise()
+        val userEdKey = KeyPairUtilities.getUserED25519KeyPair(context) ?: return emptyPromise()
 
-        val oldToken = TextSecurePreferences.getFCMToken(context)
-        val lastUploadDate = TextSecurePreferences.getLastFCMUploadTime(context)
-//        if (!force && token == oldToken && System.currentTimeMillis() - lastUploadDate < tokenExpirationInterval) {
-//            Log.d(TAG, "not registering now... not forced or expired")
-//            return
-//        }
+        return when {
+            tokenManager.isUsingFCM -> register(force, token, userPublicKey, userEdKey)
+            tokenManager.requiresUnregister -> unregister(token, userPublicKey, userEdKey)
+            else -> emptyPromise()
+        }
+    }
 
+    /**
+     * Register for push notifications if:
+     *   force is true
+     *   there is no FCM Token
+     *   FCM Token has expired
+     */
+    private fun register(
+        force: Boolean,
+        token: String,
+        publicKey: String,
+        userEd25519Key: KeyPair,
+        namespaces: List<Int> = listOf(Namespace.DEFAULT)
+    ): Promise<*, Exception> = if (force || tokenManager.isInvalid()) {
+        register(token, publicKey, userEd25519Key, namespaces)
+    } else emptyPromise()
+
+    /**
+     * Register for push notifications.
+     */
+    private fun register(
+        token: String,
+        publicKey: String,
+        userEd25519Key: KeyPair,
+        namespaces: List<Int> = listOf(Namespace.DEFAULT)
+    ): Promise<*, Exception> = PushNotificationAPI.register(token) and getSubscription(
+        token, publicKey, userEd25519Key, namespaces
+    ) fail {
+        Log.e(TAG, "Couldn't register for FCM due to error: $it.", it)
+    } success {
+        tokenManager.fcmToken = token
+    }
+
+    private fun unregister(
+        token: String,
+        userPublicKey: String,
+        userEdKey: KeyPair
+    ): Promise<*, Exception> = PushNotificationAPI.unregister() and getUnsubscription(
+        token, userPublicKey, userEdKey
+    ) fail {
+        Log.e(TAG, "Couldn't unregister for FCM due to error: ${it}.", it)
+    } success {
+        tokenManager.fcmToken = null
+    }
+
+    private fun getSubscription(
+        token: String,
+        publicKey: String,
+        userEd25519Key: KeyPair,
+        namespaces: List<Int>
+    ): Promise<SubscriptionResponse, Exception> {
         val pnKey = getOrCreateNotificationKey()
 
         val timestamp = SnodeAPI.nowWithOffset / 1000 // get timestamp in ms -> s
@@ -183,33 +180,51 @@ class FirebasePushManager(private val context: Context, private val prefs: TextS
             signature = Base64.encodeBytes(signature),
             service_info = mapOf("token" to token),
             enc_key = pnKey.asHexString,
-        )
+        ).let(Json::encodeToString)
 
-        val url = "${PushNotificationAPI.server}/subscribe"
-        val body = RequestBody.create(MediaType.get("application/json"), Json.encodeToString(requestParameters))
-        val request = Request.Builder().url(url).post(body)
-        retryIfNeeded(maxRetryCount) {
-            getResponseBody<SubscriptionResponse>(request.build()).map { response ->
-                if (response.isSuccess()) {
-                    Log.d(TAG, "Success $token")
-                    TextSecurePreferences.setFCMToken(context, token)
-                    TextSecurePreferences.setLastFCMUploadTime(context, System.currentTimeMillis())
-                    PushNotificationAPI.register(token)
-                } else {
-                    val (_, message) = response.errorInfo()
-                    Log.e(TAG, "Couldn't register for FCM due to error: $message.")
-                }
-            }.fail { exception ->
-                Log.e(TAG, "Couldn't register for FCM due to error: ${exception}.", exception)
-            }
-        }
+        return retryResponseBody("subscribe", requestParameters)
     }
 
-    private inline fun <reified T> getResponseBody(request: Request): Promise<T, Exception> =
-        OnionRequestAPI.sendOnionRequest(
+    private fun getUnsubscription(
+        token: String,
+        userPublicKey: String,
+        userEdKey: KeyPair
+    ): Promise<UnsubscribeResponse, Exception> {
+        val timestamp = SnodeAPI.nowWithOffset / 1000 // get timestamp in ms -> s
+        // if we want to support passing namespace list, here is the place to do it
+        val sigData = "UNSUBSCRIBE${userPublicKey}${timestamp}".encodeToByteArray()
+        val signature = ByteArray(Sign.BYTES)
+        sodium.cryptoSignDetached(signature, sigData, sigData.size.toLong(), userEdKey.secretKey.asBytes)
+
+        val requestParameters = UnsubscriptionRequest(
+            pubkey = userPublicKey,
+            session_ed25519 = userEdKey.publicKey.asHexString,
+            service = "firebase",
+            sig_ts = timestamp,
+            signature = Base64.encodeBytes(signature),
+            service_info = mapOf("token" to token),
+        ).let(Json::encodeToString)
+
+        return retryResponseBody("unsubscribe", requestParameters)
+    }
+
+    private inline fun <reified T: Response> retryResponseBody(path: String, requestParameters: String): Promise<T, Exception> =
+        retryIfNeeded(maxRetryCount) { getResponseBody(path, requestParameters) }
+
+    private inline fun <reified T: Response> getResponseBody(path: String, requestParameters: String): Promise<T, Exception> {
+        val url = "${PushNotificationAPI.server}/$path"
+        val body = RequestBody.create(MediaType.get("application/json"), requestParameters)
+        val request = Request.Builder().url(url).post(body).build()
+
+        return OnionRequestAPI.sendOnionRequest(
             request,
             PushNotificationAPI.server,
             PushNotificationAPI.serverPublicKey,
             Version.V4
-        ).map { response -> Json.decodeFromStream(response.body!!.inputStream()) }
+        ).map { response ->
+            response.body!!.inputStream()
+                .let { Json.decodeFromStream<T>(it) }
+                .also { if (it.isFailure()) throw Exception("error: ${it.message}.") }
+        }
+    }
 }

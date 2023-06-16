@@ -508,7 +508,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     }
 
     public void clearAllData(boolean isMigratingToV2KeyPair) {
-        PushNotificationAPI.unregister();
         if (firebaseInstanceIdJob != null && firebaseInstanceIdJob.isActive()) {
             firebaseInstanceIdJob.cancel(null);
         }

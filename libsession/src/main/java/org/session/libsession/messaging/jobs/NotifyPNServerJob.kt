@@ -10,6 +10,7 @@ import okhttp3.RequestBody
 import org.session.libsession.messaging.jobs.Job.Companion.MAX_BUFFER_SIZE
 
 import org.session.libsession.messaging.sending_receiving.notifications.PushNotificationAPI
+import org.session.libsession.messaging.sending_receiving.notifications.PushNotificationAPI.server
 import org.session.libsession.messaging.utilities.Data
 import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.snode.OnionRequestAPI
@@ -33,18 +34,21 @@ class NotifyPNServerJob(val message: SnodeMessage) : Job {
     }
 
     override fun execute(dispatcherName: String) {
-        val server = PushNotificationAPI.server
         val parameters = mapOf( "data" to message.data, "send_to" to message.recipient )
         val url = "${server}/notify"
         val body = RequestBody.create(MediaType.get("application/json"), JsonUtil.toJson(parameters))
-        val request = Request.Builder().url(url).post(body)
+        val request = Request.Builder().url(url).post(body).build()
         retryIfNeeded(4) {
-            OnionRequestAPI.sendOnionRequest(request.build(), server, PushNotificationAPI.serverPublicKey, Version.V2).map { response ->
-                val code = response.info["code"] as? Int
-                if (code == null || code == 0) {
-                    Log.d("Loki", "Couldn't notify PN server due to error: ${response.info["message"] as? String ?: "null"}.")
+            OnionRequestAPI.sendOnionRequest(
+                request,
+                server,
+                PushNotificationAPI.serverPublicKey,
+                Version.V2
+            ) success { response ->
+                when (response.info["code"]) {
+                    null, 0 -> Log.d("Loki", "Couldn't notify PN server due to error: ${response.info["message"]}.")
                 }
-            }.fail { exception ->
+            } fail { exception ->
                 Log.d("Loki", "Couldn't notify PN server due to error: $exception.")
             }
         }.success {
