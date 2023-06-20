@@ -18,7 +18,7 @@ import nl.komponents.kovenant.functional.map
 import okhttp3.MediaType
 import okhttp3.Request
 import okhttp3.RequestBody
-import org.session.libsession.messaging.sending_receiving.notifications.PushNotificationAPI
+import org.session.libsession.messaging.sending_receiving.notifications.LegacyGroupsPushManager
 import org.session.libsession.messaging.sending_receiving.notifications.PushNotificationMetadata
 import org.session.libsession.messaging.sending_receiving.notifications.Response
 import org.session.libsession.messaging.sending_receiving.notifications.SubscriptionRequest
@@ -63,6 +63,8 @@ class FirebasePushManager (private val context: Context): PushManager {
     }
 
     fun decrypt(encPayload: ByteArray): ByteArray? {
+        Log.d(TAG, "decrypt() called")
+
         val encKey = getOrCreateNotificationKey()
         val nonce = encPayload.take(AEAD.XCHACHA20POLY1305_IETF_NPUBBYTES).toByteArray()
         val payload = encPayload.drop(AEAD.XCHACHA20POLY1305_IETF_NPUBBYTES).toByteArray()
@@ -90,19 +92,23 @@ class FirebasePushManager (private val context: Context): PushManager {
 
     @Synchronized
     override fun refresh(force: Boolean) {
+        Log.d(TAG, "refresh() called with: force = $force")
+
         firebaseInstanceIdJob?.apply {
             if (force) cancel() else if (isActive) return
         }
 
         firebaseInstanceIdJob = getFcmInstanceId { task ->
             when {
-                task.isSuccessful -> task.result?.token?.let { refresh(it, force).get() }
+                task.isSuccessful -> try { task.result?.token?.let { refresh(it, force).get() } } catch(e: Exception) { Log.d(TAG, "refresh() failed", e) }
                 else -> Log.w(TAG, "getFcmInstanceId failed." + task.exception)
             }
         }
     }
 
     private fun refresh(token: String, force: Boolean): Promise<*, Exception> {
+        Log.d(TAG, "refresh() called with: token = $token, force = $force")
+
         val userPublicKey = getLocalNumber(context) ?: return emptyPromise()
         val userEdKey = KeyPairUtilities.getUserED25519KeyPair(context) ?: return emptyPromise()
 
@@ -137,11 +143,12 @@ class FirebasePushManager (private val context: Context): PushManager {
         publicKey: String,
         userEd25519Key: KeyPair,
         namespaces: List<Int> = listOf(Namespace.DEFAULT)
-    ): Promise<*, Exception> = PushNotificationAPI.register(token) and getSubscription(
+    ): Promise<*, Exception> = LegacyGroupsPushManager.register(token, publicKey) and getSubscription(
         token, publicKey, userEd25519Key, namespaces
     ) fail {
         Log.e(TAG, "Couldn't register for FCM due to error: $it.", it)
     } success {
+        Log.d(TAG, "register() success!!")
         tokenManager.fcmToken = token
     }
 
@@ -149,7 +156,7 @@ class FirebasePushManager (private val context: Context): PushManager {
         token: String,
         userPublicKey: String,
         userEdKey: KeyPair
-    ): Promise<*, Exception> = PushNotificationAPI.unregister() and getUnsubscription(
+    ): Promise<*, Exception> = LegacyGroupsPushManager.unregister() and getUnsubscription(
         token, userPublicKey, userEdKey
     ) fail {
         Log.e(TAG, "Couldn't unregister for FCM due to error: ${it}.", it)
@@ -212,14 +219,14 @@ class FirebasePushManager (private val context: Context): PushManager {
         retryIfNeeded(maxRetryCount) { getResponseBody(path, requestParameters) }
 
     private inline fun <reified T: Response> getResponseBody(path: String, requestParameters: String): Promise<T, Exception> {
-        val url = "${PushNotificationAPI.server}/$path"
+        val url = "${LegacyGroupsPushManager.server}/$path"
         val body = RequestBody.create(MediaType.get("application/json"), requestParameters)
         val request = Request.Builder().url(url).post(body).build()
 
         return OnionRequestAPI.sendOnionRequest(
             request,
-            PushNotificationAPI.server,
-            PushNotificationAPI.serverPublicKey,
+            LegacyGroupsPushManager.server,
+            LegacyGroupsPushManager.serverPublicKey,
             Version.V4
         ).map { response ->
             response.body!!.inputStream()

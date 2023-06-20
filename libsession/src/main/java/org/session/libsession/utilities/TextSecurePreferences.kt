@@ -250,7 +250,6 @@ interface TextSecurePreferences {
         const val GIF_METADATA_WARNING = "has_seen_gif_metadata_warning"
         const val GIF_GRID_LAYOUT = "pref_gif_grid_layout"
         const val IS_USING_FCM = "pref_is_using_fcm"
-        const val FCM_TOKEN_LEGACY = "pref_fcm_token"
         const val FCM_TOKEN = "pref_fcm_token_2"
         const val LAST_FCM_TOKEN_UPLOAD_TIME = "pref_last_fcm_token_upload_time_2"
         const val LAST_CONFIGURATION_SYNC_TIME = "pref_last_configuration_sync_time"
@@ -311,21 +310,6 @@ interface TextSecurePreferences {
         @JvmStatic
         fun setIsUsingFCM(context: Context, value: Boolean) {
             setBooleanPreference(context, IS_USING_FCM, value)
-        }
-
-        @JvmStatic
-        fun getLegacyFCMToken(context: Context): String? {
-            return getStringPreference(context, FCM_TOKEN_LEGACY, "")
-        }
-
-        @JvmStatic
-        fun setLegacyFCMToken(context: Context, token: String?) {
-            setStringPreference(context, FCM_TOKEN_LEGACY, token)
-        }
-
-        @JvmStatic
-        fun clearLegacyFCMToken(context: Context) {
-            removePreference(context, FCM_TOKEN_LEGACY)
         }
 
         @JvmStatic

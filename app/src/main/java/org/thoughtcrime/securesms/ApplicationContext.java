@@ -36,7 +36,6 @@ import org.session.libsession.avatars.AvatarHelper;
 import org.session.libsession.database.MessageDataProvider;
 import org.session.libsession.messaging.MessagingModuleConfiguration;
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier;
-import org.session.libsession.messaging.sending_receiving.notifications.PushNotificationAPI;
 import org.session.libsession.messaging.sending_receiving.pollers.ClosedGroupPollerV2;
 import org.session.libsession.messaging.sending_receiving.pollers.Poller;
 import org.session.libsession.snode.SnodeModule;

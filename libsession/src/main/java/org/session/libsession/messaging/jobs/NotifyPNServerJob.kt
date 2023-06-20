@@ -3,14 +3,13 @@ package org.session.libsession.messaging.jobs
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.Input
 import com.esotericsoftware.kryo.io.Output
-import nl.komponents.kovenant.functional.map
 import okhttp3.MediaType
 import okhttp3.Request
 import okhttp3.RequestBody
 import org.session.libsession.messaging.jobs.Job.Companion.MAX_BUFFER_SIZE
 
-import org.session.libsession.messaging.sending_receiving.notifications.PushNotificationAPI
-import org.session.libsession.messaging.sending_receiving.notifications.PushNotificationAPI.server
+import org.session.libsession.messaging.sending_receiving.notifications.LegacyGroupsPushManager
+import org.session.libsession.messaging.sending_receiving.notifications.LegacyGroupsPushManager.server
 import org.session.libsession.messaging.utilities.Data
 import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.snode.OnionRequestAPI
@@ -42,7 +41,7 @@ class NotifyPNServerJob(val message: SnodeMessage) : Job {
             OnionRequestAPI.sendOnionRequest(
                 request,
                 server,
-                PushNotificationAPI.serverPublicKey,
+                LegacyGroupsPushManager.serverPublicKey,
                 Version.V2
             ) success { response ->
                 when (response.info["code"]) {

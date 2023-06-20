@@ -8,7 +8,7 @@ import nl.komponents.kovenant.deferred
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.messages.control.ClosedGroupControlMessage
 import org.session.libsession.messaging.sending_receiving.MessageSender.Error
-import org.session.libsession.messaging.sending_receiving.notifications.PushNotificationAPI
+import org.session.libsession.messaging.sending_receiving.notifications.LegacyGroupsPushManager
 import org.session.libsession.messaging.sending_receiving.pollers.ClosedGroupPollerV2
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
@@ -83,7 +83,7 @@ fun MessageSender.create(name: String, members: Collection<String>): Promise<Str
         }
 
         // Notify the PN server
-        PushNotificationAPI.subscribeGroup(groupPublicKey, userPublicKey)
+        LegacyGroupsPushManager.register(publicKey = userPublicKey)
         // Start polling
         ClosedGroupPollerV2.shared.startPolling(groupPublicKey)
         // Fulfill the promise
