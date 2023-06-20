@@ -37,7 +37,7 @@ interface StorageProtocol {
     fun getUserPublicKey(): String?
     fun getUserX25519KeyPair(): ECKeyPair
     fun getUserProfile(): Profile
-    fun setUserProfilePictureURL(newProfilePicture: String)
+    fun setProfileAvatar(recipient: Recipient, profileAvatar: String?)
     // Signal
     fun getOrGenerateRegistrationID(): Int
 
@@ -106,10 +106,13 @@ interface StorageProtocol {
     fun getAttachmentsForMessage(messageID: Long): List<DatabaseAttachment>
     fun getMessageIdInDatabase(timestamp: Long, author: String): Long? // TODO: This is a weird name
     fun updateSentTimestamp(messageID: Long, isMms: Boolean, openGroupSentTimestamp: Long, threadId: Long)
+    fun markAsResyncing(timestamp: Long, author: String)
+    fun markAsSyncing(timestamp: Long, author: String)
     fun markAsSending(timestamp: Long, author: String)
     fun markAsSent(timestamp: Long, author: String)
     fun markUnidentified(timestamp: Long, author: String)
-    fun setErrorMessage(timestamp: Long, author: String, error: Exception)
+    fun markAsSyncFailed(timestamp: Long, author: String, error: Exception)
+    fun markAsSentFailed(timestamp: Long, author: String, error: Exception)
     fun clearErrorMessage(messageID: Long)
     fun setMessageServerHash(messageID: Long, serverHash: String)
 
@@ -156,6 +159,7 @@ interface StorageProtocol {
     fun trimThread(threadID: Long, threadLimit: Int)
     fun trimThreadBefore(threadID: Long, timestamp: Long)
     fun getMessageCount(threadID: Long): Long
+    fun deleteConversation(threadId: Long)
 
     // Contacts
     fun getContactWithSessionID(sessionID: String): Contact?
@@ -199,6 +203,6 @@ interface StorageProtocol {
     fun removeReaction(emoji: String, messageTimestamp: Long, author: String, notifyUnread: Boolean)
     fun updateReactionIfNeeded(message: Message, sender: String, openGroupSentTimestamp: Long)
     fun deleteReactions(messageId: Long, mms: Boolean)
-    fun unblock(toUnblock: List<Recipient>)
+    fun unblock(toUnblock: Iterable<Recipient>)
     fun blockedContacts(): List<Recipient>
 }

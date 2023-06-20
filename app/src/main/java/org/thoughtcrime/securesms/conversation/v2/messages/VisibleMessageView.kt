@@ -292,50 +292,55 @@ class VisibleMessageView : LinearLayout {
                                  @StringRes val messageText: Int?,
                                  val contentDescription: String?)
 
-    private fun getMessageStatusImage(message: MessageRecord): MessageStatusInfo {
-        return when {
-            !message.isOutgoing -> MessageStatusInfo(null,
-                null,
-                null,
-                null)
-            message.isFailed ->
-                MessageStatusInfo(
-                    R.drawable.ic_delivery_status_failed,
-                    resources.getColor(R.color.destructive, context.theme),
-                    R.string.delivery_status_failed,
-                    null
-                )
-            message.isPending ->
-                MessageStatusInfo(
-                    R.drawable.ic_delivery_status_sending,
-                    context.getColorFromAttr(R.attr.message_status_color), R.string.delivery_status_sending,
-                    context.getString(R.string.AccessibilityId_message_sent_status_pending)
-                )
-            message.isRead ->
-                MessageStatusInfo(
-                    R.drawable.ic_delivery_status_read,
-                    context.getColorFromAttr(R.attr.message_status_color), R.string.delivery_status_read,
-                    null
-                )
-            else ->
-                MessageStatusInfo(
-                    R.drawable.ic_delivery_status_sent,
-                    context.getColorFromAttr(R.attr.message_status_color),
-                    R.string.delivery_status_sent,
-                    context.getString(R.string.AccessibilityId_message_sent_status_tick)
-                )
-        }
+    private fun getMessageStatusImage(message: MessageRecord): MessageStatusInfo = when {
+        message.isFailed ->
+            MessageStatusInfo(
+                R.drawable.ic_delivery_status_failed,
+                resources.getColor(R.color.destructive, context.theme),
+                R.string.delivery_status_failed,
+                null
+            )
+        message.isSyncFailed ->
+            MessageStatusInfo(
+                R.drawable.ic_delivery_status_failed,
+                context.getColor(R.color.accent_orange),
+                R.string.delivery_status_sync_failed,
+                null
+            )
+        message.isPending ->
+            MessageStatusInfo(
+                R.drawable.ic_delivery_status_sending,
+                context.getColorFromAttr(R.attr.message_status_color), R.string.delivery_status_sending,
+                context.getString(R.string.AccessibilityId_message_sent_status_pending)
+            )
+        message.isResyncing ->
+            MessageStatusInfo(
+                R.drawable.ic_delivery_status_sending,
+                context.getColor(R.color.accent_orange), R.string.delivery_status_syncing,
+                context.getString(R.string.AccessibilityId_message_sent_status_syncing)
+            )
+        message.isRead ->
+            MessageStatusInfo(
+                R.drawable.ic_delivery_status_read,
+                context.getColorFromAttr(R.attr.message_status_color), R.string.delivery_status_read,
+                null
+            )
+        else ->
+            MessageStatusInfo(
+                R.drawable.ic_delivery_status_sent,
+                context.getColorFromAttr(R.attr.message_status_color),
+                R.string.delivery_status_sent,
+                context.getString(R.string.AccessibilityId_message_sent_status_tick)
+            )
     }
 
     private fun updateExpirationTimer(message: MessageRecord) {
         val container = binding.messageInnerContainer
         val content = binding.messageContentView.root
         val expiration = binding.expirationTimerView
-        val spacing = binding.messageContentSpacing
         container.removeAllViewsInLayout()
         container.addView(if (message.isOutgoing) expiration else content)
         container.addView(if (message.isOutgoing) content else expiration)
-        container.addView(spacing, if (message.isOutgoing) 0 else 2)
         val containerParams = container.layoutParams as ConstraintLayout.LayoutParams
         containerParams.horizontalBias = if (message.isOutgoing) 1f else 0f
         container.layoutParams = containerParams
