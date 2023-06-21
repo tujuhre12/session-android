@@ -2,7 +2,6 @@ package org.session.libsession.messaging.sending_receiving.notifications
 
 import android.annotation.SuppressLint
 import nl.komponents.kovenant.Promise
-import nl.komponents.kovenant.all
 import nl.komponents.kovenant.functional.map
 import okhttp3.MediaType
 import okhttp3.Request
@@ -17,8 +16,8 @@ import org.session.libsignal.utilities.emptyPromise
 import org.session.libsignal.utilities.retryIfNeeded
 
 @SuppressLint("StaticFieldLeak")
-object LegacyGroupsPushManager {
-    private const val TAG = "LegacyGroupsPushManager"
+object PushManagerV1 {
+    private const val TAG = "PushManagerV1"
 
     val context = MessagingModuleConfiguration.shared.context
     const val server = "https://push.getsession.org"
@@ -31,28 +30,45 @@ object LegacyGroupsPushManager {
         token: String? = TextSecurePreferences.getFCMToken(context),
         publicKey: String? = TextSecurePreferences.getLocalNumber(context),
         legacyGroupPublicKeys: Collection<String> = MessagingModuleConfiguration.shared.storage.getAllClosedGroupPublicKeys()
-    ): Promise<Unit, Exception> =
+    ): Promise<*, Exception> =
         retryIfNeeded(maxRetryCount) {
-            Log.d(TAG, "register() called")
-
-            val parameters = mapOf(
-                "token" to token!!,
-                "pubKey" to publicKey!!,
-                "legacyGroupPublicKeys" to legacyGroupPublicKeys.takeIf { it.isNotEmpty() }!!
-            )
-            val url = "$legacyServer/register_legacy_groups_only"
-            val body = RequestBody.create(MediaType.get("application/json"), JsonUtil.toJson(parameters))
-            val request = Request.Builder().url(url).post(body).build()
-
-            OnionRequestAPI.sendOnionRequest(request, legacyServer, legacyServerPublicKey, Version.V2).map { response ->
-                when (response.info["code"]) {
-                    null, 0 -> throw Exception("error: ${response.info["message"]}.")
-                    else -> Log.d(TAG, "register() success!!")
-                }
-            }
+            doRegister(token, publicKey, legacyGroupPublicKeys)
         } fail { exception ->
             Log.d(TAG, "Couldn't register for FCM due to error: ${exception}.")
+        } success {
+            Log.d(TAG, "register success!!")
         }
+
+    private fun doRegister(token: String?, publicKey: String?, legacyGroupPublicKeys: Collection<String>): Promise<*, Exception> {
+        Log.d(TAG, "doRegister() called $token, $publicKey, $legacyGroupPublicKeys")
+
+        token ?: return emptyPromise()
+        publicKey ?: return emptyPromise()
+        legacyGroupPublicKeys.takeIf { it.isNotEmpty() } ?: return emptyPromise()
+
+        Log.d(TAG, "actually registering...")
+
+        val parameters = mapOf(
+            "token" to token,
+            "pubKey" to publicKey,
+            "legacyGroupPublicKeys" to legacyGroupPublicKeys
+        )
+
+        val url = "$legacyServer/register_legacy_groups_only"
+        val body = RequestBody.create(MediaType.get("application/json"), JsonUtil.toJson(parameters))
+        val request = Request.Builder().url(url).post(body).build()
+
+        return OnionRequestAPI.sendOnionRequest(request, legacyServer, legacyServerPublicKey, Version.V2).map { response ->
+            when (response.info["code"]) {
+                null, 0 -> throw Exception("error: ${response.info["message"]}.")
+                else -> Log.d(TAG, "register() success!!")
+            }
+        } success {
+            Log.d(TAG, "onion request success")
+        } fail {
+            Log.d(TAG, "onion fail: $it")
+        }
+    }
 
     /**
      * Unregister push notifications for 1-1 conversations as this is now done in FirebasePushManager.
@@ -74,7 +90,7 @@ object LegacyGroupsPushManager {
                 legacyServerPublicKey,
                 Version.V2
             ) success {
-                android.util.Log.d(TAG, "unregister() success!!")
+                Log.d(TAG, "unregister() success!!")
 
                 when (it.info["code"]) {
                     null, 0 -> throw Exception("error: ${it.info["message"]}.")

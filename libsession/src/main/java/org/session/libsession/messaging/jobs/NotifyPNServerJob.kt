@@ -8,8 +8,8 @@ import okhttp3.Request
 import okhttp3.RequestBody
 import org.session.libsession.messaging.jobs.Job.Companion.MAX_BUFFER_SIZE
 
-import org.session.libsession.messaging.sending_receiving.notifications.LegacyGroupsPushManager
-import org.session.libsession.messaging.sending_receiving.notifications.LegacyGroupsPushManager.server
+import org.session.libsession.messaging.sending_receiving.notifications.PushManagerV1
+import org.session.libsession.messaging.sending_receiving.notifications.PushManagerV1.server
 import org.session.libsession.messaging.utilities.Data
 import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.snode.OnionRequestAPI
@@ -41,7 +41,7 @@ class NotifyPNServerJob(val message: SnodeMessage) : Job {
             OnionRequestAPI.sendOnionRequest(
                 request,
                 server,
-                LegacyGroupsPushManager.serverPublicKey,
+                PushManagerV1.serverPublicKey,
                 Version.V2
             ) success { response ->
                 when (response.info["code"]) {

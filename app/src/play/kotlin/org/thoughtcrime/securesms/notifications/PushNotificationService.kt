@@ -8,7 +8,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.jobs.MessageReceiveParameters
-import org.session.libsession.messaging.sending_receiving.notifications.LegacyGroupsPushManager
+import org.session.libsession.messaging.sending_receiving.notifications.PushManagerV1
 import org.session.libsession.messaging.utilities.MessageWrapper
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Base64
@@ -69,6 +69,6 @@ class PushNotificationService : FirebaseMessagingService() {
     override fun onDeletedMessages() {
         Log.d(TAG, "Called onDeletedMessages.")
         super.onDeletedMessages()
-        LegacyGroupsPushManager.register()
+        PushManagerV1.register()
     }
 }

@@ -28,4 +28,3 @@ fun <V, T : Promise<V, Exception>> retryIfNeeded(maxRetryCount: Int, retryInterv
     retryIfNeeded()
     return deferred.promise
 }
-

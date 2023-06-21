@@ -23,7 +23,7 @@ import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.attachments.PointerAttachment
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
-import org.session.libsession.messaging.sending_receiving.notifications.LegacyGroupsPushManager
+import org.session.libsession.messaging.sending_receiving.notifications.PushManagerV1
 import org.session.libsession.messaging.sending_receiving.pollers.ClosedGroupPollerV2
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
 import org.session.libsession.messaging.utilities.SessionId
@@ -479,7 +479,7 @@ private fun handleNewClosedGroup(sender: String, sentTimestamp: Long, groupPubli
     // Set expiration timer
     storage.setExpirationTimer(groupID, expireTimer)
     // Notify the PN server
-    LegacyGroupsPushManager.register(publicKey = userPublicKey)
+    PushManagerV1.register(publicKey = userPublicKey)
     // Notify the user
     if (userPublicKey == sender && !groupExists) {
         val threadID = storage.getOrCreateThreadIdFor(Address.fromSerialized(groupID))
@@ -772,7 +772,7 @@ fun MessageReceiver.disableLocalGroupAndUnsubscribe(groupPublicKey: String, grou
     storage.setActive(groupID, false)
     storage.removeMember(groupID, Address.fromSerialized(userPublicKey))
     // Notify the PN server
-    LegacyGroupsPushManager.register(publicKey = userPublicKey)
+    PushManagerV1.register(publicKey = userPublicKey)
     // Stop polling
     ClosedGroupPollerV2.shared.stopPolling(groupPublicKey)
 }
