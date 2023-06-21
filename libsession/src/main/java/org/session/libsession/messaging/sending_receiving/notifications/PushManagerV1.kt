@@ -33,13 +33,14 @@ object PushManagerV1 {
         publicKey: String? = TextSecurePreferences.getLocalNumber(context),
         legacyGroupPublicKeys: Collection<String> = MessagingModuleConfiguration.shared.storage.getAllClosedGroupPublicKeys()
     ): Promise<*, Exception> =
-        retryIfNeeded(maxRetryCount) {
-            if (isUsingFCM) doRegister(token, publicKey, legacyGroupPublicKeys)
-            else emptyPromise()
+        if (!isUsingFCM) {
+            emptyPromise()
+        } else retryIfNeeded(maxRetryCount) {
+            doRegister(token, publicKey, legacyGroupPublicKeys)
         } fail { exception ->
             Log.d(TAG, "Couldn't register for FCM due to error: ${exception}.")
         } success {
-            Log.d(TAG, "register success!!")
+            Log.d(TAG, "register success")
         }
 
     private fun doRegister(token: String?, publicKey: String?, legacyGroupPublicKeys: Collection<String>): Promise<*, Exception> {
@@ -62,7 +63,7 @@ object PushManagerV1 {
         return OnionRequestAPI.sendOnionRequest(request, legacyServer, legacyServerPublicKey, Version.V2).map { response ->
             when (response.info["code"]) {
                 null, 0 -> throw Exception("error: ${response.info["message"]}.")
-                else -> Log.d(TAG, "register() success!!")
+                else -> Log.d(TAG, "doRegister success")
             }
         }
     }
@@ -99,13 +100,19 @@ object PushManagerV1 {
 
     fun subscribeGroup(
         closedGroupPublicKey: String,
+        isUsingFCM: Boolean = TextSecurePreferences.isUsingFCM(context),
         publicKey: String = MessagingModuleConfiguration.shared.storage.getUserPublicKey()!!
-    ) = performGroupOperation("subscribe_closed_group", closedGroupPublicKey, publicKey)
+    ) = if (isUsingFCM) {
+        performGroupOperation("subscribe_closed_group", closedGroupPublicKey, publicKey)
+    } else emptyPromise()
 
     fun unsubscribeGroup(
         closedGroupPublicKey: String,
+        isUsingFCM: Boolean = TextSecurePreferences.isUsingFCM(context),
         publicKey: String = MessagingModuleConfiguration.shared.storage.getUserPublicKey()!!
-    ) = performGroupOperation("unsubscribe_closed_group", closedGroupPublicKey, publicKey)
+    ) = if (isUsingFCM) {
+        performGroupOperation("unsubscribe_closed_group", closedGroupPublicKey, publicKey)
+    } else emptyPromise()
 
     private fun performGroupOperation(
         operation: String,
