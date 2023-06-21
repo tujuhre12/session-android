@@ -772,7 +772,7 @@ fun MessageReceiver.disableLocalGroupAndUnsubscribe(groupPublicKey: String, grou
     storage.setActive(groupID, false)
     storage.removeMember(groupID, Address.fromSerialized(userPublicKey))
     // Notify the PN server
-    PushManagerV1.register(publicKey = userPublicKey)
+    PushManagerV1.unsubscribeGroup(groupPublicKey, publicKey = userPublicKey)
     // Stop polling
     ClosedGroupPollerV2.shared.stopPolling(groupPublicKey)
 }

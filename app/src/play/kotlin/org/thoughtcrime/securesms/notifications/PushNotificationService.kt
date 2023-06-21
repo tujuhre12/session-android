@@ -24,7 +24,6 @@ class PushNotificationService : FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
-        Log.d(TAG, "New FCM token: $token.")
         TextSecurePreferences.getLocalNumber(this) ?: return
         if (TextSecurePreferences.getFCMToken(this) != token) {
             pushManager.refresh(true)
@@ -69,6 +68,6 @@ class PushNotificationService : FirebaseMessagingService() {
     override fun onDeletedMessages() {
         Log.d(TAG, "Called onDeletedMessages.")
         super.onDeletedMessages()
-        PushManagerV1.register()
+        pushManager.refresh(true)
     }
 }

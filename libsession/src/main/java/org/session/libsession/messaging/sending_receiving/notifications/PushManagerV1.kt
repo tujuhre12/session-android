@@ -14,6 +14,7 @@ import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.emptyPromise
 import org.session.libsignal.utilities.retryIfNeeded
+import org.session.libsignal.utilities.sideEffect
 
 @SuppressLint("StaticFieldLeak")
 object PushManagerV1 {
@@ -27,12 +28,14 @@ object PushManagerV1 {
     private const val maxRetryCount = 4
 
     fun register(
+        isUsingFCM: Boolean = TextSecurePreferences.isUsingFCM(context),
         token: String? = TextSecurePreferences.getFCMToken(context),
         publicKey: String? = TextSecurePreferences.getLocalNumber(context),
         legacyGroupPublicKeys: Collection<String> = MessagingModuleConfiguration.shared.storage.getAllClosedGroupPublicKeys()
     ): Promise<*, Exception> =
         retryIfNeeded(maxRetryCount) {
-            doRegister(token, publicKey, legacyGroupPublicKeys)
+            if (isUsingFCM) doRegister(token, publicKey, legacyGroupPublicKeys)
+            else emptyPromise()
         } fail { exception ->
             Log.d(TAG, "Couldn't register for FCM due to error: ${exception}.")
         } success {
@@ -40,13 +43,11 @@ object PushManagerV1 {
         }
 
     private fun doRegister(token: String?, publicKey: String?, legacyGroupPublicKeys: Collection<String>): Promise<*, Exception> {
-        Log.d(TAG, "doRegister() called $token, $publicKey, $legacyGroupPublicKeys")
+        Log.d(TAG, "doRegister() called")
 
         token ?: return emptyPromise()
         publicKey ?: return emptyPromise()
-        legacyGroupPublicKeys.takeIf { it.isNotEmpty() } ?: return emptyPromise()
-
-        Log.d(TAG, "actually registering...")
+        legacyGroupPublicKeys.takeIf { it.isNotEmpty() } ?: return unregister()
 
         val parameters = mapOf(
             "token" to token,
@@ -63,10 +64,6 @@ object PushManagerV1 {
                 null, 0 -> throw Exception("error: ${response.info["message"]}.")
                 else -> Log.d(TAG, "register() success!!")
             }
-        } success {
-            Log.d(TAG, "onion request success")
-        } fail {
-            Log.d(TAG, "onion fail: $it")
         }
     }
 
@@ -90,14 +87,10 @@ object PushManagerV1 {
                 legacyServerPublicKey,
                 Version.V2
             ) success {
-                Log.d(TAG, "unregister() success!!")
-
                 when (it.info["code"]) {
                     null, 0 -> throw Exception("error: ${it.info["message"]}.")
-                    else -> Log.d(TAG, "unregisterV1 success token: $token")
+                    else -> Log.d(TAG, "unregisterV1 success")
                 }
-            } fail {
-                    Log.d(TAG, "Couldn't disable FCM with token: $token due to error: $it.")
             }
         }
     }
@@ -130,13 +123,10 @@ object PushManagerV1 {
                 legacyServer,
                 legacyServerPublicKey,
                 Version.V2
-            ) success {
+            ) sideEffect {
                 when (it.info["code"]) {
-                    null, 0 -> throw Exception("${it.info["message"]}")
-                    else -> Log.d(TAG, "performGroupOperation success: $operation")
+                     0, null -> throw Exception("${it.info["message"]}")
                 }
-            } fail { exception ->
-                Log.d(TAG, "performGroupOperation fail: $operation: $closedGroupPublicKey due to error: ${exception}.")
             }
         }
     }

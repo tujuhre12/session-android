@@ -73,7 +73,7 @@ class FirebasePushManager(
     }
 
     private fun refresh(token: String, force: Boolean): Promise<*, Exception> {
-        Log.d(TAG, "refresh() called with: token = $token, force = $force")
+        Log.d(TAG, "refresh() called")
 
         val userPublicKey = getLocalNumber(context) ?: return emptyPromise()
         val userEdKey = KeyPairUtilities.getUserED25519KeyPair(context) ?: return emptyPromise()
@@ -109,7 +109,10 @@ class FirebasePushManager(
         publicKey: String,
         userEd25519Key: KeyPair,
         namespaces: List<Int> = listOf(Namespace.DEFAULT)
-    ): Promise<*, Exception> = PushManagerV1.register(token, publicKey) and pushManagerV2.register(
+    ): Promise<*, Exception> = PushManagerV1.register(
+        token = token,
+        publicKey = publicKey
+    ) and pushManagerV2.register(
         token, publicKey, userEd25519Key, namespaces
     ) fail {
         Log.e(TAG, "Couldn't register for FCM due to error: $it.", it)
