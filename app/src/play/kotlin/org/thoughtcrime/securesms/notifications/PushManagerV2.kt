@@ -19,6 +19,7 @@ import okhttp3.RequestBody
 import org.session.libsession.messaging.sending_receiving.notifications.PushManagerV1
 import org.session.libsession.messaging.sending_receiving.notifications.PushNotificationMetadata
 import org.session.libsession.messaging.sending_receiving.notifications.Response
+import org.session.libsession.messaging.sending_receiving.notifications.Server
 import org.session.libsession.messaging.sending_receiving.notifications.SubscriptionRequest
 import org.session.libsession.messaging.sending_receiving.notifications.SubscriptionResponse
 import org.session.libsession.messaging.sending_receiving.notifications.UnsubscribeResponse
@@ -67,7 +68,7 @@ class PushManagerV2(private val context: Context) {
         ).let(Json::encodeToString)
 
         return retryResponseBody<SubscriptionResponse>("subscribe", requestParameters) success {
-            Log.d(TAG, "register() success!!")
+            Log.d(TAG, "registerV2 success")
         }
     }
 
@@ -92,7 +93,7 @@ class PushManagerV2(private val context: Context) {
         ).let(Json::encodeToString)
 
         return retryResponseBody<UnsubscribeResponse>("unsubscribe", requestParameters) success {
-            Log.d(TAG, "unregister() success!!")
+            Log.d(TAG, "unregisterV2 success")
         }
     }
 
@@ -100,14 +101,15 @@ class PushManagerV2(private val context: Context) {
         retryIfNeeded(FirebasePushManager.maxRetryCount) { getResponseBody(path, requestParameters) }
 
     private inline fun <reified T: Response> getResponseBody(path: String, requestParameters: String): Promise<T, Exception> {
-        val url = "${PushManagerV1.server}/$path"
+        val server = Server.LATEST
+        val url = "${server.url}/$path"
         val body = RequestBody.create(MediaType.get("application/json"), requestParameters)
         val request = Request.Builder().url(url).post(body).build()
 
         return OnionRequestAPI.sendOnionRequest(
             request,
-            PushManagerV1.server,
-            PushManagerV1.serverPublicKey,
+            server.url,
+            server.publicKey,
             Version.V4
         ).map { response ->
             response.body!!.inputStream()

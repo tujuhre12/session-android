@@ -66,7 +66,7 @@ class FirebasePushManager(
 
         firebaseInstanceIdJob = getFcmInstanceId { task ->
             when {
-                task.isSuccessful -> try { task.result?.token?.let { refresh(it, force).get() } } catch(e: Exception) { Log.d(TAG, "refresh() failed", e) }
+                task.isSuccessful -> try { task.result?.token?.let { refresh(it, force).get() } } catch(e: Exception) { Log.e(TAG, "refresh() failed", e) }
                 else -> Log.w(TAG, "getFcmInstanceId failed." + task.exception)
             }
         }
@@ -115,9 +115,9 @@ class FirebasePushManager(
     ) and pushManagerV2.register(
         token, publicKey, userEd25519Key, namespaces
     ) fail {
-        Log.e(TAG, "Couldn't register for FCM due to error: $it.", it)
+        Log.e(TAG, "registerBoth failed", it)
     } success {
-        Log.d(TAG, "register() success... saving token!!")
+        Log.d(TAG, "registerBoth success... saving token!!")
         tokenManager.fcmToken = token
     }
 
@@ -128,7 +128,7 @@ class FirebasePushManager(
     ): Promise<*, Exception> = PushManagerV1.unregister() and pushManagerV2.unregister(
         token, userPublicKey, userEdKey
     ) fail {
-        Log.e(TAG, "Couldn't unregister for FCM due to error: $it.", it)
+        Log.e(TAG, "unregisterBoth failed", it)
     } success {
         tokenManager.fcmToken = null
     }
