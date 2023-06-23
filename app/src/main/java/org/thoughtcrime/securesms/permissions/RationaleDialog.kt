@@ -10,6 +10,7 @@ import android.widget.LinearLayout
 import android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
 import android.widget.TextView
 import androidx.annotation.DrawableRes
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.res.ResourcesCompat
 import network.loki.messenger.R
 import org.session.libsession.utilities.ViewUtil
@@ -23,7 +24,7 @@ object RationaleDialog {
         onPositive: Runnable,
         onNegative: Runnable,
         @DrawableRes vararg drawables: Int
-    ): androidx.appcompat.app.AlertDialog {
+    ): AlertDialog {
         val view = LayoutInflater.from(context).inflate(R.layout.permissions_rationale_dialog, null)
             .apply { clipToOutline = true }
         val header = view.findViewById<ViewGroup>(R.id.header_container)
@@ -47,11 +48,8 @@ object RationaleDialog {
             }.also(header::addView)
         }
 
-        drawables.dropLast(1).forEach {
-            addIcon(it)
-            addPlus()
-        }
-        drawables.lastOrNull()?.let(::addIcon)
+        drawables.firstOrNull()?.let(::addIcon)
+        drawables.drop(1).forEach { addPlus(); addIcon(it) }
 
         return context.showSessionDialog {
             view(view)
