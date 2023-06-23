@@ -28,13 +28,15 @@ object RationaleDialog {
             .apply { clipToOutline = true }
         val header = view.findViewById<ViewGroup>(R.id.header_container)
         view.findViewById<TextView>(R.id.message).text = message
-        drawables.forEach {
+
+        fun addIcon(id: Int) {
             ImageView(context).apply {
-                setImageDrawable(ResourcesCompat.getDrawable(context.resources, it, context.theme))
+                setImageDrawable(ResourcesCompat.getDrawable(context.resources, id, context.theme))
                 layoutParams = LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT)
             }.also(header::addView)
         }
-        if (drawables.isNotEmpty()) {
+
+        fun addPlus() {
             TextView(context).apply {
                 text = "+"
                 setTextSize(TypedValue.COMPLEX_UNIT_SP, 40f)
@@ -44,6 +46,12 @@ object RationaleDialog {
                 }
             }.also(header::addView)
         }
+
+        drawables.dropLast(1).forEach {
+            addIcon(it)
+            addPlus()
+        }
+        drawables.lastOrNull()?.let(::addIcon)
 
         return context.showSessionDialog {
             view(view)
