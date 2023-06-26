@@ -9,7 +9,7 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.ExpirationUtil
 
 fun Context.showExpirationDialog(
-    currentExpiration: Int,
+    expiration: Int,
     onExpirationTime: (Int) -> Unit
 ): AlertDialog {
     val view = LayoutInflater.from(this).inflate(R.layout.expiration_dialog, null)
@@ -30,14 +30,12 @@ fun Context.showExpirationDialog(
         .map { ExpirationUtil.getExpirationDisplayValue(this, it) }
         .toTypedArray()
 
-    val selectedIndex = expirationTimes.withIndex()
-        .firstOrNull { it.value >= currentExpiration }?.index
-        ?: (expirationTimes.size - 1)
+    val selectedIndex = expirationTimes.run { indexOfFirst { it >= expiration }.coerceIn(indices) }
 
     numberPickerView.apply {
         displayedValues = expirationDisplayValues
         minValue = 0
-        maxValue = expirationTimes.size - 1
+        maxValue = expirationTimes.lastIndex
         setOnValueChangedListener { _, _, index -> updateText(index) }
         value = selectedIndex
     }
