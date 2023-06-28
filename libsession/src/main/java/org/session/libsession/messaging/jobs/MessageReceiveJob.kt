@@ -32,7 +32,6 @@ class MessageReceiveJob(val data: ByteArray, val serverHash: String? = null, val
     fun executeAsync(dispatcherName: String): Promise<Unit, Exception> {
         val deferred = deferred<Unit, Exception>()
         try {
-            val isRetry: Boolean = failureCount != 0
             val serverPublicKey = openGroupID?.let {
                 MessagingModuleConfiguration.shared.storage.getOpenGroupPublicKey(it.split(".").dropLast(1).joinToString("."))
             }

@@ -8,6 +8,7 @@ buildscript {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
         classpath "com.google.gms:google-services:$googleServicesVersion"
         classpath files('libs/gradle-witness.jar')
+        classpath "com.squareup:javapoet:1.13.0"
     }
 }
 
@@ -52,6 +53,6 @@ allprojects {
     project.ext {
         androidMinimumSdkVersion = 23
         androidTargetSdkVersion  = 31
-        androidCompileSdkVersion = 32
+        androidCompileSdkVersion = 33
     }
 }
