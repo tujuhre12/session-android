@@ -342,6 +342,8 @@
         <item name="prominentButtonColor">?colorAccent</item>
         <item name="elementBorderColor">@color/classic_dark_3</item>
 
+        <item name="isLightTheme">false</item>
+
         <!-- Home screen -->
         <item name="searchBackgroundColor">#1B1B1B</item>
         <item name="searchIconColor">#E5E5E8</item>
@@ -424,6 +426,7 @@
         <item name="android:colorBackgroundFloating">?colorPrimary</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowLightNavigationBar" tools:targetApi="O_MR1">true</item>
+        <item name="isLightTheme">true</item>
         <item name="android:isLightTheme" tools:targetApi="Q">true</item>
         <item name="android:statusBarColor">?colorPrimary</item>
 
@@ -506,6 +509,8 @@
         <item name="accentColor">?colorAccent</item>
         <item name="prominentButtonColor">?colorAccent</item>
         <item name="elementBorderColor">@color/ocean_dark_4</item>
+
+        <item name="isLightTheme">false</item>
 
         <!-- Home screen -->
         <item name="searchBackgroundColor">@color/ocean_dark_3</item>
@@ -594,6 +599,7 @@
         <item name="android:colorBackgroundFloating">?colorPrimary</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowLightNavigationBar" tools:targetApi="O_MR1">true</item>
+        <item name="isLightTheme">true</item>
         <item name="android:isLightTheme" tools:targetApi="Q">true</item>
         <item name="android:statusBarColor">?colorPrimary</item>
 
