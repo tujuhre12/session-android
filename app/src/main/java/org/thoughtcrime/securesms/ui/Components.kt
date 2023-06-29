@@ -10,7 +10,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ButtonColors
+import androidx.compose.material.Card
 import androidx.compose.material.Icon
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
@@ -55,13 +57,15 @@ fun Cell(content: @Composable () -> Unit) {
 
 @Composable
 fun CellWithPadding(padding: Dp = 24.dp, content: @Composable () -> Unit) {
-    androidx.compose.material.Card(
+    Card(
         shape = RoundedCornerShape(16.dp),
         elevation = 0.dp,
         modifier = Modifier
             .wrapContentHeight()
             .fillMaxWidth()
             .padding(horizontal = 32.dp),
-        backgroundColor = LocalExtraColors.current.settingsBackground
+        backgroundColor = LocalExtraColors.current.settingsBackground,
+        // probably wrong
+        contentColor = MaterialTheme.colors.onSurface
     ) { Box(Modifier.padding(padding)) { content() } }
 }

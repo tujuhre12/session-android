@@ -14,10 +14,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Divider
+import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -81,8 +84,8 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
             TitledText("Duration:", "N/A"),
         )
 
-        val sent = TitledText("Sent:", "6:12 AM Tue, 09/08/2022 ")
-        val received = TitledText("Received:", "6:12 AM Tue, 09/08/2022 ")
+        val sent = TitledText("Sent:", "6:12 AM Tue, 09/08/2022")
+        val received = TitledText("Received:", "6:12 AM Tue, 09/08/2022")
         val user = TitledText("Connor", "d4f1g54sdf5g1d5f4g65ds4564df65f4g65d54gdfsg")
 
         AppTheme {
@@ -109,7 +112,7 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
                                     .width(60.dp)
                                     .height(60.dp))
                                 Column {
-                                    titledText(user)
+                                    titledText(user, valueStyle = LocalTextStyle.current.copy(fontFamily = FontFamily.Monospace))
                                 }
                             }
                         }
@@ -134,10 +137,10 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
     }
 
     @Composable
-    fun titledText(titledText: TitledText, modifier: Modifier = Modifier) {
+    fun titledText(titledText: TitledText, modifier: Modifier = Modifier, valueStyle: TextStyle = LocalTextStyle.current) {
         Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Title(titledText.title)
-            Text(titledText.value)
+            Text(titledText.value, style = valueStyle)
         }
     }
 
