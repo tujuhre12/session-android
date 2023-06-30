@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.components
 
 import android.content.Context
 import android.util.AttributeSet
+import android.view.LayoutInflater
 import android.view.View
 import android.widget.ImageView
 import android.widget.RelativeLayout
@@ -9,6 +10,7 @@ import androidx.annotation.DimenRes
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewProfilePictureBinding
+import network.loki.messenger.databinding.ViewUserBinding
 import org.session.libsession.avatars.ContactColors
 import org.session.libsession.avatars.PlaceholderAvatarPhoto
 import org.session.libsession.avatars.ProfileContactPhoto
@@ -23,7 +25,7 @@ import org.thoughtcrime.securesms.mms.GlideRequests
 class ProfilePictureView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null
 ) : RelativeLayout(context, attrs) {
-    private val binding: ViewProfilePictureBinding by lazy { ViewProfilePictureBinding.bind(this) }
+    private val binding = ViewProfilePictureBinding.inflate(LayoutInflater.from(context), this)
     lateinit var glide: GlideRequests
     var publicKey: String? = null
     var displayName: String? = null
@@ -36,6 +38,7 @@ class ProfilePictureView @JvmOverloads constructor(
         .asDrawable(context, ContactColors.UNKNOWN_COLOR.toConversationColor(context), false)
     private val unknownOpenGroupDrawable = ResourceContactPhoto(R.drawable.ic_notification)
         .asDrawable(context, ContactColors.UNKNOWN_COLOR.toConversationColor(context), false)
+
 
     // endregion
 

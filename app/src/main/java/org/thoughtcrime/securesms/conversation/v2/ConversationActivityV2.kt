@@ -467,10 +467,10 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             R.dimen.small_profile_picture_size
         }
         val size = resources.getDimension(sizeID).roundToInt()
-        binding.toolbarContent.profilePictureView.root.layoutParams = LinearLayout.LayoutParams(size, size)
-        binding.toolbarContent.profilePictureView.root.glide = glide
+        binding.toolbarContent.profilePictureView.layoutParams = LinearLayout.LayoutParams(size, size)
+        binding.toolbarContent.profilePictureView.glide = glide
         MentionManagerUtilities.populateUserPublicKeyCacheIfNeeded(viewModel.threadId, this)
-        val profilePictureView = binding.toolbarContent.profilePictureView.root
+        val profilePictureView = binding.toolbarContent.profilePictureView
         viewModel.recipient?.let(profilePictureView::update)
     }
 
@@ -658,7 +658,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             updateSendAfterApprovalText()
             showOrHideInputIfNeeded()
 
-            binding?.toolbarContent?.profilePictureView?.root?.update(threadRecipient)
+            binding?.toolbarContent?.profilePictureView?.update(threadRecipient)
             binding?.toolbarContent?.conversationTitleView?.text = when {
                 threadRecipient.isLocalNumber -> getString(R.string.note_to_self)
                 else -> threadRecipient.toShortString()

@@ -26,6 +26,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -185,7 +186,9 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
                                     Row {
                                         Box(modifier = Modifier
                                             .width(60.dp)
-                                            .height(60.dp))
+                                            .height(60.dp)) {
+
+                                        }
                                         Column {
                                             titledText(it, valueStyle = LocalTextStyle.current.copy(fontFamily = FontFamily.Monospace))
                                         }

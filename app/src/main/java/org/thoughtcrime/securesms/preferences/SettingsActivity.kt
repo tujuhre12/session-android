@@ -75,8 +75,8 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
         val displayName = getDisplayName()
         glide = GlideApp.with(this)
         with(binding) {
-            setupProfilePictureView(profilePictureView.root)
-            profilePictureView.root.setOnClickListener { showEditProfilePictureUI() }
+            setupProfilePictureView(profilePictureView)
+            profilePictureView.setOnClickListener { showEditProfilePictureUI() }
             ctnGroupNameSection.setOnClickListener { startActionMode(DisplayNameEditActionModeCallback()) }
             btnGroupNameDisplay.text = displayName
             publicKeyTextView.text = hexEncodedPublicKey
@@ -231,8 +231,8 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
                 binding.btnGroupNameDisplay.text = displayName
             }
             if (isUpdatingProfilePicture) {
-                binding.profilePictureView.root.recycle() // Clear the cached image before updating
-                binding.profilePictureView.root.update()
+                binding.profilePictureView.recycle() // Clear the cached image before updating
+                binding.profilePictureView.update()
             }
             binding.loader.isVisible = false
         }

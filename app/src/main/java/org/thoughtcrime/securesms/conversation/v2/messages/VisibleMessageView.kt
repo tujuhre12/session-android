@@ -136,7 +136,7 @@ class VisibleMessageView : LinearLayout {
         // Show profile picture and sender name if this is a group thread AND
         // the message is incoming
         binding.moderatorIconImageView.isVisible = false
-        binding.profilePictureView.root.visibility = when {
+        binding.profilePictureView.visibility = when {
             thread.isGroupRecipient && !message.isOutgoing && isEndOfMessageCluster -> View.VISIBLE
             thread.isGroupRecipient -> View.INVISIBLE
             else -> View.GONE
@@ -145,22 +145,22 @@ class VisibleMessageView : LinearLayout {
         val bottomMargin = if (isEndOfMessageCluster) resources.getDimensionPixelSize(R.dimen.small_spacing)
         else ViewUtil.dpToPx(context,2)
 
-        if (binding.profilePictureView.root.visibility == View.GONE) {
+        if (binding.profilePictureView.visibility == View.GONE) {
             val expirationParams = binding.messageInnerContainer.layoutParams as MarginLayoutParams
             expirationParams.bottomMargin = bottomMargin
             binding.messageInnerContainer.layoutParams = expirationParams
         } else {
-            val avatarLayoutParams = binding.profilePictureView.root.layoutParams as MarginLayoutParams
+            val avatarLayoutParams = binding.profilePictureView.layoutParams as MarginLayoutParams
             avatarLayoutParams.bottomMargin = bottomMargin
-            binding.profilePictureView.root.layoutParams = avatarLayoutParams
+            binding.profilePictureView.layoutParams = avatarLayoutParams
         }
 
         if (isGroupThread && !message.isOutgoing) {
             if (isEndOfMessageCluster) {
-                binding.profilePictureView.root.publicKey = senderSessionID
-                binding.profilePictureView.root.glide = glide
-                binding.profilePictureView.root.update(message.individualRecipient)
-                binding.profilePictureView.root.setOnClickListener {
+                binding.profilePictureView.publicKey = senderSessionID
+                binding.profilePictureView.glide = glide
+                binding.profilePictureView.update(message.individualRecipient)
+                binding.profilePictureView.setOnClickListener {
                     if (thread.isOpenGroupRecipient) {
                         val openGroup = lokiThreadDb.getOpenGroupChat(threadID)
                         if (IdPrefix.fromValue(senderSessionID) == IdPrefix.BLINDED && openGroup?.canWrite == true) {
@@ -386,7 +386,7 @@ class VisibleMessageView : LinearLayout {
         val spacing = context.resources.getDimensionPixelSize(R.dimen.small_spacing)
         val iconSize = toPx(24, context.resources)
         val left = binding.messageInnerContainer.left + binding.messageContentView.root.right + spacing
-        val top = height - (binding.messageInnerContainer.height / 2) - binding.profilePictureView.root.marginBottom - (iconSize / 2)
+        val top = height - (binding.messageInnerContainer.height / 2) - binding.profilePictureView.marginBottom - (iconSize / 2)
         val right = left + iconSize
         val bottom = top + iconSize
         swipeToReplyIconRect.left = left
@@ -406,7 +406,7 @@ class VisibleMessageView : LinearLayout {
     }
 
     fun recycle() {
-        binding.profilePictureView.root.recycle()
+        binding.profilePictureView.recycle()
         binding.messageContentView.root.recycle()
     }
     // endregion
