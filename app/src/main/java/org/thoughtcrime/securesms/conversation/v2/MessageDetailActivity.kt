@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.conversation.v2
 
 import android.content.Intent
 import android.os.Bundle
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Divider
@@ -38,6 +40,7 @@ import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.components.ProfilePictureView
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.model.MessageRecord
+import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.Cell
@@ -74,6 +77,10 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
     class MessageDetailsViewModel: ViewModel() {
 
         fun setMessageRecord(value: MessageRecord?, error: String?) {
+            val mmsRecord = value as? MmsMessageRecord
+
+            val slides = mmsRecord?.slideDeck?.thumbnailSlides
+
             _details.value = value?.run {
                 MessageDetails(
                     sent = dateSent.let(::Date).toString().let { TitledText("Sent:", it) },
@@ -124,11 +131,9 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
     }
 
     private fun setResultAndFinish(code: Int) {
-        setResult(code)
-
         Bundle().apply { putLong(MESSAGE_TIMESTAMP, timestamp) }
             .let(Intent()::putExtras)
-            .let { setResult(RESULT_OK, it) }
+            .let { setResult(code, it) }
 
         finish()
     }
@@ -164,7 +169,7 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
         )
     }
 
-    @OptIn(ExperimentalLayoutApi::class)
+    @OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
     @Composable
     fun MessageDetails(
         messageDetails: MessageDetails,
@@ -178,6 +183,10 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
                     modifier = Modifier.verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
+                    HorizontalPager(pageCount = 1) {
+
+                    }
+
                     fileDetails?.takeIf { it.isNotEmpty() }?.let {
                         CellWithPadding {
                             FlowRow(
@@ -199,7 +208,9 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
                                 titledView("From:") {
                                     Row {
                                         sender?.let {
-                                            Box(modifier = Modifier.width(60.dp).align(Alignment.CenterVertically)) {
+                                            Box(modifier = Modifier
+                                                .width(60.dp)
+                                                .align(Alignment.CenterVertically)) {
                                                 AndroidView(
                                                     factory = { ProfilePictureView(it).apply { update(sender) } },
                                                     modifier = Modifier

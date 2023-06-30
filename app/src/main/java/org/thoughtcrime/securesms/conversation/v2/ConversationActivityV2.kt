@@ -18,6 +18,8 @@ import android.view.*
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import android.widget.Toast
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.annotation.DimenRes
 import androidx.appcompat.app.AlertDialog
@@ -78,6 +80,10 @@ import org.thoughtcrime.securesms.contacts.SelectContactsActivity.Companion.sele
 import org.thoughtcrime.securesms.contactshare.SimpleTextWatcher
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnActionSelectedListener
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnReactionSelectedListener
+import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.MESSAGE_TIMESTAMP
+import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_REPLY
+import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_RESEND
+import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_DELETE
 import org.thoughtcrime.securesms.conversation.v2.dialogs.BlockedDialog
 import org.thoughtcrime.securesms.conversation.v2.dialogs.LinkPreviewDialog
 import org.thoughtcrime.securesms.conversation.v2.dialogs.SendSeedDialog
@@ -1771,10 +1777,23 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         endActionMode()
     }
 
+    private val handleMessageDetail = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
+        val message = result.data?.extras?.getLong(MESSAGE_TIMESTAMP)
+            ?.let(mmsSmsDb::getMessageForTimestamp)
+
+        val set = setOfNotNull(message)
+
+        when (result.resultCode) {
+            ON_REPLY -> reply(set)
+            ON_RESEND -> resendMessage(set)
+            ON_DELETE -> deleteMessages(set)
+        }
+    }
+
     override fun showMessageDetail(messages: Set<MessageRecord>) {
         Intent(this, MessageDetailActivity::class.java)
-            .apply { putExtra(MessageDetailActivity.MESSAGE_TIMESTAMP, messages.first().timestamp) }
-            .let(::push)
+            .apply { putExtra(MESSAGE_TIMESTAMP, messages.first().timestamp) }
+            .let { handleMessageDetail.launch(it) }
 
         endActionMode()
     }
