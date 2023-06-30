@@ -44,6 +44,7 @@ import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.CellWithPadding
 import org.thoughtcrime.securesms.ui.ItemButton
 import org.thoughtcrime.securesms.ui.LocalExtraColors
+import org.thoughtcrime.securesms.ui.colorDestructive
 import org.thoughtcrime.securesms.ui.destructiveButtonColors
 import java.util.*
 import javax.inject.Inject
@@ -72,11 +73,12 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
 
     class MessageDetailsViewModel: ViewModel() {
 
-        fun setMessageRecord(value: MessageRecord?) {
+        fun setMessageRecord(value: MessageRecord?, error: String?) {
             _details.value = value?.run {
                 MessageDetails(
                     sent = dateSent.let(::Date).toString().let { TitledText("Sent:", it) },
                     received = dateReceived.let(::Date).toString().let { TitledText("Received:", it) },
+                    error = error?.let { TitledText("Error:", it) },
                     senderInfo = individualRecipient.run { name?.let { TitledText(it, address.serialize()) } },
                     sender = individualRecipient
                 )
@@ -97,7 +99,9 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
             return
         }
 
-        viewModel.setMessageRecord(messageRecord)
+        val error = DatabaseComponent.get(this).lokiMessageDatabase().getErrorMessage(messageRecord!!.getId())
+
+        viewModel.setMessageRecord(messageRecord, error)
 
         title = resources.getString(R.string.conversation_context__menu_message_details)
 
@@ -135,6 +139,7 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
         val fileDetails: List<TitledText>? = null,
         val sent: TitledText? = null,
         val received: TitledText? = null,
+        val error: TitledText? = null,
         val senderInfo: TitledText? = null,
         val sender: Recipient? = null
     )
@@ -143,16 +148,19 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
     @Composable
     fun PreviewMessageDetails() {
         MessageDetails(
-            fileDetails = listOf(
-                TitledText("File Id:", "1237896548514214124235985214"),
-                TitledText("File Type:", ".PNG"),
-                TitledText("File Size:", "6mb"),
-                TitledText("Resolution:", "550x550"),
-                TitledText("Duration:", "N/A"),
-            ),
-            sent = TitledText("Sent:", "6:12 AM Tue, 09/08/2022"),
-            received = TitledText("Received:", "6:12 AM Tue, 09/08/2022"),
-            senderInfo = TitledText("Connor", "d4f1g54sdf5g1d5f4g65ds4564df65f4g65d54gdfsg")
+            MessageDetails(
+                fileDetails = listOf(
+                    TitledText("File Id:", "1237896548514214124235985214"),
+                    TitledText("File Type:", ".PNG"),
+                    TitledText("File Size:", "6mb"),
+                    TitledText("Resolution:", "550x550"),
+                    TitledText("Duration:", "N/A"),
+                ),
+                sent = TitledText("Sent:", "6:12 AM Tue, 09/08/2022"),
+                received = TitledText("Received:", "6:12 AM Tue, 09/08/2022"),
+                error = TitledText("Error:", "Message failed to send"),
+                senderInfo = TitledText("Connor", "d4f1g54sdf5g1d5f4g65ds4564df65f4g65d54gdfsg")
+            )
         )
     }
 
@@ -186,20 +194,19 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
                         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                             sent?.let { titledText(it) }
                             received?.let { titledText(it) }
+                            error?.let { titledText(it, valueStyle = LocalTextStyle.current.copy(color = colorDestructive)) }
                             senderInfo?.let {
                                 titledView("From:") {
                                     Row {
-                                        Box(
-                                            modifier = Modifier.align(Alignment.CenterVertically)
-                                                .width(60.dp)
-                                                .height(60.dp)
-                                        ) {
-                                            AndroidView(
-                                                factory = { ProfilePictureView(it).apply { sender?.let(::update) } },
-                                                modifier = Modifier.align(Alignment.Center)
-                                                    .width(46.dp)
-                                                    .height(46.dp)
-                                            )
+                                        sender?.let {
+                                            Box(modifier = Modifier.width(60.dp).align(Alignment.CenterVertically)) {
+                                                AndroidView(
+                                                    factory = { ProfilePictureView(it).apply { update(sender) } },
+                                                    modifier = Modifier
+                                                        .width(46.dp)
+                                                        .height(46.dp)
+                                                )
+                                            }
                                         }
                                         Column {
                                             titledText(it, valueStyle = LocalTextStyle.current.copy(fontFamily = FontFamily.Monospace))
@@ -213,14 +220,11 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
                         Column {
                             ItemButton("Reply", R.drawable.ic_message_details__reply, onClick = onReply)
                             Divider()
-                            ItemButton("Resend", R.drawable.ic_message_details__refresh, onClick = onResend)
-                            Divider()
-                            ItemButton(
-                                "Delete",
-                                R.drawable.ic_message_details__trash,
-                                colors = destructiveButtonColors(),
-                                onClick = onDelete
-                            )
+                            if (error != null) {
+                                ItemButton("Resend", R.drawable.ic_message_details__refresh, onClick = onResend)
+                                Divider()
+                            }
+                            ItemButton("Delete", R.drawable.ic_message_details__trash, colors = destructiveButtonColors(), onClick = onDelete)
                         }
                     }
                 }
