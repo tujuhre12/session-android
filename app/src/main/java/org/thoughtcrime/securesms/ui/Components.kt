@@ -28,13 +28,14 @@ fun ItemButton(
     text: String,
     @DrawableRes icon: Int,
     colors: ButtonColors = transparentButtonColors(),
+    onClick: () -> Unit
 ) {
     TextButton(
         modifier = Modifier
             .fillMaxWidth()
             .height(60.dp),
         colors = colors,
-        onClick = {},
+        onClick = onClick,
         shape = RectangleShape,
     ) {
         Box(modifier = Modifier

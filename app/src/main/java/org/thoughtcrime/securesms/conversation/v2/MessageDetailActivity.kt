@@ -1,5 +1,7 @@
 package org.thoughtcrime.securesms.conversation.v2
 
+import android.accounts.AccountManager
+import android.content.Intent
 import android.os.Bundle
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,7 +12,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Divider
@@ -31,9 +32,12 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
+import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.model.MessageRecord
+import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.CellWithPadding
@@ -46,22 +50,53 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
+
+    private var timestamp: Long = 0L
+
     var messageRecord: MessageRecord? = null
 
     @Inject
     lateinit var storage: Storage
 
-    // region Settings
     companion object {
         // Extras
         const val MESSAGE_TIMESTAMP = "message_timestamp"
+
+        const val ON_REPLY = 1
+        const val ON_RESEND = 2
+        const val ON_DELETE = 3
     }
-    // endregion
+
+    val viewModel = MessageDetailsViewModel()
+
+    class MessageDetailsViewModel: ViewModel() {
+
+        fun setMessageRecord(value: MessageRecord?) {
+            _details.value = value?.run {
+                MessageDetails(
+                    sent = dateSent.let(::Date).toString().let { TitledText("Sent:", it) },
+                    received = dateReceived.let(::Date).toString().let { TitledText("Received:", it) },
+                    user = null
+                )
+            } ?: MessageDetails()
+        }
+
+        private var _details = MutableLiveData(MessageDetails())
+        val details: LiveData<MessageDetails> = _details
+    }
 
     override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
         super.onCreate(savedInstanceState, ready)
 
-        val timestamp = intent.getLongExtra(MESSAGE_TIMESTAMP, -1L)
+        timestamp = intent.getLongExtra(MESSAGE_TIMESTAMP, -1L)
+
+        val author = Address.fromSerialized(TextSecurePreferences.getLocalNumber(this)!!)
+        messageRecord = DatabaseComponent.get(this).mmsSmsDatabase().getMessageFor(timestamp, author) ?: run {
+            finish()
+            return
+        }
+
+        viewModel.setMessageRecord(messageRecord)
 
         title = resources.getString(R.string.conversation_context__menu_message_details)
 
@@ -72,15 +107,25 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
         })
     }
 
-    class MessageDetailsViewModel: ViewModel() {
-        private val _details = MutableLiveData(MessageDetails())
-        val details: LiveData<MessageDetails> = _details
+    @Composable
+    private fun MessageDetailsScreen() {
+        val details by viewModel.details.observeAsState(MessageDetails())
+        MessageDetails(
+            details,
+            onReply = { setResultAndFinish(ON_REPLY) },
+            onResend = { setResultAndFinish(ON_RESEND) },
+            onDelete = { setResultAndFinish(ON_DELETE) }
+        )
     }
 
-    @Composable
-    private fun MessageDetailsScreen(viewModel: MessageDetailsViewModel = MessageDetailsViewModel()) {
-        val details by viewModel.details.observeAsState(MessageDetails())
-        MessageDetails(details)
+    private fun setResultAndFinish(code: Int) {
+        setResult(code)
+
+        Bundle().apply { putLong(MESSAGE_TIMESTAMP, timestamp) }
+            .let(Intent()::putExtras)
+            .let { setResult(RESULT_OK, it) }
+
+        finish()
     }
 
     data class TitledText(val title: String, val value: String)
@@ -111,7 +156,12 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
 
     @OptIn(ExperimentalLayoutApi::class)
     @Composable
-    fun MessageDetails(messageDetails: MessageDetails) {
+    fun MessageDetails(
+        messageDetails: MessageDetails,
+        onReply: () -> Unit = {},
+        onResend: () -> Unit = {},
+        onDelete: () -> Unit = {},
+    ) {
         messageDetails.apply {
             AppTheme {
                 Column(
@@ -150,14 +200,15 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
                     }
                     Cell {
                         Column {
-                            ItemButton("Reply", R.drawable.ic_message_details__reply)
+                            ItemButton("Reply", R.drawable.ic_message_details__reply, onClick = onReply)
                             Divider()
-                            ItemButton("Resend", R.drawable.ic_message_details__refresh)
+                            ItemButton("Resend", R.drawable.ic_message_details__refresh, onClick = onResend)
                             Divider()
                             ItemButton(
                                 "Delete",
                                 R.drawable.ic_message_details__trash,
-                                colors = destructiveButtonColors()
+                                colors = destructiveButtonColors(),
+                                onClick = onDelete
                             )
                         }
                     }
