@@ -158,7 +158,6 @@ class VisibleMessageView : LinearLayout {
         if (isGroupThread && !message.isOutgoing) {
             if (isEndOfMessageCluster) {
                 binding.profilePictureView.publicKey = senderSessionID
-                binding.profilePictureView.glide = glide
                 binding.profilePictureView.update(message.individualRecipient)
                 binding.profilePictureView.setOnClickListener {
                     if (thread.isOpenGroupRecipient) {

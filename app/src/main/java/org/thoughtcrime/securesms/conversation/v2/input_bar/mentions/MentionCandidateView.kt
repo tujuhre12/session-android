@@ -31,7 +31,6 @@ class MentionCandidateView : RelativeLayout {
         profilePictureView.publicKey = candidate.publicKey
         profilePictureView.displayName = candidate.displayName
         profilePictureView.additionalPublicKey = null
-        profilePictureView.glide = glide!!
         profilePictureView.update()
         if (openGroupServer != null && openGroupRoom != null) {
             val isUserModerator = OpenGroupManager.isUserModerator(context, "$openGroupRoom.$openGroupServer", candidate.publicKey)

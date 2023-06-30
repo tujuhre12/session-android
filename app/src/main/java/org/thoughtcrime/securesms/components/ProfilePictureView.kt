@@ -20,13 +20,14 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
+import org.thoughtcrime.securesms.mms.GlideApp
 import org.thoughtcrime.securesms.mms.GlideRequests
 
 class ProfilePictureView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null
 ) : RelativeLayout(context, attrs) {
     private val binding = ViewProfilePictureBinding.inflate(LayoutInflater.from(context), this)
-    lateinit var glide: GlideRequests
+    private val glide: GlideRequests = GlideApp.with(this)
     var publicKey: String? = null
     var displayName: String? = null
     var additionalPublicKey: String? = null
@@ -76,7 +77,6 @@ class ProfilePictureView @JvmOverloads constructor(
     }
 
     fun update() {
-        if (!this::glide.isInitialized) return
         val publicKey = publicKey ?: return
         val additionalPublicKey = additionalPublicKey
         if (additionalPublicKey != null) {

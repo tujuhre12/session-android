@@ -33,6 +33,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
+import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.components.ProfilePictureView
 import org.thoughtcrime.securesms.database.Storage
@@ -76,7 +77,8 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
                 MessageDetails(
                     sent = dateSent.let(::Date).toString().let { TitledText("Sent:", it) },
                     received = dateReceived.let(::Date).toString().let { TitledText("Received:", it) },
-                    user = individualRecipient.run { name?.let { TitledText(it, address.serialize()) } }
+                    senderInfo = individualRecipient.run { name?.let { TitledText(it, address.serialize()) } },
+                    sender = individualRecipient
                 )
             } ?: MessageDetails()
         }
@@ -133,7 +135,8 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
         val fileDetails: List<TitledText>? = null,
         val sent: TitledText? = null,
         val received: TitledText? = null,
-        val user: TitledText? = null,
+        val senderInfo: TitledText? = null,
+        val sender: Recipient? = null
     )
 
     @Preview
@@ -149,7 +152,7 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
             ),
             sent = TitledText("Sent:", "6:12 AM Tue, 09/08/2022"),
             received = TitledText("Received:", "6:12 AM Tue, 09/08/2022"),
-            user = TitledText("Connor", "d4f1g54sdf5g1d5f4g65ds4564df65f4g65d54gdfsg")
+            senderInfo = TitledText("Connor", "d4f1g54sdf5g1d5f4g65ds4564df65f4g65d54gdfsg")
         )
     }
 
@@ -179,11 +182,11 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
                             }
                         }
                     }
-                    if (sent != null || received != null || user != null) CellWithPadding {
+                    if (sent != null || received != null || senderInfo != null) CellWithPadding {
                         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                             sent?.let { titledText(it) }
                             received?.let { titledText(it) }
-                            user?.let {
+                            senderInfo?.let {
                                 titledView("From:") {
                                     Row {
                                         Box(
@@ -192,7 +195,7 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
                                                 .height(60.dp)
                                         ) {
                                             AndroidView(
-                                                factory = { ProfilePictureView(it) },
+                                                factory = { ProfilePictureView(it).apply { sender?.let(::update) } },
                                                 modifier = Modifier.align(Alignment.Center)
                                                     .width(46.dp)
                                                     .height(46.dp)

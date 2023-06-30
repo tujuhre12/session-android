@@ -32,7 +32,6 @@ class ContactListAdapter(
 
     class ContactViewHolder(private val binding: ViewContactBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(contact: ContactListItem.Contact, glide: GlideRequests, listener: (Recipient) -> Unit) {
-            binding.profilePictureView.glide = glide
             binding.profilePictureView.update(contact.recipient)
             binding.nameTextView.text = contact.displayName
             binding.root.setOnClickListener { listener(contact.recipient) }

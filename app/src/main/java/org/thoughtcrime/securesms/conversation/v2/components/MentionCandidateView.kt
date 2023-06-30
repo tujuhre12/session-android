@@ -31,7 +31,6 @@ class MentionCandidateView : LinearLayout {
         profilePictureView.publicKey = mentionCandidate.publicKey
         profilePictureView.displayName = mentionCandidate.displayName
         profilePictureView.additionalPublicKey = null
-        profilePictureView.glide = glide!!
         profilePictureView.update()
         if (openGroupServer != null && openGroupRoom != null) {
             val isUserModerator = OpenGroupManager.isUserModerator(context, "$openGroupRoom.$openGroupServer", mentionCandidate.publicKey)

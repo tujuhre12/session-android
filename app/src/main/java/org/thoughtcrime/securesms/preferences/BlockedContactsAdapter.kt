@@ -49,7 +49,6 @@ class BlockedContactsAdapter(val viewModel: BlockedContactsViewModel) : ListAdap
         fun bind(selectable: SelectableRecipient, toggle: (SelectableRecipient) -> Unit) {
             binding.recipientName.text = selectable.item.name
             with (binding.profilePictureView) {
-                glide = this@ViewHolder.glide
                 update(selectable.item)
             }
             binding.root.setOnClickListener { toggle(selectable) }

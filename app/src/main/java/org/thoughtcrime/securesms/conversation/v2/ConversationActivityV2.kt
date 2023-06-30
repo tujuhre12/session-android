@@ -468,7 +468,6 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         }
         val size = resources.getDimension(sizeID).roundToInt()
         binding.toolbarContent.profilePictureView.layoutParams = LinearLayout.LayoutParams(size, size)
-        binding.toolbarContent.profilePictureView.glide = glide
         MentionManagerUtilities.populateUserPublicKeyCacheIfNeeded(viewModel.threadId, this)
         val profilePictureView = binding.toolbarContent.profilePictureView
         viewModel.recipient?.let(profilePictureView::update)

@@ -151,7 +151,6 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         // Set up Glide
         glide = GlideApp.with(this)
         // Set up toolbar buttons
-        binding.profileButton.glide = glide
         binding.profileButton.setOnClickListener { openSettings() }
         binding.searchViewContainer.setOnClickListener {
             binding.globalSearchInputLayout.requestFocus()

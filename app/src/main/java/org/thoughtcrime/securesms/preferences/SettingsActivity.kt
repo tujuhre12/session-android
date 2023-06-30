@@ -101,7 +101,6 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
         TextSecurePreferences.getProfileName(this) ?: truncateIdForDisplay(hexEncodedPublicKey)
 
     private fun setupProfilePictureView(view: ProfilePictureView) {
-        view.glide = glide
         view.apply {
             publicKey = hexEncodedPublicKey
             displayName = getDisplayName()
