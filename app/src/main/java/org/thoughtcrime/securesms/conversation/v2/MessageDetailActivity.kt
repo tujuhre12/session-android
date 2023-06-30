@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.conversation.v2
 
-import android.accounts.AccountManager
 import android.content.Intent
 import android.os.Bundle
 import androidx.compose.foundation.layout.Arrangement
@@ -32,8 +31,6 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
-import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.model.MessageRecord
@@ -76,7 +73,7 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
                 MessageDetails(
                     sent = dateSent.let(::Date).toString().let { TitledText("Sent:", it) },
                     received = dateReceived.let(::Date).toString().let { TitledText("Received:", it) },
-                    user = null
+                    user = individualRecipient.run { name?.let { TitledText(it, address.serialize()) } }
                 )
             } ?: MessageDetails()
         }
@@ -90,8 +87,7 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
 
         timestamp = intent.getLongExtra(MESSAGE_TIMESTAMP, -1L)
 
-        val author = Address.fromSerialized(TextSecurePreferences.getLocalNumber(this)!!)
-        messageRecord = DatabaseComponent.get(this).mmsSmsDatabase().getMessageFor(timestamp, author) ?: run {
+        messageRecord = DatabaseComponent.get(this).mmsSmsDatabase().getMessageForTimestamp(timestamp) ?: run {
             finish()
             return
         }

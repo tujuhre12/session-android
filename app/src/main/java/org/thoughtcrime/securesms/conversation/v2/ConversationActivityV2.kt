@@ -1773,9 +1773,10 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     }
 
     override fun showMessageDetail(messages: Set<MessageRecord>) {
-        val intent = Intent(this, MessageDetailActivity::class.java)
-        intent.putExtra(MessageDetailActivity.MESSAGE_TIMESTAMP, messages.first().timestamp)
-        push(intent)
+        Intent(this, MessageDetailActivity::class.java)
+            .apply { putExtra(MessageDetailActivity.MESSAGE_TIMESTAMP, messages.first().timestamp) }
+            .let(::push)
+
         endActionMode()
     }
 
