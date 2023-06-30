@@ -19,6 +19,7 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.text.TextStyle
@@ -33,6 +34,7 @@ import androidx.lifecycle.ViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
+import org.thoughtcrime.securesms.components.ProfilePictureView
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
@@ -184,10 +186,17 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
                             user?.let {
                                 titledView("From:") {
                                     Row {
-                                        Box(modifier = Modifier
-                                            .width(60.dp)
-                                            .height(60.dp)) {
-
+                                        Box(
+                                            modifier = Modifier.align(Alignment.CenterVertically)
+                                                .width(60.dp)
+                                                .height(60.dp)
+                                        ) {
+                                            AndroidView(
+                                                factory = { ProfilePictureView(it) },
+                                                modifier = Modifier.align(Alignment.Center)
+                                                    .width(46.dp)
+                                                    .height(46.dp)
+                                            )
                                         }
                                         Column {
                                             titledText(it, valueStyle = LocalTextStyle.current.copy(fontFamily = FontFamily.Monospace))
