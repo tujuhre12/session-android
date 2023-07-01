@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.conversation.v2
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -23,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -33,15 +36,21 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideImage
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
+import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
+import org.session.libsession.utilities.Util
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.components.ProfilePictureView
+import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
+import org.thoughtcrime.securesms.mms.Slide
 import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.CellWithPadding
@@ -50,6 +59,7 @@ import org.thoughtcrime.securesms.ui.LocalExtraColors
 import org.thoughtcrime.securesms.ui.colorDestructive
 import org.thoughtcrime.securesms.ui.destructiveButtonColors
 import java.util.*
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 
@@ -63,6 +73,7 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
     @Inject
     lateinit var storage: Storage
 
+
     companion object {
         // Extras
         const val MESSAGE_TIMESTAMP = "message_timestamp"
@@ -75,21 +86,47 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
     val viewModel = MessageDetailsViewModel()
 
     class MessageDetailsViewModel: ViewModel() {
+        @Inject
+        lateinit var attachmentDb: AttachmentDatabase
 
         fun setMessageRecord(value: MessageRecord?, error: String?) {
             val mmsRecord = value as? MmsMessageRecord
 
-            val slides = mmsRecord?.slideDeck?.thumbnailSlides
+            val slides: List<Slide> = mmsRecord?.slideDeck?.thumbnailSlides?.toList() ?: emptyList()
 
             _details.value = value?.run {
                 MessageDetails(
+                    attachments = slides.map { slide ->
+                        val duration = slide.takeIf { it.hasAudio() }
+                            ?.let { it.asAttachment() as? DatabaseAttachment }
+                            ?.let { attachment ->
+                                attachmentDb.getAttachmentAudioExtras(attachment.attachmentId)?.let { audioExtras ->
+                                    audioExtras.durationMs.takeIf { it > 0 }?.let {
+                                        String.format("%01d:%02d",
+                                            TimeUnit.MILLISECONDS.toMinutes(it),
+                                            TimeUnit.MILLISECONDS.toSeconds(it) % 60)
+                                    }
+                                }
+                            }
+
+                         val details = slide.run {
+                             listOfNotNull(
+                                 fileName.orNull()?.let { TitledText("File Id:", it) },
+                                 TitledText("File Type:", asAttachment().contentType),
+                                 TitledText("File Size:", Util.getPrettyFileSize(fileSize)),
+                                 if (slide.hasImage()) { TitledText("Resolution:", slide.asAttachment().run { "${width}x$height" } ) } else null,
+                                 duration?.let { TitledText("Duration:", it) },
+                             )
+                         }
+                         Attachment(slide, details)
+                    },
                     sent = dateSent.let(::Date).toString().let { TitledText("Sent:", it) },
                     received = dateReceived.let(::Date).toString().let { TitledText("Received:", it) },
                     error = error?.let { TitledText("Error:", it) },
                     senderInfo = individualRecipient.run { name?.let { TitledText(it, address.serialize()) } },
                     sender = individualRecipient
                 )
-            } ?: MessageDetails()
+            }
         }
 
         private var _details = MutableLiveData(MessageDetails())
@@ -141,7 +178,8 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
     data class TitledText(val title: String, val value: String)
 
     data class MessageDetails(
-        val fileDetails: List<TitledText>? = null,
+        val attachments: List<Attachment> = emptyList(),
+//        val fileDetails: List<TitledText>? = null,
         val sent: TitledText? = null,
         val received: TitledText? = null,
         val error: TitledText? = null,
@@ -149,27 +187,36 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
         val sender: Recipient? = null
     )
 
+    data class Attachment(
+        val slide: Slide,
+        val fileDetails: List<TitledText>
+    )
+
     @Preview
     @Composable
     fun PreviewMessageDetails() {
         MessageDetails(
             MessageDetails(
-                fileDetails = listOf(
-                    TitledText("File Id:", "1237896548514214124235985214"),
-                    TitledText("File Type:", ".PNG"),
-                    TitledText("File Size:", "6mb"),
-                    TitledText("Resolution:", "550x550"),
-                    TitledText("Duration:", "N/A"),
-                ),
+                attachments = listOf(),
+//                fileDetails = listOf(
+//                    TitledText("File Id:", "1237896548514214124235985214"),
+//                    TitledText("File Type:", ".PNG"),
+//                    TitledText("File Size:", "6mb"),
+//                    TitledText("Resolution:", "550x550"),
+//                    TitledText("Duration:", "N/A"),
+//                ),
                 sent = TitledText("Sent:", "6:12 AM Tue, 09/08/2022"),
                 received = TitledText("Received:", "6:12 AM Tue, 09/08/2022"),
                 error = TitledText("Error:", "Message failed to send"),
-                senderInfo = TitledText("Connor", "d4f1g54sdf5g1d5f4g65ds4564df65f4g65d54gdfsg")
+                senderInfo = TitledText("Connor", "d4f1g54sdf5g1d5f4g65ds4564df65f4g65d54gdfsg"),
             )
         )
     }
 
-    @OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
+    @OptIn(
+        ExperimentalLayoutApi::class,
+        ExperimentalFoundationApi::class,
+        ExperimentalGlideComposeApi::class)
     @Composable
     fun MessageDetails(
         messageDetails: MessageDetails,
@@ -183,18 +230,27 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
                     modifier = Modifier.verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    HorizontalPager(pageCount = 1) {
-
-                    }
-
-                    fileDetails?.takeIf { it.isNotEmpty() }?.let {
-                        CellWithPadding {
-                            FlowRow(
-                                verticalArrangement = Arrangement.spacedBy(16.dp),
-                                maxItemsInEachRow = 2
-                            ) {
-                                it.forEach {
-                                    titledText(it, Modifier.weight(1f))
+                    HorizontalPager(pageCount = attachments.size) {i ->
+                        val attachment = attachments[i]
+                        attachment.apply {
+                            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                                Cell {
+                                    if (slide.hasImage()) GlideImage(
+                                        contentScale = ContentScale.FillHeight,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        model = attachment.slide.uri,
+                                        contentDescription = attachment.slide.fileName.orNull() ?: "image"
+                                    )
+                                }
+                                fileDetails.takeIf { it.isNotEmpty() }?.let {
+                                    CellWithPadding {
+                                        FlowRow(
+                                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                                            maxItemsInEachRow = 2
+                                        ) {
+                                            it.forEach { titledText(it, Modifier.weight(1f)) }
+                                        }
+                                    }
                                 }
                             }
                         }
