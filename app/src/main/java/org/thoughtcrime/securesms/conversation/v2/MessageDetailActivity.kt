@@ -17,17 +17,24 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.Button
 import androidx.compose.material.Divider
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.LocalTextStyle
+import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -59,7 +66,6 @@ import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.CellNoMargin
 import org.thoughtcrime.securesms.ui.CellWithPaddingAndMargin
 import org.thoughtcrime.securesms.ui.ItemButton
-import org.thoughtcrime.securesms.ui.LocalExtraColors
 import org.thoughtcrime.securesms.ui.SessionHorizontalPagerIndicator
 import org.thoughtcrime.securesms.ui.colorDestructive
 import org.thoughtcrime.securesms.ui.destructiveButtonColors
@@ -284,31 +290,46 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
                             }
                         }
                     }
-                    Cell {
-                        Column {
-                            ItemButton(
-                                "Reply",
-                                R.drawable.ic_message_details__reply,
-                                onClick = onReply
-                            )
-                            Divider()
-                            if (error != null) {
-                                ItemButton(
-                                    "Resend",
-                                    R.drawable.ic_message_details__refresh,
-                                    onClick = onResend
-                                )
-                                Divider()
-                            }
-                            ItemButton(
-                                "Delete",
-                                R.drawable.ic_message_details__trash,
-                                colors = destructiveButtonColors(),
-                                onClick = onDelete
-                            )
-                        }
-                    }
+                    Buttons(
+                        messageDetails.error != null,
+                        onReply,
+                        onResend,
+                        onDelete,
+                    )
                 }
+            }
+        }
+    }
+
+    @Composable
+    fun Buttons(
+        hasError: Boolean,
+        onReply: () -> Unit = {},
+        onResend: () -> Unit = {},
+        onDelete: () -> Unit = {},
+    ) {
+        Cell {
+            Column {
+                ItemButton(
+                    "Reply",
+                    R.drawable.ic_message_details__reply,
+                    onClick = onReply
+                )
+                Divider()
+                if (hasError) {
+                    ItemButton(
+                        "Resend",
+                        R.drawable.ic_message_details__refresh,
+                        onClick = onResend
+                    )
+                    Divider()
+                }
+                ItemButton(
+                    "Delete",
+                    R.drawable.ic_message_details__trash,
+                    colors = destructiveButtonColors(),
+                    onClick = onDelete
+                )
             }
         }
     }
@@ -356,6 +377,16 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
                             pageCount = imageAttachments.size,
                         )
                     }
+                    Surface(
+                        shape = CircleShape,
+                        color = Color.Black.copy(alpha = 0.4f),
+                        modifier = Modifier.align(Alignment.BottomEnd).padding(8.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_expand),
+                            contentDescription = ""
+                        )
+                    }
                 }
                 CarouselNextButton(
                     pagerState,
@@ -381,15 +412,6 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
                 }
             }
         }
-    }
-
-    @Composable
-    fun Divider() {
-        Divider(
-            modifier = Modifier.padding(horizontal = 16.dp),
-            thickness = 1.dp,
-            color = LocalExtraColors.current.divider
-        )
     }
 
     @Composable

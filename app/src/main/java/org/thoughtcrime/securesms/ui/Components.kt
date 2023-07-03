@@ -143,3 +143,11 @@ fun CarouselButton(
         }
     }
 }
+
+@Composable
+fun Divider() {
+    androidx.compose.material.Divider(
+        modifier = Modifier.padding(horizontal = 16.dp),
+        color = LocalExtraColors.current.divider
+    )
+}
