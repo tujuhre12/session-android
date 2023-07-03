@@ -19,8 +19,8 @@ data class ExtraColors(
     val settingsBackground: Color,
 )
 
-fun Context.getColorFromTheme(@AttrRes attr: Int): Color =
-    MaterialColors.getColor(this, attr, 0).let(::Color)
+fun Context.getColorFromTheme(@AttrRes attr: Int, defaultValue: Int = 0x0): Color =
+    MaterialColors.getColor(this, attr, defaultValue).let(::Color)
 
 @Composable
 fun AppTheme(
@@ -29,7 +29,7 @@ fun AppTheme(
     val extraColors = LocalContext.current.run {
         ExtraColors(
             cell = getColorFromTheme(R.attr.colorCellBackground),
-            divider = getColorFromTheme(R.attr.dividerColor),
+            divider = getColorFromTheme(R.attr.dividerHorizontal),
             settingsBackground = getColorFromTheme(R.attr.colorSettingsBackground)
         )
     }
