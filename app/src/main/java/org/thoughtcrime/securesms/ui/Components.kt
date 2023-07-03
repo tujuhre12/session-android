@@ -57,11 +57,11 @@ fun ItemButton(
 
 @Composable
 fun Cell(content: @Composable () -> Unit) {
-    CellWithPaddingAndMargin(0.dp) { content() }
+    CellWithPaddingAndMargin(padding = 0.dp) { content() }
 }
 @Composable
 fun CellNoMargin(content: @Composable () -> Unit) {
-    CellWithPaddingAndMargin(0.dp, 0.dp) { content() }
+    CellWithPaddingAndMargin(padding = 0.dp, margin = 0.dp) { content() }
 }
 
 @Composable

@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.conversation.v2
 
 import android.content.Intent
 import android.os.Bundle
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,25 +10,30 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.Card
 import androidx.compose.material.Divider
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -40,6 +46,7 @@ import androidx.lifecycle.ViewModel
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Util
@@ -67,7 +74,7 @@ import javax.inject.Inject
 
 
 @AndroidEntryPoint
-class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
+class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
 
     private var timestamp: Long = 0L
 
@@ -75,7 +82,6 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
 
     @Inject
     lateinit var storage: Storage
-
 
     companion object {
         // Extras
@@ -88,7 +94,7 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
 
     val viewModel = MessageDetailsViewModel()
 
-    class MessageDetailsViewModel: ViewModel() {
+    class MessageDetailsViewModel : ViewModel() {
         @Inject
         lateinit var attachmentDb: AttachmentDatabase
 
@@ -103,30 +109,45 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
                         val duration = slide.takeIf { it.hasAudio() }
                             ?.let { it.asAttachment() as? DatabaseAttachment }
                             ?.let { attachment ->
-                                attachmentDb.getAttachmentAudioExtras(attachment.attachmentId)?.let { audioExtras ->
-                                    audioExtras.durationMs.takeIf { it > 0 }?.let {
-                                        String.format("%01d:%02d",
-                                            TimeUnit.MILLISECONDS.toMinutes(it),
-                                            TimeUnit.MILLISECONDS.toSeconds(it) % 60)
+                                attachmentDb.getAttachmentAudioExtras(attachment.attachmentId)
+                                    ?.let { audioExtras ->
+                                        audioExtras.durationMs.takeIf { it > 0 }?.let {
+                                            String.format(
+                                                "%01d:%02d",
+                                                TimeUnit.MILLISECONDS.toMinutes(it),
+                                                TimeUnit.MILLISECONDS.toSeconds(it) % 60
+                                            )
+                                        }
                                     }
-                                }
                             }
 
-                         val details = slide.run {
-                             listOfNotNull(
-                                 fileName.orNull()?.let { TitledText("File Id:", it) },
-                                 TitledText("File Type:", asAttachment().contentType),
-                                 TitledText("File Size:", Util.getPrettyFileSize(fileSize)),
-                                 if (slide.hasImage()) { TitledText("Resolution:", slide.asAttachment().run { "${width}x$height" } ) } else null,
-                                 duration?.let { TitledText("Duration:", it) },
-                             )
-                         }
-                         Attachment(slide, details)
+                        val details = slide.run {
+                            listOfNotNull(
+                                fileName.orNull()?.let { TitledText("File Id:", it) },
+                                TitledText("File Type:", asAttachment().contentType),
+                                TitledText("File Size:", Util.getPrettyFileSize(fileSize)),
+                                if (slide.hasImage()) {
+                                    TitledText(
+                                        "Resolution:",
+                                        slide.asAttachment().run { "${width}x$height" })
+                                } else null,
+                                duration?.let { TitledText("Duration:", it) },
+                            )
+                        }
+                        Attachment(slide, details)
                     },
                     sent = dateSent.let(::Date).toString().let { TitledText("Sent:", it) },
-                    received = dateReceived.let(::Date).toString().let { TitledText("Received:", it) },
+                    received = dateReceived.let(::Date).toString()
+                        .let { TitledText("Received:", it) },
                     error = error?.let { TitledText("Error:", it) },
-                    senderInfo = individualRecipient.run { name?.let { TitledText(it, address.serialize()) } },
+                    senderInfo = individualRecipient.run {
+                        name?.let {
+                            TitledText(
+                                it,
+                                address.serialize()
+                            )
+                        }
+                    },
                     sender = individualRecipient
                 )
             }
@@ -141,12 +162,14 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
 
         timestamp = intent.getLongExtra(MESSAGE_TIMESTAMP, -1L)
 
-        messageRecord = DatabaseComponent.get(this).mmsSmsDatabase().getMessageForTimestamp(timestamp) ?: run {
-            finish()
-            return
-        }
+        messageRecord =
+            DatabaseComponent.get(this).mmsSmsDatabase().getMessageForTimestamp(timestamp) ?: run {
+                finish()
+                return
+            }
 
-        val error = DatabaseComponent.get(this).lokiMessageDatabase().getErrorMessage(messageRecord!!.getId())
+        val error = DatabaseComponent.get(this).lokiMessageDatabase()
+            .getErrorMessage(messageRecord!!.getId())
 
         viewModel.setMessageRecord(messageRecord, error)
 
@@ -226,16 +249,29 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
                         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                             sent?.let { titledText(it) }
                             received?.let { titledText(it) }
-                            error?.let { titledText(it, valueStyle = LocalTextStyle.current.copy(color = colorDestructive)) }
+                            error?.let {
+                                titledText(
+                                    it,
+                                    valueStyle = LocalTextStyle.current.copy(color = colorDestructive)
+                                )
+                            }
                             senderInfo?.let {
                                 titledView("From:") {
                                     Row {
                                         sender?.let {
-                                            Box(modifier = Modifier
-                                                .width(60.dp)
-                                                .align(Alignment.CenterVertically)) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .width(60.dp)
+                                                    .align(Alignment.CenterVertically)
+                                            ) {
                                                 AndroidView(
-                                                    factory = { ProfilePictureView(it).apply { update(sender) } },
+                                                    factory = {
+                                                        ProfilePictureView(it).apply {
+                                                            update(
+                                                                sender
+                                                            )
+                                                        }
+                                                    },
                                                     modifier = Modifier
                                                         .width(46.dp)
                                                         .height(46.dp)
@@ -243,22 +279,38 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
                                             }
                                         }
                                         Column {
-                                            titledText(it, valueStyle = LocalTextStyle.current.copy(fontFamily = FontFamily.Monospace))
+                                            titledText(
+                                                it,
+                                                valueStyle = LocalTextStyle.current.copy(fontFamily = FontFamily.Monospace)
+                                            )
                                         }
                                     }
-                               }
+                                }
                             }
                         }
                     }
                     Cell {
                         Column {
-                            ItemButton("Reply", R.drawable.ic_message_details__reply, onClick = onReply)
+                            ItemButton(
+                                "Reply",
+                                R.drawable.ic_message_details__reply,
+                                onClick = onReply
+                            )
                             Divider()
                             if (error != null) {
-                                ItemButton("Resend", R.drawable.ic_message_details__refresh, onClick = onResend)
+                                ItemButton(
+                                    "Resend",
+                                    R.drawable.ic_message_details__refresh,
+                                    onClick = onResend
+                                )
                                 Divider()
                             }
-                            ItemButton("Delete", R.drawable.ic_message_details__trash, colors = destructiveButtonColors(), onClick = onDelete)
+                            ItemButton(
+                                "Delete",
+                                R.drawable.ic_message_details__trash,
+                                colors = destructiveButtonColors(),
+                                onClick = onDelete
+                            )
                         }
                     }
                 }
@@ -277,26 +329,27 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
     @OptIn(
         ExperimentalFoundationApi::class,
         ExperimentalGlideComposeApi::class,
-        ExperimentalLayoutApi::class,
     )
     @Composable
     fun ImageAttachments(attachments: List<Attachment>) {
         val imageAttachments = attachments.filter { it.slide.hasImage() }
-        val pagerState = rememberPagerState {
-            imageAttachments.size
-        }
+        val pagerState = rememberPagerState { imageAttachments.size }
 
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            CellNoMargin {
-                Box {
-                    HorizontalPager(state = pagerState) { i ->
-                        imageAttachments[i].slide.apply {
-                            GlideImage(
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.aspectRatio(1f),
-                                model = uri,
-                                contentDescription = fileName.orNull() ?: "image"
-                            )
+            Row {
+                if (imageAttachments.size >= 2) PrevButton(pagerState, modifier = Modifier.align(Alignment.CenterVertically))
+                else Spacer(modifier = Modifier.width(32.dp))
+                Box(modifier = Modifier.weight(1f)) {
+                    CellNoMargin {
+                        HorizontalPager(state = pagerState) { i ->
+                            imageAttachments[i].slide.apply {
+                                GlideImage(
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.aspectRatio(1f),
+                                    model = uri,
+                                    contentDescription = fileName.orNull() ?: "image"
+                                )
+                            }
                         }
                     }
                     if (imageAttachments.size >= 2) {
@@ -307,15 +360,61 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
                         )
                     }
                 }
+                if (imageAttachments.size >= 2) NextButton(pagerState, modifier = Modifier.align(Alignment.CenterVertically))
+                else Spacer(modifier = Modifier.width(32.dp))
             }
-            attachments[pagerState.currentPage].fileDetails.takeIf { it.isNotEmpty() }?.let {
-                CellWithPaddingAndMargin {
-                    FlowRow(
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
-                        maxItemsInEachRow = 2
-                    ) {
-                        it.forEach { titledText(it, Modifier.weight(1f)) }
-                    }
+
+            FileDetails(attachments, pagerState)
+        }
+    }
+
+    @OptIn(ExperimentalFoundationApi::class)
+    @Composable
+    fun PrevButton(pagerState: PagerState, modifier: Modifier = Modifier) {
+        CarouselButton(pagerState, modifier = modifier, enabled = pagerState.canScrollBackward, id = R.drawable.ic_prev, delta = -1)
+    }
+
+    @OptIn(ExperimentalFoundationApi::class)
+    @Composable
+    fun NextButton(pagerState: PagerState, modifier: Modifier = Modifier) {
+        CarouselButton(pagerState, modifier = modifier, enabled = pagerState.canScrollForward, id = R.drawable.ic_next, delta = 1)
+    }
+
+    @OptIn(ExperimentalFoundationApi::class)
+    @Composable
+    fun CarouselButton(
+        pagerState: PagerState,
+        modifier: Modifier = Modifier,
+        enabled: Boolean,
+        @DrawableRes id: Int,
+        delta: Int
+    ) {
+        val animationScope = rememberCoroutineScope()
+        pagerState.apply {
+            IconButton(
+                modifier = Modifier
+                    .width(40.dp)
+                    .then(modifier),
+                enabled = enabled,
+                onClick = { animationScope.launch { animateScrollToPage(currentPage + delta) } }) {
+                Icon(
+                    painter = painterResource(id = id),
+                    contentDescription = "",
+                )
+            }
+        }
+    }
+
+    @OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
+    @Composable
+    fun FileDetails(attachments: List<Attachment>, pagerState: PagerState) {
+        attachments[pagerState.currentPage].fileDetails.takeIf { it.isNotEmpty() }?.let {
+            CellWithPaddingAndMargin {
+                FlowRow(
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    maxItemsInEachRow = 2
+                ) {
+                    it.forEach { titledText(it, Modifier.weight(1f)) }
                 }
             }
         }
@@ -323,11 +422,19 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
 
     @Composable
     fun Divider() {
-        Divider(modifier = Modifier.padding(horizontal = 16.dp), thickness = 1.dp, color = LocalExtraColors.current.divider)
+        Divider(
+            modifier = Modifier.padding(horizontal = 16.dp),
+            thickness = 1.dp,
+            color = LocalExtraColors.current.divider
+        )
     }
 
     @Composable
-    fun titledText(titledText: TitledText, modifier: Modifier = Modifier, valueStyle: TextStyle = LocalTextStyle.current) {
+    fun titledText(
+        titledText: TitledText,
+        modifier: Modifier = Modifier,
+        valueStyle: TextStyle = LocalTextStyle.current
+    ) {
         Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Title(titledText.title)
             Text(titledText.value, style = valueStyle)
