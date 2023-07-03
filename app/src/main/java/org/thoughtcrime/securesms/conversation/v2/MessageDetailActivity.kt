@@ -10,11 +10,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Divider
@@ -230,31 +232,7 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
                     modifier = Modifier.verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    HorizontalPager(pageCount = attachments.size) {i ->
-                        val attachment = attachments[i]
-                        attachment.apply {
-                            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                                Cell {
-                                    if (slide.hasImage()) GlideImage(
-                                        contentScale = ContentScale.FillHeight,
-                                        modifier = Modifier.fillMaxWidth(),
-                                        model = attachment.slide.uri,
-                                        contentDescription = attachment.slide.fileName.orNull() ?: "image"
-                                    )
-                                }
-                                fileDetails.takeIf { it.isNotEmpty() }?.let {
-                                    CellWithPadding {
-                                        FlowRow(
-                                            verticalArrangement = Arrangement.spacedBy(16.dp),
-                                            maxItemsInEachRow = 2
-                                        ) {
-                                            it.forEach { titledText(it, Modifier.weight(1f)) }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    Attachments(attachments)
                     if (sent != null || received != null || senderInfo != null) CellWithPadding {
                         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                             sent?.let { titledText(it) }
@@ -293,6 +271,50 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
                             }
                             ItemButton("Delete", R.drawable.ic_message_details__trash, colors = destructiveButtonColors(), onClick = onDelete)
                         }
+                    }
+                }
+            }
+        }
+    }
+
+    @Composable
+    fun Attachments(attachments: List<Attachment>) {
+        val slide = attachments.firstOrNull()?.slide ?: return
+        when {
+            slide.hasImage() -> ImageAttachments(attachments)
+        }
+    }
+
+    @OptIn(
+        ExperimentalFoundationApi::class,
+        ExperimentalGlideComposeApi::class,
+        ExperimentalLayoutApi::class,
+    )
+    @Composable
+    fun ImageAttachments(attachments: List<Attachment>) {
+        val pagerState = rememberPagerState()
+
+        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Cell {
+                val imageAttachments = attachments.filter { it.slide.hasImage() }
+                HorizontalPager(state = pagerState, pageCount = imageAttachments.size) { i ->
+                    imageAttachments[i].slide.apply {
+                        GlideImage(
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.aspectRatio(1f),
+                            model = uri,
+                            contentDescription = fileName.orNull() ?: "image"
+                        )
+                    }
+                }
+            }
+            attachments[pagerState.currentPage].fileDetails.takeIf { it.isNotEmpty() }?.let {
+                CellWithPadding {
+                    FlowRow(
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        maxItemsInEachRow = 2
+                    ) {
+                        it.forEach { titledText(it, Modifier.weight(1f)) }
                     }
                 }
             }
