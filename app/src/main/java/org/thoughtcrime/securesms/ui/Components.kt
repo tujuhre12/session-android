@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.ui
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -14,10 +15,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ButtonColors
 import androidx.compose.material.Card
 import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,6 +29,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.pager.HorizontalPagerIndicator
+import kotlinx.coroutines.launch
+import network.loki.messenger.R
 
 @Composable
 fun ItemButton(
@@ -88,9 +93,49 @@ fun CellWithPaddingAndMargin(
 fun SessionHorizontalPagerIndicator(modifier: Modifier, pagerState: PagerState, pageCount: Int) {
     Card(shape = RoundedCornerShape(50.dp),
         backgroundColor = Color.Black.copy(alpha = 0.4f),
-        modifier = Modifier.padding(8.dp).then(modifier)) {
+        modifier = Modifier
+            .padding(8.dp)
+            .then(modifier)) {
         Box(modifier = Modifier.padding(8.dp)) {
             HorizontalPagerIndicator(pagerState = pagerState, pageCount = pageCount)
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun CarouselPrevButton(pagerState: PagerState, modifier: Modifier = Modifier) {
+    CarouselButton(pagerState, pagerState.canScrollBackward, R.drawable.ic_prev, -1, modifier)
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun CarouselNextButton(pagerState: PagerState, modifier: Modifier = Modifier) {
+    CarouselButton(pagerState, pagerState.canScrollForward, R.drawable.ic_next, 1, modifier)
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun CarouselButton(
+    pagerState: PagerState,
+    enabled: Boolean,
+    @DrawableRes id: Int,
+    delta: Int,
+    modifier: Modifier = Modifier
+) {
+    if (pagerState.pageCount <= 1) Spacer(modifier = Modifier.width(32.dp))
+    else {
+        val animationScope = rememberCoroutineScope()
+        IconButton(
+            modifier = Modifier
+                .width(40.dp)
+                .then(modifier),
+            enabled = enabled,
+            onClick = { animationScope.launch { pagerState.animateScrollToPage(pagerState.currentPage + delta) } }) {
+            Icon(
+                painter = painterResource(id = id),
+                contentDescription = "",
+            )
         }
     }
 }

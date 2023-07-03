@@ -2,7 +2,6 @@ package org.thoughtcrime.securesms.conversation.v2
 
 import android.content.Intent
 import android.os.Bundle
-import androidx.annotation.DrawableRes
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,7 +9,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -21,19 +19,15 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Divider
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
 import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -46,7 +40,6 @@ import androidx.lifecycle.ViewModel
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Util
@@ -60,6 +53,8 @@ import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.mms.Slide
 import org.thoughtcrime.securesms.ui.AppTheme
+import org.thoughtcrime.securesms.ui.CarouselNextButton
+import org.thoughtcrime.securesms.ui.CarouselPrevButton
 import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.CellNoMargin
 import org.thoughtcrime.securesms.ui.CellWithPaddingAndMargin
@@ -337,10 +332,10 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
 
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Row {
-                CarouselButtonOrSpace(
-                    Direction.PREVIOUS,
+                CarouselPrevButton(
                     pagerState,
-                    modifier = Modifier.align(Alignment.CenterVertically))
+                    modifier = Modifier.align(Alignment.CenterVertically)
+                )
                 Box(modifier = Modifier.weight(1f)) {
                     CellNoMargin {
                         HorizontalPager(state = pagerState) { i ->
@@ -362,8 +357,7 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
                         )
                     }
                 }
-                CarouselButtonOrSpace(
-                    Direction.NEXT,
+                CarouselNextButton(
                     pagerState,
                     modifier = Modifier.align(Alignment.CenterVertically)
                 )
@@ -372,53 +366,7 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
         }
     }
 
-    @OptIn(ExperimentalFoundationApi::class)
-    enum class Direction constructor(
-        val enabled: (PagerState) -> Boolean,
-        @DrawableRes val id: Int,
-        val delta: Int
-    ) {
-        PREVIOUS(
-            PagerState::canScrollBackward,
-            R.drawable.ic_prev,
-            -1
-        ),
-        NEXT(
-            PagerState::canScrollForward,
-            R.drawable.ic_next,
-            1
-        )
-    }
 
-    @OptIn(ExperimentalFoundationApi::class)
-    @Composable
-    fun CarouselButtonOrSpace(direction: Direction, pagerState: PagerState, modifier: Modifier = Modifier) {
-        if (pagerState.pageCount >= 2) CarouselButton(pagerState, modifier = modifier, direction = direction)
-        else Spacer(modifier = Modifier.width(32.dp))
-    }
-
-    @OptIn(ExperimentalFoundationApi::class)
-    @Composable
-    fun CarouselButton(
-        pagerState: PagerState,
-        modifier: Modifier = Modifier,
-        direction: Direction
-    ) {
-        val animationScope = rememberCoroutineScope()
-        pagerState.apply {
-            IconButton(
-                modifier = Modifier
-                    .width(40.dp)
-                    .then(modifier),
-                enabled = direction.enabled(pagerState),
-                onClick = { animationScope.launch { animateScrollToPage(currentPage + direction.delta) } }) {
-                Icon(
-                    painter = painterResource(id = direction.id),
-                    contentDescription = "",
-                )
-            }
-        }
-    }
 
     @OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
     @Composable
