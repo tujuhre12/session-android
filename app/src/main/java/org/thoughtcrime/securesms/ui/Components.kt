@@ -97,7 +97,11 @@ fun SessionHorizontalPagerIndicator(modifier: Modifier, pagerState: PagerState, 
             .padding(8.dp)
             .then(modifier)) {
         Box(modifier = Modifier.padding(8.dp)) {
-            HorizontalPagerIndicator(pagerState = pagerState, pageCount = pageCount)
+            HorizontalPagerIndicator(
+                pagerState = pagerState,
+                pageCount = pageCount,
+                activeColor = Color.White,
+                inactiveColor = classicDark5)
         }
     }
 }
