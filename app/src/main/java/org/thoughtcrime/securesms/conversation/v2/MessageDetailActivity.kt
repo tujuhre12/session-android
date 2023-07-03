@@ -2,7 +2,6 @@ package org.thoughtcrime.securesms.conversation.v2
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.View
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,7 +10,6 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -19,6 +17,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.Card
 import androidx.compose.material.Divider
 import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.Text
@@ -55,9 +54,11 @@ import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.mms.Slide
 import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.Cell
-import org.thoughtcrime.securesms.ui.CellWithPadding
+import org.thoughtcrime.securesms.ui.CellNoMargin
+import org.thoughtcrime.securesms.ui.CellWithPaddingAndMargin
 import org.thoughtcrime.securesms.ui.ItemButton
 import org.thoughtcrime.securesms.ui.LocalExtraColors
+import org.thoughtcrime.securesms.ui.SessionHorizontalPagerIndicator
 import org.thoughtcrime.securesms.ui.colorDestructive
 import org.thoughtcrime.securesms.ui.destructiveButtonColors
 import java.util.*
@@ -181,7 +182,6 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
 
     data class MessageDetails(
         val attachments: List<Attachment> = emptyList(),
-//        val fileDetails: List<TitledText>? = null,
         val sent: TitledText? = null,
         val received: TitledText? = null,
         val error: TitledText? = null,
@@ -200,13 +200,6 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
         MessageDetails(
             MessageDetails(
                 attachments = listOf(),
-//                fileDetails = listOf(
-//                    TitledText("File Id:", "1237896548514214124235985214"),
-//                    TitledText("File Type:", ".PNG"),
-//                    TitledText("File Size:", "6mb"),
-//                    TitledText("Resolution:", "550x550"),
-//                    TitledText("Duration:", "N/A"),
-//                ),
                 sent = TitledText("Sent:", "6:12 AM Tue, 09/08/2022"),
                 received = TitledText("Received:", "6:12 AM Tue, 09/08/2022"),
                 error = TitledText("Error:", "Message failed to send"),
@@ -215,10 +208,6 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
         )
     }
 
-    @OptIn(
-        ExperimentalLayoutApi::class,
-        ExperimentalFoundationApi::class,
-        ExperimentalGlideComposeApi::class)
     @Composable
     fun MessageDetails(
         messageDetails: MessageDetails,
@@ -233,7 +222,7 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Attachments(attachments)
-                    if (sent != null || received != null || senderInfo != null) CellWithPadding {
+                    if (sent != null || received != null || senderInfo != null) CellWithPaddingAndMargin {
                         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                             sent?.let { titledText(it) }
                             received?.let { titledText(it) }
@@ -292,24 +281,35 @@ class MessageDetailActivity: PassphraseRequiredActionBarActivity() {
     )
     @Composable
     fun ImageAttachments(attachments: List<Attachment>) {
-        val pagerState = rememberPagerState()
+        val imageAttachments = attachments.filter { it.slide.hasImage() }
+        val pagerState = rememberPagerState {
+            imageAttachments.size
+        }
 
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Cell {
-                val imageAttachments = attachments.filter { it.slide.hasImage() }
-                HorizontalPager(state = pagerState, pageCount = imageAttachments.size) { i ->
-                    imageAttachments[i].slide.apply {
-                        GlideImage(
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.aspectRatio(1f),
-                            model = uri,
-                            contentDescription = fileName.orNull() ?: "image"
+            CellNoMargin {
+                Box {
+                    HorizontalPager(state = pagerState) { i ->
+                        imageAttachments[i].slide.apply {
+                            GlideImage(
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.aspectRatio(1f),
+                                model = uri,
+                                contentDescription = fileName.orNull() ?: "image"
+                            )
+                        }
+                    }
+                    if (imageAttachments.size >= 2) {
+                        SessionHorizontalPagerIndicator(
+                            modifier = Modifier.align(Alignment.BottomCenter),
+                            pagerState = pagerState,
+                            pageCount = imageAttachments.size,
                         )
                     }
                 }
             }
             attachments[pagerState.currentPage].fileDetails.takeIf { it.isNotEmpty() }?.let {
-                CellWithPadding {
+                CellWithPaddingAndMargin {
                     FlowRow(
                         verticalArrangement = Arrangement.spacedBy(16.dp),
                         maxItemsInEachRow = 2
