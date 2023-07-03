@@ -337,8 +337,10 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
 
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Row {
-                if (imageAttachments.size >= 2) PrevButton(pagerState, modifier = Modifier.align(Alignment.CenterVertically))
-                else Spacer(modifier = Modifier.width(32.dp))
+                CarouselButtonOrSpace(
+                    Direction.PREVIOUS,
+                    pagerState,
+                    modifier = Modifier.align(Alignment.CenterVertically))
                 Box(modifier = Modifier.weight(1f)) {
                     CellNoMargin {
                         HorizontalPager(state = pagerState) { i ->
@@ -360,24 +362,39 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
                         )
                     }
                 }
-                if (imageAttachments.size >= 2) NextButton(pagerState, modifier = Modifier.align(Alignment.CenterVertically))
-                else Spacer(modifier = Modifier.width(32.dp))
+                CarouselButtonOrSpace(
+                    Direction.NEXT,
+                    pagerState,
+                    modifier = Modifier.align(Alignment.CenterVertically)
+                )
             }
-
             FileDetails(attachments, pagerState)
         }
     }
 
     @OptIn(ExperimentalFoundationApi::class)
-    @Composable
-    fun PrevButton(pagerState: PagerState, modifier: Modifier = Modifier) {
-        CarouselButton(pagerState, modifier = modifier, enabled = pagerState.canScrollBackward, id = R.drawable.ic_prev, delta = -1)
+    enum class Direction constructor(
+        val enabled: (PagerState) -> Boolean,
+        @DrawableRes val id: Int,
+        val delta: Int
+    ) {
+        PREVIOUS(
+            PagerState::canScrollBackward,
+            R.drawable.ic_prev,
+            -1
+        ),
+        NEXT(
+            PagerState::canScrollForward,
+            R.drawable.ic_next,
+            1
+        )
     }
 
     @OptIn(ExperimentalFoundationApi::class)
     @Composable
-    fun NextButton(pagerState: PagerState, modifier: Modifier = Modifier) {
-        CarouselButton(pagerState, modifier = modifier, enabled = pagerState.canScrollForward, id = R.drawable.ic_next, delta = 1)
+    fun CarouselButtonOrSpace(direction: Direction, pagerState: PagerState, modifier: Modifier = Modifier) {
+        if (pagerState.pageCount >= 2) CarouselButton(pagerState, modifier = modifier, direction = direction)
+        else Spacer(modifier = Modifier.width(32.dp))
     }
 
     @OptIn(ExperimentalFoundationApi::class)
@@ -385,9 +402,7 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
     fun CarouselButton(
         pagerState: PagerState,
         modifier: Modifier = Modifier,
-        enabled: Boolean,
-        @DrawableRes id: Int,
-        delta: Int
+        direction: Direction
     ) {
         val animationScope = rememberCoroutineScope()
         pagerState.apply {
@@ -395,10 +410,10 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
                 modifier = Modifier
                     .width(40.dp)
                     .then(modifier),
-                enabled = enabled,
-                onClick = { animationScope.launch { animateScrollToPage(currentPage + delta) } }) {
+                enabled = direction.enabled(pagerState),
+                onClick = { animationScope.launch { animateScrollToPage(currentPage + direction.delta) } }) {
                 Icon(
-                    painter = painterResource(id = id),
+                    painter = painterResource(id = direction.id),
                     contentDescription = "",
                 )
             }
