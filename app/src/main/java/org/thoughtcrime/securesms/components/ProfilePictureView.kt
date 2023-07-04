@@ -43,6 +43,10 @@ class ProfilePictureView @JvmOverloads constructor(
 
     // endregion
 
+    constructor(context: Context, sender: Recipient): this(context) {
+        update(sender)
+    }
+
     // region Updating
     fun update(recipient: Recipient) {
         fun getUserDisplayName(publicKey: String): String {

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -266,43 +267,38 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
     fun MetaDataCell(
         messageDetails: MessageDetails,
     ) {
-        if (messageDetails.sent != null || messageDetails.received != null || messageDetails.senderInfo != null) CellWithPaddingAndMargin {
-            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                messageDetails.sent?.let { TitledText(it) }
-                messageDetails.received?.let { TitledText(it) }
-                messageDetails.error?.let {
-                    TitledText(
-                        it,
-                        valueStyle = LocalTextStyle.current.copy(color = colorDestructive)
-                    )
-                }
-                messageDetails.senderInfo?.let {
-                    TitledView("From:") {
-                        Row {
-                            messageDetails.sender?.let { sender ->
-                                Box(
-                                    modifier = Modifier
-                                        .width(60.dp)
-                                        .align(Alignment.CenterVertically)
-                                ) {
-                                    AndroidView(
-                                        factory = {
-                                            ProfilePictureView(it).apply { update(sender) }
-                                        },
-                                        modifier = Modifier.width(46.dp).height(46.dp)
-                                    )
-                                }
-                            }
-                            Column {
-                                TitledText(
-                                    it,
-                                    valueStyle = LocalTextStyle.current.copy(fontFamily = FontFamily.Monospace)
-                                )
+        messageDetails.apply {
+            if (sent != null || received != null || senderInfo != null) CellWithPaddingAndMargin {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    sent?.let { TitledText(it) }
+                    received?.let { TitledText(it) }
+                    error?.let { TitledErrorText(it) }
+                    senderInfo?.let {
+                        TitledView("From:") {
+                            Row {
+                                sender?.let { Avatar(it) }
+                                TitledMonospaceText(it)
                             }
                         }
                     }
                 }
             }
+        }
+    }
+
+    @Composable
+    fun RowScope.Avatar(sender: Recipient) {
+        Box(
+            modifier = Modifier
+                .width(60.dp)
+                .align(Alignment.CenterVertically)
+        ) {
+            AndroidView(
+                factory = {
+                    ProfilePictureView(it).apply { update(sender) }
+                },
+                modifier = Modifier.width(46.dp).height(46.dp)
+            )
         }
     }
 
@@ -415,6 +411,22 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
                 }
             }
         }
+    }
+
+    @Composable
+    fun TitledErrorText(titledText: TitledText, modifier: Modifier = Modifier) {
+        TitledText(
+            titledText,
+            modifier = modifier,
+            valueStyle = LocalTextStyle.current.copy(color = colorDestructive))
+    }
+
+    @Composable
+    fun TitledMonospaceText(titledText: TitledText, modifier: Modifier = Modifier) {
+        TitledText(
+            titledText,
+            modifier = modifier,
+            valueStyle = LocalTextStyle.current.copy(fontFamily = FontFamily.Monospace))
     }
 
     @Composable
