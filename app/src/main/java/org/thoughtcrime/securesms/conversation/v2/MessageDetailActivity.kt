@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.conversation.v2
 import android.content.Intent
 import android.os.Bundle
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -51,12 +52,14 @@ import network.loki.messenger.R
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Util
 import org.session.libsession.utilities.recipients.Recipient
+import org.thoughtcrime.securesms.MediaPreviewActivity
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.components.ProfilePictureView
 import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
+
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.mms.Slide
 import org.thoughtcrime.securesms.ui.AppTheme
@@ -69,6 +72,7 @@ import org.thoughtcrime.securesms.ui.ItemButton
 import org.thoughtcrime.securesms.ui.SessionHorizontalPagerIndicator
 import org.thoughtcrime.securesms.ui.colorDestructive
 import org.thoughtcrime.securesms.ui.destructiveButtonColors
+import org.thoughtcrime.securesms.util.ActivityDispatcher
 import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -106,6 +110,7 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
 
             _details.value = value?.run {
                 MessageDetails(
+                    mmsRecord = mmsRecord,
                     attachments = slides.map { slide ->
                         val duration = slide.takeIf { it.hasAudio() }
                             ?.let { it.asAttachment() as? DatabaseAttachment }
@@ -190,7 +195,11 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
             details,
             onReply = { setResultAndFinish(ON_REPLY) },
             onResend = { setResultAndFinish(ON_RESEND) },
-            onDelete = { setResultAndFinish(ON_DELETE) }
+            onDelete = { setResultAndFinish(ON_DELETE) },
+            onClickImage = { slide ->
+                MediaPreviewActivity.getPreviewIntent(this, slide, details.mmsRecord, details.sender)
+                    .let(::startActivity)
+            }
         )
     }
 
@@ -206,6 +215,8 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
 
     data class MessageDetails(
         val attachments: List<Attachment> = emptyList(),
+        val mmsRecord: MmsMessageRecord? = null,
+
         val sent: TitledText? = null,
         val received: TitledText? = null,
         val error: TitledText? = null,
@@ -238,6 +249,7 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
         onReply: () -> Unit = {},
         onResend: () -> Unit = {},
         onDelete: () -> Unit = {},
+        onClickImage: (Slide) -> Unit = {},
     ) {
         messageDetails.apply {
             AppTheme {
@@ -245,7 +257,7 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
                     modifier = Modifier.verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Attachments(attachments)
+                    Attachments(attachments) { onClickImage(it) }
                     if (sent != null || received != null || senderInfo != null) CellWithPaddingAndMargin {
                         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                             sent?.let { titledText(it) }
@@ -335,10 +347,10 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
     }
 
     @Composable
-    fun Attachments(attachments: List<Attachment>) {
+    fun Attachments(attachments: List<Attachment>, onClick: (Slide) -> Unit) {
         val slide = attachments.firstOrNull()?.slide ?: return
         when {
-            slide.hasImage() -> ImageAttachments(attachments)
+            slide.hasImage() -> ImageAttachments(attachments) { onClick(it) }
         }
     }
 
@@ -347,7 +359,7 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
         ExperimentalGlideComposeApi::class,
     )
     @Composable
-    fun ImageAttachments(attachments: List<Attachment>) {
+    fun ImageAttachments(attachments: List<Attachment>, onClick: (Slide) -> Unit) {
         val imageAttachments = attachments.filter { it.slide.hasImage() }
         val pagerState = rememberPagerState { imageAttachments.size }
 
@@ -360,10 +372,13 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
                 Box(modifier = Modifier.weight(1f)) {
                     CellNoMargin {
                         HorizontalPager(state = pagerState) { i ->
-                            imageAttachments[i].slide.apply {
+                            val slide = imageAttachments[i].slide
+                            slide.apply {
                                 GlideImage(
                                     contentScale = ContentScale.Crop,
-                                    modifier = Modifier.aspectRatio(1f),
+                                    modifier = Modifier
+                                        .aspectRatio(1f)
+                                        .clickable { onClick(slide) },
                                     model = uri,
                                     contentDescription = fileName.orNull() ?: "image"
                                 )
