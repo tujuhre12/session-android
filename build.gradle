@@ -1,3 +1,4 @@
+
 buildscript {
     repositories {
         google()
@@ -10,6 +11,10 @@ buildscript {
         classpath files('libs/gradle-witness.jar')
         classpath "com.squareup:javapoet:1.13.0"
     }
+}
+
+plugins{
+    id("com.google.dagger.hilt.android") version "2.44" apply false
 }
 
 allprojects {

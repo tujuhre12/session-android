@@ -46,6 +46,7 @@ import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.home.UserDetailsBottomSheet
+import org.thoughtcrime.securesms.mms.GlideApp
 import org.thoughtcrime.securesms.mms.GlideRequests
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.disableClipping
@@ -70,7 +71,6 @@ class VisibleMessageView : LinearLayout {
     @Inject lateinit var mmsDb: MmsDatabase
 
     private val binding by lazy { ViewVisibleMessageBinding.bind(this) }
-    private val screenWidth = Resources.getSystem().displayMetrics.widthPixels
     private val swipeToReplyIcon = ContextCompat.getDrawable(context, R.drawable.ic_baseline_reply_24)!!.mutate()
     private val swipeToReplyIconRect = Rect()
     private var dx = 0.0f
@@ -119,13 +119,13 @@ class VisibleMessageView : LinearLayout {
     // region Updating
     fun bind(
         message: MessageRecord,
-        previous: MessageRecord?,
-        next: MessageRecord?,
-        glide: GlideRequests,
-        searchQuery: String?,
-        contact: Contact?,
+        previous: MessageRecord? = null,
+        next: MessageRecord? = null,
+        glide: GlideRequests = GlideApp.with(this),
+        searchQuery: String? = null,
+        contact: Contact? = null,
         senderSessionID: String,
-        delegate: VisibleMessageViewDelegate?,
+        delegate: VisibleMessageViewDelegate? = null,
         onAttachmentNeedsDownload: (Long, Long) -> Unit
     ) {
         val threadID = message.threadId

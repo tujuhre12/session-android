@@ -3,6 +3,8 @@ package org.thoughtcrime.securesms.conversation.v2
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.lifecycle.HiltViewModel
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Util
 import org.session.libsession.utilities.recipients.Recipient
@@ -31,9 +33,10 @@ data class Attachment(
     val fileDetails: List<TitledText>
 )
 
-class MessageDetailsViewModel : ViewModel() {
-    @Inject
-    lateinit var attachmentDb: AttachmentDatabase
+@HiltViewModel
+class MessageDetailsViewModel @Inject constructor(
+    private val attachmentDb: AttachmentDatabase
+): ViewModel() {
 
     fun setMessageRecord(value: MessageRecord?, error: String?) {
         val mmsRecord = value as? MmsMessageRecord

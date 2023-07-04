@@ -93,11 +93,13 @@ fun CellWithPaddingAndMargin(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun BoxScope.HorizontalPagerIndicator(pagerState: PagerState) {
-    Card(shape = RoundedCornerShape(50.dp),
+    if (pagerState.pageCount >= 2) Card(
+        shape = RoundedCornerShape(50.dp),
         backgroundColor = Color.Black.copy(alpha = 0.4f),
         modifier = Modifier
             .align(Alignment.BottomCenter)
-            .padding(8.dp)) {
+            .padding(8.dp)
+    ) {
         Box(modifier = Modifier.padding(8.dp)) {
             HorizontalPagerIndicator(
                 pagerState = pagerState,

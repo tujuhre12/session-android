@@ -38,6 +38,7 @@ import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.getInt
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.database.model.SmsMessageRecord
+import org.thoughtcrime.securesms.mms.GlideApp
 import org.thoughtcrime.securesms.mms.GlideRequests
 import org.thoughtcrime.securesms.util.SearchUtil
 import org.thoughtcrime.securesms.util.getAccentColor
@@ -60,12 +61,12 @@ class VisibleMessageContentView : ConstraintLayout {
     // region Updating
     fun bind(
         message: MessageRecord,
-        isStartOfMessageCluster: Boolean,
-        isEndOfMessageCluster: Boolean,
-        glide: GlideRequests,
+        isStartOfMessageCluster: Boolean = true,
+        isEndOfMessageCluster: Boolean = true,
+        glide: GlideRequests = GlideApp.with(this),
         thread: Recipient,
-        searchQuery: String?,
-        contactIsTrusted: Boolean,
+        searchQuery: String? = null,
+        contactIsTrusted: Boolean = true,
         onAttachmentNeedsDownload: (Long, Long) -> Unit
     ) {
         // Background

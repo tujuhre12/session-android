@@ -2,6 +2,8 @@ package org.thoughtcrime.securesms.conversation.v2
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.LayoutInflater
+import androidx.activity.viewModels
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -39,16 +41,24 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import network.loki.messenger.R
+import network.loki.messenger.databinding.ViewVisibleMessageBinding
+import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
+import org.session.libsession.messaging.jobs.AttachmentDownloadJob
+import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.MediaPreviewActivity
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.components.ProfilePictureView
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
+import org.thoughtcrime.securesms.mms.ImageSlide
 import org.thoughtcrime.securesms.mms.Slide
 import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.CarouselNextButton
@@ -64,7 +74,6 @@ import org.thoughtcrime.securesms.ui.colorDestructive
 import org.thoughtcrime.securesms.ui.destructiveButtonColors
 import javax.inject.Inject
 
-
 @AndroidEntryPoint
 class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
 
@@ -72,6 +81,8 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
 
     @Inject
     lateinit var storage: Storage
+
+    private val viewModel: MessageDetailsViewModel by viewModels()
 
     companion object {
         // Extras
@@ -81,8 +92,6 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
         const val ON_RESEND = 2
         const val ON_DELETE = 3
     }
-
-    val viewModel = MessageDetailsViewModel()
 
     override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
         super.onCreate(savedInstanceState, ready)
@@ -116,7 +125,12 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
             onResend = { setResultAndFinish(ON_RESEND) },
             onDelete = { setResultAndFinish(ON_DELETE) },
             onClickImage = { slide ->
-                MediaPreviewActivity.getPreviewIntent(this, slide, details.mmsRecord, details.sender)
+                MediaPreviewActivity.getPreviewIntent(
+                    this,
+                    slide,
+                    details.mmsRecord,
+                    details.sender
+                )
                     .let(::startActivity)
             }
         )
@@ -144,6 +158,12 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
         )
     }
 
+    private fun onAttachmentNeedsDownload(attachmentId: Long, mmsId: Long) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            JobQueue.shared.add(AttachmentDownloadJob(attachmentId, mmsId))
+        }
+    }
+
     @Composable
     fun MessageDetails(
         messageDetails: MessageDetails,
@@ -152,27 +172,39 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
         onDelete: () -> Unit = {},
         onClickImage: (Slide) -> Unit = {},
     ) {
-        messageDetails.apply {
-            AppTheme {
-                Column(
-                    modifier = Modifier.verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Attachments(attachments) { onClickImage(it) }
-                    MetaDataCell(messageDetails)
-                    Buttons(
-                        error != null,
-                        onReply,
-                        onResend,
-                        onDelete,
+        AppTheme {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                messageDetails.mmsRecord?.let { message ->
+                    AndroidView(
+                        modifier = Modifier.padding(32.dp),
+                        factory = {
+                            ViewVisibleMessageContentBinding.inflate(LayoutInflater.from(it)).mainContainerConstraint.apply {
+                                bind(
+                                    message,
+                                    thread = message.individualRecipient,
+                                    onAttachmentNeedsDownload = ::onAttachmentNeedsDownload
+                                )
+                            }
+                        }
                     )
                 }
+                Attachments(messageDetails.attachments) { onClickImage(it) }
+                MetadataCell(messageDetails)
+                Buttons(
+                    messageDetails.error != null,
+                    onReply,
+                    onResend,
+                    onDelete,
+                )
             }
         }
     }
 
     @Composable
-    fun MetaDataCell(
+    fun MetadataCell(
         messageDetails: MessageDetails,
     ) {
         messageDetails.apply {
@@ -205,7 +237,9 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
                 factory = {
                     ProfilePictureView(it).apply { update(sender) }
                 },
-                modifier = Modifier.width(46.dp).height(46.dp)
+                modifier = Modifier
+                    .width(46.dp)
+                    .height(46.dp)
             )
         }
     }
@@ -245,13 +279,12 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
 
     @Composable
     fun Attachments(attachments: List<Attachment>, onClick: (Slide) -> Unit) {
-        val slide = attachments.firstOrNull()?.slide ?: return
-        when {
-            slide.hasImage() -> Carousel(attachments, onClick)
+        when(attachments.firstOrNull()?.slide) {
+            is ImageSlide -> Carousel(attachments, onClick)
         }
     }
 
-    @OptIn(ExperimentalFoundationApi::class,)
+    @OptIn(ExperimentalFoundationApi::class)
     @Composable
     fun Carousel(attachments: List<Attachment>, onClick: (Slide) -> Unit) {
         val imageAttachments = attachments.filter { it.slide.hasImage() }
@@ -263,7 +296,11 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
                 Box(modifier = Modifier.weight(1f)) {
                     CellPager(pagerState, imageAttachments, onClick)
                     HorizontalPagerIndicator(pagerState)
-                    ExpandButton(modifier = Modifier.align(Alignment.BottomEnd).padding(8.dp))
+                    ExpandButton(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(8.dp)
+                    )
                 }
                 CarouselNextButton(pagerState)
             }
@@ -276,7 +313,11 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
         ExperimentalGlideComposeApi::class
     )
     @Composable
-    private fun CellPager(pagerState: PagerState, imageAttachments: List<Attachment>, onClick: (Slide) -> Unit) {
+    private fun CellPager(
+        pagerState: PagerState,
+        imageAttachments: List<Attachment>,
+        onClick: (Slide) -> Unit
+    ) {
         CellNoMargin {
             HorizontalPager(state = pagerState) { i ->
                 val slide = imageAttachments[i].slide
@@ -326,7 +367,8 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
         TitledText(
             titledText,
             modifier = modifier,
-            valueStyle = LocalTextStyle.current.copy(color = colorDestructive))
+            valueStyle = LocalTextStyle.current.copy(color = colorDestructive)
+        )
     }
 
     @Composable
@@ -334,7 +376,8 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
         TitledText(
             titledText,
             modifier = modifier,
-            valueStyle = LocalTextStyle.current.copy(fontFamily = FontFamily.Monospace))
+            valueStyle = LocalTextStyle.current.copy(fontFamily = FontFamily.Monospace)
+        )
     }
 
     @Composable
