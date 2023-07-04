@@ -39,23 +39,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
-import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
-import org.session.libsession.utilities.Util
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.MediaPreviewActivity
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.components.ProfilePictureView
-import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.Storage
-import org.thoughtcrime.securesms.database.model.MessageRecord
-import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.mms.Slide
 import org.thoughtcrime.securesms.ui.AppTheme
@@ -70,8 +62,6 @@ import org.thoughtcrime.securesms.ui.ItemButton
 import org.thoughtcrime.securesms.ui.blackAlpha40
 import org.thoughtcrime.securesms.ui.colorDestructive
 import org.thoughtcrime.securesms.ui.destructiveButtonColors
-import java.util.*
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 
@@ -93,70 +83,6 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
     }
 
     val viewModel = MessageDetailsViewModel()
-
-    class MessageDetailsViewModel : ViewModel() {
-        @Inject
-        lateinit var attachmentDb: AttachmentDatabase
-
-        fun setMessageRecord(value: MessageRecord?, error: String?) {
-            val mmsRecord = value as? MmsMessageRecord
-
-            val slides: List<Slide> = mmsRecord?.slideDeck?.thumbnailSlides?.toList() ?: emptyList()
-
-            _details.value = value?.run {
-                MessageDetails(
-                    mmsRecord = mmsRecord,
-                    attachments = slides.map { slide ->
-                        val duration = slide.takeIf { it.hasAudio() }
-                            ?.let { it.asAttachment() as? DatabaseAttachment }
-                            ?.let { attachment ->
-                                attachmentDb.getAttachmentAudioExtras(attachment.attachmentId)
-                                    ?.let { audioExtras ->
-                                        audioExtras.durationMs.takeIf { it > 0 }?.let {
-                                            String.format(
-                                                "%01d:%02d",
-                                                TimeUnit.MILLISECONDS.toMinutes(it),
-                                                TimeUnit.MILLISECONDS.toSeconds(it) % 60
-                                            )
-                                        }
-                                    }
-                            }
-
-                        val details = slide.run {
-                            listOfNotNull(
-                                fileName.orNull()?.let { TitledText("File Id:", it) },
-                                TitledText("File Type:", asAttachment().contentType),
-                                TitledText("File Size:", Util.getPrettyFileSize(fileSize)),
-                                if (slide.hasImage()) {
-                                    TitledText(
-                                        "Resolution:",
-                                        slide.asAttachment().run { "${width}x$height" })
-                                } else null,
-                                duration?.let { TitledText("Duration:", it) },
-                            )
-                        }
-                        Attachment(slide, details)
-                    },
-                    sent = dateSent.let(::Date).toString().let { TitledText("Sent:", it) },
-                    received = dateReceived.let(::Date).toString()
-                        .let { TitledText("Received:", it) },
-                    error = error?.let { TitledText("Error:", it) },
-                    senderInfo = individualRecipient.run {
-                        name?.let {
-                            TitledText(
-                                it,
-                                address.serialize()
-                            )
-                        }
-                    },
-                    sender = individualRecipient
-                )
-            }
-        }
-
-        private var _details = MutableLiveData(MessageDetails())
-        val details: LiveData<MessageDetails> = _details
-    }
 
     override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
         super.onCreate(savedInstanceState, ready)
@@ -203,24 +129,6 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
 
         finish()
     }
-
-    data class TitledText(val title: String, val value: String)
-
-    data class MessageDetails(
-        val attachments: List<Attachment> = emptyList(),
-        val mmsRecord: MmsMessageRecord? = null,
-
-        val sent: TitledText? = null,
-        val received: TitledText? = null,
-        val error: TitledText? = null,
-        val senderInfo: TitledText? = null,
-        val sender: Recipient? = null
-    )
-
-    data class Attachment(
-        val slide: Slide,
-        val fileDetails: List<TitledText>
-    )
 
     @Preview
     @Composable
