@@ -361,10 +361,7 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
 
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Row {
-                CarouselPrevButton(
-                    pagerState,
-                    modifier = Modifier.align(Alignment.CenterVertically)
-                )
+                CarouselPrevButton(pagerState)
                 Box(modifier = Modifier.weight(1f)) {
                     CellNoMargin {
                         HorizontalPager(state = pagerState) { i ->
@@ -399,10 +396,7 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
                         )
                     }
                 }
-                CarouselNextButton(
-                    pagerState,
-                    modifier = Modifier.align(Alignment.CenterVertically)
-                )
+                CarouselNextButton(pagerState)
             }
             FileDetails(attachments, pagerState)
         }

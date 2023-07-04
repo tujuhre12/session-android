@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.ui
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -108,24 +109,23 @@ fun SessionHorizontalPagerIndicator(modifier: Modifier, pagerState: PagerState, 
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun CarouselPrevButton(pagerState: PagerState, modifier: Modifier = Modifier) {
-    CarouselButton(pagerState, pagerState.canScrollBackward, R.drawable.ic_prev, -1, modifier)
+fun RowScope.CarouselPrevButton(pagerState: PagerState) {
+    CarouselButton(pagerState, pagerState.canScrollBackward, R.drawable.ic_prev, -1)
 }
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun CarouselNextButton(pagerState: PagerState, modifier: Modifier = Modifier) {
-    CarouselButton(pagerState, pagerState.canScrollForward, R.drawable.ic_next, 1, modifier)
+fun RowScope.CarouselNextButton(pagerState: PagerState) {
+    CarouselButton(pagerState, pagerState.canScrollForward, R.drawable.ic_next, 1)
 }
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun CarouselButton(
+fun RowScope.CarouselButton(
     pagerState: PagerState,
     enabled: Boolean,
     @DrawableRes id: Int,
-    delta: Int,
-    modifier: Modifier = Modifier
+    delta: Int
 ) {
     if (pagerState.pageCount <= 1) Spacer(modifier = Modifier.width(32.dp))
     else {
@@ -133,7 +133,7 @@ fun CarouselButton(
         IconButton(
             modifier = Modifier
                 .width(40.dp)
-                .then(modifier),
+                .align(Alignment.CenterVertically),
             enabled = enabled,
             onClick = { animationScope.launch { pagerState.animateScrollToPage(pagerState.currentPage + delta) } }) {
             Icon(
