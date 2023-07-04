@@ -65,8 +65,9 @@ import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.CellNoMargin
 import org.thoughtcrime.securesms.ui.CellWithPaddingAndMargin
 import org.thoughtcrime.securesms.ui.Divider
+import org.thoughtcrime.securesms.ui.HorizontalPagerIndicator
 import org.thoughtcrime.securesms.ui.ItemButton
-import org.thoughtcrime.securesms.ui.SessionHorizontalPagerIndicator
+import org.thoughtcrime.securesms.ui.blackAlpha40
 import org.thoughtcrime.securesms.ui.colorDestructive
 import org.thoughtcrime.securesms.ui.destructiveButtonColors
 import java.util.*
@@ -350,10 +351,7 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
         }
     }
 
-    @OptIn(
-        ExperimentalFoundationApi::class,
-        ExperimentalGlideComposeApi::class,
-    )
+    @OptIn(ExperimentalFoundationApi::class,)
     @Composable
     fun ImageAttachments(attachments: List<Attachment>, onClick: (Slide) -> Unit) {
         val imageAttachments = attachments.filter { it.slide.hasImage() }
@@ -363,38 +361,9 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
             Row {
                 CarouselPrevButton(pagerState)
                 Box(modifier = Modifier.weight(1f)) {
-                    CellNoMargin {
-                        HorizontalPager(state = pagerState) { i ->
-                            val slide = imageAttachments[i].slide
-                            slide.apply {
-                                GlideImage(
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier
-                                        .aspectRatio(1f)
-                                        .clickable { onClick(slide) },
-                                    model = uri,
-                                    contentDescription = fileName.orNull() ?: "image"
-                                )
-                            }
-                        }
-                    }
-                    if (imageAttachments.size >= 2) {
-                        SessionHorizontalPagerIndicator(
-                            modifier = Modifier.align(Alignment.BottomCenter),
-                            pagerState = pagerState,
-                            pageCount = imageAttachments.size,
-                        )
-                    }
-                    Surface(
-                        shape = CircleShape,
-                        color = Color.Black.copy(alpha = 0.4f),
-                        modifier = Modifier.align(Alignment.BottomEnd).padding(8.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_expand),
-                            contentDescription = ""
-                        )
-                    }
+                    CellPager(pagerState, imageAttachments) { onClick(it) }
+                    HorizontalPagerIndicator(pagerState)
+                    ExpandButton(modifier = Modifier.align(Alignment.BottomEnd).padding(8.dp))
                 }
                 CarouselNextButton(pagerState)
             }
@@ -402,7 +371,40 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
         }
     }
 
+    @OptIn(
+        ExperimentalFoundationApi::class,
+        ExperimentalGlideComposeApi::class
+    )
+    @Composable
+    private fun CellPager(pagerState: PagerState, imageAttachments: List<Attachment>, onClick: (Slide) -> Unit) {
+        CellNoMargin {
+            HorizontalPager(state = pagerState) { i ->
+                val slide = imageAttachments[i].slide
+                GlideImage(
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .aspectRatio(1f)
+                        .clickable { onClick(slide) },
+                    model = slide.uri,
+                    contentDescription = slide.fileName.orNull() ?: "image"
+                )
+            }
+        }
+    }
 
+    @Composable
+    fun ExpandButton(modifier: Modifier) {
+        Surface(
+            shape = CircleShape,
+            color = blackAlpha40,
+            modifier = modifier
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_expand),
+                contentDescription = ""
+            )
+        }
+    }
 
     @OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
     @Composable

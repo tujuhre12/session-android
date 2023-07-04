@@ -23,6 +23,8 @@ val classicLight4 = Color(0xffF0F0F0)
 val classicLight5 = Color(0xffF9F9F9)
 val classicLight6 = Color(0xffFFFFFF)
 
+val blackAlpha40 = Color.Black.copy(alpha = 0.4f)
+
 @Composable
 fun transparentButtonColors() = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent)
 

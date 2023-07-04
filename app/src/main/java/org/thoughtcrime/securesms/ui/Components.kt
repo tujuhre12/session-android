@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.ui
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -91,16 +92,16 @@ fun CellWithPaddingAndMargin(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun SessionHorizontalPagerIndicator(modifier: Modifier, pagerState: PagerState, pageCount: Int) {
+fun BoxScope.HorizontalPagerIndicator(pagerState: PagerState) {
     Card(shape = RoundedCornerShape(50.dp),
         backgroundColor = Color.Black.copy(alpha = 0.4f),
         modifier = Modifier
-            .padding(8.dp)
-            .then(modifier)) {
+            .align(Alignment.BottomCenter)
+            .padding(8.dp)) {
         Box(modifier = Modifier.padding(8.dp)) {
             HorizontalPagerIndicator(
                 pagerState = pagerState,
-                pageCount = pageCount,
+                pageCount = pagerState.pageCount,
                 activeColor = Color.White,
                 inactiveColor = classicDark5)
         }
