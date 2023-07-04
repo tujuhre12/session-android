@@ -29,7 +29,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.painterResource
@@ -79,8 +78,6 @@ import javax.inject.Inject
 class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
 
     private var timestamp: Long = 0L
-
-    var messageRecord: MessageRecord? = null
 
     @Inject
     lateinit var storage: Storage
@@ -165,24 +162,22 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
 
         timestamp = intent.getLongExtra(MESSAGE_TIMESTAMP, -1L)
 
-        messageRecord =
+        val messageRecord =
             DatabaseComponent.get(this).mmsSmsDatabase().getMessageForTimestamp(timestamp) ?: run {
                 finish()
                 return
             }
 
         val error = DatabaseComponent.get(this).lokiMessageDatabase()
-            .getErrorMessage(messageRecord!!.getId())
+            .getErrorMessage(messageRecord.getId())
 
         viewModel.setMessageRecord(messageRecord, error)
 
         title = resources.getString(R.string.conversation_context__menu_message_details)
 
-        setContentView(ComposeView(this).apply {
-            setContent {
-                MessageDetailsScreen()
-            }
-        })
+        ComposeView(this)
+            .apply { setContent { MessageDetailsScreen() } }
+            .let(::setContentView)
     }
 
     @Composable
@@ -255,56 +250,57 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Attachments(attachments) { onClickImage(it) }
-                    if (sent != null || received != null || senderInfo != null) CellWithPaddingAndMargin {
-                        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                            sent?.let { titledText(it) }
-                            received?.let { titledText(it) }
-                            error?.let {
-                                titledText(
-                                    it,
-                                    valueStyle = LocalTextStyle.current.copy(color = colorDestructive)
-                                )
-                            }
-                            senderInfo?.let {
-                                titledView("From:") {
-                                    Row {
-                                        sender?.let {
-                                            Box(
-                                                modifier = Modifier
-                                                    .width(60.dp)
-                                                    .align(Alignment.CenterVertically)
-                                            ) {
-                                                AndroidView(
-                                                    factory = {
-                                                        ProfilePictureView(it).apply {
-                                                            update(
-                                                                sender
-                                                            )
-                                                        }
-                                                    },
-                                                    modifier = Modifier
-                                                        .width(46.dp)
-                                                        .height(46.dp)
-                                                )
-                                            }
-                                        }
-                                        Column {
-                                            titledText(
-                                                it,
-                                                valueStyle = LocalTextStyle.current.copy(fontFamily = FontFamily.Monospace)
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    MetaDataCell(messageDetails)
                     Buttons(
-                        messageDetails.error != null,
+                        error != null,
                         onReply,
                         onResend,
                         onDelete,
                     )
+                }
+            }
+        }
+    }
+
+    @Composable
+    fun MetaDataCell(
+        messageDetails: MessageDetails,
+    ) {
+        if (messageDetails.sent != null || messageDetails.received != null || messageDetails.senderInfo != null) CellWithPaddingAndMargin {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                messageDetails.sent?.let { TitledText(it) }
+                messageDetails.received?.let { TitledText(it) }
+                messageDetails.error?.let {
+                    TitledText(
+                        it,
+                        valueStyle = LocalTextStyle.current.copy(color = colorDestructive)
+                    )
+                }
+                messageDetails.senderInfo?.let {
+                    TitledView("From:") {
+                        Row {
+                            messageDetails.sender?.let { sender ->
+                                Box(
+                                    modifier = Modifier
+                                        .width(60.dp)
+                                        .align(Alignment.CenterVertically)
+                                ) {
+                                    AndroidView(
+                                        factory = {
+                                            ProfilePictureView(it).apply { update(sender) }
+                                        },
+                                        modifier = Modifier.width(46.dp).height(46.dp)
+                                    )
+                                }
+                            }
+                            Column {
+                                TitledText(
+                                    it,
+                                    valueStyle = LocalTextStyle.current.copy(fontFamily = FontFamily.Monospace)
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -347,13 +343,13 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
     fun Attachments(attachments: List<Attachment>, onClick: (Slide) -> Unit) {
         val slide = attachments.firstOrNull()?.slide ?: return
         when {
-            slide.hasImage() -> ImageAttachments(attachments) { onClick(it) }
+            slide.hasImage() -> Carousel(attachments, onClick)
         }
     }
 
     @OptIn(ExperimentalFoundationApi::class,)
     @Composable
-    fun ImageAttachments(attachments: List<Attachment>, onClick: (Slide) -> Unit) {
+    fun Carousel(attachments: List<Attachment>, onClick: (Slide) -> Unit) {
         val imageAttachments = attachments.filter { it.slide.hasImage() }
         val pagerState = rememberPagerState { imageAttachments.size }
 
@@ -361,7 +357,7 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
             Row {
                 CarouselPrevButton(pagerState)
                 Box(modifier = Modifier.weight(1f)) {
-                    CellPager(pagerState, imageAttachments) { onClick(it) }
+                    CellPager(pagerState, imageAttachments, onClick)
                     HorizontalPagerIndicator(pagerState)
                     ExpandButton(modifier = Modifier.align(Alignment.BottomEnd).padding(8.dp))
                 }
@@ -415,14 +411,14 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     maxItemsInEachRow = 2
                 ) {
-                    it.forEach { titledText(it, Modifier.weight(1f)) }
+                    it.forEach { TitledText(it, Modifier.weight(1f)) }
                 }
             }
         }
     }
 
     @Composable
-    fun titledText(
+    fun TitledText(
         titledText: TitledText,
         modifier: Modifier = Modifier,
         valueStyle: TextStyle = LocalTextStyle.current
@@ -434,7 +430,7 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
     }
 
     @Composable
-    fun titledView(title: String, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    fun TitledView(title: String, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
         Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Title(title)
             content()
