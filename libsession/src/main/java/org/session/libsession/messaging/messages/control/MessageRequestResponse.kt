@@ -1,20 +1,26 @@
 package org.session.libsession.messaging.messages.control
 
+import com.google.protobuf.ByteString
+import org.session.libsession.messaging.messages.visible.Profile
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.Log
 
-class MessageRequestResponse(val isApproved: Boolean) : ControlMessage() {
+class MessageRequestResponse(val isApproved: Boolean, var profile: Profile? = null) : ControlMessage() {
 
     override val isSelfSendValid: Boolean = true
 
     override fun toProto(): SignalServiceProtos.Content? {
+        val profileProto = SignalServiceProtos.DataMessage.LokiProfile.newBuilder()
+        profile?.displayName?.let { profileProto.displayName = it }
+        profile?.profilePictureURL?.let { profileProto.profilePicture = it }
         val messageRequestResponseProto = SignalServiceProtos.MessageRequestResponse.newBuilder()
             .setIsApproved(isApproved)
-        val contentProto = SignalServiceProtos.Content.newBuilder()
+            .setProfile(profileProto.build())
+        profile?.profileKey?.let { messageRequestResponseProto.profileKey = ByteString.copyFrom(it) }
         return try {
-            contentProto.messageRequestResponse = messageRequestResponseProto.build()
-            contentProto.setExpirationConfigurationIfNeeded(threadID)
-            contentProto.build()
+            messageRequestResponseProto.messageRequestResponse = messageRequestResponseProto.build()
+            messageRequestResponseProto.setExpirationConfigurationIfNeeded(threadID)
+            messageRequestResponseProto.build()
         } catch (e: Exception) {
             Log.w(TAG, "Couldn't construct message request response proto from: $this")
             null
@@ -27,7 +33,13 @@ class MessageRequestResponse(val isApproved: Boolean) : ControlMessage() {
         fun fromProto(proto: SignalServiceProtos.Content): MessageRequestResponse? {
             val messageRequestResponseProto = if (proto.hasMessageRequestResponse()) proto.messageRequestResponse else return null
             val isApproved = messageRequestResponseProto.isApproved
-            return MessageRequestResponse(isApproved)
+            val profileProto = messageRequestResponseProto.profile
+            val profile = Profile().apply {
+                displayName = profileProto.displayName
+                profileKey = if (messageRequestResponseProto.hasProfileKey()) messageRequestResponseProto.profileKey.toByteArray() else null
+                profilePictureURL = profileProto.profilePicture
+            }
+            return MessageRequestResponse(isApproved, profile)
         }
     }
 

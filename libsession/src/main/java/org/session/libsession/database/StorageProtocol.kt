@@ -13,10 +13,12 @@ import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.ConfigurationMessage
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
 import org.session.libsession.messaging.messages.visible.Attachment
+import org.session.libsession.messaging.messages.visible.Profile
 import org.session.libsession.messaging.messages.visible.Reaction
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.open_groups.GroupMember
 import org.session.libsession.messaging.open_groups.OpenGroup
+import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentId
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage
@@ -35,10 +37,8 @@ interface StorageProtocol {
     // General
     fun getUserPublicKey(): String?
     fun getUserX25519KeyPair(): ECKeyPair
-    fun getUserDisplayName(): String?
-    fun getUserProfileKey(): ByteArray?
-    fun getUserProfilePictureURL(): String?
-    fun setUserProfilePictureURL(newProfilePicture: String)
+    fun getUserProfile(): Profile
+    fun setProfileAvatar(recipient: Recipient, profileAvatar: String?)
     // Signal
     fun getOrGenerateRegistrationID(): Int
 
@@ -50,7 +50,7 @@ interface StorageProtocol {
     fun getAttachmentUploadJob(attachmentID: Long): AttachmentUploadJob?
     fun getMessageSendJob(messageSendJobID: String): MessageSendJob?
     fun getMessageReceiveJob(messageReceiveJobID: String): Job?
-    fun getGroupAvatarDownloadJob(server: String, room: String): Job?
+    fun getGroupAvatarDownloadJob(server: String, room: String, imageId: String?): Job?
     fun resumeMessageSendJobIfNeeded(messageSendJobID: String)
     fun isJobCanceled(job: Job): Boolean
 
@@ -67,7 +67,7 @@ interface StorageProtocol {
     fun getAllOpenGroups(): Map<Long, OpenGroup>
     fun updateOpenGroup(openGroup: OpenGroup)
     fun getOpenGroup(threadId: Long): OpenGroup?
-    fun addOpenGroup(urlAsString: String)
+    fun addOpenGroup(urlAsString: String): OpenGroupApi.RoomInfo?
     fun onOpenGroupAdded(server: String)
     fun hasBackgroundGroupAddJob(groupJoinUrl: String): Boolean
     fun setOpenGroupServerMessageID(messageID: Long, serverID: Long, threadID: Long, isSms: Boolean)
@@ -81,6 +81,8 @@ interface StorageProtocol {
     // Open Group Metadata
     fun updateTitle(groupID: String, newValue: String)
     fun updateProfilePicture(groupID: String, newValue: ByteArray)
+    fun removeProfilePicture(groupID: String)
+    fun hasDownloadedProfilePicture(groupID: String): Boolean
     fun setUserCount(room: String, server: String, newValue: Int)
 
     // Last Message Server ID
@@ -105,10 +107,13 @@ interface StorageProtocol {
     fun getAttachmentsForMessage(messageID: Long): List<DatabaseAttachment>
     fun getMessageIdInDatabase(timestamp: Long, author: String): Long? // TODO: This is a weird name
     fun updateSentTimestamp(messageID: Long, isMms: Boolean, openGroupSentTimestamp: Long, threadId: Long)
+    fun markAsResyncing(timestamp: Long, author: String)
+    fun markAsSyncing(timestamp: Long, author: String)
     fun markAsSending(timestamp: Long, author: String)
     fun markAsSent(timestamp: Long, author: String)
     fun markUnidentified(timestamp: Long, author: String)
-    fun setErrorMessage(timestamp: Long, author: String, error: Exception)
+    fun markAsSyncFailed(timestamp: Long, author: String, error: Exception)
+    fun markAsSentFailed(timestamp: Long, author: String, error: Exception)
     fun clearErrorMessage(messageID: Long)
     fun setMessageServerHash(messageID: Long, serverHash: String)
 
@@ -155,6 +160,7 @@ interface StorageProtocol {
     fun trimThread(threadID: Long, threadLimit: Int)
     fun trimThreadBefore(threadID: Long, timestamp: Long)
     fun getMessageCount(threadID: Long): Long
+    fun deleteConversation(threadId: Long)
 
     // Contacts
     fun getContactWithSessionID(sessionID: String): Contact?
@@ -174,7 +180,7 @@ interface StorageProtocol {
      */
     fun persist(message: VisibleMessage, quotes: QuoteModel?, linkPreview: List<LinkPreview?>, groupPublicKey: String?, openGroupID: String?, attachments: List<Attachment>, runIncrement: Boolean, runThreadUpdate: Boolean): Long?
     fun markConversationAsRead(threadId: Long, updateLastSeen: Boolean)
-    fun incrementUnread(threadId: Long, amount: Int)
+    fun incrementUnread(threadId: Long, amount: Int, unreadMentionAmount: Int)
     fun updateThread(threadId: Long, unarchive: Boolean)
     fun insertDataExtractionNotificationMessage(senderPublicKey: String, message: DataExtractionNotificationInfoMessage, sentTimestamp: Long)
     fun insertMessageRequestResponse(response: MessageRequestResponse)
@@ -198,7 +204,7 @@ interface StorageProtocol {
     fun removeReaction(emoji: String, messageTimestamp: Long, author: String, notifyUnread: Boolean)
     fun updateReactionIfNeeded(message: Message, sender: String, openGroupSentTimestamp: Long)
     fun deleteReactions(messageId: Long, mms: Boolean)
-    fun unblock(toUnblock: List<Recipient>)
+    fun unblock(toUnblock: Iterable<Recipient>)
     fun blockedContacts(): List<Recipient>
     fun getExpirationConfiguration(threadId: Long): ExpirationConfiguration?
     fun setExpirationConfiguration(config: ExpirationConfiguration)

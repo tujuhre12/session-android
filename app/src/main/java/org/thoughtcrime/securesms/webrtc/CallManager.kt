@@ -1,7 +1,9 @@
 package org.thoughtcrime.securesms.webrtc
 
 import android.content.Context
+import android.content.pm.PackageManager
 import android.telephony.TelephonyManager
+import androidx.core.content.ContextCompat
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.serialization.json.Json
@@ -16,6 +18,7 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.messaging.messages.control.CallMessage
 import org.session.libsession.messaging.sending_receiving.MessageSender
+import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Debouncer
 import org.session.libsession.utilities.Util
@@ -88,6 +91,10 @@ class CallManager(context: Context, audioManager: AudioManagerCompat, private va
 
     fun unregisterListener(listener: WebRtcListener) {
         peerConnectionObservers.remove(listener)
+    }
+
+    fun shutDownAudioManager() {
+        signalAudioManager.shutdown()
     }
 
     private val _audioEvents = MutableStateFlow(AudioEnabled(false))
@@ -176,8 +183,22 @@ class CallManager(context: Context, audioManager: AudioManagerCompat, private va
         _callStateEvents.value = newState
     }
 
-    fun isBusy(context: Context, callId: UUID) = callId != this.callId && (currentConnectionState != CallState.Idle
-            || context.getSystemService(TelephonyManager::class.java).callState  != TelephonyManager.CALL_STATE_IDLE)
+    fun isBusy(context: Context, callId: UUID): Boolean {
+        // Make sure we have the permission before accessing the callState
+        if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
+            return (
+                callId != this.callId && (
+                    currentConnectionState != CallState.Idle ||
+                    context.getSystemService(TelephonyManager::class.java).callState != TelephonyManager.CALL_STATE_IDLE
+                )
+            )
+        }
+
+        return (
+            callId != this.callId &&
+            currentConnectionState != CallState.Idle
+        )
+    }
 
     fun isPreOffer() = currentConnectionState == CallState.RemotePreOffer
 
@@ -558,7 +579,7 @@ class CallManager(context: Context, audioManager: AudioManagerCompat, private va
         }
     }
 
-    fun insertCallMessage(threadPublicKey: String, callMessageType: CallMessageType, signal: Boolean = false, sentTimestamp: Long = System.currentTimeMillis()) {
+    fun insertCallMessage(threadPublicKey: String, callMessageType: CallMessageType, signal: Boolean = false, sentTimestamp: Long = SnodeAPI.nowWithOffset) {
         storage.insertCallMessage(threadPublicKey, callMessageType, sentTimestamp)
     }
 

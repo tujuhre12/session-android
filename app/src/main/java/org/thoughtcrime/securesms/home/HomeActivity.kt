@@ -4,6 +4,8 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.os.Bundle
 import android.text.SpannableString
 import android.widget.Toast
@@ -202,7 +204,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                     OpenGroupManager.startPolling()
                     JobQueue.shared.resumePendingJobs()
                 }
-                // Set up typing observer
+
                 withContext(Dispatchers.Main) {
                     updateProfileButton()
                     TextSecurePreferences.events.filter { it == TextSecurePreferences.PROFILE_NAME_PREF }.collect {
@@ -365,6 +367,10 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             setupMessageRequestsBanner()
             updateEmptyState()
         }
+
+        ApplicationContext.getInstance(this@HomeActivity).typingStatusRepository.typingThreads.observe(this) { threadIds ->
+            homeAdapter.typingThreadIDs = (threadIds ?: setOf())
+        }
     }
 
     private fun updateEmptyState() {
@@ -422,6 +428,24 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             userDetailsBottomSheet.arguments = bundle
             userDetailsBottomSheet.show(supportFragmentManager, userDetailsBottomSheet.tag)
         }
+        bottomSheet.onCopyConversationId = onCopyConversationId@{
+            bottomSheet.dismiss()
+            if (!thread.recipient.isGroupRecipient && !thread.recipient.isLocalNumber) {
+                val clip = ClipData.newPlainText("Session ID", thread.recipient.address.toString())
+                val manager = getSystemService(PassphraseRequiredActionBarActivity.CLIPBOARD_SERVICE) as ClipboardManager
+                manager.setPrimaryClip(clip)
+                Toast.makeText(this, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show()
+            }
+            else if (thread.recipient.isOpenGroupRecipient) {
+                val threadId = threadDb.getThreadIdIfExistsFor(thread.recipient) ?: return@onCopyConversationId Unit
+                val openGroup = DatabaseComponent.get(this@HomeActivity).lokiThreadDatabase().getOpenGroupChat(threadId) ?: return@onCopyConversationId Unit
+
+                val clip = ClipData.newPlainText("Community URL", openGroup.joinURL)
+                val manager = getSystemService(PassphraseRequiredActionBarActivity.CLIPBOARD_SERVICE) as ClipboardManager
+                manager.setPrimaryClip(clip)
+                Toast.makeText(this, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show()
+            }
+        }
         bottomSheet.onBlockTapped = {
             bottomSheet.dismiss()
             if (!thread.recipient.isBlocked) {
@@ -471,6 +495,8 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                 .setPositiveButton(R.string.RecipientPreferenceActivity_block) { dialog, _ ->
                     lifecycleScope.launch(Dispatchers.IO) {
                         recipientDatabase.setBlocked(thread.recipient, true)
+                        // TODO: Remove in UserConfig branch
+                        ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(this@HomeActivity)
                         withContext(Dispatchers.Main) {
                             binding.recyclerView.adapter!!.notifyDataSetChanged()
                             dialog.dismiss()
@@ -487,6 +513,8 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                 .setPositiveButton(R.string.RecipientPreferenceActivity_unblock) { dialog, _ ->
                     lifecycleScope.launch(Dispatchers.IO) {
                         recipientDatabase.setBlocked(thread.recipient, false)
+                        // TODO: Remove in UserConfig branch
+                        ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(this@HomeActivity)
                         withContext(Dispatchers.Main) {
                             binding.recyclerView.adapter!!.notifyDataSetChanged()
                             dialog.dismiss()

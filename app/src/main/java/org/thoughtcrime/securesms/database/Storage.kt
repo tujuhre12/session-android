@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.database
 
 import android.content.Context
 import android.net.Uri
+import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.BlindedIdMapping
 import org.session.libsession.messaging.calls.CallMessageType
@@ -24,10 +25,12 @@ import org.session.libsession.messaging.messages.signal.OutgoingGroupMediaMessag
 import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage
 import org.session.libsession.messaging.messages.signal.OutgoingTextMessage
 import org.session.libsession.messaging.messages.visible.Attachment
+import org.session.libsession.messaging.messages.visible.Profile
 import org.session.libsession.messaging.messages.visible.Reaction
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.open_groups.GroupMember
 import org.session.libsession.messaging.open_groups.OpenGroup
+import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentId
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage
@@ -52,15 +55,15 @@ import org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.KeyHelper
 import org.session.libsignal.utilities.guava.Optional
-import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.groups.OpenGroupManager
-import org.thoughtcrime.securesms.jobs.RetrieveProfileAvatarJob
+import org.session.libsession.messaging.jobs.RetrieveProfileAvatarJob
 import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
+import java.security.MessageDigest
 
 class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context, helper), StorageProtocol {
     
@@ -72,25 +75,16 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         return DatabaseComponent.get(context).lokiAPIDatabase().getUserX25519KeyPair()
     }
 
-    override fun getUserDisplayName(): String? {
-        return TextSecurePreferences.getProfileName(context)
+    override fun getUserProfile(): Profile {
+        val displayName = TextSecurePreferences.getProfileName(context)!!
+        val profileKey = ProfileKeyUtil.getProfileKey(context)
+        val profilePictureUrl = TextSecurePreferences.getProfilePictureURL(context)
+        return Profile(displayName, profileKey, profilePictureUrl)
     }
 
-    override fun getUserProfileKey(): ByteArray? {
-        return ProfileKeyUtil.getProfileKey(context)
-    }
-
-    override fun getUserProfilePictureURL(): String? {
-        return TextSecurePreferences.getProfilePictureURL(context)
-    }
-
-    override fun setUserProfilePictureURL(newValue: String) {
-        val ourRecipient = fromSerialized(getUserPublicKey()!!).let {
-            Recipient.from(context, it, false)
-        }
-        TextSecurePreferences.setProfilePictureURL(context, newValue)
-        RetrieveProfileAvatarJob(ourRecipient, newValue)
-        ApplicationContext.getInstance(context).jobManager.add(RetrieveProfileAvatarJob(ourRecipient, newValue))
+    override fun setProfileAvatar(recipient: Recipient, profileAvatar: String?) {
+        val database = DatabaseComponent.get(context).recipientDatabase()
+        database.setProfileAvatar(recipient, profileAvatar)
     }
 
     override fun getOrGenerateRegistrationID(): Int {
@@ -118,9 +112,9 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         threadDb.setRead(threadId, updateLastSeen)
     }
 
-    override fun incrementUnread(threadId: Long, amount: Int) {
+    override fun incrementUnread(threadId: Long, amount: Int, unreadMentionAmount: Int) {
         val threadDb = DatabaseComponent.get(context).threadDatabase()
-        threadDb.incrementUnread(threadId, amount)
+        threadDb.incrementUnread(threadId, amount, unreadMentionAmount)
     }
 
     override fun updateThread(threadId: Long, unarchive: Boolean) {
@@ -239,7 +233,7 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
     }
 
     override fun getAllPendingJobs(type: String): Map<String, Job?> {
-        return DatabaseComponent.get(context).sessionJobDatabase().getAllPendingJobs(type)
+        return DatabaseComponent.get(context).sessionJobDatabase().getAllJobs(type)
     }
 
     override fun getAttachmentUploadJob(attachmentID: Long): AttachmentUploadJob? {
@@ -254,8 +248,8 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         return DatabaseComponent.get(context).sessionJobDatabase().getMessageReceiveJob(messageReceiveJobID)
     }
 
-    override fun getGroupAvatarDownloadJob(server: String, room: String): GroupAvatarDownloadJob? {
-        return DatabaseComponent.get(context).sessionJobDatabase().getGroupAvatarDownloadJob(server, room)
+    override fun getGroupAvatarDownloadJob(server: String, room: String, imageId: String?): GroupAvatarDownloadJob? {
+        return DatabaseComponent.get(context).sessionJobDatabase().getGroupAvatarDownloadJob(server, room, imageId)
     }
 
     override fun resumeMessageSendJobIfNeeded(messageSendJobID: String) {
@@ -352,6 +346,14 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         DatabaseComponent.get(context).groupDatabase().updateProfilePicture(groupID, newValue)
     }
 
+    override fun removeProfilePicture(groupID: String) {
+        DatabaseComponent.get(context).groupDatabase().removeProfilePicture(groupID)
+    }
+
+    override fun hasDownloadedProfilePicture(groupID: String): Boolean {
+        return DatabaseComponent.get(context).groupDatabase().hasDownloadedProfilePicture(groupID)
+    }
+
     override fun getReceivedMessageTimestamps(): Set<Long> {
         return SessionMetaProtocol.getTimestamps()
     }
@@ -397,6 +399,22 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         }
     }
 
+    override fun markAsSyncing(timestamp: Long, author: String) {
+        DatabaseComponent.get(context).mmsSmsDatabase()
+            .getMessageFor(timestamp, author)
+            ?.run { getMmsDatabaseElseSms(isMms).markAsSyncing(id) }
+    }
+
+    private fun getMmsDatabaseElseSms(isMms: Boolean) =
+        if (isMms) DatabaseComponent.get(context).mmsDatabase()
+        else DatabaseComponent.get(context).smsDatabase()
+
+    override fun markAsResyncing(timestamp: Long, author: String) {
+        DatabaseComponent.get(context).mmsSmsDatabase()
+            .getMessageFor(timestamp, author)
+            ?.run { getMmsDatabaseElseSms(isMms).markAsResyncing(id) }
+    }
+
     override fun markAsSending(timestamp: Long, author: String) {
         val database = DatabaseComponent.get(context).mmsSmsDatabase()
         val messageRecord = database.getMessageFor(timestamp, author) ?: return
@@ -422,7 +440,7 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         }
     }
 
-    override fun setErrorMessage(timestamp: Long, author: String, error: Exception) {
+    override fun markAsSentFailed(timestamp: Long, author: String, error: Exception) {
         val database = DatabaseComponent.get(context).mmsSmsDatabase()
         val messageRecord = database.getMessageFor(timestamp, author) ?: return
         if (messageRecord.isMms) {
@@ -432,6 +450,26 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
             val smsDatabase = DatabaseComponent.get(context).smsDatabase()
             smsDatabase.markAsSentFailed(messageRecord.getId())
         }
+        if (error.localizedMessage != null) {
+            val message: String
+            if (error is OnionRequestAPI.HTTPRequestFailedAtDestinationException && error.statusCode == 429) {
+                message = "429: Rate limited."
+            } else {
+                message = error.localizedMessage!!
+            }
+            DatabaseComponent.get(context).lokiMessageDatabase().setErrorMessage(messageRecord.getId(), message)
+        } else {
+            DatabaseComponent.get(context).lokiMessageDatabase().setErrorMessage(messageRecord.getId(), error.javaClass.simpleName)
+        }
+    }
+
+    override fun markAsSyncFailed(timestamp: Long, author: String, error: Exception) {
+        val database = DatabaseComponent.get(context).mmsSmsDatabase()
+        val messageRecord = database.getMessageFor(timestamp, author) ?: return
+
+        database.getMessageFor(timestamp, author)
+            ?.run { getMmsDatabaseElseSms(isMms).markAsSyncFailed(id) }
+
         if (error.localizedMessage != null) {
             val message: String
             if (error is OnionRequestAPI.HTTPRequestFailedAtDestinationException && error.statusCode == 429) {
@@ -494,7 +532,7 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         val expirationConfig = getExpirationConfiguration(threadId)
         val expiresInMillis = (expirationConfig?.durationSeconds ?: 0) * 100L
         val expireStartedAt = if (expirationConfig?.expirationType == ExpirationType.DELETE_AFTER_SEND) sentTimestamp else 0
-        val m = IncomingTextMessage(fromSerialized(senderPublicKey), 1, sentTimestamp, "", Optional.of(group), expiresInMillis, expireStartedAt, true)
+        val m = IncomingTextMessage(fromSerialized(senderPublicKey), 1, sentTimestamp, "", Optional.of(group), expiresInMillis, expireStartedAt, true, false)
         val updateData = UpdateMessageData.buildGroupUpdate(type, name, members)?.toJSON()
         val infoMessage = IncomingGroupMessage(m, groupID, updateData, true)
         val smsDB = DatabaseComponent.get(context).smsDatabase()
@@ -601,8 +639,8 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         return DatabaseComponent.get(context).groupDatabase().allGroups
     }
 
-    override fun addOpenGroup(urlAsString: String) {
-        OpenGroupManager.addOpenGroup(urlAsString, context)
+    override fun addOpenGroup(urlAsString: String): OpenGroupApi.RoomInfo? {
+        return OpenGroupManager.addOpenGroup(urlAsString, context)
     }
 
     override fun onOpenGroupAdded(server: String) {
@@ -714,8 +752,10 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
                 recipientDatabase.setApproved(recipient, true)
                 threadDatabase.setHasSent(threadId, true)
             }
-            if (contact.isBlocked == true) {
-                recipientDatabase.setBlocked(recipient, true)
+
+            val contactIsBlocked: Boolean? = contact.isBlocked
+            if (contactIsBlocked != null && recipient.isBlocked != contactIsBlocked) {
+                recipientDatabase.setBlocked(recipient, contactIsBlocked)
                 threadDatabase.deleteConversation(threadId)
             }
         }
@@ -744,6 +784,11 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         return mmsSmsDb.getConversationCount(threadID)
     }
 
+    override fun deleteConversation(threadId: Long) {
+        val threadDB = DatabaseComponent.get(context).threadDatabase()
+        threadDB.deleteConversation(threadId)
+    }
+
 
 
     override fun getAttachmentDataUri(attachmentId: AttachmentId): Uri {
@@ -770,6 +815,7 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
             -1,
             expiresInMillis,
             expireStartedAt,
+            false,
             false,
             false,
             false,
@@ -805,6 +851,25 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
             val smsDb = DatabaseComponent.get(context).smsDatabase()
             val sender = Recipient.from(context, fromSerialized(senderPublicKey), false)
             val threadId = threadDB.getOrCreateThreadIdFor(sender)
+            val profile = response.profile
+            if (profile != null) {
+                val profileManager = SSKEnvironment.shared.profileManager
+                val name = profile.displayName!!
+                if (name.isNotEmpty()) {
+                    profileManager.setName(context, sender, name)
+                }
+                val newProfileKey = profile.profileKey
+
+                val needsProfilePicture = !AvatarHelper.avatarFileExists(context, sender.address)
+                val profileKeyValid = newProfileKey?.isNotEmpty() == true && (newProfileKey.size == 16 || newProfileKey.size == 32) && profile.profilePictureURL?.isNotEmpty() == true
+                val profileKeyChanged = (sender.profileKey == null || !MessageDigest.isEqual(sender.profileKey, newProfileKey))
+
+                if ((profileKeyValid && profileKeyChanged) || (profileKeyValid && needsProfilePicture)) {
+                    profileManager.setProfileKey(context, sender, newProfileKey!!)
+                    profileManager.setUnidentifiedAccessMode(context, sender, Recipient.UnidentifiedAccessMode.UNKNOWN)
+                    profileManager.setProfilePictureURL(context, sender, profile.profilePictureURL!!)
+                }
+            }
             threadDB.setHasSent(threadId, true)
             val mappingDb = DatabaseComponent.get(context).blindedIdMappingDatabase()
             val mappings = mutableMapOf<String, BlindedIdMapping>()
@@ -855,6 +920,7 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
                 false,
                 false,
                 true,
+                false,
                 Optional.absent(),
                 Optional.absent(),
                 Optional.absent(),
@@ -1010,7 +1076,7 @@ class Storage(context: Context, helper: SQLCipherOpenHelper) : Database(context,
         DatabaseComponent.get(context).reactionDatabase().deleteMessageReactions(MessageId(messageId, mms))
     }
 
-    override fun unblock(toUnblock: List<Recipient>) {
+    override fun unblock(toUnblock: Iterable<Recipient>) {
         val recipientDb = DatabaseComponent.get(context).recipientDatabase()
         recipientDb.setBlocked(toUnblock, false)
     }

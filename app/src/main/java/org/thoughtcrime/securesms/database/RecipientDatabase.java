@@ -11,7 +11,7 @@ import androidx.annotation.Nullable;
 
 import com.annimon.stream.Stream;
 
-import net.sqlcipher.database.SQLiteDatabase;
+import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.MaterialColor;
@@ -284,7 +284,7 @@ public class RecipientDatabase extends Database {
     notifyRecipientListeners();
   }
 
-  public void setBlocked(@NonNull List<Recipient> recipients, boolean blocked) {
+  public void setBlocked(@NonNull Iterable<Recipient> recipients, boolean blocked) {
     SQLiteDatabase db = getWritableDatabase();
     db.beginTransaction();
     try {

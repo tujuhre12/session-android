@@ -32,7 +32,6 @@ import android.widget.RelativeLayout
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
-import androidx.core.view.drawToBitmap
 import androidx.core.view.isVisible
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
@@ -45,12 +44,15 @@ import com.annimon.stream.Stream
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityConversationV2Binding
 import network.loki.messenger.databinding.ViewVisibleMessageBinding
 import nl.komponents.kovenant.ui.successUi
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.contacts.Contact
+import org.session.libsession.messaging.jobs.AttachmentDownloadJob
+import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.mentions.Mention
 import org.session.libsession.messaging.mentions.MentionsManager
 import org.session.libsession.messaging.messages.ExpirationConfiguration
@@ -155,6 +157,7 @@ import org.thoughtcrime.securesms.util.SaveAttachmentTask
 import org.thoughtcrime.securesms.util.push
 import org.thoughtcrime.securesms.util.show
 import org.thoughtcrime.securesms.util.toPx
+import java.lang.ref.WeakReference
 import java.util.Locale
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.atomic.AtomicLong
@@ -248,11 +251,10 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     val searchViewModel: SearchViewModel by viewModels()
     var searchViewItem: MenuItem? = null
 
+    private var emojiPickerVisible = false
+
     private val isScrolledToBottom: Boolean
-        get() {
-            val position = layoutManager?.findFirstCompletelyVisibleItemPosition() ?: 0
-            return position == 0
-        }
+        get() = binding?.conversationRecyclerView?.isScrolledToBottom ?: true
 
     private val layoutManager: LinearLayoutManager?
         get() { return binding?.conversationRecyclerView?.layoutManager as LinearLayoutManager? }
@@ -291,6 +293,12 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             onDeselect = { message, position ->
                 actionMode?.let {
                     onDeselect(message, position, it)
+                }
+            },
+            onAttachmentNeedsDownload = { attachmentId, mmsId ->
+                // Start download (on IO thread)
+                lifecycleScope.launch(Dispatchers.IO) {
+                    JobQueue.shared.add(AttachmentDownloadJob(attachmentId, mmsId))
                 }
             },
             glide = glide,
@@ -338,41 +346,66 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         // messageIdToScroll
         messageToScrollTimestamp.set(intent.getLongExtra(SCROLL_MESSAGE_ID, -1))
         messageToScrollAuthor.set(intent.getParcelableExtra(SCROLL_MESSAGE_AUTHOR))
-        val thread = threadDb.getRecipientForThreadId(viewModel.threadId)
-        if (thread == null) {
+        val recipient = viewModel.recipient
+        val openGroup = recipient.let { viewModel.openGroup }
+        if (recipient == null || (recipient.isOpenGroupRecipient && openGroup == null)) {
             Toast.makeText(this, "This thread has been deleted.", Toast.LENGTH_LONG).show()
             return finish()
         }
-        setUpRecyclerView()
+
         setUpToolBar()
         setUpInputBar()
         setUpLinkPreviewObserver()
         restoreDraftIfNeeded()
         setUpUiStateObserver()
         binding!!.scrollToBottomButton.setOnClickListener {
-            val layoutManager = binding?.conversationRecyclerView?.layoutManager ?: return@setOnClickListener
+            val layoutManager = (binding?.conversationRecyclerView?.layoutManager as? LinearLayoutManager) ?: return@setOnClickListener
+
             if (layoutManager.isSmoothScrolling) {
                 binding?.conversationRecyclerView?.scrollToPosition(0)
             } else {
-                binding?.conversationRecyclerView?.smoothScrollToPosition(0)
+                // It looks like 'smoothScrollToPosition' will actually load all intermediate items in
+                // order to do the scroll, this can be very slow if there are a lot of messages so
+                // instead we check the current position and if there are more than 10 items to scroll
+                // we jump instantly to the 10th item and scroll from there (this should happen quick
+                // enough to give a similar scroll effect without having to load everything)
+                val position = layoutManager.findFirstVisibleItemPosition()
+                if (position > 10) {
+                    binding?.conversationRecyclerView?.scrollToPosition(10)
+                }
+
+                binding?.conversationRecyclerView?.post {
+                    binding?.conversationRecyclerView?.smoothScrollToPosition(0)
+                }
             }
         }
-        unreadCount = mmsSmsDb.getUnreadCount(viewModel.threadId)
+
         updateUnreadCountIndicator()
-        setUpTypingObserver()
-        setUpRecipientObserver()
-        getLatestOpenGroupInfoIfNeeded()
+        updateSubtitle()
         setUpBlockedBanner()
-        setUpOutdatedClientBanner()
         binding!!.searchBottomBar.setEventListener(this)
-        setUpSearchResultObserver()
-        scrollToFirstUnreadMessageIfNeeded()
+        updateSendAfterApprovalText()
         showOrHideInputIfNeeded()
         setUpMessageRequestsBar()
-        viewModel.recipient?.let { recipient ->
-            if (recipient.isOpenGroupRecipient && viewModel.openGroup == null) {
-                Toast.makeText(this, "This thread has been deleted.", Toast.LENGTH_LONG).show()
-                return finish()
+
+        val weakActivity = WeakReference(this)
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            unreadCount = mmsSmsDb.getUnreadCount(viewModel.threadId)
+
+            // Note: We are accessing the `adapter` property because we want it to be loaded on
+            // the background thread to avoid blocking the UI thread and potentially hanging when
+            // transitioning to the activity
+            weakActivity.get()?.adapter ?: return@launch
+
+            withContext(Dispatchers.Main) {
+                setUpRecyclerView()
+                setUpTypingObserver()
+                setUpRecipientObserver()
+                getLatestOpenGroupInfoIfNeeded()
+                setUpSearchResultObserver()
+                scrollToFirstUnreadMessageIfNeeded()
+                setUpOutdatedClientBanner()
             }
         }
 
@@ -386,7 +419,11 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         super.onResume()
         ApplicationContext.getInstance(this).messageNotifier.setVisibleThread(viewModel.threadId)
         val recipient = viewModel.recipient ?: return
-        threadDb.markAllAsRead(viewModel.threadId, recipient.isOpenGroupRecipient)
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            threadDb.markAllAsRead(viewModel.threadId, recipient.isOpenGroupRecipient)
+        }
+
         contentResolver.registerContentObserver(
             MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
             true,
@@ -449,11 +486,16 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                 handleRecyclerViewScrolled()
             }
         })
+
+        binding!!.conversationRecyclerView.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+            showScrollToBottomButtonIfApplicable()
+        }
     }
 
     // called from onCreate
     private fun setUpToolBar() {
-        setSupportActionBar(binding?.toolbar)
+        val binding = binding ?: return
+        setSupportActionBar(binding.toolbar)
         val actionBar = supportActionBar ?: return
         val recipient = viewModel.recipient ?: return
         actionBar.title = ""
@@ -465,6 +507,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     // called from onCreate
     private fun setUpInputBar() {
+        binding!!.inputBar.isVisible =  viewModel.openGroup == null || viewModel.openGroup?.canWrite == true
         binding!!.inputBar.delegate = this
         binding!!.inputBarRecordingView.delegate = this
         // GIF button
@@ -567,7 +610,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         val name = contact?.displayName(Contact.ContactContext.REGULAR) ?: sessionID
         binding?.blockedBannerTextView?.text = resources.getString(R.string.activity_conversation_blocked_banner_text, name)
         binding?.blockedBanner?.isVisible = recipient.isBlocked
-        binding?.blockedBanner?.setOnClickListener { viewModel.unblock() }
+        binding?.blockedBanner?.setOnClickListener { viewModel.unblock(this@ConversationActivityV2) }
     }
 
     private fun setUpOutdatedClientBanner() {
@@ -647,6 +690,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     // region Animation & Updating
     override fun onModified(recipient: Recipient) {
+        viewModel.updateRecipient()
+
         runOnUiThread {
             val threadRecipient = viewModel.recipient ?: return@runOnUiThread
             if (threadRecipient.isContactRecipient) {
@@ -654,13 +699,20 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             }
             setUpMessageRequestsBar()
             invalidateOptionsMenu()
+            updateSubtitle()
+            updateSendAfterApprovalText()
             showOrHideInputIfNeeded()
+
             maybeUpdateToolbar(threadRecipient)
         }
     }
 
     private fun maybeUpdateToolbar(recipient: Recipient) {
         binding?.toolbarContent?.update(recipient, viewModel.openGroup, viewModel.expirationConfiguration)
+    }
+
+    private fun updateSendAfterApprovalText() {
+        binding?.textSendAfterApproval?.isVisible = viewModel.showSendAfterApprovalText
     }
 
     private fun showOrHideInputIfNeeded() {
@@ -782,7 +834,9 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         val recipient = viewModel.recipient ?: return
         if (!isShowingMentionCandidatesView) {
             additionalContentContainer.removeAllViews()
-            val view = MentionCandidatesView(this)
+            val view = MentionCandidatesView(this).apply {
+                contentDescription = context.getString(R.string.AccessibilityId_mentions_list)
+            }
             view.glide = glide
             view.onCandidateSelected = { handleMentionSelected(it) }
             additionalContentContainer.addView(view)
@@ -899,15 +953,14 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         val binding = binding ?: return
         val wasTypingIndicatorVisibleBefore = binding.typingIndicatorViewContainer.isVisible
         binding.typingIndicatorViewContainer.isVisible = wasTypingIndicatorVisibleBefore && isScrolledToBottom
-        binding.typingIndicatorViewContainer.isVisible
-        showOrHidScrollToBottomButton()
+        showScrollToBottomButtonIfApplicable()
         val firstVisiblePosition = layoutManager?.findFirstVisibleItemPosition() ?: -1
         unreadCount = min(unreadCount, firstVisiblePosition).coerceAtLeast(0)
         updateUnreadCountIndicator()
     }
 
-    private fun showOrHidScrollToBottomButton(show: Boolean = true) {
-        binding?.scrollToBottomButton?.isVisible = show && !isScrolledToBottom && adapter.itemCount > 0
+    private fun showScrollToBottomButtonIfApplicable() {
+        binding?.scrollToBottomButton?.isVisible = !emojiPickerVisible && !isScrolledToBottom && adapter.itemCount > 0
     }
 
     private fun updateUnreadCountIndicator() {
@@ -939,21 +992,35 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     override fun block(deleteThread: Boolean) {
         val title = R.string.RecipientPreferenceActivity_block_this_contact_question
         val message = R.string.RecipientPreferenceActivity_you_will_no_longer_receive_messages_and_calls_from_this_contact
-        AlertDialog.Builder(this)
+        val dialog = AlertDialog.Builder(this)
             .setTitle(title)
             .setMessage(message)
             .setNegativeButton(android.R.string.cancel, null)
             .setPositiveButton(R.string.RecipientPreferenceActivity_block) { _, _ ->
-                viewModel.block()
+                viewModel.block(this@ConversationActivityV2)
                 if (deleteThread) {
                     viewModel.deleteThread()
                     finish()
                 }
             }.show()
+        val button = dialog.getButton(DialogInterface.BUTTON_POSITIVE)
+        button.setContentDescription("Confirm block")
     }
 
     override fun copySessionID(sessionId: String) {
         val clip = ClipData.newPlainText("Session ID", sessionId)
+        val manager = getSystemService(PassphraseRequiredActionBarActivity.CLIPBOARD_SERVICE) as ClipboardManager
+        manager.setPrimaryClip(clip)
+        Toast.makeText(this, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show()
+    }
+
+    override fun copyOpenGroupUrl(thread: Recipient) {
+        if (!thread.isOpenGroupRecipient) { return }
+
+        val threadId = threadDb.getThreadIdIfExistsFor(thread) ?: return
+        val openGroup = lokiThreadDb.getOpenGroupChat(threadId) ?: return
+
+        val clip = ClipData.newPlainText("Community URL", openGroup.joinURL)
         val manager = getSystemService(PassphraseRequiredActionBarActivity.CLIPBOARD_SERVICE) as ClipboardManager
         manager.setPrimaryClip(clip)
         Toast.makeText(this, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show()
@@ -977,7 +1044,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             .setMessage(message)
             .setNegativeButton(android.R.string.cancel, null)
             .setPositiveButton(R.string.ConversationActivity_unblock) { _, _ ->
-                viewModel.unblock()
+                viewModel.unblock(this@ConversationActivityV2)
             }.show()
     }
 
@@ -1038,33 +1105,37 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             Log.e("Loki", "Failed to show emoji picker", e)
             return
         }
+
+        val binding = binding ?: return
+
+        emojiPickerVisible = true
         ViewUtil.hideKeyboard(this, visibleMessageView)
-        binding?.reactionsShade?.isVisible = true
-        showOrHidScrollToBottomButton(false)
-        binding?.conversationRecyclerView?.suppressLayout(true)
+        binding.reactionsShade.isVisible = true
+        binding.scrollToBottomButton.isVisible = false
+        binding.conversationRecyclerView.suppressLayout(true)
         reactionDelegate.setOnActionSelectedListener(ReactionsToolbarListener(message))
         reactionDelegate.setOnHideListener(object: ConversationReactionOverlay.OnHideListener {
             override fun startHide() {
-                binding?.reactionsShade?.let {
+                emojiPickerVisible = false
+                binding.reactionsShade.let {
                     ViewUtil.fadeOut(it, resources.getInteger(R.integer.reaction_scrubber_hide_duration), View.GONE)
                 }
-                showOrHidScrollToBottomButton(true)
+                showScrollToBottomButtonIfApplicable()
             }
 
             override fun onHide() {
-                binding?.conversationRecyclerView?.suppressLayout(false)
+                binding.conversationRecyclerView.suppressLayout(false)
 
                 WindowUtil.setLightStatusBarFromTheme(this@ConversationActivityV2);
                 WindowUtil.setLightNavigationBarFromTheme(this@ConversationActivityV2);
             }
 
         })
-        val contentBounds = Rect()
-        visibleMessageView.messageContentView.getGlobalVisibleRect(contentBounds)
+        val topLeft = intArrayOf(0, 0).also { visibleMessageView.messageContentView.getLocationInWindow(it) }
         val selectedConversationModel = SelectedConversationModel(
             messageContentBitmap,
-            contentBounds.left.toFloat(),
-            contentBounds.top.toFloat(),
+            topLeft[0].toFloat(),
+            topLeft[1].toFloat(),
             visibleMessageView.messageContentView.width,
             message.isOutgoing,
             visibleMessageView.messageContentView
@@ -1090,7 +1161,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         // Create the message
         val recipient = viewModel.recipient ?: return
         val reactionMessage = VisibleMessage()
-        val emojiTimestamp = System.currentTimeMillis() + SnodeAPI.clockOffset
+        val emojiTimestamp = SnodeAPI.nowWithOffset
         reactionMessage.sentTimestamp = emojiTimestamp
         val author = textSecurePreferences.getLocalNumber()!!
         // Put the message in the database
@@ -1123,7 +1194,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     private fun sendEmojiRemoval(emoji: String, originalMessage: MessageRecord) {
         val recipient = viewModel.recipient ?: return
         val message = VisibleMessage()
-        val emojiTimestamp = System.currentTimeMillis() + SnodeAPI.clockOffset
+        val emojiTimestamp = SnodeAPI.nowWithOffset
         message.sentTimestamp = emojiTimestamp
         val author = textSecurePreferences.getLocalNumber()!!
         reactionDb.deleteReaction(emoji, MessageId(originalMessage.id, originalMessage.isMms), author, false)
@@ -1314,7 +1385,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     override fun sendMessage() {
         val recipient = viewModel.recipient ?: return
         if (recipient.isContactRecipient && recipient.isBlocked) {
-            BlockedDialog(recipient).show(supportFragmentManager, "Blocked Dialog")
+            BlockedDialog(recipient, this).show(supportFragmentManager, "Blocked Dialog")
             return
         }
         val binding = binding ?: return
@@ -1352,7 +1423,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         }
         // Create the message
         val message = VisibleMessage()
-        message.sentTimestamp = System.currentTimeMillis() + SnodeAPI.clockOffset
+        message.sentTimestamp = SnodeAPI.nowWithOffset
         message.text = text
         val expiresInMillis = (viewModel.expirationConfiguration?.durationSeconds ?: 0) * 1000L
         val expireStartedAt = if (viewModel.expirationConfiguration?.expirationType == ExpirationType.DELETE_AFTER_SEND) {
@@ -1379,9 +1450,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         val recipient = viewModel.recipient ?: return
         processMessageRequestApproval()
         // Create the message
-        val sentTimestampMs = System.currentTimeMillis() + SnodeAPI.clockOffset
         val message = VisibleMessage()
-        message.sentTimestamp = sentTimestampMs
+        message.sentTimestamp = SnodeAPI.nowWithOffset
         message.text = body
         val quote = quotedMessage?.let {
             val quotedAttachments = (it as? MmsMessageRecord)?.slideDeck?.asAttachments() ?: listOf()
@@ -1425,16 +1495,16 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         val hasSeenGIFMetaDataWarning: Boolean = textSecurePreferences.hasSeenGIFMetaDataWarning()
         if (!hasSeenGIFMetaDataWarning) {
             val builder = AlertDialog.Builder(this)
-            builder.setTitle("Search GIFs?")
-            builder.setMessage("You will not have full metadata protection when sending GIFs.")
-            builder.setPositiveButton("OK") { dialog: DialogInterface, _: Int ->
+            builder.setTitle(R.string.giphy_permission_title)
+            builder.setMessage(R.string.giphy_permission_message)
+            builder.setPositiveButton(R.string.continue_2) { dialog: DialogInterface, _: Int ->
                 textSecurePreferences.setHasSeenGIFMetaDataWarning()
                 AttachmentManager.selectGif(this, PICK_GIF)
                 dialog.dismiss()
             }
-            builder.setNegativeButton(
-                "Cancel"
-            ) { dialog: DialogInterface, _: Int -> dialog.dismiss() }
+            builder.setNegativeButton(R.string.cancel) { dialog: DialogInterface, _: Int ->
+                dialog.dismiss()
+            }
             builder.create().show()
         } else {
             AttachmentManager.selectGif(this, PICK_GIF)
@@ -1540,7 +1610,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             showVoiceMessageUI()
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             audioRecorder.startRecording()
-            stopAudioHandler.postDelayed(stopVoiceMessageRecordingTask, 60000) // Limit voice messages to 1 minute each
+            stopAudioHandler.postDelayed(stopVoiceMessageRecordingTask, 300000) // Limit voice messages to 5 minute each
         } else {
             Permissions.with(this)
                 .request(Manifest.permission.RECORD_AUDIO)
@@ -1714,6 +1784,13 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         endActionMode()
     }
 
+    override fun resyncMessage(messages: Set<MessageRecord>) {
+        messages.iterator().forEach { messageRecord ->
+            ResendMessageUtilities.resend(this, messageRecord, viewModel.blindedPublicKey, isResync = true)
+        }
+        endActionMode()
+    }
+
     override fun resendMessage(messages: Set<MessageRecord>) {
         messages.iterator().forEach { messageRecord ->
             ResendMessageUtilities.resend(this, messageRecord, viewModel.blindedPublicKey)
@@ -1782,7 +1859,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     private fun sendMediaSavedNotification() {
         val recipient = viewModel.recipient ?: return
         if (recipient.isGroupRecipient) { return }
-        val timestamp = System.currentTimeMillis()
+        val timestamp = SnodeAPI.nowWithOffset
         val kind = DataExtractionNotification.Kind.MediaSaved(timestamp)
         val message = DataExtractionNotification(kind)
         MessageSender.send(message, recipient.address)
@@ -1874,6 +1951,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             val selectedItems = setOf(message)
             when (action) {
                 ConversationReactionOverlay.Action.REPLY -> reply(selectedItems)
+                ConversationReactionOverlay.Action.RESYNC -> resyncMessage(selectedItems)
                 ConversationReactionOverlay.Action.RESEND -> resendMessage(selectedItems)
                 ConversationReactionOverlay.Action.DOWNLOAD -> saveAttachment(selectedItems)
                 ConversationReactionOverlay.Action.COPY_MESSAGE -> copyMessages(selectedItems)

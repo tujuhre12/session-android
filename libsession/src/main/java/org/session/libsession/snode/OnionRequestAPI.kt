@@ -25,6 +25,8 @@ import org.session.libsignal.utilities.Snode
 import org.session.libsignal.utilities.ThreadUtils
 import org.session.libsignal.utilities.recover
 import org.session.libsignal.utilities.toHexString
+import java.util.Date
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.collections.set
 
 private typealias Path = List<Snode>
@@ -42,13 +44,27 @@ object OnionRequestAPI {
     private val snodeFailureCount = mutableMapOf<Snode, Int>()
 
     var guardSnodes = setOf<Snode>()
+    var _paths: AtomicReference<List<Path>?> = AtomicReference(null)
     var paths: List<Path> // Not a set to ensure we consistently show the same path to the user
-        get() = database.getOnionRequestPaths()
+        get() {
+            val paths = _paths.get()
+
+            if (paths != null) { return paths }
+
+            // Storing this in an atomic variable as it was causing a number of background
+            // ANRs when this value was accessed via the main thread after tapping on
+            // a notification)
+            val result = database.getOnionRequestPaths()
+            _paths.set(result)
+            return result
+        }
         set(newValue) {
             if (newValue.isEmpty()) {
                 database.clearOnionRequestPaths()
+                _paths.set(null)
             } else {
                 database.setOnionRequestPaths(newValue)
+                _paths.set(newValue)
             }
         }
 
@@ -77,8 +93,8 @@ object OnionRequestAPI {
     // endregion
 
     class HTTPRequestFailedBlindingRequiredException(statusCode: Int, json: Map<*, *>, destination: String): HTTPRequestFailedAtDestinationException(statusCode, json, destination)
-    open class HTTPRequestFailedAtDestinationException(val statusCode: Int, val json: Map<*, *>, val destination: String)
-        : Exception("HTTP request failed at destination ($destination) with status code $statusCode.")
+    open class HTTPRequestFailedAtDestinationException(statusCode: Int, json: Map<*, *>, val destination: String)
+        : HTTP.HTTPRequestFailedException(statusCode, json, "HTTP request failed at destination ($destination) with status code $statusCode.")
     class InsufficientSnodesException : Exception("Couldn't find enough snodes to build a path.")
 
     private data class OnionBuildingResult(

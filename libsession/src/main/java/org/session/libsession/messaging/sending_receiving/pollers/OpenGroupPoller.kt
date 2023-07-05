@@ -30,6 +30,7 @@ import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.successBackground
+import java.util.UUID
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
@@ -39,15 +40,101 @@ class OpenGroupPoller(private val server: String, private val executorService: S
     var isCaughtUp = false
     var secondToLastJob: MessageReceiveJob? = null
     private var future: ScheduledFuture<*>? = null
+    @Volatile private var runId: UUID = UUID.randomUUID()
 
     companion object {
         private const val pollInterval: Long = 4000L
         const val maxInactivityPeriod = 14 * 24 * 60 * 60 * 1000
+
+        public fun handleRoomPollInfo(
+            server: String,
+            roomToken: String,
+            pollInfo: OpenGroupApi.RoomPollInfo,
+            createGroupIfMissingWithPublicKey: String? = null
+        ) {
+            val storage = MessagingModuleConfiguration.shared.storage
+            val groupId = "$server.$roomToken"
+            val dbGroupId = GroupUtil.getEncodedOpenGroupID(groupId.toByteArray())
+            val existingOpenGroup = storage.getOpenGroup(roomToken, server)
+
+            // If we don't have an existing group and don't have a 'createGroupIfMissingWithPublicKey'
+            // value then don't process the poll info
+            val publicKey = existingOpenGroup?.publicKey ?: createGroupIfMissingWithPublicKey
+            val name = pollInfo.details?.name ?: existingOpenGroup?.name
+            val infoUpdates = pollInfo.details?.infoUpdates ?: existingOpenGroup?.infoUpdates
+
+            if (publicKey == null) return
+
+            val openGroup = OpenGroup(
+                server = server,
+                room = pollInfo.token,
+                name = name ?: "",
+                publicKey = publicKey,
+                imageId = (pollInfo.details?.imageId ?: existingOpenGroup?.imageId),
+                canWrite = pollInfo.write,
+                infoUpdates = infoUpdates ?: 0
+            )
+            // - Open Group changes
+            storage.updateOpenGroup(openGroup)
+
+            // - User Count
+            storage.setUserCount(roomToken, server, pollInfo.activeUsers)
+
+            // - Moderators
+            pollInfo.details?.moderators?.let { moderatorList ->
+                storage.setGroupMemberRoles(moderatorList.map {
+                    GroupMember(groupId, it, GroupMemberRole.MODERATOR)
+                })
+            }
+            pollInfo.details?.hiddenModerators?.let { moderatorList ->
+                storage.setGroupMemberRoles(moderatorList.map {
+                    GroupMember(groupId, it, GroupMemberRole.HIDDEN_MODERATOR)
+                })
+            }
+            // - Admins
+            pollInfo.details?.admins?.let { moderatorList ->
+                storage.setGroupMemberRoles(moderatorList.map {
+                    GroupMember(groupId, it, GroupMemberRole.ADMIN)
+                })
+            }
+            pollInfo.details?.hiddenAdmins?.let { moderatorList ->
+                storage.setGroupMemberRoles(moderatorList.map {
+                    GroupMember(groupId, it, GroupMemberRole.HIDDEN_ADMIN)
+                })
+            }
+
+            // Update the group avatar
+            if (
+                (
+                    pollInfo.details != null &&
+                        pollInfo.details.imageId != null && (
+                        pollInfo.details.imageId != existingOpenGroup?.imageId ||
+                            !storage.hasDownloadedProfilePicture(dbGroupId)
+                        ) &&
+                        storage.getGroupAvatarDownloadJob(openGroup.server, openGroup.room, pollInfo.details.imageId) == null
+                    ) || (
+                    pollInfo.details == null &&
+                        existingOpenGroup?.imageId != null &&
+                        !storage.hasDownloadedProfilePicture(dbGroupId) &&
+                        storage.getGroupAvatarDownloadJob(openGroup.server, openGroup.room, existingOpenGroup.imageId) == null
+                    )
+            ) {
+                JobQueue.shared.add(GroupAvatarDownloadJob(server, roomToken, openGroup.imageId))
+            }
+            else if (
+                pollInfo.details != null &&
+                pollInfo.details.imageId == null &&
+                existingOpenGroup?.imageId != null
+            ) {
+                storage.removeProfilePicture(dbGroupId)
+            }
+        }
     }
 
     fun startIfNeeded() {
         if (hasStarted) { return }
         hasStarted = true
+        runId = UUID.randomUUID()
         future = executorService?.schedule(::poll, 0, TimeUnit.MILLISECONDS)
     }
 
@@ -57,9 +144,10 @@ class OpenGroupPoller(private val server: String, private val executorService: S
     }
 
     fun poll(isPostCapabilitiesRetry: Boolean = false): Promise<Unit, Exception> {
+        val currentRunId = runId
         val storage = MessagingModuleConfiguration.shared.storage
         val rooms = storage.getAllOpenGroups().values.filter { it.server == server }.map { it.room }
-        rooms.forEach { downloadGroupAvatarIfNeeded(it) }
+
         return OpenGroupApi.poll(rooms, server).successBackground { responses ->
             responses.filterNot { it.body == null }.forEach { response ->
                 when (response.endpoint) {
@@ -86,75 +174,36 @@ class OpenGroupPoller(private val server: String, private val executorService: S
                     isCaughtUp = true
                 }
             }
-            executorService?.schedule(this@OpenGroupPoller::poll, pollInterval, TimeUnit.MILLISECONDS)
+
+            // Only poll again if it's the same poller run
+            if (currentRunId == runId) {
+                future = executorService?.schedule(this@OpenGroupPoller::poll, pollInterval, TimeUnit.MILLISECONDS)
+            }
         }.fail {
-            updateCapabilitiesIfNeeded(isPostCapabilitiesRetry, it)
+            updateCapabilitiesIfNeeded(isPostCapabilitiesRetry, currentRunId, it)
         }.map { }
     }
 
-    private fun updateCapabilitiesIfNeeded(isPostCapabilitiesRetry: Boolean, exception: Exception) {
+    private fun updateCapabilitiesIfNeeded(isPostCapabilitiesRetry: Boolean, currentRunId: UUID, exception: Exception) {
         if (exception is OnionRequestAPI.HTTPRequestFailedBlindingRequiredException) {
             if (!isPostCapabilitiesRetry) {
                 OpenGroupApi.getCapabilities(server).map {
                     handleCapabilities(server, it)
                 }
-                executorService?.schedule({ poll(isPostCapabilitiesRetry = true) }, pollInterval, TimeUnit.MILLISECONDS)
+
+                // Only poll again if it's the same poller run
+                if (currentRunId == runId) {
+                    future = executorService?.schedule({ poll(isPostCapabilitiesRetry = true) }, pollInterval, TimeUnit.MILLISECONDS)
+                }
             }
-        } else {
-            executorService?.schedule(this@OpenGroupPoller::poll, pollInterval, TimeUnit.MILLISECONDS)
+        } else if (currentRunId == runId) {
+            future = executorService?.schedule(this@OpenGroupPoller::poll, pollInterval, TimeUnit.MILLISECONDS)
         }
     }
 
     private fun handleCapabilities(server: String, capabilities: OpenGroupApi.Capabilities) {
         val storage = MessagingModuleConfiguration.shared.storage
         storage.setServerCapabilities(server, capabilities.capabilities)
-    }
-
-    private fun handleRoomPollInfo(
-        server: String,
-        roomToken: String,
-        pollInfo: OpenGroupApi.RoomPollInfo
-    ) {
-        val storage = MessagingModuleConfiguration.shared.storage
-        val groupId = "$server.$roomToken"
-
-        val existingOpenGroup = storage.getOpenGroup(roomToken, server)
-        val publicKey = existingOpenGroup?.publicKey ?: return
-        val openGroup = OpenGroup(
-            server = server,
-            room = pollInfo.token,
-            name = pollInfo.details?.name ?: "",
-            infoUpdates = pollInfo.details?.infoUpdates ?: 0,
-            publicKey = publicKey,
-        )
-        // - Open Group changes
-        storage.updateOpenGroup(openGroup)
-
-        // - User Count
-        storage.setUserCount(roomToken, server, pollInfo.activeUsers)
-
-        // - Moderators
-        pollInfo.details?.moderators?.let { moderatorList ->
-            storage.setGroupMemberRoles(moderatorList.map {
-                GroupMember(groupId, it, GroupMemberRole.MODERATOR)
-            })
-        }
-        pollInfo.details?.hiddenModerators?.let { moderatorList ->
-            storage.setGroupMemberRoles(moderatorList.map {
-                GroupMember(groupId, it, GroupMemberRole.HIDDEN_MODERATOR)
-            })
-        }
-        // - Admins
-        pollInfo.details?.admins?.let { moderatorList ->
-            storage.setGroupMemberRoles(moderatorList.map {
-                GroupMember(groupId, it, GroupMemberRole.ADMIN)
-            })
-        }
-        pollInfo.details?.hiddenAdmins?.let { moderatorList ->
-            storage.setGroupMemberRoles(moderatorList.map {
-                GroupMember(groupId, it, GroupMemberRole.HIDDEN_ADMIN)
-            })
-        }
     }
 
     private fun handleMessages(
@@ -284,16 +333,4 @@ class OpenGroupPoller(private val server: String, private val executorService: S
             JobQueue.shared.add(deleteJob)
         }
     }
-
-    private fun downloadGroupAvatarIfNeeded(room: String) {
-        val storage = MessagingModuleConfiguration.shared.storage
-        if (storage.getGroupAvatarDownloadJob(server, room) != null) return
-        val groupId = GroupUtil.getEncodedOpenGroupID("$server.$room".toByteArray())
-        storage.getGroup(groupId)?.let {
-            if (System.currentTimeMillis() > it.updatedTimestamp + TimeUnit.DAYS.toMillis(7)) {
-                JobQueue.shared.add(GroupAvatarDownloadJob(room, server))
-            }
-        }
-    }
-
 }

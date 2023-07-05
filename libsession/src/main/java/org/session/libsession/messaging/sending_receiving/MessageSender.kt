@@ -12,9 +12,14 @@ import org.session.libsession.messaging.messages.control.CallMessage
 import org.session.libsession.messaging.messages.control.ClosedGroupControlMessage
 import org.session.libsession.messaging.messages.control.ConfigurationMessage
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
+import org.session.libsession.messaging.messages.control.MessageRequestResponse
+import org.session.libsession.messaging.messages.control.UnsendRequest
+import org.session.libsession.messaging.messages.control.CallMessage
+import org.session.libsession.messaging.messages.control.ClosedGroupControlMessage
+import org.session.libsession.messaging.messages.control.ConfigurationMessage
+import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.messages.control.UnsendRequest
 import org.session.libsession.messaging.messages.visible.LinkPreview
-import org.session.libsession.messaging.messages.visible.Profile
 import org.session.libsession.messaging.messages.visible.Quote
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.open_groups.OpenGroupApi
@@ -62,11 +67,11 @@ object MessageSender {
     }
 
     // Convenience
-    fun send(message: Message, destination: Destination): Promise<Unit, Exception> {
+    fun send(message: Message, destination: Destination, isSyncMessage: Boolean = false): Promise<Unit, Exception> {
         return if (destination is Destination.LegacyOpenGroup || destination is Destination.OpenGroup || destination is Destination.OpenGroupInbox) {
             sendToOpenGroupDestination(destination, message)
         } else {
-            sendToSnodeDestination(destination, message)
+            sendToSnodeDestination(destination, message, isSyncMessage)
         }
     }
 
@@ -78,16 +83,16 @@ object MessageSender {
         val userPublicKey = storage.getUserPublicKey()
         // Set the timestamp, sender and recipient
         if (message.sentTimestamp == null) {
-            message.sentTimestamp = System.currentTimeMillis() + SnodeAPI.clockOffset // Visible messages will already have their sent timestamp set
+            message.sentTimestamp = SnodeAPI.nowWithOffset // Visible messages will already have their sent timestamp set
         }
 
-        val messageSendTime = System.currentTimeMillis()
+        val messageSendTime = SnodeAPI.nowWithOffset
 
         message.sender = userPublicKey
         val isSelfSend = (message.recipient == userPublicKey)
         // Set the failure handler (need it here already for precondition failure handling)
         fun handleFailure(error: Exception) {
-            handleFailedMessageSend(message, error)
+            handleFailedMessageSend(message, error, isSyncMessage)
             if (destination is Destination.Contact && message is VisibleMessage && !isSelfSend) {
                 SnodeModule.shared.broadcaster.broadcast("messageFailed", message.sentTimestamp!!)
             }
@@ -114,14 +119,10 @@ object MessageSender {
             }
             // Attach the user's profile if needed
             if (message is VisibleMessage) {
-                val displayName = storage.getUserDisplayName()!!
-                val profileKey = storage.getUserProfileKey()
-                val profilePictureUrl = storage.getUserProfilePictureURL()
-                if (profileKey != null && profilePictureUrl != null) {
-                    message.profile = Profile(displayName, profileKey, profilePictureUrl)
-                } else {
-                    message.profile = Profile(displayName)
-                }
+                message.profile = storage.getUserProfile()
+            }
+            if (message is MessageRequestResponse) {
+                message.profile = storage.getUserProfile()
             }
             // Convert it to protobuf
             val proto = message.toProto() ?: throw Error.ProtoConversionFailed
@@ -190,7 +191,20 @@ object MessageSender {
                         val hash = it["hash"] as? String
                         message.serverHash = hash
                         handleSuccessfulMessageSend(message, destination, isSyncMessage)
-                        val shouldNotify = ((message is VisibleMessage || message is UnsendRequest || message is CallMessage) && !isSyncMessage)
+
+                        val shouldNotify: Boolean = when (message) {
+                            is VisibleMessage, is UnsendRequest -> !isSyncMessage
+                            is CallMessage -> {
+                                // Note: Other 'CallMessage' types are too big to send as push notifications
+                                // so only send the 'preOffer' message as a notification
+                                when (message.type) {
+                                    SignalServiceProtos.CallMessage.Type.PRE_OFFER -> true
+                                    else -> false
+                                }
+                            }
+                            else -> false
+                        }
+
                         /*
                         if (message is ClosedGroupControlMessage && message.kind is ClosedGroupControlMessage.Kind.New) {
                             shouldNotify = true
@@ -233,7 +247,7 @@ object MessageSender {
         val deferred = deferred<Unit, Exception>()
         val storage = MessagingModuleConfiguration.shared.storage
         if (message.sentTimestamp == null) {
-            message.sentTimestamp = System.currentTimeMillis() + SnodeAPI.clockOffset
+            message.sentTimestamp = SnodeAPI.nowWithOffset
         }
         val userEdKeyPair = MessagingModuleConfiguration.shared.getUserED25519KeyPair()!!
         var serverCapabilities = listOf<String>()
@@ -271,14 +285,7 @@ object MessageSender {
         try {
             // Attach the user's profile if needed
             if (message is VisibleMessage) {
-                val displayName = storage.getUserDisplayName()!!
-                val profileKey = storage.getUserProfileKey()
-                val profilePictureUrl = storage.getUserProfilePictureURL()
-                if (profileKey != null && profilePictureUrl != null) {
-                    message.profile = Profile(displayName, profileKey, profilePictureUrl)
-                } else {
-                    message.profile = Profile(displayName)
-                }
+                message.profile = storage.getUserProfile()
             }
             when (destination) {
                 is Destination.OpenGroup -> {
@@ -391,16 +398,23 @@ object MessageSender {
         // • the destination was a contact
         // • we didn't sync it already
         if (destination is Destination.Contact && !isSyncMessage) {
-            if (message is VisibleMessage) { message.syncTarget = destination.publicKey }
-            if (message is ExpirationTimerUpdate) { message.syncTarget = destination.publicKey }
+            if (message is VisibleMessage) message.syncTarget = destination.publicKey
+            if (message is ExpirationTimerUpdate) message.syncTarget = destination.publicKey
+
+            storage.markAsSyncing(message.sentTimestamp!!, userPublicKey)
             sendToSnodeDestination(Destination.Contact(userPublicKey), message, true)
         }
     }
 
-    fun handleFailedMessageSend(message: Message, error: Exception) {
+    fun handleFailedMessageSend(message: Message, error: Exception, isSyncMessage: Boolean = false) {
         val storage = MessagingModuleConfiguration.shared.storage
         val userPublicKey = storage.getUserPublicKey()!!
-        storage.setErrorMessage(message.sentTimestamp!!, message.sender?:userPublicKey, error)
+
+        val timestamp = message.sentTimestamp!!
+        val author = message.sender ?: userPublicKey
+
+        if (isSyncMessage) storage.markAsSyncFailed(timestamp, author, error)
+        else storage.markAsSentFailed(timestamp, author, error)
     }
 
     // Convenience

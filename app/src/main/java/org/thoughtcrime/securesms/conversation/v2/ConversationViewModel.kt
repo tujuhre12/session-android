@@ -1,11 +1,15 @@
 package org.thoughtcrime.securesms.conversation.v2
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
 import com.goterl.lazysodium.utils.KeyPair
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -21,6 +25,7 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.repository.ConversationRepository
+import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 import java.util.UUID
 
 class ConversationViewModel(
@@ -30,17 +35,26 @@ class ConversationViewModel(
     private val storage: Storage
 ) : ViewModel() {
 
+    val showSendAfterApprovalText: Boolean
+        get() = recipient?.run { isContactRecipient && !isLocalNumber && !hasApprovedMe() } ?: false
+
     private val _uiState = MutableStateFlow(ConversationUiState())
     val uiState: StateFlow<ConversationUiState> = _uiState
 
+    private var _recipient: RetrieveOnce<Recipient> = RetrieveOnce {
+        repository.maybeGetRecipientForThreadId(threadId)
+    }
     val expirationConfiguration: ExpirationConfiguration?
         get() = storage.getExpirationConfiguration(threadId)
 
     val recipient: Recipient?
-        get() = repository.maybeGetRecipientForThreadId(threadId)
+        get() = _recipient.value
 
+    private var _openGroup: RetrieveOnce<OpenGroup> = RetrieveOnce {
+        storage.getOpenGroup(threadId)
+    }
     val openGroup: OpenGroup?
-        get() = storage.getOpenGroup(threadId)
+        get() = _openGroup.value
 
     val serverCapabilities: List<String>
         get() = openGroup?.let { storage.getServerCapabilities(it.server) } ?: listOf()
@@ -52,28 +66,46 @@ class ConversationViewModel(
         }
 
     fun saveDraft(text: String) {
-        repository.saveDraft(threadId, text)
+        GlobalScope.launch(Dispatchers.IO) {
+            repository.saveDraft(threadId, text)
+        }
     }
 
     fun getDraft(): String? {
-        return repository.getDraft(threadId)
+        val draft: String? = repository.getDraft(threadId)
+
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.clearDrafts(threadId)
+        }
+
+        return draft
     }
 
     fun inviteContacts(contacts: List<Recipient>) {
         repository.inviteContacts(threadId, contacts)
     }
 
-    fun block() {
+    fun block(context: Context) {
         val recipient = recipient ?: return Log.w("Loki", "Recipient was null for block action")
         if (recipient.isContactRecipient) {
             repository.setBlocked(recipient, true)
+
+            // TODO: Remove in UserConfig branch
+            GlobalScope.launch(Dispatchers.IO) {
+                ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(context)
+            }
         }
     }
 
-    fun unblock() {
+    fun unblock(context: Context) {
         val recipient = recipient ?: return Log.w("Loki", "Recipient was null for unblock action")
         if (recipient.isContactRecipient) {
             repository.setBlocked(recipient, false)
+
+            // TODO: Remove in UserConfig branch
+            GlobalScope.launch(Dispatchers.IO) {
+                ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(context)
+            }
         }
     }
 
@@ -164,6 +196,10 @@ class ConversationViewModel(
         return repository.hasReceived(threadId)
     }
 
+    fun updateRecipient() {
+        _recipient.updateTo(repository.maybeGetRecipientForThreadId(threadId))
+    }
+
     @dagger.assisted.AssistedFactory
     interface AssistedFactory {
         fun create(threadId: Long, edKeyPair: KeyPair?): Factory
@@ -189,3 +225,19 @@ data class ConversationUiState(
     val uiMessages: List<UiMessage> = emptyList(),
     val isMessageRequestAccepted: Boolean? = null
 )
+
+data class RetrieveOnce<T>(val retrieval: () -> T?) {
+    private var triedToRetrieve: Boolean = false
+    private var _value: T? = null
+
+    val value: T?
+        get() {
+            if (triedToRetrieve) { return _value }
+
+            triedToRetrieve = true
+            _value = retrieval()
+            return _value
+        }
+
+    fun updateTo(value: T?) { _value = value }
+}

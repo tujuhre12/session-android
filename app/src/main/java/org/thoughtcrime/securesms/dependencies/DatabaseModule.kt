@@ -6,7 +6,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import net.sqlcipher.database.SQLiteDatabase
+import net.zetetic.database.sqlcipher.SQLiteDatabase
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.utilities.SSKEnvironment
 import org.thoughtcrime.securesms.attachments.DatabaseAttachmentProvider
@@ -24,7 +24,7 @@ object DatabaseModule {
 
     @JvmStatic
     fun init(context: Context) {
-        SQLiteDatabase.loadLibs(context)
+        System.loadLibrary("sqlcipher")
     }
 
     @Provides
@@ -39,6 +39,7 @@ object DatabaseModule {
     @Singleton
     fun provideOpenHelper(@ApplicationContext context: Context): SQLCipherOpenHelper {
         val dbSecret = DatabaseSecretProvider(context).orCreateDatabaseSecret
+        SQLCipherOpenHelper.migrateSqlCipher3To4IfNeeded(context, dbSecret)
         return SQLCipherOpenHelper(context, dbSecret)
     }
 
@@ -90,10 +91,6 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun searchDatabase(@ApplicationContext context: Context, openHelper: SQLCipherOpenHelper) = SearchDatabase(context,openHelper)
-
-    @Provides
-    @Singleton
-    fun provideJobDatabase(@ApplicationContext context: Context, openHelper: SQLCipherOpenHelper) = JobDatabase(context, openHelper)
 
     @Provides
     @Singleton

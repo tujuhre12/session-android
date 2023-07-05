@@ -114,6 +114,7 @@ public class ExpiringMessageManager implements SSKEnvironment.MessageExpirationM
               expiresInMillis, expireStartedAt, true,
               false,
               false,
+              false,
               Optional.absent(),
               groupInfo,
               Optional.absent(),

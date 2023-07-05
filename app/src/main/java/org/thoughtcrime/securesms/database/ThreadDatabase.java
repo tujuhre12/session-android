@@ -32,9 +32,10 @@ import androidx.annotation.Nullable;
 
 import com.annimon.stream.Stream;
 
-import net.sqlcipher.database.SQLiteDatabase;
+import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
 import org.jetbrains.annotations.NotNull;
+import org.session.libsession.snode.SnodeAPI;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.Contact;
 import org.session.libsession.utilities.DelimiterUtil;
@@ -57,7 +58,6 @@ import org.thoughtcrime.securesms.database.model.MessageRecord;
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord;
 import org.thoughtcrime.securesms.database.model.ThreadRecord;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
-import org.thoughtcrime.securesms.groups.OpenGroupMigrator;
 import org.thoughtcrime.securesms.mms.Slide;
 import org.thoughtcrime.securesms.mms.SlideDeck;
 import org.thoughtcrime.securesms.notifications.MarkReadReceiver;
@@ -87,6 +87,7 @@ public class ThreadDatabase extends Database {
   private static final String SNIPPET_CHARSET        = "snippet_cs";
   public  static final String READ                   = "read";
   public  static final String UNREAD_COUNT           = "unread_count";
+  public  static final String UNREAD_MENTION_COUNT   = "unread_mention_count";
   public  static final String TYPE                   = "type";
   private static final String ERROR                  = "error";
   public  static final String SNIPPET_TYPE           = "snippet_type";
@@ -117,7 +118,7 @@ public class ThreadDatabase extends Database {
   };
 
   private static final String[] THREAD_PROJECTION = {
-      ID, DATE, MESSAGE_COUNT, ADDRESS, SNIPPET, SNIPPET_CHARSET, READ, UNREAD_COUNT, TYPE, ERROR, SNIPPET_TYPE,
+      ID, DATE, MESSAGE_COUNT, ADDRESS, SNIPPET, SNIPPET_CHARSET, READ, UNREAD_COUNT, UNREAD_MENTION_COUNT, TYPE, ERROR, SNIPPET_TYPE,
       SNIPPET_URI, ARCHIVED, STATUS, DELIVERY_RECEIPT_COUNT, EXPIRES_IN, LAST_SEEN, READ_RECEIPT_COUNT, IS_PINNED
   };
 
@@ -135,13 +136,18 @@ public class ThreadDatabase extends Database {
             "ADD COLUMN " + IS_PINNED + " INTEGER DEFAULT 0;";
   }
 
+  public static String getUnreadMentionCountCommand() {
+    return "ALTER TABLE "+ TABLE_NAME + " " +
+            "ADD COLUMN " + UNREAD_MENTION_COUNT + " INTEGER DEFAULT 0;";
+  }
+
   public ThreadDatabase(Context context, SQLCipherOpenHelper databaseHelper) {
     super(context, databaseHelper);
   }
 
   private long createThreadForRecipient(Address address, boolean group, int distributionType) {
     ContentValues contentValues = new ContentValues(4);
-    long date                   = System.currentTimeMillis();
+    long date                   = SnodeAPI.getNowWithOffset();
 
     contentValues.put(DATE, date - date % 1000);
     contentValues.put(ADDRESS, address.serialize());
@@ -293,9 +299,10 @@ public class ThreadDatabase extends Database {
     ContentValues contentValues = new ContentValues(1);
     contentValues.put(READ, 1);
     contentValues.put(UNREAD_COUNT, 0);
+    contentValues.put(UNREAD_MENTION_COUNT, 0);
 
     if (lastSeen) {
-      contentValues.put(LAST_SEEN, System.currentTimeMillis());
+      contentValues.put(LAST_SEEN, SnodeAPI.getNowWithOffset());
     }
 
     SQLiteDatabase db = databaseHelper.getWritableDatabase();
@@ -312,20 +319,28 @@ public class ThreadDatabase extends Database {
     }};
   }
 
-  public void incrementUnread(long threadId, int amount) {
+  public void incrementUnread(long threadId, int amount, int unreadMentionAmount) {
     SQLiteDatabase db = databaseHelper.getWritableDatabase();
     db.execSQL("UPDATE " + TABLE_NAME + " SET " + READ + " = 0, " +
-                   UNREAD_COUNT + " = " + UNREAD_COUNT + " + ? WHERE " + ID + " = ?",
-               new String[] {String.valueOf(amount),
-                             String.valueOf(threadId)});
+                   UNREAD_COUNT + " = " + UNREAD_COUNT + " + ?, " +
+                   UNREAD_MENTION_COUNT + " = " + UNREAD_MENTION_COUNT + " + ? WHERE " + ID + " = ?",
+               new String[] {
+                   String.valueOf(amount),
+                   String.valueOf(unreadMentionAmount),
+                   String.valueOf(threadId)
+              });
   }
 
-  public void decrementUnread(long threadId, int amount) {
+  public void decrementUnread(long threadId, int amount, int unreadMentionAmount) {
     SQLiteDatabase db = databaseHelper.getWritableDatabase();
     db.execSQL("UPDATE " + TABLE_NAME + " SET " + READ + " = 0, " +
-                    UNREAD_COUNT + " = " + UNREAD_COUNT + " - ? WHERE " + ID + " = ? AND " + UNREAD_COUNT + " > 0",
-            new String[] {String.valueOf(amount),
-                    String.valueOf(threadId)});
+                    UNREAD_COUNT + " = " + UNREAD_COUNT + " - ?, " +
+                    UNREAD_MENTION_COUNT + " = " + UNREAD_MENTION_COUNT + " - ? WHERE " + ID + " = ? AND " + UNREAD_COUNT + " > 0",
+            new String[] {
+              String.valueOf(amount),
+              String.valueOf(unreadMentionAmount),
+              String.valueOf(threadId)
+            });
   }
 
   public void setDistributionType(long threadId, int distributionType) {
@@ -506,7 +521,7 @@ public class ThreadDatabase extends Database {
     SQLiteDatabase db = databaseHelper.getWritableDatabase();
     ContentValues contentValues = new ContentValues(1);
     if (timestamp == -1) {
-      contentValues.put(LAST_SEEN, System.currentTimeMillis());
+      contentValues.put(LAST_SEEN, SnodeAPI.getNowWithOffset());
     } else {
       contentValues.put(LAST_SEEN, timestamp);
     }
@@ -785,77 +800,6 @@ public class ThreadDatabase extends Database {
     return query;
   }
 
-  @NotNull
-  public List<ThreadRecord> getHttpOxenOpenGroups() {
-    String where = TABLE_NAME+"."+ADDRESS+" LIKE ?";
-    String selection = OpenGroupMigrator.HTTP_PREFIX+OpenGroupMigrator.OPEN_GET_SESSION_TRAILING_DOT_ENCODED +"%";
-    SQLiteDatabase db     = databaseHelper.getReadableDatabase();
-    String         query  = createQuery(where, 0);
-    Cursor         cursor = db.rawQuery(query, new String[]{selection});
-
-    if (cursor == null) {
-      return Collections.emptyList();
-    }
-    List<ThreadRecord> threads = new ArrayList<>();
-    try {
-      Reader reader = readerFor(cursor);
-      ThreadRecord record;
-      while ((record = reader.getNext()) != null) {
-        threads.add(record);
-      }
-    } finally {
-      cursor.close();
-    }
-    return threads;
-  }
-
-  @NotNull
-  public List<ThreadRecord> getLegacyOxenOpenGroups() {
-    String where = TABLE_NAME+"."+ADDRESS+" LIKE ?";
-    String selection = OpenGroupMigrator.LEGACY_GROUP_ENCODED_ID+"%";
-    SQLiteDatabase db     = databaseHelper.getReadableDatabase();
-    String         query  = createQuery(where, 0);
-    Cursor         cursor = db.rawQuery(query, new String[]{selection});
-
-    if (cursor == null) {
-      return Collections.emptyList();
-    }
-    List<ThreadRecord> threads = new ArrayList<>();
-    try {
-      Reader reader = readerFor(cursor);
-      ThreadRecord record;
-      while ((record = reader.getNext()) != null) {
-        threads.add(record);
-      }
-    } finally {
-      cursor.close();
-    }
-    return threads;
-  }
-
-  @NotNull
-  public List<ThreadRecord> getHttpsOxenOpenGroups() {
-    String where = TABLE_NAME+"."+ADDRESS+" LIKE ?";
-    String selection = OpenGroupMigrator.NEW_GROUP_ENCODED_ID+"%";
-    SQLiteDatabase db     = databaseHelper.getReadableDatabase();
-    String         query  = createQuery(where, 0);
-    Cursor         cursor = db.rawQuery(query, new String[]{selection});
-    if (cursor == null) {
-      return Collections.emptyList();
-    }
-    List<ThreadRecord> threads = new ArrayList<>();
-    try {
-      Reader reader = readerFor(cursor);
-      ThreadRecord record;
-      while ((record = reader.getNext()) != null) {
-        threads.add(record);
-      }
-    } finally {
-      cursor.close();
-    }
-    return threads;
-  }
-
   public void migrateEncodedGroup(long threadId, @NotNull String newEncodedGroupId) {
     ContentValues contentValues = new ContentValues(1);
     contentValues.put(ADDRESS, newEncodedGroupId);
@@ -911,6 +855,7 @@ public class ThreadDatabase extends Database {
       long               date                 = cursor.getLong(cursor.getColumnIndexOrThrow(ThreadDatabase.DATE));
       long               count                = cursor.getLong(cursor.getColumnIndexOrThrow(ThreadDatabase.MESSAGE_COUNT));
       int                unreadCount          = cursor.getInt(cursor.getColumnIndexOrThrow(ThreadDatabase.UNREAD_COUNT));
+      int                unreadMentionCount   = cursor.getInt(cursor.getColumnIndexOrThrow(ThreadDatabase.UNREAD_MENTION_COUNT));
       long               type                 = cursor.getLong(cursor.getColumnIndexOrThrow(ThreadDatabase.SNIPPET_TYPE));
       boolean            archived             = cursor.getInt(cursor.getColumnIndexOrThrow(ThreadDatabase.ARCHIVED)) != 0;
       int                status               = cursor.getInt(cursor.getColumnIndexOrThrow(ThreadDatabase.STATUS));
@@ -926,7 +871,7 @@ public class ThreadDatabase extends Database {
       }
 
       return new ThreadRecord(body, snippetUri, recipient, date, count,
-                              unreadCount, threadId, deliveryReceiptCount, status, type,
+                              unreadCount, unreadMentionCount, threadId, deliveryReceiptCount, status, type,
                               distributionType, archived, expiresIn, lastSeen, readReceiptCount, pinned);
     }
 

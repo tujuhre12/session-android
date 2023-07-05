@@ -28,13 +28,15 @@ import androidx.annotation.Nullable;
 
 import com.annimon.stream.Stream;
 
-import net.sqlcipher.database.SQLiteDatabase;
-import net.sqlcipher.database.SQLiteStatement;
+import net.zetetic.database.sqlcipher.SQLiteDatabase;
+import net.zetetic.database.sqlcipher.SQLiteStatement;
 
+import org.apache.commons.lang3.StringUtils;
 import org.session.libsession.messaging.calls.CallMessageType;
 import org.session.libsession.messaging.messages.signal.IncomingGroupMessage;
 import org.session.libsession.messaging.messages.signal.IncomingTextMessage;
 import org.session.libsession.messaging.messages.signal.OutgoingTextMessage;
+import org.session.libsession.snode.SnodeAPI;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.IdentityKeyMismatch;
 import org.session.libsession.utilities.IdentityKeyMismatchList;
@@ -53,6 +55,7 @@ import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 import java.io.Closeable;
 import java.io.IOException;
 import java.security.SecureRandom;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -104,7 +107,7 @@ public class SmsDatabase extends MessagingDatabase {
       PROTOCOL, READ, STATUS, TYPE,
       REPLY_PATH_PRESENT, SUBJECT, BODY, SERVICE_CENTER, DELIVERY_RECEIPT_COUNT,
       MISMATCHED_IDENTITIES, SUBSCRIPTION_ID, EXPIRES_IN, EXPIRE_STARTED,
-      NOTIFIED, READ_RECEIPT_COUNT, UNIDENTIFIED,
+      NOTIFIED, READ_RECEIPT_COUNT, UNIDENTIFIED, HAS_MENTION,
       "json_group_array(json_object(" +
               "'" + ReactionDatabase.ROW_ID + "', " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.ROW_ID + ", " +
               "'" + ReactionDatabase.MESSAGE_ID + "', " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.MESSAGE_ID + ", " +
@@ -121,6 +124,9 @@ public class SmsDatabase extends MessagingDatabase {
 
   public static String CREATE_REACTIONS_UNREAD_COMMAND = "ALTER TABLE "+ TABLE_NAME + " " +
           "ADD COLUMN " + REACTIONS_UNREAD + " INTEGER DEFAULT 0;";
+
+  public static String CREATE_HAS_MENTION_COMMAND = "ALTER TABLE "+ TABLE_NAME + " " +
+          "ADD COLUMN " + HAS_MENTION + " INTEGER DEFAULT 0;";
 
   private static final EarlyReceiptCache earlyDeliveryReceiptCache = new EarlyReceiptCache();
   private static final EarlyReceiptCache earlyReadReceiptCache     = new EarlyReceiptCache();
@@ -198,6 +204,21 @@ public class SmsDatabase extends MessagingDatabase {
   }
 
   @Override
+  public void markAsSyncing(long id) {
+    updateTypeBitmask(id, Types.BASE_TYPE_MASK, Types.BASE_SYNCING_TYPE);
+  }
+
+  @Override
+  public void markAsResyncing(long id) {
+    updateTypeBitmask(id, Types.BASE_TYPE_MASK, Types.BASE_RESYNCING_TYPE);
+  }
+
+  @Override
+  public void markAsSyncFailed(long id) {
+    updateTypeBitmask(id, Types.BASE_TYPE_MASK, Types.BASE_SYNC_FAILED_TYPE);
+  }
+
+  @Override
   public void markUnidentified(long id, boolean unidentified) {
     ContentValues contentValues = new ContentValues(1);
     contentValues.put(UNIDENTIFIED, unidentified ? 1 : 0);
@@ -207,20 +228,23 @@ public class SmsDatabase extends MessagingDatabase {
   }
 
   @Override
-  public void markAsDeleted(long messageId, boolean read) {
+  public void markAsDeleted(long messageId, boolean read, boolean hasMention) {
     SQLiteDatabase database     = databaseHelper.getWritableDatabase();
     ContentValues contentValues = new ContentValues();
     contentValues.put(READ, 1);
     contentValues.put(BODY, "");
+    contentValues.put(HAS_MENTION, 0);
     database.update(TABLE_NAME, contentValues, ID_WHERE, new String[] {String.valueOf(messageId)});
     long threadId = getThreadIdForMessage(messageId);
-    if (!read) { DatabaseComponent.get(context).threadDatabase().decrementUnread(threadId, 1); }
+    if (!read) {
+      DatabaseComponent.get(context).threadDatabase().decrementUnread(threadId, 1, (hasMention ? 1 : 0));
+    }
     updateTypeBitmask(messageId, Types.BASE_TYPE_MASK, Types.BASE_DELETED_TYPE);
   }
 
   @Override
   public void markExpireStarted(long id) {
-    markExpireStarted(id, System.currentTimeMillis());
+    markExpireStarted(id, SnodeAPI.getNowWithOffset());
   }
 
   @Override
@@ -433,6 +457,7 @@ public class SmsDatabase extends MessagingDatabase {
     values.put(EXPIRES_IN, message.getExpiresIn());
     values.put(EXPIRE_STARTED, message.getExpireStartedAt());
     values.put(UNIDENTIFIED, message.isUnidentified());
+    values.put(HAS_MENTION, message.hasMention());
 
     if (!TextUtils.isEmpty(message.getPseudoSubject()))
       values.put(SUBJECT, message.getPseudoSubject());
@@ -451,7 +476,7 @@ public class SmsDatabase extends MessagingDatabase {
       long           messageId = db.insert(TABLE_NAME, null, values);
 
       if (unread && runIncrement) {
-        DatabaseComponent.get(context).threadDatabase().incrementUnread(threadId, 1);
+        DatabaseComponent.get(context).threadDatabase().incrementUnread(threadId, 1, (message.hasMention() ? 1 : 0));
       }
 
       if (runThreadUpdate) {
@@ -529,7 +554,7 @@ public class SmsDatabase extends MessagingDatabase {
     contentValues.put(ADDRESS, address.serialize());
     contentValues.put(THREAD_ID, threadId);
     contentValues.put(BODY, message.getMessageBody());
-    contentValues.put(DATE_RECEIVED, System.currentTimeMillis());
+    contentValues.put(DATE_RECEIVED, SnodeAPI.getNowWithOffset());
     contentValues.put(DATE_SENT, message.getSentTimestampMillis());
     contentValues.put(READ, 1);
     contentValues.put(TYPE, type);
@@ -605,6 +630,30 @@ public class SmsDatabase extends MessagingDatabase {
     SQLiteDatabase db = databaseHelper.getWritableDatabase();
     long threadId = getThreadIdForMessage(messageId);
     db.delete(TABLE_NAME, ID_WHERE, new String[] {messageId+""});
+    boolean threadDeleted = DatabaseComponent.get(context).threadDatabase().update(threadId, false);
+    notifyConversationListeners(threadId);
+    return threadDeleted;
+  }
+
+  @Override
+  public boolean deleteMessages(long[] messageIds, long threadId) {
+    String[] argsArray = new String[messageIds.length];
+    String[] argValues = new String[messageIds.length];
+    Arrays.fill(argsArray, "?");
+
+    for (int i = 0; i < messageIds.length; i++) {
+      argValues[i] = (messageIds[i] + "");
+    }
+
+    String combinedMessageIdArgss = StringUtils.join(messageIds, ',');
+    String combinedMessageIds = StringUtils.join(messageIds, ',');
+    Log.i("MessageDatabase", "Deleting: " + combinedMessageIds);
+    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    db.delete(
+      TABLE_NAME,
+      ID + " IN (" + StringUtils.join(argsArray, ',') + ")",
+      argValues
+    );
     boolean threadDeleted = DatabaseComponent.get(context).threadDatabase().update(threadId, false);
     notifyConversationListeners(threadId);
     return threadDeleted;
@@ -752,11 +801,11 @@ public class SmsDatabase extends MessagingDatabase {
     public MessageRecord getCurrent() {
       return new SmsMessageRecord(id, message.getMessageBody(),
                                   message.getRecipient(), message.getRecipient(),
-                                  System.currentTimeMillis(), System.currentTimeMillis(),
+                                  SnodeAPI.getNowWithOffset(), SnodeAPI.getNowWithOffset(),
                                   0, message.isSecureMessage() ? MmsSmsColumns.Types.getOutgoingEncryptedMessageType() : MmsSmsColumns.Types.getOutgoingSmsMessageType(),
                                   threadId, 0, new LinkedList<IdentityKeyMismatch>(),
                                   message.getExpiresIn(),
-                                  System.currentTimeMillis(), 0, false, Collections.emptyList());
+                                  SnodeAPI.getNowWithOffset(), 0, false, Collections.emptyList(), false);
     }
   }
 
@@ -797,6 +846,7 @@ public class SmsDatabase extends MessagingDatabase {
       long    expireStarted        = cursor.getLong(cursor.getColumnIndexOrThrow(SmsDatabase.EXPIRE_STARTED));
       String  body                 = cursor.getString(cursor.getColumnIndexOrThrow(SmsDatabase.BODY));
       boolean unidentified         = cursor.getInt(cursor.getColumnIndexOrThrow(SmsDatabase.UNIDENTIFIED)) == 1;
+      boolean hasMention           = cursor.getInt(cursor.getColumnIndexOrThrow(SmsDatabase.HAS_MENTION)) == 1;
 
       if (!TextSecurePreferences.isReadReceiptsEnabled(context)) {
         readReceiptCount = 0;
@@ -810,7 +860,7 @@ public class SmsDatabase extends MessagingDatabase {
                                   recipient,
                                   dateSent, dateReceived, deliveryReceiptCount, type,
                                   threadId, status, mismatches,
-                                  expiresIn, expireStarted, readReceiptCount, unidentified, reactions);
+                                  expiresIn, expireStarted, readReceiptCount, unidentified, reactions, hasMention);
     }
 
     private List<IdentityKeyMismatch> getMismatches(String document) {

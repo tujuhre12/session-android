@@ -2,7 +2,7 @@ package org.thoughtcrime.securesms.database
 
 import android.content.ContentValues
 import android.content.Context
-import net.sqlcipher.Cursor
+import android.database.Cursor
 import org.session.libsession.messaging.jobs.AttachmentUploadJob
 import org.session.libsession.messaging.jobs.BackgroundGroupAddJob
 import org.session.libsession.messaging.jobs.GroupAvatarDownloadJob
@@ -46,7 +46,7 @@ class SessionJobDatabase(context: Context, helper: SQLCipherOpenHelper) : Databa
         databaseHelper.writableDatabase.delete(sessionJobTable, "${Companion.jobID} = ?", arrayOf( jobID ))
     }
 
-    fun getAllPendingJobs(type: String): Map<String, Job?> {
+    fun getAllJobs(type: String): Map<String, Job?> {
         val database = databaseHelper.readableDatabase
         return database.getAll(sessionJobTable, "$jobType = ?", arrayOf( type )) { cursor ->
             val jobID = cursor.getString(jobID)
@@ -83,11 +83,11 @@ class SessionJobDatabase(context: Context, helper: SQLCipherOpenHelper) : Databa
         }
     }
 
-    fun getGroupAvatarDownloadJob(server: String, room: String): GroupAvatarDownloadJob? {
+    fun getGroupAvatarDownloadJob(server: String, room: String, imageId: String?): GroupAvatarDownloadJob? {
         val database = databaseHelper.readableDatabase
         return database.getAll(sessionJobTable, "$jobType = ?", arrayOf(GroupAvatarDownloadJob.KEY)) {
             jobFromCursor(it) as GroupAvatarDownloadJob?
-        }.filterNotNull().find { it.server == server && it.room == room }
+        }.filterNotNull().find { it.server == server && it.room == room && (imageId == null || it.imageId == imageId) }
     }
 
     fun cancelPendingMessageSendJobs(threadID: Long) {

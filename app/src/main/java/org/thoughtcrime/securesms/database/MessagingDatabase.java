@@ -5,7 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.text.TextUtils;
 
-import net.sqlcipher.database.SQLiteDatabase;
+import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.Document;
@@ -37,11 +37,19 @@ public abstract class MessagingDatabase extends Database implements MmsSmsColumn
   public abstract void markExpireStarted(long messageId, long startTime);
 
   public abstract void markAsSent(long messageId, boolean secure);
+
+  public abstract void markAsSyncing(long id);
+
+  public abstract void markAsResyncing(long id);
+
+  public abstract void markAsSyncFailed(long id);
+
   public abstract void markUnidentified(long messageId, boolean unidentified);
 
-  public abstract void markAsDeleted(long messageId, boolean read);
+  public abstract void markAsDeleted(long messageId, boolean read, boolean hasMention);
 
   public abstract boolean deleteMessage(long messageId);
+  public abstract boolean deleteMessages(long[] messageId, long threadId);
 
   public abstract void updateThreadId(long fromId, long toId);
 
@@ -198,7 +206,6 @@ public abstract class MessagingDatabase extends Database implements MmsSmsColumn
     contentValues.put(THREAD_ID, newThreadId);
     db.update(getTableName(), contentValues, where, args);
   }
-
   public static class SyncMessageId {
 
     private final Address address;

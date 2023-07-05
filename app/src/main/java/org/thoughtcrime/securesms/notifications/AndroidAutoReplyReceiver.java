@@ -85,7 +85,7 @@ public class AndroidAutoReplyReceiver extends BroadcastReceiver {
 
           VisibleMessage message = new VisibleMessage();
           message.setText(responseText.toString());
-          message.setSentTimestamp(System.currentTimeMillis() + SnodeAPI.INSTANCE.getClockOffset());
+          message.setSentTimestamp(SnodeAPI.getNowWithOffset() + SnodeAPI.INSTANCE.getClockOffset());
           MessageSender.send(message, recipient.getAddress());
           ExpirationConfiguration config = DatabaseComponent.get(context).expirationConfigurationDatabase().getExpirationConfiguration(threadId);
           long expiresInMillis = config == null ? 0 : config.getDurationSeconds() * 1000L;
@@ -102,7 +102,7 @@ public class AndroidAutoReplyReceiver extends BroadcastReceiver {
           } else {
             Log.w("AndroidAutoReplyReceiver", "Sending regular message ");
             OutgoingTextMessage reply = OutgoingTextMessage.from(message, recipient, expiresInMillis, expireStartedAt);
-            DatabaseComponent.get(context).smsDatabase().insertMessageOutbox(replyThreadId, reply, false, System.currentTimeMillis(), null, true);
+            DatabaseComponent.get(context).smsDatabase().insertMessageOutbox(replyThreadId, reply, false, SnodeAPI.getNowWithOffset(), null, true);
           }
 
           List<MarkedMessageInfo> messageIds = DatabaseComponent.get(context).threadDatabase().setRead(replyThreadId, true);

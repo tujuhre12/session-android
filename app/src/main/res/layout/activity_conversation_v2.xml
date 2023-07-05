@@ -37,7 +37,7 @@
         android:layout_width="match_parent"
         android:layout_height="36dp"
         android:visibility="gone"
-        android:layout_above="@+id/messageRequestBar"
+        android:layout_above="@+id/textSendAfterApproval"
         />
 
     <org.thoughtcrime.securesms.conversation.v2.input_bar.InputBar
@@ -91,6 +91,7 @@
             android:id="@+id/gifButtonContainer"
             android:layout_width="@dimen/input_bar_button_expanded_size"
             android:layout_height="@dimen/input_bar_button_expanded_size"
+            android:contentDescription="@string/AccessibilityId_gif_button"
             android:alpha="0" />
 
         <RelativeLayout
@@ -98,6 +99,7 @@
             android:layout_marginTop="8dp"
             android:layout_width="@dimen/input_bar_button_expanded_size"
             android:layout_height="@dimen/input_bar_button_expanded_size"
+            android:contentDescription="@string/AccessibilityId_documents_folder"
             android:alpha="0" />
 
         <RelativeLayout
@@ -105,6 +107,7 @@
             android:layout_marginTop="8dp"
             android:layout_width="@dimen/input_bar_button_expanded_size"
             android:layout_height="@dimen/input_bar_button_expanded_size"
+            android:contentDescription="@string/AccessibilityId_images_folder"
             android:alpha="0" />
 
         <RelativeLayout
@@ -112,9 +115,23 @@
             android:layout_marginTop="8dp"
             android:layout_width="@dimen/input_bar_button_expanded_size"
             android:layout_height="@dimen/input_bar_button_expanded_size"
+            android:contentDescription="@string/AccessibilityId_select_camera_button"
             android:alpha="0" />
 
     </LinearLayout>
+
+    <TextView
+        android:id="@+id/textSendAfterApproval"
+        android:text="@string/ConversationActivity_send_after_approval"
+        android:visibility="gone"
+        android:textAlignment="center"
+        android:textColor="@color/classic_light_2"
+        android:padding="22dp"
+        android:textSize="12sp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignWithParentIfMissing="true"
+        android:layout_above="@id/messageRequestBar"/>
 
     <RelativeLayout
         android:id="@+id/scrollToBottomButton"
@@ -123,6 +140,7 @@
         android:layout_height="50dp"
         android:layout_alignParentEnd="true"
         android:layout_above="@+id/messageRequestBar"
+        android:layout_alignWithParentIfMissing="true"
         android:layout_marginEnd="12dp"
         android:layout_marginBottom="32dp">
 
@@ -178,6 +196,7 @@
 
     <RelativeLayout
         android:id="@+id/blockedBanner"
+        android:contentDescription="@string/AccessibilityId_blocked_banner"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/toolbar"
@@ -187,6 +206,7 @@
 
         <TextView
             android:id="@+id/blockedBannerTextView"
+            android:contentDescription="@string/AccessibilityId_blocked_banner_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
@@ -233,14 +253,15 @@
 
         <TextView
             android:id="@+id/messageRequestBlock"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_gravity="center"
+            android:contentDescription="@string/AccessibilityId_block_message_request_button"
             android:textColor="@color/destructive"
             android:paddingHorizontal="@dimen/massive_spacing"
             android:paddingVertical="@dimen/small_spacing"
             android:textSize="@dimen/text_size"
-            android:text="@string/activity_conversation_block_user"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:text="@string/activity_conversation_block_user"/>
 
         <TextView
             android:id="@+id/sendAcceptsTextView"
@@ -262,6 +283,7 @@
             <Button
                 android:id="@+id/acceptMessageRequestButton"
                 style="@style/Widget.Session.Button.Common.ProminentOutline"
+                android:contentDescription="@string/AccessibilityId_accept_message_request_button"
                 android:layout_width="0dp"
                 android:layout_height="@dimen/medium_button_height"
                 android:layout_weight="1"
@@ -270,6 +292,7 @@
             <Button
                 android:id="@+id/declineMessageRequestButton"
                 style="@style/Widget.Session.Button.Common.DestructiveOutline"
+                android:contentDescription="@string/AccessibilityId_decline_message_request_button"
                 android:layout_width="0dp"
                 android:layout_height="@dimen/medium_button_height"
                 android:layout_marginStart="@dimen/medium_spacing"

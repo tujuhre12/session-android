@@ -81,6 +81,8 @@ public final class ConversationReactionOverlay extends FrameLayout {
 
   private View             dropdownAnchor;
   private LinearLayout     conversationItem;
+  private View             conversationBubble;
+  private TextView         conversationTimestamp;
   private View             backgroundView;
   private ConstraintLayout foregroundView;
   private EmojiImageView[] emojiViews;
@@ -116,6 +118,8 @@ public final class ConversationReactionOverlay extends FrameLayout {
 
     dropdownAnchor   = findViewById(R.id.dropdown_anchor);
     conversationItem = findViewById(R.id.conversation_item);
+    conversationBubble = conversationItem.findViewById(R.id.conversation_item_bubble);
+    conversationTimestamp = conversationItem.findViewById(R.id.conversation_item_timestamp);
     backgroundView   = findViewById(R.id.conversation_reaction_scrubber_background);
     foregroundView   = findViewById(R.id.conversation_reaction_scrubber_foreground);
 
@@ -165,10 +169,8 @@ public final class ConversationReactionOverlay extends FrameLayout {
 
     Bitmap conversationItemSnapshot = selectedConversationModel.getBitmap();
 
-    View conversationBubble = conversationItem.findViewById(R.id.conversation_item_bubble);
     conversationBubble.setLayoutParams(new LinearLayout.LayoutParams(conversationItemSnapshot.getWidth(), conversationItemSnapshot.getHeight()));
     conversationBubble.setBackground(new BitmapDrawable(getResources(), conversationItemSnapshot));
-    TextView conversationTimestamp = conversationItem.findViewById(R.id.conversation_item_timestamp);
     conversationTimestamp.setText(DateUtils.getDisplayFormattedTimeSpanString(getContext(), Locale.getDefault(), messageRecord.getTimestamp()));
 
     updateConversationTimestamp(messageRecord);
@@ -190,12 +192,8 @@ public final class ConversationReactionOverlay extends FrameLayout {
   }
 
   private void updateConversationTimestamp(MessageRecord message) {
-    View bubble = conversationItem.findViewById(R.id.conversation_item_bubble);
-    View timestamp = conversationItem.findViewById(R.id.conversation_item_timestamp);
-    conversationItem.removeAllViewsInLayout();
-    conversationItem.addView(message.isOutgoing() ? timestamp : bubble);
-    conversationItem.addView(message.isOutgoing() ? bubble : timestamp);
-    conversationItem.requestLayout();
+    if (message.isOutgoing()) conversationBubble.bringToFront();
+    else conversationTimestamp.bringToFront();
   }
 
   private void showAfterLayout(@NonNull MessageRecord messageRecord,
@@ -203,10 +201,11 @@ public final class ConversationReactionOverlay extends FrameLayout {
                                boolean isMessageOnLeft) {
     contextMenu = new ConversationContextMenu(dropdownAnchor, getMenuActionItems(messageRecord));
 
-    float itemX = isMessageOnLeft ? scrubberHorizontalMargin :
+    float endX = isMessageOnLeft ? scrubberHorizontalMargin :
             selectedConversationModel.getBubbleX() - conversationItem.getWidth() + selectedConversationModel.getBubbleWidth();
-    conversationItem.setX(itemX);
-    conversationItem.setY(selectedConversationModel.getBubbleY() - statusBarHeight);
+    float endY = selectedConversationModel.getBubbleY() - statusBarHeight;
+    conversationItem.setX(endX);
+    conversationItem.setY(endY);
 
     Bitmap  conversationItemSnapshot = selectedConversationModel.getBitmap();
     boolean isWideLayout             = contextMenu.getMaxWidth() + scrubberWidth < getWidth();
@@ -214,8 +213,6 @@ public final class ConversationReactionOverlay extends FrameLayout {
     int overlayHeight = getHeight();
     int bubbleWidth   = selectedConversationModel.getBubbleWidth();
 
-    float endX            = itemX;
-    float endY            = conversationItem.getY();
     float endApparentTop  = endY;
     float endScale        = 1f;
 
@@ -265,9 +262,7 @@ public final class ConversationReactionOverlay extends FrameLayout {
           }
         } else {
           endY = overlayHeight - contextMenu.getMaxHeight() - menuPadding - conversationItemSnapshot.getHeight();
-
-          float contextMenuTop = endY + conversationItemSnapshot.getHeight();
-          reactionBarBackgroundY = getReactionBarOffsetForTouch(selectedConversationModel.getBubbleY(), contextMenuTop, menuPadding, reactionBarOffset, reactionBarHeight, reactionBarTopPadding, endY);
+          reactionBarBackgroundY = endY - reactionBarHeight - menuPadding;
         }
 
         endApparentTop = endY;
@@ -354,11 +349,14 @@ public final class ConversationReactionOverlay extends FrameLayout {
 
     int revealDuration = getContext().getResources().getInteger(R.integer.reaction_scrubber_reveal_duration);
 
+    conversationBubble.animate()
+            .scaleX(endScale)
+            .scaleY(endScale)
+            .setDuration(revealDuration);
+
     conversationItem.animate()
             .x(endX)
             .y(endY)
-            .scaleX(endScale)
-            .scaleY(endScale)
             .setDuration(revealDuration);
   }
 
@@ -660,10 +658,15 @@ public final class ConversationReactionOverlay extends FrameLayout {
 
     String userPublicKey = TextSecurePreferences.getLocalNumber(getContext());
     // Select message
-    items.add(new ActionItem(R.attr.menu_select_icon, getContext().getResources().getString(R.string.conversation_context__menu_select), () -> handleActionItemClicked(Action.SELECT)));
+    items.add(new ActionItem(R.attr.menu_select_icon, getContext().getResources().getString(R.string.conversation_context__menu_select), () -> handleActionItemClicked(Action.SELECT),
+            getContext().getResources().getString(R.string.AccessibilityId_select)));
     // Reply
-    if (!message.isPending() && !message.isFailed()) {
-      items.add(new ActionItem(R.attr.menu_reply_icon, getContext().getResources().getString(R.string.conversation_context__menu_reply), () -> handleActionItemClicked(Action.REPLY)));
+    boolean canWrite = openGroup == null || openGroup.getCanWrite();
+    if (canWrite && !message.isPending() && !message.isFailed()) {
+      items.add(
+              new ActionItem(R.attr.menu_reply_icon, getContext().getResources().getString(R.string.conversation_context__menu_reply), () -> handleActionItemClicked(Action.REPLY),
+                     getContext().getResources().getString(R.string.AccessibilityId_reply_message))
+      );
     }
     // Copy message text
     if (!containsControlMessage && hasText) {
@@ -671,11 +674,17 @@ public final class ConversationReactionOverlay extends FrameLayout {
     }
     // Copy Session ID
     if (recipient.isGroupRecipient() && !recipient.isOpenGroupRecipient() && !message.getRecipient().getAddress().toString().equals(userPublicKey)) {
-      items.add(new ActionItem(R.attr.menu_copy_icon, getContext().getResources().getString(R.string.activity_conversation_menu_copy_session_id), () -> handleActionItemClicked(Action.COPY_SESSION_ID)));
+      items.add(new ActionItem(
+              R.attr.menu_copy_icon, getContext().getResources().getString(R.string.activity_conversation_menu_copy_session_id), () -> handleActionItemClicked(Action.COPY_SESSION_ID))
+      );
     }
     // Delete message
     if (ConversationMenuItemHelper.userCanDeleteSelectedItems(getContext(), message, openGroup, userPublicKey, blindedPublicKey)) {
-      items.add(new ActionItem(R.attr.menu_trash_icon, getContext().getResources().getString(R.string.delete), () -> handleActionItemClicked(Action.DELETE)));
+      items.add(new ActionItem(R.attr.menu_trash_icon, getContext().getResources().getString(R.string.delete),
+              () -> handleActionItemClicked(Action.DELETE),
+              getContext().getResources().getString(R.string.AccessibilityId_delete_message)
+              )
+      );
     }
     // Ban user
     if (ConversationMenuItemHelper.userCanBanSelectedUsers(getContext(), message, openGroup, userPublicKey, blindedPublicKey)) {
@@ -693,9 +702,15 @@ public final class ConversationReactionOverlay extends FrameLayout {
     if (message.isFailed()) {
       items.add(new ActionItem(R.attr.menu_reply_icon, getContext().getResources().getString(R.string.conversation_context__menu_resend_message), () -> handleActionItemClicked(Action.RESEND)));
     }
+    // Resync
+    if (message.isSyncFailed()) {
+      items.add(new ActionItem(R.attr.menu_reply_icon, getContext().getResources().getString(R.string.conversation_context__menu_resync_message), () -> handleActionItemClicked(Action.RESYNC)));
+    }
     // Save media
     if (message.isMms() && ((MediaMmsMessageRecord)message).containsMediaSlide()) {
-      items.add(new ActionItem(R.attr.menu_save_icon, getContext().getResources().getString(R.string.conversation_context_image__save_attachment), () -> handleActionItemClicked(Action.DOWNLOAD)));
+      items.add(new ActionItem(R.attr.menu_save_icon, getContext().getResources().getString(R.string.conversation_context_image__save_attachment), () -> handleActionItemClicked(Action.DOWNLOAD),
+              getContext().getResources().getString(R.string.AccessibilityId_save_attachment))
+      );
     }
 
     backgroundView.setVisibility(View.VISIBLE);
@@ -876,6 +891,7 @@ public final class ConversationReactionOverlay extends FrameLayout {
   public enum Action {
     REPLY,
     RESEND,
+    RESYNC,
     DOWNLOAD,
     COPY_MESSAGE,
     COPY_SESSION_ID,

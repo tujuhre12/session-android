@@ -90,8 +90,8 @@ public class OutgoingMediaMessage {
       previews = Collections.singletonList(linkPreview);
     }
     return new OutgoingMediaMessage(recipient, message.getText(), attachments, message.getSentTimestamp(), -1,
-            expiresInMillis, expireStartedAt, DistributionTypes.DEFAULT, outgoingQuote, Collections.emptyList(),
-            previews, Collections.emptyList(), Collections.emptyList());
+            expiresInMillis, expireStartedAt, DistributionTypes.DEFAULT, outgoingQuote,
+            Collections.emptyList(), previews, Collections.emptyList(), Collections.emptyList());
   }
 
   public Recipient getRecipient() {

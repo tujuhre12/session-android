@@ -25,7 +25,7 @@ class SSKEnvironment(
 
     interface ProfileManagerProtocol {
         companion object {
-            const val NAME_PADDED_LENGTH = 26
+            const val NAME_PADDED_LENGTH = 64
         }
 
         fun setNickname(context: Context, recipient: Recipient, nickname: String?)

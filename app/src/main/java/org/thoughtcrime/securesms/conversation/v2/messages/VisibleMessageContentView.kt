@@ -10,10 +10,8 @@ import android.text.style.ForegroundColorSpan
 import android.text.style.URLSpan
 import android.text.util.Linkify
 import android.util.AttributeSet
-import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
-import android.widget.LinearLayout
 import androidx.annotation.ColorInt
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -22,13 +20,12 @@ import androidx.core.graphics.BlendModeColorFilterCompat
 import androidx.core.graphics.BlendModeCompat
 import androidx.core.text.getSpans
 import androidx.core.text.toSpannable
+import androidx.core.view.children
 import androidx.core.view.isVisible
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
 import okhttp3.HttpUrl
 import org.session.libsession.messaging.MessagingModuleConfiguration
-import org.session.libsession.messaging.jobs.AttachmentDownloadJob
-import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentTransferProgress
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.getColorFromAttr
@@ -47,26 +44,30 @@ import org.thoughtcrime.securesms.util.getAccentColor
 import java.util.*
 import kotlin.math.roundToInt
 
-class VisibleMessageContentView : LinearLayout {
-    private lateinit var binding:  ViewVisibleMessageContentBinding
+class VisibleMessageContentView : ConstraintLayout {
+    private val binding: ViewVisibleMessageContentBinding by lazy { ViewVisibleMessageContentBinding.bind(this) }
     var onContentClick: MutableList<((event: MotionEvent) -> Unit)> = mutableListOf()
     var onContentDoubleTap: (() -> Unit)? = null
     var delegate: VisibleMessageViewDelegate? = null
     var indexInAdapter: Int = -1
 
     // region Lifecycle
-    constructor(context: Context) : super(context) { initialize() }
-    constructor(context: Context, attrs: AttributeSet) : super(context, attrs) { initialize() }
-    constructor(context: Context, attrs: AttributeSet, defStyleAttr: Int) : super(context, attrs, defStyleAttr) { initialize() }
-
-    private fun initialize() {
-        binding = ViewVisibleMessageContentBinding.inflate(LayoutInflater.from(context), this, true)
-    }
+    constructor(context: Context) : super(context)
+    constructor(context: Context, attrs: AttributeSet) : super(context, attrs)
+    constructor(context: Context, attrs: AttributeSet, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
     // endregion
 
     // region Updating
-    fun bind(message: MessageRecord, isStartOfMessageCluster: Boolean, isEndOfMessageCluster: Boolean,
-        glide: GlideRequests, thread: Recipient, searchQuery: String?, contactIsTrusted: Boolean) {
+    fun bind(
+        message: MessageRecord,
+        isStartOfMessageCluster: Boolean,
+        isEndOfMessageCluster: Boolean,
+        glide: GlideRequests,
+        thread: Recipient,
+        searchQuery: String?,
+        contactIsTrusted: Boolean,
+        onAttachmentNeedsDownload: (Long, Long) -> Unit
+    ) {
         // Background
         val background = getBackground(message.isOutgoing)
         val color = if (message.isOutgoing) context.getAccentColor()
@@ -80,7 +81,7 @@ class VisibleMessageContentView : LinearLayout {
 
         // reset visibilities / containers
         onContentClick.clear()
-        binding.albumThumbnailView.clearViews()
+        binding.albumThumbnailView.root.clearViews()
         onContentDoubleTap = null
 
         if (message.isDeleted) {
@@ -88,28 +89,26 @@ class VisibleMessageContentView : LinearLayout {
             binding.deletedMessageView.root.bind(message, getTextColor(context, message))
             binding.bodyTextView.isVisible = false
             binding.quoteView.root.isVisible = false
-            binding.linkPreviewView.isVisible = false
+            binding.linkPreviewView.root.isVisible = false
             binding.untrustedView.root.isVisible = false
             binding.voiceMessageView.root.isVisible = false
             binding.documentView.root.isVisible = false
-            binding.albumThumbnailView.isVisible = false
+            binding.albumThumbnailView.root.isVisible = false
             binding.openGroupInvitationView.root.isVisible = false
             return
         } else {
             binding.deletedMessageView.root.isVisible = false
         }
-        // clear the
+
+        // Note: Need to clear the body to prevent the message bubble getting incorrectly
+        // sized based on text content from a recycled view
         binding.bodyTextView.text = null
-
-
         binding.quoteView.root.isVisible = message is MmsMessageRecord && message.quote != null
-
-        binding.linkPreviewView.isVisible = message is MmsMessageRecord && message.linkPreviews.isNotEmpty()
-
+        binding.linkPreviewView.root.isVisible = message is MmsMessageRecord && message.linkPreviews.isNotEmpty()
         binding.untrustedView.root.isVisible = !contactIsTrusted && message is MmsMessageRecord && message.quote == null && message.linkPreviews.isEmpty()
         binding.voiceMessageView.root.isVisible = contactIsTrusted && message is MmsMessageRecord && message.slideDeck.audioSlide != null
         binding.documentView.root.isVisible = contactIsTrusted && message is MmsMessageRecord && message.slideDeck.documentSlide != null
-        binding.albumThumbnailView.isVisible = mediaThumbnailMessage
+        binding.albumThumbnailView.root.isVisible = mediaThumbnailMessage
         binding.openGroupInvitationView.root.isVisible = message.isOpenGroupInvitation
 
         var hideBody = false
@@ -141,8 +140,7 @@ class VisibleMessageContentView : LinearLayout {
                 val attachmentId = dbAttachment.attachmentId.rowId
                 if (attach.transferState == AttachmentTransferProgress.TRANSFER_PROGRESS_PENDING
                     && MessagingModuleConfiguration.shared.storage.getAttachmentUploadJob(attachmentId) == null) {
-                    // start download
-                    JobQueue.shared.add(AttachmentDownloadJob(attachmentId, dbAttachment.mmsId))
+                    onAttachmentNeedsDownload(attachmentId, dbAttachment.mmsId)
                 }
             }
             message.linkPreviews.forEach { preview ->
@@ -150,16 +148,18 @@ class VisibleMessageContentView : LinearLayout {
                 val attachmentId = previewThumbnail.attachmentId.rowId
                 if (previewThumbnail.transferState == AttachmentTransferProgress.TRANSFER_PROGRESS_PENDING
                     && MessagingModuleConfiguration.shared.storage.getAttachmentUploadJob(attachmentId) == null) {
-                    JobQueue.shared.add(AttachmentDownloadJob(attachmentId, previewThumbnail.mmsId))
+                    onAttachmentNeedsDownload(attachmentId, previewThumbnail.mmsId)
                 }
             }
         }
 
         when {
             message is MmsMessageRecord && message.linkPreviews.isNotEmpty() -> {
-                binding.linkPreviewView.bind(message, glide, isStartOfMessageCluster, isEndOfMessageCluster)
-                onContentClick.add { event -> binding.linkPreviewView.calculateHit(event) }
-                // Body text view is inside the link preview for layout convenience
+                binding.linkPreviewView.root.bind(message, glide, isStartOfMessageCluster, isEndOfMessageCluster)
+                onContentClick.add { event -> binding.linkPreviewView.root.calculateHit(event) }
+
+                // When in a link preview ensure the bodyTextView can expand to the full width
+                binding.bodyTextView.maxWidth = binding.linkPreviewView.root.layoutParams.width
             }
             message is MmsMessageRecord && message.slideDeck.audioSlide != null -> {
                 hideBody = true
@@ -195,21 +195,21 @@ class VisibleMessageContentView : LinearLayout {
                 if (contactIsTrusted || message.isOutgoing) {
                     // isStart and isEnd of cluster needed for calculating the mask for full bubble image groups
                     // bind after add view because views are inflated and calculated during bind
-                    binding.albumThumbnailView.bind(
+                    binding.albumThumbnailView.root.bind(
                         glideRequests = glide,
                         message = message,
                         isStart = isStartOfMessageCluster,
                         isEnd = isEndOfMessageCluster
                     )
-                    val layoutParams = binding.albumThumbnailView.layoutParams as ConstraintLayout.LayoutParams
+                    val layoutParams = binding.albumThumbnailView.root.layoutParams as ConstraintLayout.LayoutParams
                     layoutParams.horizontalBias = if (message.isOutgoing) 1f else 0f
-                    binding.albumThumbnailView.layoutParams = layoutParams
+                    binding.albumThumbnailView.root.layoutParams = layoutParams
                     onContentClick.add { event ->
-                        binding.albumThumbnailView.calculateHitObject(event, message, thread)
+                        binding.albumThumbnailView.root.calculateHitObject(event, message, thread, onAttachmentNeedsDownload)
                     }
                 } else {
                     hideBody = true
-                    binding.albumThumbnailView.clearViews()
+                    binding.albumThumbnailView.root.clearViews()
                     binding.untrustedView.root.bind(UntrustedAttachmentView.AttachmentType.MEDIA, VisibleMessageContentView.getTextColor(context,message))
                     onContentClick.add { binding.untrustedView.root.showTrustDialog(message.individualRecipient) }
                 }
@@ -222,6 +222,7 @@ class VisibleMessageContentView : LinearLayout {
         }
 
         binding.bodyTextView.isVisible = message.body.isNotEmpty() && !hideBody
+        binding.contentParent.apply { isVisible = children.any { it.isVisible } }
 
         if (message.body.isNotEmpty() && !hideBody) {
             val color = getTextColor(context, message)
@@ -241,7 +242,7 @@ class VisibleMessageContentView : LinearLayout {
     }
 
     private fun ViewVisibleMessageContentBinding.barrierViewsGone(): Boolean =
-        listOf<View>(albumThumbnailView, linkPreviewView, voiceMessageView.root, quoteView.root).none { it.isVisible }
+        listOf<View>(albumThumbnailView.root, linkPreviewView.root, voiceMessageView.root, quoteView.root).none { it.isVisible }
 
     private fun getBackground(isOutgoing: Boolean): Drawable {
         val backgroundID = if (isOutgoing) R.drawable.message_bubble_background_sent_alone else R.drawable.message_bubble_background_received_alone
@@ -256,8 +257,8 @@ class VisibleMessageContentView : LinearLayout {
             binding.openGroupInvitationView.root,
             binding.documentView.root,
             binding.quoteView.root,
-            binding.linkPreviewView,
-            binding.albumThumbnailView,
+            binding.linkPreviewView.root,
+            binding.albumThumbnailView.root,
             binding.bodyTextView
         ).forEach { view: View -> view.isVisible = false }
     }

@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.conversation.v2.menus
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.os.AsyncTask
@@ -56,6 +57,10 @@ object ConversationMenuHelper {
         // Expiring messages
         if (!isOpenGroup && (thread.hasApprovedMe() || thread.isClosedGroupRecipient || thread.isLocalNumber)) {
             inflater.inflate(R.menu.menu_conversation_expiration, menu)
+        }
+        // One-on-one chat menu allows copying the session id
+        if (thread.isContactRecipient) {
+            inflater.inflate(R.menu.menu_conversation_copy_session_id, menu)
         }
         // One-on-one chat menu (options that should only be present for one-on-one chats)
         if (thread.isContactRecipient) {
@@ -132,6 +137,7 @@ object ConversationMenuHelper {
             R.id.menu_block -> { block(context, thread, deleteThread = false) }
             R.id.menu_block_delete -> { blockAndDelete(context, thread) }
             R.id.menu_copy_session_id -> { copySessionID(context, thread) }
+            R.id.menu_copy_open_group_url -> { copyOpenGroupUrl(context, thread) }
             R.id.menu_edit_group -> { editClosedGroup(context, thread) }
             R.id.menu_leave_group -> { leaveClosedGroup(context, thread) }
             R.id.menu_invite_to_open_group -> { inviteContacts(context, thread) }
@@ -158,7 +164,7 @@ object ConversationMenuHelper {
     private fun call(context: Context, thread: Recipient) {
 
         if (!TextSecurePreferences.isCallNotificationsEnabled(context)) {
-            AlertDialog.Builder(context)
+            val dialog = AlertDialog.Builder(context)
                 .setTitle(R.string.ConversationActivity_call_title)
                 .setMessage(R.string.ConversationActivity_call_prompt)
                 .setPositiveButton(R.string.activity_settings_title) { _, _ ->
@@ -167,7 +173,10 @@ object ConversationMenuHelper {
                 }
                 .setNeutralButton(R.string.cancel) { d, _ ->
                     d.dismiss()
-                }.show()
+                }.create()
+            dialog.getButton(DialogInterface.BUTTON_POSITIVE)?.contentDescription = context.getString(R.string.AccessibilityId_settings)
+            dialog.getButton(DialogInterface.BUTTON_NEGATIVE)?.contentDescription = context.getString(R.string.AccessibilityId_cancel_button)
+            dialog.show()
             return
         }
 
@@ -248,6 +257,12 @@ object ConversationMenuHelper {
         listener.copySessionID(thread.address.toString())
     }
 
+    private fun copyOpenGroupUrl(context: Context, thread: Recipient) {
+        if (!thread.isOpenGroupRecipient) { return }
+        val listener = context as? ConversationMenuListener ?: return
+        listener.copyOpenGroupUrl(thread)
+    }
+
     private fun editClosedGroup(context: Context, thread: Recipient) {
         if (!thread.isClosedGroupRecipient) { return }
         val intent = Intent(context, EditClosedGroupActivity::class.java)
@@ -322,6 +337,7 @@ object ConversationMenuHelper {
         fun block(deleteThread: Boolean = false)
         fun unblock()
         fun copySessionID(sessionId: String)
+        fun copyOpenGroupUrl(thread: Recipient)
         fun showExpirationSettings(thread: Recipient)
     }
 

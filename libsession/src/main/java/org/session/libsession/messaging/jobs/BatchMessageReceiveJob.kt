@@ -11,14 +11,11 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
+import org.session.libsession.messaging.messages.control.UnsendRequest
 import org.session.libsession.messaging.messages.visible.ParsedMessage
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.open_groups.OpenGroupApi
-import org.session.libsession.messaging.sending_receiving.MessageReceiver
-import org.session.libsession.messaging.sending_receiving.handle
-import org.session.libsession.messaging.sending_receiving.handleOpenGroupReactions
-import org.session.libsession.messaging.sending_receiving.handleVisibleMessage
-import org.session.libsession.messaging.sending_receiving.updateExpiryIfNeeded
+import org.session.libsession.messaging.sending_receiving.*
 import org.session.libsession.messaging.utilities.Data
 import org.session.libsession.messaging.utilities.SessionId
 import org.session.libsession.messaging.utilities.SodiumUtilities
@@ -69,11 +66,11 @@ class BatchMessageReceiveJob(
         return storage.getOrCreateThreadIdFor(senderOrSync, message.groupPublicKey, openGroupID)
     }
 
-    override fun execute() {
-        executeAsync().get()
+    override fun execute(dispatcherName: String) {
+        executeAsync(dispatcherName).get()
     }
 
-    fun executeAsync(): Promise<Unit, Exception> {
+    fun executeAsync(dispatcherName: String): Promise<Unit, Exception> {
         return task {
             val threadMap = mutableMapOf<Long, MutableList<ParsedMessage>>()
             val storage = MessagingModuleConfiguration.shared.storage
@@ -95,12 +92,23 @@ class BatchMessageReceiveJob(
                         threadMap[threadID]!! += parsedParams
                     }
                 } catch (e: Exception) {
-                    Log.e(TAG, "Couldn't receive message.", e)
-                    if (e is MessageReceiver.Error && !e.isRetryable) {
-                        Log.e(TAG, "Message failed permanently",e)
-                    } else {
-                        Log.e(TAG, "Message failed",e)
-                        failures += messageParameters
+                    when (e) {
+                        is MessageReceiver.Error.DuplicateMessage, MessageReceiver.Error.SelfSend -> {
+                            Log.i(TAG, "Couldn't receive message, failed with error: ${e.message} (id: $id)")
+                        }
+                        is MessageReceiver.Error -> {
+                            if (!e.isRetryable) {
+                                Log.e(TAG, "Couldn't receive message, failed permanently (id: $id)", e)
+                            }
+                            else {
+                                Log.e(TAG, "Couldn't receive message, failed (id: $id)", e)
+                                failures += messageParameters
+                            }
+                        }
+                        else -> {
+                            Log.e(TAG, "Couldn't receive message, failed (id: $id)", e)
+                            failures += messageParameters
+                        }
                     }
                 }
             }
@@ -109,46 +117,68 @@ class BatchMessageReceiveJob(
             runBlocking(Dispatchers.IO) {
                 val deferredThreadMap = threadMap.entries.map { (threadId, messages) ->
                     async {
-                        val messageIds = mutableListOf<Pair<Long, Boolean>>()
+                        // The LinkedHashMap should preserve insertion order
+                        val messageIds = linkedMapOf<Long, Pair<Boolean, Boolean>>()
+
                         messages.forEach { (parameters, message, proto) ->
                             try {
-                                if (message is VisibleMessage) {
-                                    MessageReceiver.updateExpiryIfNeeded(message, proto, openGroupID)
+                                when (message) {
+                                    is VisibleMessage -> {
+                                        MessageReceiver.updateExpiryIfNeeded(message, proto, openGroupID)
                                     val messageId = MessageReceiver.handleVisibleMessage(message, proto, openGroupID,
                                         runIncrement = false,
                                         runThreadUpdate = false,
-                                        runProfileUpdate = true
-                                    )
-                                    if (messageId != null && message.reaction == null) {
-                                        val isUserBlindedSender = message.sender == serverPublicKey?.let { SodiumUtilities.blindedKeyPair(it, MessagingModuleConfiguration.shared.getUserED25519KeyPair()!!) }?.let { SessionId(
-                                            IdPrefix.BLINDED, it.publicKey.asBytes).hexString }
-                                        messageIds += messageId to (message.sender == localUserPublicKey || isUserBlindedSender)
+                                        runProfileUpdate = true)
+
+                                        if (messageId != null && message.reaction == null) {
+                                            val isUserBlindedSender = message.sender == serverPublicKey?.let { SodiumUtilities.blindedKeyPair(it, MessagingModuleConfiguration.shared.getUserED25519KeyPair()!!) }?.let { SessionId(
+                                                    IdPrefix.BLINDED, it.publicKey.asBytes).hexString }
+                                            messageIds[messageId] = Pair(
+                                                (message.sender == localUserPublicKey || isUserBlindedSender),
+                                                message.hasMention
+                                            )
+                                        }
+                                        parameters.openGroupMessageServerID?.let {
+                                            MessageReceiver.handleOpenGroupReactions(threadId, it, parameters.reactions)
+                                        }
                                     }
-                                    parameters.openGroupMessageServerID?.let {
-                                        MessageReceiver.handleOpenGroupReactions(threadId, it, parameters.reactions)
+
+                                    is UnsendRequest -> {
+                                        val deletedMessageId = MessageReceiver.handleUnsendRequest(message)
+
+                                        // If we removed a message then ensure it isn't in the 'messageIds'
+                                        if (deletedMessageId != null) {
+                                            messageIds.remove(deletedMessageId)
+                                        }
                                     }
-                                } else {
-                                    MessageReceiver.handle(message, proto, openGroupID)
+
+                                    else -> MessageReceiver.handle(message, proto, openGroupID)
                                 }
                             } catch (e: Exception) {
-                                Log.e(TAG, "Couldn't process message.", e)
+                                Log.e(TAG, "Couldn't process message (id: $id)", e)
                                 if (e is MessageReceiver.Error && !e.isRetryable) {
-                                    Log.e(TAG, "Message failed permanently",e)
+                                    Log.e(TAG, "Message failed permanently (id: $id)", e)
                                 } else {
-                                    Log.e(TAG, "Message failed",e)
+                                    Log.e(TAG, "Message failed (id: $id)", e)
                                     failures += parameters
                                 }
                             }
                         }
                         // increment unreads, notify, and update thread
-                        val unreadFromMine = messageIds.indexOfLast { (_,fromMe) -> fromMe }
-                        var trueUnreadCount = messageIds.filter { (_,fromMe) -> !fromMe }.size
+                        val unreadFromMine = messageIds.map { it.value.first }.indexOfLast { it }
+                        var trueUnreadCount = messageIds.filter { !it.value.first }.size
+                        var trueUnreadMentionCount = messageIds.filter { !it.value.first && it.value.second }.size
                         if (unreadFromMine >= 0) {
-                            trueUnreadCount -= (unreadFromMine + 1)
                             storage.markConversationAsRead(threadId, false)
+
+                            val trueUnreadIds = messageIds.keys.toList().subList(unreadFromMine + 1, messageIds.keys.count())
+                            trueUnreadCount = trueUnreadIds.size
+                            trueUnreadMentionCount = messageIds
+                                    .filter { trueUnreadIds.contains(it.key) && !it.value.first && it.value.second }
+                                    .size
                         }
                         if (trueUnreadCount > 0) {
-                            storage.incrementUnread(threadId, trueUnreadCount)
+                            storage.incrementUnread(threadId, trueUnreadCount, trueUnreadMentionCount)
                         }
                         storage.updateThread(threadId, true)
                         SSKEnvironment.shared.notificationManager.updateNotification(context, threadId)
@@ -158,19 +188,21 @@ class BatchMessageReceiveJob(
                 deferredThreadMap.awaitAll()
             }
             if (failures.isEmpty()) {
-                handleSuccess()
+                handleSuccess(dispatcherName)
             } else {
-                handleFailure()
+                handleFailure(dispatcherName)
             }
         }
     }
 
-    private fun handleSuccess() {
-        this.delegate?.handleJobSucceeded(this)
+    private fun handleSuccess(dispatcherName: String) {
+        Log.i(TAG, "Completed processing of ${messages.size} messages (id: $id)")
+        this.delegate?.handleJobSucceeded(this, dispatcherName)
     }
 
-    private fun handleFailure() {
-        this.delegate?.handleJobFailed(this, Exception("One or more jobs resulted in failure"))
+    private fun handleFailure(dispatcherName: String) {
+        Log.i(TAG, "Handling failure of ${failures.size} messages (${messages.size - failures.size} processed successfully) (id: $id)")
+        this.delegate?.handleJobFailed(this, dispatcherName, Exception("One or more jobs resulted in failure"))
     }
 
     override fun serialize(): Data {
