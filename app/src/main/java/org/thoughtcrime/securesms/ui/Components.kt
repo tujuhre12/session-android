@@ -30,9 +30,12 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import com.google.accompanist.pager.HorizontalPagerIndicator
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
+import org.session.libsession.utilities.recipients.Recipient
+import org.thoughtcrime.securesms.components.ProfilePictureView
 
 @Composable
 fun ItemButton(
@@ -153,4 +156,22 @@ fun Divider() {
         modifier = Modifier.padding(horizontal = 16.dp),
         color = LocalExtraColors.current.divider
     )
+}
+
+@Composable
+fun RowScope.Avatar(recipient: Recipient) {
+    Box(
+        modifier = Modifier
+            .width(60.dp)
+            .align(Alignment.CenterVertically)
+    ) {
+        AndroidView(
+            factory = {
+                ProfilePictureView(it).apply { update(recipient) }
+            },
+            modifier = Modifier
+                .width(46.dp)
+                .height(46.dp)
+        )
+    }
 }

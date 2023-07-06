@@ -1,8 +1,10 @@
 package org.thoughtcrime.securesms.conversation.v2
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.MotionEvent.ACTION_UP
 import androidx.activity.viewModels
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
@@ -12,11 +14,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
@@ -51,15 +50,14 @@ import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
 import org.session.libsession.messaging.jobs.AttachmentDownloadJob
 import org.session.libsession.messaging.jobs.JobQueue
-import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.MediaPreviewActivity
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
-import org.thoughtcrime.securesms.components.ProfilePictureView
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.mms.ImageSlide
 import org.thoughtcrime.securesms.mms.Slide
 import org.thoughtcrime.securesms.ui.AppTheme
+import org.thoughtcrime.securesms.ui.Avatar
 import org.thoughtcrime.securesms.ui.CarouselNextButton
 import org.thoughtcrime.securesms.ui.CarouselPrevButton
 import org.thoughtcrime.securesms.ui.Cell
@@ -163,6 +161,7 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
         }
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     @Composable
     fun MessageDetails(
         messageDetails: MessageDetails,
@@ -186,6 +185,11 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
                                     thread = message.individualRecipient,
                                     onAttachmentNeedsDownload = ::onAttachmentNeedsDownload
                                 )
+
+                                setOnTouchListener { _, event ->
+                                    if (event.actionMasked == ACTION_UP) onContentClick(event)
+                                    true
+                                }
                             }
                         }
                     )
@@ -222,24 +226,6 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
                     }
                 }
             }
-        }
-    }
-
-    @Composable
-    fun RowScope.Avatar(sender: Recipient) {
-        Box(
-            modifier = Modifier
-                .width(60.dp)
-                .align(Alignment.CenterVertically)
-        ) {
-            AndroidView(
-                factory = {
-                    ProfilePictureView(it).apply { update(sender) }
-                },
-                modifier = Modifier
-                    .width(46.dp)
-                    .height(46.dp)
-            )
         }
     }
 
