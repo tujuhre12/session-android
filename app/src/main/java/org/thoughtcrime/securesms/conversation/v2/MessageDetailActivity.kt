@@ -48,7 +48,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
-import network.loki.messenger.databinding.ViewVisibleMessageBinding
 import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
 import org.session.libsession.messaging.jobs.AttachmentDownloadJob
 import org.session.libsession.messaging.jobs.JobQueue

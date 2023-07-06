@@ -47,7 +47,6 @@ import kotlin.math.roundToInt
 
 class VisibleMessageContentView : ConstraintLayout {
     private val binding: ViewVisibleMessageContentBinding by lazy { ViewVisibleMessageContentBinding.bind(this) }
-    var onContentClick: MutableList<((event: MotionEvent) -> Unit)> = mutableListOf()
     var onContentDoubleTap: (() -> Unit)? = null
     var delegate: VisibleMessageViewDelegate? = null
     var indexInAdapter: Int = -1
@@ -240,6 +239,12 @@ class VisibleMessageContentView : ConstraintLayout {
         val layoutParams = binding.contentParent.layoutParams as ConstraintLayout.LayoutParams
         layoutParams.horizontalBias = if (message.isOutgoing) 1f else 0f
         binding.contentParent.layoutParams = layoutParams
+    }
+
+    private val onContentClick: MutableList<((event: MotionEvent) -> Unit)> = mutableListOf()
+
+    fun onContentClick(event: MotionEvent) {
+        onContentClick.forEach { clickHandler -> clickHandler.invoke(event) }
     }
 
     private fun ViewVisibleMessageContentBinding.barrierViewsGone(): Boolean =

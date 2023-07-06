@@ -2,7 +2,6 @@ package org.thoughtcrime.securesms.conversation.v2.messages
 
 import android.content.Context
 import android.content.Intent
-import android.content.res.Resources
 import android.graphics.Canvas
 import android.graphics.Rect
 import android.graphics.drawable.ColorDrawable
@@ -502,7 +501,7 @@ class VisibleMessageView : LinearLayout {
     }
 
     fun onContentClick(event: MotionEvent) {
-        binding.messageContentView.root.onContentClick.iterator().forEach { clickHandler -> clickHandler.invoke(event) }
+        binding.messageContentView.root.onContentClick(event)
     }
 
     private fun onPress(event: MotionEvent) {
