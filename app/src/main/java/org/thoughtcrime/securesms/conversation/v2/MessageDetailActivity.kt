@@ -183,7 +183,8 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
                                 bind(
                                     message,
                                     thread = message.individualRecipient,
-                                    onAttachmentNeedsDownload = ::onAttachmentNeedsDownload
+                                    onAttachmentNeedsDownload = ::onAttachmentNeedsDownload,
+                                    suppressThumbnails = true
                                 )
 
                                 setOnTouchListener { _, event ->

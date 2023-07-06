@@ -66,7 +66,8 @@ class VisibleMessageContentView : ConstraintLayout {
         thread: Recipient,
         searchQuery: String? = null,
         contactIsTrusted: Boolean = true,
-        onAttachmentNeedsDownload: (Long, Long) -> Unit
+        onAttachmentNeedsDownload: (Long, Long) -> Unit,
+        suppressThumbnails: Boolean = false
     ) {
         // Background
         val background = getBackground(message.isOutgoing)
@@ -188,7 +189,7 @@ class VisibleMessageContentView : ConstraintLayout {
                     onContentClick.add { binding.untrustedView.root.showTrustDialog(message.individualRecipient) }
                 }
             }
-            message is MmsMessageRecord && message.slideDeck.asAttachments().isNotEmpty() -> {
+            message is MmsMessageRecord && !suppressThumbnails && message.slideDeck.asAttachments().isNotEmpty() -> {
                 /*
                  *    Images / Video attachment
                  */
