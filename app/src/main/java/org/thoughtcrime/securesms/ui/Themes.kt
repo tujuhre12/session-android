@@ -29,7 +29,7 @@ fun AppTheme(
     val extraColors = LocalContext.current.run {
         ExtraColors(
             cell = getColorFromTheme(R.attr.colorCellBackground),
-            divider = getColorFromTheme(R.attr.dividerHorizontal),
+            divider = getColorFromTheme(R.attr.dividerHorizontal).copy(alpha = 0.15f),
             settingsBackground = getColorFromTheme(R.attr.colorSettingsBackground)
         )
     }
