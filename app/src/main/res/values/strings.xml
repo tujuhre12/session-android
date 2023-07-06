@@ -78,7 +78,6 @@
     <!--  Conversation icons -->
     <string name="AccessibilityId_call_button">Call button</string>
     <string name="AccessibilityId_settings">Settings</string>
-    <string name="AccessibilityId_disappearing_messages_timer">Disappearing messages timer</string>
     <string name="AccessibilityId_disappearing_messages_time_picker">Time selector</string>
     <string name="AccessibilityId_accept_message_request_button">Accept message request</string>
     <string name="AccessibilityId_decline_message_request_button">Decline message request</string>

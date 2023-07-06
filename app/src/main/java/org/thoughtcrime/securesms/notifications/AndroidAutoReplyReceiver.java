@@ -85,7 +85,7 @@ public class AndroidAutoReplyReceiver extends BroadcastReceiver {
 
           VisibleMessage message = new VisibleMessage();
           message.setText(responseText.toString());
-          message.setSentTimestamp(SnodeAPI.getNowWithOffset() + SnodeAPI.INSTANCE.getClockOffset());
+          message.setSentTimestamp(SnodeAPI.getNowWithOffset());
           MessageSender.send(message, recipient.getAddress());
           ExpirationConfiguration config = DatabaseComponent.get(context).expirationConfigurationDatabase().getExpirationConfiguration(threadId);
           long expiresInMillis = config == null ? 0 : config.getDurationSeconds() * 1000L;

@@ -154,6 +154,8 @@ import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.MediaUtil
 import org.thoughtcrime.securesms.util.SaveAttachmentTask
+import org.thoughtcrime.securesms.util.drawToBitmap
+import org.thoughtcrime.securesms.util.isScrolledToBottom
 import org.thoughtcrime.securesms.util.push
 import org.thoughtcrime.securesms.util.show
 import org.thoughtcrime.securesms.util.toPx
@@ -381,7 +383,6 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         }
 
         updateUnreadCountIndicator()
-        updateSubtitle()
         setUpBlockedBanner()
         binding!!.searchBottomBar.setEventListener(this)
         updateSendAfterApprovalText()
@@ -699,7 +700,6 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             }
             setUpMessageRequestsBar()
             invalidateOptionsMenu()
-            updateSubtitle()
             updateSendAfterApprovalText()
             showOrHideInputIfNeeded()
 
@@ -1451,7 +1451,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         processMessageRequestApproval()
         // Create the message
         val message = VisibleMessage()
-        message.sentTimestamp = SnodeAPI.nowWithOffset
+        val sentTimestampMs = SnodeAPI.nowWithOffset
+        message.sentTimestamp = sentTimestampMs
         message.text = body
         val quote = quotedMessage?.let {
             val quotedAttachments = (it as? MmsMessageRecord)?.slideDeck?.asAttachments() ?: listOf()

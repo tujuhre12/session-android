@@ -32,12 +32,6 @@ import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.messaging.utilities.WebRtcUtils
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.GroupRecord
-import org.session.libsession.utilities.GroupUtil
-import org.session.libsession.utilities.ProfileKeyUtil
-import org.session.libsession.utilities.SSKEnvironment
-import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.GroupUtil
@@ -282,7 +276,7 @@ fun MessageReceiver.updateExpiryIfNeeded(message: Message, proto: SignalServiceP
 
     // handle a delete after send expired fetch
     if (type == ExpirationType.DELETE_AFTER_SEND
-        && sentTime + configToUse.durationSeconds <= SnodeAPI.nowWithClockOffset) {
+        && sentTime + configToUse.durationSeconds <= SnodeAPI.nowWithOffset) {
         throw MessageReceiver.Error.ExpiredMessage
     }
     // handle a delete after read last known config value (test) TODO: actually implement this with shared config library

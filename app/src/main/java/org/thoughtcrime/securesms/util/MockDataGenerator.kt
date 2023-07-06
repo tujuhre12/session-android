@@ -7,8 +7,6 @@ import org.session.libsession.messaging.messages.signal.IncomingTextMessage
 import org.session.libsession.messaging.messages.signal.OutgoingTextMessage
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.open_groups.OpenGroupApi
-import org.session.libsession.messaging.sending_receiving.notifications.PushNotificationAPI
-import org.session.libsession.messaging.sending_receiving.pollers.ClosedGroupPollerV2
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.recipients.Recipient
@@ -21,7 +19,6 @@ import org.thoughtcrime.securesms.crypto.KeyPairUtilities
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.groups.GroupManager
 import java.security.SecureRandom
-import java.util.*
 import kotlin.random.asKotlinRandom
 
 object MockDataGenerator {
@@ -134,6 +131,7 @@ object MockDataGenerator {
                                         .joinToString(),
                                 Optional.absent(),
                                 0,
+                                0,
                                 false,
                                 -1,
                                 false
@@ -151,6 +149,7 @@ object MockDataGenerator {
                                 (0 until messageWords)
                                     .map { wordContent.random(dmThreadRandomGenerator.asKotlinRandom()) }
                                     .joinToString(),
+                                0,
                                 0,
                                 -1,
                                 (timestampNow - (index * 5000))
@@ -264,6 +263,7 @@ object MockDataGenerator {
                                     .joinToString(),
                                 Optional.absent(),
                                 0,
+                                0,
                                 false,
                                 -1,
                                 false
@@ -281,6 +281,7 @@ object MockDataGenerator {
                                 (0 until messageWords)
                                     .map { wordContent.random(cgThreadRandomGenerator.asKotlinRandom()) }
                                     .joinToString(),
+                                0,
                                 0,
                                 -1,
                                 (timestampNow - (index * 5000))
@@ -390,6 +391,7 @@ object MockDataGenerator {
                                     .joinToString(),
                                 Optional.absent(),
                                 0,
+                                0,
                                 false,
                                 -1,
                                 false
@@ -406,6 +408,7 @@ object MockDataGenerator {
                                 (0 until messageWords)
                                     .map { wordContent.random(ogThreadRandomGenerator.asKotlinRandom()) }
                                     .joinToString(),
+                                0,
                                 0,
                                 -1,
                                 (timestampNow - (index * 5000))
