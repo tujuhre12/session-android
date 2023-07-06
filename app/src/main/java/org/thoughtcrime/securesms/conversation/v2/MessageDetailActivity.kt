@@ -7,7 +7,6 @@ import android.view.LayoutInflater
 import android.view.MotionEvent.ACTION_UP
 import androidx.activity.viewModels
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,7 +31,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.painterResource
@@ -52,6 +50,8 @@ import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
 import org.session.libsession.messaging.jobs.AttachmentDownloadJob
 import org.session.libsession.messaging.jobs.JobQueue
+import org.session.libsession.messaging.sending_receiving.attachments.AttachmentTransferProgress
+import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.thoughtcrime.securesms.MediaPreviewActivity
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.database.Storage
@@ -124,13 +124,19 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
             onResend = { setResultAndFinish(ON_RESEND) },
             onDelete = { setResultAndFinish(ON_DELETE) },
             onClickImage = { slide ->
-                MediaPreviewActivity.getPreviewIntent(
+                // only open to downloaded images
+                if (slide.transferState == AttachmentTransferProgress.TRANSFER_PROGRESS_FAILED) {
+                    // Restart download here (on IO thread)
+                    (slide.asAttachment() as? DatabaseAttachment)?.let { attachment ->
+                        onAttachmentNeedsDownload(attachment.attachmentId.rowId, details.mmsRecord!!.getId())
+                    }
+                }
+                if (!slide.isInProgress) MediaPreviewActivity.getPreviewIntent(
                     this,
                     slide,
                     details.mmsRecord,
-                    details.sender
-                )
-                    .let(::startActivity)
+                    DatabaseComponent.get(this).threadDatabase().getRecipientForThreadId(details.mmsRecord!!.threadId),
+                ).let(::startActivity)
             }
         )
     }
@@ -184,7 +190,7 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
                             ViewVisibleMessageContentBinding.inflate(LayoutInflater.from(it)).mainContainerConstraint.apply {
                                 bind(
                                     message,
-                                    thread = message.individualRecipient,
+                                    thread = DatabaseComponent.get(this@MessageDetailActivity).threadDatabase().getRecipientForThreadId(message.threadId)!!,
                                     onAttachmentNeedsDownload = ::onAttachmentNeedsDownload,
                                     suppressThumbnails = true
                                 )
@@ -286,10 +292,9 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
                     HorizontalPagerIndicator(pagerState)
                     ExpandButton(
                         modifier = Modifier
-                            .clickable { onClick(imageAttachments[pagerState.currentPage].slide) }
                             .align(Alignment.BottomEnd)
                             .padding(8.dp)
-                    )
+                    ) { onClick(imageAttachments[pagerState.currentPage].slide) }
                 }
                 CarouselNextButton(pagerState)
             }
@@ -323,7 +328,7 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
     }
 
     @Composable
-    fun ExpandButton(modifier: Modifier) {
+    fun ExpandButton(modifier: Modifier, onClick: () -> Unit) {
         Surface(
             shape = CircleShape,
             color = blackAlpha40,
@@ -331,7 +336,8 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.ic_expand),
-                contentDescription = ""
+                contentDescription = "",
+                modifier = Modifier.clickable { onClick() }
             )
         }
     }
