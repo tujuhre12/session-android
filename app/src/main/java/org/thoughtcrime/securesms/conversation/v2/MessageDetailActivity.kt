@@ -284,6 +284,7 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
                     HorizontalPagerIndicator(pagerState)
                     ExpandButton(
                         modifier = Modifier
+                            .clickable { onClick(imageAttachments[pagerState.currentPage].slide) }
                             .align(Alignment.BottomEnd)
                             .padding(8.dp)
                     )
