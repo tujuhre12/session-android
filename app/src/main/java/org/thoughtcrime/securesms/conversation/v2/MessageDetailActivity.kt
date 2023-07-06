@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.MotionEvent.ACTION_UP
 import androidx.activity.viewModels
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -31,6 +32,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.painterResource
@@ -177,7 +179,7 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
             ) {
                 messageDetails.mmsRecord?.let { message ->
                     AndroidView(
-                        modifier = Modifier.padding(32.dp),
+                        modifier = Modifier.padding(horizontal = 32.dp),
                         factory = {
                             ViewVisibleMessageContentBinding.inflate(LayoutInflater.from(it)).mainContainerConstraint.apply {
                                 bind(
