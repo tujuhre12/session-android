@@ -183,7 +183,7 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
                 modifier = Modifier.verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                messageDetails.mmsRecord?.let { message ->
+                messageDetails.record?.let { message ->
                     AndroidView(
                         modifier = Modifier.padding(horizontal = 32.dp),
                         factory = {

@@ -20,6 +20,7 @@ data class TitledText(val title: String, val value: String)
 
 data class MessageDetails(
     val attachments: List<Attachment> = emptyList(),
+    val record: MessageRecord? = null,
     val mmsRecord: MmsMessageRecord? = null,
     val sent: TitledText? = null,
     val received: TitledText? = null,
@@ -38,13 +39,14 @@ class MessageDetailsViewModel @Inject constructor(
     private val attachmentDb: AttachmentDatabase
 ): ViewModel() {
 
-    fun setMessageRecord(value: MessageRecord?, error: String?) {
-        val mmsRecord = value as? MmsMessageRecord
+    fun setMessageRecord(record: MessageRecord?, error: String?) {
+        val mmsRecord = record as? MmsMessageRecord
 
         val slides: List<Slide> = mmsRecord?.slideDeck?.thumbnailSlides?.toList() ?: emptyList()
 
-        _details.value = value?.run {
+        _details.value = record?.run {
             MessageDetails(
+                record = record,
                 mmsRecord = mmsRecord,
                 attachments = slides.map { Attachment(it, it.details) },
                 sent = dateSent.let(::Date).toString().let { TitledText("Sent:", it) },
