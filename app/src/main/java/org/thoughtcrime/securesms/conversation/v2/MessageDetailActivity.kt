@@ -130,7 +130,7 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
                 threadDb = threadDb,
                 messageDetails = details,
                 onReply = { setResultAndFinish(ON_REPLY) },
-                onResend = { setResultAndFinish(ON_RESEND) },
+                onResend = details.error?.let { { setResultAndFinish(ON_RESEND) } },
                 onDelete = { setResultAndFinish(ON_DELETE) },
                 onClickImage = { slide ->
                     // only open to downloaded images
