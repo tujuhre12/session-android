@@ -43,6 +43,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.lifecycleScope
@@ -73,7 +74,8 @@ import org.thoughtcrime.securesms.ui.CellWithPaddingAndMargin
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.HorizontalPagerIndicator
 import org.thoughtcrime.securesms.ui.ItemButton
-import org.thoughtcrime.securesms.ui.Theme
+import org.thoughtcrime.securesms.ui.PreviewTheme
+import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
 import org.thoughtcrime.securesms.ui.blackAlpha40
 import org.thoughtcrime.securesms.ui.colorDestructive
 import org.thoughtcrime.securesms.ui.destructiveButtonColors
@@ -352,8 +354,10 @@ fun ExpandButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
 
 @Preview
 @Composable
-fun PreviewFileDetails() {
-    Theme(R.style.Ocean_Dark) {
+fun PreviewFileDetails(
+    @PreviewParameter(ThemeResPreviewParameterProvider::class) themeResId: Int
+) {
+    PreviewTheme(themeResId) {
         FileDetails(
             fileDetails = listOf(
                 TitledText("File Id:", "Screen Shot 2023-07-06 at 11.35.50 am.png"),
@@ -362,6 +366,16 @@ fun PreviewFileDetails() {
                 TitledText("Resolution:", "342x312"),
             )
         )
+    }
+}
+
+@Preview
+@Composable
+fun PreviewMessageDetails(
+    @PreviewParameter(ThemeResPreviewParameterProvider::class) themeResId: Int
+) {
+    PreviewTheme(themeResId) {
+        PreviewMessageDetails()
     }
 }
 

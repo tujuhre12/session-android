@@ -23,16 +23,14 @@ import org.thoughtcrime.securesms.conversation.v2.PreviewMessageDetails
 
 val LocalExtraColors = staticCompositionLocalOf<ExtraColors> { error("No Custom Attribute value provided") }
 
+
 data class ExtraColors(
     val settingsBackground: Color,
 )
 
-fun Context.getColorFromTheme(@AttrRes attr: Int, defaultValue: Int = 0x0): Color = try {
-    MaterialColors.getColor(this, attr, defaultValue).let(::Color)
-} catch (e: Exception) {
-    colorDestructive
-}
-
+/**
+ * Converts current Theme to Compose Theme.
+ */
 @Composable
 fun AppTheme(
     content: @Composable () -> Unit
@@ -50,25 +48,24 @@ fun AppTheme(
     }
 }
 
-@Preview
-@Composable
-fun PreviewMessageDetails(
-    @PreviewParameter(ThemeResPreviewParameterProvider::class) themeResId: Int
-) {
-    Theme(themeResId) {
-        Box(modifier = Modifier.background(color = MaterialTheme.colors.background)) {
-            PreviewMessageDetails()
-        }
-    }
-}
+fun Context.getColorFromTheme(@AttrRes attr: Int, defaultValue: Int = 0x0): Color =
+    MaterialColors.getColor(this, attr, defaultValue).let(::Color)
 
+/**
+ * Set the theme and a background for Compose Previews.
+ */
 @Composable
-fun Theme(@StyleRes themeResId: Int, content: @Composable () -> Unit) {
+fun PreviewTheme(
+    themeResId: Int,
+    content: @Composable () -> Unit
+) {
     CompositionLocalProvider(
         LocalContext provides ContextThemeWrapper(LocalContext.current, themeResId)
     ) {
         AppTheme {
-            content()
+            Box(modifier = Modifier.background(color = MaterialTheme.colors.background)) {
+                content()
+            }
         }
     }
 }
