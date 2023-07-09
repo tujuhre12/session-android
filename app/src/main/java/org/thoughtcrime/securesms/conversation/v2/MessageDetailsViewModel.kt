@@ -3,7 +3,6 @@ package org.thoughtcrime.securesms.conversation.v2
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.HiltViewModel
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Util
@@ -11,6 +10,7 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
+import org.thoughtcrime.securesms.mms.ImageSlide
 import org.thoughtcrime.securesms.mms.Slide
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -32,12 +32,14 @@ data class MessageDetails(
 data class Attachment(
     val slide: Slide,
     val fileDetails: List<TitledText>
-)
+) {
+    fun hasImage() = slide is ImageSlide
+}
 
 @HiltViewModel
 class MessageDetailsViewModel @Inject constructor(
     private val attachmentDb: AttachmentDatabase
-): ViewModel() {
+) : ViewModel() {
 
     fun setMessageRecord(record: MessageRecord?, error: String?) {
         val mmsRecord = record as? MmsMessageRecord
@@ -77,16 +79,13 @@ class MessageDetailsViewModel @Inject constructor(
     private fun AttachmentDatabase.duration(slide: Slide): String? =
         slide.takeIf { it.hasAudio() }
             ?.run { asAttachment() as? DatabaseAttachment }
-            ?.run {
-                getAttachmentAudioExtras(attachmentId)
-                    ?.let { audioExtras ->
-                        audioExtras.durationMs.takeIf { it > 0 }?.let {
-                            String.format(
-                                "%01d:%02d",
-                                TimeUnit.MILLISECONDS.toMinutes(it),
-                                TimeUnit.MILLISECONDS.toSeconds(it) % 60
-                            )
-                        }
-                    }
+            ?.run { getAttachmentAudioExtras(attachmentId)?.durationMs }
+            ?.takeIf { it > 0 }
+            ?.let {
+                String.format(
+                    "%01d:%02d",
+                    TimeUnit.MILLISECONDS.toMinutes(it),
+                    TimeUnit.MILLISECONDS.toSeconds(it) % 60
+                )
             }
 }
