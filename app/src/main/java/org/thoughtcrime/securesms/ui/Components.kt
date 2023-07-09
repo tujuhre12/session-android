@@ -1,32 +1,50 @@
 package org.thoughtcrime.securesms.ui
 
 import androidx.annotation.DrawableRes
+import androidx.appcompat.view.ContextThemeWrapper
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.gestures.FlingBehavior
+import androidx.compose.foundation.gestures.ScrollableDefaults
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.FlowRowScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyGridScope
+import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ButtonColors
 import androidx.compose.material.Card
+import androidx.compose.material.Colors
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -36,6 +54,13 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.components.ProfilePictureView
+import kotlin.math.roundToInt
+
+private val Colors.cellColors: Colors
+    @Composable
+    get() = MaterialTheme.colors.copy(
+            surface = LocalExtraColors.current.settingsBackground,
+    )
 
 @Composable
 fun ItemButton(
@@ -80,17 +105,18 @@ fun CellWithPaddingAndMargin(
     margin: Dp = 32.dp,
     content: @Composable () -> Unit
 ) {
-    Card(
-        shape = RoundedCornerShape(16.dp),
-        elevation = 0.dp,
-        modifier = Modifier
-            .wrapContentHeight()
-            .fillMaxWidth()
-            .padding(horizontal = margin),
-        backgroundColor = LocalExtraColors.current.settingsBackground,
-        // probably wrong
-        contentColor = MaterialTheme.colors.onSurface
-    ) { Box(Modifier.padding(padding)) { content() } }
+    MaterialTheme(colors = MaterialTheme.colors.cellColors) {
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            elevation = 0.dp,
+            modifier = Modifier
+                .wrapContentHeight()
+                .fillMaxWidth()
+                .padding(horizontal = margin),
+        ) {
+            Box(Modifier.padding(padding)) { content() }
+        }
+    }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -108,7 +134,7 @@ fun BoxScope.HorizontalPagerIndicator(pagerState: PagerState) {
                 pagerState = pagerState,
                 pageCount = pagerState.pageCount,
                 activeColor = Color.White,
-                inactiveColor = classicDark5)
+                inactiveColor = classicDarkColors[5])
         }
     }
 }
@@ -154,7 +180,6 @@ fun RowScope.CarouselButton(
 fun Divider() {
     androidx.compose.material.Divider(
         modifier = Modifier.padding(horizontal = 16.dp),
-        color = LocalExtraColors.current.divider
     )
 }
 

@@ -490,7 +490,6 @@
         <item name="android:textColor">?android:textColorPrimary</item>
         <item name="android:textColorHint">@color/ocean_dark_5</item>
         <item name="android:windowBackground">?colorPrimary</item>
-        <item name="android:colorBackground">@color/default_background_start</item>
         <item name="android:navigationBarColor">@color/navigation_bar</item>
         <item name="default_background_end">?colorPrimary</item>
         <item name="default_background_start">?colorPrimaryDark</item>
@@ -575,7 +574,6 @@
         <item name="android:textColorHint">@color/ocean_light_6</item>
         <item name="android:navigationBarColor">@color/ocean_light_navigation_bar</item>
         <item name="android:windowBackground">?colorPrimary</item>
-        <item name="android:colorBackground">@color/default_background_start</item>
         <item name="default_background_end">@color/ocean_light_7</item>
         <item name="default_background_start">@color/ocean_light_6</item>
         <item name="colorCellBackground">@color/ocean_light_5</item>
