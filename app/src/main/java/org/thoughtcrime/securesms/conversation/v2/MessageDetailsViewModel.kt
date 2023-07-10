@@ -3,12 +3,8 @@ package org.thoughtcrime.securesms.conversation.v2
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import org.session.libsession.messaging.jobs.AttachmentDownloadJob
-import org.session.libsession.messaging.jobs.JobQueue
+import network.loki.messenger.R
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Util
 import org.session.libsession.utilities.recipients.Recipient
@@ -20,36 +16,11 @@ import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.mms.ImageSlide
 import org.thoughtcrime.securesms.mms.Slide
-import java.util.*
+import org.thoughtcrime.securesms.ui.GetString
+import org.thoughtcrime.securesms.ui.TitledText
+import java.util.Date
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
-
-data class TitledText(val title: String, val value: String)
-
-data class MessageDetailsState(
-    val attachments: List<Attachment> = emptyList(),
-    val record: MessageRecord? = null,
-    val mmsRecord: MmsMessageRecord? = null,
-    val sent: TitledText? = null,
-    val received: TitledText? = null,
-    val error: TitledText? = null,
-    val senderInfo: TitledText? = null,
-    val sender: Recipient? = null,
-    val thread: Recipient? = null,
-) {
-    val imageAttachments = attachments.filter { it.hasImage() }
-    val nonImageAttachment: Attachment? = attachments.firstOrNull { !it.hasImage() }
-}
-
-data class Attachment(
-    val slide: Slide,
-    val fileDetails: List<TitledText>
-) {
-    val fileName: String? get() = slide.fileName.orNull()
-    val uri get() = slide.uri
-
-    fun hasImage() = slide is ImageSlide
-}
 
 @HiltViewModel
 class MessageDetailsViewModel @Inject constructor(
@@ -60,22 +31,18 @@ class MessageDetailsViewModel @Inject constructor(
 ) : ViewModel() {
 
     fun setMessageTimestamp(timestamp: Long) {
-        mmsSmsDatabase.getMessageForTimestamp(timestamp).let(::setMessageRecord)
-    }
-
-    fun setMessageRecord(record: MessageRecord?) {
+        val record = mmsSmsDatabase.getMessageForTimestamp(timestamp) ?: return
         val mmsRecord = record as? MmsMessageRecord
 
-        val slides: List<Slide> = mmsRecord?.slideDeck?.thumbnailSlides?.toList() ?: emptyList()
+        _details.value = record.run {
+            val slides = mmsRecord?.slideDeck?.thumbnailSlides?.toList() ?: emptyList()
 
-        _details.value = record?.run {
             MessageDetailsState(
                 attachments = slides.map { Attachment(it, it.details) },
                 record = record,
-                mmsRecord = mmsRecord,
-                sent = dateSent.let(::Date).toString().let { TitledText("Sent:", it) },
-                received = dateReceived.let(::Date).toString().let { TitledText("Received:", it) },
-                error = lokiMessageDatabase.getErrorMessage(id)?.let { TitledText("Error:", it) },
+                sent = dateSent.let(::Date).toString().let { TitledText(R.string.message_details_header__sent, it) },
+                received = dateReceived.let(::Date).toString().let { TitledText(R.string.message_details_header__received, it) },
+                error = lokiMessageDatabase.getErrorMessage(id)?.let { TitledText(R.string.message_details_header__error, it) },
                 senderInfo = individualRecipient.run { name?.let { TitledText(it, address.serialize()) } },
                 sender = individualRecipient,
                 thread = threadDb.getRecipientForThreadId(threadId)!!,
@@ -88,13 +55,14 @@ class MessageDetailsViewModel @Inject constructor(
 
     private val Slide.details: List<TitledText>
         get() = listOfNotNull(
-            fileName.orNull()?.let { TitledText("File Id:", it) },
-            TitledText("File Type:", asAttachment().contentType),
-            TitledText("File Size:", Util.getPrettyFileSize(fileSize)),
-            takeIf { it.hasImage() }
-                .run { asAttachment().run { "${width}x$height" } }
-                .let { TitledText("Resolution:", it) },
-            attachmentDb.duration(this)?.let { TitledText("Duration:", it) },
+            fileName.orNull()?.let { TitledText(R.string.message_details_header__file_id, it) },
+            TitledText(R.string.message_details_header__file_type, asAttachment().contentType),
+            TitledText(R.string.message_details_header__file_size, Util.getPrettyFileSize(fileSize)),
+            takeIf { it is ImageSlide }
+                ?.let(Slide::asAttachment)
+                ?.run { "${width}x$height" }
+                ?.let { TitledText(R.string.message_details_header__resolution, it) },
+            attachmentDb.duration(this)?.let { TitledText(R.string.message_details_header__duration, it) },
         )
 
     private fun AttachmentDatabase.duration(slide: Slide): String? =
@@ -110,4 +78,30 @@ class MessageDetailsViewModel @Inject constructor(
                 )
             }
 
+}
+
+data class MessageDetailsState(
+    val attachments: List<Attachment> = emptyList(),
+    val imageAttachments: List<Attachment> = attachments.filter { it.hasImage() },
+    val nonImageAttachmentFileDetails: List<TitledText>? = attachments.firstOrNull { !it.hasImage() }?.fileDetails,
+    val record: MessageRecord? = null,
+    val mmsRecord: MmsMessageRecord? = record as? MmsMessageRecord,
+    val sent: TitledText? = null,
+    val received: TitledText? = null,
+    val error: TitledText? = null,
+    val senderInfo: TitledText? = null,
+    val sender: Recipient? = null,
+    val thread: Recipient? = null,
+) {
+    val fromTitle = GetString(R.string.message_details_header__from)
+}
+
+data class Attachment(
+    val slide: Slide,
+    val fileDetails: List<TitledText>
+) {
+    val fileName: String? get() = slide.fileName.orNull()
+    val uri get() = slide.uri
+
+    fun hasImage() = slide is ImageSlide
 }

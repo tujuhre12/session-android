@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.pager.HorizontalPager
@@ -72,10 +71,12 @@ import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.CellNoMargin
 import org.thoughtcrime.securesms.ui.CellWithPaddingAndMargin
 import org.thoughtcrime.securesms.ui.Divider
+import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.HorizontalPagerIndicator
 import org.thoughtcrime.securesms.ui.ItemButton
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
+import org.thoughtcrime.securesms.ui.TitledText
 import org.thoughtcrime.securesms.ui.blackAlpha40
 import org.thoughtcrime.securesms.ui.colorDestructive
 import org.thoughtcrime.securesms.ui.destructiveButtonColors
@@ -160,22 +161,6 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
             JobQueue.shared.add(AttachmentDownloadJob(attachmentId, mmsId))
         }
     }
-
-}
-
-@Composable
-fun PreviewMessageDetails() {
-    AppTheme {
-        MessageDetails(
-            state = MessageDetailsState(
-                attachments = listOf(),
-                sent = TitledText("Sent:", "6:12 AM Tue, 09/08/2022"),
-                received = TitledText("Received:", "6:12 AM Tue, 09/08/2022"),
-                error = TitledText("Error:", "Message failed to send"),
-                senderInfo = TitledText("Connor", "d4f1g54sdf5g1d5f4g65ds4564df65f4g65d54"),
-            )
-        )
-    }
 }
 
 @SuppressLint("ClickableViewAccessibility")
@@ -215,9 +200,9 @@ fun MessageDetails(
             )
         }
         Carousel(state.imageAttachments) { onClickImage(it) }
-        state.nonImageAttachment?.fileDetails?.let { FileDetails(it) }
-        MetadataCell(state)
-        Buttons(
+        state.nonImageAttachmentFileDetails?.let { FileDetails(it) }
+        CellMetadata(state)
+        CellButtons(
             onReply,
             onResend,
             onDelete,
@@ -226,17 +211,18 @@ fun MessageDetails(
 }
 
 @Composable
-fun MetadataCell(
+fun CellMetadata(
     state: MessageDetailsState,
 ) {
     state.apply {
-        if (sent != null || received != null || senderInfo != null) CellWithPaddingAndMargin {
+        if (listOfNotNull(sent, received, error, senderInfo).isEmpty()) return
+        CellWithPaddingAndMargin {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                sent?.let { TitledText(it) }
-                received?.let { TitledText(it) }
-                error?.let { TitledErrorText(it) }
+                TitledText(sent)
+                TitledText(received)
+                TitledErrorText(error)
                 senderInfo?.let {
-                    TitledView(stringResource(id = R.string.message_details_header__from)) {
+                    TitledView(state.fromTitle) {
                         Row {
                             sender?.let { Avatar(it) }
                             TitledMonospaceText(it)
@@ -249,7 +235,7 @@ fun MetadataCell(
 }
 
 @Composable
-fun Buttons(
+fun CellButtons(
     onReply: () -> Unit = {},
     onResend: (() -> Unit)? = null,
     onDelete: () -> Unit = {},
@@ -257,21 +243,21 @@ fun Buttons(
     Cell {
         Column {
             ItemButton(
-                stringResource(id = R.string.reply),
+                stringResource(R.string.reply),
                 R.drawable.ic_message_details__reply,
                 onClick = onReply
             )
             Divider()
             onResend?.let {
                 ItemButton(
-                    stringResource(id = R.string.resend),
+                    stringResource(R.string.resend),
                     R.drawable.ic_message_details__refresh,
                     onClick = it
                 )
                 Divider()
             }
             ItemButton(
-                stringResource(id = R.string.delete),
+                stringResource(R.string.delete),
                 R.drawable.ic_message_details__trash,
                 colors = destructiveButtonColors(),
                 onClick = onDelete
@@ -345,22 +331,6 @@ fun ExpandButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
     }
 }
 
-@Preview
-@Composable
-fun PreviewFileDetails(
-    @PreviewParameter(ThemeResPreviewParameterProvider::class) themeResId: Int
-) {
-    PreviewTheme(themeResId) {
-        FileDetails(
-            fileDetails = listOf(
-                TitledText("File Id:", "Screen Shot 2023-07-06 at 11.35.50 am.png"),
-                TitledText("File Type:", "image/png"),
-                TitledText("File Size:", "195.6kB"),
-                TitledText("Resolution:", "342x312"),
-            )
-        )
-    }
-}
 
 @Preview
 @Composable
@@ -368,7 +338,20 @@ fun PreviewMessageDetails(
     @PreviewParameter(ThemeResPreviewParameterProvider::class) themeResId: Int
 ) {
     PreviewTheme(themeResId) {
-        PreviewMessageDetails()
+        MessageDetails(
+            state = MessageDetailsState(
+                nonImageAttachmentFileDetails = listOf(
+                    TitledText(R.string.message_details_header__file_id, "Screen Shot 2023-07-06 at 11.35.50 am.png"),
+                    TitledText(R.string.message_details_header__file_type, "image/png"),
+                    TitledText(R.string.message_details_header__file_size, "195.6kB"),
+                    TitledText(R.string.message_details_header__resolution, "342x312"),
+                ),
+                sent = TitledText(R.string.message_details_header__sent, "6:12 AM Tue, 09/08/2022"),
+                received = TitledText(R.string.message_details_header__received, "6:12 AM Tue, 09/08/2022"),
+                error = TitledText(R.string.message_details_header__error, "Message failed to send"),
+                senderInfo = TitledText("Connor", "d4f1g54sdf5g1d5f4g65ds4564df65f4g65d54"),
+            )
+        )
     }
 }
 
@@ -394,37 +377,36 @@ fun FileDetails(fileDetails: List<TitledText>) {
 }
 
 @Composable
-fun TitledErrorText(titledText: TitledText, modifier: Modifier = Modifier) {
+fun TitledErrorText(titledText: TitledText?) {
     TitledText(
         titledText,
-        modifier = modifier,
         valueStyle = LocalTextStyle.current.copy(color = colorDestructive)
     )
 }
 
 @Composable
-fun TitledMonospaceText(titledText: TitledText, modifier: Modifier = Modifier) {
+fun TitledMonospaceText(titledText: TitledText?) {
     TitledText(
         titledText,
-        modifier = modifier,
         valueStyle = LocalTextStyle.current.copy(fontFamily = FontFamily.Monospace)
     )
 }
 
 @Composable
 fun TitledText(
-    titledText: TitledText,
+    titledText: TitledText?,
     modifier: Modifier = Modifier,
-    valueStyle: TextStyle = LocalTextStyle.current
+    valueStyle: TextStyle = LocalTextStyle.current,
 ) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Title(titledText.title)
-        Text(titledText.value, style = valueStyle, modifier = Modifier.fillMaxWidth())
+    titledText?.apply {
+        TitledView(title, modifier) {
+            Text(text, style = valueStyle, modifier = Modifier.fillMaxWidth())
+        }
     }
 }
 
 @Composable
-fun TitledView(title: String, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+fun TitledView(title: GetString, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Title(title)
         content()
@@ -432,6 +414,6 @@ fun TitledView(title: String, modifier: Modifier = Modifier, content: @Composabl
 }
 
 @Composable
-fun Title(text: String, modifier: Modifier = Modifier) {
-    Text(text, modifier = modifier, fontWeight = FontWeight.Bold)
+fun Title(title: GetString) {
+    Text(title.string(), fontWeight = FontWeight.Bold)
 }

@@ -520,6 +520,11 @@
     <string name="message_details_header__to">To:</string>
     <string name="message_details_header__from">From:</string>
     <string name="message_details_header__with">With:</string>
+    <string name="message_details_header__file_id">File Id:</string>
+    <string name="message_details_header__file_type">File Type:</string>
+    <string name="message_details_header__file_size">File Size:</string>
+    <string name="message_details_header__resolution">Resolution:</string>
+    <string name="message_details_header__duration">Duration:</string>
 
     <!-- AndroidManifest.xml -->
     <string name="AndroidManifest__create_passphrase">Create passphrase</string>

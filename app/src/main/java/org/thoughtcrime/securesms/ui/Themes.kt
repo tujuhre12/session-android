@@ -2,7 +2,6 @@ package org.thoughtcrime.securesms.ui
 
 import android.content.Context
 import androidx.annotation.AttrRes
-import androidx.annotation.StyleRes
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -13,13 +12,10 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import com.google.accompanist.themeadapter.appcompat.AppCompatTheme
 import com.google.android.material.color.MaterialColors
 import network.loki.messenger.R
-import org.thoughtcrime.securesms.conversation.v2.PreviewMessageDetails
 
 val LocalExtraColors = staticCompositionLocalOf<ExtraColors> { error("No Custom Attribute value provided") }
 

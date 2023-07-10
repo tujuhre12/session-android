@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.ui
 
 import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.FlingBehavior
@@ -46,6 +47,7 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -61,6 +63,7 @@ fun ItemButton(
     text: String,
     @DrawableRes icon: Int,
     colors: ButtonColors = transparentButtonColors(),
+    contentDescription: String = text,
     onClick: () -> Unit
 ) {
     TextButton(
@@ -76,7 +79,7 @@ fun ItemButton(
             .fillMaxHeight()) {
             Icon(
                 painter = painterResource(id = icon),
-                contentDescription = "",
+                contentDescription = contentDescription,
                 modifier = Modifier.align(Alignment.Center)
             )
         }
