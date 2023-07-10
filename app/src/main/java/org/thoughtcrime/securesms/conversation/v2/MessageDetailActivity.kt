@@ -38,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -360,14 +361,18 @@ fun PreviewMessageDetails(
 fun FileDetails(fileDetails: List<TitledText>) {
     if (fileDetails.isEmpty()) return
 
-    CellWithPaddingAndMargin {
-        FlowRow(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    CellWithPaddingAndMargin(padding = 0.dp) {
+        FlowRow(
+            modifier = Modifier.padding(vertical = 24.dp, horizontal = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
             fileDetails.forEach {
                 BoxWithConstraints {
                     TitledText(
                         it,
                         modifier = Modifier
                             .widthIn(min = maxWidth.div(2))
+                            .padding(horizontal = 12.dp)
                             .width(IntrinsicSize.Max)
                     )
                 }
