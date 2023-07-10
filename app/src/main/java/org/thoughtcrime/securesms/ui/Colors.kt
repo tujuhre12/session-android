@@ -16,8 +16,6 @@ const val classicDark4 = 0xff767676
 const val classicDark5 = 0xffA1A2A1
 const val classicDark6 = 0xffFFFFFF
 
-
-
 const val classicLight0 = 0xff000000
 const val classicLight1 = 0xff6D6D6D
 const val classicLight2 = 0xffA1A2A1

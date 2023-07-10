@@ -12,6 +12,7 @@
     <string name="image">Image</string>
     <string name="note_to_self">Note to Self</string>
     <string name="version_s">Version %s</string>
+    <string name="expand">Expand</string>
 <!--Accessibility ID's-->
     <!-- Landing Page -->
     <string name="AccessibilityId_create_session_id">Create session ID</string>

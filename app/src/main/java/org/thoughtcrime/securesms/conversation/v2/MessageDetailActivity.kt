@@ -10,13 +10,16 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.pager.HorizontalPager
@@ -61,9 +64,6 @@ import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAt
 import org.thoughtcrime.securesms.MediaPreviewActivity
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.database.Storage
-import org.thoughtcrime.securesms.database.ThreadDatabase
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent
-import org.thoughtcrime.securesms.mms.Slide
 import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.Avatar
 import org.thoughtcrime.securesms.ui.CarouselNextButton
@@ -103,20 +103,14 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
     override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
         super.onCreate(savedInstanceState, ready)
 
-        timestamp = intent.getLongExtra(MESSAGE_TIMESTAMP, -1L)
-
-        val messageRecord =
-            DatabaseComponent.get(this).mmsSmsDatabase().getMessageForTimestamp(timestamp) ?: run {
-                finish()
-                return
-            }
-
-        val error = DatabaseComponent.get(this).lokiMessageDatabase()
-            .getErrorMessage(messageRecord.getId())
-
-        viewModel.setMessageRecord(messageRecord, error)
-
         title = resources.getString(R.string.conversation_context__menu_message_details)
+
+        intent.getLongExtra(MESSAGE_TIMESTAMP, -1L).let(viewModel::setMessageTimestamp)
+
+        if (viewModel.details.value == null) {
+            finish()
+            return
+        }
 
         ComposeView(this)
             .apply { setContent { MessageDetailsScreen() } }
@@ -125,28 +119,27 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
 
     @Composable
     private fun MessageDetailsScreen() {
-        val details by viewModel.details.observeAsState(MessageDetails())
-        val threadDb = DatabaseComponent.get(this@MessageDetailActivity).threadDatabase()
+        val state by viewModel.details.observeAsState(MessageDetailsState())
         AppTheme {
             MessageDetails(
-                threadDb = threadDb,
-                messageDetails = details,
+                state = state,
                 onReply = { setResultAndFinish(ON_REPLY) },
-                onResend = details.error?.let { { setResultAndFinish(ON_RESEND) } },
+                onResend = state.error?.let { { setResultAndFinish(ON_RESEND) } },
                 onDelete = { setResultAndFinish(ON_DELETE) },
-                onClickImage = { slide ->
+                onClickImage = { i ->
+                    val slide = state.attachments[i].slide
                     // only open to downloaded images
                     if (slide.transferState == AttachmentTransferProgress.TRANSFER_PROGRESS_FAILED) {
                         // Restart download here (on IO thread)
                         (slide.asAttachment() as? DatabaseAttachment)?.let { attachment ->
-                            onAttachmentNeedsDownload(attachment.attachmentId.rowId, details.mmsRecord!!.getId())
+                            onAttachmentNeedsDownload(attachment.attachmentId.rowId, state.mmsRecord!!.getId())
                         }
                     }
                     if (!slide.isInProgress) MediaPreviewActivity.getPreviewIntent(
                         this,
                         slide,
-                        details.mmsRecord,
-                        threadDb.getRecipientForThreadId(details.mmsRecord!!.threadId),
+                        state.mmsRecord,
+                        state.thread,
                     ).let(::startActivity)
                 },
                 onAttachmentNeedsDownload = ::onAttachmentNeedsDownload,
@@ -174,7 +167,7 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
 fun PreviewMessageDetails() {
     AppTheme {
         MessageDetails(
-            messageDetails = MessageDetails(
+            state = MessageDetailsState(
                 attachments = listOf(),
                 sent = TitledText("Sent:", "6:12 AM Tue, 09/08/2022"),
                 received = TitledText("Received:", "6:12 AM Tue, 09/08/2022"),
@@ -188,12 +181,11 @@ fun PreviewMessageDetails() {
 @SuppressLint("ClickableViewAccessibility")
 @Composable
 fun MessageDetails(
-    threadDb: ThreadDatabase? = null,
-    messageDetails: MessageDetails,
+    state: MessageDetailsState,
     onReply: () -> Unit = {},
     onResend: (() -> Unit)? = null,
     onDelete: () -> Unit = {},
-    onClickImage: (Slide) -> Unit = {},
+    onClickImage: (Int) -> Unit = {},
     onAttachmentNeedsDownload: (Long, Long) -> Unit = { _, _ -> }
 ) {
     Column(
@@ -202,14 +194,14 @@ fun MessageDetails(
             .padding(vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        messageDetails.record?.let { message ->
+        state.record?.let { message ->
             AndroidView(
                 modifier = Modifier.padding(horizontal = 32.dp),
                 factory = {
                     ViewVisibleMessageContentBinding.inflate(LayoutInflater.from(it)).mainContainerConstraint.apply {
                         bind(
                             message,
-                            thread = threadDb?.getRecipientForThreadId(message.threadId)!!,
+                            thread = state.thread!!,
                             onAttachmentNeedsDownload = onAttachmentNeedsDownload,
                             suppressThumbnails = true
                         )
@@ -222,8 +214,9 @@ fun MessageDetails(
                 }
             )
         }
-        Carousel(messageDetails.attachments) { onClickImage(it) }
-        MetadataCell(messageDetails)
+        Carousel(state.imageAttachments) { onClickImage(it) }
+        state.nonImageAttachment?.fileDetails?.let { FileDetails(it) }
+        MetadataCell(state)
         Buttons(
             onReply,
             onResend,
@@ -234,9 +227,9 @@ fun MessageDetails(
 
 @Composable
 fun MetadataCell(
-    messageDetails: MessageDetails,
+    state: MessageDetailsState,
 ) {
-    messageDetails.apply {
+    state.apply {
         if (sent != null || received != null || senderInfo != null) CellWithPaddingAndMargin {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 sent?.let { TitledText(it) }
@@ -289,25 +282,26 @@ fun Buttons(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun Carousel(attachments: List<Attachment>, onClick: (Slide) -> Unit) {
-    val imageAttachments = attachments.filter { it.hasImage() }.takeIf { it.isNotEmpty() } ?: return
-    val pagerState = rememberPagerState { imageAttachments.size }
+fun Carousel(attachments: List<Attachment>, onClick: (Int) -> Unit) {
+    if (attachments.isEmpty()) return
+
+    val pagerState = rememberPagerState { attachments.size }
 
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Row {
             CarouselPrevButton(pagerState)
             Box(modifier = Modifier.weight(1f)) {
-                CellCarousel(pagerState, imageAttachments, onClick)
+                CellCarousel(pagerState, attachments, onClick)
                 HorizontalPagerIndicator(pagerState)
                 ExpandButton(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(8.dp)
-                ) { onClick(imageAttachments[pagerState.currentPage].slide) }
+                ) { onClick(pagerState.currentPage) }
             }
             CarouselNextButton(pagerState)
         }
-        FileDetails(attachments, pagerState)
+        attachments.getOrNull(pagerState.currentPage)?.fileDetails?.let { FileDetails(it) }
     }
 }
 
@@ -318,19 +312,18 @@ fun Carousel(attachments: List<Attachment>, onClick: (Slide) -> Unit) {
 @Composable
 private fun CellCarousel(
     pagerState: PagerState,
-    imageAttachments: List<Attachment>,
-    onClick: (Slide) -> Unit
+    attachments: List<Attachment>,
+    onClick: (Int) -> Unit
 ) {
     CellNoMargin {
         HorizontalPager(state = pagerState) { i ->
-            val slide = imageAttachments[i].slide
             GlideImage(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .aspectRatio(1f)
-                    .clickable { onClick(slide) },
-                model = slide.uri,
-                contentDescription = slide.fileName.orNull() ?: stringResource(id = R.string.image)
+                    .clickable { onClick(i) },
+                model = attachments[i].uri,
+                contentDescription = attachments[i].fileName ?: stringResource(id = R.string.image)
             )
         }
     }
@@ -346,7 +339,7 @@ fun ExpandButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
     ) {
         Icon(
             painter = painterResource(id = R.drawable.ic_expand),
-            contentDescription = "",
+            contentDescription = stringResource(id = R.string.expand),
             modifier = Modifier.clickable { onClick() },
         )
     }
@@ -379,12 +372,6 @@ fun PreviewMessageDetails(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-fun FileDetails(attachments: List<Attachment>, pagerState: PagerState) {
-    FileDetails(attachments[pagerState.currentPage].fileDetails)
-}
-
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun FileDetails(fileDetails: List<TitledText>) {
@@ -393,13 +380,14 @@ fun FileDetails(fileDetails: List<TitledText>) {
     CellWithPaddingAndMargin {
         FlowRow(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             fileDetails.forEach {
-                TitledText(
-                    it,
-                    modifier = Modifier
-                        .widthIn(min = 100.dp)    // set minimum width
-                        .width(IntrinsicSize.Max) // make the text as wide as necessary
-                        .weight(1f)               // space evenly
-                )
+                BoxWithConstraints {
+                    TitledText(
+                        it,
+                        modifier = Modifier
+                            .widthIn(min = maxWidth.div(2))
+                            .width(IntrinsicSize.Max)
+                    )
+                }
             }
         }
     }
@@ -431,7 +419,7 @@ fun TitledText(
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Title(titledText.title)
-        Text(titledText.value, style = valueStyle)
+        Text(titledText.value, style = valueStyle, modifier = Modifier.fillMaxWidth())
     }
 }
 

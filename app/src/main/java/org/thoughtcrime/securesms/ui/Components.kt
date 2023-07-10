@@ -56,12 +56,6 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.components.ProfilePictureView
 import kotlin.math.roundToInt
 
-private val Colors.cellColors: Colors
-    @Composable
-    get() = MaterialTheme.colors.copy(
-            surface = LocalExtraColors.current.settingsBackground,
-    )
-
 @Composable
 fun ItemButton(
     text: String,
@@ -105,19 +99,22 @@ fun CellWithPaddingAndMargin(
     margin: Dp = 32.dp,
     content: @Composable () -> Unit
 ) {
-    MaterialTheme(colors = MaterialTheme.colors.cellColors) {
-        Card(
-            shape = RoundedCornerShape(16.dp),
-            elevation = 0.dp,
-            modifier = Modifier
-                .wrapContentHeight()
-                .fillMaxWidth()
-                .padding(horizontal = margin),
-        ) {
-            Box(Modifier.padding(padding)) { content() }
-        }
+    Card(
+        backgroundColor = MaterialTheme.colors.cellColor,
+        shape = RoundedCornerShape(16.dp),
+        elevation = 0.dp,
+        modifier = Modifier
+            .wrapContentHeight()
+            .fillMaxWidth()
+            .padding(horizontal = margin),
+    ) {
+        Box(Modifier.padding(padding)) { content() }
     }
 }
+
+private val Colors.cellColor: Color
+    @Composable
+    get() = LocalExtraColors.current.settingsBackground
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
