@@ -1,12 +1,14 @@
 package org.thoughtcrime.securesms.conversation.v2
 
 import android.net.Uri
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.messaging.jobs.AttachmentDownloadJob
@@ -38,17 +40,23 @@ class MessageDetailsViewModel @Inject constructor(
     private val threadDb: ThreadDatabase,
 ) : ViewModel() {
 
-    private var _state = MutableLiveData(MessageDetailsState())
-    val state: LiveData<MessageDetailsState> = _state
+    private val state = MutableStateFlow(MessageDetailsState())
+    val stateFlow = state.asStateFlow()
 
-    private var _event = MutableLiveData<MediaPreviewArgs>()
-    val event: LiveData<MediaPreviewArgs> = _event
+    private val event = Channel<Event>()
+    val eventFlow = event.receiveAsFlow()
 
     fun setMessageTimestamp(timestamp: Long) {
-        val record = mmsSmsDatabase.getMessageForTimestamp(timestamp) ?: return
+        val record = mmsSmsDatabase.getMessageForTimestamp(timestamp)
+
+        if (record == null) {
+            viewModelScope.launch { event.send(Event.Finish) }
+            return
+        }
+
         val mmsRecord = record as? MmsMessageRecord
 
-        _state.value = record.run {
+        state.value = record.run {
             val slides = mmsRecord?.slideDeck?.slides ?: emptyList()
 
             MessageDetailsState(
@@ -106,9 +114,12 @@ class MessageDetailsViewModel @Inject constructor(
 
         if (slide.isInProgress) return
 
-        _event.value = MediaPreviewArgs(slide, state.mmsRecord, state.thread)
+        viewModelScope.launch {
+            MediaPreviewArgs(slide, state.mmsRecord, state.thread)
+                .let(Event::StartMediaPreview)
+                .let { event.send(it) }
+        }
     }
-
 
     fun onAttachmentNeedsDownload(attachmentId: Long, mmsId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -139,3 +150,8 @@ data class Attachment(
     val uri: Uri?,
     val hasImage: Boolean
 )
+
+sealed class Event {
+    object Finish: Event()
+    data class StartMediaPreview(val args: MediaPreviewArgs): Event()
+}

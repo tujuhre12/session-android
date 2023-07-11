@@ -32,8 +32,8 @@ import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -48,13 +48,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
-import org.thoughtcrime.securesms.MediaPreviewActivity
+import org.thoughtcrime.securesms.MediaPreviewActivity.getPreviewIntent
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.ui.AppTheme
@@ -102,23 +103,25 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
 
         intent.getLongExtra(MESSAGE_TIMESTAMP, -1L).let(viewModel::setMessageTimestamp)
 
-        if (viewModel.state.value == null) {
-            finish()
-            return
-        }
-
         ComposeView(this)
             .apply { setContent { MessageDetailsScreen() } }
             .let(::setContentView)
 
-        viewModel.event.observe(this) {
-            startActivity(MediaPreviewActivity.getPreviewIntent(this, it))
+        lifecycleScope.launch {
+            viewModel.eventFlow.collect {
+                when (it) {
+                    Event.Finish -> finish()
+                    is Event.StartMediaPreview -> startActivity(
+                        getPreviewIntent(this@MessageDetailActivity, it.args)
+                    )
+                }
+            }
         }
     }
 
     @Composable
     private fun MessageDetailsScreen() {
-        val state by viewModel.state.observeAsState(MessageDetailsState())
+        val state by viewModel.stateFlow.collectAsState()
         AppTheme {
             MessageDetails(
                 state = state,
