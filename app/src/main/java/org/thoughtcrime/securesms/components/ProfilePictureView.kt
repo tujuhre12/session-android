@@ -30,7 +30,7 @@ class ProfilePictureView @JvmOverloads constructor(
     var additionalDisplayName: String? = null
     var isLarge = false
 
-    private val profilePicturesCache = mutableMapOf<String, String?>()
+    private val profilePicturesCache = mutableMapOf<View, Recipient>()
     private val unknownRecipientDrawable = ResourceContactPhoto(R.drawable.ic_profile_default)
         .asDrawable(context, ContactColors.UNKNOWN_COLOR.toConversationColor(context), false)
     private val unknownOpenGroupDrawable = ResourceContactPhoto(R.drawable.ic_notification)
@@ -103,12 +103,13 @@ class ProfilePictureView @JvmOverloads constructor(
     private fun setProfilePictureIfNeeded(imageView: ImageView, publicKey: String, displayName: String?) {
         if (publicKey.isNotEmpty()) {
             val recipient = Recipient.from(context, Address.fromSerialized(publicKey), false)
-            if (profilePicturesCache.containsKey(publicKey) && profilePicturesCache[publicKey] == recipient.profileAvatar) return
+            if (profilePicturesCache[imageView] == recipient) return
             val signalProfilePicture = recipient.contactPhoto
             val avatar = (signalProfilePicture as? ProfileContactPhoto)?.avatarObject
 
+            glide.clear(imageView)
+
             if (signalProfilePicture != null && avatar != "0" && avatar != "") {
-                glide.clear(imageView)
                 glide.load(signalProfilePicture)
                     .placeholder(unknownRecipientDrawable)
                     .centerCrop()
@@ -117,18 +118,15 @@ class ProfilePictureView @JvmOverloads constructor(
                     .circleCrop()
                     .into(imageView)
             } else if (recipient.isOpenGroupRecipient && recipient.groupAvatarId == null) {
-                glide.clear(imageView)
                 imageView.setImageDrawable(unknownOpenGroupDrawable)
             } else {
                 val placeholder = PlaceholderAvatarPhoto(context, publicKey, displayName ?: "${publicKey.take(4)}...${publicKey.takeLast(4)}")
-
-                glide.clear(imageView)
                 glide.load(placeholder)
                     .placeholder(unknownRecipientDrawable)
                     .centerCrop()
                     .diskCacheStrategy(DiskCacheStrategy.NONE).circleCrop().into(imageView)
             }
-            profilePicturesCache[publicKey] = recipient.profileAvatar
+            profilePicturesCache[imageView] = recipient
         } else {
             imageView.setImageDrawable(null)
         }
