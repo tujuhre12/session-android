@@ -1,13 +1,21 @@
 package org.thoughtcrime.securesms.conversation.v2
 
+import android.net.Uri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import network.loki.messenger.R
+import org.session.libsession.messaging.jobs.AttachmentDownloadJob
+import org.session.libsession.messaging.jobs.JobQueue
+import org.session.libsession.messaging.sending_receiving.attachments.AttachmentTransferProgress
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Util
 import org.session.libsession.utilities.recipients.Recipient
+import org.thoughtcrime.securesms.MediaPreviewArgs
 import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
@@ -30,15 +38,21 @@ class MessageDetailsViewModel @Inject constructor(
     private val threadDb: ThreadDatabase,
 ) : ViewModel() {
 
+    private var _state = MutableLiveData(MessageDetailsState())
+    val state: LiveData<MessageDetailsState> = _state
+
+    private var _event = MutableLiveData<MediaPreviewArgs>()
+    val event: LiveData<MediaPreviewArgs> = _event
+
     fun setMessageTimestamp(timestamp: Long) {
         val record = mmsSmsDatabase.getMessageForTimestamp(timestamp) ?: return
         val mmsRecord = record as? MmsMessageRecord
 
-        _details.value = record.run {
-            val slides = mmsRecord?.slideDeck?.thumbnailSlides?.toList() ?: emptyList()
+        _state.value = record.run {
+            val slides = mmsRecord?.slideDeck?.slides ?: emptyList()
 
             MessageDetailsState(
-                attachments = slides.map { Attachment(it, it.details) },
+                attachments = slides.map(::Attachment),
                 record = record,
                 sent = dateSent.let(::Date).toString().let { TitledText(R.string.message_details_header__sent, it) },
                 received = dateReceived.let(::Date).toString().let { TitledText(R.string.message_details_header__received, it) },
@@ -49,9 +63,6 @@ class MessageDetailsViewModel @Inject constructor(
             )
         }
     }
-
-    private var _details = MutableLiveData(MessageDetailsState())
-    val details: LiveData<MessageDetailsState> = _details
 
     private val Slide.details: List<TitledText>
         get() = listOfNotNull(
@@ -78,12 +89,38 @@ class MessageDetailsViewModel @Inject constructor(
                 )
             }
 
+    fun Attachment(slide: Slide): Attachment =
+        Attachment(slide.details, slide.fileName.orNull(), slide.uri, slide is ImageSlide)
+
+    fun onClickImage(index: Int) {
+        val state = state.value ?: return
+        val mmsRecord = state.mmsRecord ?: return
+        val slide = mmsRecord.slideDeck.slides[index] ?: return
+        // only open to downloaded images
+        if (slide.transferState == AttachmentTransferProgress.TRANSFER_PROGRESS_FAILED) {
+            // Restart download here (on IO thread)
+            (slide.asAttachment() as? DatabaseAttachment)?.let { attachment ->
+                onAttachmentNeedsDownload(attachment.attachmentId.rowId, state.mmsRecord.getId())
+            }
+        }
+
+        if (slide.isInProgress) return
+
+        _event.value = MediaPreviewArgs(slide, state.mmsRecord, state.thread)
+    }
+
+
+    fun onAttachmentNeedsDownload(attachmentId: Long, mmsId: Long) {
+        viewModelScope.launch(Dispatchers.IO) {
+            JobQueue.shared.add(AttachmentDownloadJob(attachmentId, mmsId))
+        }
+    }
 }
 
 data class MessageDetailsState(
     val attachments: List<Attachment> = emptyList(),
-    val imageAttachments: List<Attachment> = attachments.filter { it.hasImage() },
-    val nonImageAttachmentFileDetails: List<TitledText>? = attachments.firstOrNull { !it.hasImage() }?.fileDetails,
+    val imageAttachments: List<Attachment> = attachments.filter { it.hasImage },
+    val nonImageAttachmentFileDetails: List<TitledText>? = attachments.firstOrNull { !it.hasImage }?.fileDetails,
     val record: MessageRecord? = null,
     val mmsRecord: MmsMessageRecord? = record as? MmsMessageRecord,
     val sent: TitledText? = null,
@@ -97,11 +134,8 @@ data class MessageDetailsState(
 }
 
 data class Attachment(
-    val slide: Slide,
-    val fileDetails: List<TitledText>
-) {
-    val fileName: String? get() = slide.fileName.orNull()
-    val uri get() = slide.uri
-
-    fun hasImage() = slide is ImageSlide
-}
+    val fileDetails: List<TitledText>,
+    val fileName: String?,
+    val uri: Uri?,
+    val hasImage: Boolean
+)

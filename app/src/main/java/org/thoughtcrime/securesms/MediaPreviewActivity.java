@@ -146,6 +146,10 @@ public class MediaPreviewActivity extends PassphraseRequiredActionBarActivity im
     }
   };
 
+  public static Intent getPreviewIntent(Context context, MediaPreviewArgs args) {
+    return getPreviewIntent(context, args.getSlide(), args.getMmsRecord(), args.getThread());
+  }
+
   public static Intent getPreviewIntent(Context context, Slide slide, MmsMessageRecord mms, Recipient threadRecipient) {
     Intent previewIntent = null;
     if (MediaPreviewActivity.isContentTypeSupported(slide.getContentType()) && slide.getUri() != null) {

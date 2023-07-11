@@ -38,7 +38,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -49,18 +48,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.lifecycle.lifecycleScope
+import androidx.core.content.ContextCompat
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
-import org.session.libsession.messaging.jobs.AttachmentDownloadJob
-import org.session.libsession.messaging.jobs.JobQueue
-import org.session.libsession.messaging.sending_receiving.attachments.AttachmentTransferProgress
-import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.thoughtcrime.securesms.MediaPreviewActivity
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.database.Storage
@@ -109,7 +102,7 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
 
         intent.getLongExtra(MESSAGE_TIMESTAMP, -1L).let(viewModel::setMessageTimestamp)
 
-        if (viewModel.details.value == null) {
+        if (viewModel.state.value == null) {
             finish()
             return
         }
@@ -117,34 +110,23 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
         ComposeView(this)
             .apply { setContent { MessageDetailsScreen() } }
             .let(::setContentView)
+
+        viewModel.event.observe(this) {
+            startActivity(MediaPreviewActivity.getPreviewIntent(this, it))
+        }
     }
 
     @Composable
     private fun MessageDetailsScreen() {
-        val state by viewModel.details.observeAsState(MessageDetailsState())
+        val state by viewModel.state.observeAsState(MessageDetailsState())
         AppTheme {
             MessageDetails(
                 state = state,
                 onReply = { setResultAndFinish(ON_REPLY) },
                 onResend = state.error?.let { { setResultAndFinish(ON_RESEND) } },
                 onDelete = { setResultAndFinish(ON_DELETE) },
-                onClickImage = { i ->
-                    val slide = state.attachments[i].slide
-                    // only open to downloaded images
-                    if (slide.transferState == AttachmentTransferProgress.TRANSFER_PROGRESS_FAILED) {
-                        // Restart download here (on IO thread)
-                        (slide.asAttachment() as? DatabaseAttachment)?.let { attachment ->
-                            onAttachmentNeedsDownload(attachment.attachmentId.rowId, state.mmsRecord!!.getId())
-                        }
-                    }
-                    if (!slide.isInProgress) MediaPreviewActivity.getPreviewIntent(
-                        this,
-                        slide,
-                        state.mmsRecord,
-                        state.thread,
-                    ).let(::startActivity)
-                },
-                onAttachmentNeedsDownload = ::onAttachmentNeedsDownload,
+                onClickImage = { viewModel.onClickImage(it) },
+                onAttachmentNeedsDownload = viewModel::onAttachmentNeedsDownload,
             )
         }
     }
@@ -155,12 +137,6 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
             .let { setResult(code, it) }
 
         finish()
-    }
-
-    private fun onAttachmentNeedsDownload(attachmentId: Long, mmsId: Long) {
-        lifecycleScope.launch(Dispatchers.IO) {
-            JobQueue.shared.add(AttachmentDownloadJob(attachmentId, mmsId))
-        }
     }
 }
 
