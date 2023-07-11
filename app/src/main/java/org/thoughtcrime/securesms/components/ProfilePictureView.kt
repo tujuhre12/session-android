@@ -5,7 +5,6 @@ import android.util.AttributeSet
 import android.view.View
 import android.widget.ImageView
 import android.widget.RelativeLayout
-import androidx.annotation.DimenRes
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewProfilePictureBinding
@@ -77,8 +76,8 @@ class ProfilePictureView @JvmOverloads constructor(
         val publicKey = publicKey ?: return
         val additionalPublicKey = additionalPublicKey
         if (additionalPublicKey != null) {
-            setProfilePictureIfNeeded(binding.doubleModeImageView1, publicKey, displayName, R.dimen.small_profile_picture_size)
-            setProfilePictureIfNeeded(binding.doubleModeImageView2, additionalPublicKey, additionalDisplayName, R.dimen.small_profile_picture_size)
+            setProfilePictureIfNeeded(binding.doubleModeImageView1, publicKey, displayName)
+            setProfilePictureIfNeeded(binding.doubleModeImageView2, additionalPublicKey, additionalDisplayName)
             binding.doubleModeImageViewContainer.visibility = View.VISIBLE
         } else {
             glide.clear(binding.doubleModeImageView1)
@@ -86,14 +85,14 @@ class ProfilePictureView @JvmOverloads constructor(
             binding.doubleModeImageViewContainer.visibility = View.INVISIBLE
         }
         if (additionalPublicKey == null && !isLarge) {
-            setProfilePictureIfNeeded(binding.singleModeImageView, publicKey, displayName, R.dimen.medium_profile_picture_size)
+            setProfilePictureIfNeeded(binding.singleModeImageView, publicKey, displayName)
             binding.singleModeImageView.visibility = View.VISIBLE
         } else {
             glide.clear(binding.singleModeImageView)
             binding.singleModeImageView.visibility = View.INVISIBLE
         }
         if (additionalPublicKey == null && isLarge) {
-            setProfilePictureIfNeeded(binding.largeSingleModeImageView, publicKey, displayName, R.dimen.large_profile_picture_size)
+            setProfilePictureIfNeeded(binding.largeSingleModeImageView, publicKey, displayName)
             binding.largeSingleModeImageView.visibility = View.VISIBLE
         } else {
             glide.clear(binding.largeSingleModeImageView)
@@ -101,7 +100,7 @@ class ProfilePictureView @JvmOverloads constructor(
         }
     }
 
-    private fun setProfilePictureIfNeeded(imageView: ImageView, publicKey: String, displayName: String?, @DimenRes sizeResId: Int) {
+    private fun setProfilePictureIfNeeded(imageView: ImageView, publicKey: String, displayName: String?) {
         if (publicKey.isNotEmpty()) {
             val recipient = Recipient.from(context, Address.fromSerialized(publicKey), false)
             if (profilePicturesCache.containsKey(publicKey) && profilePicturesCache[publicKey] == recipient.profileAvatar) return
