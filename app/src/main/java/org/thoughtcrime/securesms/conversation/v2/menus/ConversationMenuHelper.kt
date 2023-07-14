@@ -63,17 +63,18 @@ object ConversationMenuHelper {
         // Base menu (options that should always be present)
         inflater.inflate(R.menu.menu_conversation, menu)
         // Expiring messages
-        if (!isOpenGroup && (thread.hasApprovedMe() || thread.isClosedGroupRecipient)) {
+        if (!isOpenGroup && (thread.hasApprovedMe() || thread.isClosedGroupRecipient) && !thread.isBlocked) {
             if (thread.expireMessages > 0) {
                 inflater.inflate(R.menu.menu_conversation_expiration_on, menu)
                 val item = menu.findItem(R.id.menu_expiring_messages)
-                val actionView = item.actionView
-                val iconView = actionView.findViewById<ImageView>(R.id.menu_badge_icon)
-                val badgeView = actionView.findViewById<TextView>(R.id.expiration_badge)
-                @ColorInt val color = context.getColorFromAttr(android.R.attr.textColorPrimary)
-                iconView.colorFilter = PorterDuffColorFilter(color, PorterDuff.Mode.MULTIPLY)
-                badgeView.text = ExpirationUtil.getExpirationAbbreviatedDisplayValue(context, thread.expireMessages)
-                actionView.setOnClickListener { onOptionsItemSelected(item) }
+                item.actionView?.let { actionView ->
+                    val iconView = actionView.findViewById<ImageView>(R.id.menu_badge_icon)
+                    val badgeView = actionView.findViewById<TextView>(R.id.expiration_badge)
+                    @ColorInt val color = context.getColorFromAttr(android.R.attr.textColorPrimary)
+                    iconView.colorFilter = PorterDuffColorFilter(color, PorterDuff.Mode.MULTIPLY)
+                    badgeView.text = ExpirationUtil.getExpirationAbbreviatedDisplayValue(context, thread.expireMessages)
+                    actionView.setOnClickListener { onOptionsItemSelected(item) }
+                }
             } else {
                 inflater.inflate(R.menu.menu_conversation_expiration_off, menu)
             }
@@ -86,7 +87,7 @@ object ConversationMenuHelper {
         if (thread.isContactRecipient) {
             if (thread.isBlocked) {
                 inflater.inflate(R.menu.menu_conversation_unblock, menu)
-            } else {
+            } else if (!thread.isLocalNumber) {
                 inflater.inflate(R.menu.menu_conversation_block, menu)
             }
         }
@@ -309,7 +310,7 @@ object ConversationMenuHelper {
                     val groupPublicKey = doubleDecodeGroupID(thread.address.toString()).toHexString()
                     val isClosedGroup = DatabaseComponent.get(context).lokiAPIDatabase().isClosedGroup(groupPublicKey)
 
-                    if (isClosedGroup) MessageSender.leave(groupPublicKey, true)
+                    if (isClosedGroup) MessageSender.leave(groupPublicKey, notifyUser = false)
                     else onLeaveFailed()
                 } catch (e: Exception) {
                     onLeaveFailed()

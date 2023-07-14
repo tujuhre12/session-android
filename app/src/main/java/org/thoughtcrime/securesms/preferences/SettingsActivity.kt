@@ -2,7 +2,10 @@ package org.thoughtcrime.securesms.preferences
 
 import android.Manifest
 import android.app.Activity
-import android.content.*
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import android.os.AsyncTask
 import android.os.Bundle
@@ -17,14 +20,18 @@ import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.core.view.isVisible
+import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivitySettingsBinding
+import network.loki.messenger.libsession_util.util.UserPic
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.all
 import nl.komponents.kovenant.ui.alwaysUi
 import nl.komponents.kovenant.ui.successUi
 import org.session.libsession.avatars.AvatarHelper
+import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.avatars.ProfileContactPhoto
 import org.session.libsession.utilities.*
 import org.session.libsession.utilities.SSKEnvironment.ProfileManagerProtocol
@@ -32,6 +39,7 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.avatar.AvatarSelection
 import org.thoughtcrime.securesms.components.ProfilePictureView
+import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.home.PathActivity
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
 import org.thoughtcrime.securesms.mms.GlideApp
@@ -48,9 +56,14 @@ import org.thoughtcrime.securesms.util.push
 import org.thoughtcrime.securesms.util.show
 import java.io.File
 import java.security.SecureRandom
-import java.util.Date
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class SettingsActivity : PassphraseRequiredActionBarActivity() {
+
+    @Inject
+    lateinit var configFactory: ConfigFactory
+
     private lateinit var binding: ActivitySettingsBinding
     private var displayNameEditActionMode: ActionMode? = null
         set(value) { field = value; handleDisplayNameEditActionModeChanged() }
@@ -76,7 +89,9 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
         glide = GlideApp.with(this)
         with(binding) {
             setupProfilePictureView(profilePictureView.root)
-            profilePictureView.root.setOnClickListener { showEditProfilePictureUI() }
+            profilePictureView.root.setOnClickListener {
+                showEditProfilePictureUI()
+            }
             ctnGroupNameSection.setOnClickListener { startActionMode(DisplayNameEditActionModeCallback()) }
             btnGroupNameDisplay.text = displayName
             publicKeyTextView.text = hexEncodedPublicKey
@@ -204,27 +219,36 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
         val promises = mutableListOf<Promise<*, Exception>>()
         if (displayName != null) {
             TextSecurePreferences.setProfileName(this, displayName)
+            configFactory.user?.setName(displayName)
         }
         val encodedProfileKey = ProfileKeyUtil.generateEncodedProfileKey(this)
         if (isUpdatingProfilePicture) {
             if (profilePicture != null) {
                 promises.add(ProfilePictureUtilities.upload(profilePicture, encodedProfileKey, this))
             } else {
-                TextSecurePreferences.setLastProfilePictureUpload(this, System.currentTimeMillis())
-                TextSecurePreferences.setProfilePictureURL(this, null)
+                MessagingModuleConfiguration.shared.storage.clearUserPic()
             }
         }
         val compoundPromise = all(promises)
         compoundPromise.successUi { // Do this on the UI thread so that it happens before the alwaysUi clause below
+            val userConfig = configFactory.user
             if (isUpdatingProfilePicture) {
                 AvatarHelper.setAvatar(this, Address.fromSerialized(TextSecurePreferences.getLocalNumber(this)!!), profilePicture)
                 TextSecurePreferences.setProfileAvatarId(this, profilePicture?.let { SecureRandom().nextInt() } ?: 0 )
-                TextSecurePreferences.setLastProfilePictureUpload(this, Date().time)
                 ProfileKeyUtil.setEncodedProfileKey(this, encodedProfileKey)
+                // new config
+                val url = TextSecurePreferences.getProfilePictureURL(this)
+                val profileKey = ProfileKeyUtil.getProfileKey(this)
+                if (profilePicture == null) {
+                    userConfig?.setPic(UserPic.DEFAULT)
+                } else if (!url.isNullOrEmpty() && profileKey.isNotEmpty()) {
+                    userConfig?.setPic(UserPic(url, profileKey))
+                }
             }
-            if (profilePicture != null || displayName != null) {
-                ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(this@SettingsActivity)
+            if (userConfig != null && userConfig.needsDump()) {
+                configFactory.persist(userConfig, SnodeAPI.nowWithOffset)
             }
+            ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(this@SettingsActivity)
         }
         compoundPromise.alwaysUi {
             if (displayName != null) {

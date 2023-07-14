@@ -99,6 +99,7 @@ public class Recipient implements RecipientModifiedListener {
   private           boolean        profileSharing;
   private           String         notificationChannel;
   private           boolean        forceSmsSelection;
+  private           String         wrapperHash;
 
   private @NonNull  UnidentifiedAccessMode unidentifiedAccessMode = UnidentifiedAccessMode.ENABLED;
 
@@ -279,6 +280,7 @@ public class Recipient implements RecipientModifiedListener {
     this.profileSharing         = details.profileSharing;
     this.unidentifiedAccessMode = details.unidentifiedAccessMode;
     this.forceSmsSelection      = details.forceSmsSelection;
+    this.wrapperHash            = details.wrapperHash;
 
     this.participants.addAll(details.participants);
     this.resolving    = false;
@@ -325,7 +327,7 @@ public class Recipient implements RecipientModifiedListener {
       return contact.displayName(Contact.ContactContext.REGULAR);
     } else {
       Contact contact = storage.getContactWithSessionID(sessionID);
-      if (contact == null) { return sessionID; }
+      if (contact == null) { return null; }
       return contact.displayName(Contact.ContactContext.REGULAR);
     }
   }
@@ -440,6 +442,10 @@ public class Recipient implements RecipientModifiedListener {
     return address.isOpenGroup();
   }
 
+  public boolean isOpenGroupOutboxRecipient() {
+    return address.isOpenGroupOutbox();
+  }
+
   public boolean isOpenGroupInboxRecipient() {
     return address.isOpenGroupInbox();
   }
@@ -483,7 +489,13 @@ public class Recipient implements RecipientModifiedListener {
 
   public synchronized String toShortString() {
     String name = getName();
-    return (name != null ? name : address.serialize());
+    if (name != null) return name;
+    String sessionId = address.serialize();
+    if (sessionId.length() < 4) return sessionId; // so substrings don't throw out of bounds exceptions
+    int takeAmount = 4;
+    String start = sessionId.substring(0, takeAmount);
+    String end = sessionId.substring(sessionId.length()-takeAmount);
+    return start+"..."+end;
   }
 
   public synchronized @NonNull Drawable getFallbackContactPhotoDrawable(Context context, boolean inverted) {
@@ -717,6 +729,14 @@ public class Recipient implements RecipientModifiedListener {
     return unidentifiedAccessMode;
   }
 
+  public String getWrapperHash() {
+    return wrapperHash;
+  }
+
+  public void setWrapperHash(String wrapperHash) {
+    this.wrapperHash = wrapperHash;
+  }
+
   public void setUnidentifiedAccessMode(@NonNull UnidentifiedAccessMode unidentifiedAccessMode) {
     synchronized (this) {
       this.unidentifiedAccessMode = unidentifiedAccessMode;
@@ -739,12 +759,12 @@ public class Recipient implements RecipientModifiedListener {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     Recipient recipient = (Recipient) o;
-    return resolving == recipient.resolving && mutedUntil == recipient.mutedUntil && notifyType == recipient.notifyType && blocked == recipient.blocked && approved == recipient.approved && approvedMe == recipient.approvedMe && expireMessages == recipient.expireMessages && address.equals(recipient.address) && Objects.equals(name, recipient.name) && Objects.equals(customLabel, recipient.customLabel) && Objects.equals(groupAvatarId, recipient.groupAvatarId) && Arrays.equals(profileKey, recipient.profileKey) && Objects.equals(profileName, recipient.profileName) && Objects.equals(profileAvatar, recipient.profileAvatar);
+    return resolving == recipient.resolving && mutedUntil == recipient.mutedUntil && notifyType == recipient.notifyType && blocked == recipient.blocked && approved == recipient.approved && approvedMe == recipient.approvedMe && expireMessages == recipient.expireMessages && address.equals(recipient.address) && Objects.equals(name, recipient.name) && Objects.equals(customLabel, recipient.customLabel) && Objects.equals(groupAvatarId, recipient.groupAvatarId) && Arrays.equals(profileKey, recipient.profileKey) && Objects.equals(profileName, recipient.profileName) && Objects.equals(profileAvatar, recipient.profileAvatar) && Objects.equals(wrapperHash, recipient.wrapperHash);
   }
 
   @Override
   public int hashCode() {
-    int result = Objects.hash(address, name, customLabel, resolving, groupAvatarId, mutedUntil, notifyType, blocked, approved, approvedMe, expireMessages, profileName, profileAvatar);
+    int result = Objects.hash(address, name, customLabel, resolving, groupAvatarId, mutedUntil, notifyType, blocked, approved, approvedMe, expireMessages, profileName, profileAvatar, wrapperHash);
     result = 31 * result + Arrays.hashCode(profileKey);
     return result;
   }
@@ -848,6 +868,7 @@ public class Recipient implements RecipientModifiedListener {
     private final String                 notificationChannel;
     private final UnidentifiedAccessMode unidentifiedAccessMode;
     private final boolean                forceSmsSelection;
+    private final String                 wrapperHash;
 
     public RecipientSettings(boolean blocked, boolean approved, boolean approvedMe, long muteUntil,
                       int notifyType,
@@ -869,7 +890,8 @@ public class Recipient implements RecipientModifiedListener {
                       boolean profileSharing,
                       @Nullable String notificationChannel,
                       @NonNull UnidentifiedAccessMode unidentifiedAccessMode,
-                      boolean forceSmsSelection)
+                      boolean forceSmsSelection,
+                      String wrapperHash)
     {
       this.blocked                = blocked;
       this.approved               = approved;
@@ -895,6 +917,7 @@ public class Recipient implements RecipientModifiedListener {
       this.notificationChannel    = notificationChannel;
       this.unidentifiedAccessMode = unidentifiedAccessMode;
       this.forceSmsSelection      = forceSmsSelection;
+      this.wrapperHash            = wrapperHash;
     }
 
     public @Nullable MaterialColor getColor() {
@@ -992,6 +1015,11 @@ public class Recipient implements RecipientModifiedListener {
     public boolean isForceSmsSelection() {
       return forceSmsSelection;
     }
+
+    public String getWrapperHash() {
+      return wrapperHash;
+    }
+
   }
 
 

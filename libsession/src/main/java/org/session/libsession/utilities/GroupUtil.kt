@@ -1,9 +1,9 @@
 package org.session.libsession.utilities
 
+import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.utilities.Hex
 import java.io.IOException
-import kotlin.jvm.Throws
 
 object GroupUtil {
     const val CLOSED_GROUP_PREFIX = "__textsecure_group__!"
@@ -96,5 +96,29 @@ object GroupUtil {
     @Throws(IOException::class)
     fun doubleDecodeGroupID(groupID: String): ByteArray {
         return getDecodedGroupIDAsData(getDecodedGroupID(groupID))
+    }
+
+    @JvmStatic
+    @Throws(IOException::class)
+    fun doubleDecodeGroupId(groupID: String): String {
+        return Hex.toStringCondensed(getDecodedGroupIDAsData(getDecodedGroupID(groupID)))
+    }
+
+    fun createConfigMemberMap(
+        members: Collection<String>,
+        admins: Collection<String>
+    ): Map<String, Boolean> {
+        // Start with admins
+        val memberMap = admins.associate {
+            it to true
+        }.toMutableMap()
+
+        // Add the remaining members (there may be duplicates, so only add ones that aren't already in there from admins)
+        for (member in members) {
+            if (!memberMap.contains(member)) {
+                memberMap[member] = false
+            }
+        }
+        return memberMap
     }
 }

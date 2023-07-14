@@ -12,7 +12,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import org.session.libsession.BuildConfig
 import org.session.libsession.R
 import org.session.libsession.utilities.TextSecurePreferences.Companion.AUTOPLAY_AUDIO_MESSAGES
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOTIFICATIONS_ENABLED
@@ -103,6 +102,8 @@ interface TextSecurePreferences {
     fun setUpdateApkDigest(value: String?)
     fun getUpdateApkDigest(): String?
     fun getLocalNumber(): String?
+    fun getHasLegacyConfig(): Boolean
+    fun setHasLegacyConfig(newValue: Boolean)
     fun setLocalNumber(localNumber: String)
     fun removeLocalNumber()
     fun isEnterSendsEnabled(): Boolean
@@ -178,6 +179,7 @@ interface TextSecurePreferences {
     fun setThemeStyle(themeStyle: String)
     fun setFollowSystemSettings(followSystemSettings: Boolean)
     fun autoplayAudioMessages(): Boolean
+    fun hasForcedNewConfig(): Boolean
     fun hasPreference(key: String): Boolean
     fun clearAll()
 
@@ -264,6 +266,10 @@ interface TextSecurePreferences {
         const val AUTOPLAY_AUDIO_MESSAGES = "pref_autoplay_audio"
         const val FINGERPRINT_KEY_GENERATED = "fingerprint_key_generated"
         const val SELECTED_ACCENT_COLOR = "selected_accent_color"
+
+        const val HAS_RECEIVED_LEGACY_CONFIG = "has_received_legacy_config"
+        const val HAS_FORCED_NEW_CONFIG = "has_forced_new_config"
+
         const val GREEN_ACCENT = "accent_green"
         const val BLUE_ACCENT = "accent_blue"
         const val PURPLE_ACCENT = "accent_purple"
@@ -625,6 +631,17 @@ interface TextSecurePreferences {
             return getStringPreference(context, LOCAL_NUMBER_PREF, null)
         }
 
+        @JvmStatic
+        fun getHasLegacyConfig(context: Context): Boolean {
+            return getBooleanPreference(context, HAS_RECEIVED_LEGACY_CONFIG, false)
+        }
+
+        @JvmStatic
+        fun setHasLegacyConfig(context: Context, newValue: Boolean) {
+            setBooleanPreference(context, HAS_RECEIVED_LEGACY_CONFIG, newValue)
+            _events.tryEmit(HAS_RECEIVED_LEGACY_CONFIG)
+        }
+
         fun setLocalNumber(context: Context, localNumber: String) {
             setStringPreference(context, LOCAL_NUMBER_PREF, localNumber.toLowerCase())
         }
@@ -793,6 +810,11 @@ interface TextSecurePreferences {
         @JvmStatic
         fun setNotificationMessagesChannelVersion(context: Context, version: Int) {
             setIntegerPreference(context, NOTIFICATION_MESSAGES_CHANNEL_VERSION, version)
+        }
+
+        @JvmStatic
+        fun hasForcedNewConfig(context: Context): Boolean {
+            return getBooleanPreference(context, HAS_FORCED_NEW_CONFIG, false)
         }
 
         @JvmStatic
@@ -1279,6 +1301,15 @@ class AppTextSecurePreferences @Inject constructor(
         return getStringPreference(TextSecurePreferences.LOCAL_NUMBER_PREF, null)
     }
 
+    override fun getHasLegacyConfig(): Boolean {
+        return getBooleanPreference(TextSecurePreferences.HAS_RECEIVED_LEGACY_CONFIG, false)
+    }
+
+    override fun setHasLegacyConfig(newValue: Boolean) {
+        setBooleanPreference(TextSecurePreferences.HAS_RECEIVED_LEGACY_CONFIG, newValue)
+        TextSecurePreferences._events.tryEmit(TextSecurePreferences.HAS_RECEIVED_LEGACY_CONFIG)
+    }
+
     override fun setLocalNumber(localNumber: String) {
         setStringPreference(TextSecurePreferences.LOCAL_NUMBER_PREF, localNumber.toLowerCase())
     }
@@ -1421,6 +1452,9 @@ class AppTextSecurePreferences @Inject constructor(
     override fun setNotificationMessagesChannelVersion(version: Int) {
         setIntegerPreference(TextSecurePreferences.NOTIFICATION_MESSAGES_CHANNEL_VERSION, version)
     }
+
+    override fun hasForcedNewConfig(): Boolean =
+        getBooleanPreference(TextSecurePreferences.HAS_FORCED_NEW_CONFIG, false)
 
     override fun getBooleanPreference(key: String?, defaultValue: Boolean): Boolean {
         return getDefaultSharedPreferences(context).getBoolean(key, defaultValue)

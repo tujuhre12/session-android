@@ -1,18 +1,22 @@
 package org.thoughtcrime.securesms.home
 
+import android.Manifest
+import android.app.NotificationManager
 import android.content.BroadcastReceiver
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.ClipData
-import android.content.ClipboardManager
 import android.os.Bundle
 import android.text.SpannableString
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -26,11 +30,14 @@ import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityHomeBinding
 import network.loki.messenger.databinding.ViewMessageRequestBannerBinding
+import network.loki.messenger.libsession_util.ConfigBase
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
+import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.sending_receiving.MessageSender
+import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.ProfilePictureModifiedEvent
@@ -48,8 +55,10 @@ import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.RecipientDatabase
+import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
+import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter
@@ -60,6 +69,7 @@ import org.thoughtcrime.securesms.mms.GlideApp
 import org.thoughtcrime.securesms.mms.GlideRequests
 import org.thoughtcrime.securesms.onboarding.SeedActivity
 import org.thoughtcrime.securesms.onboarding.SeedReminderViewDelegate
+import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.SettingsActivity
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.showMuteDialog
@@ -80,6 +90,11 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
     SeedReminderViewDelegate,
     GlobalSearchInputLayout.GlobalSearchInputLayoutListener {
 
+    companion object {
+        const val FROM_ONBOARDING = "HomeActivity_FROM_ONBOARDING"
+    }
+
+
     private lateinit var binding: ActivityHomeBinding
     private lateinit var glide: GlideRequests
     private var broadcastReceiver: BroadcastReceiver? = null
@@ -87,8 +102,10 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
     @Inject lateinit var threadDb: ThreadDatabase
     @Inject lateinit var mmsSmsDatabase: MmsSmsDatabase
     @Inject lateinit var recipientDatabase: RecipientDatabase
+    @Inject lateinit var storage: Storage
     @Inject lateinit var groupDatabase: GroupDatabase
     @Inject lateinit var textSecurePreferences: TextSecurePreferences
+    @Inject lateinit var configFactory: ConfigFactory
 
     private val globalSearchViewModel by viewModels<GlobalSearchViewModel>()
     private val homeViewModel by viewModels<HomeViewModel>()
@@ -97,7 +114,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         get() = textSecurePreferences.getLocalNumber()!!
 
     private val homeAdapter: HomeAdapter by lazy {
-        HomeAdapter(context = this, listener = this)
+        HomeAdapter(context = this, configFactory = configFactory, listener = this)
     }
 
     private val globalSearchAdapter = GlobalSearchAdapter { model ->
@@ -158,15 +175,17 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         }
         binding.sessionToolbar.disableClipping()
         // Set up seed reminder view
-        val hasViewedSeed = textSecurePreferences.getHasViewedSeed()
-        if (!hasViewedSeed) {
-            binding.seedReminderView.isVisible = true
-            binding.seedReminderView.title = SpannableString("You're almost finished! 80%") // Intentionally not yet translated
-            binding.seedReminderView.subtitle = resources.getString(R.string.view_seed_reminder_subtitle_1)
-            binding.seedReminderView.setProgress(80, false)
-            binding.seedReminderView.delegate = this@HomeActivity
-        } else {
-            binding.seedReminderView.isVisible = false
+        lifecycleScope.launchWhenStarted {
+            val hasViewedSeed = textSecurePreferences.getHasViewedSeed()
+            if (!hasViewedSeed) {
+                binding.seedReminderView.isVisible = true
+                binding.seedReminderView.title = SpannableString("You're almost finished! 80%") // Intentionally not yet translated
+                binding.seedReminderView.subtitle = resources.getString(R.string.view_seed_reminder_subtitle_1)
+                binding.seedReminderView.setProgress(80, false)
+                binding.seedReminderView.delegate = this@HomeActivity
+            } else {
+                binding.seedReminderView.isVisible = false
+            }
         }
         setupMessageRequestsBanner()
         // Set up recycler view
@@ -175,6 +194,11 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         homeAdapter.glide = glide
         binding.recyclerView.adapter = homeAdapter
         binding.globalSearchRecycler.adapter = globalSearchAdapter
+
+        binding.configOutdatedView.setOnClickListener {
+            textSecurePreferences.setHasLegacyConfig(false)
+            updateLegacyConfigView()
+        }
 
         // Set up empty state view
         binding.createNewPrivateChatButton.setOnClickListener { showNewConversation() }
@@ -191,6 +215,15 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         }
         this.broadcastReceiver = broadcastReceiver
         LocalBroadcastManager.getInstance(this).registerReceiver(broadcastReceiver, IntentFilter("blockedContactsChanged"))
+
+        // subscribe to outdated config updates, this should be removed after long enough time for device migration
+        lifecycleScope.launch {
+            lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                TextSecurePreferences.events.filter { it == TextSecurePreferences.HAS_RECEIVED_LEGACY_CONFIG }.collect {
+                    updateLegacyConfigView()
+                }
+            }
+        }
 
         lifecycleScope.launchWhenStarted {
             launch(Dispatchers.IO) {
@@ -212,6 +245,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                     }
                 }
             }
+
             // monitor the global search VM query
             launch {
                 binding.globalSearchInputLayout.query
@@ -264,6 +298,14 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             }
         }
         EventBus.getDefault().register(this@HomeActivity)
+        if (intent.hasExtra(FROM_ONBOARDING)
+            && intent.getBooleanExtra(FROM_ONBOARDING, false)
+            && !(getSystemService(NOTIFICATION_SERVICE) as NotificationManager).areNotificationsEnabled()
+        ) {
+            Permissions.with(this)
+                .request(Manifest.permission.POST_NOTIFICATIONS)
+                .execute()
+        }
     }
 
     override fun onInputFocusChanged(hasFocus: Boolean) {
@@ -312,6 +354,11 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         }
     }
 
+    private fun updateLegacyConfigView() {
+        binding.configOutdatedView.isVisible = ConfigBase.isNewConfigEnabled(textSecurePreferences.hasForcedNewConfig(), SnodeAPI.nowWithOffset)
+                && textSecurePreferences.getHasLegacyConfig()
+    }
+
     override fun onResume() {
         super.onResume()
         ApplicationContext.getInstance(this).messageNotifier.setHomeScreenVisible(true)
@@ -322,6 +369,11 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         if (textSecurePreferences.getHasViewedSeed()) {
             binding.seedReminderView.isVisible = false
         }
+
+        updateLegacyConfigView()
+
+        // TODO: remove this after enough updates that we can rely on ConfigBase.isNewConfigEnabled to always return true
+        // This will only run if we aren't using new configs, as they are schedule to sync when there are changes applied
         if (textSecurePreferences.getConfigurationMessageSynced()) {
             lifecycleScope.launch(Dispatchers.IO) {
                 ConfigurationMessageUtilities.syncConfigurationIfNeeded(this@HomeActivity)
@@ -493,9 +545,8 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             text(R.string.RecipientPreferenceActivity_you_will_no_longer_receive_messages_and_calls_from_this_contact)
             button(R.string.RecipientPreferenceActivity_block) {
                 lifecycleScope.launch(Dispatchers.IO) {
-                    recipientDatabase.setBlocked(thread.recipient, true)
-                    // TODO: Remove in UserConfig branch
-                    ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(this@HomeActivity)
+                    storage.setBlocked(listOf(thread.recipient), true)
+
                     withContext(Dispatchers.Main) {
                         binding.recyclerView.adapter!!.notifyDataSetChanged()
                     }
@@ -511,9 +562,8 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             text(R.string.RecipientPreferenceActivity_you_will_once_again_be_able_to_receive_messages_and_calls_from_this_contact)
             button(R.string.RecipientPreferenceActivity_unblock) {
                 lifecycleScope.launch(Dispatchers.IO) {
-                    recipientDatabase.setBlocked(thread.recipient, false)
-                    // TODO: Remove in UserConfig branch
-                    ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(this@HomeActivity)
+                    storage.setBlocked(listOf(thread.recipient), false)
+
                     withContext(Dispatchers.Main) {
                         binding.recyclerView.adapter!!.notifyDataSetChanged()
                     }
@@ -554,14 +604,14 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
 
     private fun setConversationPinned(threadId: Long, pinned: Boolean) {
         lifecycleScope.launch(Dispatchers.IO) {
-            threadDb.setPinned(threadId, pinned)
+            storage.setPinned(threadId, pinned)
             homeViewModel.tryUpdateChannel()
         }
     }
 
     private fun markAllAsRead(thread: ThreadRecord) {
         ThreadUtils.queue {
-            threadDb.markAllAsRead(thread.threadId, thread.recipient.isOpenGroupRecipient)
+            MessagingModuleConfiguration.shared.storage.markConversationAsRead(thread.threadId, SnodeAPI.nowWithOffset)
         }
     }
 

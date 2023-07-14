@@ -1,10 +1,10 @@
 package org.thoughtcrime.securesms.conversation.v2
 
-import android.content.Context
+import android.content.ContentResolver
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
+import app.cash.copper.flow.observeQuery
 import com.goterl.lazysodium.utils.KeyPair
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -21,15 +21,16 @@ import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.repository.ConversationRepository
-import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 import java.util.UUID
 
 class ConversationViewModel(
     val threadId: Long,
     val edKeyPair: KeyPair?,
+    private val contentResolver: ContentResolver,
     private val repository: ConversationRepository,
     private val storage: Storage
 ) : ViewModel() {
@@ -37,7 +38,7 @@ class ConversationViewModel(
     val showSendAfterApprovalText: Boolean
         get() = recipient?.run { isContactRecipient && !isLocalNumber && !hasApprovedMe() } ?: false
 
-    private val _uiState = MutableStateFlow(ConversationUiState())
+    private val _uiState = MutableStateFlow(ConversationUiState(conversationExists = true))
     val uiState: StateFlow<ConversationUiState> = _uiState
 
     private var _recipient: RetrieveOnce<Recipient> = RetrieveOnce {
@@ -61,6 +62,18 @@ class ConversationViewModel(
                 ?.let { SessionId(IdPrefix.BLINDED, it) }?.hexString
         }
 
+    init {
+        viewModelScope.launch(Dispatchers.IO) {
+            contentResolver.observeQuery(DatabaseContentProviders.Conversation.getUriForThread(threadId))
+                .collect {
+                    val recipientExists = storage.getRecipientForThread(threadId) != null
+                    if (!recipientExists && _uiState.value.conversationExists) {
+                        _uiState.update { it.copy(conversationExists = false) }
+                    }
+                }
+        }
+    }
+
     fun saveDraft(text: String) {
         GlobalScope.launch(Dispatchers.IO) {
             repository.saveDraft(threadId, text)
@@ -81,27 +94,17 @@ class ConversationViewModel(
         repository.inviteContacts(threadId, contacts)
     }
 
-    fun block(context: Context) {
+    fun block() {
         val recipient = recipient ?: return Log.w("Loki", "Recipient was null for block action")
         if (recipient.isContactRecipient) {
             repository.setBlocked(recipient, true)
-
-            // TODO: Remove in UserConfig branch
-            GlobalScope.launch(Dispatchers.IO) {
-                ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(context)
-            }
         }
     }
 
-    fun unblock(context: Context) {
+    fun unblock() {
         val recipient = recipient ?: return Log.w("Loki", "Recipient was null for unblock action")
         if (recipient.isContactRecipient) {
             repository.setBlocked(recipient, false)
-
-            // TODO: Remove in UserConfig branch
-            GlobalScope.launch(Dispatchers.IO) {
-                ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(context)
-            }
         }
     }
 
@@ -198,19 +201,20 @@ class ConversationViewModel(
 
     @dagger.assisted.AssistedFactory
     interface AssistedFactory {
-        fun create(threadId: Long, edKeyPair: KeyPair?): Factory
+        fun create(threadId: Long, edKeyPair: KeyPair?, contentResolver: ContentResolver): Factory
     }
 
     @Suppress("UNCHECKED_CAST")
     class Factory @AssistedInject constructor(
         @Assisted private val threadId: Long,
         @Assisted private val edKeyPair: KeyPair?,
+        @Assisted private val contentResolver: ContentResolver,
         private val repository: ConversationRepository,
         private val storage: Storage
     ) : ViewModelProvider.Factory {
 
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return ConversationViewModel(threadId, edKeyPair, repository, storage) as T
+            return ConversationViewModel(threadId, edKeyPair, contentResolver, repository, storage) as T
         }
     }
 }
@@ -219,7 +223,8 @@ data class UiMessage(val id: Long, val message: String)
 
 data class ConversationUiState(
     val uiMessages: List<UiMessage> = emptyList(),
-    val isMessageRequestAccepted: Boolean? = null
+    val isMessageRequestAccepted: Boolean? = null,
+    val conversationExists: Boolean
 )
 
 data class RetrieveOnce<T>(val retrieval: () -> T?) {

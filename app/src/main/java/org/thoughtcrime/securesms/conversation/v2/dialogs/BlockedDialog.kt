@@ -39,12 +39,7 @@ class BlockedDialog(private val recipient: Recipient, private val context: Conte
     }
 
     private fun unblock() {
-        DatabaseComponent.get(requireContext()).recipientDatabase().setBlocked(recipient, false)
+        MessagingModuleConfiguration.shared.storage.setBlocked(listOf(recipient), false)
         dismiss()
-
-        // TODO: Remove in UserConfig branch
-        GlobalScope.launch(Dispatchers.IO) {
-            ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(context)
-        }
     }
 }

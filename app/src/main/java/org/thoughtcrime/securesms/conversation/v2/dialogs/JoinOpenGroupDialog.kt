@@ -36,7 +36,7 @@ class JoinOpenGroupDialog(private val name: String, private val url: String) : D
         ThreadUtils.queue {
             try {
                 openGroup.apply { OpenGroupManager.add(server, room, serverPublicKey, activity) }
-                MessagingModuleConfiguration.shared.storage.onOpenGroupAdded(openGroup.server)
+                MessagingModuleConfiguration.shared.storage.onOpenGroupAdded(openGroup.server, openGroup.room)
                 ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(activity)
             } catch (e: Exception) {
                 Toast.makeText(activity, R.string.activity_join_public_chat_error, Toast.LENGTH_SHORT).show()
