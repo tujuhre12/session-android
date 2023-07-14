@@ -1,5 +1,7 @@
 package network.loki.messenger
 
+import androidx.core.content.edit
+import androidx.preference.PreferenceManager
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SmallTest
 import androidx.test.platform.app.InstrumentationRegistry
@@ -62,6 +64,9 @@ class LibSessionTests {
 
     @Before
     fun setupUser() {
+        PreferenceManager.getDefaultSharedPreferences(InstrumentationRegistry.getInstrumentation().targetContext.applicationContext).edit {
+            putBoolean(TextSecurePreferences.HAS_FORCED_NEW_CONFIG, true).apply()
+        }
         val newBytes = randomSeedBytes().toByteArray()
         val context = InstrumentationRegistry.getInstrumentation().targetContext.applicationContext
         val kp = KeyPairUtilities.generate(newBytes)

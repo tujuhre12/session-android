@@ -1,22 +1,19 @@
 package org.thoughtcrime.securesms.conversation.v2.dialogs
 
-import android.content.Context
 import android.app.Dialog
+import android.content.Context
 import android.graphics.Typeface
 import android.os.Bundle
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.style.StyleSpan
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import androidx.fragment.app.DialogFragment
 import network.loki.messenger.R
+import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.createSessionDialog
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
-import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 
 /** Shown upon sending a message to a user that's blocked. */
 class BlockedDialog(private val recipient: Recipient, private val context: Context) : DialogFragment() {
