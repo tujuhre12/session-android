@@ -16,6 +16,7 @@ import android.text.style.StyleSpan
 import android.view.View
 import android.widget.Toast
 import com.goterl.lazysodium.utils.KeyPair
+import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityRegisterBinding
 import org.session.libsession.snode.SnodeModule
@@ -26,10 +27,17 @@ import org.session.libsignal.utilities.KeyHelper
 import org.session.libsignal.utilities.hexEncodedPublicKey
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.crypto.KeyPairUtilities
+import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.util.push
 import org.thoughtcrime.securesms.util.setUpActionBarSessionLogo
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class RegisterActivity : BaseActionBarActivity() {
+
+    @Inject
+    lateinit var configFactory: ConfigFactory
+
     private lateinit var binding: ActivityRegisterBinding
     internal val database: LokiAPIDatabaseProtocol
         get() = SnodeModule.shared.storage
@@ -119,6 +127,7 @@ class RegisterActivity : BaseActionBarActivity() {
         database.clearReceivedMessageHashValues()
 
         KeyPairUtilities.store(this, seed!!, ed25519KeyPair!!, x25519KeyPair!!)
+        configFactory.keyPairChanged()
         val userHexEncodedPublicKey = x25519KeyPair!!.hexEncodedPublicKey
         val registrationID = KeyHelper.generateRegistrationId(false)
         TextSecurePreferences.setLocalRegistrationId(this, registrationID)

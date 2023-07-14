@@ -11,7 +11,6 @@ import androidx.core.app.NotificationCompat;
 import net.zetetic.database.sqlcipher.SQLiteConnection;
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 import net.zetetic.database.sqlcipher.SQLiteDatabaseHook;
-import net.zetetic.database.sqlcipher.SQLiteException;
 import net.zetetic.database.sqlcipher.SQLiteOpenHelper;
 
 import org.session.libsession.utilities.TextSecurePreferences;
@@ -19,6 +18,7 @@ import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.crypto.DatabaseSecret;
 import org.thoughtcrime.securesms.database.AttachmentDatabase;
 import org.thoughtcrime.securesms.database.BlindedIdMappingDatabase;
+import org.thoughtcrime.securesms.database.ConfigDatabase;
 import org.thoughtcrime.securesms.database.DraftDatabase;
 import org.thoughtcrime.securesms.database.EmojiSearchDatabase;
 import org.thoughtcrime.securesms.database.GroupDatabase;
@@ -39,6 +39,7 @@ import org.thoughtcrime.securesms.database.SessionJobDatabase;
 import org.thoughtcrime.securesms.database.SmsDatabase;
 import org.thoughtcrime.securesms.database.ThreadDatabase;
 import org.thoughtcrime.securesms.notifications.NotificationChannels;
+import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities;
 
 import java.io.File;
 
@@ -85,9 +86,11 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   private static final int lokiV38                          = 59;
   private static final int lokiV39                          = 60;
   private static final int lokiV40                          = 61;
+  private static final int lokiV41                          = 62;
+  private static final int lokiV42                          = 63;
 
   // Loki - onUpgrade(...) must be updated to use Loki version numbers if Signal makes any database changes
-  private static final int    DATABASE_VERSION         = lokiV40;
+  private static final int    DATABASE_VERSION         = lokiV42;
   private static final int    MIN_DATABASE_VERSION     = lokiV7;
   private static final String CIPHER3_DATABASE_NAME    = "signal.db";
   public static final String  DATABASE_NAME            = "signal_v4.db";
@@ -147,7 +150,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     connection.execute("PRAGMA cipher_page_size = 4096;", null, null);
   }
 
-  private static SQLiteDatabase open(String path, DatabaseSecret databaseSecret, boolean useSQLCipher4) throws SQLiteException {
+  private static SQLiteDatabase open(String path, DatabaseSecret databaseSecret, boolean useSQLCipher4) {
     return SQLiteDatabase.openDatabase(path, databaseSecret.asString(), null, SQLiteDatabase.OPEN_READWRITE, new SQLiteDatabaseHook() {
       @Override
       public void preKey(SQLiteConnection connection) { SQLCipherOpenHelper.applySQLCipherPragmas(connection, useSQLCipher4); }
@@ -340,6 +343,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     db.execSQL(ThreadDatabase.getUnreadMentionCountCommand());
     db.execSQL(SmsDatabase.CREATE_HAS_MENTION_COMMAND);
     db.execSQL(MmsDatabase.CREATE_HAS_MENTION_COMMAND);
+    db.execSQL(ConfigDatabase.CREATE_CONFIG_TABLE_COMMAND);
 
     executeStatements(db, SmsDatabase.CREATE_INDEXS);
     executeStatements(db, MmsDatabase.CREATE_INDEXS);
@@ -351,6 +355,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     executeStatements(db, ReactionDatabase.CREATE_INDEXS);
 
     executeStatements(db, ReactionDatabase.CREATE_REACTION_TRIGGERS);
+    db.execSQL(RecipientDatabase.getAddWrapperHash());
   }
 
   @Override
@@ -581,6 +586,16 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
         db.execSQL(ThreadDatabase.getUnreadMentionCountCommand());
         db.execSQL(SmsDatabase.CREATE_HAS_MENTION_COMMAND);
         db.execSQL(MmsDatabase.CREATE_HAS_MENTION_COMMAND);
+      }
+
+      if (oldVersion < lokiV41) {
+        db.execSQL(ConfigDatabase.CREATE_CONFIG_TABLE_COMMAND);
+        db.execSQL(ConfigurationMessageUtilities.DELETE_INACTIVE_GROUPS);
+        db.execSQL(ConfigurationMessageUtilities.DELETE_INACTIVE_ONE_TO_ONES);
+      }
+
+      if (oldVersion < lokiV42) {
+        db.execSQL(RecipientDatabase.getAddWrapperHash());
       }
 
       db.setTransactionSuccessful();

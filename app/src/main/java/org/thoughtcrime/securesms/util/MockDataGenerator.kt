@@ -7,8 +7,6 @@ import org.session.libsession.messaging.messages.signal.IncomingTextMessage
 import org.session.libsession.messaging.messages.signal.OutgoingTextMessage
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.open_groups.OpenGroupApi
-import org.session.libsession.messaging.sending_receiving.notifications.PushNotificationAPI
-import org.session.libsession.messaging.sending_receiving.pollers.ClosedGroupPollerV2
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.recipients.Recipient
@@ -21,7 +19,6 @@ import org.thoughtcrime.securesms.crypto.KeyPairUtilities
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.groups.GroupManager
 import java.security.SecureRandom
-import java.util.*
 import kotlin.random.asKotlinRandom
 
 object MockDataGenerator {
@@ -139,7 +136,6 @@ object MockDataGenerator {
                                 false
                             ),
                             (timestampNow - (index * 5000)),
-                            false,
                             false
                         )
                     }
@@ -235,8 +231,9 @@ object MockDataGenerator {
 
                 // Add the group to the user's set of public keys to poll for and store the key pair
                 val encryptionKeyPair = Curve.generateKeyPair()
-                storage.addClosedGroupEncryptionKeyPair(encryptionKeyPair, randomGroupPublicKey)
+                storage.addClosedGroupEncryptionKeyPair(encryptionKeyPair, randomGroupPublicKey, System.currentTimeMillis())
                 storage.setExpirationTimer(groupId, 0)
+                storage.createInitialConfigGroup(randomGroupPublicKey, groupName, GroupUtil.createConfigMemberMap(members, setOf(adminUserId)), System.currentTimeMillis(), encryptionKeyPair)
 
                 // Add the group created message
                 if (userSessionId == adminUserId) {
@@ -269,7 +266,6 @@ object MockDataGenerator {
                                 false
                             ),
                             (timestampNow - (index * 5000)),
-                            false,
                             false
                         )
                     }
@@ -395,7 +391,6 @@ object MockDataGenerator {
                                 false
                             ),
                             (timestampNow - (index * 5000)),
-                            false,
                             false
                         )
                     } else {

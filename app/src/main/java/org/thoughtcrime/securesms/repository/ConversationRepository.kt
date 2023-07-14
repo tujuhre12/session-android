@@ -23,9 +23,11 @@ import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.SessionJobDatabase
 import org.thoughtcrime.securesms.database.SmsDatabase
+import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.ThreadRecord
+import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import javax.inject.Inject
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -62,7 +64,7 @@ interface ConversationRepository {
 
     suspend fun deleteMessageRequest(thread: ThreadRecord): ResultOf<Unit>
 
-    suspend fun clearAllMessageRequests(): ResultOf<Unit>
+    suspend fun clearAllMessageRequests(block: Boolean): ResultOf<Unit>
 
     suspend fun acceptMessageRequest(threadId: Long, recipient: Recipient): ResultOf<Unit>
 
@@ -82,8 +84,10 @@ class DefaultConversationRepository @Inject constructor(
     private val mmsDb: MmsDatabase,
     private val mmsSmsDb: MmsSmsDatabase,
     private val recipientDb: RecipientDatabase,
+    private val storage: Storage,
     private val lokiMessageDb: LokiMessageDatabase,
-    private val sessionJobDb: SessionJobDatabase
+    private val sessionJobDb: SessionJobDatabase,
+    private val configFactory: ConfigFactory
 ) : ConversationRepository {
 
     override fun maybeGetRecipientForThreadId(threadId: Long): Recipient? {
@@ -125,8 +129,9 @@ class DefaultConversationRepository @Inject constructor(
         }
     }
 
+    // This assumes that recipient.isContactRecipient is true
     override fun setBlocked(recipient: Recipient, blocked: Boolean) {
-        recipientDb.setBlocked(recipient, blocked)
+        storage.setBlocked(listOf(recipient), blocked)
     }
 
     override fun deleteLocally(recipient: Recipient, message: MessageRecord) {
@@ -139,7 +144,7 @@ class DefaultConversationRepository @Inject constructor(
     }
 
     override fun setApproved(recipient: Recipient, isApproved: Boolean) {
-        recipientDb.setApproved(recipient, isApproved)
+        storage.setRecipientApproved(recipient, isApproved)
     }
 
     override suspend fun deleteForEveryone(
@@ -250,29 +255,33 @@ class DefaultConversationRepository @Inject constructor(
 
     override suspend fun deleteThread(threadId: Long): ResultOf<Unit> {
         sessionJobDb.cancelPendingMessageSendJobs(threadId)
-        threadDb.deleteConversation(threadId)
+        storage.deleteConversation(threadId)
         return ResultOf.Success(Unit)
     }
 
     override suspend fun deleteMessageRequest(thread: ThreadRecord): ResultOf<Unit> {
         sessionJobDb.cancelPendingMessageSendJobs(thread.threadId)
-        threadDb.deleteConversation(thread.threadId)
+        storage.deleteConversation(thread.threadId)
         return ResultOf.Success(Unit)
     }
 
-    override suspend fun clearAllMessageRequests(): ResultOf<Unit> {
+    override suspend fun clearAllMessageRequests(block: Boolean): ResultOf<Unit> {
         threadDb.readerFor(threadDb.unapprovedConversationList).use { reader ->
             while (reader.next != null) {
                 deleteMessageRequest(reader.current)
+                val recipient = reader.current.recipient
+                if (block) {
+                    setBlocked(recipient, true)
+                }
             }
         }
         return ResultOf.Success(Unit)
     }
 
     override suspend fun acceptMessageRequest(threadId: Long, recipient: Recipient): ResultOf<Unit> = suspendCoroutine { continuation ->
-        recipientDb.setApproved(recipient, true)
+        storage.setRecipientApproved(recipient, true)
         val message = MessageRequestResponse(true)
-        MessageSender.send(message, Destination.from(recipient.address))
+        MessageSender.send(message, Destination.from(recipient.address), isSyncMessage = recipient.isLocalNumber)
             .success {
                 threadDb.setHasSent(threadId, true)
                 continuation.resume(ResultOf.Success(Unit))
@@ -283,7 +292,7 @@ class DefaultConversationRepository @Inject constructor(
 
     override fun declineMessageRequest(threadId: Long) {
         sessionJobDb.cancelPendingMessageSendJobs(threadId)
-        threadDb.deleteConversation(threadId)
+        storage.deleteConversation(threadId)
     }
 
     override fun hasReceived(threadId: Long): Boolean {
