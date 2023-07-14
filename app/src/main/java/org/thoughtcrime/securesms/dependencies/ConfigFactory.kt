@@ -50,7 +50,7 @@ class ConfigFactory(
     private val userGroupsLock = Object()
     private var _userGroups: UserGroupsConfig? = null
 
-    private val isConfigForcedOn = TextSecurePreferences.hasForcedNewConfig(context)
+    private val isConfigForcedOn by lazy { TextSecurePreferences.hasForcedNewConfig(context) }
 
     private val listeners: MutableList<ConfigFactoryUpdateListener> = mutableListOf()
     fun registerListener(listener: ConfigFactoryUpdateListener) {
