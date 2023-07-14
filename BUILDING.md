@@ -32,6 +32,7 @@ Setting up a development environment and building from Android Studio
 4. Android Studio should detect the presence of a project file and ask you whether to open it. Click "yes".
 5. Default config options should be good enough.
 6. Project initialization and building should proceed.
+7. Clone submodules with `git submodule update --init --recursive`
 
 Contributing code
 -----------------
