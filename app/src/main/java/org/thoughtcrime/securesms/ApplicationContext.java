@@ -40,6 +40,7 @@ import org.session.libsession.messaging.sending_receiving.pollers.ClosedGroupPol
 import org.session.libsession.messaging.sending_receiving.pollers.Poller;
 import org.session.libsession.snode.SnodeModule;
 import org.session.libsession.utilities.Address;
+import org.session.libsession.utilities.ConfigFactoryUpdateListener;
 import org.session.libsession.utilities.ProfilePictureUtilities;
 import org.session.libsession.utilities.SSKEnvironment;
 import org.session.libsession.utilities.TextSecurePreferences;
@@ -59,6 +60,8 @@ import org.thoughtcrime.securesms.database.LokiAPIDatabase;
 import org.thoughtcrime.securesms.database.Storage;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
 import org.thoughtcrime.securesms.database.model.EmojiSearchData;
+import org.thoughtcrime.securesms.dependencies.AppComponent;
+import org.thoughtcrime.securesms.dependencies.ConfigFactory;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 import org.thoughtcrime.securesms.dependencies.DatabaseModule;
 import org.thoughtcrime.securesms.emoji.EmojiSource;
@@ -106,6 +109,8 @@ import dagger.hilt.EntryPoints;
 import dagger.hilt.android.HiltAndroidApp;
 import kotlin.Unit;
 import kotlinx.coroutines.Job;
+import network.loki.messenger.libsession_util.ConfigBase;
+import network.loki.messenger.libsession_util.UserProfile;
 
 /**
  * Will be called once when the TextSecure process is created.
@@ -116,7 +121,7 @@ import kotlinx.coroutines.Job;
  * @author Moxie Marlinspike
  */
 @HiltAndroidApp
-public class ApplicationContext extends Application implements DefaultLifecycleObserver {
+public class ApplicationContext extends Application implements DefaultLifecycleObserver, ConfigFactoryUpdateListener {
 
     public static final String PREFERENCES_NAME = "SecureSMS-Preferences";
 
@@ -137,9 +142,10 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     private PersistentLogger persistentLogger;
 
     @Inject LokiAPIDatabase lokiAPIDatabase;
-    @Inject Storage storage;
+    @Inject public Storage storage;
     @Inject MessageDataProvider messageDataProvider;
     @Inject TextSecurePreferences textSecurePreferences;
+    @Inject ConfigFactory configFactory;
     CallMessageProcessor callMessageProcessor;
     MessagingModuleConfiguration messagingModuleConfiguration;
 
@@ -155,6 +161,10 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
 
     public static ApplicationContext getInstance(Context context) {
         return (ApplicationContext) context.getApplicationContext();
+    }
+
+    public TextSecurePreferences getPrefs() {
+        return EntryPoints.get(getApplicationContext(), AppComponent.class).getPrefs();
     }
 
     public DatabaseComponent getDatabaseComponent() {
@@ -184,6 +194,15 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     }
 
     @Override
+    public void notifyUpdates(@NonNull ConfigBase forConfigObject) {
+        // forward to the config factory / storage ig
+        if (forConfigObject instanceof UserProfile && !textSecurePreferences.getConfigurationMessageSynced()) {
+            textSecurePreferences.setConfigurationMessageSynced(true);
+        }
+        storage.notifyConfigUpdates(forConfigObject);
+    }
+
+    @Override
     public void onCreate() {
         DatabaseModule.init(this);
         MessagingModuleConfiguration.configure(this);
@@ -191,7 +210,9 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         messagingModuleConfiguration = new MessagingModuleConfiguration(this,
                 storage,
                 messageDataProvider,
-                ()-> KeyPairUtilities.INSTANCE.getUserED25519KeyPair(this));
+                ()-> KeyPairUtilities.INSTANCE.getUserED25519KeyPair(this),
+                configFactory
+                );
         callMessageProcessor = new CallMessageProcessor(this, textSecurePreferences, ProcessLifecycleOwner.get().getLifecycle(), storage);
         Log.i(TAG, "onCreate()");
         startKovenant();
@@ -347,7 +368,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     }
 
     private void initializeProfileManager() {
-        this.profileManager = new ProfileManager();
+        this.profileManager = new ProfileManager(this, configFactory);
     }
 
     private void initializeTypingStatusSender() {
@@ -440,7 +461,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
             poller.setUserPublicKey(userPublicKey);
             return;
         }
-        poller = new Poller();
+        poller = new Poller(configFactory, new Timer());
     }
 
     public void startPollingIfNeeded() {
@@ -483,6 +504,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
                 });
             } catch (Exception exception) {
                 // Do nothing
+                Log.e("Loki-Avatar", "Uploading avatar failed", exception);
             }
         });
     }
@@ -520,6 +542,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         if (!deleteDatabase(SQLCipherOpenHelper.DATABASE_NAME)) {
             Log.d("Loki", "Failed to delete database.");
         }
+        configFactory.keyPairChanged();
         Util.runOnMain(() -> new Handler().postDelayed(ApplicationContext.this::restartApplication, 200));
     }
 

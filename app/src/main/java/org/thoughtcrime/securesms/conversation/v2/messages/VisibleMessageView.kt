@@ -110,6 +110,8 @@ class VisibleMessageView : LinearLayout {
     private fun initialize() {
         isHapticFeedbackEnabled = true
         setWillNotDraw(false)
+        binding.root.disableClipping()
+        binding.mainContainer.disableClipping()
         binding.messageInnerContainer.disableClipping()
         binding.messageContentView.root.disableClipping()
     }
@@ -124,6 +126,7 @@ class VisibleMessageView : LinearLayout {
         searchQuery: String? = null,
         contact: Contact? = null,
         senderSessionID: String,
+        lastSeen: Long,
         delegate: VisibleMessageViewDelegate? = null,
         onAttachmentNeedsDownload: (Long, Long) -> Unit
     ) {
@@ -162,6 +165,7 @@ class VisibleMessageView : LinearLayout {
                     if (thread.isOpenGroupRecipient) {
                         val openGroup = lokiThreadDb.getOpenGroupChat(threadID)
                         if (IdPrefix.fromValue(senderSessionID) == IdPrefix.BLINDED && openGroup?.canWrite == true) {
+                            // TODO: support v2 soon
                             val intent = Intent(context, ConversationActivityV2::class.java)
                             intent.putExtra(ConversationActivityV2.FROM_GROUP_THREAD_ID, threadID)
                             intent.putExtra(ConversationActivityV2.ADDRESS, Address.fromSerialized(senderSessionID))
@@ -175,7 +179,7 @@ class VisibleMessageView : LinearLayout {
                     val openGroup = lokiThreadDb.getOpenGroupChat(threadID) ?: return
                     var standardPublicKey = ""
                     var blindedPublicKey: String? = null
-                    if (IdPrefix.fromValue(senderSessionID) == IdPrefix.BLINDED) {
+                    if (IdPrefix.fromValue(senderSessionID)?.isBlinded() == true) {
                         blindedPublicKey = senderSessionID
                     } else {
                         standardPublicKey = senderSessionID
@@ -189,6 +193,8 @@ class VisibleMessageView : LinearLayout {
         val contactContext =
             if (thread.isOpenGroupRecipient) ContactContext.OPEN_GROUP else ContactContext.REGULAR
         binding.senderNameTextView.text = contact?.displayName(contactContext) ?: senderSessionID
+        // Unread marker
+        binding.unreadMarkerContainer.isVisible = lastSeen != -1L && message.timestamp > lastSeen && (previous == null || previous.timestamp <= lastSeen) && !message.isOutgoing
         // Date break
         val showDateBreak = isStartOfMessageCluster || snIsSelected
         binding.dateBreakTextView.text = if (showDateBreak) DateUtils.getDisplayFormattedTimeSpanString(context, Locale.getDefault(), message.timestamp) else null
@@ -406,6 +412,10 @@ class VisibleMessageView : LinearLayout {
     fun recycle() {
         binding.profilePictureView.recycle()
         binding.messageContentView.root.recycle()
+    }
+
+    fun playHighlight() {
+        binding.messageContentView.root.playHighlight()
     }
     // endregion
 

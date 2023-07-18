@@ -12,6 +12,8 @@ import androidx.core.app.NotificationManagerCompat;
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 
+import org.session.libsession.database.StorageProtocol;
+import org.session.libsession.messaging.MessagingModuleConfiguration;
 import org.session.libsession.messaging.messages.control.ReadReceipt;
 import org.session.libsession.messaging.sending_receiving.MessageSender;
 import org.session.libsession.snode.SnodeAPI;
@@ -27,7 +29,6 @@ import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 import org.thoughtcrime.securesms.service.ExpiringMessageManager;
 import org.thoughtcrime.securesms.util.SessionMetaProtocol;
 
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -52,18 +53,12 @@ public class MarkReadReceiver extends BroadcastReceiver {
       new AsyncTask<Void, Void, Void>() {
         @Override
         protected Void doInBackground(Void... params) {
-          List<MarkedMessageInfo> messageIdsCollection = new LinkedList<>();
-
+          long currentTime = SnodeAPI.getNowWithOffset();
           for (long threadId : threadIds) {
             Log.i(TAG, "Marking as read: " + threadId);
-            List<MarkedMessageInfo> messageIds = DatabaseComponent.get(context).threadDatabase().setRead(threadId, true);
-            messageIdsCollection.addAll(messageIds);
+            StorageProtocol storage = MessagingModuleConfiguration.getShared().getStorage();
+            storage.markConversationAsRead(threadId,currentTime, true);
           }
-
-          process(context, messageIdsCollection);
-
-          ApplicationContext.getInstance(context).messageNotifier.updateNotification(context);
-
           return null;
         }
       }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
