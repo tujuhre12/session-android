@@ -15,11 +15,6 @@ import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
 import org.session.libsession.messaging.messages.control.SharedConfigurationMessage
 import org.session.libsession.messaging.messages.control.UnsendRequest
-import org.session.libsession.messaging.messages.control.CallMessage
-import org.session.libsession.messaging.messages.control.ClosedGroupControlMessage
-import org.session.libsession.messaging.messages.control.ConfigurationMessage
-import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
-import org.session.libsession.messaging.messages.control.UnsendRequest
 import org.session.libsession.messaging.messages.visible.LinkPreview
 import org.session.libsession.messaging.messages.visible.Quote
 import org.session.libsession.messaging.messages.visible.VisibleMessage
@@ -160,7 +155,7 @@ object MessageSender {
         return SnodeMessage(
             message.recipient!!,
             base64EncodedData,
-            message.ttl,
+            ttl = getSpecifiedTtl(message, isSyncMessage) ?: message.ttl,
             messageSendTime
         )
     }
@@ -190,97 +185,14 @@ object MessageSender {
             val namespaces: List<Int> = when {
                 destination is Destination.ClosedGroup
                         && forkInfo.defaultRequiresAuth() -> listOf(Namespace.UNAUTHENTICATED_CLOSED_GROUP)
+
                 destination is Destination.ClosedGroup
-                        && forkInfo.hasNamespaces() -> listOf(Namespace.UNAUTHENTICATED_CLOSED_GROUP, Namespace.DEFAULT)
+                        && forkInfo.hasNamespaces() -> listOf(
+                    Namespace.UNAUTHENTICATED_CLOSED_GROUP,
+                    Namespace.DEFAULT
+                )
+
                 else -> listOf(Namespace.DEFAULT)
-        // DISAPPEARING-MESSAGES
-        val isSelfSend = (message.recipient == userPublicKey)
-        // Set the failure handler (need it here already for precondition failure handling)
-        fun handleFailure(error: Exception) {
-            handleFailedMessageSend(message, error, isSyncMessage)
-            if (destination is Destination.Contact && message is VisibleMessage && !isSelfSend) {
-                SnodeModule.shared.broadcaster.broadcast("messageFailed", message.sentTimestamp!!)
-            }
-            deferred.reject(error)
-        }
-        try {
-            when (destination) {
-                is Destination.Contact -> message.recipient = destination.publicKey
-                is Destination.ClosedGroup -> message.recipient = destination.groupPublicKey
-                else -> throw IllegalStateException("Destination should not be an open group.")
-            }
-            // Validate the message
-            if (!message.isValid()) { throw Error.InvalidMessage }
-            // Stop here if this is a self-send, unless it's:
-            // • a configuration message
-            // • a sync message
-            // • a closed group control message of type `new`
-            var isNewClosedGroupControlMessage = false
-            if (message is ClosedGroupControlMessage && message.kind is ClosedGroupControlMessage.Kind.New) isNewClosedGroupControlMessage = true
-            if (isSelfSend && message !is ConfigurationMessage && !isSyncMessage && !isNewClosedGroupControlMessage && message !is UnsendRequest) {
-                handleSuccessfulMessageSend(message, destination)
-                deferred.resolve(Unit)
-                return promise
-            }
-            // Attach the user's profile if needed
-            if (message is VisibleMessage) {
-                message.profile = storage.getUserProfile()
-            }
-            if (message is MessageRequestResponse) {
-                message.profile = storage.getUserProfile()
-            }
-            // Convert it to protobuf
-            val proto = message.toProto() ?: throw Error.ProtoConversionFailed
-            // Serialize the protobuf
-            val plaintext = PushTransportDetails.getPaddedMessageBody(proto.toByteArray())
-            // Encrypt the serialized protobuf
-            val ciphertext = when (destination) {
-                is Destination.Contact -> MessageEncrypter.encrypt(plaintext, destination.publicKey)
-                is Destination.ClosedGroup -> {
-                    val encryptionKeyPair = MessagingModuleConfiguration.shared.storage.getLatestClosedGroupEncryptionKeyPair(destination.groupPublicKey)!!
-                    MessageEncrypter.encrypt(plaintext, encryptionKeyPair.hexEncodedPublicKey)
-                }
-                else -> throw IllegalStateException("Destination should not be open group.")
-            }
-            // Wrap the result
-            val kind: SignalServiceProtos.Envelope.Type
-            val senderPublicKey: String
-            // TODO: this might change in future for config messages
-            val forkInfo = SnodeAPI.forkInfo
-            val namespaces: List<Int> = when {
-                destination is Destination.ClosedGroup
-                        && forkInfo.defaultRequiresAuth() -> listOf(Namespace.UNAUTHENTICATED_CLOSED_GROUP)
-                destination is Destination.ClosedGroup
-                        && forkInfo.hasNamespaces() -> listOf(Namespace.UNAUTHENTICATED_CLOSED_GROUP, Namespace.DEFAULT)
-                else -> listOf(Namespace.DEFAULT)
-            }
-            when (destination) {
-                is Destination.Contact -> {
-                    kind = SignalServiceProtos.Envelope.Type.SESSION_MESSAGE
-                    senderPublicKey = ""
-                }
-                is Destination.ClosedGroup -> {
-                    kind = SignalServiceProtos.Envelope.Type.CLOSED_GROUP_MESSAGE
-                    senderPublicKey = destination.groupPublicKey
-                }
-                else -> throw IllegalStateException("Destination should not be open group.")
-            }
-            val wrappedMessage = MessageWrapper.wrap(kind, message.sentTimestamp!!, senderPublicKey, ciphertext)
-            // Send the result
-            if (destination is Destination.Contact && message is VisibleMessage && !isSelfSend) {
-                SnodeModule.shared.broadcaster.broadcast("calculatingPoW", messageSendTime)
-            }
-            val base64EncodedData = Base64.encodeBytes(wrappedMessage)
-            // Send the result
-            val timestamp = messageSendTime + SnodeAPI.clockOffset
-            val snodeMessage = SnodeMessage(
-                recipient = message.recipient!!,
-                data = base64EncodedData,
-                ttl = getSpecifiedTtl(message, isSyncMessage) ?: message.ttl,
-                timestamp = timestamp
-            )
-            if (destination is Destination.Contact && message is VisibleMessage && !isSelfSend) {
-                SnodeModule.shared.broadcaster.broadcast("sendingMessage", messageSendTime)
             }
             namespaces.map { namespace -> SnodeAPI.sendMessage(snodeMessage, requiresAuth = false, namespace = namespace) }.let { promises ->
                 var isSuccess = false
@@ -336,7 +248,7 @@ object MessageSender {
         val threadId = message.threadID
             ?: run {
                 val address = if (isSyncMessage && message is VisibleMessage) message.syncTarget else message.recipient
-                storage.getOrCreateThreadIdFor(address!!)
+                storage.getOrCreateThreadIdFor(Address.fromSerialized(address!!))
             }
         val config = storage.getExpirationConfiguration(threadId) ?: return null
         return if (config.isEnabled && (config.expirationType == ExpirationType.DELETE_AFTER_SEND || isSyncMessage)) {

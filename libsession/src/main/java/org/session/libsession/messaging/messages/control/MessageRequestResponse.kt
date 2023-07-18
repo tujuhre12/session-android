@@ -18,9 +18,10 @@ class MessageRequestResponse(val isApproved: Boolean, var profile: Profile? = nu
             .setProfile(profileProto.build())
         profile?.profileKey?.let { messageRequestResponseProto.profileKey = ByteString.copyFrom(it) }
         return try {
-            messageRequestResponseProto.messageRequestResponse = messageRequestResponseProto.build()
-            messageRequestResponseProto.setExpirationConfigurationIfNeeded(threadID)
-            messageRequestResponseProto.build()
+            SignalServiceProtos.Content.newBuilder()
+                .setMessageRequestResponse(messageRequestResponseProto.build())
+                .setExpirationConfigurationIfNeeded(threadID)
+                .build()
         } catch (e: Exception) {
             Log.w(TAG, "Couldn't construct message request response proto from: $this")
             null
