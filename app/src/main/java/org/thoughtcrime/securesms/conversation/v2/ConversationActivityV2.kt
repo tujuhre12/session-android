@@ -1982,7 +1982,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     override fun reply(messages: Set<MessageRecord>) {
         val recipient = viewModel.recipient ?: return
-        binding?.inputBar?.draftQuote(recipient, messages.first(), glide)
+        messages.firstOrNull()?.let { binding?.inputBar?.draftQuote(recipient, it, glide) }
         endActionMode()
     }
 
