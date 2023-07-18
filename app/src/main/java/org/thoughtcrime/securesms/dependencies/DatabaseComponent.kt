@@ -46,4 +46,5 @@ interface DatabaseComponent {
     fun blindedIdMappingDatabase(): BlindedIdMappingDatabase
     fun groupMemberDatabase(): GroupMemberDatabase
     fun expirationConfigurationDatabase(): ExpirationConfigurationDatabase
+    fun configDatabase(): ConfigDatabase
 }

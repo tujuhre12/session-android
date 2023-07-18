@@ -179,6 +179,7 @@ class RecipientProvider {
     @Nullable final String                 notificationChannel;
     @NonNull  final UnidentifiedAccessMode unidentifiedAccessMode;
               final boolean                forceSmsSelection;
+              final String                 wrapperHash;
 
     RecipientDetails(@Nullable String name, @Nullable Long groupAvatarId,
                      boolean systemContact, boolean isLocalNumber, @Nullable RecipientSettings settings,
@@ -212,6 +213,7 @@ class RecipientProvider {
       this.notificationChannel             = settings     != null ? settings.getNotificationChannel() : null;
       this.unidentifiedAccessMode          = settings     != null ? settings.getUnidentifiedAccessMode() : UnidentifiedAccessMode.DISABLED;
       this.forceSmsSelection               = settings     != null && settings.isForceSmsSelection();
+      this.wrapperHash                     = settings     != null ? settings.getWrapperHash() : null;
 
       if (name == null && settings != null) this.name = settings.getSystemDisplayName();
       else                                  this.name = name;

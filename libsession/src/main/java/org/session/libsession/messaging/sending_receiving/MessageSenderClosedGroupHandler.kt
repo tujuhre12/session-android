@@ -59,16 +59,20 @@ fun MessageSender.create(name: String, members: Collection<String>): Promise<Str
         // Add the group to the user's set of public keys to poll for
         storage.addClosedGroupPublicKey(groupPublicKey)
         // Store the encryption key pair
-        storage.addClosedGroupEncryptionKeyPair(encryptionKeyPair, groupPublicKey)
+        storage.addClosedGroupEncryptionKeyPair(encryptionKeyPair, groupPublicKey, sentTime)
+        // Create the thread
+        storage.getOrCreateThreadIdFor(Address.fromSerialized(groupID))
+
         // Notify the user
         val threadID = storage.getOrCreateThreadIdFor(Address.fromSerialized(groupID))
         storage.insertOutgoingInfoMessage(context, groupID, SignalServiceGroup.Type.CREATION, name, members, admins, threadID, sentTime)
 
+        val ourPubKey = storage.getUserPublicKey()
         for (member in members) {
             val closedGroupControlMessage = ClosedGroupControlMessage(closedGroupUpdateKind, groupID)
             closedGroupControlMessage.sentTimestamp = sentTime
             try {
-                sendNonDurably(closedGroupControlMessage, Address.fromSerialized(member)).get()
+                sendNonDurably(closedGroupControlMessage, Address.fromSerialized(member), member == ourPubKey).get()
             } catch (e: Exception) {
                 // We failed to properly create the group so delete it's associated data (in the past
                 // we didn't create this data until the messages successfully sent but this resulted
@@ -81,6 +85,8 @@ fun MessageSender.create(name: String, members: Collection<String>): Promise<Str
             }
         }
 
+        // Add the group to the config now that it was successfully created
+        storage.createInitialConfigGroup(groupPublicKey, name, GroupUtil.createConfigMemberMap(members, admins), sentTime, encryptionKeyPair)
         // Notify the PN server
         PushNotificationAPI.performOperation(PushNotificationAPI.ClosedGroupOperation.Subscribe, groupPublicKey, userPublicKey)
         // Start polling
@@ -90,24 +96,6 @@ fun MessageSender.create(name: String, members: Collection<String>): Promise<Str
     }
     // Return
     return deferred.promise
-}
-
-fun MessageSender.update(groupPublicKey: String, members: List<String>, name: String) {
-    val context = MessagingModuleConfiguration.shared.context
-    val storage = MessagingModuleConfiguration.shared.storage
-    val groupID = GroupUtil.doubleEncodeGroupID(groupPublicKey)
-    val group = storage.getGroup(groupID) ?: run {
-        Log.d("Loki", "Can't update nonexistent closed group.")
-        throw Error.NoThread
-    }
-    // Update name if needed
-    if (name != group.title) { setName(groupPublicKey, name) }
-    // Add members if needed
-    val addedMembers = members - group.members.map { it.serialize() }
-    if (!addedMembers.isEmpty()) { addMembers(groupPublicKey, addedMembers) }
-    // Remove members if needed
-    val removedMembers = group.members.map { it.serialize() } - members
-    if (removedMembers.isEmpty()) { removeMembers(groupPublicKey, removedMembers) }
 }
 
 fun MessageSender.setName(groupPublicKey: String, newName: String) {
@@ -251,15 +239,15 @@ fun MessageSender.leave(groupPublicKey: String, notifyUser: Boolean = true): Pro
         val sentTime = SnodeAPI.nowWithOffset
         closedGroupControlMessage.sentTimestamp = sentTime
         storage.setActive(groupID, false)
-        sendNonDurably(closedGroupControlMessage, Address.fromSerialized(groupID)).success {
+        sendNonDurably(closedGroupControlMessage, Address.fromSerialized(groupID), isSyncMessage = false).success {
             // Notify the user
             val infoType = SignalServiceGroup.Type.QUIT
-            val threadID = storage.getOrCreateThreadIdFor(Address.fromSerialized(groupID))
             if (notifyUser) {
+                val threadID = storage.getOrCreateThreadIdFor(Address.fromSerialized(groupID))
                 storage.insertOutgoingInfoMessage(context, groupID, infoType, name, updatedMembers, admins, threadID, sentTime)
             }
             // Remove the group private key and unsubscribe from PNs
-            MessageReceiver.disableLocalGroupAndUnsubscribe(groupPublicKey, groupID, userPublicKey)
+            MessageReceiver.disableLocalGroupAndUnsubscribe(groupPublicKey, groupID, userPublicKey, true)
             deferred.resolve(Unit)
         }.fail {
             storage.setActive(groupID, true)
@@ -291,7 +279,7 @@ fun MessageSender.generateAndSendNewEncryptionKeyPair(groupPublicKey: String, ta
     // Distribute it
     sendEncryptionKeyPair(groupPublicKey, newKeyPair, targetMembers)?.success {
         // Store it * after * having sent out the message to the group
-        storage.addClosedGroupEncryptionKeyPair(newKeyPair, groupPublicKey)
+        storage.addClosedGroupEncryptionKeyPair(newKeyPair, groupPublicKey, SnodeAPI.nowWithOffset)
         pendingKeyPairs[groupPublicKey] = Optional.absent()
     }
 }
@@ -311,7 +299,8 @@ fun MessageSender.sendEncryptionKeyPair(groupPublicKey: String, newKeyPair: ECKe
     val closedGroupControlMessage = ClosedGroupControlMessage(kind, null)
     closedGroupControlMessage.sentTimestamp = sentTime
     return if (force) {
-        MessageSender.sendNonDurably(closedGroupControlMessage, Address.fromSerialized(destination))
+        val isSync = MessagingModuleConfiguration.shared.storage.getUserPublicKey() == destination
+        MessageSender.sendNonDurably(closedGroupControlMessage, Address.fromSerialized(destination), isSyncMessage = isSync)
     } else {
         MessageSender.send(closedGroupControlMessage, Address.fromSerialized(destination))
         null

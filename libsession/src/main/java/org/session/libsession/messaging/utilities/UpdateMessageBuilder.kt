@@ -77,6 +77,7 @@ object UpdateMessageBuilder {
                     context.getString(R.string.ConversationItem_group_action_left, senderName)
                 }
             }
+            is UpdateMessageData.Kind.OpenGroupInvitation -> { /*Handled externally*/ }
         }
         return message
     }

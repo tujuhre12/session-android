@@ -419,6 +419,8 @@ object OnionRequestAPI {
                     Log.d("Loki","Destination server returned ${exception.statusCode}")
                 } else if (message == "Loki Server error") {
                     Log.d("Loki", "message was $message")
+                } else if (exception.statusCode == 404) {
+                    // 404 is probably file server missing a file, don't rebuild path or mark a snode as bad here
                 } else { // Only drop snode/path if not receiving above two exception cases
                     handleUnspecificError()
                 }
@@ -446,8 +448,8 @@ object OnionRequestAPI {
         val payloadData = JsonUtil.toJson(payload).toByteArray()
         return sendOnionRequest(Destination.Snode(snode), payloadData, version).recover { exception ->
             val error = when (exception) {
-                is HTTP.HTTPRequestFailedException -> SnodeAPI.handleSnodeError(exception.statusCode, exception.json, snode, publicKey)
                 is HTTPRequestFailedAtDestinationException -> SnodeAPI.handleSnodeError(exception.statusCode, exception.json, snode, publicKey)
+                is HTTP.HTTPRequestFailedException -> SnodeAPI.handleSnodeError(exception.statusCode, exception.json, snode, publicKey)
                 else -> null
             }
             if (error != null) { throw error }

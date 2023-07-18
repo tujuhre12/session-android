@@ -1,9 +1,12 @@
 package org.thoughtcrime.securesms.preferences
 
+import android.app.Dialog
+import android.os.Bundle
 import android.view.LayoutInflater
-import androidx.appcompat.app.AlertDialog
+import android.view.View
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
+import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DividerItemDecoration
 import kotlinx.coroutines.Dispatchers
@@ -16,11 +19,10 @@ import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
-import org.thoughtcrime.securesms.conversation.v2.utilities.BaseDialog
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent
+import org.thoughtcrime.securesms.createSessionDialog
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 
-class ClearAllDataDialog : BaseDialog() {
+class ClearAllDataDialog : DialogFragment() {
     private lateinit var binding: DialogClearAllDataBinding
 
     enum class Steps {
@@ -37,7 +39,11 @@ class ClearAllDataDialog : BaseDialog() {
             updateUI()
         }
 
-    override fun setContentView(builder: AlertDialog.Builder) {
+    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog = createSessionDialog {
+        view(createView())
+    }
+
+    private fun createView(): View {
         binding = DialogClearAllDataBinding.inflate(LayoutInflater.from(requireContext()))
         val device = RadioOption("deviceOnly", requireContext().getString(R.string.dialog_clear_all_data_clear_device_only))
         val network = RadioOption("deviceAndNetwork", requireContext().getString(R.string.dialog_clear_all_data_clear_device_and_network))
@@ -64,8 +70,7 @@ class ClearAllDataDialog : BaseDialog() {
                 Steps.DELETING -> { /* do nothing intentionally */ }
             }
         }
-        builder.setView(binding.root)
-        builder.setCancelable(false)
+        return binding.root
     }
 
     private fun updateUI() {
