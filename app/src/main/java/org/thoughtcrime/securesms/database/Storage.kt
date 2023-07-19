@@ -20,13 +20,6 @@ import org.session.libsession.messaging.BlindedIdMapping
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.jobs.AttachmentUploadJob
-import org.session.libsession.messaging.jobs.GroupAvatarDownloadJob
-import org.session.libsession.messaging.jobs.Job
-import org.session.libsession.messaging.jobs.JobQueue
-import org.session.libsession.messaging.jobs.MessageReceiveJob
-import org.session.libsession.messaging.jobs.MessageSendJob
-import org.session.libsession.messaging.messages.ExpirationConfiguration
-import org.session.libsession.messaging.jobs.AttachmentUploadJob
 import org.session.libsession.messaging.jobs.BackgroundGroupAddJob
 import org.session.libsession.messaging.jobs.ConfigurationSyncJob
 import org.session.libsession.messaging.jobs.GroupAvatarDownloadJob
@@ -36,6 +29,7 @@ import org.session.libsession.messaging.jobs.MessageReceiveJob
 import org.session.libsession.messaging.jobs.MessageSendJob
 import org.session.libsession.messaging.jobs.RetrieveProfileAvatarJob
 import org.session.libsession.messaging.messages.Destination
+import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.ConfigurationMessage
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
@@ -1025,7 +1019,10 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
 
     override fun setExpirationTimer(address: String, duration: Int) {
         val recipient = Recipient.from(context, fromSerialized(address), false)
-        DatabaseComponent.get(context).recipientDatabase().setExpireMessages(recipient, duration)
+        val threadId = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(recipient)
+        DatabaseComponent.get(context).expirationConfigurationDatabase().setExpirationConfiguration(
+            ExpirationConfiguration(threadId, duration, ExpirationType.DELETE_AFTER_SEND.number, System.currentTimeMillis())
+        )
         if (recipient.isContactRecipient && !recipient.isLocalNumber) {
             configFactory.contacts?.upsertContact(address) {
                 this.expiryMode = if (duration != 0) {
@@ -1038,12 +1035,6 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
                 ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(context)
             }
         }
-    override fun setExpirationTimer(groupID: String, duration: Int) {
-        val recipient = Recipient.from(context, fromSerialized(groupID), false)
-        val threadId = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(recipient)
-        DatabaseComponent.get(context).expirationConfigurationDatabase().setExpirationConfiguration(
-            ExpirationConfiguration(threadId, duration, ExpirationType.DELETE_AFTER_SEND.number, System.currentTimeMillis())
-        )
     }
 
     override fun setServerCapabilities(server: String, capabilities: List<String>) {

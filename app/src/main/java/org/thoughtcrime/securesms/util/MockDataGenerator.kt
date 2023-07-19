@@ -131,6 +131,7 @@ object MockDataGenerator {
                                         .joinToString(),
                                 Optional.absent(),
                                 0,
+                                0,
                                 false,
                                 -1,
                                 false
@@ -147,6 +148,7 @@ object MockDataGenerator {
                                 (0 until messageWords)
                                     .map { wordContent.random(dmThreadRandomGenerator.asKotlinRandom()) }
                                     .joinToString(),
+                                0,
                                 0,
                                 -1,
                                 (timestampNow - (index * 5000))
@@ -261,6 +263,7 @@ object MockDataGenerator {
                                     .joinToString(),
                                 Optional.absent(),
                                 0,
+                                0,
                                 false,
                                 -1,
                                 false
@@ -277,6 +280,7 @@ object MockDataGenerator {
                                 (0 until messageWords)
                                     .map { wordContent.random(cgThreadRandomGenerator.asKotlinRandom()) }
                                     .joinToString(),
+                                0,
                                 0,
                                 -1,
                                 (timestampNow - (index * 5000))
@@ -386,6 +390,7 @@ object MockDataGenerator {
                                     .joinToString(),
                                 Optional.absent(),
                                 0,
+                                0,
                                 false,
                                 -1,
                                 false
@@ -401,6 +406,7 @@ object MockDataGenerator {
                                 (0 until messageWords)
                                     .map { wordContent.random(ogThreadRandomGenerator.asKotlinRandom()) }
                                     .joinToString(),
+                                0,
                                 0,
                                 -1,
                                 (timestampNow - (index * 5000))

@@ -79,7 +79,7 @@ public class RemoteReplyReceiver extends BroadcastReceiver {
           ThreadDatabase threadDatabase = DatabaseComponent.get(context).threadDatabase();
           long threadId = threadDatabase.getOrCreateThreadIdFor(recipient);
           VisibleMessage message = new VisibleMessage();
-          message.setSentTimestamp(System.currentTimeMillis() + SnodeAPI.INSTANCE.getClockOffset());
+          message.setSentTimestamp(SnodeAPI.getNowWithOffset());
           message.setText(responseText.toString());
           ExpirationConfiguration config = DatabaseComponent.get(context).expirationConfigurationDatabase().getExpirationConfiguration(threadId);
           long expiresInMillis = config == null ? 0 : config.getDurationSeconds() * 1000L;

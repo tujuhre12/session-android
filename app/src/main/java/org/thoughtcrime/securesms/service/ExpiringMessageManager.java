@@ -3,9 +3,9 @@ package org.thoughtcrime.securesms.service;
 import android.content.Context;
 
 import org.jetbrains.annotations.NotNull;
-import org.session.libsession.messaging.messages.ExpirationConfiguration;
 import org.session.libsession.database.StorageProtocol;
 import org.session.libsession.messaging.MessagingModuleConfiguration;
+import org.session.libsession.messaging.messages.ExpirationConfiguration;
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate;
 import org.session.libsession.messaging.messages.signal.IncomingMediaMessage;
 import org.session.libsession.messaging.messages.signal.OutgoingExpirationUpdateMessage;
@@ -146,14 +146,6 @@ public class ExpiringMessageManager implements SSKEnvironment.MessageExpirationM
 
     Address address;
 
-    // DISAPPEARING MESSAGES
-    try {
-      OutgoingExpirationUpdateMessage timerUpdateMessage = new OutgoingExpirationUpdateMessage(recipient, sentTimestamp, duration * 1000L, expireStartedAt, groupId);
-      database.insertSecureDecryptedMessageOutbox(timerUpdateMessage, -1, sentTimestamp, true);
-    } catch (MmsException e) {
-      Log.e("Loki", "Failed to insert expiration update message.");
-    }
-    // SHARED CONFIG
     try {
       if (groupId != null) {
         address = Address.fromSerialized(GroupUtil.doubleEncodeGroupID(groupId));
@@ -165,7 +157,7 @@ public class ExpiringMessageManager implements SSKEnvironment.MessageExpirationM
       StorageProtocol storage = MessagingModuleConfiguration.getShared().getStorage();
       message.setThreadID(storage.getOrCreateThreadIdFor(address));
 
-      OutgoingExpirationUpdateMessage timerUpdateMessage = new OutgoingExpirationUpdateMessage(recipient, sentTimestamp, duration * 1000L, groupId);
+      OutgoingExpirationUpdateMessage timerUpdateMessage = new OutgoingExpirationUpdateMessage(recipient, sentTimestamp, duration * 1000L, expireStartedAt, groupId);
       mmsDatabase.insertSecureDecryptedMessageOutbox(timerUpdateMessage, message.getThreadID(), sentTimestamp, true);
       //set the timer to the conversation
       MessagingModuleConfiguration.getShared().getStorage().setExpirationTimer(recipient.getAddress().serialize(), duration);

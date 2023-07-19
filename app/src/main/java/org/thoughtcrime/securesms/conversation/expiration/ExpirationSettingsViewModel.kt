@@ -121,7 +121,7 @@ class ExpirationSettingsViewModel(
             return@launch
         }
 
-        val expiryChangeTimestampMs = System.currentTimeMillis() + SnodeAPI.clockOffset
+        val expiryChangeTimestampMs = SnodeAPI.nowWithOffset
         storage.setExpirationConfiguration(ExpirationConfiguration(threadId, expirationTimer, expiryType, expiryChangeTimestampMs))
 
         val message = ExpirationTimerUpdate(expirationTimer)

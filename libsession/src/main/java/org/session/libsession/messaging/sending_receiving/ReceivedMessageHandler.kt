@@ -274,8 +274,8 @@ fun MessageReceiver.updateExpiryIfNeeded(message: Message, proto: SignalServiceP
     val storage = MessagingModuleConfiguration.shared.storage
     val sentTime = message.sentTimestamp ?: throw MessageReceiver.Error.InvalidMessage
     if (!proto.hasLastDisappearingMessageChangeTimestamp()) return
-    val threadID = storage.getOrCreateThreadIdFor(message.sender!!, message.groupPublicKey, openGroupID)
-    if (threadID <= 0) throw MessageReceiver.Error.NoThread
+    val threadID = storage.getThreadIdFor(message.sender!!, message.groupPublicKey, openGroupID, false)
+    if (threadID == null) throw MessageReceiver.Error.NoThread
     val recipient = storage.getRecipientForThread(threadID) ?: throw MessageReceiver.Error.NoThread
 
     val localConfig = storage.getExpirationConfiguration(threadID)
@@ -311,7 +311,7 @@ fun MessageReceiver.updateExpiryIfNeeded(message: Message, proto: SignalServiceP
 
     // handle a delete after send expired fetch
     if (type == ExpirationType.DELETE_AFTER_SEND
-        && sentTime + configToUse.durationSeconds <= SnodeAPI.nowWithClockOffset) {
+        && sentTime + configToUse.durationSeconds <= SnodeAPI.nowWithOffset) {
         throw MessageReceiver.Error.ExpiredMessage
     }
     // handle a delete after read last known config value (test) TODO: actually implement this with shared config library

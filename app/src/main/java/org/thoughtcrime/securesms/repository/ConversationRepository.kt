@@ -89,7 +89,7 @@ class DefaultConversationRepository @Inject constructor(
     private val storage: Storage,
     private val lokiMessageDb: LokiMessageDatabase,
     private val sessionJobDb: SessionJobDatabase,
-    private val configDb: ExpirationConfigurationDatabase
+    private val configDb: ExpirationConfigurationDatabase,
     private val configFactory: ConfigFactory
 ) : ConversationRepository {
 

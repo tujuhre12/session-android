@@ -9,8 +9,8 @@ import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ExpirationUtil
-import org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType
 import org.session.libsession.utilities.truncateIdForDisplay
+import org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType
 
 object UpdateMessageBuilder {
 
@@ -104,7 +104,8 @@ object UpdateMessageBuilder {
             }
         } else {
             val time = ExpirationUtil.getExpirationDisplayValue(context, duration.toInt())
-            val config = storage.getExpirationConfiguration(storage.getOrCreateThreadIdFor(Address.fromSerialized(sender!!)))
+            val threadId = storage.getThreadId(Address.fromSerialized(senderId!!)) ?: return ""
+            val config = storage.getExpirationConfiguration(threadId)
             val state = when (config?.expirationType) {
                 ExpirationType.DELETE_AFTER_SEND -> context.getString(R.string.MessageRecord_state_sent)
                 ExpirationType.DELETE_AFTER_READ -> context.getString(R.string.MessageRecord_state_read)
