@@ -1606,7 +1606,12 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         return Pair(recipient.address, sentTimestamp)
     }
 
-    private fun sendAttachments(attachments: List<Attachment>, body: String?, quotedMessage: MessageRecord? = null, linkPreview: LinkPreview? = null): Pair<Address, Long>? {
+    private fun sendAttachments(
+        attachments: List<Attachment>,
+        body: String?,
+        quotedMessage: MessageRecord? = binding?.inputBar?.quote,
+        linkPreview: LinkPreview? = null
+    ): Pair<Address, Long>? {
         val recipient = viewModel.recipient ?: return null
         val sentTimestamp = SnodeAPI.nowWithOffset
         processMessageRequestApproval()
