@@ -1,11 +1,11 @@
 package org.session.libsession.messaging.sending_receiving
 
 import android.text.TextUtils
+import network.loki.messenger.libsession_util.ConfigBase
 import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.jobs.BackgroundGroupAddJob
 import org.session.libsession.messaging.jobs.JobQueue
-import org.session.libsession.messaging.jobs.RetrieveProfileAvatarJob
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.CallMessage
 import org.session.libsession.messaging.messages.control.ClosedGroupControlMessage
@@ -42,6 +42,7 @@ import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.protos.SignalServiceProtos
+import org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
@@ -58,7 +59,10 @@ internal fun MessageReceiver.isBlocked(publicKey: String): Boolean {
     return recipient.isBlocked
 }
 
-fun MessageReceiver.handle(message: Message, proto: SignalServiceProtos.Content, openGroupID: String?) {
+fun MessageReceiver.handle(message: Message, proto: SignalServiceProtos.Content, threadId: Long, openGroupID: String?) {
+    // Do nothing if the message was outdated
+    if (MessageReceiver.messageIsOutdated(message, threadId, openGroupID)) { return }
+
     when (message) {
         is ReadReceipt -> handleReadReceipt(message)
         is TypingIndicator -> handleTypingIndicator(message)
@@ -68,13 +72,40 @@ fun MessageReceiver.handle(message: Message, proto: SignalServiceProtos.Content,
         is ConfigurationMessage -> handleConfigurationMessage(message)
         is UnsendRequest -> handleUnsendRequest(message)
         is MessageRequestResponse -> handleMessageRequestResponse(message)
-        is VisibleMessage -> handleVisibleMessage(message, proto, openGroupID,
-            runIncrement = true,
+        is VisibleMessage -> handleVisibleMessage(
+            message, proto, openGroupID, threadId,
             runThreadUpdate = true,
             runProfileUpdate = true
         )
         is CallMessage -> handleCallMessage(message)
     }
+}
+
+fun MessageReceiver.messageIsOutdated(message: Message, threadId: Long, openGroupID: String?): Boolean {
+    when (message) {
+        is ReadReceipt -> return false // No visible artifact created so better to keep for more reliable read states
+        is UnsendRequest -> return false // We should always process the removal of messages just in case
+    }
+
+    // Determine the state of the conversation and the validity of the message
+    val storage = MessagingModuleConfiguration.shared.storage
+    val userPublicKey = storage.getUserPublicKey()!!
+    val threadRecipient = storage.getRecipientForThread(threadId)
+    val conversationVisibleInConfig = storage.conversationInConfig(
+        if (message.groupPublicKey == null) threadRecipient?.address?.serialize() else null,
+        message.groupPublicKey,
+        openGroupID,
+        true
+    )
+    val canPerformChange = storage.canPerformConfigChange(
+        if (threadRecipient?.address?.serialize() == userPublicKey) SharedConfigMessage.Kind.USER_PROFILE.name else SharedConfigMessage.Kind.CONTACTS.name,
+        userPublicKey,
+        message.sentTimestamp!!
+    )
+
+    // If the thread is visible or the message was sent more recently than the last config message (minus
+    // buffer period) then we should process the message, if not then the message is outdated
+    return (!conversationVisibleInConfig && !canPerformChange)
 }
 
 // region Control Messages
@@ -129,6 +160,7 @@ private fun MessageReceiver.handleDataExtractionNotification(message: DataExtrac
     if (message.groupPublicKey != null) return
     val storage = MessagingModuleConfiguration.shared.storage
     val senderPublicKey = message.sender!!
+
     val notification: DataExtractionNotificationInfoMessage = when(message.kind) {
         is DataExtractionNotification.Kind.Screenshot -> DataExtractionNotificationInfoMessage(DataExtractionNotificationInfoMessage.Kind.SCREENSHOT)
         is DataExtractionNotification.Kind.MediaSaved -> DataExtractionNotificationInfoMessage(DataExtractionNotificationInfoMessage.Kind.MEDIA_SAVED)
@@ -149,11 +181,17 @@ private fun handleConfigurationMessage(message: ConfigurationMessage) {
 
     TextSecurePreferences.setConfigurationMessageSynced(context, true)
     TextSecurePreferences.setLastProfileUpdateTime(context, message.sentTimestamp!!)
+    val isForceSync = TextSecurePreferences.hasForcedNewConfig(context)
+    val currentTime = SnodeAPI.nowWithOffset
+    if (ConfigBase.isNewConfigEnabled(isForceSync, currentTime)) {
+        TextSecurePreferences.setHasLegacyConfig(context, true)
+        if (!firstTimeSync) return
+    }
     val allClosedGroupPublicKeys = storage.getAllClosedGroupPublicKeys()
     for (closedGroup in message.closedGroups) {
         if (allClosedGroupPublicKeys.contains(closedGroup.publicKey)) {
             // just handle the closed group encryption key pairs to avoid sync'd devices getting out of sync
-            storage.addClosedGroupEncryptionKeyPair(closedGroup.encryptionKeyPair!!, closedGroup.publicKey)
+            storage.addClosedGroupEncryptionKeyPair(closedGroup.encryptionKeyPair!!, closedGroup.publicKey, message.sentTimestamp!!)
         } else if (firstTimeSync) {
             // only handle new closed group if it's first time sync
             handleNewClosedGroup(message.sender!!, message.sentTimestamp!!, closedGroup.publicKey, closedGroup.name,
@@ -166,9 +204,9 @@ private fun handleConfigurationMessage(message: ConfigurationMessage) {
             .replace(OpenGroupApi.httpDefaultServer, OpenGroupApi.defaultServer)
     }) {
         if (allV2OpenGroups.contains(openGroup)) continue
-        Log.d("OpenGroup", "All open groups doesn't contain $openGroup")
+        Log.d("OpenGroup", "All open groups doesn't contain open group")
         if (!storage.hasBackgroundGroupAddJob(openGroup)) {
-            Log.d("OpenGroup", "Doesn't contain background job for $openGroup, adding")
+            Log.d("OpenGroup", "Doesn't contain background job for open group, adding")
             JobQueue.shared.add(BackgroundGroupAddJob(openGroup))
         }
     }
@@ -182,10 +220,7 @@ private fun handleConfigurationMessage(message: ConfigurationMessage) {
         && TextSecurePreferences.getProfilePictureURL(context) != message.profilePicture) {
         val profileKey = Base64.encodeBytes(message.profileKey)
         ProfileKeyUtil.setEncodedProfileKey(context, profileKey)
-        profileManager.setProfileKey(context, recipient, message.profileKey)
-        if (!message.profilePicture.isNullOrEmpty() && TextSecurePreferences.getProfilePictureURL(context) != message.profilePicture) {
-            JobQueue.shared.add(RetrieveProfileAvatarJob(message.profilePicture!!, recipient.address))
-        }
+        profileManager.setProfilePicture(context, recipient, message.profilePicture, message.profileKey)
     }
     storage.addContacts(message.contacts)
 }
@@ -215,24 +250,28 @@ fun handleMessageRequestResponse(message: MessageRequestResponse) {
 }
 //endregion
 
-fun MessageReceiver.handleVisibleMessage(message: VisibleMessage,
-                                         proto: SignalServiceProtos.Content,
-                                         openGroupID: String?,
-                                         runIncrement: Boolean,
-                                         runThreadUpdate: Boolean,
-                                         runProfileUpdate: Boolean): Long? {
+fun MessageReceiver.handleVisibleMessage(
+    message: VisibleMessage,
+    proto: SignalServiceProtos.Content,
+    openGroupID: String?,
+    threadId: Long,
+    runThreadUpdate: Boolean,
+    runProfileUpdate: Boolean
+): Long? {
     val storage = MessagingModuleConfiguration.shared.storage
     val context = MessagingModuleConfiguration.shared.context
     val userPublicKey = storage.getUserPublicKey()
     val messageSender: String? = message.sender
+
+    // Do nothing if the message was outdated
+    if (MessageReceiver.messageIsOutdated(message, threadId, openGroupID)) { return null }
+
     // Get or create thread
     // FIXME: In case this is an open group this actually * doesn't * create the thread if it doesn't yet
     //        exist. This is intentional, but it's very non-obvious.
-    val threadID = storage.getOrCreateThreadIdFor(message.syncTarget ?: messageSender!!, message.groupPublicKey, openGroupID)
-    if (threadID < 0) {
+    val threadID = storage.getThreadIdFor(message.syncTarget ?: messageSender!!, message.groupPublicKey, openGroupID, createThread = true)
         // Thread doesn't exist; should only be reached in a case where we are processing open group messages for a no longer existent thread
-        throw MessageReceiver.Error.NoThread
-    }
+        ?: throw MessageReceiver.Error.NoThread
     val threadRecipient = storage.getRecipientForThread(threadID)
     val userBlindedKey = openGroupID?.let {
         val openGroup = storage.getOpenGroup(threadID) ?: return@let null
@@ -259,9 +298,10 @@ fun MessageReceiver.handleVisibleMessage(message: VisibleMessage,
             val profileKeyChanged = (recipient.profileKey == null || !MessageDigest.isEqual(recipient.profileKey, newProfileKey))
 
             if ((profileKeyValid && profileKeyChanged) || (profileKeyValid && needsProfilePicture)) {
-                profileManager.setProfileKey(context, recipient, newProfileKey!!)
+                profileManager.setProfilePicture(context, recipient, profile.profilePictureURL, newProfileKey)
                 profileManager.setUnidentifiedAccessMode(context, recipient, Recipient.UnidentifiedAccessMode.UNKNOWN)
-                profileManager.setProfilePictureURL(context, recipient, profile.profilePictureURL!!)
+            } else if (newProfileKey == null || newProfileKey.isEmpty() || profile.profilePictureURL.isNullOrEmpty()) {
+                profileManager.setProfilePicture(context, recipient, null, null)
             }
         }
     }
@@ -344,7 +384,7 @@ fun MessageReceiver.handleVisibleMessage(message: VisibleMessage,
         message.threadID = threadID
         val messageID =
             storage.persist(message, quoteModel, linkPreviews, message.groupPublicKey, openGroupID,
-         attachments, runIncrement, runThreadUpdate
+         attachments, runThreadUpdate
         ) ?: return null
         val openGroupServerID = message.openGroupServerMessageID
         if (openGroupServerID != null) {
@@ -437,12 +477,34 @@ private fun MessageReceiver.handleClosedGroupControlMessage(message: ClosedGroup
         is ClosedGroupControlMessage.Kind.MembersRemoved -> handleClosedGroupMembersRemoved(message)
         is ClosedGroupControlMessage.Kind.MemberLeft -> handleClosedGroupMemberLeft(message)
     }
+    if (
+            message.kind !is ClosedGroupControlMessage.Kind.New &&
+            MessagingModuleConfiguration.shared.storage.canPerformConfigChange(
+                    SharedConfigMessage.Kind.GROUPS.name,
+                    MessagingModuleConfiguration.shared.storage.getUserPublicKey()!!,
+                    message.sentTimestamp!!
+            )
+    ) {
+        // update the config
+        val closedGroupPublicKey = message.getPublicKey()
+        val storage = MessagingModuleConfiguration.shared.storage
+        storage.updateGroupConfig(closedGroupPublicKey)
+    }
 }
+
+private fun ClosedGroupControlMessage.getPublicKey(): String = kind!!.let { when (it) {
+    is ClosedGroupControlMessage.Kind.New -> it.publicKey.toByteArray().toHexString()
+    is ClosedGroupControlMessage.Kind.EncryptionKeyPair -> it.publicKey?.toByteArray()?.toHexString() ?: groupPublicKey!!
+    is ClosedGroupControlMessage.Kind.MemberLeft -> groupPublicKey!!
+    is ClosedGroupControlMessage.Kind.MembersAdded -> groupPublicKey!!
+    is ClosedGroupControlMessage.Kind.MembersRemoved -> groupPublicKey!!
+    is ClosedGroupControlMessage.Kind.NameChange -> groupPublicKey!!
+}}
 
 private fun MessageReceiver.handleNewClosedGroup(message: ClosedGroupControlMessage) {
     val kind = message.kind!! as? ClosedGroupControlMessage.Kind.New ?: return
     val recipient = Recipient.from(MessagingModuleConfiguration.shared.context, Address.fromSerialized(message.sender!!), false)
-    if (!recipient.isApproved && !recipient.isLocalNumber) return
+    if (!recipient.isApproved && !recipient.isLocalNumber) return Log.e("Loki", "not accepting new closed group from unapproved recipient")
     val groupPublicKey = kind.publicKey.toByteArray().toHexString()
     val members = kind.members.map { it.toByteArray().toHexString() }
     val admins = kind.admins.map { it.toByteArray().toHexString() }
@@ -453,10 +515,24 @@ private fun MessageReceiver.handleNewClosedGroup(message: ClosedGroupControlMess
 private fun handleNewClosedGroup(sender: String, sentTimestamp: Long, groupPublicKey: String, name: String, encryptionKeyPair: ECKeyPair, members: List<String>, admins: List<String>, formationTimestamp: Long, expireTimer: Int) {
     val context = MessagingModuleConfiguration.shared.context
     val storage = MessagingModuleConfiguration.shared.storage
-    val userPublicKey = TextSecurePreferences.getLocalNumber(context)
-    // Create the group
+    val userPublicKey = storage.getUserPublicKey()!!
     val groupID = GroupUtil.doubleEncodeGroupID(groupPublicKey)
     val groupExists = storage.getGroup(groupID) != null
+
+    if (!storage.canPerformConfigChange(SharedConfigMessage.Kind.GROUPS.name, userPublicKey, sentTimestamp)) {
+        // If the closed group already exists then store the encryption keys (since the config only stores
+        // the latest key we won't be able to decrypt older messages if we were added to the group within
+        // the last two weeks and the key has been rotated - unfortunately if the user was added more than
+        // two weeks ago and the keys were rotated within the last two weeks then we won't be able to decrypt
+        // messages received before the key rotation)
+        if (groupExists) {
+            storage.addClosedGroupEncryptionKeyPair(encryptionKeyPair, groupPublicKey, sentTimestamp)
+            storage.updateGroupConfig(groupPublicKey)
+        }
+        return
+    }
+
+    // Create the group
     if (groupExists) {
         // Update the group
         if (!storage.isGroupActive(groupPublicKey)) {
@@ -475,18 +551,15 @@ private fun handleNewClosedGroup(sender: String, sentTimestamp: Long, groupPubli
     // Add the group to the user's set of public keys to poll for
     storage.addClosedGroupPublicKey(groupPublicKey)
     // Store the encryption key pair
-    storage.addClosedGroupEncryptionKeyPair(encryptionKeyPair, groupPublicKey)
+    storage.addClosedGroupEncryptionKeyPair(encryptionKeyPair, groupPublicKey, sentTimestamp)
+    storage.createInitialConfigGroup(groupPublicKey, name, GroupUtil.createConfigMemberMap(members, admins), formationTimestamp, encryptionKeyPair)
     // Set expiration timer
     storage.setExpirationTimer(groupID, expireTimer)
     // Notify the PN server
-    PushNotificationAPI.performOperation(PushNotificationAPI.ClosedGroupOperation.Subscribe, groupPublicKey, storage.getUserPublicKey()!!)
-    // Notify the user
-    if (userPublicKey == sender && !groupExists) {
-        val threadID = storage.getOrCreateThreadIdFor(Address.fromSerialized(groupID))
-        storage.insertOutgoingInfoMessage(context, groupID, SignalServiceGroup.Type.CREATION, name, members, admins, threadID, sentTimestamp)
-    } else if (userPublicKey != sender) {
-        storage.insertIncomingInfoMessage(context, sender, groupID, SignalServiceGroup.Type.CREATION, name, members, admins, sentTimestamp)
-    }
+    PushNotificationAPI.performOperation(PushNotificationAPI.ClosedGroupOperation.Subscribe, groupPublicKey, userPublicKey)
+    // Create thread
+    val threadId = storage.getOrCreateThreadIdFor(Address.fromSerialized(groupID))
+    storage.setThreadDate(threadId, formationTimestamp)
     // Start polling
     ClosedGroupPollerV2.shared.startPolling(groupPublicKey)
 }
@@ -527,7 +600,7 @@ private fun MessageReceiver.handleClosedGroupEncryptionKeyPair(message: ClosedGr
         Log.d("Loki", "Ignoring duplicate closed group encryption key pair.")
         return
     }
-    storage.addClosedGroupEncryptionKeyPair(keyPair, groupPublicKey)
+    storage.addClosedGroupEncryptionKeyPair(keyPair, groupPublicKey, message.sentTimestamp!!)
     Log.d("Loki", "Received a new closed group encryption key pair.")
 }
 
@@ -555,7 +628,12 @@ private fun MessageReceiver.handleClosedGroupNameChanged(message: ClosedGroupCon
     val members = group.members.map { it.serialize() }
     val admins = group.admins.map { it.serialize() }
     val name = kind.name
-    storage.updateTitle(groupID, name)
+
+    // Only update the group in storage if it isn't invalidated by the config state
+    if (storage.canPerformConfigChange(SharedConfigMessage.Kind.GROUPS.name, userPublicKey!!, message.sentTimestamp!!)) {
+        storage.updateTitle(groupID, name)
+    }
+
     // Notify the user
     if (userPublicKey == senderPublicKey) {
         val threadID = storage.getOrCreateThreadIdFor(Address.fromSerialized(groupID))
@@ -589,12 +667,16 @@ private fun MessageReceiver.handleClosedGroupMembersAdded(message: ClosedGroupCo
 
     val updateMembers = kind.members.map { it.toByteArray().toHexString() }
     val newMembers = members + updateMembers
-    storage.updateMembers(groupID, newMembers.map { Address.fromSerialized(it) })
 
-    // Update zombie members in case the added members are zombies
-    val zombies = storage.getZombieMembers(groupID)
-    if (zombies.intersect(updateMembers).isNotEmpty()) {
-        storage.setZombieMembers(groupID, zombies.minus(updateMembers).map { Address.fromSerialized(it) })
+    // Only update the group in storage if it isn't invalidated by the config state
+    if (storage.canPerformConfigChange(SharedConfigMessage.Kind.GROUPS.name, userPublicKey, message.sentTimestamp!!)) {
+        storage.updateMembers(groupID, newMembers.map { Address.fromSerialized(it) })
+
+        // Update zombie members in case the added members are zombies
+        val zombies = storage.getZombieMembers(groupID)
+        if (zombies.intersect(updateMembers).isNotEmpty()) {
+            storage.setZombieMembers(groupID, zombies.minus(updateMembers).map { Address.fromSerialized(it) })
+        }
     }
 
     // Notify the user
@@ -676,13 +758,18 @@ private fun MessageReceiver.handleClosedGroupMembersRemoved(message: ClosedGroup
         Log.d("Loki", "Received a MEMBERS_REMOVED instead of a MEMBERS_LEFT from sender: $senderPublicKey.")
     }
     val wasCurrentUserRemoved = userPublicKey in removedMembers
-    // Admin should send a MEMBERS_LEFT message but handled here just in case
-    if (didAdminLeave || wasCurrentUserRemoved) {
-        disableLocalGroupAndUnsubscribe(groupPublicKey, groupID, userPublicKey)
-    } else {
-        storage.updateMembers(groupID, newMembers.map { Address.fromSerialized(it) })
-        // Update zombie members
-        storage.setZombieMembers(groupID, zombies.minus(removedMembers).map { Address.fromSerialized(it) })
+
+    // Only update the group in storage if it isn't invalidated by the config state
+    if (storage.canPerformConfigChange(SharedConfigMessage.Kind.GROUPS.name, userPublicKey, message.sentTimestamp!!)) {
+        // Admin should send a MEMBERS_LEFT message but handled here just in case
+        if (didAdminLeave || wasCurrentUserRemoved) {
+            disableLocalGroupAndUnsubscribe(groupPublicKey, groupID, userPublicKey, true)
+            return
+        } else {
+            storage.updateMembers(groupID, newMembers.map { Address.fromSerialized(it) })
+            // Update zombie members
+            storage.setZombieMembers(groupID, zombies.minus(removedMembers).map { Address.fromSerialized(it) })
+        }
     }
 
     // Notify the user
@@ -731,24 +818,30 @@ private fun MessageReceiver.handleClosedGroupMemberLeft(message: ClosedGroupCont
     val didAdminLeave = admins.contains(senderPublicKey)
     val updatedMemberList = members - senderPublicKey
     val userLeft = (userPublicKey == senderPublicKey)
-    if (didAdminLeave || userLeft) {
-        disableLocalGroupAndUnsubscribe(groupPublicKey, groupID, userPublicKey)
-    } else {
-        storage.updateMembers(groupID, updatedMemberList.map { Address.fromSerialized(it) })
-        // Update zombie members
-        val zombies = storage.getZombieMembers(groupID)
-        storage.setZombieMembers(groupID, zombies.plus(senderPublicKey).map { Address.fromSerialized(it) })
+
+    // Only update the group in storage if it isn't invalidated by the config state
+    if (storage.canPerformConfigChange(SharedConfigMessage.Kind.GROUPS.name, userPublicKey, message.sentTimestamp!!)) {
+        if (didAdminLeave || userLeft) {
+            disableLocalGroupAndUnsubscribe(groupPublicKey, groupID, userPublicKey, delete = userLeft)
+
+            if (userLeft) {
+                return
+            }
+        } else {
+            storage.updateMembers(groupID, updatedMemberList.map { Address.fromSerialized(it) })
+            // Update zombie members
+            val zombies = storage.getZombieMembers(groupID)
+            storage.setZombieMembers(groupID, zombies.plus(senderPublicKey).map { Address.fromSerialized(it) })
+        }
     }
+
     // Notify the user
-    if (userLeft) {
-        val threadID = storage.getOrCreateThreadIdFor(Address.fromSerialized(groupID))
-        storage.insertOutgoingInfoMessage(context, groupID, SignalServiceGroup.Type.QUIT, name, members, admins, threadID, message.sentTimestamp!!)
-    } else {
+    if (!userLeft) {
         storage.insertIncomingInfoMessage(context, senderPublicKey, groupID, SignalServiceGroup.Type.QUIT, name, members, admins, message.sentTimestamp!!)
     }
 }
 
-private fun isValidGroupUpdate(group: GroupRecord, sentTimestamp: Long, senderPublicKey: String): Boolean  {
+private fun isValidGroupUpdate(group: GroupRecord, sentTimestamp: Long, senderPublicKey: String): Boolean {
     val oldMembers = group.members.map { it.serialize() }
     // Check that the message isn't from before the group was created
     if (group.formationTimestamp > sentTimestamp) {
@@ -763,7 +856,7 @@ private fun isValidGroupUpdate(group: GroupRecord, sentTimestamp: Long, senderPu
     return true
 }
 
-fun MessageReceiver.disableLocalGroupAndUnsubscribe(groupPublicKey: String, groupID: String, userPublicKey: String) {
+fun MessageReceiver.disableLocalGroupAndUnsubscribe(groupPublicKey: String, groupID: String, userPublicKey: String, delete: Boolean) {
     val storage = MessagingModuleConfiguration.shared.storage
     storage.removeClosedGroupPublicKey(groupPublicKey)
     // Remove the key pairs
@@ -775,5 +868,11 @@ fun MessageReceiver.disableLocalGroupAndUnsubscribe(groupPublicKey: String, grou
     PushNotificationAPI.performOperation(PushNotificationAPI.ClosedGroupOperation.Unsubscribe, groupPublicKey, userPublicKey)
     // Stop polling
     ClosedGroupPollerV2.shared.stopPolling(groupPublicKey)
+
+    if (delete) {
+        val threadId = storage.getOrCreateThreadIdFor(Address.fromSerialized(groupID))
+        storage.cancelPendingMessageSendJobs(threadId)
+        storage.deleteConversation(threadId)
+    }
 }
 // endregion

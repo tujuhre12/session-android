@@ -20,13 +20,11 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
 import com.annimon.stream.Stream
-import com.google.android.mms.pdu_alt.NotificationInd
 import com.google.android.mms.pdu_alt.PduHeaders
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
 import org.session.libsession.messaging.messages.signal.IncomingMediaMessage
-import org.session.libsession.messaging.messages.signal.OutgoingExpirationUpdateMessage
 import org.session.libsession.messaging.messages.signal.OutgoingGroupMediaMessage
 import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage
 import org.session.libsession.messaging.messages.signal.OutgoingSecureMediaMessage
@@ -41,16 +39,13 @@ import org.session.libsession.utilities.Address.Companion.UNKNOWN
 import org.session.libsession.utilities.Address.Companion.fromExternal
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.Contact
-import org.session.libsession.utilities.GroupUtil.doubleEncodeGroupID
 import org.session.libsession.utilities.IdentityKeyMismatch
 import org.session.libsession.utilities.IdentityKeyMismatchList
 import org.session.libsession.utilities.NetworkFailure
 import org.session.libsession.utilities.NetworkFailureList
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isReadReceiptsEnabled
 import org.session.libsession.utilities.Util.toIsoBytes
-import org.session.libsession.utilities.Util.toIsoString
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsession.utilities.recipients.RecipientFormattingException
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.ThreadUtils.queue
@@ -162,7 +157,7 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
                         )
                         get(context).groupReceiptDatabase()
                             .update(ourAddress, id, status, timestamp)
-                        get(context).threadDatabase().update(threadId, false)
+                        get(context).threadDatabase().update(threadId, false, true)
                         notifyConversationListeners(threadId)
                     }
                 }
@@ -205,25 +200,6 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
         }
     }
 
-    @Throws(RecipientFormattingException::class, MmsException::class)
-    private fun getThreadIdFor(retrieved: IncomingMediaMessage): Long {
-        return if (retrieved.groupId != null) {
-            val groupRecipients = Recipient.from(
-                context,
-                retrieved.groupId,
-                true
-            )
-            get(context).threadDatabase().getOrCreateThreadIdFor(groupRecipients)
-        } else {
-            val sender = Recipient.from(
-                context,
-                retrieved.from,
-                true
-            )
-            get(context).threadDatabase().getOrCreateThreadIdFor(sender)
-        }
-    }
-
     private fun rawQuery(where: String, arguments: Array<String>?): Cursor {
         val database = databaseHelper.readableDatabase
         return database.rawQuery(
@@ -259,7 +235,7 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
                     " WHERE " + ID + " = ?", arrayOf(id.toString() + "")
         )
         if (threadId.isPresent) {
-            get(context).threadDatabase().update(threadId.get(), false)
+            get(context).threadDatabase().update(threadId.get(), false, true)
         }
     }
 
@@ -316,10 +292,7 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
         val attachmentDatabase = get(context).attachmentDatabase()
         queue(Runnable { attachmentDatabase.deleteAttachmentsForMessage(messageId) })
         val threadId = getThreadIdForMessage(messageId)
-        if (!read) {
-            val mentionChange = if (hasMention) { 1 } else { 0 }
-            get(context).threadDatabase().decrementUnread(threadId, 1, mentionChange)
-        }
+
         markAs(messageId, MmsSmsColumns.Types.BASE_DELETED_TYPE, threadId)
     }
 
@@ -341,6 +314,13 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
         val contentValues = ContentValues()
         contentValues.put(NOTIFIED, 1)
         database.update(TABLE_NAME, contentValues, ID_WHERE, arrayOf(id.toString()))
+    }
+
+    fun setMessagesRead(threadId: Long, beforeTime: Long): List<MarkedMessageInfo> {
+        return setMessagesRead(
+            THREAD_ID + " = ? AND (" + READ + " = 0 OR " + REACTIONS_UNREAD + " = 1) AND " + DATE_SENT + " <= ?",
+            arrayOf(threadId.toString(), beforeTime.toString())
+        )
     }
 
     fun setMessagesRead(threadId: Long): List<MarkedMessageInfo> {
@@ -567,18 +547,9 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
         contentLocation: String,
         threadId: Long, mailbox: Long,
         serverTimestamp: Long,
-        runIncrement: Boolean,
         runThreadUpdate: Boolean
     ): Optional<InsertResult> {
-        var threadId = threadId
-        if (threadId == -1L || retrieved.isGroupMessage) {
-            try {
-                threadId = getThreadIdFor(retrieved)
-            } catch (e: RecipientFormattingException) {
-                Log.w("MmsDatabase", e)
-                if (threadId == -1L) throw MmsException(e)
-            }
-        }
+        if (threadId < 0 ) throw MmsException("No thread ID supplied!")
         val contentValues = ContentValues()
         contentValues.put(DATE_SENT, retrieved.sentTimeMillis)
         contentValues.put(ADDRESS, retrieved.from.serialize())
@@ -632,12 +603,8 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
             null,
         )
         if (!MmsSmsColumns.Types.isExpirationTimerUpdate(mailbox)) {
-            if (runIncrement) {
-                val mentionAmount = if (retrieved.hasMention()) { 1 } else { 0 }
-                get(context).threadDatabase().incrementUnread(threadId, 1, mentionAmount)
-            }
             if (runThreadUpdate) {
-                get(context).threadDatabase().update(threadId, true)
+                get(context).threadDatabase().update(threadId, true, true)
             }
         }
         notifyConversationListeners(threadId)
@@ -651,27 +618,7 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
         serverTimestamp: Long,
         runThreadUpdate: Boolean
     ): Optional<InsertResult> {
-        var threadId = threadId
-        if (threadId == -1L) {
-            if (retrieved.isGroup) {
-                val decodedGroupId: String = if (retrieved is OutgoingExpirationUpdateMessage) {
-                    retrieved.groupId
-                } else {
-                    (retrieved as OutgoingGroupMediaMessage).groupId
-                }
-                val groupId: String
-                groupId = try {
-                    doubleEncodeGroupID(decodedGroupId)
-                } catch (e: IOException) {
-                    Log.e(TAG, "Couldn't encrypt group ID")
-                    throw MmsException(e)
-                }
-                val group = Recipient.from(context, fromSerialized(groupId), false)
-                threadId = get(context).threadDatabase().getOrCreateThreadIdFor(group)
-            } else {
-                threadId = get(context).threadDatabase().getOrCreateThreadIdFor(retrieved.recipient)
-            }
-        }
+        if (threadId < 0 ) throw MmsException("No thread ID supplied!")
         val messageId = insertMessageOutbox(retrieved, threadId, false, null, serverTimestamp, runThreadUpdate)
         if (messageId == -1L) {
             return Optional.absent()
@@ -686,7 +633,6 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
         retrieved: IncomingMediaMessage,
         threadId: Long,
         serverTimestamp: Long = 0,
-        runIncrement: Boolean,
         runThreadUpdate: Boolean
     ): Optional<InsertResult> {
         var type = MmsSmsColumns.Types.BASE_INBOX_TYPE or MmsSmsColumns.Types.SECURE_MESSAGE_BIT
@@ -705,7 +651,7 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
         if (retrieved.isMessageRequestResponse) {
             type = type or MmsSmsColumns.Types.MESSAGE_REQUEST_RESPONSE_BIT
         }
-        return insertMessageInbox(retrieved, "", threadId, type, serverTimestamp, runIncrement, runThreadUpdate)
+        return insertMessageInbox(retrieved, "", threadId, type, serverTimestamp, runThreadUpdate)
     }
 
     @JvmOverloads
@@ -794,10 +740,13 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
             )
         }
         with (get(context).threadDatabase()) {
-            setLastSeen(threadId)
+            val lastSeen = getLastSeenAndHasSent(threadId).first()
+            if (lastSeen < message.sentTimeMillis) {
+                setLastSeen(threadId, message.sentTimeMillis)
+            }
             setHasSent(threadId, true)
             if (runThreadUpdate) {
-                update(threadId, true)
+                update(threadId, true, true)
             }
         }
         return messageId
@@ -932,7 +881,7 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
         groupReceiptDatabase.deleteRowsForMessage(messageId)
         val database = databaseHelper.writableDatabase
         database!!.delete(TABLE_NAME, ID_WHERE, arrayOf(messageId.toString()))
-        val threadDeleted = get(context).threadDatabase().update(threadId, false)
+        val threadDeleted = get(context).threadDatabase().update(threadId, false, true)
         notifyConversationListeners(threadId)
         notifyStickerListeners()
         notifyStickerPackListeners()
@@ -949,7 +898,7 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
         val database = databaseHelper.writableDatabase
         database!!.delete(TABLE_NAME, ID_IN, arrayOf(messageIds.joinToString(",")))
 
-        val threadDeleted = get(context).threadDatabase().update(threadId, false)
+        val threadDeleted = get(context).threadDatabase().update(threadId, false, true)
         notifyConversationListeners(threadId)
         notifyStickerListeners()
         notifyStickerPackListeners()
@@ -1147,7 +1096,7 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
         }
         val threadDb = get(context).threadDatabase()
         for (threadId in threadIds) {
-            val threadDeleted = threadDb.update(threadId, false)
+            val threadDeleted = threadDb.update(threadId, false, true)
             notifyConversationListeners(threadId)
         }
         notifyStickerListeners()
