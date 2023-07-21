@@ -8,9 +8,11 @@ import android.graphics.drawable.ColorDrawable
 import android.os.Handler
 import android.os.Looper
 import android.util.AttributeSet
+import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
+import android.widget.FrameLayout
 import android.widget.LinearLayout
 import androidx.annotation.ColorInt
 import androidx.annotation.DrawableRes
@@ -113,6 +115,7 @@ class VisibleMessageView : LinearLayout {
         binding.root.disableClipping()
         binding.mainContainer.disableClipping()
         binding.messageInnerContainer.disableClipping()
+        binding.messageInnerLayout.disableClipping()
         binding.messageContentView.root.disableClipping()
     }
     // endregion
@@ -340,11 +343,14 @@ class VisibleMessageView : LinearLayout {
 
     private fun updateExpirationTimer(message: MessageRecord) {
         val container = binding.messageInnerContainer
-        val content = binding.messageContentView.root
-        val expiration = binding.expirationTimerView
-        container.removeAllViewsInLayout()
-        container.addView(if (message.isOutgoing) expiration else content)
-        container.addView(if (message.isOutgoing) content else expiration)
+        val layout = binding.messageInnerLayout
+
+        if (message.isOutgoing) binding.messageContentView.root.bringToFront()
+        else binding.expirationTimerView.bringToFront()
+
+        layout.layoutParams = layout.layoutParams.let { it as FrameLayout.LayoutParams }
+            .apply { gravity = if (message.isOutgoing) Gravity.END else Gravity.START }
+
         val containerParams = container.layoutParams as ConstraintLayout.LayoutParams
         containerParams.horizontalBias = if (message.isOutgoing) 1f else 0f
         container.layoutParams = containerParams
