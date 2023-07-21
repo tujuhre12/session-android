@@ -9,8 +9,14 @@ buildscript {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
         classpath "org.jetbrains.kotlin:kotlin-serialization:$kotlinVersion"
         classpath "com.google.gms:google-services:$googleServicesVersion"
+        classpath files('libs/gradle-witness.jar')
+        classpath "com.squareup:javapoet:1.13.0"
         classpath "com.google.dagger:hilt-android-gradle-plugin:$daggerVersion"
     }
+}
+
+plugins{
+    id("com.google.dagger.hilt.android") version "2.44" apply false
 }
 
 allprojects {
@@ -53,7 +59,7 @@ allprojects {
 
     project.ext {
         androidMinimumSdkVersion = 23
-        androidTargetSdkVersion  = 31
-        androidCompileSdkVersion = 32
+        androidTargetSdkVersion  = 33
+        androidCompileSdkVersion = 33
     }
 }

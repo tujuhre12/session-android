@@ -136,7 +136,6 @@ object MockDataGenerator {
                                 false
                             ),
                             (timestampNow - (index * 5000)),
-                            false,
                             false
                         )
                     }
@@ -232,8 +231,9 @@ object MockDataGenerator {
 
                 // Add the group to the user's set of public keys to poll for and store the key pair
                 val encryptionKeyPair = Curve.generateKeyPair()
-                storage.addClosedGroupEncryptionKeyPair(encryptionKeyPair, randomGroupPublicKey)
+                storage.addClosedGroupEncryptionKeyPair(encryptionKeyPair, randomGroupPublicKey, System.currentTimeMillis())
                 storage.setExpirationTimer(groupId, 0)
+                storage.createInitialConfigGroup(randomGroupPublicKey, groupName, GroupUtil.createConfigMemberMap(members, setOf(adminUserId)), System.currentTimeMillis(), encryptionKeyPair)
 
                 // Add the group created message
                 if (userSessionId == adminUserId) {
@@ -266,7 +266,6 @@ object MockDataGenerator {
                                 false
                             ),
                             (timestampNow - (index * 5000)),
-                            false,
                             false
                         )
                     }
@@ -392,7 +391,6 @@ object MockDataGenerator {
                                 false
                             ),
                             (timestampNow - (index * 5000)),
-                            false,
                             false
                         )
                     } else {
