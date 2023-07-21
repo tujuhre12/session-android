@@ -36,6 +36,7 @@ import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.getInt
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.database.model.SmsMessageRecord
+import org.thoughtcrime.securesms.mms.GlideApp
 import org.thoughtcrime.securesms.mms.GlideRequests
 import org.thoughtcrime.securesms.util.GlowViewUtilities
 import org.thoughtcrime.securesms.util.SearchUtil
@@ -45,7 +46,6 @@ import kotlin.math.roundToInt
 
 class VisibleMessageContentView : ConstraintLayout {
     private val binding: ViewVisibleMessageContentBinding by lazy { ViewVisibleMessageContentBinding.bind(this) }
-    var onContentClick: MutableList<((event: MotionEvent) -> Unit)> = mutableListOf()
     var onContentDoubleTap: (() -> Unit)? = null
     var delegate: VisibleMessageViewDelegate? = null
     var indexInAdapter: Int = -1
@@ -59,13 +59,14 @@ class VisibleMessageContentView : ConstraintLayout {
     // region Updating
     fun bind(
         message: MessageRecord,
-        isStartOfMessageCluster: Boolean,
-        isEndOfMessageCluster: Boolean,
-        glide: GlideRequests,
+        isStartOfMessageCluster: Boolean = true,
+        isEndOfMessageCluster: Boolean = true,
+        glide: GlideRequests = GlideApp.with(this),
         thread: Recipient,
-        searchQuery: String?,
-        contactIsTrusted: Boolean,
-        onAttachmentNeedsDownload: (Long, Long) -> Unit
+        searchQuery: String? = null,
+        contactIsTrusted: Boolean = true,
+        onAttachmentNeedsDownload: (Long, Long) -> Unit,
+        suppressThumbnails: Boolean = false
     ) {
         // Background
         val color = if (message.isOutgoing) context.getAccentColor()
@@ -184,7 +185,7 @@ class VisibleMessageContentView : ConstraintLayout {
                     onContentClick.add { binding.untrustedView.root.showTrustDialog(message.individualRecipient) }
                 }
             }
-            message is MmsMessageRecord && message.slideDeck.asAttachments().isNotEmpty() -> {
+            message is MmsMessageRecord && !suppressThumbnails && message.slideDeck.asAttachments().isNotEmpty() -> {
                 /*
                  *    Images / Video attachment
                  */
@@ -235,6 +236,12 @@ class VisibleMessageContentView : ConstraintLayout {
         val layoutParams = binding.contentParent.layoutParams as ConstraintLayout.LayoutParams
         layoutParams.horizontalBias = if (message.isOutgoing) 1f else 0f
         binding.contentParent.layoutParams = layoutParams
+    }
+
+    private val onContentClick: MutableList<((event: MotionEvent) -> Unit)> = mutableListOf()
+
+    fun onContentClick(event: MotionEvent) {
+        onContentClick.forEach { clickHandler -> clickHandler.invoke(event) }
     }
 
     private fun ViewVisibleMessageContentBinding.barrierViewsGone(): Boolean =

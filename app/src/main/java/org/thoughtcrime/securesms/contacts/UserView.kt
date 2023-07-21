@@ -55,8 +55,7 @@ class UserView : LinearLayout {
             return contact?.displayName(Contact.ContactContext.REGULAR) ?: publicKey
         }
         val address = user.address.serialize()
-        binding.profilePictureView.root.glide = glide
-        binding.profilePictureView.root.update(user)
+        binding.profilePictureView.update(user)
         binding.actionIndicatorImageView.setImageResource(R.drawable.ic_baseline_edit_24)
         binding.nameTextView.text = if (user.isGroupRecipient) user.name else getUserDisplayName(address)
         when (actionIndicator) {
@@ -88,7 +87,7 @@ class UserView : LinearLayout {
     }
 
     fun unbind() {
-        binding.profilePictureView.root.recycle()
+        binding.profilePictureView.recycle()
     }
     // endregion
 }

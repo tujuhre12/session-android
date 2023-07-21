@@ -285,10 +285,9 @@ class BatchMessageReceiveJob(
             val openGroupID = data.getStringOrDefault(OPEN_GROUP_ID_KEY, null)
 
             val parameters = (0 until numMessages).map { index ->
-                val data = contents[index]
                 val serverHash = serverHashes[index].let { if (it.isEmpty()) null else it }
                 val serverId = openGroupMessageServerIDs[index].let { if (it == -1L) null else it }
-                MessageReceiveParameters(data, serverHash, serverId)
+                MessageReceiveParameters(contents[index], serverHash, serverId)
             }
 
             return BatchMessageReceiveJob(parameters, openGroupID)

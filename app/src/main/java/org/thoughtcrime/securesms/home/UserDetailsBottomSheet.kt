@@ -53,10 +53,9 @@ class UserDetailsBottomSheet: BottomSheetDialogFragment() {
         val recipient = Recipient.from(requireContext(), Address.fromSerialized(publicKey), false)
         val threadRecipient = threadDb.getRecipientForThreadId(threadID) ?: return dismiss()
         with(binding) {
-            profilePictureView.root.publicKey = publicKey
-            profilePictureView.root.glide = GlideApp.with(this@UserDetailsBottomSheet)
-            profilePictureView.root.isLarge = true
-            profilePictureView.root.update(recipient)
+            profilePictureView.publicKey = publicKey
+            profilePictureView.isLarge = true
+            profilePictureView.update(recipient)
             nameTextViewContainer.visibility = View.VISIBLE
             nameTextViewContainer.setOnClickListener {
                 if (recipient.isOpenGroupInboxRecipient || recipient.isOpenGroupOutboxRecipient) return@setOnClickListener

@@ -67,9 +67,8 @@
         android:gravity="bottom"
         android:paddingBottom="@dimen/small_spacing">
 
-        <include
+        <org.thoughtcrime.securesms.components.ProfilePictureView
             android:id="@+id/profilePictureView"
-            layout="@layout/view_profile_picture"
             android:layout_marginBottom="@dimen/small_spacing"
             android:layout_marginEnd="@dimen/small_spacing"
             android:layout_width="@dimen/very_small_profile_picture_size"

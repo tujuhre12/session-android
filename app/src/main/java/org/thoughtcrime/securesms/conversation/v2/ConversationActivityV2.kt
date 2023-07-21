@@ -33,6 +33,8 @@ import android.view.WindowManager
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import android.widget.Toast
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.annotation.DimenRes
 import androidx.core.text.set
@@ -106,6 +108,10 @@ import org.thoughtcrime.securesms.contacts.SelectContactsActivity.Companion.sele
 import org.thoughtcrime.securesms.contactshare.SimpleTextWatcher
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnActionSelectedListener
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnReactionSelectedListener
+import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.MESSAGE_TIMESTAMP
+import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_REPLY
+import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_RESEND
+import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_DELETE
 import org.thoughtcrime.securesms.conversation.v2.dialogs.BlockedDialog
 import org.thoughtcrime.securesms.conversation.v2.dialogs.LinkPreviewDialog
 import org.thoughtcrime.securesms.conversation.v2.dialogs.SendSeedDialog
@@ -582,10 +588,9 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             R.dimen.small_profile_picture_size
         }
         val size = resources.getDimension(sizeID).roundToInt()
-        binding.toolbarContent.profilePictureView.root.layoutParams = LinearLayout.LayoutParams(size, size)
-        binding.toolbarContent.profilePictureView.root.glide = glide
+        binding.toolbarContent.profilePictureView.layoutParams = LinearLayout.LayoutParams(size, size)
         MentionManagerUtilities.populateUserPublicKeyCacheIfNeeded(viewModel.threadId, this)
-        val profilePictureView = binding.toolbarContent.profilePictureView.root
+        val profilePictureView = binding.toolbarContent.profilePictureView
         viewModel.recipient?.let(profilePictureView::update)
     }
 
@@ -795,7 +800,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             updateSendAfterApprovalText()
             showOrHideInputIfNeeded()
 
-            binding?.toolbarContent?.profilePictureView?.root?.update(threadRecipient)
+            binding?.toolbarContent?.profilePictureView?.update(threadRecipient)
             binding?.toolbarContent?.conversationTitleView?.text = when {
                 threadRecipient.isLocalNumber -> getString(R.string.note_to_self)
                 else -> threadRecipient.toShortString()
@@ -1921,10 +1926,24 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         endActionMode()
     }
 
+    private val handleMessageDetail = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
+        val message = result.data?.extras?.getLong(MESSAGE_TIMESTAMP)
+            ?.let(mmsSmsDb::getMessageForTimestamp)
+
+        val set = setOfNotNull(message)
+
+        when (result.resultCode) {
+            ON_REPLY -> reply(set)
+            ON_RESEND -> resendMessage(set)
+            ON_DELETE -> deleteMessages(set)
+        }
+    }
+
     override fun showMessageDetail(messages: Set<MessageRecord>) {
-        val intent = Intent(this, MessageDetailActivity::class.java)
-        intent.putExtra(MessageDetailActivity.MESSAGE_TIMESTAMP, messages.first().timestamp)
-        push(intent)
+        Intent(this, MessageDetailActivity::class.java)
+            .apply { putExtra(MESSAGE_TIMESTAMP, messages.first().timestamp) }
+            .let { handleMessageDetail.launch(it) }
+
         endActionMode()
     }
 
@@ -1963,7 +1982,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     override fun reply(messages: Set<MessageRecord>) {
         val recipient = viewModel.recipient ?: return
-        binding?.inputBar?.draftQuote(recipient, messages.first(), glide)
+        messages.firstOrNull()?.let { binding?.inputBar?.draftQuote(recipient, it, glide) }
         endActionMode()
     }
 
