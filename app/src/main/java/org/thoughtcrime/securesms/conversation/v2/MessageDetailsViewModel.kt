@@ -46,31 +46,33 @@ class MessageDetailsViewModel @Inject constructor(
     private val event = Channel<Event>()
     val eventFlow = event.receiveAsFlow()
 
-    fun setMessageTimestamp(timestamp: Long) {
-        val record = mmsSmsDatabase.getMessageForTimestamp(timestamp)
+    var timestamp: Long = 0L
+        set(value) {
+            field = value
+            val record = mmsSmsDatabase.getMessageForTimestamp(timestamp)
 
-        if (record == null) {
-            viewModelScope.launch { event.send(Event.Finish) }
-            return
+            if (record == null) {
+                viewModelScope.launch { event.send(Event.Finish) }
+                return
+            }
+
+            val mmsRecord = record as? MmsMessageRecord
+
+            state.value = record.run {
+                val slides = mmsRecord?.slideDeck?.slides ?: emptyList()
+
+                MessageDetailsState(
+                    attachments = slides.map(::Attachment),
+                    record = record,
+                    sent = dateSent.let(::Date).toString().let { TitledText(R.string.message_details_header__sent, it) },
+                    received = dateReceived.let(::Date).toString().let { TitledText(R.string.message_details_header__received, it) },
+                    error = lokiMessageDatabase.getErrorMessage(id)?.let { TitledText(R.string.message_details_header__error, it) },
+                    senderInfo = individualRecipient.run { name?.let { TitledText(it, address.serialize()) } },
+                    sender = individualRecipient,
+                    thread = threadDb.getRecipientForThreadId(threadId)!!,
+                )
+            }
         }
-
-        val mmsRecord = record as? MmsMessageRecord
-
-        state.value = record.run {
-            val slides = mmsRecord?.slideDeck?.slides ?: emptyList()
-
-            MessageDetailsState(
-                attachments = slides.map(::Attachment),
-                record = record,
-                sent = dateSent.let(::Date).toString().let { TitledText(R.string.message_details_header__sent, it) },
-                received = dateReceived.let(::Date).toString().let { TitledText(R.string.message_details_header__received, it) },
-                error = lokiMessageDatabase.getErrorMessage(id)?.let { TitledText(R.string.message_details_header__error, it) },
-                senderInfo = individualRecipient.run { name?.let { TitledText(it, address.serialize()) } },
-                sender = individualRecipient,
-                thread = threadDb.getRecipientForThreadId(threadId)!!,
-            )
-        }
-    }
 
     private val Slide.details: List<TitledText>
         get() = listOfNotNull(

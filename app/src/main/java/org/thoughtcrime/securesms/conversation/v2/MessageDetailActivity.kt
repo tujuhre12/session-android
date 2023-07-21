@@ -80,8 +80,6 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
 
-    private var timestamp: Long = 0L
-
     @Inject
     lateinit var storage: Storage
 
@@ -101,7 +99,7 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
 
         title = resources.getString(R.string.conversation_context__menu_message_details)
 
-        intent.getLongExtra(MESSAGE_TIMESTAMP, -1L).let(viewModel::setMessageTimestamp)
+        viewModel.timestamp = intent.getLongExtra(MESSAGE_TIMESTAMP, -1L)
 
         ComposeView(this)
             .apply { setContent { MessageDetailsScreen() } }
@@ -135,7 +133,7 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
     }
 
     private fun setResultAndFinish(code: Int) {
-        Bundle().apply { putLong(MESSAGE_TIMESTAMP, timestamp) }
+        Bundle().apply { putLong(MESSAGE_TIMESTAMP, viewModel.timestamp) }
             .let(Intent()::putExtras)
             .let { setResult(code, it) }
 
