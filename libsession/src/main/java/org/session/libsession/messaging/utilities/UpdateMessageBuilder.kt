@@ -104,8 +104,8 @@ object UpdateMessageBuilder {
             }
         } else {
             val time = ExpirationUtil.getExpirationDisplayValue(context, duration.toInt())
-            val threadId = storage.getThreadId(Address.fromSerialized(senderId!!)) ?: return ""
-            val config = storage.getExpirationConfiguration(threadId)
+            val threadId = storage.getThreadId(Address.fromSerialized(senderId!!))
+            val config = threadId?.let { storage.getExpirationConfiguration(it) }
             val state = when (config?.expirationType) {
                 ExpirationType.DELETE_AFTER_SEND -> context.getString(R.string.MessageRecord_state_sent)
                 ExpirationType.DELETE_AFTER_READ -> context.getString(R.string.MessageRecord_state_read)

@@ -166,6 +166,7 @@ import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.MediaUtil
 import org.thoughtcrime.securesms.util.SaveAttachmentTask
+import org.thoughtcrime.securesms.util.drawToBitmap
 import org.thoughtcrime.securesms.util.isScrolledToBottom
 import org.thoughtcrime.securesms.util.push
 import org.thoughtcrime.securesms.util.show
