@@ -32,6 +32,8 @@ import android.view.View
 import android.view.WindowManager
 import android.widget.RelativeLayout
 import android.widget.Toast
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.core.text.set
 import androidx.core.text.toSpannable
@@ -108,6 +110,10 @@ import org.thoughtcrime.securesms.conversation.ConversationActionBarDelegate
 import org.thoughtcrime.securesms.conversation.expiration.ExpirationSettingsActivity
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnActionSelectedListener
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnReactionSelectedListener
+import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.MESSAGE_TIMESTAMP
+import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_REPLY
+import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_RESEND
+import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_DELETE
 import org.thoughtcrime.securesms.conversation.v2.dialogs.BlockedDialog
 import org.thoughtcrime.securesms.conversation.v2.dialogs.LinkPreviewDialog
 import org.thoughtcrime.securesms.conversation.v2.dialogs.SendSeedDialog
@@ -1904,10 +1910,24 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         endActionMode()
     }
 
+    private val handleMessageDetail = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
+        val message = result.data?.extras?.getLong(MESSAGE_TIMESTAMP)
+            ?.let(mmsSmsDb::getMessageForTimestamp)
+
+        val set = setOfNotNull(message)
+
+        when (result.resultCode) {
+            ON_REPLY -> reply(set)
+            ON_RESEND -> resendMessage(set)
+            ON_DELETE -> deleteMessages(set)
+        }
+    }
+
     override fun showMessageDetail(messages: Set<MessageRecord>) {
-        val intent = Intent(this, MessageDetailActivity::class.java)
-        intent.putExtra(MessageDetailActivity.MESSAGE_TIMESTAMP, messages.first().timestamp)
-        push(intent)
+        Intent(this, MessageDetailActivity::class.java)
+            .apply { putExtra(MESSAGE_TIMESTAMP, messages.first().timestamp) }
+            .let { handleMessageDetail.launch(it) }
+
         endActionMode()
     }
 
@@ -1946,7 +1966,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     override fun reply(messages: Set<MessageRecord>) {
         val recipient = viewModel.recipient ?: return
-        binding?.inputBar?.draftQuote(recipient, messages.first(), glide)
+        messages.firstOrNull()?.let { binding?.inputBar?.draftQuote(recipient, it, glide) }
         endActionMode()
     }
 

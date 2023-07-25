@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.components
 
 import android.content.Context
 import android.util.AttributeSet
+import android.view.LayoutInflater
 import android.view.View
 import android.widget.ImageView
 import android.widget.RelativeLayout
@@ -9,6 +10,7 @@ import androidx.annotation.DimenRes
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewProfilePictureBinding
+import network.loki.messenger.databinding.ViewUserBinding
 import org.session.libsession.avatars.ContactColors
 import org.session.libsession.avatars.PlaceholderAvatarPhoto
 import org.session.libsession.avatars.ProfileContactPhoto
@@ -18,13 +20,14 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
+import org.thoughtcrime.securesms.mms.GlideApp
 import org.thoughtcrime.securesms.mms.GlideRequests
 
 class ProfilePictureView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null
 ) : RelativeLayout(context, attrs) {
-    private val binding: ViewProfilePictureBinding by lazy { ViewProfilePictureBinding.bind(this) }
-    lateinit var glide: GlideRequests
+    private val binding = ViewProfilePictureBinding.inflate(LayoutInflater.from(context), this)
+    private val glide: GlideRequests = GlideApp.with(this)
     var publicKey: String? = null
     var displayName: String? = null
     var additionalPublicKey: String? = null
@@ -37,7 +40,12 @@ class ProfilePictureView @JvmOverloads constructor(
     private val unknownOpenGroupDrawable by lazy { ResourceContactPhoto(R.drawable.ic_notification)
         .asDrawable(context, ContactColors.UNKNOWN_COLOR.toConversationColor(context), false) }
 
+
     // endregion
+
+    constructor(context: Context, sender: Recipient): this(context) {
+        update(sender)
+    }
 
     // region Updating
     fun update(recipient: Recipient) {
@@ -80,7 +88,6 @@ class ProfilePictureView @JvmOverloads constructor(
     }
 
     fun update() {
-        if (!this::glide.isInitialized) return
         val publicKey = publicKey ?: return
         val additionalPublicKey = additionalPublicKey
         if (additionalPublicKey != null) {

@@ -147,6 +147,10 @@ public class MediaPreviewActivity extends PassphraseRequiredActionBarActivity im
     }
   };
 
+  public static Intent getPreviewIntent(Context context, MediaPreviewArgs args) {
+    return getPreviewIntent(context, args.getSlide(), args.getMmsRecord(), args.getThread());
+  }
+
   public static Intent getPreviewIntent(Context context, Slide slide, MmsMessageRecord mms, Recipient threadRecipient) {
     Intent previewIntent = null;
     if (MediaPreviewActivity.isContentTypeSupported(slide.getContentType()) && slide.getUri() != null) {
@@ -524,7 +528,6 @@ public class MediaPreviewActivity extends PassphraseRequiredActionBarActivity im
   @Override
   public void onLoadFinished(@NonNull Loader<Pair<Cursor, Integer>> loader, @Nullable Pair<Cursor, Integer> data) {
     if (data != null) {
-      @SuppressWarnings("ConstantConditions")
       CursorPagerAdapter adapter = new CursorPagerAdapter(this, GlideApp.with(this), getWindow(), data.first, data.second, leftIsRecent);
       mediaPager.setAdapter(adapter);
       adapter.setActive(true);

@@ -4,11 +4,15 @@
     <string name="yes">Yes</string>
     <string name="no">No</string>
     <string name="delete">Delete</string>
+    <string name="resend">Resend</string>
+    <string name="reply">Reply</string>
     <string name="ban">Ban</string>
     <string name="please_wait">Please wait…</string>
     <string name="save">Save</string>
+    <string name="image">Image</string>
     <string name="note_to_self">Note to Self</string>
     <string name="version_s">Version %s</string>
+    <string name="expand">Expand</string>
 <!--Accessibility ID's-->
     <!-- Landing Page -->
     <string name="AccessibilityId_create_session_id">Create session ID</string>
@@ -526,6 +530,12 @@
     <string name="message_details_header__to">To:</string>
     <string name="message_details_header__from">From:</string>
     <string name="message_details_header__with">With:</string>
+    <string name="message_details_header__file_id">File Id:</string>
+    <string name="message_details_header__file_type">File Type:</string>
+    <string name="message_details_header__file_size">File Size:</string>
+    <string name="message_details_header__resolution">Resolution:</string>
+    <string name="message_details_header__duration">Duration:</string>
+
     <!-- AndroidManifest.xml -->
     <string name="AndroidManifest__create_passphrase">Create passphrase</string>
     <string name="AndroidManifest__select_contacts">Select contacts</string>
