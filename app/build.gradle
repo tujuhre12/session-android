@@ -136,6 +136,13 @@ android {
             buildConfigField "String", "NOPLAY_UPDATE_URL", "$ext.websiteUpdateUrl"
         }
 
+        huawei {
+            dimension "distribution"
+            ext.websiteUpdateUrl = "null"
+            buildConfigField "boolean", "PLAY_STORE_DISABLED", "true"
+            buildConfigField "String", "NOPLAY_UPDATE_URL", "$ext.websiteUpdateUrl"
+        }
+
         website {
             dimension "distribution"
             ext.websiteUpdateUrl = "https://github.com/oxen-io/session-android/releases"
@@ -203,6 +210,7 @@ dependencies {
         exclude group: 'com.google.firebase', module: 'firebase-analytics'
         exclude group: 'com.google.firebase', module: 'firebase-measurement-connector'
     }
+    huaweiImplementation 'com.huawei.hms:push:6.7.0.300'
     implementation 'com.google.android.exoplayer:exoplayer-core:2.9.1'
     implementation 'com.google.android.exoplayer:exoplayer-ui:2.9.1'
     implementation 'org.conscrypt:conscrypt-android:2.0.0'

@@ -2,6 +2,7 @@ buildscript {
     repositories {
         google()
         mavenCentral()
+        maven {url 'https://developer.huawei.com/repo/'}
     }
     dependencies {
         classpath "com.android.tools.build:gradle:$gradlePluginVersion"
@@ -12,6 +13,7 @@ buildscript {
         classpath files('libs/gradle-witness.jar')
         classpath "com.squareup:javapoet:1.13.0"
         classpath "com.google.dagger:hilt-android-gradle-plugin:$daggerVersion"
+        classpath 'com.huawei.agconnect:agcp:1.6.0.300'
     }
 }
 
@@ -55,6 +57,7 @@ allprojects {
         }
         jcenter()
         maven { url "https://jitpack.io" }
+        maven { url 'https://developer.huawei.com/repo/' }
     }
 
     project.ext {
