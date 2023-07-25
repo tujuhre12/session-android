@@ -21,7 +21,7 @@ object HuaweiPushModule {
 
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class FirebaseBindingModule {
+abstract class HuaweiBindingModule {
     @Binds
-    abstract fun bindPushManager(firebasePushManager: HuaweiPushManager): PushManager
+    abstract fun bindPushManager(pushManager: HuaweiPushManager): PushManager
 }

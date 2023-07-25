@@ -39,7 +39,7 @@ import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 
 private const val TAG = "PushManagerV2"
 
-class PushManagerV2(private val context: Context) {
+class PushManagerV2(private val pushHandler: PushHandler) {
     private val sodium = LazySodiumAndroid(SodiumAndroid())
 
     fun register(
@@ -48,7 +48,7 @@ class PushManagerV2(private val context: Context) {
         userEd25519Key: KeyPair,
         namespaces: List<Int>
     ): Promise<SubscriptionResponse, Exception> {
-        val pnKey = getOrCreateNotificationKey()
+        val pnKey = pushHandler.getOrCreateNotificationKey()
 
         val timestamp = SnodeAPI.nowWithOffset / 1000 // get timestamp in ms -> s
         // if we want to support passing namespace list, here is the place to do it
@@ -116,42 +116,5 @@ class PushManagerV2(private val context: Context) {
                 .let { Json.decodeFromStream<T>(it) }
                 .also { if (it.isFailure()) throw Exception("error: ${it.message}.") }
         }
-    }
-
-    private fun getOrCreateNotificationKey(): Key {
-        if (IdentityKeyUtil.retrieve(context, IdentityKeyUtil.NOTIFICATION_KEY) == null) {
-            // generate the key and store it
-            val key = sodium.keygen(AEAD.Method.XCHACHA20_POLY1305_IETF)
-            IdentityKeyUtil.save(context, IdentityKeyUtil.NOTIFICATION_KEY, key.asHexString)
-        }
-        return Key.fromHexString(IdentityKeyUtil.retrieve(context, IdentityKeyUtil.NOTIFICATION_KEY))
-    }
-
-    fun decrypt(encPayload: ByteArray): ByteArray? {
-        Log.d(TAG, "decrypt() called")
-
-        val encKey = getOrCreateNotificationKey()
-        val nonce = encPayload.take(AEAD.XCHACHA20POLY1305_IETF_NPUBBYTES).toByteArray()
-        val payload = encPayload.drop(AEAD.XCHACHA20POLY1305_IETF_NPUBBYTES).toByteArray()
-        val padded = SodiumUtilities.decrypt(payload, encKey.asBytes, nonce)
-            ?: error("Failed to decrypt push notification")
-        val decrypted = padded.dropLastWhile { it.toInt() == 0 }.toByteArray()
-        val bencoded = Bencode.Decoder(decrypted)
-        val expectedList = (bencoded.decode() as? BencodeList)?.values
-            ?: error("Failed to decode bencoded list from payload")
-
-        val metadataJson = (expectedList[0] as? BencodeString)?.value ?: error("no metadata")
-        val metadata: PushNotificationMetadata = Json.decodeFromString(String(metadataJson))
-
-        val content: ByteArray? = if (expectedList.size >= 2) (expectedList[1] as? BencodeString)?.value else null
-        // null content is valid only if we got a "data_too_long" flag
-        if (content == null)
-            check(metadata.data_too_long) { "missing message data, but no too-long flag" }
-        else
-            check(metadata.data_len == content.size) { "wrong message data size" }
-
-        Log.d(TAG, "Received push for ${metadata.account}/${metadata.namespace}, msg ${metadata.msg_hash}, ${metadata.data_len}B")
-
-        return content
     }
 }

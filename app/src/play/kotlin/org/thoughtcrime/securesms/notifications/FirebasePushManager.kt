@@ -40,6 +40,7 @@ import org.session.libsignal.utilities.emptyPromise
 import org.session.libsignal.utilities.retryIfNeeded
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.crypto.KeyPairUtilities
+import javax.inject.Inject
 
 private const val TAG = "FirebasePushManager"
 
@@ -47,7 +48,7 @@ class FirebasePushManager(
     private val context: Context
     ): PushManager {
 
-    private val pushManagerV2 = PushManagerV2(context)
+    @Inject lateinit var pushManagerV2: PushManagerV2
 
     companion object {
         const val maxRetryCount = 4
@@ -132,6 +133,4 @@ class FirebasePushManager(
     } success {
         tokenManager.fcmToken = null
     }
-
-    fun decrypt(decode: ByteArray) = pushManagerV2.decrypt(decode)
 }

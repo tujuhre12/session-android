@@ -52,10 +52,13 @@ object PushManagerV1 {
         )
 
         val url = "${server.url}/register_legacy_groups_only"
-        val body = RequestBody.create(MediaType.get("application/json"), JsonUtil.toJson(parameters))
+        val body = RequestBody.create(
+            MediaType.get("application/json"),
+            JsonUtil.toJson(parameters)
+        )
         val request = Request.Builder().url(url).post(body).build()
 
-        return sendOnionRequest(request) sideEffect  { response ->
+        return sendOnionRequest(request) sideEffect { response ->
             when (response.code) {
                 null, 0 -> throw Exception("error: ${response.message}.")
             }
@@ -73,7 +76,7 @@ object PushManagerV1 {
         val token = TextSecurePreferences.getFCMToken(context) ?: emptyPromise()
 
         return retryIfNeeded(maxRetryCount) {
-            val parameters = mapOf( "token" to token )
+            val parameters = mapOf("token" to token)
             val url = "${server.url}/unregister"
             val body = RequestBody.create(MediaType.get("application/json"), JsonUtil.toJson(parameters))
             val request = Request.Builder().url(url).post(body).build()
@@ -110,7 +113,7 @@ object PushManagerV1 {
         closedGroupPublicKey: String,
         publicKey: String
     ): Promise<*, Exception> {
-        val parameters = mapOf( "closedGroupPublicKey" to closedGroupPublicKey, "pubKey" to publicKey )
+        val parameters = mapOf("closedGroupPublicKey" to closedGroupPublicKey, "pubKey" to publicKey)
         val url = "${server.url}/$operation"
         val body = RequestBody.create(MediaType.get("application/json"), JsonUtil.toJson(parameters))
         val request = Request.Builder().url(url).post(body).build()
@@ -118,7 +121,7 @@ object PushManagerV1 {
         return retryIfNeeded(maxRetryCount) {
             sendOnionRequest(request) sideEffect {
                 when (it.code) {
-                     0, null -> throw Exception(it.message)
+                    0, null -> throw Exception(it.message)
                 }
             }
         }
