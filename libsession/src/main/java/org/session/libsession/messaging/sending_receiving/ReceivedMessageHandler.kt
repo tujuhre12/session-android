@@ -272,6 +272,7 @@ fun handleMessageRequestResponse(message: MessageRequestResponse) {
 
 fun MessageReceiver.updateExpiryIfNeeded(message: Message, proto: SignalServiceProtos.Content, openGroupID: String?) {
     val storage = MessagingModuleConfiguration.shared.storage
+
     val sentTime = message.sentTimestamp ?: throw MessageReceiver.Error.InvalidMessage
     if (!proto.hasLastDisappearingMessageChangeTimestamp()) return
     val threadID = storage.getThreadIdFor(message.sender!!, message.groupPublicKey, openGroupID, false)
