@@ -96,9 +96,9 @@ namespace util {
 
         jclass object_class = env->GetObjectClass(expiry_mode);
 
-        if (object_class == after_read) {
+        if (env->IsSameObject(object_class, after_read)) {
             return std::pair(session::config::expiration_mode::after_read, env->GetLongField(expiry_mode, duration_seconds));
-        } else if (object_class == after_send) {
+        } else if (env->IsSameObject(object_class, after_send)) {
             return std::pair(session::config::expiration_mode::after_send, env->GetLongField(expiry_mode, duration_seconds));
         }
         return std::pair(session::config::expiration_mode::none, 0);
