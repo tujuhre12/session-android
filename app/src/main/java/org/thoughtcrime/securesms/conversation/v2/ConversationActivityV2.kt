@@ -111,9 +111,9 @@ import org.thoughtcrime.securesms.conversation.expiration.ExpirationSettingsActi
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnActionSelectedListener
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnReactionSelectedListener
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.MESSAGE_TIMESTAMP
+import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_DELETE
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_REPLY
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_RESEND
-import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_DELETE
 import org.thoughtcrime.securesms.conversation.v2.dialogs.BlockedDialog
 import org.thoughtcrime.securesms.conversation.v2.dialogs.LinkPreviewDialog
 import org.thoughtcrime.securesms.conversation.v2.dialogs.SendSeedDialog
@@ -172,7 +172,6 @@ import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.MediaUtil
 import org.thoughtcrime.securesms.util.SaveAttachmentTask
-import org.thoughtcrime.securesms.util.drawToBitmap
 import org.thoughtcrime.securesms.util.isScrolledToBottom
 import org.thoughtcrime.securesms.util.push
 import org.thoughtcrime.securesms.util.show
@@ -1681,6 +1680,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         Permissions.onRequestPermissionsResult(this, requestCode, permissions, grantResults)
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
         super.onActivityResult(requestCode, resultCode, intent)
         val mediaPreppedListener = object : ListenableFuture.Listener<Boolean> {

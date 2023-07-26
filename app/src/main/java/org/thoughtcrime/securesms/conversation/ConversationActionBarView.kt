@@ -87,14 +87,13 @@ class ConversationActionBarView : LinearLayout {
             R.dimen.small_profile_picture_size
         }
         val size = resources.getDimension(sizeID).roundToInt()
-        binding.profilePictureView.root.layoutParams = LayoutParams(size, size)
-        binding.profilePictureView.root.glide = glide
+        binding.profilePictureView.layoutParams = LayoutParams(size, size)
         MentionManagerUtilities.populateUserPublicKeyCacheIfNeeded(threadId, context)
         update(recipient, openGroup, config)
     }
 
     fun update(recipient: Recipient, openGroup: OpenGroup? = null, config: ExpirationConfiguration? = null) {
-        binding.profilePictureView.root.update(recipient)
+        binding.profilePictureView.update(recipient)
         binding.conversationTitleView.text = when {
             recipient.isLocalNumber -> context.getString(R.string.note_to_self)
             else -> recipient.toShortString()
@@ -104,7 +103,7 @@ class ConversationActionBarView : LinearLayout {
         val marginEnd = if (recipient.showCallMenu()) {
             0
         } else {
-            binding.profilePictureView.root.width
+            binding.profilePictureView.width
         }
         val lp = binding.conversationTitleContainer.layoutParams as MarginLayoutParams
         lp.marginEnd = marginEnd

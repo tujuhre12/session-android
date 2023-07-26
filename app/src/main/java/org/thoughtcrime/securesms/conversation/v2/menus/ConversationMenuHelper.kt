@@ -9,7 +9,6 @@ import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.widget.Toast
-import androidx.annotation.ColorInt
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.appcompat.widget.SearchView
@@ -36,8 +35,8 @@ import org.thoughtcrime.securesms.groups.EditClosedGroupActivity
 import org.thoughtcrime.securesms.groups.EditClosedGroupActivity.Companion.groupIDKey
 import org.thoughtcrime.securesms.preferences.PrivacySettingsActivity
 import org.thoughtcrime.securesms.service.WebRtcCallService
-import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.showMuteDialog
+import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.util.BitmapUtil
 import java.io.IOException
 
@@ -188,6 +187,7 @@ object ConversationMenuHelper {
     private fun addShortcut(context: Context, thread: Recipient) {
         object : AsyncTask<Void?, Void?, IconCompat?>() {
 
+            @Deprecated("Deprecated in Java")
             override fun doInBackground(vararg params: Void?): IconCompat? {
                 var icon: IconCompat? = null
                 val contactPhoto = thread.contactPhoto
@@ -206,6 +206,7 @@ object ConversationMenuHelper {
                 return icon
             }
 
+            @Deprecated("Deprecated in Java")
             override fun onPostExecute(icon: IconCompat?) {
                 val name = Optional.fromNullable<String>(thread.name)
                     .or(Optional.fromNullable<String>(thread.profileName))

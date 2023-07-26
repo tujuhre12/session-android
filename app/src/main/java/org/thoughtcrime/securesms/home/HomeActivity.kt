@@ -71,8 +71,8 @@ import org.thoughtcrime.securesms.onboarding.SeedActivity
 import org.thoughtcrime.securesms.onboarding.SeedReminderViewDelegate
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.SettingsActivity
-import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.showMuteDialog
+import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.IP2Country
@@ -447,6 +447,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
     // endregion
 
     // region Interaction
+    @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
         if (binding.globalSearchRecycler.isVisible) {
             binding.globalSearchInputLayout.clearSearch(true)
