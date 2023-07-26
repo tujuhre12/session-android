@@ -71,7 +71,7 @@ class GenericPushManager @Inject constructor(
         }
 
         val v2 = pushManagerV2.register(
-            Device.ANDROID, token, publicKey, userEd25519Key, namespaces
+            device, token, publicKey, userEd25519Key, namespaces
         ) fail {
             Log.e(TAG, "register v2 failed", it)
         }
@@ -87,7 +87,7 @@ class GenericPushManager @Inject constructor(
         userPublicKey: String,
         userEdKey: KeyPair
     ): Promise<*, Exception> = PushManagerV1.unregister() and pushManagerV2.unregister(
-        Device.ANDROID, token, userPublicKey, userEdKey
+        device, token, userPublicKey, userEdKey
     ) fail {
         Log.e(TAG, "unregisterBoth failed", it)
     } success {
