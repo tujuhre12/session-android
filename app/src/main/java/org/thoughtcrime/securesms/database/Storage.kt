@@ -1671,6 +1671,19 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
     }
 
     override fun getExpirationConfiguration(threadId: Long): ExpirationConfiguration? {
+        val recipient = getRecipientForThread(threadId) ?: return null
+        return if (recipient.isContactRecipient && recipient.address.serialize().startsWith(IdPrefix.STANDARD.value)) {
+            // read it from contacts config if exists
+            configFactory.contacts?.get(recipient.address.serialize())?.let { contact ->
+                contact.expiryMode
+            }
+        } else if (recipient.isClosedGroupRecipient) {
+            // read it from group config if exists
+            val groupPublicKey = GroupUtil.doubleDecodeGroupId(recipient.address.serialize())
+            configFactory.userGroups?.getLegacyGroupInfo(groupPublicKey)?.let {
+
+            }
+        } else null
         return DatabaseComponent.get(context).expirationConfigurationDatabase().getExpirationConfiguration(threadId)
     }
 

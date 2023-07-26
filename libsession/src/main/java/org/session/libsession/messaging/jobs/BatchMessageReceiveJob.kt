@@ -152,7 +152,7 @@ class BatchMessageReceiveJob(
                         try {
                             when (message) {
                                 is VisibleMessage -> {
-                                    MessageReceiver.updateExpiryIfNeeded(message, proto, openGroupID)
+                                    MessageReceiver.updateExpiryIfNeeded(message, proto, openGroupID, newLastSeen)
                                     val isUserBlindedSender =
                                         message.sender == serverPublicKey?.let {
                                             SodiumUtilities.blindedKeyPair(

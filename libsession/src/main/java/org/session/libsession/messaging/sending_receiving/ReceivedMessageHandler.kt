@@ -270,7 +270,7 @@ fun handleMessageRequestResponse(message: MessageRequestResponse) {
 }
 //endregion
 
-fun MessageReceiver.updateExpiryIfNeeded(message: Message, proto: SignalServiceProtos.Content, openGroupID: String?) {
+fun MessageReceiver.updateExpiryIfNeeded(message: Message, proto: SignalServiceProtos.Content, openGroupID: String?, lastSeen: Long) {
     val storage = MessagingModuleConfiguration.shared.storage
 
     val sentTime = message.sentTimestamp ?: throw MessageReceiver.Error.InvalidMessage
