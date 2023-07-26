@@ -24,7 +24,6 @@ import org.session.libsignal.protos.SignalServiceProtos
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionManagerUtilities
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
-import org.thoughtcrime.securesms.mms.GlideRequests
 import org.thoughtcrime.securesms.util.DateUtils
 import java.util.Locale
 import javax.inject.Inject
@@ -77,8 +76,7 @@ class ConversationActionBarView : LinearLayout {
         threadId: Long,
         recipient: Recipient,
         config: ExpirationConfiguration? = null,
-        openGroup: OpenGroup? = null,
-        glide: GlideRequests
+        openGroup: OpenGroup? = null
     ) {
         this.delegate = delegate
         @DimenRes val sizeID: Int = if (recipient.isClosedGroupRecipient) {

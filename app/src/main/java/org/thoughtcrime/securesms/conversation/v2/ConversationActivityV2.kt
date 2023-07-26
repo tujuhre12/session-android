@@ -578,7 +578,13 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         actionBar.title = ""
         actionBar.setDisplayHomeAsUpEnabled(true)
         actionBar.setHomeButtonEnabled(true)
-        binding!!.toolbarContent.bind(this, viewModel.threadId, recipient, viewModel.expirationConfiguration, viewModel.openGroup, glide)
+        binding!!.toolbarContent.bind(
+            this,
+            viewModel.threadId,
+            recipient,
+            viewModel.expirationConfiguration,
+            viewModel.openGroup
+        )
         maybeUpdateToolbar(recipient)
     }
 
