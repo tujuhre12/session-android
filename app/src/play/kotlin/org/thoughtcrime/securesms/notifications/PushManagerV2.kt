@@ -1,13 +1,9 @@
 package org.thoughtcrime.securesms.notifications
 
-import android.content.Context
 import com.goterl.lazysodium.LazySodiumAndroid
 import com.goterl.lazysodium.SodiumAndroid
-import com.goterl.lazysodium.interfaces.AEAD
 import com.goterl.lazysodium.interfaces.Sign
-import com.goterl.lazysodium.utils.Key
 import com.goterl.lazysodium.utils.KeyPair
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
@@ -16,30 +12,22 @@ import nl.komponents.kovenant.functional.map
 import okhttp3.MediaType
 import okhttp3.Request
 import okhttp3.RequestBody
-import org.session.libsession.messaging.sending_receiving.notifications.PushManagerV1
-import org.session.libsession.messaging.sending_receiving.notifications.PushNotificationMetadata
-import org.session.libsession.messaging.sending_receiving.notifications.Response
-import org.session.libsession.messaging.sending_receiving.notifications.Server
-import org.session.libsession.messaging.sending_receiving.notifications.SubscriptionRequest
-import org.session.libsession.messaging.sending_receiving.notifications.SubscriptionResponse
-import org.session.libsession.messaging.sending_receiving.notifications.UnsubscribeResponse
-import org.session.libsession.messaging.sending_receiving.notifications.UnsubscriptionRequest
-import org.session.libsession.messaging.utilities.SodiumUtilities
+import org.session.libsession.messaging.sending_receiving.notifications.*
 import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.Version
-import org.session.libsession.utilities.bencode.Bencode
-import org.session.libsession.utilities.bencode.BencodeList
-import org.session.libsession.utilities.bencode.BencodeString
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Namespace
 import org.session.libsignal.utilities.retryIfNeeded
-import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
+import javax.inject.Inject
+import javax.inject.Singleton
 
 private const val TAG = "PushManagerV2"
+private const val maxRetryCount = 4
 
-class PushManagerV2(private val pushHandler: PushHandler) {
+@Singleton
+class PushManagerV2 @Inject constructor(private val pushHandler: PushHandler) {
     private val sodium = LazySodiumAndroid(SodiumAndroid())
 
     fun register(
@@ -98,7 +86,7 @@ class PushManagerV2(private val pushHandler: PushHandler) {
     }
 
     private inline fun <reified T: Response> retryResponseBody(path: String, requestParameters: String): Promise<T, Exception> =
-        retryIfNeeded(FirebasePushManager.maxRetryCount) { getResponseBody(path, requestParameters) }
+        retryIfNeeded(maxRetryCount) { getResponseBody(path, requestParameters) }
 
     private inline fun <reified T: Response> getResponseBody(path: String, requestParameters: String): Promise<T, Exception> {
         val server = Server.LATEST

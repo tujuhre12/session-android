@@ -133,7 +133,7 @@ android {
             apply plugin: 'com.google.gms.google-services'
             ext.websiteUpdateUrl = "null"
             buildConfigField "boolean", "PLAY_STORE_DISABLED", "false"
-            buildConfigField "String", "DEVICE", "\"android\""
+            buildConfigField "org.session.libsession.utilities.Device", "DEVICE", "org.session.libsession.utilities.Device.ANDROID"
             buildConfigField "String", "NOPLAY_UPDATE_URL", "$ext.websiteUpdateUrl"
         }
 
@@ -141,7 +141,7 @@ android {
             dimension "distribution"
             ext.websiteUpdateUrl = "null"
             buildConfigField "boolean", "PLAY_STORE_DISABLED", "true"
-            buildConfigField "String", "DEVICE", "\"huawei\""
+            buildConfigField "org.session.libsession.utilities.Device", "DEVICE", "org.session.libsession.utilities.Device.HUAWEI"
             buildConfigField "String", "NOPLAY_UPDATE_URL", "$ext.websiteUpdateUrl"
         }
 
@@ -149,7 +149,7 @@ android {
             dimension "distribution"
             ext.websiteUpdateUrl = "https://github.com/oxen-io/session-android/releases"
             buildConfigField "boolean", "PLAY_STORE_DISABLED", "true"
-            buildConfigField "String", "DEVICE", "\"android\""
+            buildConfigField "org.session.libsession.utilities.Device", "DEVICE", "org.session.libsession.utilities.Device.ANDROID"
             buildConfigField "String", "NOPLAY_UPDATE_URL", "\"$ext.websiteUpdateUrl\""
         }
     }

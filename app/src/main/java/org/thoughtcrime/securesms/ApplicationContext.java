@@ -41,6 +41,7 @@ import org.session.libsession.messaging.sending_receiving.pollers.Poller;
 import org.session.libsession.snode.SnodeModule;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.ConfigFactoryUpdateListener;
+import org.session.libsession.utilities.Device;
 import org.session.libsession.utilities.ProfilePictureUtilities;
 import org.session.libsession.utilities.SSKEnvironment;
 import org.session.libsession.utilities.TextSecurePreferences;
@@ -142,6 +143,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
 
     @Inject LokiAPIDatabase lokiAPIDatabase;
     @Inject public Storage storage;
+    @Inject Device device;
     @Inject MessageDataProvider messageDataProvider;
     @Inject TextSecurePreferences textSecurePreferences;
     @Inject PushManager pushManager;
@@ -207,8 +209,10 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         DatabaseModule.init(this);
         MessagingModuleConfiguration.configure(this);
         super.onCreate();
-        messagingModuleConfiguration = new MessagingModuleConfiguration(this,
+        messagingModuleConfiguration = new MessagingModuleConfiguration(
+                this,
                 storage,
+                device,
                 messageDataProvider,
                 ()-> KeyPairUtilities.INSTANCE.getUserED25519KeyPair(this),
                 configFactory

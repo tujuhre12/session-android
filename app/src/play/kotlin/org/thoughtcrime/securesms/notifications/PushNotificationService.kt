@@ -19,7 +19,7 @@ private const val TAG = "PushNotificationService"
 @AndroidEntryPoint
 class PushNotificationService : FirebaseMessagingService() {
 
-    @Inject lateinit var pushManager: FirebasePushManager
+    @Inject lateinit var pushManager: PushManager
     @Inject lateinit var pushHandler: PushHandler
 
     override fun onNewToken(token: String) {

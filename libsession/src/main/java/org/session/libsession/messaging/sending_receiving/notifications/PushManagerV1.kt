@@ -9,6 +9,7 @@ import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.OnionResponse
 import org.session.libsession.snode.Version
+import org.session.libsession.utilities.Device
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
@@ -29,17 +30,18 @@ object PushManagerV1 {
         isUsingFCM: Boolean = TextSecurePreferences.isUsingFCM(context),
         token: String? = TextSecurePreferences.getFCMToken(context),
         publicKey: String? = TextSecurePreferences.getLocalNumber(context),
+        device: Device,
         legacyGroupPublicKeys: Collection<String> = MessagingModuleConfiguration.shared.storage.getAllClosedGroupPublicKeys()
     ): Promise<*, Exception> =
         if (!isUsingFCM) {
             emptyPromise()
         } else retryIfNeeded(maxRetryCount) {
-            doRegister(token, publicKey, legacyGroupPublicKeys)
+            doRegister(token, publicKey, device, legacyGroupPublicKeys)
         } fail { exception ->
             Log.d(TAG, "Couldn't register for FCM due to error: $exception.")
         }
 
-    private fun doRegister(token: String?, publicKey: String?, legacyGroupPublicKeys: Collection<String>): Promise<*, Exception> {
+    private fun doRegister(token: String?, publicKey: String?, device: Device, legacyGroupPublicKeys: Collection<String>): Promise<*, Exception> {
         Log.d(TAG, "registerV1 requested")
 
         token ?: return emptyPromise()
@@ -48,6 +50,7 @@ object PushManagerV1 {
         val parameters = mapOf(
             "token" to token,
             "pubKey" to publicKey,
+            "device" to device,
             "legacyGroupPublicKeys" to legacyGroupPublicKeys
         )
 

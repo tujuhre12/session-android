@@ -29,24 +29,26 @@ private const val TAG = "PushHandler"
 class PushHandler @Inject constructor(@ApplicationContext val context: Context) {
     private val sodium = LazySodiumAndroid(SodiumAndroid())
 
-    fun onPush(dataMap: Map<String, String>) {
-        val data: ByteArray? = if (dataMap.containsKey("spns")) {
-            // this is a v2 push notification
-            try {
-                decrypt(Base64.decode(dataMap["enc_payload"]))
-            } catch(e: Exception) {
-                Log.e(TAG, "Invalid push notification: ${e.message}")
-                return
-            }
-        } else {
-            // old v1 push notification; we still need this for receiving legacy closed group notifications
-            dataMap.get("ENCRYPTED_DATA")?.let(Base64::decode)
-        }
-        data?.let { onPush(data) } ?: onPush()
-
+    fun onPush(dataMap: Map<String, String>?) {
+        onPush(dataMap?.asByteArray())
     }
 
-    fun onPush() {
+    private fun onPush(data: ByteArray?) {
+        if (data == null) {
+            onPush()
+            return
+        }
+
+        try {
+            val envelopeAsData = MessageWrapper.unwrap(data).toByteArray()
+            val job = BatchMessageReceiveJob(listOf(MessageReceiveParameters(envelopeAsData)), null)
+            JobQueue.shared.add(job)
+        } catch (e: Exception) {
+            Log.d(TAG, "Failed to unwrap data for message due to error: $e.")
+        }
+    }
+
+    private fun onPush() {
         Log.d(TAG, "Failed to decode data for message.")
         val builder = NotificationCompat.Builder(context, NotificationChannels.OTHER)
             .setSmallIcon(network.loki.messenger.R.drawable.ic_notification)
@@ -58,15 +60,20 @@ class PushHandler @Inject constructor(@ApplicationContext val context: Context) 
         NotificationManagerCompat.from(context).notify(11111, builder.build())
     }
 
-    fun onPush(data: ByteArray) {
-        try {
-            val envelopeAsData = MessageWrapper.unwrap(data).toByteArray()
-            val job = BatchMessageReceiveJob(listOf(MessageReceiveParameters(envelopeAsData)), null)
-            JobQueue.shared.add(job)
-        } catch (e: Exception) {
-            Log.d(TAG, "Failed to unwrap data for message due to error: $e.")
+    private fun Map<String, String>.asByteArray() =
+        when {
+            // this is a v2 push notification
+            containsKey("spns") -> {
+                try {
+                    decrypt(Base64.decode(this["enc_payload"]))
+                } catch (e: Exception) {
+                    Log.e(TAG, "Invalid push notification: ${e.message}")
+                    null
+                }
+            }
+            // old v1 push notification; we still need this for receiving legacy closed group notifications
+            else -> this["ENCRYPTED_DATA"]?.let(Base64::decode)
         }
-    }
 
     fun decrypt(encPayload: ByteArray): ByteArray? {
         Log.d(TAG, "decrypt() called")
@@ -84,14 +91,18 @@ class PushHandler @Inject constructor(@ApplicationContext val context: Context) 
         val metadataJson = (expectedList[0] as? BencodeString)?.value ?: error("no metadata")
         val metadata: PushNotificationMetadata = Json.decodeFromString(String(metadataJson))
 
-        val content: ByteArray? = if (expectedList.size >= 2) (expectedList[1] as? BencodeString)?.value else null
+        val content: ByteArray? =
+            if (expectedList.size >= 2) (expectedList[1] as? BencodeString)?.value else null
         // null content is valid only if we got a "data_too_long" flag
         if (content == null)
             check(metadata.data_too_long) { "missing message data, but no too-long flag" }
         else
             check(metadata.data_len == content.size) { "wrong message data size" }
 
-        Log.d(TAG, "Received push for ${metadata.account}/${metadata.namespace}, msg ${metadata.msg_hash}, ${metadata.data_len}B")
+        Log.d(
+            TAG,
+            "Received push for ${metadata.account}/${metadata.namespace}, msg ${metadata.msg_hash}, ${metadata.data_len}B"
+        )
 
         return content
     }
@@ -102,6 +113,11 @@ class PushHandler @Inject constructor(@ApplicationContext val context: Context) 
             val key = sodium.keygen(AEAD.Method.XCHACHA20_POLY1305_IETF)
             IdentityKeyUtil.save(context, IdentityKeyUtil.NOTIFICATION_KEY, key.asHexString)
         }
-        return Key.fromHexString(IdentityKeyUtil.retrieve(context, IdentityKeyUtil.NOTIFICATION_KEY))
+        return Key.fromHexString(
+            IdentityKeyUtil.retrieve(
+                context,
+                IdentityKeyUtil.NOTIFICATION_KEY
+            )
+        )
     }
 }
