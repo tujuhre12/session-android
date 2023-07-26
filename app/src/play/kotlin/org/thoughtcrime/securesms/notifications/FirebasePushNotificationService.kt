@@ -1,23 +1,15 @@
 package org.thoughtcrime.securesms.notifications
 
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import dagger.hilt.android.AndroidEntryPoint
-import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
-import org.session.libsession.messaging.jobs.JobQueue
-import org.session.libsession.messaging.jobs.MessageReceiveParameters
-import org.session.libsession.messaging.utilities.MessageWrapper
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
 import javax.inject.Inject
 
-private const val TAG = "PushNotificationService"
-
+private const val TAG = "FirebasePushNotificationService"
 @AndroidEntryPoint
-class PushNotificationService : FirebaseMessagingService() {
+class FirebasePushNotificationService : FirebaseMessagingService() {
 
     @Inject lateinit var pushManager: PushManager
     @Inject lateinit var pushHandler: PushHandler
@@ -37,7 +29,6 @@ class PushNotificationService : FirebaseMessagingService() {
 
     override fun onDeletedMessages() {
         Log.d(TAG, "Called onDeletedMessages.")
-        super.onDeletedMessages()
         pushManager.refresh(true)
     }
 }

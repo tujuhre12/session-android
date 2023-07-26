@@ -23,13 +23,21 @@ import org.session.libsession.utilities.TextSecurePreferences;
 import org.thoughtcrime.securesms.ApplicationContext;
 import org.thoughtcrime.securesms.components.SwitchPreferenceCompat;
 import org.thoughtcrime.securesms.notifications.NotificationChannels;
+import org.thoughtcrime.securesms.notifications.PushManager;
 
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
 import network.loki.messenger.R;
 
+@AndroidEntryPoint
 public class NotificationsPreferenceFragment extends ListSummaryPreferenceFragment {
 
   @SuppressWarnings("unused")
   private static final String TAG = NotificationsPreferenceFragment.class.getSimpleName();
+
+  @Inject
+  PushManager pushManager;
 
   @Override
   public void onCreate(Bundle paramBundle) {
@@ -41,7 +49,7 @@ public class NotificationsPreferenceFragment extends ListSummaryPreferenceFragme
     this.findPreference(fcmKey)
       .setOnPreferenceChangeListener((preference, newValue) -> {
         TextSecurePreferences.setIsUsingFCM(getContext(), (boolean) newValue);
-        ApplicationContext.getInstance(getContext()).registerForPnIfNeeded(true);
+        pushManager.refresh(true);
         return true;
       });
 

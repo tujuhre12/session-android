@@ -4,7 +4,7 @@
 
     <application tools:node="merge">
         <service
-            android:name="org.thoughtcrime.securesms.notifications.PushNotificationService"
+            android:name="org.thoughtcrime.securesms.notifications.FirebasePushNotificationService"
             android:enabled="true"
             android:exported="false">
             <intent-filter>

@@ -94,7 +94,7 @@ fun MessageSender.create(
         // Add the group to the config now that it was successfully created
         storage.createInitialConfigGroup(groupPublicKey, name, GroupUtil.createConfigMemberMap(members, admins), sentTime, encryptionKeyPair)
         // Notify the PN server
-        PushManagerV1.register(publicKey = userPublicKey, device = device)
+        PushManagerV1.register(device = device, publicKey = userPublicKey)
         // Start polling
         ClosedGroupPollerV2.shared.startPolling(groupPublicKey)
         // Fulfill the promise

@@ -1,7 +1,10 @@
 package org.thoughtcrime.securesms.notifications
 
 import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import org.session.libsession.utilities.TextSecurePreferences
+import javax.inject.Inject
+import javax.inject.Singleton
 
 class ExpiryManager(
     private val context: Context,

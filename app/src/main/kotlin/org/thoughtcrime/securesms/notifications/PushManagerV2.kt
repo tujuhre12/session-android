@@ -16,6 +16,7 @@ import org.session.libsession.messaging.sending_receiving.notifications.*
 import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.Version
+import org.session.libsession.utilities.Device
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Namespace
@@ -31,6 +32,7 @@ class PushManagerV2 @Inject constructor(private val pushHandler: PushHandler) {
     private val sodium = LazySodiumAndroid(SodiumAndroid())
 
     fun register(
+        device: Device,
         token: String,
         publicKey: String,
         userEd25519Key: KeyPair,
@@ -48,7 +50,7 @@ class PushManagerV2 @Inject constructor(private val pushHandler: PushHandler) {
             session_ed25519 = userEd25519Key.publicKey.asHexString,
             namespaces = listOf(Namespace.DEFAULT),
             data = true, // only permit data subscription for now (?)
-            service = "firebase",
+            service = device.service,
             sig_ts = timestamp,
             signature = Base64.encodeBytes(signature),
             service_info = mapOf("token" to token),
@@ -61,6 +63,7 @@ class PushManagerV2 @Inject constructor(private val pushHandler: PushHandler) {
     }
 
     fun unregister(
+        device: Device,
         token: String,
         userPublicKey: String,
         userEdKey: KeyPair
@@ -74,7 +77,7 @@ class PushManagerV2 @Inject constructor(private val pushHandler: PushHandler) {
         val requestParameters = UnsubscriptionRequest(
             pubkey = userPublicKey,
             session_ed25519 = userEdKey.publicKey.asHexString,
-            service = "firebase",
+            service = device.service,
             sig_ts = timestamp,
             signature = Base64.encodeBytes(signature),
             service_info = mapOf("token" to token),

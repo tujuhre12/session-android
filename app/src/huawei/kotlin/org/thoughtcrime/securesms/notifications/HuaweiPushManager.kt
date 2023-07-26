@@ -1,10 +1,22 @@
 package org.thoughtcrime.securesms.notifications
 
 import android.content.Context
+import com.huawei.hmf.tasks.Tasks
 import com.huawei.hms.aaid.HmsInstanceId
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class HuaweiPushManager(val context: Context): PushManager {
+@Singleton
+class HuaweiPushManager @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val genericPushManager: GenericPushManager
+): PushManager {
     private var huaweiPushInstanceIdJob: Job? = null
 
     @Synchronized
@@ -17,13 +29,11 @@ class HuaweiPushManager(val context: Context): PushManager {
 
         val hmsInstanceId = HmsInstanceId.getInstance(context)
 
-        val task = hmsInstanceId.aaid
-
-//        HuaweiPushNotificationService().start()
-//
-//        huaweiPushInstanceIdJob = HmsInstanceId.getInstance(this) { hmsInstanceId ->
-//            RegisterHuaweiPushService(hmsInstanceId, this, force).start()
-//            Unit.INSTANCE
-//        }
+        MainScope().launch(Dispatchers.IO) {
+            val task = hmsInstanceId.aaid
+            Tasks.await(task)
+            if (!isActive) return@launch // don't 'complete' task if we were canceled
+            task.result?.id?.let { genericPushManager.refresh(it, force) }
+        }
     }
 }

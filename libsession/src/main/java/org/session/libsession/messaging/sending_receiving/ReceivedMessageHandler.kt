@@ -556,7 +556,7 @@ private fun handleNewClosedGroup(sender: String, sentTimestamp: Long, groupPubli
     // Set expiration timer
     storage.setExpirationTimer(groupID, expireTimer)
     // Notify the PN server
-    PushManagerV1.register(publicKey = userPublicKey, device = MessagingModuleConfiguration.shared.device)
+    PushManagerV1.register(device = MessagingModuleConfiguration.shared.device, publicKey = userPublicKey)
     // Notify the user
     if (userPublicKey == sender && !groupExists) {
         val threadID = storage.getOrCreateThreadIdFor(Address.fromSerialized(groupID))

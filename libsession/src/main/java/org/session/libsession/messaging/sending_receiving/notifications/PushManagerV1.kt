@@ -27,18 +27,19 @@ object PushManagerV1 {
     private val server = Server.LEGACY
 
     fun register(
+        device: Device,
         isUsingFCM: Boolean = TextSecurePreferences.isUsingFCM(context),
         token: String? = TextSecurePreferences.getFCMToken(context),
         publicKey: String? = TextSecurePreferences.getLocalNumber(context),
-        device: Device,
         legacyGroupPublicKeys: Collection<String> = MessagingModuleConfiguration.shared.storage.getAllClosedGroupPublicKeys()
     ): Promise<*, Exception> =
-        if (!isUsingFCM) {
-            emptyPromise()
-        } else retryIfNeeded(maxRetryCount) {
-            doRegister(token, publicKey, device, legacyGroupPublicKeys)
-        } fail { exception ->
-            Log.d(TAG, "Couldn't register for FCM due to error: $exception.")
+        when {
+            isUsingFCM -> retryIfNeeded(maxRetryCount) {
+                doRegister(token, publicKey, device, legacyGroupPublicKeys)
+            } fail { exception ->
+                Log.d(TAG, "Couldn't register for FCM due to error: $exception.")
+            }
+            else -> emptyPromise()
         }
 
     private fun doRegister(token: String?, publicKey: String?, device: Device, legacyGroupPublicKeys: Collection<String>): Promise<*, Exception> {
@@ -50,7 +51,7 @@ object PushManagerV1 {
         val parameters = mapOf(
             "token" to token,
             "pubKey" to publicKey,
-            "device" to device,
+            "device" to device.value,
             "legacyGroupPublicKeys" to legacyGroupPublicKeys
         )
 

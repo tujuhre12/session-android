@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.notifications
 
 import android.content.Context
 import com.goterl.lazysodium.utils.KeyPair
+import dagger.hilt.android.qualifiers.ApplicationContext
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.combine.and
 import org.session.libsession.messaging.sending_receiving.notifications.PushManagerV1
@@ -18,7 +19,7 @@ private const val TAG = "GenericPushManager"
 
 @Singleton
 class GenericPushManager @Inject constructor(
-    private val context: Context,
+    @ApplicationContext private val context: Context,
     private val device: Device,
     private val tokenManager: FcmTokenManager,
     private val pushManagerV2: PushManagerV2,
@@ -60,17 +61,25 @@ class GenericPushManager @Inject constructor(
         publicKey: String,
         userEd25519Key: KeyPair,
         namespaces: List<Int> = listOf(Namespace.DEFAULT)
-    ): Promise<*, Exception> = PushManagerV1.register(
-        token = token,
-        device = device,
-        publicKey = publicKey
-    ) and pushManagerV2.register(
-        token, publicKey, userEd25519Key, namespaces
-    ) fail {
-        Log.e(TAG, "registerBoth failed", it)
-    } success {
-        Log.d(TAG, "registerBoth success... saving token!!")
-        tokenManager.fcmToken = token
+    ): Promise<*, Exception> {
+        val v1 = PushManagerV1.register(
+            device = device,
+            token = token,
+            publicKey = publicKey
+        ) fail {
+            Log.e(TAG, "register v1 failed", it)
+        }
+
+        val v2 = pushManagerV2.register(
+            Device.ANDROID, token, publicKey, userEd25519Key, namespaces
+        ) fail {
+            Log.e(TAG, "register v2 failed", it)
+        }
+
+        return v1 and v2 success {
+            Log.d(TAG, "registerBoth success... saving token!!")
+            tokenManager.fcmToken = token
+        }
     }
 
     private fun unregister(
@@ -78,7 +87,7 @@ class GenericPushManager @Inject constructor(
         userPublicKey: String,
         userEdKey: KeyPair
     ): Promise<*, Exception> = PushManagerV1.unregister() and pushManagerV2.unregister(
-        token, userPublicKey, userEdKey
+        Device.ANDROID, token, userPublicKey, userEdKey
     ) fail {
         Log.e(TAG, "unregisterBoth failed", it)
     } success {

@@ -19,6 +19,7 @@ import org.session.libsession.utilities.ThemeUtil
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.home.HomeActivity
+import org.thoughtcrime.securesms.notifications.PushManager
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.util.GlowViewUtilities
 import org.thoughtcrime.securesms.util.PNModeView
@@ -27,8 +28,12 @@ import org.thoughtcrime.securesms.util.getAccentColor
 import org.thoughtcrime.securesms.util.getColorWithID
 import org.thoughtcrime.securesms.util.setUpActionBarSessionLogo
 import org.thoughtcrime.securesms.util.show
+import javax.inject.Inject
 
 class PNModeActivity : BaseActionBarActivity() {
+
+    @Inject lateinit var pushManager: PushManager
+
     private lateinit var binding: ActivityPnModeBinding
     private var selectedOptionView: PNModeView? = null
 
@@ -161,7 +166,7 @@ class PNModeActivity : BaseActionBarActivity() {
         TextSecurePreferences.setIsUsingFCM(this, (selectedOptionView == binding.fcmOptionView))
         val application = ApplicationContext.getInstance(this)
         application.startPollingIfNeeded()
-        application.registerForPnIfNeeded(true)
+        pushManager.refresh(true)
         val intent = Intent(this, HomeActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         intent.putExtra(HomeActivity.FROM_ONBOARDING, true)

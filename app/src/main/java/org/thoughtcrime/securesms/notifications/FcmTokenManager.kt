@@ -1,12 +1,17 @@
 package org.thoughtcrime.securesms.notifications
 
 import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import org.session.libsession.utilities.TextSecurePreferences
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class FcmTokenManager(
-    private val context: Context,
-    private val expiryManager: ExpiryManager
+@Singleton
+class FcmTokenManager @Inject constructor(
+    @ApplicationContext private val context: Context,
 ) {
+    private val expiryManager =  ExpiryManager(context)
+
     val isUsingFCM get() = TextSecurePreferences.isUsingFCM(context)
 
     var fcmToken
