@@ -71,7 +71,7 @@ class ExpirationSettingsViewModel(
                 if (recipient?.isLocalNumber == true || recipient?.isClosedGroupRecipient == true) {
                     ExpirationType.DELETE_AFTER_SEND.number
                 } else {
-                    expirationConfig?.expirationTypeValue ?: -1
+                    expirationConfig?.typeRadioIndex() ?: -1
                 }
             } else {
                 expirationConfig?.expirationTypeValue?.let { 0 /* Legacy */ } ?: -1
@@ -111,10 +111,10 @@ class ExpirationSettingsViewModel(
         if (typeValue == 0) {
             typeValue = ExpirationType.DELETE_AFTER_READ_VALUE
         }
-        val expiryType = typeValue
+        val expiryType = typeValue.expiry()
         val expirationTimer = _selectedExpirationTimer.value?.value?.toIntOrNull() ?: 0
         val address = recipient.value?.address
-        if (address == null || (expirationConfig?.expirationTypeValue == expiryType && expirationConfig?.durationSeconds == expirationTimer)) {
+        if (address == null || (expirationConfig?.typeRadioIndex() == typeValue && expirationConfig?.durationSeconds == expirationTimer)) {
             _uiState.update {
                 it.copy(settingsSaved = false)
             }
@@ -177,3 +177,18 @@ data class ExpirationSettingsUiState(
     val showExpirationTypeSelector: Boolean = false,
     val settingsSaved: Boolean? = null
 )
+
+fun ExpirationConfiguration?.typeRadioIndex(): Int {
+    if (this == null || expirationType == null) return -1
+    return when {
+        expirationType == ExpirationType.DELETE_AFTER_READ -> ExpirationType.DELETE_AFTER_READ_VALUE
+        else -> -1
+    }
+
+    return if (expirationType == )
+}
+
+fun Int.expiry(): ExpirationType? {
+    if (this == -1) return null
+    TODO()
+}

@@ -5,10 +5,9 @@ import org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType
 class ExpirationConfiguration(
     val threadId: Long = -1,
     val durationSeconds: Int = 0,
-    val expirationTypeValue: Int = -1,
+    val expirationType: ExpirationType? = null,
     val updatedTimestampMs: Long = 0
 ) {
-    val expirationType: ExpirationType? = ExpirationType.valueOf(expirationTypeValue)
     val isEnabled = durationSeconds > 0 && expirationType != null
 
     companion object {

@@ -1675,6 +1675,8 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
         return if (recipient.isContactRecipient && recipient.address.serialize().startsWith(IdPrefix.STANDARD.value)) {
             // read it from contacts config if exists
             configFactory.contacts?.get(recipient.address.serialize())?.let { contact ->
+                val mode = contact.expiryMode
+                ExpirationConfiguration(threadId, mode.expirySeconds,)
                 contact.expiryMode
             }
         } else if (recipient.isClosedGroupRecipient) {
