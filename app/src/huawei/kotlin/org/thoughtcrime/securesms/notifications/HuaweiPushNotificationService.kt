@@ -17,8 +17,7 @@ class HuaweiPushNotificationService: HmsMessageService() {
         pushManager.refresh(true)
     }
     override fun onMessageReceived(message: RemoteMessage?) {
-        TODO("Huawei works!")
-//        pushHandler.onPush(message?.dataOfMap)
+        pushHandler.onPush(message?.dataOfMap)
     }
     override fun onDeletedMessages() {
         pushManager.refresh(true)
