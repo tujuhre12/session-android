@@ -111,7 +111,7 @@ class ExpirationSettingsViewModel(
         if (typeValue == 0) {
             typeValue = ExpirationType.DELETE_AFTER_READ_VALUE
         }
-        val expiryType = typeValue.expiry()
+        val expiryType = typeValue.expiryType()
         val expirationTimer = _selectedExpirationTimer.value?.value?.toIntOrNull() ?: 0
         val address = recipient.value?.address
         if (address == null || (expirationConfig?.typeRadioIndex() == typeValue && expirationConfig?.durationSeconds == expirationTimer)) {
@@ -188,7 +188,7 @@ fun ExpirationConfiguration?.typeRadioIndex(): Int {
     return if (expirationType == )
 }
 
-fun Int.expiry(): ExpirationType? {
+fun Int.expiryType(): ExpirationType? {
     if (this == -1) return null
     TODO()
 }

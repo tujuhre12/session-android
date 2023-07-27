@@ -2,7 +2,7 @@ package org.session.libsession.messaging.messages
 
 import org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType
 
-class ExpirationConfiguration(
+data class ExpirationConfiguration(
     val threadId: Long = -1,
     val durationSeconds: Int = 0,
     val expirationType: ExpirationType? = null,
@@ -15,3 +15,8 @@ class ExpirationConfiguration(
         const val LAST_READ_TEST = 1673587663000L
     }
 }
+
+data class ExpirationDatabaseConfiguration(
+    val threadId: Long = -1,
+    val updatedTimestampMs: Long
+)
