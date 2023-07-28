@@ -1,14 +1,13 @@
 package org.session.libsession.messaging.messages
 
-import org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType
+import network.loki.messenger.libsession_util.util.ExpiryMode
 
 data class ExpirationConfiguration(
     val threadId: Long = -1,
-    val durationSeconds: Int = 0,
-    val expirationType: ExpirationType? = null,
+    val expirationType: ExpiryMode? = null,
     val updatedTimestampMs: Long = 0
 ) {
-    val isEnabled = durationSeconds > 0 && expirationType != null
+    val isEnabled = expirationType != null && expirationType.expirySeconds > 0
 
     companion object {
         val isNewConfigEnabled = false /* TODO: System.currentTimeMillis() > 1_676_851_200_000 // 13/02/2023 */
@@ -16,7 +15,7 @@ data class ExpirationConfiguration(
     }
 }
 
-data class ExpirationDatabaseConfiguration(
+data class ExpirationDatabaseMetadata(
     val threadId: Long = -1,
     val updatedTimestampMs: Long
 )

@@ -1672,21 +1672,29 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
 
     override fun getExpirationConfiguration(threadId: Long): ExpirationConfiguration? {
         val recipient = getRecipientForThread(threadId) ?: return null
+        val dbExpirationMetadata = DatabaseComponent.get(context).expirationConfigurationDatabase().getExpirationConfiguration(threadId) ?: return null
         return if (recipient.isContactRecipient && recipient.address.serialize().startsWith(IdPrefix.STANDARD.value)) {
             // read it from contacts config if exists
             configFactory.contacts?.get(recipient.address.serialize())?.let { contact ->
                 val mode = contact.expiryMode
-                ExpirationConfiguration(threadId, mode.expirySeconds,)
-                contact.expiryMode
+                ExpirationConfiguration(
+                    threadId,
+                    mode,
+                    dbExpirationMetadata.updatedTimestampMs
+                )
             }
         } else if (recipient.isClosedGroupRecipient) {
             // read it from group config if exists
             val groupPublicKey = GroupUtil.doubleDecodeGroupId(recipient.address.serialize())
-            configFactory.userGroups?.getLegacyGroupInfo(groupPublicKey)?.let {
-
+            configFactory.userGroups?.getLegacyGroupInfo(groupPublicKey)?.let { group ->
+                val expiry = group.disappearingTimer
+                ExpirationConfiguration(
+                    threadId,
+                    if (expiry != 0L) ExpiryMode.AfterRead(expiry) else ExpiryMode.NONE,
+                    dbExpirationMetadata.updatedTimestampMs
+                )
             }
         } else null
-        return DatabaseComponent.get(context).expirationConfigurationDatabase().getExpirationConfiguration(threadId)
     }
 
     override fun setExpirationConfiguration(config: ExpirationConfiguration) {

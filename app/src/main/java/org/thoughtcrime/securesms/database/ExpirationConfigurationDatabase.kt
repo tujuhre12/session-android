@@ -4,7 +4,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
 import org.session.libsession.messaging.messages.ExpirationConfiguration
-import org.session.libsession.messaging.messages.ExpirationDatabaseConfiguration
+import org.session.libsession.messaging.messages.ExpirationDatabaseMetadata
 import org.session.libsession.utilities.GroupUtil.CLOSED_GROUP_PREFIX
 import org.session.libsession.utilities.GroupUtil.OPEN_GROUP_INBOX_PREFIX
 import org.session.libsession.utilities.GroupUtil.OPEN_GROUP_PREFIX
@@ -43,19 +43,19 @@ class ExpirationConfigurationDatabase(context: Context, helper: SQLCipherOpenHel
             AND EXISTS (SELECT ${RecipientDatabase.EXPIRE_MESSAGES} FROM ${RecipientDatabase.TABLE_NAME} WHERE ${ThreadDatabase.TABLE_NAME}.${ThreadDatabase.ADDRESS} = ${RecipientDatabase.TABLE_NAME}.${RecipientDatabase.ADDRESS} AND ${RecipientDatabase.EXPIRE_MESSAGES} > 0)
         """.trimIndent()
 
-        private fun readExpirationConfiguration(cursor: Cursor): ExpirationDatabaseConfiguration {
-            return ExpirationDatabaseConfiguration(
+        private fun readExpirationConfiguration(cursor: Cursor): ExpirationDatabaseMetadata {
+            return ExpirationDatabaseMetadata(
                 threadId = cursor.getLong(cursor.getColumnIndexOrThrow(THREAD_ID)),
                 updatedTimestampMs = cursor.getLong(cursor.getColumnIndexOrThrow(UPDATED_TIMESTAMP_MS))
             )
         }
     }
 
-    fun getExpirationConfiguration(threadId: Long): ExpirationDatabaseConfiguration? {
+    fun getExpirationConfiguration(threadId: Long): ExpirationDatabaseMetadata? {
         val query = "$THREAD_ID = ?"
         val args = arrayOf("$threadId")
 
-        val configurations: MutableList<ExpirationDatabaseConfiguration> = mutableListOf()
+        val configurations: MutableList<ExpirationDatabaseMetadata> = mutableListOf()
 
         readableDatabase.query(TABLE_NAME, null, query, args, null, null, null).use { cursor ->
             while (cursor.moveToNext()) {
