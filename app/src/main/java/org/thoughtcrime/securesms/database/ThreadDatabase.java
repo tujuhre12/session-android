@@ -951,7 +951,9 @@ public class ThreadDatabase extends Database {
         readReceiptCount = 0;
       }
 
-      return new ThreadRecord(body, snippetUri, recipient, date, count,
+      MessageRecord lastMessage = count > 0 ? getLastMessage(threadId) : null;
+
+      return new ThreadRecord(body, snippetUri, lastMessage, recipient, date, count,
                               unreadCount, unreadMentionCount, threadId, deliveryReceiptCount, status, type,
                               distributionType, archived, expiresIn, lastSeen, readReceiptCount, pinned);
     }
@@ -975,5 +977,11 @@ public class ThreadDatabase extends Database {
         cursor.close();
       }
     }
+  }
+
+  private MessageRecord getLastMessage(long threadId) {
+    MmsSmsDatabase mmsSmsDatabase = DatabaseComponent.get(context).mmsSmsDatabase();
+    long messageTimestamp = mmsSmsDatabase.getLastMessageTimestamp(threadId);
+    return mmsSmsDatabase.getMessageForTimestamp(messageTimestamp);
   }
 }
