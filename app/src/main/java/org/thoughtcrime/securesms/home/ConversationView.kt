@@ -140,7 +140,7 @@ class ConversationView : LinearLayout {
         val body = getDisplayBody(context)
 
         when {
-            recipient.isLocalNumber -> body // Note to self
+            recipient.isLocalNumber || lastMessage?.isControlMessage == true -> body // Note to self
             lastMessage?.isOutgoing == true -> {
                 TextUtils.concat(resources.getString(R.string.MessageRecord_you), ": ", body)
             }
