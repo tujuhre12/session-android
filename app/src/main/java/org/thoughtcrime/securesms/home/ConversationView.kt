@@ -136,17 +136,19 @@ class ConversationView : LinearLayout {
         else -> recipient.toShortString() // Internally uses the Contact API
     }
 
-    private fun getSnippet(thread: ThreadRecord): CharSequence {
-        thread.apply {
-            val body = getDisplayBody(context)
+    private fun getSnippet(thread: ThreadRecord): CharSequence = thread.run {
+        val body = getDisplayBody(context)
 
-            val snippetAuthor = lastMessage?.individualRecipient
-
-            return if (lastMessage?.isOutgoing == true) {
+        when {
+            recipient.isLocalNumber -> body // Note to self
+            lastMessage?.isOutgoing == true -> {
                 TextUtils.concat(resources.getString(R.string.MessageRecord_you), ": ", body)
-            } else {
-                return snippetAuthor?.toShortString()?.let { TextUtils.concat(it, ": ", body) } ?: body
             }
+            else -> lastMessage
+                ?.individualRecipient
+                ?.toShortString()
+                ?.let { TextUtils.concat(it, ": ", body) }
+                ?: body
         }
     }
     // endregion
