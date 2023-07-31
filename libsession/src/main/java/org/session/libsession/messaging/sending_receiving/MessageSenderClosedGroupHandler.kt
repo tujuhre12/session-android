@@ -131,7 +131,7 @@ fun MessageSender.addMembers(groupPublicKey: String, membersToAdd: List<String>)
         throw Error.NoThread
     }
     val threadId = storage.getOrCreateThreadIdFor(fromSerialized(groupID))
-    val expireTimer = storage.getExpirationConfiguration(threadId)?.durationSeconds ?: 0
+    val expireTimer = storage.getExpirationConfiguration(threadId)?.expiryMode?.expirySeconds ?: 0
     if (membersToAdd.isEmpty()) {
         Log.d("Loki", "Invalid closed group update.")
         throw Error.InvalidClosedGroupUpdate
@@ -156,7 +156,14 @@ fun MessageSender.addMembers(groupPublicKey: String, membersToAdd: List<String>)
     send(closedGroupControlMessage, Address.fromSerialized(groupID))
     // Send closed group update messages to any new members individually
     for (member in membersToAdd) {
-        val closedGroupNewKind = ClosedGroupControlMessage.Kind.New(ByteString.copyFrom(Hex.fromStringCondensed(groupPublicKey)), name, encryptionKeyPair, membersAsData, adminsAsData, expireTimer)
+        val closedGroupNewKind = ClosedGroupControlMessage.Kind.New(
+            ByteString.copyFrom(Hex.fromStringCondensed(groupPublicKey)),
+            name,
+            encryptionKeyPair,
+            membersAsData,
+            adminsAsData,
+            expireTimer.toInt()
+        )
         val closedGroupControlMessage = ClosedGroupControlMessage(closedGroupNewKind, groupID)
         // It's important that the sent timestamp of this message is greater than the sent timestamp
         // of the `MembersAdded` message above. The reason is that upon receiving this `New` message,

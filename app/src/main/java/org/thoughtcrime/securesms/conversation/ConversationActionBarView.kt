@@ -16,11 +16,11 @@ import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewConversationActionBarBinding
 import network.loki.messenger.databinding.ViewConversationSettingBinding
+import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.utilities.ExpirationUtil
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsignal.protos.SignalServiceProtos
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionManagerUtilities
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
@@ -111,14 +111,14 @@ class ConversationActionBarView : LinearLayout {
     fun updateSubtitle(recipient: Recipient, openGroup: OpenGroup? = null, config: ExpirationConfiguration? = null) {
         val settings = mutableListOf<ConversationSetting>()
         if (config?.isEnabled == true) {
-            val prefix = if (config.expirationType == SignalServiceProtos.Content.ExpirationType.DELETE_AFTER_READ) {
+            val prefix = if (config.expiryMode is ExpiryMode.AfterRead) {
                 context.getString(R.string.expiration_type_disappear_after_read)
             } else {
                 context.getString(R.string.expiration_type_disappear_after_send)
             }
             settings.add(
                 ConversationSetting(
-                    "$prefix - ${ExpirationUtil.getExpirationAbbreviatedDisplayValue(context, config.durationSeconds)}" ,
+                    "$prefix - ${ExpirationUtil.getExpirationAbbreviatedDisplayValue(context, config.expiryMode?.expirySeconds!!)}" ,
                     ConversationSettingType.EXPIRATION,
                     R.drawable.ic_timer
                 )

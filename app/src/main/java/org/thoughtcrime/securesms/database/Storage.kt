@@ -72,7 +72,6 @@ import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceAttachmentPointer
 import org.session.libsignal.messages.SignalServiceGroup
-import org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
@@ -320,8 +319,9 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
             message.threadID = getOrCreateThreadIdFor(targetAddress)
         }
         val expirationConfig = getExpirationConfiguration(message.threadID ?: -1)
-        val expiresInMillis = (expirationConfig?.durationSeconds ?: 0) * 1000L
-        val expireStartedAt = if (expirationConfig?.expirationType == ExpirationType.DELETE_AFTER_SEND) message.sentTimestamp!! else 0
+        val expiryMode = expirationConfig?.expiryMode
+        val expiresInMillis = (expiryMode?.expirySeconds ?: 0) * 1000L
+        val expireStartedAt = if (expiryMode is ExpiryMode.AfterSend) message.sentTimestamp!! else 0
         if (message.isMediaMessage() || attachments.isNotEmpty()) {
             val quote: Optional<QuoteModel> = if (quotes != null) Optional.of(quotes) else Optional.absent()
             val linkPreviews: Optional<List<LinkPreview>> = if (linkPreview.isEmpty()) Optional.absent() else Optional.of(linkPreview.mapNotNull { it!! })
@@ -371,7 +371,7 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
                 DatabaseComponent.get(context).lokiMessageDatabase().setMessageServerHash(id, serverHash)
             }
         }
-        if (expirationConfig?.expirationType == ExpirationType.DELETE_AFTER_SEND) {
+        if (expiryMode is ExpiryMode.AfterSend) {
             SSKEnvironment.shared.messageExpirationManager.startAnyExpiration(message.sentTimestamp!!, message.sender!!, expireStartedAt)
         }
         return messageID
@@ -878,8 +878,6 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
     override fun updateGroupConfig(groupPublicKey: String) {
         val groupID = GroupUtil.doubleEncodeGroupID(groupPublicKey)
         val groupAddress = fromSerialized(groupID)
-        // TODO: probably add a check in here for isActive?
-        // TODO: also check if local user is a member / maybe run delete otherwise?
         val existingGroup = getGroup(groupID)
             ?: return Log.w("Loki-DBG", "No existing group for ${groupPublicKey.take(4)}} when updating group config")
         val userGroups = configFactory.userGroups ?: return
@@ -936,14 +934,15 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
         val recipient = Recipient.from(context, fromSerialized(groupID), false)
         val threadId = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(recipient)
         val expirationConfig = getExpirationConfiguration(threadId)
-        val expiresInMillis = (expirationConfig?.durationSeconds ?: 0) * 100L
-        val expireStartedAt = if (expirationConfig?.expirationType == ExpirationType.DELETE_AFTER_SEND) sentTimestamp else 0
+        val expiryMode = expirationConfig?.expiryMode
+        val expiresInMillis = (expiryMode?.expirySeconds ?: 0) * 1000L
+        val expireStartedAt = if (expiryMode is ExpiryMode.AfterSend) sentTimestamp else 0
         val m = IncomingTextMessage(fromSerialized(senderPublicKey), 1, sentTimestamp, "", Optional.of(group), expiresInMillis, expireStartedAt, true, false)
         val updateData = UpdateMessageData.buildGroupUpdate(type, name, members)?.toJSON()
         val infoMessage = IncomingGroupMessage(m, groupID, updateData, true)
         val smsDB = DatabaseComponent.get(context).smsDatabase()
         smsDB.insertMessageInbox(infoMessage,  true)
-        if (expirationConfig?.expirationType == ExpirationType.DELETE_AFTER_SEND) {
+        if (expiryMode is ExpiryMode.AfterSend) {
             SSKEnvironment.shared.messageExpirationManager.startAnyExpiration(sentTimestamp, senderPublicKey, expireStartedAt)
         }
     }
@@ -953,8 +952,9 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
         val recipient = Recipient.from(context, fromSerialized(groupID), false)
         val threadId = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(recipient)
         val expirationConfig = getExpirationConfiguration(threadId)
-        val expiresInMillis = (expirationConfig?.durationSeconds ?: 0) * 100L
-        val expireStartedAt = if (expirationConfig?.expirationType == ExpirationType.DELETE_AFTER_SEND) sentTimestamp else 0
+        val expiryMode = expirationConfig?.expiryMode
+        val expiresInMillis = (expiryMode?.expirySeconds ?: 0) * 1000L
+        val expireStartedAt = if (expiryMode is ExpiryMode.AfterSend) sentTimestamp else 0
         val updateData = UpdateMessageData.buildGroupUpdate(type, name, members)?.toJSON() ?: ""
         val infoMessage = OutgoingGroupMediaMessage(recipient, updateData, groupID, null, sentTimestamp, expiresInMillis, expireStartedAt, true, null, listOf(), listOf())
         val mmsDB = DatabaseComponent.get(context).mmsDatabase()
@@ -962,7 +962,7 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
         if (mmsSmsDB.getMessageFor(sentTimestamp, userPublicKey) != null) return
         val infoMessageID = mmsDB.insertMessageOutbox(infoMessage, threadID, false, null, runThreadUpdate = true)
         mmsDB.markAsSent(infoMessageID, true)
-        if (expirationConfig?.expirationType == ExpirationType.DELETE_AFTER_SEND) {
+        if (expiryMode is ExpiryMode.AfterSend) {
             SSKEnvironment.shared.messageExpirationManager.startAnyExpiration(sentTimestamp, userPublicKey!!, expireStartedAt)
         }
     }
@@ -1021,7 +1021,7 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
         val recipient = Recipient.from(context, fromSerialized(address), false)
         val threadId = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(recipient)
         DatabaseComponent.get(context).expirationConfigurationDatabase().setExpirationConfiguration(
-            ExpirationConfiguration(threadId, duration, ExpirationType.DELETE_AFTER_SEND.number, System.currentTimeMillis())
+            ExpirationConfiguration(threadId, ExpiryMode.AfterSend(duration.toLong()), SnodeAPI.nowWithOffset)
         )
         if (recipient.isContactRecipient && !recipient.isLocalNumber) {
             configFactory.contacts?.upsertContact(address) {
@@ -1364,8 +1364,9 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
         if (recipient.isBlocked) return
         val threadId = getThreadId(recipient) ?: return
         val expirationConfig = getExpirationConfiguration(threadId)
-        val expiresInMillis = (expirationConfig?.durationSeconds ?: 0) * 100L
-        val expireStartedAt = if (expirationConfig?.expirationType == ExpirationType.DELETE_AFTER_SEND) sentTimestamp else 0
+        val expiryMode = expirationConfig?.expiryMode
+        val expiresInMillis = (expiryMode?.expirySeconds ?: 0) * 1000L
+        val expireStartedAt = if (expiryMode is ExpiryMode.AfterSend) sentTimestamp else 0
         val mediaMessage = IncomingMediaMessage(
             address,
             sentTimestamp,
@@ -1386,7 +1387,7 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
         )
 
         database.insertSecureDecryptedMessageInbox(mediaMessage, threadId, runThreadUpdate = true)
-        if (expirationConfig?.expirationType == ExpirationType.DELETE_AFTER_SEND) {
+        if (expiryMode is ExpiryMode.AfterSend) {
             SSKEnvironment.shared.messageExpirationManager.startAnyExpiration(sentTimestamp, senderPublicKey, expireStartedAt)
         }
     }
@@ -1470,8 +1471,9 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
             recipientDb.setApproved(sender, true)
             recipientDb.setApprovedMe(sender, true)
             val expirationConfig = getExpirationConfiguration(threadId)
-            val expiresInMillis = (expirationConfig?.durationSeconds ?: 0) * 100L
-            val expireStartedAt = if (expirationConfig?.expirationType == ExpirationType.DELETE_AFTER_SEND) {
+            val expiryMode = expirationConfig?.expiryMode
+            val expiresInMillis = (expiryMode?.expirySeconds ?: 0) * 1000L
+            val expireStartedAt = if (expiryMode is ExpiryMode.AfterSend) {
                 response.sentTimestamp!!
             } else 0
             val message = IncomingMediaMessage(
@@ -1522,11 +1524,12 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
         val recipient = Recipient.from(context, address, false)
         val threadId = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(recipient)
         val expirationConfig = getExpirationConfiguration(threadId)
-        val expiresInMillis = (expirationConfig?.durationSeconds ?: 0) * 100L
-        val expireStartedAt = if (expirationConfig?.expirationType == ExpirationType.DELETE_AFTER_SEND) sentTimestamp else 0
+        val expiryMode = expirationConfig?.expiryMode
+        val expiresInMillis = (expiryMode?.expirySeconds ?: 0) * 1000L
+        val expireStartedAt = if (expiryMode is ExpiryMode.AfterSend) sentTimestamp else 0
         val callMessage = IncomingTextMessage.fromCallInfo(callMessageType, address, Optional.absent(), sentTimestamp, expiresInMillis, expireStartedAt)
         database.insertCallMessage(callMessage)
-        if (expirationConfig?.expirationType == ExpirationType.DELETE_AFTER_SEND) {
+        if (expiryMode is ExpiryMode.AfterSend) {
             SSKEnvironment.shared.messageExpirationManager.startAnyExpiration(sentTimestamp, senderPublicKey, expireStartedAt)
         }
     }

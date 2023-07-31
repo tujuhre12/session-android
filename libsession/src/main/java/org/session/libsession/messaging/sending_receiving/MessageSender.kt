@@ -1,5 +1,6 @@
 package org.session.libsession.messaging.sending_receiving
 
+import network.loki.messenger.libsession_util.util.ExpiryMode
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.deferred
 import org.session.libsession.messaging.MessagingModuleConfiguration
@@ -33,7 +34,6 @@ import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsignal.crypto.PushTransportDetails
 import org.session.libsignal.protos.SignalServiceProtos
-import org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Namespace
@@ -256,8 +256,9 @@ object MessageSender {
                 storage.getOrCreateThreadIdFor(Address.fromSerialized(address!!))
             }
         val config = storage.getExpirationConfiguration(threadId) ?: return null
-        return if (config.isEnabled && (config.expirationType == ExpirationType.DELETE_AFTER_SEND || isSyncMessage)) {
-            config.durationSeconds * 1000L
+        val expiryMode = config.expiryMode
+        return if (config.isEnabled && (expiryMode is ExpiryMode.AfterSend || isSyncMessage)) {
+            (expiryMode?.expirySeconds ?: 0L) * 1000L
         } else null
     }
 

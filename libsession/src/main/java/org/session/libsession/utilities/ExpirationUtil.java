@@ -2,9 +2,9 @@ package org.session.libsession.utilities;
 
 import android.content.Context;
 
-import java.util.concurrent.TimeUnit;
-
 import org.session.libsession.R;
+
+import java.util.concurrent.TimeUnit;
 
 public class ExpirationUtil {
 
@@ -28,20 +28,20 @@ public class ExpirationUtil {
     }
   }
 
-  public static String getExpirationAbbreviatedDisplayValue(Context context, int expirationTime) {
+  public static String getExpirationAbbreviatedDisplayValue(Context context, long expirationTime) {
     if (expirationTime < TimeUnit.MINUTES.toSeconds(1)) {
       return context.getResources().getString(R.string.expiration_seconds_abbreviated, expirationTime);
     } else if (expirationTime < TimeUnit.HOURS.toSeconds(1)) {
-      int minutes = expirationTime / (int)TimeUnit.MINUTES.toSeconds(1);
+      long minutes = expirationTime / TimeUnit.MINUTES.toSeconds(1);
       return context.getResources().getString(R.string.expiration_minutes_abbreviated, minutes);
     } else if (expirationTime < TimeUnit.DAYS.toSeconds(1)) {
-      int hours = expirationTime / (int)TimeUnit.HOURS.toSeconds(1);
+      long hours = expirationTime / TimeUnit.HOURS.toSeconds(1);
       return context.getResources().getString(R.string.expiration_hours_abbreviated, hours);
     } else if (expirationTime < TimeUnit.DAYS.toSeconds(7)) {
-      int days = expirationTime / (int)TimeUnit.DAYS.toSeconds(1);
+      long days = expirationTime / TimeUnit.DAYS.toSeconds(1);
       return context.getResources().getString(R.string.expiration_days_abbreviated, days);
     } else {
-      int weeks = expirationTime / (int)TimeUnit.DAYS.toSeconds(7);
+      long weeks = expirationTime / TimeUnit.DAYS.toSeconds(7);
       return context.getResources().getString(R.string.expiration_weeks_abbreviated, weeks);
     }
   }

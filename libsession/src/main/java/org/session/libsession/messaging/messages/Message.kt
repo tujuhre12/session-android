@@ -1,12 +1,14 @@
 package org.session.libsession.messaging.messages
 
 import com.google.protobuf.ByteString
+import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsignal.protos.SignalServiceProtos
+import org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType
 
 abstract class Message {
     var id: Long? = null
@@ -60,10 +62,16 @@ abstract class Message {
                 expirationTimer = 0
                 return this
             }
-        if (config.isEnabled) {
-            expirationTimer = config.durationSeconds
+        if (config.isEnabled && config.expiryMode != null) {
+            expirationTimer = config.expiryMode.expirySeconds.toInt()
             lastDisappearingMessageChangeTimestamp = config.updatedTimestampMs
-            expirationType = config.expirationType
+            config.expiryMode.let { expiryMode ->
+                when (expiryMode) {
+                    is ExpiryMode.AfterSend -> expirationType = ExpirationType.DELETE_AFTER_SEND
+                    is ExpiryMode.AfterRead -> expirationType = ExpirationType.DELETE_AFTER_READ
+                    ExpiryMode.NONE -> { /* do nothing */ }
+                }
+            }
         }
         return this
     }

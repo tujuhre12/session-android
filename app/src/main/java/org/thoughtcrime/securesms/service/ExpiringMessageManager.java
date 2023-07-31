@@ -15,7 +15,6 @@ import org.session.libsession.utilities.SSKEnvironment;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.messages.SignalServiceGroup;
-import org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.guava.Optional;
 import org.thoughtcrime.securesms.database.MmsDatabase;
@@ -30,6 +29,8 @@ import java.util.Comparator;
 import java.util.TreeSet;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+
+import network.loki.messenger.libsession_util.util.ExpiryMode;
 
 public class ExpiringMessageManager implements SSKEnvironment.MessageExpirationManagerProtocol {
 
@@ -73,11 +74,12 @@ public class ExpiringMessageManager implements SSKEnvironment.MessageExpirationM
   }
 
   @Override
-  public void setExpirationTimer(@NotNull ExpirationTimerUpdate message, int expiryType) {
+  public void setExpirationTimer(@NotNull ExpirationTimerUpdate message, ExpiryMode expiryMode) {
     String userPublicKey = TextSecurePreferences.getLocalNumber(context);
     String senderPublicKey = message.getSender();
-    long expireStartedAt = expiryType == ExpirationType.DELETE_AFTER_SEND_VALUE
-            ? message.getSentTimestamp() : 0;
+    long sentTimestamp = message.getSentTimestamp() == null ? 0 : message.getSentTimestamp();
+    long expireStartedAt = (expiryMode instanceof ExpiryMode.AfterSend)
+            ? sentTimestamp : 0;
 
     // Notify the user
     if (senderPublicKey == null || userPublicKey.equals(senderPublicKey)) {
@@ -86,7 +88,7 @@ public class ExpiringMessageManager implements SSKEnvironment.MessageExpirationM
     } else {
       insertIncomingExpirationTimerMessage(message, expireStartedAt);
     }
-    if (expiryType == ExpirationType.DELETE_AFTER_SEND_VALUE && message.getSentTimestamp() != null && senderPublicKey != null) {
+    if (expiryMode instanceof ExpiryMode.AfterSend && message.getSentTimestamp() != null && senderPublicKey != null) {
       startAnyExpiration(message.getSentTimestamp(), senderPublicKey, expireStartedAt);
     }
   }
@@ -171,14 +173,15 @@ public class ExpiringMessageManager implements SSKEnvironment.MessageExpirationM
     MessageRecord messageRecord = mmsSmsDatabase.getMessageFor(timestamp, author);
     if (messageRecord != null) {
       boolean mms = messageRecord.isMms();
-      ExpirationConfiguration config = DatabaseComponent.get(context).expirationConfigurationDatabase().getExpirationConfiguration(messageRecord.getThreadId());
+      ExpirationConfiguration config = DatabaseComponent.get(context).storage().getExpirationConfiguration(messageRecord.getThreadId());
       if (config == null || !config.isEnabled()) return;
+      ExpiryMode mode = config.getExpiryMode();
       if (mms) {
         mmsDatabase.markExpireStarted(messageRecord.getId(), expireStartedAt);
       } else {
         smsDatabase.markExpireStarted(messageRecord.getId(), expireStartedAt);
       }
-      scheduleDeletion(messageRecord.getId(), mms, expireStartedAt, config.getDurationSeconds() * 1000L);
+      scheduleDeletion(messageRecord.getId(), mms, expireStartedAt, (mode != null ? mode.getExpirySeconds() : 0) * 1000L);
     }
   }
 

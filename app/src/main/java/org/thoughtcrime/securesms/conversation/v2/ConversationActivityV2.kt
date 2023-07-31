@@ -62,6 +62,7 @@ import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityConversationV2Binding
 import network.loki.messenger.databinding.ViewVisibleMessageBinding
+import network.loki.messenger.libsession_util.util.ExpiryMode
 import nl.komponents.kovenant.ui.successUi
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.contacts.Contact
@@ -94,7 +95,6 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.Recipient.DisappearingState
 import org.session.libsession.utilities.recipients.RecipientModifiedListener
 import org.session.libsignal.crypto.MnemonicCodec
-import org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.ListenableFuture
 import org.session.libsignal.utilities.Log
@@ -1574,8 +1574,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         val message = VisibleMessage()
         message.sentTimestamp = sentTimestamp
         message.text = text
-        val expiresInMillis = (viewModel.expirationConfiguration?.durationSeconds ?: 0) * 1000L
-        val expireStartedAt = if (viewModel.expirationConfiguration?.expirationType == ExpirationType.DELETE_AFTER_SEND) {
+        val expiresInMillis = (viewModel.expirationConfiguration?.expiryMode?.expirySeconds ?: 0) * 1000L
+        val expireStartedAt = if (viewModel.expirationConfiguration?.expiryMode is ExpiryMode.AfterSend) {
             message.sentTimestamp!!
         } else 0
         val outgoingTextMessage = OutgoingTextMessage.from(message, recipient, expiresInMillis, expireStartedAt)
@@ -1617,8 +1617,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                 else it.individualRecipient.address
             quote?.copy(author = sender)
         }
-        val expiresInMs = (viewModel.expirationConfiguration?.durationSeconds ?: 0) * 1000L
-        val expireStartedAtMs = if (viewModel.expirationConfiguration?.expirationType == ExpirationType.DELETE_AFTER_SEND) {
+        val expiresInMs = (viewModel.expirationConfiguration?.expiryMode?.expirySeconds ?: 0) * 1000L
+        val expireStartedAtMs = if (viewModel.expirationConfiguration?.expiryMode is ExpiryMode.AfterSend) {
             sentTimestamp
         } else 0
         val outgoingTextMessage = OutgoingMediaMessage.from(message, recipient, attachments, localQuote, linkPreview, expiresInMs, expireStartedAtMs)

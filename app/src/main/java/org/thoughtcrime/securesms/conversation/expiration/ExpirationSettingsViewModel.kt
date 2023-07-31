@@ -12,18 +12,22 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.SSKEnvironment.MessageExpirationManagerProtocol
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.expiryType
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.typeRadioIndex
 import org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.preferences.RadioOption
+import kotlin.reflect.KClass
 
 class ExpirationSettingsViewModel(
     private val threadId: Long,
@@ -56,6 +60,7 @@ class ExpirationSettingsViewModel(
     init {
         viewModelScope.launch {
             expirationConfig = storage.getExpirationConfiguration(threadId)
+            val expirationType = expirationConfig?.expiryMode
             val recipient = threadDb.getRecipientForThreadId(threadId)
             _recipient.value = recipient
             val groupInfo = if (recipient?.isClosedGroupRecipient == true) {
@@ -71,14 +76,14 @@ class ExpirationSettingsViewModel(
                 if (recipient?.isLocalNumber == true || recipient?.isClosedGroupRecipient == true) {
                     ExpirationType.DELETE_AFTER_SEND.number
                 } else {
-                    expirationConfig?.typeRadioIndex() ?: -1
+                    expirationType?.typeRadioIndex() ?: -1
                 }
             } else {
-                expirationConfig?.expirationTypeValue?.let { 0 /* Legacy */ } ?: -1
+                if (expirationType != null) 0 else -1
             }
-            _selectedExpirationTimer.value = when(expirationConfig?.expirationType) {
-                null, ExpirationType.DELETE_AFTER_SEND -> afterSendOptions.find { it.value.toIntOrNull() == expirationConfig?.durationSeconds }
-                ExpirationType.DELETE_AFTER_READ -> afterReadOptions.find { it.value.toIntOrNull() == expirationConfig?.durationSeconds }
+            _selectedExpirationTimer.value = when(expirationType) {
+                is ExpiryMode.AfterSend -> afterSendOptions.find { it.value.toIntOrNull() == expirationType.expirySeconds.toInt() }
+                is ExpiryMode.AfterRead -> afterReadOptions.find { it.value.toIntOrNull() == expirationType.expirySeconds.toInt() }
                 else -> afterSendOptions.firstOrNull()
             }
         }
@@ -106,15 +111,22 @@ class ExpirationSettingsViewModel(
         _selectedExpirationTimer.value = option
     }
 
+    private fun KClass<out ExpiryMode>?.withTime(expirationTimer: Long) = when(this) {
+        ExpiryMode.AfterRead::class -> ExpiryMode.AfterRead(expirationTimer)
+        ExpiryMode.AfterSend::class -> ExpiryMode.AfterSend(expirationTimer)
+        else -> ExpiryMode.NONE
+    }
+
     fun onSetClick() = viewModelScope.launch {
         var typeValue = _selectedExpirationType.value
         if (typeValue == 0) {
             typeValue = ExpirationType.DELETE_AFTER_READ_VALUE
         }
-        val expiryType = typeValue.expiryType()
         val expirationTimer = _selectedExpirationTimer.value?.value?.toIntOrNull() ?: 0
+        val expiryTypeClass = typeValue.expiryType()
+        val expiryMode = expiryTypeClass?.withTime(expirationTimer.toLong())
         val address = recipient.value?.address
-        if (address == null || (expirationConfig?.typeRadioIndex() == typeValue && expirationConfig?.durationSeconds == expirationTimer)) {
+        if (address == null || (expirationConfig?.expiryMode?.javaClass == expiryTypeClass && expirationConfig?.expiryMode?.expirySeconds?.toInt() == expirationTimer)) {
             _uiState.update {
                 it.copy(settingsSaved = false)
             }
@@ -122,13 +134,13 @@ class ExpirationSettingsViewModel(
         }
 
         val expiryChangeTimestampMs = SnodeAPI.nowWithOffset
-        storage.setExpirationConfiguration(ExpirationConfiguration(threadId, expirationTimer, expiryType, expiryChangeTimestampMs))
+        storage.setExpirationConfiguration(ExpirationConfiguration(threadId, expiryMode, expiryChangeTimestampMs))
 
         val message = ExpirationTimerUpdate(expirationTimer)
         message.sender = textSecurePreferences.getLocalNumber()
         message.recipient = address.serialize()
         message.sentTimestamp = expiryChangeTimestampMs
-        messageExpirationManager.setExpirationTimer(message, expiryType)
+        messageExpirationManager.setExpirationTimer(message, expiryMode)
 
         MessageSender.send(message, address)
         _uiState.update {
@@ -177,18 +189,3 @@ data class ExpirationSettingsUiState(
     val showExpirationTypeSelector: Boolean = false,
     val settingsSaved: Boolean? = null
 )
-
-fun ExpirationConfiguration?.typeRadioIndex(): Int {
-    if (this == null || expirationType == null) return -1
-    return when {
-        expirationType == ExpirationType.DELETE_AFTER_READ -> ExpirationType.DELETE_AFTER_READ_VALUE
-        else -> -1
-    }
-
-    return if (expirationType == )
-}
-
-fun Int.expiryType(): ExpirationType? {
-    if (this == -1) return null
-    TODO()
-}

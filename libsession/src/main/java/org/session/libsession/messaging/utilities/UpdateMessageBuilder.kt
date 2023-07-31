@@ -1,6 +1,7 @@
 package org.session.libsession.messaging.utilities
 
 import android.content.Context
+import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.R
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.calls.CallMessageType
@@ -14,7 +15,6 @@ import org.session.libsession.messaging.sending_receiving.data_extraction.DataEx
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ExpirationUtil
 import org.session.libsession.utilities.truncateIdForDisplay
-import org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType
 
 object UpdateMessageBuilder {
     val storage = MessagingModuleConfiguration.shared.storage
@@ -99,9 +99,9 @@ object UpdateMessageBuilder {
             val time = ExpirationUtil.getExpirationDisplayValue(context, duration.toInt())
             val threadId = storage.getThreadId(Address.fromSerialized(senderId!!))
             val config = threadId?.let { storage.getExpirationConfiguration(it) }
-            val state = when (config?.expirationType) {
-                ExpirationType.DELETE_AFTER_SEND -> context.getString(R.string.MessageRecord_state_sent)
-                ExpirationType.DELETE_AFTER_READ -> context.getString(R.string.MessageRecord_state_read)
+            val state = when (config?.expiryMode) {
+                is ExpiryMode.AfterSend -> context.getString(R.string.MessageRecord_state_sent)
+                is ExpiryMode.AfterRead -> context.getString(R.string.MessageRecord_state_read)
                 else -> ""
             }
             if (isOutgoing) {

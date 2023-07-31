@@ -34,7 +34,6 @@ import org.session.libsession.messaging.sending_receiving.MessageSender;
 import org.session.libsession.snode.SnodeAPI;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.recipients.Recipient;
-import org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.ApplicationContext;
 import org.thoughtcrime.securesms.database.MessagingDatabase.MarkedMessageInfo;
@@ -50,6 +49,7 @@ import java.util.List;
 import javax.inject.Inject;
 
 import dagger.hilt.android.AndroidEntryPoint;
+import network.loki.messenger.libsession_util.util.ExpiryMode;
 
 /**
  * Get the response text from the Wearable Device and sends an message as a reply
@@ -97,9 +97,10 @@ public class RemoteReplyReceiver extends BroadcastReceiver {
           message.setSentTimestamp(SnodeAPI.getNowWithOffset());
           message.setText(responseText.toString());
           ExpirationConfiguration config = storage.getExpirationConfiguration(threadId);
+          ExpiryMode expiryMode = config == null ? null : config.getExpiryMode();
 
-          long expiresInMillis = config == null ? 0 : config.getDurationSeconds() * 1000L;
-          long expireStartedAt = config.getExpirationType() == ExpirationType.DELETE_AFTER_SEND ? message.getSentTimestamp() : 0L;
+          long expiresInMillis = expiryMode == null ? 0 : expiryMode.getExpirySeconds() * 1000L;
+          long expireStartedAt = expiryMode instanceof ExpiryMode.AfterSend ? message.getSentTimestamp() : 0L;
           switch (replyMethod) {
             case GroupMessage: {
               OutgoingMediaMessage reply = OutgoingMediaMessage.from(message, recipient, Collections.emptyList(), null, null, expiresInMillis, 0);

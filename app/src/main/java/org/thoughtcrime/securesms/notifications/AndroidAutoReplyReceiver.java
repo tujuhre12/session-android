@@ -34,7 +34,6 @@ import org.session.libsession.messaging.sending_receiving.MessageSender;
 import org.session.libsession.snode.SnodeAPI;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.recipients.Recipient;
-import org.session.libsignal.protos.SignalServiceProtos;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.ApplicationContext;
 import org.thoughtcrime.securesms.database.MessagingDatabase.MarkedMessageInfo;
@@ -43,6 +42,8 @@ import org.thoughtcrime.securesms.mms.MmsException;
 
 import java.util.Collections;
 import java.util.List;
+
+import network.loki.messenger.libsession_util.util.ExpiryMode;
 
 /**
  * Get the response text from the Android Auto and sends an message as a reply
@@ -87,9 +88,10 @@ public class AndroidAutoReplyReceiver extends BroadcastReceiver {
           message.setText(responseText.toString());
           message.setSentTimestamp(SnodeAPI.getNowWithOffset());
           MessageSender.send(message, recipient.getAddress());
-          ExpirationConfiguration config = DatabaseComponent.get(context).expirationConfigurationDatabase().getExpirationConfiguration(threadId);
-          long expiresInMillis = config == null ? 0 : config.getDurationSeconds() * 1000L;
-          long expireStartedAt = config.getExpirationType() == SignalServiceProtos.Content.ExpirationType.DELETE_AFTER_SEND ? message.getSentTimestamp() : 0L;
+          ExpirationConfiguration config = DatabaseComponent.get(context).storage().getExpirationConfiguration(threadId);
+          ExpiryMode expiryMode = config == null ? null : config.getExpiryMode();
+          long expiresInMillis = expiryMode == null ? 0 : expiryMode.getExpirySeconds() * 1000L;
+          long expireStartedAt = expiryMode instanceof ExpiryMode.AfterSend ? message.getSentTimestamp() : 0L;
 
           if (recipient.isGroupRecipient()) {
             Log.w("AndroidAutoReplyReceiver", "GroupRecipient, Sending media message");

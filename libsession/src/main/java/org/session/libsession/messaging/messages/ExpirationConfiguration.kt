@@ -4,10 +4,10 @@ import network.loki.messenger.libsession_util.util.ExpiryMode
 
 data class ExpirationConfiguration(
     val threadId: Long = -1,
-    val expirationType: ExpiryMode? = null,
+    val expiryMode: ExpiryMode? = null,
     val updatedTimestampMs: Long = 0
 ) {
-    val isEnabled = expirationType != null && expirationType.expirySeconds > 0
+    val isEnabled = expiryMode != null && expiryMode.expirySeconds > 0
 
     companion object {
         val isNewConfigEnabled = false /* TODO: System.currentTimeMillis() > 1_676_851_200_000 // 13/02/2023 */

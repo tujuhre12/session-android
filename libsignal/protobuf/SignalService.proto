@@ -44,6 +44,7 @@ message UnsendRequest {
 
 message Content {
   enum ExpirationType {
+    UNKNOWN = 0;
     DELETE_AFTER_READ = 1;
     DELETE_AFTER_SEND = 2;
   }

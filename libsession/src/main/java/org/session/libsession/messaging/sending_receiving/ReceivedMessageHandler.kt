@@ -2,6 +2,7 @@ package org.session.libsession.messaging.sending_receiving
 
 import android.text.TextUtils
 import network.loki.messenger.libsession_util.ConfigBase
+import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.jobs.BackgroundGroupAddJob
@@ -39,6 +40,7 @@ import org.session.libsession.utilities.GroupUtil.doubleEncodeGroupID
 import org.session.libsession.utilities.ProfileKeyUtil
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.expiryMode
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.crypto.ecc.DjbECPrivateKey
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
@@ -67,7 +69,7 @@ fun MessageReceiver.handle(message: Message, proto: SignalServiceProtos.Content,
     // Do nothing if the message was outdated
     if (MessageReceiver.messageIsOutdated(message, threadId, openGroupID)) { return }
 
-    MessageReceiver.updateExpiryIfNeeded(message, proto, openGroupID)
+    MessageReceiver.updateExpiryIfNeeded(message, proto, openGroupID, )
     when (message) {
         is ReadReceipt -> handleReadReceipt(message)
         is TypingIndicator -> handleTypingIndicator(message)
@@ -157,8 +159,8 @@ private fun MessageReceiver.handleExpirationTimerUpdate(message: ExpirationTimer
     val module = MessagingModuleConfiguration.shared
     val recipient = Recipient.from(module.context, Address.fromSerialized(message.sender!!), false)
     val type = when {
-        recipient.isContactRecipient -> ExpirationType.DELETE_AFTER_READ
-        recipient.isGroupRecipient -> ExpirationType.DELETE_AFTER_SEND
+        recipient.isContactRecipient -> ExpiryMode.AfterRead(message.duration!!.toLong())
+        recipient.isGroupRecipient -> ExpiryMode.AfterSend(message.duration!!.toLong())
         else -> null
     }
     try {
@@ -167,12 +169,16 @@ private fun MessageReceiver.handleExpirationTimerUpdate(message: ExpirationTimer
             threadId = module.storage.getOrCreateThreadIdFor(fromSerialized(doubleEncodeGroupID(message.groupPublicKey!!)))
         }
         module.storage.setExpirationConfiguration(
-            ExpirationConfiguration(threadId, message.duration!!, type?.number ?: -1, System.currentTimeMillis())
+            ExpirationConfiguration(
+                threadId,
+                type,
+                SnodeAPI.nowWithOffset
+            )
         )
     } catch (e: Exception) {
         Log.e("Loki", "Failed to update expiration configuration.")
     }
-    SSKEnvironment.shared.messageExpirationManager.setExpirationTimer(message, type?.number ?: -1)
+    SSKEnvironment.shared.messageExpirationManager.setExpirationTimer(message, type)
 }
 
 private fun MessageReceiver.handleDataExtractionNotification(message: DataExtractionNotification) {
@@ -270,23 +276,30 @@ fun handleMessageRequestResponse(message: MessageRequestResponse) {
 }
 //endregion
 
-fun MessageReceiver.updateExpiryIfNeeded(message: Message, proto: SignalServiceProtos.Content, openGroupID: String?, lastSeen: Long) {
+fun MessageReceiver.updateExpiryIfNeeded(
+    message: Message,
+    proto: SignalServiceProtos.Content,
+    openGroupID: String?
+) {
     val storage = MessagingModuleConfiguration.shared.storage
 
     val sentTime = message.sentTimestamp ?: throw MessageReceiver.Error.InvalidMessage
     if (!proto.hasLastDisappearingMessageChangeTimestamp()) return
-    val threadID = storage.getThreadIdFor(message.sender!!, message.groupPublicKey, openGroupID, false)
-    if (threadID == null) throw MessageReceiver.Error.NoThread
+    val threadID =
+        storage.getThreadIdFor(message.sender!!, message.groupPublicKey, openGroupID, false)
+            ?: throw MessageReceiver.Error.NoThread
     val recipient = storage.getRecipientForThread(threadID) ?: throw MessageReceiver.Error.NoThread
 
     val localConfig = storage.getExpirationConfiguration(threadID)
 
     val durationSeconds = if (proto.hasExpirationTimer()) proto.expirationTimer else 0
     val type = if (proto.hasExpirationType()) proto.expirationType else null
+
+    val expiryMode = type?.expiryMode(durationSeconds.toLong())
+
     val remoteConfig = ExpirationConfiguration(
         threadID,
-        durationSeconds,
-        type?.number ?: -1,
+        expiryMode,
         proto.lastDisappearingMessageChangeTimestamp
     )
 
@@ -312,12 +325,12 @@ fun MessageReceiver.updateExpiryIfNeeded(message: Message, proto: SignalServiceP
 
     // handle a delete after send expired fetch
     if (type == ExpirationType.DELETE_AFTER_SEND
-        && sentTime + configToUse.durationSeconds <= SnodeAPI.nowWithOffset) {
+        && sentTime + (configToUse.expiryMode?.expirySeconds ?: 0) <= SnodeAPI.nowWithOffset) {
         throw MessageReceiver.Error.ExpiredMessage
     }
-    // handle a delete after read last known config value (test) TODO: actually implement this with shared config library
+    // handle a delete after read last known config value
     if (type == ExpirationType.DELETE_AFTER_READ
-        && sentTime + configToUse.durationSeconds <= ExpirationConfiguration.LAST_READ_TEST) {
+        && sentTime + (configToUse.expiryMode?.expirySeconds ?: 0) <= storage.getLastSeen(threadID)) {
         throw MessageReceiver.Error.ExpiredMessage
     }
 
@@ -326,7 +339,7 @@ fun MessageReceiver.updateExpiryIfNeeded(message: Message, proto: SignalServiceP
     }
 
     if (message is ExpirationTimerUpdate) {
-        SSKEnvironment.shared.messageExpirationManager.setExpirationTimer(message, type?.number ?: -1)
+        SSKEnvironment.shared.messageExpirationManager.setExpirationTimer(message, type?.expiryMode(durationSeconds.toLong()))
     }
 }
 
