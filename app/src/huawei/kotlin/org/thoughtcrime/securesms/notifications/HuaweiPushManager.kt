@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.notifications
 
 import android.content.Context
+import android.util.Log
 import com.huawei.hmf.tasks.Tasks
 import com.huawei.hms.aaid.HmsInstanceId
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -9,8 +10,11 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import org.session.libsession.utilities.TextSecurePreferences
 import javax.inject.Inject
 import javax.inject.Singleton
+
+private val TAG = HuaweiPushManager::class.java.name
 
 @Singleton
 class HuaweiPushManager @Inject constructor(
@@ -27,13 +31,16 @@ class HuaweiPushManager @Inject constructor(
             if (force) cancel() else if (isActive) return
         }
 
+        val appId = "107146885"
+        val tokenScope = "HCM"
         val hmsInstanceId = HmsInstanceId.getInstance(context)
 
         MainScope().launch(Dispatchers.IO) {
-            val task = hmsInstanceId.aaid
-            Tasks.await(task)
-            if (!isActive) return@launch // don't 'complete' task if we were canceled
-            task.result?.id?.let { genericPushManager.refresh(it, force) }
+            val token = hmsInstanceId.getToken(appId, tokenScope)
+
+            Log.d(TAG, "refresh() with huawei token: $token")
+
+            genericPushManager.refresh(token, force)
         }
     }
 }
