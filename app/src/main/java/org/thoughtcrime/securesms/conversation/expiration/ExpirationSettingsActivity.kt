@@ -8,7 +8,9 @@ import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
 import androidx.core.text.HtmlCompat
 import androidx.core.view.isVisible
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
@@ -109,39 +111,50 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
         binding.buttonSet.setOnClickListener {
             viewModel.onSetClick()
         }
-        lifecycleScope.launchWhenStarted {
-            launch {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { uiState ->
                     when (uiState.settingsSaved) {
                         true -> {
                             showToast(getString(R.string.ExpirationSettingsActivity_settings_updated))
                             finish()
                         }
+
                         false -> showToast(getString(R.string.ExpirationSettingsActivity_settings_not_updated))
                         else -> {}
                     }
                 }
             }
-            launch {
+        }
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.selectedExpirationType.collect { type ->
                     val position = deleteTypeOptions.indexOfFirst { it.value.toIntOrNull() == type }
                     deleteTypeOptionAdapter.setSelectedPosition(max(0, position))
                 }
             }
-            launch {
+        }
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.selectedExpirationTimer.collect { option ->
-                    val position = viewModel.expirationTimerOptions.value.indexOfFirst { it.value == option?.value }
+                    val position =
+                        viewModel.expirationTimerOptions.value.indexOfFirst { it.value == option?.value }
                     timerOptionAdapter.setSelectedPosition(max(0, position))
                 }
             }
-            launch {
+        }
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.expirationTimerOptions.collect { options ->
-                    binding.textViewTimer.isVisible = options.isNotEmpty() && viewModel.uiState.value.showExpirationTypeSelector
+                    binding.textViewTimer.isVisible =
+                        options.isNotEmpty() && viewModel.uiState.value.showExpirationTypeSelector
                     binding.layoutTimer.isVisible = options.isNotEmpty()
                     timerOptionAdapter.submitList(options)
                 }
             }
-            launch {
+        }
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.recipient.collect {
                     binding.textViewDeleteType.isVisible = viewModel.uiState.value.showExpirationTypeSelector
                     binding.layoutDeleteTypes.isVisible = viewModel.uiState.value.showExpirationTypeSelector

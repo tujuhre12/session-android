@@ -253,7 +253,7 @@ object MessageSender {
         val threadId = message.threadID
             ?: run {
                 val address = if (isSyncMessage && message is VisibleMessage) message.syncTarget else message.recipient
-                storage.getOrCreateThreadIdFor(Address.fromSerialized(address!!))
+                storage.getThreadId(Address.fromSerialized(address!!)) ?: return null
             }
         val config = storage.getExpirationConfiguration(threadId) ?: return null
         val expiryMode = config.expiryMode

@@ -58,6 +58,7 @@ class ExpirationSettingsViewModel(
     val expirationTimerOptions: StateFlow<List<RadioOption>> = _expirationTimerOptions
 
     init {
+        // SETUP
         viewModelScope.launch {
             expirationConfig = storage.getExpirationConfiguration(threadId)
             val expirationType = expirationConfig?.expiryMode
@@ -73,13 +74,9 @@ class ExpirationSettingsViewModel(
                 )
             }
             _selectedExpirationType.value = if (ExpirationConfiguration.isNewConfigEnabled) {
-                if (recipient?.isLocalNumber == true || recipient?.isClosedGroupRecipient == true) {
-                    ExpirationType.DELETE_AFTER_SEND.number
-                } else {
-                    expirationType?.typeRadioIndex() ?: -1
-                }
+                expirationType.typeRadioIndex()
             } else {
-                if (expirationType != null) 0 else -1
+                if (expirationType != null && expirationType != ExpiryMode.NONE) 0 else -1
             }
             _selectedExpirationTimer.value = when(expirationType) {
                 is ExpiryMode.AfterSend -> afterSendOptions.find { it.value.toIntOrNull() == expirationType.expirySeconds.toInt() }
@@ -94,10 +91,11 @@ class ExpirationSettingsViewModel(
                 else -> emptyList()
             }
         }.onEach { options ->
+            val enabled = _uiState.value.isSelfAdmin || recipient.value?.isClosedGroupRecipient == true
             _expirationTimerOptions.value = if (ExpirationConfiguration.isNewConfigEnabled && (recipient.value?.isLocalNumber == true || recipient.value?.isClosedGroupRecipient == true)) {
-                options.map { it.copy(enabled = _uiState.value.isSelfAdmin) }
+                options.map { it.copy(enabled = enabled) }
             } else {
-                options.slice(1 until options.size).map { it.copy(enabled = _uiState.value.isSelfAdmin) }
+                options.slice(1 until options.size).map { it.copy(enabled = enabled) }
             }
         }.launchIn(viewModelScope)
     }

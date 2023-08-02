@@ -50,6 +50,7 @@
                 android:paddingVertical="@dimen/medium_spacing">
 
                 <androidx.recyclerview.widget.RecyclerView
+                    android:overScrollMode="never"
                     android:id="@+id/recycler_view_delete_types"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -80,6 +81,7 @@
                 android:paddingVertical="@dimen/medium_spacing">
 
                 <androidx.recyclerview.widget.RecyclerView
+                    android:overScrollMode="never"
                     android:id="@+id/recycler_view_timer_options"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

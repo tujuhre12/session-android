@@ -1701,6 +1701,14 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
     }
 
     override fun setExpirationConfiguration(config: ExpirationConfiguration) {
+        val recipient = getRecipientForThread(config.threadId) ?: return
+        if (recipient.isClosedGroupRecipient) {
+            configFactory.userGroups?.getLegacyGroupInfo()
+        } else if (recipient.isLocalNumber) {
+
+        } else if (recipient.isContactRecipient) {
+
+        }
         DatabaseComponent.get(context).expirationConfigurationDatabase().setExpirationConfiguration(config)
     }
 

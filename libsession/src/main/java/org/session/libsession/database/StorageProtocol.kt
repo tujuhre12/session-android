@@ -159,7 +159,6 @@ interface StorageProtocol {
     // Settings
     fun setProfileSharing(address: Address, value: Boolean)
 
-
     // Thread
     fun getOrCreateThreadIdFor(address: Address): Long
     fun getThreadIdFor(publicKey: String, groupPublicKey: String?, openGroupID: String?, createThread: Boolean): Long?
