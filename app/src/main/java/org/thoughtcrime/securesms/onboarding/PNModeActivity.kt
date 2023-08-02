@@ -12,6 +12,7 @@ import android.view.View
 import android.widget.Toast
 import androidx.annotation.ColorInt
 import androidx.annotation.DrawableRes
+import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityPnModeBinding
 import org.session.libsession.utilities.TextSecurePreferences
@@ -30,6 +31,7 @@ import org.thoughtcrime.securesms.util.setUpActionBarSessionLogo
 import org.thoughtcrime.securesms.util.show
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class PNModeActivity : BaseActionBarActivity() {
 
     @Inject lateinit var pushManager: PushManager
