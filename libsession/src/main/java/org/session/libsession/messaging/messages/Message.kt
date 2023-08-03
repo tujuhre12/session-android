@@ -65,11 +65,13 @@ abstract class Message {
         if (config.isEnabled && config.expiryMode != null) {
             expirationTimer = config.expiryMode.expirySeconds.toInt()
             lastDisappearingMessageChangeTimestamp = config.updatedTimestampMs
-            config.expiryMode.let { expiryMode ->
-                when (expiryMode) {
-                    is ExpiryMode.AfterSend -> expirationType = ExpirationType.DELETE_AFTER_SEND
-                    is ExpiryMode.AfterRead -> expirationType = ExpirationType.DELETE_AFTER_READ
-                    ExpiryMode.NONE -> { /* do nothing */ }
+            if (ExpirationConfiguration.isNewConfigEnabled) {
+                config.expiryMode.let { expiryMode ->
+                    when (expiryMode) {
+                        is ExpiryMode.AfterSend -> expirationType = ExpirationType.DELETE_AFTER_SEND
+                        is ExpiryMode.AfterRead -> expirationType = ExpirationType.DELETE_AFTER_READ
+                        ExpiryMode.NONE -> { /* do nothing */ }
+                    }
                 }
             }
         }

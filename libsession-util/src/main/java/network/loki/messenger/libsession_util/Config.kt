@@ -4,6 +4,7 @@ import network.loki.messenger.libsession_util.util.BaseCommunityInfo
 import network.loki.messenger.libsession_util.util.ConfigPush
 import network.loki.messenger.libsession_util.util.Contact
 import network.loki.messenger.libsession_util.util.Conversation
+import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage.Kind
@@ -126,6 +127,8 @@ class UserProfile(pointer: Long) : ConfigBase(pointer) {
     external fun setPic(userPic: UserPic)
     external fun setNtsPriority(priority: Int)
     external fun getNtsPriority(): Int
+    external fun setNtsExpiry(expiryMode: ExpiryMode)
+    external fun getNtsExpiry(): ExpiryMode
 }
 
 class ConversationVolatileConfig(pointer: Long): ConfigBase(pointer) {

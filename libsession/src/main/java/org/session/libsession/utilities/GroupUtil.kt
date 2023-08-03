@@ -1,6 +1,5 @@
 package org.session.libsession.utilities
 
-import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.utilities.Hex
 import java.io.IOException
@@ -102,6 +101,11 @@ object GroupUtil {
     @Throws(IOException::class)
     fun doubleDecodeGroupId(groupID: String): String {
         return Hex.toStringCondensed(getDecodedGroupIDAsData(getDecodedGroupID(groupID)))
+    }
+
+    @JvmStatic
+    fun addressToGroupSessionId(address: Address): String {
+        return doubleDecodeGroupId(address.toGroupString())
     }
 
     fun createConfigMemberMap(

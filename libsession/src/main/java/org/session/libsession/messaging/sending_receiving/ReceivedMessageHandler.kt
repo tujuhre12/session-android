@@ -69,7 +69,7 @@ fun MessageReceiver.handle(message: Message, proto: SignalServiceProtos.Content,
     // Do nothing if the message was outdated
     if (MessageReceiver.messageIsOutdated(message, threadId, openGroupID)) { return }
 
-    MessageReceiver.updateExpiryIfNeeded(message, proto, openGroupID, )
+    MessageReceiver.updateExpiryIfNeeded(message, proto, openGroupID)
     when (message) {
         is ReadReceipt -> handleReadReceipt(message)
         is TypingIndicator -> handleTypingIndicator(message)

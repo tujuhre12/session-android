@@ -27,7 +27,7 @@ class ExpirationConfigurationDatabase(context: Context, helper: SQLCipherOpenHel
 
         @JvmField
         val MIGRATE_GROUP_CONVERSATION_EXPIRY_TYPE_COMMAND = """
-            INSERT INTO $TABLE_NAME ($THREAD_ID) SELECT ${ThreadDatabase.TABLE_NAME}.${ThreadDatabase.ID}, ${RecipientDatabase.EXPIRE_MESSAGES}, 1
+            INSERT INTO $TABLE_NAME ($THREAD_ID) SELECT ${ThreadDatabase.TABLE_NAME}.${ThreadDatabase.ID}
             FROM ${ThreadDatabase.TABLE_NAME}, ${RecipientDatabase.TABLE_NAME}
             WHERE ${ThreadDatabase.TABLE_NAME}.${ThreadDatabase.ADDRESS} LIKE '$CLOSED_GROUP_PREFIX%'
             AND EXISTS (SELECT ${RecipientDatabase.EXPIRE_MESSAGES} FROM ${RecipientDatabase.TABLE_NAME} WHERE ${ThreadDatabase.TABLE_NAME}.${ThreadDatabase.ADDRESS} = ${RecipientDatabase.TABLE_NAME}.${RecipientDatabase.ADDRESS} AND ${RecipientDatabase.EXPIRE_MESSAGES} > 0)
@@ -35,7 +35,7 @@ class ExpirationConfigurationDatabase(context: Context, helper: SQLCipherOpenHel
 
         @JvmField
         val MIGRATE_ONE_TO_ONE_CONVERSATION_EXPIRY_TYPE_COMMAND = """
-            INSERT INTO $TABLE_NAME ($THREAD_ID) SELECT ${ThreadDatabase.TABLE_NAME}.${ThreadDatabase.ID}, ${RecipientDatabase.EXPIRE_MESSAGES}, 2
+            INSERT INTO $TABLE_NAME ($THREAD_ID) SELECT ${ThreadDatabase.TABLE_NAME}.${ThreadDatabase.ID}
             FROM ${ThreadDatabase.TABLE_NAME}, ${RecipientDatabase.TABLE_NAME}
             WHERE ${ThreadDatabase.TABLE_NAME}.${ThreadDatabase.ADDRESS} NOT LIKE '$CLOSED_GROUP_PREFIX%'
             AND ${ThreadDatabase.TABLE_NAME}.${ThreadDatabase.ADDRESS} NOT LIKE '$OPEN_GROUP_PREFIX%'

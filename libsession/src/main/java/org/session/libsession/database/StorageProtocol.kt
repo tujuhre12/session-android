@@ -182,7 +182,7 @@ interface StorageProtocol {
     fun setContact(contact: Contact)
     fun getRecipientForThread(threadId: Long): Recipient?
     fun getRecipientSettings(address: Address): RecipientSettings?
-    fun addLibSessionContacts(contacts: List<LibSessionContact>)
+    fun addLibSessionContacts(contacts: List<LibSessionContact>, timestamp: Long)
     fun addContacts(contacts: List<ConfigurationMessage.Contact>)
 
     // Attachments
@@ -229,7 +229,7 @@ interface StorageProtocol {
     fun updateDisappearingState(threadID: Long, disappearingState: Recipient.DisappearingState)
 
     // Shared configs
-    fun notifyConfigUpdates(forConfigObject: ConfigBase)
+    fun notifyConfigUpdates(forConfigObject: ConfigBase, messageTimestamp: Long)
     fun conversationInConfig(publicKey: String?, groupPublicKey: String?, openGroupId: String?, visibleOnly: Boolean): Boolean
     fun canPerformConfigChange(variant: String, publicKey: String, changeTimestampMs: Long): Boolean
 }

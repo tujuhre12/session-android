@@ -95,7 +95,7 @@ class LibSessionTests {
         fakePollNewConfig(contacts, newContactMerge)
         verify(storageSpy).addLibSessionContacts(argThat {
             first().let { it.id == newContactId && it.approved } && size == 1
-        })
+        }, 0)
         verify(storageSpy).setRecipientApproved(argThat { address.serialize() == newContactId }, eq(true))
     }
 

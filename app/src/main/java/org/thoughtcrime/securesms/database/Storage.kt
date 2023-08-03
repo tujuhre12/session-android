@@ -434,8 +434,8 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
         return DatabaseComponent.get(context).lokiAPIDatabase().getAuthToken(id)
     }
 
-    override fun notifyConfigUpdates(forConfigObject: ConfigBase) {
-        notifyUpdates(forConfigObject)
+    override fun notifyConfigUpdates(forConfigObject: ConfigBase, messageTimestamp: Long) {
+        notifyUpdates(forConfigObject, messageTimestamp)
     }
 
     override fun conversationInConfig(publicKey: String?, groupPublicKey: String?, openGroupId: String?, visibleOnly: Boolean): Boolean {
@@ -446,16 +446,16 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
         return configFactory.canPerformChange(variant, publicKey, changeTimestampMs)
     }
 
-    fun notifyUpdates(forConfigObject: ConfigBase) {
+    private fun notifyUpdates(forConfigObject: ConfigBase, messageTimestamp: Long) {
         when (forConfigObject) {
-            is UserProfile -> updateUser(forConfigObject)
-            is Contacts -> updateContacts(forConfigObject)
-            is ConversationVolatileConfig -> updateConvoVolatile(forConfigObject)
-            is UserGroupsConfig -> updateUserGroups(forConfigObject)
+            is UserProfile -> updateUser(forConfigObject, messageTimestamp)
+            is Contacts -> updateContacts(forConfigObject, messageTimestamp)
+            is ConversationVolatileConfig -> updateConvoVolatile(forConfigObject, messageTimestamp)
+            is UserGroupsConfig -> updateUserGroups(forConfigObject, messageTimestamp)
         }
     }
 
-    private fun updateUser(userProfile: UserProfile) {
+    private fun updateUser(userProfile: UserProfile, messageTimestamp: Long) {
         val userPublicKey = getUserPublicKey() ?: return
         // would love to get rid of recipient and context from this
         val recipient = Recipient.from(context, fromSerialized(userPublicKey), false)
@@ -486,11 +486,16 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
             setPinned(ourThread, userProfile.getNtsPriority() > 0)
         }
 
+        getThreadId(recipient)?.let { ourThread ->
+            val expiration = ExpirationConfiguration(ourThread, userProfile.getNtsExpiry(), messageTimestamp)
+            DatabaseComponent.get(context).expirationConfigurationDatabase().setExpirationConfiguration(expiration)
+        }
+
     }
 
-    private fun updateContacts(contacts: Contacts) {
+    private fun updateContacts(contacts: Contacts, messageTimestamp: Long) {
         val extracted = contacts.all().toList()
-        addLibSessionContacts(extracted)
+        addLibSessionContacts(extracted, messageTimestamp)
     }
 
     override fun clearUserPic() {
@@ -510,7 +515,7 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
         ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(context)
     }
 
-    private fun updateConvoVolatile(convos: ConversationVolatileConfig) {
+    private fun updateConvoVolatile(convos: ConversationVolatileConfig, messageTimestamp: Long) {
         val extracted = convos.all()
         for (conversation in extracted) {
             val threadId = when (conversation) {
@@ -527,7 +532,7 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
         }
     }
 
-    private fun updateUserGroups(userGroups: UserGroupsConfig) {
+    private fun updateUserGroups(userGroups: UserGroupsConfig, messageTimestamp: Long) {
         val threadDb = DatabaseComponent.get(context).threadDatabase()
         val localUserPublicKey = getUserPublicKey() ?: return Log.w(
             "Loki",
@@ -579,6 +584,7 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
         }
 
         for (group in lgc) {
+            val groupId = GroupUtil.doubleEncodeGroupID(group.sessionId)
             val existingGroup = existingClosedGroups.firstOrNull { GroupUtil.doubleDecodeGroupId(it.encodedId) == group.sessionId }
             val existingThread = existingGroup?.let { getThreadId(existingGroup.encodedId) }
             if (existingGroup != null) {
@@ -593,7 +599,6 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
             } else {
                 val members = group.members.keys.map { Address.fromSerialized(it) }
                 val admins = group.members.filter { it.value /*admin = true*/ }.keys.map { Address.fromSerialized(it) }
-                val groupId = GroupUtil.doubleEncodeGroupID(group.sessionId)
                 val title = group.name
                 val formationTimestamp = (group.joinedAt * 1000L)
                 createGroup(groupId, title, admins + members, null, null, admins, formationTimestamp)
@@ -615,6 +620,17 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
                 // Don't create config group here, it's from a config update
                 // Start polling
                 ClosedGroupPollerV2.shared.startPolling(group.sessionId)
+            }
+            getThreadId(Address.fromSerialized(groupId))?.let { conversationThreadId ->
+                val mode =
+                    if (group.disappearingTimer == 0L) ExpiryMode.NONE
+                    else ExpiryMode.AfterRead(group.disappearingTimer)
+                val newConfig = ExpirationConfiguration(
+                    conversationThreadId, mode, messageTimestamp
+                )
+                DatabaseComponent.get(context)
+                    .expirationConfigurationDatabase()
+                    .setExpirationConfiguration(newConfig)
             }
         }
     }
@@ -1163,7 +1179,7 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
         return if (recipientSettings.isPresent) { recipientSettings.get() } else null
     }
 
-    override fun addLibSessionContacts(contacts: List<LibSessionContact>) {
+    override fun addLibSessionContacts(contacts: List<LibSessionContact>, timestamp: Long) {
         val mappingDb = DatabaseComponent.get(context).blindedIdMappingDatabase()
         val moreContacts = contacts.filter { contact ->
             val id = SessionId(contact.id)
@@ -1203,6 +1219,15 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
                 getThreadId(fromSerialized(contact.id))?.let { conversationThreadId ->
                     setPinned(conversationThreadId, contact.priority == PRIORITY_PINNED)
                 }
+            }
+            getThreadId(recipient)?.let { conversationThreadId ->
+                val expiration = ExpirationConfiguration(
+                    conversationThreadId,
+                    contact.expiryMode,
+                    timestamp
+                )
+                DatabaseComponent.get(context).expirationConfigurationDatabase()
+                    .setExpirationConfiguration(expiration)
             }
             setRecipientHash(recipient, contact.hashCode().toString())
         }
@@ -1676,7 +1701,15 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
     override fun getExpirationConfiguration(threadId: Long): ExpirationConfiguration? {
         val recipient = getRecipientForThread(threadId) ?: return null
         val dbExpirationMetadata = DatabaseComponent.get(context).expirationConfigurationDatabase().getExpirationConfiguration(threadId) ?: return null
-        return if (recipient.isContactRecipient && recipient.address.serialize().startsWith(IdPrefix.STANDARD.value)) {
+        return if (recipient.isLocalNumber) {
+            configFactory.user?.getNtsExpiry()?.let { mode ->
+                ExpirationConfiguration(
+                    threadId,
+                    mode,
+                    dbExpirationMetadata.updatedTimestampMs
+                )
+            }
+        } else if (recipient.isContactRecipient && recipient.address.serialize().startsWith(IdPrefix.STANDARD.value)) {
             // read it from contacts config if exists
             configFactory.contacts?.get(recipient.address.serialize())?.let { contact ->
                 val mode = contact.expiryMode
@@ -1703,11 +1736,26 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
     override fun setExpirationConfiguration(config: ExpirationConfiguration) {
         val recipient = getRecipientForThread(config.threadId) ?: return
         if (recipient.isClosedGroupRecipient) {
-            configFactory.userGroups?.getLegacyGroupInfo()
+            val userGroups = configFactory.userGroups ?: return
+            val groupPublicKey = GroupUtil.addressToGroupSessionId(recipient.address)
+            val expiryMode = config.expiryMode
+            val groupInfo = userGroups.getLegacyGroupInfo(groupPublicKey)?.let { info ->
+                info.copy(disappearingTimer = when (expiryMode) {
+                    null, ExpiryMode.NONE -> 0
+                    else -> expiryMode.expirySeconds
+                })
+            } ?: return
+            userGroups.set(groupInfo)
         } else if (recipient.isLocalNumber) {
-
+            val user = configFactory.user ?: return
+            user.setNtsExpiry(config.expiryMode ?: ExpiryMode.NONE)
         } else if (recipient.isContactRecipient) {
-
+            val contacts = configFactory.contacts ?: return
+            val expiry = config.expiryMode
+            val contact = contacts.get(recipient.address.serialize())?.copy(
+                expiryMode = expiry ?: ExpiryMode.NONE
+            ) ?: return
+            contacts.set(contact)
         }
         DatabaseComponent.get(context).expirationConfigurationDatabase().setExpirationConfiguration(config)
     }
