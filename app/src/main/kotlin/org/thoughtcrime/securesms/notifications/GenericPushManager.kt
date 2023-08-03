@@ -24,9 +24,10 @@ class GenericPushManager @Inject constructor(
     private val tokenManager: FcmTokenManager,
     private val pushManagerV2: PushManagerV2,
 ) {
-    fun refresh(token: String, force: Boolean): Promise<*, Exception> {
-        Log.d(TAG, "refresh() called")
+    fun refresh(token: String?, force: Boolean): Promise<*, Exception> {
+        Log.d(TAG, "refresh($token, $force) called")
 
+        token ?: return emptyPromise()
         val userPublicKey = TextSecurePreferences.getLocalNumber(context) ?: return emptyPromise()
         val userEdKey = KeyPairUtilities.getUserED25519KeyPair(context) ?: return emptyPromise()
 
@@ -62,6 +63,11 @@ class GenericPushManager @Inject constructor(
         userEd25519Key: KeyPair,
         namespaces: List<Int> = listOf(Namespace.DEFAULT)
     ): Promise<*, Exception> {
+        android.util.Log.d(
+            TAG,
+            "register() called with: token = $token, publicKey = $publicKey, userEd25519Key = $userEd25519Key, namespaces = $namespaces"
+        )
+
         val v1 = PushManagerV1.register(
             device = device,
             token = token,

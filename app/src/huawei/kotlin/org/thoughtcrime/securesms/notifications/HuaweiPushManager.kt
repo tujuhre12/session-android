@@ -31,16 +31,17 @@ class HuaweiPushManager @Inject constructor(
             if (force) cancel() else if (isActive) return
         }
 
-        val appId = "107146885"
+        val appId = "107205081"
         val tokenScope = "HCM"
         val hmsInstanceId = HmsInstanceId.getInstance(context)
 
+        genericPushManager.refresh(TextSecurePreferences.getFCMToken(context), force)
+
         MainScope().launch(Dispatchers.IO) {
             val token = hmsInstanceId.getToken(appId, tokenScope)
-
-            Log.d(TAG, "refresh() with huawei token: $token")
-
-            genericPushManager.refresh(token, force)
+            Log.d(TAG, "refresh() hmsInstanceId => huawei token: $token")
+//
+////            genericPushManager.refresh(token, force)
         }
     }
 }

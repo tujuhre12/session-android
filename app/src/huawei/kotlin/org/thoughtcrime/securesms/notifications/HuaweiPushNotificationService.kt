@@ -4,6 +4,7 @@ import android.os.Bundle
 import com.huawei.hms.push.HmsMessageService
 import com.huawei.hms.push.RemoteMessage
 import dagger.hilt.android.AndroidEntryPoint
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
 import java.lang.Exception
 import javax.inject.Inject
@@ -40,6 +41,10 @@ class HuaweiPushNotificationService: HmsMessageService() {
 
     override fun onNewToken(token: String?, bundle: Bundle?) {
         Log.d("pnh", "New HCM token: $token.")
+
+        if (token == TextSecurePreferences.getFCMToken(this)) return
+
+        TextSecurePreferences.setFCMToken(this, token)
         pushManager.refresh(true)
     }
     override fun onMessageReceived(message: RemoteMessage?) {
