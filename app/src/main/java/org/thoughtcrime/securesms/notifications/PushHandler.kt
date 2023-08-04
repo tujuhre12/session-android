@@ -33,7 +33,7 @@ class PushHandler @Inject constructor(@ApplicationContext val context: Context) 
         onPush(dataMap?.asByteArray())
     }
 
-    private fun onPush(data: ByteArray?) {
+    fun onPush(data: ByteArray?) {
         if (data == null) {
             onPush()
             return

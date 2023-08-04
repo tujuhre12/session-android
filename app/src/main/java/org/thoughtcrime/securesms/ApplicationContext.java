@@ -506,10 +506,10 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
             firebaseInstanceIdJob.cancel(null);
         }
         String displayName = TextSecurePreferences.getProfileName(this);
-        boolean isUsingFCM = TextSecurePreferences.isUsingFCM(this);
+        boolean isUsingFCM = TextSecurePreferences.isPushEnabled(this);
         TextSecurePreferences.clearAll(this);
         if (isMigratingToV2KeyPair) {
-            TextSecurePreferences.setIsUsingFCM(this, isUsingFCM);
+            TextSecurePreferences.setPushEnabled(this, isUsingFCM);
             TextSecurePreferences.setProfileName(this, displayName);
         }
         getSharedPreferences(PREFERENCES_NAME, 0).edit().clear().commit();

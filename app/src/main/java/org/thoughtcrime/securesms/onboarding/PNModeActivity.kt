@@ -165,7 +165,7 @@ class PNModeActivity : BaseActionBarActivity() {
             return
         }
 
-        TextSecurePreferences.setIsUsingFCM(this, (selectedOptionView == binding.fcmOptionView))
+        TextSecurePreferences.setPushEnabled(this, (selectedOptionView == binding.fcmOptionView))
         val application = ApplicationContext.getInstance(this)
         application.startPollingIfNeeded()
         pushManager.refresh(true)

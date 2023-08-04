@@ -5,52 +5,63 @@ import com.huawei.hms.push.HmsMessageService
 import com.huawei.hms.push.RemoteMessage
 import dagger.hilt.android.AndroidEntryPoint
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
 import java.lang.Exception
 import javax.inject.Inject
+
+private val TAG = HuaweiPushNotificationService::class.java.simpleName
 
 @AndroidEntryPoint
 class HuaweiPushNotificationService: HmsMessageService() {
 
     init {
-        Log.d("pnh", "init Huawei Service")
+        Log.d(TAG, "init Huawei Service")
     }
 
     @Inject lateinit var pushManager: PushManager
+    @Inject lateinit var genericPushManager: GenericPushManager
     @Inject lateinit var pushHandler: PushHandler
 
     override fun onCreate() {
-        Log.d("pnh", "onCreate Huawei Service")
+        Log.d(TAG, "onCreate Huawei Service")
         super.onCreate()
     }
 
-    override fun onMessageDelivered(p0: String?, p1: Exception?) {
-        Log.d("pnh", "onMessageDelivered")
-        super.onMessageDelivered(p0, p1)
+    override fun onMessageReceived(message: RemoteMessage?) {
+        Log.d(TAG, "onMessageReceived: $message.")
+        pushHandler.onPush(message?.data?.let(Base64::decode))
     }
 
     override fun onMessageSent(p0: String?) {
-        Log.d("pnh", "onMessageSent")
+        Log.d(TAG, "onMessageSent() called with: p0 = $p0")
         super.onMessageSent(p0)
     }
 
+    override fun onSendError(p0: String?, p1: Exception?) {
+        Log.d(TAG, "onSendError() called with: p0 = $p0, p1 = $p1")
+        super.onSendError(p0, p1)
+    }
+
+    override fun onMessageDelivered(p0: String?, p1: Exception?) {
+        Log.d(TAG, "onMessageDelivered")
+        super.onMessageDelivered(p0, p1)
+    }
+
+
     override fun onNewToken(p0: String?) {
-        Log.d("pnh", "onNewToken")
+        Log.d(TAG, "onNewToken")
         super.onNewToken(p0)
     }
 
     override fun onNewToken(token: String?, bundle: Bundle?) {
-        Log.d("pnh", "New HCM token: $token.")
-
-        if (token == TextSecurePreferences.getFCMToken(this)) return
+        Log.d(TAG, "New HCM token: $token.")
 
         TextSecurePreferences.setFCMToken(this, token)
-        pushManager.refresh(true)
+
+        genericPushManager.refresh(token, true)
     }
-    override fun onMessageReceived(message: RemoteMessage?) {
-        Log.d("pnh", "onMessageReceived: $message.")
-        pushHandler.onPush(message?.dataOfMap)
-    }
+
     override fun onDeletedMessages() {
         pushManager.refresh(true)
     }

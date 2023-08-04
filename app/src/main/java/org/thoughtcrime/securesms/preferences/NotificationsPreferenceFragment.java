@@ -45,10 +45,10 @@ public class NotificationsPreferenceFragment extends ListSummaryPreferenceFragme
 
     // Set up FCM toggle
     String fcmKey = "pref_key_use_fcm";
-    ((SwitchPreferenceCompat)findPreference(fcmKey)).setChecked(TextSecurePreferences.isUsingFCM(getContext()));
+    ((SwitchPreferenceCompat)findPreference(fcmKey)).setChecked(TextSecurePreferences.isPushEnabled(getContext()));
     this.findPreference(fcmKey)
       .setOnPreferenceChangeListener((preference, newValue) -> {
-        TextSecurePreferences.setIsUsingFCM(getContext(), (boolean) newValue);
+        TextSecurePreferences.setPushEnabled(getContext(), (boolean) newValue);
         pushManager.refresh(true);
         return true;
       });

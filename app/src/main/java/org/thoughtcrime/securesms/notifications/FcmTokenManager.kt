@@ -12,7 +12,7 @@ class FcmTokenManager @Inject constructor(
 ) {
     private val expiryManager =  ExpiryManager(context)
 
-    val isUsingFCM get() = TextSecurePreferences.isUsingFCM(context)
+    val isUsingFCM get() = TextSecurePreferences.isPushEnabled(context)
 
     var fcmToken
         get() = TextSecurePreferences.getFCMToken(context)

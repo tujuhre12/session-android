@@ -28,7 +28,7 @@ object PushManagerV1 {
 
     fun register(
         device: Device,
-        isUsingFCM: Boolean = TextSecurePreferences.isUsingFCM(context),
+        isUsingFCM: Boolean = TextSecurePreferences.isPushEnabled(context),
         token: String? = TextSecurePreferences.getFCMToken(context),
         publicKey: String? = TextSecurePreferences.getLocalNumber(context),
         legacyGroupPublicKeys: Collection<String> = MessagingModuleConfiguration.shared.storage.getAllClosedGroupPublicKeys()
@@ -94,7 +94,7 @@ object PushManagerV1 {
 
             sendOnionRequest(request) success {
                 when (it.code) {
-                    null, 0 -> throw Exception("error: ${it.message}.")
+                    null, 0 -> Log.d(TAG, "error: ${it.message}.")
                     else -> Log.d(TAG, "unregisterV1 success")
                 }
             }
@@ -105,7 +105,7 @@ object PushManagerV1 {
 
     fun subscribeGroup(
         closedGroupPublicKey: String,
-        isUsingFCM: Boolean = TextSecurePreferences.isUsingFCM(context),
+        isUsingFCM: Boolean = TextSecurePreferences.isPushEnabled(context),
         publicKey: String = MessagingModuleConfiguration.shared.storage.getUserPublicKey()!!
     ) = if (isUsingFCM) {
         performGroupOperation("subscribe_closed_group", closedGroupPublicKey, publicKey)
@@ -113,7 +113,7 @@ object PushManagerV1 {
 
     fun unsubscribeGroup(
         closedGroupPublicKey: String,
-        isUsingFCM: Boolean = TextSecurePreferences.isUsingFCM(context),
+        isUsingFCM: Boolean = TextSecurePreferences.isPushEnabled(context),
         publicKey: String = MessagingModuleConfiguration.shared.storage.getUserPublicKey()!!
     ) = if (isUsingFCM) {
         performGroupOperation("unsubscribe_closed_group", closedGroupPublicKey, publicKey)

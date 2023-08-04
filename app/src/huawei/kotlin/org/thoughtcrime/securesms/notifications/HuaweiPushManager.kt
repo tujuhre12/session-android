@@ -25,6 +25,8 @@ class HuaweiPushManager @Inject constructor(
 
     @Synchronized
     override fun refresh(force: Boolean) {
+        Log.d(TAG, "refresh() called with: force = $force")
+
         val huaweiPushInstanceIdJob = huaweiPushInstanceIdJob
 
         huaweiPushInstanceIdJob?.apply {
@@ -35,9 +37,12 @@ class HuaweiPushManager @Inject constructor(
         val tokenScope = "HCM"
         val hmsInstanceId = HmsInstanceId.getInstance(context)
 
-        genericPushManager.refresh(TextSecurePreferences.getFCMToken(context), force)
+        Log.d(TAG, "hmsInstanceId: $hmsInstanceId")
+
+//        genericPushManager.refresh(TextSecurePreferences.getFCMToken(context), force)
 
         MainScope().launch(Dispatchers.IO) {
+            Log.d(TAG, "hmInstanceId getting token...")
             val token = hmsInstanceId.getToken(appId, tokenScope)
             Log.d(TAG, "refresh() hmsInstanceId => huawei token: $token")
 //

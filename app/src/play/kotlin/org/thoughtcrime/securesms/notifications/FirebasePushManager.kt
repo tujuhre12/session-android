@@ -27,7 +27,9 @@ class FirebasePushManager @Inject constructor(
 
         firebaseInstanceIdJob = getFcmInstanceId { task ->
             when {
-                task.isSuccessful -> try { task.result?.token?.let { genericPushManager.refresh(it, force).get() } } catch(e: Exception) { Log.e(TAG, "refresh() failed", e) }
+                task.isSuccessful -> try { task.result?.token?.let {
+                    genericPushManager.refresh(it, force).get()
+                } } catch(e: Exception) { Log.e(TAG, "refresh() failed", e) }
                 else -> Log.w(TAG, "getFcmInstanceId failed." + task.exception)
             }
         }
