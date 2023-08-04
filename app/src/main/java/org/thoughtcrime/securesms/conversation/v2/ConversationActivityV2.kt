@@ -540,6 +540,9 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             }
         }
         updatePlaceholder()
+        viewModel.recipient?.let {
+            maybeUpdateToolbar(recipient = it)
+        }
     }
 
     override fun onLoaderReset(cursor: Loader<Cursor>) {
@@ -859,6 +862,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     private fun isMessageRequestThread(): Boolean {
         val recipient = viewModel.recipient ?: return false
+        if (recipient.isLocalNumber) return false
         return !recipient.isGroupRecipient && !recipient.isApproved
     }
 

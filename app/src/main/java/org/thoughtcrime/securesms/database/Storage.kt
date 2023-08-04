@@ -486,9 +486,15 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
             setPinned(ourThread, userProfile.getNtsPriority() > 0)
         }
 
+        // Set or reset the shared library to use latest expiration config
         getThreadId(recipient)?.let { ourThread ->
-            val expiration = ExpirationConfiguration(ourThread, userProfile.getNtsExpiry(), messageTimestamp)
-            DatabaseComponent.get(context).expirationConfigurationDatabase().setExpirationConfiguration(expiration)
+            val currentExpiration = getExpirationConfiguration(ourThread)
+            if (currentExpiration != null && currentExpiration.updatedTimestampMs > messageTimestamp) {
+                setExpirationConfiguration(currentExpiration)
+            } else {
+                val expiration = ExpirationConfiguration(ourThread, userProfile.getNtsExpiry(), messageTimestamp)
+                DatabaseComponent.get(context).expirationConfigurationDatabase().setExpirationConfiguration(expiration)
+            }
         }
 
     }
@@ -622,15 +628,21 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
                 ClosedGroupPollerV2.shared.startPolling(group.sessionId)
             }
             getThreadId(Address.fromSerialized(groupId))?.let { conversationThreadId ->
-                val mode =
-                    if (group.disappearingTimer == 0L) ExpiryMode.NONE
-                    else ExpiryMode.AfterRead(group.disappearingTimer)
-                val newConfig = ExpirationConfiguration(
-                    conversationThreadId, mode, messageTimestamp
-                )
-                DatabaseComponent.get(context)
-                    .expirationConfigurationDatabase()
-                    .setExpirationConfiguration(newConfig)
+
+                val currentExpiration = getExpirationConfiguration(conversationThreadId)
+                if (currentExpiration != null && currentExpiration.updatedTimestampMs > messageTimestamp) {
+                    setExpirationConfiguration(currentExpiration)
+                } else {
+                    val mode =
+                        if (group.disappearingTimer == 0L) ExpiryMode.NONE
+                        else ExpiryMode.AfterRead(group.disappearingTimer)
+                    val newConfig = ExpirationConfiguration(
+                        conversationThreadId, mode, messageTimestamp
+                    )
+                    DatabaseComponent.get(context)
+                        .expirationConfigurationDatabase()
+                        .setExpirationConfiguration(newConfig)
+                }
             }
         }
     }
@@ -1221,13 +1233,18 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
                 }
             }
             getThreadId(recipient)?.let { conversationThreadId ->
-                val expiration = ExpirationConfiguration(
-                    conversationThreadId,
-                    contact.expiryMode,
-                    timestamp
-                )
-                DatabaseComponent.get(context).expirationConfigurationDatabase()
-                    .setExpirationConfiguration(expiration)
+                val currentExpiration = getExpirationConfiguration(conversationThreadId)
+                if (currentExpiration != null && currentExpiration.updatedTimestampMs > timestamp) {
+                    setExpirationConfiguration(currentExpiration)
+                } else {
+                    val expiration = ExpirationConfiguration(
+                        conversationThreadId,
+                        contact.expiryMode,
+                        timestamp
+                    )
+                    DatabaseComponent.get(context).expirationConfigurationDatabase()
+                        .setExpirationConfiguration(expiration)
+                }
             }
             setRecipientHash(recipient, contact.hashCode().toString())
         }

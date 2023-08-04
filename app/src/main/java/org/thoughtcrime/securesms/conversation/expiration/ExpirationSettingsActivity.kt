@@ -25,6 +25,7 @@ import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.preferences.RadioOption
 import org.thoughtcrime.securesms.preferences.RadioOptionAdapter
+import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 import javax.inject.Inject
 import kotlin.math.max
 
@@ -116,10 +117,9 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
                 viewModel.uiState.collect { uiState ->
                     when (uiState.settingsSaved) {
                         true -> {
-                            showToast(getString(R.string.ExpirationSettingsActivity_settings_updated))
+                            ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(this@ExpirationSettingsActivity)
                             finish()
                         }
-
                         false -> showToast(getString(R.string.ExpirationSettingsActivity_settings_not_updated))
                         else -> {}
                     }
