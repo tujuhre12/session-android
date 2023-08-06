@@ -12,7 +12,12 @@ import nl.komponents.kovenant.functional.map
 import okhttp3.MediaType
 import okhttp3.Request
 import okhttp3.RequestBody
-import org.session.libsession.messaging.sending_receiving.notifications.*
+import org.session.libsession.messaging.sending_receiving.notifications.Response
+import org.session.libsession.messaging.sending_receiving.notifications.Server
+import org.session.libsession.messaging.sending_receiving.notifications.SubscriptionRequest
+import org.session.libsession.messaging.sending_receiving.notifications.SubscriptionResponse
+import org.session.libsession.messaging.sending_receiving.notifications.UnsubscribeResponse
+import org.session.libsession.messaging.sending_receiving.notifications.UnsubscriptionRequest
 import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.Version
@@ -24,7 +29,7 @@ import org.session.libsignal.utilities.retryIfNeeded
 import javax.inject.Inject
 import javax.inject.Singleton
 
-private const val TAG = "PushManagerV2"
+private val TAG = PushRegistryV2::class.java.name
 private const val maxRetryCount = 4
 
 @Singleton

@@ -27,17 +27,15 @@ class FirebaseTokenFetcher @Inject constructor(
             .process()
     }
 
-    private fun Task<InstanceIdResult>.process() {
-        when {
-            isSuccessful -> try {
-                result?.token?.let {
-                    pushRegistry.get().refresh(it, force = true).get()
-                }
-            } catch (e: Exception) {
-                onFail(e)
+    private fun Task<InstanceIdResult>.process() = when {
+        isSuccessful -> try {
+            result?.token?.let {
+                pushRegistry.get().refresh(it, force = true).get()
             }
-            else -> exception?.let(::onFail)
+        } catch (e: Exception) {
+            onFail(e)
         }
+        else -> exception?.let(::onFail)
     }
 
     private fun onFail(e: Exception) = Log.e(TAG, "fetch failed", e)

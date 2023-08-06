@@ -16,7 +16,7 @@ import org.thoughtcrime.securesms.crypto.KeyPairUtilities
 import javax.inject.Inject
 import javax.inject.Singleton
 
-private const val TAG = "GenericPushManager"
+private val TAG = PushRegistry::class.java.name
 
 @Singleton
 class PushRegistry @Inject constructor(
@@ -26,16 +26,16 @@ class PushRegistry @Inject constructor(
     private val pushRegistryV2: PushRegistryV2,
 ) {
 
-    private var firebaseInstanceIdJob: Job? = null
+    private var pushRegistrationJob: Job? = null
 
     fun refresh(force: Boolean) {
         Log.d(TAG, "refresh() called with: force = $force")
 
-        firebaseInstanceIdJob?.apply {
+        pushRegistrationJob?.apply {
             if (force) cancel() else if (isActive) return
         }
 
-        firebaseInstanceIdJob = tokenManager.fetchToken()
+        pushRegistrationJob = tokenManager.fetchToken()
     }
 
     fun refresh(token: String?, force: Boolean): Promise<*, Exception> {
