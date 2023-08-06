@@ -28,7 +28,7 @@ private const val TAG = "PushManagerV2"
 private const val maxRetryCount = 4
 
 @Singleton
-class PushManagerV2 @Inject constructor(private val pushHandler: PushHandler) {
+class PushRegistryV2 @Inject constructor(private val pushReceiver: PushReceiver) {
     private val sodium = LazySodiumAndroid(SodiumAndroid())
 
     fun register(
@@ -38,7 +38,7 @@ class PushManagerV2 @Inject constructor(private val pushHandler: PushHandler) {
         userEd25519Key: KeyPair,
         namespaces: List<Int>
     ): Promise<SubscriptionResponse, Exception> {
-        val pnKey = pushHandler.getOrCreateNotificationKey()
+        val pnKey = pushReceiver.getOrCreateNotificationKey()
 
         val timestamp = SnodeAPI.nowWithOffset / 1000 // get timestamp in ms -> s
         // if we want to support passing namespace list, here is the place to do it

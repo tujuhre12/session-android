@@ -76,7 +76,7 @@ import org.thoughtcrime.securesms.notifications.BackgroundPollWorker;
 import org.thoughtcrime.securesms.notifications.DefaultMessageNotifier;
 import org.thoughtcrime.securesms.notifications.NotificationChannels;
 import org.thoughtcrime.securesms.notifications.OptimizedMessageNotifier;
-import org.thoughtcrime.securesms.notifications.PushManager;
+import org.thoughtcrime.securesms.notifications.PushRegistry;
 import org.thoughtcrime.securesms.providers.BlobProvider;
 import org.thoughtcrime.securesms.service.ExpiringMessageManager;
 import org.thoughtcrime.securesms.service.KeyCachingService;
@@ -146,7 +146,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     @Inject Device device;
     @Inject MessageDataProvider messageDataProvider;
     @Inject TextSecurePreferences textSecurePreferences;
-    @Inject PushManager pushManager;
+    @Inject PushRegistry pushRegistry;
     @Inject ConfigFactory configFactory;
     CallMessageProcessor callMessageProcessor;
     MessagingModuleConfiguration messagingModuleConfiguration;
@@ -429,7 +429,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     private static class ProviderInitializationException extends RuntimeException { }
 
     public void registerForPnIfNeeded(final Boolean force) {
-        pushManager.refresh(force);
+        pushRegistry.refresh(force);
     }
 
     private void setUpPollingIfNeeded() {

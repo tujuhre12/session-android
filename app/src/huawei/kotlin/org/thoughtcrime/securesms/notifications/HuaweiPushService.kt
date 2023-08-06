@@ -10,18 +10,17 @@ import org.session.libsignal.utilities.Log
 import java.lang.Exception
 import javax.inject.Inject
 
-private val TAG = HuaweiPushNotificationService::class.java.simpleName
+private val TAG = HuaweiPushService::class.java.simpleName
 
 @AndroidEntryPoint
-class HuaweiPushNotificationService: HmsMessageService() {
+class HuaweiPushService: HmsMessageService() {
 
     init {
         Log.d(TAG, "init Huawei Service")
     }
 
-    @Inject lateinit var pushManager: PushManager
-    @Inject lateinit var genericPushManager: GenericPushManager
-    @Inject lateinit var pushHandler: PushHandler
+    @Inject lateinit var pushRegistry: PushRegistry
+    @Inject lateinit var pushReceiver: PushReceiver
 
     override fun onCreate() {
         Log.d(TAG, "onCreate Huawei Service")
@@ -30,7 +29,7 @@ class HuaweiPushNotificationService: HmsMessageService() {
 
     override fun onMessageReceived(message: RemoteMessage?) {
         Log.d(TAG, "onMessageReceived: $message.")
-        pushHandler.onPush(message?.data?.let(Base64::decode))
+        pushReceiver.onPush(message?.data?.let(Base64::decode))
     }
 
     override fun onMessageSent(p0: String?) {
@@ -57,12 +56,12 @@ class HuaweiPushNotificationService: HmsMessageService() {
     override fun onNewToken(token: String?, bundle: Bundle?) {
         Log.d(TAG, "New HCM token: $token.")
 
-        TextSecurePreferences.setFCMToken(this, token)
+        TextSecurePreferences.setPushToken(this, token)
 
-        genericPushManager.refresh(token, true)
+        pushRegistry.refresh(token, true)
     }
 
     override fun onDeletedMessages() {
-        pushManager.refresh(true)
+        pushRegistry.refresh(true)
     }
 }

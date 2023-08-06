@@ -252,7 +252,7 @@ interface TextSecurePreferences {
         const val GIF_METADATA_WARNING = "has_seen_gif_metadata_warning"
         const val GIF_GRID_LAYOUT = "pref_gif_grid_layout"
         const val IS_PUSH_ENABLED = "pref_is_using_fcm"
-        const val FCM_TOKEN = "pref_fcm_token_2"
+        const val PUSH_TOKEN = "pref_fcm_token_2"
         const val PUSH_REGISTER_TIME = "pref_last_fcm_token_upload_time_2"
         const val LAST_CONFIGURATION_SYNC_TIME = "pref_last_configuration_sync_time"
         const val CONFIGURATION_SYNCED = "pref_configuration_synced"
@@ -319,20 +319,20 @@ interface TextSecurePreferences {
         }
 
         @JvmStatic
-        fun getFCMToken(context: Context): String? {
-            return getStringPreference(context, FCM_TOKEN, "")
+        fun getPushToken(context: Context): String? {
+            return getStringPreference(context, PUSH_TOKEN, "")
         }
 
         @JvmStatic
-        fun setFCMToken(context: Context, value: String?) {
-            setStringPreference(context, FCM_TOKEN, value)
+        fun setPushToken(context: Context, value: String?) {
+            setStringPreference(context, PUSH_TOKEN, value)
         }
 
-        fun getLastFCMUploadTime(context: Context): Long {
+        fun getPushRegisterTime(context: Context): Long {
             return getLongPreference(context, PUSH_REGISTER_TIME, 0)
         }
 
-        fun setLastFCMUploadTime(context: Context, value: Long) {
+        fun setPushRegisterTime(context: Context, value: Long) {
             setLongPreference(context, PUSH_REGISTER_TIME, value)
         }
 
@@ -1041,11 +1041,11 @@ class AppTextSecurePreferences @Inject constructor(
     }
 
     override fun getPushToken(): String? {
-        return getStringPreference(TextSecurePreferences.FCM_TOKEN, "")
+        return getStringPreference(TextSecurePreferences.PUSH_TOKEN, "")
     }
 
     override fun setPushToken(value: String) {
-        setStringPreference(TextSecurePreferences.FCM_TOKEN, value)
+        setStringPreference(TextSecurePreferences.PUSH_TOKEN, value)
     }
 
     override fun getPushRegisterTime(): Long {

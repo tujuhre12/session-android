@@ -23,7 +23,7 @@ import org.session.libsession.utilities.TextSecurePreferences;
 import org.thoughtcrime.securesms.ApplicationContext;
 import org.thoughtcrime.securesms.components.SwitchPreferenceCompat;
 import org.thoughtcrime.securesms.notifications.NotificationChannels;
-import org.thoughtcrime.securesms.notifications.PushManager;
+import org.thoughtcrime.securesms.notifications.PushRegistry;
 
 import javax.inject.Inject;
 
@@ -37,7 +37,7 @@ public class NotificationsPreferenceFragment extends ListSummaryPreferenceFragme
   private static final String TAG = NotificationsPreferenceFragment.class.getSimpleName();
 
   @Inject
-  PushManager pushManager;
+  PushRegistry pushRegistry;
 
   @Override
   public void onCreate(Bundle paramBundle) {
@@ -49,7 +49,7 @@ public class NotificationsPreferenceFragment extends ListSummaryPreferenceFragme
     this.findPreference(fcmKey)
       .setOnPreferenceChangeListener((preference, newValue) -> {
         TextSecurePreferences.setPushEnabled(getContext(), (boolean) newValue);
-        pushManager.refresh(true);
+        pushRegistry.refresh(true);
         return true;
       });
 

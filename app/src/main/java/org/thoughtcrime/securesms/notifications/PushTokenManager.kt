@@ -2,22 +2,24 @@ package org.thoughtcrime.securesms.notifications
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Job
 import org.session.libsession.utilities.TextSecurePreferences
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class FcmTokenManager @Inject constructor(
+class PushTokenManager @Inject constructor(
     @ApplicationContext private val context: Context,
+    private val tokenFetcher: TokenFetcher
 ) {
     private val expiryManager =  ExpiryManager(context)
 
-    val isUsingFCM get() = TextSecurePreferences.isPushEnabled(context)
+    val isPushEnabled get() = TextSecurePreferences.isPushEnabled(context)
 
     var fcmToken
-        get() = TextSecurePreferences.getFCMToken(context)
+        get() = TextSecurePreferences.getPushToken(context)
         set(value) {
-            TextSecurePreferences.setFCMToken(context, value)
+            TextSecurePreferences.setPushToken(context, value)
             if (value != null) markTime() else clearTime()
         }
 
@@ -28,4 +30,5 @@ class FcmTokenManager @Inject constructor(
     private fun isExpired() = expiryManager.isExpired()
 
     fun isInvalid(): Boolean = fcmToken == null || isExpired()
+    fun fetchToken(): Job = tokenFetcher.fetch()
 }

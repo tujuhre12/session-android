@@ -9,26 +9,25 @@ import javax.inject.Inject
 
 private const val TAG = "FirebasePushNotificationService"
 @AndroidEntryPoint
-class FirebasePushNotificationService : FirebaseMessagingService() {
+class FirebasePushService : FirebaseMessagingService() {
 
-    @Inject lateinit var pushManager: PushManager
-    @Inject lateinit var pushHandler: PushHandler
+    @Inject lateinit var prefs: TextSecurePreferences
+    @Inject lateinit var pushReceiver: PushReceiver
+    @Inject lateinit var pushRegistry: PushRegistry
 
     override fun onNewToken(token: String) {
-        super.onNewToken(token)
-        TextSecurePreferences.getLocalNumber(this) ?: return
-        if (TextSecurePreferences.getFCMToken(this) != token) {
-            pushManager.refresh(true)
-        }
+        if (token == prefs.getPushToken()) return
+
+        pushRegistry.refresh(token, true)
     }
 
     override fun onMessageReceived(message: RemoteMessage) {
         Log.d(TAG, "Received a push notification.")
-        pushHandler.onPush(message.data)
+        pushReceiver.onPush(message.data)
     }
 
     override fun onDeletedMessages() {
         Log.d(TAG, "Called onDeletedMessages.")
-        pushManager.refresh(true)
+        pushRegistry.refresh(true)
     }
 }

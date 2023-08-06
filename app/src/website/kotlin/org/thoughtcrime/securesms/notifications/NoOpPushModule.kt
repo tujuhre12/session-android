@@ -9,7 +9,5 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 class NoOpPushModule {
-    @Provides
-    @Singleton
-    fun provideNoOpManager(): PushManager = NoOpPushManager()
+
 }

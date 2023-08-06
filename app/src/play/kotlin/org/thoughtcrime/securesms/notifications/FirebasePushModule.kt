@@ -9,5 +9,5 @@ import dagger.hilt.components.SingletonComponent
 @InstallIn(SingletonComponent::class)
 abstract class FirebaseBindingModule {
     @Binds
-    abstract fun bindPushManager(firebasePushManager: FirebasePushManager): PushManager
+    abstract fun bindTokenFetcher(tokenFetcher: FirebaseTokenFetcher): TokenFetcher
 }

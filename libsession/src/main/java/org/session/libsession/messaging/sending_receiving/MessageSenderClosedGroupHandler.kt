@@ -8,7 +8,7 @@ import nl.komponents.kovenant.deferred
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.messages.control.ClosedGroupControlMessage
 import org.session.libsession.messaging.sending_receiving.MessageSender.Error
-import org.session.libsession.messaging.sending_receiving.notifications.PushManagerV1
+import org.session.libsession.messaging.sending_receiving.notifications.PushRegistryV1
 import org.session.libsession.messaging.sending_receiving.pollers.ClosedGroupPollerV2
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
@@ -94,7 +94,7 @@ fun MessageSender.create(
         // Add the group to the config now that it was successfully created
         storage.createInitialConfigGroup(groupPublicKey, name, GroupUtil.createConfigMemberMap(members, admins), sentTime, encryptionKeyPair)
         // Notify the PN server
-        PushManagerV1.register(device = device, publicKey = userPublicKey)
+        PushRegistryV1.register(device = device, publicKey = userPublicKey)
         // Start polling
         ClosedGroupPollerV2.shared.startPolling(groupPublicKey)
         // Fulfill the promise

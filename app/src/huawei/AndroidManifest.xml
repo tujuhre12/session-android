@@ -4,7 +4,7 @@
 
     <application tools:node="merge">
         <service
-            android:name="org.thoughtcrime.securesms.notifications.HuaweiPushNotificationService"
+            android:name="org.thoughtcrime.securesms.notifications.HuaweiPushService"
             android:enabled="true"
             android:exported="false">
             <intent-filter>

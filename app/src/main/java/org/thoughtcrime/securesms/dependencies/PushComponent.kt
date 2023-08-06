@@ -8,5 +8,5 @@ import org.thoughtcrime.securesms.notifications.PushManager
 @EntryPoint
 @InstallIn(SingletonComponent::class)
 interface PushComponent {
-    fun providePushManager(): PushManager
+
 }

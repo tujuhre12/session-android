@@ -18,8 +18,8 @@ import org.session.libsignal.utilities.retryIfNeeded
 import org.session.libsignal.utilities.sideEffect
 
 @SuppressLint("StaticFieldLeak")
-object PushManagerV1 {
-    private const val TAG = "PushManagerV1"
+object PushRegistryV1 {
+    private val TAG = PushRegistryV1::class.java.name
 
     val context = MessagingModuleConfiguration.shared.context
     private const val maxRetryCount = 4
@@ -29,7 +29,7 @@ object PushManagerV1 {
     fun register(
         device: Device,
         isUsingFCM: Boolean = TextSecurePreferences.isPushEnabled(context),
-        token: String? = TextSecurePreferences.getFCMToken(context),
+        token: String? = TextSecurePreferences.getPushToken(context),
         publicKey: String? = TextSecurePreferences.getLocalNumber(context),
         legacyGroupPublicKeys: Collection<String> = MessagingModuleConfiguration.shared.storage.getAllClosedGroupPublicKeys()
     ): Promise<*, Exception> = when {
@@ -84,7 +84,7 @@ object PushManagerV1 {
     fun unregister(): Promise<*, Exception> {
         Log.d(TAG, "unregisterV1 requested")
 
-        val token = TextSecurePreferences.getFCMToken(context) ?: emptyPromise()
+        val token = TextSecurePreferences.getPushToken(context) ?: emptyPromise()
 
         return retryIfNeeded(maxRetryCount) {
             val parameters = mapOf("token" to token)

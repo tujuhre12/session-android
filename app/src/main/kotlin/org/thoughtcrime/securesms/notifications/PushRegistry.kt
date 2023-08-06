@@ -3,9 +3,10 @@ package org.thoughtcrime.securesms.notifications
 import android.content.Context
 import com.goterl.lazysodium.utils.KeyPair
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Job
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.combine.and
-import org.session.libsession.messaging.sending_receiving.notifications.PushManagerV1
+import org.session.libsession.messaging.sending_receiving.notifications.PushRegistryV1
 import org.session.libsession.utilities.Device
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
@@ -18,12 +19,25 @@ import javax.inject.Singleton
 private const val TAG = "GenericPushManager"
 
 @Singleton
-class GenericPushManager @Inject constructor(
+class PushRegistry @Inject constructor(
     @ApplicationContext private val context: Context,
     private val device: Device,
-    private val tokenManager: FcmTokenManager,
-    private val pushManagerV2: PushManagerV2,
+    private val tokenManager: PushTokenManager,
+    private val pushRegistryV2: PushRegistryV2,
 ) {
+
+    private var firebaseInstanceIdJob: Job? = null
+
+    fun refresh(force: Boolean) {
+        Log.d(TAG, "refresh() called with: force = $force")
+
+        firebaseInstanceIdJob?.apply {
+            if (force) cancel() else if (isActive) return
+        }
+
+        firebaseInstanceIdJob = tokenManager.fetchToken()
+    }
+
     fun refresh(token: String?, force: Boolean): Promise<*, Exception> {
         Log.d(TAG, "refresh($token, $force) called")
 
@@ -32,7 +46,7 @@ class GenericPushManager @Inject constructor(
         val userEdKey = KeyPairUtilities.getUserED25519KeyPair(context) ?: return emptyPromise()
 
         return when {
-            tokenManager.isUsingFCM -> register(force, token, userPublicKey, userEdKey)
+            tokenManager.isPushEnabled -> register(force, token, userPublicKey, userEdKey)
             tokenManager.requiresUnregister -> unregister(token, userPublicKey, userEdKey)
             else -> emptyPromise()
         }
@@ -68,7 +82,7 @@ class GenericPushManager @Inject constructor(
             "register() called with: token = $token, publicKey = $publicKey, userEd25519Key = $userEd25519Key, namespaces = $namespaces"
         )
 
-        val v1 = PushManagerV1.register(
+        val v1 = PushRegistryV1.register(
             device = device,
             token = token,
             publicKey = publicKey
@@ -76,7 +90,7 @@ class GenericPushManager @Inject constructor(
             Log.e(TAG, "register v1 failed", it)
         }
 
-        val v2 = pushManagerV2.register(
+        val v2 = pushRegistryV2.register(
             device, token, publicKey, userEd25519Key, namespaces
         ) fail {
             Log.e(TAG, "register v2 failed", it)
@@ -92,7 +106,7 @@ class GenericPushManager @Inject constructor(
         token: String,
         userPublicKey: String,
         userEdKey: KeyPair
-    ): Promise<*, Exception> = PushManagerV1.unregister() and pushManagerV2.unregister(
+    ): Promise<*, Exception> = PushRegistryV1.unregister() and pushRegistryV2.unregister(
         device, token, userPublicKey, userEdKey
     ) fail {
         Log.e(TAG, "unregisterBoth failed", it)

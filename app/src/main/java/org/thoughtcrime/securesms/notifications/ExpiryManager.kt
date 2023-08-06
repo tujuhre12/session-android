@@ -21,8 +21,8 @@ class ExpiryManager(
     }
 
     private var time
-        get() = TextSecurePreferences.getLastFCMUploadTime(context)
-        set(value) = TextSecurePreferences.setLastFCMUploadTime(context, value)
+        get() = TextSecurePreferences.getPushRegisterTime(context)
+        set(value) = TextSecurePreferences.setPushRegisterTime(context, value)
 
     private fun currentTime() = System.currentTimeMillis()
 }
