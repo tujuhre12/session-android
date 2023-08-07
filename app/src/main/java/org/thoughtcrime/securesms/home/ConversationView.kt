@@ -103,7 +103,7 @@ class ConversationView : LinearLayout {
             R.drawable.ic_notifications_mentions
         }
         binding.muteIndicatorImageView.setImageResource(drawableRes)
-        binding.snippetTextView.text = highlightMentions(getSnippet(thread), thread.threadId, context)
+        binding.snippetTextView.text = highlightMentions(thread.getSnippet(), thread.threadId, context)
         binding.snippetTextView.typeface = if (unreadCount > 0 && !thread.isRead) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
         binding.snippetTextView.visibility = if (isTyping) View.GONE else View.VISIBLE
         if (isTyping) {
@@ -136,20 +136,16 @@ class ConversationView : LinearLayout {
         else -> recipient.toShortString() // Internally uses the Contact API
     }
 
-    private fun getSnippet(thread: ThreadRecord): CharSequence = thread.run {
-        val body = getDisplayBody(context)
+    private fun ThreadRecord.getSnippet(): CharSequence =
+        concatSnippet(getSnippetPrefix(), getDisplayBody(context))
 
-        when {
-            recipient.isLocalNumber || lastMessage?.isControlMessage == true -> body // Note to self
-            lastMessage?.isOutgoing == true -> {
-                TextUtils.concat(resources.getString(R.string.MessageRecord_you), ": ", body)
-            }
-            else -> lastMessage
-                ?.individualRecipient
-                ?.toShortString()
-                ?.let { TextUtils.concat(it, ": ", body) }
-                ?: body
-        }
+    private fun concatSnippet(prefix: CharSequence?, body: CharSequence): CharSequence =
+        prefix?.let { TextUtils.concat(it, ": ", body) } ?: body
+
+    private fun ThreadRecord.getSnippetPrefix(): CharSequence? = when {
+        recipient.isLocalNumber || lastMessage?.isControlMessage == true -> null
+        lastMessage?.isOutgoing == true -> resources.getString(R.string.MessageRecord_you)
+        else -> lastMessage?.individualRecipient?.toShortString()
     }
     // endregion
 }
