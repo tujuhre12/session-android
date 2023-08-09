@@ -4,6 +4,8 @@ import android.content.Context
 import com.goterl.lazysodium.utils.KeyPair
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.combine.and
 import org.session.libsession.messaging.sending_receiving.notifications.PushRegistryV1
@@ -22,8 +24,10 @@ private val TAG = PushRegistry::class.java.name
 class PushRegistry @Inject constructor(
     @ApplicationContext private val context: Context,
     private val device: Device,
-    private val tokenManager: PushTokenManager,
+    private val tokenManager: TokenManager,
     private val pushRegistryV2: PushRegistryV2,
+    private val prefs: TextSecurePreferences,
+    private val tokenFetcher: TokenFetcher,
 ) {
 
     private var pushRegistrationJob: Job? = null
@@ -32,41 +36,32 @@ class PushRegistry @Inject constructor(
         Log.d(TAG, "refresh() called with: force = $force")
 
         pushRegistrationJob?.apply {
-            if (force) cancel() else if (isActive) return
+            if (force) cancel() else if (isActive || !tokenManager.hasValidRegistration) return
         }
 
-        pushRegistrationJob = tokenManager.fetchToken()
+        pushRegistrationJob = MainScope().launch {
+            register(tokenFetcher.fetch()) fail {
+                Log.e(TAG, "register failed", it)
+            }
+        }
     }
 
-    fun refresh(token: String?, force: Boolean): Promise<*, Exception> {
-        Log.d(TAG, "refresh($token, $force) called")
+    fun register(token: String?): Promise<*, Exception> {
+        Log.d(TAG, "refresh($token) called")
 
-        token ?: return emptyPromise()
-        val userPublicKey = TextSecurePreferences.getLocalNumber(context) ?: return emptyPromise()
+        if (token?.isNotEmpty() != true) return emptyPromise()
+
+        prefs.setPushToken(token)
+
+        val userPublicKey = prefs.getLocalNumber() ?: return emptyPromise()
         val userEdKey = KeyPairUtilities.getUserED25519KeyPair(context) ?: return emptyPromise()
 
         return when {
-            tokenManager.isPushEnabled -> register(force, token, userPublicKey, userEdKey)
-            tokenManager.requiresUnregister -> unregister(token, userPublicKey, userEdKey)
+            prefs.isPushEnabled() -> register(token, userPublicKey, userEdKey)
+            tokenManager.isRegistered -> unregister(token, userPublicKey, userEdKey)
             else -> emptyPromise()
         }
     }
-
-    /**
-     * Register for push notifications if:
-     *   force is true
-     *   there is no FCM Token
-     *   FCM Token has expired
-     */
-    private fun register(
-        force: Boolean,
-        token: String,
-        publicKey: String,
-        userEd25519Key: KeyPair,
-        namespaces: List<Int> = listOf(Namespace.DEFAULT)
-    ): Promise<*, Exception> = if (force || tokenManager.isInvalid()) {
-        register(token, publicKey, userEd25519Key, namespaces)
-    } else emptyPromise()
 
     /**
      * Register for push notifications.
@@ -77,7 +72,7 @@ class PushRegistry @Inject constructor(
         userEd25519Key: KeyPair,
         namespaces: List<Int> = listOf(Namespace.DEFAULT)
     ): Promise<*, Exception> {
-        android.util.Log.d(
+        Log.d(
             TAG,
             "register() called with: token = $token, publicKey = $publicKey, userEd25519Key = $userEd25519Key, namespaces = $namespaces"
         )
@@ -97,8 +92,8 @@ class PushRegistry @Inject constructor(
         }
 
         return v1 and v2 success {
-            Log.d(TAG, "registerBoth success... saving token!!")
-            tokenManager.fcmToken = token
+            Log.d(TAG, "register v1 & v2 success")
+            tokenManager.register()
         }
     }
 
@@ -111,6 +106,6 @@ class PushRegistry @Inject constructor(
     ) fail {
         Log.e(TAG, "unregisterBoth failed", it)
     } success {
-        tokenManager.fcmToken = null
+        tokenManager.unregister()
     }
 }

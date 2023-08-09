@@ -18,7 +18,7 @@ class FirebasePushService : FirebaseMessagingService() {
     override fun onNewToken(token: String) {
         if (token == prefs.getPushToken()) return
 
-        pushRegistry.refresh(token, true)
+        pushRegistry.register(token)
     }
 
     override fun onMessageReceived(message: RemoteMessage) {

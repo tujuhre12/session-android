@@ -6,17 +6,21 @@ import org.session.libsession.utilities.TextSecurePreferences
 import javax.inject.Inject
 import javax.inject.Singleton
 
-class ExpiryManager(
-    private val context: Context,
-    private val interval: Int = 12 * 60 * 60 * 1000
-) {
-    fun isExpired() = currentTime() > time + interval
+private const val INTERVAL: Int = 12 * 60 * 60 * 1000
 
-    fun markTime() {
+@Singleton
+class TokenManager @Inject constructor(
+    @ApplicationContext private val context: Context,
+) {
+    val hasValidRegistration get() = isRegistered && !isExpired
+    val isRegistered get() = time > 0
+    private val isExpired get() = currentTime() > time + INTERVAL
+
+    fun register() {
         time = currentTime()
     }
 
-    fun clearTime() {
+    fun unregister() {
         time = 0
     }
 

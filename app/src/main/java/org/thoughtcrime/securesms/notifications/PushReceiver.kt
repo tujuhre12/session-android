@@ -75,7 +75,7 @@ class PushReceiver @Inject constructor(@ApplicationContext val context: Context)
             else -> this["ENCRYPTED_DATA"]?.let(Base64::decode)
         }
 
-    fun decrypt(encPayload: ByteArray): ByteArray? {
+    private fun decrypt(encPayload: ByteArray): ByteArray? {
         Log.d(TAG, "decrypt() called")
 
         val encKey = getOrCreateNotificationKey()

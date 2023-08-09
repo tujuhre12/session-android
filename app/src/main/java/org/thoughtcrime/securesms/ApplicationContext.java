@@ -427,11 +427,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     }
 
     private static class ProviderInitializationException extends RuntimeException { }
-
-    public void registerForPnIfNeeded(final Boolean force) {
-        pushRegistry.refresh(force);
-    }
-
     private void setUpPollingIfNeeded() {
         String userPublicKey = TextSecurePreferences.getLocalNumber(this);
         if (userPublicKey == null) return;
