@@ -19,20 +19,17 @@ import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.SSKEnvironment.MessageExpirationManagerProtocol
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.expiryType
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsession.utilities.typeRadioIndex
-import org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
-import org.thoughtcrime.securesms.preferences.RadioOption
+import org.thoughtcrime.securesms.preferences.ExpirationRadioOption
 import kotlin.reflect.KClass
 
 class ExpirationSettingsViewModel(
     private val threadId: Long,
-    private val afterReadOptions: List<RadioOption>,
-    private val afterSendOptions: List<RadioOption>,
+    private val afterReadOptions: List<ExpirationRadioOption>,
+    private val afterSendOptions: List<ExpirationRadioOption>,
     private val textSecurePreferences: TextSecurePreferences,
     private val messageExpirationManager: MessageExpirationManagerProtocol,
     private val threadDb: ThreadDatabase,
@@ -48,14 +45,14 @@ class ExpirationSettingsViewModel(
     private val _recipient = MutableStateFlow<Recipient?>(null)
     val recipient: StateFlow<Recipient?> = _recipient
 
-    private val _selectedExpirationType = MutableStateFlow(-1)
-    val selectedExpirationType: StateFlow<Int> = _selectedExpirationType
+    private val _selectedExpirationType: MutableStateFlow<ExpiryMode> = MutableStateFlow(ExpiryMode.NONE)
+    val selectedExpirationType: StateFlow<ExpiryMode> = _selectedExpirationType
 
     private val _selectedExpirationTimer = MutableStateFlow(afterSendOptions.firstOrNull())
-    val selectedExpirationTimer: StateFlow<RadioOption?> = _selectedExpirationTimer
+    val selectedExpirationTimer: StateFlow<ExpirationRadioOption?> = _selectedExpirationTimer
 
-    private val _expirationTimerOptions = MutableStateFlow<List<RadioOption>>(emptyList())
-    val expirationTimerOptions: StateFlow<List<RadioOption>> = _expirationTimerOptions
+    private val _expirationTimerOptions = MutableStateFlow<List<ExpirationRadioOption>>(emptyList())
+    val expirationTimerOptions: StateFlow<List<ExpirationRadioOption>> = _expirationTimerOptions
 
     init {
         // SETUP
@@ -70,24 +67,26 @@ class ExpirationSettingsViewModel(
             _uiState.update { currentUiState ->
                 currentUiState.copy(
                     isSelfAdmin = groupInfo == null || groupInfo.admins.any{ it.serialize() == textSecurePreferences.getLocalNumber() },
-                    showExpirationTypeSelector = !ExpirationConfiguration.isNewConfigEnabled || (recipient?.isContactRecipient == true && !recipient.isLocalNumber)
+                    showExpirationTypeSelector = true
                 )
             }
             _selectedExpirationType.value = if (ExpirationConfiguration.isNewConfigEnabled) {
-                expirationType.typeRadioIndex()
+                expirationType ?: ExpiryMode.NONE
             } else {
-                if (expirationType != null && expirationType != ExpiryMode.NONE) 0 else -1
+                if (expirationType != null && expirationType != ExpiryMode.NONE)
+                    ExpiryMode.Legacy(expirationType.expirySeconds)
+                else ExpiryMode.NONE
             }
             _selectedExpirationTimer.value = when(expirationType) {
-                is ExpiryMode.AfterSend -> afterSendOptions.find { it.value.toIntOrNull() == expirationType.expirySeconds.toInt() }
-                is ExpiryMode.AfterRead -> afterReadOptions.find { it.value.toIntOrNull() == expirationType.expirySeconds.toInt() }
+                is ExpiryMode.AfterSend -> afterSendOptions.find { it.value == expirationType }
+                is ExpiryMode.AfterRead -> afterReadOptions.find { it.value == expirationType }
                 else -> afterSendOptions.firstOrNull()
             }
         }
         selectedExpirationType.mapLatest {
             when (it) {
-                0, ExpirationType.DELETE_AFTER_SEND.number -> afterSendOptions
-                ExpirationType.DELETE_AFTER_READ.number -> afterReadOptions
+                is ExpiryMode.Legacy, is ExpiryMode.AfterSend -> afterSendOptions
+                is ExpiryMode.AfterRead -> afterReadOptions
                 else -> emptyList()
             }
         }.onEach { options ->
@@ -100,12 +99,12 @@ class ExpirationSettingsViewModel(
         }.launchIn(viewModelScope)
     }
 
-    fun onExpirationTypeSelected(option: RadioOption) {
-        _selectedExpirationType.value = option.value.toIntOrNull() ?: -1
+    fun onExpirationTypeSelected(option: ExpirationRadioOption) {
+        _selectedExpirationType.value = option.value
         _selectedExpirationTimer.value = _expirationTimerOptions.value.firstOrNull()
     }
 
-    fun onExpirationTimerSelected(option: RadioOption) {
+    fun onExpirationTimerSelected(option: ExpirationRadioOption) {
         _selectedExpirationTimer.value = option
     }
 
@@ -116,15 +115,9 @@ class ExpirationSettingsViewModel(
     }
 
     fun onSetClick() = viewModelScope.launch {
-        var typeValue = _selectedExpirationType.value
-        if (typeValue == 0) {
-            typeValue = ExpirationType.DELETE_AFTER_READ_VALUE
-        }
-        val expirationTimer = _selectedExpirationTimer.value?.value?.toIntOrNull() ?: 0
-        val expiryTypeClass = typeValue.expiryType()
-        val expiryMode = expiryTypeClass?.withTime(expirationTimer.toLong())
+        val expiryMode = _selectedExpirationTimer.value?.value ?: ExpiryMode.NONE
         val address = recipient.value?.address
-        if (address == null || (expirationConfig?.expiryMode?.javaClass == expiryTypeClass && expirationConfig?.expiryMode?.expirySeconds?.toInt() == expirationTimer)) {
+        if (address == null || (expirationConfig?.expiryMode != expiryMode)) {
             _uiState.update {
                 it.copy(settingsSaved = false)
             }
@@ -134,7 +127,7 @@ class ExpirationSettingsViewModel(
         val expiryChangeTimestampMs = SnodeAPI.nowWithOffset
         storage.setExpirationConfiguration(ExpirationConfiguration(threadId, expiryMode, expiryChangeTimestampMs))
 
-        val message = ExpirationTimerUpdate(expirationTimer)
+        val message = ExpirationTimerUpdate(expiryMode.expirySeconds.toInt())
         message.sender = textSecurePreferences.getLocalNumber()
         message.recipient = address.serialize()
         message.sentTimestamp = expiryChangeTimestampMs
@@ -150,16 +143,16 @@ class ExpirationSettingsViewModel(
     interface AssistedFactory {
         fun create(
             threadId: Long,
-            @Assisted("afterRead") afterReadOptions: List<RadioOption>,
-            @Assisted("afterSend") afterSendOptions: List<RadioOption>
+            @Assisted("afterRead") afterReadOptions: List<ExpirationRadioOption>,
+            @Assisted("afterSend") afterSendOptions: List<ExpirationRadioOption>
         ): Factory
     }
 
     @Suppress("UNCHECKED_CAST")
     class Factory @AssistedInject constructor(
         @Assisted private val threadId: Long,
-        @Assisted("afterRead") private val afterReadOptions: List<RadioOption>,
-        @Assisted("afterSend") private val afterSendOptions: List<RadioOption>,
+        @Assisted("afterRead") private val afterReadOptions: List<ExpirationRadioOption>,
+        @Assisted("afterSend") private val afterSendOptions: List<ExpirationRadioOption>,
         private val textSecurePreferences: TextSecurePreferences,
         private val messageExpirationManager: MessageExpirationManagerProtocol,
         private val threadDb: ThreadDatabase,

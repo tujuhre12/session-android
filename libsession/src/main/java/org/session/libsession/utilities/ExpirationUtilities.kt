@@ -8,6 +8,7 @@ fun ExpiryMode?.typeRadioIndex(): Int {
     return when (this) {
         is ExpiryMode.AfterRead -> SignalServiceProtos.Content.ExpirationType.DELETE_AFTER_READ_VALUE
         is ExpiryMode.AfterSend -> SignalServiceProtos.Content.ExpirationType.DELETE_AFTER_SEND_VALUE
+        is ExpiryMode.Legacy -> SignalServiceProtos.Content.ExpirationType.UNKNOWN_VALUE
         else -> -1
     }
 }
@@ -16,7 +17,7 @@ fun SignalServiceProtos.Content.ExpirationType?.expiryMode(durationSeconds: Long
     null -> null
     SignalServiceProtos.Content.ExpirationType.DELETE_AFTER_READ -> ExpiryMode.AfterRead(durationSeconds)
     SignalServiceProtos.Content.ExpirationType.DELETE_AFTER_SEND -> ExpiryMode.AfterSend(durationSeconds)
-    SignalServiceProtos.Content.ExpirationType.UNKNOWN -> null
+    SignalServiceProtos.Content.ExpirationType.UNKNOWN -> ExpiryMode.Legacy(durationSeconds)
 }
 
 fun Int.expiryType(): KClass<out ExpiryMode>? {
@@ -24,6 +25,7 @@ fun Int.expiryType(): KClass<out ExpiryMode>? {
     return when (this) {
         SignalServiceProtos.Content.ExpirationType.DELETE_AFTER_READ_VALUE -> ExpiryMode.AfterSend::class
         SignalServiceProtos.Content.ExpirationType.DELETE_AFTER_SEND_VALUE -> ExpiryMode.AfterRead::class
+        SignalServiceProtos.Content.ExpirationType.UNKNOWN_VALUE -> ExpiryMode.Legacy::class
         else -> ExpiryMode.NONE::class
     }
 }

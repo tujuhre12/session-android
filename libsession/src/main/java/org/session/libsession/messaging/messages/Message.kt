@@ -70,7 +70,7 @@ abstract class Message {
                     when (expiryMode) {
                         is ExpiryMode.AfterSend -> expirationType = ExpirationType.DELETE_AFTER_SEND
                         is ExpiryMode.AfterRead -> expirationType = ExpirationType.DELETE_AFTER_READ
-                        ExpiryMode.NONE -> { /* do nothing */ }
+                        is ExpiryMode.Legacy, ExpiryMode.NONE -> { /* do nothing */ }
                     }
                 }
             }
