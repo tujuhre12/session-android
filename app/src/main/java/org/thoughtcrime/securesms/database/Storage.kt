@@ -1512,18 +1512,12 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
             }
             recipientDb.setApproved(sender, true)
             recipientDb.setApprovedMe(sender, true)
-            val expirationConfig = getExpirationConfiguration(threadId)
-            val expiryMode = expirationConfig?.expiryMode
-            val expiresInMillis = (expiryMode?.expirySeconds ?: 0) * 1000L
-            val expireStartedAt = if (expiryMode is ExpiryMode.AfterSend) {
-                response.sentTimestamp!!
-            } else 0
             val message = IncomingMediaMessage(
                 sender.address,
                 response.sentTimestamp!!,
                 -1,
-                expiresInMillis,
-                expireStartedAt,
+                0,
+                0,
                 false,
                 false,
                 true,
