@@ -100,4 +100,11 @@ class ExpirationRadioOption(
     subtitle,
     enabled,
     contentDescription
-)
+) {
+    fun copy(value: ExpiryMode = this.value,
+             title: String = this.title,
+             subtitle: String? = this.subtitle,
+             enabled: Boolean = this.enabled,
+             contentDescription: String = this.contentDescription) =
+        ExpirationRadioOption(value, title, subtitle, enabled, contentDescription)
+}

@@ -46,9 +46,9 @@ class ClearAllDataDialog : DialogFragment() {
 
     private fun createView(): View {
         binding = DialogClearAllDataBinding.inflate(LayoutInflater.from(requireContext()))
-        val device = RadioOption("deviceOnly", requireContext().getString(R.string.dialog_clear_all_data_clear_device_only))
-        val network = RadioOption("deviceAndNetwork", requireContext().getString(R.string.dialog_clear_all_data_clear_device_and_network))
-        var selectedOption = device
+        val device = StringRadioOption("deviceOnly", requireContext().getString(R.string.dialog_clear_all_data_clear_device_only))
+        val network = StringRadioOption("deviceAndNetwork", requireContext().getString(R.string.dialog_clear_all_data_clear_device_and_network))
+        var selectedOption: RadioOption<String> = device
         val optionAdapter = RadioOptionAdapter { selectedOption = it }
         binding.recyclerView.apply {
             itemAnimator = null

@@ -24,12 +24,13 @@ import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.preferences.ExpirationRadioOption
+import org.thoughtcrime.securesms.preferences.RadioOption
 import kotlin.reflect.KClass
 
 class ExpirationSettingsViewModel(
     private val threadId: Long,
-    private val afterReadOptions: List<ExpirationRadioOption>,
-    private val afterSendOptions: List<ExpirationRadioOption>,
+    private val afterReadOptions: List<RadioOption<ExpiryMode>>,
+    private val afterSendOptions: List<RadioOption<ExpiryMode>>,
     private val textSecurePreferences: TextSecurePreferences,
     private val messageExpirationManager: MessageExpirationManagerProtocol,
     private val threadDb: ThreadDatabase,
@@ -49,10 +50,10 @@ class ExpirationSettingsViewModel(
     val selectedExpirationType: StateFlow<ExpiryMode> = _selectedExpirationType
 
     private val _selectedExpirationTimer = MutableStateFlow(afterSendOptions.firstOrNull())
-    val selectedExpirationTimer: StateFlow<ExpirationRadioOption?> = _selectedExpirationTimer
+    val selectedExpirationTimer: StateFlow<RadioOption<ExpiryMode>?> = _selectedExpirationTimer
 
-    private val _expirationTimerOptions = MutableStateFlow<List<ExpirationRadioOption>>(emptyList())
-    val expirationTimerOptions: StateFlow<List<ExpirationRadioOption>> = _expirationTimerOptions
+    private val _expirationTimerOptions = MutableStateFlow<List<RadioOption<ExpiryMode>>>(emptyList())
+    val expirationTimerOptions: StateFlow<List<RadioOption<ExpiryMode>>> = _expirationTimerOptions
 
     init {
         // SETUP
@@ -92,19 +93,23 @@ class ExpirationSettingsViewModel(
         }.onEach { options ->
             val enabled = _uiState.value.isSelfAdmin || recipient.value?.isClosedGroupRecipient == true
             _expirationTimerOptions.value = if (ExpirationConfiguration.isNewConfigEnabled && (recipient.value?.isLocalNumber == true || recipient.value?.isClosedGroupRecipient == true)) {
-                options.map { it.copy(enabled = enabled) }
+                options.filterIsInstance<ExpirationRadioOption>().map {
+                    it.copy(enabled = enabled)
+                }
             } else {
-                options.slice(1 until options.size).map { it.copy(enabled = enabled) }
+                options.slice(1 until options.size).filterIsInstance<ExpirationRadioOption>().map {
+                    it.copy(enabled = enabled)
+                }
             }
         }.launchIn(viewModelScope)
     }
 
-    fun onExpirationTypeSelected(option: ExpirationRadioOption) {
+    fun onExpirationTypeSelected(option: RadioOption<ExpiryMode>) {
         _selectedExpirationType.value = option.value
         _selectedExpirationTimer.value = _expirationTimerOptions.value.firstOrNull()
     }
 
-    fun onExpirationTimerSelected(option: ExpirationRadioOption) {
+    fun onExpirationTimerSelected(option: RadioOption<ExpiryMode>) {
         _selectedExpirationTimer.value = option
     }
 
