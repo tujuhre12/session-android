@@ -40,14 +40,14 @@ class PushRegistry @Inject constructor(
         }
 
         pushRegistrationJob = MainScope().launch {
-            register(tokenFetcher.fetch()) fail {
-                Log.e(TAG, "register failed", it)
+            register(tokenFetcher.fetch()) fail { e ->
+                Log.e(TAG, "register failed", e)
             }
         }
     }
 
     fun register(token: String?): Promise<*, Exception> {
-        Log.d(TAG, "refresh($token) called")
+        Log.d(TAG, "refresh() called")
 
         if (token?.isNotEmpty() != true) return emptyPromise()
 
@@ -72,10 +72,7 @@ class PushRegistry @Inject constructor(
         userEd25519Key: KeyPair,
         namespaces: List<Int> = listOf(Namespace.DEFAULT)
     ): Promise<*, Exception> {
-        Log.d(
-            TAG,
-            "register() called with: token = $token, publicKey = $publicKey, userEd25519Key = $userEd25519Key, namespaces = $namespaces"
-        )
+        Log.d(TAG, "register() called")
 
         val v1 = PushRegistryV1.register(
             device = device,

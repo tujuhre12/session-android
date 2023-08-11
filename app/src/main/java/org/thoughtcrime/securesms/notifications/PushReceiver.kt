@@ -44,7 +44,7 @@ class PushReceiver @Inject constructor(@ApplicationContext val context: Context)
             val job = BatchMessageReceiveJob(listOf(MessageReceiveParameters(envelopeAsData)), null)
             JobQueue.shared.add(job)
         } catch (e: Exception) {
-            Log.d(TAG, "Failed to unwrap data for message due to error: $e.")
+            Log.d(TAG, "Failed to unwrap data for message due to error.", e)
         }
     }
 
@@ -67,7 +67,7 @@ class PushReceiver @Inject constructor(@ApplicationContext val context: Context)
                 try {
                     decrypt(Base64.decode(this["enc_payload"]))
                 } catch (e: Exception) {
-                    Log.e(TAG, "Invalid push notification: ${e.message}")
+                    Log.e(TAG, "Invalid push notification", e)
                     null
                 }
             }
@@ -91,20 +91,11 @@ class PushReceiver @Inject constructor(@ApplicationContext val context: Context)
         val metadataJson = (expectedList[0] as? BencodeString)?.value ?: error("no metadata")
         val metadata: PushNotificationMetadata = Json.decodeFromString(String(metadataJson))
 
-        val content: ByteArray? =
-            if (expectedList.size >= 2) (expectedList[1] as? BencodeString)?.value else null
-        // null content is valid only if we got a "data_too_long" flag
-        if (content == null)
-            check(metadata.data_too_long) { "missing message data, but no too-long flag" }
-        else
-            check(metadata.data_len == content.size) { "wrong message data size" }
-
-        Log.d(
-            TAG,
-            "Received push for ${metadata.account}/${metadata.namespace}, msg ${metadata.msg_hash}, ${metadata.data_len}B"
-        )
-
-        return content
+        return (expectedList.getOrNull(1) as? BencodeString)?.value.also {
+            // null content is valid only if we got a "data_too_long" flag
+            it?.let { check(metadata.data_len == it.size) { "wrong message data size" } }
+                ?: check(metadata.data_too_long) { "missing message data, but no too-long flag" }
+        }
     }
 
     fun getOrCreateNotificationKey(): Key {

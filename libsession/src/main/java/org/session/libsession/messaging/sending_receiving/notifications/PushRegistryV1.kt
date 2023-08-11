@@ -34,23 +34,17 @@ object PushRegistryV1 {
         legacyGroupPublicKeys: Collection<String> = MessagingModuleConfiguration.shared.storage.getAllClosedGroupPublicKeys()
     ): Promise<*, Exception> = when {
         isUsingFCM -> retryIfNeeded(maxRetryCount) {
-            android.util.Log.d(
-                TAG,
-                "register() called with: device = $device, isUsingFCM = $isUsingFCM, token = $token, publicKey = $publicKey, legacyGroupPublicKeys = $legacyGroupPublicKeys"
-            )
+            Log.d(TAG, "register() called")
             doRegister(token, publicKey, device, legacyGroupPublicKeys)
         } fail { exception ->
-            Log.d(TAG, "Couldn't register for FCM due to error: $exception... $device $token $publicKey $legacyGroupPublicKeys")
+            Log.d(TAG, "Couldn't register for FCM due to error", exception)
         }
 
         else -> emptyPromise()
     }
 
     private fun doRegister(token: String?, publicKey: String?, device: Device, legacyGroupPublicKeys: Collection<String>): Promise<*, Exception> {
-        android.util.Log.d(
-            TAG,
-            "doRegister() called with: token = $token, publicKey = $publicKey, device = $device, legacyGroupPublicKeys = $legacyGroupPublicKeys"
-        )
+        Log.d(TAG, "doRegister() called")
 
         token ?: return emptyPromise()
         publicKey ?: return emptyPromise()
