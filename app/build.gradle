@@ -41,6 +41,16 @@ def abiPostFix = ['armeabi-v7a' : 1,
                   'x86_64'      : 4,
                   'universal'   : 5]
 
+tasks.register('checkHuaweiEnabled') {
+    doFirst {
+        if (!project.hasProperty('huawei')) {
+            def message = 'Huawei is not enabled. Please add -Phuawei command line arg. See README.'
+            logger.error(message)
+            throw new GradleException(message)
+        }
+    }
+}
+
 android {
     compileSdkVersion androidCompileSdkVersion
     namespace 'network.loki.messenger'
@@ -143,6 +153,7 @@ android {
             buildConfigField "boolean", "PLAY_STORE_DISABLED", "true"
             buildConfigField "org.session.libsession.utilities.Device", "DEVICE", "org.session.libsession.utilities.Device.HUAWEI"
             buildConfigField "String", "NOPLAY_UPDATE_URL", "$ext.websiteUpdateUrl"
+
         }
 
         website {
@@ -180,6 +191,12 @@ android {
         dataBinding true
         viewBinding true
     }
+
+    applicationVariants.all { variant ->
+        if (variant.flavorName == 'huawei') {
+            variant.preBuild.dependsOn checkHuaweiEnabled
+        }
+    }
 }
 
 dependencies {
@@ -213,7 +230,7 @@ dependencies {
         exclude group: 'com.google.firebase', module: 'firebase-analytics'
         exclude group: 'com.google.firebase', module: 'firebase-measurement-connector'
     }
-    huaweiImplementation 'com.huawei.hms:push:6.7.0.300'
+    if (project.hasProperty('huawei')) huaweiImplementation 'com.huawei.hms:push:6.7.0.300'
     implementation 'com.google.android.exoplayer:exoplayer-core:2.9.1'
     implementation 'com.google.android.exoplayer:exoplayer-ui:2.9.1'
     implementation 'org.conscrypt:conscrypt-android:2.0.0'
