@@ -42,8 +42,9 @@ def abiPostFix = ['armeabi-v7a' : 1,
                   'universal'   : 5]
 
 tasks.register('checkHuaweiEnabled') {
+    ext.huaweiEnabled = project.hasProperty('huawei')
     doFirst {
-        if (!project.hasProperty('huawei')) {
+        if (!huaweiEnabled) {
             def message = 'Huawei is not enabled. Please add -Phuawei command line arg. See README.'
             logger.error(message)
             throw new GradleException(message)
@@ -194,7 +195,7 @@ android {
 
     applicationVariants.all { variant ->
         if (variant.flavorName == 'huawei') {
-            variant.preBuild.dependsOn checkHuaweiEnabled
+            variant.getPreBuildProvider().get().dependsOn checkHuaweiEnabled
         }
     }
 }
