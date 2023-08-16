@@ -41,17 +41,6 @@ def abiPostFix = ['armeabi-v7a' : 1,
                   'x86_64'      : 4,
                   'universal'   : 5]
 
-tasks.register('checkHuaweiEnabled') {
-    ext.huaweiEnabled = project.hasProperty('huawei')
-    doFirst {
-        if (!huaweiEnabled) {
-            def message = 'Huawei is not enabled. Please add -Phuawei command line arg. See README.'
-            logger.error(message)
-            throw new GradleException(message)
-        }
-    }
-}
-
 android {
     compileSdkVersion androidCompileSdkVersion
     namespace 'network.loki.messenger'
@@ -193,9 +182,19 @@ android {
         viewBinding true
     }
 
-    applicationVariants.all { variant ->
+    def huaweiEnabled = project.properties['huawei'] != null
+
+    applicationVariants.configureEach { variant ->
         if (variant.flavorName == 'huawei') {
-            variant.getPreBuildProvider().get().dependsOn checkHuaweiEnabled
+            variant.getPreBuildProvider().configure { task ->
+                task.doFirst {
+                    if (!huaweiEnabled) {
+                        def message = 'Huawei is not enabled. Please add -Phuawei command line arg. See BUILDING.md'
+                        logger.error(message)
+                        throw new GradleException(message)
+                    }
+                }
+            }
         }
     }
 }
