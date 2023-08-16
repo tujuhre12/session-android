@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.notifications
 import android.content.Context
 import com.goterl.lazysodium.utils.KeyPair
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
@@ -32,18 +33,20 @@ class PushRegistry @Inject constructor(
 
     private var pushRegistrationJob: Job? = null
 
-    fun refresh(force: Boolean) {
+    fun refresh(force: Boolean): Job {
         Log.d(TAG, "refresh() called with: force = $force")
 
         pushRegistrationJob?.apply {
-            if (force) cancel() else if (isActive || !tokenManager.hasValidRegistration) return
+            if (force) cancel() else if (isActive) return MainScope().launch {}
         }
 
-        pushRegistrationJob = MainScope().launch {
-            register(tokenFetcher.fetch()) fail { e ->
+        return MainScope().launch(Dispatchers.IO) {
+            try {
+                register(tokenFetcher.fetch()).get()
+            } catch (e: Exception) {
                 Log.e(TAG, "register failed", e)
             }
-        }
+        }.also { pushRegistrationJob = it }
     }
 
     fun register(token: String?): Promise<*, Exception> {

@@ -42,7 +42,18 @@ class NotificationsPreferenceFragment : ListSummaryPreferenceFragment() {
         fcmPreference.isChecked = prefs.isPushEnabled()
         fcmPreference.setOnPreferenceChangeListener { _: Preference, newValue: Any ->
                 prefs.setPushEnabled(newValue as Boolean)
-                pushRegistry.refresh(true)
+                val job = pushRegistry.refresh(true)
+
+                fcmPreference.isEnabled = false
+
+                lifecycleScope.launch(Dispatchers.IO) {
+                    job.join()
+
+                    withContext(Dispatchers.Main) {
+                        fcmPreference.isEnabled = true
+                    }
+                }
+
                 true
             }
         if (NotificationChannels.supported()) {
