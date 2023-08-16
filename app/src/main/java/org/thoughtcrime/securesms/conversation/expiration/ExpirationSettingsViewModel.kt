@@ -58,7 +58,10 @@ class ExpirationSettingsViewModel(
     init {
         // SETUP
         viewModelScope.launch {
-            expirationConfig = storage.getExpirationConfiguration(threadId)
+            expirationConfig = storage.getExpirationConfiguration(threadId)?.let {
+                if (ExpirationConfiguration.isNewConfigEnabled) it
+                else if (it)
+            }
             val expirationType = expirationConfig?.expiryMode
             val recipient = threadDb.getRecipientForThreadId(threadId)
             _recipient.value = recipient
@@ -121,8 +124,12 @@ class ExpirationSettingsViewModel(
 
     fun onSetClick() = viewModelScope.launch {
         val expiryMode = _selectedExpirationTimer.value?.value ?: ExpiryMode.NONE
+        val typeValue = expiryMode.let {
+            if (it is ExpiryMode.Legacy) ExpiryMode.AfterRead(it.expirySeconds)
+            else it
+        }
         val address = recipient.value?.address
-        if (address == null || (expirationConfig?.expiryMode != expiryMode)) {
+        if (address == null || (expirationConfig?.expiryMode == typeValue)) {
             _uiState.update {
                 it.copy(settingsSaved = false)
             }
@@ -130,13 +137,13 @@ class ExpirationSettingsViewModel(
         }
 
         val expiryChangeTimestampMs = SnodeAPI.nowWithOffset
-        storage.setExpirationConfiguration(ExpirationConfiguration(threadId, expiryMode, expiryChangeTimestampMs))
+        storage.setExpirationConfiguration(ExpirationConfiguration(threadId, typeValue, expiryChangeTimestampMs))
 
-        val message = ExpirationTimerUpdate(expiryMode.expirySeconds.toInt())
+        val message = ExpirationTimerUpdate(typeValue.expirySeconds.toInt())
         message.sender = textSecurePreferences.getLocalNumber()
         message.recipient = address.serialize()
         message.sentTimestamp = expiryChangeTimestampMs
-        messageExpirationManager.setExpirationTimer(message, expiryMode)
+        messageExpirationManager.setExpirationTimer(message, typeValue)
 
         MessageSender.send(message, address)
         _uiState.update {
