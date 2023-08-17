@@ -28,12 +28,12 @@ object PushRegistryV1 {
 
     fun register(
         device: Device,
-        isUsingFCM: Boolean = TextSecurePreferences.isPushEnabled(context),
+        isPushEnabled: Boolean = TextSecurePreferences.isPushEnabled(context),
         token: String? = TextSecurePreferences.getPushToken(context),
         publicKey: String? = TextSecurePreferences.getLocalNumber(context),
         legacyGroupPublicKeys: Collection<String> = MessagingModuleConfiguration.shared.storage.getAllClosedGroupPublicKeys()
     ): Promise<*, Exception> = when {
-        isUsingFCM -> retryIfNeeded(maxRetryCount) {
+        isPushEnabled -> retryIfNeeded(maxRetryCount) {
             Log.d(TAG, "register() called")
             doRegister(token, publicKey, device, legacyGroupPublicKeys)
         } fail { exception ->
@@ -99,17 +99,17 @@ object PushRegistryV1 {
 
     fun subscribeGroup(
         closedGroupPublicKey: String,
-        isUsingFCM: Boolean = TextSecurePreferences.isPushEnabled(context),
+        isPushEnabled: Boolean = TextSecurePreferences.isPushEnabled(context),
         publicKey: String = MessagingModuleConfiguration.shared.storage.getUserPublicKey()!!
-    ) = if (isUsingFCM) {
+    ) = if (isPushEnabled) {
         performGroupOperation("subscribe_closed_group", closedGroupPublicKey, publicKey)
     } else emptyPromise()
 
     fun unsubscribeGroup(
         closedGroupPublicKey: String,
-        isUsingFCM: Boolean = TextSecurePreferences.isPushEnabled(context),
+        isPushEnabled: Boolean = TextSecurePreferences.isPushEnabled(context),
         publicKey: String = MessagingModuleConfiguration.shared.storage.getUserPublicKey()!!
-    ) = if (isUsingFCM) {
+    ) = if (isPushEnabled) {
         performGroupOperation("unsubscribe_closed_group", closedGroupPublicKey, publicKey)
     } else emptyPromise()
 
