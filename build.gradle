@@ -2,7 +2,12 @@ buildscript {
     repositories {
         google()
         mavenCentral()
-        maven { url 'https://developer.huawei.com/repo/' }
+        if (project.hasProperty('huawei')) maven {
+            url 'https://developer.huawei.com/repo/'
+            content {
+                includeGroup 'com.huawei.agconnect'
+            }
+        }
     }
 
     dependencies {
@@ -58,7 +63,15 @@ allprojects {
         }
         jcenter()
         maven { url "https://jitpack.io" }
-        if (project.hasProperty('huawei')) maven { url 'https://developer.huawei.com/repo/' }
+        if (project.hasProperty('huawei')) maven {
+            url 'https://developer.huawei.com/repo/'
+            content {
+                includeGroup 'com.huawei.android.hms'
+                includeGroup 'com.huawei.agconnect'
+                includeGroup 'com.huawei.hmf'
+                includeGroup 'com.huawei.hms'
+            }
+        }
     }
 
     project.ext {
