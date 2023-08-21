@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.ui
 
+import android.content.Context
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
@@ -10,13 +11,17 @@ import androidx.compose.ui.res.stringResource
 sealed class GetString {
     @Composable
     abstract fun string(): String
+
+    abstract fun string(context: Context): String
     data class FromString(val string: String): GetString() {
         @Composable
         override fun string(): String = string
+        override fun string(context: Context): String = string
     }
     data class FromResId(@StringRes val resId: Int): GetString() {
         @Composable
         override fun string(): String = stringResource(resId)
+        override fun string(context: Context): String = context.getString(resId)
 
     }
 }

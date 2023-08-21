@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.launchIn
@@ -27,6 +28,7 @@ import org.thoughtcrime.securesms.preferences.ExpirationRadioOption
 import org.thoughtcrime.securesms.preferences.RadioOption
 import kotlin.reflect.KClass
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class ExpirationSettingsViewModel(
     private val threadId: Long,
     private val afterReadOptions: List<ExpirationRadioOption>,
