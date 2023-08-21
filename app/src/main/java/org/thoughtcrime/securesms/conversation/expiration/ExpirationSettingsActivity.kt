@@ -13,13 +13,13 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.divider.MaterialDividerItemDecoration
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityExpirationSettingsBinding
 import network.loki.messenger.libsession_util.util.ExpiryMode
-import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
@@ -93,11 +93,7 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
         }
         binding.recyclerViewDeleteTypes.apply {
             adapter = deleteTypeOptionAdapter
-            addItemDecoration(ContextCompat.getDrawable(this@ExpirationSettingsActivity, R.drawable.conversation_menu_divider)!!.let {
-                DividerItemDecoration(this@ExpirationSettingsActivity, RecyclerView.VERTICAL).apply {
-                    setDrawable(it)
-                }
-            })
+            addDividers()
             setHasFixedSize(true)
         }
         deleteTypeOptionAdapter.submitList(deleteTypeOptions)
@@ -107,11 +103,7 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
         }
         binding.recyclerViewTimerOptions.apply {
             adapter = timerOptionAdapter
-            addItemDecoration(ContextCompat.getDrawable(this@ExpirationSettingsActivity, R.drawable.conversation_menu_divider)!!.let {
-                DividerItemDecoration(this@ExpirationSettingsActivity, RecyclerView.VERTICAL).apply {
-                    setDrawable(it)
-                }
-            })
+            addDividers()
         }
         binding.buttonSet.setOnClickListener {
             viewModel.onSetClick()
@@ -168,6 +160,17 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
             }
         }
 
+    }
+
+    private fun RecyclerView.addDividers() {
+        addItemDecoration(
+            MaterialDividerItemDecoration(
+                this@ExpirationSettingsActivity,
+                RecyclerView.VERTICAL
+            ).apply {
+                isLastItemDecorated = false
+            }
+        )
     }
 
     private fun showToast(message: String) {
