@@ -68,7 +68,7 @@ class RadioOptionAdapter<T>(
 
 }
 
-sealed class RadioOption<T>(
+data class RadioOption<T>(
     val value: T,
     val title: String,
     val subtitle: String? = null,
@@ -76,35 +76,5 @@ sealed class RadioOption<T>(
     val contentDescription: String = ""
 )
 
-class StringRadioOption(value: String,
-                        title: String,
-                        subtitle: String? = null,
-                        enabled: Boolean = true,
-                        contentDescription: String = ""): RadioOption<String>(
-    value,
-    title,
-    subtitle,
-    enabled,
-    contentDescription
-)
-
-class ExpirationRadioOption(
-    value: ExpiryMode,
-    title: String,
-    subtitle: String? = null,
-    enabled: Boolean = true,
-    contentDescription: String = ""
-): RadioOption<ExpiryMode>(
-    value,
-    title,
-    subtitle,
-    enabled,
-    contentDescription
-) {
-    fun copy(value: ExpiryMode = this.value,
-             title: String = this.title,
-             subtitle: String? = this.subtitle,
-             enabled: Boolean = this.enabled,
-             contentDescription: String = this.contentDescription) =
-        ExpirationRadioOption(value, title, subtitle, enabled, contentDescription)
-}
+typealias StringRadioOption = RadioOption<String>
+typealias ExpirationRadioOption = RadioOption<ExpiryMode>

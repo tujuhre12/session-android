@@ -29,8 +29,8 @@ import kotlin.reflect.KClass
 
 class ExpirationSettingsViewModel(
     private val threadId: Long,
-    private val afterReadOptions: List<RadioOption<ExpiryMode>>,
-    private val afterSendOptions: List<RadioOption<ExpiryMode>>,
+    private val afterReadOptions: List<ExpirationRadioOption>,
+    private val afterSendOptions: List<ExpirationRadioOption>,
     private val textSecurePreferences: TextSecurePreferences,
     private val messageExpirationManager: MessageExpirationManagerProtocol,
     private val threadDb: ThreadDatabase,
@@ -93,11 +93,11 @@ class ExpirationSettingsViewModel(
         }.onEach { options ->
             val enabled = _uiState.value.isSelfAdmin || recipient.value?.isClosedGroupRecipient == true
             _expirationTimerOptions.value = if (ExpirationConfiguration.isNewConfigEnabled && (recipient.value?.isLocalNumber == true || recipient.value?.isClosedGroupRecipient == true)) {
-                options.filterIsInstance<ExpirationRadioOption>().map {
+                options.map {
                     it.copy(enabled = enabled)
                 }
             } else {
-                options.slice(1 until options.size).filterIsInstance<ExpirationRadioOption>().map {
+                options.slice(1 until options.size).map {
                     it.copy(enabled = enabled)
                 }
             }
