@@ -58,10 +58,7 @@ class ExpirationSettingsViewModel(
     init {
         // SETUP
         viewModelScope.launch {
-            expirationConfig = storage.getExpirationConfiguration(threadId)?.let {
-                if (ExpirationConfiguration.isNewConfigEnabled) it
-                else if (it)
-            }
+            expirationConfig = storage.getExpirationConfiguration(threadId)
             val expirationType = expirationConfig?.expiryMode
             val recipient = threadDb.getRecipientForThreadId(threadId)
             _recipient.value = recipient
