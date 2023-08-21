@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
@@ -26,6 +27,7 @@ import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.preferences.ExpirationRadioOption
 import org.thoughtcrime.securesms.preferences.RadioOption
+import org.thoughtcrime.securesms.preferences.radioOption
 import kotlin.reflect.KClass
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -149,6 +151,85 @@ class ExpirationSettingsViewModel(
             it.copy(settingsSaved = true)
         }
     }
+
+    fun getDeleteOptions(): List<ExpirationRadioOption> {
+        if (!uiState.value.showExpirationTypeSelector) return emptyList()
+
+        val recipient = recipient.value
+
+        return if (ExpirationConfiguration.isNewConfigEnabled) {
+            if (recipient?.isContactRecipient == true && !recipient.isLocalNumber) contactRecipientOptions()
+            else if (recipient?.isLocalNumber == true) noteToSelfOptions()
+            else if (recipient?.isClosedGroupRecipient == true) closedGroupRecipientOptions()
+            else emptyList()
+        } else if (recipient?.isContactRecipient == true && !recipient.isLocalNumber) oldConfigContactRecipientOptions()
+        else oldConfigDefaultOptions()
+    }
+
+    private fun oldConfigDefaultOptions() = listOf(
+        radioOption(ExpiryMode.NONE, R.string.expiration_off),
+        radioOption(ExpiryMode.Legacy(0), R.string.expiration_type_disappear_legacy) {
+            subtitle(R.string.expiration_type_disappear_legacy_description)
+        },
+        radioOption(ExpiryMode.AfterSend(0), R.string.expiration_type_disappear_after_send) {
+            subtitle(R.string.expiration_type_disappear_after_send_description)
+            enabled = false
+            contentDescription(R.string.AccessibilityId_disappear_after_send_option)
+        }
+    )
+
+    private fun oldConfigContactRecipientOptions() = listOf(
+        radioOption(ExpiryMode.NONE, R.string.expiration_off) {
+            contentDescription(R.string.AccessibilityId_disable_disappearing_messages)
+        },
+        radioOption(ExpiryMode.Legacy(0), R.string.expiration_type_disappear_legacy) {
+            subtitle(R.string.expiration_type_disappear_legacy_description)
+        },
+        radioOption(ExpiryMode.AfterRead(0), R.string.expiration_type_disappear_after_read) {
+            subtitle(R.string.expiration_type_disappear_after_read_description)
+            enabled = false
+            contentDescription(R.string.AccessibilityId_disappear_after_read_option)
+        },
+        radioOption(ExpiryMode.AfterSend(0), R.string.expiration_type_disappear_after_send) {
+            subtitle(R.string.expiration_type_disappear_after_send_description)
+            enabled = false
+            contentDescription(R.string.AccessibilityId_disappear_after_send_option)
+        }
+    )
+
+    private fun contactRecipientOptions() = listOf(
+        radioOption(ExpiryMode.NONE, R.string.expiration_off) {
+            contentDescription(R.string.AccessibilityId_disable_disappearing_messages)
+        },
+        radioOption(ExpiryMode.AfterRead(0), R.string.expiration_type_disappear_after_read) {
+            subtitle(R.string.expiration_type_disappear_after_read_description)
+            contentDescription(R.string.AccessibilityId_disappear_after_read_option)
+        },
+        radioOption(ExpiryMode.AfterSend(0), R.string.expiration_type_disappear_after_send) {
+            subtitle(R.string.expiration_type_disappear_after_send_description)
+            contentDescription(R.string.AccessibilityId_disappear_after_send_option)
+        }
+    )
+
+    private fun closedGroupRecipientOptions() = listOf(
+        radioOption(ExpiryMode.NONE, R.string.expiration_off) {
+            contentDescription(R.string.AccessibilityId_disable_disappearing_messages)
+        },
+        radioOption(ExpiryMode.AfterSend(0), R.string.expiration_type_disappear_after_send) {
+            subtitle(R.string.expiration_type_disappear_after_send_description)
+            contentDescription(R.string.AccessibilityId_disappear_after_send_option)
+        }
+    )
+
+    private fun noteToSelfOptions() = listOf(
+        radioOption(ExpiryMode.NONE, R.string.expiration_off) {
+            contentDescription(R.string.AccessibilityId_disable_disappearing_messages)
+        },
+        radioOption(ExpiryMode.AfterSend(0), R.string.expiration_type_disappear_after_send) {
+            subtitle(R.string.expiration_type_disappear_after_send_description)
+            contentDescription(R.string.AccessibilityId_disappear_after_send_option)
+        }
+    )
 
     @dagger.assisted.AssistedFactory
     interface AssistedFactory {

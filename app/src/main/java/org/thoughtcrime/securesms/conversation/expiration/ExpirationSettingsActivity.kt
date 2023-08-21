@@ -87,7 +87,7 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
             }
         }
 
-        val deleteTypeOptions = getDeleteOptions()
+        val deleteTypeOptions = viewModel.getDeleteOptions()
         val deleteTypeOptionAdapter = RadioOptionAdapter {
             viewModel.onExpirationTypeSelected(it)
         }
@@ -172,93 +172,6 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
 
     private fun showToast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
-    }
-
-    private fun getDeleteOptions(): List<ExpirationRadioOption> {
-        if (!viewModel.uiState.value.showExpirationTypeSelector) return emptyList()
-
-        val deleteTypeOptions = mutableListOf<ExpirationRadioOption>()
-        if (ExpirationConfiguration.isNewConfigEnabled) {
-            if (viewModel.recipient.value?.isContactRecipient == true && viewModel.recipient.value?.isLocalNumber == false) {
-                deleteTypeOptions.addAll(
-                    listOf(
-                        radioOption(ExpiryMode.NONE, R.string.expiration_off) {
-                            contentDescription(R.string.AccessibilityId_disable_disappearing_messages)
-                        },
-                        radioOption(ExpiryMode.AfterRead(0), R.string.expiration_type_disappear_after_read) {
-                            subtitle(R.string.expiration_type_disappear_after_read_description)
-                            contentDescription(R.string.AccessibilityId_disappear_after_read_option)
-                        },
-                        radioOption(ExpiryMode.AfterSend(0), R.string.expiration_type_disappear_after_send) {
-                            subtitle(R.string.expiration_type_disappear_after_send_description)
-                            contentDescription(R.string.AccessibilityId_disappear_after_send_option)
-                        }
-                    )
-                )
-            } else if (viewModel.recipient.value?.isLocalNumber == true) {
-                deleteTypeOptions.addAll(
-                    listOf(
-                        radioOption(ExpiryMode.NONE, R.string.expiration_off) {
-                            contentDescription(R.string.AccessibilityId_disable_disappearing_messages)
-                        },
-                        radioOption(ExpiryMode.AfterSend(0), R.string.expiration_type_disappear_after_send) {
-                            subtitle(R.string.expiration_type_disappear_after_send_description)
-                            contentDescription(R.string.AccessibilityId_disappear_after_send_option)
-                        }
-                    )
-                )
-            } else if (viewModel.recipient.value?.isClosedGroupRecipient == true) {
-                deleteTypeOptions.addAll(
-                    listOf(
-                        radioOption(ExpiryMode.NONE, R.string.expiration_off) {
-                            contentDescription(R.string.AccessibilityId_disable_disappearing_messages)
-                        },
-                        radioOption(ExpiryMode.AfterSend(0), R.string.expiration_type_disappear_after_send) {
-                            subtitle(R.string.expiration_type_disappear_after_send_description)
-                            contentDescription(R.string.AccessibilityId_disappear_after_send_option)
-                        }
-                    )
-                )
-            }
-        } else {
-            if (viewModel.recipient.value?.isContactRecipient == true && viewModel.recipient.value?.isLocalNumber == false) {
-                deleteTypeOptions.addAll(
-                    listOf(
-                        radioOption(ExpiryMode.NONE, R.string.expiration_off) {
-                            contentDescription(R.string.AccessibilityId_disable_disappearing_messages)
-                        },
-                        radioOption(ExpiryMode.Legacy(0), R.string.expiration_type_disappear_legacy) {
-                            subtitle(R.string.expiration_type_disappear_legacy_description)
-                        },
-                        radioOption(ExpiryMode.AfterRead(0), R.string.expiration_type_disappear_after_read) {
-                            subtitle(R.string.expiration_type_disappear_after_read_description)
-                            enabled = false
-                            contentDescription(R.string.AccessibilityId_disappear_after_read_option)
-                        },
-                        radioOption(ExpiryMode.AfterSend(0), R.string.expiration_type_disappear_after_send) {
-                            subtitle(R.string.expiration_type_disappear_after_send_description)
-                            enabled = false
-                            contentDescription(R.string.AccessibilityId_disappear_after_send_option)
-                        }
-                    )
-                )
-            } else {
-                deleteTypeOptions.addAll(
-                    listOf(
-                        radioOption(ExpiryMode.NONE, R.string.expiration_off),
-                        radioOption(ExpiryMode.Legacy(0), R.string.expiration_type_disappear_legacy) {
-                            subtitle(R.string.expiration_type_disappear_legacy_description)
-                        },
-                        radioOption(ExpiryMode.AfterSend(0), R.string.expiration_type_disappear_after_send) {
-                            subtitle(R.string.expiration_type_disappear_after_send_description)
-                            enabled = false
-                            contentDescription(R.string.AccessibilityId_disappear_after_send_option)
-                        }
-                    )
-                )
-            }
-        }
-        return deleteTypeOptions
     }
 
     private fun setUpToolbar() {
