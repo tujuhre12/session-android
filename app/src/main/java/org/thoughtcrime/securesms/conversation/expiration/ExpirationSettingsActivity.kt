@@ -5,14 +5,13 @@ import android.os.Parcelable
 import android.util.SparseArray
 import android.widget.Toast
 import androidx.activity.viewModels
-import androidx.core.content.ContextCompat
 import androidx.core.text.HtmlCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.SimpleItemAnimator
 import com.google.android.material.divider.MaterialDividerItemDecoration
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -92,6 +91,7 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
             viewModel.onExpirationTypeSelected(it)
         }
         binding.recyclerViewDeleteTypes.apply {
+            (itemAnimator as SimpleItemAnimator).supportsChangeAnimations = false
             adapter = deleteTypeOptionAdapter
             addDividers()
             setHasFixedSize(true)
@@ -102,6 +102,7 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
             viewModel.onExpirationTimerSelected(it)
         }
         binding.recyclerViewTimerOptions.apply {
+            (itemAnimator as SimpleItemAnimator).supportsChangeAnimations = false
             adapter = timerOptionAdapter
             addDividers()
         }

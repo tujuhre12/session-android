@@ -35,14 +35,14 @@ class RadioOptionAdapter<T>(
             isSelected = position == selectedOptionPosition
         ) {
             onClickListener(it)
-            selectedOptionPosition = position
-            notifyItemRangeChanged(0, itemCount)
+            setSelectedPosition(position)
         }
     }
 
     fun setSelectedPosition(selectedPosition: Int) {
+        notifyItemChanged(selectedOptionPosition)
         selectedOptionPosition = selectedPosition
-        notifyDataSetChanged()
+        notifyItemChanged(selectedOptionPosition)
     }
 
     class ViewHolder<T>(itemView: View): RecyclerView.ViewHolder(itemView) {
