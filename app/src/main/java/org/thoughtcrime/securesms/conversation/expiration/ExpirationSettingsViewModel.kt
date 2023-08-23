@@ -49,9 +49,6 @@ class ExpirationSettingsViewModel(
 
     private var expirationConfig: ExpirationConfiguration? = null
 
-    private val _recipient = MutableStateFlow<Recipient?>(null)
-    val recipient: StateFlow<Recipient?> = _recipient
-
     private val _selectedExpirationType: MutableStateFlow<ExpiryMode> = MutableStateFlow(ExpiryMode.NONE)
     val selectedExpirationType: StateFlow<ExpiryMode> = _selectedExpirationType
 
@@ -67,13 +64,13 @@ class ExpirationSettingsViewModel(
             expirationConfig = storage.getExpirationConfiguration(threadId)
             val expirationType = expirationConfig?.expiryMode
             val recipient = threadDb.getRecipientForThreadId(threadId)
-            _recipient.value = recipient
             val groupInfo = recipient?.takeIf { it.isClosedGroupRecipient }
                 ?.run { address.toGroupString().let(groupDb::getGroup).orNull() }
             _uiState.update { currentUiState ->
                 currentUiState.copy(
                     isSelfAdmin = groupInfo == null || groupInfo.admins.any{ it.serialize() == textSecurePreferences.getLocalNumber() },
-                    showExpirationTypeSelector = true
+                    showExpirationTypeSelector = true,
+                    recipient = recipient
                 )
             }
             _selectedExpirationType.value = if (ExpirationConfiguration.isNewConfigEnabled) {
@@ -89,18 +86,18 @@ class ExpirationSettingsViewModel(
                 else -> afterSendOptions.firstOrNull()
             }
         }
-        selectedExpirationType.mapLatest {
-            when (it) {
-                is ExpiryMode.Legacy, is ExpiryMode.AfterSend -> afterSendOptions
-                is ExpiryMode.AfterRead -> afterReadOptions
-                else -> emptyList()
-            }
-        }.onEach { options ->
-            val enabled = _uiState.value.isSelfAdmin || recipient.value?.isClosedGroupRecipient == true
-            _expirationTimerOptions.value = options.let {
-                if (ExpirationConfiguration.isNewConfigEnabled && recipient.value?.run { isLocalNumber || isClosedGroupRecipient } == true) it.drop(1) else it
-            }.map { it.copy(enabled = enabled) }
-        }.launchIn(viewModelScope)
+//        selectedExpirationType.mapLatest {
+//            when (it) {
+//                is ExpiryMode.Legacy, is ExpiryMode.AfterSend -> afterSendOptions
+//                is ExpiryMode.AfterRead -> afterReadOptions
+//                else -> emptyList()
+//            }
+//        }.onEach { options ->
+//            val enabled = _uiState.value.isSelfAdmin || recipient.value?.isClosedGroupRecipient == true
+//            _expirationTimerOptions.value = options.let {
+//                if (ExpirationConfiguration.isNewConfigEnabled && recipient.value?.run { isLocalNumber || isClosedGroupRecipient } == true) it.drop(1) else it
+//            }.map { it.copy(enabled = enabled) }
+//        }.launchIn(viewModelScope)
     }
 
     fun onExpirationTypeSelected(option: RadioOption<ExpiryMode>) {
@@ -119,13 +116,14 @@ class ExpirationSettingsViewModel(
     }
 
     fun onSetClick() = viewModelScope.launch {
+        val state = uiState.value
         val expiryMode = _selectedExpirationTimer.value?.value ?: ExpiryMode.NONE
         val typeValue = expiryMode.let {
             if (it is ExpiryMode.Legacy) ExpiryMode.AfterRead(it.expirySeconds)
             else it
         }
-        val address = recipient.value?.address
-        if (address == null || (expirationConfig?.expiryMode == typeValue)) {
+        val address = state.recipient?.address
+        if (address == null || expirationConfig?.expiryMode == typeValue) {
             _uiState.update {
                 it.copy(settingsSaved = false)
             }
@@ -150,7 +148,7 @@ class ExpirationSettingsViewModel(
     fun getDeleteOptions(): List<ExpirationRadioOption> {
         if (!uiState.value.showExpirationTypeSelector) return emptyList()
 
-        val recipient = recipient.value ?: return emptyList()
+        val recipient = uiState.value.recipient ?: return emptyList()
 
         return if (ExpirationConfiguration.isNewConfigEnabled) when {
             recipient.isLocalNumber -> noteToSelfOptions()
@@ -267,5 +265,6 @@ class ExpirationSettingsViewModel(
 data class ExpirationSettingsUiState(
     val isSelfAdmin: Boolean = false,
     val showExpirationTypeSelector: Boolean = false,
-    val settingsSaved: Boolean? = null
+    val settingsSaved: Boolean? = null,
+    val recipient: Recipient? = null
 )

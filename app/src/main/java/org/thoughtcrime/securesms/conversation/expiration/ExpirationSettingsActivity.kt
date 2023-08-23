@@ -112,6 +112,11 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { uiState ->
+                    binding.textViewDeleteType.isVisible = uiState.showExpirationTypeSelector
+                    binding.layoutDeleteTypes.isVisible = uiState.showExpirationTypeSelector
+                    binding.textViewFooter.isVisible = uiState.recipient?.isClosedGroupRecipient == true
+                    binding.textViewFooter.text = HtmlCompat.fromHtml(getString(R.string.activity_expiration_settings_group_footer), HtmlCompat.FROM_HTML_MODE_COMPACT)
+
                     when (uiState.settingsSaved) {
                         true -> {
                             ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(this@ExpirationSettingsActivity)
@@ -150,17 +155,6 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
                 }
             }
         }
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.recipient.collect {
-                    binding.textViewDeleteType.isVisible = viewModel.uiState.value.showExpirationTypeSelector
-                    binding.layoutDeleteTypes.isVisible = viewModel.uiState.value.showExpirationTypeSelector
-                    binding.textViewFooter.isVisible = it?.isClosedGroupRecipient == true
-                    binding.textViewFooter.text = HtmlCompat.fromHtml(getString(R.string.activity_expiration_settings_group_footer), HtmlCompat.FROM_HTML_MODE_COMPACT)
-                }
-            }
-        }
-
     }
 
     private fun RecyclerView.addDividers() {
