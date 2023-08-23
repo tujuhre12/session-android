@@ -30,7 +30,7 @@ class ConversationViewModelTest: BaseViewModelTest() {
     private lateinit var recipient: Recipient
 
     private val viewModel: ConversationViewModel by lazy {
-        ConversationViewModel(threadId, edKeyPair, repository, storage)
+        ConversationViewModel(threadId, edKeyPair, mock(), repository, storage)
     }
 
     @Before

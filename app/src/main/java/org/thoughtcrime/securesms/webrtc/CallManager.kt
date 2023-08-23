@@ -18,6 +18,7 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.messaging.messages.control.CallMessage
 import org.session.libsession.messaging.sending_receiving.MessageSender
+import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Debouncer
 import org.session.libsession.utilities.Util
@@ -90,6 +91,10 @@ class CallManager(context: Context, audioManager: AudioManagerCompat, private va
 
     fun unregisterListener(listener: WebRtcListener) {
         peerConnectionObservers.remove(listener)
+    }
+
+    fun shutDownAudioManager() {
+        signalAudioManager.shutdown()
     }
 
     private val _audioEvents = MutableStateFlow(AudioEnabled(false))
@@ -298,7 +303,7 @@ class CallManager(context: Context, audioManager: AudioManagerCompat, private va
                         sdpMLineIndexes = sdpMLineIndexes,
                         sdpMids = sdpMids,
                         currentCallId
-                ), currentRecipient.address)
+                ), currentRecipient.address, isSyncMessage = currentRecipient.isLocalNumber)
             }
         }
     }
@@ -432,7 +437,7 @@ class CallManager(context: Context, audioManager: AudioManagerCompat, private va
             pendingIncomingIceUpdates.clear()
             val answerMessage = CallMessage.answer(answer.description, callId)
             Log.i("Loki", "Posting new answer")
-            MessageSender.sendNonDurably(answerMessage, recipient.address)
+            MessageSender.sendNonDurably(answerMessage, recipient.address, isSyncMessage = recipient.isLocalNumber)
         } else {
             Promise.ofFail(Exception("Couldn't reconnect from current state"))
         }
@@ -476,11 +481,11 @@ class CallManager(context: Context, audioManager: AudioManagerCompat, private va
         connection.setLocalDescription(answer)
         val answerMessage = CallMessage.answer(answer.description, callId)
         val userAddress = storage.getUserPublicKey() ?: return Promise.ofFail(NullPointerException("No user public key"))
-        MessageSender.sendNonDurably(answerMessage, Address.fromSerialized(userAddress))
+        MessageSender.sendNonDurably(answerMessage, Address.fromSerialized(userAddress), isSyncMessage = true)
         val sendAnswerMessage = MessageSender.sendNonDurably(CallMessage.answer(
                 answer.description,
                 callId
-        ), recipient.address)
+        ), recipient.address, isSyncMessage = recipient.isLocalNumber)
 
         insertCallMessage(recipient.address.serialize(), CallMessageType.CALL_INCOMING, false)
 
@@ -530,13 +535,13 @@ class CallManager(context: Context, audioManager: AudioManagerCompat, private va
             Log.d("Loki", "Sending pre-offer")
             return MessageSender.sendNonDurably(CallMessage.preOffer(
                 callId
-            ), recipient.address).bind {
+            ), recipient.address, isSyncMessage = recipient.isLocalNumber).bind {
                 Log.d("Loki", "Sent pre-offer")
                 Log.d("Loki", "Sending offer")
                 MessageSender.sendNonDurably(CallMessage.offer(
                     offer.description,
                     callId
-                ), recipient.address).success {
+                ), recipient.address, isSyncMessage = recipient.isLocalNumber).success {
                     Log.d("Loki", "Sent offer")
                 }.fail {
                     Log.e("Loki", "Failed to send offer", it)
@@ -550,8 +555,8 @@ class CallManager(context: Context, audioManager: AudioManagerCompat, private va
         val recipient = recipient ?: return
         val userAddress = storage.getUserPublicKey() ?: return
         stateProcessor.processEvent(Event.DeclineCall) {
-            MessageSender.sendNonDurably(CallMessage.endCall(callId), Address.fromSerialized(userAddress))
-            MessageSender.sendNonDurably(CallMessage.endCall(callId), recipient.address)
+            MessageSender.sendNonDurably(CallMessage.endCall(callId), Address.fromSerialized(userAddress), isSyncMessage = true)
+            MessageSender.sendNonDurably(CallMessage.endCall(callId), recipient.address, isSyncMessage = recipient.isLocalNumber)
             insertCallMessage(recipient.address.serialize(), CallMessageType.CALL_MISSED)
         }
     }
@@ -570,11 +575,11 @@ class CallManager(context: Context, audioManager: AudioManagerCompat, private va
                 val buffer = DataChannel.Buffer(ByteBuffer.wrap(HANGUP_JSON.toString().encodeToByteArray()), false)
                 channel.send(buffer)
             }
-            MessageSender.sendNonDurably(CallMessage.endCall(callId), recipient.address)
+            MessageSender.sendNonDurably(CallMessage.endCall(callId), recipient.address, isSyncMessage = recipient.isLocalNumber)
         }
     }
 
-    fun insertCallMessage(threadPublicKey: String, callMessageType: CallMessageType, signal: Boolean = false, sentTimestamp: Long = System.currentTimeMillis()) {
+    fun insertCallMessage(threadPublicKey: String, callMessageType: CallMessageType, signal: Boolean = false, sentTimestamp: Long = SnodeAPI.nowWithOffset) {
         storage.insertCallMessage(threadPublicKey, callMessageType, sentTimestamp)
     }
 
@@ -721,7 +726,7 @@ class CallManager(context: Context, audioManager: AudioManagerCompat, private va
             })
             connection.setLocalDescription(offer)
 
-            MessageSender.sendNonDurably(CallMessage.offer(offer.description, callId), recipient.address)
+            MessageSender.sendNonDurably(CallMessage.offer(offer.description, callId), recipient.address, isSyncMessage = recipient.isLocalNumber)
         }
     }
 

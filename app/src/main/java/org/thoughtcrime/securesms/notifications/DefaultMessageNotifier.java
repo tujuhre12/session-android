@@ -44,6 +44,7 @@ import org.session.libsession.messaging.open_groups.OpenGroup;
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier;
 import org.session.libsession.messaging.utilities.SessionId;
 import org.session.libsession.messaging.utilities.SodiumUtilities;
+import org.session.libsession.snode.SnodeAPI;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.Contact;
 import org.session.libsession.utilities.ServiceUtil;
@@ -53,13 +54,12 @@ import org.session.libsignal.utilities.IdPrefix;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.Util;
 import org.thoughtcrime.securesms.ApplicationContext;
-import org.thoughtcrime.securesms.contactshare.ContactUtil;
+import org.thoughtcrime.securesms.contacts.ContactUtil;
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2;
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionManagerUtilities;
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities;
 import org.thoughtcrime.securesms.crypto.KeyPairUtilities;
 import org.thoughtcrime.securesms.database.LokiThreadDatabase;
-import org.thoughtcrime.securesms.database.MessagingDatabase.MarkedMessageInfo;
 import org.thoughtcrime.securesms.database.MmsSmsDatabase;
 import org.thoughtcrime.securesms.database.RecipientDatabase;
 import org.thoughtcrime.securesms.database.ThreadDatabase;
@@ -137,7 +137,7 @@ public class DefaultMessageNotifier implements MessageNotifier {
       Intent intent = new Intent(context, ConversationActivityV2.class);
       intent.putExtra(ConversationActivityV2.ADDRESS, recipient.getAddress());
       intent.putExtra(ConversationActivityV2.THREAD_ID, threadId);
-      intent.setData((Uri.parse("custom://" + System.currentTimeMillis())));
+      intent.setData((Uri.parse("custom://" + SnodeAPI.getNowWithOffset())));
 
       FailedNotificationBuilder builder = new FailedNotificationBuilder(context, TextSecurePreferences.getNotificationPrivacy(context), intent);
       ((NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE))
@@ -159,8 +159,9 @@ public class DefaultMessageNotifier implements MessageNotifier {
     executor.cancel();
   }
 
-  private void cancelActiveNotifications(@NonNull Context context) {
+  private boolean cancelActiveNotifications(@NonNull Context context) {
     NotificationManager notifications = ServiceUtil.getNotificationManager(context);
+    boolean hasNotifications = notifications.getActiveNotifications().length > 0;
     notifications.cancel(SUMMARY_NOTIFICATION_ID);
 
     try {
@@ -174,6 +175,7 @@ public class DefaultMessageNotifier implements MessageNotifier {
       Log.w(TAG, e);
       notifications.cancelAll();
     }
+    return hasNotifications;
   }
 
   private void cancelOrphanedNotifications(@NonNull Context context, NotificationState notificationState) {
@@ -239,10 +241,6 @@ public class DefaultMessageNotifier implements MessageNotifier {
             !(recipient.isApproved() || threads.getLastSeenAndHasSent(threadId).second())) {
       TextSecurePreferences.removeHasHiddenMessageRequests(context);
     }
-    if (isVisible && recipient != null) {
-      List<MarkedMessageInfo> messageIds = threads.setRead(threadId, false);
-      if (SessionMetaProtocol.shouldSendReadReceipt(recipient)) { MarkReadReceiver.process(context, messageIds); }
-    }
 
     if (!TextSecurePreferences.isNotificationsEnabled(context) ||
         (recipient != null && recipient.isMuted()))
@@ -250,8 +248,18 @@ public class DefaultMessageNotifier implements MessageNotifier {
       return;
     }
 
-    if (!isVisible && !homeScreenVisible) {
+    if ((!isVisible && !homeScreenVisible) || hasExistingNotifications(context)) {
       updateNotification(context, signal, 0);
+    }
+  }
+
+  private boolean hasExistingNotifications(Context context) {
+    NotificationManager notifications = ServiceUtil.getNotificationManager(context);
+    try {
+      StatusBarNotification[] activeNotifications = notifications.getActiveNotifications();
+      return activeNotifications.length > 0;
+    } catch (Exception e) {
+      return false;
     }
   }
 
@@ -266,8 +274,8 @@ public class DefaultMessageNotifier implements MessageNotifier {
 
       if ((telcoCursor == null || telcoCursor.isAfterLast()) || !TextSecurePreferences.hasSeenWelcomeScreen(context))
       {
-        cancelActiveNotifications(context);
         updateBadge(context, 0);
+        cancelActiveNotifications(context);
         clearReminder(context);
         return;
       }

@@ -3,7 +3,6 @@ package org.thoughtcrime.securesms.conversation.v2.messages
 import android.content.Context
 import android.graphics.Color
 import android.graphics.Rect
-import android.graphics.drawable.Drawable
 import android.text.Spannable
 import android.text.style.BackgroundColorSpan
 import android.text.style.ForegroundColorSpan
@@ -15,11 +14,10 @@ import android.view.View
 import androidx.annotation.ColorInt
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.core.content.res.ResourcesCompat
-import androidx.core.graphics.BlendModeColorFilterCompat
-import androidx.core.graphics.BlendModeCompat
+import androidx.core.graphics.ColorUtils
 import androidx.core.text.getSpans
 import androidx.core.text.toSpannable
+import androidx.core.view.children
 import androidx.core.view.isVisible
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
@@ -27,6 +25,7 @@ import okhttp3.HttpUrl
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentTransferProgress
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
+import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
@@ -36,7 +35,10 @@ import org.thoughtcrime.securesms.conversation.v2.utilities.ModalURLSpan
 import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.getIntersectedModalSpans
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
+import org.thoughtcrime.securesms.database.model.SmsMessageRecord
+import org.thoughtcrime.securesms.mms.GlideApp
 import org.thoughtcrime.securesms.mms.GlideRequests
+import org.thoughtcrime.securesms.util.GlowViewUtilities
 import org.thoughtcrime.securesms.util.SearchUtil
 import org.thoughtcrime.securesms.util.getAccentColor
 import java.util.Locale
@@ -44,7 +46,6 @@ import kotlin.math.roundToInt
 
 class VisibleMessageContentView : ConstraintLayout {
     private val binding: ViewVisibleMessageContentBinding by lazy { ViewVisibleMessageContentBinding.bind(this) }
-    var onContentClick: MutableList<((event: MotionEvent) -> Unit)> = mutableListOf()
     var onContentDoubleTap: (() -> Unit)? = null
     var delegate: VisibleMessageViewDelegate? = null
     var indexInAdapter: Int = -1
@@ -58,20 +59,20 @@ class VisibleMessageContentView : ConstraintLayout {
     // region Updating
     fun bind(
         message: MessageRecord,
-        isStartOfMessageCluster: Boolean,
-        isEndOfMessageCluster: Boolean,
-        glide: GlideRequests,
+        isStartOfMessageCluster: Boolean = true,
+        isEndOfMessageCluster: Boolean = true,
+        glide: GlideRequests = GlideApp.with(this),
         thread: Recipient,
-        searchQuery: String?,
-        onAttachmentNeedsDownload: (Long, Long) -> Unit
+        searchQuery: String? = null,
+        contactIsTrusted: Boolean = true,
+        onAttachmentNeedsDownload: (Long, Long) -> Unit,
+        suppressThumbnails: Boolean = false
     ) {
         // Background
-        val background = getBackground(message.isOutgoing)
         val color = if (message.isOutgoing) context.getAccentColor()
         else context.getColorFromAttr(R.attr.message_received_background_color)
-        val filter = BlendModeColorFilterCompat.createBlendModeColorFilterCompat(color, BlendModeCompat.SRC_IN)
-        background.colorFilter = filter
-        binding.contentParent.background = background
+        binding.contentParent.mainColor = color
+        binding.contentParent.cornerRadius = resources.getDimension(R.dimen.message_corner_radius)
 
         val mediaDownloaded = message is MmsMessageRecord && message.slideDeck.asAttachments().all { it.transferState == AttachmentTransferProgress.TRANSFER_PROGRESS_DONE }
         val mediaInProgress = message is MmsMessageRecord && message.slideDeck.asAttachments().any { it.isInProgress }
@@ -97,6 +98,9 @@ class VisibleMessageContentView : ConstraintLayout {
             binding.deletedMessageView.root.isVisible = false
         }
 
+        // Note: Need to clear the body to prevent the message bubble getting incorrectly
+        // sized based on text content from a recycled view
+        binding.bodyTextView.text = null
         binding.quoteView.root.isVisible = message is MmsMessageRecord && message.quote != null
         binding.linkPreviewView.root.isVisible = message is MmsMessageRecord && message.linkPreviews.isNotEmpty()
         binding.pendingAttachmentView.root.isVisible = !mediaDownloaded && !mediaInProgress && message is MmsMessageRecord && message.quote == null && message.linkPreviews.isEmpty()
@@ -125,7 +129,6 @@ class VisibleMessageContentView : ConstraintLayout {
                     delegate?.scrollToMessageIfPossible(quote.id)
                 }
             }
-            val hasMedia = message.slideDeck.asAttachments().isNotEmpty()
         }
 
         if (message is MmsMessageRecord) {
@@ -152,7 +155,9 @@ class VisibleMessageContentView : ConstraintLayout {
             message is MmsMessageRecord && message.linkPreviews.isNotEmpty() -> {
                 binding.linkPreviewView.root.bind(message, glide, isStartOfMessageCluster, isEndOfMessageCluster)
                 onContentClick.add { event -> binding.linkPreviewView.root.calculateHit(event) }
-                // Body text view is inside the link preview for layout convenience
+
+                // When in a link preview ensure the bodyTextView can expand to the full width
+                binding.bodyTextView.maxWidth = binding.linkPreviewView.root.layoutParams.width
             }
             // AUDIO
             message is MmsMessageRecord && message.slideDeck.audioSlide != null -> {
@@ -197,7 +202,7 @@ class VisibleMessageContentView : ConstraintLayout {
                 }
             }
             // IMAGE / VIDEO
-            message is MmsMessageRecord && message.slideDeck.asAttachments().isNotEmpty() -> {
+            message is MmsMessageRecord && !suppressThumbnails && message.slideDeck.asAttachments().isNotEmpty() -> {
                 if (mediaDownloaded || mediaInProgress || message.isOutgoing) {
                     // isStart and isEnd of cluster needed for calculating the mask for full bubble image groups
                     // bind after add view because views are inflated and calculated during bind
@@ -237,6 +242,7 @@ class VisibleMessageContentView : ConstraintLayout {
         }
 
         binding.bodyTextView.isVisible = message.body.isNotEmpty() && !hideBody
+        binding.contentParent.apply { isVisible = children.any { it.isVisible } }
 
         if (message.body.isNotEmpty() && !hideBody) {
             val color = getTextColor(context, message)
@@ -255,13 +261,14 @@ class VisibleMessageContentView : ConstraintLayout {
         binding.contentParent.layoutParams = layoutParams
     }
 
+    private val onContentClick: MutableList<((event: MotionEvent) -> Unit)> = mutableListOf()
+
+    fun onContentClick(event: MotionEvent) {
+        onContentClick.forEach { clickHandler -> clickHandler.invoke(event) }
+    }
+
     private fun ViewVisibleMessageContentBinding.barrierViewsGone(): Boolean =
         listOf<View>(albumThumbnailView.root, linkPreviewView.root, voiceMessageView.root, quoteView.root).none { it.isVisible }
-
-    private fun getBackground(isOutgoing: Boolean): Drawable {
-        val backgroundID = if (isOutgoing) R.drawable.message_bubble_background_sent_alone else R.drawable.message_bubble_background_received_alone
-        return ResourcesCompat.getDrawable(resources, backgroundID, context.theme)!!
-    }
 
     fun recycle() {
         arrayOf(
@@ -279,6 +286,15 @@ class VisibleMessageContentView : ConstraintLayout {
 
     fun playVoiceMessage() {
         binding.voiceMessageView.root.togglePlayback()
+    }
+
+    fun playHighlight() {
+        // Show the highlight colour immediately then slowly fade out
+        val targetColor = if (ThemeUtil.isDarkTheme(context)) context.getAccentColor() else resources.getColor(R.color.black, context.theme)
+        val clearTargetColor = ColorUtils.setAlphaComponent(targetColor, 0)
+        binding.contentParent.numShadowRenders = if (ThemeUtil.isDarkTheme(context)) 3 else 1
+        binding.contentParent.sessionShadowColor = targetColor
+        GlowViewUtilities.animateShadowColorChange(binding.contentParent, targetColor, clearTargetColor, 1600)
     }
     // endregion
 

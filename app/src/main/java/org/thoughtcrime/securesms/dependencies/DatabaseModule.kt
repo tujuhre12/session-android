@@ -6,7 +6,6 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import net.zetetic.database.sqlcipher.SQLiteDatabase
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
 import org.thoughtcrime.securesms.attachments.DatabaseAttachmentProvider
@@ -89,10 +88,6 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideJobDatabase(@ApplicationContext context: Context, openHelper: SQLCipherOpenHelper) = JobDatabase(context, openHelper)
-
-    @Provides
-    @Singleton
     fun provideLokiApiDatabase(@ApplicationContext context: Context, openHelper: SQLCipherOpenHelper) = LokiAPIDatabase(context,openHelper)
 
     @Provides
@@ -137,10 +132,18 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideStorage(@ApplicationContext context: Context, openHelper: SQLCipherOpenHelper): StorageProtocol = Storage(context,openHelper)
+    fun provideStorage(@ApplicationContext context: Context, openHelper: SQLCipherOpenHelper, configFactory: ConfigFactory, threadDatabase: ThreadDatabase): Storage {
+        val storage = Storage(context,openHelper, configFactory)
+        threadDatabase.setUpdateListener(storage)
+        return storage
+    }
 
     @Provides
     @Singleton
     fun provideAttachmentProvider(@ApplicationContext context: Context, openHelper: SQLCipherOpenHelper): MessageDataProvider = DatabaseAttachmentProvider(context, openHelper)
+
+    @Provides
+    @Singleton
+    fun provideConfigDatabase(@ApplicationContext context: Context, openHelper: SQLCipherOpenHelper): ConfigDatabase = ConfigDatabase(context, openHelper)
 
 }

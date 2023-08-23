@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:contentDescription="@string/AccessibilityId_message_request"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:gravity="center_vertical"
     android:orientation="horizontal">
 
-    <include layout="@layout/view_profile_picture"
+    <org.thoughtcrime.securesms.components.ProfilePictureView
         android:id="@+id/profilePictureView"
         android:layout_width="@dimen/medium_profile_picture_size"
         android:layout_height="@dimen/medium_profile_picture_size"

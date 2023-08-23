@@ -11,7 +11,6 @@ import androidx.core.app.NotificationCompat;
 import net.zetetic.database.sqlcipher.SQLiteConnection;
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 import net.zetetic.database.sqlcipher.SQLiteDatabaseHook;
-import net.zetetic.database.sqlcipher.SQLiteException;
 import net.zetetic.database.sqlcipher.SQLiteOpenHelper;
 
 import org.session.libsession.utilities.TextSecurePreferences;
@@ -19,12 +18,12 @@ import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.crypto.DatabaseSecret;
 import org.thoughtcrime.securesms.database.AttachmentDatabase;
 import org.thoughtcrime.securesms.database.BlindedIdMappingDatabase;
+import org.thoughtcrime.securesms.database.ConfigDatabase;
 import org.thoughtcrime.securesms.database.DraftDatabase;
 import org.thoughtcrime.securesms.database.EmojiSearchDatabase;
 import org.thoughtcrime.securesms.database.GroupDatabase;
 import org.thoughtcrime.securesms.database.GroupMemberDatabase;
 import org.thoughtcrime.securesms.database.GroupReceiptDatabase;
-import org.thoughtcrime.securesms.database.JobDatabase;
 import org.thoughtcrime.securesms.database.LokiAPIDatabase;
 import org.thoughtcrime.securesms.database.LokiBackupFilesDatabase;
 import org.thoughtcrime.securesms.database.LokiMessageDatabase;
@@ -40,6 +39,7 @@ import org.thoughtcrime.securesms.database.SessionJobDatabase;
 import org.thoughtcrime.securesms.database.SmsDatabase;
 import org.thoughtcrime.securesms.database.ThreadDatabase;
 import org.thoughtcrime.securesms.notifications.NotificationChannels;
+import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities;
 
 import java.io.File;
 
@@ -87,9 +87,11 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   private static final int lokiV39                          = 60;
   private static final int lokiV40                          = 61;
   private static final int lokiV41                          = 62;
+  private static final int lokiV42                          = 63;
+  private static final int lokiV43                          = 64;
 
   // Loki - onUpgrade(...) must be updated to use Loki version numbers if Signal makes any database changes
-  private static final int    DATABASE_VERSION         = lokiV41;
+  private static final int    DATABASE_VERSION         = lokiV43;
   private static final int    MIN_DATABASE_VERSION     = lokiV7;
   private static final String CIPHER3_DATABASE_NAME    = "signal.db";
   public static final String  DATABASE_NAME            = "signal_v4.db";
@@ -98,25 +100,40 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   private final DatabaseSecret databaseSecret;
 
   public SQLCipherOpenHelper(@NonNull Context context, @NonNull DatabaseSecret databaseSecret) {
-    super(context, DATABASE_NAME, databaseSecret.asString(), null, DATABASE_VERSION, MIN_DATABASE_VERSION, null, new SQLiteDatabaseHook() {
-      @Override
-      public void preKey(SQLiteConnection connection) {
-        SQLCipherOpenHelper.applySQLCipherPragmas(connection, true);
-      }
-
-      @Override
-      public void postKey(SQLiteConnection connection) {
-        SQLCipherOpenHelper.applySQLCipherPragmas(connection, true);
-
-        // if not vacuumed in a while, perform that operation
-        long currentTime = System.currentTimeMillis();
-        // 7 days
-        if (currentTime - TextSecurePreferences.getLastVacuumTime(context) > 604_800_000) {
-          connection.execute("VACUUM;", null, null);
-          TextSecurePreferences.setLastVacuumNow(context);
+    super(
+      context,
+      DATABASE_NAME,
+      databaseSecret.asString(),
+      null,
+      DATABASE_VERSION,
+      MIN_DATABASE_VERSION,
+      null,
+      new SQLiteDatabaseHook() {
+        @Override
+        public void preKey(SQLiteConnection connection) {
+          SQLCipherOpenHelper.applySQLCipherPragmas(connection, true);
         }
-      }
-    }, true);
+
+        @Override
+        public void postKey(SQLiteConnection connection) {
+          SQLCipherOpenHelper.applySQLCipherPragmas(connection, true);
+
+          // if not vacuumed in a while, perform that operation
+          long currentTime = System.currentTimeMillis();
+          // 7 days
+          if (currentTime - TextSecurePreferences.getLastVacuumTime(context) > 604_800_000) {
+            connection.execute("VACUUM;", null, null);
+            TextSecurePreferences.setLastVacuumNow(context);
+          }
+        }
+      },
+      // Note: Now that we support concurrent database reads the migrations are actually non-blocking
+      // because of this we need to initially open the database with writeAheadLogging (WAL mode) disabled
+      // and enable it once the database officially opens it's connection (which will cause it to re-connect
+      // in WAL mode) - this is a little inefficient but will prevent SQL-related errors/crashes due to
+      // incomplete migrations
+      false
+    );
 
     this.context        = context.getApplicationContext();
     this.databaseSecret = databaseSecret;
@@ -134,7 +151,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     connection.execute("PRAGMA cipher_page_size = 4096;", null, null);
   }
 
-  private static SQLiteDatabase open(String path, DatabaseSecret databaseSecret, boolean useSQLCipher4) throws SQLiteException {
+  private static SQLiteDatabase open(String path, DatabaseSecret databaseSecret, boolean useSQLCipher4) {
     return SQLiteDatabase.openDatabase(path, databaseSecret.asString(), null, SQLiteDatabase.OPEN_READWRITE, new SQLiteDatabaseHook() {
       @Override
       public void preKey(SQLiteConnection connection) { SQLCipherOpenHelper.applySQLCipherPragmas(connection, useSQLCipher4); }
@@ -151,11 +168,11 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     // If the old SQLCipher3 database file doesn't exist then no need to do anything
     if (!oldDbFile.exists()) { return; }
 
-    try {
-      // Define the location for the new database
-      String newDbPath = context.getDatabasePath(DATABASE_NAME).getPath();
-      File newDbFile = new File(newDbPath);
+    // Define the location for the new database
+    String newDbPath = context.getDatabasePath(DATABASE_NAME).getPath();
+    File newDbFile = new File(newDbPath);
 
+    try {
       // If the new database file already exists then check if it's valid first, if it's in an
       // invalid state we should delete it and try to migrate again
       if (newDbFile.exists()) {
@@ -163,10 +180,24 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
         // assume the user hasn't downgraded for some reason and made changes to the old database and
         // can remove the old database file (it won't be used anymore)
         if (oldDbFile.lastModified() <= newDbFile.lastModified()) {
-          // TODO: Delete 'CIPHER3_DATABASE_NAME' once enough time has past
-//          //noinspection ResultOfMethodCallIgnored
-//          oldDbFile.delete();
-          return;
+          try {
+            SQLiteDatabase newDb = SQLCipherOpenHelper.open(newDbPath, databaseSecret, true);
+            int version = newDb.getVersion();
+            newDb.close();
+
+            // Make sure the new database has it's version set correctly (if not then the migration didn't
+            // fully succeed and the database will try to create all it's tables and immediately fail so
+            // we will need to remove and remigrate)
+            if (version > 0) {
+              // TODO: Delete 'CIPHER3_DATABASE_NAME' once enough time has past
+//            //noinspection ResultOfMethodCallIgnored
+//            oldDbFile.delete();
+              return;
+            }
+          }
+          catch (Exception e) {
+            Log.i(TAG, "Failed to retrieve version from new database, assuming invalid and remigrating");
+          }
         }
 
         // If the old database does have newer changes then the new database could have stale/invalid
@@ -207,6 +238,11 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     }
     catch (Exception e) {
       Log.e(TAG, "Migration from SQLCipher3 to SQLCipher4 failed", e);
+
+      // If an exception was thrown then we should remove the new database file (it's probably invalid)
+      if (!newDbFile.delete()) {
+        Log.e(TAG, "Unable to delete invalid new database file");
+      }
 
       // Notify the user of the issue so they know they can downgrade until the issue is fixed
       NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
@@ -249,9 +285,6 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     db.execSQL(RecipientDatabase.CREATE_TABLE);
     db.execSQL(GroupReceiptDatabase.CREATE_TABLE);
     for (String sql : SearchDatabase.CREATE_TABLE) {
-      db.execSQL(sql);
-    }
-    for (String sql : JobDatabase.CREATE_TABLE) {
       db.execSQL(sql);
     }
     db.execSQL(LokiAPIDatabase.getCreateSnodePoolTableCommand());
@@ -311,6 +344,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     db.execSQL(ThreadDatabase.getUnreadMentionCountCommand());
     db.execSQL(SmsDatabase.CREATE_HAS_MENTION_COMMAND);
     db.execSQL(MmsDatabase.CREATE_HAS_MENTION_COMMAND);
+    db.execSQL(ConfigDatabase.CREATE_CONFIG_TABLE_COMMAND);
 
     executeStatements(db, SmsDatabase.CREATE_INDEXS);
     executeStatements(db, MmsDatabase.CREATE_INDEXS);
@@ -322,6 +356,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     executeStatements(db, ReactionDatabase.CREATE_INDEXS);
 
     executeStatements(db, ReactionDatabase.CREATE_REACTION_TRIGGERS);
+    db.execSQL(RecipientDatabase.getAddWrapperHash());
 
     db.execSQL(RecipientDatabase.getCreateAutoDownloadCommand());
     db.execSQL(RecipientDatabase.getUpdateAutoDownloadValuesCommand());
@@ -558,6 +593,16 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
       }
 
       if (oldVersion < lokiV41) {
+        db.execSQL(ConfigDatabase.CREATE_CONFIG_TABLE_COMMAND);
+        db.execSQL(ConfigurationMessageUtilities.DELETE_INACTIVE_GROUPS);
+        db.execSQL(ConfigurationMessageUtilities.DELETE_INACTIVE_ONE_TO_ONES);
+      }
+
+      if (oldVersion < lokiV42) {
+        db.execSQL(RecipientDatabase.getAddWrapperHash());
+      }
+
+      if (oldVersion < lokiV43) {
         db.execSQL(RecipientDatabase.getCreateAutoDownloadCommand());
         db.execSQL(RecipientDatabase.getUpdateAutoDownloadValuesCommand());
       }
@@ -566,6 +611,15 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     } finally {
       db.endTransaction();
     }
+  }
+
+  @Override
+  public void onOpen(SQLiteDatabase db) {
+    super.onOpen(db);
+
+    // Now that the database is officially open (ie. the migrations are completed) we want to enable
+    // write ahead logging (WAL mode) to officially support concurrent read connections
+    db.enableWriteAheadLogging();
   }
 
   public void markCurrent(SQLiteDatabase db) {

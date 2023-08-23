@@ -123,10 +123,10 @@ open class ThumbnailView: FrameLayout {
 
         when {
             slide.thumbnailUri != null -> {
-                buildThumbnailGlideRequest(glide, slide).into(GlideDrawableListeningTarget(binding.thumbnailImage, result))
+                buildThumbnailGlideRequest(glide, slide).into(GlideDrawableListeningTarget(binding.thumbnailImage, binding.thumbnailLoadIndicator, result))
             }
             slide.hasPlaceholder() -> {
-                buildPlaceholderGlideRequest(glide, slide).into(GlideBitmapListeningTarget(binding.thumbnailImage, result))
+                buildPlaceholderGlideRequest(glide, slide).into(GlideBitmapListeningTarget(binding.thumbnailImage, null, result))
             }
             else -> {
                 glide.clear(binding.thumbnailImage)
@@ -190,7 +190,7 @@ open class ThumbnailView: FrameLayout {
             request.transforms(CenterCrop())
         }
 
-        request.into(GlideDrawableListeningTarget(binding.thumbnailImage, future))
+        request.into(GlideDrawableListeningTarget(binding.thumbnailImage, binding.thumbnailLoadIndicator, future))
 
         return future
     }

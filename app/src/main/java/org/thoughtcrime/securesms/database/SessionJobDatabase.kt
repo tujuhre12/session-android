@@ -46,7 +46,7 @@ class SessionJobDatabase(context: Context, helper: SQLCipherOpenHelper) : Databa
         databaseHelper.writableDatabase.delete(sessionJobTable, "${Companion.jobID} = ?", arrayOf( jobID ))
     }
 
-    fun getAllPendingJobs(type: String): Map<String, Job?> {
+    fun getAllJobs(type: String): Map<String, Job?> {
         val database = databaseHelper.readableDatabase
         return database.getAll(sessionJobTable, "$jobType = ?", arrayOf( type )) { cursor ->
             val jobID = cursor.getString(jobID)
@@ -83,16 +83,17 @@ class SessionJobDatabase(context: Context, helper: SQLCipherOpenHelper) : Databa
         }
     }
 
-    fun getGroupAvatarDownloadJob(server: String, room: String): GroupAvatarDownloadJob? {
+    fun getGroupAvatarDownloadJob(server: String, room: String, imageId: String?): GroupAvatarDownloadJob? {
         val database = databaseHelper.readableDatabase
         return database.getAll(sessionJobTable, "$jobType = ?", arrayOf(GroupAvatarDownloadJob.KEY)) {
             jobFromCursor(it) as GroupAvatarDownloadJob?
-        }.filterNotNull().find { it.server == server && it.room == room }
+        }.filterNotNull().find { it.server == server && it.room == room && (imageId == null || it.imageId == imageId) }
     }
 
     fun cancelPendingMessageSendJobs(threadID: Long) {
         val database = databaseHelper.writableDatabase
         val attachmentUploadJobKeys = mutableListOf<String>()
+        database.beginTransaction()
         database.getAll(sessionJobTable, "$jobType = ?", arrayOf( AttachmentUploadJob.KEY )) { cursor ->
             val job = jobFromCursor(cursor) as AttachmentUploadJob?
             if (job != null && job.threadID == threadID.toString()) { attachmentUploadJobKeys.add(job.id!!) }
@@ -103,15 +104,19 @@ class SessionJobDatabase(context: Context, helper: SQLCipherOpenHelper) : Databa
             if (job != null && job.message.threadID == threadID) { messageSendJobKeys.add(job.id!!) }
         }
         if (attachmentUploadJobKeys.isNotEmpty()) {
-            val attachmentUploadJobKeysAsString = attachmentUploadJobKeys.joinToString(", ")
-            database.delete(sessionJobTable, "${Companion.jobType} = ? AND ${Companion.jobID} IN (?)",
-                arrayOf( AttachmentUploadJob.KEY, attachmentUploadJobKeysAsString ))
+            attachmentUploadJobKeys.forEach {
+                database.delete(sessionJobTable, "${Companion.jobType} = ? AND ${Companion.jobID} = ?",
+                    arrayOf( AttachmentUploadJob.KEY, it ))
+            }
         }
         if (messageSendJobKeys.isNotEmpty()) {
-            val messageSendJobKeysAsString = messageSendJobKeys.joinToString(", ")
-            database.delete(sessionJobTable, "${Companion.jobType} = ? AND ${Companion.jobID} IN (?)",
-                arrayOf( MessageSendJob.KEY, messageSendJobKeysAsString ))
+            messageSendJobKeys.forEach {
+                database.delete(sessionJobTable, "${Companion.jobType} = ? AND ${Companion.jobID} = ?",
+                    arrayOf( MessageSendJob.KEY, it ))
+            }
         }
+        database.setTransactionSuccessful()
+        database.endTransaction()
     }
 
     fun isJobCanceled(job: Job): Boolean {

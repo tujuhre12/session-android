@@ -29,12 +29,16 @@
         android:name="android.hardware.touchscreen"
         android:required="false" />
 
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.USE_FINGERPRINT" />
     <uses-permission android:name="network.loki.messenger.ACCESS_SESSION_SECRETS" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
@@ -313,14 +317,6 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="org.thoughtcrime.securesms.home.HomeActivity" />
         </activity>
-        <service
-            android:name="org.thoughtcrime.securesms.notifications.PushNotificationService"
-            android:enabled="true"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.google.firebase.MESSAGING_EVENT" />
-            </intent-filter>
-        </service>
         <service android:enabled="true" android:name="org.thoughtcrime.securesms.service.WebRtcCallService"
             android:exported="false" />
         <service
@@ -414,12 +410,6 @@
                 <action android:name="network.loki.securesms.RESTART" />
             </intent-filter>
         </receiver>
-        <receiver android:name="org.thoughtcrime.securesms.service.LocalBackupListener"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-            </intent-filter>
-        </receiver>
         <receiver android:name="org.thoughtcrime.securesms.service.PersistentConnectionBootListener"
             android:exported="true">
             <intent-filter>
@@ -454,16 +444,8 @@
             </intent-filter>
         </receiver>
         <service
-            android:name="org.thoughtcrime.securesms.jobmanager.JobSchedulerScheduler$SystemService"
-            android:enabled="@bool/enable_job_service"
-            android:permission="android.permission.BIND_JOB_SERVICE"
-            tools:targetApi="26" />
-        <service
             android:name="org.thoughtcrime.securesms.jobmanager.KeepAliveService"
             android:enabled="@bool/enable_alarm_manager" />
-        <receiver
-            android:name="org.thoughtcrime.securesms.jobmanager.AlarmManagerScheduler$RetryReceiver"
-            android:enabled="@bool/enable_alarm_manager" /> <!-- Probably don't need this one -->
         <uses-library
             android:name="com.sec.android.app.multiwindow"
             android:required="false" />

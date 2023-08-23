@@ -14,7 +14,6 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.ColorInt
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.appcompat.widget.SearchView
@@ -33,7 +32,6 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.guava.Optional
 import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.MediaOverviewActivity
-import org.thoughtcrime.securesms.MuteDialog
 import org.thoughtcrime.securesms.ShortcutLauncherActivity
 import org.thoughtcrime.securesms.calls.WebRtcCallActivity
 import org.thoughtcrime.securesms.contacts.SelectContactsActivity
@@ -44,6 +42,8 @@ import org.thoughtcrime.securesms.groups.EditClosedGroupActivity
 import org.thoughtcrime.securesms.groups.EditClosedGroupActivity.Companion.groupIDKey
 import org.thoughtcrime.securesms.preferences.PrivacySettingsActivity
 import org.thoughtcrime.securesms.service.WebRtcCallService
+import org.thoughtcrime.securesms.showSessionDialog
+import org.thoughtcrime.securesms.showMuteDialog
 import org.thoughtcrime.securesms.util.BitmapUtil
 import java.io.IOException
 
@@ -63,26 +63,31 @@ object ConversationMenuHelper {
         // Base menu (options that should always be present)
         inflater.inflate(R.menu.menu_conversation, menu)
         // Expiring messages
-        if (!isOpenGroup && (thread.hasApprovedMe() || thread.isClosedGroupRecipient)) {
+        if (!isOpenGroup && (thread.hasApprovedMe() || thread.isClosedGroupRecipient) && !thread.isBlocked) {
             if (thread.expireMessages > 0) {
                 inflater.inflate(R.menu.menu_conversation_expiration_on, menu)
                 val item = menu.findItem(R.id.menu_expiring_messages)
-                val actionView = item.actionView
-                val iconView = actionView.findViewById<ImageView>(R.id.menu_badge_icon)
-                val badgeView = actionView.findViewById<TextView>(R.id.expiration_badge)
-                @ColorInt val color = context.getColorFromAttr(android.R.attr.textColorPrimary)
-                iconView.colorFilter = PorterDuffColorFilter(color, PorterDuff.Mode.MULTIPLY)
-                badgeView.text = ExpirationUtil.getExpirationAbbreviatedDisplayValue(context, thread.expireMessages)
-                actionView.setOnClickListener { onOptionsItemSelected(item) }
+                item.actionView?.let { actionView ->
+                    val iconView = actionView.findViewById<ImageView>(R.id.menu_badge_icon)
+                    val badgeView = actionView.findViewById<TextView>(R.id.expiration_badge)
+                    @ColorInt val color = context.getColorFromAttr(android.R.attr.textColorPrimary)
+                    iconView.colorFilter = PorterDuffColorFilter(color, PorterDuff.Mode.MULTIPLY)
+                    badgeView.text = ExpirationUtil.getExpirationAbbreviatedDisplayValue(context, thread.expireMessages)
+                    actionView.setOnClickListener { onOptionsItemSelected(item) }
+                }
             } else {
                 inflater.inflate(R.menu.menu_conversation_expiration_off, menu)
             }
+        }
+        // One-on-one chat menu allows copying the session id
+        if (thread.isContactRecipient) {
+            inflater.inflate(R.menu.menu_conversation_copy_session_id, menu)
         }
         // One-on-one chat menu (options that should only be present for one-on-one chats)
         if (thread.isContactRecipient) {
             if (thread.isBlocked) {
                 inflater.inflate(R.menu.menu_conversation_unblock, menu)
-            } else {
+            } else if (!thread.isLocalNumber) {
                 inflater.inflate(R.menu.menu_conversation_block, menu)
             }
         }
@@ -154,6 +159,7 @@ object ConversationMenuHelper {
             R.id.menu_block -> { block(context, thread, deleteThread = false) }
             R.id.menu_block_delete -> { blockAndDelete(context, thread) }
             R.id.menu_copy_session_id -> { copySessionID(context, thread) }
+            R.id.menu_copy_open_group_url -> { copyOpenGroupUrl(context, thread) }
             R.id.menu_edit_group -> { editClosedGroup(context, thread) }
             R.id.menu_leave_group -> { leaveClosedGroup(context, thread) }
             R.id.menu_invite_to_open_group -> { inviteContacts(context, thread) }
@@ -180,26 +186,23 @@ object ConversationMenuHelper {
     private fun call(context: Context, thread: Recipient) {
 
         if (!TextSecurePreferences.isCallNotificationsEnabled(context)) {
-            AlertDialog.Builder(context)
-                .setTitle(R.string.ConversationActivity_call_title)
-                .setMessage(R.string.ConversationActivity_call_prompt)
-                .setPositiveButton(R.string.activity_settings_title) { _, _ ->
-                    val intent = Intent(context, PrivacySettingsActivity::class.java)
-                    context.startActivity(intent)
+            context.showSessionDialog {
+                title(R.string.ConversationActivity_call_title)
+                text(R.string.ConversationActivity_call_prompt)
+                button(R.string.activity_settings_title, R.string.AccessibilityId_settings) {
+                    Intent(context, PrivacySettingsActivity::class.java).let(context::startActivity)
                 }
-                .setNeutralButton(R.string.cancel) { d, _ ->
-                    d.dismiss()
-                }.show()
+                cancelButton()
+            }
             return
         }
 
-        val service = WebRtcCallService.createCall(context, thread)
-        context.startService(service)
+        WebRtcCallService.createCall(context, thread)
+            .let(context::startService)
 
-        val activity = Intent(context, WebRtcCallActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        }
-        context.startActivity(activity)
+        Intent(context, WebRtcCallActivity::class.java)
+            .apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }
+            .let(context::startActivity)
 
     }
 
@@ -270,6 +273,12 @@ object ConversationMenuHelper {
         listener.copySessionID(thread.address.toString())
     }
 
+    private fun copyOpenGroupUrl(context: Context, thread: Recipient) {
+        if (!thread.isOpenGroupRecipient) { return }
+        val listener = context as? ConversationMenuListener ?: return
+        listener.copyOpenGroupUrl(thread)
+    }
+
     private fun editClosedGroup(context: Context, thread: Recipient) {
         if (!thread.isClosedGroupRecipient) { return }
         val intent = Intent(context, EditClosedGroupActivity::class.java)
@@ -280,9 +289,7 @@ object ConversationMenuHelper {
 
     private fun leaveClosedGroup(context: Context, thread: Recipient) {
         if (!thread.isClosedGroupRecipient) { return }
-        val builder = AlertDialog.Builder(context)
-        builder.setTitle(context.resources.getString(R.string.ConversationActivity_leave_group))
-        builder.setCancelable(true)
+
         val group = DatabaseComponent.get(context).groupDatabase().getGroup(thread.address.toGroupString()).orNull()
         val admins = group.admins
         val sessionID = TextSecurePreferences.getLocalNumber(context)
@@ -292,29 +299,25 @@ object ConversationMenuHelper {
         } else {
             context.resources.getString(R.string.ConversationActivity_are_you_sure_you_want_to_leave_this_group)
         }
-        builder.setMessage(message)
-        builder.setPositiveButton(R.string.yes) { _, _ ->
-            var groupPublicKey: String?
-            var isClosedGroup: Boolean
-            try {
-                groupPublicKey = doubleDecodeGroupID(thread.address.toString()).toHexString()
-                isClosedGroup = DatabaseComponent.get(context).lokiAPIDatabase().isClosedGroup(groupPublicKey)
-            } catch (e: IOException) {
-                groupPublicKey = null
-                isClosedGroup = false
-            }
-            try {
-                if (isClosedGroup) {
-                    MessageSender.leave(groupPublicKey!!, true)
-                } else {
-                    Toast.makeText(context, R.string.ConversationActivity_error_leaving_group, Toast.LENGTH_LONG).show()
+
+        fun onLeaveFailed() = Toast.makeText(context, R.string.ConversationActivity_error_leaving_group, Toast.LENGTH_LONG).show()
+
+        context.showSessionDialog {
+            title(R.string.ConversationActivity_leave_group)
+            text(message)
+            button(R.string.yes) {
+                try {
+                    val groupPublicKey = doubleDecodeGroupID(thread.address.toString()).toHexString()
+                    val isClosedGroup = DatabaseComponent.get(context).lokiAPIDatabase().isClosedGroup(groupPublicKey)
+
+                    if (isClosedGroup) MessageSender.leave(groupPublicKey, notifyUser = false)
+                    else onLeaveFailed()
+                } catch (e: Exception) {
+                    onLeaveFailed()
                 }
-            } catch (e: Exception) {
-                Toast.makeText(context, R.string.ConversationActivity_error_leaving_group, Toast.LENGTH_LONG).show()
             }
+            button(R.string.no)
         }
-        builder.setNegativeButton(R.string.no, null)
-        builder.show()
     }
 
     private fun inviteContacts(context: Context, thread: Recipient) {
@@ -329,7 +332,7 @@ object ConversationMenuHelper {
     }
 
     private fun mute(context: Context, thread: Recipient) {
-        MuteDialog.show(ContextThemeWrapper(context, context.theme)) { until: Long ->
+        showMuteDialog(ContextThemeWrapper(context, context.theme)) { until ->
             DatabaseComponent.get(context).recipientDatabase().setMuted(thread, until)
         }
     }
@@ -344,6 +347,7 @@ object ConversationMenuHelper {
         fun block(deleteThread: Boolean = false)
         fun unblock()
         fun copySessionID(sessionId: String)
+        fun copyOpenGroupUrl(thread: Recipient)
         fun showExpiringMessagesDialog(thread: Recipient)
     }
 

@@ -1,8 +1,10 @@
 package org.thoughtcrime.securesms.conversation.v2
 
+import android.content.ContentResolver
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import app.cash.copper.flow.observeQuery
 import com.goterl.lazysodium.utils.KeyPair
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -20,6 +22,8 @@ import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.database.DatabaseContentProviders
+import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import java.util.UUID
@@ -27,18 +31,28 @@ import java.util.UUID
 class ConversationViewModel(
     val threadId: Long,
     val edKeyPair: KeyPair?,
+    private val contentResolver: ContentResolver,
     private val repository: ConversationRepository,
     private val storage: StorageProtocol
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(ConversationUiState())
+    val showSendAfterApprovalText: Boolean
+        get() = recipient?.run { isContactRecipient && !isLocalNumber && !hasApprovedMe() } ?: false
+
+    private val _uiState = MutableStateFlow(ConversationUiState(conversationExists = true))
     val uiState: StateFlow<ConversationUiState> = _uiState
 
+    private var _recipient: RetrieveOnce<Recipient> = RetrieveOnce {
+        repository.maybeGetRecipientForThreadId(threadId)
+    }
     val recipient: Recipient?
-        get() = repository.maybeGetRecipientForThreadId(threadId)
+        get() = _recipient.value
 
+    private var _openGroup: RetrieveOnce<OpenGroup> = RetrieveOnce {
+        storage.getOpenGroup(threadId)
+    }
     val openGroup: OpenGroup?
-        get() = storage.getOpenGroup(threadId)
+        get() = _openGroup.value
 
     val serverCapabilities: List<String>
         get() = openGroup?.let { storage.getServerCapabilities(it.server) } ?: listOf()
@@ -48,6 +62,18 @@ class ConversationViewModel(
             SodiumUtilities.blindedKeyPair(openGroup!!.publicKey, edKeyPair)?.publicKey?.asBytes
                 ?.let { SessionId(IdPrefix.BLINDED, it) }?.hexString
         }
+
+    init {
+        viewModelScope.launch(Dispatchers.IO) {
+            contentResolver.observeQuery(DatabaseContentProviders.Conversation.getUriForThread(threadId))
+                .collect {
+                    val recipientExists = storage.getRecipientForThread(threadId) != null
+                    if (!recipientExists && _uiState.value.conversationExists) {
+                        _uiState.update { it.copy(conversationExists = false) }
+                    }
+                }
+        }
+    }
 
     fun saveDraft(text: String) {
         GlobalScope.launch(Dispatchers.IO) {
@@ -170,21 +196,26 @@ class ConversationViewModel(
         return repository.hasReceived(threadId)
     }
 
+    fun updateRecipient() {
+        _recipient.updateTo(repository.maybeGetRecipientForThreadId(threadId))
+    }
+
     @dagger.assisted.AssistedFactory
     interface AssistedFactory {
-        fun create(threadId: Long, edKeyPair: KeyPair?): Factory
+        fun create(threadId: Long, edKeyPair: KeyPair?, contentResolver: ContentResolver): Factory
     }
 
     @Suppress("UNCHECKED_CAST")
     class Factory @AssistedInject constructor(
         @Assisted private val threadId: Long,
         @Assisted private val edKeyPair: KeyPair?,
+        @Assisted private val contentResolver: ContentResolver,
         private val repository: ConversationRepository,
         private val storage: StorageProtocol
     ) : ViewModelProvider.Factory {
 
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return ConversationViewModel(threadId, edKeyPair, repository, storage) as T
+            return ConversationViewModel(threadId, edKeyPair, contentResolver, repository, storage) as T
         }
     }
 }
@@ -193,5 +224,22 @@ data class UiMessage(val id: Long, val message: String)
 
 data class ConversationUiState(
     val uiMessages: List<UiMessage> = emptyList(),
-    val isMessageRequestAccepted: Boolean? = null
+    val isMessageRequestAccepted: Boolean? = null,
+    val conversationExists: Boolean
 )
+
+data class RetrieveOnce<T>(val retrieval: () -> T?) {
+    private var triedToRetrieve: Boolean = false
+    private var _value: T? = null
+
+    val value: T?
+        get() {
+            if (triedToRetrieve) { return _value }
+
+            triedToRetrieve = true
+            _value = retrieval()
+            return _value
+        }
+
+    fun updateTo(value: T?) { _value = value }
+}
