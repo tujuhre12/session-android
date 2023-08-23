@@ -12,7 +12,7 @@ sealed class ConversationSettingsActivityResult {
 
 class ConversationSettingsActivityContract: ActivityResultContract<Long, ConversationSettingsActivityResult>() {
 
-    override fun createIntent(context: Context, input: Long?) = Intent(context, ConversationSettingsActivity::class.java).apply {
+    override fun createIntent(context: Context, input: Long) = Intent(context, ConversationSettingsActivity::class.java).apply {
         putExtra(ConversationActivityV2.THREAD_ID, input ?: -1L)
     }
 

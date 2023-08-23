@@ -7,7 +7,7 @@ import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 
 class ConversationNotificationSettingsActivityContract: ActivityResultContract<Long, Unit>() {
 
-    override fun createIntent(context: Context, input: Long?): Intent =
+    override fun createIntent(context: Context, input: Long): Intent =
         Intent(context, ConversationNotificationSettingsActivity::class.java).apply {
             putExtra(ConversationActivityV2.THREAD_ID, input)
         }

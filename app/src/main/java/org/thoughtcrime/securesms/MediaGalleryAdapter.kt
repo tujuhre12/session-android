@@ -7,7 +7,6 @@ import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import network.loki.messenger.R
 import network.loki.messenger.databinding.MediaOverviewGalleryItemBinding
-import org.thoughtcrime.securesms.conversation.v2.utilities.ThumbnailView
 import org.thoughtcrime.securesms.database.MediaDatabase.MediaRecord
 import org.thoughtcrime.securesms.mms.GlideApp
 import org.thoughtcrime.securesms.util.MediaUtil
@@ -68,11 +67,11 @@ class MediaGalleryAdapter(private val itemClickListener: ItemClickListener): Rec
             val slide = MediaUtil.getSlideForAttachment(itemView.context, item.attachment)
 
             if (slide != null) {
-                binding.image.setImageResource(glide, slide, false, false)
+                binding.image.root.setImageResource(glide, slide, false, null)
             }
 
-            binding.image.setOnClickListener { itemClickListener.onMediaClicked(item) }
-            binding.image.setOnLongClickListener {
+            binding.image.root.setOnClickListener { itemClickListener.onMediaClicked(item) }
+            binding.image.root.setOnLongClickListener {
                 itemClickListener.onMediaLongClicked(item)
                 true
             }

@@ -25731,6 +25731,30 @@ public final class SignalServiceProtos {
      * </pre>
      */
     boolean getIsApproved();
+
+    // optional bytes profileKey = 2;
+    /**
+     * <code>optional bytes profileKey = 2;</code>
+     */
+    boolean hasProfileKey();
+    /**
+     * <code>optional bytes profileKey = 2;</code>
+     */
+    com.google.protobuf.ByteString getProfileKey();
+
+    // optional .signalservice.DataMessage.LokiProfile profile = 3;
+    /**
+     * <code>optional .signalservice.DataMessage.LokiProfile profile = 3;</code>
+     */
+    boolean hasProfile();
+    /**
+     * <code>optional .signalservice.DataMessage.LokiProfile profile = 3;</code>
+     */
+    org.session.libsignal.protos.SignalServiceProtos.DataMessage.LokiProfile getProfile();
+    /**
+     * <code>optional .signalservice.DataMessage.LokiProfile profile = 3;</code>
+     */
+    org.session.libsignal.protos.SignalServiceProtos.DataMessage.LokiProfileOrBuilder getProfileOrBuilder();
   }
   /**
    * Protobuf type {@code signalservice.MessageRequestResponse}
@@ -25786,6 +25810,24 @@ public final class SignalServiceProtos {
             case 8: {
               bitField0_ |= 0x00000001;
               isApproved_ = input.readBool();
+              break;
+            }
+            case 18: {
+              bitField0_ |= 0x00000002;
+              profileKey_ = input.readBytes();
+              break;
+            }
+            case 26: {
+              org.session.libsignal.protos.SignalServiceProtos.DataMessage.LokiProfile.Builder subBuilder = null;
+              if (((bitField0_ & 0x00000004) == 0x00000004)) {
+                subBuilder = profile_.toBuilder();
+              }
+              profile_ = input.readMessage(org.session.libsignal.protos.SignalServiceProtos.DataMessage.LokiProfile.PARSER, extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(profile_);
+                profile_ = subBuilder.buildPartial();
+              }
+              bitField0_ |= 0x00000004;
               break;
             }
           }
@@ -25852,8 +25894,48 @@ public final class SignalServiceProtos {
       return isApproved_;
     }
 
+    // optional bytes profileKey = 2;
+    public static final int PROFILEKEY_FIELD_NUMBER = 2;
+    private com.google.protobuf.ByteString profileKey_;
+    /**
+     * <code>optional bytes profileKey = 2;</code>
+     */
+    public boolean hasProfileKey() {
+      return ((bitField0_ & 0x00000002) == 0x00000002);
+    }
+    /**
+     * <code>optional bytes profileKey = 2;</code>
+     */
+    public com.google.protobuf.ByteString getProfileKey() {
+      return profileKey_;
+    }
+
+    // optional .signalservice.DataMessage.LokiProfile profile = 3;
+    public static final int PROFILE_FIELD_NUMBER = 3;
+    private org.session.libsignal.protos.SignalServiceProtos.DataMessage.LokiProfile profile_;
+    /**
+     * <code>optional .signalservice.DataMessage.LokiProfile profile = 3;</code>
+     */
+    public boolean hasProfile() {
+      return ((bitField0_ & 0x00000004) == 0x00000004);
+    }
+    /**
+     * <code>optional .signalservice.DataMessage.LokiProfile profile = 3;</code>
+     */
+    public org.session.libsignal.protos.SignalServiceProtos.DataMessage.LokiProfile getProfile() {
+      return profile_;
+    }
+    /**
+     * <code>optional .signalservice.DataMessage.LokiProfile profile = 3;</code>
+     */
+    public org.session.libsignal.protos.SignalServiceProtos.DataMessage.LokiProfileOrBuilder getProfileOrBuilder() {
+      return profile_;
+    }
+
     private void initFields() {
       isApproved_ = false;
+      profileKey_ = com.google.protobuf.ByteString.EMPTY;
+      profile_ = org.session.libsignal.protos.SignalServiceProtos.DataMessage.LokiProfile.getDefaultInstance();
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -25874,6 +25956,12 @@ public final class SignalServiceProtos {
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         output.writeBool(1, isApproved_);
       }
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        output.writeBytes(2, profileKey_);
+      }
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        output.writeMessage(3, profile_);
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -25886,6 +25974,14 @@ public final class SignalServiceProtos {
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         size += com.google.protobuf.CodedOutputStream
           .computeBoolSize(1, isApproved_);
+      }
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(2, profileKey_);
+      }
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(3, profile_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -25995,6 +26091,7 @@ public final class SignalServiceProtos {
       }
       private void maybeForceBuilderInitialization() {
         if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+          getProfileFieldBuilder();
         }
       }
       private static Builder create() {
@@ -26005,6 +26102,14 @@ public final class SignalServiceProtos {
         super.clear();
         isApproved_ = false;
         bitField0_ = (bitField0_ & ~0x00000001);
+        profileKey_ = com.google.protobuf.ByteString.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000002);
+        if (profileBuilder_ == null) {
+          profile_ = org.session.libsignal.protos.SignalServiceProtos.DataMessage.LokiProfile.getDefaultInstance();
+        } else {
+          profileBuilder_.clear();
+        }
+        bitField0_ = (bitField0_ & ~0x00000004);
         return this;
       }
 
@@ -26037,6 +26142,18 @@ public final class SignalServiceProtos {
           to_bitField0_ |= 0x00000001;
         }
         result.isApproved_ = isApproved_;
+        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
+          to_bitField0_ |= 0x00000002;
+        }
+        result.profileKey_ = profileKey_;
+        if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
+          to_bitField0_ |= 0x00000004;
+        }
+        if (profileBuilder_ == null) {
+          result.profile_ = profile_;
+        } else {
+          result.profile_ = profileBuilder_.build();
+        }
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -26055,6 +26172,12 @@ public final class SignalServiceProtos {
         if (other == org.session.libsignal.protos.SignalServiceProtos.MessageRequestResponse.getDefaultInstance()) return this;
         if (other.hasIsApproved()) {
           setIsApproved(other.getIsApproved());
+        }
+        if (other.hasProfileKey()) {
+          setProfileKey(other.getProfileKey());
+        }
+        if (other.hasProfile()) {
+          mergeProfile(other.getProfile());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -26134,6 +26257,159 @@ public final class SignalServiceProtos {
         isApproved_ = false;
         onChanged();
         return this;
+      }
+
+      // optional bytes profileKey = 2;
+      private com.google.protobuf.ByteString profileKey_ = com.google.protobuf.ByteString.EMPTY;
+      /**
+       * <code>optional bytes profileKey = 2;</code>
+       */
+      public boolean hasProfileKey() {
+        return ((bitField0_ & 0x00000002) == 0x00000002);
+      }
+      /**
+       * <code>optional bytes profileKey = 2;</code>
+       */
+      public com.google.protobuf.ByteString getProfileKey() {
+        return profileKey_;
+      }
+      /**
+       * <code>optional bytes profileKey = 2;</code>
+       */
+      public Builder setProfileKey(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000002;
+        profileKey_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional bytes profileKey = 2;</code>
+       */
+      public Builder clearProfileKey() {
+        bitField0_ = (bitField0_ & ~0x00000002);
+        profileKey_ = getDefaultInstance().getProfileKey();
+        onChanged();
+        return this;
+      }
+
+      // optional .signalservice.DataMessage.LokiProfile profile = 3;
+      private org.session.libsignal.protos.SignalServiceProtos.DataMessage.LokiProfile profile_ = org.session.libsignal.protos.SignalServiceProtos.DataMessage.LokiProfile.getDefaultInstance();
+      private com.google.protobuf.SingleFieldBuilder<
+          org.session.libsignal.protos.SignalServiceProtos.DataMessage.LokiProfile, org.session.libsignal.protos.SignalServiceProtos.DataMessage.LokiProfile.Builder, org.session.libsignal.protos.SignalServiceProtos.DataMessage.LokiProfileOrBuilder> profileBuilder_;
+      /**
+       * <code>optional .signalservice.DataMessage.LokiProfile profile = 3;</code>
+       */
+      public boolean hasProfile() {
+        return ((bitField0_ & 0x00000004) == 0x00000004);
+      }
+      /**
+       * <code>optional .signalservice.DataMessage.LokiProfile profile = 3;</code>
+       */
+      public org.session.libsignal.protos.SignalServiceProtos.DataMessage.LokiProfile getProfile() {
+        if (profileBuilder_ == null) {
+          return profile_;
+        } else {
+          return profileBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>optional .signalservice.DataMessage.LokiProfile profile = 3;</code>
+       */
+      public Builder setProfile(org.session.libsignal.protos.SignalServiceProtos.DataMessage.LokiProfile value) {
+        if (profileBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          profile_ = value;
+          onChanged();
+        } else {
+          profileBuilder_.setMessage(value);
+        }
+        bitField0_ |= 0x00000004;
+        return this;
+      }
+      /**
+       * <code>optional .signalservice.DataMessage.LokiProfile profile = 3;</code>
+       */
+      public Builder setProfile(
+          org.session.libsignal.protos.SignalServiceProtos.DataMessage.LokiProfile.Builder builderForValue) {
+        if (profileBuilder_ == null) {
+          profile_ = builderForValue.build();
+          onChanged();
+        } else {
+          profileBuilder_.setMessage(builderForValue.build());
+        }
+        bitField0_ |= 0x00000004;
+        return this;
+      }
+      /**
+       * <code>optional .signalservice.DataMessage.LokiProfile profile = 3;</code>
+       */
+      public Builder mergeProfile(org.session.libsignal.protos.SignalServiceProtos.DataMessage.LokiProfile value) {
+        if (profileBuilder_ == null) {
+          if (((bitField0_ & 0x00000004) == 0x00000004) &&
+              profile_ != org.session.libsignal.protos.SignalServiceProtos.DataMessage.LokiProfile.getDefaultInstance()) {
+            profile_ =
+              org.session.libsignal.protos.SignalServiceProtos.DataMessage.LokiProfile.newBuilder(profile_).mergeFrom(value).buildPartial();
+          } else {
+            profile_ = value;
+          }
+          onChanged();
+        } else {
+          profileBuilder_.mergeFrom(value);
+        }
+        bitField0_ |= 0x00000004;
+        return this;
+      }
+      /**
+       * <code>optional .signalservice.DataMessage.LokiProfile profile = 3;</code>
+       */
+      public Builder clearProfile() {
+        if (profileBuilder_ == null) {
+          profile_ = org.session.libsignal.protos.SignalServiceProtos.DataMessage.LokiProfile.getDefaultInstance();
+          onChanged();
+        } else {
+          profileBuilder_.clear();
+        }
+        bitField0_ = (bitField0_ & ~0x00000004);
+        return this;
+      }
+      /**
+       * <code>optional .signalservice.DataMessage.LokiProfile profile = 3;</code>
+       */
+      public org.session.libsignal.protos.SignalServiceProtos.DataMessage.LokiProfile.Builder getProfileBuilder() {
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return getProfileFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>optional .signalservice.DataMessage.LokiProfile profile = 3;</code>
+       */
+      public org.session.libsignal.protos.SignalServiceProtos.DataMessage.LokiProfileOrBuilder getProfileOrBuilder() {
+        if (profileBuilder_ != null) {
+          return profileBuilder_.getMessageOrBuilder();
+        } else {
+          return profile_;
+        }
+      }
+      /**
+       * <code>optional .signalservice.DataMessage.LokiProfile profile = 3;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilder<
+          org.session.libsignal.protos.SignalServiceProtos.DataMessage.LokiProfile, org.session.libsignal.protos.SignalServiceProtos.DataMessage.LokiProfile.Builder, org.session.libsignal.protos.SignalServiceProtos.DataMessage.LokiProfileOrBuilder> 
+          getProfileFieldBuilder() {
+        if (profileBuilder_ == null) {
+          profileBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+              org.session.libsignal.protos.SignalServiceProtos.DataMessage.LokiProfile, org.session.libsignal.protos.SignalServiceProtos.DataMessage.LokiProfile.Builder, org.session.libsignal.protos.SignalServiceProtos.DataMessage.LokiProfileOrBuilder>(
+                  profile_,
+                  getParentForChildren(),
+                  isClean());
+          profile_ = null;
+        }
+        return profileBuilder_;
       }
 
       // @@protoc_insertion_point(builder_scope:signalservice.MessageRequestResponse)
@@ -28802,18 +29078,20 @@ public final class SignalServiceProtos {
       "ey\030\001 \002(\014\022\014\n\004name\030\002 \002(\t\022\026\n\016profilePicture" +
       "\030\003 \001(\t\022\022\n\nprofileKey\030\004 \001(\014\022\022\n\nisApproved" +
       "\030\005 \001(\010\022\021\n\tisBlocked\030\006 \001(\010\022\024\n\014didApproveM" +
-      "e\030\007 \001(\010\",\n\026MessageRequestResponse\022\022\n\nisA" +
-      "pproved\030\001 \002(\010\"u\n\016ReceiptMessage\0220\n\004type\030" +
-      "\001 \002(\0162\".signalservice.ReceiptMessage.Typ" +
-      "e\022\021\n\ttimestamp\030\002 \003(\004\"\036\n\004Type\022\014\n\010DELIVERY" +
-      "\020\000\022\010\n\004READ\020\001\"\354\001\n\021AttachmentPointer\022\n\n\002id" +
-      "\030\001 \002(\006\022\023\n\013contentType\030\002 \001(\t\022\013\n\003key\030\003 \001(\014" +
-      "\022\014\n\004size\030\004 \001(\r\022\021\n\tthumbnail\030\005 \001(\014\022\016\n\006dig",
-      "est\030\006 \001(\014\022\020\n\010fileName\030\007 \001(\t\022\r\n\005flags\030\010 \001" +
-      "(\r\022\r\n\005width\030\t \001(\r\022\016\n\006height\030\n \001(\r\022\017\n\007cap" +
-      "tion\030\013 \001(\t\022\013\n\003url\030e \001(\t\"\032\n\005Flags\022\021\n\rVOIC" +
-      "E_MESSAGE\020\001B3\n\034org.session.libsignal.pro" +
-      "tosB\023SignalServiceProtos"
+      "e\030\007 \001(\010\"y\n\026MessageRequestResponse\022\022\n\nisA" +
+      "pproved\030\001 \002(\010\022\022\n\nprofileKey\030\002 \001(\014\0227\n\007pro" +
+      "file\030\003 \001(\0132&.signalservice.DataMessage.L" +
+      "okiProfile\"u\n\016ReceiptMessage\0220\n\004type\030\001 \002" +
+      "(\0162\".signalservice.ReceiptMessage.Type\022\021" +
+      "\n\ttimestamp\030\002 \003(\004\"\036\n\004Type\022\014\n\010DELIVERY\020\000\022" +
+      "\010\n\004READ\020\001\"\354\001\n\021AttachmentPointer\022\n\n\002id\030\001 ",
+      "\002(\006\022\023\n\013contentType\030\002 \001(\t\022\013\n\003key\030\003 \001(\014\022\014\n" +
+      "\004size\030\004 \001(\r\022\021\n\tthumbnail\030\005 \001(\014\022\016\n\006digest" +
+      "\030\006 \001(\014\022\020\n\010fileName\030\007 \001(\t\022\r\n\005flags\030\010 \001(\r\022" +
+      "\r\n\005width\030\t \001(\r\022\016\n\006height\030\n \001(\r\022\017\n\007captio" +
+      "n\030\013 \001(\t\022\013\n\003url\030e \001(\t\"\032\n\005Flags\022\021\n\rVOICE_M" +
+      "ESSAGE\020\001B3\n\034org.session.libsignal.protos" +
+      "B\023SignalServiceProtos"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -28975,7 +29253,7 @@ public final class SignalServiceProtos {
           internal_static_signalservice_MessageRequestResponse_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_signalservice_MessageRequestResponse_descriptor,
-              new java.lang.String[] { "IsApproved", });
+              new java.lang.String[] { "IsApproved", "ProfileKey", "Profile", });
           internal_static_signalservice_ReceiptMessage_descriptor =
             getDescriptor().getMessageTypes().get(15);
           internal_static_signalservice_ReceiptMessage_fieldAccessorTable = new
