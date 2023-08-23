@@ -1750,21 +1750,16 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
             val userGroups = configFactory.userGroups ?: return
             val groupPublicKey = GroupUtil.addressToGroupSessionId(recipient.address)
             val expiryMode = config.expiryMode
-            val groupInfo = userGroups.getLegacyGroupInfo(groupPublicKey)?.let { info ->
-                info.copy(disappearingTimer = when (expiryMode) {
-                    null, ExpiryMode.NONE -> 0
-                    else -> expiryMode.expirySeconds
-                })
-            } ?: return
+            val groupInfo = userGroups.getLegacyGroupInfo(groupPublicKey)
+                ?.copy(disappearingTimer = expiryMode.expirySeconds) ?: return
             userGroups.set(groupInfo)
         } else if (recipient.isLocalNumber) {
             val user = configFactory.user ?: return
-            user.setNtsExpiry(config.expiryMode ?: ExpiryMode.NONE)
+            user.setNtsExpiry(config.expiryMode)
         } else if (recipient.isContactRecipient) {
             val contacts = configFactory.contacts ?: return
-            val expiry = config.expiryMode
             val contact = contacts.get(recipient.address.serialize())?.copy(
-                expiryMode = expiry ?: ExpiryMode.NONE
+                expiryMode = config.expiryMode
             ) ?: return
             contacts.set(contact)
         }
