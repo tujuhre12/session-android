@@ -163,16 +163,7 @@ public class MediaOverviewActivity extends PassphraseRequiredActionBarActivity i
     @Override
     public void onClick(View v) {
         if (v.getId() == R.id.clearMedia) {
-            FragmentManager fm = getSupportFragmentManager();
-            ClearAllMediaDialog dialog = new ClearAllMediaDialog(() -> {
-                StorageProtocol storage = MessagingModuleConfiguration.getShared().getStorage();
-                Long threadId = storage.getThreadId(recipient);
-                if (threadId != null) {
-                    storage.clearMedia(threadId, null);
-                }
-                return Unit.INSTANCE;
-            });
-            dialog.show(fm, "ClearAllMedia");
+            // TODO: future chunk
         }
     }
 
