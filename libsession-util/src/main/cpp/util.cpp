@@ -23,6 +23,15 @@ namespace util {
         return st;
     }
 
+    session::ustring ustring_from_jstring(JNIEnv* env, jstring string) {
+        size_t len = env->GetStringUTFLength(string);
+        auto chars = env->GetStringUTFChars(string, nullptr);
+
+        session::ustring st{reinterpret_cast<const unsigned char *>(chars), len};
+        env->ReleaseStringUTFChars(string, chars);
+        return st;
+    }
+
     jobject serialize_user_pic(JNIEnv *env, session::config::profile_pic pic) {
         jclass returnObjectClass = env->FindClass("network/loki/messenger/libsession_util/util/UserPic");
         jmethodID constructor = env->GetMethodID(returnObjectClass, "<init>", "(Ljava/lang/String;[B)V");
