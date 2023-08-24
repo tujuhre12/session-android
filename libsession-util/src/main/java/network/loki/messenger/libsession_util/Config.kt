@@ -23,6 +23,7 @@ sealed class ConfigBase(protected val /* yucky */ pointer: Long) {
             is Contacts -> Kind.CONTACTS
             is ConversationVolatileConfig -> Kind.CONVO_INFO_VOLATILE
             is UserGroupsConfig -> Kind.GROUPS
+            is GroupInfoConfig -> Kind.CLOSED_GROUP_INFO
         }
 
         // TODO: time in future to activate (hardcoded to 1st jan 2024 for testing, change before release)
@@ -197,4 +198,14 @@ class UserGroupsConfig(pointer: Long): ConfigBase(pointer) {
     external fun all(): List<GroupInfo>
     external fun allCommunityInfo(): List<GroupInfo.CommunityGroupInfo>
     external fun allLegacyGroupInfo(): List<GroupInfo.LegacyGroupInfo>
+}
+
+class GroupInfoConfig(pointer: Long): ConfigBase(pointer) {
+    companion object {}
+    init {
+        System.loadLibrary("session_util")
+    }
+    external fun newInstance(pubKeyHex: String): GroupInfoConfig
+    external fun newInstance(pubKeyHex: String, secretKey: ByteArray?): GroupInfoConfig
+    external fun newInstance(pubKeyHex: String, secretKey: ByteArray?, initialDump: ByteArray): GroupInfoConfig
 }

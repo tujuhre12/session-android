@@ -30,7 +30,8 @@ set(SOURCES
         config_base.cpp
         contacts.cpp
         conversation.cpp
-        util.cpp)
+        util.cpp
+        group_info.cpp)
 
 add_library( # Sets the name of the library.
         session_util

@@ -1,0 +1,6 @@
+#ifndef SESSION_ANDROID_GROUP_INFO_H
+#define SESSION_ANDROID_GROUP_INFO_H
+
+#include "util.h"
+
+#endif //SESSION_ANDROID_GROUP_INFO_H
