@@ -22,101 +22,11 @@
             app:subtitleTextAppearance="@style/TextAppearance.Session.ToolbarSubtitle"
             app:title="@string/activity_expiration_settings_title" />
 
-        <LinearLayout
-            android:id="@+id/layout_container"
+        <androidx.compose.ui.platform.ComposeView
+            android:id="@+id/container"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/toolbar"
-            android:layout_marginBottom="@dimen/massive_spacing"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/text_view_delete_type"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:paddingHorizontal="@dimen/very_large_spacing"
-                android:paddingVertical="@dimen/small_spacing"
-                android:text="@string/activity_expiration_settings_delete_type"
-                android:textColor="?android:textColorTertiary"
-                android:textSize="@dimen/medium_font_size" />
-
-            <LinearLayout
-                android:id="@+id/layout_delete_types"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="@dimen/small_spacing"
-                android:background="@drawable/preference_single"
-                android:paddingHorizontal="@dimen/large_spacing"
-                android:paddingVertical="@dimen/medium_spacing">
-
-                <androidx.recyclerview.widget.RecyclerView
-                    android:overScrollMode="never"
-                    android:id="@+id/recycler_view_delete_types"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:clipToPadding="false"
-                    app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                    tools:itemCount="3"
-                    tools:listitem="@layout/item_selectable" />
-            </LinearLayout>
-
-            <TextView
-                android:id="@+id/text_view_timer"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:paddingHorizontal="@dimen/very_large_spacing"
-                android:paddingVertical="@dimen/small_spacing"
-                android:text="@string/activity_expiration_settings_timer"
-                android:textColor="?android:textColorTertiary"
-                android:textSize="@dimen/medium_font_size" />
-
-            <LinearLayout
-                android:id="@+id/layout_timer"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:contentDescription="@string/AccessibilityId_disappearing_messages_timer"
-                android:layout_marginHorizontal="@dimen/small_spacing"
-                android:background="@drawable/preference_single"
-                android:paddingHorizontal="@dimen/large_spacing"
-                android:paddingVertical="@dimen/medium_spacing">
-
-                <androidx.recyclerview.widget.RecyclerView
-                    android:overScrollMode="never"
-                    android:id="@+id/recycler_view_timer_options"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:clipToPadding="false"
-                    app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                    tools:itemCount="3"
-                    tools:listitem="@layout/item_selectable" />
-            </LinearLayout>
-
-            <TextView
-                android:id="@+id/text_view_footer"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:paddingHorizontal="@dimen/very_large_spacing"
-                android:paddingVertical="@dimen/small_spacing"
-                android:gravity="center_horizontal"
-                android:text="@string/activity_expiration_settings_group_footer"
-                android:textColor="?android:textColorTertiary"
-                android:textSize="@dimen/very_small_font_size"
-                android:visibility="gone"
-                tools:visibility="visible"/>
-
-        </LinearLayout>
-
-        <Button
-            android:id="@+id/button_set"
-            style="@style/Widget.Session.Button.Common.ProminentOutline"
-            android:layout_width="196dp"
-            android:layout_height="@dimen/medium_button_height"
-            android:contentDescription="@string/AccessibilityId_set_button"
-            android:layout_alignParentBottom="true"
-            android:layout_centerHorizontal="true"
-            android:layout_marginTop="@dimen/medium_spacing"
-            android:layout_marginBottom="@dimen/very_large_spacing"
-            android:text="@string/expiration_settings_set_button_title" />
+            android:layout_height="match_parent"
+            android:layout_below="@id/toolbar"/>
 
     </RelativeLayout>
 

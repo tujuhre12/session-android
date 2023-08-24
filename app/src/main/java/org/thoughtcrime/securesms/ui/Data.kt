@@ -3,12 +3,18 @@ package org.thoughtcrime.securesms.ui
 import android.content.Context
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 
 /**
  * Compatibility class to allow ViewModels to use strings and string resources interchangeably.
  */
 sealed class GetString {
+
+    @Composable
+    operator fun invoke() = string()
+    operator fun invoke(context: Context) = string(context)
+
     @Composable
     abstract fun string(): String
 
@@ -22,12 +28,17 @@ sealed class GetString {
         @Composable
         override fun string(): String = stringResource(resId)
         override fun string(context: Context): String = context.getString(resId)
-
+    }
+    data class FromFun(val function: (Context) -> String): GetString() {
+        @Composable
+        override fun string(): String = function(LocalContext.current)
+        override fun string(context: Context): String = function(context)
     }
 }
 
 fun GetString(@StringRes resId: Int) = GetString.FromResId(resId)
 fun GetString(string: String) = GetString.FromString(string)
+fun GetString(function: (Context) -> String) = GetString.FromFun(function)
 
 
 /**

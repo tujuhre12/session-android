@@ -161,7 +161,7 @@ private fun MessageReceiver.handleExpirationTimerUpdate(message: ExpirationTimer
     val type = when {
         recipient.isContactRecipient -> ExpiryMode.AfterRead(message.duration!!.toLong())
         recipient.isGroupRecipient -> ExpiryMode.AfterSend(message.duration!!.toLong())
-        else -> null
+        else -> ExpiryMode.NONE
     }
     try {
         var threadId: Long = module.storage.getOrCreateThreadIdFor(fromSerialized(message.sender!!))
@@ -295,7 +295,7 @@ fun MessageReceiver.updateExpiryIfNeeded(
     val durationSeconds = if (proto.hasExpirationTimer()) proto.expirationTimer else 0
     val type = if (proto.hasExpirationType()) proto.expirationType else null
 
-    val expiryMode = type?.expiryMode(durationSeconds.toLong())
+    val expiryMode = type?.expiryMode(durationSeconds.toLong()) ?: ExpiryMode.NONE
 
     val remoteConfig = ExpirationConfiguration(
         threadID,
@@ -325,12 +325,12 @@ fun MessageReceiver.updateExpiryIfNeeded(
 
     // handle a delete after send expired fetch
     if (type == ExpirationType.DELETE_AFTER_SEND
-        && sentTime + (configToUse.expiryMode?.expirySeconds ?: 0) <= SnodeAPI.nowWithOffset) {
+        && sentTime + configToUse.expiryMode.expirySeconds <= SnodeAPI.nowWithOffset) {
         throw MessageReceiver.Error.ExpiredMessage
     }
     // handle a delete after read last known config value
     if (type == ExpirationType.DELETE_AFTER_READ
-        && sentTime + (configToUse.expiryMode?.expirySeconds ?: 0) <= storage.getLastSeen(threadID)) {
+        && sentTime + configToUse.expiryMode.expirySeconds <= storage.getLastSeen(threadID)) {
         throw MessageReceiver.Error.ExpiredMessage
     }
 
