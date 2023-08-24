@@ -11,12 +11,12 @@ import network.loki.messenger.databinding.ActivityConversationSettingsBinding
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.MediaOverviewActivity
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
-import org.thoughtcrime.securesms.conversation.settings.ClearAllMessagesDialog.Option
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.groups.EditClosedGroupActivity
 import org.thoughtcrime.securesms.mms.GlideApp
+import org.thoughtcrime.securesms.showSessionDialog
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -150,9 +150,17 @@ class ConversationSettingsActivity: PassphraseRequiredActionBarActivity(), View.
             }
             v === binding.back -> onBackPressed()
             v === binding.clearMessages -> {
-                ClearAllMessagesDialog(viewModel.isUserGroupAdmin()) { option ->
-                    viewModel.clearMessages(option == Option.FOR_EVERYONE)
-                }.show(supportFragmentManager, "Clear messages dialog")
+
+                showSessionDialog {
+                    title(R.string.dialog_clear_all_messages_title)
+                    text(R.string.dialog_clear_all_messages_message)
+                    destructiveButton(
+                        R.string.dialog_clear_all_messages_clear,
+                        R.string.dialog_clear_all_messages_clear) {
+                        viewModel.clearMessages(false)
+                    }
+                    cancelButton()
+                }
             }
             v === binding.editGroup -> {
                 val recipient = viewModel.recipient ?: return
