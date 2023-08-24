@@ -87,7 +87,7 @@ object MessageSender {
 
         when (destination) {
             is Destination.Contact -> message.recipient = destination.publicKey
-            is Destination.ClosedGroup -> message.recipient = destination.groupPublicKey
+            is Destination.LegacyClosedGroup -> message.recipient = destination.groupPublicKey
             else -> throw IllegalStateException("Destination should not be an open group.")
         }
 
@@ -126,7 +126,7 @@ object MessageSender {
         // Encrypt the serialized protobuf
         val ciphertext = when (destination) {
             is Destination.Contact -> MessageEncrypter.encrypt(plaintext, destination.publicKey)
-            is Destination.ClosedGroup -> {
+            is Destination.LegacyClosedGroup -> {
                 val encryptionKeyPair =
                     MessagingModuleConfiguration.shared.storage.getLatestClosedGroupEncryptionKeyPair(
                         destination.groupPublicKey
@@ -143,7 +143,7 @@ object MessageSender {
                 kind = SignalServiceProtos.Envelope.Type.SESSION_MESSAGE
                 senderPublicKey = ""
             }
-            is Destination.ClosedGroup -> {
+            is Destination.LegacyClosedGroup -> {
                 kind = SignalServiceProtos.Envelope.Type.CLOSED_GROUP_MESSAGE
                 senderPublicKey = destination.groupPublicKey
             }
@@ -183,9 +183,9 @@ object MessageSender {
             // TODO: this might change in future for config messages
             val forkInfo = SnodeAPI.forkInfo
             val namespaces: List<Int> = when {
-                destination is Destination.ClosedGroup
+                destination is Destination.LegacyClosedGroup
                         && forkInfo.defaultRequiresAuth() -> listOf(Namespace.UNAUTHENTICATED_CLOSED_GROUP)
-                destination is Destination.ClosedGroup
+                destination is Destination.LegacyClosedGroup
                         && forkInfo.hasNamespaces() -> listOf(Namespace.UNAUTHENTICATED_CLOSED_GROUP, Namespace.DEFAULT)
                 else -> listOf(Namespace.DEFAULT)
             }

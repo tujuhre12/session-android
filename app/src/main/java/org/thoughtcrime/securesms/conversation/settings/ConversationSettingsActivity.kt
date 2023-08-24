@@ -60,7 +60,6 @@ class ConversationSettingsActivity: PassphraseRequiredActionBarActivity(), View.
         super.onCreate(savedInstanceState, ready)
         binding = ActivityConversationSettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        binding.profilePictureView.root.glide = GlideApp.with(this)
         updateRecipientDisplay()
         binding.searchConversation.setOnClickListener(this)
         binding.clearMessages.setOnClickListener(this)
@@ -91,7 +90,7 @@ class ConversationSettingsActivity: PassphraseRequiredActionBarActivity(), View.
         }
 
         // Toggle group-specific settings
-        val areGroupOptionsVisible = recipient.isClosedGroupRecipient
+        val areGroupOptionsVisible = recipient.isClosedGroupRecipient || recipient.isLegacyClosedGroupRecipient
         groupOptions.forEach { v ->
             v.isVisible = areGroupOptionsVisible
         }
@@ -164,7 +163,7 @@ class ConversationSettingsActivity: PassphraseRequiredActionBarActivity(), View.
             }
             v === binding.editGroup -> {
                 val recipient = viewModel.recipient ?: return
-                if (!recipient.isClosedGroupRecipient) return
+                if (!recipient.isClosedGroupRecipient || !recipient.isLegacyClosedGroupRecipient) return
                 val intent = Intent(this, EditClosedGroupActivity::class.java)
                 val groupID: String = recipient.address.toGroupString()
                 intent.putExtra(EditClosedGroupActivity.groupIDKey, groupID)

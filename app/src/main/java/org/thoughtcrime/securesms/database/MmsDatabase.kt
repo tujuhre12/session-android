@@ -932,7 +932,7 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
             cursor?.close()
         }
         val threadDb = get(context).threadDatabase()
-        threadDb.update(threadId, false)
+        threadDb.update(threadId, false, false)
         notifyConversationListeners(threadId)
         notifyStickerListeners()
         notifyStickerPackListeners()
@@ -959,7 +959,7 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
             cursor?.close()
         }
         val threadDb = get(context).threadDatabase()
-        threadDb.update(threadId, false)
+        threadDb.update(threadId, false, true)
         notifyConversationListeners(threadId)
         notifyStickerListeners()
         notifyStickerPackListeners()

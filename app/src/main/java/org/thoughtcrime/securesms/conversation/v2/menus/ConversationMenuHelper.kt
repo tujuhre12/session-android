@@ -63,7 +63,7 @@ object ConversationMenuHelper {
         // Base menu (options that should always be present)
         inflater.inflate(R.menu.menu_conversation, menu)
         // Expiring messages
-        if (!isOpenGroup && (thread.hasApprovedMe() || thread.isClosedGroupRecipient) && !thread.isBlocked) {
+        if (!isOpenGroup && (thread.hasApprovedMe() || thread.isLegacyClosedGroupRecipient) && !thread.isBlocked) {
             if (thread.expireMessages > 0) {
                 inflater.inflate(R.menu.menu_conversation_expiration_on, menu)
                 val item = menu.findItem(R.id.menu_expiring_messages)
@@ -92,7 +92,7 @@ object ConversationMenuHelper {
             }
         }
         // Closed group menu (options that should only be present in closed groups)
-        if (thread.isClosedGroupRecipient) {
+        if (thread.isLegacyClosedGroupRecipient) {
             inflater.inflate(R.menu.menu_conversation_closed_group, menu)
         }
         // Open group menu
@@ -280,7 +280,7 @@ object ConversationMenuHelper {
     }
 
     private fun editClosedGroup(context: Context, thread: Recipient) {
-        if (!thread.isClosedGroupRecipient) { return }
+        if (!thread.isLegacyClosedGroupRecipient) { return }
         val intent = Intent(context, EditClosedGroupActivity::class.java)
         val groupID: String = thread.address.toGroupString()
         intent.putExtra(groupIDKey, groupID)
@@ -288,7 +288,7 @@ object ConversationMenuHelper {
     }
 
     private fun leaveClosedGroup(context: Context, thread: Recipient) {
-        if (!thread.isClosedGroupRecipient) { return }
+        if (!thread.isLegacyClosedGroupRecipient) { return }
 
         val group = DatabaseComponent.get(context).groupDatabase().getGroup(thread.address.toGroupString()).orNull()
         val admins = group.admins

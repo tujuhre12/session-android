@@ -9,7 +9,6 @@ import android.text.style.StyleSpan
 import androidx.fragment.app.DialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
-import network.loki.messenger.databinding.DialogDownloadBinding
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
@@ -31,20 +30,21 @@ class AutoDownloadDialog(private val threadRecipient: Recipient,
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog = createSessionDialog {
         val threadId = storage.getThreadId(threadRecipient) ?: run {
             dismiss()
-            return
+            return@createSessionDialog
         }
 
         val displayName = when {
             threadRecipient.isOpenGroupRecipient -> storage.getOpenGroup(threadId)?.name ?: "UNKNOWN"
-            threadRecipient.isClosedGroupRecipient -> storage.getGroup(threadRecipient.address.toGroupString())?.title ?: "UNKNOWN"
+            threadRecipient.isLegacyClosedGroupRecipient -> storage.getGroup(threadRecipient.address.toGroupString())?.title ?: "UNKNOWN"
+            // TODO: threadRecipient.isClosedGroupRecipient -> storage.getLibSessionGroup(threadRecipient.address.serialize())?.groupName ?: "UNKNOWN" or something
             else -> storage.getContactWithSessionID(threadRecipient.address.serialize())?.displayName(Contact.ContactContext.REGULAR) ?: "UNKNOWN"
         }
         title(resources.getString(R.string.dialog_auto_download_title))
 
         val explanation = resources.getString(R.string.dialog_auto_download_explanation, displayName)
         val spannable = SpannableStringBuilder(explanation)
-        val startIndex = explanation.indexOf(name)
-        spannable.setSpan(StyleSpan(Typeface.BOLD), startIndex, startIndex + name.count(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+        val startIndex = explanation.indexOf(displayName)
+        spannable.setSpan(StyleSpan(Typeface.BOLD), startIndex, startIndex + displayName.count(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
         text(spannable)
 
         button(R.string.dialog_download_button_title, R.string.AccessibilityId_download_media) {

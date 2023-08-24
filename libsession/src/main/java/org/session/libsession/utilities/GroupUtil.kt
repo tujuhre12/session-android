@@ -1,12 +1,11 @@
 package org.session.libsession.utilities
 
-import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.utilities.Hex
 import java.io.IOException
 
 object GroupUtil {
-    const val CLOSED_GROUP_PREFIX = "__textsecure_group__!"
+    const val LEGACY_CLOSED_GROUP_PREFIX = "__textsecure_group__!"
     const val OPEN_GROUP_PREFIX = "__loki_public_chat_group__!"
     const val OPEN_GROUP_INBOX_PREFIX = "__open_group_inbox__!"
 
@@ -22,7 +21,7 @@ object GroupUtil {
 
     @JvmStatic
     fun getEncodedClosedGroupID(groupID: ByteArray): String {
-        return CLOSED_GROUP_PREFIX + Hex.toStringCondensed(groupID)
+        return LEGACY_CLOSED_GROUP_PREFIX + Hex.toStringCondensed(groupID)
     }
 
     @JvmStatic
@@ -61,7 +60,7 @@ object GroupUtil {
     }
 
     fun isEncodedGroup(groupId: String): Boolean {
-        return groupId.startsWith(CLOSED_GROUP_PREFIX) || groupId.startsWith(OPEN_GROUP_PREFIX)
+        return groupId.startsWith(LEGACY_CLOSED_GROUP_PREFIX) || groupId.startsWith(OPEN_GROUP_PREFIX)
     }
 
     @JvmStatic
@@ -75,8 +74,8 @@ object GroupUtil {
     }
 
     @JvmStatic
-    fun isClosedGroup(groupId: String): Boolean {
-        return groupId.startsWith(CLOSED_GROUP_PREFIX)
+    fun isLegacyClosedGroup(groupId: String): Boolean {
+        return groupId.startsWith(LEGACY_CLOSED_GROUP_PREFIX)
     }
 
     // NOTE: Signal group ID handling is weird. The ID is double encoded in the database, but not in a `GroupContext`.

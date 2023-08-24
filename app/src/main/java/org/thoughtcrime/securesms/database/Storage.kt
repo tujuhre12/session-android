@@ -5,6 +5,7 @@ import android.net.Uri
 import network.loki.messenger.libsession_util.ConfigBase
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_PINNED
+import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.Contacts
 import network.loki.messenger.libsession_util.ConversationVolatileConfig
 import network.loki.messenger.libsession_util.UserGroupsConfig
@@ -101,20 +102,26 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
         val volatile = configFactory.convoVolatile ?: return
         if (address.isGroup) {
             val groups = configFactory.userGroups ?: return
-            if (address.isClosedGroup) {
-                val sessionId = GroupUtil.doubleDecodeGroupId(address.serialize())
-                val closedGroup = getGroup(address.toGroupString())
-                if (closedGroup != null && closedGroup.isActive) {
-                    val legacyGroup = groups.getOrConstructLegacyGroupInfo(sessionId)
-                    groups.set(legacyGroup)
-                    val newVolatileParams = volatile.getOrConstructLegacyGroup(sessionId).copy(
-                        lastRead = SnodeAPI.nowWithOffset,
-                    )
-                    volatile.set(newVolatileParams)
+            when {
+                address.isLegacyClosedGroup -> {
+                    val sessionId = GroupUtil.doubleDecodeGroupId(address.serialize())
+                    val closedGroup = getGroup(address.toGroupString())
+                    if (closedGroup != null && closedGroup.isActive) {
+                        val legacyGroup = groups.getOrConstructLegacyGroupInfo(sessionId)
+                        groups.set(legacyGroup)
+                        val newVolatileParams = volatile.getOrConstructLegacyGroup(sessionId).copy(
+                            lastRead = SnodeAPI.nowWithOffset,
+                        )
+                        volatile.set(newVolatileParams)
+                    }
                 }
-            } else if (address.isOpenGroup) {
-                // these should be added on the group join / group info fetch
-                Log.w("Loki", "Thread created called for open group address, not adding any extra information")
+                address.isClosedGroup -> {
+                    Log.w("Loki", "Thread created called for new closed group address, not adding any extra information")
+                }
+                address.isOpenGroup -> {
+                    // these should be added on the group join / group info fetch
+                    Log.w("Loki", "Thread created called for open group address, not adding any extra information")
+                }
             }
         } else if (address.isContact) {
             // non-standard contact prefixes: 15, 00 etc shouldn't be stored in config
@@ -123,11 +130,11 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
             if (getUserPublicKey() != address.serialize()) {
                 val contacts = configFactory.contacts ?: return
                 contacts.upsertContact(address.serialize()) {
-                    priority = ConfigBase.PRIORITY_VISIBLE
+                    priority = PRIORITY_VISIBLE
                 }
             } else {
                 val userProfile = configFactory.user ?: return
-                userProfile.setNtsPriority(ConfigBase.PRIORITY_VISIBLE)
+                userProfile.setNtsPriority(PRIORITY_VISIBLE)
                 DatabaseComponent.get(context).threadDatabase().setHasSent(threadId, true)
             }
             val newVolatileParams = volatile.getOrConstructOneToOne(address.serialize())
@@ -241,7 +248,8 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
             configFactory.convoVolatile?.let { config ->
                 val convo = when {
                     // recipient closed group
-                    recipient.isClosedGroupRecipient -> config.getOrConstructLegacyGroup(GroupUtil.doubleDecodeGroupId(recipient.address.serialize()))
+                    recipient.isLegacyClosedGroupRecipient -> config.getOrConstructLegacyGroup(GroupUtil.doubleDecodeGroupId(recipient.address.serialize()))
+                    recipient.isClosedGroupRecipient -> config.getOrConstructGroup(recipient.address.serialize())
                     // recipient is open group
                     recipient.isOpenGroupRecipient -> {
                         val openGroupJoinUrl = getOpenGroup(threadId)?.joinURL ?: return
@@ -848,7 +856,7 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
             sessionId = groupPublicKey,
             name = name,
             members = members,
-            priority = ConfigBase.PRIORITY_VISIBLE,
+            priority = PRIORITY_VISIBLE,
             encPubKey = (encryptionKeyPair.publicKey as DjbECPublicKey).publicKey,  // 'serialize()' inserts an extra byte
             encSecKey = encryptionKeyPair.privateKey.serialize(),
             disappearingTimer = 0L,
@@ -884,7 +892,7 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
             members = membersMap,
             encPubKey = (latestKeyPair.publicKey as DjbECPublicKey).publicKey,  // 'serialize()' inserts an extra byte
             encSecKey = latestKeyPair.privateKey.serialize(),
-            priority = if (isPinned(threadID)) PRIORITY_PINNED else ConfigBase.PRIORITY_VISIBLE,
+            priority = if (isPinned(threadID)) PRIORITY_PINNED else PRIORITY_VISIBLE,
             disappearingTimer = recipientSettings.expireMessages.toLong(),
             joinedAt = (existingGroup.formationTimestamp / 1000L)
         )
@@ -1264,27 +1272,36 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
         val threadRecipient = getRecipientForThread(threadID) ?: return
         if (threadRecipient.isLocalNumber) {
             val user = configFactory.user ?: return
-            user.setNtsPriority(if (isPinned) PRIORITY_PINNED else ConfigBase.PRIORITY_VISIBLE)
+            user.setNtsPriority(if (isPinned) PRIORITY_PINNED else PRIORITY_VISIBLE)
         } else if (threadRecipient.isContactRecipient) {
             val contacts = configFactory.contacts ?: return
             contacts.upsertContact(threadRecipient.address.serialize()) {
-                priority = if (isPinned) PRIORITY_PINNED else ConfigBase.PRIORITY_VISIBLE
+                priority = if (isPinned) PRIORITY_PINNED else PRIORITY_VISIBLE
             }
         } else if (threadRecipient.isGroupRecipient) {
             val groups = configFactory.userGroups ?: return
-            if (threadRecipient.isClosedGroupRecipient) {
-                val sessionId = GroupUtil.doubleDecodeGroupId(threadRecipient.address.serialize())
-                val newGroupInfo = groups.getOrConstructLegacyGroupInfo(sessionId).copy (
-                    priority = if (isPinned) PRIORITY_PINNED else ConfigBase.PRIORITY_VISIBLE
-                )
-                groups.set(newGroupInfo)
-            } else if (threadRecipient.isOpenGroupRecipient) {
-                val openGroup = getOpenGroup(threadID) ?: return
-                val (baseUrl, room, pubKeyHex) = BaseCommunityInfo.parseFullUrl(openGroup.joinURL) ?: return
-                val newGroupInfo = groups.getOrConstructCommunityInfo(baseUrl, room, Hex.toStringCondensed(pubKeyHex)).copy (
-                    priority = if (isPinned) PRIORITY_PINNED else ConfigBase.PRIORITY_VISIBLE
-                )
-                groups.set(newGroupInfo)
+            when {
+                threadRecipient.isLegacyClosedGroupRecipient -> {
+                    val sessionId = GroupUtil.doubleDecodeGroupId(threadRecipient.address.serialize())
+                    val newGroupInfo = groups.getOrConstructLegacyGroupInfo(sessionId).copy (
+                        priority = if (isPinned) PRIORITY_PINNED else PRIORITY_VISIBLE
+                    )
+                    groups.set(newGroupInfo)
+                }
+                threadRecipient.isClosedGroupRecipient -> {
+                    val newGroupInfo = groups.getGroupInfo(threadRecipient.address.serialize()).copy (
+                        priority = if (isPinned) PRIORITY_PINNED else PRIORITY_VISIBLE
+                    )
+                    groups.set(newGroupInfo)
+                }
+                threadRecipient.isOpenGroupRecipient -> {
+                    val openGroup = getOpenGroup(threadID) ?: return
+                    val (baseUrl, room, pubKeyHex) = BaseCommunityInfo.parseFullUrl(openGroup.joinURL) ?: return
+                    val newGroupInfo = groups.getOrConstructCommunityInfo(baseUrl, room, Hex.toStringCondensed(pubKeyHex)).copy (
+                        priority = if (isPinned) PRIORITY_PINNED else PRIORITY_VISIBLE
+                    )
+                    groups.set(newGroupInfo)
+                }
             }
         }
         ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(context)
@@ -1341,7 +1358,7 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
         } else {
             smsDb.deleteMessagesFrom(threadID, fromUser.serialize())
             mmsDb.deleteMessagesFrom(threadID, fromUser.serialize())
-            threadDb.update(threadID, false)
+            threadDb.update(threadID, false, true)
         }
         return true
     }

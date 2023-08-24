@@ -592,7 +592,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             recipient.isLocalNumber -> getString(R.string.note_to_self)
             else -> recipient.toShortString()
         }
-        @DimenRes val sizeID: Int = if (viewModel.recipient?.isClosedGroupRecipient == true) {
+        @DimenRes val sizeID: Int = if (viewModel.recipient?.isLegacyClosedGroupRecipient == true) {
             R.dimen.medium_profile_picture_size
         } else {
             R.dimen.small_profile_picture_size
@@ -823,8 +823,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     }
 
     private fun showOrHideInputIfNeeded() {
-        val recipient = viewModel.recipient
-        if (recipient != null && recipient.isClosedGroupRecipient) {
+        val recipient = viewModel.recipient ?: return
+        if (recipient.isLegacyClosedGroupRecipient) {
             val group = groupDb.getGroup(recipient.address.toGroupString()).orNull()
             val isActive = (group?.isActive == true)
             binding?.inputBar?.showInput = isActive
@@ -1157,7 +1157,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     }
 
     override fun onClick(v: View?) {
-        if (v === binding?.toolbarContent?.profilePictureView?.root) {
+        if (v === binding?.toolbarContent?.profilePictureView) {
             // open conversation settings
             conversationSettingsCallback.launch(viewModel.threadId)
         }
@@ -1197,8 +1197,9 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         Toast.makeText(this, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show()
     }
 
+    // TODO: don't need to allow new closed group check here, removed in new disappearing messages
     override fun showExpiringMessagesDialog(thread: Recipient) {
-        if (thread.isClosedGroupRecipient) {
+        if (thread.isLegacyClosedGroupRecipient) {
             val group = groupDb.getGroup(thread.address.toGroupString()).orNull()
             if (group?.isActive == false) { return }
         }

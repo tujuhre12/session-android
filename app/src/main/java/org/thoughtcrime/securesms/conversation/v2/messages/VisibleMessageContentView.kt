@@ -64,7 +64,6 @@ class VisibleMessageContentView : ConstraintLayout {
         glide: GlideRequests = GlideApp.with(this),
         thread: Recipient,
         searchQuery: String? = null,
-        contactIsTrusted: Boolean = true,
         onAttachmentNeedsDownload: (Long, Long) -> Unit,
         suppressThumbnails: Boolean = false
     ) {

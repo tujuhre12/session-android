@@ -157,14 +157,14 @@ data class ConfigurationSyncJob(val destination: Destination): Job {
 
     fun Destination.destinationPublicKey(): String = when (this) {
         is Destination.Contact -> publicKey
-        is Destination.ClosedGroup -> groupPublicKey
+        is Destination.ClosedGroup -> publicKey
         else -> throw NullPointerException("Not public key for this destination")
     }
 
     override fun serialize(): Data {
         val (type, address) = when (destination) {
             is Destination.Contact -> CONTACT_TYPE to destination.publicKey
-            is Destination.ClosedGroup -> GROUP_TYPE to destination.groupPublicKey
+            is Destination.ClosedGroup -> GROUP_TYPE to destination.publicKey
             else -> return Data.EMPTY
         }
         return Data.Builder()

@@ -18,11 +18,11 @@ class ConversationSettingsViewModel(
 
     val recipient get() = storage.getRecipientForThread(threadId)
 
-    fun isPinned() = storage.isThreadPinned(threadId)
+    fun isPinned() = storage.isPinned(threadId)
 
     fun togglePin() = viewModelScope.launch {
-        val isPinned = storage.isThreadPinned(threadId)
-        storage.setThreadPinned(threadId, !isPinned)
+        val isPinned = storage.isPinned(threadId)
+        storage.setPinned(threadId, !isPinned)
     }
 
     fun autoDownloadAttachments() = recipient?.let { recipient -> storage.shouldAutoDownloadAttachments(recipient) } ?: false
@@ -32,7 +32,7 @@ class ConversationSettingsViewModel(
     }
 
     fun isUserGroupAdmin(): Boolean = recipient?.let { recipient ->
-        if (!recipient.isClosedGroupRecipient) return@let false
+        if (!recipient.isLegacyClosedGroupRecipient || !recipient.isClosedGroupRecipient) return@let false
         val localUserAddress = prefs.getLocalNumber() ?: return@let false
         val group = storage.getGroup(recipient.address.toGroupString())
         group?.admins?.contains(Address.fromSerialized(localUserAddress)) ?: false // this will have to be replaced for new closed groups
