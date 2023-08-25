@@ -113,6 +113,23 @@ namespace util {
         return std::pair(session::config::expiration_mode::none, 0);
     }
 
+    jobject jlongFromOptional(JNIEnv* env, std::optional<long long> optional) {
+        if (!optional) {
+            return nullptr;
+        }
+        jclass longClass = env->FindClass("java/lang/Long");
+        jmethodID constructor = env->GetMethodID(longClass, "<init>", "(J)V");
+        jobject returned = env->NewObject(longClass, constructor, (jlong)*optional);
+        return returned;
+    }
+
+    jstring jstringFromOptional(JNIEnv* env, std::optional<std::string_view> optional) {
+        if (!optional) {
+            return nullptr;
+        }
+        return env->NewStringUTF(optional->data());
+    }
+
 }
 
 extern "C"

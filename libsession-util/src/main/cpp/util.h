@@ -5,6 +5,7 @@
 #include <array>
 #include <optional>
 #include "session/types.hpp"
+#include "session/config/groups/info.hpp"
 #include "session/config/profile_pic.hpp"
 #include "session/config/user_groups.hpp"
 #include "session/config/expiring.hpp"
@@ -20,6 +21,8 @@ namespace util {
     session::config::community deserialize_base_community(JNIEnv *env, jobject base_community);
     jobject serialize_expiry(JNIEnv *env, const session::config::expiration_mode& mode, const std::chrono::seconds& time_seconds);
     std::pair<session::config::expiration_mode, long> deserialize_expiry(JNIEnv *env, jobject expiry_mode);
+    jobject jlongFromOptional(JNIEnv* env, std::optional<long long> optional);
+    jstring jstringFromOptional(JNIEnv* env, std::optional<std::string_view> optional);
 }
 
 #endif

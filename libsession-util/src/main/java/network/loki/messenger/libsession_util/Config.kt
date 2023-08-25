@@ -201,11 +201,34 @@ class UserGroupsConfig(pointer: Long): ConfigBase(pointer) {
 }
 
 class GroupInfoConfig(pointer: Long): ConfigBase(pointer) {
-    companion object {}
-    init {
-        System.loadLibrary("session_util")
+    companion object {
+        init {
+            System.loadLibrary("session_util")
+        }
+
+        external fun newInstance(pubKey: ByteArray): GroupInfoConfig
+        external fun newInstance(pubKey: ByteArray, secretKey: ByteArray?): GroupInfoConfig
+        external fun newInstance(
+            pubKey: ByteArray,
+            secretKey: ByteArray?,
+            initialDump: ByteArray
+        ): GroupInfoConfig
     }
-    external fun newInstance(pubKeyHex: String): GroupInfoConfig
-    external fun newInstance(pubKeyHex: String, secretKey: ByteArray?): GroupInfoConfig
-    external fun newInstance(pubKeyHex: String, secretKey: ByteArray?, initialDump: ByteArray): GroupInfoConfig
+
+    external fun destroyGroup()
+    external fun getCreated(): Long?
+    external fun getDeleteAttachmentsBefore(): Long?
+    external fun getDeleteBefore(): Long?
+    external fun getExpiryTimer(): Long? // TODO: maybe refactor this to new type when disappearing messages merged
+    external fun getName(): String?
+    external fun getProfilePic(): UserPic
+    external fun isDestroyed(): Boolean
+    external fun setCreated(createdAt: Long)
+    external fun setDeleteAttachmentsBefore(deleteBefore: Long)
+    external fun setDeleteBefore(deleteBefore: Long)
+    external fun setExpiryTimer(expireSeconds: Long)
+    external fun setName(newName: String)
+    external fun setProfilePic(newProfilePic: UserPic)
+    external fun storageNamespace(): Long
+
 }
