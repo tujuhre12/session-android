@@ -6,6 +6,8 @@
 #include <optional>
 #include "session/types.hpp"
 #include "session/config/groups/info.hpp"
+#include "session/config/groups/keys.hpp"
+#include "session/config/groups/members.hpp"
 #include "session/config/profile_pic.hpp"
 #include "session/config/user_groups.hpp"
 #include "session/config/expiring.hpp"

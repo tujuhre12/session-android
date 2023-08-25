@@ -2,48 +2,26 @@
 #include "group_info.h"
 #include "session/config/groups/info.hpp"
 
-
-extern "C"
-JNIEXPORT jobject JNICALL
-Java_network_loki_messenger_libsession_1util_GroupInfoConfig_00024Companion_newInstance___3B(
-        JNIEnv *env, jobject thiz, jbyteArray pub_key) {
-    std::lock_guard guard{util::util_mutex_};
-    auto pub_key_bytes = util::ustring_from_bytes(env, pub_key);
-    auto* group_info = new session::config::groups::Info(pub_key_bytes, std::nullopt, std::nullopt);
-
-    jclass groupInfoClass = env->FindClass("network/loki/messenger/libsession_util/GroupInfoConfig");
-    jmethodID constructor = env->GetMethodID(groupInfoClass, "<init>", "(J)V");
-    jobject newConfig = env->NewObject(groupInfoClass, constructor, reinterpret_cast<jlong>(group_info));
-
-    return newConfig;
-}
-
-extern "C"
-JNIEXPORT jobject JNICALL
-Java_network_loki_messenger_libsession_1util_GroupInfoConfig_00024Companion_newInstance___3B_3B(
-        JNIEnv *env, jobject thiz, jbyteArray pub_key, jbyteArray secret_key) {
-    std::lock_guard guard{util::util_mutex_};
-    auto pub_key_bytes = util::ustring_from_bytes(env, pub_key);
-    auto secret_key_bytes = util::ustring_from_bytes(env, secret_key);
-    auto* group_info = new session::config::groups::Info(pub_key_bytes, secret_key_bytes, std::nullopt);
-
-    jclass groupInfoClass = env->FindClass("network/loki/messenger/libsession_util/GroupInfoConfig");
-    jmethodID constructor = env->GetMethodID(groupInfoClass, "<init>", "(J)V");
-    jobject newConfig = env->NewObject(groupInfoClass, constructor, reinterpret_cast<jlong>(group_info));
-
-    return newConfig;
-}
-
 extern "C"
 JNIEXPORT jobject JNICALL
 Java_network_loki_messenger_libsession_1util_GroupInfoConfig_00024Companion_newInstance___3B_3B_3B(
         JNIEnv *env, jobject thiz, jbyteArray pub_key, jbyteArray secret_key,
         jbyteArray initial_dump) {
     std::lock_guard guard{util::util_mutex_};
+    std::optional<session::ustring> secret_key_optional;
+    std::optional<session::ustring> initial_dump_optional;
     auto pub_key_bytes = util::ustring_from_bytes(env, pub_key);
-    auto secret_key_bytes = util::ustring_from_bytes(env, secret_key);
+    if (secret_key != nullptr) {
+        auto secret_key_bytes = util::ustring_from_bytes(env, secret_key);
+        secret_key_optional = std::optional{secret_key_bytes};
+    }
+    if (pub_key != nullptr) {
+        auto initial_dump_bytes = util::ustring_from_bytes(env, initial_dump);
+        initial_dump_optional = std::optional{initial_dump_bytes};
+    }
+
     auto initial_dump_bytes = util::ustring_from_bytes(env, initial_dump);
-    auto* group_info = new session::config::groups::Info(pub_key_bytes, secret_key_bytes, initial_dump_bytes);
+    auto* group_info = new session::config::groups::Info(pub_key_bytes, secret_key_optional, initial_dump_optional);
 
     jclass groupInfoClass = env->FindClass("network/loki/messenger/libsession_util/GroupInfoConfig");
     jmethodID constructor = env->GetMethodID(groupInfoClass, "<init>", "(J)V");
@@ -162,7 +140,7 @@ Java_network_loki_messenger_libsession_1util_GroupInfoConfig_setExpiryTimer(JNIE
                                                                             jlong  expire_seconds) {
     std::lock_guard guard{util::util_mutex_};
     auto group_info = ptrToInfo(env, thiz);
-    group_info->set_expiry_timer(std::chrono::seconds{expire_seconds})
+    group_info->set_expiry_timer(std::chrono::seconds{expire_seconds});
 }
 
 extern "C"

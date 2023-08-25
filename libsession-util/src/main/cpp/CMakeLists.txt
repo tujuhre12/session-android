@@ -31,6 +31,8 @@ set(SOURCES
         contacts.cpp
         conversation.cpp
         util.cpp
+        group_members.cpp
+        group_keys.cpp
         group_info.cpp)
 
 add_library( # Sets the name of the library.

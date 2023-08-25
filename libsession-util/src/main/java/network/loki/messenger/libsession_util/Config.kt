@@ -206,12 +206,10 @@ class GroupInfoConfig(pointer: Long): ConfigBase(pointer) {
             System.loadLibrary("session_util")
         }
 
-        external fun newInstance(pubKey: ByteArray): GroupInfoConfig
-        external fun newInstance(pubKey: ByteArray, secretKey: ByteArray?): GroupInfoConfig
         external fun newInstance(
             pubKey: ByteArray,
             secretKey: ByteArray?,
-            initialDump: ByteArray
+            initialDump: ByteArray?
         ): GroupInfoConfig
     }
 
@@ -230,5 +228,32 @@ class GroupInfoConfig(pointer: Long): ConfigBase(pointer) {
     external fun setName(newName: String)
     external fun setProfilePic(newProfilePic: UserPic)
     external fun storageNamespace(): Long
+}
 
+class GroupMemberConfig(pointer: Long): ConfigBase(pointer) {
+    companion object {
+        init {
+            System.loadLibrary("session_util")
+        }
+        external fun newInstance(
+            pubKey: ByteArray,
+            secretKey: ByteArray?,
+            initialDump: ByteArray?
+        )
+    }
+}
+
+class GroupKeysConfig(pointer: Long): ConfigBase(pointer) {
+    companion object {
+        init {
+            System.loadLibrary("session_util")
+        }
+        external fun newInstance(
+            publicKey: ByteArray,
+            secretKey: ByteArray?,
+            initialDump: ByteArray?,
+            info: GroupInfoConfig,
+            members: GroupMemberConfig
+        ): GroupKeysConfig
+    }
 }
