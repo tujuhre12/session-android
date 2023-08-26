@@ -1,33 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/scrollView"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true">
+    android:orientation="vertical">
 
-    <RelativeLayout
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:clipChildren="false">
+        android:background="?colorPrimary"
+        app:contentInsetStart="0dp"
+        app:subtitle="@string/activity_expiration_settings_subtitle"
+        app:subtitleTextAppearance="@style/TextAppearance.Session.ToolbarSubtitle"
+        app:title="@string/activity_expiration_settings_title" />
 
-        <androidx.appcompat.widget.Toolbar
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="?colorPrimary"
-            app:contentInsetStart="0dp"
-            app:subtitle="@string/activity_expiration_settings_subtitle"
-            app:subtitleTextAppearance="@style/TextAppearance.Session.ToolbarSubtitle"
-            app:title="@string/activity_expiration_settings_title" />
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 
-        <androidx.compose.ui.platform.ComposeView
-            android:id="@+id/container"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_below="@id/toolbar"/>
-
-    </RelativeLayout>
-
-</ScrollView>
+</LinearLayout>

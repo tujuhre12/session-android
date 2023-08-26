@@ -90,15 +90,15 @@ class ExpirationSettingsViewModel(
     fun typeOption(
         type: ExpiryType,
         @StringRes title: Int,
-        @StringRes subtitle: Int,
-//        @StringRes contentDescription: Int
-    ) = OptionModel(GetString(title), GetString(subtitle)) { setType(type) }
+        @StringRes subtitle: Int? = null,
+        @StringRes contentDescription: Int = title
+    ) = OptionModel(GetString(title), subtitle?.let(::GetString)) { setType(type) }
 
     private fun typeOptions() = listOf(
-        typeOption(ExpiryType.NONE, R.string.expiration_off, R.string.AccessibilityId_disable_disappearing_messages),
-        typeOption(ExpiryType.LEGACY, R.string.expiration_type_disappear_legacy, R.string.expiration_type_disappear_legacy_description),
-        typeOption(ExpiryType.AFTER_READ, R.string.expiration_type_disappear_after_read, R.string.expiration_type_disappear_after_read_description),
-        typeOption(ExpiryType.AFTER_SEND, R.string.expiration_type_disappear_after_send, R.string.expiration_type_disappear_after_send_description),
+        typeOption(ExpiryType.NONE, R.string.expiration_off, contentDescription = R.string.AccessibilityId_disable_disappearing_messages),
+        typeOption(ExpiryType.LEGACY, R.string.expiration_type_disappear_legacy, contentDescription = R.string.expiration_type_disappear_legacy_description),
+        typeOption(ExpiryType.AFTER_READ, R.string.expiration_type_disappear_after_read, contentDescription = R.string.expiration_type_disappear_after_read_description),
+        typeOption(ExpiryType.AFTER_SEND, R.string.expiration_type_disappear_after_send, contentDescription = R.string.expiration_type_disappear_after_send_description),
     )
 
     private fun setType(type: ExpiryType) {
@@ -127,7 +127,7 @@ class ExpirationSettingsViewModel(
     val afterSendTimes = listOf(5.minutes, 1.hours) + afterReadTimes
 
     private fun noteToSelfOptions() = listOfNotNull(
-        typeOption(ExpiryType.NONE, R.string.arrays__off, R.string.arrays__off),
+        typeOption(ExpiryType.NONE, R.string.arrays__off),
         noteToSelfOption(1.minutes, subtitle = "for testing purposes").takeIf { BuildConfig.DEBUG },
     ) + afterSendTimes.map(::noteToSelfOption)
 

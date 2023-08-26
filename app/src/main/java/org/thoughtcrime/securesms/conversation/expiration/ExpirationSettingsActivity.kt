@@ -4,11 +4,13 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -16,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -29,8 +32,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -48,11 +57,13 @@ import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.CellNoMargin
+import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 import javax.inject.Inject
+import kotlin.math.min
 
 @AndroidEntryPoint
 class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
@@ -189,18 +200,22 @@ fun DisappearingMessages(
     modifier: Modifier = Modifier,
     onSetClick: () -> Unit = {}
 ) {
+    val scrollState = rememberScrollState()
+
     Column(modifier = modifier) {
         Box(modifier = Modifier.weight(1f)) {
             Column(
                 modifier = Modifier
                     .padding(horizontal = 32.dp)
-                    .verticalScroll(rememberScrollState()),
+                    .padding(bottom = 20.dp)
+                    .verticalScroll(scrollState)
+                    .fadingEdges(scrollState),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                state.cards.filter { it.options.isNotEmpty() }.forEach { OptionsCard(it) }
+                state.cards.filter { it.options.isNotEmpty() }.forEach {
+                    OptionsCard(it)
+                }
             }
-
-            Gradient(100.dp, modifier = Modifier.align(Alignment.BottomCenter))
         }
 
         OutlineButton(
@@ -213,6 +228,43 @@ fun DisappearingMessages(
     }
 }
 
+fun Modifier.fadingEdges(
+    scrollState: ScrollState,
+    topEdgeHeight: Dp = 0.dp,
+    bottomEdgeHeight: Dp = 20.dp
+): Modifier = this.then(
+    Modifier
+        // adding layer fixes issue with blending gradient and content
+        .graphicsLayer { alpha = 0.99F }
+        .drawWithContent {
+            drawContent()
+
+            val topColors = listOf(Color.Transparent, Color.Black)
+            val topStartY = scrollState.value.toFloat()
+            val topGradientHeight = min(topEdgeHeight.toPx(), topStartY)
+            drawRect(
+                brush = Brush.verticalGradient(
+                    colors = topColors,
+                    startY = topStartY,
+                    endY = topStartY + topGradientHeight
+                ),
+                blendMode = BlendMode.DstIn
+            )
+
+            val bottomColors = listOf(Color.Black, Color.Transparent)
+            val bottomEndY = size.height - scrollState.maxValue + scrollState.value
+            val bottomGradientHeight = min(bottomEdgeHeight.toPx(), scrollState.maxValue.toFloat() - scrollState.value)
+            if (bottomGradientHeight != 0f) drawRect(
+                brush = Brush.verticalGradient(
+                    colors = bottomColors,
+                    startY = bottomEndY - bottomGradientHeight,
+                    endY = bottomEndY
+                ),
+                blendMode = BlendMode.DstIn
+            )
+        }
+)
+
 @Composable
 fun OptionsCard(card: CardModel) {
     Text(text = card.title())
@@ -220,7 +272,8 @@ fun OptionsCard(card: CardModel) {
         LazyColumn(
             modifier = Modifier.heightIn(max = 5000.dp)
         ) {
-            items(card.options) {
+            itemsIndexed(card.options) { i, it ->
+                if (i != 0) Divider()
                 TitledRadioButton(it)
             }
         }
@@ -233,13 +286,13 @@ fun Gradient(height: Dp, modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxWidth()
             .height(height)
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(Color.Transparent, MaterialTheme.colors.primary),
-                    startY = 0f,
-                    endY = height.value
-                )
-            )
+//            .background(
+//                brush = Brush.verticalGradient(
+//                    colors = listOf(Color.Transparent, MaterialTheme.colors.primary),
+//                    startY = 0f,
+//                    endY = height.value
+//                )
+//            )
     )
 }
 
