@@ -86,19 +86,19 @@ class ExpirationSettingsViewModel(
 
     private fun typeOption(
         type: ExpiryType,
-        selected: ExpiryType?,
+        state: State,
         @StringRes title: Int,
         @StringRes subtitle: Int? = null,
         @StringRes contentDescription: Int = title
-    ) = OptionModel(GetString(title), subtitle?.let(::GetString), selected = selected == type) { setType(type) }
+    ) = OptionModel(GetString(title), subtitle?.let(::GetString), selected = state.expiryType == type) { setType(type) }
 
     private fun typeOptions(state: State) =
         if (state.isSelf) emptyList()
         else listOf(
-            typeOption(ExpiryType.NONE, state.expiryType, R.string.expiration_off, contentDescription = R.string.AccessibilityId_disable_disappearing_messages),
-            typeOption(ExpiryType.LEGACY, state.expiryType, R.string.expiration_type_disappear_legacy, contentDescription = R.string.expiration_type_disappear_legacy_description),
-            typeOption(ExpiryType.AFTER_READ, state.expiryType, R.string.expiration_type_disappear_after_read, contentDescription = R.string.expiration_type_disappear_after_read_description),
-            typeOption(ExpiryType.AFTER_SEND, state.expiryType, R.string.expiration_type_disappear_after_send, contentDescription = R.string.expiration_type_disappear_after_send_description),
+            typeOption(ExpiryType.NONE, state, R.string.expiration_off, contentDescription = R.string.AccessibilityId_disable_disappearing_messages),
+            typeOption(ExpiryType.LEGACY, state, R.string.expiration_type_disappear_legacy, contentDescription = R.string.expiration_type_disappear_legacy_description),
+            typeOption(ExpiryType.AFTER_READ, state, R.string.expiration_type_disappear_after_read, contentDescription = R.string.expiration_type_disappear_after_read_description),
+            typeOption(ExpiryType.AFTER_SEND, state, R.string.expiration_type_disappear_after_send, contentDescription = R.string.expiration_type_disappear_after_send_description),
         )
 
     private fun setType(type: ExpiryType) {
@@ -122,7 +122,7 @@ class ExpirationSettingsViewModel(
 
 //    private fun timeOptions(state: State) = timeOptions(state.types.isEmpty(), state.expiryType == ExpiryType.AFTER_SEND)
     private fun timeOptions(state: State): List<OptionModel> =
-        if (state.isSelf) noteToSelfOptions(state.expiryType)
+        if (state.isSelf) noteToSelfOptions(state)
         else when (state.expiryMode) {
             is ExpiryMode.Legacy -> afterReadTimes
             is ExpiryMode.AfterRead -> afterReadTimes
@@ -133,10 +133,10 @@ class ExpirationSettingsViewModel(
     private val afterReadTimes = listOf(12.hours, 1.days, 7.days, 14.days)
     private val afterSendTimes = listOf(5.minutes, 1.hours) + afterReadTimes
 
-    private fun noteToSelfOptions(selected: ExpiryType?) = listOfNotNull(
-        typeOption(ExpiryType.NONE, selected, R.string.arrays__off),
-        noteToSelfOption(1.minutes, subtitle = "for testing purposes").takeIf { BuildConfig.DEBUG },
-    ) + afterSendTimes.map(::noteToSelfOption)
+    private fun noteToSelfOptions(state: State) = listOfNotNull(
+        typeOption(ExpiryType.NONE, state, R.string.arrays__off),
+        noteToSelfOption(1.minutes, state, subtitle = "for testing purposes").takeIf { BuildConfig.DEBUG },
+    ) + afterSendTimes.map { noteToSelfOption(it, state) }
 
     private fun option(
         duration: Duration,
@@ -147,12 +147,13 @@ class ExpirationSettingsViewModel(
     )
     private fun noteToSelfOption(
         duration: Duration,
+        state: State,
         title: GetString = GetString { ExpirationUtil.getExpirationDisplayValue(it, duration.inWholeSeconds.toInt()) },
         subtitle: String? = null
     ) = OptionModel(
         title = title,
         subtitle = subtitle?.let(::GetString),
-        selected = false,
+        selected = state.duration == duration,
         onClick = { setMode(ExpiryMode.AfterSend(duration.inWholeSeconds)) }
     )
 
@@ -219,6 +220,7 @@ data class State(
     val expiryMode: ExpiryMode? = null,
     val types: List<ExpiryType> = emptyList()
 ) {
+    val duration get() = expiryMode?.duration
     val isSelf = recipient?.isLocalNumber == true
     val expiryType get() = expiryMode?.type
 }
