@@ -114,7 +114,7 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.state.collect { state ->
-                    actionBar?.subtitle = state.subtitle(this@ExpirationSettingsActivity)
+                    supportActionBar?.subtitle = state.subtitle(this@ExpirationSettingsActivity)
 
 //                    val position = deleteTypeOptions.indexOfFirst { it.value == state.selectedExpirationType }
 //                    deleteTypeOptionAdapter.setSelectedPosition(max(0, position))
