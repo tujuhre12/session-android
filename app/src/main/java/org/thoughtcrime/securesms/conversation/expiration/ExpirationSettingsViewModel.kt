@@ -7,9 +7,11 @@ import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.BuildConfig
@@ -42,6 +44,9 @@ class ExpirationSettingsViewModel(
     private val groupDb: GroupDatabase,
     private val storage: Storage
 ) : ViewModel() {
+
+    private val _event = Channel<Event>()
+    val event = _event.receiveAsFlow()
 
     private val _state = MutableStateFlow(State())
     val state = _state.asStateFlow()
@@ -171,9 +176,7 @@ class ExpirationSettingsViewModel(
         }
         val address = state.recipient?.address
         if (address == null || expirationConfig?.expiryMode == typeValue) {
-            _state.update {
-                it.copy(settingsSaved = false)
-            }
+            _event.send(Event(false))
             return@launch
         }
 
@@ -187,9 +190,7 @@ class ExpirationSettingsViewModel(
         messageExpirationManager.setExpirationTimer(message, typeValue)
 
         MessageSender.send(message, address)
-        _state.update {
-            it.copy(settingsSaved = true)
-        }
+        _event.send(Event(true))
     }
 
     @dagger.assisted.AssistedFactory
@@ -218,10 +219,13 @@ class ExpirationSettingsViewModel(
     }
 }
 
+data class Event(
+    val saveSuccess: Boolean
+)
+
 data class State(
     val isGroup: Boolean = false,
     val isSelfAdmin: Boolean = false,
-    val settingsSaved: Boolean? = null,
     val recipient: Recipient? = null,
     val expiryMode: ExpiryMode? = null,
     val types: List<ExpiryType> = emptyList()

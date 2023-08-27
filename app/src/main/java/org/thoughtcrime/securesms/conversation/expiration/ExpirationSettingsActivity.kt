@@ -102,17 +102,19 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.event.collect {
+                    if (it.saveSuccess) {
+                        ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(this@ExpirationSettingsActivity)
+                        finish()
+                    } else showToast(getString(R.string.ExpirationSettingsActivity_settings_not_updated))
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.state.collect { state ->
                     actionBar?.subtitle = state.subtitle(this@ExpirationSettingsActivity)
-
-                    when (state.settingsSaved) {
-                        true -> {
-                            ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(this@ExpirationSettingsActivity)
-                            finish()
-                        }
-                        false -> showToast(getString(R.string.ExpirationSettingsActivity_settings_not_updated))
-                        else -> {}
-                    }
 
 //                    val position = deleteTypeOptions.indexOfFirst { it.value == state.selectedExpirationType }
 //                    deleteTypeOptionAdapter.setSelectedPosition(max(0, position))
