@@ -16,6 +16,9 @@ import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.messaging.messages.ExpirationConfiguration
+import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
+import org.session.libsession.messaging.sending_receiving.MessageSender
+import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.ExpirationUtil
 import org.session.libsession.utilities.SSKEnvironment.MessageExpirationManagerProtocol
 import org.session.libsession.utilities.TextSecurePreferences
@@ -48,7 +51,8 @@ class ExpirationSettingsViewModel(
             cards = listOf(
                 CardModel(GetString(R.string.activity_expiration_settings_delete_type), typeOptions(it)),
                 CardModel(GetString(R.string.activity_expiration_settings_timer), timeOptions(it))
-            )
+            ),
+            showGroupFooter = it.isGroup
         )
     }
 
@@ -64,6 +68,7 @@ class ExpirationSettingsViewModel(
                 ?.run { address.toGroupString().let(groupDb::getGroup).orNull() }
             _state.update { state ->
                 state.copy(
+                    isGroup = groupInfo != null,
                     isSelfAdmin = groupInfo == null || groupInfo.admins.any{ it.serialize() == textSecurePreferences.getLocalNumber() },
                     recipient = recipient,
                     expiryMode = expiryMode
@@ -159,32 +164,32 @@ class ExpirationSettingsViewModel(
 
     fun onSetClick() = viewModelScope.launch {
         val state = _state.value
-//        val expiryMode = _selectedExpirationTimer.value?.value ?: ExpiryMode.NONE
-//        val typeValue = expiryMode.let {
-//            if (it is ExpiryMode.Legacy) ExpiryMode.AfterRead(it.expirySeconds)
-//            else it
-//        }
+        val expiryMode = state.expiryMode ?: ExpiryMode.NONE
+        val typeValue = expiryMode.let {
+            if (it is ExpiryMode.Legacy) ExpiryMode.AfterRead(it.expirySeconds)
+            else it
+        }
         val address = state.recipient?.address
-//        if (address == null || expirationConfig?.expiryMode == typeValue) {
-//            _state.update {
-//                it.copy(settingsSaved = false)
-//            }
-//            return@launch
-//        }
+        if (address == null || expirationConfig?.expiryMode == typeValue) {
+            _state.update {
+                it.copy(settingsSaved = false)
+            }
+            return@launch
+        }
 
-//        val expiryChangeTimestampMs = SnodeAPI.nowWithOffset
-//        storage.setExpirationConfiguration(ExpirationConfiguration(threadId, typeValue, expiryChangeTimestampMs))
-//
-//        val message = ExpirationTimerUpdate(typeValue.expirySeconds.toInt())
-//        message.sender = textSecurePreferences.getLocalNumber()
-//        message.recipient = address.serialize()
-//        message.sentTimestamp = expiryChangeTimestampMs
-//        messageExpirationManager.setExpirationTimer(message, typeValue)
-//
-//        MessageSender.send(message, address)
-//        state.update {
-//            it.copy(settingsSaved = true)
-//        }
+        val expiryChangeTimestampMs = SnodeAPI.nowWithOffset
+        storage.setExpirationConfiguration(ExpirationConfiguration(threadId, typeValue, expiryChangeTimestampMs))
+
+        val message = ExpirationTimerUpdate(typeValue.expirySeconds.toInt())
+        message.sender = textSecurePreferences.getLocalNumber()
+        message.recipient = address.serialize()
+        message.sentTimestamp = expiryChangeTimestampMs
+        messageExpirationManager.setExpirationTimer(message, typeValue)
+
+        MessageSender.send(message, address)
+        _state.update {
+            it.copy(settingsSaved = true)
+        }
     }
 
     @dagger.assisted.AssistedFactory
@@ -214,19 +219,25 @@ class ExpirationSettingsViewModel(
 }
 
 data class State(
+    val isGroup: Boolean = false,
     val isSelfAdmin: Boolean = false,
     val settingsSaved: Boolean? = null,
     val recipient: Recipient? = null,
     val expiryMode: ExpiryMode? = null,
     val types: List<ExpiryType> = emptyList()
 ) {
+    val subtitle get() = when (expiryType) {
+        ExpiryType.AFTER_SEND -> GetString(R.string.activity_expiration_settings_subtitle_sent)
+        else -> GetString(R.string.activity_expiration_settings_subtitle)
+    }
     val duration get() = expiryMode?.duration
     val isSelf = recipient?.isLocalNumber == true
     val expiryType get() = expiryMode?.type
 }
 
 data class UiState(
-    val cards: List<CardModel> = emptyList()
+    val cards: List<CardModel> = emptyList(),
+    val showGroupFooter: Boolean = false
 )
 
 data class CardModel(

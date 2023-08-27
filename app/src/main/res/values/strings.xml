@@ -1049,7 +1049,7 @@
     <string name="expiration_settings_set_button_title">Set</string>
     <string name="activity_expiration_settings_delete_type">Delete Type</string>
     <string name="activity_expiration_settings_timer">Timer</string>
-    <string name="activity_expiration_settings_group_footer"><![CDATA[This setting applies to everyone in this conversation.<br/>Only group admins can change this setting.]]></string>
+    <string name="activity_expiration_settings_group_footer">This setting applies to everyone in this conversation.\nOnly group admins can change this setting.</string>
     <string name="activity_conversation_outdated_client_banner_text">%s is using an outdated client. Disappearing messages may not work as expected.</string>
     <string name="ExpirationSettingsActivity_settings_updated">Settings updated</string>
     <string name="ExpirationSettingsActivity_settings_not_updated">Settings not updated and please try again</string>

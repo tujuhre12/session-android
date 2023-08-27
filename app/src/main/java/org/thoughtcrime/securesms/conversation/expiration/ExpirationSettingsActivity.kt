@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -41,10 +42,18 @@ import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.core.text.HtmlCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -82,14 +91,6 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
         viewModelFactory.create(threadId)
     }
 
-
-//    override fun onSaveInstanceState(outState: Bundle) {
-//        super.onSaveInstanceState(outState)
-//        val scrollParcelArray = SparseArray<Parcelable>()
-//        binding.scrollView.saveHierarchyState(scrollParcelArray)
-//        outState.putSparseParcelableArray(SCROLL_PARCEL, scrollParcelArray)
-//    }
-
     override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
         super.onCreate(savedInstanceState, ready)
         binding = ActivityExpirationSettingsBinding.inflate(layoutInflater)
@@ -99,31 +100,10 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
 
         binding.container.setContent { DisappearingMessagesScreen() }
 
-//        savedInstanceState?.let { bundle ->
-//            val scrollStateParcel = bundle.getSparseParcelableArray<Parcelable>(SCROLL_PARCEL)
-//            if (scrollStateParcel != null) {
-//                binding.scrollView.restoreHierarchyState(scrollStateParcel)
-//            }
-//        }
-
-//        val deleteTypeOptions = viewModel.getDeleteOptions()
-
-//        binding.buttonSet.setOnClickListener {
-//            viewModel.onSetClick()
-//        }
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.state.collect { state ->
-//                    actionBar?.subtitle = if (state.selectedExpirationType.value is ExpiryMode.AfterSend) {
-//                        getString(R.string.activity_expiration_settings_subtitle_sent)
-//                    } else {
-//                        getString(R.string.activity_expiration_settings_subtitle)
-//                    }
-
-//                    binding.textViewDeleteType.isVisible = state.showExpirationTypeSelector
-//                    binding.layoutDeleteTypes.isVisible = state.showExpirationTypeSelector
-//                    binding.textViewFooter.isVisible = state.recipient?.isClosedGroupRecipient == true
-//                    binding.textViewFooter.text = HtmlCompat.fromHtml(getString(R.string.activity_expiration_settings_group_footer), HtmlCompat.FROM_HTML_MODE_COMPACT)
+                    actionBar?.subtitle = state.subtitle(this@ExpirationSettingsActivity)
 
                     when (state.settingsSaved) {
                         true -> {
@@ -181,7 +161,6 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
     }
 
     companion object {
-        private const val SCROLL_PARCEL = "scroll_parcel"
         const val THREAD_ID = "thread_id"
     }
 
@@ -215,6 +194,14 @@ fun DisappearingMessages(
                 state.cards.filter { it.options.isNotEmpty() }.forEach {
                     OptionsCard(it)
                 }
+
+                if (state.showGroupFooter) Text(text = stringResource(R.string.activity_expiration_settings_group_footer),
+                    style = TextStyle(
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight(400),
+                        color = Color(0xFFA1A2A1),
+                        textAlign = TextAlign.Center),
+                    modifier = Modifier.fillMaxWidth())
             }
         }
 
@@ -253,7 +240,8 @@ fun Modifier.fadingEdges(
 
             val bottomColors = listOf(Color.Black, Color.Transparent)
             val bottomEndY = size.height - scrollState.maxValue + scrollState.value
-            val bottomGradientHeight = min(bottomEdgeHeight.toPx(), scrollState.maxValue.toFloat() - scrollState.value)
+            val bottomGradientHeight =
+                min(bottomEdgeHeight.toPx(), scrollState.maxValue.toFloat() - scrollState.value)
             if (bottomGradientHeight != 0f) drawRect(
                 brush = Brush.verticalGradient(
                     colors = bottomColors,
@@ -278,22 +266,6 @@ fun OptionsCard(card: CardModel) {
             }
         }
     }
-}
-
-@Composable
-fun Gradient(height: Dp, modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(height)
-//            .background(
-//                brush = Brush.verticalGradient(
-//                    colors = listOf(Color.Transparent, MaterialTheme.colors.primary),
-//                    startY = 0f,
-//                    endY = height.value
-//                )
-//            )
-    )
 }
 
 @Composable
@@ -341,8 +313,8 @@ fun PreviewMessageDetails(
         DisappearingMessages(
             UiState(
                 cards = listOf(
-                    CardModel(GetString(R.string.activity_expiration_settings_delete_type), typeOptions()),
-                    CardModel(GetString(R.string.activity_expiration_settings_timer), timeOptions())
+                    CardModel(GetString(R.string.activity_expiration_settings_delete_type), previewTypeOptions()),
+                    CardModel(GetString(R.string.activity_expiration_settings_timer), previewTimeOptions())
                 )
             ),
             modifier = Modifier.size(400.dp, 600.dp)
@@ -350,14 +322,14 @@ fun PreviewMessageDetails(
     }
 }
 
-fun typeOptions() = listOf(
+fun previewTypeOptions() = listOf(
     OptionModel(GetString(R.string.expiration_off)),
     OptionModel(GetString(R.string.expiration_type_disappear_legacy)),
     OptionModel(GetString(R.string.expiration_type_disappear_after_read)),
     OptionModel(GetString(R.string.expiration_type_disappear_after_send))
 )
 
-fun timeOptions() = listOf(
+fun previewTimeOptions() = listOf(
     OptionModel(GetString("1 Minute")),
     OptionModel(GetString("5 Minutes")),
     OptionModel(GetString("1 Week")),
