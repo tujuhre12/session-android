@@ -142,7 +142,8 @@ class ExpirationSettingsViewModel(
         title: GetString = GetString { ExpirationUtil.getExpirationDisplayValue(it, duration.inWholeSeconds.toInt()) },
     ) = OptionModel(
         title = title,
-        selected = state.expiryMode?.duration == duration
+        selected = state.expiryMode?.duration == duration,
+        enabled = state.isSelfAdmin
     ) { setTime(duration.inWholeSeconds) }
 
     private fun noteToSelfOption(
@@ -244,6 +245,7 @@ data class OptionModel(
     val title: GetString,
     val subtitle: GetString? = null,
     val selected: Boolean = false,
+    val enabled: Boolean = true,
     val onClick: () -> Unit = {}
 )
 

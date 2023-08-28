@@ -285,6 +285,7 @@ fun TitledRadioButton(option: OptionModel) {
         }
         RadioButton(
             selected = option.selected,
+            enabled = option.enabled,
             onClick = option.onClick,
             modifier = Modifier
                 .height(26.dp)
