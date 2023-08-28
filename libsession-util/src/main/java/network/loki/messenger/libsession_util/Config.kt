@@ -5,6 +5,7 @@ import network.loki.messenger.libsession_util.util.ConfigPush
 import network.loki.messenger.libsession_util.util.Contact
 import network.loki.messenger.libsession_util.util.Conversation
 import network.loki.messenger.libsession_util.util.GroupInfo
+import network.loki.messenger.libsession_util.util.GroupMember
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage.Kind
 import org.session.libsignal.utilities.IdPrefix
@@ -242,8 +243,13 @@ class GroupMemberConfig(pointer: Long): ConfigBase(pointer) {
             pubKey: ByteArray,
             secretKey: ByteArray?,
             initialDump: ByteArray?
-        )
+        ): GroupMemberConfig
     }
+    external fun all(): List<GroupMember>
+    external fun erase(groupMember: GroupMember): Boolean
+    external fun get(pubKeyHex: String): GroupMember?
+    external fun getOrConstruct(pubKeyHex: String): GroupMember
+    external fun set(groupMember: GroupMember)
 }
 
 class GroupKeysConfig(pointer: Long): ConfigBase(pointer) {
@@ -259,4 +265,14 @@ class GroupKeysConfig(pointer: Long): ConfigBase(pointer) {
             members: GroupMemberConfig
         ): GroupKeysConfig
     }
+    external fun groupKeys(): List<ByteArray>
+    external fun loadKey(data: ByteArray,
+                         msgId: ByteArray,
+                         timestampMs: Long,
+                         info: GroupInfoConfig,
+                         members: GroupMemberConfig)
+    external fun needsRekey(): Boolean
+    external fun pendingKey(): ByteArray?
+    external fun pendingPush(): ByteArray?
+    external fun rekey(info: GroupInfoConfig, members: GroupMemberConfig): ByteArray
 }

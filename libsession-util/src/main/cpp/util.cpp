@@ -113,6 +113,78 @@ namespace util {
         return std::pair(session::config::expiration_mode::none, 0);
     }
 
+    jobject serialize_group_member(JNIEnv* env, const session::config::groups::member& member) {
+        jclass group_member_class = env->FindClass("network/loki/messenger/libsession_util/util/GroupMember");
+        jmethodID constructor = env->GetMethodID(group_member_class, "<init>", "(Ljava/lang/String;Ljava/lang/String;Lnetwork/loki/messenger/libsession_util/util/UserPic;ZZZZZ)V");
+        jobject user_pic = serialize_user_pic(env, member.profile_picture);
+        jstring session_id = env->NewStringUTF(member.session_id.data());
+        jstring name = env->NewStringUTF(member.name.data());
+        jboolean invite_failed = member.invite_failed();
+        jboolean invite_pending = member.invite_pending();
+        jboolean promoted = member.promoted();
+        jboolean promotion_failed = member.promotion_failed();
+        jboolean promotion_pending = member.promotion_pending();
+        return env->NewObject(group_member_class,
+                              constructor,
+                              session_id,
+                              name,
+                              user_pic,
+                              invite_failed,
+                              invite_pending,
+                              promoted,
+                              promotion_failed,
+                              promotion_pending);
+    }
+
+    session::config::groups::member deserialize_group_member(JNIEnv* env, jobject member) {
+        jclass group_member_class = env->FindClass("network/loki/messenger/libsession_util/util/GroupMember");
+        jfieldID session_id_field = env->GetFieldID(group_member_class, "sessionId", "Ljava/lang/String;");
+        jfieldID name_field = env->GetFieldID(group_member_class, "name", "Ljava/lang/String;");
+        jfieldID user_pic_field = env->GetFieldID(group_member_class,"profilePicture", "Lnetwork/loki/messenger/libsession_util/util/UserPic;");
+        jfieldID invite_failed_field = env->GetFieldID(group_member_class, "inviteFailed", "Z");
+        jfieldID invite_pending_field = env->GetFieldID(group_member_class, "invitePending", "Z");
+        jfieldID promoted_field = env->GetFieldID(group_member_class, "promoted", "Z");
+        jfieldID promotion_failed_field = env->GetFieldID(group_member_class, "promotionFailed", "Z");
+        jfieldID promotion_pending_field = env->GetFieldID(group_member_class, "promotionPending", "Z");
+        auto session_id = (jstring)env->GetObjectField(member, session_id_field);
+        auto session_id_bytes = env->GetStringUTFChars(session_id, nullptr);
+        auto name = (jstring)env->GetObjectField(member, name_field);
+        auto name_bytes = env->GetStringUTFChars(name, nullptr);
+        auto user_pic_jobject = env->GetObjectField(member, user_pic_field);
+        auto user_pic = deserialize_user_pic(env, user_pic_jobject);
+        auto url_bytes = env->GetStringUTFChars(user_pic.first, nullptr);
+        auto pic_key = ustring_from_bytes(env, user_pic.second);
+        auto invite_failed = env->GetBooleanField(member, invite_failed_field);
+        auto invite_pending = env->GetBooleanField(member, invite_pending_field);
+        auto promoted = env->GetBooleanField(member, promoted_field);
+        auto promotion_failed = env->GetBooleanField(member, promotion_failed_field);
+        auto promotion_pending = env->GetBooleanField(member, promotion_pending_field);
+
+        // set up the object
+        session::config::groups::member group_member(session_id_bytes);
+        group_member.set_name(name_bytes);
+        group_member.profile_picture = session::config::profile_pic{url_bytes, pic_key};
+
+        if (invite_pending) {
+            group_member.set_invited(false);
+        } else if (invite_failed) {
+            group_member.set_invited(true);
+        }
+
+        if (promotion_pending) {
+            group_member.set_promoted(false);
+        } else if (promotion_failed) {
+            group_member.set_promoted(true);
+        }
+
+        // set promotion TODO
+
+        env->ReleaseStringUTFChars(user_pic.first, url_bytes);
+        env->ReleaseStringUTFChars(session_id, session_id_bytes);
+        env->ReleaseStringUTFChars(name, name_bytes);
+        return group_member;
+    }
+
     jobject jlongFromOptional(JNIEnv* env, std::optional<long long> optional) {
         if (!optional) {
             return nullptr;
