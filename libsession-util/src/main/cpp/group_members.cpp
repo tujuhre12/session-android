@@ -5,6 +5,7 @@ JNIEXPORT jobject JNICALL
 Java_network_loki_messenger_libsession_1util_GroupMemberConfig_00024Companion_newInstance(
         JNIEnv *env, jobject thiz, jbyteArray pub_key, jbyteArray secret_key,
         jbyteArray initial_dump) {
+    std::lock_guard lock{util::util_mutex_};
     auto pub_key_bytes = util::ustring_from_bytes(env, pub_key);
     std::optional<session::ustring> secret_key_optional{std::nullopt};
     std::optional<session::ustring> initial_dump_optional{std::nullopt};
@@ -29,6 +30,7 @@ Java_network_loki_messenger_libsession_1util_GroupMemberConfig_00024Companion_ne
 extern "C"
 JNIEXPORT jobject JNICALL
 Java_network_loki_messenger_libsession_1util_GroupMemberConfig_all(JNIEnv *env, jobject thiz) {
+    std::lock_guard lock{util::util_mutex_};
     auto config = ptrToMembers(env, thiz);
     jclass stack = env->FindClass("java/util/Stack");
     jmethodID init = env->GetMethodID(stack, "<init>", "()V");
@@ -54,6 +56,7 @@ extern "C"
 JNIEXPORT jobject JNICALL
 Java_network_loki_messenger_libsession_1util_GroupMemberConfig_get(JNIEnv *env, jobject thiz,
                                                                    jstring pub_key_hex) {
+    std::lock_guard lock{util::util_mutex_};
     auto config = ptrToMembers(env, thiz);
     auto pub_key_bytes = env->GetStringUTFChars(pub_key_hex, nullptr);
     auto member = config->get(pub_key_bytes);
@@ -70,6 +73,7 @@ JNIEXPORT jobject JNICALL
 Java_network_loki_messenger_libsession_1util_GroupMemberConfig_getOrConstruct(JNIEnv *env,
                                                                               jobject thiz,
                                                                               jstring pub_key_hex) {
+    std::lock_guard lock{util::util_mutex_};
     auto config = ptrToMembers(env, thiz);
     auto pub_key_bytes = env->GetStringUTFChars(pub_key_hex, nullptr);
     auto member = config->get_or_construct(pub_key_bytes);
@@ -82,6 +86,7 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_network_loki_messenger_libsession_1util_GroupMemberConfig_set(JNIEnv *env, jobject thiz,
                                                                    jobject group_member) {
+    std::lock_guard lock{util::util_mutex_};
     auto config = ptrToMembers(env, thiz);
     auto deserialized = util::deserialize_group_member(env, group_member);
     config->set(deserialized);

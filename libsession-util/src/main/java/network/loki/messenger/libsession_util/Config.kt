@@ -10,6 +10,7 @@ import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage.Kind
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
+import java.util.Stack
 
 
 sealed class ConfigBase(protected val /* yucky */ pointer: Long) {
@@ -245,7 +246,7 @@ class GroupMemberConfig(pointer: Long): ConfigBase(pointer) {
             initialDump: ByteArray?
         ): GroupMemberConfig
     }
-    external fun all(): List<GroupMember>
+    external fun all(): Stack<GroupMember>
     external fun erase(groupMember: GroupMember): Boolean
     external fun get(pubKeyHex: String): GroupMember?
     external fun getOrConstruct(pubKeyHex: String): GroupMember
@@ -258,14 +259,15 @@ class GroupKeysConfig(pointer: Long): ConfigBase(pointer) {
             System.loadLibrary("session_util")
         }
         external fun newInstance(
-            publicKey: ByteArray,
-            secretKey: ByteArray?,
+            userSecretKey: ByteArray,
+            groupPublicKey: ByteArray,
+            groupSecretKey: ByteArray?,
             initialDump: ByteArray?,
             info: GroupInfoConfig,
             members: GroupMemberConfig
         ): GroupKeysConfig
     }
-    external fun groupKeys(): List<ByteArray>
+    external fun groupKeys(): Stack<ByteArray>
     external fun loadKey(data: ByteArray,
                          msgId: ByteArray,
                          timestampMs: Long,
