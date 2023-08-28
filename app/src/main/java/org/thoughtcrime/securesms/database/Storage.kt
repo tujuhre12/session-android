@@ -197,6 +197,11 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
         db.setProfileKey(recipient, newProfileKey)
     }
 
+    override fun setBlocksCommunityMessageRequests(recipient: Recipient, blocksMessageRequests: Boolean) {
+        val db = DatabaseComponent.get(context).recipientDatabase()
+        db.setBlocksCommunityMessageRequests(recipient, blocksMessageRequests)
+    }
+
     override fun setUserProfilePicture(newProfilePicture: String?, newProfileKey: ByteArray?) {
         val ourRecipient = fromSerialized(getUserPublicKey()!!).let {
             Recipient.from(context, it, false)
@@ -436,6 +441,10 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
 
     override fun canPerformConfigChange(variant: String, publicKey: String, changeTimestampMs: Long): Boolean {
         return configFactory.canPerformChange(variant, publicKey, changeTimestampMs)
+    }
+
+    override fun isCheckingCommunityRequests(): Boolean {
+        return configFactory.user?.getCommunityMessageRequests() == true
     }
 
     fun notifyUpdates(forConfigObject: ConfigBase) {
@@ -1459,7 +1468,7 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
                     val blindedId = when {
                         recipient.isGroupRecipient -> null
                         recipient.isOpenGroupInboxRecipient -> {
-                            GroupUtil.getDecodedOpenGroupInbox(address)
+                            GroupUtil.getDecodedOpenGroupInboxSessionId(address)
                         }
                         else -> {
                             if (SessionId(address).prefix == IdPrefix.BLINDED) {
@@ -1578,16 +1587,12 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
         if (mapping.sessionId != null) {
             return mapping
         }
-        val threadDb = DatabaseComponent.get(context).threadDatabase()
-        threadDb.readerFor(threadDb.conversationList).use { reader ->
-            while (reader.next != null) {
-                val recipient = reader.current.recipient
-                val sessionId = recipient.address.serialize()
-                if (!recipient.isGroupRecipient && SodiumUtilities.sessionId(sessionId, blindedId, serverPublicKey)) {
-                    val contactMapping = mapping.copy(sessionId = sessionId)
-                    db.addBlindedIdMapping(contactMapping)
-                    return contactMapping
-                }
+        getAllContacts().forEach { contact ->
+            val sessionId = SessionId(contact.sessionID)
+            if (sessionId.prefix == IdPrefix.STANDARD && SodiumUtilities.sessionId(sessionId.hexString, blindedId, serverPublicKey)) {
+                val contactMapping = mapping.copy(sessionId = sessionId.hexString)
+                db.addBlindedIdMapping(contactMapping)
+                return contactMapping
             }
         }
         db.getBlindedIdMappingsExceptFor(server).forEach {
