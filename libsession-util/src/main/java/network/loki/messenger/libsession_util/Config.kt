@@ -129,6 +129,9 @@ class UserProfile(pointer: Long) : ConfigBase(pointer) {
     external fun getNtsPriority(): Int
     external fun setNtsExpiry(expiryMode: ExpiryMode)
     external fun getNtsExpiry(): ExpiryMode
+    external fun getCommunityMessageRequests(): Boolean
+    external fun setCommunityMessageRequests(blocks: Boolean)
+    external fun isBlockCommunityMessageRequestsSet(): Boolean
 }
 
 class ConversationVolatileConfig(pointer: Long): ConfigBase(pointer) {

@@ -38,6 +38,7 @@ import androidx.activity.viewModels
 import androidx.core.text.set
 import androidx.core.text.toSpannable
 import androidx.core.view.drawToBitmap
+import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.Lifecycle
@@ -77,7 +78,6 @@ import org.session.libsession.messaging.messages.signal.OutgoingTextMessage
 import org.session.libsession.messaging.messages.visible.Reaction
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.open_groups.OpenGroupApi
-import org.session.libsession.messaging.open_groups.OpenGroupApi.Capability
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
@@ -105,7 +105,6 @@ import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.attachments.ScreenshotObserver
 import org.thoughtcrime.securesms.audio.AudioRecorder
 import org.thoughtcrime.securesms.contacts.SelectContactsActivity.Companion.selectedContactsKey
-import org.thoughtcrime.securesms.contactshare.SimpleTextWatcher
 import org.thoughtcrime.securesms.conversation.ConversationActionBarDelegate
 import org.thoughtcrime.securesms.conversation.expiration.ExpirationSettingsActivity
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnActionSelectedListener
@@ -172,6 +171,7 @@ import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.MediaUtil
 import org.thoughtcrime.securesms.util.SaveAttachmentTask
+import org.thoughtcrime.securesms.util.SimpleTextWatcher
 import org.thoughtcrime.securesms.util.isScrolledToBottom
 import org.thoughtcrime.securesms.util.push
 import org.thoughtcrime.securesms.util.show
@@ -237,11 +237,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                     val address = if (sessionId.prefix == IdPrefix.BLINDED && openGroup != null) {
                         storage.getOrCreateBlindedIdMapping(sessionId.hexString, openGroup.server, openGroup.publicKey).sessionId?.let {
                             fromSerialized(it)
-                        } ?: run {
-                            val openGroupInboxId =
-                                "${openGroup.server}!${openGroup.publicKey}!${sessionId.hexString}".toByteArray()
-                            fromSerialized(GroupUtil.getEncodedOpenGroupInboxID(openGroupInboxId))
-                        }
+                        } ?: GroupUtil.getEncodedOpenGroupInboxID(openGroup, sessionId)
                     } else {
                         it
                     }
@@ -250,7 +246,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                 }
             } ?: finish()
         }
-        viewModelFactory.create(threadId, MessagingModuleConfiguration.shared.getUserED25519KeyPair(), contentResolver)
+        viewModelFactory.create(threadId, MessagingModuleConfiguration.shared.getUserED25519KeyPair())
     }
     private var actionMode: ActionMode? = null
     private var unreadCount = 0
@@ -309,8 +305,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                 handleSwipeToReply(message)
             },
             onItemLongPress = { message, position, view ->
-                if (!isMessageRequestThread() &&
-                    (viewModel.openGroup == null || Capability.REACTIONS.name.lowercase() in viewModel.serverCapabilities)
+                if (!viewModel.isMessageRequestThread &&
+                    viewModel.canReactToMessages
                 ) {
                     showEmojiPicker(message, view)
                 } else {
@@ -593,26 +589,27 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     // called from onCreate
     private fun setUpInputBar() {
-        binding!!.inputBar.isVisible =  viewModel.openGroup == null || viewModel.openGroup?.canWrite == true
-        binding!!.inputBar.delegate = this
-        binding!!.inputBarRecordingView.delegate = this
+        val binding = binding ?: return
+        binding.inputBar.isGone = viewModel.hidesInputBar()
+        binding.inputBar.delegate = this
+        binding.inputBarRecordingView.delegate = this
         // GIF button
-        binding!!.gifButtonContainer.addView(gifButton)
+        binding.gifButtonContainer.addView(gifButton)
         gifButton.layoutParams = RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT)
         gifButton.onUp = { showGIFPicker() }
         gifButton.snIsEnabled = false
         // Document button
-        binding!!.documentButtonContainer.addView(documentButton)
+        binding.documentButtonContainer.addView(documentButton)
         documentButton.layoutParams = RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT)
         documentButton.onUp = { showDocumentPicker() }
         documentButton.snIsEnabled = false
         // Library button
-        binding!!.libraryButtonContainer.addView(libraryButton)
+        binding.libraryButtonContainer.addView(libraryButton)
         libraryButton.layoutParams = RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT)
         libraryButton.onUp = { pickFromLibrary() }
         libraryButton.snIsEnabled = false
         // Camera button
-        binding!!.cameraButtonContainer.addView(cameraButton)
+        binding.cameraButtonContainer.addView(cameraButton)
         cameraButton.layoutParams = RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT)
         cameraButton.onUp = { showCamera() }
         cameraButton.snIsEnabled = false
@@ -776,7 +773,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
         val recipient = viewModel.recipient ?: return false
-        if (!isMessageRequestThread()) {
+        if (!viewModel.isMessageRequestThread) {
             ConversationMenuHelper.onPrepareOptionsMenu(
                 menu,
                 menuInflater,
@@ -1080,11 +1077,13 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     private fun updatePlaceholder() {
         val recipient = viewModel.recipient
             ?: return Log.w("Loki", "recipient was null in placeholder update")
+        val blindedRecipient = viewModel.blindedRecipient
         val binding = binding ?: return
         val openGroup = viewModel.openGroup
         val (textResource, insertParam) = when {
             recipient.isLocalNumber -> R.string.activity_conversation_empty_state_note_to_self to null
             openGroup != null && !openGroup.canWrite -> R.string.activity_conversation_empty_state_read_only to recipient.toShortString()
+            blindedRecipient?.blocksCommunityMessageRequests == true -> R.string.activity_conversation_empty_state_blocks_community_requests to recipient.toShortString()
             else -> R.string.activity_conversation_empty_state_default to recipient.toShortString()
         }
         val showPlaceholder = adapter.itemCount == 0

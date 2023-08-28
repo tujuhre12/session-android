@@ -6233,6 +6233,16 @@ public final class SignalServiceProtos {
      */
     com.google.protobuf.ByteString
         getSyncTargetBytes();
+
+    // optional bool blocksCommunityMessageRequests = 106;
+    /**
+     * <code>optional bool blocksCommunityMessageRequests = 106;</code>
+     */
+    boolean hasBlocksCommunityMessageRequests();
+    /**
+     * <code>optional bool blocksCommunityMessageRequests = 106;</code>
+     */
+    boolean getBlocksCommunityMessageRequests();
   }
   /**
    * Protobuf type {@code signalservice.DataMessage}
@@ -6407,6 +6417,11 @@ public final class SignalServiceProtos {
             case 842: {
               bitField0_ |= 0x00000800;
               syncTarget_ = input.readBytes();
+              break;
+            }
+            case 848: {
+              bitField0_ |= 0x00001000;
+              blocksCommunityMessageRequests_ = input.readBool();
               break;
             }
           }
@@ -14679,6 +14694,22 @@ public final class SignalServiceProtos {
       }
     }
 
+    // optional bool blocksCommunityMessageRequests = 106;
+    public static final int BLOCKSCOMMUNITYMESSAGEREQUESTS_FIELD_NUMBER = 106;
+    private boolean blocksCommunityMessageRequests_;
+    /**
+     * <code>optional bool blocksCommunityMessageRequests = 106;</code>
+     */
+    public boolean hasBlocksCommunityMessageRequests() {
+      return ((bitField0_ & 0x00001000) == 0x00001000);
+    }
+    /**
+     * <code>optional bool blocksCommunityMessageRequests = 106;</code>
+     */
+    public boolean getBlocksCommunityMessageRequests() {
+      return blocksCommunityMessageRequests_;
+    }
+
     private void initFields() {
       body_ = "";
       attachments_ = java.util.Collections.emptyList();
@@ -14694,6 +14725,7 @@ public final class SignalServiceProtos {
       openGroupInvitation_ = org.session.libsignal.protos.SignalServiceProtos.DataMessage.OpenGroupInvitation.getDefaultInstance();
       closedGroupControlMessage_ = org.session.libsignal.protos.SignalServiceProtos.DataMessage.ClosedGroupControlMessage.getDefaultInstance();
       syncTarget_ = "";
+      blocksCommunityMessageRequests_ = false;
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -14791,6 +14823,9 @@ public final class SignalServiceProtos {
       if (((bitField0_ & 0x00000800) == 0x00000800)) {
         output.writeBytes(105, getSyncTargetBytes());
       }
+      if (((bitField0_ & 0x00001000) == 0x00001000)) {
+        output.writeBool(106, blocksCommunityMessageRequests_);
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -14855,6 +14890,10 @@ public final class SignalServiceProtos {
       if (((bitField0_ & 0x00000800) == 0x00000800)) {
         size += com.google.protobuf.CodedOutputStream
           .computeBytesSize(105, getSyncTargetBytes());
+      }
+      if (((bitField0_ & 0x00001000) == 0x00001000)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(106, blocksCommunityMessageRequests_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -15040,6 +15079,8 @@ public final class SignalServiceProtos {
         bitField0_ = (bitField0_ & ~0x00001000);
         syncTarget_ = "";
         bitField0_ = (bitField0_ & ~0x00002000);
+        blocksCommunityMessageRequests_ = false;
+        bitField0_ = (bitField0_ & ~0x00004000);
         return this;
       }
 
@@ -15158,6 +15199,10 @@ public final class SignalServiceProtos {
           to_bitField0_ |= 0x00000800;
         }
         result.syncTarget_ = syncTarget_;
+        if (((from_bitField0_ & 0x00004000) == 0x00004000)) {
+          to_bitField0_ |= 0x00001000;
+        }
+        result.blocksCommunityMessageRequests_ = blocksCommunityMessageRequests_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -15265,6 +15310,9 @@ public final class SignalServiceProtos {
           bitField0_ |= 0x00002000;
           syncTarget_ = other.syncTarget_;
           onChanged();
+        }
+        if (other.hasBlocksCommunityMessageRequests()) {
+          setBlocksCommunityMessageRequests(other.getBlocksCommunityMessageRequests());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -16796,6 +16844,39 @@ public final class SignalServiceProtos {
   }
   bitField0_ |= 0x00002000;
         syncTarget_ = value;
+        onChanged();
+        return this;
+      }
+
+      // optional bool blocksCommunityMessageRequests = 106;
+      private boolean blocksCommunityMessageRequests_ ;
+      /**
+       * <code>optional bool blocksCommunityMessageRequests = 106;</code>
+       */
+      public boolean hasBlocksCommunityMessageRequests() {
+        return ((bitField0_ & 0x00004000) == 0x00004000);
+      }
+      /**
+       * <code>optional bool blocksCommunityMessageRequests = 106;</code>
+       */
+      public boolean getBlocksCommunityMessageRequests() {
+        return blocksCommunityMessageRequests_;
+      }
+      /**
+       * <code>optional bool blocksCommunityMessageRequests = 106;</code>
+       */
+      public Builder setBlocksCommunityMessageRequests(boolean value) {
+        bitField0_ |= 0x00004000;
+        blocksCommunityMessageRequests_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional bool blocksCommunityMessageRequests = 106;</code>
+       */
+      public Builder clearBlocksCommunityMessageRequests() {
+        bitField0_ = (bitField0_ & ~0x00004000);
+        blocksCommunityMessageRequests_ = false;
         onChanged();
         return this;
       }
@@ -27508,7 +27589,7 @@ public final class SignalServiceProtos {
       "\"\226\001\n\032DataExtractionNotification\022<\n\004type\030" +
       "\001 \002(\0162..signalservice.DataExtractionNoti" +
       "fication.Type\022\021\n\ttimestamp\030\002 \001(\004\"\'\n\004Type" +
-      "\022\016\n\nSCREENSHOT\020\001\022\017\n\013MEDIA_SAVED\020\002\"\361\r\n\013Da" +
+      "\022\016\n\nSCREENSHOT\020\001\022\017\n\013MEDIA_SAVED\020\002\"\231\016\n\013Da" +
       "taMessage\022\014\n\004body\030\001 \001(\t\0225\n\013attachments\030\002" +
       " \003(\0132 .signalservice.AttachmentPointer\022*" +
       "\n\005group\030\003 \001(\0132\033.signalservice.GroupConte" +
@@ -27523,7 +27604,8 @@ public final class SignalServiceProtos {
       "2..signalservice.DataMessage.OpenGroupIn" +
       "vitation\022W\n\031closedGroupControlMessage\030h " +
       "\001(\01324.signalservice.DataMessage.ClosedGr" +
-      "oupControlMessage\022\022\n\nsyncTarget\030i \001(\t\032\225\002",
+      "oupControlMessage\022\022\n\nsyncTarget\030i \001(\t\022&\n",
+      "\036blocksCommunityMessageRequests\030j \001(\010\032\225\002" +
       "\n\005Quote\022\n\n\002id\030\001 \002(\004\022\016\n\006author\030\002 \002(\t\022\014\n\004t" +
       "ext\030\003 \001(\t\022F\n\013attachments\030\004 \003(\01321.signals" +
       "ervice.DataMessage.Quote.QuotedAttachmen" +
@@ -27532,8 +27614,8 @@ public final class SignalServiceProtos {
       "2 .signalservice.AttachmentPointer\022\r\n\005fl" +
       "ags\030\004 \001(\r\"\032\n\005Flags\022\021\n\rVOICE_MESSAGE\020\001\032V\n" +
       "\007Preview\022\013\n\003url\030\001 \002(\t\022\r\n\005title\030\002 \001(\t\022/\n\005" +
-      "image\030\003 \001(\0132 .signalservice.AttachmentPo" +
-      "inter\032:\n\013LokiProfile\022\023\n\013displayName\030\001 \001(",
+      "image\030\003 \001(\0132 .signalservice.AttachmentPo",
+      "inter\032:\n\013LokiProfile\022\023\n\013displayName\030\001 \001(" +
       "\t\022\026\n\016profilePicture\030\002 \001(\t\0320\n\023OpenGroupIn" +
       "vitation\022\013\n\003url\030\001 \002(\t\022\014\n\004name\030\003 \002(\t\032\374\003\n\031" +
       "ClosedGroupControlMessage\022G\n\004type\030\001 \002(\0162" +
@@ -27542,8 +27624,8 @@ public final class SignalServiceProtos {
       "\004name\030\003 \001(\t\0221\n\021encryptionKeyPair\030\004 \001(\0132\026" +
       ".signalservice.KeyPair\022\017\n\007members\030\005 \003(\014\022" +
       "\016\n\006admins\030\006 \003(\014\022U\n\010wrappers\030\007 \003(\0132C.sign" +
-      "alservice.DataMessage.ClosedGroupControl" +
-      "Message.KeyPairWrapper\022\027\n\017expirationTime",
+      "alservice.DataMessage.ClosedGroupControl",
+      "Message.KeyPairWrapper\022\027\n\017expirationTime" +
       "r\030\010 \001(\r\032=\n\016KeyPairWrapper\022\021\n\tpublicKey\030\001" +
       " \002(\014\022\030\n\020encryptedKeyPair\030\002 \002(\014\"r\n\004Type\022\007" +
       "\n\003NEW\020\001\022\027\n\023ENCRYPTION_KEY_PAIR\020\003\022\017\n\013NAME" +
@@ -27552,8 +27634,8 @@ public final class SignalServiceProtos {
       "\n\n\002id\030\001 \002(\004\022\016\n\006author\030\002 \002(\t\022\r\n\005emoji\030\003 \001" +
       "(\t\022:\n\006action\030\004 \002(\0162*.signalservice.DataM" +
       "essage.Reaction.Action\"\037\n\006Action\022\t\n\005REAC" +
-      "T\020\000\022\n\n\006REMOVE\020\001\"$\n\005Flags\022\033\n\027EXPIRATION_T" +
-      "IMER_UPDATE\020\002\"\352\001\n\013CallMessage\022-\n\004type\030\001 ",
+      "T\020\000\022\n\n\006REMOVE\020\001\"$\n\005Flags\022\033\n\027EXPIRATION_T",
+      "IMER_UPDATE\020\002\"\352\001\n\013CallMessage\022-\n\004type\030\001 " +
       "\002(\0162\037.signalservice.CallMessage.Type\022\014\n\004" +
       "sdps\030\002 \003(\t\022\027\n\017sdpMLineIndexes\030\003 \003(\r\022\017\n\007s" +
       "dpMids\030\004 \003(\t\022\014\n\004uuid\030\005 \002(\t\"f\n\004Type\022\r\n\tPR" +
@@ -27562,8 +27644,8 @@ public final class SignalServiceProtos {
       "END_CALL\020\005\"\245\004\n\024ConfigurationMessage\022E\n\014c" +
       "losedGroups\030\001 \003(\0132/.signalservice.Config" +
       "urationMessage.ClosedGroup\022\022\n\nopenGroups" +
-      "\030\002 \003(\t\022\023\n\013displayName\030\003 \001(\t\022\026\n\016profilePi" +
-      "cture\030\004 \001(\t\022\022\n\nprofileKey\030\005 \001(\014\022=\n\010conta",
+      "\030\002 \003(\t\022\023\n\013displayName\030\003 \001(\t\022\026\n\016profilePi",
+      "cture\030\004 \001(\t\022\022\n\nprofileKey\030\005 \001(\014\022=\n\010conta" +
       "cts\030\006 \003(\0132+.signalservice.ConfigurationM" +
       "essage.Contact\032\233\001\n\013ClosedGroup\022\021\n\tpublic" +
       "Key\030\001 \001(\014\022\014\n\004name\030\002 \001(\t\0221\n\021encryptionKey" +
@@ -27572,8 +27654,8 @@ public final class SignalServiceProtos {
       "nTimer\030\006 \001(\r\032\223\001\n\007Contact\022\021\n\tpublicKey\030\001 " +
       "\002(\014\022\014\n\004name\030\002 \002(\t\022\026\n\016profilePicture\030\003 \001(" +
       "\t\022\022\n\nprofileKey\030\004 \001(\014\022\022\n\nisApproved\030\005 \001(" +
-      "\010\022\021\n\tisBlocked\030\006 \001(\010\022\024\n\014didApproveMe\030\007 \001" +
-      "(\010\"y\n\026MessageRequestResponse\022\022\n\nisApprov",
+      "\010\022\021\n\tisBlocked\030\006 \001(\010\022\024\n\014didApproveMe\030\007 \001",
+      "(\010\"y\n\026MessageRequestResponse\022\022\n\nisApprov" +
       "ed\030\001 \002(\010\022\022\n\nprofileKey\030\002 \001(\014\0227\n\007profile\030" +
       "\003 \001(\0132&.signalservice.DataMessage.LokiPr" +
       "ofile\"\375\001\n\023SharedConfigMessage\0225\n\004kind\030\001 " +
@@ -27582,8 +27664,8 @@ public final class SignalServiceProtos {
       "nd\022\020\n\014USER_PROFILE\020\001\022\014\n\010CONTACTS\020\002\022\027\n\023CO" +
       "NVO_INFO_VOLATILE\020\003\022\n\n\006GROUPS\020\004\022\025\n\021CLOSE" +
       "D_GROUP_INFO\020\005\022\030\n\024CLOSED_GROUP_MEMBERS\020\006" +
-      "\022\023\n\017ENCRYPTION_KEYS\020\007\"u\n\016ReceiptMessage\022" +
-      "0\n\004type\030\001 \002(\0162\".signalservice.ReceiptMes",
+      "\022\023\n\017ENCRYPTION_KEYS\020\007\"u\n\016ReceiptMessage\022",
+      "0\n\004type\030\001 \002(\0162\".signalservice.ReceiptMes" +
       "sage.Type\022\021\n\ttimestamp\030\002 \003(\004\"\036\n\004Type\022\014\n\010" +
       "DELIVERY\020\000\022\010\n\004READ\020\001\"\354\001\n\021AttachmentPoint" +
       "er\022\n\n\002id\030\001 \002(\006\022\023\n\013contentType\030\002 \001(\t\022\013\n\003k" +
@@ -27592,8 +27674,8 @@ public final class SignalServiceProtos {
       "lags\030\010 \001(\r\022\r\n\005width\030\t \001(\r\022\016\n\006height\030\n \001(" +
       "\r\022\017\n\007caption\030\013 \001(\t\022\013\n\003url\030e \001(\t\"\032\n\005Flags" +
       "\022\021\n\rVOICE_MESSAGE\020\001\"\365\001\n\014GroupContext\022\n\n\002" +
-      "id\030\001 \001(\014\022.\n\004type\030\002 \001(\0162 .signalservice.G" +
-      "roupContext.Type\022\014\n\004name\030\003 \001(\t\022\017\n\007member",
+      "id\030\001 \001(\014\022.\n\004type\030\002 \001(\0162 .signalservice.G",
+      "roupContext.Type\022\014\n\004name\030\003 \001(\t\022\017\n\007member" +
       "s\030\004 \003(\t\0220\n\006avatar\030\005 \001(\0132 .signalservice." +
       "AttachmentPointer\022\016\n\006admins\030\006 \003(\t\"H\n\004Typ" +
       "e\022\013\n\007UNKNOWN\020\000\022\n\n\006UPDATE\020\001\022\013\n\007DELIVER\020\002\022" +
@@ -27646,7 +27728,7 @@ public final class SignalServiceProtos {
           internal_static_signalservice_DataMessage_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_signalservice_DataMessage_descriptor,
-              new java.lang.String[] { "Body", "Attachments", "Group", "Flags", "ExpireTimer", "ProfileKey", "Timestamp", "Quote", "Preview", "Reaction", "Profile", "OpenGroupInvitation", "ClosedGroupControlMessage", "SyncTarget", });
+              new java.lang.String[] { "Body", "Attachments", "Group", "Flags", "ExpireTimer", "ProfileKey", "Timestamp", "Quote", "Preview", "Reaction", "Profile", "OpenGroupInvitation", "ClosedGroupControlMessage", "SyncTarget", "BlocksCommunityMessageRequests", });
           internal_static_signalservice_DataMessage_Quote_descriptor =
             internal_static_signalservice_DataMessage_descriptor.getNestedTypes().get(0);
           internal_static_signalservice_DataMessage_Quote_fieldAccessorTable = new
