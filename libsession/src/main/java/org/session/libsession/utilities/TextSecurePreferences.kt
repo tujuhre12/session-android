@@ -189,6 +189,9 @@ interface TextSecurePreferences {
         internal val _events = MutableSharedFlow<String>(0, 64, BufferOverflow.DROP_OLDEST)
         val events get() = _events.asSharedFlow()
 
+        @JvmStatic
+        var pushSuffix = ""
+
         const val DISABLE_PASSPHRASE_PREF = "pref_disable_passphrase"
         const val LANGUAGE_PREF = "pref_language"
         const val THREAD_TRIM_NOW = "pref_trim_now"
@@ -251,9 +254,9 @@ interface TextSecurePreferences {
         const val LINK_PREVIEWS = "pref_link_previews"
         const val GIF_METADATA_WARNING = "has_seen_gif_metadata_warning"
         const val GIF_GRID_LAYOUT = "pref_gif_grid_layout"
-        const val IS_PUSH_ENABLED = "pref_is_using_fcm"
-        const val PUSH_TOKEN = "pref_fcm_token_2"
-        const val PUSH_REGISTER_TIME = "pref_last_fcm_token_upload_time_2"
+        val IS_PUSH_ENABLED get() = "pref_is_using_fcm$pushSuffix"
+        val PUSH_TOKEN get() = "pref_fcm_token_2$pushSuffix"
+        val PUSH_REGISTER_TIME get() = "pref_last_fcm_token_upload_time_2$pushSuffix"
         const val LAST_CONFIGURATION_SYNC_TIME = "pref_last_configuration_sync_time"
         const val CONFIGURATION_SYNCED = "pref_configuration_synced"
         const val LAST_PROFILE_UPDATE_TIME = "pref_last_profile_update_time"
