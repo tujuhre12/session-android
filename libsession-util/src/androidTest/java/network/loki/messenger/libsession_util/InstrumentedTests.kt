@@ -4,6 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import network.loki.messenger.libsession_util.util.*
 import org.hamcrest.CoreMatchers.not
+import org.hamcrest.CoreMatchers.notNullValue
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Assert.*
 import org.junit.Test
@@ -21,10 +22,17 @@ class InstrumentedTests {
 
     val seed =
         Hex.fromStringCondensed("0123456789abcdef0123456789abcdef00000000000000000000000000000000")
+    val groupSeed =
+        Hex.fromStringCondensed("0123456789abcdef0123456789abcdef11111111111111111111111111111111")
 
     private val keyPair: KeyPair
         get() {
             return Sodium.ed25519KeyPair(seed)
+        }
+
+    private val groupKeyPair: KeyPair
+        get() {
+            return Sodium.ed25519KeyPair(groupSeed)
         }
 
     @Test
@@ -583,10 +591,29 @@ class InstrumentedTests {
 
     @Test
     fun testGroupInfo() {
-        val (public, secret) = keyPair
-        val conf = GroupInfoConfig.newInstance(public, secret, null)
-        conf.setName("New Group")
-        assertEquals("New Group", conf.getName())
+        val (groupPublic, groupSecret) = groupKeyPair
+        val (userPublic, userSecret) = keyPair
+        val userCurve = Sodium.ed25519PkToCurve25519(userPublic)
+        val infoConf = GroupInfoConfig.newInstance(groupPublic, groupSecret)
+        infoConf.setName("New Group")
+        assertEquals("New Group", infoConf.getName())
+        infoConf.setCreated(System.currentTimeMillis())
+        assertThat(infoConf.getCreated(), notNullValue())
+        val memberConf = GroupMemberConfig.newInstance(groupPublic, groupSecret)
+        memberConf.set(
+            GroupMember(
+                sessionId = "05"+Hex.toStringCondensed(userCurve),
+                name = "User",
+                admin = true
+            )
+        )
+        val keys = GroupKeysConfig.newInstance(
+            userSecretKey = userSecret,
+            groupPublicKey = groupPublic,
+            groupSecretKey = groupSecret,
+            info = infoConf,
+            members = memberConf
+        )
     }
 
 }

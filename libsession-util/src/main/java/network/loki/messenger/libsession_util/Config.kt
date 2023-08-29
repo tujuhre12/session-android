@@ -215,8 +215,8 @@ class GroupInfoConfig(pointer: Long): ConfigBase(pointer) {
 
         external fun newInstance(
             pubKey: ByteArray,
-            secretKey: ByteArray,
-            initialDump: ByteArray
+            secretKey: ByteArray = byteArrayOf(),
+            initialDump: ByteArray = byteArrayOf()
         ): GroupInfoConfig
     }
 
