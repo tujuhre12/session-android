@@ -614,6 +614,8 @@ class InstrumentedTests {
             info = infoConf,
             members = memberConf
         )
+        assertThat(keys.pendingKey(), notNullValue())
+
     }
 
 }
