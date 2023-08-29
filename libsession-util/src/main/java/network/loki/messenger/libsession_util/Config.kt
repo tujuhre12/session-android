@@ -26,6 +26,8 @@ sealed class ConfigBase(protected val /* yucky */ pointer: Long) {
             is ConversationVolatileConfig -> Kind.CONVO_INFO_VOLATILE
             is UserGroupsConfig -> Kind.GROUPS
             is GroupInfoConfig -> Kind.CLOSED_GROUP_INFO
+            is GroupKeysConfig -> Kind.ENCRYPTION_KEYS
+            is GroupMemberConfig -> Kind.CLOSED_GROUP_MEMBERS
         }
 
         // TODO: time in future to activate (hardcoded to 1st jan 2024 for testing, change before release)
@@ -213,8 +215,8 @@ class GroupInfoConfig(pointer: Long): ConfigBase(pointer) {
 
         external fun newInstance(
             pubKey: ByteArray,
-            secretKey: ByteArray?,
-            initialDump: ByteArray?
+            secretKey: ByteArray,
+            initialDump: ByteArray
         ): GroupInfoConfig
     }
 
@@ -242,8 +244,8 @@ class GroupMemberConfig(pointer: Long): ConfigBase(pointer) {
         }
         external fun newInstance(
             pubKey: ByteArray,
-            secretKey: ByteArray?,
-            initialDump: ByteArray?
+            secretKey: ByteArray = byteArrayOf(),
+            initialDump: ByteArray = byteArrayOf()
         ): GroupMemberConfig
     }
     external fun all(): Stack<GroupMember>
@@ -261,8 +263,8 @@ class GroupKeysConfig(pointer: Long): ConfigBase(pointer) {
         external fun newInstance(
             userSecretKey: ByteArray,
             groupPublicKey: ByteArray,
-            groupSecretKey: ByteArray?,
-            initialDump: ByteArray?,
+            groupSecretKey: ByteArray = byteArrayOf(),
+            initialDump: ByteArray = byteArrayOf(),
             info: GroupInfoConfig,
             members: GroupMemberConfig
         ): GroupKeysConfig

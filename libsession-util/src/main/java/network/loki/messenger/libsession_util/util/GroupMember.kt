@@ -6,7 +6,7 @@ data class GroupMember(
     val profilePicture: UserPic?,
     val inviteFailed: Boolean,
     val invitePending: Boolean,
-    val promoted: Boolean,
+    val admin: Boolean,
     val promotionFailed: Boolean,
     val promotionPending: Boolean,
 )

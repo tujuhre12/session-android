@@ -584,7 +584,7 @@ class InstrumentedTests {
     @Test
     fun testGroupInfo() {
         val (public, secret) = keyPair
-        val conf = GroupInfoConfig.newInstance(public, secret)
+        val conf = GroupInfoConfig.newInstance(public, secret, null)
         conf.setName("New Group")
         assertEquals("New Group", conf.getName())
     }

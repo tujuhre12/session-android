@@ -4,18 +4,20 @@
 
 extern "C"
 JNIEXPORT jobject JNICALL
-Java_network_loki_messenger_libsession_1util_GroupInfoConfig_00024Companion_newInstance___3B_3B_3B(
-        JNIEnv *env, jobject thiz, jbyteArray pub_key, jbyteArray secret_key,
-        jbyteArray initial_dump) {
+Java_network_loki_messenger_libsession_1util_GroupInfoConfig_00024Companion_newInstance(JNIEnv *env,
+                                                                                        jobject thiz,
+                                                                                        jbyteArray pub_key,
+                                                                                        jbyteArray secret_key,
+                                                                                        jbyteArray initial_dump) {
     std::lock_guard guard{util::util_mutex_};
     std::optional<session::ustring> secret_key_optional{std::nullopt};
     std::optional<session::ustring> initial_dump_optional{std::nullopt};
     auto pub_key_bytes = util::ustring_from_bytes(env, pub_key);
-    if (secret_key != nullptr) {
+    if (env->GetArrayLength(secret_key) == 32 || env->GetArrayLength(secret_key) == 64) {
         auto secret_key_bytes = util::ustring_from_bytes(env, secret_key);
         secret_key_optional = secret_key_bytes;
     }
-    if (pub_key != nullptr) {
+    if (env->GetArrayLength(initial_dump) > 0) {
         auto initial_dump_bytes = util::ustring_from_bytes(env, initial_dump);
         initial_dump_optional = initial_dump_bytes;
     }

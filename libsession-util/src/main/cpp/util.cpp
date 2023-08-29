@@ -121,7 +121,7 @@ namespace util {
         jstring name = env->NewStringUTF(member.name.data());
         jboolean invite_failed = member.invite_failed();
         jboolean invite_pending = member.invite_pending();
-        jboolean promoted = member.promoted();
+        jboolean admin = member.admin;
         jboolean promotion_failed = member.promotion_failed();
         jboolean promotion_pending = member.promotion_pending();
         return env->NewObject(group_member_class,
@@ -131,7 +131,7 @@ namespace util {
                               user_pic,
                               invite_failed,
                               invite_pending,
-                              promoted,
+                              admin,
                               promotion_failed,
                               promotion_pending);
     }
@@ -143,7 +143,7 @@ namespace util {
         jfieldID user_pic_field = env->GetFieldID(group_member_class,"profilePicture", "Lnetwork/loki/messenger/libsession_util/util/UserPic;");
         jfieldID invite_failed_field = env->GetFieldID(group_member_class, "inviteFailed", "Z");
         jfieldID invite_pending_field = env->GetFieldID(group_member_class, "invitePending", "Z");
-        jfieldID promoted_field = env->GetFieldID(group_member_class, "promoted", "Z");
+        jfieldID admin_field = env->GetFieldID(group_member_class, "admin", "Z");
         jfieldID promotion_failed_field = env->GetFieldID(group_member_class, "promotionFailed", "Z");
         jfieldID promotion_pending_field = env->GetFieldID(group_member_class, "promotionPending", "Z");
         auto session_id = (jstring)env->GetObjectField(member, session_id_field);
@@ -156,14 +156,15 @@ namespace util {
         auto pic_key = ustring_from_bytes(env, user_pic.second);
         auto invite_failed = env->GetBooleanField(member, invite_failed_field);
         auto invite_pending = env->GetBooleanField(member, invite_pending_field);
-        auto promoted = env->GetBooleanField(member, promoted_field);
+        auto admin = env->GetBooleanField(member, admin_field);
         auto promotion_failed = env->GetBooleanField(member, promotion_failed_field);
         auto promotion_pending = env->GetBooleanField(member, promotion_pending_field);
 
         // set up the object
         session::config::groups::member group_member(session_id_bytes);
-        group_member.set_name(name_bytes);
-        group_member.profile_picture = session::config::profile_pic{url_bytes, pic_key};
+        group_member.name = name_bytes;
+        group_member.profile_picture.url = url_bytes;
+        group_member.profile_picture.set_key(pic_key);
 
         if (invite_pending) {
             group_member.set_invited(false);
@@ -177,7 +178,7 @@ namespace util {
             group_member.set_promoted(true);
         }
 
-        // set promotion TODO
+        group_member.admin = admin;
 
         env->ReleaseStringUTFChars(user_pic.first, url_bytes);
         env->ReleaseStringUTFChars(session_id, session_id_bytes);
