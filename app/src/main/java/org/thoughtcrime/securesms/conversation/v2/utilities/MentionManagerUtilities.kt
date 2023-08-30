@@ -11,13 +11,15 @@ object MentionManagerUtilities {
     fun populateUserPublicKeyCacheIfNeeded(threadID: Long, context: Context) {
         val result = mutableSetOf<String>()
         val recipient = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(threadID) ?: return
+        val storage = DatabaseComponent.get(context).storage()
         when {
             recipient.address.isLegacyClosedGroup -> {
                 val members = DatabaseComponent.get(context).groupDatabase().getGroupMembers(recipient.address.toGroupString(), false).map { it.address.serialize() }
                 result.addAll(members)
             }
             recipient.address.isClosedGroup -> {
-                TODO("get members from libsession via storage")
+                val members = storage.getMembers(recipient.address.serialize())
+                TODO("Fix when compile errors are dealt with for recipient closed groups")
             }
             recipient.address.isOpenGroup -> {
                 val messageDatabase = DatabaseComponent.get(context).mmsSmsDatabase()

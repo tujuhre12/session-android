@@ -4,6 +4,38 @@ sealed class GroupInfo {
 
     data class CommunityGroupInfo(val community: BaseCommunityInfo, val priority: Int) : GroupInfo()
 
+    data class ClosedGroupInfo(
+        val groupSessionId: String,
+        val adminKey: ByteArray?,
+        val signingKey: ByteArray?
+    ): GroupInfo() {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as ClosedGroupInfo
+
+            if (groupSessionId != other.groupSessionId) return false
+            if (adminKey != null) {
+                if (other.adminKey == null) return false
+                if (!adminKey.contentEquals(other.adminKey)) return false
+            } else if (other.adminKey != null) return false
+            if (signingKey != null) {
+                if (other.signingKey == null) return false
+                if (!signingKey.contentEquals(other.signingKey)) return false
+            } else if (other.signingKey != null) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = groupSessionId.hashCode()
+            result = 31 * result + (adminKey?.contentHashCode() ?: 0)
+            result = 31 * result + (signingKey?.contentHashCode() ?: 0)
+            return result
+        }
+    }
+
     data class LegacyGroupInfo(
         val sessionId: String,
         val name: String,

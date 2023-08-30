@@ -125,7 +125,7 @@ interface StorageProtocol {
     fun clearErrorMessage(messageID: Long)
     fun setMessageServerHash(messageID: Long, serverHash: String)
 
-    // Closed Groups
+    // Legacy Closed Groups
     fun getGroup(groupID: String): GroupRecord?
     fun createGroup(groupID: String, title: String?, members: List<Address>, avatar: SignalServiceAttachmentPointer?, relay: String?, admins: List<Address>, formationTimestamp: Long)
     fun createInitialConfigGroup(groupPublicKey: String, name: String, members: Map<String, Boolean>, formationTimestamp: Long, encryptionKeyPair: ECKeyPair)
@@ -152,6 +152,9 @@ interface StorageProtocol {
     fun updateFormationTimestamp(groupID: String, formationTimestamp: Long)
     fun updateTimestampUpdated(groupID: String, updatedTimestamp: Long)
     fun setExpirationTimer(address: String, duration: Int)
+
+    // Closed Groups
+    fun getMembers(groupPublicKey: String): List<GroupMember>
 
     // Groups
     fun getAllGroups(includeInactive: Boolean): List<GroupRecord>

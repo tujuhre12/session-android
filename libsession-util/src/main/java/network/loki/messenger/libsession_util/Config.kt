@@ -205,6 +205,9 @@ class UserGroupsConfig(pointer: Long): ConfigBase(pointer) {
     external fun all(): List<GroupInfo>
     external fun allCommunityInfo(): List<GroupInfo.CommunityGroupInfo>
     external fun allLegacyGroupInfo(): List<GroupInfo.LegacyGroupInfo>
+    external fun getClosedGroup(sessionId: String): GroupInfo.ClosedGroupInfo?
+    external fun getOrConstructClosedGroup(sessionId: String): GroupInfo.ClosedGroupInfo
+    external fun all():
 }
 
 class GroupInfoConfig(pointer: Long): ConfigBase(pointer) {

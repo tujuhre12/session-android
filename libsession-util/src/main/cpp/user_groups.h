@@ -127,6 +127,40 @@ inline jobject serialize_legacy_group_info(JNIEnv *env, session::config::legacy_
     return serialized;
 }
 
+inline jobject serialize_group_info(JNIEnv* env, session::config::group_info info) {
+    jstring session_id = env->NewStringUTF(info.id.data());
+    jbyteArray admin_bytes = util::bytes_from_ustring(env, info.secretkey);
+    jbyteArray auth_bytes = util::bytes_from_ustring(env, info.auth_sig);
+
+    jclass group_info_class = env->FindClass("network/loki/messenger/libsession_util/util/GroupInfo$ClosedGroupInfo");
+    jmethodID constructor = env->GetMethodID(group_info_class, "<init>", "(Ljava/lang/String;[B[B)V");
+    jobject return_object = env->NewObject(group_info_class,constructor,
+                                           session_id, admin_bytes, auth_bytes);
+    return return_object;
+}
+
+inline session::config::group_info deserialize_group_info(JNIEnv* env, jobject info_serialized) {
+    jclass closed_group_class = env->FindClass("network/loki/messenger/libsession_util/util/GroupInfo$ClosedGroupInfo");
+    jfieldID id_field = env->GetFieldID(closed_group_class, "groupSessionId", "Ljava/lang/String;");
+    jfieldID secret_field = env->GetFieldID(closed_group_class, "adminKey", "[B");
+    jfieldID auth_field = env->GetFieldID(closed_group_class, "signingKey", "[B");
+
+    jstring id_jstring = (jstring)env->GetObjectField(info_serialized, id_field);
+    jbyteArray secret_jBytes = (jbyteArray)env->GetObjectField(info_serialized, secret_field);
+    jbyteArray auth_jBytes = (jbyteArray)env->GetObjectField(info_serialized, auth_field);
+
+    auto id_bytes = env->GetStringUTFChars(id_jstring, nullptr);
+    auto secret_bytes = util::ustring_from_bytes(env, secret_jBytes);
+    auto auth_bytes = util::ustring_from_bytes(env, auth_jBytes);
+
+    session::config::group_info group_info(id_bytes);
+    group_info.auth_sig = auth_bytes;
+    group_info.secretkey = secret_bytes;
+
+    env->ReleaseStringUTFChars(id_jstring, id_bytes);
+    return group_info;
+}
+
 inline jobject serialize_community_info(JNIEnv *env, session::config::community_info info) {
     auto priority = info.priority;
     auto serialized_info = util::serialize_base_community(env, info);

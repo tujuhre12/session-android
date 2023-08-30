@@ -271,3 +271,21 @@ Java_network_loki_messenger_libsession_1util_UserGroupsConfig_eraseLegacyGroup(J
     env->ReleaseStringUTFChars(session_id, session_id_bytes);
     return return_bool;
 }
+extern "C"
+JNIEXPORT jobject JNICALL
+Java_network_loki_messenger_libsession_1util_UserGroupsConfig_getClosedGroup(JNIEnv *env,
+                                                                             jobject thiz,
+                                                                             jstring session_id) {
+    std::lock_guard guard{util::util_mutex_};
+    auto config = ptrToUserGroups(env, thiz);
+    auto session_id_bytes = env->GetStringUTFChars(session_id, nullptr);
+
+    auto group = config->get_group(session_id_bytes);
+
+    env->ReleaseStringUTFChars(session_id, session_id_bytes);
+
+    if (group) {
+        return serialize_group_info(env, *group);
+    }
+    return nullptr;
+}

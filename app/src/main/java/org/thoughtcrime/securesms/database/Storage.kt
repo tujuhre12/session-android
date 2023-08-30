@@ -116,6 +116,9 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
                     }
                 }
                 address.isClosedGroup -> {
+                    val sessionId = address.serialize()
+                    val closedGroup = groups.getClosedGroup(sessionId)
+
                     Log.w("Loki", "Thread created called for new closed group address, not adding any extra information")
                 }
                 address.isOpenGroup -> {
@@ -1019,6 +1022,11 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
                 ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(context)
             }
         }
+    }
+
+    override fun getMembers(groupPublicKey: String): List<GroupMember> {
+        val groups = configFactory.userGroups ?: return emptyList()
+        TODO("Add group specific configs")
     }
 
     override fun setServerCapabilities(server: String, capabilities: List<String>) {
