@@ -1,11 +1,13 @@
 package org.thoughtcrime.securesms.conversation.expiration
 
+import android.content.Context
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,6 +31,7 @@ import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.ui.GetString
+import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
@@ -68,6 +71,7 @@ object NoOpCallbacks: Callbacks
 
 class ExpirationSettingsViewModel(
     private val threadId: Long,
+    private val context: Context,
     private val textSecurePreferences: TextSecurePreferences,
     private val messageExpirationManager: MessageExpirationManagerProtocol,
     private val threadDb: ThreadDatabase,
@@ -147,6 +151,8 @@ class ExpirationSettingsViewModel(
             MessageSender.send(message, address)
         }
 
+        ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(context)
+
         _event.send(Event.SUCCESS)
     }
 
@@ -158,6 +164,7 @@ class ExpirationSettingsViewModel(
     @Suppress("UNCHECKED_CAST")
     class Factory @AssistedInject constructor(
         @Assisted private val threadId: Long,
+        @ApplicationContext private val context: Context,
         private val textSecurePreferences: TextSecurePreferences,
         private val messageExpirationManager: MessageExpirationManagerProtocol,
         private val threadDb: ThreadDatabase,
@@ -167,6 +174,7 @@ class ExpirationSettingsViewModel(
 
         override fun <T : ViewModel> create(modelClass: Class<T>): T = ExpirationSettingsViewModel(
             threadId,
+            context,
             textSecurePreferences,
             messageExpirationManager,
             threadDb,

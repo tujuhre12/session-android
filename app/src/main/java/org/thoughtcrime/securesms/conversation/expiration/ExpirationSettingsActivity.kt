@@ -53,14 +53,12 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityExpirationSettingsBinding
 import network.loki.messenger.libsession_util.util.ExpiryMode
-import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.CellNoMargin
 import org.thoughtcrime.securesms.ui.Divider
-import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LocalExtraColors
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
@@ -98,10 +96,7 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.event.collect {
                     when (it) {
-                        Event.SUCCESS -> {
-                            ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(this@ExpirationSettingsActivity)
-                            finish()
-                        }
+                        Event.SUCCESS -> finish()
                         Event.FAIL -> showToast(getString(R.string.ExpirationSettingsActivity_settings_not_updated))
                     }
                 }
@@ -112,39 +107,9 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.state.collect { state ->
                     supportActionBar?.subtitle = state.subtitle(this@ExpirationSettingsActivity)
-
-//                    val position = deleteTypeOptions.indexOfFirst { it.value == state.selectedExpirationType }
-//                    deleteTypeOptionAdapter.setSelectedPosition(max(0, position))
                 }
             }
         }
-//        lifecycleScope.launch {
-//            repeatOnLifecycle(Lifecycle.State.STARTED) {
-//                viewModel.selectedExpirationType.collect { type ->
-//                    val position = deleteTypeOptions.indexOfFirst { it.value == type }
-//                    deleteTypeOptionAdapter.setSelectedPosition(max(0, position))
-//                }
-//            }
-//        }
-//        lifecycleScope.launch {
-//            repeatOnLifecycle(Lifecycle.State.STARTED) {
-//                viewModel.selectedExpirationTimer.collect { option ->
-//                    val position =
-//                        viewModel.expirationTimerOptions.value.indexOfFirst { it.value == option?.value }
-//                    timerOptionAdapter.setSelectedPosition(max(0, position))
-//                }
-//            }
-//        }
-//        lifecycleScope.launch {
-//            repeatOnLifecycle(Lifecycle.State.STARTED) {
-//                viewModel.expirationTimerOptions.collect { options ->
-//                    binding.textViewTimer.isVisible =
-//                        options.isNotEmpty() && viewModel.uiState.value.showExpirationTypeSelector
-//                    binding.layoutTimer.isVisible = options.isNotEmpty()
-//                    timerOptionAdapter.submitList(options)
-//                }
-//            }
-//        }
     }
 
     private fun showToast(message: String) {
@@ -167,7 +132,7 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
     fun DisappearingMessagesScreen() {
         val uiState by viewModel.uiState.collectAsState(UiState())
         AppTheme {
-            DisappearingMessages(uiState, onSetClick = viewModel::onSetClick)
+            DisappearingMessages(uiState)
         }
     }
 }
@@ -175,8 +140,7 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
 @Composable
 fun DisappearingMessages(
     state: UiState,
-    modifier: Modifier = Modifier,
-    onSetClick: () -> Unit = {}
+    modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
 
@@ -209,7 +173,7 @@ fun DisappearingMessages(
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
                 .padding(bottom = 20.dp),
-            onClick = onSetClick
+            onClick = state.callbacks::onSetClick
         )
     }
 }
