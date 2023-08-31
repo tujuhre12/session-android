@@ -275,9 +275,9 @@ object MessageSender {
             else -> {}
         }
         val messageSender = if (serverCapabilities.contains(Capability.BLIND.name.lowercase()) && blindedPublicKey != null) {
-            SessionId(IdPrefix.BLINDED, blindedPublicKey!!).hexString
+            SessionId(IdPrefix.BLINDED, blindedPublicKey!!).hexString()
         } else {
-            SessionId(IdPrefix.UN_BLINDED, userEdKeyPair.publicKey.asBytes).hexString
+            SessionId(IdPrefix.UN_BLINDED, userEdKeyPair.publicKey.asBytes).hexString()
         }
         message.sender = messageSender
         // Set the failure handler (need it here already for precondition failure handling)

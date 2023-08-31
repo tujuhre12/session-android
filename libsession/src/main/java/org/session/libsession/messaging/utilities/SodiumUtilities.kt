@@ -9,7 +9,7 @@ import com.goterl.lazysodium.utils.Key
 import com.goterl.lazysodium.utils.KeyPair
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
-import org.session.libsignal.utilities.toHexString
+import org.session.libsignal.utilities.SessionId
 import org.whispersystems.curve25519.Curve25519
 import kotlin.experimental.xor
 
@@ -231,22 +231,3 @@ object SodiumUtilities {
     }
 
 }
-
-class SessionId {
-    var prefix: IdPrefix?
-    var publicKey: String
-
-    constructor(id: String) {
-        prefix = IdPrefix.fromValue(id)
-        publicKey = id.drop(2)
-    }
-
-    constructor(prefix: IdPrefix, publicKey: ByteArray) {
-        this.prefix = prefix
-        this.publicKey = publicKey.toHexString()
-    }
-
-    val hexString
-        get() = prefix?.value + publicKey
-}
-

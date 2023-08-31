@@ -1,13 +1,15 @@
 package network.loki.messenger.libsession_util.util
 
+import org.session.libsignal.utilities.SessionId
+
 sealed class GroupInfo {
 
-    data class CommunityGroupInfo(val community: BaseCommunityInfo, val priority: Int) : GroupInfo()
+    data class CommunityGroupInfo(val community: BaseCommunityInfo, val priority: Long) : GroupInfo()
 
     data class ClosedGroupInfo(
-        val groupSessionId: String,
+        val groupSessionId: SessionId,
         val adminKey: ByteArray?,
-        val signingKey: ByteArray?
+        val authData: ByteArray?
     ): GroupInfo() {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
@@ -20,10 +22,10 @@ sealed class GroupInfo {
                 if (other.adminKey == null) return false
                 if (!adminKey.contentEquals(other.adminKey)) return false
             } else if (other.adminKey != null) return false
-            if (signingKey != null) {
-                if (other.signingKey == null) return false
-                if (!signingKey.contentEquals(other.signingKey)) return false
-            } else if (other.signingKey != null) return false
+            if (authData != null) {
+                if (other.authData == null) return false
+                if (!authData.contentEquals(other.authData)) return false
+            } else if (other.authData != null) return false
 
             return true
         }
@@ -31,18 +33,18 @@ sealed class GroupInfo {
         override fun hashCode(): Int {
             var result = groupSessionId.hashCode()
             result = 31 * result + (adminKey?.contentHashCode() ?: 0)
-            result = 31 * result + (signingKey?.contentHashCode() ?: 0)
+            result = 31 * result + (authData?.contentHashCode() ?: 0)
             return result
         }
     }
 
     data class LegacyGroupInfo(
-        val sessionId: String,
+        val sessionId: SessionId,
         val name: String,
         val members: Map<String, Boolean>,
         val encPubKey: ByteArray,
         val encSecKey: ByteArray,
-        val priority: Int,
+        val priority: Long,
         val disappearingTimer: Long,
         val joinedAt: Long
     ): GroupInfo() {
@@ -75,11 +77,12 @@ sealed class GroupInfo {
             result = 31 * result + members.hashCode()
             result = 31 * result + encPubKey.contentHashCode()
             result = 31 * result + encSecKey.contentHashCode()
-            result = 31 * result + priority
+            result = 31 * result + priority.hashCode()
             result = 31 * result + disappearingTimer.hashCode()
             result = 31 * result + joinedAt.hashCode()
             return result
         }
+
     }
 
 }

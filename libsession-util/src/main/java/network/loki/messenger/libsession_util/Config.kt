@@ -192,22 +192,25 @@ class UserGroupsConfig(pointer: Long): ConfigBase(pointer) {
 
     external fun getCommunityInfo(baseUrl: String, room: String): GroupInfo.CommunityGroupInfo?
     external fun getLegacyGroupInfo(sessionId: String): GroupInfo.LegacyGroupInfo?
+    external fun getClosedGroup(sessionId: String): GroupInfo.ClosedGroupInfo?
     external fun getOrConstructCommunityInfo(baseUrl: String, room: String, pubKeyHex: String): GroupInfo.CommunityGroupInfo
     external fun getOrConstructLegacyGroupInfo(sessionId: String): GroupInfo.LegacyGroupInfo
+    external fun getOrConstructClosedGroup(sessionId: String): GroupInfo.ClosedGroupInfo
     external fun set(groupInfo: GroupInfo)
     external fun erase(communityInfo: GroupInfo)
     external fun eraseCommunity(baseCommunityInfo: BaseCommunityInfo): Boolean
     external fun eraseCommunity(server: String, room: String): Boolean
     external fun eraseLegacyGroup(sessionId: String): Boolean
-    external fun sizeCommunityInfo(): Int
-    external fun sizeLegacyGroupInfo(): Int
-    external fun size(): Int
+    external fun eraseClosedGroup(sessionId: String): Boolean
+    external fun sizeCommunityInfo(): Long
+    external fun sizeLegacyGroupInfo(): Long
+    external fun sizeClosedGroup(): Long
+    external fun size(): Long
     external fun all(): List<GroupInfo>
     external fun allCommunityInfo(): List<GroupInfo.CommunityGroupInfo>
     external fun allLegacyGroupInfo(): List<GroupInfo.LegacyGroupInfo>
-    external fun getClosedGroup(sessionId: String): GroupInfo.ClosedGroupInfo?
-    external fun getOrConstructClosedGroup(sessionId: String): GroupInfo.ClosedGroupInfo
-    external fun all():
+    external fun allClosedGroupInfo(): List<GroupInfo.ClosedGroupInfo>
+    external fun createGroup(): GroupInfo.ClosedGroupInfo
 }
 
 class GroupInfoConfig(pointer: Long): ConfigBase(pointer) {
@@ -222,7 +225,6 @@ class GroupInfoConfig(pointer: Long): ConfigBase(pointer) {
             initialDump: ByteArray = byteArrayOf()
         ): GroupInfoConfig
     }
-
     external fun destroyGroup()
     external fun getCreated(): Long?
     external fun getDeleteAttachmentsBefore(): Long?

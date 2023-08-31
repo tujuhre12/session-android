@@ -203,6 +203,27 @@ namespace util {
         return env->NewStringUTF(optional->data());
     }
 
+    jobject serialize_session_id(JNIEnv* env, std::string_view session_id) {
+        if (session_id.size() != 66) return nullptr;
+
+        jclass id_class = env->FindClass("org/session/libsignal/utilities/SessionId");
+        jmethodID session_id_constructor = env->GetStaticMethodID(id_class, "from", "(Ljava/lang/String;)Lorg/session/libsignal/utilities/SessionId;");
+
+        jstring session_id_string = env->NewStringUTF(session_id.data());
+
+        return env->CallStaticObjectMethod(id_class, session_id_constructor, session_id_string);
+    }
+
+    std::string deserialize_session_id(JNIEnv* env, jobject session_id) {
+        jclass session_id_class = env->FindClass("org/session/libsignal/utilities/SessionId");
+        jmethodID get_string = env->GetMethodID(session_id_class, "hexString", "()Ljava/lang/String;");
+        auto hex_jstring = (jstring)env->CallObjectMethod(session_id, get_string);
+        auto hex_bytes = env->GetStringUTFChars(hex_jstring, nullptr);
+        std::string hex_string{hex_bytes};
+        env->ReleaseStringUTFChars(hex_jstring, hex_bytes);
+        return hex_string;
+    }
+
 }
 
 extern "C"

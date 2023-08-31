@@ -27,6 +27,8 @@ namespace util {
     session::config::groups::member deserialize_group_member(JNIEnv* env, jobject member);
     jobject jlongFromOptional(JNIEnv* env, std::optional<long long> optional);
     jstring jstringFromOptional(JNIEnv* env, std::optional<std::string_view> optional);
+    jobject serialize_session_id(JNIEnv* env, std::string_view session_id);
+    std::string deserialize_session_id(JNIEnv* env, jobject session_id);
 }
 
 #endif
