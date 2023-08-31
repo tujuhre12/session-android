@@ -3,6 +3,7 @@ package network.loki.messenger.libsession_util
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import network.loki.messenger.libsession_util.util.*
+import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.CoreMatchers.not
 import org.hamcrest.CoreMatchers.notNullValue
 import org.hamcrest.MatcherAssert.assertThat
@@ -625,10 +626,13 @@ class InstrumentedTests {
         val userCurve = Sodium.ed25519PkToCurve25519(userPublic)
         val groupConfig = UserGroupsConfig.newInstance(userSecret)
         val group = groupConfig.createGroup()
-        val groupSecret = group.adminKey!!
+        val groupSecret = group.adminKey
         val groupPublic = Hex.fromStringCondensed(group.groupSessionId.publicKey)
         groupConfig.set(group)
-        val infoConf = GroupInfoConfig.newInstance(groupPublic, group.adminKey!!)
+        val setGroup = groupConfig.getClosedGroup(group.groupSessionId.hexString())
+        assertThat(setGroup, notNullValue())
+        assertTrue(setGroup!!.adminKey.isNotEmpty())
+        val infoConf = GroupInfoConfig.newInstance(groupPublic, group.adminKey)
         infoConf.setName("New Group")
         assertEquals("New Group", infoConf.getName())
         infoConf.setCreated(System.currentTimeMillis())

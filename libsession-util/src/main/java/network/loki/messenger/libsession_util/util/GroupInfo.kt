@@ -8,8 +8,8 @@ sealed class GroupInfo {
 
     data class ClosedGroupInfo(
         val groupSessionId: SessionId,
-        val adminKey: ByteArray?,
-        val authData: ByteArray?
+        val adminKey: ByteArray,
+        val authData: ByteArray
     ): GroupInfo() {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
@@ -18,24 +18,19 @@ sealed class GroupInfo {
             other as ClosedGroupInfo
 
             if (groupSessionId != other.groupSessionId) return false
-            if (adminKey != null) {
-                if (other.adminKey == null) return false
-                if (!adminKey.contentEquals(other.adminKey)) return false
-            } else if (other.adminKey != null) return false
-            if (authData != null) {
-                if (other.authData == null) return false
-                if (!authData.contentEquals(other.authData)) return false
-            } else if (other.authData != null) return false
+            if (!adminKey.contentEquals(other.adminKey)) return false
+            if (!authData.contentEquals(other.authData)) return false
 
             return true
         }
 
         override fun hashCode(): Int {
             var result = groupSessionId.hashCode()
-            result = 31 * result + (adminKey?.contentHashCode() ?: 0)
-            result = 31 * result + (authData?.contentHashCode() ?: 0)
+            result = 31 * result + adminKey.contentHashCode()
+            result = 31 * result + authData.contentHashCode()
             return result
         }
+
     }
 
     data class LegacyGroupInfo(

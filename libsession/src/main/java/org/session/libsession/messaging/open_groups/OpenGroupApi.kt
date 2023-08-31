@@ -19,7 +19,6 @@ import okhttp3.MediaType
 import okhttp3.RequestBody
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.sending_receiving.pollers.OpenGroupPoller.Companion.maxInactivityPeriod
-import org.session.libsession.messaging.utilities.SessionId
 import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.OnionResponse
@@ -36,6 +35,7 @@ import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
+import org.session.libsignal.utilities.SessionId
 import org.session.libsignal.utilities.removingIdPrefixIfNeeded
 import org.whispersystems.curve25519.Curve25519
 import java.util.concurrent.TimeUnit
@@ -360,7 +360,7 @@ object OpenGroupApi {
                         pubKey = SessionId(
                             IdPrefix.BLINDED,
                             keyPair.publicKey.asBytes
-                        ).hexString
+                        ).hexString()
 
                         signature = SodiumUtilities.sogsSignature(
                             messageBytes,
@@ -373,7 +373,7 @@ object OpenGroupApi {
                     pubKey = SessionId(
                         IdPrefix.UN_BLINDED,
                         ed25519KeyPair.publicKey.asBytes
-                    ).hexString
+                    ).hexString()
                     sodium.cryptoSignDetached(
                         signature,
                         messageBytes,

@@ -36,9 +36,9 @@ sealed class ConfigBase(protected val /* yucky */ pointer: Long) {
         fun isNewConfigEnabled(forced: Boolean, currentTime: Long) =
             forced || currentTime >= ACTIVATE_TIME
 
-        const val PRIORITY_HIDDEN = -1
-        const val PRIORITY_VISIBLE = 0
-        const val PRIORITY_PINNED = 1
+        const val PRIORITY_HIDDEN = -1L
+        const val PRIORITY_VISIBLE = 0L
+        const val PRIORITY_PINNED = 1L
 
     }
 
@@ -129,8 +129,8 @@ class UserProfile(pointer: Long) : ConfigBase(pointer) {
     external fun getName(): String?
     external fun getPic(): UserPic
     external fun setPic(userPic: UserPic)
-    external fun setNtsPriority(priority: Int)
-    external fun getNtsPriority(): Int
+    external fun setNtsPriority(priority: Long)
+    external fun getNtsPriority(): Long
     external fun getCommunityMessageRequests(): Boolean
     external fun setCommunityMessageRequests(blocks: Boolean)
     external fun isBlockCommunityMessageRequestsSet(): Boolean

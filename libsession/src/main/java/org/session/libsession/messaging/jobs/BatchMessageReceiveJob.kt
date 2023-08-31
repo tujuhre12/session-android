@@ -28,7 +28,7 @@ import org.session.libsession.messaging.sending_receiving.handleOpenGroupReactio
 import org.session.libsession.messaging.sending_receiving.handleUnsendRequest
 import org.session.libsession.messaging.sending_receiving.handleVisibleMessage
 import org.session.libsession.messaging.utilities.Data
-import org.session.libsession.messaging.utilities.SessionId
+import org.session.libsignal.utilities.SessionId
 import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsignal.protos.UtilProtos
@@ -160,7 +160,7 @@ class BatchMessageReceiveJob(
                                         }?.let {
                                             SessionId(
                                                 IdPrefix.BLINDED, it.publicKey.asBytes
-                                            ).hexString
+                                            ).hexString()
                                         }
                                     val sentTimestamp = message.sentTimestamp!!
                                     if (message.sender == localUserPublicKey || isUserBlindedSender) {

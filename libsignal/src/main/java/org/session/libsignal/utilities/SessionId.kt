@@ -22,6 +22,4 @@ class SessionId {
     }
 
     fun hexString() = prefix?.value + publicKey
-
-    fun bytes(): ByteArray = Hex.fromStringCondensed(prefix?.value + publicKey)
 }

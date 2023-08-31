@@ -8,6 +8,9 @@ import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_PINN
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.Contacts
 import network.loki.messenger.libsession_util.ConversationVolatileConfig
+import network.loki.messenger.libsession_util.GroupInfoConfig
+import network.loki.messenger.libsession_util.GroupKeysConfig
+import network.loki.messenger.libsession_util.GroupMemberConfig
 import network.loki.messenger.libsession_util.UserGroupsConfig
 import network.loki.messenger.libsession_util.UserProfile
 import network.loki.messenger.libsession_util.util.BaseCommunityInfo
@@ -54,7 +57,6 @@ import org.session.libsession.messaging.sending_receiving.link_preview.LinkPrevi
 import org.session.libsession.messaging.sending_receiving.notifications.PushRegistryV1
 import org.session.libsession.messaging.sending_receiving.pollers.ClosedGroupPollerV2
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
-import org.session.libsession.messaging.utilities.SessionId
 import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.snode.OnionRequestAPI
@@ -77,6 +79,7 @@ import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.KeyHelper
 import org.session.libsignal.utilities.Log
+import org.session.libsignal.utilities.SessionId
 import org.session.libsignal.utilities.guava.Optional
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -118,8 +121,7 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
                 address.isClosedGroup -> {
                     val sessionId = address.serialize()
                     val closedGroup = groups.getClosedGroup(sessionId)
-
-                    Log.w("Loki", "Thread created called for new closed group address, not adding any extra information")
+                    TODO("Set the closed group's convo volatile info")
                 }
                 address.isOpenGroup -> {
                     // these should be added on the group join / group info fetch
@@ -149,13 +151,15 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
         val volatile = configFactory.convoVolatile ?: return
         if (address.isGroup) {
             val groups = configFactory.userGroups ?: return
-            if (address.isClosedGroup) {
+            if (address.isLegacyClosedGroup) {
                 val sessionId = GroupUtil.doubleDecodeGroupId(address.serialize())
                 volatile.eraseLegacyClosedGroup(sessionId)
                 groups.eraseLegacyGroup(sessionId)
             } else if (address.isOpenGroup) {
                 // these should be removed in the group leave / handling new configs
                 Log.w("Loki", "Thread delete called for open group address, expecting to be handled elsewhere")
+            } else if (address.isClosedGroup) {
+                TODO("add the thread deleted checks for new closed groups")
             }
         } else {
             // non-standard contact prefixes: 15, 00 etc shouldn't be stored in config
@@ -456,6 +460,9 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
             is Contacts -> updateContacts(forConfigObject)
             is ConversationVolatileConfig -> updateConvoVolatile(forConfigObject)
             is UserGroupsConfig -> updateUserGroups(forConfigObject)
+            is GroupInfoConfig -> TODO()
+            is GroupKeysConfig -> TODO()
+            is GroupMemberConfig -> TODO()
         }
     }
 
@@ -548,8 +555,8 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
         val toAddCommunities = communities.filter { it.community.fullUrl() !in existingCommunities.map { it.value.joinURL } }
         val existingJoinUrls = existingCommunities.values.map { it.joinURL }
 
-        val existingClosedGroups = getAllGroups(includeInactive = true).filter { it.isClosedGroup }
-        val lgcIds = lgc.map { it.sessionId }
+        val existingClosedGroups = getAllGroups(includeInactive = true).filter { it.isLegacyClosedGroup }
+        val lgcIds = lgc.map { it.sessionId.hexString() }
         val toDeleteClosedGroups = existingClosedGroups.filter { group ->
             GroupUtil.doubleDecodeGroupId(group.encodedId) !in lgcIds
         }
@@ -583,7 +590,7 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
         }
 
         for (group in lgc) {
-            val existingGroup = existingClosedGroups.firstOrNull { GroupUtil.doubleDecodeGroupId(it.encodedId) == group.sessionId }
+            val existingGroup = existingClosedGroups.firstOrNull { GroupUtil.doubleDecodeGroupId(it.encodedId) == group.sessionId.hexString() }
             val existingThread = existingGroup?.let { getThreadId(existingGroup.encodedId) }
             if (existingGroup != null) {
                 if (group.priority == PRIORITY_HIDDEN && existingThread != null) {
@@ -597,28 +604,28 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
             } else {
                 val members = group.members.keys.map { Address.fromSerialized(it) }
                 val admins = group.members.filter { it.value /*admin = true*/ }.keys.map { Address.fromSerialized(it) }
-                val groupId = GroupUtil.doubleEncodeGroupID(group.sessionId)
+                val groupId = GroupUtil.doubleEncodeGroupID(group.sessionId.hexString())
                 val title = group.name
                 val formationTimestamp = (group.joinedAt * 1000L)
                 createGroup(groupId, title, admins + members, null, null, admins, formationTimestamp)
                 setProfileSharing(Address.fromSerialized(groupId), true)
                 // Add the group to the user's set of public keys to poll for
-                addClosedGroupPublicKey(group.sessionId)
+                addClosedGroupPublicKey(group.sessionId.hexString())
                 // Store the encryption key pair
                 val keyPair = ECKeyPair(DjbECPublicKey(group.encPubKey), DjbECPrivateKey(group.encSecKey))
-                addClosedGroupEncryptionKeyPair(keyPair, group.sessionId, SnodeAPI.nowWithOffset)
+                addClosedGroupEncryptionKeyPair(keyPair, group.sessionId.hexString(), SnodeAPI.nowWithOffset)
                 // Set expiration timer
                 val expireTimer = group.disappearingTimer
                 setExpirationTimer(groupId, expireTimer.toInt())
                 // Notify the PN server
-                PushRegistryV1.subscribeGroup(group.sessionId, publicKey = localUserPublicKey)
+                PushRegistryV1.subscribeGroup(group.sessionId.hexString(), publicKey = localUserPublicKey)
                 // Notify the user
                 val threadID = getOrCreateThreadIdFor(Address.fromSerialized(groupId))
                 threadDb.setDate(threadID, formationTimestamp)
                 insertOutgoingInfoMessage(context, groupId, SignalServiceGroup.Type.CREATION, title, members.map { it.serialize() }, admins.map { it.serialize() }, threadID, formationTimestamp)
                 // Don't create config group here, it's from a config update
                 // Start polling
-                ClosedGroupPollerV2.shared.startPolling(group.sessionId)
+                ClosedGroupPollerV2.shared.startPolling(group.sessionId.hexString())
             }
         }
     }

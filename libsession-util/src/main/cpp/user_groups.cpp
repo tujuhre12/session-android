@@ -1,6 +1,7 @@
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "bugprone-reserved-identifier"
 #include "user_groups.h"
+#include "oxenc/hex.h"
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "bugprone-reserved-identifier"
@@ -134,14 +135,8 @@ Java_network_loki_messenger_libsession_1util_UserGroupsConfig_set__Lnetwork_loki
         auto deserialized = deserialize_legacy_group_info(env, group_info, conf);
         conf->set(deserialized);
     } else if (env->IsSameObject(closed_group_info, object_class)) {
-        LOGD("Closed group deserializing...")
         auto deserialized = deserialize_closed_group_info(env, group_info);
-        LOGD("secret key deserialized: %d", deserialized.secretkey.size())
         conf->set(deserialized);
-        auto check_group = conf->get_group(deserialized.id);
-        if (check_group) {
-            LOGD("after set: %d", check_group->secretkey.size());
-        }
     }
 }
 

@@ -8,9 +8,6 @@
 #include "session/config/user_groups.hpp"
 #include <android/log.h>
 
-#define APPNAME "libsession-jni"
-#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, APPNAME, __VA_ARGS__);
-
 inline session::config::UserGroups* ptrToUserGroups(JNIEnv *env, jobject obj) {
     jclass configClass = env->FindClass("network/loki/messenger/libsession_util/UserGroupsConfig");
     jfieldID pointerField = env->GetFieldID(configClass, "pointer", "J");
@@ -133,7 +130,6 @@ inline jobject serialize_legacy_group_info(JNIEnv *env, session::config::legacy_
 inline jobject serialize_closed_group_info(JNIEnv* env, session::config::group_info info) {
     auto session_id = util::serialize_session_id(env, info.id);
     jbyteArray admin_bytes = util::bytes_from_ustring(env, info.secretkey);
-    LOGD("admin byte length: %d", info.secretkey.size());
     jbyteArray auth_bytes = util::bytes_from_ustring(env, info.auth_data);
 
     jclass group_info_class = env->FindClass("network/loki/messenger/libsession_util/util/GroupInfo$ClosedGroupInfo");
