@@ -111,8 +111,18 @@ class ExpirationSettingsViewModel(
         }
     }
 
+    /**
+    * When enabling Disappearing Messages (for screens which provide the `Delete Type` options) the default `Timer` selection should be:
+    * Disappear After Read: `12 Hours`
+    * Disappear After Send: `1 Day`
+    * Legacy: `1 Day`
+    * */
     override fun setType(type: ExpiryType) {
-        _state.update { it.copy(expiryMode = type.mode(0)) }
+        if (state.value.expiryType == type) return
+
+        _state.update {
+            it.copy(expiryMode = type.defaultMode())
+        }
     }
 
     override fun setTime(seconds: Long) {
@@ -300,6 +310,11 @@ enum class ExpiryType(private val createMode: (Long) -> ExpiryMode) {
     AFTER_READ(ExpiryMode::AfterRead);
 
     fun mode(seconds: Long) = createMode(seconds)
+
+    fun defaultMode() = when(this) {
+        AFTER_READ -> 43200L
+        else -> 86400L
+    }.let { mode(it) }
 }
 
 private val ExpiryMode.type: ExpiryType get() = when(this) {

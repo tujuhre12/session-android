@@ -62,7 +62,6 @@ import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.LocalExtraColors
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
-import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 import javax.inject.Inject
 import kotlin.math.min
 
