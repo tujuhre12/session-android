@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -233,6 +234,7 @@ fun OptionsCard(card: CardModel) {
 @Composable
 fun TitledRadioButton(option: OptionModel) {
     Row(modifier = Modifier
+        .clickable { option.onClick() }
         .heightIn(min = 60.dp)
         .padding(horizontal = 34.dp)) {
         Column(modifier = Modifier
@@ -255,8 +257,8 @@ fun TitledRadioButton(option: OptionModel) {
         }
         RadioButton(
             selected = option.selected,
+            onClick = null,
             enabled = option.enabled,
-            onClick = option.onClick,
             modifier = Modifier
                 .height(26.dp)
                 .align(Alignment.CenterVertically)
