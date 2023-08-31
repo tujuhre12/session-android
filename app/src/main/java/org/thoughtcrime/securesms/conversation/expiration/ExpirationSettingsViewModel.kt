@@ -34,9 +34,9 @@ import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 
-data class Event(
-    val saveSuccess: Boolean
-)
+enum class Event {
+    SUCCESS, FAIL
+}
 
 data class State(
     val isGroup: Boolean = false,
@@ -125,28 +125,29 @@ class ExpirationSettingsViewModel(
 
     override fun onSetClick() = viewModelScope.launch {
         val state = _state.value
-        val expiryMode = state.expiryMode ?: ExpiryMode.NONE
-        val typeValue = expiryMode.let {
+        val mode = (state.expiryMode ?: ExpiryMode.NONE).let {
             if (it is ExpiryMode.Legacy) ExpiryMode.AfterRead(it.expirySeconds)
             else it
         }
         val address = state.address
-        if (address == null || expirationConfig?.expiryMode == typeValue) {
-            _event.send(Event(false))
+        if (address == null || expirationConfig?.expiryMode == mode) {
+            _event.send(Event.FAIL)
             return@launch
         }
 
         val expiryChangeTimestampMs = SnodeAPI.nowWithOffset
-        storage.setExpirationConfiguration(ExpirationConfiguration(threadId, typeValue, expiryChangeTimestampMs))
+        storage.setExpirationConfiguration(ExpirationConfiguration(threadId, mode, expiryChangeTimestampMs))
 
-        val message = ExpirationTimerUpdate(typeValue.expirySeconds.toInt())
-        message.sender = textSecurePreferences.getLocalNumber()
-        message.recipient = address.serialize()
-        message.sentTimestamp = expiryChangeTimestampMs
-        messageExpirationManager.setExpirationTimer(message, typeValue)
+        ExpirationTimerUpdate(mode.expirySeconds.toInt()).apply {
+            sender = textSecurePreferences.getLocalNumber()
+            recipient = address.serialize()
+            sentTimestamp = expiryChangeTimestampMs
+        }.also { message ->
+            messageExpirationManager.setExpirationTimer(message, mode)
+            MessageSender.send(message, address)
+        }
 
-        MessageSender.send(message, address)
-        _event.send(Event(true))
+        _event.send(Event.SUCCESS)
     }
 
     @dagger.assisted.AssistedFactory

@@ -97,10 +97,13 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.event.collect {
-                    if (it.saveSuccess) {
-                        ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(this@ExpirationSettingsActivity)
-                        finish()
-                    } else showToast(getString(R.string.ExpirationSettingsActivity_settings_not_updated))
+                    when (it) {
+                        Event.SUCCESS -> {
+                            ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(this@ExpirationSettingsActivity)
+                            finish()
+                        }
+                        Event.FAIL -> showToast(getString(R.string.ExpirationSettingsActivity_settings_not_updated))
+                    }
                 }
             }
         }
