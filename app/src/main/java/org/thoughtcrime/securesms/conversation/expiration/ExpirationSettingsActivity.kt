@@ -5,20 +5,16 @@ import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -33,27 +29,22 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.text.HtmlCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -61,6 +52,8 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityExpirationSettingsBinding
+import network.loki.messenger.libsession_util.util.ExpiryMode
+import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
@@ -279,8 +272,18 @@ fun TitledRadioButton(option: OptionModel) {
             .weight(1f)
             .align(Alignment.CenterVertically)) {
             Column {
-                Text(text = option.title())
-                option.subtitle?.let { Text(text = it()) }
+                Text(
+                    text = option.title(),
+                    fontSize = 16.sp,
+                    modifier = Modifier.alpha(if (option.enabled) 1f else 0.5f)
+                )
+                option.subtitle?.let {
+                    Text(
+                        text = it(),
+                        fontSize = 11.sp,
+                        modifier = Modifier.alpha(if (option.enabled) 1f else 0.5f)
+                    )
+                }
             }
         }
         RadioButton(
@@ -307,6 +310,41 @@ fun OutlineButton(text: String, modifier: Modifier = Modifier, onClick: () -> Un
     }
 }
 
+@Preview(widthDp = 450, heightDp = 700)
+@Composable
+fun x(
+    @PreviewParameter(StatePreviewParameterProvider::class) state: State
+) {
+    PreviewTheme(R.style.Classic_Dark) {
+        DisappearingMessages(
+            UiState(state)
+        )
+    }
+}
+
+class StatePreviewParameterProvider : PreviewParameterProvider<State> {
+    override val values = newConfigValues.filter { it.expiryType != ExpiryType.LEGACY } + newConfigValues.map { it.copy(isNewConfigEnabled = false) }
+
+    private val newConfigValues get() = sequenceOf(
+        // new 1-1
+        State(expiryMode = ExpiryMode.NONE),
+        State(expiryMode = ExpiryMode.Legacy(43200)),
+        State(expiryMode = ExpiryMode.AfterRead(300)),
+        State(expiryMode = ExpiryMode.AfterSend(43200)),
+        // new group non-admin
+        State(isGroup = true, isSelfAdmin = false),
+        State(isGroup = true, isSelfAdmin = false, expiryMode = ExpiryMode.Legacy(43200)),
+        State(isGroup = true, isSelfAdmin = false, expiryMode = ExpiryMode.AfterSend(43200)),
+        // new group admin
+        State(isGroup = true),
+        State(isGroup = true, expiryMode = ExpiryMode.Legacy(43200)),
+        State(isGroup = true, expiryMode = ExpiryMode.AfterSend(43200)),
+        // new note-to-self
+        State(isNoteToSelf = true),
+    )
+}
+
+
 @Preview
 @Composable
 fun PreviewMessageDetails(
@@ -314,27 +352,8 @@ fun PreviewMessageDetails(
 ) {
     PreviewTheme(themeResId) {
         DisappearingMessages(
-            UiState(
-                cards = listOf(
-                    CardModel(GetString(R.string.activity_expiration_settings_delete_type), previewTypeOptions()),
-                    CardModel(GetString(R.string.activity_expiration_settings_timer), previewTimeOptions())
-                )
-            ),
+            UiState(State(expiryMode = ExpiryMode.AfterSend(43200))),
             modifier = Modifier.size(400.dp, 600.dp)
         )
     }
 }
-
-fun previewTypeOptions() = listOf(
-    OptionModel(GetString(R.string.expiration_off)),
-    OptionModel(GetString(R.string.expiration_type_disappear_legacy)),
-    OptionModel(GetString(R.string.expiration_type_disappear_after_read)),
-    OptionModel(GetString(R.string.expiration_type_disappear_after_send))
-)
-
-fun previewTimeOptions() = listOf(
-    OptionModel(GetString("1 Minute")),
-    OptionModel(GetString("5 Minutes")),
-    OptionModel(GetString("1 Week")),
-    OptionModel(GetString("2 Weeks")),
-)
