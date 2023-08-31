@@ -1,7 +1,10 @@
 package org.thoughtcrime.securesms.conversation.expiration
 
+import android.app.Application
 import android.content.Context
 import androidx.annotation.StringRes
+import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -10,9 +13,11 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.BuildConfig
@@ -71,14 +76,14 @@ object NoOpCallbacks: Callbacks
 
 class ExpirationSettingsViewModel(
     private val threadId: Long,
-    private val context: Context,
+    private val application: Application,
     private val textSecurePreferences: TextSecurePreferences,
     private val messageExpirationManager: MessageExpirationManagerProtocol,
     private val threadDb: ThreadDatabase,
     private val groupDb: GroupDatabase,
     private val storage: Storage,
     isNewConfigEnabled: Boolean
-) : ViewModel(), Callbacks {
+) : AndroidViewModel(application), Callbacks {
 
     private val _event = Channel<Event>()
     val event = _event.receiveAsFlow()
@@ -89,7 +94,9 @@ class ExpirationSettingsViewModel(
     ))
     val state = _state.asStateFlow()
 
-    val uiState = _state.map { UiState(it) }
+    val uiState = _state
+        .map(::UiState)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, UiState())
 
     private var expirationConfig: ExpirationConfiguration? = null
 
@@ -161,7 +168,7 @@ class ExpirationSettingsViewModel(
             MessageSender.send(message, address)
         }
 
-        ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(context)
+        ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(application)
 
         _event.send(Event.SUCCESS)
     }
@@ -174,7 +181,7 @@ class ExpirationSettingsViewModel(
     @Suppress("UNCHECKED_CAST")
     class Factory @AssistedInject constructor(
         @Assisted private val threadId: Long,
-        @ApplicationContext private val context: Context,
+        private val application: Application,
         private val textSecurePreferences: TextSecurePreferences,
         private val messageExpirationManager: MessageExpirationManagerProtocol,
         private val threadDb: ThreadDatabase,
@@ -184,7 +191,7 @@ class ExpirationSettingsViewModel(
 
         override fun <T : ViewModel> create(modelClass: Class<T>): T = ExpirationSettingsViewModel(
             threadId,
-            context,
+            application,
             textSecurePreferences,
             messageExpirationManager,
             threadDb,
@@ -201,9 +208,9 @@ data class UiState(
     val callbacks: Callbacks = NoOpCallbacks
 ) {
     constructor(state: State): this(
-        cards = listOf(
-            CardModel(GetString(R.string.activity_expiration_settings_delete_type), typeOptions(state)),
-            CardModel(GetString(R.string.activity_expiration_settings_timer), timeOptions(state))
+        cards = listOfNotNull(
+            typeOptions(state)?.let { CardModel(GetString(R.string.activity_expiration_settings_delete_type), it) },
+            timeOptions(state)?.let { CardModel(GetString(R.string.activity_expiration_settings_timer), it) }
         ),
         showGroupFooter = state.isGroup && state.isNewConfigEnabled,
         callbacks = state.callbacks
@@ -216,39 +223,42 @@ data class CardModel(
 )
 
 private fun typeOptions(state: State) =
-    if (state.isNoteToSelf || (state.isGroup && state.isNewConfigEnabled)) emptyList()
-    else listOfNotNull(
-        typeOption(
-            ExpiryType.NONE,
-            state,
-            R.string.expiration_off,
-            contentDescription = R.string.AccessibilityId_disable_disappearing_messages,
-            enabled = state.isSelfAdmin
-        ),
-        if (!state.isNewConfigEnabled) typeOption(
-            ExpiryType.LEGACY,
-            state,
-            R.string.expiration_type_disappear_legacy,
-            contentDescription = R.string.expiration_type_disappear_legacy_description,
-            enabled = state.isSelfAdmin
-        ) else null,
-        if (!state.isGroup) typeOption(
-            ExpiryType.AFTER_READ,
-            state,
-            R.string.expiration_type_disappear_after_read,
-            R.string.expiration_type_disappear_after_read_description,
-            contentDescription = R.string.expiration_type_disappear_after_read_description,
-            enabled = state.isNewConfigEnabled && state.isSelfAdmin
-        ) else null,
-        typeOption(
-            ExpiryType.AFTER_SEND,
-            state,
-            R.string.expiration_type_disappear_after_send,
-            R.string.expiration_type_disappear_after_read_description,
-            contentDescription = R.string.expiration_type_disappear_after_send_description,
-            enabled = state.isNewConfigEnabled && state.isSelfAdmin
-        ),
-    )
+    state.takeUnless {
+        state.isNoteToSelf || state.isGroup && state.isNewConfigEnabled
+    }?.run {
+        listOfNotNull(
+            typeOption(
+                ExpiryType.NONE,
+                state,
+                R.string.expiration_off,
+                contentDescription = R.string.AccessibilityId_disable_disappearing_messages,
+                enabled = state.isSelfAdmin
+            ),
+            if (!state.isNewConfigEnabled) typeOption(
+                ExpiryType.LEGACY,
+                state,
+                R.string.expiration_type_disappear_legacy,
+                contentDescription = R.string.expiration_type_disappear_legacy_description,
+                enabled = state.isSelfAdmin
+            ) else null,
+            if (!state.isGroup) typeOption(
+                ExpiryType.AFTER_READ,
+                state,
+                R.string.expiration_type_disappear_after_read,
+                R.string.expiration_type_disappear_after_read_description,
+                contentDescription = R.string.expiration_type_disappear_after_read_description,
+                enabled = state.isNewConfigEnabled && state.isSelfAdmin
+            ) else null,
+            typeOption(
+                ExpiryType.AFTER_SEND,
+                state,
+                R.string.expiration_type_disappear_after_send,
+                R.string.expiration_type_disappear_after_read_description,
+                contentDescription = R.string.expiration_type_disappear_after_send_description,
+                enabled = state.isNewConfigEnabled && state.isSelfAdmin
+            )
+        )
+    }
 
 private fun typeOption(
     type: ExpiryType,
@@ -266,17 +276,17 @@ private fun typeOption(
     onClick = onClick
 )
 
-private fun timeOptions(state: State): List<OptionModel> =
+private fun timeOptions(state: State) =
     if (state.isNoteToSelf || (state.isGroup && state.isNewConfigEnabled)) timeOptionsOnly(state)
     else when (state.expiryMode) {
         is ExpiryMode.Legacy -> afterReadTimes
         is ExpiryMode.AfterRead -> afterReadTimes
         is ExpiryMode.AfterSend -> afterSendTimes
-        else -> emptyList()
-    }.map { timeOption(it, state) }
+        else -> null
+    }?.map { timeOption(it, state) }
 
-private val afterSendTimes = listOf(12.hours, 1.days, 7.days, 14.days)
-private val afterReadTimes = listOf(5.minutes, 1.hours) + afterSendTimes
+val afterSendTimes = listOf(12.hours, 1.days, 7.days, 14.days)
+val afterReadTimes = listOf(5.minutes, 1.hours) + afterSendTimes
 
 private fun timeOptionsOnly(state: State) = listOfNotNull(
     typeOption(ExpiryType.NONE, state, R.string.arrays__off, enabled = state.isSelfAdmin),
@@ -312,9 +322,9 @@ enum class ExpiryType(private val createMode: (Long) -> ExpiryMode) {
     fun mode(seconds: Long) = createMode(seconds)
 
     fun defaultMode() = when(this) {
-        AFTER_READ -> 43200L
-        else -> 86400L
-    }.let { mode(it) }
+        AFTER_READ -> 12.hours
+        else -> 1.days
+    }.inWholeSeconds.let(::mode)
 }
 
 private val ExpiryMode.type: ExpiryType get() = when(this) {

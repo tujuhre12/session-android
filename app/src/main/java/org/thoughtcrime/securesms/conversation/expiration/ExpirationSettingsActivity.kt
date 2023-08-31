@@ -153,7 +153,7 @@ fun DisappearingMessages(
                     .fadingEdges(scrollState),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                state.cards.filter { it.options.isNotEmpty() }.forEach {
+                state.cards.forEach {
                     OptionsCard(it)
                 }
 
