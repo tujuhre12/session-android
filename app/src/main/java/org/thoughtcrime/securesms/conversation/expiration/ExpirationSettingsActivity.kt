@@ -61,6 +61,7 @@ import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.CellNoMargin
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.GetString
+import org.thoughtcrime.securesms.ui.LocalExtraColors
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
@@ -302,9 +303,12 @@ fun OutlineButton(text: String, modifier: Modifier = Modifier, onClick: () -> Un
     OutlinedButton(
         modifier = modifier.size(108.dp, 34.dp),
         onClick = onClick,
-        border = BorderStroke(1.dp, MaterialTheme.colors.secondary),
+        border = BorderStroke(1.dp, LocalExtraColors.current.prominentButtonColor),
         shape = RoundedCornerShape(50), // = 50% percent
-        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colors.secondary)
+        colors = ButtonDefaults.outlinedButtonColors(
+            contentColor = LocalExtraColors.current.prominentButtonColor,
+            backgroundColor = MaterialTheme.colors.background
+        )
     ){
         Text(text = text)
     }
@@ -312,7 +316,7 @@ fun OutlineButton(text: String, modifier: Modifier = Modifier, onClick: () -> Un
 
 @Preview(widthDp = 450, heightDp = 700)
 @Composable
-fun x(
+fun PreviewStates(
     @PreviewParameter(StatePreviewParameterProvider::class) state: State
 ) {
     PreviewTheme(R.style.Classic_Dark) {
@@ -347,7 +351,7 @@ class StatePreviewParameterProvider : PreviewParameterProvider<State> {
 
 @Preview
 @Composable
-fun PreviewMessageDetails(
+fun PreviewThemes(
     @PreviewParameter(ThemeResPreviewParameterProvider::class) themeResId: Int
 ) {
     PreviewTheme(themeResId) {
