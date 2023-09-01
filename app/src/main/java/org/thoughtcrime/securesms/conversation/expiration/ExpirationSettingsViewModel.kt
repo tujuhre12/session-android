@@ -110,6 +110,7 @@ class ExpirationSettingsViewModel(
 
             _state.update { state ->
                 state.copy(
+                    address = recipient?.address,
                     isGroup = groupInfo != null,
                     isSelfAdmin = groupInfo == null || groupInfo.admins.any{ it.serialize() == textSecurePreferences.getLocalNumber() },
                     expiryMode = expiryMode
