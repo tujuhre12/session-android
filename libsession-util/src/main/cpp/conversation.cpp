@@ -350,3 +350,33 @@ Java_network_loki_messenger_libsession_1util_ConversationVolatileConfig_allLegac
         env->CallObjectMethod(our_stack, push, serialize_legacy_group(env, *contact));
     return our_stack;
 }
+
+extern "C"
+JNIEXPORT jobject JNICALL
+Java_network_loki_messenger_libsession_1util_ConversationVolatileConfig_getClosedGroup(JNIEnv *env,
+                                                                                       jobject thiz,
+                                                                                       jstring session_id) {
+    auto config = ptrToConvoInfo(env, thiz);
+    auto session_id_bytes = env->GetStringUTFChars(session_id, nullptr);
+    auto group = config->get_group(session_id_bytes);
+    env->ReleaseStringUTFChars(session_id, session_id_bytes);
+    if (group) {
+        auto serialized = serialize_closed_group(env, *group);
+        return serialized;
+    }
+    return nullptr;
+}
+
+extern "C"
+JNIEXPORT jobject JNICALL
+Java_network_loki_messenger_libsession_1util_ConversationVolatileConfig_getOrConstructClosedGroup(
+        JNIEnv *env, jobject thiz, jstring session_id) {
+    // TODO: implement getOrConstructClosedGroup()
+}
+
+extern "C"
+JNIEXPORT jboolean JNICALL
+Java_network_loki_messenger_libsession_1util_ConversationVolatileConfig_eraseClosedGroup(
+        JNIEnv *env, jobject thiz, jstring session_id) {
+    // TODO: implement eraseClosedGroup()
+}

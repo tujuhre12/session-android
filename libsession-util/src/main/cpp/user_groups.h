@@ -6,7 +6,6 @@
 #include "util.h"
 #include "conversation.h"
 #include "session/config/user_groups.hpp"
-#include <android/log.h>
 
 inline session::config::UserGroups* ptrToUserGroups(JNIEnv *env, jobject obj) {
     jclass configClass = env->FindClass("network/loki/messenger/libsession_util/UserGroupsConfig");

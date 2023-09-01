@@ -15,12 +15,11 @@ import kotlinx.coroutines.launch
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.open_groups.OpenGroupApi
-import org.session.libsession.messaging.utilities.SessionId
 import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.database.Storage
+import org.session.libsignal.utilities.SessionId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import java.util.UUID
@@ -65,7 +64,7 @@ class ConversationViewModel(
     val blindedPublicKey: String?
         get() = if (openGroup == null || edKeyPair == null || !serverCapabilities.contains(OpenGroupApi.Capability.BLIND.name.lowercase())) null else {
             SodiumUtilities.blindedKeyPair(openGroup!!.publicKey, edKeyPair)?.publicKey?.asBytes
-                ?.let { SessionId(IdPrefix.BLINDED, it) }?.hexString
+                ?.let { SessionId(IdPrefix.BLINDED, it) }?.hexString()
         }
 
     val isMessageRequestThread : Boolean

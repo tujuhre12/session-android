@@ -203,6 +203,7 @@ inline jobject iterator_as_java_stack(JNIEnv *env, const session::config::UserGr
         } else if (auto* community = std::get_if<session::config::community_info>(&item)) {
             serialized = serialize_community_info(env, *community);
         } else if (auto* closed = std::get_if<session::config::group_info>(&item)) {
+            LOGD("Item is closed group");
             serialized = serialize_closed_group_info(env, *closed);
         }
         if (serialized != nullptr) {
@@ -218,6 +219,8 @@ JNIEXPORT jobject JNICALL
 Java_network_loki_messenger_libsession_1util_UserGroupsConfig_all(JNIEnv *env, jobject thiz) {
     std::lock_guard lock{util::util_mutex_};
     auto conf = ptrToUserGroups(env, thiz);
+    bool isFin = conf->begin().done();
+    LOGD("Group iterator has more: %d", isFin);
     jobject all_stack = iterator_as_java_stack(env, conf->begin(), conf->end());
     return all_stack;
 }
@@ -325,7 +328,9 @@ Java_network_loki_messenger_libsession_1util_UserGroupsConfig_allClosedGroupInfo
                                                                                  jobject thiz) {
     std::lock_guard lock{util::util_mutex_};
     auto conf = ptrToUserGroups(env, thiz);
-    return nullptr;
+    auto closed_group_stack = iterator_as_java_stack(env, conf->begin_groups(), conf->end());
+
+    return closed_group_stack;
 }
 
 extern "C"
@@ -341,7 +346,7 @@ Java_network_loki_messenger_libsession_1util_UserGroupsConfig_createGroup(JNIEnv
 
 extern "C"
 JNIEXPORT jlong JNICALL
-Java_network_loki_messenger_libsession_1util_UserGroupsConfig_sizeClosedGroup(JNIEnv *env,
+  Java_network_loki_messenger_libsession_1util_UserGroupsConfig_sizeClosedGroup(JNIEnv *env,
                                                                               jobject thiz) {
     std::lock_guard guard{util::util_mutex_};
     auto config = ptrToUserGroups(env, thiz);

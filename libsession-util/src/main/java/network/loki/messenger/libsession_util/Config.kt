@@ -158,8 +158,12 @@ class ConversationVolatileConfig(pointer: Long): ConfigBase(pointer) {
     external fun getLegacyClosedGroup(groupId: String): Conversation.LegacyGroup?
     external fun getOrConstructLegacyGroup(groupId: String): Conversation.LegacyGroup
     external fun eraseLegacyClosedGroup(groupId: String): Boolean
-    external fun erase(conversation: Conversation): Boolean
 
+    external fun getClosedGroup(sessionId: String): Conversation.ClosedGroup?
+    external fun getOrConstructClosedGroup(sessionId: String): Conversation.ClosedGroup
+    external fun eraseClosedGroup(sessionId: String): Boolean
+
+    external fun erase(conversation: Conversation): Boolean
     external fun set(toStore: Conversation)
 
     /**

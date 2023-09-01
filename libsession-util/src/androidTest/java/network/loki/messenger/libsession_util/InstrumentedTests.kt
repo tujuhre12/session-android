@@ -12,7 +12,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.toHexString
 
 /**
  * Instrumented test, which will execute on an Android device.
@@ -653,6 +652,19 @@ class InstrumentedTests {
             members = memberConf
         )
         assertThat(keys.pendingKey(), notNullValue())
+    }
+
+    @Test
+    fun testGroupMembership() {
+        val (userPublic, userSecret) = keyPair
+        val userCurve = Sodium.ed25519PkToCurve25519(userPublic)
+        val groupConfig = UserGroupsConfig.newInstance(userSecret)
+        val group = groupConfig.createGroup()
+        val groupSecret = group.adminKey
+        val groupPublic = Hex.fromStringCondensed(group.groupSessionId.publicKey)
+        groupConfig.set(group)
+        val allClosedGroups = groupConfig.all()
+        assertThat(allClosedGroups, equalTo(1))
     }
 
 }
