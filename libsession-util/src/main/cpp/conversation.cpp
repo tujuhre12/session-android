@@ -371,12 +371,20 @@ extern "C"
 JNIEXPORT jobject JNICALL
 Java_network_loki_messenger_libsession_1util_ConversationVolatileConfig_getOrConstructClosedGroup(
         JNIEnv *env, jobject thiz, jstring session_id) {
-    // TODO: implement getOrConstructClosedGroup()
+    auto config = ptrToConvoInfo(env, thiz);
+    auto session_id_bytes = env->GetStringUTFChars(session_id, nullptr);
+    auto group = config->get_or_construct_group(session_id_bytes);
+    env->ReleaseStringUTFChars(session_id, session_id_bytes);
+    return serialize_closed_group(env, group);
 }
 
 extern "C"
 JNIEXPORT jboolean JNICALL
 Java_network_loki_messenger_libsession_1util_ConversationVolatileConfig_eraseClosedGroup(
         JNIEnv *env, jobject thiz, jstring session_id) {
-    // TODO: implement eraseClosedGroup()
+    auto config = ptrToConvoInfo(env, thiz);
+    auto session_id_bytes = env->GetStringUTFChars(session_id, nullptr);
+    auto erased = config->erase_group(session_id_bytes);
+    env->ReleaseStringUTFChars(session_id, session_id_bytes);
+    return erased;
 }

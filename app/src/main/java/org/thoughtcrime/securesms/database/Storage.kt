@@ -261,7 +261,7 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
                 val convo = when {
                     // recipient closed group
                     recipient.isLegacyClosedGroupRecipient -> config.getOrConstructLegacyGroup(GroupUtil.doubleDecodeGroupId(recipient.address.serialize()))
-                    recipient.isClosedGroupRecipient -> config.getOrConstructGroup(recipient.address.serialize())
+                    recipient.isClosedGroupRecipient -> config.getOrConstructClosedGroup(recipient.address.serialize())
                     // recipient is open group
                     recipient.isOpenGroupRecipient -> {
                         val openGroupJoinUrl = getOpenGroup(threadId)?.joinURL ?: return
@@ -528,6 +528,7 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
                 is Conversation.OneToOne -> getThreadIdFor(conversation.sessionId, null, null, createThread = false)
                 is Conversation.LegacyGroup -> getThreadIdFor("", conversation.groupId,null, createThread = false)
                 is Conversation.Community -> getThreadIdFor("",null, "${conversation.baseCommunityInfo.baseUrl.removeSuffix("/")}.${conversation.baseCommunityInfo.room}", createThread = false)
+                is Conversation.ClosedGroup -> getThreadIdFor(conversation.sessionId, null, null, createThread = false)
             }
             if (threadId != null) {
                 if (conversation.lastRead > getLastSeen(threadId)) {
@@ -872,7 +873,7 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
         groupVolatileConfig.lastRead = formationTimestamp
         volatiles.set(groupVolatileConfig)
         val groupInfo = GroupInfo.LegacyGroupInfo(
-            sessionId = groupPublicKey,
+            sessionId = SessionId.from(groupPublicKey),
             name = name,
             members = members,
             priority = PRIORITY_VISIBLE,
@@ -965,9 +966,7 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
     }
 
     override fun isClosedGroup(publicKey: String): Boolean {
-        val isClosedGroup = DatabaseComponent.get(context).lokiAPIDatabase().isClosedGroup(publicKey)
-        val address = fromSerialized(publicKey)
-        return address.isClosedGroup || isClosedGroup
+        return DatabaseComponent.get(context).lokiAPIDatabase().isClosedGroup(publicKey)
     }
 
     override fun getClosedGroupEncryptionKeyPairs(groupPublicKey: String): MutableList<ECKeyPair> {
@@ -1313,7 +1312,7 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
                     groups.set(newGroupInfo)
                 }
                 threadRecipient.isClosedGroupRecipient -> {
-                    val newGroupInfo = groups.getGroupInfo(threadRecipient.address.serialize()).copy (
+                    val newGroupInfo = groups.getOrConstructClosedGroup(threadRecipient.address.serialize()).copy (
                         priority = if (isPinned) PRIORITY_PINNED else PRIORITY_VISIBLE
                     )
                     groups.set(newGroupInfo)

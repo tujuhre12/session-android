@@ -560,6 +560,7 @@ class InstrumentedTests {
                     is Conversation.OneToOne -> seen.add("1-to-1: ${convo.sessionId}")
                     is Conversation.Community -> seen.add("og: ${convo.baseCommunityInfo.baseUrl}/r/${convo.baseCommunityInfo.room}")
                     is Conversation.LegacyGroup -> seen.add("cl: ${convo.groupId}")
+                    is Conversation.ClosedGroup -> TODO()
                 }
             }
 

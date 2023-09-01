@@ -9,7 +9,8 @@ sealed class GroupInfo {
     data class ClosedGroupInfo(
         val groupSessionId: SessionId,
         val adminKey: ByteArray,
-        val authData: ByteArray
+        val authData: ByteArray,
+        val priority: Long,
     ): GroupInfo() {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true

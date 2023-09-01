@@ -132,9 +132,9 @@ inline jobject serialize_closed_group_info(JNIEnv* env, session::config::group_i
     jbyteArray auth_bytes = util::bytes_from_ustring(env, info.auth_data);
 
     jclass group_info_class = env->FindClass("network/loki/messenger/libsession_util/util/GroupInfo$ClosedGroupInfo");
-    jmethodID constructor = env->GetMethodID(group_info_class, "<init>", "(Lorg/session/libsignal/utilities/SessionId;[B[B)V");
+    jmethodID constructor = env->GetMethodID(group_info_class, "<init>", "(Lorg/session/libsignal/utilities/SessionId;[B[BJ)V");
     jobject return_object = env->NewObject(group_info_class,constructor,
-                                           session_id, admin_bytes, auth_bytes);
+                                           session_id, admin_bytes, auth_bytes, (jlong)info.priority);
     return return_object;
 }
 
@@ -143,6 +143,8 @@ inline session::config::group_info deserialize_closed_group_info(JNIEnv* env, jo
     jfieldID id_field = env->GetFieldID(closed_group_class, "groupSessionId", "Lorg/session/libsignal/utilities/SessionId;");
     jfieldID secret_field = env->GetFieldID(closed_group_class, "adminKey", "[B");
     jfieldID auth_field = env->GetFieldID(closed_group_class, "authData", "[B");
+    jfieldID priority_field = env->GetFieldID(closed_group_class, "priority", "J");
+
 
     jobject id_jobject = env->GetObjectField(info_serialized, id_field);
     jbyteArray secret_jBytes = (jbyteArray)env->GetObjectField(info_serialized, secret_field);
@@ -155,6 +157,7 @@ inline session::config::group_info deserialize_closed_group_info(JNIEnv* env, jo
     session::config::group_info group_info(id_bytes);
     group_info.auth_data = auth_bytes;
     group_info.secretkey = secret_bytes;
+    group_info.priority = env->GetLongField(info_serialized, priority_field);
 
     return group_info;
 }
