@@ -4,11 +4,15 @@
     <string name="yes">Yes</string>
     <string name="no">No</string>
     <string name="delete">Delete</string>
+    <string name="resend">Resend</string>
+    <string name="reply">Reply</string>
     <string name="ban">Ban</string>
     <string name="please_wait">Please wait…</string>
     <string name="save">Save</string>
+    <string name="image">Image</string>
     <string name="note_to_self">Note to Self</string>
     <string name="version_s">Version %s</string>
+    <string name="expand">Expand</string>
 <!--Accessibility ID's-->
     <!-- Landing Page -->
     <string name="AccessibilityId_create_session_id">Create session ID</string>
@@ -516,6 +520,12 @@
     <string name="message_details_header__to">To:</string>
     <string name="message_details_header__from">From:</string>
     <string name="message_details_header__with">With:</string>
+    <string name="message_details_header__file_id">File Id:</string>
+    <string name="message_details_header__file_type">File Type:</string>
+    <string name="message_details_header__file_size">File Size:</string>
+    <string name="message_details_header__resolution">Resolution:</string>
+    <string name="message_details_header__duration">Duration:</string>
+
     <!-- AndroidManifest.xml -->
     <string name="AndroidManifest__create_passphrase">Create passphrase</string>
     <string name="AndroidManifest__select_contacts">Select contacts</string>
@@ -617,6 +627,9 @@
     <string name="preferences_notifications__priority">Priority</string>
     <string name="preferences_app_protection__screenshot_notifications">Screenshot Notifications</string>
     <string name="preferences_app_protected__screenshot_notifications_summary">Receive a notification when a contact takes a screenshot of a one-to-one chat.</string>
+    <string name="preferences__message_requests_category">Message Requests</string>
+    <string name="preferences__message_requests_title">Community Message Requests</string>
+    <string name="preferences__message_requests_summary">Allow message requests from Community conversations</string>
     <!-- **************************************** -->
     <!-- menus -->
     <!-- **************************************** -->
@@ -1023,6 +1036,7 @@
     <string name="activity_home_outdated_client_config">Some of your devices are using outdated versions. Syncing may be unreliable until they are updated.</string>
 
     <string name="activity_conversation_empty_state_read_only">There are no messages in <b>%s</b>.</string>
+    <string name="activity_conversation_empty_state_blocks_community_requests"><b>%s</b> has message requests from Community conversations turned off, so you cannot send them a message.</string>
     <string name="activity_conversation_empty_state_note_to_self">You have no messages in Note to Self.</string>
     <string name="activity_conversation_empty_state_default">You have no messages from <b>%s</b>.\nSend a message to start the conversation!</string>
 

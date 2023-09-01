@@ -67,12 +67,13 @@ import org.thoughtcrime.securesms.home.search.GlobalSearchViewModel
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
 import org.thoughtcrime.securesms.mms.GlideApp
 import org.thoughtcrime.securesms.mms.GlideRequests
+import org.thoughtcrime.securesms.notifications.PushRegistry
 import org.thoughtcrime.securesms.onboarding.SeedActivity
 import org.thoughtcrime.securesms.onboarding.SeedReminderViewDelegate
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.SettingsActivity
-import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.showMuteDialog
+import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.IP2Country
@@ -106,6 +107,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
     @Inject lateinit var groupDatabase: GroupDatabase
     @Inject lateinit var textSecurePreferences: TextSecurePreferences
     @Inject lateinit var configFactory: ConfigFactory
+    @Inject lateinit var pushRegistry: PushRegistry
 
     private val globalSearchViewModel by viewModels<GlobalSearchViewModel>()
     private val homeViewModel by viewModels<HomeViewModel>()
@@ -168,8 +170,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         // Set up Glide
         glide = GlideApp.with(this)
         // Set up toolbar buttons
-        binding.profileButton.root.glide = glide
-        binding.profileButton.root.setOnClickListener { openSettings() }
+        binding.profileButton.setOnClickListener { openSettings() }
         binding.searchViewContainer.setOnClickListener {
             binding.globalSearchInputLayout.requestFocus()
         }
@@ -231,8 +232,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                 (applicationContext as ApplicationContext).startPollingIfNeeded()
                 // update things based on TextSecurePrefs (profile info etc)
                 // Set up remaining components if needed
-                val application = ApplicationContext.getInstance(this@HomeActivity)
-                application.registerForFCMIfNeeded(false)
+                pushRegistry.refresh(false)
                 if (textSecurePreferences.getLocalNumber() != null) {
                     OpenGroupManager.startPolling()
                     JobQueue.shared.resumePendingJobs()
@@ -299,12 +299,17 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         }
         EventBus.getDefault().register(this@HomeActivity)
         if (intent.hasExtra(FROM_ONBOARDING)
-            && intent.getBooleanExtra(FROM_ONBOARDING, false)
-            && !(getSystemService(NOTIFICATION_SERVICE) as NotificationManager).areNotificationsEnabled()
-        ) {
-            Permissions.with(this)
-                .request(Manifest.permission.POST_NOTIFICATIONS)
-                .execute()
+            && intent.getBooleanExtra(FROM_ONBOARDING, false)) {
+            if ((getSystemService(NOTIFICATION_SERVICE) as NotificationManager).areNotificationsEnabled().not()) {
+                Permissions.with(this)
+                    .request(Manifest.permission.POST_NOTIFICATIONS)
+                    .execute()
+            }
+            configFactory.user?.let { user ->
+                if (!user.isBlockCommunityMessageRequestsSet()) {
+                    user.setCommunityMessageRequests(false)
+                }
+            }
         }
     }
 
@@ -364,8 +369,8 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         ApplicationContext.getInstance(this).messageNotifier.setHomeScreenVisible(true)
         if (textSecurePreferences.getLocalNumber() == null) { return; } // This can be the case after a secondary device is auto-cleared
         IdentityKeyUtil.checkUpdate(this)
-        binding.profileButton.root.recycle() // clear cached image before update tje profilePictureView
-        binding.profileButton.root.update()
+        binding.profileButton.recycle() // clear cached image before update tje profilePictureView
+        binding.profileButton.update()
         if (textSecurePreferences.getHasViewedSeed()) {
             binding.seedReminderView.isVisible = false
         }
@@ -440,10 +445,10 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
     }
 
     private fun updateProfileButton() {
-        binding.profileButton.root.publicKey = publicKey
-        binding.profileButton.root.displayName = textSecurePreferences.getProfileName()
-        binding.profileButton.root.recycle()
-        binding.profileButton.root.update()
+        binding.profileButton.publicKey = publicKey
+        binding.profileButton.displayName = textSecurePreferences.getProfileName()
+        binding.profileButton.recycle()
+        binding.profileButton.update()
     }
     // endregion
 

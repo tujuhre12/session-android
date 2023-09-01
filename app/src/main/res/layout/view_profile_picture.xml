@@ -1,9 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<org.thoughtcrime.securesms.components.ProfilePictureView
-    android:contentDescription="@string/AccessibilityId_profile_picture"
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
+<merge xmlns:android="http://schemas.android.com/apk/res/android">
 
     <RelativeLayout
         android:id="@+id/doubleModeImageViewContainer"
@@ -44,4 +40,4 @@
         android:layout_height="@dimen/large_profile_picture_size"
         android:background="@drawable/profile_picture_view_large_background" />
 
-</org.thoughtcrime.securesms.components.ProfilePictureView>
+</merge>
