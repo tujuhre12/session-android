@@ -160,14 +160,13 @@ class ExpirationSettingsViewModel(
         val expiryChangeTimestampMs = SnodeAPI.nowWithOffset
         storage.setExpirationConfiguration(ExpirationConfiguration(threadId, mode, expiryChangeTimestampMs))
 
-        ExpirationTimerUpdate(mode.expirySeconds.toInt()).apply {
+        val message = ExpirationTimerUpdate(mode.expirySeconds.toInt()).apply {
             sender = textSecurePreferences.getLocalNumber()
             recipient = address.serialize()
             sentTimestamp = expiryChangeTimestampMs
-        }.also { message ->
-            messageExpirationManager.setExpirationTimer(message, mode)
-            MessageSender.send(message, address)
         }
+        messageExpirationManager.setExpirationTimer(message, mode)
+        MessageSender.send(message, address)
 
         ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(application)
 
