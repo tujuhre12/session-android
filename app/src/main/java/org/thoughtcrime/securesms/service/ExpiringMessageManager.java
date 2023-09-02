@@ -161,8 +161,6 @@ public class ExpiringMessageManager implements SSKEnvironment.MessageExpirationM
 
       OutgoingExpirationUpdateMessage timerUpdateMessage = new OutgoingExpirationUpdateMessage(recipient, sentTimestamp, duration * 1000L, expireStartedAt, groupId);
       mmsDatabase.insertSecureDecryptedMessageOutbox(timerUpdateMessage, message.getThreadID(), sentTimestamp, true);
-      //set the timer to the conversation
-      MessagingModuleConfiguration.getShared().getStorage().setExpirationTimer(recipient.getAddress().serialize(), duration);
     } catch (MmsException | IOException ioe) {
       Log.e("Loki", "Failed to insert expiration update message.", ioe);
     }

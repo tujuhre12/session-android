@@ -328,7 +328,7 @@ enum class ExpiryType(private val createMode: (Long) -> ExpiryMode) {
     AFTER_SEND(ExpiryMode::AfterSend),
     AFTER_READ(ExpiryMode::AfterRead);
 
-    fun mode(seconds: Long) = createMode(seconds)
+    fun mode(seconds: Long) = if (seconds != 0L) createMode(seconds) else ExpiryMode.NONE
 
     fun defaultMode() = when(this) {
         AFTER_READ -> 12.hours
@@ -336,7 +336,7 @@ enum class ExpiryType(private val createMode: (Long) -> ExpiryMode) {
     }.inWholeSeconds.let(::mode)
 }
 
-private val ExpiryMode.type: ExpiryType get() = when(this) {
+val ExpiryMode.type: ExpiryType get() = when(this) {
     is ExpiryMode.Legacy -> ExpiryType.LEGACY
     is ExpiryMode.AfterSend -> ExpiryType.AFTER_SEND
     is ExpiryMode.AfterRead -> ExpiryType.AFTER_READ

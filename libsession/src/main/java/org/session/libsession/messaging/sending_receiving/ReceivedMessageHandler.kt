@@ -650,8 +650,6 @@ private fun handleNewClosedGroup(sender: String, sentTimestamp: Long, groupPubli
     // Store the encryption key pair
     storage.addClosedGroupEncryptionKeyPair(encryptionKeyPair, groupPublicKey, sentTimestamp)
     storage.createInitialConfigGroup(groupPublicKey, name, GroupUtil.createConfigMemberMap(members, admins), formationTimestamp, encryptionKeyPair)
-    // Set expiration timer
-    storage.setExpirationTimer(groupID, expireTimer)
     // Notify the PN server
     PushRegistryV1.register(device = MessagingModuleConfiguration.shared.device, publicKey = userPublicKey)
     // Notify the user

@@ -78,6 +78,7 @@ import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.KeyHelper
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
+import org.thoughtcrime.securesms.conversation.expiration.type
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.ReactionRecord
@@ -626,9 +627,6 @@ open class Storage(
                 // Store the encryption key pair
                 val keyPair = ECKeyPair(DjbECPublicKey(group.encPubKey), DjbECPrivateKey(group.encSecKey))
                 addClosedGroupEncryptionKeyPair(keyPair, group.sessionId, SnodeAPI.nowWithOffset)
-                // Set expiration timer
-                val expireTimer = group.disappearingTimer
-                setExpirationTimer(groupId, expireTimer.toInt())
                 // Notify the PN server
                 PushRegistryV1.subscribeGroup(group.sessionId, publicKey = localUserPublicKey)
                 // Notify the user
@@ -1055,26 +1053,6 @@ open class Storage(
     override fun updateTimestampUpdated(groupID: String, updatedTimestamp: Long) {
         DatabaseComponent.get(context).groupDatabase()
             .updateTimestampUpdated(groupID, updatedTimestamp)
-    }
-
-    override fun setExpirationTimer(address: String, duration: Int) {
-        val recipient = Recipient.from(context, fromSerialized(address), false)
-        val threadId = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(recipient)
-        DatabaseComponent.get(context).expirationConfigurationDatabase().setExpirationConfiguration(
-            ExpirationConfiguration(threadId, ExpiryMode.AfterSend(duration.toLong()), SnodeAPI.nowWithOffset)
-        )
-        if (recipient.isContactRecipient && !recipient.isLocalNumber) {
-            configFactory.contacts?.upsertContact(address) {
-                this.expiryMode = if (duration != 0) {
-                    ExpiryMode.AfterRead(duration.toLong())
-                } else { // = 0 / delete
-                    ExpiryMode.NONE
-                }
-            }
-            if (configFactory.contacts?.needsPush() == true) {
-                ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(context)
-            }
-        }
     }
 
     override fun setServerCapabilities(server: String, capabilities: List<String>) {

@@ -152,7 +152,6 @@ interface StorageProtocol {
     fun getLatestClosedGroupEncryptionKeyPair(groupPublicKey: String): ECKeyPair?
     fun updateFormationTimestamp(groupID: String, formationTimestamp: Long)
     fun updateTimestampUpdated(groupID: String, updatedTimestamp: Long)
-    fun setExpirationTimer(address: String, duration: Int)
 
     // Groups
     fun getAllGroups(includeInactive: Boolean): List<GroupRecord>
