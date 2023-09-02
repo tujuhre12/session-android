@@ -290,20 +290,29 @@ val afterReadTimes = listOf(5.minutes, 1.hours) + afterSendTimes
 
 private fun timeOptionsOnly(state: State) = listOfNotNull(
     typeOption(ExpiryType.NONE, state, R.string.arrays__off, enabled = state.isSelfAdmin),
-    timeOption(1.minutes, state, subtitle = GetString("for testing purposes")).takeIf { BuildConfig.DEBUG },
-) + afterSendTimes.map { timeOption(it, state) }
+    if (BuildConfig.DEBUG) timeOptionOnly(1.minutes, state, subtitle = GetString("for testing purposes")) else null,
+) + afterSendTimes.map { timeOptionOnly(it, state) }
+
+private fun timeOptionOnly(
+    duration: Duration,
+    state: State,
+    title: GetString = GetString { ExpirationUtil.getExpirationDisplayValue(it, duration.inWholeSeconds.toInt()) },
+    subtitle: GetString? = null,
+) = timeOption(duration, state, title, subtitle) { state.callbacks.setMode(ExpiryMode.AfterSend(duration.inWholeSeconds)) }
 
 private fun timeOption(
     duration: Duration,
     state: State,
     title: GetString = GetString { ExpirationUtil.getExpirationDisplayValue(it, duration.inWholeSeconds.toInt()) },
-    subtitle: GetString? = null
+    subtitle: GetString? = null,
+    onClick: () -> Unit = { state.callbacks.setTime(duration.inWholeSeconds) }
 ) = OptionModel(
     title = title,
     subtitle = subtitle,
     selected = state.expiryMode?.duration == duration,
-    enabled = state.isTimeOptionsEnabled
-) { state.callbacks.setTime(duration.inWholeSeconds) }
+    enabled = state.isTimeOptionsEnabled,
+    onClick = onClick
+)
 
 data class OptionModel(
     val title: GetString,
