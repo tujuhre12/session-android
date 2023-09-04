@@ -147,12 +147,15 @@ class ExpirationSettingsViewModel(
 
     override fun onSetClick() = viewModelScope.launch {
         val state = _state.value
-        val mode = (state.expiryMode ?: ExpiryMode.NONE).let {
-            if (it is ExpiryMode.Legacy) ExpiryMode.AfterRead(it.expirySeconds)
-            else it
+        val mode = state.expiryMode.let {
+            when {
+                it !is ExpiryMode.Legacy -> it
+                state.isGroup -> ExpiryMode.AfterSend(it.expirySeconds)
+                else -> ExpiryMode.AfterRead(it.expirySeconds)
+            } ?: ExpiryMode.NONE
         }
         val address = state.address
-        if (address == null || expirationConfig?.expiryMode == mode) {
+        if (address == null) {
             _event.send(Event.FAIL)
             return@launch
         }

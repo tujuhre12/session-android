@@ -645,7 +645,7 @@ open class Storage(
                 } else {
                     val mode =
                         if (group.disappearingTimer == 0L) ExpiryMode.NONE
-                        else ExpiryMode.AfterRead(group.disappearingTimer)
+                        else ExpiryMode.AfterSend(group.disappearingTimer)
                     val newConfig = ExpirationConfiguration(
                         conversationThreadId, mode, messageTimestamp
                     )
@@ -1698,36 +1698,21 @@ open class Storage(
     override fun getExpirationConfiguration(threadId: Long): ExpirationConfiguration? {
         val recipient = getRecipientForThread(threadId) ?: return null
         val dbExpirationMetadata = DatabaseComponent.get(context).expirationConfigurationDatabase().getExpirationConfiguration(threadId) ?: return null
-        return if (recipient.isLocalNumber) {
-            configFactory.user?.getNtsExpiry()?.let { mode ->
-                ExpirationConfiguration(
-                    threadId,
-                    mode,
-                    dbExpirationMetadata.updatedTimestampMs
-                )
+        return when {
+            recipient.isLocalNumber -> configFactory.user?.getNtsExpiry()
+            recipient.isContactRecipient -> {
+                // read it from contacts config if exists
+                recipient.address.serialize().takeIf { it.startsWith(IdPrefix.STANDARD.value) }
+                    ?.let { configFactory.contacts?.get(it)?.expiryMode }
             }
-        } else if (recipient.isContactRecipient && recipient.address.serialize().startsWith(IdPrefix.STANDARD.value)) {
-            // read it from contacts config if exists
-            configFactory.contacts?.get(recipient.address.serialize())?.let { contact ->
-                val mode = contact.expiryMode
-                ExpirationConfiguration(
-                    threadId,
-                    mode,
-                    dbExpirationMetadata.updatedTimestampMs
-                )
+            recipient.isClosedGroupRecipient -> {
+                // read it from group config if exists
+                GroupUtil.doubleDecodeGroupId(recipient.address.serialize())
+                    .let { configFactory.userGroups?.getLegacyGroupInfo(it) }
+                    ?.run { disappearingTimer.takeIf { it != 0L }?.let(ExpiryMode::AfterSend) ?: ExpiryMode.NONE }
             }
-        } else if (recipient.isClosedGroupRecipient) {
-            // read it from group config if exists
-            val groupPublicKey = GroupUtil.doubleDecodeGroupId(recipient.address.serialize())
-            configFactory.userGroups?.getLegacyGroupInfo(groupPublicKey)?.let { group ->
-                val expiry = group.disappearingTimer
-                ExpirationConfiguration(
-                    threadId,
-                    if (expiry != 0L) ExpiryMode.AfterRead(expiry) else ExpiryMode.NONE,
-                    dbExpirationMetadata.updatedTimestampMs
-                )
-            }
-        } else null
+            else -> null
+        }?.let { ExpirationConfiguration(threadId, it, dbExpirationMetadata.updatedTimestampMs) }
     }
 
     override fun setExpirationConfiguration(config: ExpirationConfiguration) {

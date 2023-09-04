@@ -4,9 +4,9 @@ import kotlin.time.Duration.Companion.seconds
 
 sealed class ExpiryMode(val expirySeconds: Long) {
     object NONE: ExpiryMode(0)
-    class Legacy(seconds: Long): ExpiryMode(seconds) // after read
-    class AfterSend(seconds: Long): ExpiryMode(seconds)
-    class AfterRead(seconds: Long): ExpiryMode(seconds)
+    data class Legacy(private val seconds: Long): ExpiryMode(seconds) // after read
+    data class AfterSend(private val seconds: Long): ExpiryMode(seconds)
+    data class AfterRead(private val seconds: Long): ExpiryMode(seconds)
 
     val duration get() = expirySeconds.seconds
 }
