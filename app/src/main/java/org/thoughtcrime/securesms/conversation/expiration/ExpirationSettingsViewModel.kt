@@ -290,15 +290,24 @@ private fun timeOptions(state: State) =
 
 private val DEBUG_TIME = 1.minutes
 
-val afterSendTimes = buildList {
-    if (BuildConfig.DEBUG) add(DEBUG_TIME)
+val defaultTimes = buildList {
     add(12.hours)
     add(1.days)
     add(7.days)
     add(14.days)
 }
 
-val afterReadTimes = listOf(5.minutes, 1.hours) + afterSendTimes
+val afterSendTimes = buildList {
+    if (BuildConfig.DEBUG) add(DEBUG_TIME)
+    addAll(defaultTimes)
+}
+
+val afterReadTimes = buildList {
+    if (BuildConfig.DEBUG) add(DEBUG_TIME)
+    add(5.minutes)
+    add(1.hours)
+    addAll(defaultTimes)
+}
 
 private fun timeOptionsOnly(state: State) = listOfNotNull(
     typeOption(ExpiryType.NONE, state, R.string.arrays__off, enabled = state.isSelfAdmin),
