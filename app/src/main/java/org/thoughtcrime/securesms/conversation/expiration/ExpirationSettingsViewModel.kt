@@ -290,12 +290,7 @@ private fun timeOptions(state: State) =
 
 private val DEBUG_TIME = 1.minutes
 
-val defaultTimes = buildList {
-    add(12.hours)
-    add(1.days)
-    add(7.days)
-    add(14.days)
-}
+val defaultTimes = listOf(12.hours, 1.days, 7.days, 14.days)
 
 val afterSendTimes = buildList {
     if (BuildConfig.DEBUG) add(DEBUG_TIME)
