@@ -177,3 +177,11 @@ Java_network_loki_messenger_libsession_1util_GroupInfoConfig_storageNamespace(JN
     auto group_info = ptrToInfo(env, thiz);
     return static_cast<jlong>(group_info->storage_namespace());
 }
+
+extern "C"
+JNIEXPORT jobject JNICALL
+Java_network_loki_messenger_libsession_1util_GroupInfoConfig_id(JNIEnv *env, jobject thiz) {
+    std::lock_guard guard{util::util_mutex_};
+    auto group_info = ptrToInfo(env, thiz);
+    return util::serialize_session_id(env, group_info->id);
+}

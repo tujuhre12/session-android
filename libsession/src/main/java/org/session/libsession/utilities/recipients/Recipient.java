@@ -476,6 +476,10 @@ public class Recipient implements RecipientModifiedListener {
     return address.isLegacyClosedGroup();
   }
 
+  public boolean isClosedGroupRecipient() {
+    return address.isClosedGroup();
+  }
+
 
   @Deprecated
   public boolean isPushGroupRecipient() {

@@ -10,7 +10,7 @@ import network.loki.messenger.libsession_util.Contacts
 import network.loki.messenger.libsession_util.ConversationVolatileConfig
 import network.loki.messenger.libsession_util.GroupInfoConfig
 import network.loki.messenger.libsession_util.GroupKeysConfig
-import network.loki.messenger.libsession_util.GroupMemberConfig
+import network.loki.messenger.libsession_util.GroupMembersConfig
 import network.loki.messenger.libsession_util.UserGroupsConfig
 import network.loki.messenger.libsession_util.UserProfile
 import network.loki.messenger.libsession_util.util.BaseCommunityInfo
@@ -94,6 +94,7 @@ import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
 import java.security.MessageDigest
 import network.loki.messenger.libsession_util.util.Contact as LibSessionContact
+import network.loki.messenger.libsession_util.util.GroupMember as LibSessionGroupMember
 
 open class Storage(context: Context, helper: SQLCipherOpenHelper, private val configFactory: ConfigFactory) : Database(context, helper), StorageProtocol,
     ThreadDatabase.ConversationThreadUpdateListener {
@@ -460,9 +461,9 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
             is Contacts -> updateContacts(forConfigObject)
             is ConversationVolatileConfig -> updateConvoVolatile(forConfigObject)
             is UserGroupsConfig -> updateUserGroups(forConfigObject)
-            is GroupInfoConfig -> TODO()
-            is GroupKeysConfig -> TODO()
-            is GroupMemberConfig -> TODO()
+            is GroupInfoConfig -> updateGroupInfo(forConfigObject)
+            is GroupKeysConfig -> updateGroupKeys(forConfigObject)
+            is GroupMembersConfig -> updateGroupMembers(forConfigObject)
         }
     }
 
@@ -497,6 +498,19 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
             setPinned(ourThread, userProfile.getNtsPriority() > 0)
         }
 
+    }
+
+    private fun updateGroupInfo(groupInfoConfig: GroupInfoConfig) {
+        val threadId = getOrCreateThreadIdFor(Address.fromSerialized(groupInfoConfig.id().hexString()))
+        // TODO: handle deleted group, handle delete attachment / message before a certain time
+    }
+
+    private fun updateGroupKeys(groupKeys: GroupKeysConfig) {
+        // TODO: update something here?
+    }
+
+    private fun updateGroupMembers(groupMembers: GroupMembersConfig) {
+        // TODO: maybe clear out some contacts or something?
     }
 
     private fun updateContacts(contacts: Contacts) {
@@ -1030,10 +1044,8 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
         }
     }
 
-    override fun getMembers(groupPublicKey: String): List<GroupMember> {
-        val groups = configFactory.userGroups ?: return emptyList()
-        TODO("Add group specific configs")
-    }
+    override fun getMembers(groupPublicKey: String): List<LibSessionGroupMember> =
+        configFactory.groupMemberConfig(SessionId.from(groupPublicKey))?.all()?.toList() ?: emptyList()
 
     override fun setServerCapabilities(server: String, capabilities: List<String>) {
         return DatabaseComponent.get(context).lokiAPIDatabase().setServerCapabilities(server, capabilities)
@@ -1603,8 +1615,8 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
         }
         getAllContacts().forEach { contact ->
             val sessionId = SessionId(contact.sessionID)
-            if (sessionId.prefix == IdPrefix.STANDARD && SodiumUtilities.sessionId(sessionId.hexString, blindedId, serverPublicKey)) {
-                val contactMapping = mapping.copy(sessionId = sessionId.hexString)
+            if (sessionId.prefix == IdPrefix.STANDARD && SodiumUtilities.sessionId(sessionId.hexString(), blindedId, serverPublicKey)) {
+                val contactMapping = mapping.copy(sessionId = sessionId.hexString())
                 db.addBlindedIdMapping(contactMapping)
                 return contactMapping
             }

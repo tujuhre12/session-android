@@ -144,7 +144,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                 intent.putExtra(ConversationActivityV2.ADDRESS, Address.fromSerialized(address))
                 push(intent)
             }
-            is GlobalSearchAdapter.Model.GroupConversation -> {
+            is GlobalSearchAdapter.Model.LegacyGroupConversation -> {
                 val groupAddress = Address.fromSerialized(model.groupRecord.encodedId)
                 val threadId = threadDb.getThreadIdIfExistsFor(Recipient.from(this, groupAddress, false))
                 if (threadId >= 0) {
@@ -257,7 +257,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                 globalSearchViewModel.result.collect { result ->
                     val currentUserPublicKey = publicKey
                     val contactAndGroupList = result.contacts.map { GlobalSearchAdapter.Model.Contact(it) } +
-                            result.threads.map { GlobalSearchAdapter.Model.GroupConversation(it) }
+                            result.threads.map { GlobalSearchAdapter.Model.LegacyGroupConversation(it) }
 
                     val contactResults = contactAndGroupList.toMutableList()
 
@@ -642,13 +642,17 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                     // Cancel any outstanding jobs
                     DatabaseComponent.get(context).sessionJobDatabase().cancelPendingMessageSendJobs(threadID)
                     // Send a leave group message if this is an active closed group
-                    if (recipient.address.isClosedGroup && DatabaseComponent.get(context).groupDatabase().isActive(recipient.address.toGroupString())) {
+                    if (recipient.address.isLegacyClosedGroup && DatabaseComponent.get(context).groupDatabase().isActive(recipient.address.toGroupString())) {
                         try {
                             GroupUtil.doubleDecodeGroupID(recipient.address.toString()).toHexString()
                                 .takeIf(DatabaseComponent.get(context).lokiAPIDatabase()::isClosedGroup)
                                 ?.let { MessageSender.explicitLeave(it, false) }
-                        } catch (_: IOException) {
+                        } catch (e: IOException) {
+                            Log.e("Loki", e)
                         }
+                    }
+                    if (recipient.address.isClosedGroup) {
+                        TODO("Implement leaving / deleting a new closed group conversation")
                     }
                     // Delete the conversation
                     val v2OpenGroup = DatabaseComponent.get(context).lokiThreadDatabase().getOpenGroupChat(threadID)

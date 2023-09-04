@@ -65,6 +65,7 @@ Java_network_loki_messenger_libsession_1util_GroupKeysConfig_groupKeys(JNIEnv *e
 extern "C"
 JNIEXPORT void JNICALL
 Java_network_loki_messenger_libsession_1util_GroupKeysConfig_loadKey(JNIEnv *env, jobject thiz,
+                                                                     jstring hash,
                                                                      jbyteArray data,
                                                                      jbyteArray msg_id,
                                                                      jlong timestamp_ms,
@@ -72,11 +73,13 @@ Java_network_loki_messenger_libsession_1util_GroupKeysConfig_loadKey(JNIEnv *env
                                                                      jobject members_jobject) {
     std::lock_guard lock{util::util_mutex_};
     auto keys = ptrToKeys(env, thiz);
+    auto hash_bytes = env->GetStringUTFChars(hash, nullptr);
     auto data_bytes = util::ustring_from_bytes(env, data);
     auto msg_bytes = util::ustring_from_bytes(env, msg_id);
     auto info = ptrToInfo(env, info_jobject);
     auto members = ptrToMembers(env, members_jobject);
-    keys->load_key_message(data_bytes, timestamp_ms, *info, *members);
+    keys->load_key_message(hash_bytes, data_bytes, timestamp_ms, *info, *members);
+    env->ReleaseStringUTFChars(hash, hash_bytes);
 }
 
 extern "C"

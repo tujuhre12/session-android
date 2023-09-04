@@ -23,6 +23,8 @@ class Address private constructor(address: String) : Parcelable, Comparable<Addr
         get() = GroupUtil.isEncodedGroup(address) || address.startsWith(IdPrefix.GROUP.value)
     val isLegacyClosedGroup: Boolean
         get() = GroupUtil.isLegacyClosedGroup(address)
+    val isClosedGroup: Boolean
+        get() = address.startsWith(IdPrefix.GROUP.value)
     val isOpenGroup: Boolean
         get() = GroupUtil.isOpenGroup(address)
     val isOpenGroupInbox: Boolean

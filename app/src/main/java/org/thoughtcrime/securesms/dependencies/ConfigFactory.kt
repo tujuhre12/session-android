@@ -5,6 +5,9 @@ import android.os.Trace
 import network.loki.messenger.libsession_util.ConfigBase
 import network.loki.messenger.libsession_util.Contacts
 import network.loki.messenger.libsession_util.ConversationVolatileConfig
+import network.loki.messenger.libsession_util.GroupInfoConfig
+import network.loki.messenger.libsession_util.GroupKeysConfig
+import network.loki.messenger.libsession_util.GroupMembersConfig
 import network.loki.messenger.libsession_util.UserGroupsConfig
 import network.loki.messenger.libsession_util.UserProfile
 import org.session.libsession.snode.SnodeAPI
@@ -12,7 +15,9 @@ import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigFactoryUpdateListener
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage
+import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.Log
+import org.session.libsignal.utilities.SessionId
 import org.thoughtcrime.securesms.database.ConfigDatabase
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent.Companion.get
 import org.thoughtcrime.securesms.groups.GroupManager
@@ -61,7 +66,7 @@ class ConfigFactory(
         listeners -= listener
     }
 
-    private inline fun <T> synchronizedWithLog(lock: Any, body: ()->T): T {
+    private inline fun <T> synchronizedWithLog(lock: Any, body: () -> T): T {
         Trace.beginSection("synchronizedWithLog")
         val result = synchronized(lock) {
             body()
@@ -72,7 +77,11 @@ class ConfigFactory(
 
     override val user: UserProfile?
         get() = synchronizedWithLog(userLock) {
-            if (!ConfigBase.isNewConfigEnabled(isConfigForcedOn, SnodeAPI.nowWithOffset)) return null
+            if (!ConfigBase.isNewConfigEnabled(
+                    isConfigForcedOn,
+                    SnodeAPI.nowWithOffset
+                )
+            ) return null
             if (_userConfig == null) {
                 val (secretKey, publicKey) = maybeGetUserInfo() ?: return null
                 val userDump = configDatabase.retrieveConfigAndHashes(
@@ -92,7 +101,11 @@ class ConfigFactory(
 
     override val contacts: Contacts?
         get() = synchronizedWithLog(contactsLock) {
-            if (!ConfigBase.isNewConfigEnabled(isConfigForcedOn, SnodeAPI.nowWithOffset)) return null
+            if (!ConfigBase.isNewConfigEnabled(
+                    isConfigForcedOn,
+                    SnodeAPI.nowWithOffset
+                )
+            ) return null
             if (_contacts == null) {
                 val (secretKey, publicKey) = maybeGetUserInfo() ?: return null
                 val contactsDump = configDatabase.retrieveConfigAndHashes(
@@ -112,7 +125,11 @@ class ConfigFactory(
 
     override val convoVolatile: ConversationVolatileConfig?
         get() = synchronizedWithLog(convoVolatileLock) {
-            if (!ConfigBase.isNewConfigEnabled(isConfigForcedOn, SnodeAPI.nowWithOffset)) return null
+            if (!ConfigBase.isNewConfigEnabled(
+                    isConfigForcedOn,
+                    SnodeAPI.nowWithOffset
+                )
+            ) return null
             if (_convoVolatileConfig == null) {
                 val (secretKey, publicKey) = maybeGetUserInfo() ?: return null
                 val convoDump = configDatabase.retrieveConfigAndHashes(
@@ -133,7 +150,11 @@ class ConfigFactory(
 
     override val userGroups: UserGroupsConfig?
         get() = synchronizedWithLog(userGroupsLock) {
-            if (!ConfigBase.isNewConfigEnabled(isConfigForcedOn, SnodeAPI.nowWithOffset)) return null
+            if (!ConfigBase.isNewConfigEnabled(
+                    isConfigForcedOn,
+                    SnodeAPI.nowWithOffset
+                )
+            ) return null
             if (_userGroups == null) {
                 val (secretKey, publicKey) = maybeGetUserInfo() ?: return null
                 val userGroupsDump = configDatabase.retrieveConfigAndHashes(
@@ -151,6 +172,61 @@ class ConfigFactory(
             _userGroups
         }
 
+    private fun getGroupAuthInfo(groupSessionId: SessionId) = userGroups?.getClosedGroup(groupSessionId.hexString())?.let {
+        it.adminKey to it.authData
+    }
+
+    override fun groupInfoConfig(groupSessionId: SessionId): GroupInfoConfig? = getGroupAuthInfo(groupSessionId)?.let { (sk, _) ->
+        // get any potential initial dumps
+        val dump = configDatabase.retrieveConfigAndHashes(
+            SharedConfigMessage.Kind.CLOSED_GROUP_INFO.name,
+            groupSessionId.hexString()
+        ) ?: byteArrayOf()
+
+        GroupInfoConfig.newInstance(Hex.fromStringCondensed(groupSessionId.publicKey), sk, dump)
+    }
+
+    override fun groupKeysConfig(groupSessionId: SessionId): GroupKeysConfig? = getGroupAuthInfo(groupSessionId)?.let { (sk, _) ->
+        // Get the user info or return early
+        val (userSk, _) = maybeGetUserInfo() ?: return@let null
+
+        // Get the group info or return early
+        val info = groupInfoConfig(groupSessionId) ?: return@let null
+
+        // Get the group members or return early
+        val members = groupMemberConfig(groupSessionId) ?: return@let null
+
+        // Get the dump or empty
+        val dump = configDatabase.retrieveConfigAndHashes(
+            SharedConfigMessage.Kind.ENCRYPTION_KEYS.name,
+            groupSessionId.hexString()
+        ) ?: byteArrayOf()
+
+        // Put it all together
+        GroupKeysConfig.newInstance(
+            userSk,
+            Hex.fromStringCondensed(groupSessionId.publicKey),
+            sk,
+            dump,
+            info,
+            members
+        )
+    }
+
+    override fun groupMemberConfig(groupSessionId: SessionId): GroupMembersConfig? = getGroupAuthInfo(groupSessionId)?.let { (sk, auth) ->
+        // Get initial dump if we have one
+        val dump = configDatabase.retrieveConfigAndHashes(
+            SharedConfigMessage.Kind.CLOSED_GROUP_MEMBERS.name,
+            groupSessionId.hexString()
+        ) ?: byteArrayOf()
+
+        GroupMembersConfig.newInstance(
+            Hex.fromStringCondensed(groupSessionId.publicKey),
+            sk,
+            dump
+        )
+    }
+
     override fun getUserConfigs(): List<ConfigBase> =
         listOfNotNull(user, contacts, convoVolatile, userGroups)
 
@@ -158,13 +234,23 @@ class ConfigFactory(
     private fun persistUserConfigDump(timestamp: Long) = synchronized(userLock) {
         val dumped = user?.dump() ?: return
         val (_, publicKey) = maybeGetUserInfo() ?: return
-        configDatabase.storeConfig(SharedConfigMessage.Kind.USER_PROFILE.name, publicKey, dumped, timestamp)
+        configDatabase.storeConfig(
+            SharedConfigMessage.Kind.USER_PROFILE.name,
+            publicKey,
+            dumped,
+            timestamp
+        )
     }
 
     private fun persistContactsConfigDump(timestamp: Long) = synchronized(contactsLock) {
         val dumped = contacts?.dump() ?: return
         val (_, publicKey) = maybeGetUserInfo() ?: return
-        configDatabase.storeConfig(SharedConfigMessage.Kind.CONTACTS.name, publicKey, dumped, timestamp)
+        configDatabase.storeConfig(
+            SharedConfigMessage.Kind.CONTACTS.name,
+            publicKey,
+            dumped,
+            timestamp
+        )
     }
 
     private fun persistConvoVolatileConfigDump(timestamp: Long) = synchronized(convoVolatileLock) {
@@ -181,7 +267,12 @@ class ConfigFactory(
     private fun persistUserGroupsConfigDump(timestamp: Long) = synchronized(userGroupsLock) {
         val dumped = userGroups?.dump() ?: return
         val (_, publicKey) = maybeGetUserInfo() ?: return
-        configDatabase.storeConfig(SharedConfigMessage.Kind.GROUPS.name, publicKey, dumped, timestamp)
+        configDatabase.storeConfig(
+            SharedConfigMessage.Kind.GROUPS.name,
+            publicKey,
+            dumped,
+            timestamp
+        )
     }
 
     override fun persist(forConfigObject: ConfigBase, timestamp: Long) {
@@ -214,23 +305,21 @@ class ConfigFactory(
         if (openGroupId != null) {
             val userGroups = userGroups ?: return false
             val threadId = GroupManager.getOpenGroupThreadID(openGroupId, context)
-            val openGroup = get(context).lokiThreadDatabase().getOpenGroupChat(threadId) ?: return false
+            val openGroup =
+                get(context).lokiThreadDatabase().getOpenGroupChat(threadId) ?: return false
 
             // Not handling the `hidden` behaviour for communities so just indicate the existence
             return (userGroups.getCommunityInfo(openGroup.server, openGroup.room) != null)
-        }
-        else if (groupPublicKey != null) {
+        } else if (groupPublicKey != null) {
             val userGroups = userGroups ?: return false
 
             // Not handling the `hidden` behaviour for legacy groups so just indicate the existence
             return (userGroups.getLegacyGroupInfo(groupPublicKey) != null)
-        }
-        else if (publicKey == userPublicKey) {
+        } else if (publicKey == userPublicKey) {
             val user = user ?: return false
 
             return (!visibleOnly || user.getNtsPriority() != ConfigBase.PRIORITY_HIDDEN)
-        }
-        else if (publicKey != null) {
+        } else if (publicKey != null) {
             val contacts = contacts ?: return false
             val targetContact = contacts.get(publicKey) ?: return false
 
@@ -240,12 +329,18 @@ class ConfigFactory(
         return false
     }
 
-    override fun canPerformChange(variant: String, publicKey: String, changeTimestampMs: Long): Boolean {
+    override fun canPerformChange(
+        variant: String,
+        publicKey: String,
+        changeTimestampMs: Long
+    ): Boolean {
         if (!ConfigBase.isNewConfigEnabled(isConfigForcedOn, SnodeAPI.nowWithOffset)) return true
 
-        val lastUpdateTimestampMs = configDatabase.retrieveConfigLastUpdateTimestamp(variant, publicKey)
+        val lastUpdateTimestampMs =
+            configDatabase.retrieveConfigLastUpdateTimestamp(variant, publicKey)
 
         // Ensure the change occurred after the last config message was handled (minus the buffer period)
         return (changeTimestampMs >= (lastUpdateTimestampMs - ConfigFactory.configChangeBufferPeriod))
     }
+
 }

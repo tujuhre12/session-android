@@ -19,7 +19,7 @@ object MentionManagerUtilities {
             }
             recipient.address.isClosedGroup -> {
                 val members = storage.getMembers(recipient.address.serialize())
-                TODO("Fix when compile errors are dealt with for recipient closed groups")
+                 result.addAll(members.map { it.sessionId })
             }
             recipient.address.isOpenGroup -> {
                 val messageDatabase = DatabaseComponent.get(context).mmsSmsDatabase()

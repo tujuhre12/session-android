@@ -10,6 +10,8 @@ import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage.Kind
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
+import org.session.libsignal.utilities.SessionId
+import java.io.Closeable
 import java.util.Stack
 
 
@@ -27,7 +29,7 @@ sealed class ConfigBase(protected val /* yucky */ pointer: Long) {
             is UserGroupsConfig -> Kind.GROUPS
             is GroupInfoConfig -> Kind.CLOSED_GROUP_INFO
             is GroupKeysConfig -> Kind.ENCRYPTION_KEYS
-            is GroupMemberConfig -> Kind.CLOSED_GROUP_MEMBERS
+            is GroupMembersConfig -> Kind.CLOSED_GROUP_MEMBERS
         }
 
         // TODO: time in future to activate (hardcoded to 1st jan 2024 for testing, change before release)
@@ -217,7 +219,7 @@ class UserGroupsConfig(pointer: Long): ConfigBase(pointer) {
     external fun createGroup(): GroupInfo.ClosedGroupInfo
 }
 
-class GroupInfoConfig(pointer: Long): ConfigBase(pointer) {
+class GroupInfoConfig(pointer: Long): ConfigBase(pointer), Closeable {
     companion object {
         init {
             System.loadLibrary("session_util")
@@ -229,6 +231,7 @@ class GroupInfoConfig(pointer: Long): ConfigBase(pointer) {
             initialDump: ByteArray = byteArrayOf()
         ): GroupInfoConfig
     }
+    external fun id(): SessionId
     external fun destroyGroup()
     external fun getCreated(): Long?
     external fun getDeleteAttachmentsBefore(): Long?
@@ -244,9 +247,12 @@ class GroupInfoConfig(pointer: Long): ConfigBase(pointer) {
     external fun setName(newName: String)
     external fun setProfilePic(newProfilePic: UserPic)
     external fun storageNamespace(): Long
+    override fun close() {
+        free()
+    }
 }
 
-class GroupMemberConfig(pointer: Long): ConfigBase(pointer) {
+class GroupMembersConfig(pointer: Long): ConfigBase(pointer), Closeable {
     companion object {
         init {
             System.loadLibrary("session_util")
@@ -255,16 +261,19 @@ class GroupMemberConfig(pointer: Long): ConfigBase(pointer) {
             pubKey: ByteArray,
             secretKey: ByteArray = byteArrayOf(),
             initialDump: ByteArray = byteArrayOf()
-        ): GroupMemberConfig
+        ): GroupMembersConfig
     }
     external fun all(): Stack<GroupMember>
     external fun erase(groupMember: GroupMember): Boolean
     external fun get(pubKeyHex: String): GroupMember?
     external fun getOrConstruct(pubKeyHex: String): GroupMember
     external fun set(groupMember: GroupMember)
+    override fun close() {
+        free()
+    }
 }
 
-class GroupKeysConfig(pointer: Long): ConfigBase(pointer) {
+class GroupKeysConfig(pointer: Long): ConfigBase(pointer), Closeable {
     companion object {
         init {
             System.loadLibrary("session_util")
@@ -275,17 +284,21 @@ class GroupKeysConfig(pointer: Long): ConfigBase(pointer) {
             groupSecretKey: ByteArray = byteArrayOf(),
             initialDump: ByteArray = byteArrayOf(),
             info: GroupInfoConfig,
-            members: GroupMemberConfig
+            members: GroupMembersConfig
         ): GroupKeysConfig
     }
     external fun groupKeys(): Stack<ByteArray>
-    external fun loadKey(data: ByteArray,
+    external fun loadKey(hash: String,
+                         data: ByteArray,
                          msgId: ByteArray,
                          timestampMs: Long,
                          info: GroupInfoConfig,
-                         members: GroupMemberConfig)
+                         members: GroupMembersConfig)
     external fun needsRekey(): Boolean
     external fun pendingKey(): ByteArray?
     external fun pendingPush(): ByteArray?
-    external fun rekey(info: GroupInfoConfig, members: GroupMemberConfig): ByteArray
+    external fun rekey(info: GroupInfoConfig, members: GroupMembersConfig): ByteArray
+    override fun close() {
+        free()
+    }
 }

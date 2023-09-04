@@ -154,7 +154,7 @@ interface StorageProtocol {
     fun setExpirationTimer(address: String, duration: Int)
 
     // Closed Groups
-    fun getMembers(groupPublicKey: String): List<GroupMember>
+    fun getMembers(groupPublicKey: String): List<network.loki.messenger.libsession_util.util.GroupMember>
 
     // Groups
     fun getAllGroups(includeInactive: Boolean): List<GroupRecord>

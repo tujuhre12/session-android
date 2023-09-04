@@ -7,6 +7,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -21,6 +28,7 @@ import nl.komponents.kovenant.ui.successUi
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.groupSizeLimit
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Contact
 import org.session.libsession.utilities.Device
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
@@ -49,8 +57,11 @@ class CreateGroupFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        binding = FragmentCreateGroupBinding.inflate(inflater)
-        return binding.root
+        return ComposeView(requireContext()).apply {
+            setContent {
+                
+            }
+        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -121,4 +132,15 @@ class CreateGroupFragment : Fragment() {
         context.startActivity(intent)
     }
 
+}
+
+@Composable
+fun MemberList(contacts: List<Contact>, modifier: Modifier = Modifier) {
+    Avatar
+}
+
+@Preview
+@Composable
+fun ClosedGroupPreview() {
+    MemberList(contacts = emptyList(), modifier = Modifier.fillMaxWidth())
 }

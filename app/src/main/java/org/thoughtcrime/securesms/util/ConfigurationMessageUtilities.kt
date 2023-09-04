@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.util
 
 import android.content.Context
+import android.provider.Telephony.Sms.Conversations
 import network.loki.messenger.libsession_util.ConfigBase
 import network.loki.messenger.libsession_util.Contacts
 import network.loki.messenger.libsession_util.ConversationVolatileConfig
@@ -26,6 +27,7 @@ import org.session.libsession.utilities.WindowDebouncer
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
+import org.session.libsignal.utilities.SessionId
 import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
@@ -199,6 +201,11 @@ object ConfigurationMessageUtilities {
                         convoConfig.getOrConstructCommunity(base, room, pubKey)
                     }
                     recipient.isClosedGroupRecipient -> {
+                        // It's probably safe to assume there will never be a case where new closed groups will ever be there before a dump is created...
+                        // but just in case...
+                        convoConfig.getOrConstructClosedGroup(recipient.address.serialize())
+                    }
+                    recipient.isLegacyClosedGroupRecipient -> {
                         val groupPublicKey = GroupUtil.doubleDecodeGroupId(recipient.address.serialize())
                         convoConfig.getOrConstructLegacyGroup(groupPublicKey)
                     }
@@ -241,7 +248,7 @@ object ConfigurationMessageUtilities {
         }
 
         val allLgc = storage.getAllGroups(includeInactive = false).filter {
-            it.isClosedGroup && it.isActive && it.members.size > 1
+            it.isLegacyClosedGroup && it.isActive && it.members.size > 1
         }.mapNotNull { group ->
             val groupAddress = Address.fromSerialized(group.encodedId)
             val groupPublicKey = GroupUtil.doubleDecodeGroupID(groupAddress.serialize()).toHexString()
@@ -252,7 +259,7 @@ object ConfigurationMessageUtilities {
             val admins = group.admins.map { it.serialize() to true }.toMap()
             val members = group.members.filterNot { it.serialize() !in admins.keys }.map { it.serialize() to false }.toMap()
             GroupInfo.LegacyGroupInfo(
-                sessionId = groupPublicKey,
+                sessionId = SessionId.from(groupPublicKey),
                 name = group.title,
                 members = admins + members,
                 priority = if (isPinned) ConfigBase.PRIORITY_PINNED else ConfigBase.PRIORITY_VISIBLE,

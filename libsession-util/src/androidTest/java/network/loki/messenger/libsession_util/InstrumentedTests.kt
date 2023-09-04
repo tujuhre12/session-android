@@ -601,7 +601,7 @@ class InstrumentedTests {
         assertEquals("New Group", infoConf.getName())
         infoConf.setCreated(System.currentTimeMillis())
         assertThat(infoConf.getCreated(), notNullValue())
-        val memberConf = GroupMemberConfig.newInstance(groupPublic, groupSecret)
+        val memberConf = GroupMembersConfig.newInstance(groupPublic, groupSecret)
         memberConf.set(
             GroupMember(
                 sessionId = "05"+Hex.toStringCondensed(userCurve),
@@ -637,7 +637,7 @@ class InstrumentedTests {
         assertEquals("New Group", infoConf.getName())
         infoConf.setCreated(System.currentTimeMillis())
         assertThat(infoConf.getCreated(), notNullValue())
-        val memberConf = GroupMemberConfig.newInstance(groupPublic, groupSecret)
+        val memberConf = GroupMembersConfig.newInstance(groupPublic, groupSecret)
         memberConf.set(
             GroupMember(
                 sessionId = "05"+Hex.toStringCondensed(userCurve),
