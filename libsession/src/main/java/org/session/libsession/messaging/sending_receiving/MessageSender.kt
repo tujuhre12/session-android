@@ -256,10 +256,10 @@ object MessageSender {
                 val address = if (isSyncMessage && message is VisibleMessage) message.syncTarget else message.recipient
                 storage.getThreadId(Address.fromSerialized(address!!)) ?: return null
             }
-        val config = storage.getExpirationConfiguration(threadId) ?: return null
+        val config = storage.getExpirationConfiguration(threadId)?.takeIf { it.isEnabled } ?: return null
         val expiryMode = config.expiryMode
-        return if (config.isEnabled && (expiryMode is ExpiryMode.AfterSend || isSyncMessage)) {
-            (expiryMode?.expirySeconds ?: 0L) * 1000L
+        return if (expiryMode is ExpiryMode.AfterSend || isSyncMessage) {
+            expiryMode.expiryMillis
         } else null
     }
 

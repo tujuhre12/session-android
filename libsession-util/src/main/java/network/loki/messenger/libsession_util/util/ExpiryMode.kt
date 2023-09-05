@@ -9,4 +9,6 @@ sealed class ExpiryMode(val expirySeconds: Long) {
     data class AfterRead(private val seconds: Long): ExpiryMode(seconds)
 
     val duration get() = expirySeconds.seconds
+
+    val expiryMillis get() = expirySeconds * 1000L
 }

@@ -99,7 +99,7 @@ public class RemoteReplyReceiver extends BroadcastReceiver {
           ExpirationConfiguration config = storage.getExpirationConfiguration(threadId);
           ExpiryMode expiryMode = config == null ? null : config.getExpiryMode();
 
-          long expiresInMillis = expiryMode == null ? 0 : expiryMode.getExpirySeconds() * 1000L;
+          long expiresInMillis = expiryMode == null ? 0 : expiryMode.getExpiryMillis();
           long expireStartedAt = expiryMode instanceof ExpiryMode.AfterSend ? message.getSentTimestamp() : 0L;
           switch (replyMethod) {
             case GroupMessage: {

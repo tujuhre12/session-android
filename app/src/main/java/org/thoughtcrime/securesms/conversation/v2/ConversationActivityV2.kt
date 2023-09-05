@@ -1577,7 +1577,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         val message = VisibleMessage()
         message.sentTimestamp = sentTimestamp
         message.text = text
-        val expiresInMillis = (viewModel.expirationConfiguration?.expiryMode?.expirySeconds ?: 0) * 1000L
+        val expiresInMillis = viewModel.expirationConfiguration?.expiryMode?.expiryMillis ?: 0
         val expireStartedAt = if (viewModel.expirationConfiguration?.expiryMode is ExpiryMode.AfterSend) {
             message.sentTimestamp!!
         } else 0
@@ -1620,7 +1620,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                 else it.individualRecipient.address
             quote?.copy(author = sender)
         }
-        val expiresInMs = (viewModel.expirationConfiguration?.expiryMode?.expirySeconds ?: 0) * 1000L
+        val expiresInMs = viewModel.expirationConfiguration?.expiryMode?.expiryMillis ?: 0
         val expireStartedAtMs = if (viewModel.expirationConfiguration?.expiryMode is ExpiryMode.AfterSend) {
             sentTimestamp
         } else 0

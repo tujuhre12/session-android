@@ -149,7 +149,7 @@ class DefaultConversationRepository @Inject constructor(
             openGroupInvitation.url = openGroup.joinURL
             message.openGroupInvitation = openGroupInvitation
             val expirationConfig = storage.getExpirationConfiguration(threadId)
-            val expiresInMillis = (expirationConfig?.expiryMode?.expirySeconds ?: 0) * 1000L
+            val expiresInMillis = (expirationConfig?.expiryMode?.expiryMillis ?: 0)
             val expireStartedAt = if (expirationConfig?.expiryMode is ExpiryMode.AfterSend) message.sentTimestamp!! else 0
             val outgoingTextMessage = OutgoingTextMessage.fromOpenGroupInvitation(
                 openGroupInvitation,

@@ -179,7 +179,7 @@ public class ExpiringMessageManager implements SSKEnvironment.MessageExpirationM
       } else {
         smsDatabase.markExpireStarted(messageRecord.getId(), expireStartedAt);
       }
-      scheduleDeletion(messageRecord.getId(), mms, expireStartedAt, (mode != null ? mode.getExpirySeconds() : 0) * 1000L);
+      scheduleDeletion(messageRecord.getId(), mms, expireStartedAt, (mode != null ? mode.getExpiryMillis() : 0));
     }
   }
 

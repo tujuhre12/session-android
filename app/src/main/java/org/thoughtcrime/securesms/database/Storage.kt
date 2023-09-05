@@ -329,7 +329,7 @@ open class Storage(
         }
         val expirationConfig = getExpirationConfiguration(message.threadID ?: -1)
         val expiryMode = expirationConfig?.expiryMode
-        val expiresInMillis = (expiryMode?.expirySeconds ?: 0) * 1000L
+        val expiresInMillis = expiryMode?.expiryMillis ?: 0
         val expireStartedAt = if (expiryMode is ExpiryMode.AfterSend) message.sentTimestamp!! else 0
         if (message.isMediaMessage() || attachments.isNotEmpty()) {
             val quote: Optional<QuoteModel> = if (quotes != null) Optional.of(quotes) else Optional.absent()
@@ -973,7 +973,7 @@ open class Storage(
         val threadId = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(recipient)
         val expirationConfig = getExpirationConfiguration(threadId)
         val expiryMode = expirationConfig?.expiryMode
-        val expiresInMillis = (expiryMode?.expirySeconds ?: 0) * 1000L
+        val expiresInMillis = expiryMode?.expiryMillis ?: 0
         val expireStartedAt = if (expiryMode is ExpiryMode.AfterSend) sentTimestamp else 0
         val m = IncomingTextMessage(fromSerialized(senderPublicKey), 1, sentTimestamp, "", Optional.of(group), expiresInMillis, expireStartedAt, true, false)
         val updateData = UpdateMessageData.buildGroupUpdate(type, name, members)?.toJSON()
@@ -991,7 +991,7 @@ open class Storage(
         val threadId = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(recipient)
         val expirationConfig = getExpirationConfiguration(threadId)
         val expiryMode = expirationConfig?.expiryMode
-        val expiresInMillis = (expiryMode?.expirySeconds ?: 0) * 1000L
+        val expiresInMillis = expiryMode?.expiryMillis ?: 0
         val expireStartedAt = if (expiryMode is ExpiryMode.AfterSend) sentTimestamp else 0
         val updateData = UpdateMessageData.buildGroupUpdate(type, name, members)?.toJSON() ?: ""
         val infoMessage = OutgoingGroupMediaMessage(recipient, updateData, groupID, null, sentTimestamp, expiresInMillis, expireStartedAt, true, null, listOf(), listOf())
@@ -1397,7 +1397,7 @@ open class Storage(
         val threadId = getThreadId(recipient) ?: return
         val expirationConfig = getExpirationConfiguration(threadId)
         val expiryMode = expirationConfig?.expiryMode
-        val expiresInMillis = (expiryMode?.expirySeconds ?: 0) * 1000L
+        val expiresInMillis = expiryMode?.expiryMillis ?: 0
         val expireStartedAt = if (expiryMode is ExpiryMode.AfterSend) sentTimestamp else 0
         val mediaMessage = IncomingMediaMessage(
             address,
@@ -1551,7 +1551,7 @@ open class Storage(
         val threadId = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(recipient)
         val expirationConfig = getExpirationConfiguration(threadId)
         val expiryMode = expirationConfig?.expiryMode
-        val expiresInMillis = (expiryMode?.expirySeconds ?: 0) * 1000L
+        val expiresInMillis = expiryMode?.expiryMillis ?: 0
         val expireStartedAt = if (expiryMode is ExpiryMode.AfterSend) sentTimestamp else 0
         val callMessage = IncomingTextMessage.fromCallInfo(callMessageType, address, Optional.absent(), sentTimestamp, expiresInMillis, expireStartedAt)
         database.insertCallMessage(callMessage)

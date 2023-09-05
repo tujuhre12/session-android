@@ -118,7 +118,7 @@ class ConversationActionBarView : LinearLayout {
             }
             settings.add(
                 ConversationSetting(
-                    "$prefix - ${ExpirationUtil.getExpirationAbbreviatedDisplayValue(context, config.expiryMode?.expirySeconds!!)}" ,
+                    "$prefix - ${ExpirationUtil.getExpirationAbbreviatedDisplayValue(context, config.expiryMode.expirySeconds)}" ,
                     ConversationSettingType.EXPIRATION,
                     R.drawable.ic_timer
                 )

@@ -303,12 +303,8 @@ fun MessageReceiver.updateExpiryIfNeeded(
         proto.lastDisappearingMessageChangeTimestamp
     )
 
-    val (shouldUpdateConfig, configToUse) =
-        if (localConfig != null && localConfig.updatedTimestampMs > proto.lastDisappearingMessageChangeTimestamp) {
-            false to localConfig
-        } else {
-            true to remoteConfig
-        }
+    val configToUse = localConfig?.takeIf { it.updatedTimestampMs > proto.lastDisappearingMessageChangeTimestamp } ?: remoteConfig
+    val shouldUpdateConfig = configToUse == remoteConfig
 
     // don't update any values for open groups
     if (recipient.isOpenGroupRecipient && type != null) throw MessageReceiver.Error.InvalidMessage
@@ -325,12 +321,12 @@ fun MessageReceiver.updateExpiryIfNeeded(
 
     // handle a delete after send expired fetch
     if (type == ExpirationType.DELETE_AFTER_SEND
-        && sentTime + configToUse.expiryMode.expirySeconds <= SnodeAPI.nowWithOffset) {
+        && sentTime + configToUse.expiryMode.expiryMillis <= SnodeAPI.nowWithOffset) {
         throw MessageReceiver.Error.ExpiredMessage
     }
     // handle a delete after read last known config value
     if (type == ExpirationType.DELETE_AFTER_READ
-        && sentTime + configToUse.expiryMode.expirySeconds <= storage.getLastSeen(threadID)) {
+        && sentTime + configToUse.expiryMode.expiryMillis <= storage.getLastSeen(threadID)) {
         throw MessageReceiver.Error.ExpiredMessage
     }
 

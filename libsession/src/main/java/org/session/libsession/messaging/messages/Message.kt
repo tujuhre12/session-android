@@ -62,7 +62,7 @@ abstract class Message {
                 expirationTimer = 0
                 return this
             }
-        if (config.isEnabled && config.expiryMode != null) {
+        if (config.isEnabled) {
             expirationTimer = config.expiryMode.expirySeconds.toInt()
             lastDisappearingMessageChangeTimestamp = config.updatedTimestampMs
             if (ExpirationConfiguration.isNewConfigEnabled) {
