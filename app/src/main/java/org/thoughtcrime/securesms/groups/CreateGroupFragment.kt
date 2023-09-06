@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
@@ -41,6 +42,7 @@ import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.keyboard.emoji.KeyboardPageSearchView
 import org.thoughtcrime.securesms.mms.GlideApp
+import org.thoughtcrime.securesms.ui.NavigationBar
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
 import org.thoughtcrime.securesms.util.fadeIn
@@ -139,9 +141,18 @@ class CreateGroupFragment : Fragment() {
 
     @Composable
     fun CreateGroupScreen(createGroupState: CreateGroupState, modifier: Modifier = Modifier) {
-        CreateGroup(createGroupState, onCreate = {
+        CreateGroup(
+            createGroupState,
+            onCreate = {
+                
+            },
+            onClose = {
 
-        })
+            },
+            onBack = {
+
+            }
+        )
     }
 
 }
@@ -155,13 +166,22 @@ data class CreateGroupState (
 @Composable
 fun CreateGroup(
     createGroupState: CreateGroupState,
+    onBack: () -> Unit,
+    onClose: () -> Unit,
     onCreate: suspend (CreateGroupState) -> Unit,
     modifier: Modifier = Modifier) {
     Column(
         modifier
-            .fillMaxWidth()
-            .padding(8.dp)) {
-
+            .fillMaxWidth()) {
+        NavigationBar(
+            title = stringResource(id = R.string.activity_create_group_title),
+            onBack = {
+                onBack()
+            },
+            onClose = {
+                onClose()
+            }
+        )
     }
 }
 
