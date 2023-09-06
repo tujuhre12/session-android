@@ -2,17 +2,24 @@ package org.thoughtcrime.securesms.ui
 
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ButtonColors
 import androidx.compose.material.Card
@@ -29,8 +36,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.google.accompanist.pager.HorizontalPagerIndicator
 import kotlinx.coroutines.launch
@@ -178,5 +191,104 @@ fun RowScope.Avatar(recipient: Recipient) {
                 .width(46.dp)
                 .height(46.dp)
         )
+    }
+}
+
+@Composable
+fun EditableAvatar(
+    // TODO: add attachment-based state for current view rendering?
+) {
+    Box(modifier = Modifier
+        .size(110.dp)
+        .padding(15.dp)
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.avatar_placeholder),
+            contentDescription = stringResource(
+                id = R.string.arrays__default
+            ),
+            Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colors.cellColor, shape = CircleShape)
+                .padding(16.dp)
+        )
+        Image(
+            painter = painterResource(id = R.drawable.ic_plus),
+            contentDescription = null,
+            Modifier
+                .align(Alignment.BottomEnd)
+                .size(24.dp)
+                .background(colorDestructive, shape = CircleShape)
+                .padding(6.dp)
+        )
+    }
+}
+
+@Composable
+fun NavigationBar(
+    //
+    title: String,
+    titleAlignment: Alignment = Alignment.Center,
+    // if
+    onBack: (() -> Unit)? = null,
+    onClose: (()->Unit)? = null,
+) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .height(64.dp)) {
+        // Optional back button, layout should still take up space
+        Box(modifier = Modifier
+            .fillMaxHeight()
+        ) {
+            if (onBack != null) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_arrow_left_24),
+                    contentDescription = stringResource(
+                        id = R.string.new_conversation_dialog_back_button_content_description
+                    ),
+                    Modifier
+                        .clickable { onBack() }
+                        .padding(16.dp)
+                        .align(Alignment.Center)
+                )
+            }
+        }
+        //Main title
+        Box(modifier = Modifier.fillMaxHeight().weight(1f).padding(8.dp)) {
+            Text(
+                text = title,
+                Modifier.align(titleAlignment),
+                overflow = TextOverflow.Ellipsis,
+                fontSize = 26.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+        // Optional close button
+        Box(modifier = Modifier
+            .fillMaxHeight()
+            .align(Alignment.CenterVertically)
+        ) {
+            if (onClose != null) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_baseline_close_24),
+                    contentDescription = stringResource(
+                        id = R.string.new_conversation_dialog_close_button_content_description
+                    ),
+                    Modifier
+                        .clickable { onClose() }
+                        .padding(16.dp)
+                        .align(Alignment.Center)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+@Preview
+fun PreviewNavigationBar(@PreviewParameter(provider = ThemeResPreviewParameterProvider::class) themeResId: Int) {
+    PreviewTheme(themeResId = themeResId) {
+        NavigationBar(title = "Create Group", onBack = {}, onClose = {})
     }
 }

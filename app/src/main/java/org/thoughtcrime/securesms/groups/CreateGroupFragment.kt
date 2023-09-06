@@ -7,13 +7,15 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -32,12 +34,15 @@ import org.session.libsession.utilities.Contact
 import org.session.libsession.utilities.Device
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.utilities.SessionId
 import org.thoughtcrime.securesms.contacts.SelectContactsAdapter
 import org.thoughtcrime.securesms.conversation.start.NewConversationDelegate
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.keyboard.emoji.KeyboardPageSearchView
 import org.thoughtcrime.securesms.mms.GlideApp
+import org.thoughtcrime.securesms.ui.PreviewTheme
+import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
 import org.thoughtcrime.securesms.util.fadeIn
 import org.thoughtcrime.securesms.util.fadeOut
 import javax.inject.Inject
@@ -132,15 +137,46 @@ class CreateGroupFragment : Fragment() {
         context.startActivity(intent)
     }
 
+    @Composable
+    fun CreateGroupScreen(createGroupState: CreateGroupState, modifier: Modifier = Modifier) {
+        CreateGroup(createGroupState, onCreate = {
+
+        })
+    }
+
 }
+
+data class CreateGroupState (
+    val groupName: String,
+    val groupDescription: String,
+    val members: Set<SessionId>
+)
+
+@Composable
+fun CreateGroup(
+    createGroupState: CreateGroupState,
+    onCreate: suspend (CreateGroupState) -> Unit,
+    modifier: Modifier = Modifier) {
+    Column(
+        modifier
+            .fillMaxWidth()
+            .padding(8.dp)) {
+
+    }
+}
+
 
 @Composable
 fun MemberList(contacts: List<Contact>, modifier: Modifier = Modifier) {
-    Avatar
+
 }
 
 @Preview
 @Composable
-fun ClosedGroupPreview() {
-    MemberList(contacts = emptyList(), modifier = Modifier.fillMaxWidth())
+fun ClosedGroupPreview(
+    @PreviewParameter(ThemeResPreviewParameterProvider::class) themeResId: Int
+) {
+    PreviewTheme(themeResId) {
+        CreateGroup(CreateGroupState("Group Name", "Test Group Description", emptySet()), {})
+    }
 }
