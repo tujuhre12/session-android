@@ -41,6 +41,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 enum class Event {
     SUCCESS, FAIL
@@ -112,6 +113,7 @@ class ExpirationSettingsViewModel(
                 state.copy(
                     address = recipient?.address,
                     isGroup = groupInfo != null,
+                    isNoteToSelf = recipient?.address?.serialize() == textSecurePreferences.getLocalNumber(),
                     isSelfAdmin = groupInfo == null || groupInfo.admins.any{ it.serialize() == textSecurePreferences.getLocalNumber() },
                     expiryMode = expiryMode
                 )
@@ -288,17 +290,17 @@ private fun timeOptions(state: State) =
         else -> null
     }?.map { timeOption(it, state) }
 
-private val DEBUG_TIME = 1.minutes
+private val DEBUG_TIMES = if (BuildConfig.DEBUG) listOf(10.seconds, 1.minutes) else emptyList()
 
 val defaultTimes = listOf(12.hours, 1.days, 7.days, 14.days)
 
 val afterSendTimes = buildList {
-    if (BuildConfig.DEBUG) add(DEBUG_TIME)
+    addAll(DEBUG_TIMES)
     addAll(defaultTimes)
 }
 
 val afterReadTimes = buildList {
-    if (BuildConfig.DEBUG) add(DEBUG_TIME)
+    addAll(DEBUG_TIMES)
     add(5.minutes)
     add(1.hours)
     addAll(defaultTimes)
@@ -318,7 +320,7 @@ private fun timeOption(
     duration: Duration,
     state: State,
     title: GetString = GetString { ExpirationUtil.getExpirationDisplayValue(it, duration.inWholeSeconds.toInt()) },
-    subtitle: GetString? = if (duration == DEBUG_TIME) GetString("for testing purposes") else null,
+    subtitle: GetString? = if (duration in DEBUG_TIMES) GetString("for testing purposes") else null,
     onClick: () -> Unit = { state.callbacks.setTime(duration.inWholeSeconds) }
 ) = OptionModel(
     title = title,
