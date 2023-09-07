@@ -32,6 +32,7 @@ import org.session.libsession.utilities.recipients.Recipient.RecipientSettings
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceAttachmentPointer
 import org.session.libsignal.messages.SignalServiceGroup
+import org.session.libsignal.utilities.SessionId
 import network.loki.messenger.libsession_util.util.Contact as LibSessionContact
 
 interface StorageProtocol {
@@ -154,6 +155,7 @@ interface StorageProtocol {
     fun setExpirationTimer(address: String, duration: Int)
 
     // Closed Groups
+    fun createNewGroup(groupName: String, groupDescription: String, members: List<SessionId>): Long?
     fun getMembers(groupPublicKey: String): List<network.loki.messenger.libsession_util.util.GroupMember>
 
     // Groups

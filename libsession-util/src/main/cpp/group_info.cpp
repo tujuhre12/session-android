@@ -185,3 +185,20 @@ Java_network_loki_messenger_libsession_1util_GroupInfoConfig_id(JNIEnv *env, job
     auto group_info = ptrToInfo(env, thiz);
     return util::serialize_session_id(env, group_info->id);
 }
+
+extern "C"
+JNIEXPORT jstring JNICALL
+Java_network_loki_messenger_libsession_1util_GroupInfoConfig_getDescription(JNIEnv *env,
+                                                                            jobject thiz) {
+    std::lock_guard guard{util::util_mutex_};
+    auto group_info = ptrToInfo(env, thiz);
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_network_loki_messenger_libsession_1util_GroupInfoConfig_setDescription(JNIEnv *env,
+                                                                            jobject thiz,
+                                                                            jstring new_description) {
+    std::lock_guard guard{util::util_mutex_};
+    auto group_info = ptrToInfo(env, thiz);
+}

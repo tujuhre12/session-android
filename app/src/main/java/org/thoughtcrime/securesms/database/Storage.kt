@@ -880,6 +880,31 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
         DatabaseComponent.get(context).groupDatabase().create(groupId, title, members, avatar, relay, admins, formationTimestamp)
     }
 
+    override fun createNewGroup(groupName: String, groupDescription: String, members: List<SessionId>): Long? {
+        val userGroups = configFactory.userGroups ?: return null
+        val ourSessionId = getUserPublicKey() ?: return null
+
+        val group = userGroups.createGroup()
+        userGroups.set(group)
+        val groupInfo = configFactory.groupInfoConfig(group.groupSessionId) ?: return null
+        val groupMembers = configFactory.groupMemberConfig(group.groupSessionId) ?: return null
+        val groupKeys = configFactory.groupKeysConfig(group.groupSessionId) ?: return null
+
+        with (groupInfo) {
+            setName(groupName)
+            setDescription(groupDescription)
+        }
+
+        groupMembers.set(
+            LibSessionGroupMember(ourSessionId, "admin", admin = true)
+        )
+
+        // Test the sending
+        val userGroupsUpdate =
+
+        TODO()
+    }
+
     override fun createInitialConfigGroup(groupPublicKey: String, name: String, members: Map<String, Boolean>, formationTimestamp: Long, encryptionKeyPair: ECKeyPair) {
         val volatiles = configFactory.convoVolatile ?: return
         val userGroups = configFactory.userGroups ?: return

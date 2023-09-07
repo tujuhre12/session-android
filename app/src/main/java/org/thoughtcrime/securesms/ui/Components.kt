@@ -197,8 +197,9 @@ fun RowScope.Avatar(recipient: Recipient) {
 @Composable
 fun EditableAvatar(
     // TODO: add attachment-based state for current view rendering?
+    modifier: Modifier = Modifier
 ) {
-    Box(modifier = Modifier
+    Box(modifier = modifier
         .size(110.dp)
         .padding(15.dp)
     ) {

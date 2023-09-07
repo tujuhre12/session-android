@@ -6,47 +6,47 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
+import androidx.annotation.StringRes
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.OutlinedButton
+import androidx.compose.material.OutlinedTextField
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
-import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.recyclerview.widget.DividerItemDecoration
-import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.FragmentCreateGroupBinding
-import nl.komponents.kovenant.ui.failUi
-import nl.komponents.kovenant.ui.successUi
-import org.session.libsession.messaging.sending_receiving.MessageSender
-import org.session.libsession.messaging.sending_receiving.groupSizeLimit
-import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.Contact
 import org.session.libsession.utilities.Device
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.SessionId
-import org.thoughtcrime.securesms.contacts.SelectContactsAdapter
 import org.thoughtcrime.securesms.conversation.start.NewConversationDelegate
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent
-import org.thoughtcrime.securesms.keyboard.emoji.KeyboardPageSearchView
-import org.thoughtcrime.securesms.mms.GlideApp
+import org.thoughtcrime.securesms.ui.EditableAvatar
 import org.thoughtcrime.securesms.ui.NavigationBar
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
-import org.thoughtcrime.securesms.util.fadeIn
-import org.thoughtcrime.securesms.util.fadeOut
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -64,71 +64,13 @@ class CreateGroupFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+
+        val isLoading = viewModel.viewState.
+
         return ComposeView(requireContext()).apply {
             setContent {
-                
+                CreateGroupScreen(createGroupState = CreateGroupState("", "", emptySet()))
             }
-        }
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        val adapter = SelectContactsAdapter(requireContext(), GlideApp.with(requireContext()))
-        binding.backButton.setOnClickListener { delegate.onDialogBackPressed() }
-        binding.closeButton.setOnClickListener { delegate.onDialogClosePressed() }
-        binding.contactSearch.callbacks = object : KeyboardPageSearchView.Callbacks {
-            override fun onQueryChanged(query: String) {
-                adapter.members = viewModel.filter(query).map { it.address.serialize() }
-            }
-        }
-        binding.createNewPrivateChatButton.setOnClickListener { delegate.onNewMessageSelected() }
-        binding.recyclerView.adapter = adapter
-        val divider = ContextCompat.getDrawable(requireActivity(), R.drawable.conversation_menu_divider)!!.let {
-            DividerItemDecoration(requireActivity(), RecyclerView.VERTICAL).apply {
-                setDrawable(it)
-            }
-        }
-        binding.recyclerView.addItemDecoration(divider)
-        var isLoading = false
-        binding.createClosedGroupButton.setOnClickListener {
-            if (isLoading) return@setOnClickListener
-            val name = binding.nameEditText.text.trim()
-            if (name.isEmpty()) {
-                return@setOnClickListener Toast.makeText(context, R.string.activity_create_closed_group_group_name_missing_error, Toast.LENGTH_LONG).show()
-            }
-            if (name.length >= 30) {
-                return@setOnClickListener Toast.makeText(context, R.string.activity_create_closed_group_group_name_too_long_error, Toast.LENGTH_LONG).show()
-            }
-            val selectedMembers = adapter.selectedMembers
-            if (selectedMembers.isEmpty()) {
-                return@setOnClickListener Toast.makeText(context, R.string.activity_create_closed_group_not_enough_group_members_error, Toast.LENGTH_LONG).show()
-            }
-            if (selectedMembers.count() >= groupSizeLimit) { // Minus one because we're going to include self later
-                return@setOnClickListener Toast.makeText(context, R.string.activity_create_closed_group_too_many_group_members_error, Toast.LENGTH_LONG).show()
-            }
-            val userPublicKey = TextSecurePreferences.getLocalNumber(requireContext())!!
-            isLoading = true
-            binding.loaderContainer.fadeIn()
-            MessageSender.createClosedGroup(device, name.toString(), selectedMembers + setOf( userPublicKey )).successUi { groupID ->
-                binding.loaderContainer.fadeOut()
-                isLoading = false
-                val threadID = DatabaseComponent.get(requireContext()).threadDatabase().getOrCreateThreadIdFor(Recipient.from(requireContext(), Address.fromSerialized(groupID), false))
-                openConversationActivity(
-                    requireContext(),
-                    threadID,
-                    Recipient.from(requireContext(), Address.fromSerialized(groupID), false)
-                )
-                delegate.onDialogClosePressed()
-            }.failUi {
-                binding.loaderContainer.fadeOut()
-                isLoading = false
-                Toast.makeText(context, it.message, Toast.LENGTH_LONG).show()
-            }
-        }
-        binding.mainContentGroup.isVisible = !viewModel.recipients.value.isNullOrEmpty()
-        binding.emptyStateGroup.isVisible = viewModel.recipients.value.isNullOrEmpty()
-        viewModel.recipients.observe(viewLifecycleOwner) { recipients ->
-            adapter.members = recipients.map { it.address.serialize() }
         }
     }
 
@@ -144,16 +86,22 @@ class CreateGroupFragment : Fragment() {
         CreateGroup(
             createGroupState,
             onCreate = {
-                
+                // launch something to create here
             },
             onClose = {
-
+                delegate.onDialogClosePressed()
             },
             onBack = {
-
+                delegate.onDialogBackPressed()
             }
         )
     }
+
+    data class ViewState(
+        val isLoading: Boolean,
+        @StringRes val error: Int?,
+        val createdThreadId: Long?
+    )
 
 }
 
@@ -166,29 +114,93 @@ data class CreateGroupState (
 @Composable
 fun CreateGroup(
     createGroupState: CreateGroupState,
+    onCreate: (CreateGroupState) -> Unit,
     onBack: () -> Unit,
     onClose: () -> Unit,
-    onCreate: suspend (CreateGroupState) -> Unit,
     modifier: Modifier = Modifier) {
+
+    var name by remember { mutableStateOf(createGroupState.groupName) }
+    var description by remember { mutableStateOf(createGroupState.groupDescription) }
+    val members by remember { mutableStateOf(createGroupState.members) }
+
+    val scrollState = rememberScrollState()
+
     Column(
         modifier
             .fillMaxWidth()) {
-        NavigationBar(
-            title = stringResource(id = R.string.activity_create_group_title),
-            onBack = {
-                onBack()
-            },
-            onClose = {
-                onClose()
-            }
-        )
+        Column(modifier.scrollable(scrollState, orientation = Orientation.Vertical)) {
+            // Top bar
+            NavigationBar(
+                title = stringResource(id = R.string.activity_create_group_title),
+                onBack = onBack,
+                onClose = onClose
+            )
+            // Editable avatar (future chunk)
+            EditableAvatar(
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .padding(top = 16.dp)
+            )
+            // Title
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.CenterHorizontally)
+                    .padding(vertical = 8.dp, horizontal = 24.dp),
+            )
+            // Description
+            OutlinedTextField(
+                value = description,
+                onValueChange = { description = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.CenterHorizontally)
+                    .padding(vertical = 8.dp, horizontal = 24.dp),
+            )
+            // Group list
+            MemberList(contacts = members, modifier = Modifier.padding(vertical = 8.dp, horizontal = 24.dp))
+        }
+        // Create button
+        OutlinedButton(
+            onClick = { onCreate(CreateGroupState(name, description, members)) },
+            enabled = name.isNotBlank(),
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .padding(16.dp),
+            shape = RoundedCornerShape(32.dp)
+        ) {
+            Text(
+                text = stringResource(id = R.string.activity_create_group_create_button_title),
+                // TODO: colours of everything here probably needs to be redone
+                color = MaterialTheme.colors.onBackground,
+                modifier = Modifier.width(160.dp),
+                textAlign = TextAlign.Center
+            )
+        }
     }
 }
 
 
 @Composable
-fun MemberList(contacts: List<Contact>, modifier: Modifier = Modifier) {
-
+fun MemberList(contacts: Collection<SessionId>, modifier: Modifier = Modifier) {
+    Column(modifier = modifier
+        .fillMaxWidth()
+        .defaultMinSize(minHeight = 240.dp)) {
+        Text(text = stringResource(id = R.string.conversation_settings_group_members),
+            modifier = Modifier
+                .align(Alignment.Start)
+                .padding(vertical = 8.dp)
+        )
+        // TODO group list representation
+        Text(
+            text = stringResource(id = R.string.activity_create_closed_group_not_enough_group_members_error),
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .padding(vertical = 8.dp)
+        )
+    }
 }
 
 @Preview
@@ -197,6 +209,11 @@ fun ClosedGroupPreview(
     @PreviewParameter(ThemeResPreviewParameterProvider::class) themeResId: Int
 ) {
     PreviewTheme(themeResId) {
-        CreateGroup(CreateGroupState("Group Name", "Test Group Description", emptySet()), {})
+        CreateGroup(
+            CreateGroupState("Group Name", "Test Group Description", emptySet()),
+            onCreate = {},
+            onClose = {},
+            onBack = {},
+        )
     }
 }
