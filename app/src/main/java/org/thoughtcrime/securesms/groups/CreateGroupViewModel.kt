@@ -21,7 +21,7 @@ class CreateGroupViewModel @Inject constructor(
     private val _recipients = MutableLiveData<List<Recipient>>()
     val recipients: LiveData<List<Recipient>> = _recipients
 
-    private val _viewState = MutableLiveData(CreateGroupFragment.ViewState(false, null, null))
+    private val _viewState = MutableLiveData(CreateGroupFragment.ViewState.DEFAULT)
     val viewState: LiveData<CreateGroupFragment.ViewState>  = _viewState
 
     init {
@@ -43,8 +43,12 @@ class CreateGroupViewModel @Inject constructor(
     fun tryCreateGroup(createGroupState: CreateGroupState) {
         _viewState.postValue(CreateGroupFragment.ViewState(true, null, null))
 
+        val name = createGroupState.groupName
+        val description = createGroupState.groupDescription
+        val members = createGroupState.members
+
         // do some validations
-        if (createGroupState.groupName.isEmpty()) {
+        if (name.isEmpty()) {
             return _viewState.postValue(
                 CreateGroupFragment.ViewState(false, R.string.error, null)
             )
@@ -52,7 +56,7 @@ class CreateGroupViewModel @Inject constructor(
         // TODO: add future validation for empty group ? we'll add ourselves anyway ig
 
         // make a group
-        storage.createGroup()
+         storage.createNewGroup(name, description, members)
     }
 
     fun filter(query: String): List<Recipient> {

@@ -176,7 +176,7 @@ class ConfigFactory(
         it.adminKey to it.authData
     }
 
-    override fun groupInfoConfig(groupSessionId: SessionId): GroupInfoConfig? = getGroupAuthInfo(groupSessionId)?.let { (sk, _) ->
+    override fun getOrConstructGroupInfoConfig(groupSessionId: SessionId): GroupInfoConfig? = getGroupAuthInfo(groupSessionId)?.let { (sk, _) ->
         // get any potential initial dumps
         val dump = configDatabase.retrieveConfigAndHashes(
             SharedConfigMessage.Kind.CLOSED_GROUP_INFO.name,
@@ -186,15 +186,15 @@ class ConfigFactory(
         GroupInfoConfig.newInstance(Hex.fromStringCondensed(groupSessionId.publicKey), sk, dump)
     }
 
-    override fun groupKeysConfig(groupSessionId: SessionId): GroupKeysConfig? = getGroupAuthInfo(groupSessionId)?.let { (sk, _) ->
+    override fun getGroupKeysConfig(groupSessionId: SessionId): GroupKeysConfig? = getGroupAuthInfo(groupSessionId)?.let { (sk, _) ->
         // Get the user info or return early
         val (userSk, _) = maybeGetUserInfo() ?: return@let null
 
         // Get the group info or return early
-        val info = groupInfoConfig(groupSessionId) ?: return@let null
+        val info = getOrConstructGroupInfoConfig(groupSessionId) ?: return@let null
 
         // Get the group members or return early
-        val members = groupMemberConfig(groupSessionId) ?: return@let null
+        val members = getOrConstructGroupMemberConfig(groupSessionId) ?: return@let null
 
         // Get the dump or empty
         val dump = configDatabase.retrieveConfigAndHashes(
@@ -213,7 +213,7 @@ class ConfigFactory(
         )
     }
 
-    override fun groupMemberConfig(groupSessionId: SessionId): GroupMembersConfig? = getGroupAuthInfo(groupSessionId)?.let { (sk, auth) ->
+    override fun getOrConstructGroupMemberConfig(groupSessionId: SessionId): GroupMembersConfig? = getGroupAuthInfo(groupSessionId)?.let { (sk, auth) ->
         // Get initial dump if we have one
         val dump = configDatabase.retrieveConfigAndHashes(
             SharedConfigMessage.Kind.CLOSED_GROUP_MEMBERS.name,

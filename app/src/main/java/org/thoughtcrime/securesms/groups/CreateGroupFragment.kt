@@ -22,6 +22,7 @@ import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -64,12 +65,13 @@ class CreateGroupFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-
-        val isLoading = viewModel.viewState.
-
         return ComposeView(requireContext()).apply {
             setContent {
-                CreateGroupScreen(createGroupState = CreateGroupState("", "", emptySet()))
+                // this is kind of annoying to require an initial state in the fragment and the VM
+                val currentState = viewModel.viewState.observeAsState(initial = ViewState.DEFAULT)
+                // create group state might be useful in future for adding members and returning
+                // to the create group state with a copy or something
+                CreateGroupScreen(currentState.value, createGroupState = CreateGroupState("", "", emptySet()))
             }
         }
     }
@@ -82,11 +84,15 @@ class CreateGroupFragment : Fragment() {
     }
 
     @Composable
-    fun CreateGroupScreen(createGroupState: CreateGroupState, modifier: Modifier = Modifier) {
+    fun CreateGroupScreen(viewState: ViewState,
+                          createGroupState: CreateGroupState,
+                          modifier: Modifier = Modifier) {
         CreateGroup(
+            viewState,
             createGroupState,
-            onCreate = {
+            onCreate = { newGroup ->
                 // launch something to create here
+                viewModel.tryCreateGroup(newGroup)
             },
             onClose = {
                 delegate.onDialogClosePressed()
@@ -101,7 +107,11 @@ class CreateGroupFragment : Fragment() {
         val isLoading: Boolean,
         @StringRes val error: Int?,
         val createdThreadId: Long?
-    )
+    ) {
+        companion object {
+            val DEFAULT = ViewState(false, null, null)
+        }
+    }
 
 }
 
@@ -113,6 +123,7 @@ data class CreateGroupState (
 
 @Composable
 fun CreateGroup(
+    viewState: CreateGroupFragment.ViewState,
     createGroupState: CreateGroupState,
     onCreate: (CreateGroupState) -> Unit,
     onBack: () -> Unit,
@@ -165,7 +176,7 @@ fun CreateGroup(
         // Create button
         OutlinedButton(
             onClick = { onCreate(CreateGroupState(name, description, members)) },
-            enabled = name.isNotBlank(),
+            enabled = name.isNotBlank() && !viewState.isLoading,
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
                 .padding(16.dp),
