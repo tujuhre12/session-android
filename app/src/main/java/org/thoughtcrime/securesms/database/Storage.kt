@@ -21,6 +21,7 @@ import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.BlindedIdMapping
+import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.jobs.AttachmentUploadJob
@@ -880,15 +881,23 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
         DatabaseComponent.get(context).groupDatabase().create(groupId, title, members, avatar, relay, admins, formationTimestamp)
     }
 
-    override fun createNewGroup(groupName: String, groupDescription: String, members: List<SessionId>): Long? {
+    override fun createNewGroup(groupName: String, groupDescription: String, members: Set<SessionId>): Long? {
         val userGroups = configFactory.userGroups ?: return null
         val ourSessionId = getUserPublicKey() ?: return null
+        val userKp = MessagingModuleConfiguration.shared.getUserED25519KeyPair() ?: return null
 
         val group = userGroups.createGroup()
         userGroups.set(group)
-        val groupInfo = configFactory.groupInfoConfig(group.groupSessionId) ?: return null
-        val groupMembers = configFactory.groupMemberConfig(group.groupSessionId) ?: return null
-        val groupKeys = configFactory.groupKeysConfig(group.groupSessionId) ?: return null
+        val groupInfo = configFactory.getOrConstructGroupInfoConfig(group.groupSessionId) ?: return null
+        val groupMembers = configFactory.getOrConstructGroupMemberConfig(group.groupSessionId) ?: return null
+
+        val groupKeys = GroupKeysConfig.newInstance(
+            userKp.secretKey.asBytes,
+            Hex.fromStringCondensed(group.groupSessionId.publicKey),
+            group.adminKey,
+            info = groupInfo,
+            members = groupMembers
+        )
 
         with (groupInfo) {
             setName(groupName)
@@ -1070,7 +1079,7 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
     }
 
     override fun getMembers(groupPublicKey: String): List<LibSessionGroupMember> =
-        configFactory.groupMemberConfig(SessionId.from(groupPublicKey))?.all()?.toList() ?: emptyList()
+        configFactory.getOrConstructGroupMemberConfig(SessionId.from(groupPublicKey))?.all()?.toList() ?: emptyList()
 
     override fun setServerCapabilities(server: String, capabilities: List<String>) {
         return DatabaseComponent.get(context).lokiAPIDatabase().setServerCapabilities(server, capabilities)
