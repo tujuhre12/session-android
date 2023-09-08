@@ -3,6 +3,7 @@
 package org.session.libsession.snode
 
 import android.os.Build
+import androidx.annotation.WorkerThread
 import com.goterl.lazysodium.LazySodiumAndroid
 import com.goterl.lazysodium.SodiumAndroid
 import com.goterl.lazysodium.exceptions.SodiumException
@@ -18,6 +19,8 @@ import nl.komponents.kovenant.functional.bind
 import nl.komponents.kovenant.functional.map
 import nl.komponents.kovenant.task
 import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.messaging.messages.Destination
+import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.utilities.MessageWrapper
 import org.session.libsignal.crypto.getRandomElement
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
@@ -628,6 +631,40 @@ object SnodeAPI {
             val timestamp = rawResponse["timestamp"] as? Long ?: -1
             snode to timestamp
         }
+    }
+
+    @WorkerThread
+    fun sendMessage(destination: Destination, rawMessage: ByteArray, ttl: Long, signingKey: ByteArray, namespace: Int): RawResponse {
+        val pubKey = when (destination) {
+            is Destination.ClosedGroup -> destination.publicKey
+            else -> throw MessageSender.Error.InvalidDestination(destination)
+        }
+
+        return retryIfNeeded(maxRetryCount) {
+            val timestamp = nowWithOffset
+
+            val signature = ByteArray(Sign.BYTES)
+            // assume namespace here is non-zero, as zero namespace doesn't require auth
+            val verificationData = "store$namespace$timestamp".toByteArray()
+            try {
+                sodium.cryptoSignDetached(signature, verificationData, verificationData.size.toLong(), signingKey)
+            } catch (exception: Exception) {
+                return@retryIfNeeded Promise.ofFail(Error.SigningFailed)
+            }
+
+            val parameters = mapOf(
+                "pubKey" to pubKey,
+                "data" to Base64.encodeBytes(rawMessage),
+                "ttl" to ttl.toString(),
+                "timestamp" to timestamp.toString(),
+                "sig_timestamp" to timestamp.toString(),
+                "signature" to Base64.encodeBytes(verificationData)
+            )
+
+            getSingleTargetSnode(pubKey).bind { targetSnode ->
+                invoke(Snode.Method.SendMessage, targetSnode, parameters, pubKey)
+            }
+        }.get()
     }
 
     fun sendMessage(message: SnodeMessage, requiresAuth: Boolean = false, namespace: Int = 0): RawResponsePromise {

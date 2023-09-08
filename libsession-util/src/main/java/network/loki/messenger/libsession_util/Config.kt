@@ -203,7 +203,7 @@ class UserGroupsConfig(pointer: Long): ConfigBase(pointer) {
     external fun getOrConstructLegacyGroupInfo(sessionId: String): GroupInfo.LegacyGroupInfo
     external fun getOrConstructClosedGroup(sessionId: String): GroupInfo.ClosedGroupInfo
     external fun set(groupInfo: GroupInfo)
-    external fun erase(communityInfo: GroupInfo)
+    external fun erase(groupInfo: GroupInfo)
     external fun eraseCommunity(baseCommunityInfo: BaseCommunityInfo): Boolean
     external fun eraseCommunity(server: String, room: String): Boolean
     external fun eraseLegacyGroup(sessionId: String): Boolean

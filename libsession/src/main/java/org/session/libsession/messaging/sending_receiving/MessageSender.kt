@@ -1,5 +1,7 @@
 package org.session.libsession.messaging.sending_receiving
 
+import androidx.annotation.WorkerThread
+import network.loki.messenger.libsession_util.ConfigBase
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.deferred
 import org.session.libsession.messaging.MessagingModuleConfiguration
@@ -49,6 +51,7 @@ object MessageSender {
         object NoUserED25519KeyPair : Error("Couldn't find user ED25519 key pair.")
         object SigningFailed : Error("Couldn't sign message.")
         object EncryptionFailed : Error("Couldn't encrypt message.")
+        data class InvalidDestination(val destination: Destination): Error("Can't send this way to $destination")
 
         // Closed groups
         object NoThread : Error("Couldn't find a thread associated with the given group public key.")
@@ -68,6 +71,25 @@ object MessageSender {
         } else {
             sendToSnodeDestination(destination, message, isSyncMessage)
         }
+    }
+
+    // New closed groups and configs not requiring additional overhead (already handled by libsession)
+    @WorkerThread
+    fun sendConfig(destination: Destination, config: ConfigBase, signingKey: ByteArray): Result<String> {
+        if (destination !is Destination.ClosedGroup) return Result.failure(Error.InvalidDestination(destination))
+
+        val (bytes, _) = config.push()
+
+        val testTtl = 30 * 24 * 60 * 60 * 1000L // 30 days
+
+        // handle this error thrown case
+        val response = SnodeAPI.sendMessage(destination, bytes, testTtl, signingKey, config.configNamespace())
+
+        Log.d("Send Config", "Response is good")
+
+        val hash = response["hash"] as? String ?: return Result.failure(Error("No returned hash of string type"))
+
+        return Result.success(hash)
     }
 
     // One-on-One Chats & Closed Groups
@@ -213,11 +235,6 @@ object MessageSender {
                             else -> false
                         }
 
-                        /*
-                        if (message is ClosedGroupControlMessage && message.kind is ClosedGroupControlMessage.Kind.New) {
-                            shouldNotify = true
-                        }
-                         */
                         if (shouldNotify) {
                             val notifyPNServerJob = NotifyPNServerJob(snodeMessage)
                             JobQueue.shared.add(notifyPNServerJob)

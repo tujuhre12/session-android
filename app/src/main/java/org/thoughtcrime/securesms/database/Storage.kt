@@ -51,6 +51,7 @@ import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.open_groups.GroupMember
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.open_groups.OpenGroupApi
+import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentId
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage
@@ -881,23 +882,16 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
         DatabaseComponent.get(context).groupDatabase().create(groupId, title, members, avatar, relay, admins, formationTimestamp)
     }
 
-    override fun createNewGroup(groupName: String, groupDescription: String, members: Set<SessionId>): Long? {
+    override suspend fun createNewGroup(groupName: String, groupDescription: String, members: Set<SessionId>): Long? {
         val userGroups = configFactory.userGroups ?: return null
         val ourSessionId = getUserPublicKey() ?: return null
         val userKp = MessagingModuleConfiguration.shared.getUserED25519KeyPair() ?: return null
 
         val group = userGroups.createGroup()
+        val adminKey = group.adminKey
         userGroups.set(group)
         val groupInfo = configFactory.getOrConstructGroupInfoConfig(group.groupSessionId) ?: return null
         val groupMembers = configFactory.getOrConstructGroupMemberConfig(group.groupSessionId) ?: return null
-
-        val groupKeys = GroupKeysConfig.newInstance(
-            userKp.secretKey.asBytes,
-            Hex.fromStringCondensed(group.groupSessionId.publicKey),
-            group.adminKey,
-            info = groupInfo,
-            members = groupMembers
-        )
 
         with (groupInfo) {
             setName(groupName)
@@ -908,10 +902,25 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
             LibSessionGroupMember(ourSessionId, "admin", admin = true)
         )
 
-        // Test the sending
-        val userGroupsUpdate =
+        val groupKeys = GroupKeysConfig.newInstance(
+            userKp.secretKey.asBytes,
+            Hex.fromStringCondensed(group.groupSessionId.publicKey),
+            group.adminKey,
+            info = groupInfo,
+            members = groupMembers
+        )
 
-        TODO()
+        // Test the sending
+        try {
+            MessageSender.sendConfig(Destination.ClosedGroup(group.groupSessionId.hexString()), groupInfo, adminKey)
+        } catch (e: Exception) {
+            Log.e("Group Config", e)
+            Log.e("Group Config", "Deleting group from our group")
+            // delete the group from user groups
+            userGroups.erase(group)
+        }
+
+        return 0
     }
 
     override fun createInitialConfigGroup(groupPublicKey: String, name: String, members: Map<String, Boolean>, formationTimestamp: Long, encryptionKeyPair: ECKeyPair) {
