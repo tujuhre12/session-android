@@ -343,4 +343,13 @@ class ConfigFactory(
         return (changeTimestampMs >= (lastUpdateTimestampMs - ConfigFactory.configChangeBufferPeriod))
     }
 
+    override fun saveGroupConfigs(
+        groupKeys: GroupKeysConfig,
+        groupInfo: GroupInfoConfig,
+        groupMembers: GroupMembersConfig
+    ) {
+        val pubKey = groupInfo.id().hexString()
+        val timestamp = SnodeAPI.nowWithOffset
+        configDatabase.storeGroupConfigs(pubKey, groupKeys.dump(), groupInfo.dump(), groupMembers.dump(), timestamp)
+    }
 }

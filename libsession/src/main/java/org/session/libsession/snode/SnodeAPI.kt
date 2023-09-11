@@ -19,8 +19,6 @@ import nl.komponents.kovenant.functional.bind
 import nl.komponents.kovenant.functional.map
 import nl.komponents.kovenant.task
 import org.session.libsession.messaging.MessagingModuleConfiguration
-import org.session.libsession.messaging.messages.Destination
-import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.utilities.MessageWrapper
 import org.session.libsignal.crypto.getRandomElement
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
@@ -219,7 +217,7 @@ object SnodeAPI {
         }
     }
 
-    internal fun getSingleTargetSnode(publicKey: String): Promise<Snode, Exception> {
+    fun getSingleTargetSnode(publicKey: String): Promise<Snode, Exception> {
         // SecureRandom() should be cryptographically secure
         return getSwarm(publicKey).map { it.shuffled(SecureRandom()).random() }
     }
@@ -374,7 +372,7 @@ object SnodeAPI {
         return invoke(Snode.Method.Retrieve, snode, parameters, publicKey)
     }
 
-    fun buildAuthenticatedStoreBatchInfo(publicKey: String, namespace: Int, message: SnodeMessage): SnodeBatchRequestInfo? {
+    fun buildAuthenticatedStoreBatchInfo(namespace: Int, message: SnodeMessage, signingKey: ByteArray, ed25519PubKey: String? = null): SnodeBatchRequestInfo {
         val params = mutableMapOf<String, Any>()
         // load the message data params into the sub request
         // currently loads:
@@ -388,13 +386,6 @@ object SnodeAPI {
         // used for sig generation since it is also the value used in timestamp parameter
         val messageTimestamp = message.timestamp
 
-        val userEd25519KeyPair = try {
-            MessagingModuleConfiguration.shared.getUserED25519KeyPair() ?: return null
-        } catch (e: Exception) {
-            return null
-        }
-
-        val ed25519PublicKey = userEd25519KeyPair.publicKey.asHexString
         val signature = ByteArray(Sign.BYTES)
         val verificationData = "store$namespace$messageTimestamp".toByteArray()
         try {
@@ -402,19 +393,31 @@ object SnodeAPI {
                 signature,
                 verificationData,
                 verificationData.size.toLong(),
-                userEd25519KeyPair.secretKey.asBytes
+                signingKey
             )
         } catch (e: Exception) {
             Log.e("Loki", "Signing data failed with user secret key", e)
         }
         // timestamp already set
-        params["pubkey_ed25519"] = ed25519PublicKey
+        if (ed25519PubKey != null) {
+            params["pubkey_ed25519"] = ed25519PubKey
+        }
         params["signature"] = Base64.encodeBytes(signature)
         return SnodeBatchRequestInfo(
             Snode.Method.SendMessage.rawValue,
             params,
             namespace
         )
+    }
+
+    fun buildAuthenticatedStoreBatchInfo(namespace: Int, message: SnodeMessage): SnodeBatchRequestInfo? {
+        val userEd25519KeyPair = try {
+            MessagingModuleConfiguration.shared.getUserED25519KeyPair() ?: return null
+        } catch (e: Exception) {
+            return null
+        }
+        val ed25519PublicKey = userEd25519KeyPair.publicKey.asHexString
+        return buildAuthenticatedStoreBatchInfo(namespace, message, userEd25519KeyPair.secretKey.asBytes, ed25519PublicKey)
     }
 
     /**
@@ -634,11 +637,8 @@ object SnodeAPI {
     }
 
     @WorkerThread
-    fun sendMessage(destination: Destination, rawMessage: ByteArray, ttl: Long, signingKey: ByteArray, namespace: Int): RawResponse {
-        val pubKey = when (destination) {
-            is Destination.ClosedGroup -> destination.publicKey
-            else -> throw MessageSender.Error.InvalidDestination(destination)
-        }
+    fun sendAuthenticatedMessage(message: SnodeMessage, signingKey: ByteArray, namespace: Int): RawResponse {
+        val pubKey = message.recipient
 
         return retryIfNeeded(maxRetryCount) {
             val timestamp = nowWithOffset
@@ -654,8 +654,7 @@ object SnodeAPI {
 
             val parameters = mapOf(
                 "pubKey" to pubKey,
-                "data" to Base64.encodeBytes(rawMessage),
-                "ttl" to ttl.toString(),
+                "data" to message.data,
                 "timestamp" to timestamp.toString(),
                 "sig_timestamp" to timestamp.toString(),
                 "signature" to Base64.encodeBytes(verificationData)

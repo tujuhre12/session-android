@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.core.content.contentValuesOf
 import androidx.core.database.getBlobOrNull
 import androidx.core.database.getLongOrNull
+import androidx.sqlite.db.transaction
+import org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 
 class ConfigDatabase(context: Context, helper: SQLCipherOpenHelper): Database(context, helper) {
@@ -20,6 +22,10 @@ class ConfigDatabase(context: Context, helper: SQLCipherOpenHelper): Database(co
             "CREATE TABLE $TABLE_NAME ($VARIANT TEXT NOT NULL, $PUBKEY TEXT NOT NULL, $DATA BLOB, $TIMESTAMP INTEGER NOT NULL DEFAULT 0, PRIMARY KEY($VARIANT, $PUBKEY));"
 
         private const val VARIANT_AND_PUBKEY_WHERE = "$VARIANT = ? AND $PUBKEY = ?"
+
+        val KEYS_VARIANT = SharedConfigMessage.Kind.ENCRYPTION_KEYS.name
+        val INFO_VARIANT = SharedConfigMessage.Kind.CLOSED_GROUP_INFO.name
+        val MEMBER_VARIANT = SharedConfigMessage.Kind.CLOSED_GROUP_MEMBERS.name
     }
 
     fun storeConfig(variant: String, publicKey: String, data: ByteArray, timestamp: Long) {
@@ -31,6 +37,39 @@ class ConfigDatabase(context: Context, helper: SQLCipherOpenHelper): Database(co
             TIMESTAMP to timestamp
         )
         db.insertOrUpdate(TABLE_NAME, contentValues, VARIANT_AND_PUBKEY_WHERE, arrayOf(variant, publicKey))
+    }
+
+    fun storeGroupConfigs(publicKey: String, keysConfig: ByteArray, infoConfig: ByteArray, memberConfig: ByteArray, timestamp: Long) {
+        val db = writableDatabase
+        db.transaction {
+            val keyContent = contentValuesOf(
+                VARIANT to KEYS_VARIANT,
+                PUBKEY to publicKey,
+                DATA to keysConfig,
+                TIMESTAMP to timestamp
+            )
+            db.insertOrUpdate(TABLE_NAME, keyContent, VARIANT_AND_PUBKEY_WHERE,
+                arrayOf(KEYS_VARIANT, publicKey)
+            )
+            val infoContent = contentValuesOf(
+                VARIANT to INFO_VARIANT,
+                PUBKEY to publicKey,
+                DATA to infoConfig,
+                TIMESTAMP to timestamp
+            )
+            db.insertOrUpdate(TABLE_NAME, infoContent, VARIANT_AND_PUBKEY_WHERE,
+                arrayOf(INFO_VARIANT, publicKey)
+            )
+            val memberContent = contentValuesOf(
+                VARIANT to MEMBER_VARIANT,
+                PUBKEY to publicKey,
+                DATA to memberConfig,
+                TIMESTAMP to timestamp
+            )
+            db.insertOrUpdate(TABLE_NAME, memberContent, VARIANT_AND_PUBKEY_WHERE,
+                arrayOf(MEMBER_VARIANT, publicKey)
+            )
+        }
     }
 
     fun retrieveConfigAndHashes(variant: String, publicKey: String): ByteArray? {

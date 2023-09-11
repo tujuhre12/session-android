@@ -51,7 +51,6 @@ import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.open_groups.GroupMember
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.open_groups.OpenGroupApi
-import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentId
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage
@@ -62,7 +61,9 @@ import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
 import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.snode.OnionRequestAPI
+import org.session.libsession.snode.RawResponse
 import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.GroupRecord
@@ -882,16 +883,18 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
         DatabaseComponent.get(context).groupDatabase().create(groupId, title, members, avatar, relay, admins, formationTimestamp)
     }
 
-    override suspend fun createNewGroup(groupName: String, groupDescription: String, members: Set<SessionId>): Long? {
-        val userGroups = configFactory.userGroups ?: return null
-        val ourSessionId = getUserPublicKey() ?: return null
-        val userKp = MessagingModuleConfiguration.shared.getUserED25519KeyPair() ?: return null
+    override fun createNewGroup(groupName: String, groupDescription: String, members: Set<SessionId>): Optional<Boolean> {
+        val userGroups = configFactory.userGroups ?: return Optional.absent()
+        val ourSessionId = getUserPublicKey() ?: return Optional.absent()
+        val userKp = MessagingModuleConfiguration.shared.getUserED25519KeyPair() ?: return Optional.absent()
+
+        val groupCreationTimestamp = SnodeAPI.nowWithOffset
 
         val group = userGroups.createGroup()
         val adminKey = group.adminKey
         userGroups.set(group)
-        val groupInfo = configFactory.getOrConstructGroupInfoConfig(group.groupSessionId) ?: return null
-        val groupMembers = configFactory.getOrConstructGroupMemberConfig(group.groupSessionId) ?: return null
+        val groupInfo = configFactory.getOrConstructGroupInfoConfig(group.groupSessionId) ?: return Optional.absent()
+        val groupMembers = configFactory.getOrConstructGroupMemberConfig(group.groupSessionId) ?: return Optional.absent()
 
         with (groupInfo) {
             setName(groupName)
@@ -910,9 +913,68 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
             members = groupMembers
         )
 
+        val newGroupRecipient = group.groupSessionId.hexString()
+        val configTtl = 1 * 24 * 60 * 60 * 1000L // TODO: just testing here, 1 day so we don't fill large space on network
         // Test the sending
+        val keyPush = groupKeys.pendingPush() ?: return Optional.absent()
+        val keysSnodeMessage = SnodeMessage(
+            newGroupRecipient,
+            Base64.encodeBytes(keyPush),
+            configTtl,
+            groupCreationTimestamp
+        )
+        val keysBatchInfo = SnodeAPI.buildAuthenticatedStoreBatchInfo(
+            GroupKeysConfig.storageNamespace(),
+            keysSnodeMessage,
+            adminKey
+        )
+
+        val (infoPush, infoSeqNo) = groupInfo.push()
+        val infoSnodeMessage = SnodeMessage(
+            newGroupRecipient,
+            Base64.encodeBytes(keyPush),
+            configTtl,
+            groupCreationTimestamp
+        )
+        val infoBatchInfo = SnodeAPI.buildAuthenticatedStoreBatchInfo(
+            groupInfo.configNamespace(),
+            infoSnodeMessage,
+            adminKey
+        )
+
+        val (memberPush, memberSeqNo) = groupMembers.push()
+        val memberSnodeMessage = SnodeMessage(
+            newGroupRecipient,
+            Base64.encodeBytes(memberPush),
+            configTtl,
+            groupCreationTimestamp
+        )
+        val memberBatchInfo = SnodeAPI.buildAuthenticatedStoreBatchInfo(
+            groupMembers.configNamespace(),
+            memberSnodeMessage,
+            adminKey
+        )
+
         try {
-            MessageSender.sendConfig(Destination.ClosedGroup(group.groupSessionId.hexString()), groupInfo, adminKey)
+            val snode = SnodeAPI.getSingleTargetSnode(newGroupRecipient).get()
+            val response = SnodeAPI.getRawBatchResponse(
+                snode,
+                newGroupRecipient,
+                listOf(keysBatchInfo, infoBatchInfo, memberBatchInfo),
+                true
+            ).get()
+
+            @Suppress("UNCHECKED_CAST")
+            val responseList = (response["results"] as List<RawResponse>)
+
+            val keyResponse = responseList[0]
+            val infoResponse = responseList[1]
+            val memberResponse = responseList[2]
+            // TODO: check response success
+            configFactory.saveGroupConfigs(groupKeys, groupInfo, groupMembers) // now check poller to be all
+            ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(context)
+            Log.d("Group Config", "Saved group config for $newGroupRecipient")
+            return Optional.of(true)
         } catch (e: Exception) {
             Log.e("Group Config", e)
             Log.e("Group Config", "Deleting group from our group")
@@ -920,7 +982,7 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
             userGroups.erase(group)
         }
 
-        return 0
+        return Optional.absent()
     }
 
     override fun createInitialConfigGroup(groupPublicKey: String, name: String, members: Map<String, Boolean>, formationTimestamp: Long, encryptionKeyPair: ECKeyPair) {

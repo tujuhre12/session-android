@@ -25,6 +25,11 @@ interface ConfigFactoryProtocol {
 
     fun conversationInConfig(publicKey: String?, groupPublicKey: String?, openGroupId: String?, visibleOnly: Boolean): Boolean
     fun canPerformChange(variant: String, publicKey: String, changeTimestampMs: Long): Boolean
+    fun saveGroupConfigs(
+        groupKeys: GroupKeysConfig,
+        groupInfo: GroupInfoConfig,
+        groupMembers: GroupMembersConfig
+    )
 }
 
 interface ConfigFactoryUpdateListener {

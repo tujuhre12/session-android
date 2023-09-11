@@ -3,6 +3,13 @@
 #include "group_members.h"
 
 extern "C"
+JNIEXPORT jint JNICALL
+        Java_network_loki_messenger_libsession_1util_GroupKeysConfig_00024Companion_storageNamespace(JNIEnv* env,
+                                                                                                     jobject thiz) {
+    return (jint)session::config::Namespace::GroupKeys;
+}
+
+extern "C"
 JNIEXPORT jobject JNICALL
 Java_network_loki_messenger_libsession_1util_GroupKeysConfig_00024Companion_newInstance(JNIEnv *env,
                                                                                         jobject thiz,

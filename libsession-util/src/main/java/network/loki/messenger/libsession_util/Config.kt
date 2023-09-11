@@ -288,8 +288,10 @@ class GroupKeysConfig(pointer: Long): ConfigBase(pointer), Closeable {
             info: GroupInfoConfig,
             members: GroupMembersConfig
         ): GroupKeysConfig
+        external fun storageNamespace(): Int
     }
     external fun groupKeys(): Stack<ByteArray>
+    external fun keyDump(): ByteArray
     external fun loadKey(hash: String,
                          data: ByteArray,
                          msgId: ByteArray,

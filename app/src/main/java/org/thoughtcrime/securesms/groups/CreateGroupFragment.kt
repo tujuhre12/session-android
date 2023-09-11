@@ -44,6 +44,7 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.SessionId
 import org.thoughtcrime.securesms.conversation.start.NewConversationDelegate
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
+import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.EditableAvatar
 import org.thoughtcrime.securesms.ui.NavigationBar
 import org.thoughtcrime.securesms.ui.PreviewTheme
@@ -87,20 +88,22 @@ class CreateGroupFragment : Fragment() {
     fun CreateGroupScreen(viewState: ViewState,
                           createGroupState: CreateGroupState,
                           modifier: Modifier = Modifier) {
-        CreateGroup(
-            viewState,
-            createGroupState,
-            onCreate = { newGroup ->
-                // launch something to create here
-                viewModel.tryCreateGroup(newGroup)
-            },
-            onClose = {
-                delegate.onDialogClosePressed()
-            },
-            onBack = {
-                delegate.onDialogBackPressed()
-            }
-        )
+        AppTheme {
+            CreateGroup(
+                viewState,
+                createGroupState,
+                onCreate = { newGroup ->
+                    // launch something to create here
+                    viewModel.tryCreateGroup(newGroup)
+                },
+                onClose = {
+                    delegate.onDialogClosePressed()
+                },
+                onBack = {
+                    delegate.onDialogBackPressed()
+                }
+            )
+        }
     }
 
     data class ViewState(
@@ -221,7 +224,8 @@ fun ClosedGroupPreview(
 ) {
     PreviewTheme(themeResId) {
         CreateGroup(
-            CreateGroupState("Group Name", "Test Group Description", emptySet()),
+            viewState = CreateGroupFragment.ViewState(false, null, null),
+            createGroupState = CreateGroupState("Group Name", "Test Group Description", emptySet()),
             onCreate = {},
             onClose = {},
             onBack = {},
