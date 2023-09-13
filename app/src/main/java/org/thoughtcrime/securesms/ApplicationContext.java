@@ -34,10 +34,9 @@ import androidx.lifecycle.ProcessLifecycleOwner;
 import org.conscrypt.Conscrypt;
 import org.session.libsession.avatars.AvatarHelper;
 import org.session.libsession.database.MessageDataProvider;
-import org.session.libsession.database.StorageProtocol;
 import org.session.libsession.messaging.MessagingModuleConfiguration;
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier;
-import org.session.libsession.messaging.sending_receiving.pollers.ClosedGroupPollerV2;
+import org.session.libsession.messaging.sending_receiving.pollers.LegacyClosedGroupPollerV2;
 import org.session.libsession.messaging.sending_receiving.pollers.Poller;
 import org.session.libsession.snode.SnodeModule;
 import org.session.libsession.utilities.Address;
@@ -283,7 +282,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         if (poller != null) {
             poller.stopIfNeeded();
         }
-        ClosedGroupPollerV2.getShared().stopAll();
+        LegacyClosedGroupPollerV2.getShared().stopAll();
     }
 
     @Override
@@ -446,7 +445,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         if (poller != null) {
             poller.startIfNeeded();
         }
-        ClosedGroupPollerV2.getShared().start();
+        LegacyClosedGroupPollerV2.getShared().start();
     }
 
     private void resubmitProfilePictureIfNeeded() {

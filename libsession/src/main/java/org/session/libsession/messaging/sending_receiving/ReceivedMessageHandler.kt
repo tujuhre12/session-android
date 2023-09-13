@@ -25,7 +25,7 @@ import org.session.libsession.messaging.sending_receiving.attachments.PointerAtt
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
 import org.session.libsession.messaging.sending_receiving.notifications.PushRegistryV1
-import org.session.libsession.messaging.sending_receiving.pollers.ClosedGroupPollerV2
+import org.session.libsession.messaging.sending_receiving.pollers.LegacyClosedGroupPollerV2
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
 import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.messaging.utilities.WebRtcUtils
@@ -580,7 +580,7 @@ private fun handleNewClosedGroup(sender: String, sentTimestamp: Long, groupPubli
         storage.insertIncomingInfoMessage(context, sender, groupID, SignalServiceGroup.Type.CREATION, name, members, admins, sentTimestamp)
     }
     // Start polling
-    ClosedGroupPollerV2.shared.startPolling(groupPublicKey)
+    LegacyClosedGroupPollerV2.shared.startPolling(groupPublicKey)
 }
 
 private fun MessageReceiver.handleClosedGroupEncryptionKeyPair(message: ClosedGroupControlMessage) {
@@ -886,7 +886,7 @@ fun MessageReceiver.disableLocalGroupAndUnsubscribe(groupPublicKey: String, grou
     // Notify the PN server
     PushRegistryV1.unsubscribeGroup(groupPublicKey, publicKey = userPublicKey)
     // Stop polling
-    ClosedGroupPollerV2.shared.stopPolling(groupPublicKey)
+    LegacyClosedGroupPollerV2.shared.stopPolling(groupPublicKey)
 
     if (delete) {
         val threadId = storage.getOrCreateThreadIdFor(Address.fromSerialized(groupID))

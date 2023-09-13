@@ -28,7 +28,6 @@ sealed class ConfigBase(protected val /* yucky */ pointer: Long) {
             is ConversationVolatileConfig -> Kind.CONVO_INFO_VOLATILE
             is UserGroupsConfig -> Kind.GROUPS
             is GroupInfoConfig -> Kind.CLOSED_GROUP_INFO
-            is GroupKeysConfig -> Kind.ENCRYPTION_KEYS
             is GroupMembersConfig -> Kind.CLOSED_GROUP_MEMBERS
         }
 
@@ -275,7 +274,7 @@ class GroupMembersConfig(pointer: Long): ConfigBase(pointer), Closeable {
     }
 }
 
-class GroupKeysConfig(pointer: Long): ConfigBase(pointer), Closeable {
+class GroupKeysConfig(private val pointer: Long): Closeable {
     companion object {
         init {
             System.loadLibrary("session_util")
@@ -292,16 +291,16 @@ class GroupKeysConfig(pointer: Long): ConfigBase(pointer), Closeable {
     }
     external fun groupKeys(): Stack<ByteArray>
     external fun keyDump(): ByteArray
-    external fun loadKey(hash: String,
-                         data: ByteArray,
-                         msgId: ByteArray,
+    external fun loadKey(message: ByteArray,
+                         hash: String,
                          timestampMs: Long,
                          info: GroupInfoConfig,
                          members: GroupMembersConfig)
     external fun needsRekey(): Boolean
     external fun pendingKey(): ByteArray?
-    external fun pendingPush(): ByteArray?
+    external fun pendingConfig(): ByteArray?
     external fun rekey(info: GroupInfoConfig, members: GroupMembersConfig): ByteArray
+    external fun free()
     override fun close() {
         free()
     }

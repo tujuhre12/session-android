@@ -9,7 +9,7 @@ import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.messages.control.ClosedGroupControlMessage
 import org.session.libsession.messaging.sending_receiving.MessageSender.Error
 import org.session.libsession.messaging.sending_receiving.notifications.PushRegistryV1
-import org.session.libsession.messaging.sending_receiving.pollers.ClosedGroupPollerV2
+import org.session.libsession.messaging.sending_receiving.pollers.LegacyClosedGroupPollerV2
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
@@ -96,7 +96,7 @@ fun MessageSender.create(
         // Notify the PN server
         PushRegistryV1.register(device = device, publicKey = userPublicKey)
         // Start polling
-        ClosedGroupPollerV2.shared.startPolling(groupPublicKey)
+        LegacyClosedGroupPollerV2.shared.startPolling(groupPublicKey)
         // Fulfill the promise
         deferred.resolve(groupID)
     }

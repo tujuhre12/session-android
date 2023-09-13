@@ -77,9 +77,8 @@ class CreateGroupFragment : Fragment() {
         }
     }
 
-    private fun openConversationActivity(context: Context, threadId: Long, recipient: Recipient) {
+    private fun openConversationActivity(context: Context, recipient: Recipient) {
         val intent = Intent(context, ConversationActivityV2::class.java)
-        intent.putExtra(ConversationActivityV2.THREAD_ID, threadId)
         intent.putExtra(ConversationActivityV2.ADDRESS, recipient.address)
         context.startActivity(intent)
     }
@@ -94,7 +93,10 @@ class CreateGroupFragment : Fragment() {
                 createGroupState,
                 onCreate = { newGroup ->
                     // launch something to create here
-                    viewModel.tryCreateGroup(newGroup)
+                    val groupRecipient = viewModel.tryCreateGroup(newGroup)
+                    groupRecipient?.let { recipient ->
+                        openConversationActivity(requireContext(), recipient)
+                    }
                 },
                 onClose = {
                     delegate.onDialogClosePressed()

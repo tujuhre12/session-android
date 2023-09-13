@@ -503,7 +503,8 @@ public class ThreadDatabase extends Database {
   }
 
   public Cursor getApprovedConversationList() {
-    String where  = "((" + HAS_SENT + " = 1 OR " + RecipientDatabase.APPROVED + " = 1 OR "+ GroupDatabase.TABLE_NAME +"."+GROUP_ID+" LIKE '"+ LEGACY_CLOSED_GROUP_PREFIX +"%') OR " + GroupDatabase.TABLE_NAME + "." + GROUP_ID + " LIKE '" + OPEN_GROUP_PREFIX + "%') " +
+    String where  = "((" + HAS_SENT + " = 1 OR " + RecipientDatabase.APPROVED + " = 1 OR "+ GroupDatabase.TABLE_NAME +"."+GROUP_ID+" LIKE '"+ LEGACY_CLOSED_GROUP_PREFIX +"%' OR "+RecipientDatabase.TABLE_NAME+"."+RecipientDatabase.ADDRESS+" LIKE '"+ IdPrefix.GROUP.getValue() +"%') " +
+            "OR " + GroupDatabase.TABLE_NAME + "." + GROUP_ID + " LIKE '" + OPEN_GROUP_PREFIX + "%') " +
             "AND " + ARCHIVED + " = 0 ";
     return getConversationList(where);
   }
@@ -830,9 +831,7 @@ public class ThreadDatabase extends Database {
   }
 
   private boolean deleteThreadOnEmpty(long threadId) {
-    return false; // TODO: test the deletion / clearing logic here to make sure this is the desired functionality
-//    Recipient threadRecipient = getRecipientForThreadId(threadId);
-//    return threadRecipient != null && !threadRecipient.isOpenGroupRecipient();
+    return false;
   }
 
   private @NonNull String getFormattedBodyFor(@NonNull MessageRecord messageRecord) {

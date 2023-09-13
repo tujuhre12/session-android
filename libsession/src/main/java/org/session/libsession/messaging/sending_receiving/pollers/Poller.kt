@@ -210,7 +210,6 @@ class Poller(private val configFactory: ConfigFactoryProtocol, debounceTimer: Ti
                         val responseList = (rawResponses["results"] as List<RawResponse>)
                         // in case we had null configs, the array won't be fully populated
                         // index of the sparse array key iterator should be the request index, with the key being the namespace
-                        // TODO: add in specific ordering of config namespaces for processing
                         listOfNotNull(
                             configFactory.user?.configNamespace(),
                             configFactory.contacts?.configNamespace(),

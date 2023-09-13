@@ -350,6 +350,6 @@ class ConfigFactory(
     ) {
         val pubKey = groupInfo.id().hexString()
         val timestamp = SnodeAPI.nowWithOffset
-        configDatabase.storeGroupConfigs(pubKey, groupKeys.dump(), groupInfo.dump(), groupMembers.dump(), timestamp)
+        configDatabase.storeGroupConfigs(pubKey, groupKeys.keyDump(), groupInfo.dump(), groupMembers.dump(), timestamp)
     }
 }

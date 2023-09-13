@@ -56,7 +56,7 @@ import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAt
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
 import org.session.libsession.messaging.sending_receiving.notifications.PushRegistryV1
-import org.session.libsession.messaging.sending_receiving.pollers.ClosedGroupPollerV2
+import org.session.libsession.messaging.sending_receiving.pollers.LegacyClosedGroupPollerV2
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
 import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.messaging.utilities.UpdateMessageData
@@ -124,8 +124,11 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
                 }
                 address.isClosedGroup -> {
                     val sessionId = address.serialize()
-                    val closedGroup = groups.getClosedGroup(sessionId)
-                    TODO("Set the closed group's convo volatile info")
+                    groups.getClosedGroup(sessionId) ?: return Log.d("Closed group doesn't exist locally", NullPointerException())
+                    val conversation = Conversation.ClosedGroup(
+                        sessionId, 0, false
+                    )
+                    volatile.set(conversation)
                 }
                 address.isOpenGroup -> {
                     // these should be added on the group join / group info fetch
@@ -465,7 +468,7 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
             is ConversationVolatileConfig -> updateConvoVolatile(forConfigObject)
             is UserGroupsConfig -> updateUserGroups(forConfigObject)
             is GroupInfoConfig -> updateGroupInfo(forConfigObject)
-            is GroupKeysConfig -> updateGroupKeys(forConfigObject)
+            // is GroupKeysConfig -> updateGroupKeys(forConfigObject)
             is GroupMembersConfig -> updateGroupMembers(forConfigObject)
         }
     }
@@ -545,7 +548,7 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
                 is Conversation.OneToOne -> getThreadIdFor(conversation.sessionId, null, null, createThread = false)
                 is Conversation.LegacyGroup -> getThreadIdFor("", conversation.groupId,null, createThread = false)
                 is Conversation.Community -> getThreadIdFor("",null, "${conversation.baseCommunityInfo.baseUrl.removeSuffix("/")}.${conversation.baseCommunityInfo.room}", createThread = false)
-                is Conversation.ClosedGroup -> getThreadIdFor(conversation.sessionId, null, null, createThread = false)
+                is Conversation.ClosedGroup -> getThreadIdFor(conversation.sessionId, null, null, createThread = false) // New groups will be managed bia libsession
             }
             if (threadId != null) {
                 if (conversation.lastRead > getLastSeen(threadId)) {
@@ -607,6 +610,15 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
             }
         }
 
+        val newClosedGroups = userGroups.allClosedGroupInfo()
+        for (closedGroup in newClosedGroups) {
+            val recipient = Recipient.from(context, Address.fromSerialized(closedGroup.groupSessionId.hexString()), false)
+            setRecipientApprovedMe(recipient, true)
+            setRecipientApproved(recipient, true)
+            val threadId = getOrCreateThreadIdFor(recipient.address)
+            setPinned(threadId, closedGroup.priority == PRIORITY_PINNED)
+        }
+
         for (group in lgc) {
             val existingGroup = existingClosedGroups.firstOrNull { GroupUtil.doubleDecodeGroupId(it.encodedId) == group.sessionId.hexString() }
             val existingThread = existingGroup?.let { getThreadId(existingGroup.encodedId) }
@@ -643,7 +655,7 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
                 insertOutgoingInfoMessage(context, groupId, SignalServiceGroup.Type.CREATION, title, members.map { it.serialize() }, admins.map { it.serialize() }, threadID, formationTimestamp)
                 // Don't create config group here, it's from a config update
                 // Start polling
-                ClosedGroupPollerV2.shared.startPolling(group.sessionId.hexString())
+                LegacyClosedGroupPollerV2.shared.startPolling(group.sessionId.hexString())
             }
         }
     }
@@ -883,8 +895,9 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
         DatabaseComponent.get(context).groupDatabase().create(groupId, title, members, avatar, relay, admins, formationTimestamp)
     }
 
-    override fun createNewGroup(groupName: String, groupDescription: String, members: Set<SessionId>): Optional<Boolean> {
+    override fun createNewGroup(groupName: String, groupDescription: String, members: Set<SessionId>): Optional<Recipient> {
         val userGroups = configFactory.userGroups ?: return Optional.absent()
+        val convoVolatile = configFactory.convoVolatile ?: return Optional.absent()
         val ourSessionId = getUserPublicKey() ?: return Optional.absent()
         val userKp = MessagingModuleConfiguration.shared.getUserED25519KeyPair() ?: return Optional.absent()
 
@@ -916,7 +929,9 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
         val newGroupRecipient = group.groupSessionId.hexString()
         val configTtl = 1 * 24 * 60 * 60 * 1000L // TODO: just testing here, 1 day so we don't fill large space on network
         // Test the sending
-        val keyPush = groupKeys.pendingPush() ?: return Optional.absent()
+        val keyPush = groupKeys.pendingConfig() ?: return Optional.absent()
+        val pendingKey = groupKeys.pendingKey() ?: return Optional.absent()
+
         val keysSnodeMessage = SnodeMessage(
             newGroupRecipient,
             Base64.encodeBytes(keyPush),
@@ -932,7 +947,7 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
         val (infoPush, infoSeqNo) = groupInfo.push()
         val infoSnodeMessage = SnodeMessage(
             newGroupRecipient,
-            Base64.encodeBytes(keyPush),
+            Base64.encodeBytes(infoPush),
             configTtl,
             groupCreationTimestamp
         )
@@ -968,13 +983,28 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
             val responseList = (response["results"] as List<RawResponse>)
 
             val keyResponse = responseList[0]
+            val keyHash = (keyResponse["body"] as Map<String,Any>)["hash"] as String
+            val keyTimestamp = (keyResponse["body"] as Map<String,Any>)["t"] as Long
             val infoResponse = responseList[1]
+            val infoHash = (infoResponse["body"] as Map<String,Any>)["hash"] as String
             val memberResponse = responseList[2]
+            val memberHash = (memberResponse["body"] as Map<String,Any>)["hash"] as String
             // TODO: check response success
+            groupKeys.loadKey(keyPush, keyHash, keyTimestamp, groupInfo, groupMembers)
+            groupInfo.confirmPushed(infoSeqNo, infoHash)
+            groupMembers.confirmPushed(memberSeqNo, memberHash)
+
             configFactory.saveGroupConfigs(groupKeys, groupInfo, groupMembers) // now check poller to be all
+            convoVolatile.set(Conversation.ClosedGroup(newGroupRecipient, groupCreationTimestamp, false))
             ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(context)
             Log.d("Group Config", "Saved group config for $newGroupRecipient")
-            return Optional.of(true)
+            groupKeys.free()
+            groupInfo.free()
+            groupMembers.free()
+            val groupRecipient = Recipient.from(context, Address.fromSerialized(newGroupRecipient), false)
+            setRecipientApprovedMe(groupRecipient, true)
+            setRecipientApproved(groupRecipient, true)
+            return Optional.of(groupRecipient)
         } catch (e: Exception) {
             Log.e("Group Config", e)
             Log.e("Group Config", "Deleting group from our group")
@@ -1648,7 +1678,7 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
     }
 
     override fun getRecipientApproved(address: Address): Boolean {
-        return DatabaseComponent.get(context).recipientDatabase().getApproved(address)
+        return address.isClosedGroup || DatabaseComponent.get(context).recipientDatabase().getApproved(address)
     }
 
     override fun setRecipientApproved(recipient: Recipient, approved: Boolean) {
