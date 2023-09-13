@@ -65,6 +65,7 @@ import org.thoughtcrime.securesms.dependencies.AppComponent;
 import org.thoughtcrime.securesms.dependencies.ConfigFactory;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 import org.thoughtcrime.securesms.dependencies.DatabaseModule;
+import org.thoughtcrime.securesms.dependencies.PollerFactory;
 import org.thoughtcrime.securesms.emoji.EmojiSource;
 import org.thoughtcrime.securesms.groups.OpenGroupManager;
 import org.thoughtcrime.securesms.home.HomeActivity;
@@ -149,6 +150,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     @Inject TextSecurePreferences textSecurePreferences;
     @Inject PushRegistry pushRegistry;
     @Inject ConfigFactory configFactory;
+    @Inject PollerFactory pollerFactory;
     CallMessageProcessor callMessageProcessor;
     MessagingModuleConfiguration messagingModuleConfiguration;
 
@@ -289,6 +291,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     public void onTerminate() {
         stopKovenant(); // Loki
         OpenGroupManager.INSTANCE.stopPolling();
+        pollerFactory.stopAll();
         super.onTerminate();
     }
 
@@ -445,6 +448,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         if (poller != null) {
             poller.startIfNeeded();
         }
+        pollerFactory.startAll();
         LegacyClosedGroupPollerV2.getShared().start();
     }
 

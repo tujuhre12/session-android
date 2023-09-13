@@ -7,7 +7,6 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import org.session.libsession.database.MessageDataProvider
-import org.session.libsession.database.StorageProtocol
 import org.thoughtcrime.securesms.attachments.DatabaseAttachmentProvider
 import org.thoughtcrime.securesms.crypto.AttachmentSecret
 import org.thoughtcrime.securesms.crypto.AttachmentSecretProvider
@@ -132,8 +131,12 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideStorage(@ApplicationContext context: Context, openHelper: SQLCipherOpenHelper, configFactory: ConfigFactory, threadDatabase: ThreadDatabase): Storage {
-        val storage = Storage(context,openHelper, configFactory)
+    fun provideStorage(@ApplicationContext context: Context,
+                       openHelper: SQLCipherOpenHelper,
+                       configFactory: ConfigFactory,
+                       threadDatabase: ThreadDatabase,
+                       pollerFactory: PollerFactory): Storage {
+        val storage = Storage(context, openHelper, configFactory, pollerFactory)
         threadDatabase.setUpdateListener(storage)
         return storage
     }

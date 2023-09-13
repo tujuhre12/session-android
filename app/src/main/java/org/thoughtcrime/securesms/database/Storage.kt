@@ -89,6 +89,7 @@ import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
+import org.thoughtcrime.securesms.dependencies.PollerFactory
 import org.thoughtcrime.securesms.groups.ClosedGroupManager
 import org.thoughtcrime.securesms.groups.GroupManager
 import org.thoughtcrime.securesms.groups.OpenGroupManager
@@ -99,7 +100,12 @@ import java.security.MessageDigest
 import network.loki.messenger.libsession_util.util.Contact as LibSessionContact
 import network.loki.messenger.libsession_util.util.GroupMember as LibSessionGroupMember
 
-open class Storage(context: Context, helper: SQLCipherOpenHelper, private val configFactory: ConfigFactory) : Database(context, helper), StorageProtocol,
+open class Storage(
+    context: Context,
+    helper: SQLCipherOpenHelper,
+    private val configFactory: ConfigFactory,
+    private val pollerFactory: PollerFactory
+) : Database(context, helper), StorageProtocol,
     ThreadDatabase.ConversationThreadUpdateListener {
 
     override fun threadCreated(address: Address, threadId: Long) {
@@ -617,6 +623,7 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
             setRecipientApproved(recipient, true)
             val threadId = getOrCreateThreadIdFor(recipient.address)
             setPinned(threadId, closedGroup.priority == PRIORITY_PINNED)
+            pollerFactory.pollerFor(closedGroup.groupSessionId)?.start()
         }
 
         for (group in lgc) {
@@ -1003,6 +1010,7 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
             val groupRecipient = Recipient.from(context, Address.fromSerialized(newGroupRecipient), false)
             setRecipientApprovedMe(groupRecipient, true)
             setRecipientApproved(groupRecipient, true)
+            pollerFactory.updatePollers()
             return Optional.of(groupRecipient)
         } catch (e: Exception) {
             Log.e("Group Config", e)
