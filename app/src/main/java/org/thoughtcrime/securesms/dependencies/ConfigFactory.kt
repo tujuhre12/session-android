@@ -176,7 +176,7 @@ class ConfigFactory(
         it.adminKey to it.authData
     }
 
-    override fun getOrConstructGroupInfoConfig(groupSessionId: SessionId): GroupInfoConfig? = getGroupAuthInfo(groupSessionId)?.let { (sk, _) ->
+    override fun getGroupInfoConfig(groupSessionId: SessionId): GroupInfoConfig? = getGroupAuthInfo(groupSessionId)?.let { (sk, _) ->
         // get any potential initial dumps
         val dump = configDatabase.retrieveConfigAndHashes(
             SharedConfigMessage.Kind.CLOSED_GROUP_INFO.name,
@@ -191,10 +191,10 @@ class ConfigFactory(
         val (userSk, _) = maybeGetUserInfo() ?: return@let null
 
         // Get the group info or return early
-        val info = getOrConstructGroupInfoConfig(groupSessionId) ?: return@let null
+        val info = getGroupInfoConfig(groupSessionId) ?: return@let null
 
         // Get the group members or return early
-        val members = getOrConstructGroupMemberConfig(groupSessionId) ?: return@let null
+        val members = getGroupMemberConfig(groupSessionId) ?: return@let null
 
         // Get the dump or empty
         val dump = configDatabase.retrieveConfigAndHashes(
@@ -213,7 +213,7 @@ class ConfigFactory(
         )
     }
 
-    override fun getOrConstructGroupMemberConfig(groupSessionId: SessionId): GroupMembersConfig? = getGroupAuthInfo(groupSessionId)?.let { (sk, auth) ->
+    override fun getGroupMemberConfig(groupSessionId: SessionId): GroupMembersConfig? = getGroupAuthInfo(groupSessionId)?.let { (sk, auth) ->
         // Get initial dump if we have one
         val dump = configDatabase.retrieveConfigAndHashes(
             SharedConfigMessage.Kind.CLOSED_GROUP_MEMBERS.name,

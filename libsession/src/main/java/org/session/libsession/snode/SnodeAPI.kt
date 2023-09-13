@@ -460,19 +460,21 @@ object SnodeAPI {
         )
     }
 
-    fun buildAuthenticatedRetrieveBatchRequest(snode: Snode, publicKey: String, namespace: Int = 0, maxSize: Int? = null): SnodeBatchRequestInfo? {
+    fun buildAuthenticatedRetrieveBatchRequest(snode: Snode,
+                                               publicKey: String,
+                                               namespace: Int,
+                                               maxSize: Int? = null,
+                                               signingKey: ByteArray,
+                                               ed25519PublicKey: Key? = null): SnodeBatchRequestInfo? {
         val lastHashValue = database.getLastMessageHashValue(snode, publicKey, namespace) ?: ""
         val params = mutableMapOf<String, Any>(
             "pubkey" to publicKey,
-            "last_hash" to lastHashValue,
+            "last_hash" to lastHashValue
         )
-        val userEd25519KeyPair = try {
-            MessagingModuleConfiguration.shared.getUserED25519KeyPair() ?: return null
-        } catch (e: Exception) {
-            return null
+        if (ed25519PublicKey != null) {
+            params["pubkey_ed25519"] = ed25519PublicKey.asHexString
         }
-        val ed25519PublicKey = userEd25519KeyPair.publicKey.asHexString
-        val timestamp = System.currentTimeMillis() + clockOffset
+        val timestamp = nowWithOffset
         val signature = ByteArray(Sign.BYTES)
         val verificationData = if (namespace == 0) "retrieve$timestamp".toByteArray()
         else "retrieve$namespace$timestamp".toByteArray()
@@ -481,14 +483,13 @@ object SnodeAPI {
                 signature,
                 verificationData,
                 verificationData.size.toLong(),
-                userEd25519KeyPair.secretKey.asBytes
+                signingKey
             )
         } catch (e: Exception) {
-            Log.e("Loki", "Signing data failed with user secret key", e)
+            Log.e("BatchRetrieve", "Signing data failed with provided signing key", e)
             return null
         }
         params["timestamp"] = timestamp
-        params["pubkey_ed25519"] = ed25519PublicKey
         params["signature"] = Base64.encodeBytes(signature)
         if (namespace != 0) {
             params["namespace"] = namespace
@@ -500,6 +501,24 @@ object SnodeAPI {
             Snode.Method.Retrieve.rawValue,
             params,
             namespace
+        )
+    }
+
+    fun buildAuthenticatedRetrieveBatchRequest(snode: Snode, publicKey: String, namespace: Int = 0, maxSize: Int? = null): SnodeBatchRequestInfo? {
+        val userEd25519KeyPair = try {
+            MessagingModuleConfiguration.shared.getUserED25519KeyPair() ?: return null
+        } catch (e: Exception) {
+            return null
+        }
+        val secretKey = userEd25519KeyPair.secretKey.asBytes
+        val ed25519PublicKey = userEd25519KeyPair.publicKey
+        return buildAuthenticatedRetrieveBatchRequest(
+            snode,
+            publicKey,
+            namespace,
+            maxSize,
+            secretKey,
+            ed25519PublicKey
         )
     }
 

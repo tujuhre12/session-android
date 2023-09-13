@@ -32,6 +32,10 @@ sealed class GroupInfo {
             return result
         }
 
+        fun signingKey(): ByteArray {
+            return if (adminKey.isNotEmpty()) adminKey else authData
+        }
+
     }
 
     data class LegacyGroupInfo(

@@ -906,8 +906,8 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
         val group = userGroups.createGroup()
         val adminKey = group.adminKey
         userGroups.set(group)
-        val groupInfo = configFactory.getOrConstructGroupInfoConfig(group.groupSessionId) ?: return Optional.absent()
-        val groupMembers = configFactory.getOrConstructGroupMemberConfig(group.groupSessionId) ?: return Optional.absent()
+        val groupInfo = configFactory.getGroupInfoConfig(group.groupSessionId) ?: return Optional.absent()
+        val groupMembers = configFactory.getGroupMemberConfig(group.groupSessionId) ?: return Optional.absent()
 
         with (groupInfo) {
             setName(groupName)
@@ -921,7 +921,7 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
         val groupKeys = GroupKeysConfig.newInstance(
             userKp.secretKey.asBytes,
             Hex.fromStringCondensed(group.groupSessionId.publicKey),
-            group.adminKey,
+            adminKey,
             info = groupInfo,
             members = groupMembers
         )
@@ -930,7 +930,6 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
         val configTtl = 1 * 24 * 60 * 60 * 1000L // TODO: just testing here, 1 day so we don't fill large space on network
         // Test the sending
         val keyPush = groupKeys.pendingConfig() ?: return Optional.absent()
-        val pendingKey = groupKeys.pendingKey() ?: return Optional.absent()
 
         val keysSnodeMessage = SnodeMessage(
             newGroupRecipient,
@@ -1180,7 +1179,7 @@ open class Storage(context: Context, helper: SQLCipherOpenHelper, private val co
     }
 
     override fun getMembers(groupPublicKey: String): List<LibSessionGroupMember> =
-        configFactory.getOrConstructGroupMemberConfig(SessionId.from(groupPublicKey))?.all()?.toList() ?: emptyList()
+        configFactory.getGroupMemberConfig(SessionId.from(groupPublicKey))?.all()?.toList() ?: emptyList()
 
     override fun setServerCapabilities(server: String, capabilities: List<String>) {
         return DatabaseComponent.get(context).lokiAPIDatabase().setServerCapabilities(server, capabilities)

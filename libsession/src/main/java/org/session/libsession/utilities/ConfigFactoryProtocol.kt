@@ -16,8 +16,8 @@ interface ConfigFactoryProtocol {
     val convoVolatile: ConversationVolatileConfig?
     val userGroups: UserGroupsConfig?
 
-    fun getOrConstructGroupInfoConfig(groupSessionId: SessionId): GroupInfoConfig?
-    fun getOrConstructGroupMemberConfig(groupSessionId: SessionId): GroupMembersConfig?
+    fun getGroupInfoConfig(groupSessionId: SessionId): GroupInfoConfig?
+    fun getGroupMemberConfig(groupSessionId: SessionId): GroupMembersConfig?
     fun getGroupKeysConfig(groupSessionId: SessionId): GroupKeysConfig?
 
     fun getUserConfigs(): List<ConfigBase>
