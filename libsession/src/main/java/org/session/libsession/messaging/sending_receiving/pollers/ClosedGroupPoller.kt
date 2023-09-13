@@ -4,6 +4,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import network.loki.messenger.libsession_util.GroupInfoConfig
 import network.loki.messenger.libsession_util.GroupKeysConfig
@@ -62,7 +63,7 @@ class ClosedGroupPoller(private val executor: CoroutineScope,
         job = executor.launch(Dispatchers.IO) {
             val closedGroups = configFactoryProtocol.userGroups?: return@launch
             isRunning = true
-            while (isRunning) {
+            while (isActive && isRunning) {
                 val group = closedGroups.getClosedGroup(closedGroupSessionId.hexString()) ?: break
                 val nextPoll = poll(group)
                 if (nextPoll != null) {
@@ -132,6 +133,7 @@ class ClosedGroupPoller(private val executor: CoroutineScope,
             // TODO: add the extend duration TTLs for known hashes here
 
             // if poll result body is null here we don't have any things ig
+            Log.d("ClosedGroupPoller", "Poll results @${SnodeAPI.nowWithOffset}:")
             (pollResult["results"] as List<RawResponse>).forEachIndexed { index, response ->
                 when (index) {
                     keysIndex -> handleKeyPoll(response, keys, info, members)
@@ -177,7 +179,7 @@ class ClosedGroupPoller(private val executor: CoroutineScope,
         // get all the data to hash objects and process them
         parseMessages(response).forEach { (message, hash, timestamp) ->
             keysConfig.loadKey(message, hash, timestamp, infoConfig, membersConfig)
-            Log.d("ClosedGroupPoller", "Merged $hash for keys")
+            Log.d("ClosedGroupPoller", "Merged $hash for keys on ${closedGroupSessionId.hexString()}")
         }
     }
 
@@ -185,7 +187,7 @@ class ClosedGroupPoller(private val executor: CoroutineScope,
                            infoConfig: GroupInfoConfig) {
         parseMessages(response).forEach { (message, hash, _) ->
             infoConfig.merge(hash to message)
-            Log.d("ClosedGroupPoller", "Merged $hash for info")
+            Log.d("ClosedGroupPoller", "Merged $hash for info on ${closedGroupSessionId.hexString()}")
         }
     }
 
@@ -193,7 +195,7 @@ class ClosedGroupPoller(private val executor: CoroutineScope,
                               membersConfig: GroupMembersConfig) {
         parseMessages(response).forEach { (message, hash, _) ->
             membersConfig.merge(hash to message)
-            Log.d("ClosedGroupPoller", "Merged $hash for members")
+            Log.d("ClosedGroupPoller", "Merged $hash for members on ${closedGroupSessionId.hexString()}")
         }
     }
 

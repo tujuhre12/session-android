@@ -22,4 +22,25 @@ class SessionId {
     }
 
     fun hexString() = prefix?.value + publicKey
+
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as SessionId
+
+        if (prefix != other.prefix) return false
+        if (publicKey != other.publicKey) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = prefix?.hashCode() ?: 0
+        result = 31 * result + publicKey.hashCode()
+        return result
+    }
+
+
 }
