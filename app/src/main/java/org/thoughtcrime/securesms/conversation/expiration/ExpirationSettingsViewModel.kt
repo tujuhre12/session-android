@@ -1,16 +1,13 @@
 package org.thoughtcrime.securesms.conversation.expiration
 
 import android.app.Application
-import android.content.Context
 import androidx.annotation.StringRes
-import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -31,7 +28,6 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ExpirationUtil
 import org.session.libsession.utilities.SSKEnvironment.MessageExpirationManagerProtocol
 import org.session.libsession.utilities.TextSecurePreferences
-import org.thoughtcrime.securesms.conversation.expiration.ExpiryType
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
@@ -54,7 +50,8 @@ data class State(
     val isNoteToSelf: Boolean = false,
     val expiryMode: ExpiryMode? = ExpiryMode.NONE,
     val isNewConfigEnabled: Boolean = true,
-    val callbacks: Callbacks = NoOpCallbacks
+    val callbacks: Callbacks = NoOpCallbacks,
+    val persistedMode: ExpiryMode? = null
 ) {
     val subtitle get() = when {
         isGroup || isNoteToSelf -> GetString(R.string.activity_expiration_settings_subtitle_sent)
@@ -115,7 +112,8 @@ class ExpirationSettingsViewModel(
                     isGroup = groupInfo != null,
                     isNoteToSelf = recipient?.address?.serialize() == textSecurePreferences.getLocalNumber(),
                     isSelfAdmin = groupInfo == null || groupInfo.admins.any{ it.serialize() == textSecurePreferences.getLocalNumber() },
-                    expiryMode = expiryMode
+                    expiryMode = expiryMode,
+                    persistedMode = expiryMode
                 )
             }
         }
@@ -128,10 +126,12 @@ class ExpirationSettingsViewModel(
     * Legacy: `1 Day`
     * */
     override fun setType(type: ExpiryType) {
-        if (state.value.expiryType == type) return
+        val state = state.value
+
+        if (state.expiryType == type) return
 
         _state.update {
-            it.copy(expiryMode = type.defaultMode())
+            it.copy(expiryMode = type.defaultMode(state.persistedMode))
         }
     }
 
@@ -204,6 +204,12 @@ class ExpirationSettingsViewModel(
             storage,
             ExpirationConfiguration.isNewConfigEnabled
         ) as T
+    }
+
+    private fun ExpiryType.defaultMode(persistedMode: ExpiryMode?) = when(this) {
+        persistedMode?.type -> persistedMode
+        ExpiryType.AFTER_READ -> mode(12.hours)
+        else -> mode(1.days)
     }
 }
 
@@ -345,11 +351,7 @@ enum class ExpiryType(private val createMode: (Long) -> ExpiryMode) {
     AFTER_READ(ExpiryMode::AfterRead);
 
     fun mode(seconds: Long) = if (seconds != 0L) createMode(seconds) else ExpiryMode.NONE
-
-    fun defaultMode() = when(this) {
-        AFTER_READ -> 12.hours
-        else -> 1.days
-    }.inWholeSeconds.let(::mode)
+    fun mode(duration: Duration) = mode(duration.inWholeSeconds)
 }
 
 val ExpiryMode.type: ExpiryType get() = when(this) {
