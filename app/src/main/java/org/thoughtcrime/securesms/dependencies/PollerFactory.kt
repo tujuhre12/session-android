@@ -7,7 +7,8 @@ import org.session.libsession.messaging.sending_receiving.pollers.ClosedGroupPol
 import org.session.libsignal.utilities.SessionId
 import java.util.concurrent.ConcurrentHashMap
 
-class PollerFactory(private val scope: CoroutineScope, private val configFactory: ConfigFactory) {
+class PollerFactory(private val scope: CoroutineScope,
+                    private val configFactory: ConfigFactory) {
 
     private val pollers = ConcurrentHashMap<SessionId, ClosedGroupPoller>()
 

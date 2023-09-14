@@ -478,7 +478,7 @@ open class Storage(
         return configFactory.user?.getCommunityMessageRequests() == true
     }
 
-    fun notifyUpdates(forConfigObject: ConfigBase) {
+    private fun notifyUpdates(forConfigObject: ConfigBase) {
         when (forConfigObject) {
             is UserProfile -> updateUser(forConfigObject)
             is Contacts -> updateContacts(forConfigObject)
@@ -525,6 +525,9 @@ open class Storage(
 
     private fun updateGroupInfo(groupInfoConfig: GroupInfoConfig) {
         val threadId = getOrCreateThreadIdFor(Address.fromSerialized(groupInfoConfig.id().hexString()))
+        val recipient = getRecipientForThread(threadId) ?: return
+        val db = DatabaseComponent.get(context).recipientDatabase()
+        db.setProfileName(recipient, groupInfoConfig.getName())
         // TODO: handle deleted group, handle delete attachment / message before a certain time
     }
 

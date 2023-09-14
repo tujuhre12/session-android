@@ -10,6 +10,7 @@ import network.loki.messenger.libsession_util.GroupInfoConfig
 import network.loki.messenger.libsession_util.GroupKeysConfig
 import network.loki.messenger.libsession_util.GroupMembersConfig
 import network.loki.messenger.libsession_util.util.GroupInfo
+import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.jobs.MessageReceiveParameters
@@ -190,9 +191,13 @@ class ClosedGroupPoller(private val executor: CoroutineScope,
 
     private fun handleInfo(response: RawResponse,
                            infoConfig: GroupInfoConfig) {
-        parseMessages(response).forEach { (message, hash, _) ->
+        val messages = parseMessages(response)
+        messages.forEach { (message, hash, _) ->
             infoConfig.merge(hash to message)
             if (ENABLE_LOGGING) Log.d("ClosedGroupPoller", "Merged $hash for info on ${closedGroupSessionId.hexString()}")
+        }
+        if (messages.isNotEmpty()) {
+            MessagingModuleConfiguration.shared.storage.notifyConfigUpdates(infoConfig) // TODO: figure this out
         }
     }
 
