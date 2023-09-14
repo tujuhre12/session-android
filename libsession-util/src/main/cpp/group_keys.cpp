@@ -151,3 +151,42 @@ Java_network_loki_messenger_libsession_1util_GroupKeysConfig_free(JNIEnv *env, j
     auto ptr = ptrToKeys(env, thiz);
     delete ptr;
 }
+
+extern "C"
+JNIEXPORT jbyteArray JNICALL
+Java_network_loki_messenger_libsession_1util_GroupKeysConfig_encrypt(JNIEnv *env, jobject thiz,
+                                                                     jbyteArray plaintext) {
+    auto ptr = ptrToKeys(env, thiz);
+    auto plaintext_ustring = util::ustring_from_bytes(env, plaintext);
+    auto enc = ptr->encrypt_message(plaintext_ustring);
+    return util::bytes_from_ustring(env, enc);
+}
+
+extern "C"
+JNIEXPORT jbyteArray JNICALL
+Java_network_loki_messenger_libsession_1util_GroupKeysConfig_decrypt(JNIEnv *env, jobject thiz,
+                                                                     jbyteArray ciphertext) {
+    auto ptr = ptrToKeys(env, thiz);
+    auto ciphertext_ustring = util::ustring_from_bytes(env, ciphertext);
+    auto plaintext = ptr->decrypt_message(ciphertext_ustring);
+    if (plaintext) {
+        return util::bytes_from_ustring(env, *plaintext);
+    }
+
+    return nullptr;
+}
+extern "C"
+JNIEXPORT jobject JNICALL
+Java_network_loki_messenger_libsession_1util_GroupKeysConfig_keys(JNIEnv *env, jobject thiz) {
+    auto ptr = ptrToKeys(env, thiz);
+    auto keys = ptr->group_keys();
+    jclass stack = env->FindClass("java/util/Stack");
+    jmethodID init = env->GetMethodID(stack, "<init>", "()V");
+    jobject our_stack = env->NewObject(stack, init);
+    jmethodID push = env->GetMethodID(stack, "push", "(Ljava/lang/Object;)Ljava/lang/Object;");
+    for (auto& key : keys) {
+        auto key_bytes = util::bytes_from_ustring(env, key);
+        env->CallObjectMethod(our_stack, push, key_bytes);
+    }
+    return our_stack;
+}

@@ -148,7 +148,7 @@ interface StorageProtocol {
         name: String, members: Collection<String>, admins: Collection<String>, sentTimestamp: Long)
     fun insertOutgoingInfoMessage(context: Context, groupID: String, type: SignalServiceGroup.Type, name: String,
         members: Collection<String>, admins: Collection<String>, threadID: Long, sentTimestamp: Long)
-    fun isClosedGroup(publicKey: String): Boolean
+    fun isLegacyClosedGroup(publicKey: String): Boolean
     fun getClosedGroupEncryptionKeyPairs(groupPublicKey: String): MutableList<ECKeyPair>
     fun getLatestClosedGroupEncryptionKeyPair(groupPublicKey: String): ECKeyPair?
     fun updateFormationTimestamp(groupID: String, formationTimestamp: Long)

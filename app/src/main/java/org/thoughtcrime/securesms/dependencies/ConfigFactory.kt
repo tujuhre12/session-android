@@ -16,6 +16,7 @@ import org.session.libsession.utilities.ConfigFactoryUpdateListener
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage
 import org.session.libsignal.utilities.Hex
+import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.SessionId
 import org.thoughtcrime.securesms.database.ConfigDatabase
@@ -314,7 +315,11 @@ class ConfigFactory(
             val userGroups = userGroups ?: return false
 
             // Not handling the `hidden` behaviour for legacy groups so just indicate the existence
-            return (userGroups.getLegacyGroupInfo(groupPublicKey) != null)
+            return if (groupPublicKey.startsWith(IdPrefix.GROUP.value)) {
+                userGroups.getClosedGroup(groupPublicKey) != null
+            } else {
+                userGroups.getLegacyGroupInfo(groupPublicKey) != null
+            }
         } else if (publicKey == userPublicKey) {
             val user = user ?: return false
 

@@ -10,6 +10,9 @@ import network.loki.messenger.libsession_util.GroupInfoConfig
 import network.loki.messenger.libsession_util.GroupKeysConfig
 import network.loki.messenger.libsession_util.GroupMembersConfig
 import network.loki.messenger.libsession_util.util.GroupInfo
+import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
+import org.session.libsession.messaging.jobs.JobQueue
+import org.session.libsession.messaging.jobs.MessageReceiveParameters
 import org.session.libsession.snode.RawResponse
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -17,6 +20,7 @@ import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Namespace
 import org.session.libsignal.utilities.SessionId
+import org.session.libsignal.utilities.Snode
 
 class ClosedGroupPoller(private val executor: CoroutineScope,
                         private val closedGroupSessionId: SessionId,
@@ -50,6 +54,7 @@ class ClosedGroupPoller(private val executor: CoroutineScope,
 
     companion object {
         const val POLL_INTERVAL = 3_000L
+        const val ENABLE_LOGGING = false
     }
 
     private var isRunning: Boolean = false
@@ -58,7 +63,7 @@ class ClosedGroupPoller(private val executor: CoroutineScope,
     fun start() {
         if (isRunning) return // already started, don't restart
 
-        Log.d("ClosedGroupPoller", "Starting closed group poller for ${closedGroupSessionId.hexString().take(4)}")
+        if (ENABLE_LOGGING) Log.d("ClosedGroupPoller", "Starting closed group poller for ${closedGroupSessionId.hexString().take(4)}")
         job?.cancel()
         job = executor.launch(Dispatchers.IO) {
             val closedGroups = configFactoryProtocol.userGroups?: return@launch
@@ -69,7 +74,7 @@ class ClosedGroupPoller(private val executor: CoroutineScope,
                 if (nextPoll != null) {
                     delay(nextPoll)
                 } else {
-                    Log.d("ClosedGroupPoller", "Stopping the closed group poller")
+                    if (ENABLE_LOGGING) Log.d("ClosedGroupPoller", "Stopping the closed group poller")
                     return@launch
                 }
             }
@@ -133,13 +138,13 @@ class ClosedGroupPoller(private val executor: CoroutineScope,
             // TODO: add the extend duration TTLs for known hashes here
 
             // if poll result body is null here we don't have any things ig
-            Log.d("ClosedGroupPoller", "Poll results @${SnodeAPI.nowWithOffset}:")
+            if (ENABLE_LOGGING) Log.d("ClosedGroupPoller", "Poll results @${SnodeAPI.nowWithOffset}:")
             (pollResult["results"] as List<RawResponse>).forEachIndexed { index, response ->
                 when (index) {
                     keysIndex -> handleKeyPoll(response, keys, info, members)
                     infoIndex -> handleInfo(response, info)
                     membersIndex -> handleMembers(response, members)
-                    messageIndex -> handleMessages(response, keys)
+                    messageIndex -> handleMessages(response, snode)
                 }
             }
 
@@ -149,7 +154,7 @@ class ClosedGroupPoller(private val executor: CoroutineScope,
             members.free()
 
         } catch (e: Exception) {
-            Log.e("GroupPoller", "Polling failed for group", e)
+            if (ENABLE_LOGGING) Log.e("GroupPoller", "Polling failed for group", e)
             return POLL_INTERVAL
         }
         return POLL_INTERVAL // this might change in future
@@ -158,7 +163,7 @@ class ClosedGroupPoller(private val executor: CoroutineScope,
     private fun parseMessages(response: RawResponse): List<ParsedRawMessage> {
         val body = response["body"] as? RawResponse
         if (body == null) {
-            Log.e("GroupPoller", "Batch parse messages contained no body!")
+            if (ENABLE_LOGGING) Log.e("GroupPoller", "Batch parse messages contained no body!")
             return emptyList()
         }
         val messages = body["messages"] as? List<*> ?: return emptyList()
@@ -179,7 +184,7 @@ class ClosedGroupPoller(private val executor: CoroutineScope,
         // get all the data to hash objects and process them
         parseMessages(response).forEach { (message, hash, timestamp) ->
             keysConfig.loadKey(message, hash, timestamp, infoConfig, membersConfig)
-            Log.d("ClosedGroupPoller", "Merged $hash for keys on ${closedGroupSessionId.hexString()}")
+            if (ENABLE_LOGGING) Log.d("ClosedGroupPoller", "Merged $hash for keys on ${closedGroupSessionId.hexString()}")
         }
     }
 
@@ -187,7 +192,7 @@ class ClosedGroupPoller(private val executor: CoroutineScope,
                            infoConfig: GroupInfoConfig) {
         parseMessages(response).forEach { (message, hash, _) ->
             infoConfig.merge(hash to message)
-            Log.d("ClosedGroupPoller", "Merged $hash for info on ${closedGroupSessionId.hexString()}")
+            if (ENABLE_LOGGING) Log.d("ClosedGroupPoller", "Merged $hash for info on ${closedGroupSessionId.hexString()}")
         }
     }
 
@@ -195,15 +200,22 @@ class ClosedGroupPoller(private val executor: CoroutineScope,
                               membersConfig: GroupMembersConfig) {
         parseMessages(response).forEach { (message, hash, _) ->
             membersConfig.merge(hash to message)
-            Log.d("ClosedGroupPoller", "Merged $hash for members on ${closedGroupSessionId.hexString()}")
+            if (ENABLE_LOGGING) Log.d("ClosedGroupPoller", "Merged $hash for members on ${closedGroupSessionId.hexString()}")
         }
     }
 
-    private fun handleMessages(response: RawResponse, keysConfig: GroupKeysConfig) {
-        val messages = parseMessages(response)
-        if (messages.isNotEmpty()) {
-            // TODO: process decrypting bundles
+    private fun handleMessages(response: RawResponse, snode: Snode) {
+        val body = response["body"] as RawResponse
+        val messages = SnodeAPI.parseRawMessagesResponse(body, snode, closedGroupSessionId.hexString())
+        val parameters = messages.map { (envelope, serverHash) ->
+            MessageReceiveParameters(envelope.toByteArray(), serverHash = serverHash)
         }
+        parameters.chunked(BatchMessageReceiveJob.BATCH_DEFAULT_NUMBER).forEach { chunk ->
+            val job = BatchMessageReceiveJob(chunk)
+            JobQueue.shared.add(job)
+        }
+        if (ENABLE_LOGGING) Log.d("ClosedGroupPoller", "namespace 0 message size: ${messages.size}")
+
     }
 
 }

@@ -84,6 +84,7 @@ import org.session.libsignal.utilities.KeyHelper
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.SessionId
 import org.session.libsignal.utilities.guava.Optional
+import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.ReactionRecord
@@ -322,6 +323,9 @@ open class Storage(
             ?.let { SodiumUtilities.sessionId(getUserPublicKey()!!, message.sender!!, it) } ?: false
         val group: Optional<SignalServiceGroup> = when {
             openGroupID != null -> Optional.of(SignalServiceGroup(openGroupID.toByteArray(), SignalServiceGroup.GroupType.PUBLIC_CHAT))
+            groupPublicKey != null && groupPublicKey.startsWith(IdPrefix.GROUP.value) -> {
+                Optional.of(SignalServiceGroup(Hex.fromStringCondensed(groupPublicKey), SignalServiceGroup.GroupType.SIGNAL))
+            }
             groupPublicKey != null -> {
                 val doubleEncoded = GroupUtil.doubleEncodeGroupID(groupPublicKey)
                 Optional.of(SignalServiceGroup(GroupUtil.getDecodedGroupIDAsData(doubleEncoded), SignalServiceGroup.GroupType.SIGNAL))
@@ -334,7 +338,14 @@ open class Storage(
         val targetAddress = if ((isUserSender || isUserBlindedSender) && !message.syncTarget.isNullOrEmpty()) {
             fromSerialized(message.syncTarget!!)
         } else if (group.isPresent) {
-            fromSerialized(GroupUtil.getEncodedId(group.get()))
+            val idHex = group.get().groupId.toHexString()
+            if (idHex.startsWith(IdPrefix.GROUP.value)) {
+                fromSerialized(idHex)
+            } else {
+                fromSerialized(GroupUtil.getEncodedId(group.get()))
+            }
+        } else if (message.recipient?.startsWith(IdPrefix.GROUP.value) == true) {
+            fromSerialized(message.recipient!!)
         } else {
             senderAddress
         }
@@ -1121,7 +1132,7 @@ open class Storage(
         mmsDB.markAsSent(infoMessageID, true)
     }
 
-    override fun isClosedGroup(publicKey: String): Boolean {
+    override fun isLegacyClosedGroup(publicKey: String): Boolean {
         return DatabaseComponent.get(context).lokiAPIDatabase().isClosedGroup(publicKey)
     }
 
@@ -1250,8 +1261,12 @@ open class Storage(
         return if (!openGroupID.isNullOrEmpty()) {
             val recipient = Recipient.from(context, fromSerialized(GroupUtil.getEncodedOpenGroupID(openGroupID.toByteArray())), false)
             database.getThreadIdIfExistsFor(recipient).let { if (it == -1L) null else it }
-        } else if (!groupPublicKey.isNullOrEmpty()) {
+        } else if (!groupPublicKey.isNullOrEmpty() && !groupPublicKey.startsWith(IdPrefix.GROUP.value)) {
             val recipient = Recipient.from(context, fromSerialized(GroupUtil.doubleEncodeGroupID(groupPublicKey)), false)
+            if (createThread) database.getOrCreateThreadIdFor(recipient)
+            else database.getThreadIdIfExistsFor(recipient).let { if (it == -1L) null else it }
+        } else if (!groupPublicKey.isNullOrEmpty()) {
+            val recipient = Recipient.from(context, fromSerialized(groupPublicKey), false)
             if (createThread) database.getOrCreateThreadIdFor(recipient)
             else database.getThreadIdIfExistsFor(recipient).let { if (it == -1L) null else it }
         } else {

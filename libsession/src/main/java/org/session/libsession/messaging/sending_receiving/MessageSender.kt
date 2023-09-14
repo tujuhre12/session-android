@@ -75,6 +75,7 @@ object MessageSender {
     @Throws(Exception::class)
     fun buildWrappedMessageToSnode(destination: Destination, message: Message, isSyncMessage: Boolean): SnodeMessage {
         val storage = MessagingModuleConfiguration.shared.storage
+        val configFactory = MessagingModuleConfiguration.shared.configFactory
         val userPublicKey = storage.getUserPublicKey()
         // Set the timestamp, sender and recipient
         val messageSendTime = SnodeAPI.nowWithOffset
@@ -88,6 +89,7 @@ object MessageSender {
         when (destination) {
             is Destination.Contact -> message.recipient = destination.publicKey
             is Destination.LegacyClosedGroup -> message.recipient = destination.groupPublicKey
+            is Destination.ClosedGroup -> message.recipient = destination.publicKey
             else -> throw IllegalStateException("Destination should not be an open group.")
         }
 
@@ -133,6 +135,12 @@ object MessageSender {
                     )!!
                 MessageEncrypter.encrypt(plaintext, encryptionKeyPair.hexEncodedPublicKey)
             }
+            is Destination.ClosedGroup -> {
+                val groupKeys = configFactory.getGroupKeysConfig(SessionId.from(destination.publicKey)) ?: throw Error.NoKeyPair
+                groupKeys.use { keys ->
+                    keys.encrypt(plaintext)
+                }
+            }
             else -> throw IllegalStateException("Destination should not be open group.")
         }
         // Wrap the result
@@ -146,6 +154,10 @@ object MessageSender {
             is Destination.LegacyClosedGroup -> {
                 kind = SignalServiceProtos.Envelope.Type.CLOSED_GROUP_MESSAGE
                 senderPublicKey = destination.groupPublicKey
+            }
+            is Destination.ClosedGroup -> {
+                kind = SignalServiceProtos.Envelope.Type.CLOSED_GROUP_MESSAGE
+                senderPublicKey = destination.publicKey
             }
             else -> throw IllegalStateException("Destination should not be open group.")
         }
@@ -165,6 +177,7 @@ object MessageSender {
         val deferred = deferred<Unit, Exception>()
         val promise = deferred.promise
         val storage = MessagingModuleConfiguration.shared.storage
+        val configFactory = MessagingModuleConfiguration.shared.configFactory
         val userPublicKey = storage.getUserPublicKey()
 
         // recipient will be set later, so initialize it as a function here
@@ -189,7 +202,15 @@ object MessageSender {
                         && forkInfo.hasNamespaces() -> listOf(Namespace.UNAUTHENTICATED_CLOSED_GROUP, Namespace.DEFAULT)
                 else -> listOf(Namespace.DEFAULT)
             }
-            namespaces.map { namespace -> SnodeAPI.sendMessage(snodeMessage, requiresAuth = false, namespace = namespace) }.let { promises ->
+            namespaces.map { namespace ->
+                if (destination is Destination.ClosedGroup) {
+                    // possibly handle a failure for no user groups or no closed group signing key?
+                    val signingKey = configFactory.userGroups!!.getClosedGroup(destination.publicKey)!!.signingKey()
+                    SnodeAPI.sendAuthenticatedMessage(snodeMessage, signingKey, namespace = namespace)
+                } else {
+                    SnodeAPI.sendMessage(snodeMessage, requiresAuth = false, namespace = namespace)
+                }
+            }.let { promises ->
                 var isSuccess = false
                 val promiseCount = promises.size
                 val errorCount = AtomicInteger(0)

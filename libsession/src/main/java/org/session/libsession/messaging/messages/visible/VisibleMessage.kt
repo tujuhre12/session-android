@@ -130,7 +130,7 @@ class VisibleMessage(
         //       if it receives a message without the current expiration timer value attached to it...
         val storage = MessagingModuleConfiguration.shared.storage
         val context = MessagingModuleConfiguration.shared.context
-        val expiration = if (storage.isClosedGroup(recipient!!)) {
+        val expiration = if (storage.isLegacyClosedGroup(recipient!!)) {
             Recipient.from(context, Address.fromSerialized(GroupUtil.doubleEncodeGroupID(recipient!!)), false).expireMessages
         } else {
             Recipient.from(context, Address.fromSerialized(recipient!!), false).expireMessages

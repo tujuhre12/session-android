@@ -3,6 +3,7 @@ package org.session.libsession.utilities
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.utilities.Hex
+import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.SessionId
 import java.io.IOException
 
@@ -30,7 +31,9 @@ object GroupUtil {
 
     @JvmStatic
     fun getEncodedClosedGroupID(groupID: ByteArray): String {
-        return LEGACY_CLOSED_GROUP_PREFIX + Hex.toStringCondensed(groupID)
+        val hex = Hex.toStringCondensed(groupID)
+        if (hex.startsWith(IdPrefix.GROUP.value)) throw IllegalArgumentException("Trying to encode a new closed group")
+        return LEGACY_CLOSED_GROUP_PREFIX + hex
     }
 
     @JvmStatic
@@ -92,6 +95,7 @@ object GroupUtil {
     @JvmStatic
     @Throws(IOException::class)
     fun doubleEncodeGroupID(groupPublicKey: String): String {
+        if (groupPublicKey.startsWith(IdPrefix.GROUP.value)) throw IllegalArgumentException("Trying to double encode a new closed group")
         return getEncodedClosedGroupID(getEncodedClosedGroupID(Hex.fromStringCondensed(groupPublicKey)).toByteArray())
     }
 

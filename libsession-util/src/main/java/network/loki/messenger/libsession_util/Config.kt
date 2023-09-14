@@ -304,4 +304,10 @@ class GroupKeysConfig(private val pointer: Long): Closeable {
     override fun close() {
         free()
     }
+
+    external fun encrypt(plaintext: ByteArray): ByteArray
+    external fun decrypt(ciphertext: ByteArray): ByteArray?
+
+    external fun keys(): Stack<ByteArray>
+
 }

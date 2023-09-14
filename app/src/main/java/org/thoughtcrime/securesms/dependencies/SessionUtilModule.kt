@@ -8,8 +8,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.plus
 import org.session.libsession.utilities.ConfigFactoryUpdateListener
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.crypto.KeyPairUtilities
@@ -42,8 +40,7 @@ object SessionUtilModule {
 
     @Provides
     @Named(POLLER_SCOPE)
-    fun providePollerScope(@ApplicationContext applicationContext: Context) =
-        GlobalScope + SupervisorJob()
+    fun providePollerScope(@ApplicationContext applicationContext: Context): CoroutineScope = GlobalScope
 
     @Provides
     @Singleton

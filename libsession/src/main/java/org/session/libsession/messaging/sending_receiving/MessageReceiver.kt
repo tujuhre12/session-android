@@ -93,33 +93,46 @@ object MessageReceiver {
                 }
                 SignalServiceProtos.Envelope.Type.CLOSED_GROUP_MESSAGE -> {
                     val hexEncodedGroupPublicKey = envelope.source
-                    if (hexEncodedGroupPublicKey == null || !MessagingModuleConfiguration.shared.storage.isClosedGroup(hexEncodedGroupPublicKey)) {
-                        throw Error.InvalidGroupPublicKey
-                    }
-                    val encryptionKeyPairs = MessagingModuleConfiguration.shared.storage.getClosedGroupEncryptionKeyPairs(hexEncodedGroupPublicKey)
-                    if (encryptionKeyPairs.isEmpty()) {
-                        throw Error.NoGroupKeyPair
-                    }
-                    // Loop through all known group key pairs in reverse order (i.e. try the latest key pair first (which'll more than
-                    // likely be the one we want) but try older ones in case that didn't work)
-                    var encryptionKeyPair = encryptionKeyPairs.removeLast()
-                    fun decrypt() {
-                        try {
-                            val decryptionResult = MessageDecrypter.decrypt(ciphertext.toByteArray(), encryptionKeyPair)
-                            plaintext = decryptionResult.first
-                            sender = decryptionResult.second
-                        } catch (e: Exception) {
-                            if (encryptionKeyPairs.isNotEmpty()) {
-                                encryptionKeyPair = encryptionKeyPairs.removeLast()
-                                decrypt()
-                            } else {
-                                Log.e("Loki", "Failed to decrypt group message", e)
-                                throw e
+                    val sessionId = SessionId.from(hexEncodedGroupPublicKey)
+                    if (sessionId.prefix == IdPrefix.GROUP) {
+                        val configFactory = MessagingModuleConfiguration.shared.configFactory
+                        configFactory.getGroupKeysConfig(sessionId)?.use { config ->
+                            plaintext = config.decrypt(ciphertext.toByteArray())
+                            sender = userPublicKey
+                            groupPublicKey = envelope.source
+                        }
+                        if (plaintext == null) {
+                            throw Error.DecryptionFailed
+                        }
+                    } else {
+                        if (!MessagingModuleConfiguration.shared.storage.isLegacyClosedGroup(hexEncodedGroupPublicKey)) {
+                            throw Error.InvalidGroupPublicKey
+                        }
+                        val encryptionKeyPairs = MessagingModuleConfiguration.shared.storage.getClosedGroupEncryptionKeyPairs(hexEncodedGroupPublicKey)
+                        if (encryptionKeyPairs.isEmpty()) {
+                            throw Error.NoGroupKeyPair
+                        }
+                        // Loop through all known group key pairs in reverse order (i.e. try the latest key pair first (which'll more than
+                        // likely be the one we want) but try older ones in case that didn't work)
+                        var encryptionKeyPair = encryptionKeyPairs.removeLast()
+                        fun decrypt() {
+                            try {
+                                val decryptionResult = MessageDecrypter.decrypt(ciphertext.toByteArray(), encryptionKeyPair)
+                                plaintext = decryptionResult.first
+                                sender = decryptionResult.second
+                            } catch (e: Exception) {
+                                if (encryptionKeyPairs.isNotEmpty()) {
+                                    encryptionKeyPair = encryptionKeyPairs.removeLast()
+                                    decrypt()
+                                } else {
+                                    Log.e("Loki", "Failed to decrypt group message", e)
+                                    throw e
+                                }
                             }
                         }
+                        groupPublicKey = envelope.source
+                        decrypt()
                     }
-                    groupPublicKey = envelope.source
-                    decrypt()
                 }
                 else -> {
                     throw Error.UnknownEnvelopeType
@@ -174,7 +187,7 @@ object MessageReceiver {
         // If the message failed to process the first time around we retry it later (if the error is retryable). In this case the timestamp
         // will already be in the database but we don't want to treat the message as a duplicate. The isRetry flag is a simple workaround
         // for this issue.
-        if (groupPublicKey != null && groupPublicKey !in (currentClosedGroups ?: emptySet())) {
+        if (groupPublicKey != null && groupPublicKey !in (currentClosedGroups ?: emptySet()) && groupPublicKey?.startsWith(IdPrefix.GROUP.value) != true) {
             throw Error.NoGroupThread
         }
         if ((message is ClosedGroupControlMessage && message.kind is ClosedGroupControlMessage.Kind.New) || message is SharedConfigurationMessage) {

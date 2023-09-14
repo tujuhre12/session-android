@@ -3,7 +3,6 @@
 package org.session.libsession.snode
 
 import android.os.Build
-import androidx.annotation.WorkerThread
 import com.goterl.lazysodium.LazySodiumAndroid
 import com.goterl.lazysodium.SodiumAndroid
 import com.goterl.lazysodium.exceptions.SodiumException
@@ -655,34 +654,32 @@ object SnodeAPI {
         }
     }
 
-    @WorkerThread
-    fun sendAuthenticatedMessage(message: SnodeMessage, signingKey: ByteArray, namespace: Int): RawResponse {
+    fun sendAuthenticatedMessage(message: SnodeMessage, signingKey: ByteArray, namespace: Int): RawResponsePromise {
         val pubKey = message.recipient
 
         return retryIfNeeded(maxRetryCount) {
-            val timestamp = nowWithOffset
 
             val signature = ByteArray(Sign.BYTES)
             // assume namespace here is non-zero, as zero namespace doesn't require auth
-            val verificationData = "store$namespace$timestamp".toByteArray()
+            val sigTimestamp = nowWithOffset
+            val verificationData = "store$namespace$sigTimestamp".toByteArray()
             try {
                 sodium.cryptoSignDetached(signature, verificationData, verificationData.size.toLong(), signingKey)
             } catch (exception: Exception) {
                 return@retryIfNeeded Promise.ofFail(Error.SigningFailed)
             }
 
-            val parameters = mapOf(
-                "pubKey" to pubKey,
-                "data" to message.data,
-                "timestamp" to timestamp.toString(),
-                "sig_timestamp" to timestamp.toString(),
-                "signature" to Base64.encodeBytes(verificationData)
+            val parameters = message.toJSON().toMutableMap<String,Any>()
+
+            parameters += mapOf(
+                "sig_timestamp" to sigTimestamp,
+                "signature" to Base64.encodeBytes(signature)
             )
 
             getSingleTargetSnode(pubKey).bind { targetSnode ->
                 invoke(Snode.Method.SendMessage, targetSnode, parameters, pubKey)
             }
-        }.get()
+        }
     }
 
     fun sendMessage(message: SnodeMessage, requiresAuth: Boolean = false, namespace: Int = 0): RawResponsePromise {

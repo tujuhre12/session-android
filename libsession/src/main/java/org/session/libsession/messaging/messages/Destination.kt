@@ -61,6 +61,9 @@ sealed class Destination {
                         groupInboxId.last()
                     )
                 }
+                address.isClosedGroup -> {
+                    ClosedGroup(address.serialize())
+                }
                 else -> {
                     throw Exception("TODO: Handle legacy closed groups.")
                 }

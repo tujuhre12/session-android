@@ -1,6 +1,8 @@
 package org.thoughtcrime.securesms.dependencies
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.plus
 import org.session.libsession.messaging.sending_receiving.pollers.ClosedGroupPoller
 import org.session.libsignal.utilities.SessionId
 import java.util.concurrent.ConcurrentHashMap
@@ -13,7 +15,7 @@ class PollerFactory(private val scope: CoroutineScope, private val configFactory
         val activeGroup = configFactory.userGroups?.getClosedGroup(sessionId.hexString()) ?: return null
         // TODO: add check for active group being invited / approved etc
         return pollers.getOrPut(sessionId) {
-            ClosedGroupPoller(scope, sessionId, configFactory)
+            ClosedGroupPoller(scope + SupervisorJob(), sessionId, configFactory)
         }
     }
 
