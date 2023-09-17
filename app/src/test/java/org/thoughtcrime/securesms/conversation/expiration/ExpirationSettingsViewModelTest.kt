@@ -5,6 +5,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import network.loki.messenger.libsession_util.util.ExpiryMode
+import network.loki.messenger.R
 import org.hamcrest.CoreMatchers
 import org.hamcrest.MatcherAssert
 import org.junit.Rule
@@ -24,6 +25,8 @@ import org.thoughtcrime.securesms.MainCoroutineRule
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.ui.GetString
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -33,17 +36,17 @@ class ExpirationSettingsViewModelTest {
     @get:Rule
     var mainCoroutineRule = MainCoroutineRule()
 
-    val application: Application = mock(Application::class.java)
-    val textSecurePreferences: TextSecurePreferences = mock(TextSecurePreferences::class.java)
-    val messageExpirationManager: SSKEnvironment.MessageExpirationManagerProtocol = mock(SSKEnvironment.MessageExpirationManagerProtocol::class.java)
-    val threadDb: ThreadDatabase = mock(ThreadDatabase::class.java)
-    val groupDb: GroupDatabase = mock(GroupDatabase::class.java)
-    val storage: Storage = mock(Storage::class.java)
+    private val application: Application = mock(Application::class.java)
+    private val textSecurePreferences: TextSecurePreferences = mock(TextSecurePreferences::class.java)
+    private val messageExpirationManager: SSKEnvironment.MessageExpirationManagerProtocol = mock(SSKEnvironment.MessageExpirationManagerProtocol::class.java)
+    private val threadDb: ThreadDatabase = mock(ThreadDatabase::class.java)
+    private val groupDb: GroupDatabase = mock(GroupDatabase::class.java)
+    private val storage: Storage = mock(Storage::class.java)
 
-    val recipient = mock(Recipient::class.java)
+    private val recipient = mock(Recipient::class.java)
 
-    val groupRecord = mock(GroupRecord::class.java)
-    val optionalGroupRecord = Optional.of(groupRecord)
+    private val groupRecord = mock(GroupRecord::class.java)
+    private val optionalGroupRecord = Optional.of(groupRecord)
 
     @Test
     fun `UI should show a list of times and an Off option`() = runTest {
@@ -80,9 +83,18 @@ class ExpirationSettingsViewModelTest {
             CoreMatchers.equalTo(1)
         )
 
+        val options = viewModel.uiState.value.cards[0].options
         MatcherAssert.assertThat(
-            viewModel.uiState.value.cards[0].options.count(),
-            CoreMatchers.equalTo(6)
+            options.map { it.title },
+            CoreMatchers.equalTo(
+                listOf(
+                    GetString(R.string.expiration_off),
+                    GetString(12.hours),
+                    GetString(1.days),
+                    GetString(7.days),
+                    GetString(14.days)
+                )
+            )
         )
     }
 
@@ -94,6 +106,7 @@ class ExpirationSettingsViewModelTest {
         threadDb,
         groupDb,
         storage,
-        isNewConfigEnabled
+        isNewConfigEnabled,
+        false
     )
 }
