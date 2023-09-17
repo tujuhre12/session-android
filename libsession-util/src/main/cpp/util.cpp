@@ -285,3 +285,69 @@ Java_network_loki_messenger_libsession_1util_util_BaseCommunityInfo_fullUrl(JNIE
     auto full_url = deserialized.full_url();
     return env->NewStringUTF(full_url.data());
 }
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_org_session_libsignal_utilities_Namespace_DEFAULT(JNIEnv *env, jobject thiz) {
+    return 0;
+}
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_org_session_libsignal_utilities_Namespace_USER_1PROFILE(JNIEnv *env, jobject thiz) {
+    return (int) session::config::Namespace::UserProfile;
+}
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_org_session_libsignal_utilities_Namespace_CONTACTS(JNIEnv *env, jobject thiz) {
+    return (int) session::config::Namespace::Contacts;
+}
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_org_session_libsignal_utilities_Namespace_CONVO_1INFO_1VOLATILE(JNIEnv *env, jobject thiz) {
+    return (int) session::config::Namespace::ConvoInfoVolatile;
+}
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_org_session_libsignal_utilities_Namespace_GROUPS(JNIEnv *env, jobject thiz) {
+    return (int) session::config::Namespace::UserGroups;
+}
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_org_session_libsignal_utilities_Namespace_CLOSED_1GROUP_1INFO(JNIEnv *env, jobject thiz) {
+    return (int) session::config::Namespace::GroupInfo;
+}
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_org_session_libsignal_utilities_Namespace_CLOSED_1GROUP_1MEMBERS(JNIEnv *env, jobject thiz) {
+    return (int) session::config::Namespace::GroupMembers;
+}
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_org_session_libsignal_utilities_Namespace_ENCRYPTION_1KEYS(JNIEnv *env, jobject thiz) {
+    return (int) session::config::Namespace::GroupKeys;
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_network_loki_messenger_libsession_1util_Config_free(JNIEnv *env, jobject thiz) {
+    jclass baseClass = env->FindClass("network/loki/messenger/libsession_util/Config");
+    jfieldID pointerField = env->GetFieldID(baseClass, "pointer", "J");
+    jclass sig = env->FindClass("network/loki/messenger/libsession_util/ConfigSig");
+    jclass base = env->FindClass("network/loki/messenger/libsession_util/ConfigBase");
+    jclass ours = env->GetObjectClass(thiz);
+    if (env->IsSameObject(sig, ours)) {
+        // config sig object
+        auto config = (session::config::ConfigSig*) env->GetLongField(thiz, pointerField);
+        delete config;
+    } else if (env->IsSameObject(base, ours)) {
+        auto config = (session::config::ConfigBase*) env->GetLongField(thiz, pointerField);
+        delete config;
+    }
+}

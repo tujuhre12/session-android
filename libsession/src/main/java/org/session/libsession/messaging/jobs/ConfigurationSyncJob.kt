@@ -10,9 +10,11 @@ import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.utilities.Data
 import org.session.libsession.snode.RawResponse
 import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.snode.SnodeAPI.SnodeBatchRequestInfo
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
 import java.util.concurrent.atomic.AtomicBoolean
+typealias ConfigPair<T> = List<Pair<T, ConfigBase>>
 
 // only contact (self) and closed group destinations will be supported
 data class ConfigurationSyncJob(val destination: Destination): Job {
@@ -24,27 +26,19 @@ data class ConfigurationSyncJob(val destination: Destination): Job {
 
     val shouldRunAgain = AtomicBoolean(false)
 
+    data class SyncInformation(val configs: ConfigPair<SnodeBatchRequestInfo>, val toDelete: List<String>)
+
+
     override suspend fun execute(dispatcherName: String) {
         val storage = MessagingModuleConfiguration.shared.storage
         val forcedConfig = TextSecurePreferences.hasForcedNewConfig(MessagingModuleConfiguration.shared.context)
         val currentTime = SnodeAPI.nowWithOffset
-        val userEdKeyPair = MessagingModuleConfiguration.shared.getUserED25519KeyPair()
+
         val userPublicKey = storage.getUserPublicKey()
-        val delegate = delegate
-        if (destination is Destination.ClosedGroup // TODO: closed group configs will be handled in closed group feature
-            // if we haven't enabled the new configs don't run
-            || !ConfigBase.isNewConfigEnabled(forcedConfig, currentTime)
-            // if we don't have a user ed key pair for signing updates
-            || userEdKeyPair == null
-            // this will be useful to not handle null delegate cases
-            || delegate == null
-            // check our local identity key exists
-            || userPublicKey.isNullOrEmpty()
-            // don't allow pushing  configs for non-local user
-            || (destination is Destination.Contact && destination.publicKey != userPublicKey)
-        ) {
+        val delegate = delegate ?: return Log.e("ConfigurationSyncJob", "No Delegate")
+        if ((destination is Destination.Contact && destination.publicKey != userPublicKey)) {
             Log.w(TAG, "No need to run config sync job, TODO")
-            return delegate?.handleJobSucceeded(this, dispatcherName) ?: Unit
+            return delegate.handleJobSucceeded(this, dispatcherName)
         }
 
         // configFactory singleton instance will come in handy for modifying hashes and fetching configs for namespace etc
@@ -61,7 +55,7 @@ data class ConfigurationSyncJob(val destination: Destination): Job {
 
         // allow null results here so the list index matches configsRequiringPush
         val sentTimestamp: Long = SnodeAPI.nowWithOffset
-        val batchObjects: List<Pair<SharedConfigurationMessage, SnodeAPI.SnodeBatchRequestInfo>?> = configsRequiringPush.map { config ->
+        val batchObjects: List<Pair<SharedConfigurationMessage, SnodeBatchRequestInfo>?> = configsRequiringPush.map { config ->
             val (data, seqNo, obsoleteHashes) = config.push()
             toDeleteHashes += obsoleteHashes
             SharedConfigurationMessage(config.protoKindFor(), data, seqNo) to config
@@ -85,7 +79,7 @@ data class ConfigurationSyncJob(val destination: Destination): Job {
             return delegate.handleJobFailedPermanently(this, dispatcherName, NullPointerException("One or more requests had a null batch request info"))
         }
 
-        val allRequests = mutableListOf<SnodeAPI.SnodeBatchRequestInfo>()
+        val allRequests = mutableListOf<SnodeBatchRequestInfo>()
         allRequests += batchObjects.requireNoNulls().map { (_, request) -> request }
         // add in the deletion if we have any hashes
         if (toDeleteRequest != null) {
@@ -152,6 +146,14 @@ data class ConfigurationSyncJob(val destination: Destination): Job {
             // reschedule if something has updated since we started this job
             JobQueue.shared.add(ConfigurationSyncJob(destination))
         }
+    }
+
+    private fun getUserSyncInformation(delegate: JobDelegate) {
+        val userEdKeyPair = MessagingModuleConfiguration.shared.getUserED25519KeyPair()
+    }
+
+    private fun syncGroupConfigs(delegate: JobDelegate) {
+
     }
 
     fun Destination.destinationPublicKey(): String = when (this) {

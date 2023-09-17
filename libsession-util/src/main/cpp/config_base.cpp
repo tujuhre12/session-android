@@ -109,12 +109,6 @@ Java_network_loki_messenger_libsession_1util_ConfigBase_merge__Lkotlin_Pair_2(JN
 #pragma clang diagnostic pop
 }
 extern "C"
-JNIEXPORT jint JNICALL
-Java_network_loki_messenger_libsession_1util_ConfigBase_configNamespace(JNIEnv *env, jobject thiz) {
-    auto conf = ptrToConfigBase(env, thiz);
-    return (std::int16_t) conf->storage_namespace();
-}
-extern "C"
 JNIEXPORT jclass JNICALL
 Java_network_loki_messenger_libsession_1util_ConfigBase_00024Companion_kindFor(JNIEnv *env,
                                                                                jobject thiz,

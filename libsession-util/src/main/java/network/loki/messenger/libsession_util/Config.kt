@@ -10,12 +10,20 @@ import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage.Kind
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
+import org.session.libsignal.utilities.Namespace
 import org.session.libsignal.utilities.SessionId
 import java.io.Closeable
 import java.util.Stack
 
+sealed class Config(protected val pointer: Long): Closeable {
+    abstract fun namespace(): Int
+    external fun free()
+    override fun close() {
+        free()
+    }
+}
 
-sealed class ConfigBase(protected val /* yucky */ pointer: Long) {
+sealed class ConfigBase(pointer: Long): Config(pointer) {
     companion object {
         init {
             System.loadLibrary("session_util")
@@ -53,12 +61,8 @@ sealed class ConfigBase(protected val /* yucky */ pointer: Long) {
     external fun merge(toMerge: Array<Pair<String,ByteArray>>): Int
     external fun currentHashes(): List<String>
 
-    external fun configNamespace(): Int
-
     // Singular merge
     external fun merge(toMerge: Pair<String,ByteArray>): Int
-
-    external fun free()
 
 }
 
@@ -70,6 +74,8 @@ class Contacts(pointer: Long) : ConfigBase(pointer) {
         external fun newInstance(ed25519SecretKey: ByteArray): Contacts
         external fun newInstance(ed25519SecretKey: ByteArray, initialDump: ByteArray): Contacts
     }
+
+    override fun namespace() = Namespace.CONTACTS()
 
     external fun get(sessionId: String): Contact?
     external fun getOrConstruct(sessionId: String): Contact
@@ -126,6 +132,8 @@ class UserProfile(pointer: Long) : ConfigBase(pointer) {
         external fun newInstance(ed25519SecretKey: ByteArray, initialDump: ByteArray): UserProfile
     }
 
+    override fun namespace() = Namespace.USER_PROFILE()
+
     external fun setName(newName: String)
     external fun getName(): String?
     external fun getPic(): UserPic
@@ -145,6 +153,8 @@ class ConversationVolatileConfig(pointer: Long): ConfigBase(pointer) {
         external fun newInstance(ed25519SecretKey: ByteArray): ConversationVolatileConfig
         external fun newInstance(ed25519SecretKey: ByteArray, initialDump: ByteArray): ConversationVolatileConfig
     }
+
+    override fun namespace() = Namespace.CONVO_INFO_VOLATILE()
 
     external fun getOneToOne(pubKeyHex: String): Conversation.OneToOne?
     external fun getOrConstructOneToOne(pubKeyHex: String): Conversation.OneToOne
@@ -195,6 +205,8 @@ class UserGroupsConfig(pointer: Long): ConfigBase(pointer) {
         external fun newInstance(ed25519SecretKey: ByteArray, initialDump: ByteArray): UserGroupsConfig
     }
 
+    override fun namespace() = Namespace.GROUPS()
+
     external fun getCommunityInfo(baseUrl: String, room: String): GroupInfo.CommunityGroupInfo?
     external fun getLegacyGroupInfo(sessionId: String): GroupInfo.LegacyGroupInfo?
     external fun getClosedGroup(sessionId: String): GroupInfo.ClosedGroupInfo?
@@ -230,6 +242,9 @@ class GroupInfoConfig(pointer: Long): ConfigBase(pointer), Closeable {
             initialDump: ByteArray = byteArrayOf()
         ): GroupInfoConfig
     }
+
+    override fun namespace() = Namespace.CLOSED_GROUP_INFO()
+
     external fun id(): SessionId
     external fun destroyGroup()
     external fun getCreated(): Long?
@@ -264,6 +279,9 @@ class GroupMembersConfig(pointer: Long): ConfigBase(pointer), Closeable {
             initialDump: ByteArray = byteArrayOf()
         ): GroupMembersConfig
     }
+
+    override fun namespace() = Namespace.CLOSED_GROUP_MEMBERS()
+
     external fun all(): Stack<GroupMember>
     external fun erase(groupMember: GroupMember): Boolean
     external fun get(pubKeyHex: String): GroupMember?
@@ -274,7 +292,9 @@ class GroupMembersConfig(pointer: Long): ConfigBase(pointer), Closeable {
     }
 }
 
-class GroupKeysConfig(private val pointer: Long): Closeable {
+sealed class ConfigSig(pointer: Long) : Config(pointer)
+
+class GroupKeysConfig(pointer: Long): ConfigSig(pointer) {
     companion object {
         init {
             System.loadLibrary("session_util")
@@ -287,8 +307,10 @@ class GroupKeysConfig(private val pointer: Long): Closeable {
             info: GroupInfoConfig,
             members: GroupMembersConfig
         ): GroupKeysConfig
-        external fun storageNamespace(): Int
     }
+
+    override fun namespace() = Namespace.ENCRYPTION_KEYS()
+
     external fun groupKeys(): Stack<ByteArray>
     external fun keyDump(): ByteArray
     external fun loadKey(message: ByteArray,
@@ -300,7 +322,6 @@ class GroupKeysConfig(private val pointer: Long): Closeable {
     external fun pendingKey(): ByteArray?
     external fun pendingConfig(): ByteArray?
     external fun rekey(info: GroupInfoConfig, members: GroupMembersConfig): ByteArray
-    external fun free()
     override fun close() {
         free()
     }
