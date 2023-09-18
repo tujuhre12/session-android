@@ -198,3 +198,20 @@ Java_network_loki_messenger_libsession_1util_GroupKeysConfig_keys(JNIEnv *env, j
     }
     return our_stack;
 }
+
+extern "C"
+JNIEXPORT jobject JNICALL
+Java_network_loki_messenger_libsession_1util_GroupKeysConfig_currentHashes(JNIEnv *env,
+                                                                           jobject thiz) {
+    auto ptr = ptrToKeys(env, thiz);
+    auto existing = ptr->current_hashes();
+    jclass stack = env->FindClass("java/util/Stack");
+    jmethodID init = env->GetMethodID(stack, "<init>", "()V");
+    jobject our_list = env->NewObject(stack, init);
+    jmethodID push = env->GetMethodID(stack, "push", "(Ljava/lang/Object;)Ljava/lang/Object;");
+    for (auto& hash : existing) {
+        auto hash_bytes = env->NewStringUTF(hash.data());
+        env->CallObjectMethod(our_list, push, hash_bytes);
+    }
+    return our_list;
+}

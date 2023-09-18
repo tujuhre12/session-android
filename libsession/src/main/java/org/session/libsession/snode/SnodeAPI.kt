@@ -525,15 +525,39 @@ object SnodeAPI {
         messageHashes: List<String>,
         newExpiry: Long,
         publicKey: String,
+        signingKey: ByteArray,
+        pubKeyEd25519: String? = null,
         shorten: Boolean = false,
         extend: Boolean = false): SnodeBatchRequestInfo? {
-        val params = buildAlterTtlParams(messageHashes, newExpiry, publicKey, extend, shorten) ?: return null
+        val params = buildAlterTtlParams(messageHashes, newExpiry, publicKey, signingKey, pubKeyEd25519, extend, shorten) ?: return null
         return SnodeBatchRequestInfo(
             Snode.Method.Expire.rawValue,
             params,
             null
         )
     }
+
+    fun buildAuthenticatedAlterTtlBatchRequest(
+        messageHashes: List<String>,
+        newExpiry: Long,
+        publicKey: String,
+        shorten: Boolean = false,
+        extend: Boolean = false): SnodeBatchRequestInfo? {
+        val userEd25519KeyPair = MessagingModuleConfiguration.shared.getUserED25519KeyPair() ?: return null
+        val signingKey = userEd25519KeyPair.secretKey.asBytes
+        val pubKeyEd25519 = userEd25519KeyPair.publicKey.asHexString
+        return buildAuthenticatedAlterTtlBatchRequest(
+            messageHashes,
+            newExpiry,
+            publicKey,
+            signingKey,
+            pubKeyEd25519,
+            shorten,
+            extend
+        )
+    }
+
+
 
     fun getRawBatchResponse(snode: Snode, publicKey: String, requests: List<SnodeBatchRequestInfo>, sequence: Boolean = false): RawResponsePromise {
         val parameters = mutableMapOf<String, Any>(
@@ -587,9 +611,18 @@ object SnodeAPI {
         }
     }
 
-    fun alterTtl(messageHashes: List<String>, newExpiry: Long, publicKey: String, extend: Boolean = false, shorten: Boolean = false): RawResponsePromise {
+    fun alterTtl(messageHashes: List<String>,
+                 newExpiry: Long,
+                 publicKey: String,
+                 extend: Boolean = false,
+                 shorten: Boolean = false): RawResponsePromise {
         return retryIfNeeded(maxRetryCount) {
-            val params = buildAlterTtlParams(messageHashes, newExpiry, publicKey, extend, shorten)
+            val userEd25519KeyPair = MessagingModuleConfiguration.shared.getUserED25519KeyPair() ?: return@retryIfNeeded Promise.ofFail(
+                Exception("No user key pair to sign alter ttl message")
+            )
+            val signingKey = userEd25519KeyPair.secretKey.asBytes
+            val pubKeyEd25519 = userEd25519KeyPair.publicKey.asHexString
+            val params = buildAlterTtlParams(messageHashes, newExpiry, publicKey, signingKey, pubKeyEd25519, extend, shorten)
                 ?: return@retryIfNeeded Promise.ofFail(
                     Exception("Couldn't build signed params for alterTtl request for newExpiry=$newExpiry, extend=$extend, shorten=$shorten")
                 )
@@ -599,13 +632,15 @@ object SnodeAPI {
         }
     }
 
-    private fun buildAlterTtlParams( // TODO: in future this will probably need to use the closed group subkeys / admin keys for group swarms
+    private fun buildAlterTtlParams(
         messageHashes: List<String>,
         newExpiry: Long,
         publicKey: String,
+        signingKey: ByteArray,
+        pubKeyEd25519: String? = null,
         extend: Boolean = false,
         shorten: Boolean = false): Map<String, Any>? {
-        val userEd25519KeyPair = MessagingModuleConfiguration.shared.getUserED25519KeyPair() ?: return null
+
         val params = mutableMapOf(
             "expiry" to newExpiry,
             "messages" to messageHashes,
@@ -619,21 +654,23 @@ object SnodeAPI {
 
         val signData = "${Snode.Method.Expire.rawValue}$shortenOrExtend$newExpiry${messageHashes.joinToString(separator = "")}".toByteArray()
 
-        val ed25519PublicKey = userEd25519KeyPair.publicKey.asHexString
         val signature = ByteArray(Sign.BYTES)
         try {
             sodium.cryptoSignDetached(
                 signature,
                 signData,
                 signData.size.toLong(),
-                userEd25519KeyPair.secretKey.asBytes
+                signingKey
             )
         } catch (e: Exception) {
             Log.e("Loki", "Signing data failed with user secret key", e)
             return null
         }
         params["pubkey"] = publicKey
-        params["pubkey_ed25519"] = ed25519PublicKey
+        if (pubKeyEd25519 != null) {
+            params["pubkey_ed25519"] = pubKeyEd25519
+        }
+
         params["signature"] = Base64.encodeBytes(signature)
 
         return params

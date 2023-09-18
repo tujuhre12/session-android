@@ -292,7 +292,8 @@ class GroupMembersConfig(pointer: Long): ConfigBase(pointer), Closeable {
     }
 }
 
-sealed class ConfigSig(pointer: Long) : Config(pointer)
+sealed class ConfigSig(pointer: Long) : Config(pointer) {
+}
 
 class GroupKeysConfig(pointer: Long): ConfigSig(pointer) {
     companion object {
@@ -322,6 +323,7 @@ class GroupKeysConfig(pointer: Long): ConfigSig(pointer) {
     external fun needsRekey(): Boolean
     external fun pendingKey(): ByteArray?
     external fun pendingConfig(): ByteArray?
+    external fun currentHashes(): List<String>
     external fun rekey(info: GroupInfoConfig, members: GroupMembersConfig): ByteArray
     override fun close() {
         free()

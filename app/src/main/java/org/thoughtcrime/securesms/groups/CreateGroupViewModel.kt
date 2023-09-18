@@ -41,23 +41,26 @@ class CreateGroupViewModel @Inject constructor(
     }
 
     fun tryCreateGroup(createGroupState: CreateGroupState): Recipient? {
-        _viewState.postValue(CreateGroupFragment.ViewState(true, null, null))
+        _viewState.postValue(CreateGroupFragment.ViewState(true, null))
 
         val name = createGroupState.groupName
         val description = createGroupState.groupDescription
         val members = createGroupState.members
 
-        // do some validations
+        // do some validation
         if (name.isEmpty()) {
             _viewState.postValue(
-                CreateGroupFragment.ViewState(false, R.string.error, null)
+                CreateGroupFragment.ViewState(false, R.string.error)
             )
             return null
         }
         // TODO: add future validation for empty group ? we'll add ourselves anyway ig
 
         // make a group
-         val newGroup = storage.createNewGroup(name, description, members) // TODO: handle optional
+        val newGroup = storage.createNewGroup(name, description, members) // TODO: handle optional
+        if (!newGroup.isPresent) {
+            _viewState.postValue(CreateGroupFragment.ViewState(isLoading = false, null))
+        }
         return newGroup.orNull()
     }
 

@@ -7,15 +7,19 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.StringRes
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.scrollable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedButton
 import androidx.compose.material.OutlinedTextField
@@ -28,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -36,7 +41,10 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.databinding.FragmentCreateGroupBinding
 import org.session.libsession.utilities.Device
@@ -93,9 +101,13 @@ class CreateGroupFragment : Fragment() {
                 createGroupState,
                 onCreate = { newGroup ->
                     // launch something to create here
-                    val groupRecipient = viewModel.tryCreateGroup(newGroup)
-                    groupRecipient?.let { recipient ->
-                        openConversationActivity(requireContext(), recipient)
+                    // dunno if we want to key this here as a launched effect on some property :thinking:
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        val groupRecipient = viewModel.tryCreateGroup(newGroup)
+                        groupRecipient?.let { recipient ->
+                            openConversationActivity(requireContext(), recipient)
+                            delegate.onDialogClosePressed()
+                        }
                     }
                 },
                 onClose = {
@@ -110,11 +122,10 @@ class CreateGroupFragment : Fragment() {
 
     data class ViewState(
         val isLoading: Boolean,
-        @StringRes val error: Int?,
-        val createdThreadId: Long?
+        @StringRes val error: Int?
     ) {
         companion object {
-            val DEFAULT = ViewState(false, null, null)
+            val DEFAULT = ViewState(false, null)
         }
     }
 
@@ -141,59 +152,68 @@ fun CreateGroup(
 
     val scrollState = rememberScrollState()
 
-    Column(
-        modifier
-            .fillMaxWidth()) {
-        Column(modifier.scrollable(scrollState, orientation = Orientation.Vertical)) {
-            // Top bar
-            NavigationBar(
-                title = stringResource(id = R.string.activity_create_group_title),
-                onBack = onBack,
-                onClose = onClose
-            )
-            // Editable avatar (future chunk)
-            EditableAvatar(
+    Box {
+        Column(
+            modifier
+                .fillMaxWidth()) {
+            Column(modifier.scrollable(scrollState, orientation = Orientation.Vertical)) {
+                // Top bar
+                NavigationBar(
+                    title = stringResource(id = R.string.activity_create_group_title),
+                    onBack = onBack,
+                    onClose = onClose
+                )
+                // Editable avatar (future chunk)
+                EditableAvatar(
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .padding(top = 16.dp)
+                )
+                // Title
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.CenterHorizontally)
+                        .padding(vertical = 8.dp, horizontal = 24.dp),
+                )
+                // Description
+                OutlinedTextField(
+                    value = description,
+                    onValueChange = { description = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.CenterHorizontally)
+                        .padding(vertical = 8.dp, horizontal = 24.dp),
+                )
+                // Group list
+                MemberList(contacts = members, modifier = Modifier.padding(vertical = 8.dp, horizontal = 24.dp))
+            }
+            // Create button
+            OutlinedButton(
+                onClick = { onCreate(CreateGroupState(name, description, members)) },
+                enabled = name.isNotBlank() && !viewState.isLoading,
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
-                    .padding(top = 16.dp)
-            )
-            // Title
-            OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.CenterHorizontally)
-                    .padding(vertical = 8.dp, horizontal = 24.dp),
-            )
-            // Description
-            OutlinedTextField(
-                value = description,
-                onValueChange = { description = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.CenterHorizontally)
-                    .padding(vertical = 8.dp, horizontal = 24.dp),
-            )
-            // Group list
-            MemberList(contacts = members, modifier = Modifier.padding(vertical = 8.dp, horizontal = 24.dp))
+                    .padding(16.dp),
+                shape = RoundedCornerShape(32.dp)
+            ) {
+                Text(
+                    text = stringResource(id = R.string.activity_create_group_create_button_title),
+                    // TODO: colours of everything here probably needs to be redone
+                    color = MaterialTheme.colors.onBackground,
+                    modifier = Modifier.width(160.dp),
+                    textAlign = TextAlign.Center
+                )
+            }
         }
-        // Create button
-        OutlinedButton(
-            onClick = { onCreate(CreateGroupState(name, description, members)) },
-            enabled = name.isNotBlank() && !viewState.isLoading,
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .padding(16.dp),
-            shape = RoundedCornerShape(32.dp)
-        ) {
-            Text(
-                text = stringResource(id = R.string.activity_create_group_create_button_title),
-                // TODO: colours of everything here probably needs to be redone
-                color = MaterialTheme.colors.onBackground,
-                modifier = Modifier.width(160.dp),
-                textAlign = TextAlign.Center
-            )
+        if (viewState.isLoading) {
+            Box(modifier = modifier.fillMaxSize().background(Color.Gray.copy(alpha = 0.5f))) {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
         }
     }
 }
@@ -226,7 +246,7 @@ fun ClosedGroupPreview(
 ) {
     PreviewTheme(themeResId) {
         CreateGroup(
-            viewState = CreateGroupFragment.ViewState(false, null, null),
+            viewState = CreateGroupFragment.ViewState(false, null),
             createGroupState = CreateGroupState("Group Name", "Test Group Description", emptySet()),
             onCreate = {},
             onClose = {},

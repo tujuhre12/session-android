@@ -23,6 +23,7 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Namespace
 import org.session.libsignal.utilities.SessionId
 import org.session.libsignal.utilities.Snode
+import kotlin.time.Duration.Companion.days
 
 class ClosedGroupPoller(private val executor: CoroutineScope,
                         private val closedGroupSessionId: SessionId,
@@ -97,6 +98,12 @@ class ClosedGroupPoller(private val executor: CoroutineScope,
             val members = configFactoryProtocol.getGroupMemberConfig(closedGroupSessionId) ?: return null
             val keys = configFactoryProtocol.getGroupKeysConfig(closedGroupSessionId) ?: return null
 
+            val hashesToExtend = mutableSetOf<String>()
+
+            hashesToExtend += info.currentHashes()
+            hashesToExtend += members.currentHashes()
+            hashesToExtend += keys.currentHashes()
+
             val keysIndex = 0
             val infoIndex = 1
             val membersIndex = 2
@@ -133,13 +140,25 @@ class ClosedGroupPoller(private val executor: CoroutineScope,
                 group.signingKey()
             ) ?: return null
 
+            val requests = mutableListOf(keysPoll, infoPoll, membersPoll, messagePoll)
+
+            if (hashesToExtend.isNotEmpty()) {
+                SnodeAPI.buildAuthenticatedAlterTtlBatchRequest(
+                    messageHashes = hashesToExtend.toList(),
+                    publicKey = closedGroupSessionId.hexString(),
+                    signingKey = group.signingKey(),
+                    newExpiry = SnodeAPI.nowWithOffset + 14.days.inWholeMilliseconds,
+                    extend = true
+                )?.let { extensionRequest ->
+                    requests += extensionRequest
+                }
+            }
+
             val pollResult = SnodeAPI.getRawBatchResponse(
                 snode,
                 closedGroupSessionId.hexString(),
-                listOf(keysPoll, infoPoll, membersPoll, messagePoll)
+                requests
             ).get()
-
-            // TODO: add the extend duration TTLs for known hashes here
 
             // if poll result body is null here we don't have any things ig
             if (ENABLE_LOGGING) Log.d("ClosedGroupPoller", "Poll results @${SnodeAPI.nowWithOffset}:")
