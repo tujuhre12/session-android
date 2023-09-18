@@ -73,7 +73,7 @@ class PushRegistry @Inject constructor(
         token: String,
         publicKey: String,
         userEd25519Key: KeyPair,
-        namespaces: List<Int> = listOf(Namespace.DEFAULT)
+        namespaces: List<Int> = listOf(Namespace.DEFAULT())
     ): Promise<*, Exception> {
         Log.d(TAG, "register() called")
 

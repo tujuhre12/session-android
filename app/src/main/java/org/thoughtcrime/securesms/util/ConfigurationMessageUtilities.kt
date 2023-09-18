@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.util
 
 import android.content.Context
-import android.provider.Telephony.Sms.Conversations
 import network.loki.messenger.libsession_util.ConfigBase
 import network.loki.messenger.libsession_util.Contacts
 import network.loki.messenger.libsession_util.ConversationVolatileConfig
@@ -12,7 +11,6 @@ import network.loki.messenger.libsession_util.util.Contact
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import network.loki.messenger.libsession_util.util.UserPic
-import nl.komponents.kovenant.Promise
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.jobs.ConfigurationSyncJob
 import org.session.libsession.messaging.jobs.JobQueue
@@ -27,6 +25,7 @@ import org.session.libsession.utilities.WindowDebouncer
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
+import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.SessionId
 import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.database.GroupDatabase
@@ -38,17 +37,16 @@ object ConfigurationMessageUtilities {
 
     private val debouncer = WindowDebouncer(3000, Timer())
 
-    private fun scheduleConfigSync(userPublicKey: String) {
+    private fun scheduleConfigSync(destination: Destination) {
         debouncer.publish {
             // don't schedule job if we already have one
             val storage = MessagingModuleConfiguration.shared.storage
-            val ourDestination = Destination.Contact(userPublicKey)
-            val currentStorageJob = storage.getConfigSyncJob(ourDestination)
+            val currentStorageJob = storage.getConfigSyncJob(destination)
             if (currentStorageJob != null) {
                 (currentStorageJob as ConfigurationSyncJob).shouldRunAgain.set(true)
                 return@publish
             }
-            val newConfigSync = ConfigurationSyncJob(ourDestination)
+            val newConfigSync = ConfigurationSyncJob(destination)
             JobQueue.shared.add(newConfigSync)
         }
     }
@@ -60,7 +58,7 @@ object ConfigurationMessageUtilities {
         val forcedConfig = TextSecurePreferences.hasForcedNewConfig(context)
         val currentTime = SnodeAPI.nowWithOffset
         if (ConfigBase.isNewConfigEnabled(forcedConfig, currentTime)) {
-            scheduleConfigSync(userPublicKey)
+            scheduleConfigSync(Destination.Contact(userPublicKey))
             return
         }
         val lastSyncTime = TextSecurePreferences.getLastConfigurationSyncTime(context)
@@ -84,34 +82,21 @@ object ConfigurationMessageUtilities {
         TextSecurePreferences.setLastConfigurationSyncTime(context, now)
     }
 
-    fun forceSyncConfigurationNowIfNeeded(context: Context): Promise<Unit, Exception> {
+    fun forceSyncConfigurationNowIfNeeded(destination: Destination) {
+        scheduleConfigSync(destination)
+    }
+
+
+    fun forceSyncConfigurationNowIfNeeded(context: Context) {
         // add if check here to schedule new config job process and return early
-        val userPublicKey = TextSecurePreferences.getLocalNumber(context) ?: return Promise.ofFail(NullPointerException("User Public Key is null"))
+        val userPublicKey = TextSecurePreferences.getLocalNumber(context) ?: return Log.e("Loki", NullPointerException("User Public Key is null"))
         val forcedConfig = TextSecurePreferences.hasForcedNewConfig(context)
         val currentTime = SnodeAPI.nowWithOffset
         if (ConfigBase.isNewConfigEnabled(forcedConfig, currentTime)) {
             // schedule job if none exist
             // don't schedule job if we already have one
-            scheduleConfigSync(userPublicKey)
-            return Promise.ofSuccess(Unit)
+            scheduleConfigSync(Destination.Contact(userPublicKey))
         }
-        val contacts = ContactUtilities.getAllContacts(context).filter { recipient ->
-            !recipient.isGroupRecipient && !recipient.name.isNullOrEmpty() && !recipient.isLocalNumber && recipient.address.serialize().isNotEmpty()
-        }.map { recipient ->
-            ConfigurationMessage.Contact(
-                publicKey = recipient.address.serialize(),
-                name = recipient.name!!,
-                profilePicture = recipient.profileAvatar,
-                profileKey = recipient.profileKey,
-                isApproved = recipient.isApproved,
-                isBlocked = recipient.isBlocked,
-                didApproveMe = recipient.hasApprovedMe()
-            )
-        }
-        val configurationMessage = ConfigurationMessage.getCurrent(contacts) ?: return Promise.ofSuccess(Unit)
-        val promise = MessageSender.send(configurationMessage, Destination.from(Address.fromSerialized(userPublicKey)), isSyncMessage = true)
-        TextSecurePreferences.setLastConfigurationSyncTime(context, System.currentTimeMillis())
-        return promise
     }
 
     private fun maybeUserSecretKey() = MessagingModuleConfiguration.shared.getUserED25519KeyPair()?.secretKey?.asBytes

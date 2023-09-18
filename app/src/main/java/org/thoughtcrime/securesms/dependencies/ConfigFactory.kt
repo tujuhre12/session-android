@@ -11,6 +11,7 @@ import network.loki.messenger.libsession_util.GroupKeysConfig
 import network.loki.messenger.libsession_util.GroupMembersConfig
 import network.loki.messenger.libsession_util.UserGroupsConfig
 import network.loki.messenger.libsession_util.UserProfile
+import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigFactoryUpdateListener
@@ -357,5 +358,10 @@ class ConfigFactory(
         val pubKey = groupInfo.id().hexString()
         val timestamp = SnodeAPI.nowWithOffset
         configDatabase.storeGroupConfigs(pubKey, groupKeys.dump(), groupInfo.dump(), groupMembers.dump(), timestamp)
+    }
+
+    override fun scheduleUpdate(destination: Destination) {
+        // there's probably a better way to do this
+        ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(destination)
     }
 }

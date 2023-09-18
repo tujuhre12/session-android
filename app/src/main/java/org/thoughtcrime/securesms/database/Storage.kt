@@ -959,7 +959,7 @@ open class Storage(
             groupCreationTimestamp
         )
         val keysBatchInfo = SnodeAPI.buildAuthenticatedStoreBatchInfo(
-            GroupKeysConfig.namespace(),
+            groupKeys.namespace(),
             keysSnodeMessage,
             adminKey
         )

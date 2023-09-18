@@ -53,7 +53,7 @@ class PushRegistryV2 @Inject constructor(private val pushReceiver: PushReceiver)
         val requestParameters = SubscriptionRequest(
             pubkey = publicKey,
             session_ed25519 = userEd25519Key.publicKey.asHexString,
-            namespaces = listOf(Namespace.DEFAULT),
+            namespaces = listOf(Namespace.DEFAULT()),
             data = true, // only permit data subscription for now (?)
             service = device.service,
             sig_ts = timestamp,

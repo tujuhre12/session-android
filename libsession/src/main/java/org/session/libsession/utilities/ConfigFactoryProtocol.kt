@@ -9,6 +9,7 @@ import network.loki.messenger.libsession_util.GroupKeysConfig
 import network.loki.messenger.libsession_util.GroupMembersConfig
 import network.loki.messenger.libsession_util.UserGroupsConfig
 import network.loki.messenger.libsession_util.UserProfile
+import org.session.libsession.messaging.messages.Destination
 import org.session.libsignal.utilities.SessionId
 
 interface ConfigFactoryProtocol {
@@ -31,6 +32,8 @@ interface ConfigFactoryProtocol {
         groupInfo: GroupInfoConfig,
         groupMembers: GroupMembersConfig
     )
+
+    fun scheduleUpdate(destination: Destination)
 }
 
 interface ConfigFactoryUpdateListener {

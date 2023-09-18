@@ -14,6 +14,7 @@ import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.jobs.MessageReceiveParameters
+import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.snode.RawResponse
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -101,6 +102,8 @@ class ClosedGroupPoller(private val executor: CoroutineScope,
             val membersIndex = 2
             val messageIndex = 3
 
+            val requiresSync = info.needsPush() || members.needsPush() || keys.needsRekey() || keys.pendingConfig() != null
+
             val messagePoll = SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
                 snode,
                 closedGroupSessionId.hexString(),
@@ -154,6 +157,9 @@ class ClosedGroupPoller(private val executor: CoroutineScope,
             info.free()
             members.free()
 
+            if (requiresSync) {
+                configFactoryProtocol.scheduleUpdate(Destination.ClosedGroup(closedGroupSessionId.hexString()))
+            }
         } catch (e: Exception) {
             if (ENABLE_LOGGING) Log.e("GroupPoller", "Polling failed for group", e)
             return POLL_INTERVAL

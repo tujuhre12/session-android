@@ -292,7 +292,7 @@ class GroupMembersConfig(pointer: Long): ConfigBase(pointer), Closeable {
     }
 }
 
-abstract class ConfigSig(pointer: Long) : Config(pointer)
+sealed class ConfigSig(pointer: Long) : Config(pointer)
 
 class GroupKeysConfig(pointer: Long): ConfigSig(pointer) {
     companion object {
