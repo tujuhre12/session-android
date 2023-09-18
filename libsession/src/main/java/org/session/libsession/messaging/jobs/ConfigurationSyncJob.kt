@@ -1,20 +1,20 @@
 package org.session.libsession.messaging.jobs
 
+import network.loki.messenger.libsession_util.Config
 import network.loki.messenger.libsession_util.ConfigBase
-import network.loki.messenger.libsession_util.ConfigBase.Companion.protoKindFor
 import nl.komponents.kovenant.functional.bind
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.messages.Destination
-import org.session.libsession.messaging.messages.control.SharedConfigurationMessage
-import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.utilities.Data
 import org.session.libsession.snode.RawResponse
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeAPI.SnodeBatchRequestInfo
-import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsignal.utilities.Log
 import java.util.concurrent.atomic.AtomicBoolean
-typealias ConfigPair<T> = List<Pair<T, ConfigBase>>
+
+class InvalidDestination: Exception("Trying to push configs somewhere other than our swarm or a closed group")
+class InvalidContactDestination: Exception("Trying to push to non-user config swarm")
 
 // only contact (self) and closed group destinations will be supported
 data class ConfigurationSyncJob(val destination: Destination): Job {
@@ -26,61 +26,47 @@ data class ConfigurationSyncJob(val destination: Destination): Job {
 
     val shouldRunAgain = AtomicBoolean(false)
 
-    data class SyncInformation(val configs: ConfigPair<SnodeBatchRequestInfo>, val toDelete: List<String>)
+    data class ConfigMessageInformation(val batch: SnodeBatchRequestInfo, val config: Config, val seqNo: Long?) // seqNo will be null for keys type
 
+    data class SyncInformation(val configs: List<ConfigMessageInformation>, val toDelete: List<String>)
+
+    private fun destinationConfigs(delegate: JobDelegate, configFactoryProtocol: ConfigFactoryProtocol): SyncInformation {
+        TODO()
+    }
 
     override suspend fun execute(dispatcherName: String) {
         val storage = MessagingModuleConfiguration.shared.storage
-        val forcedConfig = TextSecurePreferences.hasForcedNewConfig(MessagingModuleConfiguration.shared.context)
-        val currentTime = SnodeAPI.nowWithOffset
 
         val userPublicKey = storage.getUserPublicKey()
         val delegate = delegate ?: return Log.e("ConfigurationSyncJob", "No Delegate")
-        if ((destination is Destination.Contact && destination.publicKey != userPublicKey)) {
-            Log.w(TAG, "No need to run config sync job, TODO")
-            return delegate.handleJobSucceeded(this, dispatcherName)
+        if (destination is Destination.Contact && destination.publicKey != userPublicKey) {
+            return delegate.handleJobFailedPermanently(this, dispatcherName, InvalidContactDestination())
+        } else if (destination !is Destination.ClosedGroup) {
+            return delegate.handleJobFailedPermanently(this, dispatcherName, InvalidDestination())
         }
 
         // configFactory singleton instance will come in handy for modifying hashes and fetching configs for namespace etc
         val configFactory = MessagingModuleConfiguration.shared.configFactory
 
+        // **** start user ****
         // get latest states, filter out configs that don't need push
         val configsRequiringPush = configFactory.getUserConfigs().filter { config -> config.needsPush() }
 
         // don't run anything if we don't need to push anything
         if (configsRequiringPush.isEmpty()) return delegate.handleJobSucceeded(this, dispatcherName)
 
-        // need to get the current hashes before we call `push()`
-        val toDeleteHashes = mutableListOf<String>()
-
+        // **** end user ****
         // allow null results here so the list index matches configsRequiringPush
         val sentTimestamp: Long = SnodeAPI.nowWithOffset
-        val batchObjects: List<Pair<SharedConfigurationMessage, SnodeBatchRequestInfo>?> = configsRequiringPush.map { config ->
-            val (data, seqNo, obsoleteHashes) = config.push()
-            toDeleteHashes += obsoleteHashes
-            SharedConfigurationMessage(config.protoKindFor(), data, seqNo) to config
-        }.map { (message, config) ->
-            // return a list of batch request objects
-            val snodeMessage = MessageSender.buildWrappedMessageToSnode(destination, message, true)
-            val authenticated = SnodeAPI.buildAuthenticatedStoreBatchInfo(
-                config.configNamespace(),
-                snodeMessage
-            ) ?: return@map null // this entry will be null otherwise
-            message to authenticated // to keep track of seqNo for calling confirmPushed later
-        }
+        val (batchObjects, toDeleteHashes) = destinationConfigs(delegate, configFactory)
 
         val toDeleteRequest = toDeleteHashes.let { toDeleteFromAllNamespaces ->
             if (toDeleteFromAllNamespaces.isEmpty()) null
             else SnodeAPI.buildAuthenticatedDeleteBatchInfo(destination.destinationPublicKey(), toDeleteFromAllNamespaces)
         }
 
-        if (batchObjects.any { it == null }) {
-            // stop running here, something like a signing error occurred
-            return delegate.handleJobFailedPermanently(this, dispatcherName, NullPointerException("One or more requests had a null batch request info"))
-        }
-
         val allRequests = mutableListOf<SnodeBatchRequestInfo>()
-        allRequests += batchObjects.requireNoNulls().map { (_, request) -> request }
+        allRequests += batchObjects.map { (request) -> request }
         // add in the deletion if we have any hashes
         if (toDeleteRequest != null) {
             allRequests += toDeleteRequest
@@ -118,23 +104,26 @@ data class ConfigurationSyncJob(val destination: Destination): Job {
             } ?: emptySet()
 
             // at this point responseList index should line up with configsRequiringPush index
-            configsRequiringPush.forEachIndexed { index, config ->
-                val (toPushMessage, _) = batchObjects[index]!!
+            batchObjects.forEachIndexed { index, (message, config, seqNo) ->
                 val response = responseList[index]
                 val responseBody = response["body"] as? RawResponse
                 val insertHash = responseBody?.get("hash") as? String ?: run {
-                    Log.w(TAG, "No hash returned for the configuration in namespace ${config.configNamespace()}")
+                    Log.w(TAG, "No hash returned for the configuration in namespace ${config.namespace()}")
                     return@forEachIndexed
                 }
                 Log.d(TAG, "Hash ${insertHash.take(4)} returned from store request for new config")
 
                 // confirm pushed seqno
-                val thisSeqNo = toPushMessage.seqNo
-                config.confirmPushed(thisSeqNo, insertHash)
+                if (config is ConfigBase) {
+                    seqNo?.let {
+                        config.confirmPushed(it, insertHash)
+                    }
+                }
+
                 Log.d(TAG, "Successfully removed the deleted hashes from ${config.javaClass.simpleName}")
                 // dump and write config after successful
-                if (config.needsDump()) { // usually this will be true?
-                    configFactory.persist(config, toPushMessage.sentTimestamp ?: sentTimestamp)
+                if (config is ConfigBase && config.needsDump()) { // usually this will be true?
+                    configFactory.persist(config, (message.params["timestamp"] as String).toLong())
                 }
             }
         } catch (e: Exception) {
@@ -150,10 +139,6 @@ data class ConfigurationSyncJob(val destination: Destination): Job {
 
     private fun getUserSyncInformation(delegate: JobDelegate) {
         val userEdKeyPair = MessagingModuleConfiguration.shared.getUserED25519KeyPair()
-    }
-
-    private fun syncGroupConfigs(delegate: JobDelegate) {
-
     }
 
     fun Destination.destinationPublicKey(): String = when (this) {

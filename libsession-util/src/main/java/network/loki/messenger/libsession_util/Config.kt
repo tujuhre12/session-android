@@ -292,7 +292,7 @@ class GroupMembersConfig(pointer: Long): ConfigBase(pointer), Closeable {
     }
 }
 
-sealed class ConfigSig(pointer: Long) : Config(pointer)
+abstract class ConfigSig(pointer: Long) : Config(pointer)
 
 class GroupKeysConfig(pointer: Long): ConfigSig(pointer) {
     companion object {
@@ -312,7 +312,8 @@ class GroupKeysConfig(pointer: Long): ConfigSig(pointer) {
     override fun namespace() = Namespace.ENCRYPTION_KEYS()
 
     external fun groupKeys(): Stack<ByteArray>
-    external fun keyDump(): ByteArray
+    external fun needsDump(): Boolean
+    external fun dump(): ByteArray
     external fun loadKey(message: ByteArray,
                          hash: String,
                          timestampMs: Long,

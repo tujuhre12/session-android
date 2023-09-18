@@ -793,14 +793,14 @@ object SnodeAPI {
                 retryIfNeeded(maxRetryCount) {
                     getNetworkTime(snode).bind { (_, timestamp) ->
                         val signature = ByteArray(Sign.BYTES)
-                        val verificationData = (Snode.Method.DeleteAll.rawValue + Namespace.ALL + timestamp.toString()).toByteArray()
+                        val verificationData = (Snode.Method.DeleteAll.rawValue + Namespace.ALL() + timestamp.toString()).toByteArray()
                         sodium.cryptoSignDetached(signature, verificationData, verificationData.size.toLong(), userED25519KeyPair.secretKey.asBytes)
                         val deleteMessageParams = mapOf(
                             "pubkey" to userPublicKey,
                             "pubkey_ed25519" to userED25519KeyPair.publicKey.asHexString,
                             "timestamp" to timestamp,
                             "signature" to Base64.encodeBytes(signature),
-                            "namespace" to Namespace.ALL,
+                            "namespace" to Namespace.ALL(),
                         )
                         invoke(Snode.Method.DeleteAll, snode, deleteMessageParams, userPublicKey).map {
                             rawResponse -> parseDeletions(userPublicKey, timestamp, rawResponse)

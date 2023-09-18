@@ -26,8 +26,8 @@ inline std::pair<std::string, session::ustring> extractHashAndData(JNIEnv *env, 
 }
 
 inline session::config::ConfigSig* ptrToConfigSig(JNIEnv* env, jobject obj) {
-    jclass baseClass = env->FindClass("network/loki/messenger/libsession_util/ConfigSig");
-    jfieldID pointerField = env->GetFieldID(baseClass, "pointer", "J");
+    jclass sigClass = env->FindClass("network/loki/messenger/libsession_util/ConfigSig");
+    jfieldID pointerField = env->GetFieldID(sigClass, "pointer", "J");
     return (session::config::ConfigSig*) env->GetLongField(obj, pointerField);
 }
 

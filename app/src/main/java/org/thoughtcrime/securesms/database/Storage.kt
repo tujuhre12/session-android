@@ -2,7 +2,7 @@ package org.thoughtcrime.securesms.database
 
 import android.content.Context
 import android.net.Uri
-import network.loki.messenger.libsession_util.ConfigBase
+import network.loki.messenger.libsession_util.Config
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_PINNED
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
@@ -462,7 +462,7 @@ open class Storage(
         return DatabaseComponent.get(context).lokiAPIDatabase().getAuthToken(id)
     }
 
-    override fun notifyConfigUpdates(forConfigObject: ConfigBase) {
+    override fun notifyConfigUpdates(forConfigObject: Config) {
         notifyUpdates(forConfigObject)
     }
 
@@ -478,14 +478,14 @@ open class Storage(
         return configFactory.user?.getCommunityMessageRequests() == true
     }
 
-    private fun notifyUpdates(forConfigObject: ConfigBase) {
+    private fun notifyUpdates(forConfigObject: Config) {
         when (forConfigObject) {
             is UserProfile -> updateUser(forConfigObject)
             is Contacts -> updateContacts(forConfigObject)
             is ConversationVolatileConfig -> updateConvoVolatile(forConfigObject)
             is UserGroupsConfig -> updateUserGroups(forConfigObject)
             is GroupInfoConfig -> updateGroupInfo(forConfigObject)
-            // is GroupKeysConfig -> updateGroupKeys(forConfigObject)
+            is GroupKeysConfig -> updateGroupKeys(forConfigObject)
             is GroupMembersConfig -> updateGroupMembers(forConfigObject)
         }
     }
@@ -959,7 +959,7 @@ open class Storage(
             groupCreationTimestamp
         )
         val keysBatchInfo = SnodeAPI.buildAuthenticatedStoreBatchInfo(
-            GroupKeysConfig.storageNamespace(),
+            GroupKeysConfig.namespace(),
             keysSnodeMessage,
             adminKey
         )
@@ -972,7 +972,7 @@ open class Storage(
             groupCreationTimestamp
         )
         val infoBatchInfo = SnodeAPI.buildAuthenticatedStoreBatchInfo(
-            groupInfo.configNamespace(),
+            groupInfo.namespace(),
             infoSnodeMessage,
             adminKey
         )
@@ -985,7 +985,7 @@ open class Storage(
             groupCreationTimestamp
         )
         val memberBatchInfo = SnodeAPI.buildAuthenticatedStoreBatchInfo(
-            groupMembers.configNamespace(),
+            groupMembers.namespace(),
             memberSnodeMessage,
             adminKey
         )

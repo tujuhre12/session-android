@@ -2,7 +2,7 @@ package org.session.libsession.database
 
 import android.content.Context
 import android.net.Uri
-import network.loki.messenger.libsession_util.ConfigBase
+import network.loki.messenger.libsession_util.Config
 import org.session.libsession.messaging.BlindedIdMapping
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.messaging.contacts.Contact
@@ -237,7 +237,7 @@ interface StorageProtocol {
     fun blockedContacts(): List<Recipient>
 
     // Shared configs
-    fun notifyConfigUpdates(forConfigObject: ConfigBase)
+    fun notifyConfigUpdates(forConfigObject: Config)
     fun conversationInConfig(publicKey: String?, groupPublicKey: String?, openGroupId: String?, visibleOnly: Boolean): Boolean
     fun canPerformConfigChange(variant: String, publicKey: String, changeTimestampMs: Long): Boolean
     fun isCheckingCommunityRequests(): Boolean

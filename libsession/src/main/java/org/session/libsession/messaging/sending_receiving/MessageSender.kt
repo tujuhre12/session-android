@@ -197,10 +197,10 @@ object MessageSender {
             val forkInfo = SnodeAPI.forkInfo
             val namespaces: List<Int> = when {
                 destination is Destination.LegacyClosedGroup
-                        && forkInfo.defaultRequiresAuth() -> listOf(Namespace.UNAUTHENTICATED_CLOSED_GROUP)
+                        && forkInfo.defaultRequiresAuth() -> listOf(Namespace.UNAUTHENTICATED_CLOSED_GROUP())
                 destination is Destination.LegacyClosedGroup
-                        && forkInfo.hasNamespaces() -> listOf(Namespace.UNAUTHENTICATED_CLOSED_GROUP, Namespace.DEFAULT)
-                else -> listOf(Namespace.DEFAULT)
+                        && forkInfo.hasNamespaces() -> listOf(Namespace.UNAUTHENTICATED_CLOSED_GROUP(), Namespace.DEFAULT())
+                else -> listOf(Namespace.DEFAULT())
             }
             namespaces.map { namespace ->
                 if (destination is Destination.ClosedGroup) {

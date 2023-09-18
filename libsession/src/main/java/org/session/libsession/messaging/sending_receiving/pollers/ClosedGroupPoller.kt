@@ -104,28 +104,28 @@ class ClosedGroupPoller(private val executor: CoroutineScope,
             val messagePoll = SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
                 snode,
                 closedGroupSessionId.hexString(),
-                Namespace.DEFAULT,
+                Namespace.DEFAULT(),
                 maxSize = null,
                 group.signingKey()
             ) ?: return null
             val infoPoll = SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
                 snode,
                 closedGroupSessionId.hexString(),
-                info.configNamespace(),
+                info.namespace(),
                 maxSize = null,
                 group.signingKey()
             ) ?: return null
             val membersPoll = SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
                 snode,
                 closedGroupSessionId.hexString(),
-                members.configNamespace(),
+                members.namespace(),
                 maxSize = null,
                 group.signingKey()
             ) ?: return null
             val keysPoll = SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
                 snode,
                 closedGroupSessionId.hexString(),
-                GroupKeysConfig.storageNamespace(),
+                keys.namespace(),
                 maxSize = null,
                 group.signingKey()
             ) ?: return null

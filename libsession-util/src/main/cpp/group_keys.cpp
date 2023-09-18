@@ -97,6 +97,14 @@ Java_network_loki_messenger_libsession_1util_GroupKeysConfig_needsRekey(JNIEnv *
 }
 
 extern "C"
+JNIEXPORT jboolean JNICALL
+Java_network_loki_messenger_libsession_1util_GroupKeysConfig_needsDump(JNIEnv *env, jobject thiz) {
+    std::lock_guard lock{util::util_mutex_};
+    auto keys = ptrToKeys(env, thiz);
+    return keys->needs_dump();
+}
+
+extern "C"
 JNIEXPORT jbyteArray JNICALL
 Java_network_loki_messenger_libsession_1util_GroupKeysConfig_pendingKey(JNIEnv *env, jobject thiz) {
     std::lock_guard lock{util::util_mutex_};
@@ -138,7 +146,7 @@ Java_network_loki_messenger_libsession_1util_GroupKeysConfig_rekey(JNIEnv *env, 
 
 extern "C"
 JNIEXPORT jbyteArray JNICALL
-Java_network_loki_messenger_libsession_1util_GroupKeysConfig_keyDump(JNIEnv *env, jobject thiz) {
+Java_network_loki_messenger_libsession_1util_GroupKeysConfig_dump(JNIEnv *env, jobject thiz) {
     auto keys = ptrToKeys(env, thiz);
     auto dump = keys->dump();
     auto byte_array = util::bytes_from_ustring(env, dump);

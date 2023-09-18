@@ -32,6 +32,7 @@ import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ProcessLifecycleOwner;
 
 import org.conscrypt.Conscrypt;
+import org.jetbrains.annotations.NotNull;
 import org.session.libsession.avatars.AvatarHelper;
 import org.session.libsession.database.MessageDataProvider;
 import org.session.libsession.messaging.MessagingModuleConfiguration;
@@ -111,7 +112,7 @@ import dagger.hilt.android.HiltAndroidApp;
 import kotlin.Unit;
 import kotlinx.coroutines.Job;
 import network.loki.messenger.BuildConfig;
-import network.loki.messenger.libsession_util.ConfigBase;
+import network.loki.messenger.libsession_util.Config;
 import network.loki.messenger.libsession_util.UserProfile;
 
 /**
@@ -199,7 +200,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     }
 
     @Override
-    public void notifyUpdates(@NonNull ConfigBase forConfigObject) {
+    public void notifyUpdates(@NotNull Config forConfigObject) {
         // forward to the config factory / storage ig
         if (forConfigObject instanceof UserProfile && !textSecurePreferences.getConfigurationMessageSynced()) {
             textSecurePreferences.setConfigurationMessageSynced(true);

@@ -1,5 +1,6 @@
 package org.session.libsession.utilities
 
+import network.loki.messenger.libsession_util.Config
 import network.loki.messenger.libsession_util.ConfigBase
 import network.loki.messenger.libsession_util.Contacts
 import network.loki.messenger.libsession_util.ConversationVolatileConfig
@@ -21,7 +22,7 @@ interface ConfigFactoryProtocol {
     fun getGroupKeysConfig(groupSessionId: SessionId): GroupKeysConfig?
 
     fun getUserConfigs(): List<ConfigBase>
-    fun persist(forConfigObject: ConfigBase, timestamp: Long)
+    fun persist(forConfigObject: Config, timestamp: Long)
 
     fun conversationInConfig(publicKey: String?, groupPublicKey: String?, openGroupId: String?, visibleOnly: Boolean): Boolean
     fun canPerformChange(variant: String, publicKey: String, changeTimestampMs: Long): Boolean
@@ -33,5 +34,5 @@ interface ConfigFactoryProtocol {
 }
 
 interface ConfigFactoryUpdateListener {
-    fun notifyUpdates(forConfigObject: ConfigBase)
+    fun notifyUpdates(forConfigObject: Config)
 }
