@@ -27,6 +27,7 @@ import org.thoughtcrime.securesms.ui.GetString
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
 
 private const val THREAD_ID = 1L
 
@@ -204,9 +205,67 @@ class ExpirationSettingsViewModelTest {
         )
     }
 
-    private fun newExpirationConfiguration(time: Duration? = null) = ExpirationConfiguration(
+    @Test
+    fun `1-1 conversation, 1 day after read, new config`() = runTest {
+        val time = 1.days
+        val someAddress = Address.fromSerialized("05---SOME---ADDRESS")
+        val config = newExpirationConfiguration(time, ExpiryType.AFTER_READ)
+
+        whenever(threadDb.getRecipientForThreadId(Mockito.anyLong())).thenReturn(recipient)
+        whenever(storage.getExpirationConfiguration(Mockito.anyLong())).thenReturn(config)
+        whenever(textSecurePreferences.getLocalNumber()).thenReturn("05---LOCAL---ADDRESS")
+        whenever(recipient.isClosedGroupRecipient).thenReturn(false)
+        whenever(recipient.address).thenReturn(someAddress)
+
+        val viewModel = createViewModel()
+
+        advanceUntilIdle()
+
+        assertThat(
+            viewModel.state.value
+        ).isEqualTo(
+            State(
+                isGroup = false,
+                isSelfAdmin = true,
+                address = someAddress,
+                isNoteToSelf = false,
+                expiryMode = ExpiryMode.AfterRead(1.days.inWholeSeconds),
+                isNewConfigEnabled = true,
+                persistedMode = ExpiryMode.AfterRead(1.days.inWholeSeconds),
+                showDebugOptions = false
+            )
+        )
+
+        val newTypeOption = TypeOptionCreator(time)
+        val newTimeOption = TimeOptionCreator(ExpiryType.AFTER_READ)
+
+        assertThat(
+            viewModel.uiState.value
+        ).isEqualTo(
+            UiState(
+                showGroupFooter = false,
+                CardModel(
+                    R.string.activity_expiration_settings_delete_type,
+                    newTypeOption(ExpiryType.NONE),
+                    typeOption(1.days, ExpiryType.AFTER_READ, selected = true),
+                    newTypeOption(ExpiryType.AFTER_SEND)
+                ),
+                CardModel(
+                    GetString(R.string.activity_expiration_settings_timer),
+                    newTimeOption(duration = 5.minutes),
+                    newTimeOption(duration = 1.hours),
+                    newTimeOption(duration = 12.hours),
+                    newTimeOption(duration = 1.days, selected = true),
+                    newTimeOption(duration = 7.days),
+                    newTimeOption(duration = 14.days)
+                )
+            )
+        )
+    }
+
+    private fun newExpirationConfiguration(time: Duration? = null, type: ExpiryType = ExpiryType.AFTER_SEND) = ExpirationConfiguration(
         threadId = THREAD_ID,
-        expiryMode = time?.inWholeSeconds?.let(ExpiryMode::AfterSend) ?: ExpiryMode.NONE,
+        expiryMode = time?.inWholeSeconds?.let(type::mode) ?: ExpiryMode.NONE,
         updatedTimestampMs = 0
     )
 
