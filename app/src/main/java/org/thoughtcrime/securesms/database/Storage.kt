@@ -1201,7 +1201,7 @@ open class Storage(
     }
 
     override fun getMembers(groupPublicKey: String): List<LibSessionGroupMember> =
-        configFactory.getGroupMemberConfig(SessionId.from(groupPublicKey))?.all()?.toList() ?: emptyList()
+        configFactory.getGroupMemberConfig(SessionId.from(groupPublicKey))?.use { it.all() }?.toList() ?: emptyList()
 
     override fun setServerCapabilities(server: String, capabilities: List<String>) {
         return DatabaseComponent.get(context).lokiAPIDatabase().setServerCapabilities(server, capabilities)

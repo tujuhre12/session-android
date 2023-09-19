@@ -1125,14 +1125,22 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                 actionBarBinding.conversationSubtitleView.text = getString(R.string.ConversationActivity_muted_forever)
             }
         } else if (recipient.isGroupRecipient) {
-            viewModel.openGroup?.let { openGroup ->
-                val userCount = lokiApiDb.getUserCount(openGroup.room, openGroup.server) ?: 0
-                actionBarBinding.conversationSubtitleView.text = getString(R.string.ConversationActivity_active_member_count, userCount)
-            } ?: run {
-                val userCount = groupDb.getGroupMemberAddresses(recipient.address.toGroupString(), true).size
-                actionBarBinding.conversationSubtitleView.text = getString(R.string.ConversationActivity_member_count, userCount)
+            when {
+                recipient.isOpenGroupRecipient -> {
+                    viewModel.openGroup?.let { openGroup ->
+                        val userCount = lokiApiDb.getUserCount(openGroup.room, openGroup.server) ?: 0
+                        actionBarBinding.conversationSubtitleView.text = getString(R.string.ConversationActivity_active_member_count, userCount)
+                    }
+                }
+                recipient.isLegacyClosedGroupRecipient -> {
+                    val userCount = groupDb.getGroupMemberAddresses(recipient.address.toGroupString(), true).size
+                    actionBarBinding.conversationSubtitleView.text = getString(R.string.ConversationActivity_member_count, userCount)
+                }
+                recipient.isClosedGroupRecipient -> {
+                    val userCount = viewModel.closedGroupMembers.size
+                    actionBarBinding.conversationSubtitleView.text = getString(R.string.ConversationActivity_member_count, userCount)
+                }
             }
-            viewModel
         } else {
             actionBarBinding.conversationSubtitleView.isVisible = false
         }

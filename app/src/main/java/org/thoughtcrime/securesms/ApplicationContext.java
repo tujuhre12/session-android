@@ -285,6 +285,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         if (poller != null) {
             poller.stopIfNeeded();
         }
+        pollerFactory.stopAll();
         LegacyClosedGroupPollerV2.getShared().stopAll();
     }
 

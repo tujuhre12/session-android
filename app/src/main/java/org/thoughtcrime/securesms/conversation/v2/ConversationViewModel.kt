@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import network.loki.messenger.libsession_util.util.GroupMember
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.open_groups.OpenGroupApi
@@ -57,6 +58,14 @@ class ConversationViewModel(
     }
     val openGroup: OpenGroup?
         get() = _openGroup.value
+
+    val closedGroupMembers: List<GroupMember>
+        get() {
+            val recipient = recipient ?: return emptyList()
+            if (!recipient.isClosedGroupRecipient) return emptyList()
+            return storage.getMembers(recipient.address.serialize())
+        }
+
 
     val serverCapabilities: List<String>
         get() = openGroup?.let { storage.getServerCapabilities(it.server) } ?: listOf()
