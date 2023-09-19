@@ -12,7 +12,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.Mockito
-import org.mockito.Mockito.mock
 import org.mockito.junit.MockitoJUnitRunner
 import org.mockito.kotlin.whenever
 import org.session.libsession.messaging.messages.ExpirationConfiguration
@@ -25,7 +24,6 @@ import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.ui.GetString
-import kotlin.reflect.typeOf
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
@@ -48,6 +46,51 @@ class ExpirationSettingsViewModelTest {
     @Mock lateinit var groupDb: GroupDatabase
     @Mock lateinit var storage: Storage
     @Mock lateinit var recipient: Recipient
+
+    @Test
+    fun `1-1 conversation, off, new config`() = runTest {
+        val someAddress = Address.fromSerialized("05---SOME---ADDRESS")
+        val config = newExpirationConfiguration()
+
+        whenever(threadDb.getRecipientForThreadId(Mockito.anyLong())).thenReturn(recipient)
+        whenever(storage.getExpirationConfiguration(Mockito.anyLong())).thenReturn(config)
+        whenever(textSecurePreferences.getLocalNumber()).thenReturn("05---LOCAL---ADDRESS")
+        whenever(recipient.isClosedGroupRecipient).thenReturn(false)
+        whenever(recipient.address).thenReturn(someAddress)
+
+        val viewModel = createViewModel()
+
+        advanceUntilIdle()
+
+        assertThat(
+            viewModel.state.value
+        ).isEqualTo(
+            State(
+                isGroup = false,
+                isSelfAdmin = true,
+                address = someAddress,
+                isNoteToSelf = false,
+                expiryMode = ExpiryMode.NONE,
+                isNewConfigEnabled = true,
+                persistedMode = ExpiryMode.NONE,
+                showDebugOptions = false
+            )
+        )
+
+        assertThat(
+            viewModel.uiState.value
+        ).isEqualTo(
+            UiState(
+                showGroupFooter = false,
+                CardModel(
+                    R.string.activity_expiration_settings_delete_type,
+                    typeOption(ExpiryMode.NONE, selected = true),
+                    typeOption(12.hours, ExpiryType.AFTER_READ),
+                    typeOption(1.days, ExpiryType.AFTER_SEND)
+                )
+            )
+        )
+    }
 
     @Test
     fun `1-1 conversation, 12 hours after send, new config`() = runTest {
@@ -161,9 +204,9 @@ class ExpirationSettingsViewModelTest {
         )
     }
 
-    private fun newExpirationConfiguration(time: Duration) = ExpirationConfiguration(
+    private fun newExpirationConfiguration(time: Duration? = null) = ExpirationConfiguration(
         threadId = THREAD_ID,
-        expiryMode = ExpiryMode.AfterSend(time.inWholeSeconds),
+        expiryMode = time?.inWholeSeconds?.let(ExpiryMode::AfterSend) ?: ExpiryMode.NONE,
         updatedTimestampMs = 0
     )
 
@@ -195,11 +238,14 @@ class ExpirationSettingsViewModelTest {
 }
 
 fun typeOption(time: Duration, type: ExpiryType, selected: Boolean = false, enabled: Boolean = true) =
+    typeOption(type.mode(time), selected, enabled)
+
+fun typeOption(mode: ExpiryMode, selected: Boolean = false, enabled: Boolean = true) =
     OptionModel(
-        type.mode(time),
-        GetString(type.title),
-        type.subtitle?.let(::GetString),
-        GetString(type.contentDescription),
+        mode,
+        GetString(mode.type.title),
+        mode.type.subtitle?.let(::GetString),
+        GetString(mode.type.contentDescription),
         selected = selected,
         enabled = enabled
     )
