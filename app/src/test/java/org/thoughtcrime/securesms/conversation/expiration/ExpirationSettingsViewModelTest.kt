@@ -51,13 +51,7 @@ class ExpirationSettingsViewModelTest {
     @Test
     fun `1-1 conversation, off, new config`() = runTest {
         val someAddress = Address.fromSerialized("05---SOME---ADDRESS")
-        val config = newExpirationConfiguration()
-
-        whenever(threadDb.getRecipientForThreadId(Mockito.anyLong())).thenReturn(recipient)
-        whenever(storage.getExpirationConfiguration(Mockito.anyLong())).thenReturn(config)
-        whenever(textSecurePreferences.getLocalNumber()).thenReturn("05---LOCAL---ADDRESS")
-        whenever(recipient.isClosedGroupRecipient).thenReturn(false)
-        whenever(recipient.address).thenReturn(someAddress)
+        mock1on1(ExpiryMode.NONE, someAddress)
 
         val viewModel = createViewModel()
 
@@ -97,13 +91,7 @@ class ExpirationSettingsViewModelTest {
     fun `1-1 conversation, 12 hours after send, new config`() = runTest {
         val time = 12.hours
         val someAddress = Address.fromSerialized("05---SOME---ADDRESS")
-        val config = newExpirationConfiguration(time)
-
-        whenever(threadDb.getRecipientForThreadId(Mockito.anyLong())).thenReturn(recipient)
-        whenever(storage.getExpirationConfiguration(Mockito.anyLong())).thenReturn(config)
-        whenever(textSecurePreferences.getLocalNumber()).thenReturn("05---LOCAL---ADDRESS")
-        whenever(recipient.isClosedGroupRecipient).thenReturn(false)
-        whenever(recipient.address).thenReturn(someAddress)
+        mock1on1AfterSend(time, someAddress)
 
         val viewModel = createViewModel()
 
@@ -153,13 +141,7 @@ class ExpirationSettingsViewModelTest {
     fun `1-1 conversation, 1 day after send, new config`() = runTest {
         val time = 1.days
         val someAddress = Address.fromSerialized("05---SOME---ADDRESS")
-        val config = newExpirationConfiguration(time)
-
-        whenever(threadDb.getRecipientForThreadId(Mockito.anyLong())).thenReturn(recipient)
-        whenever(storage.getExpirationConfiguration(Mockito.anyLong())).thenReturn(config)
-        whenever(textSecurePreferences.getLocalNumber()).thenReturn("05---LOCAL---ADDRESS")
-        whenever(recipient.isClosedGroupRecipient).thenReturn(false)
-        whenever(recipient.address).thenReturn(someAddress)
+        mock1on1AfterSend(time, someAddress)
 
         val viewModel = createViewModel()
 
@@ -209,13 +191,8 @@ class ExpirationSettingsViewModelTest {
     fun `1-1 conversation, 1 day after read, new config`() = runTest {
         val time = 1.days
         val someAddress = Address.fromSerialized("05---SOME---ADDRESS")
-        val config = newExpirationConfiguration(time, ExpiryType.AFTER_READ)
 
-        whenever(threadDb.getRecipientForThreadId(Mockito.anyLong())).thenReturn(recipient)
-        whenever(storage.getExpirationConfiguration(Mockito.anyLong())).thenReturn(config)
-        whenever(textSecurePreferences.getLocalNumber()).thenReturn("05---LOCAL---ADDRESS")
-        whenever(recipient.isClosedGroupRecipient).thenReturn(false)
-        whenever(recipient.address).thenReturn(someAddress)
+        mock1on1AfterRead(time, someAddress)
 
         val viewModel = createViewModel()
 
@@ -263,9 +240,32 @@ class ExpirationSettingsViewModelTest {
         )
     }
 
-    private fun newExpirationConfiguration(time: Duration? = null, type: ExpiryType = ExpiryType.AFTER_SEND) = ExpirationConfiguration(
+    private fun mock1on1AfterRead(time: Duration, someAddress: Address) {
+        mock1on1(ExpiryType.AFTER_READ.mode(time), someAddress)
+    }
+
+    private fun mock1on1AfterSend(time: Duration, someAddress: Address) {
+        mock1on1(ExpiryType.AFTER_SEND.mode(time), someAddress)
+    }
+
+    private fun mock1on1(mode: ExpiryMode, someAddress: Address) {
+        val config = config(mode)
+
+        whenever(threadDb.getRecipientForThreadId(Mockito.anyLong())).thenReturn(recipient)
+        whenever(storage.getExpirationConfiguration(Mockito.anyLong())).thenReturn(config)
+        whenever(textSecurePreferences.getLocalNumber()).thenReturn("05---LOCAL---ADDRESS")
+        whenever(recipient.isClosedGroupRecipient).thenReturn(false)
+        whenever(recipient.address).thenReturn(someAddress)
+    }
+
+    private fun afterSendConfig(time: Duration) =
+        config(ExpiryType.AFTER_SEND.mode(time.inWholeSeconds))
+    private fun afterReadConfig(time: Duration) =
+        config(ExpiryType.AFTER_READ.mode(time.inWholeSeconds))
+
+    private fun config(mode: ExpiryMode) = ExpirationConfiguration(
         threadId = THREAD_ID,
-        expiryMode = time?.inWholeSeconds?.let(type::mode) ?: ExpiryMode.NONE,
+        expiryMode = mode,
         updatedTimestampMs = 0
     )
 
