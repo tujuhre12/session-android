@@ -120,6 +120,3 @@ class RadioOptionBuilder<out T>(
         contentDescription
     )
 }
-
-typealias StringRadioOption = RadioOption<String>
-typealias ExpirationRadioOption = RadioOption<ExpiryMode>

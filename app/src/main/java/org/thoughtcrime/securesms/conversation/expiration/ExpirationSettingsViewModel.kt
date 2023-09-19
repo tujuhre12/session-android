@@ -48,7 +48,7 @@ data class State(
     val isSelfAdmin: Boolean = true,
     val address: Address? = null,
     val isNoteToSelf: Boolean = false,
-    val expiryMode: ExpiryMode? = ExpiryMode.NONE,
+    val expiryMode: ExpiryMode? = null,
     val isNewConfigEnabled: Boolean = true,
     val persistedMode: ExpiryMode? = null,
     val showDebugOptions: Boolean = false
@@ -58,11 +58,10 @@ data class State(
         else -> GetString(R.string.activity_expiration_settings_subtitle)
     }
 
-    val modeOptionsHidden get() = isNoteToSelf || (isGroup && isNewConfigEnabled)
+    val typeOptionsHidden get() = isNoteToSelf || (isGroup && isNewConfigEnabled)
 
     val duration get() = expiryMode?.duration
     val expiryType get() = expiryMode?.type
-    val expiryTypeOrNone: ExpiryType = expiryType ?: ExpiryType.NONE
 
     val isTimeOptionsEnabled = isNoteToSelf || isSelfAdmin && (isNewConfigEnabled || expiryType == ExpiryType.LEGACY)
 }
@@ -104,15 +103,12 @@ class ExpirationSettingsViewModel(
         .map(::UiState)
         .stateIn(viewModelScope, SharingStarted.Eagerly, UiState())
 
-    private var expirationConfig: ExpirationConfiguration? = null
-
     init {
         viewModelScope.launch {
-            expirationConfig = storage.getExpirationConfiguration(threadId)
-            val expiryMode = expirationConfig?.expiryMode ?: ExpiryMode.NONE
+            val expiryMode = storage.getExpirationConfiguration(threadId)?.expiryMode ?: ExpiryMode.NONE
             val recipient = threadDb.getRecipientForThreadId(threadId)
             val groupRecord = recipient?.takeIf { it.isClosedGroupRecipient }
-                ?.run { address.toGroupString().let(groupDb::getGroup).orNull() }
+                ?.run { groupDb.getGroup(address.toGroupString()).orNull() }
 
             _state.update { state ->
                 state.copy(
@@ -127,23 +123,13 @@ class ExpirationSettingsViewModel(
         }
     }
 
-    override fun setMode(mode: ExpiryMode) {
-        _state.update { it.copy(
-            expiryMode = mode
-        ) }
-    }
+    override fun setMode(mode: ExpiryMode) = _state.update { it.copy(expiryMode = mode) }
 
     override fun onSetClick() = viewModelScope.launch {
         val state = _state.value
-        val mode = state.expiryMode.let {
-            when {
-                it !is ExpiryMode.Legacy -> it
-                state.isGroup -> ExpiryMode.AfterSend(it.expirySeconds)
-                else -> ExpiryMode.AfterRead(it.expirySeconds)
-            } ?: ExpiryMode.NONE
-        }
+        val mode = state.expiryMode
         val address = state.address
-        if (address == null) {
+        if (address == null || mode == null) {
             _event.send(Event.FAIL)
             return@launch
         }
@@ -194,12 +180,6 @@ class ExpirationSettingsViewModel(
     }
 }
 
-private fun ExpiryType.defaultMode(persistedMode: ExpiryMode?) = when(this) {
-    persistedMode?.type -> persistedMode
-    ExpiryType.AFTER_READ -> mode(12.hours)
-    else -> mode(1.days)
-}
-
 data class UiState(
     val cards: List<CardModel> = emptyList(),
     val showGroupFooter: Boolean = false
@@ -211,62 +191,43 @@ data class UiState(
         ),
         showGroupFooter = state.isGroup && state.isNewConfigEnabled
     )
+
+    constructor(showGroupFooter: Boolean, vararg cards: CardModel): this(cards.asList(), showGroupFooter)
 }
 
 data class CardModel(
     val title: GetString,
     val options: List<OptionModel>
-)
+) {
+    constructor(title: GetString, vararg options: OptionModel): this(title, options.asList())
+    constructor(@StringRes title: Int, vararg options: OptionModel): this(GetString(title), options.asList())
+}
 
-private fun typeOptions(state: State) =
-    state.takeUnless { it.modeOptionsHidden }?.run {
-        listOfNotNull(
-            typeOption(
-                ExpiryMode.NONE,
-                state,
-                R.string.expiration_off,
-                contentDescription = R.string.AccessibilityId_disable_disappearing_messages,
-                enabled = isSelfAdmin
-            ),
-            if (!isNewConfigEnabled) typeOption(
-                ExpiryType.LEGACY.defaultMode(persistedMode),
-                state,
-                R.string.expiration_type_disappear_legacy,
-                contentDescription = R.string.expiration_type_disappear_legacy_description,
-                enabled = isSelfAdmin
-            ) else null,
-            if (!isGroup) typeOption(
-                ExpiryType.AFTER_READ.defaultMode(persistedMode),
-                state,
-                R.string.expiration_type_disappear_after_read,
-                R.string.expiration_type_disappear_after_read_description,
-                contentDescription = R.string.expiration_type_disappear_after_read_description,
-                enabled = isNewConfigEnabled && isSelfAdmin
-            ) else null,
-            typeOption(
-                ExpiryType.AFTER_SEND.defaultMode(persistedMode),
-                state,
-                R.string.expiration_type_disappear_after_send,
-                R.string.expiration_type_disappear_after_read_description,
-                contentDescription = R.string.expiration_type_disappear_after_send_description,
-                enabled = isNewConfigEnabled && isSelfAdmin
-            )
-        )
-    }
+fun offTypeOption(state: State) = typeOption(ExpiryType.NONE, state)
+fun legacyTypeOption(state: State) = typeOption(ExpiryType.LEGACY, state)
+fun afterReadTypeOption(state: State) = newTypeOption(ExpiryType.AFTER_READ, state)
+fun afterSendTypeOption(state: State) = newTypeOption(ExpiryType.AFTER_SEND, state)
+private fun newTypeOption(type: ExpiryType, state: State) = typeOption(type, state, state.run { isNewConfigEnabled && isSelfAdmin })
+
+private fun typeOptions(state: State) = state.takeUnless { it.typeOptionsHidden }?.run {
+    listOfNotNull(
+        offTypeOption(state),
+        takeUnless { isNewConfigEnabled }?.let(::legacyTypeOption),
+        takeUnless { isGroup }?.let(::afterReadTypeOption),
+        afterSendTypeOption(state)
+    )
+}
 
 private fun typeOption(
-    mode: ExpiryMode,
+    type: ExpiryType,
     state: State,
-    @StringRes title: Int,
-    @StringRes subtitle: Int? = null,
-    @StringRes contentDescription: Int = title,
-    enabled: Boolean = true,
+    enabled: Boolean = state.isSelfAdmin,
 ) = OptionModel(
-    value = mode,
-    title = GetString(title),
-    subtitle = subtitle?.let(::GetString),
-    contentDescription = GetString(contentDescription),
-    selected = state.expiryType == mode.type,
+    value = type.defaultMode(state.persistedMode),
+    title = GetString(type.title),
+    subtitle = type.subtitle?.let(::GetString),
+    contentDescription = GetString(type.contentDescription),
+    selected = state.expiryType == type,
     enabled = enabled
 )
 
@@ -292,26 +253,26 @@ val afterReadModes = afterReadTimes.map { it.inWholeSeconds }.map(ExpiryMode::Af
 fun afterReadOptions(state: State) = afterReadModes.map { timeOption(it, state) }
 
 private fun timeOptions(state: State): List<OptionModel>? =
-    if (state.modeOptionsHidden) timeOptionsAfterSend(state)
+    if (state.typeOptionsHidden) timeOptionsAfterSend(state)
     else when (state.expiryMode) {
         is ExpiryMode.Legacy, is ExpiryMode.AfterRead -> debugOptions(state) + afterReadOptions(state)
         is ExpiryMode.AfterSend -> debugOptions(state) + afterSendOptions(state)
         else -> null
     }
 
-private fun timeOptionsAfterSend(state: State) = listOf(
-    typeOption(ExpiryMode.NONE, state, R.string.expiration_off, enabled = state.isSelfAdmin),
-) + debugOptions(state) + afterSendModes.map { timeOption(it, state) }
+private fun timeOptionsAfterSend(state: State): List<OptionModel> =
+    listOf(offTypeOption(state)) + debugOptions(state) + afterSendOptions(state)
 
-private fun timeOption(
+fun timeOption(
     mode: ExpiryMode,
     state: State,
-    title: GetString = GetString(mode.duration, ExpirationUtil::getExpirationDisplayValue),
+    title: GetString = GetString(mode.duration),
     subtitle: GetString? = null,
 ) = OptionModel(
     value = mode,
     title = title,
     subtitle = subtitle,
+    contentDescription = title,
     selected = state.expiryMode == mode,
     enabled = state.isTimeOptionsEnabled
 )
@@ -325,14 +286,43 @@ data class OptionModel(
     val enabled: Boolean = true,
 )
 
-enum class ExpiryType(private val createMode: (Long) -> ExpiryMode) {
-    NONE({ ExpiryMode.NONE }),
-    LEGACY(ExpiryMode::Legacy),
-    AFTER_SEND(ExpiryMode::AfterSend),
-    AFTER_READ(ExpiryMode::AfterRead);
+enum class ExpiryType(
+    private val createMode: (Long) -> ExpiryMode,
+    @StringRes val title: Int,
+    @StringRes val subtitle: Int? = null,
+    @StringRes val contentDescription: Int = title,
+) {
+    NONE(
+        { ExpiryMode.NONE },
+        R.string.expiration_off,
+        contentDescription = R.string.AccessibilityId_disable_disappearing_messages,
+    ),
+    LEGACY(
+        ExpiryMode::Legacy,
+        R.string.expiration_type_disappear_legacy,
+        contentDescription = R.string.expiration_type_disappear_legacy_description
+    ),
+    AFTER_SEND(
+        ExpiryMode::AfterSend,
+        R.string.expiration_type_disappear_after_send,
+        R.string.expiration_type_disappear_after_read_description,
+        R.string.expiration_type_disappear_after_send_description
+    ),
+    AFTER_READ(
+        ExpiryMode::AfterRead,
+        R.string.expiration_type_disappear_after_read,
+        R.string.expiration_type_disappear_after_read_description,
+        R.string.expiration_type_disappear_after_read_description
+    );
 
     fun mode(seconds: Long) = if (seconds != 0L) createMode(seconds) else ExpiryMode.NONE
     fun mode(duration: Duration) = mode(duration.inWholeSeconds)
+
+    fun defaultMode(persistedMode: ExpiryMode?) = when(this) {
+        persistedMode?.type -> persistedMode
+        AFTER_READ -> mode(12.hours)
+        else -> mode(1.days)
+    }
 }
 
 val ExpiryMode.type: ExpiryType get() = when(this) {
