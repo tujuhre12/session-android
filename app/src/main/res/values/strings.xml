@@ -566,7 +566,7 @@
     <string name="arrays__default">Default</string>
     <string name="arrays__high">High</string>
     <string name="arrays__max">Max</string>
-    <string name="arrays__off">Off</string>
+    <string name="sarrays__off">Off</string>
     <string name="arrays__five_minutes">5 Minutes</string>
     <string name="arrays__one_hour">1 Hour</string>
     <string name="arrays__twelve_hours">12 Hours</string>

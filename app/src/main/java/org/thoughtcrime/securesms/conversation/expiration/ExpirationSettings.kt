@@ -86,7 +86,7 @@ fun OptionsCard(card: CardModel, callbacks: Callbacks) {
         ) {
             itemsIndexed(card.options) { i, it ->
                 if (i != 0) Divider()
-                TitledRadioButton(it) { it.onClick(callbacks) }
+                TitledRadioButton(it) { callbacks.setMode(it.value) }
             }
         }
     }

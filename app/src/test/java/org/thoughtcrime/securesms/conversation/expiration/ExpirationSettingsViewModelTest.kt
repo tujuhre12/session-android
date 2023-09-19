@@ -5,7 +5,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import network.loki.messenger.libsession_util.util.ExpiryMode
-import network.loki.messenger.R
 import org.hamcrest.CoreMatchers
 import org.hamcrest.MatcherAssert
 import org.junit.Rule
@@ -15,8 +14,6 @@ import org.mockito.Mockito.mock
 import org.mockito.kotlin.whenever
 import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.GroupRecord
-import org.session.libsession.utilities.GroupUtil.CLOSED_GROUP_PREFIX
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
@@ -26,8 +23,10 @@ import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.ui.GetString
-import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
+import network.loki.messenger.R
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.days
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ExpirationSettingsViewModelTest {
@@ -42,11 +41,7 @@ class ExpirationSettingsViewModelTest {
     private val threadDb: ThreadDatabase = mock(ThreadDatabase::class.java)
     private val groupDb: GroupDatabase = mock(GroupDatabase::class.java)
     private val storage: Storage = mock(Storage::class.java)
-
     private val recipient = mock(Recipient::class.java)
-
-    private val groupRecord = mock(GroupRecord::class.java)
-    private val optionalGroupRecord = Optional.of(groupRecord)
 
     @Test
     fun `UI should show a list of times and an Off option`() = runTest {
@@ -59,42 +54,74 @@ class ExpirationSettingsViewModelTest {
         )
         whenever(threadDb.getRecipientForThreadId(Mockito.anyLong())).thenReturn(recipient)
         whenever(storage.getExpirationConfiguration(Mockito.anyLong())).thenReturn(expirationConfig)
+        whenever(textSecurePreferences.getLocalNumber()).thenReturn("05---LOCAL---ADDRESS")
 
-        val address = Address.fromSerialized("${CLOSED_GROUP_PREFIX}94198734289")
+        val userAddress = Address.fromSerialized(textSecurePreferences.getLocalNumber()!!)
+        val someAddress = Address.fromSerialized("05---SOME---ADDRESS")
 
-        whenever(recipient.isClosedGroupRecipient).thenReturn(true)
-        whenever(recipient.address).thenReturn(address)
+        whenever(recipient.isClosedGroupRecipient).thenReturn(false)
+        whenever(recipient.address).thenReturn(someAddress)
 
-        whenever(groupDb.getGroup(Mockito.anyString())).thenReturn(optionalGroupRecord)
+        whenever(groupDb.getGroup(Mockito.anyString())).thenReturn(Optional.absent())
 
         val viewModel = createViewModel()
 
         advanceUntilIdle()
 
-        val state = viewModel.state.value
-
         MatcherAssert.assertThat(
-            state.isGroup,
-            CoreMatchers.equalTo(true)
-        )
-
-        MatcherAssert.assertThat(
-            viewModel.uiState.value.cards.count(),
-            CoreMatchers.equalTo(1)
-        )
-
-        val options = viewModel.uiState.value.cards[0].options
-        MatcherAssert.assertThat(
-            options.map { it.title },
+            viewModel.state.value,
             CoreMatchers.equalTo(
-                listOf(
-                    GetString(R.string.expiration_off),
-                    GetString(12.hours),
-                    GetString(1.days),
-                    GetString(7.days),
-                    GetString(14.days)
+                State(
+                    isGroup = false,
+                    isSelfAdmin = true,
+                    address = someAddress,
+                    isNoteToSelf = false,
+                    expiryMode = ExpiryMode.AfterSend(12.hours.inWholeSeconds),
+                    isNewConfigEnabled = true,
+                    persistedMode = ExpiryMode.AfterSend(12.hours.inWholeSeconds),
+                    showDebugOptions = false
                 )
             )
+        )
+
+        val uiState = viewModel.uiState.value
+
+        MatcherAssert.assertThat(
+            uiState.cards.map { it.title },
+            CoreMatchers.equalTo(
+                listOf(
+                    R.string.activity_expiration_settings_delete_type,
+                    R.string.activity_expiration_settings_timer
+                ).map(::GetString)
+            )
+        )
+
+        MatcherAssert.assertThat(
+            uiState.cards[0].options.map { it.title },
+            CoreMatchers.equalTo(
+                listOf(
+                    R.string.expiration_off,
+                    R.string.expiration_type_disappear_after_read,
+                    R.string.expiration_type_disappear_after_send,
+                ).map(::GetString)
+            )
+        )
+
+        MatcherAssert.assertThat(
+            uiState.cards[1].options.map { it.title },
+            CoreMatchers.equalTo(
+                listOf(
+                    12.hours,
+                    1.days,
+                    7.days,
+                    14.days,
+                ).map(::GetString)
+            )
+        )
+
+        MatcherAssert.assertThat(
+            uiState.showGroupFooter,
+            CoreMatchers.equalTo(false)
         )
     }
 

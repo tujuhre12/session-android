@@ -257,7 +257,7 @@ fun RowScope.CarouselButton(
             onClick = { animationScope.launch { pagerState.animateScrollToPage(pagerState.currentPage + delta) } }) {
             Icon(
                 painter = painterResource(id = id),
-                contentDescription = "",
+                contentDescription = null,
             )
         }
     }
