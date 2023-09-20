@@ -67,7 +67,7 @@ fun DisappearingMessages(
             }
         }
 
-        OutlineButton(
+        if (state.showSetButton) OutlineButton(
             stringResource(R.string.expiration_settings_set_button_title),
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)

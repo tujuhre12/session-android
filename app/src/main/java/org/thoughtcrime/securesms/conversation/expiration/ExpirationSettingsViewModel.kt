@@ -182,17 +182,27 @@ class ExpirationSettingsViewModel(
 
 data class UiState(
     val cards: List<CardModel> = emptyList(),
-    val showGroupFooter: Boolean = false
+    val showGroupFooter: Boolean = false,
+    val showSetButton: Boolean = true
 ) {
     constructor(state: State): this(
         cards = listOfNotNull(
             typeOptions(state)?.let { CardModel(GetString(R.string.activity_expiration_settings_delete_type), it) },
             timeOptions(state)?.let { CardModel(GetString(R.string.activity_expiration_settings_timer), it) }
         ),
-        showGroupFooter = state.isGroup && state.isNewConfigEnabled
+        showGroupFooter = state.isGroup && state.isNewConfigEnabled,
+        showSetButton = state.isSelfAdmin
     )
 
-    constructor(showGroupFooter: Boolean, vararg cards: CardModel): this(cards.asList(), showGroupFooter)
+    constructor(
+        vararg cards: CardModel,
+        showGroupFooter: Boolean = false,
+        showSetButton: Boolean = true,
+    ): this(
+        cards.asList(),
+        showGroupFooter,
+        showSetButton
+    )
 }
 
 data class CardModel(

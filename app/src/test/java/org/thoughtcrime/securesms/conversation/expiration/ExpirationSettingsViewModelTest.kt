@@ -83,7 +83,6 @@ class ExpirationSettingsViewModelTest {
             viewModel.uiState.value
         ).isEqualTo(
             UiState(
-                showGroupFooter = false,
                 CardModel(
                     R.string.activity_expiration_settings_timer,
                     typeOption(ExpiryMode.NONE, selected = true),
@@ -123,7 +122,6 @@ class ExpirationSettingsViewModelTest {
             viewModel.uiState.value
         ).isEqualTo(
             UiState(
-                showGroupFooter = false,
                 CardModel(
                     R.string.activity_expiration_settings_timer,
                     typeOption(ExpiryMode.NONE, selected = true),
@@ -132,6 +130,47 @@ class ExpirationSettingsViewModelTest {
                     timeOption(ExpiryType.LEGACY, 7.days),
                     timeOption(ExpiryType.LEGACY, 14.days)
                 )
+            )
+        )
+    }
+
+    @Test
+    fun `group, off, admin, new config`() = runTest {
+        mockGroup(ExpiryMode.NONE)
+
+        val viewModel = createViewModel()
+
+        advanceUntilIdle()
+
+        assertThat(
+            viewModel.state.value
+        ).isEqualTo(
+            State(
+                isGroup = true,
+                isSelfAdmin = false,
+                address = GROUP_ADDRESS,
+                isNoteToSelf = false,
+                expiryMode = ExpiryMode.NONE,
+                isNewConfigEnabled = true,
+                persistedMode = ExpiryMode.NONE,
+                showDebugOptions = false
+            )
+        )
+
+        assertThat(
+            viewModel.uiState.value
+        ).isEqualTo(
+            UiState(
+                CardModel(
+                    R.string.activity_expiration_settings_timer,
+                    typeOption(ExpiryMode.NONE, enabled = false, selected = true),
+                    timeOption(ExpiryType.AFTER_SEND, 12.hours, enabled = false),
+                    timeOption(ExpiryType.AFTER_SEND, 1.days, enabled = false),
+                    timeOption(ExpiryType.AFTER_SEND, 7.days, enabled = false),
+                    timeOption(ExpiryType.AFTER_SEND, 14.days, enabled = false)
+                ),
+                showGroupFooter = true,
+                showSetButton = false
             )
         )
     }
@@ -163,7 +202,6 @@ class ExpirationSettingsViewModelTest {
             viewModel.uiState.value
         ).isEqualTo(
             UiState(
-                showGroupFooter = true,
                 CardModel(
                     R.string.activity_expiration_settings_timer,
                     typeOption(ExpiryMode.NONE, enabled = false, selected = true),
@@ -171,7 +209,9 @@ class ExpirationSettingsViewModelTest {
                     timeOption(ExpiryType.AFTER_SEND, 1.days, enabled = false),
                     timeOption(ExpiryType.AFTER_SEND, 7.days, enabled = false),
                     timeOption(ExpiryType.AFTER_SEND, 14.days, enabled = false)
-                )
+                ),
+                showGroupFooter = true,
+                showSetButton = false,
             )
         )
     }
@@ -204,7 +244,6 @@ class ExpirationSettingsViewModelTest {
             viewModel.uiState.value
         ).isEqualTo(
             UiState(
-                showGroupFooter = false,
                 CardModel(
                     R.string.activity_expiration_settings_delete_type,
                     typeOption(ExpiryMode.NONE, selected = true),
@@ -244,7 +283,6 @@ class ExpirationSettingsViewModelTest {
             viewModel.uiState.value
         ).isEqualTo(
             UiState(
-                showGroupFooter = false,
                 CardModel(
                     R.string.activity_expiration_settings_delete_type,
                     typeOption(ExpiryMode.NONE),
@@ -291,7 +329,6 @@ class ExpirationSettingsViewModelTest {
             viewModel.uiState.value
         ).isEqualTo(
             UiState(
-                showGroupFooter = false,
                 CardModel(
                     R.string.activity_expiration_settings_delete_type,
                     typeOption(ExpiryMode.NONE),
@@ -339,7 +376,6 @@ class ExpirationSettingsViewModelTest {
             viewModel.uiState.value
         ).isEqualTo(
             UiState(
-                showGroupFooter = false,
                 CardModel(
                     R.string.activity_expiration_settings_delete_type,
                     typeOption(ExpiryMode.NONE),
@@ -387,7 +423,6 @@ class ExpirationSettingsViewModelTest {
             viewModel.uiState.value
         ).isEqualTo(
             UiState(
-                showGroupFooter = false,
                 CardModel(
                     R.string.activity_expiration_settings_delete_type,
                     typeOption(ExpiryMode.NONE),
@@ -441,7 +476,6 @@ class ExpirationSettingsViewModelTest {
             viewModel.uiState.value
         ).isEqualTo(
             UiState(
-                showGroupFooter = false,
                 CardModel(
                     R.string.activity_expiration_settings_delete_type,
                     typeOption(ExpiryMode.NONE),
