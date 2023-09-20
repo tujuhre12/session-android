@@ -136,7 +136,7 @@ class ExpirationSettingsViewModelTest {
 
     @Test
     fun `group, off, admin, new config`() = runTest {
-        mockGroup(ExpiryMode.NONE)
+        mockGroup(ExpiryMode.NONE, isAdmin = true)
 
         val viewModel = createViewModel()
 
@@ -147,7 +147,7 @@ class ExpirationSettingsViewModelTest {
         ).isEqualTo(
             State(
                 isGroup = true,
-                isSelfAdmin = false,
+                isSelfAdmin = true,
                 address = GROUP_ADDRESS,
                 isNoteToSelf = false,
                 expiryMode = ExpiryMode.NONE,
@@ -163,21 +163,20 @@ class ExpirationSettingsViewModelTest {
             UiState(
                 CardModel(
                     R.string.activity_expiration_settings_timer,
-                    typeOption(ExpiryMode.NONE, enabled = false, selected = true),
-                    timeOption(ExpiryType.AFTER_SEND, 12.hours, enabled = false),
-                    timeOption(ExpiryType.AFTER_SEND, 1.days, enabled = false),
-                    timeOption(ExpiryType.AFTER_SEND, 7.days, enabled = false),
-                    timeOption(ExpiryType.AFTER_SEND, 14.days, enabled = false)
+                    typeOption(ExpiryMode.NONE, selected = true),
+                    timeOption(ExpiryType.AFTER_SEND, 12.hours),
+                    timeOption(ExpiryType.AFTER_SEND, 1.days),
+                    timeOption(ExpiryType.AFTER_SEND, 7.days),
+                    timeOption(ExpiryType.AFTER_SEND, 14.days)
                 ),
-                showGroupFooter = true,
-                showSetButton = false
+                showGroupFooter = true
             )
         )
     }
 
     @Test
     fun `group, off, not admin, new config`() = runTest {
-        mockGroup(ExpiryMode.NONE)
+        mockGroup(ExpiryMode.NONE, isAdmin = false)
 
         val viewModel = createViewModel()
 
@@ -526,7 +525,7 @@ class ExpirationSettingsViewModelTest {
         whenever(recipient.address).thenReturn(someAddress)
     }
 
-    private fun mockGroup(mode: ExpiryMode) {
+    private fun mockGroup(mode: ExpiryMode, isAdmin: Boolean) {
         val config = config(mode)
 
         whenever(threadDb.getRecipientForThreadId(Mockito.anyLong())).thenReturn(recipient)
@@ -536,7 +535,11 @@ class ExpirationSettingsViewModelTest {
         whenever(recipient.address).thenReturn(GROUP_ADDRESS)
         whenever(recipient.isClosedGroupRecipient).thenReturn(true)
         whenever(groupDb.getGroup(any<String>())).thenReturn(Optional.of(groupRecord))
-        whenever(groupRecord.admins).thenReturn(listOf())
+        whenever(groupRecord.admins).thenReturn(
+            buildList {
+                if (isAdmin) add(LOCAL_ADDRESS)
+            }
+        )
     }
 
     private fun config(mode: ExpiryMode) = ExpirationConfiguration(
