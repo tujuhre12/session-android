@@ -3,7 +3,6 @@ package org.thoughtcrime.securesms.conversation.expiration
 import android.app.Application
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import network.loki.messenger.R
@@ -31,6 +30,8 @@ import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 
 private const val THREAD_ID = 1L
+private const val LOCAL_NUMBER = "05---local---address"
+private val LOCAL_ADDRESS = Address.fromSerialized(LOCAL_NUMBER)
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(MockitoJUnitRunner::class)
@@ -47,6 +48,86 @@ class ExpirationSettingsViewModelTest {
     @Mock lateinit var groupDb: GroupDatabase
     @Mock lateinit var storage: Storage
     @Mock lateinit var recipient: Recipient
+
+    @Test
+    fun `note to self, off, new config`() = runTest {
+        mock1on1(ExpiryMode.NONE, LOCAL_ADDRESS)
+
+        val viewModel = createViewModel()
+
+        advanceUntilIdle()
+
+        assertThat(
+            viewModel.state.value
+        ).isEqualTo(
+            State(
+                isGroup = false,
+                isSelfAdmin = true,
+                address = LOCAL_ADDRESS,
+                isNoteToSelf = true,
+                expiryMode = ExpiryMode.NONE,
+                isNewConfigEnabled = true,
+                persistedMode = ExpiryMode.NONE,
+                showDebugOptions = false
+            )
+        )
+
+        assertThat(
+            viewModel.uiState.value
+        ).isEqualTo(
+            UiState(
+                showGroupFooter = false,
+                CardModel(
+                    R.string.activity_expiration_settings_timer,
+                    typeOption(ExpiryMode.NONE, selected = true),
+                    timeOption(ExpiryType.AFTER_SEND, 12.hours),
+                    timeOption(ExpiryType.AFTER_SEND, 1.days),
+                    timeOption(ExpiryType.AFTER_SEND, 7.days),
+                    timeOption(ExpiryType.AFTER_SEND, 14.days)
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `note to self, off, old config`() = runTest {
+        mock1on1(ExpiryMode.NONE, LOCAL_ADDRESS)
+
+        val viewModel = createViewModel(isNewConfigEnabled = false)
+
+        advanceUntilIdle()
+
+        assertThat(
+            viewModel.state.value
+        ).isEqualTo(
+            State(
+                isGroup = false,
+                isSelfAdmin = true,
+                address = LOCAL_ADDRESS,
+                isNoteToSelf = true,
+                expiryMode = ExpiryMode.NONE,
+                isNewConfigEnabled = false,
+                persistedMode = ExpiryMode.NONE,
+                showDebugOptions = false
+            )
+        )
+
+        assertThat(
+            viewModel.uiState.value
+        ).isEqualTo(
+            UiState(
+                showGroupFooter = false,
+                CardModel(
+                    R.string.activity_expiration_settings_timer,
+                    typeOption(ExpiryMode.NONE, selected = true),
+                    timeOption(ExpiryType.AFTER_SEND, 12.hours),
+                    timeOption(ExpiryType.AFTER_SEND, 1.days),
+                    timeOption(ExpiryType.AFTER_SEND, 7.days),
+                    timeOption(ExpiryType.AFTER_SEND, 14.days)
+                )
+            )
+        )
+    }
 
     @Test
     fun `1-1 conversation, off, new config`() = runTest {
@@ -122,6 +203,54 @@ class ExpirationSettingsViewModelTest {
                     typeOption(ExpiryMode.NONE),
                     typeOption(time, ExpiryType.AFTER_READ),
                     typeOption(time, ExpiryType.AFTER_SEND, selected = true)
+                ),
+                CardModel(
+                    GetString(R.string.activity_expiration_settings_timer),
+                    timeOption(ExpiryType.AFTER_SEND, 12.hours, selected = true),
+                    timeOption(ExpiryType.AFTER_SEND, 1.days),
+                    timeOption(ExpiryType.AFTER_SEND, 7.days),
+                    timeOption(ExpiryType.AFTER_SEND, 14.days)
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `1-1 conversation, 12 hours legacy, old config`() = runTest {
+        val time = 12.hours
+        val someAddress = Address.fromSerialized("05---SOME---ADDRESS")
+        mock1on1(ExpiryType.LEGACY.mode(time), someAddress)
+
+        val viewModel = createViewModel(isNewConfigEnabled = false)
+
+        advanceUntilIdle()
+
+        assertThat(
+            viewModel.state.value
+        ).isEqualTo(
+            State(
+                isGroup = false,
+                isSelfAdmin = true,
+                address = someAddress,
+                isNoteToSelf = false,
+                expiryMode = ExpiryType.LEGACY.mode(12.hours),
+                isNewConfigEnabled = false,
+                persistedMode = ExpiryType.LEGACY.mode(12.hours),
+                showDebugOptions = false
+            )
+        )
+
+        assertThat(
+            viewModel.uiState.value
+        ).isEqualTo(
+            UiState(
+                showGroupFooter = false,
+                CardModel(
+                    R.string.activity_expiration_settings_delete_type,
+                    typeOption(ExpiryMode.NONE),
+                    typeOption(time, ExpiryType.LEGACY, selected = true),
+                    typeOption(12.hours, ExpiryType.AFTER_READ, enabled = false),
+                    typeOption(1.days, ExpiryType.AFTER_SEND, enabled = false)
                 ),
                 CardModel(
                     GetString(R.string.activity_expiration_settings_timer),
@@ -306,12 +435,12 @@ class ExpirationSettingsViewModelTest {
         mock1on1(ExpiryType.AFTER_SEND.mode(time), someAddress)
     }
 
-    private fun mock1on1(mode: ExpiryMode, someAddress: Address) {
+    private fun mock1on1(mode: ExpiryMode, someAddress: Address, new: Boolean = true) {
         val config = config(mode)
 
         whenever(threadDb.getRecipientForThreadId(Mockito.anyLong())).thenReturn(recipient)
         whenever(storage.getExpirationConfiguration(Mockito.anyLong())).thenReturn(config)
-        whenever(textSecurePreferences.getLocalNumber()).thenReturn("05---LOCAL---ADDRESS")
+        whenever(textSecurePreferences.getLocalNumber()).thenReturn(LOCAL_NUMBER)
         whenever(recipient.isClosedGroupRecipient).thenReturn(false)
         whenever(recipient.address).thenReturn(someAddress)
     }
