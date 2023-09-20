@@ -516,22 +516,14 @@ class ExpirationSettingsViewModelTest {
     }
 
     private fun mock1on1(mode: ExpiryMode, someAddress: Address) {
-        val config = config(mode)
+        mockStuff(mode)
 
-        whenever(threadDb.getRecipientForThreadId(Mockito.anyLong())).thenReturn(recipient)
-        whenever(storage.getExpirationConfiguration(Mockito.anyLong())).thenReturn(config)
-        whenever(textSecurePreferences.getLocalNumber()).thenReturn(LOCAL_NUMBER)
-        whenever(recipient.isClosedGroupRecipient).thenReturn(false)
         whenever(recipient.address).thenReturn(someAddress)
     }
 
     private fun mockGroup(mode: ExpiryMode, isAdmin: Boolean) {
-        val config = config(mode)
+        mockStuff(mode)
 
-        whenever(threadDb.getRecipientForThreadId(Mockito.anyLong())).thenReturn(recipient)
-        whenever(storage.getExpirationConfiguration(Mockito.anyLong())).thenReturn(config)
-        whenever(textSecurePreferences.getLocalNumber()).thenReturn(LOCAL_NUMBER)
-        whenever(recipient.isClosedGroupRecipient).thenReturn(false)
         whenever(recipient.address).thenReturn(GROUP_ADDRESS)
         whenever(recipient.isClosedGroupRecipient).thenReturn(true)
         whenever(groupDb.getGroup(any<String>())).thenReturn(Optional.of(groupRecord))
@@ -540,6 +532,13 @@ class ExpirationSettingsViewModelTest {
                 if (isAdmin) add(LOCAL_ADDRESS)
             }
         )
+    }
+
+    private fun mockStuff(mode: ExpiryMode) {
+        val config = config(mode)
+        whenever(threadDb.getRecipientForThreadId(Mockito.anyLong())).thenReturn(recipient)
+        whenever(storage.getExpirationConfiguration(Mockito.anyLong())).thenReturn(config)
+        whenever(textSecurePreferences.getLocalNumber()).thenReturn(LOCAL_NUMBER)
     }
 
     private fun config(mode: ExpiryMode) = ExpirationConfiguration(
