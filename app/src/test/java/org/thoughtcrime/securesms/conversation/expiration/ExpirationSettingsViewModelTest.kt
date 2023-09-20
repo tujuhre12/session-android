@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.conversation.expiration
 import android.app.Application
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import network.loki.messenger.R
@@ -30,7 +31,6 @@ import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 
 private const val THREAD_ID = 1L
-
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(MockitoJUnitRunner::class)
@@ -112,9 +112,6 @@ class ExpirationSettingsViewModelTest {
             )
         )
 
-        val newTypeOption = TypeOptionCreator(time)
-        val newTimeOption = TimeOptionCreator(ExpiryType.AFTER_SEND)
-
         assertThat(
             viewModel.uiState.value
         ).isEqualTo(
@@ -122,16 +119,16 @@ class ExpirationSettingsViewModelTest {
                 showGroupFooter = false,
                 CardModel(
                     R.string.activity_expiration_settings_delete_type,
-                    newTypeOption(ExpiryType.NONE),
-                    newTypeOption(ExpiryType.AFTER_READ),
-                    newTypeOption(ExpiryType.AFTER_SEND, selected = true)
+                    typeOption(ExpiryMode.NONE),
+                    typeOption(time, ExpiryType.AFTER_READ),
+                    typeOption(time, ExpiryType.AFTER_SEND, selected = true)
                 ),
                 CardModel(
                     GetString(R.string.activity_expiration_settings_timer),
-                    newTimeOption(duration = 12.hours, selected = true),
-                    newTimeOption(duration = 1.days),
-                    newTimeOption(duration = 7.days),
-                    newTimeOption(duration = 14.days)
+                    timeOption(ExpiryType.AFTER_SEND, 12.hours, selected = true),
+                    timeOption(ExpiryType.AFTER_SEND, 1.days),
+                    timeOption(ExpiryType.AFTER_SEND, 7.days),
+                    timeOption(ExpiryType.AFTER_SEND, 14.days)
                 )
             )
         )
@@ -162,9 +159,6 @@ class ExpirationSettingsViewModelTest {
             )
         )
 
-        val newTypeOption = TypeOptionCreator(time)
-        val newTimeOption = TimeOptionCreator(ExpiryType.AFTER_SEND)
-
         assertThat(
             viewModel.uiState.value
         ).isEqualTo(
@@ -172,16 +166,16 @@ class ExpirationSettingsViewModelTest {
                 showGroupFooter = false,
                 CardModel(
                     R.string.activity_expiration_settings_delete_type,
-                    newTypeOption(ExpiryType.NONE),
+                    typeOption(ExpiryMode.NONE),
                     typeOption(12.hours, ExpiryType.AFTER_READ),
-                    newTypeOption(ExpiryType.AFTER_SEND, selected = true)
+                    typeOption(time, ExpiryType.AFTER_SEND, selected = true)
                 ),
                 CardModel(
                     GetString(R.string.activity_expiration_settings_timer),
-                    newTimeOption(duration = 12.hours),
-                    newTimeOption(duration = 1.days, selected = true),
-                    newTimeOption(duration = 7.days),
-                    newTimeOption(duration = 14.days)
+                    timeOption(ExpiryType.AFTER_SEND, 12.hours),
+                    timeOption(ExpiryType.AFTER_SEND, 1.days, selected = true),
+                    timeOption(ExpiryType.AFTER_SEND, 7.days),
+                    timeOption(ExpiryType.AFTER_SEND, 14.days)
                 )
             )
         )
@@ -213,8 +207,59 @@ class ExpirationSettingsViewModelTest {
             )
         )
 
-        val newTypeOption = TypeOptionCreator(time)
-        val newTimeOption = TimeOptionCreator(ExpiryType.AFTER_READ)
+        assertThat(
+            viewModel.uiState.value
+        ).isEqualTo(
+            UiState(
+                showGroupFooter = false,
+                CardModel(
+                    R.string.activity_expiration_settings_delete_type,
+                    typeOption(ExpiryMode.NONE),
+                    typeOption(1.days, ExpiryType.AFTER_READ, selected = true),
+                    typeOption(time, ExpiryType.AFTER_SEND)
+                ),
+                CardModel(
+                    GetString(R.string.activity_expiration_settings_timer),
+                    timeOption(ExpiryType.AFTER_READ, 5.minutes),
+                    timeOption(ExpiryType.AFTER_READ, 1.hours),
+                    timeOption(ExpiryType.AFTER_READ, 12.hours),
+                    timeOption(ExpiryType.AFTER_READ, 1.days, selected = true),
+                    timeOption(ExpiryType.AFTER_READ, 7.days),
+                    timeOption(ExpiryType.AFTER_READ, 14.days)
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `1-1 conversation, init 12 hours after read, then select after send, new config`() = runTest {
+        val time = 12.hours
+        val someAddress = Address.fromSerialized("05---SOME---ADDRESS")
+
+        mock1on1AfterRead(time, someAddress)
+
+        val viewModel = createViewModel()
+
+        advanceUntilIdle()
+
+        viewModel.setMode(afterSendMode(1.days))
+
+        advanceUntilIdle()
+
+        assertThat(
+            viewModel.state.value
+        ).isEqualTo(
+            State(
+                isGroup = false,
+                isSelfAdmin = true,
+                address = someAddress,
+                isNoteToSelf = false,
+                expiryMode = afterSendMode(1.days),
+                isNewConfigEnabled = true,
+                persistedMode = afterReadMode(12.hours),
+                showDebugOptions = false
+            )
+        )
 
         assertThat(
             viewModel.uiState.value
@@ -223,22 +268,35 @@ class ExpirationSettingsViewModelTest {
                 showGroupFooter = false,
                 CardModel(
                     R.string.activity_expiration_settings_delete_type,
-                    newTypeOption(ExpiryType.NONE),
-                    typeOption(1.days, ExpiryType.AFTER_READ, selected = true),
-                    newTypeOption(ExpiryType.AFTER_SEND)
+                    typeOption(ExpiryMode.NONE),
+                    typeOption(12.hours, ExpiryType.AFTER_READ),
+                    typeOption(1.days, ExpiryType.AFTER_SEND, selected = true)
                 ),
                 CardModel(
                     GetString(R.string.activity_expiration_settings_timer),
-                    newTimeOption(duration = 5.minutes),
-                    newTimeOption(duration = 1.hours),
-                    newTimeOption(duration = 12.hours),
-                    newTimeOption(duration = 1.days, selected = true),
-                    newTimeOption(duration = 7.days),
-                    newTimeOption(duration = 14.days)
+                    timeOption(ExpiryType.AFTER_SEND, 12.hours),
+                    timeOption(ExpiryType.AFTER_SEND, 1.days, selected = true),
+                    timeOption(ExpiryType.AFTER_SEND, 7.days),
+                    timeOption(ExpiryType.AFTER_SEND, 14.days)
                 )
             )
         )
     }
+
+    private fun timeOption(
+        type: ExpiryType,
+        time: Duration,
+        enabled: Boolean = true,
+        selected: Boolean = false
+    ) = OptionModel(
+        value = type.mode(time),
+        title = GetString(time),
+        enabled = enabled,
+        selected = selected
+    )
+
+    private fun afterSendMode(time: Duration) = ExpiryMode.AfterSend(time.inWholeSeconds)
+    private fun afterReadMode(time: Duration) = ExpiryMode.AfterRead(time.inWholeSeconds)
 
     private fun mock1on1AfterRead(time: Duration, someAddress: Address) {
         mock1on1(ExpiryType.AFTER_READ.mode(time), someAddress)
@@ -258,30 +316,11 @@ class ExpirationSettingsViewModelTest {
         whenever(recipient.address).thenReturn(someAddress)
     }
 
-    private fun afterSendConfig(time: Duration) =
-        config(ExpiryType.AFTER_SEND.mode(time.inWholeSeconds))
-    private fun afterReadConfig(time: Duration) =
-        config(ExpiryType.AFTER_READ.mode(time.inWholeSeconds))
-
     private fun config(mode: ExpiryMode) = ExpirationConfiguration(
         threadId = THREAD_ID,
         expiryMode = mode,
         updatedTimestampMs = 0
     )
-
-    private class TypeOptionCreator(private val time: Duration) {
-        operator fun invoke(type: ExpiryType, selected: Boolean = false, enabled: Boolean = true) =
-            typeOption(time, type, selected, enabled)
-    }
-
-    private class TimeOptionCreator(private val type: ExpiryType) {
-        operator fun invoke(duration: Duration, selected: Boolean = false, enabled: Boolean = true) = OptionModel(
-            value = type.mode(duration),
-            title = GetString(duration),
-            enabled = enabled,
-            selected = selected
-        )
-    }
 
     private fun createViewModel(isNewConfigEnabled: Boolean = true) = ExpirationSettingsViewModel(
         THREAD_ID,
