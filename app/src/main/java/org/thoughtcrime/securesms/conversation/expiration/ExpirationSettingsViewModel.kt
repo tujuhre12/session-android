@@ -242,7 +242,9 @@ val defaultTimes = listOf(12.hours, 1.days, 7.days, 14.days)
 
 val afterSendTimes = defaultTimes
 val afterSendModes = afterSendTimes.map { it.inWholeSeconds }.map(ExpiryMode::AfterSend)
+val legacyModes = afterSendTimes.map { it.inWholeSeconds }.map(ExpiryMode::Legacy)
 fun afterSendOptions(state: State) = afterSendModes.map { timeOption(it, state) }
+fun legacyOptions(state: State) = legacyModes.map { timeOption(it, state) }
 
 val afterReadTimes = buildList {
     add(5.minutes)
@@ -252,16 +254,26 @@ val afterReadTimes = buildList {
 val afterReadModes = afterReadTimes.map { it.inWholeSeconds }.map(ExpiryMode::AfterRead)
 fun afterReadOptions(state: State) = afterReadModes.map { timeOption(it, state) }
 
-private fun timeOptions(state: State): List<OptionModel>? =
-    if (state.typeOptionsHidden) timeOptionsAfterSend(state)
-    else when (state.expiryMode) {
-        is ExpiryMode.Legacy, is ExpiryMode.AfterRead -> debugOptions(state) + afterReadOptions(state)
-        is ExpiryMode.AfterSend -> debugOptions(state) + afterSendOptions(state)
-        else -> null
-    }
+private fun timeOptions(
+    state: State
+): List<OptionModel>? {
+    val type = state.takeUnless {
+        it.typeOptionsHidden
+    }?.expiryType ?: if (state.isNewConfigEnabled) ExpiryType.AFTER_SEND else ExpiryType.LEGACY
 
-private fun timeOptionsAfterSend(state: State): List<OptionModel> =
-    listOf(offTypeOption(state)) + debugOptions(state) + afterSendOptions(state)
+    return when (type) {
+        ExpiryType.AFTER_READ -> afterReadOptions(state)
+        ExpiryType.AFTER_SEND -> afterSendOptions(state)
+        ExpiryType.LEGACY -> legacyOptions(state)
+        else -> null
+    }?.let {
+        buildList {
+            if (state.typeOptionsHidden) add(offTypeOption(state))
+            addAll(debugOptions(state))
+            addAll(it)
+        }
+    }
+}
 
 fun timeOption(
     mode: ExpiryMode,

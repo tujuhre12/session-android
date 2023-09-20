@@ -13,12 +13,16 @@ import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.Mockito
 import org.mockito.junit.MockitoJUnitRunner
+import org.mockito.kotlin.any
 import org.mockito.kotlin.whenever
 import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.GroupRecord
+import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.utilities.guava.Optional
 import org.thoughtcrime.securesms.MainCoroutineRule
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.Storage
@@ -32,6 +36,8 @@ import kotlin.time.Duration.Companion.minutes
 private const val THREAD_ID = 1L
 private const val LOCAL_NUMBER = "05---local---address"
 private val LOCAL_ADDRESS = Address.fromSerialized(LOCAL_NUMBER)
+private const val GROUP_NUMBER = "${GroupUtil.OPEN_GROUP_PREFIX}4133"
+private val GROUP_ADDRESS = Address.fromSerialized(GROUP_NUMBER)
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(MockitoJUnitRunner::class)
@@ -48,6 +54,7 @@ class ExpirationSettingsViewModelTest {
     @Mock lateinit var groupDb: GroupDatabase
     @Mock lateinit var storage: Storage
     @Mock lateinit var recipient: Recipient
+    @Mock lateinit var groupRecord: GroupRecord
 
     @Test
     fun `note to self, off, new config`() = runTest {
@@ -120,10 +127,50 @@ class ExpirationSettingsViewModelTest {
                 CardModel(
                     R.string.activity_expiration_settings_timer,
                     typeOption(ExpiryMode.NONE, selected = true),
-                    timeOption(ExpiryType.AFTER_SEND, 12.hours),
-                    timeOption(ExpiryType.AFTER_SEND, 1.days),
-                    timeOption(ExpiryType.AFTER_SEND, 7.days),
-                    timeOption(ExpiryType.AFTER_SEND, 14.days)
+                    timeOption(ExpiryType.LEGACY, 12.hours),
+                    timeOption(ExpiryType.LEGACY, 1.days),
+                    timeOption(ExpiryType.LEGACY, 7.days),
+                    timeOption(ExpiryType.LEGACY, 14.days)
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `group, off, not admin, new config`() = runTest {
+        mockGroup(ExpiryMode.NONE)
+
+        val viewModel = createViewModel()
+
+        advanceUntilIdle()
+
+        assertThat(
+            viewModel.state.value
+        ).isEqualTo(
+            State(
+                isGroup = true,
+                isSelfAdmin = false,
+                address = GROUP_ADDRESS,
+                isNoteToSelf = false,
+                expiryMode = ExpiryMode.NONE,
+                isNewConfigEnabled = true,
+                persistedMode = ExpiryMode.NONE,
+                showDebugOptions = false
+            )
+        )
+
+        assertThat(
+            viewModel.uiState.value
+        ).isEqualTo(
+            UiState(
+                showGroupFooter = true,
+                CardModel(
+                    R.string.activity_expiration_settings_timer,
+                    typeOption(ExpiryMode.NONE, enabled = false, selected = true),
+                    timeOption(ExpiryType.AFTER_SEND, 12.hours, enabled = false),
+                    timeOption(ExpiryType.AFTER_SEND, 1.days, enabled = false),
+                    timeOption(ExpiryType.AFTER_SEND, 7.days, enabled = false),
+                    timeOption(ExpiryType.AFTER_SEND, 14.days, enabled = false)
                 )
             )
         )
@@ -254,10 +301,10 @@ class ExpirationSettingsViewModelTest {
                 ),
                 CardModel(
                     GetString(R.string.activity_expiration_settings_timer),
-                    timeOption(ExpiryType.AFTER_SEND, 12.hours, selected = true),
-                    timeOption(ExpiryType.AFTER_SEND, 1.days),
-                    timeOption(ExpiryType.AFTER_SEND, 7.days),
-                    timeOption(ExpiryType.AFTER_SEND, 14.days)
+                    timeOption(ExpiryType.LEGACY, 12.hours, selected = true),
+                    timeOption(ExpiryType.LEGACY, 1.days),
+                    timeOption(ExpiryType.LEGACY, 7.days),
+                    timeOption(ExpiryType.LEGACY, 14.days)
                 )
             )
         )
@@ -435,7 +482,7 @@ class ExpirationSettingsViewModelTest {
         mock1on1(ExpiryType.AFTER_SEND.mode(time), someAddress)
     }
 
-    private fun mock1on1(mode: ExpiryMode, someAddress: Address, new: Boolean = true) {
+    private fun mock1on1(mode: ExpiryMode, someAddress: Address) {
         val config = config(mode)
 
         whenever(threadDb.getRecipientForThreadId(Mockito.anyLong())).thenReturn(recipient)
@@ -443,6 +490,19 @@ class ExpirationSettingsViewModelTest {
         whenever(textSecurePreferences.getLocalNumber()).thenReturn(LOCAL_NUMBER)
         whenever(recipient.isClosedGroupRecipient).thenReturn(false)
         whenever(recipient.address).thenReturn(someAddress)
+    }
+
+    private fun mockGroup(mode: ExpiryMode) {
+        val config = config(mode)
+
+        whenever(threadDb.getRecipientForThreadId(Mockito.anyLong())).thenReturn(recipient)
+        whenever(storage.getExpirationConfiguration(Mockito.anyLong())).thenReturn(config)
+        whenever(textSecurePreferences.getLocalNumber()).thenReturn(LOCAL_NUMBER)
+        whenever(recipient.isClosedGroupRecipient).thenReturn(false)
+        whenever(recipient.address).thenReturn(GROUP_ADDRESS)
+        whenever(recipient.isClosedGroupRecipient).thenReturn(true)
+        whenever(groupDb.getGroup(any<String>())).thenReturn(Optional.of(groupRecord))
+        whenever(groupRecord.admins).thenReturn(listOf())
     }
 
     private fun config(mode: ExpiryMode) = ExpirationConfiguration(
