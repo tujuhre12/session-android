@@ -6,8 +6,7 @@
     android:layout_height="match_parent"
     android:gravity="center_horizontal"
     android:orientation="vertical"
-    android:elevation="4dp"
-    android:padding="@dimen/medium_spacing">
+    android:elevation="4dp">
 
     <TextView
         android:layout_width="wrap_content"
@@ -46,16 +45,15 @@
             style="@style/Widget.Session.Button.Dialog.DestructiveText"
             android:id="@+id/clearAllDataButton"
             android:layout_width="0dp"
-            android:layout_height="@dimen/small_button_height"
+            android:layout_height="@dimen/dialog_button_height"
             android:layout_weight="1"
-            android:layout_marginStart="@dimen/medium_spacing"
             android:text="@string/dialog_clear_all_data_clear" />
 
         <Button
             style="@style/Widget.Session.Button.Dialog.UnimportantText"
             android:id="@+id/cancelButton"
             android:layout_width="0dp"
-            android:layout_height="@dimen/small_button_height"
+            android:layout_height="@dimen/dialog_button_height"
             android:layout_weight="1"
             android:text="@string/cancel" />
 

@@ -14,13 +14,11 @@ import androidx.annotation.LayoutRes
 import androidx.annotation.StringRes
 import androidx.annotation.StyleRes
 import androidx.appcompat.app.AlertDialog
-import androidx.core.view.setMargins
 import androidx.core.view.setPadding
 import androidx.core.view.updateMargins
 import androidx.fragment.app.Fragment
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.util.toPx
-
 
 @DslMarker
 @Target(AnnotationTarget.CLASS, AnnotationTarget.TYPE)
@@ -31,6 +29,7 @@ class SessionDialogBuilder(val context: Context) {
 
     private val dp20 = toPx(20, context.resources)
     private val dp40 = toPx(40, context.resources)
+    private val dp60 = toPx(60, context.resources)
 
     private val dialogBuilder: AlertDialog.Builder = AlertDialog.Builder(context)
 
@@ -63,7 +62,6 @@ class SessionDialogBuilder(val context: Context) {
                 .apply { updateMargins(dp40, 0, dp40, dp20) }
         }
     }
-
 
     private fun text(text: CharSequence?, @StyleRes style: Int, modify: TextView.() -> Unit) {
         text ?: return
@@ -125,8 +123,7 @@ class SessionDialogBuilder(val context: Context) {
     ) = Button(context, null, 0, style).apply {
             setText(text)
             contentDescription = resources.getString(contentDescriptionRes)
-            layoutParams = LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT, 1f)
-                .apply { setMargins(toPx(20, resources)) }
+            layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, dp60, 1f)
             setOnClickListener {
                 listener.invoke()
                 if (dismiss) dismiss()
