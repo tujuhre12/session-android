@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.ui
 
 import androidx.annotation.DrawableRes
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.pager.PagerState
@@ -26,9 +28,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -37,6 +43,7 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.components.ProfilePictureView
+import kotlin.math.roundToInt
 
 @Composable
 fun ItemButton(
@@ -177,6 +184,52 @@ fun RowScope.Avatar(recipient: Recipient) {
             modifier = Modifier
                 .width(46.dp)
                 .height(46.dp)
+        )
+    }
+}
+
+@Composable
+fun ProgressArc(progress: Float, modifier: Modifier = Modifier) {
+    val text = (progress * 100).roundToInt()
+
+    Box(modifier = modifier) {
+        Arc(percentage = progress, modifier = Modifier.align(Alignment.Center))
+        Text("${text}%", color = Color.White, modifier = Modifier.align(Alignment.Center), style = MaterialTheme.typography.h2)
+    }
+}
+
+@Composable
+fun Arc(
+    modifier: Modifier = Modifier,
+    percentage: Float = 0.25f,
+    fillColor: Color = session_accent,
+    backgroundColor: Color = classicDarkColors[3],
+    strokeWidth: Dp = 18.dp,
+    sweepAngle: Float = 310f,
+    startAngle: Float = (360f - sweepAngle) / 2 + 90f
+) {
+    Canvas(
+        modifier = modifier
+            .padding(strokeWidth)
+            .size(186.dp)
+    ) {
+        // Background Line
+        drawArc(
+            color = backgroundColor,
+            startAngle,
+            sweepAngle,
+            false,
+            style = Stroke(strokeWidth.toPx(), cap = StrokeCap.Round),
+            size = Size(size.width, size.height)
+        )
+
+        drawArc(
+            color = fillColor,
+            startAngle,
+            percentage * sweepAngle,
+            false,
+            style = Stroke(strokeWidth.toPx(), cap = StrokeCap.Round),
+            size = Size(size.width, size.height)
         )
     }
 }

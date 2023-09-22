@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.onboarding
 
 import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import android.text.InputType
 import android.view.LayoutInflater
@@ -10,54 +9,28 @@ import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
-import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentPagerAdapter
-import androidx.lifecycle.lifecycleScope
-import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityLinkDeviceBinding
 import network.loki.messenger.databinding.FragmentRecoveryPhraseBinding
-import org.session.libsession.snode.SnodeModule
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.crypto.MnemonicCodec
-import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.utilities.Hex
-import org.session.libsignal.utilities.KeyHelper
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.hexEncodedPublicKey
-import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.BaseActionBarActivity
-import org.thoughtcrime.securesms.crypto.KeyPairUtilities
 import org.thoughtcrime.securesms.crypto.MnemonicUtilities
-import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.util.ScanQRCodeWrapperFragment
 import org.thoughtcrime.securesms.util.ScanQRCodeWrapperFragmentDelegate
-import org.thoughtcrime.securesms.util.push
 import org.thoughtcrime.securesms.util.setUpActionBarSessionLogo
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class LinkDeviceActivity : BaseActionBarActivity(), ScanQRCodeWrapperFragmentDelegate {
 
-    @Inject
-    lateinit var configFactory: ConfigFactory
-
     private lateinit var binding: ActivityLinkDeviceBinding
-    internal val database: LokiAPIDatabaseProtocol
-        get() = SnodeModule.shared.storage
-    private val adapter = LinkDeviceActivityAdapter(this)
-    private var restoreJob: Job? = null
 
-    override fun onBackPressed() {
-        if (restoreJob?.isActive == true) return // Don't allow going back with a pending job
-        super.onBackPressed()
-    }
+    private val adapter = LinkDeviceActivityAdapter(this)
 
     // region Lifecycle
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -106,58 +79,7 @@ class LinkDeviceActivity : BaseActionBarActivity(), ScanQRCodeWrapperFragmentDel
     }
 
     private fun continueWithSeed(seed: ByteArray) {
-
-        // only have one sync job running at a time (prevent QR from trying to spawn a new job)
-        if (restoreJob?.isActive == true) return
-
-        restoreJob = lifecycleScope.launch {
-            // This is here to resolve a case where the app restarts before a user completes onboarding
-            // which can result in an invalid database state
-            database.clearAllLastMessageHashes()
-            database.clearReceivedMessageHashValues()
-
-            // RestoreActivity handles seed this way
-            val keyPairGenerationResult = KeyPairUtilities.generate(seed)
-            val x25519KeyPair = keyPairGenerationResult.x25519KeyPair
-            KeyPairUtilities.store(this@LinkDeviceActivity, seed, keyPairGenerationResult.ed25519KeyPair, x25519KeyPair)
-            configFactory.keyPairChanged()
-            val userHexEncodedPublicKey = x25519KeyPair.hexEncodedPublicKey
-            val registrationID = KeyHelper.generateRegistrationId(false)
-            TextSecurePreferences.setLocalRegistrationId(this@LinkDeviceActivity, registrationID)
-            TextSecurePreferences.setLocalNumber(this@LinkDeviceActivity, userHexEncodedPublicKey)
-            TextSecurePreferences.setRestorationTime(this@LinkDeviceActivity, System.currentTimeMillis())
-            TextSecurePreferences.setHasViewedSeed(this@LinkDeviceActivity, true)
-
-            binding.loader.isVisible = true
-            val snackBar = Snackbar.make(binding.containerLayout, R.string.activity_link_device_skip_prompt,Snackbar.LENGTH_INDEFINITE)
-                    .setAction(R.string.registration_activity__skip) { register(true) }
-
-            val skipJob = launch {
-                delay(15_000L)
-                snackBar.show()
-            }
-            // start polling and wait for updated message
-            ApplicationContext.getInstance(this@LinkDeviceActivity).apply {
-                startPollingIfNeeded()
-            }
-            TextSecurePreferences.events.filter { it == TextSecurePreferences.CONFIGURATION_SYNCED }.collect {
-                // handle we've synced
-                snackBar.dismiss()
-                skipJob.cancel()
-                register(false)
-            }
-
-            binding.loader.isVisible = false
-        }
-    }
-
-    private fun register(skipped: Boolean) {
-        restoreJob?.cancel()
-        binding.loader.isVisible = false
-        TextSecurePreferences.setLastConfigurationSyncTime(this, System.currentTimeMillis())
-        val intent = Intent(this@LinkDeviceActivity, if (skipped) DisplayNameActivity::class.java else PNModeActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        push(intent)
+        startLoadingActivity(seed)
     }
     // endregion
 }

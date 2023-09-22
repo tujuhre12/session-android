@@ -42,6 +42,7 @@ const val oceanLight5 = 0xffE7F3F4
 const val oceanLight6 = 0xffECFAFB
 const val oceanLight7 = 0xffFCFFFF
 
+val session_accent = Color(0xFF31F196)
 val ocean_accent = Color(0xff57C9FA)
 
 val oceanLights = arrayOf(oceanLight0, oceanLight1, oceanLight2, oceanLight3, oceanLight4, oceanLight5, oceanLight6, oceanLight7)
