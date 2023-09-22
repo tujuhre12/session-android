@@ -10,7 +10,6 @@ import com.goterl.lazysodium.utils.Key
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonBuilder
 import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.jobs.MessageReceiveParameters
@@ -29,7 +28,6 @@ private const val TAG = "PushHandler"
 
 class PushReceiver @Inject constructor(@ApplicationContext val context: Context) {
     private val sodium = LazySodiumAndroid(SodiumAndroid())
-    private val json = Json { ignoreUnknownKeys = true }
 
     fun onPush(dataMap: Map<String, String>?) {
         onPush(dataMap?.asByteArray())
@@ -91,7 +89,7 @@ class PushReceiver @Inject constructor(@ApplicationContext val context: Context)
             ?: error("Failed to decode bencoded list from payload")
 
         val metadataJson = (expectedList[0] as? BencodeString)?.value ?: error("no metadata")
-        val metadata: PushNotificationMetadata = json.decodeFromString(String(metadataJson))
+        val metadata: PushNotificationMetadata = Json.decodeFromString(String(metadataJson))
 
         return (expectedList.getOrNull(1) as? BencodeString)?.value.also {
             // null content is valid only if we got a "data_too_long" flag
