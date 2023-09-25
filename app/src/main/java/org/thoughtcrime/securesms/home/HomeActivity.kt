@@ -12,6 +12,21 @@ import android.os.Bundle
 import android.text.SpannableString
 import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.Divider
+import androidx.compose.material.Icon
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
@@ -20,6 +35,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.accompanist.themeadapter.appcompat.AppCompatTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
@@ -74,6 +90,8 @@ import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.SettingsActivity
 import org.thoughtcrime.securesms.showMuteDialog
 import org.thoughtcrime.securesms.showSessionDialog
+import org.thoughtcrime.securesms.ui.AppTheme
+import org.thoughtcrime.securesms.ui.h8
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.IP2Country
@@ -202,7 +220,8 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         }
 
         // Set up empty state view
-        binding.createNewPrivateChatButton.setOnClickListener { showNewConversation() }
+        binding.emptyStateContainer.setContent { EmptyView() }
+
         IP2Country.configureIfNeeded(this@HomeActivity)
         startObservingUpdates()
 
@@ -309,6 +328,34 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                 if (!user.isBlockCommunityMessageRequestsSet()) {
                     user.setCommunityMessageRequests(false)
                 }
+            }
+        }
+    }
+
+    @Composable
+    private fun EmptyView() {
+        AppTheme {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .padding(horizontal = 50.dp)
+                    .padding(bottom = 12.dp)
+            ) {
+                Spacer(modifier = Modifier.weight(1f))
+                Icon(
+                    painter = painterResource(id = R.drawable.emoji_tada),
+                    contentDescription = null,
+                    tint = Color.Unspecified
+                )
+                Text("Account Created", style = MaterialTheme.typography.h4, textAlign = TextAlign.Center)
+                Text("Welcome to Session", color = MaterialTheme.colors.secondary, textAlign = TextAlign.Center)
+                Divider(modifier = Modifier.padding(vertical = 16.dp))
+                Text("You don't have any conversations yet",
+                    style = MaterialTheme.typography.h8,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(bottom = 12.dp))
+                Text("Hit the plus button to start a chat, create a group, or join an official communitiy!", textAlign = TextAlign.Center)
+                Spacer(modifier = Modifier.weight(2f))
             }
         }
     }
