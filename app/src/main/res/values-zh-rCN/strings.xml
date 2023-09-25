@@ -526,8 +526,8 @@
     <string name="view_fake_chat_bubble_3">所以Session不会收集我的个人信息或者对话元数据？怎么做到的？</string>
     <string name="view_fake_chat_bubble_4">通过结合高效的匿名路由和端到端的加密技术。</string>
     <string name="view_fake_chat_bubble_5">好朋友之间就要使用能够保证信息安全的聊天工具，不用谢啦！</string>
-    <string name="activity_register_title">向您的Session ID打个招呼吧</string>
-    <string name="activity_register_explanation">您的Session ID是其他用户在与您聊天时使用的独一无二的地址。Session ID与您的真实身份无关，它在设计上完全是匿名且私密的</string>
+
+
     <string name="activity_restore_title">恢复您的帐号</string>
     <string name="activity_restore_explanation">在您重新登陆并需要恢复账户时，请输入您注册帐号时的恢复口令</string>
     <string name="activity_restore_seed_edit_text_hint">输入您的恢复口令</string>

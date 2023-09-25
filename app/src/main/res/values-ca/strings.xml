@@ -531,8 +531,8 @@ d\'intercanvi de claus!</string>
     <string name="view_fake_chat_bubble_3">Per tant, no agafa les meves dades personals o les metadades de les meves converses? Com funciona?</string>
     <string name="view_fake_chat_bubble_4">Fent servir una combinació de tecnologies d\'encaminament anònim avançat i un xifratge d\'extrem a extrem.</string>
     <string name="view_fake_chat_bubble_5">Amics no deixis que els amics facin servir missatgeries compromeses. Sigueu benvinguts.</string>
-    <string name="activity_register_title">Digues hola al teu ID de Session</string>
-    <string name="activity_register_explanation">El teu ID de Session és l\'adreça única que els usuaris poden utilitzar per a contactar-te a Session. Sense cap connexió amb la teva identitat real, el teu ID de Session ID per disseny és totalment anònim i privat.</string>
+
+
     <string name="activity_restore_title">Restableix el teu compte</string>
     <string name="activity_restore_explanation">Introdueix la frase de recuperació que se\'t va proporcionar quan et vas registrar per a restaurar el compte.</string>
     <string name="activity_restore_seed_edit_text_hint">Introdueix la frase de recuperació</string>

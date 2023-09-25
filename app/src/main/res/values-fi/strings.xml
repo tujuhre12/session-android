@@ -537,8 +537,8 @@ on viallinen!</string>
     <string name="view_fake_chat_bubble_3">Joten se ei kerää henkilökohtaisia tietoja tai keskustelun metatietoja? Miten se toimii?</string>
     <string name="view_fake_chat_bubble_4">Käyttämällä kehittyneitä nimettömiä reititys- ja päästä päähän -salaustekniikoita.</string>
     <string name="view_fake_chat_bubble_5">Ystävät eivät anna ystävien käyttää vaarantunutta viestintäsovellusta. Olet tervetullut.</string>
-    <string name="activity_register_title">Sano tervehdys Session tunnuksellesi</string>
-    <string name="activity_register_explanation">Session ID on yksilöllinen osoite, jonka avulla muut voivat ottaa sinuun yhteyttä Sessionissa. Sillä ei ole yhteyttä todelliseen identiteettiisi, Session ID on täysin anonyymi ja yksityinen tarkoituksella.</string>
+
+
     <string name="activity_restore_title">Palauta sinun tili</string>
     <string name="activity_restore_explanation">Syötä palautuslause joka annettiin sinulle, kun olet rekisteröitynyt palauttamaan tilisi.</string>
     <string name="activity_restore_seed_edit_text_hint">Syötä palautuslauseesi</string>

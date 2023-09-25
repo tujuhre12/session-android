@@ -538,8 +538,8 @@ iletisi alındı!</string>
     <string name="view_fake_chat_bubble_3">Yani kişisel bilgilerimi veya konuşma meta verilerimi toplamaz mı? Nasıl çalışır?</string>
     <string name="view_fake_chat_bubble_4">Gelişmiş anonim yönlendirme ve uçtan uca şifreleme teknolojilerinin bir kombinasyonunu kullan.</string>
     <string name="view_fake_chat_bubble_5">Arkadaşlar, arkadaşlarının güvenliği ihlal edilmiş mesajlaşma programlarını kullanmasına izin vermez. Rica ederim.</string>
-    <string name="activity_register_title">Yeni Session kimliğinize merhaba deyin.</string>
-    <string name="activity_register_explanation">Session Kimliğiniz, kişilerin Session\'da sizinle iletişim kurmak için kullanabileceği benzersiz adrestir. Gerçek kimliğinizle hiçbir bağlantısı olmadan, Session Kimliğiniz tasarım gereği tamamen anonim ve özeldir.</string>
+
+
     <string name="activity_restore_title">Hesabınızı geri yükleyin</string>
     <string name="activity_restore_explanation">Hesabınızı geri yüklemek için kaydolduğunuzda size verilen kurtarma ifadesini girin.</string>
     <string name="activity_restore_seed_edit_text_hint">Kurtarma ifadenizi girin</string>

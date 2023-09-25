@@ -538,8 +538,8 @@ de intercambio de claves!</string>
     <string name="view_fake_chat_bubble_3">¿Entonces no recopila mi información personal ni los metadatos de mi conversación? ¿Cómo funciona?</string>
     <string name="view_fake_chat_bubble_4">Utiliza una combinación de enrutamiento anónimo avanzado y tecnologías de cifrado de extremo a extremo.</string>
     <string name="view_fake_chat_bubble_5">Los amigos no dejan que sus amigos usen messengers riesgosos. De nada.</string>
-    <string name="activity_register_title">Saluda a tu ID de Session</string>
-    <string name="activity_register_explanation">Tu ID de Session es la dirección única que las personas pueden usar para contactarte en Session. Por diseño, tu ID de Session es totalmente anónima y privada, sin vínculo con tu identidad real.</string>
+
+
     <string name="activity_restore_title">Restaura tu cuenta</string>
     <string name="activity_restore_explanation">Ingresa la frase de recuperación que se te dio cuando te registraste para restaurar tu cuenta.</string>
     <string name="activity_restore_seed_edit_text_hint">Ingresa tu frase de recuperación</string>

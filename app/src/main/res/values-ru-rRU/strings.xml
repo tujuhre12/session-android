@@ -563,8 +563,8 @@
     <string name="view_fake_chat_bubble_3">Значит ли это, что оно не собирает мою личную информацию или метаданные моего разговора? Как оно работает?</string>
     <string name="view_fake_chat_bubble_4">С использованием комбинации передовых технологий анонимной маршрутизации и сквозного шифрования.</string>
     <string name="view_fake_chat_bubble_5">Друзья не позволят друзьям использовать ненадежные мессенджеры. Пользуйтесь на здоровье.</string>
-    <string name="activity_register_title">Познакомьтесь со своим Session ID</string>
-    <string name="activity_register_explanation">Ваш Session ID - это уникальный адрес, который другие пользователи могут использовать для связи с вами при помощи Session. Поскольку ваш Session ID никак не связан с вашей настоящей личностью, он по определению является полностью анонимным и конфиденциальным.</string>
+
+
     <string name="activity_restore_title">Восстановите свой аккаунт</string>
     <string name="activity_restore_explanation">Для восстановления учетной записи введите секретную фразу, которая была предоставлена вам при регистрации.</string>
     <string name="activity_restore_seed_edit_text_hint">Введите секретную фразу</string>

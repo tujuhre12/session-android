@@ -539,8 +539,8 @@
     <string name="view_fake_chat_bubble_3">Dus het verzamelt geen persoonlijke informatie of de metagegevens van mijn gesprek? Hoe werkt het?</string>
     <string name="view_fake_chat_bubble_4">Met behulp van een combinatie van geavanceerde anonieme routing en end-to-end encryptietechnologieën.</string>
     <string name="view_fake_chat_bubble_5">Vrienden laten vrienden geen gecomprimeerde berichten apps gebruiken. Graag gedaan.</string>
-    <string name="activity_register_title">Zeg hallo tegen uw Sessie-ID</string>
-    <string name="activity_register_explanation">Uw Sessie-ID is het unieke adres dat mensen kunnen gebruiken om contact met u op te nemen via Sessie. Zonder verbinding met je echte identiteit, is je Sessie-ID volledig anoniem en privé.</string>
+
+
     <string name="activity_restore_title">Uw account herstellen</string>
     <string name="activity_restore_explanation">Voer de herstel zin in die u hebt gekregen toen u uwzelf hebt aangemeld om uw account te herstellen.</string>
     <string name="activity_restore_seed_edit_text_hint">Voer uw herstel zin in</string>

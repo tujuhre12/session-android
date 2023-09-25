@@ -551,8 +551,8 @@ výmeny kľúčov.</string>
     <string name="view_fake_chat_bubble_3">Takže nezbiera moje osobné informácie alebo metadáta mojich konverzácií? Ako to funguje?</string>
     <string name="view_fake_chat_bubble_4">Použitím kombinácie pokročilých technológií anonymného smerovania a end-to-end šifrovania.</string>
     <string name="view_fake_chat_bubble_5">Priatelia nedovolia priateľom používať skompromitované chatové aplikácie. Nieje za čo.</string>
-    <string name="activity_register_title">Povedzte ahoj svojmu Session ID</string>
-    <string name="activity_register_explanation">Vaše Session ID je jedinečná adresa, ktorú môžu ľudia použiť aby sa s vami skontaktovali v Session. Pretože Session ID nemá žiadne spojenie s vašou skutočnou identitou, je Session ID úplne anonymné a súkromé.</string>
+
+
     <string name="activity_restore_title">Obnoviť účet</string>
     <string name="activity_restore_explanation">Zadajte frázu na obnovenie, ktorá vám bola poskytnutá pri registrácii na obnovenie účtu.</string>
     <string name="activity_restore_seed_edit_text_hint">Zadajte vašu obnovovaciu frázu</string>

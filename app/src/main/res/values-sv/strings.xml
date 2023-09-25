@@ -538,8 +538,8 @@ för nyckelutbyte!</string>
     <string name="view_fake_chat_bubble_3">Så det samlar inte in mina personuppgifter eller mina konversationers metadata? Hur fungerar det?</string>
     <string name="view_fake_chat_bubble_4">Med hjälp av en kombination av avancerad anonym routing och end-to-end-krypteringsteknik.</string>
     <string name="view_fake_chat_bubble_5">Vänner låter inte vänner använda osäkra meddelandeappar. Varsågod.</string>
-    <string name="activity_register_title">Säg hej till ditt Session-ID</string>
-    <string name="activity_register_explanation">Ditt Session-ID är den unika adress folk kan använda för att kontakta dig på Session. Ditt Session-ID är helt anonymt och privat rakt igenom, helt utan koppling till din riktiga identitet.</string>
+
+
     <string name="activity_restore_title">Återställ ditt konto</string>
     <string name="activity_restore_explanation">Ange den återställningsfras du fick när du skapade ditt konto för att kunna återställa ditt konto.</string>
     <string name="activity_restore_seed_edit_text_hint">Ange din återställningsfras</string>

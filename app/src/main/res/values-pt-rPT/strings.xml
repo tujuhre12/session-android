@@ -534,8 +534,8 @@ foi recebida está corrompida!</string>
     <string name="view_fake_chat_bubble_3">Então ele não coleta minhas informações pessoais ou meus metadados de conversa? Como funciona?</string>
     <string name="view_fake_chat_bubble_4">Usando uma combinação de tecnologias avançadas de roteamento anônimo e criptografia de ponta a ponta.</string>
     <string name="view_fake_chat_bubble_5">Amigos não deixam amigos usarem aplicativos de mensagem comprometidos. De nada.</string>
-    <string name="activity_register_title">Diga olá ao seu ID Session</string>
-    <string name="activity_register_explanation">Seu ID Session é o endereço exclusivo que as pessoas podem usar para entrar em contato com você no Session. Sem conexão com sua identidade real, seu ID Session é totalmente anônimo e privado por definição.</string>
+
+
     <string name="activity_restore_title">Restaurar sua conta</string>
     <string name="activity_restore_explanation">Digite a frase de recuperação que lhe foi fornecida quando você se inscreveu para restaurar sua conta.</string>
     <string name="activity_restore_seed_edit_text_hint">Digite sua frase de recuperação</string>

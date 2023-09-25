@@ -539,8 +539,8 @@
     <string name="view_fake_chat_bubble_3">Δηλαδή δεν συλλέγει τα προσωπικά μου στοιχεία ή τα μεταδεδομένα των συνομιλιών μου; Πώς λειτουργεί;</string>
     <string name="view_fake_chat_bubble_4">Χρησιμοποιώντας ένα συνδυασμό προηγμένων ανώνυμων τεχνολογιών δρομολόγησης και τεχνολογίας κρυπτογράφησης από άκρο σε άκρο.</string>
     <string name="view_fake_chat_bubble_5">Οι φίλοι δεν αφήνουν τους φίλους να χρησιμοποιούν ευάλωτες εφαρμογές μηνυμάτων. Είστε ευπρόσδεκτοι.</string>
-    <string name="activity_register_title">Πείτε γεια στη Session ταυτότητά σας</string>
-    <string name="activity_register_explanation">Η Session ταυτότητά σας είναι η μοναδική διεύθυνση που μπορούν να χρησιμοποιήσουν τα άτομα για να επικοινωνήσουν μαζί σας στο Session. Χωρίς σύνδεση με την πραγματική σας ταυτότητα, η Session ταυτότητά σας είναι εντελώς ανώνυμη και ιδιωτική.</string>
+
+
     <string name="activity_restore_title">Επαναφορά του λογαριασμού σας</string>
     <string name="activity_restore_explanation">Εισάγετε τη φράση ανάκτησης που σας δόθηκε κατά την εγγραφή σας για να επαναφέρετε το λογαριασμό σας.</string>
     <string name="activity_restore_seed_edit_text_hint">Εισάγετε τη φράση ανάκτησης σας</string>

@@ -30,7 +30,7 @@ class LandingActivity : BaseActionBarActivity() {
     }
 
     private fun register() {
-        val intent = Intent(this, RegisterActivity::class.java)
+        val intent = Intent(this, DisplayNameActivity::class.java)
         push(intent)
     }
 

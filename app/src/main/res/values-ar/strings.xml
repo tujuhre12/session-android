@@ -585,8 +585,8 @@
     <string name="view_fake_chat_bubble_3">اِذن لا يقوم بجمع المعلومات الشخصية أو المعلومات الوصفية لمحادثاتي؟ كيف يعمل؟</string>
     <string name="view_fake_chat_bubble_4">باِستخدام مُركَب من تكنولوجيات التشفير من الطرفين و توجيه مجهول للمعلومات.</string>
     <string name="view_fake_chat_bubble_5">الأصدقاء لا يتركون أصدقائهم يستعملون تطبيق مراسلة مكشوف. مرحبا بك.</string>
-    <string name="activity_register_title">رحب بعنوان تعريفك</string>
-    <string name="activity_register_explanation">عنوان تعريفك هو عنوان وحيد خاص بك, يمكن للناس الاتصال بك عن طريقه. دون معرفة هويتك الحقيقية, هذا العنوان مصمم ليكون خاص و مجهول.</string>
+
+
     <string name="activity_restore_title">استرجع حسابك</string>
     <string name="activity_restore_explanation">أدخل عبارة الأسترجاع التي اعطيت لك عندما سجلت الدخول لاِسترجاع حسابك.</string>
     <string name="activity_restore_seed_edit_text_hint">ادخل عبارة الاسترجاع</string>

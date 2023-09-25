@@ -539,8 +539,8 @@
     <string name="view_fake_chat_bubble_3">Yəni, şəxsi məlumatlarımı və ya danışıq meta verilənlərimi yığmır? Necə işləyir?</string>
     <string name="view_fake_chat_bubble_4">Qabaqcıl anonim yönləndirmə və bir ucdan digərinə qədər şifrələmə texnologiyalarının kombinasiyasını istifadə edir.</string>
     <string name="view_fake_chat_bubble_5">Dostlar, dostlarının güvənliyi qorunmayan messencerlərdən istifadə etməsinə icazə verməz. Xoşdur, buyurun.</string>
-    <string name="activity_register_title">Session kimliyinizə salam deyin</string>
-    <string name="activity_register_explanation">Session kimliyiniz, əlaqələrin Session-da sizinlə əlaqə saxlamaq üçün istifadə edəcəyi unikal bir ünvandır. Gerçək kimliyinizlə heç bir bağlantısı olmadan, Session kimliyiniz, ümumilikdə anonimlik və gizlilik üzərinə dizayn edilmişdir.</string>
+
+
     <string name="activity_restore_title">Hesabınızı bərpa edin</string>
     <string name="activity_restore_explanation">Hesabınızı bərpa etmək üçün qeydiyyatdan keçərkən sizə verliən bərpa paroluunu daxil edin.</string>
     <string name="activity_restore_seed_edit_text_hint">Bərpa parolunu daxil edin</string>

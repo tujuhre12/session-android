@@ -538,8 +538,8 @@
     <string name="view_fake_chat_bubble_3">Do ĝi ne kolektas miajn personajn informojn aŭ miajn konversaciajn metadatumojn? Kiel ĝi funkcias?</string>
     <string name="view_fake_chat_bubble_4">Uzante kombinon de progresinta anonima enkursigo kaj tutvoje ĉifraj teknologioj.</string>
     <string name="view_fake_chat_bubble_5">Amikoj ne permesas amikojn uzi kompromititajn mesaĝilojn. Nedankinde.</string>
-    <string name="activity_register_title">Diru saluton al via Session ID</string>
-    <string name="activity_register_explanation">Via Session ID estas la unika adreso kiun homoj povas uzi por kontakti en Session. Sen ligo al via vera identeco, via Session ID estas tute anonima kaj privata per dezajno.</string>
+
+
     <string name="activity_restore_title">Restaŭri vian konton</string>
     <string name="activity_restore_explanation">Entajpu la riparan frazon, kiu estis donita al vi kiam vi aliĝis, por ripari vian konton.</string>
     <string name="activity_restore_seed_edit_text_hint">Entajpu vian riparan frazon</string>

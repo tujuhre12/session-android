@@ -561,8 +561,8 @@
     <string name="view_fake_chat_bubble_3">Więc nie zbiera moich danych osobowych ani metadanych z mojej rozmowy? Jak to działa?</string>
     <string name="view_fake_chat_bubble_4">Wykorzystując połączenie zaawansowanych anonimowych tras i technologii szyfrowania end-to-end.</string>
     <string name="view_fake_chat_bubble_5">Przyjaciele nie pozwalają przyjaciołom korzystać z niezabezpieczonych komunikatorów. Nie ma za co.</string>
-    <string name="activity_register_title">Przywitaj się z identyfikatorem Session</string>
-    <string name="activity_register_explanation">Twój identyfikator Session to unikalny adres, za pomocą którego można się z Tobą kontaktować w Session. Bez połączenia z twoją prawdziwą tożsamością, identyfikator Session jest z założenia całkowicie anonimowy i prywatny.</string>
+
+
     <string name="activity_restore_title">Przywróć swoje konto</string>
     <string name="activity_restore_explanation">Wprowadź frazę odzyskiwania, która została Ci przekazana podczas rejestracji w celu przywrócenia konta.</string>
     <string name="activity_restore_seed_edit_text_hint">Wpisz swoją frazę odzyskiwania</string>

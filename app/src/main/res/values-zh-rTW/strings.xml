@@ -532,8 +532,8 @@
     <string name="view_fake_chat_bubble_3">所以牠不會收集我的個人資訊或我的對話元數據？ 它是如何工作的？</string>
     <string name="view_fake_chat_bubble_4">我們結合了進階匿名連線與端對端加密技術。</string>
     <string name="view_fake_chat_bubble_5">我們不會讓自己的朋友使用不夠好的聊天 app，不客氣。</string>
-    <string name="activity_register_title">與您的 Session ID 打個招呼</string>
-    <string name="activity_register_explanation">您的 Session ID 是人們可以用來在 Session 上聯繫您的唯一地址。 並且與您的真實身份毫無關聯，因此您的 Session ID 在設計上是完全匿名和私密的。</string>
+
+
     <string name="activity_restore_title">恢復您的帳號</string>
     <string name="activity_restore_explanation">輸入您註冊時提供的恢復短語以恢復您的帳號。</string>
     <string name="activity_restore_seed_edit_text_hint">請輸入您的回復用字句</string>

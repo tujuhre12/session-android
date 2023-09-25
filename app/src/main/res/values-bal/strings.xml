@@ -437,8 +437,8 @@ memproses pertukaran kunci korupsi.</string>
     <string name="view_fake_chat_bubble_3">Bagaimana dengan pengumpulan informasi personal atau metadata percakapan? Bagaimana cara kerjanya?</string>
     <string name="view_fake_chat_bubble_4">Menggunakan kombinasi routing yang anonim canggih dan teknologi enkripsi ujung-ke-ujung (end-to-end encryption)</string>
     <string name="view_fake_chat_bubble_5">Rekan yang baik tak membiarkan rekannya menggunakan aplikasi bertukar pesan yang tak aman. Terima kasih kembali.</string>
-    <string name="activity_register_title">Ucapkan halo pada Session ID anda</string>
-    <string name="activity_register_explanation">Session ID adalah alamat unik yang bisa digunakan untuk mengontak anda. Tanpa koneksi dengan identitas asli, Session ID anda didesain bersifat anonim dan rahasia.</string>
+
+
     <string name="activity_restore_title">Kembalikan akun</string>
     <string name="activity_restore_explanation">Masukkan kata pemulihan yang diberikan saat anda mencoba masuk ke akun</string>
     <string name="activity_restore_seed_edit_text_hint">masukan kata pemulihan</string>

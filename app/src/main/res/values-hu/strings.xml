@@ -540,8 +540,8 @@
     <string name="view_fake_chat_bubble_3">Tehát nem gyűjti a személyes adataimat vagy a beszélgetés metaadatait? Hogyan működik?</string>
     <string name="view_fake_chat_bubble_4">Fejlett anonim útválasztási és végponttól-végpontig titkosítási technológiák használatával.</string>
     <string name="view_fake_chat_bubble_5">A barátként nem engedhetem, hogy megbízhatatlan üzenetküldő appokat használj. Szívesen.</string>
-    <string name="activity_register_title">Ismerd meg a Session ID-d</string>
-    <string name="activity_register_explanation">A Session azonosító az az egyedi cím, amelyet az emberek használhatnak, hogy kapcsolatba lépjenek Önnel a Sessionon. Mivel nincs kapcsolat a valódi személyazonosságával, az Session azonosító teljesen névtelen, és privát.</string>
+
+
     <string name="activity_restore_title">Fiók visszaállítása</string>
     <string name="activity_restore_explanation">Írja be azt a helyreállítási kifejezést, amelyet a fiók visszaállításához regisztrálásakor kapott.</string>
     <string name="activity_restore_seed_edit_text_hint">Írja be a helyreállítási kifejezést</string>

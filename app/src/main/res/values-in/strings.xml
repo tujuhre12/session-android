@@ -414,8 +414,6 @@
     <string name="invalid_url">URL salah</string>
     <string name="copied_to_clipboard">Salin ke clipboard</string>
     <string name="next">Berikutnya</string>
-    <string name="activity_register_title">Ucapkan halo pada Session ID anda</string>
-    <string name="activity_register_explanation">Session ID adalah alamat unik yang bisa digunakan untuk mengontak anda. Tanpa koneksi dengan identitas asli, Session ID anda didesain bersifat anonim dan rahasia.</string>
     <string name="activity_restore_title">Memulihkan akun Anda</string>
     <string name="activity_restore_explanation">Masukkan kata pemulihan yang diberikan saat anda masuk untuk memulihkan akun anda.</string>
     <string name="activity_restore_seed_edit_text_hint">Masukan kata pemulihan</string>

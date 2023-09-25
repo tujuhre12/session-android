@@ -523,8 +523,8 @@
     <string name="view_fake_chat_bubble_3">個人情報や会話のメタデータは収集されませんか？どのように機能しますか？</string>
     <string name="view_fake_chat_bubble_4">高度な匿名ルーティングとエンドツーエンドの暗号化テクノロジーを組み合わせて使用します。</string>
     <string name="view_fake_chat_bubble_5">友人は、セキュリティ侵害されたメッセンジャーを自らの友人に使用させません。どういたしまして。</string>
-    <string name="activity_register_title">Session ID をご紹介します</string>
-    <string name="activity_register_explanation">Session ID は、Session で連絡を取るために使用できる一意のアドレスです。本当のアイデンティティに関係なく、あなたの Session ID は設計上完全に匿名でプライベートです。</string>
+
+
     <string name="activity_restore_title">アカウントを復元する</string>
     <string name="activity_restore_explanation">アカウントを復元するためにサインアップしたときに与えられたリカバリーフレーズを入力します。</string>
     <string name="activity_restore_seed_edit_text_hint">リカバリーフレーズを入力してください</string>

@@ -538,8 +538,8 @@
     <string name="view_fake_chat_bubble_3">इसलिए यह मेरी निजी जानकारी या बातचीत का metadata इकठ्ठा नहीं करता? यह कैसे काम करता है?</string>
     <string name="view_fake_chat_bubble_4">एडवांस्ड anonymous routing और end-to-end encryption के मिश्रण का प्रयोग करके।</string>
     <string name="view_fake_chat_bubble_5">दोस्त दोस्तों को असुरक्षित मैसेंजर नहीं उपयोग करने देते। आपका स्वागत है।</string>
-    <string name="activity_register_title">अपनी सेशन आईडी को हेल्लो कहें</string>
-    <string name="activity_register_explanation">आपकी Session ID एक ऐसा अनोखा पता है जिसका उपयोग करके लोग आपसे Session पर संपर्क कर सकते हैं। आपकी वास्तविक पहचान से कोई संबंध नहीं होने के कारण, आपका Session ID डिज़ाइन द्वारा पूरी तरह से गुमनाम और निजी है |</string>
+
+
     <string name="activity_restore_title">अकाउंट रिस्टोर करें</string>
     <string name="activity_restore_explanation">अकाउंट बनाते समय बनाया गया अपना रिकवरी वाक्य डालें।</string>
     <string name="activity_restore_seed_edit_text_hint">अपना पुनर्प्राप्ति वाक्यांश लिखें</string>

@@ -546,8 +546,8 @@
     <string name="view_fake_chat_bubble_3">Դա նշանակում է, որ այն չի՞ հավաքում իմ անձնական տվյալները կամ իմ զրույցի մետատվյալները։</string>
     <string name="view_fake_chat_bubble_4">Այն օգտվում է հատուկ տվյալների փոխանցման միջոցներից և ամբողջական կոդավորման տեխնոլոգիաներից։</string>
     <string name="view_fake_chat_bubble_5">Ընկերները չեն թողնի ընկերներին, որ նրանք օգտվեն վտանգավոր նամակների ծրագրերից։ Խնդրեմ։</string>
-    <string name="activity_register_title">Ասեք «բարև» Ձեր Սեանսի ինքնությանը</string>
-    <string name="activity_register_explanation">Ձեր Սեանսի ինքնությունը հատուկ հասցե է, որը մարդիկ պիտի օգտագործեն Ձեզ հետ Սեանսով կապ հաստատելու համար։ Ձեր իրական ինքնության հետ կապ չունենալով, Ձեր Սեանսի ինքնությունն լիովին գաղտնի է։</string>
+
+
     <string name="activity_restore_title">Վերականգնել ձեր հաշիվը</string>
     <string name="activity_restore_explanation">Մուտքագրեք վերականգնման բառակապակցությունը, որը տրվել է ձեզ, երբ գրանցվել եք ձեր հաշիվը վերականգնելու համար:</string>
     <string name="activity_restore_seed_edit_text_hint">Գրեք գաղտնի արտահայտությունը</string>

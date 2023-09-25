@@ -539,8 +539,8 @@ scambia un altro messaggio!</string>
     <string name="view_fake_chat_bubble_3">Quindi non raccoglie informazioni personali o metadati di conversazione? Come funziona?</string>
     <string name="view_fake_chat_bubble_4">Utilizza una combinazione di tecnologie avanzate come instradamento anonimo e crittografia end-to-end.</string>
     <string name="view_fake_chat_bubble_5">Gli amici non lasciano che i propri amici utilizzino app di messaggistica compromesse. Benvenuto/a.</string>
-    <string name="activity_register_title">Ecco il tuo ID Sessione</string>
-    <string name="activity_register_explanation">L\'ID Sessione è l\'indirizzo univoco che le persone possono utilizzare per contattarti su Session. L\'ID Sessione permette di eliminare ogni connessione con la tua identità reale: l\'ID Sessione è completamente anonimo e privato.</string>
+
+
     <string name="activity_restore_title">Ripristina il tuo account</string>
     <string name="activity_restore_explanation">Inserisci la frase di recupero che ti è stata data quando ti sei registrato per ripristinare il tuo account.</string>
     <string name="activity_restore_seed_edit_text_hint">Inserisci la frase di recupero</string>

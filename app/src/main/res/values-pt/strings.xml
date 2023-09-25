@@ -539,8 +539,8 @@
     <string name="view_fake_chat_bubble_3">Então ele não coleta minha informação pessoal ou meus metadados de conversa? Como funciona?</string>
     <string name="view_fake_chat_bubble_4">Usando uma combinação de tecnologias avançadas de roteamento anônimo e encriptação ponta-a-ponta.</string>
     <string name="view_fake_chat_bubble_5">Amigas(os) não deixam amigas(os) usarem mensageiros comprometidos. De nada.</string>
-    <string name="activity_register_title">Diga olá a sua Session ID</string>
-    <string name="activity_register_explanation">Sua Session ID é o endereço exclusivo que pessoas podem usar para contactar você em Session. Com nenhuma conexão com sua identidade real, sua Session ID é totalmente anônima e privada por design.</string>
+
+
     <string name="activity_restore_title">Restaurar sua conta</string>
     <string name="activity_restore_explanation">Entre a frase de recuperação que lhe foi dada quando você fez signup para restaurar sua conta.</string>
     <string name="activity_restore_seed_edit_text_hint">Entre sua frase de recuperação</string>

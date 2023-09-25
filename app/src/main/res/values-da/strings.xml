@@ -537,8 +537,8 @@ udveksel besked!</string>
     <string name="view_fake_chat_bubble_3">Så den indsamler ikke mine personlige oplysninger eller min samtale metadata? Hvordan virker det?</string>
     <string name="view_fake_chat_bubble_4">Ved hjælp af en kombination af avanceret anonym routing og end-to-end krypteringsteknologier.</string>
     <string name="view_fake_chat_bubble_5">Venner lader ikke venner bruge usikre besked tjenester. Du er velkommen.</string>
-    <string name="activity_register_title">Sig hej til dit Session ID</string>
-    <string name="activity_register_explanation">Dit Session ID er den unikke adresse, som folk kan bruge til at kontakte dig i Session. Dit Session ID har ingen tilknytning til din rigtige identitet og er helt anonymt og privat.</string>
+
+
     <string name="activity_restore_title">Gendan din konto</string>
     <string name="activity_restore_explanation">Angiv den genoprettelsessætning, du fik, da du tilmeldte dig, for at kunne gendanne din konto.</string>
     <string name="activity_restore_seed_edit_text_hint">Angiv din genoprettelsessætning</string>

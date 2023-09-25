@@ -556,8 +556,8 @@
     <string name="view_fake_chat_bubble_3">Ji nerenka mano asmeninės informacijos ar mano pokalbių metaduomenų? Kaip ji veikia?</string>
     <string name="view_fake_chat_bubble_4">Naudodama išplėstinio anoniminio nukreipimo ir ištisinio šifravimo technologijų kombinaciją.</string>
     <string name="view_fake_chat_bubble_5">Draugai neleidžia savo draugams naudotis į pavojų statančiomis programėlėmis. Prašom.</string>
-    <string name="activity_register_title">Pasisveikinkite su savo Session ID</string>
-    <string name="activity_register_explanation">Jūsų Session ID yra unikalus adresas, kurį žmonės gali naudoti, kad susisiektų su jumis per Session programėlę. Neturėdamas jokių sąsajų su jūsų tikrąja tapatybe, jūsų Session ID yra tyčia visiškai anoniminis ir privatus.</string>
+
+
     <string name="activity_restore_title">Atkurkite savo paskyrą</string>
     <string name="activity_restore_seed_edit_text_hint">Įveskite savo atkūrimo frazę</string>
     <string name="activity_display_name_title_2">Pasirinkite savo rodomą vardą</string>

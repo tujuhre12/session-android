@@ -564,8 +564,8 @@
     <string name="view_fake_chat_bubble_3">Отже, він не збирає мою особисту інформацію чи мою метадані розмови? Як це працює?</string>
     <string name="view_fake_chat_bubble_4">Він використовує комбінацію анонімної мережі та скрізного енд-ту-енд шифрування.</string>
     <string name="view_fake_chat_bubble_5">Друзі не дозволяють друзям користуватися скомпромітованими мессенджерами. Ласкаво просимо.</string>
-    <string name="activity_register_title">Привітайтесь з вашою Session ID адрессою</string>
-    <string name="activity_register_explanation">Ваш Session ID є унікальною адресою, якою люди будуть зв’язуватимися з вами в Session. При відсутньому з\'єднанні з вашою реальною особистістю, Session ID є абсолютно анонімним та приватним, по дизайну.</string>
+
+
     <string name="activity_restore_title">Відновити обліковий запис</string>
     <string name="activity_restore_explanation">Введіть фразу відновлення, яку вам було сказано записати на папері під час реєстрації, для відновлення облікового запису.</string>
     <string name="activity_restore_seed_edit_text_hint">Введіть вашу фразу відновлення</string>

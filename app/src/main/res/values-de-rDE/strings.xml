@@ -537,8 +537,8 @@
     <string name="view_fake_chat_bubble_3">Es werden also weder meine persönlichen Daten noch die Metadaten meiner Konversation erfasst? Wie funktioniert das?</string>
     <string name="view_fake_chat_bubble_4">Mit einer Kombination fortschrittlicher anonyme Routing- und End-to-End-Verschlüsselungstechnologien.</string>
     <string name="view_fake_chat_bubble_5">Freunde lassen Freunde keine kompromittierten Messenger verwenden. Herzlich Willkommen.</string>
-    <string name="activity_register_title">Das ist Ihre Session ID.</string>
-    <string name="activity_register_explanation">Ihre Session ID ist die eindeutige Adresse, unter der Personen Sie über Session kontaktieren können. Ihre Session ID ist nicht mit Ihrer realen Identität verbunden, völlig anonym und von Natur aus privat.</string>
+
+
     <string name="activity_restore_title">Ihr Konto wiederherstellen</string>
     <string name="activity_restore_explanation">Geben Sie den Wiederherstellungssatz ein, den Sie bei der Anmeldung zur Wiederherstellung Ihres Kontos erhalten haben.</string>
     <string name="activity_restore_seed_edit_text_hint">Ihr Wiederherstellungssatz</string>
