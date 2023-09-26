@@ -6,6 +6,7 @@ import network.loki.messenger.databinding.ActivityLandingBinding
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
+import org.thoughtcrime.securesms.onboarding.name.DisplayNameActivity
 import org.thoughtcrime.securesms.service.KeyCachingService
 import org.thoughtcrime.securesms.util.push
 import org.thoughtcrime.securesms.util.setUpActionBarSessionLogo

@@ -58,6 +58,7 @@
        <item name="prominentButtonColor">?colorAccent</item>
        <item name="attachment_document_icon_small">@drawable/ic_document_small_dark</item>
        <item name="attachment_document_icon_large">@drawable/ic_document_large_dark</item>
+       <item name="colorError">@color/destructive</item>
     </style>
 
     <!-- This should be the default theme for the application. -->

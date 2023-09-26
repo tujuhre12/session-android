@@ -41,7 +41,7 @@ class AlbumThumbnailView : RelativeLayout {
     private var slides: List<Slide> = listOf()
     private var slideSize: Int = 0
 
-    override fun dispatchDraw(canvas: Canvas?) {
+    override fun dispatchDraw(canvas: Canvas) {
         super.dispatchDraw(canvas)
         cornerMask.mask(canvas)
     }

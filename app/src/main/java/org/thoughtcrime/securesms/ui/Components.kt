@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.ui
 
 import androidx.annotation.DrawableRes
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
@@ -17,11 +18,13 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ButtonColors
+import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Card
 import androidx.compose.material.Colors
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
@@ -34,7 +37,6 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -44,6 +46,22 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.components.ProfilePictureView
 import kotlin.math.roundToInt
+
+@Composable
+fun OutlineButton(text: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    OutlinedButton(
+        modifier = modifier.size(108.dp, 34.dp),
+        onClick = onClick,
+        border = BorderStroke(1.dp, LocalExtraColors.current.prominentButtonColor),
+        shape = RoundedCornerShape(50), // = 50% percent
+        colors = ButtonDefaults.outlinedButtonColors(
+            contentColor = LocalExtraColors.current.prominentButtonColor,
+            backgroundColor = MaterialTheme.colors.background
+        )
+    ){
+        Text(text = text)
+    }
+}
 
 @Composable
 fun ItemButton(

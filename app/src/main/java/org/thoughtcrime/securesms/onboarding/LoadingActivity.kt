@@ -24,6 +24,7 @@ import kotlinx.coroutines.launch
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.onboarding.name.DisplayNameActivity
 import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.ProgressArc
 import org.thoughtcrime.securesms.util.push

@@ -30,6 +30,7 @@ val LocalExtraColors = staticCompositionLocalOf<ExtraColors> { error("No Custom 
 
 data class ExtraColors(
     val settingsBackground: Color,
+    val prominentButtonColor: Color
 )
 
 /**
@@ -42,6 +43,7 @@ fun AppTheme(
     val extraColors = LocalContext.current.run {
         ExtraColors(
             settingsBackground = getColorFromTheme(R.attr.colorSettingsBackground),
+            prominentButtonColor = getColorFromTheme(R.attr.prominentButtonColor),
         )
     }
 
@@ -98,6 +100,7 @@ val sessionTypography = Typography(
 )
 
 val Typography.base get() = defaultStyle(14.sp)
+val Typography.baseBold get() = boldStyle(14.sp)
 val Typography.small get() = defaultStyle(12.sp)
 
 val Typography.h7 get() = boldStyle(18.sp)

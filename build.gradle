@@ -11,7 +11,7 @@ buildscript {
     }
 
     dependencies {
-        classpath "com.android.tools.build:gradle:$gradlePluginVersion"
+        classpath 'com.android.tools.build:gradle:7.4.2'
         classpath files('libs/gradle-witness.jar')
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
         classpath "org.jetbrains.kotlin:kotlin-serialization:$kotlinVersion"
@@ -77,6 +77,6 @@ allprojects {
     project.ext {
         androidMinimumSdkVersion = 23
         androidTargetSdkVersion  = 33
-        androidCompileSdkVersion = 33
+        androidCompileSdkVersion = 34
     }
 }
