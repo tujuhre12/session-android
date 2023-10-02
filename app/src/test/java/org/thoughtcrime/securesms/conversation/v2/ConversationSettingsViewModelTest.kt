@@ -44,9 +44,9 @@ class ConversationSettingsViewModelTest: BaseViewModelTest() {
 
     @Test
     fun `it should report correct pin status`() {
-        whenever(mockedStorage.isThreadPinned(TEST_THREAD_ID)).thenReturn(true)
+        whenever(mockedStorage.isPinned(TEST_THREAD_ID)).thenReturn(true)
         val pinStatus = viewModel.isPinned()
-        verify(mockedStorage).isThreadPinned(TEST_THREAD_ID)
+        verify(mockedStorage).isPinned(TEST_THREAD_ID)
         assertTrue(pinStatus)
     }
 
