@@ -21,7 +21,6 @@ import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.BlindedIdMapping
-import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.jobs.AttachmentUploadJob
@@ -920,7 +919,6 @@ open class Storage(
         val userGroups = configFactory.userGroups ?: return Optional.absent()
         val convoVolatile = configFactory.convoVolatile ?: return Optional.absent()
         val ourSessionId = getUserPublicKey() ?: return Optional.absent()
-        val userKp = MessagingModuleConfiguration.shared.getUserED25519KeyPair() ?: return Optional.absent()
 
         val groupCreationTimestamp = SnodeAPI.nowWithOffset
 
@@ -939,13 +937,11 @@ open class Storage(
             LibSessionGroupMember(ourSessionId, "admin", admin = true)
         )
 
-        val groupKeys = GroupKeysConfig.newInstance(
-            userKp.secretKey.asBytes,
-            Hex.fromStringCondensed(group.groupSessionId.publicKey),
-            adminKey,
+        members.forEach { groupMembers.set(LibSessionGroupMember(it.hexString(), "member", invitePending = true)) }
+
+        val groupKeys = configFactory.constructGroupKeysConfig(group.groupSessionId,
             info = groupInfo,
-            members = groupMembers
-        )
+            members = groupMembers) ?: return Optional.absent()
 
         val newGroupRecipient = group.groupSessionId.hexString()
         val configTtl = 1 * 24 * 60 * 60 * 1000L // TODO: just testing here, 1 day so we don't fill large space on network

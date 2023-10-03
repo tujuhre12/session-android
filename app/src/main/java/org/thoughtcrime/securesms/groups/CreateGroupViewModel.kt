@@ -48,18 +48,18 @@ class CreateGroupViewModel @Inject constructor(
         val members = createGroupState.members
 
         // do some validation
+        // need a name
         if (name.isEmpty()) {
             _viewState.postValue(
                 CreateGroupFragment.ViewState(false, R.string.error)
             )
             return null
         }
-
-        if (members.isEmpty()) {
+        // TODO: need at least two members
+        if (members.size <= 1) {
             _viewState.postValue(
-                CreateGroupFragment.ViewState(false, R.string.error)
+                CreateGroupFragment.ViewState(false, R.string.activity_create_closed_group_not_enough_group_members_error)
             )
-            return null
         }
 
         // make a group

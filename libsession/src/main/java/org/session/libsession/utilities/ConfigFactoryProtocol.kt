@@ -34,6 +34,11 @@ interface ConfigFactoryProtocol {
     )
 
     fun scheduleUpdate(destination: Destination)
+    fun constructGroupKeysConfig(
+        groupSessionId: SessionId,
+        info: GroupInfoConfig,
+        members: GroupMembersConfig
+    ): GroupKeysConfig?
 }
 
 interface ConfigFactoryUpdateListener {

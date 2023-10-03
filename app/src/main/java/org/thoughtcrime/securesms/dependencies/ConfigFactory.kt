@@ -230,6 +230,21 @@ class ConfigFactory(
         )
     }
 
+    override fun constructGroupKeysConfig(
+        groupSessionId: SessionId,
+        info: GroupInfoConfig,
+        members: GroupMembersConfig
+    ): GroupKeysConfig? = getGroupAuthInfo(groupSessionId)?.let { (sk, _) ->
+        val (userSk, _) = maybeGetUserInfo() ?: return null
+        GroupKeysConfig.newInstance(
+            userSk,
+            Hex.fromStringCondensed(groupSessionId.hexString()),
+            sk,
+            info = info,
+            members = members
+        )
+    }
+
     override fun getUserConfigs(): List<ConfigBase> =
         listOfNotNull(user, contacts, convoVolatile, userGroups)
 
