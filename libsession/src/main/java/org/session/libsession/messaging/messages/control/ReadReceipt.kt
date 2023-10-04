@@ -25,7 +25,7 @@ class ReadReceipt() : ControlMessage() {
         }
     }
 
-    internal constructor(timestamps: List<Long>?) : this() {
+    constructor(timestamps: List<Long>?) : this() {
         this.timestamps = timestamps
     }
 

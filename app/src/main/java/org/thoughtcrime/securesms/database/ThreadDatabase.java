@@ -816,13 +816,7 @@ public class ThreadDatabase extends Database {
     MmsSmsDatabase mmsSmsDatabase = DatabaseComponent.get(context).mmsSmsDatabase();
     if (mmsSmsDatabase.getConversationCount(threadId) <= 0 && !force) return false;
     List<MarkedMessageInfo> messages = setRead(threadId, lastSeenTime);
-    if (isGroupRecipient) {
-      for (MarkedMessageInfo message: messages) {
-        MarkReadReceiver.scheduleDeletion(context, message.getExpirationInfo());
-      }
-    } else {
-      MarkReadReceiver.process(context, messages);
-    }
+    MarkReadReceiver.process(context, messages);
     ApplicationContext.getInstance(context).messageNotifier.updateNotification(context, threadId);
     return setLastSeen(threadId, lastSeenTime);
   }

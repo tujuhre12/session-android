@@ -533,14 +533,10 @@ object SnodeAPI {
 
     fun getExpiries(messageHashes: List<String>, publicKey: String) : RawResponsePromise {
         val userEd25519KeyPair = MessagingModuleConfiguration.shared.getUserED25519KeyPair() ?: return Promise.ofFail(NullPointerException("No user key pair"))
+        val hashes = messageHashes.takeIf { it.size != 1 } ?: (messageHashes + "") // TODO remove this when bug is fixed on nodes.
         return retryIfNeeded(maxRetryCount) {
             val timestamp = System.currentTimeMillis() + clockOffset
-            val params = mutableMapOf(
-                "pubkey" to publicKey,
-                "messages" to messageHashes,
-                "timestamp" to timestamp
-            )
-            val signData = "${Snode.Method.GetExpiries.rawValue}$timestamp${messageHashes.joinToString(separator = "")}".toByteArray()
+            val signData = "${Snode.Method.GetExpiries.rawValue}$timestamp${hashes.joinToString(separator = "")}".toByteArray()
 
             val ed25519PublicKey = userEd25519KeyPair.publicKey.asHexString
             val signature = ByteArray(Sign.BYTES)
@@ -555,9 +551,14 @@ object SnodeAPI {
                 Log.e("Loki", "Signing data failed with user secret key", e)
                 return@retryIfNeeded Promise.ofFail(e)
             }
-            params["pubkey_ed25519"] = ed25519PublicKey
-            params["signature"] = Base64.encodeBytes(signature)
-            getSingleTargetSnode(publicKey).bind { snode ->
+            val params = mapOf(
+                "pubkey" to publicKey,
+                "messages" to hashes,
+                "timestamp" to timestamp,
+                "pubkey_ed25519" to ed25519PublicKey,
+                "signature" to Base64.encodeBytes(signature)
+            )
+            getSingleTargetSnode(publicKey) bind { snode ->
                 invoke(Snode.Method.GetExpiries, snode, params, publicKey)
             }
         }
