@@ -1,6 +1,7 @@
 package network.loki.messenger.groups
 
 import android.content.Context
+import androidx.test.platform.app.InstrumentationRegistry
 import junit.framework.TestCase.assertNotNull
 import network.loki.messenger.libsession_util.util.Sodium
 import org.junit.Before
@@ -16,6 +17,7 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.SessionId
+import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.database.ConfigDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
@@ -39,17 +41,16 @@ class ClosedGroupViewTests {
 
     @Before
     fun setup() {
+        val applicationContext = InstrumentationRegistry.getInstrumentation().targetContext
         whenever(textSecurePreferences.getLocalNumber()).thenReturn(userSessionId.hexString())
         val context = mock<Context>()
         val emptyDb = mock<ConfigDatabase> { db ->
             whenever(db.retrieveConfigAndHashes(any(), any())).thenReturn(byteArrayOf())
         }
-        val overridenStorage = Storage(mock(), mock(), ConfigFactory(context, emptyDb) {
+        val overriddenStorage = Storage(applicationContext, mock(), ConfigFactory(context, emptyDb) {
             keyPair.secretKey to userSessionId.hexString()
         }, mock())
-        storage = spy(overridenStorage) { storage ->
-            whenever(storage.createNewGroup(any(), any(), any())).thenCallRealMethod()
-        }
+        storage = overriddenStorage
     }
 
     @Test
