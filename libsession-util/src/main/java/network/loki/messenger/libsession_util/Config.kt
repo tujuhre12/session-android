@@ -39,7 +39,6 @@ sealed class ConfigBase(pointer: Long): Config(pointer) {
             is GroupMembersConfig -> Kind.CLOSED_GROUP_MEMBERS
         }
 
-        // TODO: time in future to activate (hardcoded to 1st jan 2024 for testing, change before release)
         private const val ACTIVATE_TIME = 1690761600000
 
         fun isNewConfigEnabled(forced: Boolean, currentTime: Long) =
@@ -292,8 +291,7 @@ class GroupMembersConfig(pointer: Long): ConfigBase(pointer), Closeable {
     }
 }
 
-sealed class ConfigSig(pointer: Long) : Config(pointer) {
-}
+sealed class ConfigSig(pointer: Long) : Config(pointer)
 
 class GroupKeysConfig(pointer: Long): ConfigSig(pointer) {
     companion object {
@@ -330,7 +328,7 @@ class GroupKeysConfig(pointer: Long): ConfigSig(pointer) {
     }
 
     external fun encrypt(plaintext: ByteArray): ByteArray
-    external fun decrypt(ciphertext: ByteArray): ByteArray?
+    external fun decrypt(ciphertext: ByteArray): Pair<ByteArray, SessionId>?
 
     external fun keys(): Stack<ByteArray>
 
