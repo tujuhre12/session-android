@@ -709,8 +709,9 @@ object SnodeAPI {
             val parameters = message.toJSON().toMutableMap<String,Any>()
 
             parameters += mapOf(
-                "sig_timestamp" to sigTimestamp,
-                "signature" to Base64.encodeBytes(signature)
+                "timestamp" to sigTimestamp,
+                "signature" to Base64.encodeBytes(signature),
+                "namespace" to namespace
             )
 
             getSingleTargetSnode(pubKey).bind { targetSnode ->

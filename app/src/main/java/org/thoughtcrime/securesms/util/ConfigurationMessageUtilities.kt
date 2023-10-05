@@ -32,22 +32,35 @@ import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import java.util.Timer
+import java.util.concurrent.ConcurrentLinkedDeque
 
 object ConfigurationMessageUtilities {
 
     private val debouncer = WindowDebouncer(3000, Timer())
+    private val destinationUpdater = Any()
+    private val pendingDestinations = ConcurrentLinkedDeque<Destination>()
 
     private fun scheduleConfigSync(destination: Destination) {
+        synchronized(destinationUpdater) {
+            pendingDestinations.add(destination)
+        }
         debouncer.publish {
             // don't schedule job if we already have one
             val storage = MessagingModuleConfiguration.shared.storage
-            val currentStorageJob = storage.getConfigSyncJob(destination)
-            if (currentStorageJob != null) {
-                (currentStorageJob as ConfigurationSyncJob).shouldRunAgain.set(true)
-                return@publish
+            val destinations = synchronized(destinationUpdater) {
+                val objects = pendingDestinations.toList()
+                pendingDestinations.clear()
+                objects
             }
-            val newConfigSync = ConfigurationSyncJob(destination)
-            JobQueue.shared.add(newConfigSync)
+            destinations.forEach {  destination ->
+                val currentStorageJob = storage.getConfigSyncJob(destination)
+                if (currentStorageJob != null) {
+                    (currentStorageJob as ConfigurationSyncJob).shouldRunAgain.set(true)
+                    return@publish
+                }
+                val newConfigSync = ConfigurationSyncJob(destination)
+                JobQueue.shared.add(newConfigSync)
+            }
         }
     }
 

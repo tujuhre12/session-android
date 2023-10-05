@@ -138,7 +138,7 @@ object MessageSender {
             is Destination.ClosedGroup -> {
                 val groupKeys = configFactory.getGroupKeysConfig(SessionId.from(destination.publicKey)) ?: throw Error.NoKeyPair
                 groupKeys.use { keys ->
-                    keys.encrypt(plaintext)
+                    keys.encrypt(proto.toByteArray())
                 }
             }
             else -> throw IllegalStateException("Destination should not be open group.")
@@ -200,6 +200,7 @@ object MessageSender {
                         && forkInfo.defaultRequiresAuth() -> listOf(Namespace.UNAUTHENTICATED_CLOSED_GROUP())
                 destination is Destination.LegacyClosedGroup
                         && forkInfo.hasNamespaces() -> listOf(Namespace.UNAUTHENTICATED_CLOSED_GROUP(), Namespace.DEFAULT())
+                destination is Destination.ClosedGroup -> listOf(Namespace.CLOSED_GROUP_MESSAGES())
                 else -> listOf(Namespace.DEFAULT())
             }
             namespaces.map { namespace ->

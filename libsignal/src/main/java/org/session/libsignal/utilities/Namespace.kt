@@ -11,4 +11,5 @@ object Namespace {
     external fun CLOSED_GROUP_INFO(): Int
     external fun CLOSED_GROUP_MEMBERS(): Int
     external fun ENCRYPTION_KEYS(): Int
+    external fun CLOSED_GROUP_MESSAGES(): Int
 }

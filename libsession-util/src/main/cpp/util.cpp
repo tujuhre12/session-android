@@ -1,6 +1,7 @@
 #include "util.h"
+//#include <sodium/crypto_sign.h>
+#include "../../../libsession-util/external/libsodium-internal/src/libsodium/include/sodium/crypto_sign.h"
 #include <string>
-#include <sodium/crypto_sign.h>
 
 namespace util {
 
@@ -332,6 +333,12 @@ extern "C"
 JNIEXPORT jint JNICALL
 Java_org_session_libsignal_utilities_Namespace_ENCRYPTION_1KEYS(JNIEnv *env, jobject thiz) {
     return (int) session::config::Namespace::GroupKeys;
+}
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_org_session_libsignal_utilities_Namespace_CLOSED_1GROUP_1MESSAGES(JNIEnv *env, jobject thiz) {
+    return  (int) session::config::Namespace::GroupMessages;
 }
 
 extern "C"

@@ -57,7 +57,7 @@ class ClosedGroupPoller(private val executor: CoroutineScope,
 
     companion object {
         const val POLL_INTERVAL = 3_000L
-        const val ENABLE_LOGGING = false
+        const val ENABLE_LOGGING = true
     }
 
     private var isRunning: Boolean = false
@@ -109,12 +109,10 @@ class ClosedGroupPoller(private val executor: CoroutineScope,
             val membersIndex = 2
             val messageIndex = 3
 
-            val requiresSync = info.needsPush() || members.needsPush() || keys.needsRekey() || keys.pendingConfig() != null
-
             val messagePoll = SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
                 snode,
                 closedGroupSessionId.hexString(),
-                Namespace.DEFAULT(),
+                Namespace.CLOSED_GROUP_MESSAGES(),
                 maxSize = null,
                 group.signingKey()
             ) ?: return null
@@ -171,6 +169,8 @@ class ClosedGroupPoller(private val executor: CoroutineScope,
                 }
             }
 
+            val requiresSync = info.needsPush() || members.needsPush() || keys.needsRekey() || keys.pendingConfig() != null
+
             configFactoryProtocol.saveGroupConfigs(keys, info, members)
             keys.free()
             info.free()
@@ -222,7 +222,7 @@ class ClosedGroupPoller(private val executor: CoroutineScope,
             if (ENABLE_LOGGING) Log.d("ClosedGroupPoller", "Merged $hash for info on ${closedGroupSessionId.hexString()}")
         }
         if (messages.isNotEmpty()) {
-            MessagingModuleConfiguration.shared.storage.notifyConfigUpdates(infoConfig) // TODO: figure this out
+            MessagingModuleConfiguration.shared.storage.notifyConfigUpdates(infoConfig)
         }
     }
 

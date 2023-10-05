@@ -238,7 +238,7 @@ class ConfigFactory(
         val (userSk, _) = maybeGetUserInfo() ?: return null
         GroupKeysConfig.newInstance(
             userSk,
-            Hex.fromStringCondensed(groupSessionId.hexString()),
+            Hex.fromStringCondensed(groupSessionId.publicKey),
             sk,
             info = info,
             members = members

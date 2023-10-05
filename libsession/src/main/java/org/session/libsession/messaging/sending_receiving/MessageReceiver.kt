@@ -97,9 +97,11 @@ object MessageReceiver {
                     if (sessionId.prefix == IdPrefix.GROUP) {
                         val configFactory = MessagingModuleConfiguration.shared.configFactory
                         configFactory.getGroupKeysConfig(sessionId)?.use { config ->
-                            plaintext = config.decrypt(ciphertext.toByteArray())
-                            sender = userPublicKey
-                            groupPublicKey = envelope.source
+                            config.decrypt(ciphertext.toByteArray())?.let { (decrypted, senderSessionId) ->
+                                plaintext = decrypted
+                                sender = senderSessionId.hexString()
+                                groupPublicKey = envelope.source
+                            }
                         }
                         if (plaintext == null) {
                             throw Error.DecryptionFailed
