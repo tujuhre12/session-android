@@ -5,6 +5,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -115,10 +116,13 @@ fun CellWithPaddingAndMargin(
 
 @Composable
 fun TitledRadioButton(option: OptionModel, onClick: () -> Unit) {
-    Row(modifier = Modifier
-        .clickable { if (!option.selected) onClick() }
-        .heightIn(min = 60.dp)
-        .padding(horizontal = 34.dp)) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        modifier = Modifier
+            .clickable { if (!option.selected) onClick() }
+            .heightIn(min = 60.dp)
+            .padding(horizontal = 32.dp)
+    ) {
         Column(modifier = Modifier
             .weight(1f)
             .align(Alignment.CenterVertically)) {
@@ -182,7 +186,7 @@ fun Modifier.fadingEdges(
             val topColors = listOf(Color.Transparent, Color.Black)
             val topStartY = scrollState.value.toFloat()
             val topGradientHeight = min(topEdgeHeight.toPx(), topStartY)
-            drawRect(
+            if (topGradientHeight > 0f) drawRect(
                 brush = Brush.verticalGradient(
                     colors = topColors,
                     startY = topStartY,
@@ -195,7 +199,7 @@ fun Modifier.fadingEdges(
             val bottomEndY = size.height - scrollState.maxValue + scrollState.value
             val bottomGradientHeight =
                 min(bottomEdgeHeight.toPx(), scrollState.maxValue.toFloat() - scrollState.value)
-            if (bottomGradientHeight != 0f) drawRect(
+            if (bottomGradientHeight > 0f) drawRect(
                 brush = Brush.verticalGradient(
                     colors = bottomColors,
                     startY = bottomEndY - bottomGradientHeight,

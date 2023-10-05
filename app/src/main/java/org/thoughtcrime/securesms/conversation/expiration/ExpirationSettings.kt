@@ -43,11 +43,10 @@ fun DisappearingMessages(
 ) {
     val scrollState = rememberScrollState()
 
-    Column(modifier = modifier) {
+    Column(modifier = modifier.padding(horizontal = 32.dp)) {
         Box(modifier = Modifier.weight(1f)) {
             Column(
                 modifier = Modifier
-                    .padding(horizontal = 32.dp)
                     .padding(bottom = 20.dp)
                     .verticalScroll(scrollState)
                     .fadingEdges(scrollState),
