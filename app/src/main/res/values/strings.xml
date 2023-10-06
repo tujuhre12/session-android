@@ -88,7 +88,7 @@
     <string name="AccessibilityId_block_message_request_button">Block message request</string>
     <string name="AccessibilityId_timer_icon">Timer icon</string>
 <!--    Configuration messages -->
-    <string name="AccessibilityId_control_message">Configuration message</string>
+    <string name="AccessibilityId_control_message">Control message</string>
     <string name="AccessibilityId_blocked_banner">Blocked banner</string>
     <string name="AccessibilityId_blocked_banner_text">Blocked banner text</string>
     <!--New Session -->
