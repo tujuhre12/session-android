@@ -1,6 +1,5 @@
 #include "util.h"
-//#include <sodium/crypto_sign.h>
-#include "../../../libsession-util/external/libsodium-internal/src/libsodium/include/sodium/crypto_sign.h"
+#include <sodium/crypto_sign.h>
 #include <string>
 
 namespace util {
