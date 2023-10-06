@@ -10,6 +10,7 @@ import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage.Kind
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
+import java.util.Stack
 
 
 sealed class ConfigBase(protected val /* yucky */ pointer: Long) {
@@ -45,13 +46,13 @@ sealed class ConfigBase(protected val /* yucky */ pointer: Long) {
     external fun dump(): ByteArray
     external fun encryptionDomain(): String
     external fun confirmPushed(seqNo: Long, newHash: String)
-    external fun merge(toMerge: Array<Pair<String,ByteArray>>): Int
+    external fun merge(toMerge: Array<Pair<String,ByteArray>>): Stack<String>
     external fun currentHashes(): List<String>
 
     external fun configNamespace(): Int
 
     // Singular merge
-    external fun merge(toMerge: Pair<String,ByteArray>): Int
+    external fun merge(toMerge: Pair<String,ByteArray>): Stack<String>
 
     external fun free()
 

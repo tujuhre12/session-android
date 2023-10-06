@@ -104,6 +104,17 @@ namespace util {
         return std::pair(session::config::expiration_mode::none, 0);
     }
 
+    jobject build_string_stack(JNIEnv* env, std::vector<std::string> to_add) {
+        jclass stack_class = env->FindClass("java/util/Stack");
+        jmethodID constructor = env->GetMethodID(stack_class,"<init>", "()V");
+        jmethodID add = env->GetMethodID(stack_class, "push", "(Ljava/lang/Object;)Ljava/lang/Object;");
+        jobject our_stack = env->NewObject(stack_class, constructor);
+        for (std::basic_string_view<char> string: to_add) {
+            env->CallObjectMethod(our_stack, add, env->NewStringUTF(string.data()));
+        }
+        return our_stack;
+    }
+
 }
 
 extern "C"
