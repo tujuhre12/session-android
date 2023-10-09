@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.conversation.expiration
+package org.thoughtcrime.securesms.conversation.disappearingmessages
 
 import android.app.Application
 import androidx.annotation.StringRes
@@ -25,7 +25,6 @@ import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.ExpirationUtil
 import org.session.libsession.utilities.SSKEnvironment.MessageExpirationManagerProtocol
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.database.GroupDatabase
@@ -54,8 +53,8 @@ data class State(
     val showDebugOptions: Boolean = false
 ) {
     val subtitle get() = when {
-        isGroup || isNoteToSelf -> GetString(R.string.activity_expiration_settings_subtitle_sent)
-        else -> GetString(R.string.activity_expiration_settings_subtitle)
+        isGroup || isNoteToSelf -> GetString(R.string.activity_disappearing_messages_subtitle_sent)
+        else -> GetString(R.string.activity_disappearing_messages_subtitle)
     }
 
     val typeOptionsHidden get() = isNoteToSelf || (isGroup && isNewConfigEnabled)
@@ -76,7 +75,7 @@ object NoOpCallbacks: Callbacks {
     override fun setMode(mode: ExpiryMode) {}
 }
 
-class ExpirationSettingsViewModel(
+class DisappearingMessagesViewModel(
     private val threadId: Long,
     private val application: Application,
     private val textSecurePreferences: TextSecurePreferences,
@@ -166,7 +165,7 @@ class ExpirationSettingsViewModel(
         private val storage: Storage
     ) : ViewModelProvider.Factory {
 
-        override fun <T : ViewModel> create(modelClass: Class<T>): T = ExpirationSettingsViewModel(
+        override fun <T : ViewModel> create(modelClass: Class<T>): T = DisappearingMessagesViewModel(
             threadId,
             application,
             textSecurePreferences,
@@ -187,8 +186,8 @@ data class UiState(
 ) {
     constructor(state: State): this(
         cards = listOfNotNull(
-            typeOptions(state)?.let { CardModel(GetString(R.string.activity_expiration_settings_delete_type), it) },
-            timeOptions(state)?.let { CardModel(GetString(R.string.activity_expiration_settings_timer), it) }
+            typeOptions(state)?.let { CardModel(GetString(R.string.activity_disappearing_messages_delete_type), it) },
+            timeOptions(state)?.let { CardModel(GetString(R.string.activity_disappearing_messages_timer), it) }
         ),
         showGroupFooter = state.isGroup && state.isNewConfigEnabled,
         showSetButton = state.isSelfAdmin

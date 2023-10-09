@@ -106,7 +106,7 @@ import org.thoughtcrime.securesms.attachments.ScreenshotObserver
 import org.thoughtcrime.securesms.audio.AudioRecorder
 import org.thoughtcrime.securesms.contacts.SelectContactsActivity.Companion.selectedContactsKey
 import org.thoughtcrime.securesms.conversation.ConversationActionBarDelegate
-import org.thoughtcrime.securesms.conversation.expiration.ExpirationSettingsActivity
+import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesActivity
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnActionSelectedListener
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnReactionSelectedListener
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.MESSAGE_TIMESTAMP
@@ -1123,8 +1123,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     // endregion
 
     // region Interaction
-    override fun onExpirationSettingClicked() {
-        viewModel.recipient?.let { showExpirationSettings(it) }
+    override fun onDisappearingMessagesClicked() {
+        viewModel.recipient?.let { showDisappearingMessages(it) }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -1170,14 +1170,13 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         Toast.makeText(this, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show()
     }
 
-    override fun showExpirationSettings(thread: Recipient) {
+    override fun showDisappearingMessages(thread: Recipient) {
         if (thread.isClosedGroupRecipient) {
-            val group = groupDb.getGroup(thread.address.toGroupString()).orNull()
-            if (group?.isActive == false) { return }
+            groupDb.getGroup(thread.address.toGroupString()).orNull()?.run { if (isActive) return }
         }
-        val expirationIntent = Intent(this, ExpirationSettingsActivity::class.java)
-        expirationIntent.putExtra(ExpirationSettingsActivity.THREAD_ID, viewModel.threadId)
-        show(expirationIntent, true)
+        Intent(this, DisappearingMessagesActivity::class.java)
+            .apply { putExtra(DisappearingMessagesActivity.THREAD_ID, viewModel.threadId) }
+            .also { show(it, true) }
     }
 
     override fun unblock() {

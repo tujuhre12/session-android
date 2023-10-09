@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.conversation.expiration
+package org.thoughtcrime.securesms.conversation.disappearingmessages
 
 import android.os.Bundle
 import android.widget.Toast
@@ -12,33 +12,34 @@ import androidx.lifecycle.repeatOnLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
-import network.loki.messenger.databinding.ActivityExpirationSettingsBinding
+import network.loki.messenger.databinding.ActivityDisappearingMessagesBinding
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
+import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.DisappearingMessages
 import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.ui.AppTheme
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
+class DisappearingMessagesActivity: PassphraseRequiredActionBarActivity() {
 
-    private lateinit var binding : ActivityExpirationSettingsBinding
+    private lateinit var binding : ActivityDisappearingMessagesBinding
 
     @Inject lateinit var recipientDb: RecipientDatabase
     @Inject lateinit var threadDb: ThreadDatabase
-    @Inject lateinit var viewModelFactory: ExpirationSettingsViewModel.AssistedFactory
+    @Inject lateinit var viewModelFactory: DisappearingMessagesViewModel.AssistedFactory
 
     private val threadId: Long by lazy {
         intent.getLongExtra(THREAD_ID, -1)
     }
 
-    private val viewModel: ExpirationSettingsViewModel by viewModels {
+    private val viewModel: DisappearingMessagesViewModel by viewModels {
         viewModelFactory.create(threadId)
     }
 
     override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
         super.onCreate(savedInstanceState, ready)
-        binding = ActivityExpirationSettingsBinding.inflate(layoutInflater)
+        binding = ActivityDisappearingMessagesBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         setUpToolbar()
@@ -50,7 +51,7 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
                 viewModel.event.collect {
                     when (it) {
                         Event.SUCCESS -> finish()
-                        Event.FAIL -> showToast(getString(R.string.ExpirationSettingsActivity_settings_not_updated))
+                        Event.FAIL -> showToast(getString(R.string.DisappearingMessagesActivity_settings_not_updated))
                     }
                 }
             }
@@ -59,7 +60,7 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.state.collect { state ->
-                    supportActionBar?.subtitle = state.subtitle(this@ExpirationSettingsActivity)
+                    supportActionBar?.subtitle = state.subtitle(this@DisappearingMessagesActivity)
                 }
             }
         }
@@ -72,7 +73,7 @@ class ExpirationSettingsActivity: PassphraseRequiredActionBarActivity() {
     private fun setUpToolbar() {
         setSupportActionBar(binding.toolbar)
         val actionBar = supportActionBar ?: return
-        actionBar.title = getString(R.string.activity_expiration_settings_title)
+        actionBar.title = getString(R.string.activity_disappearing_messages_title)
         actionBar.setDisplayHomeAsUpEnabled(true)
         actionBar.setHomeButtonEnabled(true)
     }

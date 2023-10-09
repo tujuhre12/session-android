@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.conversation.expiration
+package org.thoughtcrime.securesms.conversation.disappearingmessages.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,6 +27,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.ExpiryMode
+import org.thoughtcrime.securesms.conversation.disappearingmessages.Callbacks
+import org.thoughtcrime.securesms.conversation.disappearingmessages.CardModel
+import org.thoughtcrime.securesms.conversation.disappearingmessages.ExpiryType
+import org.thoughtcrime.securesms.conversation.disappearingmessages.NoOpCallbacks
+import org.thoughtcrime.securesms.conversation.disappearingmessages.State
+import org.thoughtcrime.securesms.conversation.disappearingmessages.UiState
 import org.thoughtcrime.securesms.ui.CellNoMargin
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.OutlineButton
@@ -56,7 +62,7 @@ fun DisappearingMessages(
                     OptionsCard(it, callbacks)
                 }
 
-                if (state.showGroupFooter) Text(text = stringResource(R.string.activity_expiration_settings_group_footer),
+                if (state.showGroupFooter) Text(text = stringResource(R.string.activity_disappearing_messages_group_footer),
                     style = TextStyle(
                         fontSize = 11.sp,
                         fontWeight = FontWeight(400),
@@ -67,7 +73,7 @@ fun DisappearingMessages(
         }
 
         if (state.showSetButton) OutlineButton(
-            stringResource(R.string.expiration_settings_set_button_title),
+            stringResource(R.string.disappearing_messages_set_button_title),
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
                 .padding(bottom = 20.dp),
@@ -88,53 +94,5 @@ fun OptionsCard(card: CardModel, callbacks: Callbacks) {
                 TitledRadioButton(it) { callbacks.setMode(it.value) }
             }
         }
-    }
-}
-
-@Preview(widthDp = 450, heightDp = 700)
-@Composable
-fun PreviewStates(
-    @PreviewParameter(StatePreviewParameterProvider::class) state: State
-) {
-    PreviewTheme(R.style.Classic_Dark) {
-        DisappearingMessages(
-            UiState(state)
-        )
-    }
-}
-
-class StatePreviewParameterProvider : PreviewParameterProvider<State> {
-    override val values = newConfigValues.filter { it.expiryType != ExpiryType.LEGACY } + newConfigValues.map { it.copy(isNewConfigEnabled = false) }
-
-    private val newConfigValues get() = sequenceOf(
-        // new 1-1
-        State(expiryMode = ExpiryMode.NONE),
-        State(expiryMode = ExpiryMode.Legacy(43200)),
-        State(expiryMode = ExpiryMode.AfterRead(300)),
-        State(expiryMode = ExpiryMode.AfterSend(43200)),
-        // new group non-admin
-        State(isGroup = true, isSelfAdmin = false),
-        State(isGroup = true, isSelfAdmin = false, expiryMode = ExpiryMode.Legacy(43200)),
-        State(isGroup = true, isSelfAdmin = false, expiryMode = ExpiryMode.AfterSend(43200)),
-        // new group admin
-        State(isGroup = true),
-        State(isGroup = true, expiryMode = ExpiryMode.Legacy(43200)),
-        State(isGroup = true, expiryMode = ExpiryMode.AfterSend(43200)),
-        // new note-to-self
-        State(isNoteToSelf = true),
-    )
-}
-
-
-@Preview
-@Composable
-fun PreviewThemes(
-    @PreviewParameter(ThemeResPreviewParameterProvider::class) themeResId: Int
-) {
-    PreviewTheme(themeResId) {
-        DisappearingMessages(
-            UiState(State(expiryMode = ExpiryMode.AfterSend(43200))),
-            modifier = Modifier.size(400.dp, 600.dp)
-        )
     }
 }

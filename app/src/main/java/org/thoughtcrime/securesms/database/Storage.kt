@@ -78,7 +78,6 @@ import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.KeyHelper
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
-import org.thoughtcrime.securesms.conversation.expiration.type
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.ReactionRecord

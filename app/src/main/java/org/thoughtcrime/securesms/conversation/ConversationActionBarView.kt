@@ -41,7 +41,7 @@ class ConversationActionBarView : LinearLayout {
 
     private val settingsAdapter = ConversationSettingsAdapter { setting ->
         if (setting.settingType == ConversationSettingType.EXPIRATION) {
-            delegate?.onExpirationSettingClicked()
+            delegate?.onDisappearingMessagesClicked()
         }
     }
 
@@ -202,7 +202,7 @@ class ConversationActionBarView : LinearLayout {
 
 
 fun interface ConversationActionBarDelegate {
-    fun onExpirationSettingClicked()
+    fun onDisappearingMessagesClicked()
 }
 
 data class ConversationSetting(

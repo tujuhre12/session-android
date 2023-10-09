@@ -54,7 +54,7 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.components.ProfilePictureView
-import org.thoughtcrime.securesms.conversation.expiration.OptionModel
+import org.thoughtcrime.securesms.conversation.disappearingmessages.OptionModel
 import kotlin.math.min
 
 @Composable

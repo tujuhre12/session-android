@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.conversation.expiration
+package org.thoughtcrime.securesms.conversation.disappearingmessages
 
 import android.app.Application
 import com.google.common.truth.Truth.assertThat
@@ -41,7 +41,7 @@ private val GROUP_ADDRESS = Address.fromSerialized(GROUP_NUMBER)
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(MockitoJUnitRunner::class)
-class ExpirationSettingsViewModelTest {
+class DisappearingMessagesViewModelTest {
 
     @ExperimentalCoroutinesApi
     @get:Rule
@@ -84,7 +84,7 @@ class ExpirationSettingsViewModelTest {
         ).isEqualTo(
             UiState(
                 CardModel(
-                    R.string.activity_expiration_settings_timer,
+                    R.string.activity_disappearing_messages_timer,
                     typeOption(ExpiryMode.NONE, selected = true),
                     timeOption(ExpiryType.AFTER_SEND, 12.hours),
                     timeOption(ExpiryType.AFTER_SEND, 1.days),
@@ -123,7 +123,7 @@ class ExpirationSettingsViewModelTest {
         ).isEqualTo(
             UiState(
                 CardModel(
-                    R.string.activity_expiration_settings_timer,
+                    R.string.activity_disappearing_messages_timer,
                     typeOption(ExpiryMode.NONE, selected = true),
                     timeOption(ExpiryType.LEGACY, 12.hours),
                     timeOption(ExpiryType.LEGACY, 1.days),
@@ -162,7 +162,7 @@ class ExpirationSettingsViewModelTest {
         ).isEqualTo(
             UiState(
                 CardModel(
-                    R.string.activity_expiration_settings_timer,
+                    R.string.activity_disappearing_messages_timer,
                     typeOption(ExpiryMode.NONE, selected = true),
                     timeOption(ExpiryType.AFTER_SEND, 12.hours),
                     timeOption(ExpiryType.AFTER_SEND, 1.days),
@@ -202,7 +202,7 @@ class ExpirationSettingsViewModelTest {
         ).isEqualTo(
             UiState(
                 CardModel(
-                    R.string.activity_expiration_settings_timer,
+                    R.string.activity_disappearing_messages_timer,
                     typeOption(ExpiryMode.NONE, enabled = false, selected = true),
                     timeOption(ExpiryType.AFTER_SEND, 12.hours, enabled = false),
                     timeOption(ExpiryType.AFTER_SEND, 1.days, enabled = false),
@@ -244,7 +244,7 @@ class ExpirationSettingsViewModelTest {
         ).isEqualTo(
             UiState(
                 CardModel(
-                    R.string.activity_expiration_settings_delete_type,
+                    R.string.activity_disappearing_messages_delete_type,
                     typeOption(ExpiryMode.NONE, selected = true),
                     typeOption(12.hours, ExpiryType.AFTER_READ),
                     typeOption(1.days, ExpiryType.AFTER_SEND)
@@ -283,13 +283,13 @@ class ExpirationSettingsViewModelTest {
         ).isEqualTo(
             UiState(
                 CardModel(
-                    R.string.activity_expiration_settings_delete_type,
+                    R.string.activity_disappearing_messages_delete_type,
                     typeOption(ExpiryMode.NONE),
                     typeOption(time, ExpiryType.AFTER_READ),
                     typeOption(time, ExpiryType.AFTER_SEND, selected = true)
                 ),
                 CardModel(
-                    GetString(R.string.activity_expiration_settings_timer),
+                    GetString(R.string.activity_disappearing_messages_timer),
                     timeOption(ExpiryType.AFTER_SEND, 12.hours, selected = true),
                     timeOption(ExpiryType.AFTER_SEND, 1.days),
                     timeOption(ExpiryType.AFTER_SEND, 7.days),
@@ -329,14 +329,14 @@ class ExpirationSettingsViewModelTest {
         ).isEqualTo(
             UiState(
                 CardModel(
-                    R.string.activity_expiration_settings_delete_type,
+                    R.string.activity_disappearing_messages_delete_type,
                     typeOption(ExpiryMode.NONE),
                     typeOption(time, ExpiryType.LEGACY, selected = true),
                     typeOption(12.hours, ExpiryType.AFTER_READ, enabled = false),
                     typeOption(1.days, ExpiryType.AFTER_SEND, enabled = false)
                 ),
                 CardModel(
-                    GetString(R.string.activity_expiration_settings_timer),
+                    GetString(R.string.activity_disappearing_messages_timer),
                     timeOption(ExpiryType.LEGACY, 12.hours, selected = true),
                     timeOption(ExpiryType.LEGACY, 1.days),
                     timeOption(ExpiryType.LEGACY, 7.days),
@@ -376,13 +376,13 @@ class ExpirationSettingsViewModelTest {
         ).isEqualTo(
             UiState(
                 CardModel(
-                    R.string.activity_expiration_settings_delete_type,
+                    R.string.activity_disappearing_messages_delete_type,
                     typeOption(ExpiryMode.NONE),
                     typeOption(12.hours, ExpiryType.AFTER_READ),
                     typeOption(time, ExpiryType.AFTER_SEND, selected = true)
                 ),
                 CardModel(
-                    GetString(R.string.activity_expiration_settings_timer),
+                    GetString(R.string.activity_disappearing_messages_timer),
                     timeOption(ExpiryType.AFTER_SEND, 12.hours),
                     timeOption(ExpiryType.AFTER_SEND, 1.days, selected = true),
                     timeOption(ExpiryType.AFTER_SEND, 7.days),
@@ -423,13 +423,13 @@ class ExpirationSettingsViewModelTest {
         ).isEqualTo(
             UiState(
                 CardModel(
-                    R.string.activity_expiration_settings_delete_type,
+                    R.string.activity_disappearing_messages_delete_type,
                     typeOption(ExpiryMode.NONE),
                     typeOption(1.days, ExpiryType.AFTER_READ, selected = true),
                     typeOption(time, ExpiryType.AFTER_SEND)
                 ),
                 CardModel(
-                    GetString(R.string.activity_expiration_settings_timer),
+                    GetString(R.string.activity_disappearing_messages_timer),
                     timeOption(ExpiryType.AFTER_READ, 5.minutes),
                     timeOption(ExpiryType.AFTER_READ, 1.hours),
                     timeOption(ExpiryType.AFTER_READ, 12.hours),
@@ -476,13 +476,13 @@ class ExpirationSettingsViewModelTest {
         ).isEqualTo(
             UiState(
                 CardModel(
-                    R.string.activity_expiration_settings_delete_type,
+                    R.string.activity_disappearing_messages_delete_type,
                     typeOption(ExpiryMode.NONE),
                     typeOption(12.hours, ExpiryType.AFTER_READ),
                     typeOption(1.days, ExpiryType.AFTER_SEND, selected = true)
                 ),
                 CardModel(
-                    GetString(R.string.activity_expiration_settings_timer),
+                    GetString(R.string.activity_disappearing_messages_timer),
                     timeOption(ExpiryType.AFTER_SEND, 12.hours),
                     timeOption(ExpiryType.AFTER_SEND, 1.days, selected = true),
                     timeOption(ExpiryType.AFTER_SEND, 7.days),
@@ -547,7 +547,7 @@ class ExpirationSettingsViewModelTest {
         updatedTimestampMs = 0
     )
 
-    private fun createViewModel(isNewConfigEnabled: Boolean = true) = ExpirationSettingsViewModel(
+    private fun createViewModel(isNewConfigEnabled: Boolean = true) = DisappearingMessagesViewModel(
         THREAD_ID,
         application,
         textSecurePreferences,
