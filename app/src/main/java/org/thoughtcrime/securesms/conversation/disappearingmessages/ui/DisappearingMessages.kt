@@ -4,11 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Text
@@ -20,32 +16,25 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.ExpiryMode
-import org.thoughtcrime.securesms.conversation.disappearingmessages.Callbacks
-import org.thoughtcrime.securesms.conversation.disappearingmessages.CardModel
-import org.thoughtcrime.securesms.conversation.disappearingmessages.ExpiryType
-import org.thoughtcrime.securesms.conversation.disappearingmessages.NoOpCallbacks
-import org.thoughtcrime.securesms.conversation.disappearingmessages.State
-import org.thoughtcrime.securesms.conversation.disappearingmessages.UiState
-import org.thoughtcrime.securesms.ui.CellNoMargin
-import org.thoughtcrime.securesms.ui.Divider
+import org.thoughtcrime.securesms.ui.Callbacks
+import org.thoughtcrime.securesms.ui.NoOpCallbacks
+import org.thoughtcrime.securesms.ui.OptionsCard
 import org.thoughtcrime.securesms.ui.OutlineButton
-import org.thoughtcrime.securesms.ui.PreviewTheme
-import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
-import org.thoughtcrime.securesms.ui.TitledRadioButton
+import org.thoughtcrime.securesms.ui.RadioOption
 import org.thoughtcrime.securesms.ui.fadingEdges
+
+typealias ExpiryCallbacks = Callbacks<ExpiryMode>
+typealias ExpiryRadioOption = RadioOption<ExpiryMode>
 
 @Composable
 fun DisappearingMessages(
     state: UiState,
     modifier: Modifier = Modifier,
-    callbacks: Callbacks = NoOpCallbacks
+    callbacks: ExpiryCallbacks = NoOpCallbacks
 ) {
     val scrollState = rememberScrollState()
 
@@ -79,20 +68,5 @@ fun DisappearingMessages(
                 .padding(bottom = 20.dp),
             onClick = callbacks::onSetClick
         )
-    }
-}
-
-@Composable
-fun OptionsCard(card: CardModel, callbacks: Callbacks) {
-    Text(text = card.title())
-    CellNoMargin {
-        LazyColumn(
-            modifier = Modifier.heightIn(max = 5000.dp)
-        ) {
-            itemsIndexed(card.options) { i, it ->
-                if (i != 0) Divider()
-                TitledRadioButton(it) { callbacks.setMode(it.value) }
-            }
-        }
     }
 }
