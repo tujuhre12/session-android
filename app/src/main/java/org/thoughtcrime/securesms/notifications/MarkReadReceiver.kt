@@ -56,43 +56,36 @@ class MarkReadReceiver : BroadcastReceiver() {
 
         @JvmStatic
         fun process(context: Context, markedReadMessages: List<MarkedMessageInfo>) {
+            if (markedReadMessages.isEmpty()) return
 
             val loki = DatabaseComponent.get(context).lokiMessageDatabase()
 
             task {
                 val hashToInfo = markedReadMessages.associateByNotNull { loki.getMessageServerHash(it.expirationInfo.id) }
-
                 if (hashToInfo.isEmpty()) return@task
 
                 @Suppress("UNCHECKED_CAST")
-                val hashToExpiry = SnodeAPI.getExpiries(hashToInfo.keys.toList(), TextSecurePreferences.getLocalNumber(context)!!)
+                val expiries = SnodeAPI.getExpiries(hashToInfo.keys.toList(), TextSecurePreferences.getLocalNumber(context)!!)
                     .get()["expiries"] as Map<String, Long>
 
-                hashToInfo.forEach { (hash, info) -> hashToExpiry[hash]?.let { scheduleDeletion(context, info.expirationInfo, it - info.expirationInfo.expireStarted) } }
+                hashToInfo.forEach { (hash, info) -> expiries[hash]?.let { scheduleDeletion(context, info.expirationInfo, it - info.expirationInfo.expireStarted) } }
             } fail {
                 Log.e(TAG, "process() disappear after read failed", it)
             }
 
-            if (markedReadMessages.isEmpty()) return
-            for (messageInfo in markedReadMessages) {
-                scheduleDeletion(context, messageInfo.expirationInfo)
-            }
+            markedReadMessages.forEach { scheduleDeletion(context, it.expirationInfo) }
+
             if (!isReadReceiptsEnabled(context)) return
 
-            val addressMap = Stream.of(markedReadMessages)
-                .map { it.syncMessageId }
-                .collect(Collectors.groupingBy { it.address } )
-
-            for (address in addressMap.keys) {
-                val timestamps = addressMap[address]!!.map { obj: SyncMessageId -> obj.timetamp }
-                if (!shouldSendReadReceipt(Recipient.from(context, address, false))) {
-                    continue
+            markedReadMessages.map { it.syncMessageId }
+                .filter { shouldSendReadReceipt(Recipient.from(context, it.address, false)) }
+                .groupBy { it.address }
+                .forEach { (address, messages) ->
+                    messages.map { it.timetamp }
+                        .let(::ReadReceipt)
+                        .apply { sentTimestamp = nowWithOffset }
+                        .let { send(it, address) }
                 }
-
-                ReadReceipt(timestamps)
-                    .apply { sentTimestamp = nowWithOffset }
-                    .let { send(it, address) }
-            }
         }
 
         fun scheduleDeletion(
