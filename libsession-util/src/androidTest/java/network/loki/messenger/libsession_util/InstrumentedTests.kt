@@ -11,7 +11,9 @@ import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.session.libsignal.utilities.Hex
+import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
+import org.session.libsignal.utilities.SessionId
 
 /**
  * Instrumented test, which will execute on an Android device.
@@ -658,14 +660,22 @@ class InstrumentedTests {
     @Test
     fun testGroupMembership() {
         val (userPublic, userSecret) = keyPair
-        val userCurve = Sodium.ed25519PkToCurve25519(userPublic)
+        val userSessionId = SessionId(IdPrefix.STANDARD, Sodium.ed25519PkToCurve25519(userPublic))
         val groupConfig = UserGroupsConfig.newInstance(userSecret)
         val group = groupConfig.createGroup()
-        val groupSecret = group.adminKey
-        val groupPublic = Hex.fromStringCondensed(group.groupSessionId.publicKey)
+        groupConfig.set(group)
+        val groupMembersConfig = GroupMembersConfig.newInstance()
+    }
+
+    @Test
+    fun testNewGroupExists() {
+        val (_, userSecret) = keyPair
+        val groupConfig = UserGroupsConfig.newInstance(userSecret)
+        val group = groupConfig.createGroup()
         groupConfig.set(group)
         val allClosedGroups = groupConfig.all()
         assertThat(allClosedGroups, equalTo(1))
+        assertTrue(groupConfig.needsPush())
     }
 
 }
