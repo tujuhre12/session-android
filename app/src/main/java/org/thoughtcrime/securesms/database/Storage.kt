@@ -376,7 +376,7 @@ open class Storage(
         }
         message.serverHash?.let { serverHash ->
             messageID?.let { id ->
-                DatabaseComponent.get(context).lokiMessageDatabase().setMessageServerHash(id, serverHash)
+                DatabaseComponent.get(context).lokiMessageDatabase().setMessageServerHash(id, message.isMediaMessage(), serverHash)
             }
         }
         if (expiryMode is ExpiryMode.AfterSend) {
@@ -756,10 +756,10 @@ open class Storage(
         SessionMetaProtocol.removeTimestamps(timestamps)
     }
 
-    override fun getMessageIdInDatabase(timestamp: Long, author: String): Long? {
+    override fun getMessageIdInDatabase(timestamp: Long, author: String): Pair<Long, Boolean>? {
         val database = DatabaseComponent.get(context).mmsSmsDatabase()
         val address = fromSerialized(author)
-        return database.getMessageFor(timestamp, address)?.getId()
+        return database.getMessageFor(timestamp, address)?.run { getId() to isMms }
     }
 
     override fun updateSentTimestamp(
@@ -878,8 +878,8 @@ open class Storage(
         db.clearErrorMessage(messageID)
     }
 
-    override fun setMessageServerHash(messageID: Long, serverHash: String) {
-        DatabaseComponent.get(context).lokiMessageDatabase().setMessageServerHash(messageID, serverHash)
+    override fun setMessageServerHash(messageID: Long, mms: Boolean, serverHash: String) {
+        DatabaseComponent.get(context).lokiMessageDatabase().setMessageServerHash(messageID, mms, serverHash)
     }
 
     override fun getGroup(groupID: String): GroupRecord? {

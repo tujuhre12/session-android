@@ -259,8 +259,8 @@ fun MessageReceiver.handleUnsendRequest(message: UnsendRequest): Long? {
     val messageDataProvider = MessagingModuleConfiguration.shared.messageDataProvider
     val timestamp = message.timestamp ?: return null
     val author = message.author ?: return null
-    val messageIdToDelete = storage.getMessageIdInDatabase(timestamp, author) ?: return null
-    messageDataProvider.getServerHashForMessage(messageIdToDelete)?.let { serverHash ->
+    val (messageIdToDelete, mms) = storage.getMessageIdInDatabase(timestamp, author) ?: return null
+    messageDataProvider.getServerHashForMessage(messageIdToDelete, mms)?.let { serverHash ->
         SnodeAPI.deleteMessage(author, listOf(serverHash))
     }
     val deletedMessageId = messageDataProvider.updateMessageAsDeleted(timestamp, author)

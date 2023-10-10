@@ -114,7 +114,7 @@ interface StorageProtocol {
      */
     fun persistAttachments(messageID: Long, attachments: List<Attachment>): List<Long>
     fun getAttachmentsForMessage(messageID: Long): List<DatabaseAttachment>
-    fun getMessageIdInDatabase(timestamp: Long, author: String): Long? // TODO: This is a weird name
+    fun getMessageIdInDatabase(timestamp: Long, author: String): Pair<Long, Boolean>? // TODO: This is a weird name
     fun updateSentTimestamp(messageID: Long, isMms: Boolean, openGroupSentTimestamp: Long, threadId: Long)
     fun markAsResyncing(timestamp: Long, author: String)
     fun markAsSyncing(timestamp: Long, author: String)
@@ -124,7 +124,7 @@ interface StorageProtocol {
     fun markAsSyncFailed(timestamp: Long, author: String, error: Exception)
     fun markAsSentFailed(timestamp: Long, author: String, error: Exception)
     fun clearErrorMessage(messageID: Long)
-    fun setMessageServerHash(messageID: Long, serverHash: String)
+    fun setMessageServerHash(messageID: Long, mms: Boolean, serverHash: String)
 
     // Closed Groups
     fun getGroup(groupID: String): GroupRecord?

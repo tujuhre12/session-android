@@ -372,20 +372,23 @@ object MessageSender {
     fun handleSuccessfulMessageSend(message: Message, destination: Destination, isSyncMessage: Boolean = false, openGroupSentTimestamp: Long = -1) {
         val storage = MessagingModuleConfiguration.shared.storage
         val userPublicKey = storage.getUserPublicKey()!!
+        val timestamp = message.sentTimestamp!!
         // Ignore future self-sends
-        storage.addReceivedMessageTimestamp(message.sentTimestamp!!)
-        storage.getMessageIdInDatabase(message.sentTimestamp!!, userPublicKey)?.let { messageID ->
+        storage.addReceivedMessageTimestamp(timestamp)
+        storage.getMessageIdInDatabase(timestamp, userPublicKey)?.let { (messageID, mms) ->
             if (openGroupSentTimestamp != -1L && message is VisibleMessage) {
                 storage.addReceivedMessageTimestamp(openGroupSentTimestamp)
                 storage.updateSentTimestamp(messageID, message.isMediaMessage(), openGroupSentTimestamp, message.threadID!!)
                 message.sentTimestamp = openGroupSentTimestamp
             }
+
             // When the sync message is successfully sent, the hash value of this TSOutgoingMessage
             // will be replaced by the hash value of the sync message. Since the hash value of the
             // real message has no use when we delete a message. It is OK to let it be.
             message.serverHash?.let {
-                storage.setMessageServerHash(messageID, it)
+                storage.setMessageServerHash(messageID, mms, it)
             }
+
             // in case any errors from previous sends
             storage.clearErrorMessage(messageID)
             // Track the open group server message ID
@@ -412,11 +415,11 @@ object MessageSender {
                 }
             }
             // Mark the message as sent
-            storage.markAsSent(message.sentTimestamp!!, userPublicKey)
-            storage.markUnidentified(message.sentTimestamp!!, userPublicKey)
+            storage.markAsSent(timestamp, userPublicKey)
+            storage.markUnidentified(timestamp, userPublicKey)
             // Start the disappearing messages timer if needed
             if (message.recipient == userPublicKey || !isSyncMessage) {
-                SSKEnvironment.shared.messageExpirationManager.startAnyExpiration(message.sentTimestamp!!, userPublicKey, System.currentTimeMillis())
+                SSKEnvironment.shared.messageExpirationManager.startAnyExpiration(timestamp, userPublicKey, System.currentTimeMillis())
             }
         } ?: run {
             storage.updateReactionIfNeeded(message, message.sender?:userPublicKey, openGroupSentTimestamp)
@@ -429,7 +432,7 @@ object MessageSender {
             if (message is VisibleMessage) message.syncTarget = destination.publicKey
             if (message is ExpirationTimerUpdate) message.syncTarget = destination.publicKey
 
-            storage.markAsSyncing(message.sentTimestamp!!, userPublicKey)
+            storage.markAsSyncing(timestamp, userPublicKey)
             sendToSnodeDestination(Destination.Contact(userPublicKey), message, true)
         }
     }
@@ -456,7 +459,7 @@ object MessageSender {
         message.linkPreview?.let { linkPreview ->
             if (linkPreview.attachmentID == null) {
                 messageDataProvider.getLinkPreviewAttachmentIDFor(message.id!!)?.let { attachmentID ->
-                    message.linkPreview!!.attachmentID = attachmentID
+                    linkPreview.attachmentID = attachmentID
                     message.attachmentIDs.remove(attachmentID)
                 }
             }
