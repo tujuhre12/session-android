@@ -13,6 +13,8 @@ class LokiMessageDatabase(context: Context, helper: SQLCipherOpenHelper) : Datab
         private val messageThreadMappingTable = "loki_message_thread_mapping_database"
         private val errorMessageTable = "loki_error_message_database"
         private val messageHashTable = "loki_message_hash_database"
+        private val smsHashTable = "loki_sms_hash_database"
+        private val mmsHashTable = "loki_mms_hash_database"
         private val messageID = "message_id"
         private val serverID = "server_id"
         private val friendRequestStatus = "friend_request_status"
@@ -32,6 +34,10 @@ class LokiMessageDatabase(context: Context, helper: SQLCipherOpenHelper) : Datab
         val updateMessageMappingTable = "ALTER TABLE $messageThreadMappingTable ADD COLUMN $serverID INTEGER DEFAULT 0; ALTER TABLE $messageThreadMappingTable ADD CONSTRAINT PK_$messageThreadMappingTable PRIMARY KEY ($messageID, $serverID);"
         @JvmStatic
         val createMessageHashTableCommand = "CREATE TABLE IF NOT EXISTS $messageHashTable ($messageID INTEGER PRIMARY KEY, $serverHash STRING);"
+        @JvmStatic
+        val createMmsHashTableCommand = "CREATE TABLE IF NOT EXISTS $mmsHashTable ($messageID INTEGER PRIMARY KEY, $serverHash STRING);"
+        @JvmStatic
+        val createSmsHashTableCommand = "CREATE TABLE IF NOT EXISTS $smsHashTable ($messageID INTEGER PRIMARY KEY, $serverHash STRING);"
 
         const val SMS_TYPE = 0
         const val MMS_TYPE = 1

@@ -91,9 +91,10 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   private static final int lokiV42                          = 63;
   private static final int lokiV43                          = 64;
   private static final int lokiV44                          = 65;
+  private static final int lokiV45                          = 66;
 
   // Loki - onUpgrade(...) must be updated to use Loki version numbers if Signal makes any database changes
-  private static final int    DATABASE_VERSION         = lokiV44;
+  private static final int    DATABASE_VERSION         = lokiV45;
   private static final int    MIN_DATABASE_VERSION     = lokiV7;
   private static final String CIPHER3_DATABASE_NAME    = "signal.db";
   public static final String  DATABASE_NAME            = "signal_v4.db";
@@ -313,6 +314,8 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     db.execSQL(LokiMessageDatabase.getCreateMessageToThreadMappingTableCommand());
     db.execSQL(LokiMessageDatabase.getCreateErrorMessageTableCommand());
     db.execSQL(LokiMessageDatabase.getCreateMessageHashTableCommand());
+    db.execSQL(LokiMessageDatabase.getCreateSmsHashTableCommand());
+    db.execSQL(LokiMessageDatabase.getCreateMmsHashTableCommand());
     db.execSQL(LokiThreadDatabase.getCreateSessionResetTableCommand());
     db.execSQL(LokiThreadDatabase.getCreatePublicChatTableCommand());
     db.execSQL(LokiUserDatabase.getCreateDisplayNameTableCommand());
@@ -613,6 +616,11 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
         db.execSQL(ExpirationConfigurationDatabase.CREATE_EXPIRATION_CONFIGURATION_TABLE_COMMAND);
         db.execSQL(ExpirationConfigurationDatabase.MIGRATE_GROUP_CONVERSATION_EXPIRY_TYPE_COMMAND);
         db.execSQL(ExpirationConfigurationDatabase.MIGRATE_ONE_TO_ONE_CONVERSATION_EXPIRY_TYPE_COMMAND);
+      }
+
+      if (oldVersion < lokiV45) {
+        db.execSQL(LokiMessageDatabase.getCreateSmsHashTableCommand());
+        db.execSQL(LokiMessageDatabase.getCreateMmsHashTableCommand());
       }
 
       db.setTransactionSuccessful();
