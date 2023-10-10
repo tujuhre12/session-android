@@ -7,16 +7,22 @@ import androidx.test.filters.SmallTest
 import androidx.test.platform.app.InstrumentationRegistry
 import network.loki.messenger.libsession_util.ConfigBase
 import network.loki.messenger.libsession_util.Contacts
+import network.loki.messenger.libsession_util.ConversationVolatileConfig
 import network.loki.messenger.libsession_util.util.Contact
+import network.loki.messenger.libsession_util.util.Conversation
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.kotlin.argThat
+import org.mockito.kotlin.argWhere
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.spy
 import org.mockito.kotlin.verify
 import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.messaging.messages.ExpirationConfiguration
+import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.KeyHelper
 import org.session.libsignal.utilities.hexEncodedPublicKey
@@ -50,11 +56,20 @@ class LibSessionTests {
 
     private fun buildContactMessage(contactList: List<Contact>): ByteArray {
         val (key,_) = maybeGetUserInfo()!!
-        val contacts = Contacts.Companion.newInstance(key)
+        val contacts = Contacts.newInstance(key)
         contactList.forEach { contact ->
             contacts.set(contact)
         }
         return contacts.push().config
+    }
+
+    private fun buildVolatileMessage(conversations: List<Conversation>): ByteArray {
+        val (key, _) = maybeGetUserInfo()!!
+        val volatile = ConversationVolatileConfig.newInstance(key)
+        conversations.forEach { conversation ->
+            volatile.set(conversation)
+        }
+        return volatile.push().config
     }
 
     private fun fakePollNewConfig(configBase: ConfigBase, toMerge: ByteArray) {
@@ -97,6 +112,40 @@ class LibSessionTests {
             first().let { it.id == newContactId && it.approved } && size == 1
         }, 0)
         verify(storageSpy).setRecipientApproved(argThat { address.serialize() == newContactId }, eq(true))
+    }
+
+    @Test
+    fun test_expected_configs() {
+        val app = InstrumentationRegistry.getInstrumentation().targetContext.applicationContext as ApplicationContext
+        val storageSpy = spy(app.storage)
+        app.storage = storageSpy
+
+        val randomRecipient = randomSessionId()
+        val newContact = Contact(
+            id = randomRecipient,
+            approved = true,
+            expiryMode = ExpiryMode.AfterSend(1000)
+        )
+        val newConvo = Conversation.OneToOne(
+            randomRecipient,
+            SnodeAPI.nowWithOffset,
+            false
+        )
+        val volatiles = MessagingModuleConfiguration.shared.configFactory.convoVolatile!!
+        val contacts = MessagingModuleConfiguration.shared.configFactory.contacts!!
+        val newContactMerge = buildContactMessage(listOf(newContact))
+        val newVolatileMerge = buildVolatileMessage(listOf(newConvo))
+        val expConfig = ExpirationConfiguration()
+        val recipientAddress = Address.fromSerialized(randomRecipient)
+        fakePollNewConfig(contacts, newContactMerge)
+        fakePollNewConfig(volatiles, newVolatileMerge)
+        val threadId = storageSpy.getThreadId(recipientAddress)!!
+//        whenever(storageSpy.getExpirationConfiguration(eq(threadId))).thenReturn(expConfig)
+//        doNothing().whenever(storageSpy).setExpirationConfiguration(any())
+//        verify(storageSpy).getExpirationConfiguration(eq(threadId))
+        verify(storageSpy).setExpirationConfiguration(argWhere { config ->
+            config.expiryMode is ExpiryMode.AfterSend
+        })
     }
 
 }

@@ -1217,7 +1217,7 @@ open class Storage(
                     deleteConversation(conversationThreadId)
                 }
             } else {
-                getThreadId(fromSerialized(contact.id))?.let { conversationThreadId ->
+                getOrCreateThreadIdFor(fromSerialized(contact.id)).let { conversationThreadId ->
                     setPinned(conversationThreadId, contact.priority == PRIORITY_PINNED)
                 }
             }
@@ -1231,8 +1231,7 @@ open class Storage(
                         contact.expiryMode,
                         timestamp
                     )
-                    DatabaseComponent.get(context).expirationConfigurationDatabase()
-                        .setExpirationConfiguration(expiration)
+                    setExpirationConfiguration(expiration)
                 }
             }
             setRecipientHash(recipient, contact.hashCode().toString())
