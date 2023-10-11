@@ -8,6 +8,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
 import android.os.Bundle
 import android.text.SpannableString
 import android.widget.Toast
@@ -319,7 +320,8 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         EventBus.getDefault().register(this@HomeActivity)
         if (intent.hasExtra(FROM_ONBOARDING)
             && intent.getBooleanExtra(FROM_ONBOARDING, false)) {
-            if ((getSystemService(NOTIFICATION_SERVICE) as NotificationManager).areNotificationsEnabled().not()) {
+            if (Build.VERSION.SDK_INT >= 33 &&
+                (getSystemService(NOTIFICATION_SERVICE) as NotificationManager).areNotificationsEnabled().not()) {
                 Permissions.with(this)
                     .request(Manifest.permission.POST_NOTIFICATIONS)
                     .execute()
