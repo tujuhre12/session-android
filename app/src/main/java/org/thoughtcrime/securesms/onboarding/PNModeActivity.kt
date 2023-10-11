@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.onboarding
 
 import android.animation.ArgbEvaluator
 import android.animation.ValueAnimator
+import android.content.Context
 import android.content.Intent
 import android.graphics.drawable.TransitionDrawable
 import android.net.Uri
@@ -28,6 +29,7 @@ import org.thoughtcrime.securesms.util.PNModeView
 import org.thoughtcrime.securesms.util.disableClipping
 import org.thoughtcrime.securesms.util.getAccentColor
 import org.thoughtcrime.securesms.util.getColorWithID
+import org.thoughtcrime.securesms.util.push
 import org.thoughtcrime.securesms.util.setUpActionBarSessionLogo
 import org.thoughtcrime.securesms.util.show
 import javax.inject.Inject
@@ -176,4 +178,8 @@ class PNModeActivity : BaseActionBarActivity() {
         show(intent)
     }
     // endregion
+}
+
+fun Context.startPNModeActivity() {
+    Intent(this, PNModeActivity::class.java).also(::startActivity)
 }

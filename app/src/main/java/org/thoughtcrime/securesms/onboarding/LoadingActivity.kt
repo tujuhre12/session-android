@@ -24,7 +24,7 @@ import kotlinx.coroutines.launch
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.onboarding.name.DisplayNameActivity
+import org.thoughtcrime.securesms.onboarding.pickname.PickDisplayNameActivity
 import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.ProgressArc
 import org.thoughtcrime.securesms.util.push
@@ -50,7 +50,7 @@ class LoadingActivity: BaseActionBarActivity() {
 
     private fun register(skipped: Boolean) {
         prefs.setLastConfigurationSyncTime(System.currentTimeMillis())
-        Intent(this, if (skipped) DisplayNameActivity::class.java else PNModeActivity::class.java)
+        Intent(this, if (skipped) PickDisplayNameActivity::class.java else PNModeActivity::class.java)
             .apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK }
             .also(::push)
     }

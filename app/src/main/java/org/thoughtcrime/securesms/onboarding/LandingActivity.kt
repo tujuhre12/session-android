@@ -6,7 +6,7 @@ import network.loki.messenger.databinding.ActivityLandingBinding
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
-import org.thoughtcrime.securesms.onboarding.name.DisplayNameActivity
+import org.thoughtcrime.securesms.onboarding.pickname.startPickDisplayNameActivity
 import org.thoughtcrime.securesms.service.KeyCachingService
 import org.thoughtcrime.securesms.util.push
 import org.thoughtcrime.securesms.util.setUpActionBarSessionLogo
@@ -20,7 +20,7 @@ class LandingActivity : BaseActionBarActivity() {
         setUpActionBarSessionLogo(true)
         with(binding) {
             fakeChatView.startAnimating()
-            registerButton.setOnClickListener { register() }
+            registerButton.setOnClickListener { startPickDisplayNameActivity() }
             restoreButton.setOnClickListener { link() }
             linkButton.setOnClickListener { link() }
         }
@@ -28,11 +28,6 @@ class LandingActivity : BaseActionBarActivity() {
         TextSecurePreferences.setPasswordDisabled(this, true)
         // AC: This is a temporary workaround to trick the old code that the screen is unlocked.
         KeyCachingService.setMasterSecret(applicationContext, Object())
-    }
-
-    private fun register() {
-        val intent = Intent(this, DisplayNameActivity::class.java)
-        push(intent)
     }
 
     private fun link() {

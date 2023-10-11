@@ -1,8 +1,8 @@
-package org.thoughtcrime.securesms.onboarding.name
+package org.thoughtcrime.securesms.onboarding.pickname
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.view.inputmethod.InputMethodManager
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.LocalContentColor
@@ -32,21 +31,19 @@ import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
-import network.loki.messenger.databinding.ActivityDisplayNameBinding
 import org.thoughtcrime.securesms.BaseActionBarActivity
-import org.thoughtcrime.securesms.onboarding.PNModeActivity
+import org.thoughtcrime.securesms.onboarding.startPNModeActivity
 import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.OutlineButton
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.baseBold
 import org.thoughtcrime.securesms.ui.colorDestructive
-import org.thoughtcrime.securesms.util.push
 import org.thoughtcrime.securesms.util.setUpActionBarSessionLogo
 
 @AndroidEntryPoint
-class DisplayNameActivity : BaseActionBarActivity() {
-    private val viewModel: DisplayNameViewModel by viewModels()
+class PickDisplayNameActivity : BaseActionBarActivity() {
+    private val viewModel: PickDisplayNameViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,20 +55,17 @@ class DisplayNameActivity : BaseActionBarActivity() {
 
         lifecycleScope.launch {
             viewModel.eventFlow.collect {
-//                val inputMethodManager = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-//                inputMethodManager.hideSoftInputFromWindow(content.displayNameEditText.windowToken, 0)
-
-                Intent(this@DisplayNameActivity, PNModeActivity::class.java).also(::push)
+                startPNModeActivity()
             }
         }
     }
 
     @Composable
-    private fun DisplayNameScreen(viewModel: DisplayNameViewModel) {
+    private fun DisplayNameScreen(viewModel: PickDisplayNameViewModel) {
         val state = viewModel.stateFlow.collectAsState()
 
         AppTheme {
-            DisplayName(state.value, viewModel::onChange, viewModel::onContinue)
+            DisplayName(state.value, viewModel::onChange) { viewModel.onContinue(this) }
         }
     }
 
@@ -113,10 +107,10 @@ class DisplayNameActivity : BaseActionBarActivity() {
                 ),
                 singleLine = true,
                 keyboardActions = KeyboardActions(
-                    onDone = { viewModel.onContinue() },
-                    onGo = { viewModel.onContinue() },
-                    onSearch = { viewModel.onContinue() },
-                    onSend = { viewModel.onContinue() },
+                    onDone = { onContinue() },
+                    onGo = { onContinue() },
+                    onSearch = { onContinue() },
+                    onSend = { onContinue() },
                 ),
                 isError = state.error != null,
                 shape = RoundedCornerShape(12.dp)
@@ -136,4 +130,8 @@ class DisplayNameActivity : BaseActionBarActivity() {
             ) { onContinue() }
         }
     }
+}
+
+fun Context.startPickDisplayNameActivity() {
+    Intent(this, PickDisplayNameActivity::class.java).also(::startActivity)
 }
