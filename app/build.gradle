@@ -31,7 +31,7 @@ configurations.all {
     exclude module: "commons-logging"
 }
 
-def canonicalVersionCode = 357
+def canonicalVersionCode = 358
 def canonicalVersionName = "1.17.3"
 
 def postFixSize = 10

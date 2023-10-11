@@ -29,7 +29,7 @@ class SessionJobDatabase(context: Context, helper: SQLCipherOpenHelper) : Databa
             = "CREATE TABLE $sessionJobTable ($jobID INTEGER PRIMARY KEY, $jobType STRING, $failureCount INTEGER DEFAULT 0, $serializedData TEXT);"
 
         const val dropAttachmentDownloadJobs =
-                "DELETE FROM $sessionJobTable WHERE $jobType = ${AttachmentDownloadJob.KEY};"
+                "DELETE FROM $sessionJobTable WHERE $jobType = '${AttachmentDownloadJob.KEY}';"
     }
 
     fun persistJob(job: Job) {
