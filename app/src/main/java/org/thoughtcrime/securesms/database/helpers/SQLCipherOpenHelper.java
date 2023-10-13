@@ -612,13 +612,15 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
       }
 
       if (oldVersion < lokiV44) {
+        db.execSQL(SessionJobDatabase.dropAttachmentDownloadJobs);
+      }
+
+      if (oldVersion < lokiV45) {
         db.execSQL(RecipientDatabase.getCreateDisappearingStateCommand());
         db.execSQL(ExpirationConfigurationDatabase.CREATE_EXPIRATION_CONFIGURATION_TABLE_COMMAND);
         db.execSQL(ExpirationConfigurationDatabase.MIGRATE_GROUP_CONVERSATION_EXPIRY_TYPE_COMMAND);
         db.execSQL(ExpirationConfigurationDatabase.MIGRATE_ONE_TO_ONE_CONVERSATION_EXPIRY_TYPE_COMMAND);
-      }
 
-      if (oldVersion < lokiV45) {
         db.execSQL(LokiMessageDatabase.getCreateSmsHashTableCommand());
         db.execSQL(LokiMessageDatabase.getCreateMmsHashTableCommand());
       }
