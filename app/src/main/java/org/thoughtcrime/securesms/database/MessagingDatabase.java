@@ -12,8 +12,10 @@ import org.session.libsession.utilities.Document;
 import org.session.libsession.utilities.IdentityKeyMismatch;
 import org.session.libsession.utilities.IdentityKeyMismatchList;
 import org.session.libsignal.crypto.IdentityKey;
+import org.session.libsignal.protos.SignalServiceProtos;
 import org.session.libsignal.utilities.JsonUtil;
 import org.session.libsignal.utilities.Log;
+import org.thoughtcrime.securesms.conversation.disappearingmessages.ExpiryType;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
 import org.thoughtcrime.securesms.database.model.MessageRecord;
 import org.thoughtcrime.securesms.util.SqlUtil;
@@ -272,6 +274,16 @@ public abstract class MessagingDatabase extends Database implements MmsSmsColumn
 
     public ExpirationInfo getExpirationInfo() {
       return expirationInfo;
+    }
+
+    public ExpiryType guessExpiryType() {
+      long expireStarted = expirationInfo.expireStarted;
+      long expiresIn = expirationInfo.expiresIn;
+      long timestamp = syncMessageId.timetamp;
+
+      if (timestamp == expireStarted) return ExpiryType.AFTER_SEND;
+      if (expiresIn > 0) return ExpiryType.AFTER_READ;
+      return ExpiryType.NONE;
     }
   }
 
