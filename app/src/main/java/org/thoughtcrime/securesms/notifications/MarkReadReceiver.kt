@@ -69,19 +69,20 @@ class MarkReadReceiver : BroadcastReceiver() {
 
             markedReadMessages.forEach { scheduleDeletion(context, it.expirationInfo) }
 
-            getHashToMessage(context, markedReadMessages)?.let {
+            hashToDisappearAfterReadMessage(context, markedReadMessages)?.let {
                 fetchUpdatedExpiriesAndScheduleDeletion(context, it)
                 shortenExpiryOfDisappearingAfterRead(context, it)
             }
         }
 
-        private fun getHashToMessage(
+        private fun hashToDisappearAfterReadMessage(
             context: Context,
             markedReadMessages: List<MarkedMessageInfo>
         ): Map<String, MarkedMessageInfo>? {
             val loki = DatabaseComponent.get(context).lokiMessageDatabase()
 
             return markedReadMessages
+                .filter { it.guessExpiryType() == ExpiryType.AFTER_READ }
                 .associateByNotNull { it.expirationInfo.run { loki.getMessageServerHash(id, isMms) } }
                 .takeIf { it.isNotEmpty() }
         }
@@ -90,8 +91,7 @@ class MarkReadReceiver : BroadcastReceiver() {
             context: Context,
             hashToMessage: Map<String, MarkedMessageInfo>
         ) {
-            hashToMessage.filterValues { it.guessExpiryType() == ExpiryType.AFTER_READ }
-                .entries
+            hashToMessage.entries
                 .groupBy(
                     keySelector =  { it.value.expirationInfo.expiresIn },
                     valueTransform = { it.key }
