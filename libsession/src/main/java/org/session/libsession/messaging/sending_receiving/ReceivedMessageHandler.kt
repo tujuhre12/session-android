@@ -308,26 +308,10 @@ fun MessageReceiver.updateExpiryIfNeeded(
 
     // don't update any values for open groups
     if (recipient.isOpenGroupRecipient && type != null) throw MessageReceiver.Error.InvalidMessage
-    if ((recipient.isGroupRecipient || recipient.isLocalNumber)
-        && type == ExpirationType.DELETE_AFTER_READ) {
-        // don't allow deleteAfterRead if we are sending to note to self or a group, treat the entire message as invalid
-        throw MessageReceiver.Error.InvalidMessage
-    }
 
     if (!recipient.isGroupRecipient && !recipient.isLocalNumber) {
         val disappearingState = if (proto.hasExpirationType()) Recipient.DisappearingState.UPDATED else Recipient.DisappearingState.LEGACY
         storage.updateDisappearingState(threadID, disappearingState)
-    }
-
-    // handle a delete after send expired fetch
-    if (type == ExpirationType.DELETE_AFTER_SEND
-        && sentTime + configToUse.expiryMode.expiryMillis <= SnodeAPI.nowWithOffset) {
-        throw MessageReceiver.Error.ExpiredMessage
-    }
-    // handle a delete after read last known config value
-    if (type == ExpirationType.DELETE_AFTER_READ
-        && sentTime + configToUse.expiryMode.expiryMillis <= storage.getLastSeen(threadID)) {
-        throw MessageReceiver.Error.ExpiredMessage
     }
 
     if (shouldUpdateConfig) {
