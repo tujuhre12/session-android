@@ -35,7 +35,7 @@ class AttachmentDownloadJob(val attachmentID: Long, val databaseMessageID: Long)
     override val maxFailureCount: Int = 2
 
     companion object {
-        val KEY: String = "AttachmentDownloadJob"
+        const val KEY: String = "AttachmentDownloadJob"
 
         // Keys used for database storage
         private val ATTACHMENT_ID_KEY = "attachment_id"
