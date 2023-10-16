@@ -53,12 +53,6 @@ allprojects {
                 includeGroupByRegex "org\\.signal.*"
             }
         }
-        maven {
-            url "https://repo1.maven.org/maven2/com/goterl/lazysodium-android"
-            content {
-                includeGroupByRegex "com\\.goterl.*"
-            }
-        }
         jcenter()
         maven { url "https://jitpack.io" }
         if (project.hasProperty('huawei')) maven {
