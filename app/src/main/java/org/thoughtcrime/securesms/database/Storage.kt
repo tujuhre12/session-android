@@ -505,7 +505,7 @@ open class Storage(
                 setExpirationConfiguration(currentExpiration)
             } else {
                 val expiration = ExpirationConfiguration(ourThread, userProfile.getNtsExpiry(), messageTimestamp)
-                DatabaseComponent.get(context).expirationConfigurationDatabase().setExpirationConfiguration(expiration)
+                setExpirationConfiguration(expiration)
             }
         }
 
@@ -648,9 +648,7 @@ open class Storage(
                     val newConfig = ExpirationConfiguration(
                         conversationThreadId, mode, messageTimestamp
                     )
-                    DatabaseComponent.get(context)
-                        .expirationConfigurationDatabase()
-                        .setExpirationConfiguration(newConfig)
+                    setExpirationConfiguration(newConfig)
                 }
             }
         }
