@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.onboarding
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.text.InputType
 import android.view.LayoutInflater
@@ -149,3 +150,7 @@ class RecoveryPhraseFragment : Fragment() {
     }
 }
 // endregion
+
+fun Context.startLinkDeviceActivity() {
+    Intent(this, LinkDeviceActivity::class.java).let(::startActivity)
+}

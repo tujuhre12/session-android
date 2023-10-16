@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.google.accompanist.pager.HorizontalPagerIndicator
@@ -58,8 +59,47 @@ fun OutlineButton(text: String, modifier: Modifier = Modifier, onClick: () -> Un
             contentColor = LocalExtraColors.current.prominentButtonColor,
             backgroundColor = MaterialTheme.colors.background
         )
-    ){
+    ) {
         Text(text = text)
+    }
+}
+
+@Composable
+fun FilledButton(text: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    OutlinedButton(
+        modifier = modifier.size(108.dp, 34.dp),
+        onClick = onClick,
+        shape = RoundedCornerShape(50), // = 50% percent
+        colors = ButtonDefaults.outlinedButtonColors(
+            contentColor = MaterialTheme.colors.background,
+            backgroundColor = LocalExtraColors.current.prominentButtonColor
+        )
+    ) {
+        Text(text = text)
+    }
+}
+
+@Composable
+fun BorderlessButton(
+    text: String,
+    modifier: Modifier = Modifier,
+    fontSize: TextUnit = TextUnit.Unspecified,
+    lineHeight: TextUnit = TextUnit.Unspecified,
+    onClick: () -> Unit) {
+    TextButton(
+        onClick = onClick,
+        modifier = modifier,
+        shape = RoundedCornerShape(50), // = 50% percent
+        colors = ButtonDefaults.outlinedButtonColors(
+            contentColor = MaterialTheme.colors.onBackground,
+            backgroundColor = MaterialTheme.colors.background
+        )
+    ) {
+        Text(
+            text = text,
+            fontSize = fontSize,
+            lineHeight = lineHeight
+        )
     }
 }
 
