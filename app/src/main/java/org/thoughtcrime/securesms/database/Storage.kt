@@ -1715,6 +1715,11 @@ open class Storage(
 
     override fun setExpirationConfiguration(config: ExpirationConfiguration) {
         val recipient = getRecipientForThread(config.threadId) ?: return
+
+        val expirationDb = DatabaseComponent.get(context).expirationConfigurationDatabase()
+        val currentConfig = expirationDb.getExpirationConfiguration(config.threadId)
+        if (currentConfig != null && currentConfig.updatedTimestampMs >= config.updatedTimestampMs) return
+
         if (recipient.isClosedGroupRecipient) {
             val userGroups = configFactory.userGroups ?: return
             val groupPublicKey = GroupUtil.addressToGroupSessionId(recipient.address)
@@ -1732,7 +1737,7 @@ open class Storage(
             ) ?: return
             contacts.set(contact)
         }
-        DatabaseComponent.get(context).expirationConfigurationDatabase().setExpirationConfiguration(config)
+        expirationDb.setExpirationConfiguration(config)
     }
 
     override fun getExpiringMessages(messageIds: List<Long>): List<Pair<Long, Long>> {

@@ -172,7 +172,7 @@ private fun MessageReceiver.handleExpirationTimerUpdate(message: ExpirationTimer
             ExpirationConfiguration(
                 threadId,
                 type,
-                SnodeAPI.nowWithOffset
+                message.sentTimestamp!!
             )
         )
     } catch (e: Exception) {
