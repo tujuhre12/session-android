@@ -6,13 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.AsyncTask
 import androidx.core.app.NotificationManagerCompat
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import nl.komponents.kovenant.task
 import org.session.libsession.messaging.MessagingModuleConfiguration.Companion.shared
 import org.session.libsession.messaging.messages.control.ReadReceipt
 import org.session.libsession.messaging.sending_receiving.MessageSender.send
@@ -136,8 +129,6 @@ class MarkReadReceiver : BroadcastReceiver() {
             expirationInfo: ExpirationInfo,
             expiresIn: Long = expirationInfo.expiresIn
         ) {
-            android.util.Log.d(TAG, "scheduleDeletion() called with: expirationInfo = $expirationInfo, expiresIn = $expiresIn")
-
             if (expiresIn > 0 && expirationInfo.expireStarted <= 0) {
                 if (expirationInfo.isMms) DatabaseComponent.get(context!!).mmsDatabase().markExpireStarted(expirationInfo.id)
                 else DatabaseComponent.get(context!!).smsDatabase().markExpireStarted(expirationInfo.id)
