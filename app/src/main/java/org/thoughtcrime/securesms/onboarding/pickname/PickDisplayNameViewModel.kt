@@ -3,8 +3,10 @@ package org.thoughtcrime.securesms.onboarding.pickname
 import android.content.Context
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedInject
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,21 +22,17 @@ import org.session.libsignal.utilities.KeyHelper
 import org.session.libsignal.utilities.hexEncodedPublicKey
 import org.thoughtcrime.securesms.crypto.KeyPairUtilities
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import javax.inject.Inject
 
-@HiltViewModel
-class PickDisplayNameViewModel @Inject constructor(
-    private val prefs: TextSecurePreferences
+class PickDisplayNameViewModel(
+    pickNewName: Boolean,
+    private val prefs: TextSecurePreferences,
+    private val configFactory: ConfigFactory
 ): ViewModel() {
-
-    private val state = MutableStateFlow(State())
+    private val state = MutableStateFlow(if (pickNewName) pickNewNameState() else State())
     val stateFlow = state.asStateFlow()
 
     private val event = Channel<Event>()
     val eventFlow = event.receiveAsFlow()
-
-    @Inject
-    lateinit var configFactory: ConfigFactory
 
     private val database: LokiAPIDatabaseProtocol
         get() = SnodeModule.shared.storage
@@ -75,11 +73,27 @@ class PickDisplayNameViewModel @Inject constructor(
     }
 
     fun onChange(value: String) {
-        state.update {
-            it.copy(
+        state.update { state -> state.copy(
                 displayName = value,
                 error = value.takeIf { it.length > NAME_PADDED_LENGTH }?.let { R.string.activity_display_name_display_name_too_long_error }
             )
+        }
+    }
+
+    @dagger.assisted.AssistedFactory
+    interface AssistedFactory {
+        fun create(pickNewName: Boolean): Factory
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    class Factory @AssistedInject constructor(
+        @Assisted private val pickNewName: Boolean,
+        private val prefs: TextSecurePreferences,
+        private val configFactory: ConfigFactory
+    ) : ViewModelProvider.Factory {
+
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            return PickDisplayNameViewModel(pickNewName, prefs, configFactory) as T
         }
     }
 }
@@ -89,6 +103,11 @@ data class State(
     @StringRes val description: Int = R.string.activity_display_name_explanation,
     @StringRes val error: Int? = null,
     val displayName: String = ""
+)
+
+fun pickNewNameState() = State(
+    title = R.string.activity_display_name_pick_a_new_display_name,
+    description = R.string.activity_display_name_unable_to_load_new_name_explanation
 )
 
 sealed interface Event {

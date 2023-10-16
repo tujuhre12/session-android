@@ -24,10 +24,9 @@ import kotlinx.coroutines.launch
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.onboarding.pickname.PickDisplayNameActivity
+import org.thoughtcrime.securesms.onboarding.pickname.startPickDisplayNameActivity
 import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.ProgressArc
-import org.thoughtcrime.securesms.util.push
 import javax.inject.Inject
 
 private const val EXTRA_MNEMONIC = "mnemonic"
@@ -50,9 +49,13 @@ class LoadingActivity: BaseActionBarActivity() {
 
     private fun register(skipped: Boolean) {
         prefs.setLastConfigurationSyncTime(System.currentTimeMillis())
-        Intent(this, if (skipped) PickDisplayNameActivity::class.java else PNModeActivity::class.java)
-            .apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK }
-            .also(::push)
+
+        val flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+
+        when {
+            skipped -> startPickDisplayNameActivity(true, flags)
+            else -> startPNModeActivity(flags)
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

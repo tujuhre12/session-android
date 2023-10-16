@@ -180,6 +180,8 @@ class PNModeActivity : BaseActionBarActivity() {
     // endregion
 }
 
-fun Context.startPNModeActivity() {
-    Intent(this, PNModeActivity::class.java).also(::startActivity)
+fun Context.startPNModeActivity(flags: Int = 0) {
+    Intent(this, PNModeActivity::class.java)
+        .also { it.flags = flags }
+        .also(::startActivity)
 }

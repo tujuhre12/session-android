@@ -728,7 +728,9 @@
     <string name="activity_restore_explanation">Enter the recovery phrase that was given to you when you signed up to restore your account.</string>
     <string name="activity_restore_seed_edit_text_hint">Enter your recovery phrase</string>
     <string name="activity_display_name_title_2">Pick your display name</string>
+    <string name="activity_display_name_pick_a_new_display_name">Pick a new display name</string>
     <string name="activity_display_name_explanation">It can be your real name, an alias, or anything else you like — and you can change it any time.</string>
+    <string name="activity_display_name_unable_to_load_new_name_explanation">We were unable to load your display name. Please enter a new display name to continue.</string>
     <string name="activity_display_name_edit_text_hint">Enter a display name</string>
     <string name="activity_display_name_display_name_missing_error">Please pick a display name</string>
     <string name="activity_display_name_display_name_too_long_error">Please pick a shorter display name</string>

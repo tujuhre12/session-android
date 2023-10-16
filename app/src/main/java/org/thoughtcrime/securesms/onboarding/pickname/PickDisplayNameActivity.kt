@@ -32,6 +32,8 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.BaseActionBarActivity
+import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
+import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel
 import org.thoughtcrime.securesms.onboarding.startPNModeActivity
 import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.OutlineButton
@@ -40,10 +42,20 @@ import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.baseBold
 import org.thoughtcrime.securesms.ui.colorDestructive
 import org.thoughtcrime.securesms.util.setUpActionBarSessionLogo
+import javax.inject.Inject
+
+private const val EXTRA_PICK_NEW_NAME = "extra_pick_new_name"
 
 @AndroidEntryPoint
 class PickDisplayNameActivity : BaseActionBarActivity() {
-    private val viewModel: PickDisplayNameViewModel by viewModels()
+
+    @Inject
+    lateinit var viewModelFactory: PickDisplayNameViewModel.AssistedFactory
+
+    private val viewModel: PickDisplayNameViewModel by viewModels {
+        val pickNewName = intent.getBooleanExtra(EXTRA_PICK_NEW_NAME, false)
+        viewModelFactory.create(pickNewName)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -132,6 +144,9 @@ class PickDisplayNameActivity : BaseActionBarActivity() {
     }
 }
 
-fun Context.startPickDisplayNameActivity() {
-    Intent(this, PickDisplayNameActivity::class.java).also(::startActivity)
+fun Context.startPickDisplayNameActivity(failedToLoad: Boolean = false, flags: Int = 0) {
+    Intent(this, PickDisplayNameActivity::class.java)
+        .apply { putExtra(EXTRA_PICK_NEW_NAME, failedToLoad) }
+        .also { it.flags = flags }
+        .also(::startActivity)
 }
