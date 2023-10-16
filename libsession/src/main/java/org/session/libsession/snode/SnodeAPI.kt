@@ -29,6 +29,7 @@ import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Namespace
+import org.session.libsignal.utilities.SessionId
 import org.session.libsignal.utilities.Snode
 import org.session.libsignal.utilities.ThreadUtils
 import org.session.libsignal.utilities.prettifiedDescription
@@ -851,14 +852,21 @@ object SnodeAPI {
         }
     }
 
-    fun parseRawMessagesResponse(rawResponse: RawResponse, snode: Snode, publicKey: String, namespace: Int = 0, updateLatestHash: Boolean = true, updateStoredHashes: Boolean = true): List<Pair<SignalServiceProtos.Envelope, String?>> {
+    fun parseRawMessagesResponse(rawResponse: RawResponse,
+                                 snode: Snode,
+                                 publicKey: String,
+                                 namespace: Int = 0,
+                                 updateLatestHash: Boolean = true,
+                                 updateStoredHashes: Boolean = true,
+                                 decrypt: ((ByteArray) -> Pair<ByteArray, SessionId>?)? = null
+                                 ): List<Pair<SignalServiceProtos.Envelope, String?>> {
         val messages = rawResponse["messages"] as? List<*>
         return if (messages != null) {
             if (updateLatestHash) {
                 updateLastMessageHashValueIfPossible(snode, publicKey, messages, namespace)
             }
             val newRawMessages = removeDuplicates(publicKey, messages, namespace, updateStoredHashes)
-            return parseEnvelopes(newRawMessages)
+            return parseEnvelopes(newRawMessages, decrypt)
         } else {
             listOf()
         }
@@ -895,14 +903,20 @@ object SnodeAPI {
         return result
     }
 
-    private fun parseEnvelopes(rawMessages: List<*>): List<Pair<SignalServiceProtos.Envelope, String?>> {
+    private fun parseEnvelopes(rawMessages: List<*>, decrypt: ((ByteArray)->Pair<ByteArray, SessionId>?)?): List<Pair<SignalServiceProtos.Envelope, String?>> {
         return rawMessages.mapNotNull { rawMessage ->
             val rawMessageAsJSON = rawMessage as? Map<*, *>
             val base64EncodedData = rawMessageAsJSON?.get("data") as? String
             val data = base64EncodedData?.let { Base64.decode(it) }
             if (data != null) {
                 try {
-                    Pair(MessageWrapper.unwrap(data), rawMessageAsJSON.get("hash") as? String)
+                    if (decrypt != null) {
+                        val (decrypted, sender) = decrypt(data)!!
+                        val envelope = SignalServiceProtos.Envelope.parseFrom(decrypted).toBuilder()
+                        envelope.source = sender.hexString()
+                        Pair(envelope.build(),rawMessageAsJSON.get("hash") as? String)
+                    }
+                    else Pair(MessageWrapper.unwrap(data), rawMessageAsJSON.get("hash") as? String)
                 } catch (e: Exception) {
                     Log.d("Loki", "Failed to unwrap data for message: ${rawMessage.prettifiedDescription()}.")
                     null

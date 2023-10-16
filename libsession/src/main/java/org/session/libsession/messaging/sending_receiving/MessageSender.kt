@@ -125,25 +125,8 @@ object MessageSender {
         val proto = message.toProto() ?: throw Error.ProtoConversionFailed
         // Serialize the protobuf
         val plaintext = PushTransportDetails.getPaddedMessageBody(proto.toByteArray())
-        // Encrypt the serialized protobuf
-        val ciphertext = when (destination) {
-            is Destination.Contact -> MessageEncrypter.encrypt(plaintext, destination.publicKey)
-            is Destination.LegacyClosedGroup -> {
-                val encryptionKeyPair =
-                    MessagingModuleConfiguration.shared.storage.getLatestClosedGroupEncryptionKeyPair(
-                        destination.groupPublicKey
-                    )!!
-                MessageEncrypter.encrypt(plaintext, encryptionKeyPair.hexEncodedPublicKey)
-            }
-            is Destination.ClosedGroup -> {
-                val groupKeys = configFactory.getGroupKeysConfig(SessionId.from(destination.publicKey)) ?: throw Error.NoKeyPair
-                groupKeys.use { keys ->
-                    keys.encrypt(proto.toByteArray())
-                }
-            }
-            else -> throw IllegalStateException("Destination should not be open group.")
-        }
-        // Wrap the result
+
+        // Envelope information
         val kind: SignalServiceProtos.Envelope.Type
         val senderPublicKey: String
         when (destination) {
@@ -161,7 +144,34 @@ object MessageSender {
             }
             else -> throw IllegalStateException("Destination should not be open group.")
         }
-        val wrappedMessage = MessageWrapper.wrap(kind, message.sentTimestamp!!, senderPublicKey, ciphertext)
+
+        // Encrypt the serialized protobuf
+        val ciphertext = when (destination) {
+            is Destination.Contact -> MessageEncrypter.encrypt(plaintext, destination.publicKey)
+            is Destination.LegacyClosedGroup -> {
+                val encryptionKeyPair =
+                    MessagingModuleConfiguration.shared.storage.getLatestClosedGroupEncryptionKeyPair(
+                        destination.groupPublicKey
+                    )!!
+                MessageEncrypter.encrypt(plaintext, encryptionKeyPair.hexEncodedPublicKey)
+            }
+            is Destination.ClosedGroup -> {
+                val groupKeys = configFactory.getGroupKeysConfig(SessionId.from(destination.publicKey)) ?: throw Error.NoKeyPair
+                val envelope = MessageWrapper.createEnvelope(kind, message.sentTimestamp!!, senderPublicKey, proto.toByteArray())
+                groupKeys.use { keys ->
+                    keys.encrypt(envelope.toByteArray())
+                }
+            }
+            else -> throw IllegalStateException("Destination should not be open group.")
+        }
+        // Wrap the result using envelope information
+        val wrappedMessage = when (destination) {
+            is Destination.ClosedGroup -> {
+                // encrypted bytes from the above closed group encryption and envelope steps
+                ciphertext
+            }
+            else -> MessageWrapper.wrap(kind, message.sentTimestamp!!, senderPublicKey, ciphertext)
+        }
         val base64EncodedData = Base64.encodeBytes(wrappedMessage)
         // Send the result
         return SnodeMessage(

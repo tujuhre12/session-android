@@ -57,11 +57,11 @@ sealed class ConfigBase(pointer: Long): Config(pointer) {
     external fun dump(): ByteArray
     external fun encryptionDomain(): String
     external fun confirmPushed(seqNo: Long, newHash: String)
-    external fun merge(toMerge: Array<Pair<String,ByteArray>>): Int
+    external fun merge(toMerge: Array<Pair<String,ByteArray>>): Stack<String>
     external fun currentHashes(): List<String>
 
     // Singular merge
-    external fun merge(toMerge: Pair<String,ByteArray>): Int
+    external fun merge(toMerge: Pair<String,ByteArray>): Stack<String>
 
 }
 

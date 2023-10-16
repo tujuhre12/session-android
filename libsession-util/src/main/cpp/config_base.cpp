@@ -82,7 +82,7 @@ Java_network_loki_messenger_libsession_1util_ConfigBase_confirmPushed(JNIEnv *en
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "bugprone-reserved-identifier"
-JNIEXPORT jint JNICALL
+JNIEXPORT jobject JNICALL
 Java_network_loki_messenger_libsession_1util_ConfigBase_merge___3Lkotlin_Pair_2(JNIEnv *env, jobject thiz,
                                                                      jobjectArray to_merge) {
     std::lock_guard lock{util::util_mutex_};
@@ -94,19 +94,29 @@ Java_network_loki_messenger_libsession_1util_ConfigBase_merge___3Lkotlin_Pair_2(
         auto pair = extractHashAndData(env, jElement);
         configs.push_back(pair);
     }
-    return conf->merge(configs);
+    auto returned = conf->merge(configs);
+    auto string_stack = util::build_string_stack(env, returned);
+    return string_stack;
 }
 
-JNIEXPORT jint JNICALL
+JNIEXPORT jobject JNICALL
 Java_network_loki_messenger_libsession_1util_ConfigBase_merge__Lkotlin_Pair_2(JNIEnv *env, jobject thiz,
                                                                    jobject to_merge) {
     std::lock_guard lock{util::util_mutex_};
     auto conf = ptrToConfigBase(env, thiz);
     std::vector<std::pair<std::string, session::ustring>> configs = {extractHashAndData(env, to_merge)};
-    return conf->merge(configs);
+    auto returned = conf->merge(configs);
+    auto string_stack = util::build_string_stack(env, returned);
+    return string_stack;
 }
 
 #pragma clang diagnostic pop
+}
+extern "C"
+JNIEXPORT jint JNICALL
+Java_network_loki_messenger_libsession_1util_ConfigBase_configNamespace(JNIEnv *env, jobject thiz) {
+    auto conf = ptrToConfigBase(env, thiz);
+    return (std::int16_t) conf->storage_namespace();
 }
 extern "C"
 JNIEXPORT jclass JNICALL

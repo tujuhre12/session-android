@@ -17,6 +17,7 @@ import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsignal.crypto.PushTransportDetails
 import org.session.libsignal.protos.SignalServiceProtos
+import org.session.libsignal.protos.SignalServiceProtos.Envelope
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.SessionId
@@ -53,22 +54,24 @@ object MessageReceiver {
         isOutgoing: Boolean? = null,
         otherBlindedPublicKey: String? = null,
         openGroupPublicKey: String? = null,
-        currentClosedGroups: Set<String>?
+        currentClosedGroups: Set<String>?,
+        closedGroupSessionId: String? = null,
     ): Pair<Message, SignalServiceProtos.Content> {
         val storage = MessagingModuleConfiguration.shared.storage
         val userPublicKey = storage.getUserPublicKey()
         val isOpenGroupMessage = (openGroupServerID != null)
-        // Parse the envelope
-        val envelope = SignalServiceProtos.Envelope.parseFrom(data)
-        // Decrypt the contents
-        val ciphertext = envelope.content ?: run {
-            throw Error.NoData
-        }
         var plaintext: ByteArray? = null
         var sender: String? = null
         var groupPublicKey: String? = null
+        // Parse the envelope
+        val envelope = Envelope.parseFrom(data) ?: throw Error.InvalidMessage
+        // Decrypt the contents
+        val envelopeContent = envelope.content ?: run {
+            throw Error.NoData
+        }
+
         if (isOpenGroupMessage) {
-            plaintext = envelope.content.toByteArray()
+            plaintext = envelopeContent.toByteArray()
             sender = envelope.source
         } else {
             when (envelope.type) {
@@ -77,7 +80,7 @@ object MessageReceiver {
                         openGroupPublicKey ?: throw Error.InvalidGroupPublicKey
                         otherBlindedPublicKey ?: throw Error.DecryptionFailed
                         val decryptionResult = MessageDecrypter.decryptBlinded(
-                            ciphertext.toByteArray(),
+                            envelopeContent.toByteArray(),
                             isOutgoing ?: false,
                             otherBlindedPublicKey,
                             openGroupPublicKey
@@ -86,26 +89,18 @@ object MessageReceiver {
                         sender = decryptionResult.second
                     } else {
                         val userX25519KeyPair = MessagingModuleConfiguration.shared.storage.getUserX25519KeyPair()
-                        val decryptionResult = MessageDecrypter.decrypt(ciphertext.toByteArray(), userX25519KeyPair)
+                        val decryptionResult = MessageDecrypter.decrypt(envelopeContent.toByteArray(), userX25519KeyPair)
                         plaintext = decryptionResult.first
                         sender = decryptionResult.second
                     }
                 }
                 SignalServiceProtos.Envelope.Type.CLOSED_GROUP_MESSAGE -> {
-                    val hexEncodedGroupPublicKey = envelope.source
+                    val hexEncodedGroupPublicKey = closedGroupSessionId ?: envelope.source
                     val sessionId = SessionId.from(hexEncodedGroupPublicKey)
                     if (sessionId.prefix == IdPrefix.GROUP) {
-                        val configFactory = MessagingModuleConfiguration.shared.configFactory
-                        configFactory.getGroupKeysConfig(sessionId)?.use { config ->
-                            config.decrypt(ciphertext.toByteArray())?.let { (decrypted, senderSessionId) ->
-                                plaintext = decrypted
-                                sender = senderSessionId.hexString()
-                                groupPublicKey = envelope.source
-                            }
-                        }
-                        if (plaintext == null) {
-                            throw Error.DecryptionFailed
-                        }
+                        plaintext = envelopeContent.toByteArray()
+                        sender = envelope.source
+                        groupPublicKey = hexEncodedGroupPublicKey
                     } else {
                         if (!MessagingModuleConfiguration.shared.storage.isLegacyClosedGroup(hexEncodedGroupPublicKey)) {
                             throw Error.InvalidGroupPublicKey
@@ -119,7 +114,7 @@ object MessageReceiver {
                         var encryptionKeyPair = encryptionKeyPairs.removeLast()
                         fun decrypt() {
                             try {
-                                val decryptionResult = MessageDecrypter.decrypt(ciphertext.toByteArray(), encryptionKeyPair)
+                                val decryptionResult = MessageDecrypter.decrypt(envelopeContent.toByteArray(), encryptionKeyPair)
                                 plaintext = decryptionResult.first
                                 sender = decryptionResult.second
                             } catch (e: Exception) {
@@ -132,7 +127,7 @@ object MessageReceiver {
                                 }
                             }
                         }
-                        groupPublicKey = envelope.source
+                        groupPublicKey = hexEncodedGroupPublicKey
                         decrypt()
                     }
                 }

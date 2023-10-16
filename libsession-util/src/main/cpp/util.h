@@ -2,7 +2,6 @@
 #define SESSION_ANDROID_UTIL_H
 
 #include <jni.h>
-#include <mutex>
 #include <array>
 #include <optional>
 #include "session/types.hpp"
@@ -12,13 +11,6 @@
 #include "session/config/profile_pic.hpp"
 #include "session/config/user_groups.hpp"
 #include "session/config/expiring.hpp"
-//#include <android/log.h>
-
-//#define  LOG_TAG "libsession-jni"
-//#define  LOGE(...)  __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
-//#define  LOGW(...)  __android_log_print(ANDROID_LOG_WARN,LOG_TAG,__VA_ARGS__)
-//#define  LOGD(...)  __android_log_print(ANDROID_LOG_DEBUG,LOG_TAG,__VA_ARGS__)
-//#define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
 
 namespace util {
     extern std::mutex util_mutex_;
@@ -37,6 +29,7 @@ namespace util {
     jstring jstringFromOptional(JNIEnv* env, std::optional<std::string_view> optional);
     jobject serialize_session_id(JNIEnv* env, std::string_view session_id);
     std::string deserialize_session_id(JNIEnv* env, jobject session_id);
+    jobject build_string_stack(JNIEnv* env, std::vector<std::string> to_add);
 }
 
 #endif

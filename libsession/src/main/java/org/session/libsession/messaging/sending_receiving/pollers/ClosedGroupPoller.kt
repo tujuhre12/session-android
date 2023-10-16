@@ -165,7 +165,7 @@ class ClosedGroupPoller(private val executor: CoroutineScope,
                     keysIndex -> handleKeyPoll(response, keys, info, members)
                     infoIndex -> handleInfo(response, info)
                     membersIndex -> handleMembers(response, members)
-                    messageIndex -> handleMessages(response, snode)
+                    messageIndex -> handleMessages(response, snode, keys)
                 }
             }
 
@@ -234,11 +234,13 @@ class ClosedGroupPoller(private val executor: CoroutineScope,
         }
     }
 
-    private fun handleMessages(response: RawResponse, snode: Snode) {
+    private fun handleMessages(response: RawResponse, snode: Snode, keysConfig: GroupKeysConfig) {
         val body = response["body"] as RawResponse
-        val messages = SnodeAPI.parseRawMessagesResponse(body, snode, closedGroupSessionId.hexString())
+        val messages = SnodeAPI.parseRawMessagesResponse(body, snode, closedGroupSessionId.hexString()) {
+            return@parseRawMessagesResponse keysConfig.decrypt(it)
+        }
         val parameters = messages.map { (envelope, serverHash) ->
-            MessageReceiveParameters(envelope.toByteArray(), serverHash = serverHash)
+            MessageReceiveParameters(envelope.toByteArray(), serverHash = serverHash, closedGroup = Destination.ClosedGroup(closedGroupSessionId.hexString()))
         }
         parameters.chunked(BatchMessageReceiveJob.BATCH_DEFAULT_NUMBER).forEach { chunk ->
             val job = BatchMessageReceiveJob(chunk)
