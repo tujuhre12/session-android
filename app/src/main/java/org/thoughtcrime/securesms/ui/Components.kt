@@ -37,6 +37,7 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -97,8 +98,10 @@ fun BorderlessButton(
     ) {
         Text(
             text = text,
+            textAlign = TextAlign.Center,
             fontSize = fontSize,
-            lineHeight = lineHeight
+            lineHeight = lineHeight,
+            modifier = Modifier.padding(horizontal = 2.dp)
         )
     }
 }

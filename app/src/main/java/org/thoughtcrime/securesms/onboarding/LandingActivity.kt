@@ -1,5 +1,7 @@
 package org.thoughtcrime.securesms.onboarding
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -21,11 +23,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.onboarding.pickname.startPickDisplayNameActivity
 import org.thoughtcrime.securesms.service.KeyCachingService
+import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.BorderlessButton
 import org.thoughtcrime.securesms.ui.FilledButton
@@ -82,10 +86,23 @@ class LandingActivity : BaseActionBarActivity() {
                         .align(Alignment.CenterHorizontally),
                     fontSize = 11.sp,
                     lineHeight = 13.sp
-                ) {  }
+                ) { openDialog() }
                 Spacer(modifier = Modifier.height(8.dp))
             }
         }
+    }
+
+    private fun openDialog() {
+        showSessionDialog {
+            title(R.string.activity_landing_open_url_title)
+            text(R.string.activity_landing_open_url_explanation)
+            button(R.string.activity_landing_terms_of_service) { open("https://getsession.org/terms-of-service") }
+            button(R.string.activity_landing_privacy_policy) { open("https://getsession.org/privacy-policy") }
+        }
+    }
+
+    private fun open(url: String) {
+        Intent(Intent.ACTION_VIEW, Uri.parse(url)).let(::startActivity)
     }
 
     @Composable

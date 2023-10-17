@@ -719,6 +719,10 @@
     <string name="activity_landing_title_2">Your Session begins here...</string>
     <string name="activity_landing_register_button_title">Create Session ID</string>
     <string name="activity_landing_restore_button_title">Continue Your Session</string>
+    <string name="activity_landing_open_url_title">Open URL</string>
+    <string name="activity_landing_open_url_explanation">This will open in your browser.</string>
+    <string name="activity_landing_terms_of_service">Terms of Service</string>
+    <string name="activity_landing_privacy_policy">Privacy Policy</string>
     <string name="view_fake_chat_bubble_1">What\'s Session?</string>
     <string name="view_fake_chat_bubble_2">It\'s a decentralized, encrypted messaging app</string>
     <string name="view_fake_chat_bubble_3">So it doesn\'t collect my personal information or my conversation metadata? How does it work?</string>
