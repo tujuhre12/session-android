@@ -32,9 +32,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.BaseActionBarActivity
-import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
-import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel
-import org.thoughtcrime.securesms.onboarding.startPNModeActivity
+import org.thoughtcrime.securesms.onboarding.messagenotifications.startPNModeActivity
 import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.OutlineButton
 import org.thoughtcrime.securesms.ui.PreviewTheme

@@ -120,7 +120,7 @@
             android:windowSoftInputMode="adjustResize"
             android:theme="@style/Theme.Session.DayNight.FlatActionBar" />
         <activity
-            android:name="org.thoughtcrime.securesms.onboarding.PNModeActivity"
+            android:name="org.thoughtcrime.securesms.onboarding.messagenotifications.MessageNotificationsActivity"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.Session.DayNight.FlatActionBar" />
         <activity
