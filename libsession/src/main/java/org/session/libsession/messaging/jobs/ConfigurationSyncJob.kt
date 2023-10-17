@@ -115,20 +115,31 @@ data class ConfigurationSyncJob(val destination: Destination) : Job {
                                 seqNo
                         )
                     }
-                } else {
+                } else if (destination is Destination.Contact) {
                     // assume our own user as check already takes place in `execute` for our own key
                     // if contact
+                    val sentTimestamp = SnodeAPI.nowWithOffset
                     configFactoryProtocol.getUserConfigs().filter { it.needsPush() }.map { config ->
-                        val (bytes, seqNo, obsoleteHashes) = config.push()
+                        val (push, seqNo, obsoleteHashes) = config.push()
                         toDelete += obsoleteHashes
                         val message =
-                                messageForConfig(config, bytes, seqNo)
-                                        ?: throw NullPointerException(
-                                                "SnodeBatchRequest message was null, check group keys exists"
-                                        )
-                        ConfigMessageInformation(message, config, seqNo)
+                            SnodeMessage(
+                                destination.publicKey,
+                                Base64.encodeBytes(push),
+                                SnodeMessage.CONFIG_TTL,
+                                sentTimestamp
+                            )
+
+                        ConfigMessageInformation(
+                            SnodeAPI.buildAuthenticatedStoreBatchInfo(
+                                config.namespace(),
+                                message
+                            )!!,
+                            config,
+                            seqNo
+                        )
                     }
-                }
+                } else throw InvalidDestination()
         return SyncInformation(configsRequiringPush, toDelete)
     }
 
