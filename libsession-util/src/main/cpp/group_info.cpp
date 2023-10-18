@@ -192,6 +192,7 @@ Java_network_loki_messenger_libsession_1util_GroupInfoConfig_getDescription(JNIE
                                                                             jobject thiz) {
     std::lock_guard guard{util::util_mutex_};
     auto group_info = ptrToInfo(env, thiz);
+    return nullptr;
 }
 
 extern "C"

@@ -4,6 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import network.loki.messenger.libsession_util.util.*
 import org.hamcrest.CoreMatchers.equalTo
+import org.hamcrest.CoreMatchers.hasItem
 import org.hamcrest.CoreMatchers.not
 import org.hamcrest.CoreMatchers.notNullValue
 import org.hamcrest.MatcherAssert.assertThat
@@ -272,7 +273,8 @@ class InstrumentedTests {
         val newConf = UserProfile.newInstance(edSk)
 
         val accepted = newConf.merge("fakehash1" to newToPush)
-        assertEquals(1, accepted)
+        assertThat(accepted, hasItem("fakehash1"))
+        assertThat(accepted.size, equalTo(1))
 
         assertTrue(newConf.needsDump())
         assertFalse(newConf.needsPush())
@@ -664,7 +666,16 @@ class InstrumentedTests {
         val groupConfig = UserGroupsConfig.newInstance(userSecret)
         val group = groupConfig.createGroup()
         groupConfig.set(group)
-        val groupMembersConfig = GroupMembersConfig.newInstance()
+        val groupMembersConfig = GroupMembersConfig.newInstance(
+            group.groupSessionId.pubKeyBytes,
+            group.signingKey()
+        )
+        val toAdd = GroupMember(userSessionId.hexString(), "user", admin = true)
+        groupMembersConfig.set(
+            toAdd
+        )
+        assertThat(groupMembersConfig.all().size, equalTo(1))
+        assertThat(groupMembersConfig.all(), hasItem(toAdd))
     }
 
     @Test
@@ -674,8 +685,21 @@ class InstrumentedTests {
         val group = groupConfig.createGroup()
         groupConfig.set(group)
         val allClosedGroups = groupConfig.all()
-        assertThat(allClosedGroups, equalTo(1))
+        assertThat(allClosedGroups.size, equalTo(1))
         assertTrue(groupConfig.needsPush())
+    }
+
+    @Test
+    fun testNewGroupInfo() {
+        val (_, userSecret) = keyPair
+        val groupConfig = UserGroupsConfig.newInstance(userSecret)
+        val group = groupConfig.createGroup()
+        groupConfig.set(group)
+        val groupInfo = GroupInfoConfig.newInstance(group.groupSessionId.pubKeyBytes, group.signingKey())
+        groupInfo.setName("Test Group")
+        groupInfo.setDescription("This is a test group")
+        assertThat(groupInfo.getName(), equalTo("Test Group"))
+        assertThat(groupInfo.getDescription(), equalTo("This is a test group"))
     }
 
 }

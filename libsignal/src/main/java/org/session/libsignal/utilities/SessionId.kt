@@ -10,15 +10,18 @@ class SessionId {
 
     var prefix: IdPrefix?
     var publicKey: String
+    var pubKeyBytes: ByteArray
 
     constructor(id: String) {
         prefix = IdPrefix.fromValue(id)
         publicKey = id.drop(2)
+        pubKeyBytes = Hex.fromStringCondensed(publicKey)
     }
 
     constructor(prefix: IdPrefix, publicKey: ByteArray) {
         this.prefix = prefix
         this.publicKey = publicKey.toHexString()
+        this.pubKeyBytes = publicKey
     }
 
     fun hexString() = prefix?.value + publicKey
