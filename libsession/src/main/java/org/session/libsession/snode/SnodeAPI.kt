@@ -872,7 +872,7 @@ object SnodeAPI {
         }
     }
 
-    private fun updateLastMessageHashValueIfPossible(snode: Snode, publicKey: String, rawMessages: List<*>, namespace: Int) {
+    fun updateLastMessageHashValueIfPossible(snode: Snode, publicKey: String, rawMessages: List<*>, namespace: Int) {
         val lastMessageAsJSON = rawMessages.lastOrNull() as? Map<*, *>
         val hashValue = lastMessageAsJSON?.get("hash") as? String
         if (hashValue != null) {
@@ -882,7 +882,7 @@ object SnodeAPI {
         }
     }
 
-    private fun removeDuplicates(publicKey: String, rawMessages: List<*>, namespace: Int, updateStoredHashes: Boolean): List<*> {
+    fun removeDuplicates(publicKey: String, rawMessages: List<*>, namespace: Int, updateStoredHashes: Boolean): List<*> {
         val originalMessageHashValues = database.getReceivedMessageHashValues(publicKey, namespace)?.toMutableSet() ?: mutableSetOf()
         val receivedMessageHashValues = originalMessageHashValues.toMutableSet()
         val result = rawMessages.filter { rawMessage ->
