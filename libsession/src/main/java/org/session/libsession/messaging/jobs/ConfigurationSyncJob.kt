@@ -2,14 +2,10 @@ package org.session.libsession.messaging.jobs
 
 import network.loki.messenger.libsession_util.Config
 import network.loki.messenger.libsession_util.ConfigBase
-import network.loki.messenger.libsession_util.ConfigBase.Companion.protoKindFor
 import network.loki.messenger.libsession_util.GroupKeysConfig
-import network.loki.messenger.libsession_util.util.ConfigPush
 import nl.komponents.kovenant.functional.bind
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.messages.Destination
-import org.session.libsession.messaging.messages.control.SharedConfigurationMessage
-import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.utilities.Data
 import org.session.libsession.snode.RawResponse
 import org.session.libsession.snode.SnodeAPI
@@ -55,10 +51,11 @@ data class ConfigurationSyncJob(val destination: Destination) : Job {
         val toDelete = mutableListOf<String>()
         val configsRequiringPush =
                 if (destination is Destination.ClosedGroup) {
-                    val sentTimestamp = SnodeAPI.nowWithOffset
                     // destination is a closed group, get all configs requiring push here
                     val groupId = SessionId.from(destination.publicKey)
 
+                    // Get the signing key for pushing configs
+                    // TODO: do nothing if we don't have the keys / aren't admin
                     val signingKey =
                             configFactoryProtocol.userGroups!!.getClosedGroup(
                                             destination.publicKey
@@ -82,75 +79,77 @@ data class ConfigurationSyncJob(val destination: Destination) : Job {
                     // in case any of the configs don't need pushing, they won't be freed later
                     (listOf(keys, info, members) subtract requiringPush).forEach(Config::free)
 
-                    requiringPush.map { config ->
-                        val (push, seqNo, obsoleteHashes) =
-                                if (config is GroupKeysConfig) {
-                                    ConfigPush(
-                                            config.pendingConfig()!!,
-                                            0,
-                                            emptyList()
-                                    ) // should not be null from filter step previous
-                                } else if (config is ConfigBase) {
-                                    config.push()
-                                } else
-                                        throw IllegalArgumentException(
-                                                "Got a non group keys or config base object for config sync"
-                                        )
-                        toDelete += obsoleteHashes
-                        val message =
-                                SnodeMessage(
-                                        destination.publicKey,
-                                        Base64.encodeBytes(push),
-                                        SnodeMessage.CONFIG_TTL,
-                                        sentTimestamp
-                                )
-
-                        ConfigMessageInformation(
-                                SnodeAPI.buildAuthenticatedStoreBatchInfo(
-                                        config.namespace(),
-                                        message,
-                                        signingKey
-                                ),
-                                config,
-                                seqNo
-                        )
+                    requiringPush.mapNotNull { config ->
+                        if (config is GroupKeysConfig) {
+                            config.messageInformation(destination.publicKey, signingKey)
+                        } else if (config is ConfigBase) {
+                            config.messageInformation(toDelete, destination.publicKey, signingKey, groupId.publicKey)
+                        } else {
+                            Log.e("ConfigurationSyncJob", "Tried to create a message from an unknown config")
+                            null
+                        }
                     }
                 } else if (destination is Destination.Contact) {
                     // assume our own user as check already takes place in `execute` for our own key
                     // if contact
-                    val sentTimestamp = SnodeAPI.nowWithOffset
                     configFactoryProtocol.getUserConfigs().filter { it.needsPush() }.map { config ->
-                        val (push, seqNo, obsoleteHashes) = config.push()
-                        toDelete += obsoleteHashes
-                        val message =
-                            SnodeMessage(
-                                destination.publicKey,
-                                Base64.encodeBytes(push),
-                                SnodeMessage.CONFIG_TTL,
-                                sentTimestamp
-                            )
-
-                        ConfigMessageInformation(
-                            SnodeAPI.buildAuthenticatedStoreBatchInfo(
-                                config.namespace(),
-                                message
-                            )!!,
-                            config,
-                            seqNo
-                        )
+                        config.messageInformation(toDelete, destination.publicKey)
                     }
                 } else throw InvalidDestination()
         return SyncInformation(configsRequiringPush, toDelete)
     }
 
-    private fun messageForConfig(
-            config: ConfigBase,
-            bytes: ByteArray,
-            seqNo: Long
-    ): SnodeBatchRequestInfo? {
-        val message = SharedConfigurationMessage(config.protoKindFor(), bytes, seqNo)
-        val snodeMessage = MessageSender.buildWrappedMessageToSnode(destination, message, true)
-        return SnodeAPI.buildAuthenticatedStoreBatchInfo(config.namespace(), snodeMessage)
+    private fun ConfigBase.messageInformation(toDelete: MutableList<String>,
+                                              destinationPubKey: String,
+                                              signingKey: ByteArray? = null,
+                                              ed25519PubKey: String? = null): ConfigMessageInformation {
+        val sentTimestamp = SnodeAPI.nowWithOffset
+        val (push, seqNo, obsoleteHashes) = push()
+        toDelete.addAll(obsoleteHashes)
+        val message =
+            SnodeMessage(
+                destinationPubKey,
+                Base64.encodeBytes(push),
+                SnodeMessage.CONFIG_TTL,
+                sentTimestamp
+            )
+
+        return ConfigMessageInformation(
+            if (signingKey != null && ed25519PubKey != null) {
+               SnodeAPI.buildAuthenticatedStoreBatchInfo(
+                   namespace(),
+                   message,
+                   signingKey,
+                   ed25519PubKey
+               )
+            } else SnodeAPI.buildAuthenticatedStoreBatchInfo(
+                namespace(),
+                message,
+            )!!,
+            this,
+            seqNo
+        )
+    }
+
+    private fun GroupKeysConfig.messageInformation(destinationPubKey: String, signingKey: ByteArray): ConfigMessageInformation {
+        val sentTimestamp = SnodeAPI.nowWithOffset
+        val message =
+            SnodeMessage(
+                destinationPubKey,
+                Base64.encodeBytes(pendingConfig()!!), // should not be null from checking has pending
+                SnodeMessage.CONFIG_TTL,
+                sentTimestamp
+            )
+
+        return ConfigMessageInformation(
+            SnodeAPI.buildAuthenticatedStoreBatchInfo(
+                namespace(),
+                message,
+                signingKey
+            ),
+            this,
+            0
+        )
     }
 
     override suspend fun execute(dispatcherName: String) {
