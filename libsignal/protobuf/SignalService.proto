@@ -127,6 +127,87 @@ message DataMessage {
     optional GroupPromoteMessage    promoteMessage    = 34;
   }
 
+  // New closed group update messages
+  message GroupUpdateMessage {
+    optional GroupUpdateInviteMessage               inviteMessage          = 1;
+    optional GroupUpdateDeleteMessage               deleteMessage          = 2;
+    optional GroupUpdateInfoChangeMessage           infoChangeMessage      = 3;
+    optional GroupUpdateMemberChangeMessage         memberChangeMessage    = 4;
+    optional GroupUpdatePromoteMessage              promoteMessage         = 5;
+    optional GroupUpdateMemberLeftMessage           memberLeftMessage      = 6;
+    optional GroupUpdateInviteResponseMessage       inviteResponse         = 7;
+    optional GroupUpdateDeleteMemberContentMessage  deleteMemberContent    = 8;
+  }
+
+  // New closed groups
+  message GroupUpdateInviteMessage {
+    // @required
+    required string         groupSessionId         = 1; // The `groupIdentityPublicKey` with a `03` prefix
+    // @required
+    required string         name                   = 2;
+    // @required
+    required bytes          memberAuthData         = 3;
+    optional bytes          profileKey             = 4;
+    optional LokiProfile    profile                = 5;
+    // @required
+    required bytes          adminSignature         = 6;
+  }
+
+  message GroupUpdateDeleteMessage {
+    // @required
+    required string         groupSessionId          = 1; // The `groupIdentityPublicKey` with a `03` prefix
+    // @required
+    required bytes          adminSignature          = 2;
+  }
+
+  message GroupUpdatePromoteMessage {
+    // @required
+    required bytes          groupIdentitySeed       = 1;
+  }
+
+  message GroupUpdateInfoChangeMessage {
+    enum Type {
+      NAME                  = 1;
+      AVATAR                = 2;
+      DISAPPEARING_MESSAGES = 3;
+    }
+
+    // @required
+    required Type     type              = 1;
+    optional string   updatedName       = 2;
+    optional uint32   updatedExpiration = 3;
+  }
+
+  message GroupUpdateMemberChangeMessage {
+    enum Type {
+      ADDED    = 1;
+      REMOVED  = 2;
+      PROMOTED = 3;
+    }
+
+    // @required
+    required Type   type               = 1;
+    repeated bytes  memberPublicKeys   = 2;
+  }
+
+  message GroupUpdateMemberLeftMessage {
+    // the pubkey of the member left is included as part of the closed group encryption logic (senderIdentity on desktop)
+  }
+
+  message GroupUpdateInviteResponseMessage {
+    // @required
+    required bool                      isApproved                = 1; // Whether the request was approved
+    optional bytes                     profileKey                = 2;
+    optional LokiProfile               profile                   = 3;
+  }
+
+  message GroupUpdateDeleteMemberContentMessage {
+    repeated bytes  memberPublicKeys   = 1;
+    // @required
+    required bytes  adminSignature     = 2;
+  }
+
+
   message ClosedGroupControlMessage {
 
     enum Type {

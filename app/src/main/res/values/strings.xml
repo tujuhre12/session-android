@@ -80,6 +80,9 @@
     <string name="AccessibilityId_done">Done</string>
     <string name="AccessibilityId_mentions_list">Mentions list</string>
     <string name="AccessibilityId_contact_mentions">Contact mentions</string>
+    <string name="AccessibilityId_closed_group_edit_group_name">Group name</string>
+    <string name="AccessibilityId_closed_group_edit_group_description">Group description</string>
+    <string name="AccessibilityId_create_closed_group_create_button">Create group</string>
     <!--  Conversation icons -->
     <string name="AccessibilityId_call_button">Call button</string>
     <string name="AccessibilityId_settings">Settings</string>

@@ -702,4 +702,51 @@ class InstrumentedTests {
         assertThat(groupInfo.getDescription(), equalTo("This is a test group"))
     }
 
+    @Test
+    fun testGroupKeyConfig() {
+        val (userPubKey, userSecret) = keyPair
+        val groupConfig = UserGroupsConfig.newInstance(userSecret)
+        val group = groupConfig.createGroup()
+        groupConfig.set(group)
+        val groupInfo = GroupInfoConfig.newInstance(group.groupSessionId.pubKeyBytes, group.signingKey())
+        groupInfo.setName("test")
+        val groupMembers = GroupMembersConfig.newInstance(group.groupSessionId.pubKeyBytes, group.signingKey())
+        groupMembers.set(
+            GroupMember(
+                sessionId = SessionId(IdPrefix.STANDARD, Sodium.ed25519PkToCurve25519(userPubKey)).hexString(),
+                name = "admin",
+                admin = true
+            )
+        )
+        val membersDump = groupMembers.dump()
+        val infoDump = groupInfo.dump()
+
+        val ourKeyConfig = GroupKeysConfig.newInstance(
+            userSecret,
+            group.groupSessionId.pubKeyBytes,
+            group.signingKey(),
+            info = groupInfo,
+            members = groupMembers
+        )
+
+        assertThat(ourKeyConfig.needsRekey(), equalTo(false))
+        val pushed = ourKeyConfig.pendingConfig()!!
+        val messageTimestamp = System.currentTimeMillis()
+        ourKeyConfig.loadKey(pushed, "testabc", messageTimestamp, groupInfo, groupMembers)
+        assertThat(ourKeyConfig.needsDump(), equalTo(true))
+        ourKeyConfig.dump()
+        assertThat(ourKeyConfig.needsRekey(), equalTo(false))
+        val mergeInfo = GroupInfoConfig.newInstance(group.groupSessionId.pubKeyBytes, group.signingKey(), infoDump)
+        val mergeMembers = GroupMembersConfig.newInstance(group.groupSessionId.pubKeyBytes, group.signingKey(), membersDump)
+        val mergeConfig = GroupKeysConfig.newInstance(userSecret, group.groupSessionId.pubKeyBytes, group.signingKey(), info = mergeInfo, members = mergeMembers)
+        mergeConfig.loadKey(pushed, "testabc", messageTimestamp, mergeInfo, mergeMembers)
+        assertThat(mergeConfig.needsRekey(), equalTo(false))
+        assertThat(mergeConfig.keys().size, equalTo(1))
+        assertThat(ourKeyConfig.keys().size, equalTo(1))
+        assertThat(mergeConfig.keys().first(), equalTo(ourKeyConfig.keys().first()))
+        assertThat(ourKeyConfig.groupKeys().size, equalTo(1))
+        assertThat(mergeConfig.groupKeys().size, equalTo(1))
+        assertThat(ourKeyConfig.groupKeys().first(), equalTo(mergeConfig.groupKeys().first()))
+    }
+
 }
