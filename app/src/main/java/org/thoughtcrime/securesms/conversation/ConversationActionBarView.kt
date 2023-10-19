@@ -120,7 +120,8 @@ class ConversationActionBarView : LinearLayout {
                 ConversationSetting(
                     "$prefix - ${ExpirationUtil.getExpirationAbbreviatedDisplayValue(context, config.expiryMode.expirySeconds)}" ,
                     ConversationSettingType.EXPIRATION,
-                    R.drawable.ic_timer
+                    R.drawable.ic_timer,
+                    resources.getString(R.string.AccessibilityId_disappearing_messages_type_and_time)
                 )
             )
         }
