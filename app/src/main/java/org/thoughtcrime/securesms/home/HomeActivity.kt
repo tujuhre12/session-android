@@ -93,7 +93,7 @@ import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
 import org.thoughtcrime.securesms.mms.GlideApp
 import org.thoughtcrime.securesms.mms.GlideRequests
 import org.thoughtcrime.securesms.notifications.PushRegistry
-import org.thoughtcrime.securesms.onboarding.startRecoveryPasswordActivity
+import org.thoughtcrime.securesms.onboarding.recoverypassword.startRecoveryPasswordActivity
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.SettingsActivity
 import org.thoughtcrime.securesms.showMuteDialog
@@ -101,6 +101,7 @@ import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.OutlineButton
 import org.thoughtcrime.securesms.ui.PreviewTheme
+import org.thoughtcrime.securesms.ui.SessionShieldIcon
 import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
 import org.thoughtcrime.securesms.ui.h8
 import org.thoughtcrime.securesms.ui.small
@@ -365,12 +366,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                         Row {
                             Text("Save your recovery password", style = MaterialTheme.typography.h8)
                             Spacer(Modifier.requiredWidth(8.dp))
-                            Icon(
-                                painter = painterResource(R.drawable.session_shield),
-                                contentDescription = null,
-                                modifier = Modifier.align(Alignment.CenterVertically)
-                                    .wrapContentSize(unbounded = true)
-                            )
+                            SessionShieldIcon()
                         }
                         Text("Save your recovery password to make sure you don't lose access to your account.", style = MaterialTheme.typography.small)
                     }

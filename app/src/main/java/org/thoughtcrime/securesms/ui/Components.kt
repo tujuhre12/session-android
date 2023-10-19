@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ButtonColors
@@ -50,14 +51,19 @@ import org.thoughtcrime.securesms.components.ProfilePictureView
 import kotlin.math.roundToInt
 
 @Composable
-fun OutlineButton(text: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+fun OutlineButton(
+    text: String,
+    modifier: Modifier = Modifier,
+    color: Color = LocalExtraColors.current.prominentButtonColor,
+    onClick: () -> Unit
+) {
     OutlinedButton(
-        modifier = modifier.size(108.dp, 34.dp),
+        modifier = modifier,
         onClick = onClick,
-        border = BorderStroke(1.dp, LocalExtraColors.current.prominentButtonColor),
+        border = BorderStroke(1.dp, color),
         shape = RoundedCornerShape(50), // = 50% percent
         colors = ButtonDefaults.outlinedButtonColors(
-            contentColor = LocalExtraColors.current.prominentButtonColor,
+            contentColor = color,
             backgroundColor = Color.Unspecified
         )
     ) {
@@ -293,4 +299,14 @@ fun Arc(
             size = Size(size.width, size.height)
         )
     }
+}
+
+@Composable
+fun RowScope.SessionShieldIcon() {
+    Icon(
+        painter = painterResource(R.drawable.session_shield),
+        contentDescription = null,
+        modifier = Modifier.align(Alignment.CenterVertically)
+            .wrapContentSize(unbounded = true)
+    )
 }
