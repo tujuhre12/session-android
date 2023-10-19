@@ -32,7 +32,7 @@ class CreateGroupTests {
         val nameDesc = application.getString(R.string.AccessibilityId_closed_group_edit_group_name)
         val buttonDesc = application.getString(R.string.AccessibilityId_create_closed_group_create_button)
 
-        lateinit var postedGroup: CreateGroupState
+        var postedGroup: CreateGroupState? = null
         var backPressed = false
         var closePressed = false
 
@@ -54,7 +54,7 @@ class CreateGroupTests {
             onNode(hasContentDescriptionExactly(buttonDesc)).performClick()
         }
 
-        assertThat(postedGroup.groupName, equalTo("Name"))
+        assertThat(postedGroup!!.groupName, equalTo("Name"))
         assertThat(backPressed, equalTo(false))
         assertThat(closePressed, equalTo(false))
 
@@ -62,17 +62,99 @@ class CreateGroupTests {
 
     @Test
     fun testFailToCreate() {
+        val application = InstrumentationRegistry.getInstrumentation().targetContext.applicationContext as ApplicationContext
+        // Accessibility IDs
+        val nameDesc = application.getString(R.string.AccessibilityId_closed_group_edit_group_name)
+        val buttonDesc = application.getString(R.string.AccessibilityId_create_closed_group_create_button)
 
+        var postedGroup: CreateGroupState? = null
+        var backPressed = false
+        var closePressed = false
+
+        composeTest.setContent {
+            AppTheme {
+                CreateGroup(
+                    viewState = CreateGroupFragment.ViewState.DEFAULT,
+                    createGroupState = CreateGroupState("", "", emptySet()),
+                    onCreate = { submitted ->
+                        postedGroup = submitted
+                    },
+                    onBack = { backPressed = true },
+                    onClose = { closePressed = true })
+            }
+        }
+        with(composeTest) {
+            onNode(hasContentDescriptionExactly(nameDesc)).performTextInput("")
+            onNode(hasContentDescriptionExactly(buttonDesc)).performClick()
+        }
+
+        assertThat(postedGroup, nullValue())
+        assertThat(backPressed, equalTo(false))
+        assertThat(closePressed, equalTo(false))
     }
 
     @Test
     fun testBackButton() {
+        val application = InstrumentationRegistry.getInstrumentation().targetContext.applicationContext as ApplicationContext
+        // Accessibility IDs
+        val backDesc = application.getString(R.string.new_conversation_dialog_back_button_content_description)
+        val closeDesc = application.getString(R.string.new_conversation_dialog_close_button_content_description)
 
+        var postedGroup: CreateGroupState? = null
+        var backPressed = false
+        var closePressed = false
+
+        composeTest.setContent {
+            AppTheme {
+                CreateGroup(
+                    viewState = CreateGroupFragment.ViewState.DEFAULT,
+                    createGroupState = CreateGroupState("", "", emptySet()),
+                    onCreate = { submitted ->
+                        postedGroup = submitted
+                    },
+                    onBack = { backPressed = true },
+                    onClose = { closePressed = true })
+            }
+        }
+
+        with (composeTest) {
+            onNode(hasContentDescriptionExactly(backDesc)).performClick()
+        }
+
+        assertThat(postedGroup, nullValue())
+        assertThat(backPressed, equalTo(true))
     }
 
     @Test
     fun testCloseButton() {
+        val application = InstrumentationRegistry.getInstrumentation().targetContext.applicationContext as ApplicationContext
+        // Accessibility IDs
+        val backDesc = application.getString(R.string.new_conversation_dialog_back_button_content_description)
+        val closeDesc = application.getString(R.string.new_conversation_dialog_close_button_content_description)
 
+        var postedGroup: CreateGroupState? = null
+        var backPressed = false
+        var closePressed = false
+
+        composeTest.setContent {
+            AppTheme {
+                CreateGroup(
+                    viewState = CreateGroupFragment.ViewState.DEFAULT,
+                    createGroupState = CreateGroupState("", "", emptySet()),
+                    onCreate = { submitted ->
+                        postedGroup = submitted
+                    },
+                    onBack = { backPressed = true },
+                    onClose = { closePressed = true })
+            }
+        }
+
+        with (composeTest) {
+            onNode(hasContentDescriptionExactly(closeDesc)).performClick()
+        }
+
+        assertThat(postedGroup, nullValue())
+        assertThat(closePressed, equalTo(true))
     }
 
 
