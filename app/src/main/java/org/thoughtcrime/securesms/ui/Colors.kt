@@ -1,10 +1,21 @@
 package org.thoughtcrime.securesms.ui
 
+import android.content.Context
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.material.ButtonDefaults
+import androidx.compose.material.Card
 import androidx.compose.material.Colors
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
+import androidx.compose.material.primarySurface
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.dp
 
 val colorDestructive = Color(0xffFF453A)
 
@@ -62,3 +73,45 @@ fun transparentButtonColors() = ButtonDefaults.buttonColors(backgroundColor = Co
 
 @Composable
 fun destructiveButtonColors() = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent, contentColor = colorDestructive)
+
+@Preview
+@Composable
+fun Context.PreviewMessageDetails(
+    @PreviewParameter(ThemeResPreviewParameterProvider::class) themeResId: Int
+) {
+    PreviewTheme(themeResId) {
+        Colors()
+    }
+}
+
+@Composable
+private fun Colors() {
+    AppTheme {
+        Column {
+            Box(Modifier.background(MaterialTheme.colors.primary)) {
+                Text("primary")
+            }
+            Box(Modifier.background(MaterialTheme.colors.primaryVariant)) {
+                Text("primaryVariant")
+            }
+            Box(Modifier.background(MaterialTheme.colors.secondary)) {
+                Text("secondary")
+            }
+            Box(Modifier.background(MaterialTheme.colors.secondaryVariant)) {
+                Text("secondaryVariant")
+            }
+            Box(Modifier.background(MaterialTheme.colors.surface)) {
+                Text("surface")
+            }
+            Box(Modifier.background(MaterialTheme.colors.primarySurface)) {
+                Text("primarySurface")
+            }
+            Box(Modifier.background(MaterialTheme.colors.background)) {
+                Text("background")
+            }
+            Box(Modifier.background(MaterialTheme.colors.error)) {
+                Text("error")
+            }
+        }
+    }
+}

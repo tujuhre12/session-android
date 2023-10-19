@@ -94,7 +94,7 @@
                 android:background="?android:dividerHorizontal"
                 android:elevation="1dp" />
 
-            <org.thoughtcrime.securesms.onboarding.SeedReminderView
+            <androidx.compose.ui.platform.ComposeView
                 tools:visibility="gone"
                 android:id="@+id/seedReminderView"
                 android:layout_width="match_parent"

@@ -40,15 +40,19 @@ data class ExtraColors(
 fun AppTheme(
     content: @Composable () -> Unit
 ) {
-    val extraColors = LocalContext.current.run {
+    val context = LocalContext.current
+
+    val extraColors = context.run {
         ExtraColors(
             settingsBackground = getColorFromTheme(R.attr.colorSettingsBackground),
             prominentButtonColor = getColorFromTheme(R.attr.prominentButtonColor),
         )
     }
 
+    val surface = context.getColorFromTheme(R.attr.colorSettingsBackground)
+
     CompositionLocalProvider(LocalExtraColors provides extraColors) {
-        AppCompatTheme {
+        AppCompatTheme(surface = surface) {
             content()
         }
     }
@@ -60,6 +64,7 @@ fun AppCompatTheme(
     readColors: Boolean = true,
     typography: Typography = sessionTypography,
     shapes: Shapes = MaterialTheme.shapes,
+    surface: Color? = null,
     content: @Composable () -> Unit
 ) {
     val themeParams = remember(context.theme) {
@@ -69,8 +74,12 @@ fun AppCompatTheme(
         )
     }
 
+    val colors = themeParams.colors ?: MaterialTheme.colors
+
     MaterialTheme(
-        colors = themeParams.colors ?: MaterialTheme.colors,
+        colors = colors.copy(
+            surface = surface ?: colors.surface
+        ),
         typography = typography,
         shapes = shapes,
     ) {

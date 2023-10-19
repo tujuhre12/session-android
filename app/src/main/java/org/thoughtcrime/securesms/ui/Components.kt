@@ -58,7 +58,7 @@ fun OutlineButton(text: String, modifier: Modifier = Modifier, onClick: () -> Un
         shape = RoundedCornerShape(50), // = 50% percent
         colors = ButtonDefaults.outlinedButtonColors(
             contentColor = LocalExtraColors.current.prominentButtonColor,
-            backgroundColor = MaterialTheme.colors.background
+            backgroundColor = Color.Unspecified
         )
     ) {
         Text(text = text)

@@ -10,25 +10,41 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
-import android.text.SpannableString
 import android.widget.Toast
 import androidx.activity.viewModels
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredWidth
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsEndWidth
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material.Divider
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
+import androidx.compose.material.primarySurface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.core.os.bundleOf
+import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -36,7 +52,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.accompanist.themeadapter.appcompat.AppCompatTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
@@ -85,14 +100,18 @@ import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
 import org.thoughtcrime.securesms.mms.GlideApp
 import org.thoughtcrime.securesms.mms.GlideRequests
 import org.thoughtcrime.securesms.notifications.PushRegistry
-import org.thoughtcrime.securesms.onboarding.SeedActivity
-import org.thoughtcrime.securesms.onboarding.SeedReminderViewDelegate
+import org.thoughtcrime.securesms.onboarding.startSeedActivity
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.SettingsActivity
 import org.thoughtcrime.securesms.showMuteDialog
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.ui.AppTheme
+import org.thoughtcrime.securesms.ui.OutlineButton
+import org.thoughtcrime.securesms.ui.PreviewTheme
+import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
+import org.thoughtcrime.securesms.ui.classicDarkColors
 import org.thoughtcrime.securesms.ui.h8
+import org.thoughtcrime.securesms.ui.small
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.IP2Country
@@ -107,7 +126,6 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class HomeActivity : PassphraseRequiredActionBarActivity(),
     ConversationClickListener,
-    SeedReminderViewDelegate,
     GlobalSearchInputLayout.GlobalSearchInputLayoutListener {
 
     companion object {
@@ -196,15 +214,8 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         binding.sessionToolbar.disableClipping()
         // Set up seed reminder view
         lifecycleScope.launchWhenStarted {
-            val hasViewedSeed = textSecurePreferences.getHasViewedSeed()
-            if (!hasViewedSeed) {
-                binding.seedReminderView.isVisible = true
-                binding.seedReminderView.title = SpannableString("You're almost finished! 80%") // Intentionally not yet translated
-                binding.seedReminderView.subtitle = resources.getString(R.string.view_seed_reminder_subtitle_1)
-                binding.seedReminderView.setProgress(80, false)
-                binding.seedReminderView.delegate = this@HomeActivity
-            } else {
-                binding.seedReminderView.isVisible = false
+            binding.seedReminderView.setContent {
+                if (!textSecurePreferences.getHasViewedSeed()) SeedReminder()
             }
         }
         setupMessageRequestsBanner()
@@ -329,6 +340,53 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             configFactory.user?.let { user ->
                 if (!user.isBlockCommunityMessageRequestsSet()) {
                     user.setCommunityMessageRequests(false)
+                }
+            }
+        }
+    }
+
+    @Preview
+    @Composable
+    fun PreviewMessageDetails(
+        @PreviewParameter(ThemeResPreviewParameterProvider::class) themeResId: Int
+    ) {
+        PreviewTheme(themeResId) {
+            SeedReminder()
+        }
+    }
+
+    @Composable
+    private fun SeedReminder() {
+        AppTheme {
+            Column {
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(4.dp)
+                        .background(MaterialTheme.colors.secondary))
+                Row(
+                    Modifier
+                        .background(MaterialTheme.colors.surface)
+                        .padding(horizontal = 24.dp, vertical = 16.dp)
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Row {
+                            Text("Save your recovery password", style = MaterialTheme.typography.h8)
+                            Spacer(Modifier.requiredWidth(8.dp))
+                            Icon(
+                                painter = painterResource(R.drawable.session_shield),
+                                contentDescription = null,
+                                modifier = Modifier.align(Alignment.CenterVertically)
+                                    .wrapContentSize(unbounded = true)
+                            )
+                        }
+                        Text("Save your recovery password to make sure you don't lose access to your account.", style = MaterialTheme.typography.small)
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    OutlineButton(
+                        stringResource(R.string.continue_2),
+                        Modifier.align(Alignment.CenterVertically)
+                    ) { startSeedActivity() }
                 }
             }
         }
@@ -510,11 +568,6 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         super.onBackPressed()
     }
 
-    override fun handleSeedReminderViewContinueButtonTapped() {
-        val intent = Intent(this, SeedActivity::class.java)
-        show(intent)
-    }
-
     override fun onConversationClick(thread: ThreadRecord) {
         val intent = Intent(this, ConversationActivityV2::class.java)
         intent.putExtra(ConversationActivityV2.THREAD_ID, thread.threadId)
@@ -538,7 +591,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             bottomSheet.dismiss()
             if (!thread.recipient.isGroupRecipient && !thread.recipient.isLocalNumber) {
                 val clip = ClipData.newPlainText("Session ID", thread.recipient.address.toString())
-                val manager = getSystemService(PassphraseRequiredActionBarActivity.CLIPBOARD_SERVICE) as ClipboardManager
+                val manager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
                 manager.setPrimaryClip(clip)
                 Toast.makeText(this, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show()
             }
@@ -547,7 +600,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                 val openGroup = DatabaseComponent.get(this@HomeActivity).lokiThreadDatabase().getOpenGroupChat(threadId) ?: return@onCopyConversationId Unit
 
                 val clip = ClipData.newPlainText("Community URL", openGroup.joinURL)
-                val manager = getSystemService(PassphraseRequiredActionBarActivity.CLIPBOARD_SERVICE) as ClipboardManager
+                val manager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
                 manager.setPrimaryClip(clip)
                 Toast.makeText(this, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show()
             }
