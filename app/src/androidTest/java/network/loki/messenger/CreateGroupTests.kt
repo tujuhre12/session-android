@@ -60,4 +60,20 @@ class CreateGroupTests {
 
     }
 
+    @Test
+    fun testFailToCreate() {
+
+    }
+
+    @Test
+    fun testBackButton() {
+
+    }
+
+    @Test
+    fun testCloseButton() {
+
+    }
+
+
 }
