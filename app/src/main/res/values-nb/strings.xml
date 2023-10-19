@@ -560,7 +560,6 @@ nøkkelutvekslingsmelding.</string>
     <string name="activity_seed_title_2">Møt din gjenopprettingsfrase</string>
     <string name="activity_seed_explanation">Gjenopprettelsesfrasen din er hovednøkkelen til Session-IDen din – du kan bruke den for å gjenopprette Session-IDen din dersom du mister tilgang til enheten din. Arkiver gjenopprettelsesfrasen din på et trygt sted, og ikke gi den til noen.</string>
     <string name="activity_seed_reveal_button_title">Hold for å vise</string>
-    <string name="view_seed_reminder_title">Du er nesten ferdig! 80%</string>
     <string name="view_seed_reminder_subtitle_1">Sikre kontoen din ved å lagre din gjenopprettingsfrase</string>
     <string name="view_seed_reminder_subtitle_2">Trykk og hold inne de overflødige ordene for å hente gjenopprettingsfrasen din, og lagre den trygt å sikre din Session-ID.</string>
     <string name="view_seed_reminder_subtitle_3">Pass på å lagre gjenopprettingsfrasen på et sikkert sted</string>

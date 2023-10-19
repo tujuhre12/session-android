@@ -583,7 +583,6 @@
     <string name="activity_seed_title_2">Poznaj swoją frazę odzyskiwania</string>
     <string name="activity_seed_explanation">Twoja fraza odzyskiwania jest głównym kluczem do identyfikatora Session - możesz jej użyć do przywrócenia identyfikatora Session, jeśli stracisz dostęp do urządzenia. Przechowuj swoją frazę odzyskiwania w bezpiecznym miejscu i nikomu jej nie udostępniaj.</string>
     <string name="activity_seed_reveal_button_title">Przytrzymaj, aby odsłonić</string>
-    <string name="view_seed_reminder_title">Prawie skończyłeś! 80%</string>
     <string name="view_seed_reminder_subtitle_1">Zabezpiecz swoje konto, zapisując frazę odzyskiwania</string>
     <string name="view_seed_reminder_subtitle_2">Stuknij i przytrzymaj zredagowane słowa, aby odsłonić frazę odzyskiwania, a następnie przechowuj ją w bezpiecznym miejscu, aby zabezpieczyć identyfikator Session.</string>
     <string name="view_seed_reminder_subtitle_3">Pamiętaj, aby przechowywać frazę odzyskiwania w bezpiecznym miejscu</string>

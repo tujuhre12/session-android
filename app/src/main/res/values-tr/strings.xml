@@ -560,7 +560,6 @@ iletisi alındı!</string>
     <string name="activity_seed_title_2">Kurtarma ifadenizle tanışın</string>
     <string name="activity_seed_explanation">Kurtarma ifadeniz Session kimliğinizin ana anahtarıdır; cihazınıza erişiminizi kaybederseniz Session kimliğinizi geri yüklemek için bunu kullanabilirsiniz. Kurtarma ifadenizi güvenli bir yerde saklayın ve kimseye vermeyin.</string>
     <string name="activity_seed_reveal_button_title">Ortaya çıkarmak için basılı tutun</string>
-    <string name="view_seed_reminder_title">Neredeyse bitirdiniz! %80</string>
     <string name="view_seed_reminder_subtitle_1">Kurtarma ifadenizi kaydederek hesabınızı güvenceye alın</string>
     <string name="view_seed_reminder_subtitle_2">Kurtarma ifadenizi ortaya çıkarmak için düzeltilen kelimelere dokunun ve basılı tutun, ardından Session kimliğinizi korumak için güvenli bir şekilde saklayın.</string>
     <string name="view_seed_reminder_subtitle_3">Kurtarma ifadenizi güvenli bir yerde sakladığınızdan emin olun</string>

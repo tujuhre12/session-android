@@ -561,7 +561,6 @@
     <string name="activity_seed_title_2">Maak kennis met uw herstel zin</string>
     <string name="activity_seed_explanation">Uw herstel zin is de hoofdsleutel van uw Sessie-ID - u kunt deze gebruiken om uw Sessie-ID te herstellen als u de toegang tot uw apparaat verliest. Sla uw herstel zin op op een veilige plaats op en geef het aan niemand anders.</string>
     <string name="activity_seed_reveal_button_title">Ingedrukt houden om te onthullen</string>
-    <string name="view_seed_reminder_title">Je bent bijna klaar! 80%</string>
     <string name="view_seed_reminder_subtitle_1">Beveilig uw account door uw herstel zin op te slaan</string>
     <string name="view_seed_reminder_subtitle_2">Hou de herschreven woorden ingedrukt om uw herstelzin te onthullen, en sla het vervolgens veilig op om uw Sessie-ID te beveiligen.</string>
     <string name="view_seed_reminder_subtitle_3">Zorg ervoor dat u uw herstel zin op een veilige plek opslaat</string>

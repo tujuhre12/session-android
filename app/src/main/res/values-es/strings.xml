@@ -560,7 +560,6 @@ de intercambio de claves!</string>
     <string name="activity_seed_title_2">Guarda tu frase de recuperación</string>
     <string name="activity_seed_explanation">Tu frase de recuperación es la llave maestra de tu ID de Session, puedes usarla para recuperar tu ID de Session en caso de pérdida de acceso a tu dispositivo. Guarda tu frase de recuperación en un lugar seguro y no se la digas a nadie.</string>
     <string name="activity_seed_reveal_button_title">Mantén pulsado para revelar</string>
-    <string name="view_seed_reminder_title">¡Ya casi has terminado! 80%</string>
     <string name="view_seed_reminder_subtitle_1">Protege tu cuenta guardando tu frase de recuperación</string>
     <string name="view_seed_reminder_subtitle_2">Toca y mantén presionadas las palabras redactadas para revelar tu frase de recuperación, después guárdala de manera segura para proteger tu ID de Session.</string>
     <string name="view_seed_reminder_subtitle_3">Asegúrate de guardar tu frase de recuperación en un lugar seguro</string>

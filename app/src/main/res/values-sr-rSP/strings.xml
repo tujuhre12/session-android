@@ -522,7 +522,6 @@
     <string name="activity_seed_title">Фраза за опоравак</string>
     <string name="activity_seed_title_2">Сретни своју фразу за опоравак</string>
     <string name="activity_seed_reveal_button_title">Држи да откријеш</string>
-    <string name="view_seed_reminder_title">Скоро си завршио! 80%</string>
     <string name="activity_path_device_row_title">Ти</string>
     <!-- Next round of translation -->
 </resources>

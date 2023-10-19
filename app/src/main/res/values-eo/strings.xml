@@ -560,7 +560,6 @@
     <string name="activity_seed_title_2">Ekkonu vian riparan frazon</string>
     <string name="activity_seed_explanation">Via ripara frazo estas la ĉefŝlosilo de via Session ID — vi povas uzi ĝin por restaŭri vian Session ID-on se vi malgajros aliron al via aparato. Konservu vian riparan frazon en sekura loko, kaj donu ĝin al neniu.</string>
     <string name="activity_seed_reveal_button_title">Tuŝadu por malkaŝi</string>
-    <string name="view_seed_reminder_title">Vi preskaŭ estas fininta! 80%</string>
     <string name="view_seed_reminder_subtitle_1">Sekurigi vian konton per konservi vian riparan frazon</string>
     <string name="view_seed_reminder_subtitle_2">Tuŝadu la kaŝitajn vortojn por malkaŝi vian riparan frazon, tiam konservi ĝin sekure por sekurigi vian Session ID-on.</string>
     <string name="view_seed_reminder_subtitle_3">Certigu konservi vian riparan frazon en sekura loko</string>

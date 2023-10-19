@@ -559,7 +559,6 @@ on viallinen!</string>
     <string name="activity_seed_title_2">Tutustu palautuslauseesi</string>
     <string name="activity_seed_explanation">Sinun palautuslause on pääavain Session tunnukseesi — voit käyttää sitä palauttamaan Session tunnuksesi jos menetät pääsyn laitteeseen. Säilytä palautuslauseesi turvallisessa paikassa, ja älä anna sitä kenellekään.</string>
     <string name="activity_seed_reveal_button_title">Pidä pohjassa paljastaaksesi</string>
-    <string name="view_seed_reminder_title">Olet melkein valmis! 80%</string>
     <string name="view_seed_reminder_subtitle_1">Suojaa tilisi tallentamalla palautuslauseke</string>
     <string name="view_seed_reminder_subtitle_2">Napauta ja pidä piiloteettuja sanoja paljastaaksesi palautuslauseen, ja säästä se turvallisesti suojataksesi Session tilisi.</string>
     <string name="view_seed_reminder_subtitle_3">Varmista, että säilytät palautuslauseesi turvallisessa paikassa</string>

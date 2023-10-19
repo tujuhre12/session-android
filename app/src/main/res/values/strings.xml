@@ -750,7 +750,6 @@
     <string name="activity_seed_title_2">Meet your recovery phrase</string>
     <string name="activity_seed_explanation">Your recovery phrase is the master key to your Session ID — you can use it to restore your Session ID if you lose access to your device. Store your recovery phrase in a safe place, and don\'t give it to anyone.</string>
     <string name="activity_seed_reveal_button_title">Hold to reveal</string>
-    <string name="view_seed_reminder_title">You\'re almost finished! 80%</string>
     <string name="view_seed_reminder_subtitle_1">Secure your account by saving your recovery phrase</string>
     <string name="view_seed_reminder_subtitle_2">Tap and hold the redacted words to reveal your recovery phrase, then store it safely to secure your Session ID.</string>
     <string name="view_seed_reminder_subtitle_3">Make sure to store your recovery phrase in a safe place</string>
