@@ -40,7 +40,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -150,6 +153,7 @@ fun <T> TitledRadioButton(option: RadioOption<T>, onClick: () -> Unit) {
             .clickable { if (!option.selected) onClick() }
             .heightIn(min = 60.dp)
             .padding(horizontal = 32.dp)
+            .contentDescription(option.contentDescription)
     ) {
         Column(modifier = Modifier
             .weight(1f)
@@ -178,6 +182,12 @@ fun <T> TitledRadioButton(option: RadioOption<T>, onClick: () -> Unit) {
                 .align(Alignment.CenterVertically)
         )
     }
+}
+
+@Composable
+fun Modifier.contentDescription(text: GetString): Modifier {
+    val context = LocalContext.current
+    return semantics { contentDescription = text(context) }
 }
 
 @Composable
