@@ -1172,7 +1172,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     override fun showDisappearingMessages(thread: Recipient) {
         if (thread.isClosedGroupRecipient) {
-            groupDb.getGroup(thread.address.toGroupString()).orNull()?.run { if (isActive) return }
+            groupDb.getGroup(thread.address.toGroupString()).orNull()?.run { if (!isActive) return }
         }
         Intent(this, DisappearingMessagesActivity::class.java)
             .apply { putExtra(DisappearingMessagesActivity.THREAD_ID, viewModel.threadId) }
