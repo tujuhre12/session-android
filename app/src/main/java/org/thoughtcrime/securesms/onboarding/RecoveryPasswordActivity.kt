@@ -45,6 +45,6 @@ class RecoveryPasswordActivity : BaseActionBarActivity() {
     }
 }
 
-fun Context.startSeedActivity() {
+fun Context.startRecoveryPasswordActivity() {
     Intent(this, RecoveryPasswordActivity::class.java).also(::startActivity)
 }

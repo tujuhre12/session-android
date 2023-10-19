@@ -374,7 +374,7 @@
                     android:paddingHorizontal="@dimen/large_spacing"
                     android:layout_width="match_parent"
                     android:layout_height="@dimen/setting_button_height"
-                    android:contentDescription="@string/AccessibilityId_recovery_phrase">
+                    android:contentDescription="@string/AccessibilityId_recovery_password">
                     <ImageView
                         android:id="@+id/seedContainer"
                         android:layout_width="@dimen/small_profile_picture_size"
@@ -394,7 +394,7 @@
                         android:textStyle="bold"
                         android:gravity="center"
                         android:layout_toEndOf="@+id/seedContainer"
-                        android:text="@string/activity_settings_recovery_phrase_button_title"  />
+                        android:text="@string/activity_settings_recovery_password_button_title"  />
                 </RelativeLayout>
 
                 <View

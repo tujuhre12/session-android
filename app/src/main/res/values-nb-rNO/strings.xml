@@ -600,7 +600,6 @@ nøkkelutvekslingsmelding.</string>
     <string name="activity_settings_devices_button_title">Enheter</string>
     <string name="activity_settings_invite_button_title">Inviter en venn</string>
     <string name="activity_settings_faq_button_title">Ofte Stilte Spørsmål</string>
-    <string name="activity_settings_recovery_phrase_button_title">Gjenopprettingsfrase</string>
     <string name="activity_settings_clear_all_data_button_title">Fjern data</string>
     <string name="activity_settings_clear_all_data_and_network_button_title">Fjern data inkludert nettverk</string>
     <string name="activity_settings_help_translate_session">Hjelp oss med å oversette Session</string>
@@ -613,8 +612,6 @@ nøkkelutvekslingsmelding.</string>
     <string name="preferences_notifications_strategy_category_fast_mode_summary">Du vil bli varslet om nye meldinger på en pålitelig måte, og umiddelbart ved hjelp av Googles varslingsservere.</string>
     <string name="fragment_device_list_bottom_sheet_change_name_button_title">Endre navn</string>
     <string name="fragment_device_list_bottom_sheet_unlink_device_button_title">Koble fra enhet</string>
-    <string name="dialog_seed_title">Din gjenopprettingsfrase</string>
-    <string name="dialog_seed_explanation">Dette er din gjenopprettingsfrase, med den, du kan gjenopprette eller overføre din Session-ID til en ny enhet.</string>
     <string name="dialog_clear_all_data_title">Fjern alle data</string>
     <string name="dialog_clear_all_data_explanation">Dette vil permanent slette dine meldinger, økter og kontakter.</string>
     <string name="dialog_clear_all_data_network_explanation">Ønsker du å rense kun denne enheten, eller slette hele kontoen din?</string>

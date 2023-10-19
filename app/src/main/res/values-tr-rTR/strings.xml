@@ -600,7 +600,6 @@ iletisi alındı!</string>
     <string name="activity_settings_devices_button_title">Cihazlar</string>
     <string name="activity_settings_invite_button_title">Bir arkadaş davet et</string>
     <string name="activity_settings_faq_button_title">SSS</string>
-    <string name="activity_settings_recovery_phrase_button_title">Kurtarma Sözcük Grubu</string>
     <string name="activity_settings_clear_all_data_button_title">Verileri Temizle</string>
     <string name="activity_settings_clear_all_data_and_network_button_title">Ağ Dahil Verileri Temizle</string>
     <string name="activity_settings_help_translate_session">Session programını çevirmemize yardımcı olun</string>
@@ -613,8 +612,6 @@ iletisi alındı!</string>
     <string name="preferences_notifications_strategy_category_fast_mode_summary">Google\'ın bildirim sunucularını kullanarak yeni iletilerden güvenilir ve anında haberdar olacaksınız.</string>
     <string name="fragment_device_list_bottom_sheet_change_name_button_title">Adı değiştir</string>
     <string name="fragment_device_list_bottom_sheet_unlink_device_button_title">Cihazın bağlantısını kaldır</string>
-    <string name="dialog_seed_title">Kurtarma İfadeniz</string>
-    <string name="dialog_seed_explanation">Bu sizin kurtarma ifadenizdir. Bununla, Session Kimliğinizi yeni bir cihaza geri yükleyebilir veya taşıyabilirsiniz.</string>
     <string name="dialog_clear_all_data_title">Tüm Verileri Temizle</string>
     <string name="dialog_clear_all_data_explanation">Bu, mesajlarınızı, oturumlarınızı ve kişilerinizi kalıcı olarak siler.</string>
     <string name="dialog_clear_all_data_network_explanation">Yalnızca bu cihazı mı silmek istiyorsunuz yoksa hesabınızın tamamını mı silmek istiyorsunuz?</string>

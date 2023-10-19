@@ -624,7 +624,6 @@
     <string name="activity_settings_devices_button_title">دستگاه‌ها</string>
     <string name="activity_settings_invite_button_title">دعوت از یک دوست</string>
     <string name="activity_settings_faq_button_title">سوالات متداول</string>
-    <string name="activity_settings_recovery_phrase_button_title">عبارت بازیابی</string>
     <string name="activity_settings_clear_all_data_button_title">پاک کردن اطلاعات</string>
     <string name="activity_settings_clear_all_data_and_network_button_title">پاک کردن داده‌ها همراه با شبکه</string>
     <string name="activity_settings_help_translate_session">به ما کمک کنید که سشن را ترجمه کنیم</string>
@@ -646,8 +645,6 @@
     <string name="preferences_notifications_strategy_category_fast_mode_summary">با استفاده از سرورهای اعلان گوگل به طور قابل اعتماد و بلافاصله از پیام جدید مطلع خواهید شد.</string>
     <string name="fragment_device_list_bottom_sheet_change_name_button_title">تغییر نام</string>
     <string name="fragment_device_list_bottom_sheet_unlink_device_button_title">قطع اتصال دستگاه</string>
-    <string name="dialog_seed_title">عبارت بازیابی شما</string>
-    <string name="dialog_seed_explanation">می توانید از عبارت بازیابی یا برای بازیابی حساب خود و یا برای وصل با یک دستگاه استفاده کنید.</string>
     <string name="dialog_clear_all_data_title">پاک کردن همه داتا</string>
     <string name="dialog_clear_all_data_explanation">این گزینه به طور دائم پیام‌ها، جلسات و مخاطبین شما را حذف می‌کند.</string>
     <string name="dialog_clear_all_data_network_explanation">آیا فقط می‌خواهید این دستگاه را پاک کنید یا می‌خواهید کل اکانت را پاک کنید؟</string>
