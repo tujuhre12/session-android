@@ -581,10 +581,6 @@
     <string name="activity_home_leaving_group_failed_message">"Не удалось покинуть группу"</string>
     <string name="activity_home_delete_conversation_dialog_message">Вы уверены, что хотите удалить этот разговор?</string>
     <string name="activity_home_conversation_deleted_message">Разговор удален</string>
-    <string name="activity_seed_title">Ваша секретная фраза для восстановления</string>
-    <string name="activity_seed_title_2">А вот и ваша секретная фраза для восстановления</string>
-    <string name="activity_seed_explanation">Ваша секретная фраза является главным ключом к вашему Session ID. Вы можете использовать ее для восстановления Session ID, если потеряете доступ к своему устройству. Сохраните свою секретную фразу в безопасном месте, и никому ее не передавайте.</string>
-    <string name="activity_seed_reveal_button_title">Удерживайте, чтобы показать</string>
     <string name="view_seed_reminder_subtitle_1">Защитите свой аккаунт, сохранив секретную фразу</string>
     <string name="view_seed_reminder_subtitle_2">Нажмите и удерживайте сокращенные слова, чтобы открыть секретную фразу, а затем сохраните ее в надежном месте, чтобы защитить свой Session ID.</string>
     <string name="view_seed_reminder_subtitle_3">Обязательно сохраните секретную фразу в надежном месте</string>

@@ -555,10 +555,6 @@
     <string name="activity_home_leaving_group_failed_message">"Gruppe konnte nicht verlassen werden."</string>
     <string name="activity_home_delete_conversation_dialog_message">Möchten Sie diese Unterhaltung wirklich löschen?</string>
     <string name="activity_home_conversation_deleted_message">Die Unterhaltung wurde gelöscht.</string>
-    <string name="activity_seed_title">Ihr Wiederherstellungssatz</string>
-    <string name="activity_seed_title_2">Das ist Ihr Wiederherstellungssatz.</string>
-    <string name="activity_seed_explanation">Ihr Wiederherstellungssatz ist der Hauptschlüssel für Ihre Session ID. Mit diesem Satz können Sie Ihre Session ID wiederherstellen, wenn Sie den Zugriff auf Ihr Gerät verlieren. Bewahren Sie Ihren Wiederherstellungssatz an einem sicheren Ort auf und geben Sie ihn an niemandem weiter.</string>
-    <string name="activity_seed_reveal_button_title">Zur Anzeige gedrückt halten</string>
     <string name="view_seed_reminder_subtitle_1">Sichern Sie Ihr Konto, indem Sie Ihren Wiederherstellungssatz speichern</string>
     <string name="view_seed_reminder_subtitle_2">Tippen und halten Sie die verborgenen Wörter, um Ihren Wiederherstellungssatz anzuzeigen, und speichern Sie ihn dann sicher, um Ihre Session ID zu sichern.</string>
     <string name="view_seed_reminder_subtitle_3">Bewahren Sie Ihren Wiederherstellungssatz an einem sicheren Ort auf.</string>

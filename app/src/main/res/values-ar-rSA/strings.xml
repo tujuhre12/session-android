@@ -603,10 +603,6 @@
     <string name="activity_home_leaving_group_failed_message">"لا يمكن مغادرة المجموعة"</string>
     <string name="activity_home_delete_conversation_dialog_message">هل أنت متأكد من حذفك المحادثة؟</string>
     <string name="activity_home_conversation_deleted_message">تم حذف المحادثة</string>
-    <string name="activity_seed_title">عبارة الاسترجاع</string>
-    <string name="activity_seed_title_2">هذه هي عبارة الاسترجاع</string>
-    <string name="activity_seed_explanation">عبارة الاسترجاع هي مفتاح عنوان تعريفك - يمكنك استخدامها لاسترجاع عنوان تعريفك اذا فقدت الوصول لجهازك. قم بحفظها في مكان امن و لا تعطها الى اي أحد.</string>
-    <string name="activity_seed_reveal_button_title">انقر مطولاً للكشف</string>
     <string name="view_seed_reminder_subtitle_1">أمّن حسابك بحفظ كلمات إسترجاع الحساب</string>
     <string name="view_seed_reminder_subtitle_2">انقر بإستمرار على الكلمات المغطاة للكشف عن كلمات إسترداد حسابك، ثم قم بتخزينها بأمان للحفاظ على معرّف الجلسة الخاص بك.</string>
     <string name="view_seed_reminder_subtitle_3">تأكد من الإحتفاظ بكلمات الإسترجاع الخاصة بك في مكان آمن</string>

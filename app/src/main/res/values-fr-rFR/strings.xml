@@ -582,10 +582,6 @@
     <string name="activity_home_leaving_group_failed_message">"Impossible de quitter le groupe"</string>
     <string name="activity_home_delete_conversation_dialog_message">Voulez-vous vraiment supprimer cette conversation ?</string>
     <string name="activity_home_conversation_deleted_message">Conversation supprimée</string>
-    <string name="activity_seed_title">Votre phrase de récupération</string>
-    <string name="activity_seed_title_2">Voici votre phrase de récupération</string>
-    <string name="activity_seed_explanation">Votre phrase de récupération est la clé principale de votre Session ID - vous pouvez l\'utiliser pour restaurer votre Session ID si vous perdez l\'accès à votre appareil. Conservez la dans un endroit sûr et ne la donnez à personne.</string>
-    <string name="activity_seed_reveal_button_title">Appuyer pour révéler</string>
     <string name="view_seed_reminder_subtitle_1">Sécurisez votre compte en sauvegardant votre phrase de récupération</string>
     <string name="view_seed_reminder_subtitle_2">Appuyez et maintenez les mots masqués pour révéler votre phrase de récupération, puis stockez-la en toute sécurité pour sécuriser votre Session ID.</string>
     <string name="view_seed_reminder_subtitle_3">Assurez-vous de conserver votre phrase de récupération dans un endroit sûr</string>

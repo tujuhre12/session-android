@@ -544,10 +544,6 @@
     <string name="activity_home_leaving_group_failed_message">"无法离开群组"</string>
     <string name="activity_home_delete_conversation_dialog_message">您确定要删除此对话吗？</string>
     <string name="activity_home_conversation_deleted_message">对话已删除</string>
-    <string name="activity_seed_title">您的恢复口令</string>
-    <string name="activity_seed_title_2">这里是您的恢复口令</string>
-    <string name="activity_seed_explanation">您的恢复口令是Session ID的主密钥 - 如果您无法访问您的现有设备，则可以使用它在其他设备上恢复您的Session ID。请将您的恢复口令存储在安全的地方，不要将其提供给任何人。</string>
-    <string name="activity_seed_reveal_button_title">长按显示内容</string>
     <string name="view_seed_reminder_subtitle_1">保存恢复口令以保护您的帐号安全</string>
     <string name="view_seed_reminder_subtitle_2">点击并按住遮盖住的单词以显示您的恢复口令，请将它安全地存储以保护您的Session ID。</string>
     <string name="view_seed_reminder_subtitle_3">请确保将恢复口令存储在安全的地方</string>

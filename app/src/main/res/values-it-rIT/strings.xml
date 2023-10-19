@@ -557,10 +557,6 @@ scambia un altro messaggio!</string>
     <string name="activity_home_leaving_group_failed_message">"Impossibile lasciare il gruppo"</string>
     <string name="activity_home_delete_conversation_dialog_message">Sei sicuro di voler eliminare questa conversazione?</string>
     <string name="activity_home_conversation_deleted_message">Conversazione eliminata</string>
-    <string name="activity_seed_title">Frase di recupero</string>
-    <string name="activity_seed_title_2">La frase di recupero</string>
-    <string name="activity_seed_explanation">La frase di recupero è la chiave principale per l\'ID Sessione: puoi usarla per ripristinare l\'ID Sessione se perdi l\'accesso al dispositivo. Conserva la frase di recupero in un luogo sicuro e non rivelarla a nessuno.</string>
-    <string name="activity_seed_reveal_button_title">Tieni premuto per rivelare</string>
     <string name="view_seed_reminder_subtitle_1">Proteggi il tuo account salvando la frase di recupero</string>
     <string name="view_seed_reminder_subtitle_2">Tocca e tieni premute le parole redatte per rivelare la frase di recupero, salva in modo sicuro per proteggere il tuo ID Sessione.</string>
     <string name="view_seed_reminder_subtitle_3">Assicurati di salvare la frase di recupero in un luogo sicuro</string>

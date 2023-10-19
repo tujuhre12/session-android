@@ -564,10 +564,6 @@
     <string name="activity_home_leaving_group_failed_message">"Չստացվեց հեռանալ խումբից"</string>
     <string name="activity_home_delete_conversation_dialog_message">Վստա՞հ եք, որ ցանկանում եք ջնջել այս խոսակցությունը:</string>
     <string name="activity_home_conversation_deleted_message">Ջնջված է</string>
-    <string name="activity_seed_title">Ձեր վերականգնման բառակապակցություն</string>
-    <string name="activity_seed_title_2">Ծանոթացեք ձեր վերականգնման բառակապակցության հետ</string>
-    <string name="activity_seed_explanation">Session այդին Ձեր Session բանալին է, որը կարող եք վերականգնել եթե կորցնեք ձեր սարքը, ձեր բանալին պահեք և մի տվեք ինչ-որ մեկին.</string>
-    <string name="activity_seed_reveal_button_title">Սեղմած պահեք տեսնելու համար</string>
     <string name="view_seed_reminder_subtitle_1">Պահեք ձեր անվտանգությունը պահպանելով session-ի բանալին</string>
     <string name="view_seed_reminder_subtitle_2">Հպեք և պահեք տրված բառերը՝ ձեր վերականգնման բանալին գտնելու համար, այնուհետև պահեք այն ապահով՝ ձեր Session ID-ն ապահով պահելու համար.</string>
     <string name="view_seed_reminder_subtitle_3">Վստահ եղեք որ ձեր վերականգման բանալին հուսալի տեղում է</string>

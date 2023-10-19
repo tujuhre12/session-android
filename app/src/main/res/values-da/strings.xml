@@ -554,10 +554,6 @@ udveksel besked!</string>
     <string name="activity_home_leaving_group_failed_message">"Kunne ikke forlade gruppen"</string>
     <string name="activity_home_delete_conversation_dialog_message">Er du sikker på, at du vil slette denne samtale?</string>
     <string name="activity_home_conversation_deleted_message">Samtale slettet</string>
-    <string name="activity_seed_title">Din gendannelsessætning</string>
-    <string name="activity_seed_title_2">Mød din gendannelsessætning</string>
-    <string name="activity_seed_explanation">Din gendannelsessætning er hovednøglen til dit Session ID - du kan bruge den til at gendanne dit Session ID, hvis du mister adgang til din enhed. Gem din gendannelsessætning på et sikkert sted, og giv det ikke til nogen.</string>
-    <string name="activity_seed_reveal_button_title">Hold nede for at se</string>
     <string name="view_seed_reminder_subtitle_1">Sikre din konto ved at gemme din gendannelsessætning</string>
     <string name="view_seed_reminder_subtitle_2">Tryk og hold de redigerede ord for at afsløre din gendannelsessætning, og gem det derefter et sikkert sted for at sikre dit Session ID.</string>
     <string name="view_seed_reminder_subtitle_3">Sørg for at gemme din gendannelsessætning et sikkert sted</string>

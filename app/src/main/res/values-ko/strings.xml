@@ -409,7 +409,6 @@
     <string name="your_session_id">당신의 세션 ID</string>
     <string name="activity_home_empty_state_message">아직 연락처가 없습니다</string>
     <string name="activity_home_empty_state_button_title">세션 시작하기</string>
-    <string name="activity_seed_title">당신의 복구 코드</string>
     <string name="activity_path_explanation">Session 분산 네트워크의 여러 서비스 노드를 통해 메시지를 분산해 IP를 숨깁니다. 이들이 현재 연결을 분산하는 국가입니다:</string>
     <string name="activity_path_device_row_title">당신</string>
     <string name="activity_path_destination_row_title">목적지</string>

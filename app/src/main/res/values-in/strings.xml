@@ -429,9 +429,6 @@
     <string name="activity_home_leave_group_dialog_message">Apakah anda yakin ingin meninggalkan grup ini?</string>
     <string name="activity_home_leaving_group_failed_message">"Tidak dapat meninggalkan grup"</string>
     <string name="activity_home_conversation_deleted_message">Percakapan dihapus</string>
-    <string name="activity_seed_title">Kata pemulihan anda</string>
-    <string name="activity_seed_title_2">Inilah kata pemulihan anda</string>
-    <string name="activity_seed_reveal_button_title">Tekan untuk melihat</string>
     <string name="activity_path_device_row_title">Anda</string>
     <string name="activity_path_destination_row_title">Tujuan</string>
     <string name="activity_path_learn_more_button_title">Selengkapnya</string>

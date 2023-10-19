@@ -579,10 +579,6 @@
     <string name="activity_home_leaving_group_failed_message">"ترک گروه انجام نشد"</string>
     <string name="activity_home_delete_conversation_dialog_message">آیا مطمئن هستید که می‌خواهید این مکالمه را حذف کنید؟</string>
     <string name="activity_home_conversation_deleted_message">مکالمه حذف شد</string>
-    <string name="activity_seed_title">عبارت بازیابی شما</string>
-    <string name="activity_seed_title_2">این عبارت بازیابی شماست</string>
-    <string name="activity_seed_explanation">عبارت بازیابی شما کلید اصلی شناسه‌ی Session شما است - در صورت عدم دسترسی به دستگاه خود می توانید از آن برای بازگرداندن شناسه‌ی Session خود استفاده کنید. عبارت بازیابی خود را در مکانی امن ذخیره کنید و آن را به کسی ندهید.</string>
-    <string name="activity_seed_reveal_button_title">نگه دارید تا نشان داده شود</string>
     <string name="view_seed_reminder_subtitle_1">با ذخیره کردن عبارت بازیابی، از حساب خود محافظت کنید</string>
     <string name="view_seed_reminder_subtitle_2">برای دیدن عبارت بازیابی، بر روی کلمات پنهان شده ضربه زده و نگه دارید، سپس با خیال راحت آن را ذخیره کنید تا از شناسه‌ی Session خود محافظت نمایید.</string>
     <string name="view_seed_reminder_subtitle_3">حتماً عبارت بازیابی خود را در مکانی امن ذخیره کنید</string>

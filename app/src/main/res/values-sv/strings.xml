@@ -556,10 +556,6 @@ för nyckelutbyte!</string>
     <string name="activity_home_leaving_group_failed_message">"Kunde inte lämna gruppen"</string>
     <string name="activity_home_delete_conversation_dialog_message">Är du säker på att du vill ta bort denna konversation?</string>
     <string name="activity_home_conversation_deleted_message">Konversationen har raderats</string>
-    <string name="activity_seed_title">Din Återställningsfras</string>
-    <string name="activity_seed_title_2">Möt din återställningsfras</string>
-    <string name="activity_seed_explanation">Din återställningsfras är huvudnyckeln till ditt Session-ID – du kan använda den för att återställa ditt Session-ID om du förlorar åtkomst till enheten. Förvara din återställningsfras på en säker plats, och ge den inte till någon.</string>
-    <string name="activity_seed_reveal_button_title">Håll ned för att visa</string>
     <string name="view_seed_reminder_subtitle_1">Säkra ditt konto genom att spara din återställningsfras</string>
     <string name="view_seed_reminder_subtitle_2">Tryck på och håll ned de dolda orden för att avslöja din återställningsfras och lagra dem på ett säkert sätt för att säkra ditt Session-ID.</string>
     <string name="view_seed_reminder_subtitle_3">Se till att spara din återställningsfras på en säker plats</string>

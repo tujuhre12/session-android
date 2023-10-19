@@ -558,10 +558,6 @@
     <string name="activity_home_leaving_group_failed_message">"Nem sikerült kilépni a csoportból"</string>
     <string name="activity_home_delete_conversation_dialog_message">Biztosan törli ezt a beszélgetést?</string>
     <string name="activity_home_conversation_deleted_message">A beszélgetés törölve</string>
-    <string name="activity_seed_title">A helyreállítási kifejezés</string>
-    <string name="activity_seed_title_2">Írja be a helyreállítási kifejezést</string>
-    <string name="activity_seed_explanation">A helyreállítási kifejezés a Session azonosító főkulcsa - használhatja a Session azonosító visszaállítására, ha elveszíti a hozzáférését eszközéhez. Tárolja helyreállítási mondatát biztonságos helyen, és ne adja át senkinek.</string>
-    <string name="activity_seed_reveal_button_title">Tartsa lenyomva, hogy felfedje</string>
     <string name="view_seed_reminder_subtitle_1">Biztosítsa fiókját a helyreállítási szöveg elmentésével</string>
     <string name="view_seed_reminder_subtitle_2">Érintse meg és tartsa lenyomva a szerkesztett szavakat, hogy felfedje a helyreállítási kifejezést, majd tárolja biztonságosan Session-azonosítója biztonsága érdekében.</string>
     <string name="view_seed_reminder_subtitle_3">Ügyeljen arra, hogy a helyreállítási szöveget biztonságos helyen tárolja</string>
