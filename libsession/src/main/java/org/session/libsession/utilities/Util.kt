@@ -367,6 +367,8 @@ object Util {
     }
 }
 
+fun <T, R> T.runIf(condition: Boolean, block: T.() -> R): R where T: R = if (condition) block() else this
+
 fun <T, K: Any> Iterable<T>.associateByNotNull(
     keySelector: (T) -> K?
 ) = associateByNotNull(keySelector) { it }

@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.runIf
 import org.thoughtcrime.securesms.components.ProfilePictureView
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.OptionsCard
 import kotlin.math.min
@@ -150,7 +151,7 @@ fun <T> TitledRadioButton(option: RadioOption<T>, onClick: () -> Unit) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         modifier = Modifier
-            .clickable { if (!option.selected) onClick() }
+            .runIf(option.enabled) { clickable { if (!option.selected) onClick() } }
             .heightIn(min = 60.dp)
             .padding(horizontal = 32.dp)
             .contentDescription(option.contentDescription)
