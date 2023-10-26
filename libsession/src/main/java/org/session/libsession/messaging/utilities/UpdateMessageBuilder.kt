@@ -76,7 +76,7 @@ object UpdateMessageBuilder {
         }
     }
 
-    fun buildExpirationTimerMessage(context: Context, duration: Long, senderId: String? = null, isOutgoing: Boolean = false): String {
+    fun buildExpirationTimerMessage(context: Context, duration: Long, senderId: String? = null, threadId: Long, isOutgoing: Boolean = false): String {
         if (!isOutgoing && senderId == null) return ""
         val senderName: String = if (!isOutgoing) {
             getSenderName(senderId!!)
@@ -97,8 +97,7 @@ object UpdateMessageBuilder {
             }
         } else {
             val time = ExpirationUtil.getExpirationDisplayValue(context, duration.toInt())
-            val threadId = storage.getThreadId(Address.fromSerialized(senderId!!))
-            val config = threadId?.let { storage.getExpirationConfiguration(it) }
+            val config = threadId.let { storage.getExpirationConfiguration(it) }
             val state = when (config?.expiryMode) {
                 is ExpiryMode.AfterSend -> context.getString(R.string.MessageRecord_state_sent)
                 is ExpiryMode.AfterRead -> context.getString(R.string.MessageRecord_state_read)

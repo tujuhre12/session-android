@@ -47,7 +47,6 @@ import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.protos.SignalServiceProtos
-import org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType
 import org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.IdPrefix
@@ -303,9 +302,6 @@ fun MessageReceiver.updateExpiryIfNeeded(
         proto.lastDisappearingMessageChangeTimestamp
     )
 
-    val configToUse = localConfig?.takeIf { it.updatedTimestampMs > proto.lastDisappearingMessageChangeTimestamp } ?: remoteConfig
-    val shouldUpdateConfig = configToUse == remoteConfig
-
     // don't update any values for open groups
     if (recipient.isOpenGroupRecipient && type != null) throw MessageReceiver.Error.InvalidMessage
 
@@ -314,8 +310,8 @@ fun MessageReceiver.updateExpiryIfNeeded(
         storage.updateDisappearingState(threadID, disappearingState)
     }
 
-    if (shouldUpdateConfig) {
-        storage.setExpirationConfiguration(configToUse)
+    if (localConfig != null || localConfig!!) {
+        storage.setExpirationConfiguration(remoteConfig)
     }
 
     if (message is ExpirationTimerUpdate) {
