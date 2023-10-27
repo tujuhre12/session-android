@@ -45,6 +45,8 @@ public class ExpirationTimerView extends androidx.appcompat.widget.AppCompatImag
 
   public ExpirationTimerView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
     super(context, attrs, defStyleAttr);
+
+    setContentDescription(context.getString(R.string.AccessibilityId_timer_icon));
   }
 
   public void setExpirationTime(long startedAt, long expiresIn) {

@@ -115,30 +115,10 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/senderNameTextView">
 
-            <LinearLayout
-                android:id="@+id/messageInnerLayout"
+            <include layout="@layout/view_visible_message_content"
+                android:id="@+id/messageContentView"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <include layout="@layout/view_visible_message_content"
-                    android:id="@+id/messageContentView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-
-                <org.thoughtcrime.securesms.conversation.v2.components.ExpirationTimerView
-                    android:id="@+id/expirationTimerView"
-                    android:layout_width="12dp"
-                    android:layout_height="12dp"
-                    android:layout_gravity="center_vertical"
-                    android:layout_marginHorizontal="@dimen/small_spacing"
-                    android:contentDescription="@string/AccessibilityId_timer_icon"
-                    android:visibility="invisible"
-                    tools:visibility="visible"
-                    tools:src="@drawable/timer60"
-                    tools:tint="@color/black"/>
-
-            </LinearLayout>
+                android:layout_height="wrap_content" />
         </FrameLayout>
 
         <include layout="@layout/view_emoji_reactions"

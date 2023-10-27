@@ -12,6 +12,7 @@ import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import androidx.annotation.ColorInt
@@ -115,7 +116,6 @@ class VisibleMessageView : LinearLayout {
         binding.root.disableClipping()
         binding.mainContainer.disableClipping()
         binding.messageInnerContainer.disableClipping()
-        binding.messageInnerLayout.disableClipping()
         binding.messageContentView.root.disableClipping()
     }
     // endregion
@@ -342,46 +342,45 @@ class VisibleMessageView : LinearLayout {
     }
 
     private fun updateExpirationTimer(message: MessageRecord) {
-        val container = binding.messageInnerContainer
-        val layout = binding.messageInnerLayout
-
-        if (message.isOutgoing) binding.messageContentView.root.bringToFront()
-        else binding.expirationTimerView.bringToFront()
-
-        layout.layoutParams = layout.layoutParams.let { it as FrameLayout.LayoutParams }
-            .apply { gravity = if (message.isOutgoing) Gravity.END else Gravity.START }
-
-        val containerParams = container.layoutParams as ConstraintLayout.LayoutParams
-        containerParams.horizontalBias = if (message.isOutgoing) 1f else 0f
-        container.layoutParams = containerParams
-        if (message.expiresIn > 0 && !message.isPending) {
-            binding.expirationTimerView.setColorFilter(context.getColorFromAttr(android.R.attr.textColorPrimary))
-            binding.expirationTimerView.isInvisible = false
-            binding.expirationTimerView.setPercentComplete(0.0f)
-            if (message.expireStarted > 0) {
-                binding.expirationTimerView.setExpirationTime(message.expireStarted, message.expiresIn)
-                binding.expirationTimerView.startAnimation()
-                if (message.expireStarted + message.expiresIn <= SnodeAPI.nowWithOffset) {
-                    ApplicationContext.getInstance(context).expiringMessageManager.checkSchedule()
-                }
-            } else if (!message.isMediaPending) {
-                binding.expirationTimerView.setPercentComplete(0.0f)
-                binding.expirationTimerView.stopAnimation()
-                ThreadUtils.queue {
-                    val expirationManager = ApplicationContext.getInstance(context).expiringMessageManager
-                    val id = message.getId()
-                    val mms = message.isMms
-                    if (mms) mmsDb.markExpireStarted(id) else smsDb.markExpireStarted(id)
-                    expirationManager.scheduleDeletion(id, mms, message.expiresIn)
-                }
-            } else {
-                binding.expirationTimerView.stopAnimation()
-                binding.expirationTimerView.setPercentComplete(0.0f)
+        messageContentView.layoutParams = messageContentView.layoutParams
+            .apply {
+                this as FrameLayout.LayoutParams
+                this.gravity = if (message.isOutgoing) Gravity.END else Gravity.START
             }
-        } else {
-            binding.expirationTimerView.isInvisible = true
-        }
-        container.requestLayout()
+
+//        val container = binding.messageInnerContainer
+//        container.layoutParams = (container.layoutParams as ConstraintLayout.LayoutParams)
+//            .apply { horizontalBias = if (message.isOutgoing) 1f else 0f }
+
+//        container.layoutParams = containerParams
+//        if (message.expiresIn > 0 && !message.isPending) {
+//            binding.expirationTimerView.setColorFilter(context.getColorFromAttr(android.R.attr.textColorPrimary))
+//            binding.expirationTimerView.isInvisible = false
+//            binding.expirationTimerView.setPercentComplete(0.0f)
+//            if (message.expireStarted > 0) {
+//                binding.expirationTimerView.setExpirationTime(message.expireStarted, message.expiresIn)
+//                binding.expirationTimerView.startAnimation()
+//                if (message.expireStarted + message.expiresIn <= SnodeAPI.nowWithOffset) {
+//                    ApplicationContext.getInstance(context).expiringMessageManager.checkSchedule()
+//                }
+//            } else if (!message.isMediaPending) {
+//                binding.expirationTimerView.setPercentComplete(0.0f)
+//                binding.expirationTimerView.stopAnimation()
+//                ThreadUtils.queue {
+//                    val expirationManager = ApplicationContext.getInstance(context).expiringMessageManager
+//                    val id = message.getId()
+//                    val mms = message.isMms
+//                    if (mms) mmsDb.markExpireStarted(id) else smsDb.markExpireStarted(id)
+//                    expirationManager.scheduleDeletion(id, mms, message.expiresIn)
+//                }
+//            } else {
+//                binding.expirationTimerView.stopAnimation()
+//                binding.expirationTimerView.setPercentComplete(0.0f)
+//            }
+//        } else {
+//            binding.expirationTimerView.isInvisible = true
+//        }
+//        container.requestLayout()
     }
 
     private fun handleIsSelectedChanged() {
@@ -404,7 +403,7 @@ class VisibleMessageView : LinearLayout {
         swipeToReplyIconRect.right = right
         swipeToReplyIconRect.bottom = bottom
 
-        if (translationX < 0 && !binding.expirationTimerView.isVisible) {
+        if (translationX < 0 /*&& !binding.expirationTimerView.isVisible*/) {
             val threshold = swipeToReplyThreshold
             swipeToReplyIcon.bounds = swipeToReplyIconRect
             swipeToReplyIcon.alpha = (255.0f * (min(abs(translationX), threshold) / threshold)).roundToInt()
