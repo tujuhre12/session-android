@@ -1,10 +1,10 @@
 package org.thoughtcrime.securesms.conversation.v2.components;
 
-import android.content.Context;
-import android.util.AttributeSet;
+import android.graphics.drawable.Drawable;
+import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+import androidx.appcompat.content.res.AppCompatResources;
 
 import org.session.libsession.utilities.Util;
 
@@ -13,8 +13,10 @@ import java.util.concurrent.TimeUnit;
 
 import network.loki.messenger.R;
 
-public class ExpirationTimerView extends androidx.appcompat.widget.AppCompatImageView {
+public class ExpirationTimerView {
 
+  private final ImageView imageView;
+  private final Integer iconColor;
   private long startedAt;
   private long expiresIn;
 
@@ -35,18 +37,9 @@ public class ExpirationTimerView extends androidx.appcompat.widget.AppCompatImag
                                           R.drawable.timer55,
                                           R.drawable.timer60 };
 
-  public ExpirationTimerView(Context context) {
-    super(context);
-  }
-
-  public ExpirationTimerView(Context context, @Nullable AttributeSet attrs) {
-    super(context, attrs);
-  }
-
-  public ExpirationTimerView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
-    super(context, attrs, defStyleAttr);
-
-    setContentDescription(context.getString(R.string.AccessibilityId_timer_icon));
+  public ExpirationTimerView(ImageView imageView, Integer iconColor) {
+    this.imageView = imageView;
+    this.iconColor = iconColor;
   }
 
   public void setExpirationTime(long startedAt, long expiresIn) {
@@ -60,7 +53,10 @@ public class ExpirationTimerView extends androidx.appcompat.widget.AppCompatImag
     int frame = (int) Math.ceil(percentFull * (frames.length - 1));
 
     frame = Math.max(0, Math.min(frame, frames.length - 1));
-    setImageResource(frames[frame]);
+
+    Drawable drawable = AppCompatResources.getDrawable(imageView.getContext(), frames[frame]).mutate();
+    if (iconColor != null) drawable.setTint(iconColor);
+    imageView.setImageDrawable(drawable);
   }
 
   public void startAnimation() {

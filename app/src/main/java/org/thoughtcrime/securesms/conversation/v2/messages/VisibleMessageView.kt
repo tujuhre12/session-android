@@ -12,7 +12,6 @@ import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
-import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import androidx.annotation.ColorInt
@@ -22,7 +21,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
-import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.core.view.marginBottom
 import dagger.hilt.android.AndroidEntryPoint
@@ -39,6 +37,7 @@ import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.ThreadUtils
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
+import org.thoughtcrime.securesms.conversation.v2.components.ExpirationTimerView
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.MmsDatabase
@@ -203,43 +202,7 @@ class VisibleMessageView : LinearLayout {
         binding.dateBreakTextView.text = if (showDateBreak) DateUtils.getDisplayFormattedTimeSpanString(context, Locale.getDefault(), message.timestamp) else null
         binding.dateBreakTextView.isVisible = showDateBreak
         // Message status indicator
-        if (message.isOutgoing) {
-            val (iconID, iconColor, textId, contentDescription) = getMessageStatusImage(message)
-            if (textId != null) {
-                binding.messageStatusTextView.setText(textId)
-
-                if (iconColor != null) {
-                    binding.messageStatusTextView.setTextColor(iconColor)
-                }
-            }
-            if (iconID != null) {
-                val drawable = ContextCompat.getDrawable(context, iconID)?.mutate()
-                if (iconColor != null) {
-                    drawable?.setTint(iconColor)
-                }
-                binding.messageStatusImageView.setImageDrawable(drawable)
-            }
-            binding.messageStatusImageView.contentDescription = contentDescription
-
-            val lastMessageID = mmsSmsDb.getLastMessageID(message.threadId)
-            binding.messageStatusTextView.isVisible = (
-                textId != null && (
-                    !message.isSent ||
-                    message.id == lastMessageID
-                )
-            )
-            binding.messageStatusImageView.isVisible = (
-                iconID != null && (
-                    !message.isSent ||
-                    message.id == lastMessageID
-                )
-            )
-        } else {
-            binding.messageStatusTextView.isVisible = false
-            binding.messageStatusImageView.isVisible = false
-        }
-        // Expiration timer
-        updateExpirationTimer(message)
+        showStatusMessage(message)
         // Emoji Reactions
         val emojiLayoutParams = binding.emojiReactionsView.root.layoutParams as ConstraintLayout.LayoutParams
         emojiLayoutParams.horizontalBias = if (message.isOutgoing) 1f else 0f
@@ -272,6 +235,29 @@ class VisibleMessageView : LinearLayout {
         )
         binding.messageContentView.root.delegate = delegate
         onDoubleTap = { binding.messageContentView.root.onContentDoubleTap?.invoke() }
+    }
+
+    private fun showStatusMessage(message: MessageRecord) {
+        if (message.isOutgoing) {
+            val (iconID, iconColor, textId, contentDescription) = getMessageStatusImage(message)
+            textId?.let(binding.messageStatusTextView::setText)
+            iconColor?.let(binding.messageStatusTextView::setTextColor)
+            iconID?.let { ContextCompat.getDrawable(context, it) }
+                ?.run { iconColor?.let { mutate().apply { setTint(it) } } ?: this }
+                ?.let(binding.messageStatusImageView::setImageDrawable)
+            binding.messageStatusImageView.contentDescription = contentDescription
+
+            val lastMessageID = mmsSmsDb.getLastMessageID(message.threadId)
+            binding.messageStatusTextView.isVisible =
+                textId != null && (!message.isSent || message.id == lastMessageID)
+            binding.messageStatusImageView.isVisible =
+                iconID != null && (!message.isSent || message.id == lastMessageID)
+
+            updateExpirationTimer(message, iconColor)
+        } else {
+            binding.messageStatusTextView.isVisible = false
+            binding.messageStatusImageView.isVisible = false
+        }
     }
 
     private fun isStartOfMessageCluster(current: MessageRecord, previous: MessageRecord?, isGroupThread: Boolean): Boolean {
@@ -341,46 +327,42 @@ class VisibleMessageView : LinearLayout {
             )
     }
 
-    private fun updateExpirationTimer(message: MessageRecord) {
-        messageContentView.layoutParams = messageContentView.layoutParams
-            .apply {
-                this as FrameLayout.LayoutParams
-                this.gravity = if (message.isOutgoing) Gravity.END else Gravity.START
+    private fun updateExpirationTimer(message: MessageRecord, iconColor: Int?) {
+        messageContentView.layoutParams = (messageContentView.layoutParams as FrameLayout.LayoutParams)
+            .apply { gravity = if (message.isOutgoing) Gravity.END else Gravity.START }
+
+        val container = binding.messageInnerContainer
+        container.layoutParams = (container.layoutParams as ConstraintLayout.LayoutParams)
+            .apply { horizontalBias = if (message.isOutgoing) 1f else 0f }
+
+        val expirationTimerView = ExpirationTimerView(binding.messageStatusImageView, iconColor)
+
+        // container.layoutParams = containerParams
+        if (message.expiresIn > 0) {
+            // expirationTimerView.setColorFilter(context.getColorFromAttr(android.R.attr.textColorPrimary))
+            // expirationTimerView.isInvisible = false
+            expirationTimerView.setPercentComplete(0.0f)
+            if (message.expireStarted > 0) {
+                expirationTimerView.setExpirationTime(message.expireStarted, message.expiresIn)
+                expirationTimerView.startAnimation()
+                if (message.expireStarted + message.expiresIn <= SnodeAPI.nowWithOffset) {
+                    ApplicationContext.getInstance(context).expiringMessageManager.checkSchedule()
+                }
+            } else {
+                expirationTimerView.setPercentComplete(0.0f)
+                expirationTimerView.stopAnimation()
+                ThreadUtils.queue {
+                    val expirationManager = ApplicationContext.getInstance(context).expiringMessageManager
+                    val id = message.getId()
+                    val mms = message.isMms
+                    if (mms) mmsDb.markExpireStarted(id) else smsDb.markExpireStarted(id)
+                    expirationManager.scheduleDeletion(id, mms, message.expiresIn)
+                }
             }
-
-//        val container = binding.messageInnerContainer
-//        container.layoutParams = (container.layoutParams as ConstraintLayout.LayoutParams)
-//            .apply { horizontalBias = if (message.isOutgoing) 1f else 0f }
-
-//        container.layoutParams = containerParams
-//        if (message.expiresIn > 0 && !message.isPending) {
-//            binding.expirationTimerView.setColorFilter(context.getColorFromAttr(android.R.attr.textColorPrimary))
-//            binding.expirationTimerView.isInvisible = false
-//            binding.expirationTimerView.setPercentComplete(0.0f)
-//            if (message.expireStarted > 0) {
-//                binding.expirationTimerView.setExpirationTime(message.expireStarted, message.expiresIn)
-//                binding.expirationTimerView.startAnimation()
-//                if (message.expireStarted + message.expiresIn <= SnodeAPI.nowWithOffset) {
-//                    ApplicationContext.getInstance(context).expiringMessageManager.checkSchedule()
-//                }
-//            } else if (!message.isMediaPending) {
-//                binding.expirationTimerView.setPercentComplete(0.0f)
-//                binding.expirationTimerView.stopAnimation()
-//                ThreadUtils.queue {
-//                    val expirationManager = ApplicationContext.getInstance(context).expiringMessageManager
-//                    val id = message.getId()
-//                    val mms = message.isMms
-//                    if (mms) mmsDb.markExpireStarted(id) else smsDb.markExpireStarted(id)
-//                    expirationManager.scheduleDeletion(id, mms, message.expiresIn)
-//                }
-//            } else {
-//                binding.expirationTimerView.stopAnimation()
-//                binding.expirationTimerView.setPercentComplete(0.0f)
-//            }
-//        } else {
-//            binding.expirationTimerView.isInvisible = true
-//        }
-//        container.requestLayout()
+        } else {
+            // expirationTimerView.isInvisible = true
+        }
+        container.requestLayout()
     }
 
     private fun handleIsSelectedChanged() {
