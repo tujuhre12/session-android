@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.content.res.AppCompatResources;
 
 import org.session.libsession.utilities.Util;
+import org.thoughtcrime.securesms.database.model.MessageRecord;
 
 import java.lang.ref.WeakReference;
 import java.util.concurrent.TimeUnit;

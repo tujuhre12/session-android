@@ -352,9 +352,7 @@ class VisibleMessageView : LinearLayout {
             if (message.expireStarted > 0) {
                 expirationTimerView.setExpirationTime(message.expireStarted, message.expiresIn)
                 expirationTimerView.startAnimation()
-                if (message.expireStarted + message.expiresIn <= SnodeAPI.nowWithOffset) {
-                    ApplicationContext.getInstance(context).expiringMessageManager.checkSchedule()
-                }
+                ApplicationContext.getInstance(context).expiringMessageManager.checkSchedule()
             } else {
                 expirationTimerView.setPercentComplete(0.0f)
                 expirationTimerView.stopAnimation()

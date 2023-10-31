@@ -9,6 +9,8 @@ import androidx.core.content.res.ResourcesCompat
 import androidx.recyclerview.widget.RecyclerView
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewControlMessageBinding
+import org.session.libsession.utilities.getColorFromAttr
+import org.thoughtcrime.securesms.conversation.v2.components.ExpirationTimerView
 import org.thoughtcrime.securesms.database.model.MessageRecord
 
 class ControlMessageView : LinearLayout {
@@ -34,9 +36,10 @@ class ControlMessageView : LinearLayout {
         binding.root.contentDescription= null
         when {
             message.isExpirationTimerUpdate -> {
-                binding.iconImageView.setImageDrawable(
-                    ResourcesCompat.getDrawable(resources, R.drawable.ic_timer, context.theme)
-                )
+                ExpirationTimerView(binding.iconImageView, context.getColorFromAttr(android.R.attr.textColorPrimary)).apply {
+                    setExpirationTime(message.expireStarted, message.expiresIn)
+                    startAnimation()
+                }
                 binding.iconImageView.visibility = View.VISIBLE
             }
             message.isMediaSavedNotification -> {
