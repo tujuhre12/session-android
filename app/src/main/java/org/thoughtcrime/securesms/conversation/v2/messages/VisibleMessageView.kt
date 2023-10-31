@@ -115,6 +115,7 @@ class VisibleMessageView : LinearLayout {
         binding.root.disableClipping()
         binding.mainContainer.disableClipping()
         binding.messageInnerContainer.disableClipping()
+        binding.messageInnerLayout.disableClipping()
         binding.messageContentView.root.disableClipping()
     }
     // endregion
@@ -238,7 +239,19 @@ class VisibleMessageView : LinearLayout {
     }
 
     private fun showStatusMessage(message: MessageRecord) {
-        if (message.isOutgoing) {
+        val disappearing = message.expiresIn > 0
+
+        binding.messageInnerLayout.apply {
+            layoutParams = layoutParams.let { it as FrameLayout.LayoutParams }
+                .apply { gravity = if (message.isOutgoing) Gravity.END else Gravity.START }
+        }
+
+        binding.statusContainer.apply {
+            layoutParams = layoutParams.let { it as ConstraintLayout.LayoutParams }
+                .apply { horizontalBias = if (message.isOutgoing) 1f else 0f }
+        }
+
+        if (message.isOutgoing || disappearing) {
             val (iconID, iconColor, textId, contentDescription) = getMessageStatusImage(message)
             textId?.let(binding.messageStatusTextView::setText)
             iconColor?.let(binding.messageStatusTextView::setTextColor)
@@ -248,12 +261,13 @@ class VisibleMessageView : LinearLayout {
             binding.messageStatusImageView.contentDescription = contentDescription
 
             val lastMessageID = mmsSmsDb.getLastMessageID(message.threadId)
+            val isLastMessage = message.id == lastMessageID
             binding.messageStatusTextView.isVisible =
-                textId != null && (!message.isSent || message.id == lastMessageID)
+                textId != null && (!message.isSent || isLastMessage || disappearing)
             binding.messageStatusImageView.isVisible =
-                iconID != null && (!message.isSent || message.id == lastMessageID)
+                iconID != null && (!message.isSent || isLastMessage || disappearing)
 
-            updateExpirationTimer(message, iconColor)
+            if (disappearing && !message.isPending) updateExpirationTimer(message, iconColor)
         } else {
             binding.messageStatusTextView.isVisible = false
             binding.messageStatusImageView.isVisible = false
@@ -312,7 +326,7 @@ class VisibleMessageView : LinearLayout {
                 context.getColor(R.color.accent_orange), R.string.delivery_status_syncing,
                 context.getString(R.string.AccessibilityId_message_sent_status_syncing)
             )
-        message.isRead ->
+        message.isRead || !message.isOutgoing ->
             MessageStatusInfo(
                 R.drawable.ic_delivery_status_read,
                 context.getColorFromAttr(R.attr.message_status_color), R.string.delivery_status_read,
@@ -328,19 +342,9 @@ class VisibleMessageView : LinearLayout {
     }
 
     private fun updateExpirationTimer(message: MessageRecord, iconColor: Int?) {
-        messageContentView.layoutParams = (messageContentView.layoutParams as FrameLayout.LayoutParams)
-            .apply { gravity = if (message.isOutgoing) Gravity.END else Gravity.START }
-
-        val container = binding.messageInnerContainer
-        container.layoutParams = (container.layoutParams as ConstraintLayout.LayoutParams)
-            .apply { horizontalBias = if (message.isOutgoing) 1f else 0f }
-
         val expirationTimerView = ExpirationTimerView(binding.messageStatusImageView, iconColor)
 
-        // container.layoutParams = containerParams
         if (message.expiresIn > 0) {
-            // expirationTimerView.setColorFilter(context.getColorFromAttr(android.R.attr.textColorPrimary))
-            // expirationTimerView.isInvisible = false
             expirationTimerView.setPercentComplete(0.0f)
             if (message.expireStarted > 0) {
                 expirationTimerView.setExpirationTime(message.expireStarted, message.expiresIn)
@@ -359,10 +363,7 @@ class VisibleMessageView : LinearLayout {
                     expirationManager.scheduleDeletion(id, mms, message.expiresIn)
                 }
             }
-        } else {
-            // expirationTimerView.isInvisible = true
         }
-        container.requestLayout()
     }
 
     private fun handleIsSelectedChanged() {
