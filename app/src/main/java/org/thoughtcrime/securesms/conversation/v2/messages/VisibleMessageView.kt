@@ -267,6 +267,7 @@ class VisibleMessageView : LinearLayout {
             binding.messageStatusImageView.isVisible =
                 iconID != null && (!message.isSent || isLastMessage || disappearing)
 
+            binding.messageStatusImageView.bringToFront()
             if (disappearing && !message.isPending) updateExpirationTimer(message, iconColor)
         } else {
             binding.messageStatusTextView.isVisible = false
@@ -343,6 +344,8 @@ class VisibleMessageView : LinearLayout {
 
     private fun updateExpirationTimer(message: MessageRecord, iconColor: Int?) {
         val expirationTimerView = ExpirationTimerView(binding.messageStatusImageView, iconColor)
+
+        if (!message.isOutgoing) binding.messageStatusTextView.bringToFront()
 
         if (message.expiresIn > 0) {
             expirationTimerView.setPercentComplete(0.0f)
