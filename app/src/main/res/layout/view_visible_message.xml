@@ -164,6 +164,13 @@
                 android:layout_gravity="center"
                 android:src="@drawable/ic_delivery_status_sent" />
 
+            <org.thoughtcrime.securesms.conversation.v2.components.ExpirationTimerView
+                android:id="@+id/expirationTimerView"
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:layout_gravity="center"
+                android:tint="?message_status_color" />
+
         </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>

@@ -6,6 +6,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.widget.LinearLayout
 import androidx.core.content.res.ResourcesCompat
+import androidx.core.view.isGone
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewControlMessageBinding
@@ -17,7 +19,6 @@ class ControlMessageView : LinearLayout {
 
     private lateinit var binding: ViewControlMessageBinding
 
-    // region Lifecycle
     constructor(context: Context) : super(context) { initialize() }
     constructor(context: Context, attrs: AttributeSet) : super(context, attrs) { initialize() }
     constructor(context: Context, attrs: AttributeSet, defStyleAttr: Int) : super(context, attrs, defStyleAttr) { initialize() }
@@ -26,27 +27,27 @@ class ControlMessageView : LinearLayout {
         binding = ViewControlMessageBinding.inflate(LayoutInflater.from(context), this, true)
         layoutParams = RecyclerView.LayoutParams(RecyclerView.LayoutParams.MATCH_PARENT, RecyclerView.LayoutParams.WRAP_CONTENT)
     }
-    // endregion
 
-    // region Updating
     fun bind(message: MessageRecord, previous: MessageRecord?) {
         binding.dateBreakTextView.showDateBreak(message, previous)
-        binding.iconImageView.visibility = View.GONE
+        binding.iconImageView.isGone = true
+        binding.expirationTimerView.isGone = true
         var messageBody: CharSequence = message.getDisplayBody(context)
         binding.root.contentDescription= null
         when {
             message.isExpirationTimerUpdate -> {
-                ExpirationTimerView(binding.iconImageView, context.getColorFromAttr(android.R.attr.textColorPrimary)).apply {
+                binding.expirationTimerView.apply {
+                    isVisible = true
                     setExpirationTime(message.expireStarted, message.expiresIn)
-                    startAnimation()
                 }
-                binding.iconImageView.visibility = View.VISIBLE
             }
             message.isMediaSavedNotification -> {
-                binding.iconImageView.setImageDrawable(
-                    ResourcesCompat.getDrawable(resources, R.drawable.ic_file_download_white_36dp, context.theme)
-                )
-                binding.iconImageView.visibility = View.VISIBLE
+                binding.iconImageView.apply {
+                    setImageDrawable(
+                        ResourcesCompat.getDrawable(resources, R.drawable.ic_file_download_white_36dp, context.theme)
+                    )
+                    isVisible = true
+                }
             }
             message.isMessageRequestResponse -> {
                 messageBody = context.getString(R.string.message_requests_accepted)
@@ -59,8 +60,10 @@ class ControlMessageView : LinearLayout {
                     message.isFirstMissedCall -> R.drawable.ic_info_outline_light
                     else -> R.drawable.ic_missed_call
                 }
-                binding.iconImageView.setImageDrawable(ResourcesCompat.getDrawable(resources, drawable, context.theme))
-                binding.iconImageView.visibility = View.VISIBLE
+                binding.iconImageView.apply {
+                    setImageDrawable(ResourcesCompat.getDrawable(resources, drawable, context.theme))
+                    isVisible = true
+                }
             }
         }
 
@@ -70,5 +73,4 @@ class ControlMessageView : LinearLayout {
     fun recycle() {
 
     }
-    // endregion
 }

@@ -29,7 +29,6 @@ import network.loki.messenger.databinding.ViewVisibleMessageBinding
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.contacts.Contact.ContactContext
 import org.session.libsession.messaging.open_groups.OpenGroupApi
-import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ViewUtil
 import org.session.libsession.utilities.getColorFromAttr
@@ -37,7 +36,6 @@ import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.ThreadUtils
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
-import org.thoughtcrime.securesms.conversation.v2.components.ExpirationTimerView
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.MmsDatabase
@@ -264,11 +262,15 @@ class VisibleMessageView : LinearLayout {
             val isLastMessage = message.id == lastMessageID
             binding.messageStatusTextView.isVisible =
                 textId != null && (!message.isSent || isLastMessage || disappearing)
+            val showTimer = disappearing && !message.isPending
             binding.messageStatusImageView.isVisible =
-                iconID != null && (!message.isSent || isLastMessage || disappearing)
+                iconID != null && !showTimer && (!message.isSent || isLastMessage)
+
 
             binding.messageStatusImageView.bringToFront()
-            if (disappearing && !message.isPending) updateExpirationTimer(message, iconColor)
+            binding.expirationTimerView.bringToFront()
+            binding.expirationTimerView.isVisible = showTimer
+            if (showTimer) updateExpirationTimer(message)
         } else {
             binding.messageStatusTextView.isVisible = false
             binding.messageStatusImageView.isVisible = false
@@ -342,20 +344,16 @@ class VisibleMessageView : LinearLayout {
             )
     }
 
-    private fun updateExpirationTimer(message: MessageRecord, iconColor: Int?) {
-        val expirationTimerView = ExpirationTimerView(binding.messageStatusImageView, iconColor)
+    private fun updateExpirationTimer(message: MessageRecord) {
+        val expirationTimerView = binding.expirationTimerView
 
         if (!message.isOutgoing) binding.messageStatusTextView.bringToFront()
 
         if (message.expiresIn > 0) {
-            expirationTimerView.setPercentComplete(0.0f)
             if (message.expireStarted > 0) {
                 expirationTimerView.setExpirationTime(message.expireStarted, message.expiresIn)
-                expirationTimerView.startAnimation()
                 ApplicationContext.getInstance(context).expiringMessageManager.checkSchedule()
             } else {
-                expirationTimerView.setPercentComplete(0.0f)
-                expirationTimerView.stopAnimation()
                 ThreadUtils.queue {
                     val expirationManager = ApplicationContext.getInstance(context).expiringMessageManager
                     val id = message.getId()
