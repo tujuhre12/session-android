@@ -21,6 +21,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
+import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.core.view.marginBottom
 import dagger.hilt.android.AndroidEntryPoint
@@ -248,6 +249,8 @@ class VisibleMessageView : LinearLayout {
             layoutParams = layoutParams.let { it as ConstraintLayout.LayoutParams }
                 .apply { horizontalBias = if (message.isOutgoing) 1f else 0f }
         }
+
+        binding.expirationTimerView.isGone = true
 
         if (message.isOutgoing || disappearing) {
             val (iconID, iconColor, textId, contentDescription) = getMessageStatusImage(message)
