@@ -1395,6 +1395,8 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
     }
 
     companion object {
+
+
         private val TAG = MmsDatabase::class.java.simpleName
         const val TABLE_NAME: String = "mms"
         const val DATE_SENT: String = "date"
@@ -1416,7 +1418,7 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
         const val SHARED_CONTACTS: String = "shared_contacts"
         const val LINK_PREVIEWS: String = "previews"
         const val CREATE_TABLE: String =
-            "CREATE TABLE " + TABLE_NAME + " (" + ID + " INTEGER PRIMARY KEY, " +
+            "CREATE TABLE " + TABLE_NAME + " (" + ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                     THREAD_ID + " INTEGER, " + DATE_SENT + " INTEGER, " + DATE_RECEIVED + " INTEGER, " + MESSAGE_BOX + " INTEGER, " +
                     READ + " INTEGER DEFAULT 0, " + "m_id" + " TEXT, " + "sub" + " TEXT, " +
                     "sub_cs" + " INTEGER, " + BODY + " TEXT, " + PART_COUNT + " INTEGER, " +
@@ -1521,5 +1523,21 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
         const val CREATE_REACTIONS_UNREAD_COMMAND = "ALTER TABLE $TABLE_NAME ADD COLUMN $REACTIONS_UNREAD INTEGER DEFAULT 0;"
         const val CREATE_REACTIONS_LAST_SEEN_COMMAND = "ALTER TABLE $TABLE_NAME ADD COLUMN $REACTIONS_LAST_SEEN INTEGER DEFAULT 0;"
         const val CREATE_HAS_MENTION_COMMAND = "ALTER TABLE $TABLE_NAME ADD COLUMN $HAS_MENTION INTEGER DEFAULT 0;"
+
+        private const val TEMP_TABLE_NAME = "TEMP_TABLE_NAME"
+
+        const val COMMA_SEPARATED_COLUMNS = "$ID, $THREAD_ID, $DATE_SENT, $DATE_RECEIVED, $MESSAGE_BOX, $READ, m_id, sub, sub_cs, $BODY, $PART_COUNT, ct_t, $CONTENT_LOCATION, $ADDRESS, $ADDRESS_DEVICE_ID, $EXPIRY, m_cls, $MESSAGE_TYPE, v, $MESSAGE_SIZE, pri, rr,rpt_a, resp_st, $STATUS, $TRANSACTION_ID, retr_st, retr_txt, retr_txt_cs, read_status, ct_cls, resp_txt, d_tm, $DELIVERY_RECEIPT_COUNT, $MISMATCHED_IDENTITIES, $NETWORK_FAILURE, d_rpt, $SUBSCRIPTION_ID, $EXPIRES_IN, $EXPIRE_STARTED, $NOTIFIED, $READ_RECEIPT_COUNT, $QUOTE_ID, $QUOTE_AUTHOR, $QUOTE_BODY, $QUOTE_ATTACHMENT, $QUOTE_MISSING, $SHARED_CONTACTS, $UNIDENTIFIED, $LINK_PREVIEWS, $MESSAGE_REQUEST_RESPONSE, $REACTIONS_UNREAD, $REACTIONS_LAST_SEEN, $HAS_MENTION"
+
+        @JvmField
+        val ADD_AUTOINCREMENT = arrayOf(
+            "ALTER TABLE $TABLE_NAME RENAME TO $TEMP_TABLE_NAME",
+            CREATE_TABLE,
+            CREATE_MESSAGE_REQUEST_RESPONSE_COMMAND,
+            CREATE_REACTIONS_UNREAD_COMMAND,
+            CREATE_REACTIONS_LAST_SEEN_COMMAND,
+            CREATE_HAS_MENTION_COMMAND,
+            "INSERT INTO $TABLE_NAME ($COMMA_SEPARATED_COLUMNS) SELECT $COMMA_SEPARATED_COLUMNS FROM $TEMP_TABLE_NAME",
+            "DROP TABLE $TEMP_TABLE_NAME"
+        )
     }
 }
