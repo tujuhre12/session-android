@@ -6,13 +6,11 @@ import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.Log
 
-class ExpirationTimerUpdate() : ControlMessage() {
-    /** In the case of a sync message, the public key of the person the message was targeted at.
-     *
-     * **Note:** `nil` if this isn't a sync message.
-     */
-    var syncTarget: String? = null
-    var duration: Int? = 0
+/** In the case of a sync message, the public key of the person the message was targeted at.
+ *
+ * **Note:** `nil` if this isn't a sync message.
+ */
+data class ExpirationTimerUpdate(var duration: Int? = 0, var syncTarget: String? = null) : ControlMessage() {
 
     override val isSelfSendValid: Boolean = true
 
@@ -32,18 +30,8 @@ class ExpirationTimerUpdate() : ControlMessage() {
             if (!isExpirationTimerUpdate) return null
             val syncTarget = dataMessageProto.syncTarget
             val duration = if (proto.hasExpirationTimer()) proto.expirationTimer else dataMessageProto.expireTimer
-            return ExpirationTimerUpdate(syncTarget, duration)
+            return ExpirationTimerUpdate(duration, syncTarget)
         }
-    }
-
-    constructor(duration: Int) : this() {
-        this.syncTarget = null
-        this.duration = duration
-    }
-
-    internal constructor(syncTarget: String, duration: Int) : this() {
-        this.syncTarget = syncTarget
-        this.duration = duration
     }
 
     override fun toProto(): SignalServiceProtos.Content? {
@@ -63,11 +51,11 @@ class ExpirationTimerUpdate() : ControlMessage() {
                 return null
             }
         }
-        val contentProto = SignalServiceProtos.Content.newBuilder()
         return try {
-            contentProto.dataMessage = dataMessageProto.build()
-            contentProto.setExpirationConfigurationIfNeeded(threadID)
-            contentProto.build()
+            SignalServiceProtos.Content.newBuilder().apply {
+                dataMessage = dataMessageProto.build()
+                setExpirationConfigurationIfNeeded(threadID)
+            }.build()
         } catch (e: Exception) {
             Log.w(TAG, "Couldn't construct expiration timer update proto from: $this")
             null
