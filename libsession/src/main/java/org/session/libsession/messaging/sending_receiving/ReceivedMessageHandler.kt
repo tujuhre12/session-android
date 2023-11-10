@@ -310,9 +310,9 @@ fun MessageReceiver.updateExpiryIfNeeded(
         storage.updateDisappearingState(threadID, disappearingState)
     }
 
-    if (localConfig != null || localConfig!!) {
-        storage.setExpirationConfiguration(remoteConfig)
-    }
+    remoteConfig.takeIf { localConfig == null || it.updatedTimestampMs > localConfig.updatedTimestampMs }
+        ?.let(storage::setExpirationConfiguration)
+
 
     if (message is ExpirationTimerUpdate) {
         SSKEnvironment.shared.messageExpirationManager.setExpirationTimer(message, type?.expiryMode(durationSeconds.toLong()))
