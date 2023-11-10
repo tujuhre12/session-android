@@ -31,6 +31,11 @@ class ExpirationTimerView @JvmOverloads constructor(
     )
 
     fun setExpirationTime(startedAt: Long, expiresIn: Long) {
+        if (expiresIn == 0L) {
+            setImageResource(R.drawable.timer55)
+            return
+        }
+
         val elapsedTime = nowWithOffset - startedAt
         val remainingTime = expiresIn - elapsedTime
         val remainingPercent = (remainingTime / expiresIn.toFloat()).coerceIn(0f, 1f)

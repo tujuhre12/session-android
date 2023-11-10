@@ -3,7 +3,6 @@ package org.thoughtcrime.securesms.conversation.v2.messages
 import android.content.Context
 import android.util.AttributeSet
 import android.view.LayoutInflater
-import android.view.View
 import android.widget.LinearLayout
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.view.isGone
@@ -11,8 +10,6 @@ import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewControlMessageBinding
-import org.session.libsession.utilities.getColorFromAttr
-import org.thoughtcrime.securesms.conversation.v2.components.ExpirationTimerView
 import org.thoughtcrime.securesms.database.model.MessageRecord
 
 class ControlMessageView : LinearLayout {
