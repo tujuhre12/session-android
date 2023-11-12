@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.conversation.v2
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -17,6 +18,7 @@ import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.utilities.SessionId
 import org.session.libsession.messaging.utilities.SodiumUtilities
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
@@ -220,6 +222,11 @@ class ConversationViewModel(
 
     fun hidesInputBar(): Boolean = openGroup?.canWrite != true &&
                 blindedRecipient?.blocksCommunityMessageRequests == true
+
+    fun legacyBannerRecipient(context: Context): Recipient? = recipient?.let { recipient ->
+        val legacyAddress = storage.getLastLegacyRecipient(recipient.address.serialize()) ?: return@let null
+        return Recipient.from(context, Address.fromSerialized(legacyAddress), false)
+    }
 
 
     @dagger.assisted.AssistedFactory

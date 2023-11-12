@@ -175,6 +175,8 @@ interface StorageProtocol {
     fun isPinned(threadID: Long): Boolean
     fun deleteConversation(threadID: Long)
     fun setThreadDate(threadId: Long, newDate: Long)
+    fun getLastLegacyRecipient(threadRecipient: String): String?
+    fun setLastLegacyRecipient(threadRecipient: String, senderRecipient: String?)
 
     // Contacts
     fun getContactWithSessionID(sessionID: String): Contact?
@@ -226,7 +228,11 @@ interface StorageProtocol {
     fun getExpirationConfiguration(threadId: Long): ExpirationConfiguration?
     fun setExpirationConfiguration(config: ExpirationConfiguration)
     fun getExpiringMessages(messageIds: List<Long> = emptyList()): List<Pair<Long, Long>>
-    fun updateDisappearingState(threadID: Long, disappearingState: Recipient.DisappearingState)
+    fun updateDisappearingState(
+        messageSender: String,
+        threadID: Long,
+        disappearingState: Recipient.DisappearingState
+    )
 
     // Shared configs
     fun notifyConfigUpdates(forConfigObject: ConfigBase, messageTimestamp: Long)

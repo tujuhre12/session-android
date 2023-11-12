@@ -92,7 +92,6 @@ import org.session.libsession.utilities.Stub
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.concurrent.SimpleTask
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsession.utilities.recipients.Recipient.DisappearingState
 import org.session.libsession.utilities.recipients.RecipientModifiedListener
 import org.session.libsignal.crypto.MnemonicCodec
 import org.session.libsignal.utilities.IdPrefix
@@ -697,13 +696,12 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     }
 
     private fun setUpOutdatedClientBanner() {
-        val recipient = viewModel.recipient?.takeIf { !it.isLocalNumber } ?: return
+        val legacyRecipient = viewModel.legacyBannerRecipient(this)
         if (ExpirationConfiguration.isNewConfigEnabled &&
-            recipient.disappearingState == DisappearingState.LEGACY &&
-            viewModel.expirationConfiguration?.isEnabled == true
+             legacyRecipient != null
         ) {
             binding?.outdatedBannerTextView?.text =
-                resources.getString(R.string.activity_conversation_outdated_client_banner_text, recipient.name)
+                resources.getString(R.string.activity_conversation_outdated_client_banner_text, legacyRecipient.name)
             binding?.outdatedBanner?.isVisible = true
         }
     }

@@ -67,6 +67,7 @@ import org.session.libsession.utilities.ProfileKeyUtil
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.Recipient.DisappearingState
 import org.session.libsignal.crypto.ecc.DjbECPrivateKey
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
@@ -1345,6 +1346,14 @@ open class Storage(
         threadDb.setDate(threadId, newDate)
     }
 
+    override fun getLastLegacyRecipient(threadRecipient: String): String? {
+        return DatabaseComponent.get(context).lokiAPIDatabase().getLastLegacySenderAddress(threadRecipient)
+    }
+
+    override fun setLastLegacyRecipient(threadRecipient: String, senderRecipient: String?) {
+        DatabaseComponent.get(context).lokiAPIDatabase().setLastLegacySenderAddress(threadRecipient, senderRecipient)
+    }
+
     override fun deleteConversation(threadID: Long) {
         val recipient = getRecipientForThread(threadID)
         val threadDB = DatabaseComponent.get(context).threadDatabase()
@@ -1759,10 +1768,18 @@ open class Storage(
         return expiringMessages
     }
 
-    override fun updateDisappearingState(threadID: Long, disappearingState: Recipient.DisappearingState) {
+    override fun updateDisappearingState(
+        messageSender: String,
+        threadID: Long,
+        disappearingState: Recipient.DisappearingState
+    ) {
         val threadDb = DatabaseComponent.get(context).threadDatabase()
         val recipient = threadDb.getRecipientForThreadId(threadID) ?: return
         val recipientDb = DatabaseComponent.get(context).recipientDatabase()
         recipientDb.setDisappearingState(recipient, disappearingState);
+        if (disappearingState == DisappearingState.LEGACY) {
+            DatabaseComponent.get(context).lokiAPIDatabase()
+                .setLastLegacySenderAddress(recipient.address.serialize(), messageSender)
+        }
     }
 }

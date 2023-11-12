@@ -307,7 +307,7 @@ fun MessageReceiver.updateExpiryIfNeeded(
 
     if (!recipient.isGroupRecipient && !recipient.isLocalNumber) {
         val disappearingState = if (proto.hasExpirationType()) Recipient.DisappearingState.UPDATED else Recipient.DisappearingState.LEGACY
-        storage.updateDisappearingState(threadID, disappearingState)
+        storage.updateDisappearingState(message.sender!!, threadID, disappearingState)
     }
 
     remoteConfig.takeIf { localConfig == null || it.updatedTimestampMs > localConfig.updatedTimestampMs }
