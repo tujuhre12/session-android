@@ -366,6 +366,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     executeStatements(db, ReactionDatabase.CREATE_REACTION_TRIGGERS);
     db.execSQL(RecipientDatabase.getAddWrapperHash());
     db.execSQL(RecipientDatabase.getAddBlocksCommunityMessageRequests());
+    db.execSQL(LokiAPIDatabase.CREATE_LAST_LEGACY_MESSAGE_TABLE);
   }
 
   @Override
@@ -629,6 +630,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
       if (oldVersion < lokiV46) {
         executeStatements(db, SmsDatabase.ADD_AUTOINCREMENT);
         executeStatements(db, MmsDatabase.ADD_AUTOINCREMENT);
+        db.execSQL(LokiAPIDatabase.CREATE_LAST_LEGACY_MESSAGE_TABLE);
       }
 
       db.setTransactionSuccessful();
