@@ -1774,12 +1774,17 @@ open class Storage(
         disappearingState: Recipient.DisappearingState
     ) {
         val threadDb = DatabaseComponent.get(context).threadDatabase()
+        val lokiDb = DatabaseComponent.get(context).lokiAPIDatabase()
         val recipient = threadDb.getRecipientForThreadId(threadID) ?: return
+        val recipientAddress = recipient.address.serialize()
         val recipientDb = DatabaseComponent.get(context).recipientDatabase()
         recipientDb.setDisappearingState(recipient, disappearingState);
-        if (disappearingState == DisappearingState.LEGACY) {
-            DatabaseComponent.get(context).lokiAPIDatabase()
-                .setLastLegacySenderAddress(recipient.address.serialize(), messageSender)
+        val currentLegacyRecipient = lokiDb.getLastLegacySenderAddress(recipientAddress)
+        if (disappearingState == DisappearingState.LEGACY
+            && ExpirationConfiguration.isNewConfigEnabled) { // only set "this person is legacy" if new config enabled
+            lokiDb.setLastLegacySenderAddress(recipientAddress, messageSender)
+        } else if (messageSender == currentLegacyRecipient) {
+            lokiDb.setLastLegacySenderAddress(recipientAddress, null)
         }
     }
 }
