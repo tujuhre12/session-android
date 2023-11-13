@@ -30,6 +30,12 @@ data class State(
 
     val typeOptionsHidden get() = isNoteToSelf || (isGroup && isNewConfigEnabled)
 
+    val nextType get() = when {
+        expiryType == ExpiryType.AFTER_READ -> ExpiryType.AFTER_READ
+        isNewConfigEnabled -> ExpiryType.AFTER_SEND
+        else -> ExpiryType.LEGACY
+    }
+
     val duration get() = expiryMode?.duration
     val expiryType get() = expiryMode?.type
 

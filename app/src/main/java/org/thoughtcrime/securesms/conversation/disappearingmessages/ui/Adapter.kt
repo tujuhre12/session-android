@@ -5,6 +5,7 @@ import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ExpiryType
 import org.thoughtcrime.securesms.conversation.disappearingmessages.State
 import org.thoughtcrime.securesms.ui.GetString
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
@@ -29,16 +30,15 @@ private fun State.typeOptions(): List<ExpiryRadioOption>? = if (typeOptionsHidde
 }
 
 private fun State.timeOptions(): List<ExpiryRadioOption>? {
-    val type = takeUnless {
-        it.typeOptionsHidden
-    }?.expiryType ?: if (isNewConfigEnabled) ExpiryType.AFTER_SEND else ExpiryType.LEGACY
+    // Don't show times card if we have a types card, and type is off.
+    if (!typeOptionsHidden && expiryType == ExpiryType.NONE) return null
 
-    return when (type) {
-        ExpiryType.AFTER_READ -> afterReadModes
-        ExpiryType.AFTER_SEND -> afterSendModes
-        ExpiryType.LEGACY -> legacyModes
-        else -> null
-    }?.map { timeOption(it) }?.let {
+    return nextType.let { type ->
+        when (type) {
+            ExpiryType.AFTER_READ -> afterReadTimes
+            else -> afterSendTimes
+        }.map { timeOption(type, it) }
+    }.let {
         buildList {
             if (typeOptionsHidden) add(offTypeOption())
             addAll(debugOptions())
@@ -69,20 +69,20 @@ private fun debugTimes(isDebug: Boolean) = if (isDebug) listOf(10.seconds, 1.min
 private fun debugModes(isDebug: Boolean, type: ExpiryType) =
     debugTimes(isDebug).map { type.mode(it.inWholeSeconds) }
 private fun State.debugOptions(): List<ExpiryRadioOption> =
-    debugModes(showDebugOptions, expiryType.takeIf { it == ExpiryType.AFTER_READ } ?: ExpiryType.AFTER_SEND)
-        .map { timeOption(it, subtitle = GetString("for testing purposes")) }
+    debugModes(showDebugOptions, nextType).map { timeOption(it, subtitle = GetString("for testing purposes")) }
 
 private val afterSendTimes = listOf(12.hours, 1.days, 7.days, 14.days)
-
-private val afterSendModes = afterSendTimes.map { it.inWholeSeconds }.map(ExpiryMode::AfterSend)
-private val legacyModes = afterSendTimes.map { it.inWholeSeconds }.map(ExpiryMode::Legacy)
 
 private val afterReadTimes = buildList {
     add(5.minutes)
     add(1.hours)
     addAll(afterSendTimes)
 }
-private val afterReadModes = afterReadTimes.map { it.inWholeSeconds }.map(ExpiryMode::AfterRead)
+
+private fun State.timeOption(
+    type: ExpiryType,
+    time: Duration
+) = timeOption(type.mode(time))
 
 private fun State.timeOption(
     mode: ExpiryMode,
@@ -93,6 +93,6 @@ private fun State.timeOption(
     title = title,
     subtitle = subtitle,
     contentDescription = title,
-    selected = expiryMode == mode,
+    selected = mode.duration == expiryMode?.duration,
     enabled = isTimeOptionsEnabled
 )
