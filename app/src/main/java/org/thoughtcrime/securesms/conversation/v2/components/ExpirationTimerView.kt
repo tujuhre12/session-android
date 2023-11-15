@@ -3,17 +3,19 @@ package org.thoughtcrime.securesms.conversation.v2.components
 import android.content.Context
 import android.graphics.drawable.AnimationDrawable
 import android.util.AttributeSet
+import android.util.Log
 import android.widget.ImageView
+import androidx.appcompat.widget.AppCompatImageView
 import androidx.core.content.ContextCompat
 import network.loki.messenger.R
 import org.session.libsession.snode.SnodeAPI.nowWithOffset
 import kotlin.math.round
 
 class ExpirationTimerView @JvmOverloads constructor(
-    context: Context?,
+    context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
-) : ImageView(context, attrs, defStyleAttr) {
+) : AppCompatImageView(context, attrs, defStyleAttr) {
     private val frames = intArrayOf(
         R.drawable.timer00,
         R.drawable.timer05,
@@ -33,6 +35,12 @@ class ExpirationTimerView @JvmOverloads constructor(
     fun setExpirationTime(startedAt: Long, expiresIn: Long) {
         if (expiresIn == 0L) {
             setImageResource(R.drawable.timer55)
+            return
+        }
+
+        if (startedAt == 0L) {
+            // timer has not started
+            setImageResource(R.drawable.timer60)
             return
         }
 
