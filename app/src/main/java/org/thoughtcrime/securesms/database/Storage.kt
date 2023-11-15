@@ -30,6 +30,7 @@ import org.session.libsession.messaging.jobs.MessageSendJob
 import org.session.libsession.messaging.jobs.RetrieveProfileAvatarJob
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.ExpirationConfiguration
+import org.session.libsession.messaging.messages.ExpirationConfiguration.Companion.isNewConfigEnabled
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.ConfigurationMessage
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
@@ -1717,7 +1718,9 @@ open class Storage(
                     ?.run { disappearingTimer.takeIf { it != 0L }?.let(ExpiryMode::AfterSend) ?: ExpiryMode.NONE }
             }
             else -> null
-        }?.let { ExpirationConfiguration(threadId, it, dbExpirationMetadata.updatedTimestampMs) }
+        }
+            ?.run { takeIf { isNewConfigEnabled || it is ExpiryMode.NONE } ?: ExpiryMode.Legacy(expirySeconds) }
+            ?.let { ExpirationConfiguration(threadId, it, dbExpirationMetadata.updatedTimestampMs) }
     }
 
     override fun setExpirationConfiguration(config: ExpirationConfiguration) {
@@ -1727,24 +1730,32 @@ open class Storage(
         val currentConfig = expirationDb.getExpirationConfiguration(config.threadId)
         if (currentConfig != null && currentConfig.updatedTimestampMs >= config.updatedTimestampMs) return
 
+        val expiryMode = config.expiryMode.run {
+            takeUnless { it is ExpiryMode.Legacy }
+                ?: if (recipient.isContactRecipient) ExpiryMode.AfterRead(expirySeconds)
+                else ExpiryMode.AfterSend(expirySeconds)
+        }
+
         if (recipient.isClosedGroupRecipient) {
             val userGroups = configFactory.userGroups ?: return
             val groupPublicKey = GroupUtil.addressToGroupSessionId(recipient.address)
-            val expiryMode = config.expiryMode
             val groupInfo = userGroups.getLegacyGroupInfo(groupPublicKey)
                 ?.copy(disappearingTimer = expiryMode.expirySeconds) ?: return
             userGroups.set(groupInfo)
         } else if (recipient.isLocalNumber) {
             val user = configFactory.user ?: return
-            user.setNtsExpiry(config.expiryMode)
+            user.setNtsExpiry(expiryMode)
         } else if (recipient.isContactRecipient) {
             val contacts = configFactory.contacts ?: return
+
             val contact = contacts.get(recipient.address.serialize())?.copy(
-                expiryMode = config.expiryMode
+                expiryMode = expiryMode
             ) ?: return
             contacts.set(contact)
         }
-        expirationDb.setExpirationConfiguration(config)
+        expirationDb.setExpirationConfiguration(
+            config.run { copy(expiryMode = expiryMode) }
+        )
     }
 
     override fun getExpiringMessages(messageIds: List<Long>): List<Pair<Long, Long>> {
