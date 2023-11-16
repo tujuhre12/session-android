@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
@@ -38,6 +39,8 @@ import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.notifications.PushRegistry
 import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.OutlineButton
+import org.thoughtcrime.securesms.ui.PreviewTheme
+import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
 import org.thoughtcrime.securesms.ui.h8
 import org.thoughtcrime.securesms.ui.h9
 import org.thoughtcrime.securesms.ui.session_accent
@@ -66,7 +69,9 @@ class MessageNotificationsActivity : BaseActionBarActivity() {
     private fun MessageNotifications() {
         val state by viewModel.stateFlow.collectAsState()
 
-        MessageNotifications(state, viewModel::setEnabled, ::register)
+        AppTheme {
+            MessageNotifications(state, viewModel::setEnabled, ::register)
+        }
     }
 
     private fun register() {
@@ -82,42 +87,49 @@ class MessageNotificationsActivity : BaseActionBarActivity() {
 
 @Preview
 @Composable
+fun MessageNotificationsPreview(
+    @PreviewParameter(ThemeResPreviewParameterProvider::class) themeResId: Int
+) {
+    PreviewTheme(themeResId) {
+        MessageNotifications()
+    }
+}
+
+@Composable
 fun MessageNotifications(
     state: MessageNotificationsState = MessageNotificationsState(),
     setEnabled: (Boolean) -> Unit = {},
     onContinue: () -> Unit = {}
 ) {
-    AppTheme {
-        Column(Modifier.padding(horizontal = 32.dp)) {
-            Spacer(Modifier.weight(1f))
-            Text("Message notifications", style = MaterialTheme.typography.h4)
-            Spacer(Modifier.height(16.dp))
-            Text("There are two ways Session can notify you of new messages.")
-            Spacer(Modifier.height(16.dp))
-            NotificationRadioButton(
-                R.string.activity_pn_mode_fast_mode,
-                R.string.activity_pn_mode_fast_mode_explanation,
-                R.string.activity_pn_mode_recommended_option_tag,
-                selected = state.pushEnabled,
-                onClick = { setEnabled(true) }
-            )
-            Spacer(Modifier.height(16.dp))
-            NotificationRadioButton(
-                R.string.activity_pn_mode_slow_mode,
-                R.string.activity_pn_mode_slow_mode_explanation,
-                selected = state.pushDisabled,
-                onClick = { setEnabled(false) }
-            )
-            Spacer(Modifier.weight(1f))
-            OutlineButton(
-                stringResource(R.string.continue_2),
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .width(262.dp),
-                onClick = onContinue
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-        }
+    Column(Modifier.padding(horizontal = 32.dp)) {
+        Spacer(Modifier.weight(1f))
+        Text("Message notifications", style = MaterialTheme.typography.h4)
+        Spacer(Modifier.height(16.dp))
+        Text("There are two ways Session can notify you of new messages.")
+        Spacer(Modifier.height(16.dp))
+        NotificationRadioButton(
+            R.string.activity_pn_mode_fast_mode,
+            R.string.activity_pn_mode_fast_mode_explanation,
+            R.string.activity_pn_mode_recommended_option_tag,
+            selected = state.pushEnabled,
+            onClick = { setEnabled(true) }
+        )
+        Spacer(Modifier.height(16.dp))
+        NotificationRadioButton(
+            R.string.activity_pn_mode_slow_mode,
+            R.string.activity_pn_mode_slow_mode_explanation,
+            selected = state.pushDisabled,
+            onClick = { setEnabled(false) }
+        )
+        Spacer(Modifier.weight(1f))
+        OutlineButton(
+            stringResource(R.string.continue_2),
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .width(262.dp),
+            onClick = onContinue
+        )
+        Spacer(modifier = Modifier.height(12.dp))
     }
 }
 
