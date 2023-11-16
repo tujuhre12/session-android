@@ -1791,7 +1791,9 @@ open class Storage(
         val recipientDb = DatabaseComponent.get(context).recipientDatabase()
         recipientDb.setDisappearingState(recipient, disappearingState);
         val currentLegacyRecipient = lokiDb.getLastLegacySenderAddress(recipientAddress)
+        val currentExpiry = getExpirationConfiguration(threadID)
         if (disappearingState == DisappearingState.LEGACY
+            && currentExpiry?.isEnabled == true
             && ExpirationConfiguration.isNewConfigEnabled) { // only set "this person is legacy" if new config enabled
             lokiDb.setLastLegacySenderAddress(recipientAddress, messageSender)
         } else if (messageSender == currentLegacyRecipient) {

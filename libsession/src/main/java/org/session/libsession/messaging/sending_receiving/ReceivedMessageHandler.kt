@@ -283,11 +283,18 @@ fun MessageReceiver.updateExpiryIfNeeded(
     val storage = MessagingModuleConfiguration.shared.storage
 
     val sentTime = message.sentTimestamp ?: throw MessageReceiver.Error.InvalidMessage
-    if (!proto.hasLastDisappearingMessageChangeTimestamp()) return
+
     val threadID =
         storage.getThreadIdFor(message.sender!!, message.groupPublicKey, openGroupID, false)
             ?: throw MessageReceiver.Error.NoThread
     val recipient = storage.getRecipientForThread(threadID) ?: throw MessageReceiver.Error.NoThread
+
+    if (!recipient.isLocalNumber) {
+        val disappearingState = if (proto.hasExpirationType()) Recipient.DisappearingState.UPDATED else Recipient.DisappearingState.LEGACY
+        storage.updateDisappearingState(message.sender!!, threadID, disappearingState)
+    }
+
+    if (!proto.hasLastDisappearingMessageChangeTimestamp()) return
 
     val localConfig = storage.getExpirationConfiguration(threadID)
 
@@ -304,11 +311,6 @@ fun MessageReceiver.updateExpiryIfNeeded(
 
     // don't update any values for open groups
     if (recipient.isOpenGroupRecipient && type != null) throw MessageReceiver.Error.InvalidMessage
-
-    if (!recipient.isGroupRecipient && !recipient.isLocalNumber) {
-        val disappearingState = if (proto.hasExpirationType()) Recipient.DisappearingState.UPDATED else Recipient.DisappearingState.LEGACY
-        storage.updateDisappearingState(message.sender!!, threadID, disappearingState)
-    }
 
     remoteConfig.takeIf { localConfig == null || it.updatedTimestampMs > localConfig.updatedTimestampMs }
         ?.let(storage::setExpirationConfiguration)
