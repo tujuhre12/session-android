@@ -343,6 +343,9 @@
         <item name="prominentButtonColor">?colorAccent</item>
         <item name="elementBorderColor">@color/classic_dark_3</item>
 
+        <item name="lightCell">@color/white</item>
+        <item name="onLightCell">@color/black</item>
+
         <item name="isLightTheme">false</item>
 
         <!-- Home screen -->
@@ -421,6 +424,9 @@
         <item name="accentColor">?colorAccent</item>
         <item name="prominentButtonColor">?android:textColorPrimary</item>
         <item name="elementBorderColor">@color/classic_light_3</item>
+
+        <item name="lightCell">@color/classic_light_5</item>
+        <item name="onLightCell">@color/black</item>
 
         <!-- Light mode -->
         <item name="theme_type">light</item>
@@ -510,6 +516,9 @@
         <item name="prominentButtonColor">?colorAccent</item>
         <item name="elementBorderColor">@color/ocean_dark_4</item>
 
+        <item name="lightCell">@color/white</item>
+        <item name="onLightCell">@color/ocean_dark_2</item>
+
         <item name="isLightTheme">false</item>
 
         <!-- Home screen -->
@@ -592,6 +601,9 @@
         <item name="accentColor">?colorAccent</item>
         <item name="prominentButtonColor">?android:textColorPrimary</item>
         <item name="elementBorderColor">@color/ocean_light_3</item>
+
+        <item name="lightCell">@color/ocean_light_6</item>
+        <item name="onLightCell">@color/ocean_light_1</item>
 
         <!-- Light mode -->
         <item name="theme_type">light</item>

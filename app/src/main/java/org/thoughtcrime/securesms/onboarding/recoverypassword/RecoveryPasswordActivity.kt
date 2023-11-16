@@ -34,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.painterResource
@@ -44,14 +45,8 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsignal.crypto.MnemonicCodec
-import org.session.libsignal.utilities.hexEncodedPrivateKey
 import org.thoughtcrime.securesms.BaseActionBarActivity
-import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
-import org.thoughtcrime.securesms.crypto.MnemonicUtilities
 import org.thoughtcrime.securesms.ui.AppTheme
-import org.thoughtcrime.securesms.ui.Cell
-import org.thoughtcrime.securesms.ui.CellNoMargin
 import org.thoughtcrime.securesms.ui.CellWithPaddingAndMargin
 import org.thoughtcrime.securesms.ui.LocalExtraColors
 import org.thoughtcrime.securesms.ui.OutlineButton
@@ -60,7 +55,6 @@ import org.thoughtcrime.securesms.ui.SessionShieldIcon
 import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
 import org.thoughtcrime.securesms.ui.classicDarkColors
 import org.thoughtcrime.securesms.ui.colorDestructive
-import org.thoughtcrime.securesms.ui.extraSmall
 import org.thoughtcrime.securesms.ui.h8
 import org.thoughtcrime.securesms.ui.small
 
@@ -74,7 +68,7 @@ class RecoveryPasswordActivity : BaseActionBarActivity() {
 
         ComposeView(this).apply {
             setContent {
-                RecoveryPassword(viewModel.seed, viewModel.bitmap) { copySeed() }
+                RecoveryPassword(viewModel.seed, viewModel.qrBitmap) { copySeed() }
             }
         }.let(::setContentView)
     }
@@ -103,21 +97,21 @@ fun PreviewMessageDetails(
 }
 
 @Composable
-fun RecoveryPassword(seed: String = "", bitmap: Bitmap? = null, copySeed:() -> Unit = {}) {
+fun RecoveryPassword(seed: String = "", qrBitmap: Bitmap? = null, copySeed:() -> Unit = {}) {
     AppTheme {
         Column(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.verticalScroll(rememberScrollState())
                 .padding(bottom = 16.dp)
         ) {
-            RecoveryPasswordCell(seed, bitmap, copySeed)
+            RecoveryPasswordCell(seed, qrBitmap, copySeed)
             HideRecoveryPasswordCell()
         }
     }
 }
 
 @Composable
-fun RecoveryPasswordCell(seed: String = "", bitmap: Bitmap? = null, copySeed:() -> Unit = {}) {
+fun RecoveryPasswordCell(seed: String = "", qrBitmap: Bitmap? = null, copySeed:() -> Unit = {}) {
     val showQr = remember {
         mutableStateOf(false)
     }
@@ -150,27 +144,29 @@ fun RecoveryPasswordCell(seed: String = "", bitmap: Bitmap? = null, copySeed:() 
 
             AnimatedVisibility(showQr.value, modifier = Modifier.align(Alignment.CenterHorizontally)) {
                 Card(
-                    backgroundColor = Color.White,
+                    backgroundColor = LocalExtraColors.current.lightCell,
+                    elevation = 0.dp,
                     modifier = Modifier
                         .align(Alignment.CenterHorizontally)
                         .padding(vertical = 24.dp)
                 ) {
                     Box {
-                        bitmap?.let {
+                        qrBitmap?.let {
                             Image(
                                 bitmap = it.asImageBitmap(),
-                                contentDescription = "some useful description",
+                                contentDescription = "QR code of your recovery password",
+                                colorFilter = ColorFilter.tint(LocalExtraColors.current.onLightCell)
                             )
                         }
 
                         Icon(
                             painter = painterResource(id = R.drawable.session_shield),
                             contentDescription = "",
-                            tint = Color.Black,
+                            tint = LocalExtraColors.current.onLightCell,
                             modifier = Modifier.align(Alignment.Center)
                                 .width(46.dp)
                                 .height(56.dp)
-                                .background(color = Color.White)
+                                .background(color = LocalExtraColors.current.lightCell)
                                 .padding(horizontal = 3.dp, vertical = 1.dp)
                         )
                     }

@@ -18,7 +18,7 @@ class RecoveryPasswordViewModel @Inject constructor(
     private val application: Application
 ): AndroidViewModel(application) {
 
-    val bitmap: Bitmap? = TextSecurePreferences.getLocalNumber(application)?.let {
+    val qrBitmap: Bitmap? = TextSecurePreferences.getLocalNumber(application)?.let {
         QRCodeUtilities.encode(
             data = it,
             size = toPx(280, application.resources),

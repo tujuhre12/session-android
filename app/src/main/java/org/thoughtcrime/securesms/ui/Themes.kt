@@ -30,7 +30,9 @@ val LocalExtraColors = staticCompositionLocalOf<ExtraColors> { error("No Custom 
 
 data class ExtraColors(
     val settingsBackground: Color,
-    val prominentButtonColor: Color
+    val prominentButtonColor: Color,
+    val lightCell: Color,
+    val onLightCell: Color,
 )
 
 /**
@@ -46,6 +48,8 @@ fun AppTheme(
         ExtraColors(
             settingsBackground = getColorFromTheme(R.attr.colorSettingsBackground),
             prominentButtonColor = getColorFromTheme(R.attr.prominentButtonColor),
+            lightCell = getColorFromTheme(R.attr.lightCell),
+            onLightCell = getColorFromTheme(R.attr.onLightCell),
         )
     }
 
