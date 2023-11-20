@@ -63,13 +63,13 @@ enum class ExpiryType(
         ExpiryMode::AfterRead,
         R.string.expiration_type_disappear_after_read,
         R.string.expiration_type_disappear_after_read_description,
-        R.string.expiration_type_disappear_after_read_description
+        R.string.AccessibilityId_disappear_after_read_option
     ),
     AFTER_SEND(
         ExpiryMode::AfterSend,
         R.string.expiration_type_disappear_after_send,
         R.string.expiration_type_disappear_after_read_description,
-        R.string.expiration_type_disappear_after_send_description
+        R.string.AccessibilityId_disappear_after_send_option
     );
 
     fun mode(seconds: Long) = if (seconds != 0L) createMode(seconds) else ExpiryMode.NONE
