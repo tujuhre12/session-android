@@ -18,8 +18,8 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ExpiryType
-import org.thoughtcrime.securesms.database.MessagingDatabase.ExpirationInfo
-import org.thoughtcrime.securesms.database.MessagingDatabase.MarkedMessageInfo
+import org.thoughtcrime.securesms.database.ExpirationInfo
+import org.thoughtcrime.securesms.database.MarkedMessageInfo
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.util.SessionMetaProtocol.shouldSendReadReceipt
 
@@ -129,16 +129,18 @@ class MarkReadReceiver : BroadcastReceiver() {
             expirationInfo: ExpirationInfo,
             expiresIn: Long = expirationInfo.expiresIn
         ) {
-            if (expiresIn > 0 && expirationInfo.expireStarted <= 0) {
-                if (expirationInfo.isMms) DatabaseComponent.get(context!!).mmsDatabase().markExpireStarted(expirationInfo.id)
-                else DatabaseComponent.get(context!!).smsDatabase().markExpireStarted(expirationInfo.id)
+            if (expiresIn <= 0 || expirationInfo.expireStarted > 0) return
 
-                ApplicationContext.getInstance(context).expiringMessageManager.scheduleDeletion(
-                    expirationInfo.id,
-                    expirationInfo.isMms,
-                    expiresIn
-                )
-            }
+            val now = SnodeAPI.nowWithOffset
+            val db = DatabaseComponent.get(context!!).run { if (expirationInfo.isMms) mmsDatabase() else smsDatabase() }
+            db.markExpireStarted(expirationInfo.id, now)
+
+            ApplicationContext.getInstance(context).expiringMessageManager.scheduleDeletion(
+                expirationInfo.id,
+                expirationInfo.isMms,
+                now,
+                expiresIn
+            )
         }
     }
 }

@@ -61,7 +61,7 @@ class DisappearingMessagesViewModel(
 
     init {
         viewModelScope.launch {
-            val expiryMode = storage.getExpirationConfiguration(threadId)?.expiryMode ?: ExpiryMode.NONE
+            val expiryMode = storage.getExpirationConfiguration(threadId)?.expiryMode?.maybeConvertToLegacy(isNewConfigEnabled) ?: ExpiryMode.NONE
             val recipient = threadDb.getRecipientForThreadId(threadId)
             val groupRecord = recipient?.takeIf { it.isClosedGroupRecipient }
                 ?.run { groupDb.getGroup(address.toGroupString()).orNull() }
@@ -83,7 +83,7 @@ class DisappearingMessagesViewModel(
 
     override fun onSetClick() = viewModelScope.launch {
         val state = _state.value
-        val mode = state.expiryMode
+        val mode = state.expiryMode?.coerceLegacyToAfterSend()
         val address = state.address
         if (address == null || mode == null) {
             _event.send(Event.FAIL)
@@ -93,8 +93,9 @@ class DisappearingMessagesViewModel(
         val expiryChangeTimestampMs = SnodeAPI.nowWithOffset
         storage.setExpirationConfiguration(ExpirationConfiguration(threadId, mode, expiryChangeTimestampMs))
 
-        val message = ExpirationTimerUpdate(mode.expirySeconds.toInt()).apply {
+        val message = ExpirationTimerUpdate(mode).apply {
             sender = textSecurePreferences.getLocalNumber()
+            isSenderSelf = true
             recipient = address.serialize()
             sentTimestamp = expiryChangeTimestampMs
         }
@@ -105,6 +106,8 @@ class DisappearingMessagesViewModel(
 
         _event.send(Event.SUCCESS)
     }
+
+    private fun ExpiryMode.coerceLegacyToAfterSend() = takeUnless { it is ExpiryMode.Legacy } ?: ExpiryMode.AfterSend(expirySeconds)
 
     @dagger.assisted.AssistedFactory
     interface AssistedFactory {
@@ -135,3 +138,5 @@ class DisappearingMessagesViewModel(
         ) as T
     }
 }
+
+private fun ExpiryMode.maybeConvertToLegacy(isNewConfigEnabled: Boolean): ExpiryMode = takeIf { isNewConfigEnabled } ?: ExpiryMode.Legacy(expirySeconds)

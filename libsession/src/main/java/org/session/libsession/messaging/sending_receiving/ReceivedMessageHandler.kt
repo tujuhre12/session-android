@@ -40,7 +40,6 @@ import org.session.libsession.utilities.GroupUtil.doubleEncodeGroupID
 import org.session.libsession.utilities.ProfileKeyUtil
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.expiryMode
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.crypto.ecc.DjbECPrivateKey
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
@@ -156,28 +155,21 @@ fun MessageReceiver.cancelTypingIndicatorsIfNeeded(senderPublicKey: String) {
 private fun MessageReceiver.handleExpirationTimerUpdate(message: ExpirationTimerUpdate) {
     if (ExpirationConfiguration.isNewConfigEnabled) return
     val module = MessagingModuleConfiguration.shared
-    val recipient = Recipient.from(module.context, Address.fromSerialized(message.sender!!), false)
-    val type = when {
-        recipient.isContactRecipient -> ExpiryMode.AfterRead(message.duration!!.toLong())
-        recipient.isGroupRecipient -> ExpiryMode.AfterSend(message.duration!!.toLong())
-        else -> ExpiryMode.NONE
-    }
     try {
-        var threadId: Long = module.storage.getOrCreateThreadIdFor(fromSerialized(message.sender!!))
-        if (message.groupPublicKey != null) {
-            threadId = module.storage.getOrCreateThreadIdFor(fromSerialized(doubleEncodeGroupID(message.groupPublicKey!!)))
-        }
+        val threadId = fromSerialized(message.groupPublicKey?.let(::doubleEncodeGroupID) ?: message.sender!!)
+            .let(module.storage::getOrCreateThreadIdFor)
+
         module.storage.setExpirationConfiguration(
             ExpirationConfiguration(
                 threadId,
-                type,
+                message.expiryMode,
                 message.sentTimestamp!!
             )
         )
     } catch (e: Exception) {
         Log.e("Loki", "Failed to update expiration configuration.")
     }
-    SSKEnvironment.shared.messageExpirationManager.setExpirationTimer(message, type)
+    SSKEnvironment.shared.messageExpirationManager.setExpirationTimer(message, message.expiryMode)
 }
 
 private fun MessageReceiver.handleDataExtractionNotification(message: DataExtractionNotification) {
@@ -317,9 +309,17 @@ fun MessageReceiver.updateExpiryIfNeeded(
 
 
     if (message is ExpirationTimerUpdate) {
-        SSKEnvironment.shared.messageExpirationManager.setExpirationTimer(message, type?.expiryMode(durationSeconds.toLong()))
+        SSKEnvironment.shared.messageExpirationManager.setExpirationTimer(message, expiryMode)
     }
 }
+
+private fun SignalServiceProtos.Content.ExpirationType.expiryMode(durationSeconds: Long) = takeIf { durationSeconds > 0 }?.let {
+    when (it) {
+        SignalServiceProtos.Content.ExpirationType.DELETE_AFTER_READ -> ExpiryMode.AfterRead(durationSeconds)
+        SignalServiceProtos.Content.ExpirationType.DELETE_AFTER_SEND, SignalServiceProtos.Content.ExpirationType.UNKNOWN -> ExpiryMode.AfterSend(durationSeconds)
+        else -> ExpiryMode.NONE
+    }
+} ?: ExpiryMode.NONE
 
 fun MessageReceiver.handleVisibleMessage(
     message: VisibleMessage,
@@ -583,8 +583,8 @@ private fun MessageReceiver.handleNewClosedGroup(message: ClosedGroupControlMess
     val groupPublicKey = kind.publicKey.toByteArray().toHexString()
     val members = kind.members.map { it.toByteArray().toHexString() }
     val admins = kind.admins.map { it.toByteArray().toHexString() }
-    val expireTimer = kind.expirationTimer
-    handleNewClosedGroup(message.sender!!, message.sentTimestamp!!, groupPublicKey, kind.name, kind.encryptionKeyPair!!, members, admins, message.sentTimestamp!!, expireTimer)
+    val expirationTimer = kind.expirationTimer
+    handleNewClosedGroup(message.sender!!, message.sentTimestamp!!, groupPublicKey, kind.name, kind.encryptionKeyPair!!, members, admins, message.sentTimestamp!!, expirationTimer)
 }
 
 private fun handleNewClosedGroup(sender: String, sentTimestamp: Long, groupPublicKey: String, name: String, encryptionKeyPair: ECKeyPair, members: List<String>, admins: List<String>, formationTimestamp: Long, expireTimer: Int) {

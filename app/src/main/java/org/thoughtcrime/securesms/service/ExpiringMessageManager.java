@@ -9,6 +9,7 @@ import org.session.libsession.messaging.messages.ExpirationConfiguration;
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate;
 import org.session.libsession.messaging.messages.signal.IncomingMediaMessage;
 import org.session.libsession.messaging.messages.signal.OutgoingExpirationUpdateMessage;
+import org.session.libsession.snode.SnodeAPI;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.GroupUtil;
 import org.session.libsession.utilities.SSKEnvironment;
@@ -54,10 +55,6 @@ public class ExpiringMessageManager implements SSKEnvironment.MessageExpirationM
     executor.execute(new ProcessTask());
   }
 
-  public void scheduleDeletion(long id, boolean mms, long expiresInMillis) {
-    scheduleDeletion(id, mms, System.currentTimeMillis(), expiresInMillis);
-  }
-
   public void scheduleDeletion(long id, boolean mms, long startedAtTimestamp, long expiresInMillis) {
     long expiresAtMillis = startedAtTimestamp + expiresInMillis;
 
@@ -78,8 +75,7 @@ public class ExpiringMessageManager implements SSKEnvironment.MessageExpirationM
     String userPublicKey = TextSecurePreferences.getLocalNumber(context);
     String senderPublicKey = message.getSender();
     long sentTimestamp = message.getSentTimestamp() == null ? 0 : message.getSentTimestamp();
-    long expireStartedAt = (expiryMode instanceof ExpiryMode.AfterSend)
-            ? sentTimestamp : 0;
+    long expireStartedAt = (expiryMode instanceof ExpiryMode.AfterSend || message.isSenderSelf()) ? sentTimestamp : 0;
 
     // Notify the user
     if (senderPublicKey == null || userPublicKey.equals(senderPublicKey)) {
@@ -88,7 +84,7 @@ public class ExpiringMessageManager implements SSKEnvironment.MessageExpirationM
     } else {
       insertIncomingExpirationTimerMessage(message, expireStartedAt);
     }
-    if (expiryMode instanceof ExpiryMode.AfterSend && message.getSentTimestamp() != null && senderPublicKey != null) {
+    if (expiryMode.getExpirySeconds() > 0 && message.getSentTimestamp() != null && senderPublicKey != null) {
       startAnyExpiration(message.getSentTimestamp(), senderPublicKey, expireStartedAt);
     }
   }
@@ -98,7 +94,7 @@ public class ExpiringMessageManager implements SSKEnvironment.MessageExpirationM
     String senderPublicKey = message.getSender();
     Long sentTimestamp = message.getSentTimestamp();
     String groupId = message.getGroupPublicKey();
-    long expiresInMillis = message.getDuration() * 1000L;
+    long expiresInMillis = message.getExpiryMode().getExpiryMillis();
 
     Optional<SignalServiceGroup> groupInfo = Optional.absent();
     Address address = Address.fromSerialized(senderPublicKey);
@@ -144,7 +140,7 @@ public class ExpiringMessageManager implements SSKEnvironment.MessageExpirationM
 
     Long sentTimestamp = message.getSentTimestamp();
     String groupId = message.getGroupPublicKey();
-    int duration = message.getDuration();
+    long duration = message.getExpiryMode().getExpiryMillis();
 
     Address address;
 
@@ -159,7 +155,7 @@ public class ExpiringMessageManager implements SSKEnvironment.MessageExpirationM
       StorageProtocol storage = MessagingModuleConfiguration.getShared().getStorage();
       message.setThreadID(storage.getOrCreateThreadIdFor(address));
 
-      OutgoingExpirationUpdateMessage timerUpdateMessage = new OutgoingExpirationUpdateMessage(recipient, sentTimestamp, duration * 1000L, expireStartedAt, groupId);
+      OutgoingExpirationUpdateMessage timerUpdateMessage = new OutgoingExpirationUpdateMessage(recipient, sentTimestamp, duration, expireStartedAt, groupId);
       mmsDatabase.insertSecureDecryptedMessageOutbox(timerUpdateMessage, message.getThreadID(), sentTimestamp, true);
     } catch (MmsException | IOException ioe) {
       Log.e("Loki", "Failed to insert expiration update message.", ioe);
@@ -169,18 +165,17 @@ public class ExpiringMessageManager implements SSKEnvironment.MessageExpirationM
   @Override
   public void startAnyExpiration(long timestamp, @NotNull String author, long expireStartedAt) {
     MessageRecord messageRecord = mmsSmsDatabase.getMessageFor(timestamp, author);
-    if (messageRecord != null) {
-      boolean mms = messageRecord.isMms();
-      ExpirationConfiguration config = DatabaseComponent.get(context).storage().getExpirationConfiguration(messageRecord.getThreadId());
-      if (config == null || !config.isEnabled()) return;
-      ExpiryMode mode = config.getExpiryMode();
-      if (mms) {
-        mmsDatabase.markExpireStarted(messageRecord.getId(), expireStartedAt);
-      } else {
-        smsDatabase.markExpireStarted(messageRecord.getId(), expireStartedAt);
-      }
-      scheduleDeletion(messageRecord.getId(), mms, expireStartedAt, (mode != null ? mode.getExpiryMillis() : 0));
+    if (messageRecord == null) return;
+    boolean mms = messageRecord.isMms();
+    ExpirationConfiguration config = DatabaseComponent.get(context).storage().getExpirationConfiguration(messageRecord.getThreadId());
+    if (config == null || !config.isEnabled()) return;
+    ExpiryMode mode = config.getExpiryMode();
+    if (mms) {
+      mmsDatabase.markExpireStarted(messageRecord.getId(), expireStartedAt);
+    } else {
+      smsDatabase.markExpireStarted(messageRecord.getId(), expireStartedAt);
     }
+    scheduleDeletion(messageRecord.getId(), mms, expireStartedAt, (mode != null ? mode.getExpiryMillis() : 0));
   }
 
   private class LoadTask implements Runnable {
@@ -219,7 +214,7 @@ public class ExpiringMessageManager implements SSKEnvironment.MessageExpirationM
             while (expiringMessageReferences.isEmpty()) expiringMessageReferences.wait();
 
             ExpiringMessageReference nextReference = expiringMessageReferences.first();
-            long                     waitTime      = nextReference.expiresAtMillis - System.currentTimeMillis();
+            long                     waitTime      = nextReference.expiresAtMillis - SnodeAPI.getNowWithOffset();
 
             if (waitTime > 0) {
               ExpirationListener.setAlarm(context, waitTime);

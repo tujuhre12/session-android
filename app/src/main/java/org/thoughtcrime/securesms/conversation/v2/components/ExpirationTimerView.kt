@@ -3,8 +3,6 @@ package org.thoughtcrime.securesms.conversation.v2.components
 import android.content.Context
 import android.graphics.drawable.AnimationDrawable
 import android.util.AttributeSet
-import android.util.Log
-import android.widget.ImageView
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.core.content.ContextCompat
 import network.loki.messenger.R

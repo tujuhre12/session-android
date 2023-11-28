@@ -30,6 +30,7 @@ import network.loki.messenger.databinding.ViewVisibleMessageBinding
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.contacts.Contact.ContactContext
 import org.session.libsession.messaging.open_groups.OpenGroupApi
+import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ViewUtil
 import org.session.libsession.utilities.getColorFromAttr
@@ -348,23 +349,18 @@ class VisibleMessageView : LinearLayout {
     }
 
     private fun updateExpirationTimer(message: MessageRecord) {
-        val expirationTimerView = binding.expirationTimerView
-
         if (!message.isOutgoing) binding.messageStatusTextView.bringToFront()
 
-        if (message.expiresIn > 0) {
-            if (message.expireStarted > 0) {
-                expirationTimerView.setExpirationTime(message.expireStarted, message.expiresIn)
-                ApplicationContext.getInstance(context).expiringMessageManager.checkSchedule()
-            } else {
-                ThreadUtils.queue {
-                    val expirationManager = ApplicationContext.getInstance(context).expiringMessageManager
-                    val id = message.getId()
-                    val mms = message.isMms
-                    if (mms) mmsDb.markExpireStarted(id) else smsDb.markExpireStarted(id)
-                    expirationManager.scheduleDeletion(id, mms, message.expiresIn)
-                }
-            }
+        val expireStarted = message.expireStarted.takeIf { it > 0 } ?: SnodeAPI.nowWithOffset
+
+        val id = message.getId()
+        val mms = message.isMms
+        binding.expirationTimerView.setExpirationTime(expireStarted, message.expiresIn)
+        ThreadUtils.queue {
+            val db = if (mms) mmsDb else smsDb
+            db.markExpireStarted(id, expireStarted)
+            ApplicationContext.getInstance(context).expiringMessageManager
+                .scheduleDeletion(id, mms, expireStarted, message.expiresIn)
         }
     }
 

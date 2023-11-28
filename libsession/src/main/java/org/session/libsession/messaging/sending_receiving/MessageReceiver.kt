@@ -148,12 +148,14 @@ object MessageReceiver {
             VisibleMessage.fromProto(proto) ?: run {
             throw Error.UnknownMessage
         }
+
         val isUserBlindedSender = sender == openGroupPublicKey?.let { SodiumUtilities.blindedKeyPair(it, MessagingModuleConfiguration.shared.getUserED25519KeyPair()!!) }?.let { SessionId(IdPrefix.BLINDED, it.publicKey.asBytes).hexString }
+        val isUserSender = sender == userPublicKey
         // Ignore self send if needed
-        if (!message.isSelfSendValid && (sender == userPublicKey || isUserBlindedSender)) {
+        if (!message.isSelfSendValid && (isUserSender || isUserBlindedSender)) {
             throw Error.SelfSend
         }
-        if (sender == userPublicKey || isUserBlindedSender) {
+        if (isUserSender || isUserBlindedSender) {
             message.isSenderSelf = true
         }
         // Guard against control messages in open groups

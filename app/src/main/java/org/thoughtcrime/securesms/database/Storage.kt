@@ -1718,9 +1718,7 @@ open class Storage(
                     ?.run { disappearingTimer.takeIf { it != 0L }?.let(ExpiryMode::AfterSend) ?: ExpiryMode.NONE }
             }
             else -> null
-        }
-            ?.run { takeIf { isNewConfigEnabled || it is ExpiryMode.NONE } ?: ExpiryMode.Legacy(expirySeconds) }
-            ?.let { ExpirationConfiguration(threadId, it, dbExpirationMetadata.updatedTimestampMs) }
+        }?.let { ExpirationConfiguration(threadId, it, dbExpirationMetadata.updatedTimestampMs) }
     }
 
     override fun setExpirationConfiguration(config: ExpirationConfiguration) {
@@ -1729,12 +1727,7 @@ open class Storage(
         val expirationDb = DatabaseComponent.get(context).expirationConfigurationDatabase()
         val currentConfig = expirationDb.getExpirationConfiguration(config.threadId)
         if (currentConfig != null && currentConfig.updatedTimestampMs >= config.updatedTimestampMs) return
-
-        val expiryMode = config.expiryMode.run {
-            takeUnless { it is ExpiryMode.Legacy }
-                ?: if (recipient.isContactRecipient) ExpiryMode.AfterRead(expirySeconds)
-                else ExpiryMode.AfterSend(expirySeconds)
-        }
+        val expiryMode = config.expiryMode
 
         if (recipient.isClosedGroupRecipient) {
             val userGroups = configFactory.userGroups ?: return

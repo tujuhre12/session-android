@@ -1,5 +1,6 @@
 package org.session.libsession.messaging.messages.control
 
+import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.visible.VisibleMessage
@@ -10,14 +11,9 @@ import org.session.libsignal.utilities.Log
  *
  * **Note:** `nil` if this isn't a sync message.
  */
-data class ExpirationTimerUpdate(var duration: Int? = 0, var syncTarget: String? = null) : ControlMessage() {
+data class ExpirationTimerUpdate(var expiryMode: ExpiryMode, var syncTarget: String? = null) : ControlMessage() {
 
     override val isSelfSendValid: Boolean = true
-
-    override fun isValid(): Boolean {
-        if (!super.isValid()) return false
-        return duration != null || ExpirationConfiguration.isNewConfigEnabled
-    }
 
     companion object {
         const val TAG = "ExpirationTimerUpdate"
@@ -29,15 +25,22 @@ data class ExpirationTimerUpdate(var duration: Int? = 0, var syncTarget: String?
             ) != 0
             if (!isExpirationTimerUpdate) return null
             val syncTarget = dataMessageProto.syncTarget
-            val duration = if (proto.hasExpirationTimer()) proto.expirationTimer else dataMessageProto.expireTimer
-            return ExpirationTimerUpdate(duration, syncTarget)
+            val duration: Int = if (proto.hasExpirationTimer()) proto.expirationTimer else dataMessageProto.expireTimer
+            val type = proto.expirationType.takeIf { duration > 0 }
+            val expiryMode = when (type) {
+                SignalServiceProtos.Content.ExpirationType.DELETE_AFTER_SEND -> ExpiryMode.AfterSend(duration.toLong())
+                SignalServiceProtos.Content.ExpirationType.DELETE_AFTER_READ -> ExpiryMode.AfterRead(duration.toLong())
+                else -> ExpiryMode.NONE
+            }
+
+            return ExpirationTimerUpdate(expiryMode, syncTarget)
         }
     }
 
     override fun toProto(): SignalServiceProtos.Content? {
         val dataMessageProto = SignalServiceProtos.DataMessage.newBuilder()
         dataMessageProto.flags = SignalServiceProtos.DataMessage.Flags.EXPIRATION_TIMER_UPDATE_VALUE
-        duration?.let { dataMessageProto.expireTimer = it }
+        dataMessageProto.expireTimer = expiryMode.expirySeconds.toInt()
         // Sync target
         if (syncTarget != null) {
             dataMessageProto.syncTarget = syncTarget
@@ -53,6 +56,8 @@ data class ExpirationTimerUpdate(var duration: Int? = 0, var syncTarget: String?
         }
         return try {
             SignalServiceProtos.Content.newBuilder().apply {
+                expirationType
+                expirationTimer
                 dataMessage = dataMessageProto.build()
                 setExpirationConfigurationIfNeeded(threadID)
             }.build()

@@ -12,7 +12,6 @@ import org.session.libsession.utilities.Document;
 import org.session.libsession.utilities.IdentityKeyMismatch;
 import org.session.libsession.utilities.IdentityKeyMismatchList;
 import org.session.libsignal.crypto.IdentityKey;
-import org.session.libsignal.protos.SignalServiceProtos;
 import org.session.libsignal.utilities.JsonUtil;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ExpiryType;
@@ -224,66 +223,6 @@ public abstract class MessagingDatabase extends Database implements MmsSmsColumn
 
     public long getTimetamp() {
       return timetamp;
-    }
-  }
-
-  public static class ExpirationInfo {
-
-    private final long    id;
-    private final long    expiresIn;
-    private final long    expireStarted;
-    private final boolean mms;
-
-    public ExpirationInfo(long id, long expiresIn, long expireStarted, boolean mms) {
-      this.id            = id;
-      this.expiresIn     = expiresIn;
-      this.expireStarted = expireStarted;
-      this.mms           = mms;
-    }
-
-    public long getId() {
-      return id;
-    }
-
-    public long getExpiresIn() {
-      return expiresIn;
-    }
-
-    public long getExpireStarted() {
-      return expireStarted;
-    }
-
-    public boolean isMms() {
-      return mms;
-    }
-  }
-
-  public static class MarkedMessageInfo {
-
-    private final SyncMessageId  syncMessageId;
-    private final ExpirationInfo expirationInfo;
-
-    public MarkedMessageInfo(SyncMessageId syncMessageId, ExpirationInfo expirationInfo) {
-      this.syncMessageId  = syncMessageId;
-      this.expirationInfo = expirationInfo;
-    }
-
-    public SyncMessageId getSyncMessageId() {
-      return syncMessageId;
-    }
-
-    public ExpirationInfo getExpirationInfo() {
-      return expirationInfo;
-    }
-
-    public ExpiryType guessExpiryType() {
-      long expireStarted = expirationInfo.expireStarted;
-      long expiresIn = expirationInfo.expiresIn;
-      long timestamp = syncMessageId.timetamp;
-
-      if (timestamp == expireStarted) return ExpiryType.AFTER_SEND;
-      if (expiresIn > 0) return ExpiryType.AFTER_READ;
-      return ExpiryType.NONE;
     }
   }
 
