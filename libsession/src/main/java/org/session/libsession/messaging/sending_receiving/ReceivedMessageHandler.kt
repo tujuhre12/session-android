@@ -8,6 +8,7 @@ import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.jobs.BackgroundGroupAddJob
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.messages.ExpirationConfiguration
+import org.session.libsession.messaging.messages.ExpirationConfiguration.Companion.isNewConfigEnabled
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.CallMessage
 import org.session.libsession.messaging.messages.control.ClosedGroupControlMessage
@@ -286,7 +287,7 @@ fun MessageReceiver.updateExpiryIfNeeded(
         storage.updateDisappearingState(message.sender!!, threadID, disappearingState)
     }
 
-    if (!proto.hasLastDisappearingMessageChangeTimestamp()) return
+    if (!proto.hasLastDisappearingMessageChangeTimestamp() && !isNewConfigEnabled) return
 
     val localConfig = storage.getExpirationConfiguration(threadID)
 
@@ -295,16 +296,21 @@ fun MessageReceiver.updateExpiryIfNeeded(
 
     val expiryMode = type?.expiryMode(durationSeconds.toLong()) ?: ExpiryMode.NONE
 
+    val lastDisappearingMessageChangeTimestamp = proto.lastDisappearingMessageChangeTimestamp
+
     val remoteConfig = ExpirationConfiguration(
         threadID,
         expiryMode,
-        proto.lastDisappearingMessageChangeTimestamp
+        lastDisappearingMessageChangeTimestamp
     )
 
     // don't update any values for open groups
     if (recipient.isOpenGroupRecipient && type != null) throw MessageReceiver.Error.InvalidMessage
 
-    remoteConfig.takeIf { localConfig == null || it.updatedTimestampMs > localConfig.updatedTimestampMs }
+    remoteConfig.takeIf {
+        localConfig == null
+            || it.updatedTimestampMs > localConfig.updatedTimestampMs
+            || !isNewConfigEnabled && !proto.hasLastDisappearingMessageChangeTimestamp() }
         ?.let(storage::setExpirationConfiguration)
 
 

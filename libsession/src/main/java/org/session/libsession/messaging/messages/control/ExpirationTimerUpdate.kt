@@ -30,7 +30,7 @@ data class ExpirationTimerUpdate(var expiryMode: ExpiryMode, var syncTarget: Str
             val expiryMode = when (type) {
                 SignalServiceProtos.Content.ExpirationType.DELETE_AFTER_SEND -> ExpiryMode.AfterSend(duration.toLong())
                 SignalServiceProtos.Content.ExpirationType.DELETE_AFTER_READ -> ExpiryMode.AfterRead(duration.toLong())
-                else -> ExpiryMode.NONE
+                else -> duration.takeIf { it > 0 }?.toLong()?.let(ExpiryMode::AfterSend) ?: ExpiryMode.NONE
             }
 
             return ExpirationTimerUpdate(expiryMode, syncTarget)

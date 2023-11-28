@@ -57,7 +57,7 @@ abstract class Message {
     }
 
     fun SignalServiceProtos.Content.Builder.setExpirationConfigurationIfNeeded(threadId: Long?): SignalServiceProtos.Content.Builder {
-        val config = threadId?.let { MessagingModuleConfiguration.shared.storage.getExpirationConfiguration(it) }
+        val config = threadId?.let(MessagingModuleConfiguration.shared.storage::getExpirationConfiguration)
             ?: run {
                 expirationTimer = 0
                 return this
@@ -66,9 +66,9 @@ abstract class Message {
         lastDisappearingMessageChangeTimestamp = config.updatedTimestampMs
         config.expiryMode.let { expiryMode ->
             expirationType = when (expiryMode) {
-                is ExpiryMode.Legacy, is ExpiryMode.AfterSend -> ExpirationType.DELETE_AFTER_SEND
+                is ExpiryMode.AfterSend -> ExpirationType.DELETE_AFTER_SEND
                 is ExpiryMode.AfterRead -> ExpirationType.DELETE_AFTER_READ
-                ExpiryMode.NONE -> ExpirationType.UNKNOWN
+                else -> ExpirationType.UNKNOWN
             }
         }
         return this
