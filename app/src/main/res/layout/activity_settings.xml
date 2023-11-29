@@ -398,6 +398,7 @@
                 </RelativeLayout>
 
                 <View
+                    android:id="@+id/passwordDivider"
                     android:layout_marginHorizontal="@dimen/very_large_spacing"
                     android:layout_width="match_parent"
                     android:layout_height="1dp"

@@ -114,6 +114,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
             appearanceButton.setOnClickListener { showAppearanceSettings() }
             inviteFriendButton.setOnClickListener { sendInvitation() }
             helpButton.setOnClickListener { showHelp() }
+            passwordDivider.isGone = prefs.getHidePassword()
             passwordButton.isGone = prefs.getHidePassword()
             passwordButton.setOnClickListener { showPassword() }
             clearAllDataButton.setOnClickListener { clearAllData() }
