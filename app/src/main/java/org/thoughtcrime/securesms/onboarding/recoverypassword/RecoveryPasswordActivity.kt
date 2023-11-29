@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.BaseActionBarActivity
+import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.CellWithPaddingAndMargin
 import org.thoughtcrime.securesms.ui.LocalExtraColors
@@ -68,7 +69,7 @@ class RecoveryPasswordActivity : BaseActionBarActivity() {
 
         ComposeView(this).apply {
             setContent {
-                RecoveryPassword(viewModel.seed, viewModel.qrBitmap) { copySeed() }
+                RecoveryPassword(viewModel.seed, viewModel.qrBitmap, { copySeed() }) { onHide() }
             }
         }.let(::setContentView)
     }
@@ -84,6 +85,29 @@ class RecoveryPasswordActivity : BaseActionBarActivity() {
         clipboard.setPrimaryClip(clip)
         Toast.makeText(this, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show()
     }
+
+    private fun onHide() {
+        showSessionDialog {
+            title("Hide Recovery Password Permanently")
+            text("Without your recovery password, you cannot load your account on new devices.\n" +
+                "\n" +
+                "We strongly recommend you save your recovery password in a safe and secure place before continuing.")
+            destructiveButton(R.string.continue_2) { onHideConfirm() }
+            button(R.string.cancel) {}
+        }
+    }
+
+    private fun onHideConfirm() {
+        showSessionDialog {
+            title("Hide Recovery Password Permanently")
+            text("Are you sure you want to permanently hide your recovery password on this device? This cannot be undone.")
+            button(R.string.cancel) {}
+            destructiveButton(R.string.yes) {
+                viewModel.permanentlyHidePassword()
+                finish()
+            }
+        }
+    }
 }
 
 @Preview
@@ -97,7 +121,12 @@ fun PreviewMessageDetails(
 }
 
 @Composable
-fun RecoveryPassword(seed: String = "", qrBitmap: Bitmap? = null, copySeed:() -> Unit = {}) {
+fun RecoveryPassword(
+    seed: String = "",
+    qrBitmap: Bitmap? = null,
+    copySeed:() -> Unit = {},
+    onHide:() -> Unit = {}
+) {
     AppTheme {
         Column(
             verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -105,7 +134,7 @@ fun RecoveryPassword(seed: String = "", qrBitmap: Bitmap? = null, copySeed:() ->
                 .padding(bottom = 16.dp)
         ) {
             RecoveryPasswordCell(seed, qrBitmap, copySeed)
-            HideRecoveryPasswordCell()
+            HideRecoveryPasswordCell(onHide)
         }
     }
 }
@@ -194,7 +223,7 @@ fun RecoveryPasswordCell(seed: String = "", qrBitmap: Bitmap? = null, copySeed:(
 private fun MutableState<Boolean>.toggle() { value = !value }
 
 @Composable
-fun HideRecoveryPasswordCell() {
+fun HideRecoveryPasswordCell(onHide: () -> Unit = {}) {
     CellWithPaddingAndMargin {
         Row {
             Column(Modifier.weight(1f)) {
@@ -205,7 +234,7 @@ fun HideRecoveryPasswordCell() {
                 "Hide",
                 modifier = Modifier.align(Alignment.CenterVertically),
                 color = colorDestructive
-            ) {}
+            ) { onHide() }
         }
     }
 }

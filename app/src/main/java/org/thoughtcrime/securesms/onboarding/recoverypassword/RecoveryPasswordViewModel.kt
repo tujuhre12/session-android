@@ -3,7 +3,9 @@ package org.thoughtcrime.securesms.onboarding.recoverypassword
 import android.app.Application
 import android.graphics.Bitmap
 import androidx.lifecycle.AndroidViewModel
+import androidx.preference.PreferenceFragmentCompat.OnPreferenceStartFragmentCallback
 import dagger.hilt.android.lifecycle.HiltViewModel
+import org.session.libsession.utilities.AppTextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.crypto.MnemonicCodec
 import org.session.libsignal.utilities.hexEncodedPrivateKey
@@ -17,6 +19,12 @@ import javax.inject.Inject
 class RecoveryPasswordViewModel @Inject constructor(
     private val application: Application
 ): AndroidViewModel(application) {
+
+    val prefs = AppTextSecurePreferences(application)
+
+    fun permanentlyHidePassword() {
+        prefs.setHidePassword(true)
+    }
 
     val seed by lazy {
         val hexEncodedSeed = IdentityKeyUtil.retrieve(application, IdentityKeyUtil.LOKI_SEED)

@@ -369,14 +369,14 @@
                     android:background="?colorDividerBackground" />
 
                 <RelativeLayout
-                    android:id="@+id/seedButton"
+                    android:id="@+id/passwordButton"
                     android:background="?selectableItemBackground"
                     android:paddingHorizontal="@dimen/large_spacing"
                     android:layout_width="match_parent"
                     android:layout_height="@dimen/setting_button_height"
                     android:contentDescription="@string/AccessibilityId_recovery_password">
                     <ImageView
-                        android:id="@+id/seedContainer"
+                        android:id="@+id/passwordContainer"
                         android:layout_width="@dimen/small_profile_picture_size"
                         android:layout_height="@dimen/small_profile_picture_size"
                         android:layout_alignParentStart="true"
@@ -393,7 +393,7 @@
                         android:layout_marginHorizontal="@dimen/medium_spacing"
                         android:textStyle="bold"
                         android:gravity="center"
-                        android:layout_toEndOf="@+id/seedContainer"
+                        android:layout_toEndOf="@+id/passwordContainer"
                         android:text="@string/activity_settings_recovery_password_button_title"  />
                 </RelativeLayout>
 

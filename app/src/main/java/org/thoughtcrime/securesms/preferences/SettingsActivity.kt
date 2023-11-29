@@ -19,6 +19,7 @@ import android.view.MenuItem
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
+import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.BuildConfig
@@ -64,6 +65,10 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
 
     @Inject
     lateinit var configFactory: ConfigFactory
+    @Inject
+    lateinit var prefs: TextSecurePreferences
+
+
 
     private lateinit var binding: ActivitySettingsBinding
     private var displayNameEditActionMode: ActionMode? = null
@@ -86,13 +91,17 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
         super.onCreate(savedInstanceState, isReady)
         binding = ActivitySettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        val displayName = getDisplayName()
         glide = GlideApp.with(this)
-        with(binding) {
+    }
+
+    override fun onStart() {
+        super.onStart()
+
+        binding.run {
             setupProfilePictureView(profilePictureView)
             profilePictureView.setOnClickListener { showEditProfilePictureUI() }
             ctnGroupNameSection.setOnClickListener { startActionMode(DisplayNameEditActionModeCallback()) }
-            btnGroupNameDisplay.text = displayName
+            btnGroupNameDisplay.text = getDisplayName()
             publicKeyTextView.text = hexEncodedPublicKey
             copyButton.setOnClickListener { copyPublicKey() }
             shareButton.setOnClickListener { sharePublicKey() }
@@ -105,7 +114,8 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
             appearanceButton.setOnClickListener { showAppearanceSettings() }
             inviteFriendButton.setOnClickListener { sendInvitation() }
             helpButton.setOnClickListener { showHelp() }
-            seedButton.setOnClickListener { showSeed() }
+            passwordButton.isGone = prefs.getHidePassword()
+            passwordButton.setOnClickListener { showPassword() }
             clearAllDataButton.setOnClickListener { clearAllData() }
             versionTextView.text = String.format(getString(R.string.version_s), "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")
         }
@@ -384,7 +394,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
         show(intent)
     }
 
-    private fun showSeed() {
+    private fun showPassword() {
         startRecoveryPasswordActivity()
     }
 
