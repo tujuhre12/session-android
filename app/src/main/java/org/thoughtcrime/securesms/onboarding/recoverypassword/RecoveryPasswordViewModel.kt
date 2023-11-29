@@ -18,19 +18,19 @@ class RecoveryPasswordViewModel @Inject constructor(
     private val application: Application
 ): AndroidViewModel(application) {
 
-    val qrBitmap: Bitmap? = TextSecurePreferences.getLocalNumber(application)?.let {
-        QRCodeUtilities.encode(
-            data = it,
-            size = toPx(280, application.resources),
-            isInverted = false,
-            hasTransparentBackground = true
-        )
-    }
-
     val seed by lazy {
         val hexEncodedSeed = IdentityKeyUtil.retrieve(application, IdentityKeyUtil.LOKI_SEED)
             ?: IdentityKeyUtil.getIdentityKeyPair(application).hexEncodedPrivateKey // Legacy account
         MnemonicCodec { MnemonicUtilities.loadFileContents(application, it) }
             .encode(hexEncodedSeed, MnemonicCodec.Language.Configuration.english)
+    }
+
+    val qrBitmap by lazy {
+        QRCodeUtilities.encode(
+            data = seed,
+            size = toPx(280, application.resources),
+            isInverted = false,
+            hasTransparentBackground = true
+        )
     }
 }
