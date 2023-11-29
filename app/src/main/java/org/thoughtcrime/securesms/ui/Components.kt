@@ -186,15 +186,16 @@ fun <T> TitledRadioButton(option: RadioOption<T>, onClick: () -> Unit) {
 }
 
 @Composable
-fun Modifier.contentDescription(text: GetString): Modifier {
+fun Modifier.contentDescription(text: GetString?): Modifier {
     val context = LocalContext.current
-    return semantics { contentDescription = text(context) }
+    return text?.let { semantics { contentDescription = it(context) } } ?: this
 }
 
 @Composable
-fun OutlineButton(text: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+fun OutlineButton(text: GetString, contentDescription: GetString? = text, modifier: Modifier = Modifier, onClick: () -> Unit) {
     OutlinedButton(
-        modifier = modifier.size(108.dp, 34.dp),
+        modifier = modifier.size(108.dp, 34.dp)
+            .contentDescription(contentDescription),
         onClick = onClick,
         border = BorderStroke(1.dp, LocalExtraColors.current.prominentButtonColor),
         shape = RoundedCornerShape(50), // = 50% percent
@@ -203,7 +204,7 @@ fun OutlineButton(text: String, modifier: Modifier = Modifier, onClick: () -> Un
             backgroundColor = MaterialTheme.colors.background
         )
     ){
-        Text(text = text)
+        Text(text = text())
     }
 }
 

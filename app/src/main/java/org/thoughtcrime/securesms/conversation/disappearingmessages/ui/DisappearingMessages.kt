@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.thoughtcrime.securesms.ui.Callbacks
+import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.NoOpCallbacks
 import org.thoughtcrime.securesms.ui.OptionsCard
 import org.thoughtcrime.securesms.ui.OutlineButton
@@ -62,7 +63,7 @@ fun DisappearingMessages(
         }
 
         if (state.showSetButton) OutlineButton(
-            stringResource(R.string.disappearing_messages_set_button_title),
+            GetString(R.string.disappearing_messages_set_button_title),
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
                 .padding(bottom = 20.dp),
