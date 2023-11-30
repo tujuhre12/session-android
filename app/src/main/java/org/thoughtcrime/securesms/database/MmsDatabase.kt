@@ -886,6 +886,8 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
     }
 
     override fun deleteMessage(messageId: Long): Boolean {
+        Log.d(TAG, "deleteMessage() called with: messageId = $messageId")
+
         val threadId = getThreadIdForMessage(messageId)
         val attachmentDatabase = get(context).attachmentDatabase()
         queue(Runnable { attachmentDatabase.deleteAttachmentsForMessage(messageId) })
