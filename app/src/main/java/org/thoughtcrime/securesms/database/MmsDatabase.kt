@@ -559,7 +559,7 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
         runThreadUpdate: Boolean
     ): Optional<InsertResult> {
         if (threadId < 0 ) throw MmsException("No thread ID supplied!")
-        deleteExpirationTimerMessages(threadId)
+        deleteExpirationTimerMessages(threadId, false.takeUnless { retrieved.groupId != null })
         val contentValues = ContentValues()
         contentValues.put(DATE_SENT, retrieved.sentTimeMillis)
         contentValues.put(ADDRESS, retrieved.from.serialize())
@@ -629,7 +629,7 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
         runThreadUpdate: Boolean
     ): Optional<InsertResult> {
         if (threadId < 0 ) throw MmsException("No thread ID supplied!")
-        deleteExpirationTimerMessages(threadId)
+        deleteExpirationTimerMessages(threadId, true.takeUnless { retrieved.isGroup })
         val messageId = insertMessageOutbox(retrieved, threadId, false, null, serverTimestamp, runThreadUpdate)
         if (messageId == -1L) {
             return Optional.absent()
@@ -1166,9 +1166,17 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
         )
     }
 
-    fun deleteExpirationTimerMessages(threadId: Long) {
-        val where = "$THREAD_ID = ? AND ($MESSAGE_BOX & ${MmsSmsColumns.Types.EXPIRATION_TIMER_UPDATE_BIT}) <> 0"
-        val updated = writableDatabase.delete(TABLE_NAME, where, arrayOf("$threadId"))
+    /**
+     * @param outgoing if true only delete outgoing messages, if false only delete incoming messages, if null delete both.
+     */
+    private fun deleteExpirationTimerMessages(threadId: Long, outgoing: Boolean? = null) {
+        val outgoingClause = outgoing?.let {
+            val comparison = if (it) "IN" else "NOT IN"
+            " AND $MESSAGE_BOX & ${MmsSmsColumns.Types.BASE_TYPE_MASK} $comparison (${MmsSmsColumns.Types.OUTGOING_MESSAGE_TYPES.joinToString()})"
+        } ?: ""
+
+        val where = "$THREAD_ID = ? AND ($MESSAGE_BOX & ${MmsSmsColumns.Types.EXPIRATION_TIMER_UPDATE_BIT}) <> 0" + outgoingClause
+        writableDatabase.delete(TABLE_NAME, where, arrayOf("$threadId"))
         notifyConversationListeners(threadId)
     }
 
