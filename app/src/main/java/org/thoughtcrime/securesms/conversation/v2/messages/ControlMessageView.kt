@@ -29,6 +29,7 @@ class ControlMessageView : LinearLayout {
         binding.dateBreakTextView.showDateBreak(message, previous)
         binding.iconImageView.isGone = true
         binding.expirationTimerView.isGone = true
+        binding.followSetting.isGone = true
         var messageBody: CharSequence = message.getDisplayBody(context)
         binding.root.contentDescription= null
         when {
@@ -37,6 +38,8 @@ class ControlMessageView : LinearLayout {
                     isVisible = true
                     setExpirationTime(message.expireStarted, message.expiresIn)
                 }
+
+                binding.followSetting.isGone = message.isOutgoing
             }
             message.isMediaSavedNotification -> {
                 binding.iconImageView.apply {

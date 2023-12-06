@@ -50,4 +50,14 @@
         android:textStyle="bold"
         tools:text="@string/MessageRecord_you_disabled_disappearing_messages" />
 
+    <TextView
+        android:id="@+id/followSetting"
+        style="@style/Widget.Session.Button.Common.Borderless"
+        android:layout_marginTop="4dp"
+        android:textColor="@color/accent_green"
+        android:textSize="@dimen/very_small_font_size"
+        android:text="Follow Setting"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
 </LinearLayout>
