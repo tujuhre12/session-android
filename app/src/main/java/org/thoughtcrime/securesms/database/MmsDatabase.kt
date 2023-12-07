@@ -25,6 +25,7 @@ import com.google.android.mms.pdu_alt.PduHeaders
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
+import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.signal.IncomingMediaMessage
 import org.session.libsession.messaging.messages.signal.OutgoingGroupMediaMessage
 import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage
@@ -1170,7 +1171,7 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
      * @param outgoing if true only delete outgoing messages, if false only delete incoming messages, if null delete both.
      */
     private fun deleteExpirationTimerMessages(threadId: Long, outgoing: Boolean? = null) {
-        val outgoingClause = outgoing?.let {
+        val outgoingClause = outgoing?.takeIf { ExpirationConfiguration.isNewConfigEnabled }?.let {
             val comparison = if (it) "IN" else "NOT IN"
             " AND $MESSAGE_BOX & ${MmsSmsColumns.Types.BASE_TYPE_MASK} $comparison (${MmsSmsColumns.Types.OUTGOING_MESSAGE_TYPES.joinToString()})"
         } ?: ""

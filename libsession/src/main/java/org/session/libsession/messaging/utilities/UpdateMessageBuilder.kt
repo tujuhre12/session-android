@@ -12,14 +12,14 @@ import org.session.libsession.messaging.calls.CallMessageType.CALL_OUTGOING
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage
-import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ExpirationUtil
+import org.session.libsession.utilities.getExpirationTypeDisplayValue
 import org.session.libsession.utilities.truncateIdForDisplay
 
 object UpdateMessageBuilder {
     val storage = MessagingModuleConfiguration.shared.storage
 
-    fun getSenderName(senderId: String) = storage.getContactWithSessionID(senderId)
+    private fun getSenderName(senderId: String) = storage.getContactWithSessionID(senderId)
         ?.displayName(Contact.ContactContext.REGULAR)
         ?: truncateIdForDisplay(senderId)
 
@@ -76,11 +76,17 @@ object UpdateMessageBuilder {
         }
     }
 
-    fun buildExpirationTimerMessage(context: Context, duration: Long, senderId: String? = null, threadId: Long, isOutgoing: Boolean = false): String {
+    fun buildExpirationTimerMessage(
+        context: Context,
+        duration: Long,
+        senderId: String? = null,
+        threadId: Long,
+        isOutgoing: Boolean = false,
+        timestamp: Long,
+        expireStarted: Long
+    ): String {
         if (!isOutgoing && senderId == null) return ""
-        val senderName: String = if (!isOutgoing) {
-            getSenderName(senderId!!)
-        } else { context.getString(R.string.MessageRecord_you) }
+        val senderName = if (isOutgoing) context.getString(R.string.MessageRecord_you) else getSenderName(senderId!!)
         return if (duration <= 0) {
             if (isOutgoing) {
                 if (ExpirationConfiguration.isNewConfigEnabled) {
@@ -98,11 +104,7 @@ object UpdateMessageBuilder {
         } else {
             val time = ExpirationUtil.getExpirationDisplayValue(context, duration.toInt())
             val config = threadId.let { storage.getExpirationConfiguration(it) }
-            val state = when (config?.expiryMode) {
-                is ExpiryMode.AfterSend -> context.getString(R.string.MessageRecord_state_sent)
-                is ExpiryMode.AfterRead -> context.getString(R.string.MessageRecord_state_read)
-                else -> ""
-            }
+            val state = context.getExpirationTypeDisplayValue(timestamp == expireStarted)
             if (isOutgoing) {
                 if (ExpirationConfiguration.isNewConfigEnabled) {
                     context.getString(R.string.MessageRecord_you_set_messages_to_disappear_s_after_s, time, state)

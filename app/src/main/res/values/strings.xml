@@ -906,6 +906,11 @@
     <string name="dialog_join_open_group_explanation">Are you sure you want to join the %s open group?</string>
     <string name="dialog_open_url_title">Open URL?</string>
     <string name="dialog_open_url_explanation">Are you sure you want to open %s?</string>
+    <string name="dialog_disappearing_messages_follow_setting_title">Follow Setting</string>
+    <string name="dialog_disappearing_messages_follow_setting_off_body">Messages you send will no longer disappear. Are you sure you want to turn off disappearing messages?</string>
+    <string name="dialog_disappearing_messages_follow_setting_on_body">Set your messages to disappear %1$s after they have been %2$s?</string>
+    <string name="dialog_disappearing_messages_follow_setting_set">Set</string>
+    <string name="dialog_disappearing_messages_follow_setting_confirm">Confirm</string>
     <string name="open">Open</string>
     <string name="copy_url">Copy URL</string>
     <string name="dialog_link_preview_title">Enable Link Previews?</string>

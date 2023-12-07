@@ -56,8 +56,6 @@ data class ExpirationTimerUpdate(var expiryMode: ExpiryMode, var syncTarget: Str
         }
         return try {
             SignalServiceProtos.Content.newBuilder().apply {
-                expirationType
-                expirationTimer
                 dataMessage = dataMessageProto.build()
                 setExpirationConfigurationIfNeeded(threadID)
             }.build()

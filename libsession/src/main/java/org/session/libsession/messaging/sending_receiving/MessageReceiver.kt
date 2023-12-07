@@ -151,11 +151,10 @@ object MessageReceiver {
 
         val isUserBlindedSender = sender == openGroupPublicKey?.let { SodiumUtilities.blindedKeyPair(it, MessagingModuleConfiguration.shared.getUserED25519KeyPair()!!) }?.let { SessionId(IdPrefix.BLINDED, it.publicKey.asBytes).hexString }
         val isUserSender = sender == userPublicKey
-        // Ignore self send if needed
-        if (!message.isSelfSendValid && (isUserSender || isUserBlindedSender)) {
-            throw Error.SelfSend
-        }
+
         if (isUserSender || isUserBlindedSender) {
+            // Ignore self send if needed
+            if (!message.isSelfSendValid) throw Error.SelfSend
             message.isSenderSelf = true
         }
         // Guard against control messages in open groups
