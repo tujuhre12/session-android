@@ -58,6 +58,8 @@ class MarkReadReceiver : BroadcastReceiver() {
         ) {
             if (markedReadMessages.isEmpty()) return
 
+            Log.d(TAG, "process() called with: context = $context, markedReadMessages = $markedReadMessages")
+
             sendReadReceipts(context, markedReadMessages)
 
             markedReadMessages.forEach { scheduleDeletion(context, it.expirationInfo) }
@@ -119,6 +121,8 @@ class MarkReadReceiver : BroadcastReceiver() {
             context: Context,
             hashToMessage: Map<String, MarkedMessageInfo>
         ) {
+            Log.d(TAG, "fetchUpdatedExpiriesAndScheduleDeletion() called with: context = $context, hashToMessage = $hashToMessage")
+
             @Suppress("UNCHECKED_CAST")
             val expiries = SnodeAPI.getExpiries(hashToMessage.keys.toList(), TextSecurePreferences.getLocalNumber(context)!!).get()["expiries"] as Map<String, Long>
             hashToMessage.forEach { (hash, info) -> expiries[hash]?.let { scheduleDeletion(context, info.expirationInfo, it - info.expirationInfo.expireStarted) } }
@@ -129,6 +133,8 @@ class MarkReadReceiver : BroadcastReceiver() {
             expirationInfo: ExpirationInfo,
             expiresIn: Long = expirationInfo.expiresIn
         ) {
+            Log.d(TAG, "scheduleDeletion() called with: context = $context, expirationInfo = $expirationInfo, expiresIn = $expiresIn")
+
             if (expiresIn <= 0 || expirationInfo.expireStarted > 0) return
 
             val now = SnodeAPI.nowWithOffset

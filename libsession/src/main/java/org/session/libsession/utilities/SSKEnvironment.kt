@@ -38,7 +38,7 @@ class SSKEnvironment(
     }
 
     interface MessageExpirationManagerProtocol {
-        fun setExpirationTimer(message: ExpirationTimerUpdate, expiryType: ExpiryMode?)
+        fun setExpirationTimer(message: ExpirationTimerUpdate)
         fun startAnyExpiration(timestamp: Long, author: String, expireStartedAt: Long)
     }
 

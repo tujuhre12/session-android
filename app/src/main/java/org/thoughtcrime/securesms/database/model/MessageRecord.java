@@ -54,6 +54,10 @@ public abstract class MessageRecord extends DisplayRecord {
   private final List<ReactionRecord>      reactions;
   private final boolean                   hasMention;
 
+  public final boolean isNotDisappearAfterRead() {
+    return expireStarted == getTimestamp();
+  }
+
   public abstract boolean isMms();
   public abstract boolean isMmsNotification();
 

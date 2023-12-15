@@ -99,7 +99,7 @@ class DisappearingMessagesViewModel(
             recipient = address.serialize()
             sentTimestamp = expiryChangeTimestampMs
         }
-        messageExpirationManager.setExpirationTimer(message, mode)
+        messageExpirationManager.setExpirationTimer(message)
         MessageSender.send(message, address)
 
         ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(application)

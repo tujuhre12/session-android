@@ -8,6 +8,7 @@ import android.graphics.drawable.ColorDrawable
 import android.os.Handler
 import android.os.Looper
 import android.util.AttributeSet
+import android.util.Log
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
@@ -60,6 +61,8 @@ import kotlin.math.abs
 import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
+
+private const val TAG = "VisibleMessageView"
 
 @AndroidEntryPoint
 class VisibleMessageView : LinearLayout {
@@ -349,6 +352,8 @@ class VisibleMessageView : LinearLayout {
     }
 
     private fun updateExpirationTimer(message: MessageRecord) {
+        Log.d(TAG, "updateExpirationTimer() called with: message = $message")
+
         if (!message.isOutgoing) binding.messageStatusTextView.bringToFront()
 
         val expireStarted = message.expireStarted.takeIf { it > 0 } ?: SnodeAPI.nowWithOffset

@@ -155,6 +155,7 @@ fun MessageReceiver.cancelTypingIndicatorsIfNeeded(senderPublicKey: String) {
 
 private fun MessageReceiver.handleExpirationTimerUpdate(message: ExpirationTimerUpdate) {
     if (ExpirationConfiguration.isNewConfigEnabled) return
+
     val module = MessagingModuleConfiguration.shared
     try {
         val threadId = fromSerialized(message.groupPublicKey?.let(::doubleEncodeGroupID) ?: message.sender!!)
@@ -170,7 +171,7 @@ private fun MessageReceiver.handleExpirationTimerUpdate(message: ExpirationTimer
     } catch (e: Exception) {
         Log.e("Loki", "Failed to update expiration configuration.")
     }
-    SSKEnvironment.shared.messageExpirationManager.setExpirationTimer(message, message.expiryMode)
+    SSKEnvironment.shared.messageExpirationManager.setExpirationTimer(message)
 }
 
 private fun MessageReceiver.handleDataExtractionNotification(message: DataExtractionNotification) {
@@ -298,24 +299,25 @@ fun MessageReceiver.updateExpiryIfNeeded(
 
     val lastDisappearingMessageChangeTimestamp = proto.lastDisappearingMessageChangeTimestamp
 
+    // don't update any values for open groups
+    if (recipient.isOpenGroupRecipient && type != null) throw MessageReceiver.Error.InvalidMessage
+
+    val incoming1on1 = recipient.isContactRecipient && !message.isSenderSelf
+
     val remoteConfig = ExpirationConfiguration(
         threadID,
         expiryMode,
         lastDisappearingMessageChangeTimestamp
     )
 
-    // don't update any values for open groups
-    if (recipient.isOpenGroupRecipient && type != null) throw MessageReceiver.Error.InvalidMessage
-
-    remoteConfig.takeIf {
+    remoteConfig.takeUnless { incoming1on1 }?.takeIf {
         localConfig == null
             || it.updatedTimestampMs > localConfig.updatedTimestampMs
-            || !isNewConfigEnabled && !proto.hasLastDisappearingMessageChangeTimestamp() }
-        ?.let(storage::setExpirationConfiguration)
-
+            || !isNewConfigEnabled && !proto.hasLastDisappearingMessageChangeTimestamp()
+    }?.let(storage::setExpirationConfiguration)
 
     if (message is ExpirationTimerUpdate) {
-        SSKEnvironment.shared.messageExpirationManager.setExpirationTimer(message, expiryMode)
+        SSKEnvironment.shared.messageExpirationManager.setExpirationTimer(message)
     }
 }
 

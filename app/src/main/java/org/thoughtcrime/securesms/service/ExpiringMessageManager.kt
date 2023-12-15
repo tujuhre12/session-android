@@ -62,7 +62,8 @@ class ExpiringMessageManager(context: Context) : MessageExpirationManagerProtoco
         synchronized(expiringMessageReferences) { (expiringMessageReferences as Object).notifyAll() }
     }
 
-    override fun setExpirationTimer(message: ExpirationTimerUpdate, expiryMode: ExpiryMode?) {
+    override fun setExpirationTimer(message: ExpirationTimerUpdate) {
+        val expiryMode: ExpiryMode = message.expiryMode
         Log.d(TAG, "setExpirationTimer() called with: message = $message, expiryMode = $expiryMode")
 
         val userPublicKey = getLocalNumber(context)
