@@ -457,6 +457,7 @@ public class Recipient implements RecipientModifiedListener {
   public boolean isContactRecipient() {
     return address.isContact();
   }
+  public boolean is1on1() { return address.isContact() && !isLocalNumber; }
 
   public boolean isOpenGroupRecipient() {
     return address.isOpenGroup();

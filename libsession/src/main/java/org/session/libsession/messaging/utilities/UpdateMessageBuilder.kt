@@ -1,7 +1,6 @@
 package org.session.libsession.messaging.utilities
 
 import android.content.Context
-import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.R
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.calls.CallMessageType
@@ -10,10 +9,11 @@ import org.session.libsession.messaging.calls.CallMessageType.CALL_INCOMING
 import org.session.libsession.messaging.calls.CallMessageType.CALL_MISSED
 import org.session.libsession.messaging.calls.CallMessageType.CALL_OUTGOING
 import org.session.libsession.messaging.contacts.Contact
-import org.session.libsession.messaging.messages.ExpirationConfiguration
+import org.session.libsession.messaging.messages.ExpirationConfiguration.Companion.isNewConfigEnabled
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage
 import org.session.libsession.utilities.ExpirationUtil
 import org.session.libsession.utilities.getExpirationTypeDisplayValue
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.truncateIdForDisplay
 
 object UpdateMessageBuilder {
@@ -79,8 +79,8 @@ object UpdateMessageBuilder {
     fun buildExpirationTimerMessage(
         context: Context,
         duration: Long,
+        recipient: Recipient,
         senderId: String? = null,
-        threadId: Long,
         isOutgoing: Boolean = false,
         timestamp: Long,
         expireStarted: Long
@@ -89,34 +89,30 @@ object UpdateMessageBuilder {
         val senderName = if (isOutgoing) context.getString(R.string.MessageRecord_you) else getSenderName(senderId!!)
         return if (duration <= 0) {
             if (isOutgoing) {
-                if (ExpirationConfiguration.isNewConfigEnabled) {
-                    context.getString(R.string.MessageRecord_you_turned_off_disappearing_messages)
-                } else {
-                    context.getString(R.string.MessageRecord_you_disabled_disappearing_messages)
-                }
+                if (!isNewConfigEnabled) context.getString(R.string.MessageRecord_you_disabled_disappearing_messages)
+                else context.getString(if (recipient.is1on1) R.string.MessageRecord_you_turned_off_disappearing_messages_1_on_1 else R.string.MessageRecord_you_turned_off_disappearing_messages)
             } else {
-                if (ExpirationConfiguration.isNewConfigEnabled) {
-                    context.getString(R.string.MessageRecord_s_turned_off_disappearing_messages, senderName)
-                } else {
-                    context.getString(R.string.MessageRecord_s_disabled_disappearing_messages, senderName)
-                }
+                if (!isNewConfigEnabled) context.getString(R.string.MessageRecord_s_disabled_disappearing_messages, senderName)
+                else context.getString(if (recipient.is1on1) R.string.MessageRecord_s_turned_off_disappearing_messages_1_on_1 else R.string.MessageRecord_s_turned_off_disappearing_messages, senderName)
             }
         } else {
             val time = ExpirationUtil.getExpirationDisplayValue(context, duration.toInt())
-            val config = threadId.let { storage.getExpirationConfiguration(it) }
-            val state = context.getExpirationTypeDisplayValue(timestamp == expireStarted)
+            val action = context.getExpirationTypeDisplayValue(timestamp == expireStarted)
             if (isOutgoing) {
-                if (ExpirationConfiguration.isNewConfigEnabled) {
-                    context.getString(R.string.MessageRecord_you_set_messages_to_disappear_s_after_s, time, state)
-                } else {
-                    context.getString(R.string.MessageRecord_you_set_disappearing_message_time_to_s, time)
-                }
+                if (!isNewConfigEnabled) context.getString(R.string.MessageRecord_you_set_disappearing_message_time_to_s, time)
+                else context.getString(
+                    if (recipient.is1on1) R.string.MessageRecord_you_set_messages_to_disappear_s_after_s_1_on_1 else R.string.MessageRecord_you_set_messages_to_disappear_s_after_s,
+                    time,
+                    action
+                )
             } else {
-                if (ExpirationConfiguration.isNewConfigEnabled) {
-                    context.getString(R.string.MessageRecord_s_set_messages_to_disappear_s_after_s, senderName, time, state)
-                } else {
-                    context.getString(R.string.MessageRecord_s_set_disappearing_message_time_to_s, senderName, time)
-                }
+                if (!isNewConfigEnabled) context.getString(R.string.MessageRecord_s_set_disappearing_message_time_to_s, senderName, time)
+                else context.getString(
+                    if (recipient.is1on1) R.string.MessageRecord_s_set_messages_to_disappear_s_after_s_1_on_1 else R.string.MessageRecord_s_set_messages_to_disappear_s_after_s,
+                    senderName,
+                    time,
+                    action
+                )
             }
         }
     }
