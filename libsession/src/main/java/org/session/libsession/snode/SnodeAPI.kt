@@ -533,7 +533,7 @@ object SnodeAPI {
 
     fun getExpiries(messageHashes: List<String>, publicKey: String) : RawResponsePromise {
         val userEd25519KeyPair = MessagingModuleConfiguration.shared.getUserED25519KeyPair() ?: return Promise.ofFail(NullPointerException("No user key pair"))
-        val hashes = messageHashes.takeIf { it.size != 1 } ?: (messageHashes + "") // TODO remove this when bug is fixed on nodes.
+        val hashes = messageHashes.takeIf { it.size != 1 } ?: (messageHashes + "///////////////////////////////////////////") // TODO remove this when bug is fixed on nodes.
         return retryIfNeeded(maxRetryCount) {
             val timestamp = System.currentTimeMillis() + clockOffset
             val signData = "${Snode.Method.GetExpiries.rawValue}$timestamp${hashes.joinToString(separator = "")}".toByteArray()
