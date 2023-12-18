@@ -304,10 +304,6 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
         markAs(messageId, MmsSmsColumns.Types.BASE_DELETED_TYPE, threadId)
     }
 
-    override fun markExpireStarted(messageId: Long) {
-        markExpireStarted(messageId, SnodeAPI.nowWithOffset)
-    }
-
     override fun markExpireStarted(messageId: Long, startedTimestamp: Long) {
         val contentValues = ContentValues()
         contentValues.put(EXPIRE_STARTED, startedTimestamp)

@@ -252,11 +252,6 @@ public class SmsDatabase extends MessagingDatabase {
   }
 
   @Override
-  public void markExpireStarted(long id) {
-    markExpireStarted(id, SnodeAPI.getNowWithOffset());
-  }
-
-  @Override
   public void markExpireStarted(long id, long startedAtTimestamp) {
     ContentValues contentValues = new ContentValues();
     contentValues.put(EXPIRE_STARTED, startedAtTimestamp);
