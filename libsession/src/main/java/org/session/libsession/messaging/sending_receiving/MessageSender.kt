@@ -27,6 +27,7 @@ import org.session.libsession.messaging.utilities.SessionId
 import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.snode.RawResponsePromise
 import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.snode.SnodeAPI.nowWithOffset
 import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.snode.SnodeModule
 import org.session.libsession.utilities.Address
@@ -37,6 +38,7 @@ import org.session.libsignal.crypto.PushTransportDetails
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.IdPrefix
+import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Namespace
 import org.session.libsignal.utilities.defaultRequiresAuth
 import org.session.libsignal.utilities.hasNamespaces
@@ -83,7 +85,7 @@ object MessageSender {
         val storage = MessagingModuleConfiguration.shared.storage
         val userPublicKey = storage.getUserPublicKey()
         // Set the timestamp, sender and recipient
-        val messageSendTime = SnodeAPI.nowWithOffset
+        val messageSendTime = nowWithOffset
         if (message.sentTimestamp == null) {
             message.sentTimestamp =
                 messageSendTime // Visible messages will already have their sent timestamp set
@@ -269,7 +271,7 @@ object MessageSender {
         val storage = MessagingModuleConfiguration.shared.storage
         val configFactory = MessagingModuleConfiguration.shared.configFactory
         if (message.sentTimestamp == null) {
-            message.sentTimestamp = SnodeAPI.nowWithOffset
+            message.sentTimestamp = nowWithOffset
         }
         // Attach the blocks message requests info
         configFactory.user?.let { user ->
@@ -418,8 +420,11 @@ object MessageSender {
             storage.markAsSent(timestamp, userPublicKey)
             storage.markUnidentified(timestamp, userPublicKey)
             // Start the disappearing messages timer if needed
-            if (message.recipient == userPublicKey || !isSyncMessage) {
-                SSKEnvironment.shared.messageExpirationManager.startAnyExpiration(timestamp, userPublicKey, System.currentTimeMillis())
+            Log.d("MessageSender", "Start the disappearing messages timer if needed message.recipient = ${message.recipient}, userPublicKey = $userPublicKey, isSyncMessage = $isSyncMessage")
+            message.threadID?.let(storage::getExpirationConfiguration)?.takeIf { it.expiryMode.expirySeconds > 0 }?.let { config ->
+                if (message.recipient == userPublicKey || !isSyncMessage) {
+                    SSKEnvironment.shared.messageExpirationManager.startAnyExpiration(timestamp, userPublicKey, timestamp)
+                }
             }
         } ?: run {
             storage.updateReactionIfNeeded(message, message.sender?:userPublicKey, openGroupSentTimestamp)
