@@ -68,7 +68,6 @@ fun MessageReceiver.handle(message: Message, proto: SignalServiceProtos.Content,
     // Do nothing if the message was outdated
     if (MessageReceiver.messageIsOutdated(message, threadId, openGroupID)) { return }
 
-    MessageReceiver.updateExpiryIfNeeded(message, proto, openGroupID)
     when (message) {
         is ReadReceipt -> handleReadReceipt(message)
         is TypingIndicator -> handleTypingIndicator(message)
@@ -154,7 +153,9 @@ fun MessageReceiver.cancelTypingIndicatorsIfNeeded(senderPublicKey: String) {
 }
 
 private fun MessageReceiver.handleExpirationTimerUpdate(message: ExpirationTimerUpdate) {
-    if (ExpirationConfiguration.isNewConfigEnabled) return
+    SSKEnvironment.shared.messageExpirationManager.setExpirationTimer(message)
+
+    if (isNewConfigEnabled) return
 
     val module = MessagingModuleConfiguration.shared
     try {
@@ -171,7 +172,6 @@ private fun MessageReceiver.handleExpirationTimerUpdate(message: ExpirationTimer
     } catch (e: Exception) {
         Log.e("Loki", "Failed to update expiration configuration.")
     }
-    SSKEnvironment.shared.messageExpirationManager.setExpirationTimer(message)
 }
 
 private fun MessageReceiver.handleDataExtractionNotification(message: DataExtractionNotification) {
@@ -268,58 +268,6 @@ fun handleMessageRequestResponse(message: MessageRequestResponse) {
     MessagingModuleConfiguration.shared.storage.insertMessageRequestResponse(message)
 }
 //endregion
-
-fun MessageReceiver.updateExpiryIfNeeded(
-    message: Message,
-    proto: SignalServiceProtos.Content,
-    openGroupID: String?
-) {
-    val storage = MessagingModuleConfiguration.shared.storage
-
-    val sentTime = message.sentTimestamp ?: throw MessageReceiver.Error.InvalidMessage
-
-    val threadID =
-        storage.getThreadIdFor(message.sender!!, message.groupPublicKey, openGroupID, false)
-            ?: throw MessageReceiver.Error.NoThread
-    val recipient = storage.getRecipientForThread(threadID) ?: throw MessageReceiver.Error.NoThread
-
-    if (!recipient.isLocalNumber) {
-        val disappearingState = if (proto.hasExpirationType()) Recipient.DisappearingState.UPDATED else Recipient.DisappearingState.LEGACY
-        storage.updateDisappearingState(message.sender!!, threadID, disappearingState)
-    }
-
-    if (!proto.hasLastDisappearingMessageChangeTimestamp() && !isNewConfigEnabled) return
-
-    val localConfig = storage.getExpirationConfiguration(threadID)
-
-    val durationSeconds = if (proto.hasExpirationTimer()) proto.expirationTimer else 0
-    val type = if (proto.hasExpirationType()) proto.expirationType else null
-
-    val expiryMode = type?.expiryMode(durationSeconds.toLong()) ?: ExpiryMode.NONE
-
-    val lastDisappearingMessageChangeTimestamp = proto.lastDisappearingMessageChangeTimestamp
-
-    // don't update any values for open groups
-    if (recipient.isOpenGroupRecipient && type != null) throw MessageReceiver.Error.InvalidMessage
-
-    val incoming1on1 = recipient.isContactRecipient && !message.isSenderSelf
-
-    val remoteConfig = ExpirationConfiguration(
-        threadID,
-        expiryMode,
-        lastDisappearingMessageChangeTimestamp
-    )
-
-    remoteConfig.takeUnless { incoming1on1 }?.takeIf {
-        localConfig == null
-            || it.updatedTimestampMs > localConfig.updatedTimestampMs
-            || !isNewConfigEnabled && !proto.hasLastDisappearingMessageChangeTimestamp()
-    }?.let(storage::setExpirationConfiguration)
-
-    if (message is ExpirationTimerUpdate) {
-        SSKEnvironment.shared.messageExpirationManager.setExpirationTimer(message)
-    }
-}
 
 private fun SignalServiceProtos.Content.ExpirationType.expiryMode(durationSeconds: Long) = takeIf { durationSeconds > 0 }?.let {
     when (it) {
@@ -465,14 +413,10 @@ fun MessageReceiver.handleVisibleMessage(
 
         // Persist the message
         message.threadID = threadID
-        val messageID =
-            storage.persist(message, quoteModel, linkPreviews, message.groupPublicKey, openGroupID,
-         attachments, runThreadUpdate
-        ) ?: return null
-        val openGroupServerID = message.openGroupServerMessageID
-        if (openGroupServerID != null) {
-            val isSms = !(message.isMediaMessage() || attachments.isNotEmpty())
-            storage.setOpenGroupServerMessageID(messageID, openGroupServerID, threadID, isSms)
+        val messageID = storage.persist(message, quoteModel, linkPreviews, message.groupPublicKey, openGroupID, attachments, runThreadUpdate) ?: return null
+        message.openGroupServerMessageID?.let {
+            val isSms = !message.isMediaMessage() && attachments.isEmpty()
+            storage.setOpenGroupServerMessageID(messageID, it, threadID, isSms)
         }
         return messageID
     }

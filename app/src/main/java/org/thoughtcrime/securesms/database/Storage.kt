@@ -94,6 +94,8 @@ import org.thoughtcrime.securesms.util.SessionMetaProtocol
 import java.security.MessageDigest
 import network.loki.messenger.libsession_util.util.Contact as LibSessionContact
 
+private const val TAG = "Storage"
+
 open class Storage(
     context: Context,
     helper: SQLCipherOpenHelper,
@@ -240,6 +242,7 @@ open class Storage(
     }
 
     override fun markConversationAsRead(threadId: Long, lastSeenTime: Long, force: Boolean) {
+        Log.d(TAG, "markConversationAsRead() called with: threadId = $threadId, lastSeenTime = $lastSeenTime, force = $force")
         val threadDb = DatabaseComponent.get(context).threadDatabase()
         getRecipientForThread(threadId)?.let { recipient ->
             val currentLastRead = threadDb.getLastSeenAndHasSent(threadId).first()
@@ -1722,6 +1725,8 @@ open class Storage(
     }
 
     override fun setExpirationConfiguration(config: ExpirationConfiguration) {
+        Log.d(TAG, "setExpirationConfiguration() called with: config = $config")
+
         val recipient = getRecipientForThread(config.threadId) ?: return
 
         val expirationDb = DatabaseComponent.get(context).expirationConfigurationDatabase()

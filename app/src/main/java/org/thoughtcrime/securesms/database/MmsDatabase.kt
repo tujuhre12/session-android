@@ -305,6 +305,8 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
     }
 
     override fun markExpireStarted(messageId: Long, startedTimestamp: Long) {
+        Log.d(TAG, "markExpireStarted() called with: messageId = $messageId, startedTimestamp = $startedTimestamp")
+
         val contentValues = ContentValues()
         contentValues.put(EXPIRE_STARTED, startedTimestamp)
         val db = databaseHelper.writableDatabase
@@ -351,13 +353,14 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
             )
             while (cursor != null && cursor.moveToNext()) {
                 if (MmsSmsColumns.Types.isSecureType(cursor.getLong(3))) {
-                    val syncMessageId =
-                        SyncMessageId(fromSerialized(cursor.getString(1)), cursor.getLong(2))
+                    val timestamp = cursor.getLong(2)
+                    val syncMessageId = SyncMessageId(fromSerialized(cursor.getString(1)), timestamp)
                     val expirationInfo = ExpirationInfo(
-                        cursor.getLong(0),
-                        cursor.getLong(4),
-                        cursor.getLong(5),
-                        true
+                        id = cursor.getLong(0),
+                        timestamp = timestamp,
+                        expiresIn = cursor.getLong(4),
+                        expireStarted = cursor.getLong(5),
+                        isMms = true
                     )
                     result.add(MarkedMessageInfo(syncMessageId, expirationInfo))
                 }

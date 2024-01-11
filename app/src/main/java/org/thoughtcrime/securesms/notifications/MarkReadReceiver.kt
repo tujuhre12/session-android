@@ -58,7 +58,7 @@ class MarkReadReceiver : BroadcastReceiver() {
         ) {
             if (markedReadMessages.isEmpty()) return
 
-            Log.d(TAG, "process() called with: context = $context, markedReadMessages = $markedReadMessages")
+            Log.d(TAG, "process() called with: markedReadMessages = $markedReadMessages")
 
             sendReadReceipts(context, markedReadMessages)
 
@@ -133,13 +133,16 @@ class MarkReadReceiver : BroadcastReceiver() {
             expirationInfo: ExpirationInfo,
             expiresIn: Long = expirationInfo.expiresIn
         ) {
-            Log.d(TAG, "scheduleDeletion() called with: context = $context, expirationInfo = $expirationInfo, expiresIn = $expiresIn")
+            Log.d(TAG, "MarkReadReceiver#scheduleDeletion() called with: expirationInfo = $expirationInfo, expiresIn = $expiresIn")
 
-            if (expiresIn <= 0 || expirationInfo.expireStarted > 0) return
+            val now = nowWithOffset
 
-            val now = SnodeAPI.nowWithOffset
-            val db = DatabaseComponent.get(context!!).run { if (expirationInfo.isMms) mmsDatabase() else smsDatabase() }
-            db.markExpireStarted(expirationInfo.id, now)
+            val expireStarted = expirationInfo.expireStarted
+
+            if (expirationInfo.isDisappearAfterRead() && expireStarted == 0L || now < expireStarted) {
+                val db = DatabaseComponent.get(context!!).run { if (expirationInfo.isMms) mmsDatabase() else smsDatabase() }
+                db.markExpireStarted(expirationInfo.id, now)
+            }
 
             ApplicationContext.getInstance(context).expiringMessageManager.scheduleDeletion(
                 expirationInfo.id,

@@ -13,7 +13,7 @@ import org.session.libsession.messaging.sending_receiving.attachments.Attachment
  *
  * **Note:** `nil` if this isn't a sync message.
  */
-class VisibleMessage(
+data class VisibleMessage(
     var syncTarget: String? = null,
     var text: String? = null,
     val attachmentIDs: MutableList<Long> = mutableListOf(),

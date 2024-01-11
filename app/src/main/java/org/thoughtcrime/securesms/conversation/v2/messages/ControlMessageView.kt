@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.conversation.v2.messages
 
 import android.content.Context
 import android.util.AttributeSet
+import android.util.Log
 import android.view.LayoutInflater
 import android.widget.LinearLayout
 import androidx.core.content.res.ResourcesCompat
@@ -21,6 +22,8 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class ControlMessageView : LinearLayout {
+
+    private val TAG = "ControlMessageView"
 
     private lateinit var binding: ViewControlMessageBinding
 
@@ -47,6 +50,7 @@ class ControlMessageView : LinearLayout {
                 binding.apply {
                     expirationTimerView.isVisible = true
 
+                    Log.d(TAG, "bind() called, messageBody = $messageBody")
 
                     expirationTimerView.setExpirationTime(message.expireStarted, message.expiresIn)
 
