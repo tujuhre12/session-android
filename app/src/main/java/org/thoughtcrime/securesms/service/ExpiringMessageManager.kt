@@ -53,35 +53,13 @@ class ExpiringMessageManager(context: Context) : MessageExpirationManagerProtoco
         Log.d(TAG, "scheduleDeletion() called with: id = $id, mms = $mms, startedAtTimestamp = $startedAtTimestamp, expiresInMillis = $expiresInMillis")
         val expiresAtMillis = startedAtTimestamp + expiresInMillis
         synchronized(expiringMessageReferences) {
-            expiringMessageReferences.add(ExpiringMessageReference(id, mms, expiresAtMillis))
+            expiringMessageReferences += ExpiringMessageReference(id, mms, expiresAtMillis)
             (expiringMessageReferences as Object).notifyAll()
         }
     }
 
     fun checkSchedule() {
         synchronized(expiringMessageReferences) { (expiringMessageReferences as Object).notifyAll() }
-    }
-
-    override fun setExpirationTimer(message: ExpirationTimerUpdate) {
-        val expiryMode: ExpiryMode = message.expiryMode
-        Log.d(TAG, "setExpirationTimer() called with: message = $message, expiryMode = $expiryMode")
-
-        val userPublicKey = getLocalNumber(context)
-        val senderPublicKey = message.sender
-        val sentTimestamp = if (message.sentTimestamp == null) 0 else message.sentTimestamp!!
-        val expireStartedAt =
-            if (expiryMode is AfterSend || message.isSenderSelf) sentTimestamp else 0
-
-        // Notify the user
-        if (senderPublicKey == null || userPublicKey == senderPublicKey) {
-            // sender is self or a linked device
-            insertOutgoingExpirationTimerMessage(message, expireStartedAt)
-        } else {
-            insertIncomingExpirationTimerMessage(message, expireStartedAt)
-        }
-        if (expiryMode!!.expirySeconds > 0 && message.sentTimestamp != null && senderPublicKey != null) {
-            startAnyExpiration(message.sentTimestamp!!, senderPublicKey, expireStartedAt)
-        }
     }
 
     private fun insertIncomingExpirationTimerMessage(
@@ -94,9 +72,7 @@ class ExpiringMessageManager(context: Context) : MessageExpirationManagerProtoco
         val groupId = message.groupPublicKey
         val expiresInMillis = message.expiryMode.expiryMillis
         var groupInfo = Optional.absent<SignalServiceGroup?>()
-        val address = fromSerialized(
-            senderPublicKey!!
-        )
+        val address = fromSerialized(senderPublicKey!!)
         var recipient = Recipient.from(context, address, false)
 
         // if the sender is blocked, we don't display the update, except if it's in a closed group
@@ -145,16 +121,14 @@ class ExpiringMessageManager(context: Context) : MessageExpirationManagerProtoco
         val sentTimestamp = message.sentTimestamp
         val groupId = message.groupPublicKey
         val duration = message.expiryMode.expiryMillis
-        val address: Address
         try {
-            address = if (groupId != null) {
-                fromSerialized(doubleEncodeGroupID(groupId))
-            } else {
-                fromSerialized((if (message.syncTarget != null && !message.syncTarget!!.isEmpty()) message.syncTarget else message.recipient)!!)
-            }
+            val serializedAddress = groupId?.let(::doubleEncodeGroupID)
+                ?: message.syncTarget?.takeIf { it.isNotEmpty() }
+                ?: message.recipient!!
+            val address = fromSerialized(serializedAddress)
             val recipient = Recipient.from(context, address, false)
-            val storage = shared.storage
-            message.threadID = storage.getOrCreateThreadIdFor(address)
+
+            message.threadID = shared.storage.getOrCreateThreadIdFor(address)
             val timerUpdateMessage = OutgoingExpirationUpdateMessage(
                 recipient,
                 sentTimestamp!!,
@@ -175,15 +149,35 @@ class ExpiringMessageManager(context: Context) : MessageExpirationManagerProtoco
         }
     }
 
+    override fun setExpirationTimer(message: ExpirationTimerUpdate) {
+        val expiryMode: ExpiryMode = message.expiryMode
+        Log.d(TAG, "setExpirationTimer() called with: message = $message, expiryMode = $expiryMode")
+
+        val userPublicKey = getLocalNumber(context)
+        val senderPublicKey = message.sender
+        val sentTimestamp = if (message.sentTimestamp == null) 0 else message.sentTimestamp!!
+        val expireStartedAt =
+            if (expiryMode is AfterSend || message.isSenderSelf) sentTimestamp else 0
+
+        // Notify the user
+        if (senderPublicKey == null || userPublicKey == senderPublicKey) {
+            // sender is self or a linked device
+            insertOutgoingExpirationTimerMessage(message, expireStartedAt)
+        } else {
+            insertIncomingExpirationTimerMessage(message, expireStartedAt)
+        }
+
+        if (expiryMode is AfterSend && expiryMode.expirySeconds > 0 && message.sentTimestamp != null && senderPublicKey != null) {
+            startAnyExpiration(message.sentTimestamp!!, senderPublicKey, expireStartedAt)
+        }
+    }
+
     override fun startAnyExpiration(timestamp: Long, author: String, expireStartedAt: Long) {
         Log.d(TAG, "startAnyExpiration() called with: timestamp = $timestamp, author = $author, expireStartedAt = $expireStartedAt")
         val messageRecord = mmsSmsDatabase.getMessageFor(timestamp, author) ?: return
         val mms = messageRecord.isMms()
-        val config = get(context).storage().getExpirationConfiguration(messageRecord.threadId)
-        if (config == null || !config.isEnabled) return
-        val mode = config.expiryMode
         getDatabase(mms).markExpireStarted(messageRecord.getId(), expireStartedAt)
-        scheduleDeletion(messageRecord.getId(), mms, expireStartedAt, mode?.expiryMillis ?: 0)
+        scheduleDeletion(messageRecord.getId(), mms, expireStartedAt, messageRecord.expiresIn)
     }
 
     private inner class LoadTask : Runnable {
@@ -195,12 +189,10 @@ class ExpiringMessageManager(context: Context) : MessageExpirationManagerProtoco
             val mmsMessages = mmsReader.use { generateSequence { it.next }.toList() }
 
             (smsMessages + mmsMessages).forEach { messageRecord ->
-                expiringMessageReferences.add(
-                    ExpiringMessageReference(
-                        messageRecord.getId(),
-                        messageRecord.isMms,
-                        messageRecord.expireStarted + messageRecord.expiresIn
-                    )
+                expiringMessageReferences += ExpiringMessageReference(
+                    messageRecord.getId(),
+                    messageRecord.isMms,
+                    messageRecord.expireStarted + messageRecord.expiresIn
                 )
             }
         }
@@ -219,7 +211,7 @@ class ExpiringMessageManager(context: Context) : MessageExpirationManagerProtoco
                             (expiringMessageReferences as Object).wait(waitTime)
                             null
                         } else {
-                            expiringMessageReferences.remove(nextReference)
+                            expiringMessageReferences -= nextReference
                             nextReference
                         }
                     } catch (e: InterruptedException) {
@@ -236,6 +228,6 @@ class ExpiringMessageManager(context: Context) : MessageExpirationManagerProtoco
         val mms: Boolean,
         val expiresAtMillis: Long
     ): Comparable<ExpiringMessageReference> {
-        override fun compareTo(other: ExpiringMessageReference) = compareValuesBy(this, other, { it.id }, { it.mms }, { it.expiresAtMillis})
+        override fun compareTo(other: ExpiringMessageReference) = compareValuesBy(this, other, { it.expiresAtMillis }, { it.id }, { it.mms })
     }
 }
