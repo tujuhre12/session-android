@@ -352,21 +352,9 @@ class VisibleMessageView : LinearLayout {
     }
 
     private fun updateExpirationTimer(message: MessageRecord) {
-        Log.d(TAG, "updateExpirationTimer() called with: message = $message")
-
         if (!message.isOutgoing) binding.messageStatusTextView.bringToFront()
-
         val expireStarted = message.expireStarted.takeIf { it > 0 } ?: SnodeAPI.nowWithOffset
-
-        val id = message.getId()
-        val mms = message.isMms
         binding.expirationTimerView.setExpirationTime(expireStarted, message.expiresIn)
-        ThreadUtils.queue {
-            val db = if (mms) mmsDb else smsDb
-            db.markExpireStarted(id, expireStarted)
-            ApplicationContext.getInstance(context).expiringMessageManager
-                .scheduleDeletion(id, mms, expireStarted, message.expiresIn)
-        }
     }
 
     private fun handleIsSelectedChanged() {
