@@ -135,6 +135,8 @@ class MarkReadReceiver : BroadcastReceiver() {
         ) {
             Log.d(TAG, "MarkReadReceiver#scheduleDeletion() called with: expirationInfo = $expirationInfo, expiresIn = $expiresIn")
 
+            if (expiresIn == 0L) return
+
             val now = nowWithOffset
 
             val expireStarted = expirationInfo.expireStarted
