@@ -82,8 +82,7 @@ class CallMessage(): ControlMessage() {
             .setUuid(callId!!.toString())
 
         val content = SignalServiceProtos.Content.newBuilder()
-        content.setExpirationConfigurationIfNeeded(threadID)
-
+        content.setExpirationConfigurationIfNeeded(threadID, true)
         return content
             .setCallMessage(callMessage)
             .build()

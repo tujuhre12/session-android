@@ -64,7 +64,7 @@ class DataExtractionNotification() : ControlMessage() {
             }
             val contentProto = SignalServiceProtos.Content.newBuilder()
             contentProto.dataExtractionNotification = dataExtractionNotification.build()
-            contentProto.setExpirationConfigurationIfNeeded(threadID)
+            contentProto.setExpirationConfigurationIfNeeded(threadID, true)
             return contentProto.build()
         } catch (e: Exception) {
             Log.w(TAG, "Couldn't construct data extraction notification proto from: $this")
