@@ -16,6 +16,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 
+import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.util.AnimationCompleteListener;
 
 import network.loki.messenger.R;
@@ -69,6 +70,9 @@ public class SearchToolbar extends LinearLayout {
 
       @Override
       public boolean onQueryTextChange(String newText) {
+
+        Log.d("[ACL]", "IT'S NOT THIS ONE - Search text changed to: " + newText);
+
         return onQueryTextSubmit(newText);
       }
     });

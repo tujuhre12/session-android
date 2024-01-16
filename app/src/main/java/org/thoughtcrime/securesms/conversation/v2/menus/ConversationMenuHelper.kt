@@ -29,6 +29,7 @@ import org.session.libsession.utilities.GroupUtil.doubleDecodeGroupID
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
 import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.MediaOverviewActivity
@@ -124,6 +125,11 @@ object ConversationMenuHelper {
             }
 
             override fun onQueryTextChange(query: String): Boolean {
+
+                // *** Crashes when searching for non-alphanumeric first char ***
+                Log.d("[ACL]", "THIS ONE - CMH search query changed to: $query")
+
+
                 context.onSearchQueryUpdated(query)
                 return true
             }
