@@ -1,5 +1,6 @@
 package org.session.libsession.messaging.messages.control
 
+import org.session.libsession.messaging.messages.copyExpiration
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.Log
 
@@ -22,6 +23,7 @@ class ReadReceipt() : ControlMessage() {
             val timestamps = receiptProto.timestampList
             if (timestamps.isEmpty()) return null
             return ReadReceipt(timestamps = timestamps)
+                    .copyExpiration(proto)
         }
     }
 

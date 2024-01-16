@@ -3,6 +3,7 @@ package org.session.libsession.messaging.messages.visible
 import com.goterl.lazysodium.BuildConfig
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.messages.Message
+import org.session.libsession.messaging.messages.copyExpiration
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.Log
@@ -75,7 +76,7 @@ data class VisibleMessage(
 
             result.blocksMessageRequests = with (dataMessage) { hasBlocksCommunityMessageRequests() && blocksCommunityMessageRequests }
 
-            return result
+            return result.copyExpiration(proto)
         }
     }
 

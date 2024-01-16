@@ -2,6 +2,7 @@ package org.session.libsession.messaging.messages.control
 
 import com.google.protobuf.ByteString
 import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.messaging.messages.copyExpiration
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.ProfileKeyUtil
@@ -159,6 +160,7 @@ class ConfigurationMessage(var closedGroups: List<ClosedGroup>, var openGroups: 
             val profileKey = configurationProto.profileKey
             val contacts = configurationProto.contactsList.mapNotNull { Contact.fromProto(it) }
             return ConfigurationMessage(closedGroups, openGroups, contacts, displayName, profilePicture, profileKey.toByteArray())
+                    .copyExpiration(proto)
         }
     }
 

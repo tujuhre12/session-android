@@ -93,7 +93,8 @@ class DisappearingMessagesViewModel(
         val expiryChangeTimestampMs = SnodeAPI.nowWithOffset
         storage.setExpirationConfiguration(ExpirationConfiguration(threadId, mode, expiryChangeTimestampMs))
 
-        val message = ExpirationTimerUpdate(mode).apply {
+        val message = ExpirationTimerUpdate().apply {
+            expiryMode = mode
             sender = textSecurePreferences.getLocalNumber()
             isSenderSelf = true
             recipient = address.serialize()

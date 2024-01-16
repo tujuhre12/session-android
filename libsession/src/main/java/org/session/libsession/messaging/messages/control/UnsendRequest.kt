@@ -1,5 +1,6 @@
 package org.session.libsession.messaging.messages.control
 
+import org.session.libsession.messaging.messages.copyExpiration
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.Log
 
@@ -24,6 +25,7 @@ class UnsendRequest(): ControlMessage() {
             val timestamp = unsendRequestProto.timestamp
             val author = unsendRequestProto.author
             return UnsendRequest(timestamp, author)
+                    .copyExpiration(proto)
         }
     }
 

@@ -331,9 +331,8 @@ open class Storage(
             // open group recipients should explicitly create threads
             message.threadID = getOrCreateThreadIdFor(targetAddress)
         }
-        val expirationConfig = getExpirationConfiguration(message.threadID ?: -1)
-        val expiryMode = expirationConfig?.expiryMode
-        val expiresInMillis = expiryMode?.expiryMillis ?: 0
+        val expiryMode = message.expiryMode
+        val expiresInMillis = expiryMode.expiryMillis
         val expireStartedAt = if (expiryMode is ExpiryMode.AfterSend) message.sentTimestamp!! else 0
         if (message.isMediaMessage() || attachments.isNotEmpty()) {
             val quote: Optional<QuoteModel> = if (quotes != null) Optional.of(quotes) else Optional.absent()

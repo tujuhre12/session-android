@@ -2,6 +2,7 @@ package org.session.libsession.messaging.messages.control
 
 import com.google.protobuf.ByteString
 import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.messaging.messages.copyExpiration
 import org.session.libsession.utilities.Address
 import org.session.libsignal.crypto.ecc.DjbECPrivateKey
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
@@ -118,6 +119,7 @@ class ClosedGroupControlMessage() : ControlMessage() {
                 }
             }
             return ClosedGroupControlMessage(kind)
+                    .copyExpiration(proto)
         }
     }
 

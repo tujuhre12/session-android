@@ -1,5 +1,6 @@
 package org.session.libsession.messaging.messages.control
 
+import org.session.libsession.messaging.messages.copyExpiration
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.Log
 
@@ -31,6 +32,7 @@ class DataExtractionNotification() : ControlMessage() {
                 }
             }
             return DataExtractionNotification(kind)
+                    .copyExpiration(proto)
         }
     }
 

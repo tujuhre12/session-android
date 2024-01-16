@@ -1,5 +1,6 @@
 package org.session.libsession.messaging.messages.control
 
+import org.session.libsession.messaging.messages.copyExpiration
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.*
 import org.session.libsignal.utilities.Log
@@ -64,7 +65,8 @@ class CallMessage(): ControlMessage() {
             val sdpMLineIndexes = callMessageProto.sdpMLineIndexesList
             val sdpMids = callMessageProto.sdpMidsList
             val callId = UUID.fromString(callMessageProto.uuid)
-            return CallMessage(type,sdps, sdpMLineIndexes, sdpMids, callId)
+            return CallMessage(type, sdps, sdpMLineIndexes, sdpMids, callId)
+                    .copyExpiration(proto)
         }
     }
 

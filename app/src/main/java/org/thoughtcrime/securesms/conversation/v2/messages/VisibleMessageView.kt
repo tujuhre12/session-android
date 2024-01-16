@@ -273,7 +273,6 @@ class VisibleMessageView : LinearLayout {
             binding.messageStatusImageView.isVisible =
                 iconID != null && !showTimer && (!message.isSent || isLastMessage)
 
-
             binding.messageStatusImageView.bringToFront()
             binding.expirationTimerView.bringToFront()
             binding.expirationTimerView.isVisible = showTimer

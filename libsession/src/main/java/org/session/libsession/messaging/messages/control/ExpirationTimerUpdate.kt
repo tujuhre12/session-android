@@ -2,7 +2,7 @@ package org.session.libsession.messaging.messages.control
 
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.messaging.MessagingModuleConfiguration
-import org.session.libsession.messaging.messages.ExpirationConfiguration
+import org.session.libsession.messaging.messages.copyExpiration
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.Log
@@ -11,8 +11,7 @@ import org.session.libsignal.utilities.Log
  *
  * **Note:** `nil` if this isn't a sync message.
  */
-data class ExpirationTimerUpdate(var expiryMode: ExpiryMode, var syncTarget: String? = null) : ControlMessage() {
-
+data class ExpirationTimerUpdate(var syncTarget: String? = null) : ControlMessage() {
     override val isSelfSendValid: Boolean = true
 
     companion object {
@@ -24,16 +23,9 @@ data class ExpirationTimerUpdate(var expiryMode: ExpiryMode, var syncTarget: Str
                 SignalServiceProtos.DataMessage.Flags.EXPIRATION_TIMER_UPDATE_VALUE
             ) != 0
             if (!isExpirationTimerUpdate) return null
-            val syncTarget = dataMessageProto.syncTarget
-            val duration: Int = if (proto.hasExpirationTimer()) proto.expirationTimer else dataMessageProto.expireTimer
-            val type = proto.expirationType.takeIf { duration > 0 }
-            val expiryMode = when (type) {
-                SignalServiceProtos.Content.ExpirationType.DELETE_AFTER_SEND -> ExpiryMode.AfterSend(duration.toLong())
-                SignalServiceProtos.Content.ExpirationType.DELETE_AFTER_READ -> ExpiryMode.AfterRead(duration.toLong())
-                else -> duration.takeIf { it > 0 }?.toLong()?.let(ExpiryMode::AfterSend) ?: ExpiryMode.NONE
-            }
 
-            return ExpirationTimerUpdate(expiryMode, syncTarget)
+            return ExpirationTimerUpdate(dataMessageProto.syncTarget)
+                    .copyExpiration(proto)
         }
     }
 

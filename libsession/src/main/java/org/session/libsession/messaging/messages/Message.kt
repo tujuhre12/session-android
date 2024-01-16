@@ -23,6 +23,8 @@ abstract class Message {
     var serverHash: String? = null
     var specifiedTtl: Long? = null
 
+    var expiryMode: ExpiryMode = ExpiryMode.NONE
+
     open val defaultTtl: Long = 14 * 24 * 60 * 60 * 1000
     open val ttl: Long get() = specifiedTtl ?: defaultTtl
     open val isSelfSendValid: Boolean = false
@@ -74,4 +76,16 @@ abstract class Message {
         }
         return this
     }
+}
+
+inline fun <reified M: Message> M.copyExpiration(proto: SignalServiceProtos.Content): M {
+    val duration: Int = (if (proto.hasExpirationTimer()) proto.expirationTimer else if (proto.hasDataMessage()) proto.dataMessage?.expireTimer else null) ?: return this
+
+    expiryMode = when (proto.expirationType.takeIf { duration > 0 }) {
+        ExpirationType.DELETE_AFTER_SEND -> ExpiryMode.AfterSend(duration.toLong())
+        ExpirationType.DELETE_AFTER_READ -> ExpiryMode.AfterRead(duration.toLong())
+        else -> ExpiryMode.NONE
+    }
+
+    return this
 }

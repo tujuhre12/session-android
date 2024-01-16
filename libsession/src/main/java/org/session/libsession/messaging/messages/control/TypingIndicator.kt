@@ -1,5 +1,6 @@
 package org.session.libsession.messaging.messages.control
 
+import org.session.libsession.messaging.messages.copyExpiration
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.Log
 
@@ -20,6 +21,7 @@ class TypingIndicator() : ControlMessage() {
             val typingIndicatorProto = if (proto.hasTypingMessage()) proto.typingMessage else return null
             val kind = Kind.fromProto(typingIndicatorProto.action)
             return TypingIndicator(kind = kind)
+                    .copyExpiration(proto)
         }
     }
 
