@@ -18,6 +18,7 @@ import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessages
 import org.thoughtcrime.securesms.conversation.disappearingmessages.expiryMode
 import org.thoughtcrime.securesms.database.model.MessageRecord
+import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -57,6 +58,7 @@ class ControlMessageView : LinearLayout {
                     followSetting.isVisible = ExpirationConfiguration.isNewConfigEnabled
                         && !message.isOutgoing
                         && message.expiryMode != (MessagingModuleConfiguration.shared.storage.getExpirationConfiguration(message.threadId)?.expiryMode ?: ExpiryMode.NONE)
+                        && DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(message.threadId)?.isGroupRecipient != true
 
                     followSetting.setOnClickListener { disappearingMessages.showFollowSettingDialog(context, message) }
                 }
