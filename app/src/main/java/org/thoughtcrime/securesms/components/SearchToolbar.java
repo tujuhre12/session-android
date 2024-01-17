@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.components;
 
-
 import android.animation.Animator;
 import android.content.Context;
 import android.os.Build;
@@ -16,7 +15,6 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 
-import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.util.AnimationCompleteListener;
 
 import network.loki.messenger.R;
