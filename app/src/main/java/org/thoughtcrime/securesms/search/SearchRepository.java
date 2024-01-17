@@ -218,6 +218,7 @@ public class SearchRepository {
    */
   private String sanitizeQuery(@NonNull String query) {
     StringBuilder out = new StringBuilder();
+
     for (int i = 0; i < query.length(); i++) {
       char c = query.charAt(i);
       if (!BANNED_CHARACTERS.contains(c)) {
@@ -226,6 +227,7 @@ public class SearchRepository {
         out.append(' ');
       }
     }
+    
     return out.toString();
   }
 
