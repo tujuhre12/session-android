@@ -125,10 +125,6 @@ object ConversationMenuHelper {
             }
 
             override fun onQueryTextChange(query: String): Boolean {
-
-                // *** Crashes when searching for non-alphanumeric first char ***
-                Log.d("[ACL]", "[ConversationMenuHelper] Query text changed to: $query")
-
                 context.onSearchQueryUpdated(query)
                 return true
             }

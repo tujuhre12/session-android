@@ -69,12 +69,7 @@ public class SearchToolbar extends LinearLayout {
       }
 
       @Override
-      public boolean onQueryTextChange(String newText) {
-
-        Log.d("[ACL]", "IT'S NOT THIS ONE - Search text changed to: " + newText);
-
-        return onQueryTextSubmit(newText);
-      }
+      public boolean onQueryTextChange(String newText) { return onQueryTextSubmit(newText); }
     });
 
     searchItem.setOnActionExpandListener(new MenuItem.OnActionExpandListener() {

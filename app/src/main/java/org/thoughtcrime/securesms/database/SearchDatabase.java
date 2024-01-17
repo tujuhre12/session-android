@@ -116,11 +116,7 @@ public class SearchDatabase extends Database {
   public Cursor queryMessages(@NonNull String query) {
     SQLiteDatabase db          = databaseHelper.getReadableDatabase();
     String         prefixQuery = adjustQuery(query);
-
     int queryLimit = Math.min(query.length()*50,500);
-
-    Log.d("[ACL]", "[SearchDatabase] Query is:\n" + MESSAGES_QUERY);
-
     Cursor cursor = db.rawQuery(MESSAGES_QUERY, new String[] { prefixQuery, prefixQuery, String.valueOf(queryLimit) });
     setNotifyConverationListListeners(cursor);
     return cursor;

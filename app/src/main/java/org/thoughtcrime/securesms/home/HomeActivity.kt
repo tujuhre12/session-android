@@ -293,10 +293,6 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                     }
 
                     val newData = contactResults + messageResults
-
-
-                    Log.d("[ACL]", "THIS IS THE GLOBAL SEARCH - Result query is: ${result.query}")
-
                     globalSearchAdapter.setNewData(result.query, newData)
                 }
             }

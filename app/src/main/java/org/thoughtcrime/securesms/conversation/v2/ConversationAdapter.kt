@@ -269,9 +269,7 @@ class ConversationAdapter(
     }
 
     fun onSearchQueryUpdated(query: String?) {
-        Log.d("[ACL]", "4")
         this.searchQuery = query
-        Log.d("[ACL]", "5")
         notifyDataSetChanged()
     }
 

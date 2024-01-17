@@ -2066,11 +2066,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     }
 
     fun onSearchQueryUpdated(query: String) {
-        Log.d("[ACL]", "1")
         searchViewModel.onQueryUpdated(query, viewModel.threadId)
-        Log.d("[ACL]", "2")
         binding?.searchBottomBar?.showLoading()
-        Log.d("[ACL]", "3")
         adapter.onSearchQueryUpdated(query)
     }
 
