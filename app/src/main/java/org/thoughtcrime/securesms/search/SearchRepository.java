@@ -95,6 +95,16 @@ public class SearchRepository {
       Stopwatch timer = new Stopwatch("FtsQuery");
 
       String cleanQuery = sanitizeQuery(query);
+
+      // If the search is for a single character and it was stripped by `sanitizeQuery` then abort
+      // the search for an empty string to avoid SQLite error.
+      if (cleanQuery.length() == 0)
+      {
+        Log.d(TAG, "Aborting empty search query.");
+        timer.stop(TAG);
+        return;
+      }
+
       timer.split("clean");
 
       Pair<CursorList<Contact>, List<String>> contacts = queryContacts(cleanQuery);
@@ -114,15 +124,30 @@ public class SearchRepository {
 
   public void query(@NonNull String query, long threadId, @NonNull Callback<CursorList<MessageResult>> callback) {
     if (TextUtils.isEmpty(query)) {
+      Log.d("[ACL]", "Recognised empty query!");
+
       callback.onResult(CursorList.emptyList());
       return;
     }
+    else {
+      Log.d("[ACL]", "Non-empty query is: " + query);
+    }
 
     executor.execute(() -> {
-      long startTime = System.currentTimeMillis();
-      CursorList<MessageResult> messages = queryMessages(sanitizeQuery(query), threadId);
-      Log.d(TAG, "[ConversationQuery] " + (System.currentTimeMillis() - startTime) + " ms");
 
+      Log.d("[ACL]", "Hit query.execute!");
+
+      // If the search is for a single character and it was stripped by `sanitizeQuery` then abort
+      // the search for an empty string to avoid SQLite error.
+      String cleanQuery = sanitizeQuery(query);
+      Log.d("[ACL]", "clean query is: \"" + cleanQuery + "\"");
+      if (cleanQuery.isEmpty() || cleanQuery.equalsIgnoreCase(" "))
+      {
+        Log.d("[ACL]", "Aborting empty search query.");
+        return;
+      }
+
+      CursorList<MessageResult> messages = queryMessages(cleanQuery, threadId);
       callback.onResult(messages);
     });
   }
@@ -186,12 +211,19 @@ public class SearchRepository {
   }
 
   private CursorList<MessageResult> queryMessages(@NonNull String query) {
+
+    Log.d("[ACL]", "[SearchRepository] Query is:\n" + query);
+
+
     Cursor messages = searchDatabase.queryMessages(query);
     return messages != null ? new CursorList<>(messages, new MessageModelBuilder(context))
                             : CursorList.emptyList();
   }
 
   private CursorList<MessageResult> queryMessages(@NonNull String query, long threadId) {
+
+    Log.d("[ACL]", "[SearchRepository] 6 - query is: " + query);
+
     Cursor messages = searchDatabase.queryMessages(query, threadId);
     return messages != null ? new CursorList<>(messages, new MessageModelBuilder(context))
                             : CursorList.emptyList();
@@ -205,6 +237,9 @@ public class SearchRepository {
    * However, if we replace the apostrophe with a space, then the query will find the match.
    */
   private String sanitizeQuery(@NonNull String query) {
+
+    Log.d("[ACL]", "[SearchRepository] Hit sanitizeQuery - initial query is: " + query);
+
     StringBuilder out = new StringBuilder();
 
     for (int i = 0; i < query.length(); i++) {
@@ -216,7 +251,10 @@ public class SearchRepository {
       }
     }
 
-    return out.toString();
+    Log.d("[ACL]", "[SearchRepository] Hit sanitizeQuery - sanitized query is: " + out.toString());
+
+    // Querying for an empty string causes a crash so we'll que
+    if (out.toString().length() > 0) { return out.toString(); } else { return " "; }
   }
 
   private static class ContactModelBuilder implements CursorList.ModelBuilder<Contact> {
