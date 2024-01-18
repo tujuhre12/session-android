@@ -30,7 +30,6 @@ import org.session.libsession.messaging.jobs.MessageSendJob
 import org.session.libsession.messaging.jobs.RetrieveProfileAvatarJob
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.ExpirationConfiguration
-import org.session.libsession.messaging.messages.ExpirationConfiguration.Companion.isNewConfigEnabled
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.ConfigurationMessage
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
@@ -1732,6 +1731,11 @@ open class Storage(
         val currentConfig = expirationDb.getExpirationConfiguration(config.threadId)
         if (currentConfig != null && currentConfig.updatedTimestampMs >= config.updatedTimestampMs) return
         val expiryMode = config.expiryMode
+
+        if (expiryMode == ExpiryMode.NONE) {
+            // Clear the legacy recipients on updating config to be none
+            DatabaseComponent.get(context).lokiAPIDatabase().setLastLegacySenderAddress(recipient.address.serialize(), null)
+        }
 
         if (recipient.isClosedGroupRecipient) {
             val userGroups = configFactory.userGroups ?: return

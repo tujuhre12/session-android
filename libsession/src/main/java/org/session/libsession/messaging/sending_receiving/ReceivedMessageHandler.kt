@@ -335,6 +335,17 @@ fun MessageReceiver.handleVisibleMessage(
         if (userPublicKey != messageSender && !isUserBlindedSender) {
             storage.setBlocksCommunityMessageRequests(recipient, message.blocksMessageRequests)
         }
+
+        // update the disappearing / legacy banner for the sender
+        val disappearingState = when {
+            proto.dataMessage.expireTimer > 0 && !proto.hasExpirationType() -> Recipient.DisappearingState.LEGACY
+            else -> Recipient.DisappearingState.UPDATED
+        }
+        storage.updateDisappearingState(
+            messageSender,
+            threadID,
+            disappearingState
+        )
     }
     // Parse quote if needed
     var quoteModel: QuoteModel? = null

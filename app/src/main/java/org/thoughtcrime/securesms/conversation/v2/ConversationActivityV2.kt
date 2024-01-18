@@ -537,6 +537,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         updatePlaceholder()
         viewModel.recipient?.let {
             maybeUpdateToolbar(recipient = it)
+            setUpOutdatedClientBanner()
         }
     }
 
@@ -697,12 +698,14 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     private fun setUpOutdatedClientBanner() {
         val legacyRecipient = viewModel.legacyBannerRecipient(this)
-        if (ExpirationConfiguration.isNewConfigEnabled &&
-             legacyRecipient != null
-        ) {
+
+        val shouldShowLegacy = ExpirationConfiguration.isNewConfigEnabled &&
+                legacyRecipient != null
+
+        binding?.outdatedBanner?.isVisible = shouldShowLegacy
+        if (shouldShowLegacy) {
             binding?.outdatedBannerTextView?.text =
-                resources.getString(R.string.activity_conversation_outdated_client_banner_text, legacyRecipient.name)
-            binding?.outdatedBanner?.isVisible = true
+                resources.getString(R.string.activity_conversation_outdated_client_banner_text, legacyRecipient!!.name)
         }
     }
 
