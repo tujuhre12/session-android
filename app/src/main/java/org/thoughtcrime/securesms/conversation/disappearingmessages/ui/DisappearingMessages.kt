@@ -26,6 +26,7 @@ import org.thoughtcrime.securesms.ui.NoOpCallbacks
 import org.thoughtcrime.securesms.ui.OptionsCard
 import org.thoughtcrime.securesms.ui.OutlineButton
 import org.thoughtcrime.securesms.ui.RadioOption
+import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.fadingEdges
 
 typealias ExpiryCallbacks = Callbacks<ExpiryMode>
@@ -65,6 +66,7 @@ fun DisappearingMessages(
         if (state.showSetButton) OutlineButton(
             GetString(R.string.disappearing_messages_set_button_title),
             modifier = Modifier
+                .contentDescription(GetString(R.string.AccessibilityId_set_button))
                 .align(Alignment.CenterHorizontally)
                 .padding(bottom = 20.dp),
             onClick = callbacks::onSetClick
