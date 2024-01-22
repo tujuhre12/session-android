@@ -253,6 +253,8 @@ public class SmsDatabase extends MessagingDatabase {
 
   @Override
   public void markExpireStarted(long id, long startedAtTimestamp) {
+    Log.d(TAG, "markExpireStarted() called with: id = [" + id + "], startedAtTimestamp = [" + startedAtTimestamp + "]");
+
     ContentValues contentValues = new ContentValues();
     contentValues.put(EXPIRE_STARTED, startedAtTimestamp);
 

@@ -56,9 +56,9 @@ class MarkReadReceiver : BroadcastReceiver() {
             context: Context,
             markedReadMessages: List<MarkedMessageInfo>
         ) {
-            if (markedReadMessages.isEmpty()) return
-
             Log.d(TAG, "process() called with: markedReadMessages = $markedReadMessages")
+
+            if (markedReadMessages.isEmpty()) return
 
             sendReadReceipts(context, markedReadMessages)
 

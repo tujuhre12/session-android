@@ -37,7 +37,7 @@ class DisappearingMessages @Inject constructor(
             sentTimestamp = expiryChangeTimestampMs
         }
 
-        messageExpirationManager.setExpirationTimer(message)
+        messageExpirationManager.insertExpirationTimerMessage(message)
         MessageSender.send(message, address)
         ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(context)
     }

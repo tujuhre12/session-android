@@ -1,10 +1,13 @@
 package org.session.libsession.utilities
 
 import android.content.Context
+import android.util.Log
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.messaging.contacts.Contact
+import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
+import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.recipients.Recipient
 
 class SSKEnvironment(
@@ -38,8 +41,20 @@ class SSKEnvironment(
     }
 
     interface MessageExpirationManagerProtocol {
-        fun setExpirationTimer(message: ExpirationTimerUpdate)
+        fun insertExpirationTimerMessage(message: ExpirationTimerUpdate)
         fun startAnyExpiration(timestamp: Long, author: String, expireStartedAt: Long)
+        fun startAnyExpiration(message: Message, coerceToDisappearAfterRead: Boolean = false) {
+            Log.d("MessageExpirationManagerProtocol", "startAnyExpiration() called with: message = $message, coerceToDisappearAfterRead = $coerceToDisappearAfterRead")
+
+            val timestamp = message.sentTimestamp ?: return
+            startAnyExpiration(
+                timestamp = timestamp,
+                author = message.sender ?: return,
+                expireStartedAt = if (message.expiryMode is ExpiryMode.AfterRead || coerceToDisappearAfterRead && message.expiryMode.expiryMillis > 0) SnodeAPI.nowWithOffset.coerceAtLeast(timestamp + 1)
+                else if (message.expiryMode is ExpiryMode.AfterSend) timestamp
+                else return
+            )
+        }
     }
 
     companion object {

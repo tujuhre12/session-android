@@ -65,6 +65,8 @@ internal fun MessageReceiver.isBlocked(publicKey: String): Boolean {
 }
 
 fun MessageReceiver.handle(message: Message, proto: SignalServiceProtos.Content, threadId: Long, openGroupID: String?) {
+    Log.d("MessageReceiver", "handle() called with: message = $message, proto = $proto, threadId = $threadId, openGroupID = $openGroupID")
+
     // Do nothing if the message was outdated
     if (MessageReceiver.messageIsOutdated(message, threadId, openGroupID)) { return }
 
@@ -122,6 +124,7 @@ private fun MessageReceiver.handleReadReceipt(message: ReadReceipt) {
 private fun MessageReceiver.handleCallMessage(message: CallMessage) {
     // TODO: refactor this out to persistence, just to help debug the flow and send/receive in synchronous testing
     WebRtcUtils.SIGNAL_QUEUE.trySend(message)
+    SSKEnvironment.shared.messageExpirationManager.startAnyExpiration(message, coerceToDisappearAfterRead = true)
 }
 
 private fun MessageReceiver.handleTypingIndicator(message: TypingIndicator) {
@@ -153,7 +156,7 @@ fun MessageReceiver.cancelTypingIndicatorsIfNeeded(senderPublicKey: String) {
 }
 
 private fun MessageReceiver.handleExpirationTimerUpdate(message: ExpirationTimerUpdate) {
-    SSKEnvironment.shared.messageExpirationManager.setExpirationTimer(message)
+    SSKEnvironment.shared.messageExpirationManager.insertExpirationTimerMessage(message)
 
     if (isNewConfigEnabled) return
 
@@ -186,6 +189,7 @@ private fun MessageReceiver.handleDataExtractionNotification(message: DataExtrac
         else -> return
     }
     storage.insertDataExtractionNotificationMessage(senderPublicKey, notification, message.sentTimestamp!!)
+    SSKEnvironment.shared.messageExpirationManager.startAnyExpiration(message, coerceToDisappearAfterRead = true)
 }
 
 private fun handleConfigurationMessage(message: ConfigurationMessage) {
@@ -285,6 +289,8 @@ fun MessageReceiver.handleVisibleMessage(
     runThreadUpdate: Boolean,
     runProfileUpdate: Boolean
 ): Long? {
+    Log.d("ReceivedMessageHandler", "handleVisibleMessage() called with: message = $message, proto = $proto, openGroupID = $openGroupID, threadId = $threadId, runThreadUpdate = $runThreadUpdate, runProfileUpdate = $runProfileUpdate")
+
     val storage = MessagingModuleConfiguration.shared.storage
     val context = MessagingModuleConfiguration.shared.context
     val userPublicKey = storage.getUserPublicKey()
@@ -386,14 +392,7 @@ fun MessageReceiver.handleVisibleMessage(
         }
     }
     // Parse attachments if needed
-    val attachments = proto.dataMessage.attachmentsList.mapNotNull { attachmentProto ->
-        val attachment = Attachment.fromProto(attachmentProto)
-        if (!attachment.isValid()) {
-            return@mapNotNull null
-        } else {
-            return@mapNotNull attachment
-        }
-    }
+    val attachments = proto.dataMessage.attachmentsList.map(Attachment::fromProto).filter { it.isValid() }
     // Cancel any typing indicators if needed
     cancelTypingIndicatorsIfNeeded(message.sender!!)
     // Parse reaction if needed
@@ -429,6 +428,7 @@ fun MessageReceiver.handleVisibleMessage(
             val isSms = !message.isMediaMessage() && attachments.isEmpty()
             storage.setOpenGroupServerMessageID(messageID, it, threadID, isSms)
         }
+        SSKEnvironment.shared.messageExpirationManager.startAnyExpiration(message)
         return messageID
     }
     return null

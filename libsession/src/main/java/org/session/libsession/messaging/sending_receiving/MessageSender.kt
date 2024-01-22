@@ -421,9 +421,10 @@ object MessageSender {
             storage.markUnidentified(timestamp, userPublicKey)
             // Start the disappearing messages timer if needed
             Log.d("MessageSender", "Start the disappearing messages timer if needed message.recipient = ${message.recipient}, userPublicKey = $userPublicKey, isSyncMessage = $isSyncMessage")
-            message.threadID?.let(storage::getExpirationConfiguration)?.takeIf { it.expiryMode.expirySeconds > 0 }?.let { config ->
+            message.threadID?.let(storage::getExpirationConfiguration)?.expiryMode?.takeIf { it.expirySeconds > 0 }?.let { mode ->
                 if (message.recipient == userPublicKey || !isSyncMessage) {
-                    SSKEnvironment.shared.messageExpirationManager.startAnyExpiration(timestamp, userPublicKey, timestamp)
+                    val expireStartedAt = if (mode is ExpiryMode.AfterRead) timestamp + 1 else timestamp
+                    SSKEnvironment.shared.messageExpirationManager.startAnyExpiration(timestamp, userPublicKey, expireStartedAt)
                 }
             }
         } ?: run {
