@@ -56,7 +56,8 @@
         android:layout_marginTop="4dp"
         android:textColor="@color/accent_green"
         android:textSize="@dimen/very_small_font_size"
-        android:text="Follow Setting"
+        android:text="@string/MessageRecord_follow_setting"
+        android:contentDescription="@string/"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
 
