@@ -87,7 +87,7 @@ class DisappearingMessagesViewModel(
             return@launch
         }
 
-        disappearingMessages.set(threadId, address, mode)
+        disappearingMessages.set(threadId, address, mode, state.isGroup)
 
         _event.send(Event.SUCCESS)
     }

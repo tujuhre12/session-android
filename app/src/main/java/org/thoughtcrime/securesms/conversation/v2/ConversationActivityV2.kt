@@ -72,6 +72,7 @@ import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.mentions.Mention
 import org.session.libsession.messaging.mentions.MentionsManager
 import org.session.libsession.messaging.messages.ExpirationConfiguration
+import org.session.libsession.messaging.messages.applyExpiryMode
 import org.session.libsession.messaging.messages.control.DataExtractionNotification
 import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage
 import org.session.libsession.messaging.messages.signal.OutgoingTextMessage
@@ -1574,7 +1575,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             return null
         }
         // Create the message
-        val message = VisibleMessage()
+        val message = VisibleMessage().applyExpiryMode(viewModel.threadId)
         message.sentTimestamp = sentTimestamp
         message.text = text
         val expiresInMillis = viewModel.expirationConfiguration?.expiryMode?.expiryMillis ?: 0
@@ -1609,7 +1610,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         val sentTimestamp = SnodeAPI.nowWithOffset
         processMessageRequestApproval()
         // Create the message
-        val message = VisibleMessage()
+        val message = VisibleMessage().applyExpiryMode()
         message.sentTimestamp = sentTimestamp
         message.text = body
         val quote = quotedMessage?.let {

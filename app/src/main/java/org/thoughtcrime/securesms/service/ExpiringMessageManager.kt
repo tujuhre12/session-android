@@ -49,6 +49,9 @@ class ExpiringMessageManager(context: Context) : MessageExpirationManagerProtoco
 
     fun scheduleDeletion(id: Long, mms: Boolean, startedAtTimestamp: Long, expiresInMillis: Long) {
         Log.d(TAG, "scheduleDeletion() called with: id = $id, mms = $mms, startedAtTimestamp = $startedAtTimestamp, expiresInMillis = $expiresInMillis")
+
+        if (startedAtTimestamp <= 0) return
+
         val expiresAtMillis = startedAtTimestamp + expiresInMillis
         synchronized(expiringMessageReferences) {
             expiringMessageReferences += ExpiringMessageReference(id, mms, expiresAtMillis)
@@ -164,16 +167,16 @@ class ExpiringMessageManager(context: Context) : MessageExpirationManagerProtoco
             insertIncomingExpirationTimerMessage(message, expireStartedAt)
         }
 
-        startAnyExpiration(message)
+        maybeStartExpiration(message)
     }
 
     override fun startAnyExpiration(timestamp: Long, author: String, expireStartedAt: Long) {
         Log.d(TAG, "startAnyExpiration() called with: timestamp = $timestamp, author = $author, expireStartedAt = $expireStartedAt")
-        val messageRecord = mmsSmsDatabase.getMessageFor(timestamp, author) ?: throw Exception("no message record!!!")
-        Log.d(TAG, "startAnyExpiration() $messageRecord")
-        val mms = messageRecord.isMms()
-        getDatabase(mms).markExpireStarted(messageRecord.getId(), expireStartedAt)
-        scheduleDeletion(messageRecord.getId(), mms, expireStartedAt, messageRecord.expiresIn)
+
+        mmsSmsDatabase.getMessageFor(timestamp, author)?.run {
+            getDatabase(isMms()).markExpireStarted(getId(), expireStartedAt)
+            scheduleDeletion(getId(), isMms(), expireStartedAt, expiresIn)
+        } ?: Log.e(TAG, "no message record!!!")
     }
 
     private inner class LoadTask : Runnable {

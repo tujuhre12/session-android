@@ -3,11 +3,12 @@ package org.session.libsession.utilities
 import android.content.Context
 import android.util.Log
 import network.loki.messenger.libsession_util.util.ExpiryMode
+import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
-import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.snode.SnodeAPI.nowWithOffset
 import org.session.libsession.utilities.recipients.Recipient
 
 class SSKEnvironment(
@@ -43,17 +44,40 @@ class SSKEnvironment(
     interface MessageExpirationManagerProtocol {
         fun insertExpirationTimerMessage(message: ExpirationTimerUpdate)
         fun startAnyExpiration(timestamp: Long, author: String, expireStartedAt: Long)
-        fun startAnyExpiration(message: Message, coerceToDisappearAfterRead: Boolean = false) {
-            Log.d("MessageExpirationManagerProtocol", "startAnyExpiration() called with: message = $message, coerceToDisappearAfterRead = $coerceToDisappearAfterRead")
 
-            val timestamp = message.sentTimestamp ?: return
-            startAnyExpiration(
-                timestamp = timestamp,
-                author = message.sender ?: return,
-                expireStartedAt = if (message.expiryMode is ExpiryMode.AfterRead || coerceToDisappearAfterRead && message.expiryMode.expiryMillis > 0) SnodeAPI.nowWithOffset.coerceAtLeast(timestamp + 1)
-                else if (message.expiryMode is ExpiryMode.AfterSend) timestamp
-                else return
+        fun maybeStartExpiration(message: Message, startDisappearAfterRead: Boolean = false) {
+            Log.d("MessageExpirationManagerProtocol", "maybeStartExpiration() called with: message = $message, startDisappearAfterRead = $startDisappearAfterRead")
+
+            if (message is ExpirationTimerUpdate && message.isGroup) return
+
+            maybeStartExpiration(
+                message.sentTimestamp ?: return,
+                message.sender ?: return,
+                message.expiryMode,
+                startDisappearAfterRead || message.isSenderSelf
             )
+        }
+
+        fun startDisappearAfterRead(timestamp: Long, sender: String) {
+            Log.d("MessageExpirationManagerProtocol", "startDisappearAfterRead() called with: timestamp = $timestamp, sender = $sender")
+
+            startAnyExpiration(
+                timestamp,
+                sender,
+                expireStartedAt = nowWithOffset.coerceAtLeast(timestamp + 1)
+            )
+        }
+
+        fun maybeStartExpiration(timestamp: Long, sender: String, mode: ExpiryMode, startDisappearAfterRead: Boolean = false) {
+            Log.d("MessageExpirationManagerProtocol", "maybeStartExpiration() called with: timestamp = $timestamp, sender = $sender, mode = $mode, startDisappearAfterRead = $startDisappearAfterRead")
+
+            val expireStartedAt = when (mode) {
+                is ExpiryMode.AfterSend -> timestamp
+                is ExpiryMode.AfterRead -> if (startDisappearAfterRead) nowWithOffset.coerceAtLeast(timestamp + 1) else return
+                else -> return
+            }
+
+            startAnyExpiration(timestamp, sender, expireStartedAt)
         }
     }
 

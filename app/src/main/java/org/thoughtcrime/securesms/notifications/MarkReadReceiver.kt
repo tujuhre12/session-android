@@ -11,6 +11,7 @@ import org.session.libsession.messaging.messages.control.ReadReceipt
 import org.session.libsession.messaging.sending_receiving.MessageSender.send
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeAPI.nowWithOffset
+import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isReadReceiptsEnabled
 import org.session.libsession.utilities.associateByNotNull
@@ -62,6 +63,18 @@ class MarkReadReceiver : BroadcastReceiver() {
 
             sendReadReceipts(context, markedReadMessages)
 
+            markedReadMessages
+                .filter { it.expiryType == ExpiryType.AFTER_READ }
+                .forEach { info ->
+                    DatabaseComponent.get(context).mmsSmsDatabase().getMessageForTimestamp(info.syncMessageId.timetamp)
+                        ?.takeUnless { it.isExpirationTimerUpdate && it.recipient.isClosedGroupRecipient }
+                        ?.run {
+                            SSKEnvironment.shared.messageExpirationManager.startDisappearAfterRead(
+                                info.syncMessageId.timetamp,
+                                info.syncMessageId.address.serialize()
+                            )
+                        }
+                }
             markedReadMessages.forEach { scheduleDeletion(context, it.expirationInfo) }
 
             hashToDisappearAfterReadMessage(context, markedReadMessages)?.let {
@@ -77,7 +90,7 @@ class MarkReadReceiver : BroadcastReceiver() {
             val loki = DatabaseComponent.get(context).lokiMessageDatabase()
 
             return markedReadMessages
-                .filter { it.guessExpiryType() == ExpiryType.AFTER_READ }
+                .filter { it.expiryType == ExpiryType.AFTER_READ }
                 .associateByNotNull { it.expirationInfo.run { loki.getMessageServerHash(id, isMms) } }
                 .takeIf { it.isNotEmpty() }
         }

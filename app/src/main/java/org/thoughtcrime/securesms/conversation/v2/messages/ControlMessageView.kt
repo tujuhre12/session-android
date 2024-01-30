@@ -53,12 +53,19 @@ class ControlMessageView : LinearLayout {
 
                     Log.d(TAG, "bind() called, messageBody = $messageBody")
 
-                    expirationTimerView.setExpirationTime(message.expireStarted, message.expiresIn)
+                    val threadRecipient = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(message.threadId)
+
+                    if (threadRecipient?.isClosedGroupRecipient == true) {
+                        expirationTimerView.setTimerIcon()
+                    } else {
+                        expirationTimerView.setExpirationTime(message.expireStarted, message.expiresIn)
+                    }
+
 
                     followSetting.isVisible = ExpirationConfiguration.isNewConfigEnabled
                         && !message.isOutgoing
                         && message.expiryMode != (MessagingModuleConfiguration.shared.storage.getExpirationConfiguration(message.threadId)?.expiryMode ?: ExpiryMode.NONE)
-                        && DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(message.threadId)?.isGroupRecipient != true
+                        && threadRecipient?.isGroupRecipient != true
 
                     followSetting.setOnClickListener { disappearingMessages.showFollowSettingDialog(context, message) }
                 }

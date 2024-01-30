@@ -124,7 +124,6 @@ private fun MessageReceiver.handleReadReceipt(message: ReadReceipt) {
 private fun MessageReceiver.handleCallMessage(message: CallMessage) {
     // TODO: refactor this out to persistence, just to help debug the flow and send/receive in synchronous testing
     WebRtcUtils.SIGNAL_QUEUE.trySend(message)
-    SSKEnvironment.shared.messageExpirationManager.startAnyExpiration(message, coerceToDisappearAfterRead = true)
 }
 
 private fun MessageReceiver.handleTypingIndicator(message: TypingIndicator) {
@@ -192,7 +191,6 @@ private fun MessageReceiver.handleDataExtractionNotification(message: DataExtrac
         else -> return
     }
     storage.insertDataExtractionNotificationMessage(senderPublicKey, notification, message.sentTimestamp!!)
-    SSKEnvironment.shared.messageExpirationManager.startAnyExpiration(message, coerceToDisappearAfterRead = true)
 }
 
 private fun handleConfigurationMessage(message: ConfigurationMessage) {
@@ -221,7 +219,7 @@ private fun handleConfigurationMessage(message: ConfigurationMessage) {
         } else {
             // only handle new closed group if it's first time sync
             handleNewClosedGroup(message.sender!!, message.sentTimestamp!!, closedGroup.publicKey, closedGroup.name,
-                closedGroup.encryptionKeyPair!!, closedGroup.members, closedGroup.admins, message.sentTimestamp!!, closedGroup.expirationTimer)
+                    closedGroup.encryptionKeyPair!!, closedGroup.members, closedGroup.admins, message.sentTimestamp!!)
         }
     }
     val allV2OpenGroups = storage.getAllOpenGroups().map { it.value.joinURL }
@@ -431,7 +429,7 @@ fun MessageReceiver.handleVisibleMessage(
             val isSms = !message.isMediaMessage() && attachments.isEmpty()
             storage.setOpenGroupServerMessageID(messageID, it, threadID, isSms)
         }
-        SSKEnvironment.shared.messageExpirationManager.startAnyExpiration(message)
+        SSKEnvironment.shared.messageExpirationManager.maybeStartExpiration(message)
         return messageID
     }
     return null
@@ -550,10 +548,10 @@ private fun MessageReceiver.handleNewClosedGroup(message: ClosedGroupControlMess
     val members = kind.members.map { it.toByteArray().toHexString() }
     val admins = kind.admins.map { it.toByteArray().toHexString() }
     val expirationTimer = kind.expirationTimer
-    handleNewClosedGroup(message.sender!!, message.sentTimestamp!!, groupPublicKey, kind.name, kind.encryptionKeyPair!!, members, admins, message.sentTimestamp!!, expirationTimer)
+    handleNewClosedGroup(message.sender!!, message.sentTimestamp!!, groupPublicKey, kind.name, kind.encryptionKeyPair!!, members, admins, message.sentTimestamp!!)
 }
 
-private fun handleNewClosedGroup(sender: String, sentTimestamp: Long, groupPublicKey: String, name: String, encryptionKeyPair: ECKeyPair, members: List<String>, admins: List<String>, formationTimestamp: Long, expireTimer: Int) {
+private fun handleNewClosedGroup(sender: String, sentTimestamp: Long, groupPublicKey: String, name: String, encryptionKeyPair: ECKeyPair, members: List<String>, admins: List<String>, formationTimestamp: Long) {
     val context = MessagingModuleConfiguration.shared.context
     val storage = MessagingModuleConfiguration.shared.storage
     val userPublicKey = storage.getUserPublicKey()!!
