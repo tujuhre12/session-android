@@ -2,7 +2,6 @@ package org.session.libsession.messaging.messages.control
 
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.messages.copyExpiration
-import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage.Flags.EXPIRATION_TIMER_UPDATE_VALUE
 import org.session.libsignal.utilities.Log
@@ -20,7 +19,7 @@ data class ExpirationTimerUpdate(var syncTarget: String? = null, val isGroup: Bo
 
         fun fromProto(proto: SignalServiceProtos.Content): ExpirationTimerUpdate? =
             proto.dataMessage?.takeIf { it.flags and EXPIRATION_TIMER_UPDATE_VALUE != 0 }?.run {
-                ExpirationTimerUpdate(syncTarget, hasGroup()).copyExpiration(proto)
+                ExpirationTimerUpdate(takeIf { hasSyncTarget() }?.syncTarget, hasGroup()).copyExpiration(proto)
             }
     }
 
