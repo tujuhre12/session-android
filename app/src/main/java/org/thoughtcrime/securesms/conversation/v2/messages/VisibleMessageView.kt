@@ -346,8 +346,7 @@ class VisibleMessageView : LinearLayout {
 
     private fun updateExpirationTimer(message: MessageRecord) {
         if (!message.isOutgoing) binding.messageStatusTextView.bringToFront()
-        val expireStarted = message.expireStarted.takeIf { it > 0 } ?: SnodeAPI.nowWithOffset
-        binding.expirationTimerView.setExpirationTime(expireStarted, message.expiresIn)
+        binding.expirationTimerView.setExpirationTime(message.expireStarted, message.expiresIn)
     }
 
     private fun handleIsSelectedChanged() {
