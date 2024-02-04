@@ -75,7 +75,6 @@ class MarkReadReceiver : BroadcastReceiver() {
                             )
                         }
                 }
-            markedReadMessages.forEach { scheduleDeletion(context, it.expirationInfo) }
 
             hashToDisappearAfterReadMessage(context, markedReadMessages)?.let {
                 fetchUpdatedExpiriesAndScheduleDeletion(context, it)
