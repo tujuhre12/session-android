@@ -52,6 +52,8 @@ class MarkReadReceiver : BroadcastReceiver() {
         const val THREAD_IDS_EXTRA = "thread_ids"
         const val NOTIFICATION_ID_EXTRA = "notification_id"
 
+        val messageExpirationManager = SSKEnvironment.shared.messageExpirationManager
+
         @JvmStatic
         fun process(
             context: Context,
@@ -63,18 +65,14 @@ class MarkReadReceiver : BroadcastReceiver() {
 
             sendReadReceipts(context, markedReadMessages)
 
+            val mmsSmsDatabase = DatabaseComponent.get(context).mmsSmsDatabase()
+
+            // start disappear after read messages except TimerUpdates in groups.
             markedReadMessages
                 .filter { it.expiryType == ExpiryType.AFTER_READ }
-                .forEach { info ->
-                    DatabaseComponent.get(context).mmsSmsDatabase().getMessageForTimestamp(info.syncMessageId.timetamp)
-                        ?.takeUnless { it.isExpirationTimerUpdate && it.recipient.isClosedGroupRecipient }
-                        ?.run {
-                            SSKEnvironment.shared.messageExpirationManager.startDisappearAfterRead(
-                                info.syncMessageId.timetamp,
-                                info.syncMessageId.address.serialize()
-                            )
-                        }
-                }
+                .map { it.syncMessageId }
+                .filter { mmsSmsDatabase.getMessageForTimestamp(it.timetamp)?.run { isExpirationTimerUpdate && recipient.isClosedGroupRecipient } == false }
+                .forEach { messageExpirationManager.startDisappearAfterRead(it.timetamp, it.address.serialize()) }
 
             hashToDisappearAfterReadMessage(context, markedReadMessages)?.let {
                 fetchUpdatedExpiriesAndScheduleDeletion(context, it)
