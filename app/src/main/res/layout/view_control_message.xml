@@ -50,6 +50,26 @@
         android:textStyle="bold"
         tools:text="@string/MessageRecord_you_disabled_disappearing_messages" />
 
+    <LinearLayout
+        android:id="@+id/call_view"
+        style="@style/FakeChatViewMessageBubble.Incoming"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/call_text_view"
+            android:drawableTint="?message_received_text_color"
+            android:drawableStart="@drawable/ic_missed_call"
+            android:layout_weight="1"
+            android:textAlignment="center"
+            android:layout_gravity="center"
+            android:text="You missed a call"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"/>
+
+    </LinearLayout>
+
     <TextView
         android:id="@+id/followSetting"
         style="@style/Widget.Session.Button.Common.Borderless"
