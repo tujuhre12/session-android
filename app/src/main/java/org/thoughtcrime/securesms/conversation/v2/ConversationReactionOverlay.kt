@@ -37,6 +37,7 @@ import org.thoughtcrime.securesms.dependencies.DatabaseComponent.Companion.get
 import org.thoughtcrime.securesms.util.AnimationCompleteListener
 import org.thoughtcrime.securesms.util.DateUtils
 import java.util.Locale
+import kotlin.time.Duration.Companion.milliseconds
 
 class ConversationReactionOverlay : FrameLayout {
     private val emojiViewGlobalRect = Rect()
@@ -518,7 +519,13 @@ class ConversationReactionOverlay : FrameLayout {
         }
         // Delete message
         if (userCanDeleteSelectedItems(context, message, openGroup, userPublicKey, blindedPublicKey)) {
-            items += ActionItem(R.attr.menu_trash_icon, context.resources.getString(R.string.delete), { handleActionItemClicked(Action.DELETE) }, context.resources.getString(R.string.AccessibilityId_delete_message))
+            items += ActionItem(
+                R.attr.menu_trash_icon,
+                context.resources.getString(R.string.delete),
+                { handleActionItemClicked(Action.DELETE) },
+                context.resources.getString(R.string.AccessibilityId_delete_message),
+                message.takeIf { it.expireStarted > 0 }?.run { expiresIn.milliseconds }?.let { "Auto-deletes in $it" }
+            )
         }
         // Ban user
         if (userCanBanSelectedUsers(context, message, openGroup, userPublicKey, blindedPublicKey)) {
