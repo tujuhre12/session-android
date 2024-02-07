@@ -1077,5 +1077,6 @@
     <string name="activity_conversation_empty_state_default">You have no messages from <b>%s</b>.\nSend a message to start the conversation!</string>
 
     <string name="unread_marker">Unread Messages</string>
+    <string name="auto_deletes_in">Auto-deletes in %1$s</string>
 
 </resources>
