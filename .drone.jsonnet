@@ -5,8 +5,6 @@ local version_info = {
   name: 'Version Information',
   image: docker_base + 'android',
   commands: [
-    '/usr/lib/android-ndk --version',
-    '/usr/lib/android-sdk --version'
   ]
 };
 
