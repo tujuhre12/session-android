@@ -6,8 +6,7 @@ local version_info = {
   image: docker_base + 'android',
   commands: [
     'cmake --version',
-    'echo "Android SDK Version: $(cat /usr/lib/android-sdk/source.properties | grep Pkg.Revision)',
-    'echo "Android NDK Version: $(cat /usr/lib/android-ndk/source.properties | grep Pkg.Revision)'
+    'apt --installed list'
   ]
 };
 
