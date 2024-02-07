@@ -33,14 +33,17 @@ local debian_pipeline(name,
   name: name,
   platform: { arch: arch },
   steps: [
-    submodules,
+    clone_submodules,
     {
       name: 'build',
       image: image,
       pull: 'always',
       [if allow_fail then 'failure']: 'ignore',
-      environment: { SSH_KEY: { from_secret: 'SSH_KEY' }, WINEDEBUG: '-all' },
-      commands: [] + build,
+      environment: { SSH_KEY: { from_secret: 'SSH_KEY' } },
+      commands: [
+        './gradlew assemblePlayDebug',
+        './Scripts/drone-static-upload.sh',
+      ] + build,
     },
   ],
 };
@@ -66,9 +69,7 @@ local debian_build(name,
   oxen_repo=oxen_repo,
   kitware_repo=kitware_repo,
   allow_fail=allow_fail,
-  build=[
-    './gradlew assemblePlayDebug',
-  ]
+  build=[]
 );
 
 
@@ -117,7 +118,6 @@ local debian_build(name,
     platform: { arch: 'amd64' },
     trigger: { event: { exclude: [ 'pull_request' ] } },
     steps: [
-      clone_submodules,
       debian_pipeline(
         'Build',
         docker_base + 'android',
