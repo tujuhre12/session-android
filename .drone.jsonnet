@@ -18,6 +18,14 @@ local clone_submodules = {
   commands: ['git fetch --tags', 'git submodule update --init --recursive --depth=2 --jobs=4']
 };
 
+// Install dependencies
+local install_dependencies = {
+  name: 'Install Dependencies',
+  image: docker_base + 'android',
+  commands: ['apt-get install -y ninja-build']
+};
+
+
 // cmake options for static deps mirror
 local ci_dep_mirror(want_mirror) = (if want_mirror then ' -DLOCAL_MIRROR=https://oxen.rocks/deps ' else '');
 
@@ -32,13 +40,13 @@ local ci_dep_mirror(want_mirror) = (if want_mirror then ' -DLOCAL_MIRROR=https:/
     steps: [
       version_info,
       clone_submodules,
+      install_dependencies,
       {
         name: 'Run Unit Tests',
         image: docker_base + 'android',
         pull: 'always',
         environment: { ANDROID_HOME: '/usr/lib/android-sdk' },
         commands: [
-          'apt-get ninja-build',
           './gradlew testPlayDebugUnitTestCoverageReport'
         ],
       }
@@ -57,7 +65,7 @@ local ci_dep_mirror(want_mirror) = (if want_mirror then ' -DLOCAL_MIRROR=https:/
         image: docker_base + 'android',
         pull: 'always',
         commands: [
-          './Scripts/drone-upload-exists.sh'
+          './scripts/drone-upload-exists.sh'
         ]
       }
     ]
@@ -72,13 +80,13 @@ local ci_dep_mirror(want_mirror) = (if want_mirror then ' -DLOCAL_MIRROR=https:/
     steps: [
       version_info,
       clone_submodules,
+      install_dependencies,
       {
         name: 'Build',
         image: docker_base + 'android',
         pull: 'always',
         environment: { ANDROID_HOME: '/usr/lib/android-sdk' },
         commands: [
-          'apt-get install -y ninja-build',
           './gradlew assemblePlayDebug'
         ],
       },
@@ -88,7 +96,7 @@ local ci_dep_mirror(want_mirror) = (if want_mirror then ' -DLOCAL_MIRROR=https:/
           pull: 'always',
           environment: { SSH_KEY: { from_secret: 'SSH_KEY' } },
           commands: [
-            './Scripts/drone-static-upload.sh'
+            './scripts/drone-static-upload.sh'
           ]
         },
     ],
