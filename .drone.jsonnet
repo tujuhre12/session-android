@@ -5,6 +5,8 @@ local version_info = {
   name: 'Version Information',
   image: docker_base + 'android',
   commands: [
+    'cmake --version',
+    '/usr/lib/android-sdk/tools/bin/sdkmanager --list | awk "/Installed/{flag=1; next} /Available/{flag=0} flag"'
   ]
 };
 
