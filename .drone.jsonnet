@@ -6,7 +6,8 @@ local version_info = {
   image: docker_base + 'android',
   commands: [
     'cmake --version',
-    '/usr/lib/android-sdk/tools/bin/sdkmanager --list | awk "/Installed/{flag=1; next} /Available/{flag=0} flag"'
+    'apt-show-versions android-sdk',
+    'apt-show-versions android-ndk'
   ]
 };
 
