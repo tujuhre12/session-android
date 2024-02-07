@@ -1,3 +1,5 @@
+local docker_base = 'registry.oxen.rocks/lokinet-ci-';
+
 // Log a bunch of version information to make it easier for debugging
 local version_info = {
   name: 'Version Information',
@@ -29,7 +31,7 @@ local ci_dep_mirror(want_mirror) = (if want_mirror then ' -DLOCAL_MIRROR=https:/
       clone_submodules,
       {
         name: 'Run Unit Tests',
-        image: 'registry.oxen.rocks/lokinet-ci-android',
+        image: docker_base + 'android',
         environment: { ANDROID: 'android' },
         commands: [
           './gradlew testPlayDebugUnitTestCoverageReport'
@@ -47,6 +49,7 @@ local ci_dep_mirror(want_mirror) = (if want_mirror then ' -DLOCAL_MIRROR=https:/
     steps: [
       {
         name: 'Poll for build artifact existence',
+        image: docker_base + 'android',
         commands: [
           './Scripts/drone-upload-exists.sh'
         ]
@@ -65,7 +68,7 @@ local ci_dep_mirror(want_mirror) = (if want_mirror then ' -DLOCAL_MIRROR=https:/
       clone_submodules,
       {
         name: 'Build',
-        image: 'registry.oxen.rocks/lokinet-ci-android',
+        image: docker_base + 'android',
         environment: { ANDROID: 'android' },
         commands: [
           './gradlew assemblePlayDebug'
@@ -73,6 +76,7 @@ local ci_dep_mirror(want_mirror) = (if want_mirror then ' -DLOCAL_MIRROR=https:/
       },
       {
         name: 'Upload artifacts',
+        image: docker_base + 'android',
         environment: { SSH_KEY: { from_secret: 'SSH_KEY' } },
         commands: [
           './Scripts/drone-static-upload.sh'
