@@ -1,5 +1,16 @@
 local docker_base = 'registry.oxen.rocks/lokinet-ci-';
 
+// Log a bunch of version information to make it easier for debugging
+local version_info = {
+  name: 'Version Information',
+  image: docker_base + 'android',
+  commands: [
+    '/usr/lib/android-ndk --version',
+    '/usr/lib/android-sdk --version'
+  ]
+};
+
+
 // Intentionally doing a depth of 2 as libSession-util has it's own submodules (and libLokinet likely will as well)
 local clone_submodules = {
   name: 'Clone Submodules',
@@ -19,11 +30,13 @@ local ci_dep_mirror(want_mirror) = (if want_mirror then ' -DLOCAL_MIRROR=https:/
     platform: { arch: 'amd64' },
     trigger: { event: { exclude: [ 'push' ] } },
     steps: [
+      version_info,
       clone_submodules,
       {
         name: 'Run Unit Tests',
-        image: 'registry.oxen.rocks/lokinet-ci-android',
+        image: docker_base + 'android',
         pull: 'always',
+        environment: { ANDROID_HOME: '/usr/lib/android-sdk' },
         commands: [
           './gradlew testPlayDebugUnitTestCoverageReport'
         ],
@@ -40,7 +53,7 @@ local ci_dep_mirror(want_mirror) = (if want_mirror then ' -DLOCAL_MIRROR=https:/
     steps: [
       {
         name: 'Poll for build artifact existence',
-        image: 'registry.oxen.rocks/lokinet-ci-android',
+        image: docker_base + 'android',
         pull: 'always',
         commands: [
           './Scripts/drone-upload-exists.sh'
@@ -56,17 +69,26 @@ local ci_dep_mirror(want_mirror) = (if want_mirror then ' -DLOCAL_MIRROR=https:/
     platform: { arch: 'amd64' },
     trigger: { event: { exclude: [ 'pull_request' ] } },
     steps: [
+      version_info,
       clone_submodules,
       {
         name: 'Build',
-        image: 'registry.oxen.rocks/lokinet-ci-android',
+        image: docker_base + 'android',
         pull: 'always',
-        environment: { SSH_KEY: { from_secret: 'SSH_KEY' } },
+        environment: { ANDROID_HOME: '/usr/lib/android-sdk' },
         commands: [
-          './gradlew assemblePlayDebug',
-          './Scripts/drone-static-upload.sh'
+          './gradlew assemblePlayDebug'
         ],
       },
+      {
+          name: 'Upload artifacts',
+          image: docker_base + 'android',
+          pull: 'always',
+          environment: { SSH_KEY: { from_secret: 'SSH_KEY' } },
+          commands: [
+            './Scripts/drone-static-upload.sh'
+          ]
+        },
     ],
   }
 ]
