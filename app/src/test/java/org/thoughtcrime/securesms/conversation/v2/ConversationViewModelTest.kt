@@ -10,12 +10,14 @@ import org.hamcrest.CoreMatchers.nullValue
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Before
 import org.junit.Test
+import org.mockito.Mockito
 import org.mockito.Mockito.anyLong
 import org.mockito.Mockito.anySet
 import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import org.mockito.verification.VerificationMode
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.BaseViewModelTest
 import org.thoughtcrime.securesms.database.Storage
@@ -49,7 +51,8 @@ class ConversationViewModelTest: BaseViewModelTest() {
 
         viewModel.saveDraft(draft)
 
-        verify(repository).saveDraft(threadId, draft)
+        // The above is an async process to wait 100ms to give it a chance to complete
+        verify(repository, Mockito.timeout(100).times(1)).saveDraft(threadId, draft)
     }
 
     @Test
