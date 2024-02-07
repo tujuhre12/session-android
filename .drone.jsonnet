@@ -1,5 +1,4 @@
 local docker_base = 'registry.oxen.rocks/lokinet-ci-';
-local default_deps = [];
 
 // Log a bunch of version information to make it easier for debugging
 local version_info = {
@@ -19,60 +18,6 @@ local clone_submodules = {
 // cmake options for static deps mirror
 local ci_dep_mirror(want_mirror) = (if want_mirror then ' -DLOCAL_MIRROR=https://oxen.rocks/deps ' else '');
 
-local debian_pipeline(name,
-                      image,
-                      arch='amd64',
-                      deps=default_deps,
-                      oxen_repo=false,
-                      kitware_repo=''/* ubuntu codename, if wanted */,
-                      allow_fail=false,
-                      build=['echo "Error: drone build argument not set"', 'exit 1'])
-      = {
-  kind: 'pipeline',
-  type: 'docker',
-  name: name,
-  platform: { arch: arch },
-  steps: [
-    clone_submodules,
-    {
-      name: 'build',
-      image: image,
-      pull: 'always',
-      [if allow_fail then 'failure']: 'ignore',
-      environment: { SSH_KEY: { from_secret: 'SSH_KEY' } },
-      commands: [
-        './gradlew assemblePlayDebug',
-        './Scripts/drone-static-upload.sh',
-      ] + build,
-    },
-  ],
-};
-
-local debian_build(name,
-                   image,
-                   arch='amd64',
-                   deps=default_deps,
-                   build_type='Release',
-                   lto=false,
-                   werror=true,
-                   cmake_extra='',
-                   jobs=6,
-                   tests=true,
-                   oxen_repo=false,
-                   kitware_repo=''/* ubuntu codename, if wanted */,
-                   allow_fail=false)
-      = debian_pipeline(
-  name,
-  image,
-  arch=arch,
-  deps=deps,
-  oxen_repo=oxen_repo,
-  kitware_repo=kitware_repo,
-  allow_fail=allow_fail,
-  build=[]
-);
-
-
 [
   // Unit tests (PRs only)
   {
@@ -86,6 +31,7 @@ local debian_build(name,
       clone_submodules,
       {
         name: 'Run Unit Tests',
+        pull: always
         image: docker_base + 'android',
         commands: [
           './gradlew testPlayDebugUnitTestCoverageReport'
@@ -103,6 +49,7 @@ local debian_build(name,
     steps: [
       {
         name: 'Poll for build artifact existence',
+        pull: always
         image: docker_base + 'android',
         commands: [
           './Scripts/drone-upload-exists.sh'
@@ -118,13 +65,19 @@ local debian_build(name,
     platform: { arch: 'amd64' },
     trigger: { event: { exclude: [ 'pull_request' ] } },
     steps: [
-      debian_pipeline(
-        'Build',
-        docker_base + 'android',
-        build=[]
-      ),
+      version_info,
+      clone_submodules,
+      {
+        name: 'Build',
+        pull: always
+        image: docker_base + 'android',
+        commands: [
+          './gradlew assemblePlayDebug'
+        ],
+      },
       {
         name: 'Upload artifacts',
+        pull: always
         image: docker_base + 'android',
         environment: { SSH_KEY: { from_secret: 'SSH_KEY' } },
         commands: [
