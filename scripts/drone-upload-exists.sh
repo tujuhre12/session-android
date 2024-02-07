@@ -21,7 +21,7 @@ fork_repo=$(echo "$head_info" | grep -o '"full_name":"[^"]*' | sed 's/"full_name
 fork_branch=$(echo "$head_info" | grep -o '"ref":"[^"]*' | sed 's/"ref":"//')
 upload_dir="https://oxen.rocks/${fork_repo}/${fork_branch}"
 
-echo "Starting to poll ${upload_dir} every 10s to check for a build matching '${prefix}.*${suffix}'"
+echo "Starting to poll ${upload_dir}/ every 10s to check for a build matching '${prefix}.*${suffix}'"
 
 # Loop indefinitely the CI can timeout the script if it takes too long
 total_poll_duration=0
@@ -32,14 +32,12 @@ while true; do
 	build_artifacts_html=$(curl -s "${upload_dir}/")
 
 	if [ $? != 0 ]; then
-		echo "Failed to retrieve build artifact list"
+		echo -e "\n\n\n\n\e[31;1mFailed to retrieve build artifact list\e[0m\n\n\n"
 		exit 1
 	fi
 
-	# Extract 'session-ios...' titles using grep and awk
-	current_build_artifacts=$(echo "$build_artifacts_html" | grep -o 'href="${prefix}[^"]*' | sed 's/href="//')
-
-	# Use grep to check for the combination
+	# Extract 'session-ios...' titles using grep and awk then look for the target file
+	current_build_artifacts=$(echo "$build_artifacts_html" | grep -o "href=\"${prefix}[^\"]*" | sed 's/href="//')
 	target_file=$(echo "$current_build_artifacts" | grep -o "${prefix}.*${suffix}" | tail -n 1)
 
 	if [ -n "$target_file" ]; then
