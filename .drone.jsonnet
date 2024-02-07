@@ -31,7 +31,7 @@ local ci_dep_mirror(want_mirror) = (if want_mirror then ' -DLOCAL_MIRROR=https:/
       clone_submodules,
       {
         name: 'Run Unit Tests',
-        pull: always
+        pull: always,
         image: docker_base + 'android',
         commands: [
           './gradlew testPlayDebugUnitTestCoverageReport'
@@ -49,7 +49,7 @@ local ci_dep_mirror(want_mirror) = (if want_mirror then ' -DLOCAL_MIRROR=https:/
     steps: [
       {
         name: 'Poll for build artifact existence',
-        pull: always
+        pull: always,
         image: docker_base + 'android',
         commands: [
           './Scripts/drone-upload-exists.sh'
@@ -69,7 +69,7 @@ local ci_dep_mirror(want_mirror) = (if want_mirror then ' -DLOCAL_MIRROR=https:/
       clone_submodules,
       {
         name: 'Build',
-        pull: always
+        pull: always,
         image: docker_base + 'android',
         commands: [
           './gradlew assemblePlayDebug'
@@ -77,7 +77,7 @@ local ci_dep_mirror(want_mirror) = (if want_mirror then ' -DLOCAL_MIRROR=https:/
       },
       {
         name: 'Upload artifacts',
-        pull: always
+        pull: always,
         image: docker_base + 'android',
         environment: { SSH_KEY: { from_secret: 'SSH_KEY' } },
         commands: [
