@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.repository
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import android.content.ContentResolver
 import android.content.Context
+import app.cash.copper.Query
 import app.cash.copper.flow.observeQuery
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
@@ -45,6 +46,7 @@ import kotlin.coroutines.suspendCoroutine
 interface ConversationRepository {
     fun maybeGetRecipientForThreadId(threadId: Long): Recipient?
     fun maybeGetBlindedRecipient(recipient: Recipient): Recipient?
+    fun changes(threadId: Long): Flow<Query>
     fun recipientUpdateFlow(threadId: Long): Flow<Recipient?>
     fun saveDraft(threadId: Long, text: String)
     fun getDraft(threadId: Long): String?
@@ -116,6 +118,9 @@ class DefaultConversationRepository @Inject constructor(
             false
         )
     }
+
+    override fun changes(threadId: Long): Flow<Query> =
+        contentResolver.observeQuery(DatabaseContentProviders.Conversation.getUriForThread(threadId))
 
     override fun recipientUpdateFlow(threadId: Long): Flow<Recipient?> {
         return contentResolver.observeQuery(DatabaseContentProviders.Conversation.getUriForThread(threadId)).map {
