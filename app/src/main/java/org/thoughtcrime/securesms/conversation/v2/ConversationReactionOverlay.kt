@@ -22,6 +22,13 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.core.view.doOnLayout
 import androidx.vectordrawable.graphics.drawable.AnimatorInflaterCompat
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocalNumber
@@ -31,13 +38,17 @@ import org.thoughtcrime.securesms.components.emoji.RecentEmojiPageModel
 import org.thoughtcrime.securesms.components.menu.ActionItem
 import org.thoughtcrime.securesms.conversation.v2.menus.ConversationMenuItemHelper.userCanBanSelectedUsers
 import org.thoughtcrime.securesms.conversation.v2.menus.ConversationMenuItemHelper.userCanDeleteSelectedItems
+import org.thoughtcrime.securesms.database.MmsSmsDatabase
+import org.thoughtcrime.securesms.database.SessionContactDatabase
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent.Companion.get
+import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.AnimationCompleteListener
 import org.thoughtcrime.securesms.util.DateUtils
 import java.util.Locale
+import javax.inject.Inject
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
@@ -45,6 +56,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
+@AndroidEntryPoint
 class ConversationReactionOverlay : FrameLayout {
     private val emojiViewGlobalRect = Rect()
     private val emojiStripViewBounds = Rect()
@@ -84,6 +96,11 @@ class ConversationReactionOverlay : FrameLayout {
     private val revealAnimatorSet = AnimatorSet()
     private var hideAnimatorSet = AnimatorSet()
 
+    @Inject lateinit var mmsSmsDatabase: MmsSmsDatabase
+    @Inject lateinit var repository: ConversationRepository
+    private val scope = CoroutineScope(Dispatchers.Default)
+    private var job: Job? = null
+
     constructor(context: Context) : super(context)
     constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
 
@@ -111,6 +128,8 @@ class ConversationReactionOverlay : FrameLayout {
              lastSeenDownPoint: PointF,
              selectedConversationModel: SelectedConversationModel,
              blindedPublicKey: String?) {
+        job?.cancel()
+
         if (overlayState != OverlayState.HIDDEN) {
             return
         }
@@ -135,6 +154,12 @@ class ConversationReactionOverlay : FrameLayout {
         this.activity = activity
         updateSystemUiOnShow(activity)
         doOnLayout { showAfterLayout(messageRecord, lastSeenDownPoint, isMessageOnLeft) }
+
+        job = scope.launch(Dispatchers.IO) {
+            repository.changes(messageRecord.threadId)
+                .filter { mmsSmsDatabase.getMessageForTimestamp(messageRecord.timestamp) == null }
+                .collect { withContext(Dispatchers.Main) { hide() } }
+        }
     }
 
     private fun updateConversationTimestamp(message: MessageRecord) {
@@ -310,6 +335,7 @@ class ConversationReactionOverlay : FrameLayout {
     }
 
     private fun hideInternal(onHideListener: OnHideListener?) {
+        job?.cancel()
         overlayState = OverlayState.HIDDEN
         val animatorSet = newHideAnimatorSet()
         hideAnimatorSet = animatorSet

@@ -68,7 +68,7 @@ class MessageDetailsViewModel @Inject constructor(
 
             job = viewModelScope.launch {
                 repository.changes(record.threadId)
-                    .filter { mmsSmsDatabase.getMessageForTimestamp(timestamp) == null }
+                    .filter { mmsSmsDatabase.getMessageForTimestamp(value) == null }
                     .collect { event.send(Event.Finish) }
             }
 
