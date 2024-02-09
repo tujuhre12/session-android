@@ -261,8 +261,7 @@ class VisibleMessageView : LinearLayout {
             iconID?.let { ContextCompat.getDrawable(context, it) }
                 ?.run { iconColor?.let { mutate().apply { setTint(it) } } ?: this }
                 ?.let(binding.messageStatusImageView::setImageDrawable)
-            binding.messageStatusTextView.contentDescription = context.getString(R.string.AccessibilityId_message_sent_status)
-
+            
             val lastMessageID = mmsSmsDb.getLastMessageID(message.threadId)
             val isLastMessage = message.id == lastMessageID
             binding.messageStatusTextView.isVisible =
