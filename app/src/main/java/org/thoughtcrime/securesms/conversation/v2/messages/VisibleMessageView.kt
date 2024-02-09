@@ -63,7 +63,6 @@ import kotlin.math.sqrt
 
 @AndroidEntryPoint
 class VisibleMessageView : LinearLayout {
-
     @Inject lateinit var threadDb: ThreadDatabase
     @Inject lateinit var lokiThreadDb: LokiThreadDatabase
     @Inject lateinit var lokiApiDb: LokiAPIDatabase
@@ -138,8 +137,7 @@ class VisibleMessageView : LinearLayout {
         val isGroupThread = thread.isGroupRecipient
         val isStartOfMessageCluster = isStartOfMessageCluster(message, previous, isGroupThread)
         val isEndOfMessageCluster = isEndOfMessageCluster(message, next, isGroupThread)
-        // Show profile picture and sender name if this is a group thread AND
-        // the message is incoming
+        // Show profile picture and sender name if this is a group thread AND the message is incoming
         binding.moderatorIconImageView.isVisible = false
         binding.profilePictureView.visibility = when {
             thread.isGroupRecipient && !message.isOutgoing && isEndOfMessageCluster -> View.VISIBLE
