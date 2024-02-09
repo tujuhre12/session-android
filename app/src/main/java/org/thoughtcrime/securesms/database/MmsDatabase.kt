@@ -559,7 +559,7 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
         runThreadUpdate: Boolean
     ): Optional<InsertResult> {
         if (threadId < 0 ) throw MmsException("No thread ID supplied!")
-        deleteExpirationTimerMessages(threadId, false.takeUnless { retrieved.groupId != null })
+        if (retrieved.isExpirationUpdate) deleteExpirationTimerMessages(threadId, false.takeUnless { retrieved.groupId != null })
         val contentValues = ContentValues()
         contentValues.put(DATE_SENT, retrieved.sentTimeMillis)
         contentValues.put(ADDRESS, retrieved.from.serialize())
@@ -629,7 +629,7 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
         runThreadUpdate: Boolean
     ): Optional<InsertResult> {
         if (threadId < 0 ) throw MmsException("No thread ID supplied!")
-        deleteExpirationTimerMessages(threadId, true.takeUnless { retrieved.isGroup })
+        if (retrieved.isExpirationUpdate) deleteExpirationTimerMessages(threadId, true.takeUnless { retrieved.isGroup })
         val messageId = insertMessageOutbox(retrieved, threadId, false, null, serverTimestamp, runThreadUpdate)
         if (messageId == -1L) {
             return Optional.absent()
