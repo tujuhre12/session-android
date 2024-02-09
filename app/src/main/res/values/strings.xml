@@ -117,7 +117,7 @@
     <string name="AccessibilityId_download_media">Download media</string>
     <string name="AccessibilityId_dont_download_media">Don\'t download media</string>
     <!-- Conversation View-->
-    <string name="AccessibilityId_message_sent_status">Message sent status</string>
+    <string name="AccessibilityId_message_sent_status">Message sent status: Sent</string>
     <string name="AccessibilityId_message_request_config_message">Message request has been accepted</string>
     <string name="AccessibilityId_message_body">Message body</string>
     <string name="AccessibilityId_voice_message">Voice message</string>
