@@ -57,6 +57,9 @@
     <string name="AccessibilityId_new_direct_message">New direct message</string>
     <string name="AccessibilityId_create_group">Create group</string>
     <string name="AccessibilityId_join_community">Join community button</string>
+    <!-- Join community pop up -->
+    <string name="AccessibilityId_community_input_box">Community input</string>
+    <string name="AccessibilityId_join_community_button">Join community button</string>
     <!--  Conversation options (three dots menu)-->
     <string name="AccessibilityId_all_media">All media</string>
     <string name="AccessibilityId_search">Search</string>
@@ -476,6 +479,7 @@
     <string name="conversation_activity__quick_attachment_drawer_record_and_send_audio_description">Record and send audio attachment</string>
     <string name="conversation_activity__quick_attachment_drawer_lock_record_description">Lock recording of audio attachment</string>
     <string name="conversation_activity__enable_signal_for_sms">Enable Session for SMS</string>
+    <string name="conversation_activity__wait_until_attachment_has_finished_downloading">Please wait until attachment has finished downloading</string>
     <!-- conversation_input_panel -->
     <string name="conversation_input_panel__slide_to_cancel">Slide to cancel</string>
     <string name="conversation_input_panel__cancel">Cancel</string>
