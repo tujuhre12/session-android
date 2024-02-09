@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.components.menu
 
+import android.content.Context
 import androidx.annotation.AttrRes
 
 /**
@@ -10,5 +11,5 @@ data class ActionItem(
   val title: Int,
   val action: Runnable,
   val contentDescription: Int? = null,
-  val subtitle: (() -> CharSequence?)? = null
+  val subtitle: ((Context) -> CharSequence?)? = null
 )

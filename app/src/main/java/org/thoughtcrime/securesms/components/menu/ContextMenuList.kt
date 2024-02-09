@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.components.menu
 
+import android.content.Context
 import android.util.TypedValue
 import android.view.View
 import android.widget.ImageView
@@ -101,8 +102,8 @@ class ContextMenuList(recyclerView: RecyclerView, onItemClick: () -> Unit) {
       }.let(itemView::setBackgroundResource)
     }
 
-    private fun startSubtitleJob(textView: TextView, getSubtitle: () -> CharSequence?) {
-      fun updateText() = getSubtitle().let {
+    private fun startSubtitleJob(textView: TextView, getSubtitle: (Context) -> CharSequence?) {
+      fun updateText() = getSubtitle(context).let {
         textView.isGone = it == null
         textView.text = it
       }

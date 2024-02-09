@@ -549,13 +549,7 @@ class ConversationReactionOverlay : FrameLayout {
         }
         // Delete message
         if (userCanDeleteSelectedItems(context, message, openGroup, userPublicKey, blindedPublicKey)) {
-            val subtitle = { message.takeIf { it.expireStarted > 0 }
-                    ?.run { expiresIn - (SnodeAPI.nowWithOffset - expireStarted) }
-                    ?.coerceAtLeast(0L)
-                    ?.milliseconds
-                    ?.to2partString()
-                    ?.let { context.getString(R.string.auto_deletes_in, it) } }
-            items += ActionItem(R.attr.menu_trash_icon, R.string.delete, { handleActionItemClicked(Action.DELETE) }, R.string.AccessibilityId_delete_message, subtitle)
+            items += ActionItem(R.attr.menu_trash_icon, R.string.delete, { handleActionItemClicked(Action.DELETE) }, R.string.AccessibilityId_delete_message, message.subtitle)
         }
         // Ban user
         if (userCanBanSelectedUsers(context, message, openGroup, userPublicKey, blindedPublicKey)) {
@@ -716,3 +710,14 @@ class ConversationReactionOverlay : FrameLayout {
 private fun Duration.to2partString(): String? =
     toComponents { days, hours, minutes, seconds, nanoseconds -> listOf(days.days, hours.hours, minutes.minutes, seconds.seconds) }
         .filter { it.inWholeSeconds > 0L }.take(2).takeIf { it.isNotEmpty() }?.joinToString(" ")
+
+private val MessageRecord.subtitle: ((Context) -> CharSequence?)?
+    get() = if (expiresIn <= 0) {
+        null
+    } else { context ->
+        (expiresIn - (SnodeAPI.nowWithOffset - (expireStarted.takeIf { it > 0 } ?: timestamp)))
+            .coerceAtLeast(0L)
+            .milliseconds
+            .to2partString()
+            ?.let { context.getString(R.string.auto_deletes_in, it) }
+    }
