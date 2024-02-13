@@ -92,7 +92,7 @@ class ContextMenuList(recyclerView: RecyclerView, onItemClick: () -> Unit) {
       item.contentDescription?.let(context.resources::getString)?.let { itemView.contentDescription = it }
       title.setText(item.title)
       color?.let(title::setTextColor)
-      color?.let(title::setTextColor)
+      color?.let(subtitle::setTextColor)
       subtitle.isGone = true
       item.subtitle?.let {
         startSubtitleJob(subtitle, it)
