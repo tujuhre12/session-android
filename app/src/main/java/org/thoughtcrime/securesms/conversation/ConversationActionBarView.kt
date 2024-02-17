@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import androidx.annotation.DimenRes
 import androidx.core.view.isVisible
+import androidx.core.view.marginEnd
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -98,14 +99,11 @@ class ConversationActionBarView : LinearLayout {
         }
         updateSubtitle(recipient, openGroup, config)
 
-        val marginEnd = if (recipient.showCallMenu()) {
-            0
-        } else {
-            binding.profilePictureView.width
+        binding.conversationTitleContainer.apply {
+            layoutParams = (layoutParams as MarginLayoutParams).apply {
+                marginEnd = if (recipient.showCallMenu()) 0 else binding.profilePictureView.width
+            }
         }
-        val lp = binding.conversationTitleContainer.layoutParams as MarginLayoutParams
-        lp.marginEnd = marginEnd
-        binding.conversationTitleContainer.layoutParams = lp
     }
 
     fun updateSubtitle(recipient: Recipient, openGroup: OpenGroup? = null, config: ExpirationConfiguration? = null) {
@@ -116,26 +114,22 @@ class ConversationActionBarView : LinearLayout {
             } else {
                 context.getString(R.string.expiration_type_disappear_after_send)
             }
-            settings.add(
-                ConversationSetting(
-                    "$prefix - ${ExpirationUtil.getExpirationAbbreviatedDisplayValue(context, config.expiryMode.expirySeconds)}" ,
-                    ConversationSettingType.EXPIRATION,
-                    R.drawable.ic_timer,
-                    resources.getString(R.string.AccessibilityId_disappearing_messages_type_and_time)
-                )
+            settings += ConversationSetting(
+                "$prefix - ${ExpirationUtil.getExpirationAbbreviatedDisplayValue(context, config.expiryMode.expirySeconds)}" ,
+                ConversationSettingType.EXPIRATION,
+                R.drawable.ic_timer,
+                resources.getString(R.string.AccessibilityId_disappearing_messages_type_and_time)
             )
         }
         if (recipient.isMuted) {
-            settings.add(
-                ConversationSetting(
-                    if (recipient.mutedUntil != Long.MAX_VALUE) {
-                        context.getString(R.string.ConversationActivity_muted_until_date, DateUtils.getFormattedDateTime(recipient.mutedUntil, "EEE, MMM d, yyyy HH:mm", Locale.getDefault()))
-                    } else {
-                        context.getString(R.string.ConversationActivity_muted_forever)
-                    },
-                    ConversationSettingType.NOTIFICATION,
-                    R.drawable.ic_outline_notifications_off_24
-                )
+            settings += ConversationSetting(
+                if (recipient.mutedUntil != Long.MAX_VALUE) {
+                    context.getString(R.string.ConversationActivity_muted_until_date, DateUtils.getFormattedDateTime(recipient.mutedUntil, "EEE, MMM d, yyyy HH:mm", Locale.getDefault()))
+                } else {
+                    context.getString(R.string.ConversationActivity_muted_forever)
+                },
+                ConversationSettingType.NOTIFICATION,
+                R.drawable.ic_outline_notifications_off_24
             )
         }
         if (recipient.isGroupRecipient) {
@@ -146,12 +140,7 @@ class ConversationActionBarView : LinearLayout {
                 val userCount = groupDb.getGroupMemberAddresses(recipient.address.toGroupString(), true).size
                 context.getString(R.string.ConversationActivity_member_count, userCount)
             }
-            settings.add(
-                ConversationSetting(
-                    title,
-                    ConversationSettingType.MEMBER_COUNT,
-                )
-            )
+            settings += ConversationSetting(title, ConversationSettingType.MEMBER_COUNT)
         }
         settingsAdapter.submitList(settings)
         binding.settingsTabLayout.isVisible = settings.size > 1
