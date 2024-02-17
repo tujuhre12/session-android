@@ -926,7 +926,7 @@ open class Storage(
         val membersMap = GroupUtil.createConfigMemberMap(admins = admins, members = members)
         val latestKeyPair = getLatestClosedGroupEncryptionKeyPair(groupPublicKey)
             ?: return Log.w("Loki-DBG", "No latest closed group encryption key pair for ${groupPublicKey.take(4)}} when updating group config")
-        val recipientSettings = getRecipientSettings(groupAddress) ?: return
+
         val threadID = getThreadId(groupAddress) ?: return
         val groupInfo = userGroups.getOrConstructLegacyGroupInfo(groupPublicKey).copy(
             name = name,
@@ -934,7 +934,7 @@ open class Storage(
             encPubKey = (latestKeyPair.publicKey as DjbECPublicKey).publicKey,  // 'serialize()' inserts an extra byte
             encSecKey = latestKeyPair.privateKey.serialize(),
             priority = if (isPinned(threadID)) PRIORITY_PINNED else ConfigBase.PRIORITY_VISIBLE,
-            disappearingTimer = recipientSettings.expireMessages.toLong(),
+            disappearingTimer = getExpirationConfiguration(threadID)?.expiryMode?.expirySeconds ?: 0L,
             joinedAt = (existingGroup.formationTimestamp / 1000L)
         )
         userGroups.set(groupInfo)
@@ -1170,8 +1170,7 @@ open class Storage(
     }
 
     override fun getRecipientSettings(address: Address): Recipient.RecipientSettings? {
-        val recipientSettings = DatabaseComponent.get(context).recipientDatabase().getRecipientSettings(address)
-        return if (recipientSettings.isPresent) { recipientSettings.get() } else null
+        return DatabaseComponent.get(context).recipientDatabase().getRecipientSettings(address).orNull()
     }
 
     override fun addLibSessionContacts(contacts: List<LibSessionContact>, timestamp: Long) {
