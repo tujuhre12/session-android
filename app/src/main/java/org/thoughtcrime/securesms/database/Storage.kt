@@ -241,7 +241,6 @@ open class Storage(
     }
 
     override fun markConversationAsRead(threadId: Long, lastSeenTime: Long, force: Boolean) {
-        Log.d(TAG, "markConversationAsRead() called with: threadId = $threadId, lastSeenTime = $lastSeenTime, force = $force")
         val threadDb = DatabaseComponent.get(context).threadDatabase()
         getRecipientForThread(threadId)?.let { recipient ->
             val currentLastRead = threadDb.getLastSeenAndHasSent(threadId).first()
@@ -1340,9 +1339,8 @@ open class Storage(
         threadDb.setDate(threadId, newDate)
     }
 
-    override fun getLastLegacyRecipient(threadRecipient: String): String? {
-        return DatabaseComponent.get(context).lokiAPIDatabase().getLastLegacySenderAddress(threadRecipient)
-    }
+    override fun getLastLegacyRecipient(threadRecipient: String): String? =
+            DatabaseComponent.get(context).lokiAPIDatabase().getLastLegacySenderAddress(threadRecipient)
 
     override fun setLastLegacyRecipient(threadRecipient: String, senderRecipient: String?) {
         DatabaseComponent.get(context).lokiAPIDatabase().setLastLegacySenderAddress(threadRecipient, senderRecipient)
@@ -1712,8 +1710,6 @@ open class Storage(
     }
 
     override fun setExpirationConfiguration(config: ExpirationConfiguration) {
-        Log.d(TAG, "setExpirationConfiguration() called with: config = $config")
-
         val recipient = getRecipientForThread(config.threadId) ?: return
 
         val expirationDb = DatabaseComponent.get(context).expirationConfigurationDatabase()
@@ -1738,9 +1734,7 @@ open class Storage(
         } else if (recipient.isContactRecipient) {
             val contacts = configFactory.contacts ?: return
 
-            val contact = contacts.get(recipient.address.serialize())?.copy(
-                expiryMode = expiryMode
-            ) ?: return
+            val contact = contacts.get(recipient.address.serialize())?.copy(expiryMode = expiryMode) ?: return
             contacts.set(contact)
         }
         expirationDb.setExpirationConfiguration(
@@ -1778,8 +1772,8 @@ open class Storage(
         val lokiDb = DatabaseComponent.get(context).lokiAPIDatabase()
         val recipient = threadDb.getRecipientForThreadId(threadID) ?: return
         val recipientAddress = recipient.address.serialize()
-        val recipientDb = DatabaseComponent.get(context).recipientDatabase()
-        recipientDb.setDisappearingState(recipient, disappearingState);
+        DatabaseComponent.get(context).recipientDatabase()
+            .setDisappearingState(recipient, disappearingState);
         val currentLegacyRecipient = lokiDb.getLastLegacySenderAddress(recipientAddress)
         val currentExpiry = getExpirationConfiguration(threadID)
         if (disappearingState == DisappearingState.LEGACY
