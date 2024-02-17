@@ -866,27 +866,15 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         }
     }
 
-    private fun isMessageRequestThread(): Boolean {
-        val recipient = viewModel.recipient ?: return false
-        if (recipient.isLocalNumber) return false
-        return !recipient.isGroupRecipient && !recipient.isApproved
-    }
+    private fun isOutgoingMessageRequestThread(): Boolean = viewModel.recipient?.run {
+        !isGroupRecipient && !isLocalNumber &&
+        !(hasApprovedMe() || viewModel.hasReceived())
+    } ?: false
 
-    private fun isOutgoingMessageRequestThread(): Boolean {
-        val recipient = viewModel.recipient ?: return false
-        return !recipient.isGroupRecipient &&
-                !recipient.isLocalNumber &&
-                !(recipient.hasApprovedMe() || viewModel.hasReceived())
-    }
-
-    private fun isIncomingMessageRequestThread(): Boolean {
-        val recipient = viewModel.recipient ?: return false
-        return !recipient.isGroupRecipient &&
-                !recipient.isApproved &&
-                !recipient.isLocalNumber &&
-                !threadDb.getLastSeenAndHasSent(viewModel.threadId).second() &&
-                threadDb.getMessageCount(viewModel.threadId) > 0
-    }
+    private fun isIncomingMessageRequestThread(): Boolean = viewModel.recipient?.run {
+        !isGroupRecipient && !isApproved && !isLocalNumber &&
+        !threadDb.getLastSeenAndHasSent(viewModel.threadId).second() && threadDb.getMessageCount(viewModel.threadId) > 0
+    } ?: false
 
     override fun inputBarEditTextContentChanged(newContent: CharSequence) {
         val inputBarText = binding?.inputBar?.text ?: return // TODO check if we should be referencing newContent here instead
