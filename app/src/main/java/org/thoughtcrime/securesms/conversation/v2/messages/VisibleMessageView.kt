@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.conversation.v2.messages
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.graphics.Canvas
@@ -243,12 +244,12 @@ class VisibleMessageView : LinearLayout {
         val disappearing = message.expiresIn > 0
 
         binding.messageInnerLayout.apply {
-            layoutParams = layoutParams.let { it as FrameLayout.LayoutParams }
+            layoutParams = (layoutParams as FrameLayout.LayoutParams)
                 .apply { gravity = if (message.isOutgoing) Gravity.END else Gravity.START }
         }
 
         binding.statusContainer.apply {
-            layoutParams = layoutParams.let { it as ConstraintLayout.LayoutParams }
+            layoutParams = (layoutParams as ConstraintLayout.LayoutParams)
                 .apply { horizontalBias = if (message.isOutgoing) 1f else 0f }
         }
 
@@ -280,25 +281,19 @@ class VisibleMessageView : LinearLayout {
         }
     }
 
-    private fun isStartOfMessageCluster(current: MessageRecord, previous: MessageRecord?, isGroupThread: Boolean): Boolean {
-        return if (isGroupThread) {
-            previous == null || previous.isUpdate || !DateUtils.isSameHour(current.timestamp, previous.timestamp)
-                || current.recipient.address != previous.recipient.address
+    private fun isStartOfMessageCluster(current: MessageRecord, previous: MessageRecord?, isGroupThread: Boolean): Boolean =
+        previous == null || previous.isUpdate || !DateUtils.isSameHour(current.timestamp, previous.timestamp) || if (isGroupThread) {
+            current.recipient.address != previous.recipient.address
         } else {
-            previous == null || previous.isUpdate || !DateUtils.isSameHour(current.timestamp, previous.timestamp)
-                || current.isOutgoing != previous.isOutgoing
+            current.isOutgoing != previous.isOutgoing
         }
-    }
 
-    private fun isEndOfMessageCluster(current: MessageRecord, next: MessageRecord?, isGroupThread: Boolean): Boolean {
-        return if (isGroupThread) {
-            next == null || next.isUpdate || !DateUtils.isSameHour(current.timestamp, next.timestamp)
-                || current.recipient.address != next.recipient.address
+    private fun isEndOfMessageCluster(current: MessageRecord, next: MessageRecord?, isGroupThread: Boolean): Boolean =
+        next == null || next.isUpdate || !DateUtils.isSameHour(current.timestamp, next.timestamp) || if (isGroupThread) {
+            current.recipient.address != next.recipient.address
         } else {
-            next == null || next.isUpdate || !DateUtils.isSameHour(current.timestamp, next.timestamp)
-                || current.isOutgoing != next.isOutgoing
+            current.isOutgoing != next.isOutgoing
         }
-    }
 
     data class MessageStatusInfo(@DrawableRes val iconId: Int?,
                                  @ColorInt val iconTint: Int?,
@@ -346,11 +341,7 @@ class VisibleMessageView : LinearLayout {
     }
 
     private fun handleIsSelectedChanged() {
-        background = if (snIsSelected) {
-            ColorDrawable(context.getColorFromAttr(R.attr.message_selected))
-        } else {
-            null
-        }
+        background = if (snIsSelected) ColorDrawable(context.getColorFromAttr(R.attr.message_selected)) else null
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -387,6 +378,7 @@ class VisibleMessageView : LinearLayout {
     // endregion
 
     // region Interaction
+    @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
         if (onPress == null || onSwipeToReply == null || onLongPress == null) { return false }
         when (event.action) {
@@ -487,14 +479,13 @@ class VisibleMessageView : LinearLayout {
     }
 
     private fun maybeShowUserDetails(publicKey: String, threadID: Long) {
-        val userDetailsBottomSheet = UserDetailsBottomSheet()
-        val bundle = bundleOf(
+        UserDetailsBottomSheet().apply {
+            arguments = bundleOf(
                 UserDetailsBottomSheet.ARGUMENT_PUBLIC_KEY to publicKey,
                 UserDetailsBottomSheet.ARGUMENT_THREAD_ID to threadID
-        )
-        userDetailsBottomSheet.arguments = bundle
-        val activity = context as AppCompatActivity
-        userDetailsBottomSheet.show(activity.supportFragmentManager, userDetailsBottomSheet.tag)
+            )
+            show((context as AppCompatActivity).supportFragmentManager, tag)
+        }
     }
 
     fun playVoiceMessage() {
