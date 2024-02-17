@@ -498,22 +498,18 @@ public class SmsDatabase extends MessagingDatabase {
   }
 
   private long getCallMessageTypeMask(CallMessageType callMessageType) {
-    long typeMask = 0;
     switch (callMessageType) {
       case CALL_OUTGOING:
-        typeMask = Types.OUTGOING_CALL_TYPE;
-        break;
+        return Types.OUTGOING_CALL_TYPE;
       case CALL_INCOMING:
-        typeMask = Types.INCOMING_CALL_TYPE;
-        break;
+        return Types.INCOMING_CALL_TYPE;
       case CALL_MISSED:
-        typeMask = Types.MISSED_CALL_TYPE;
-        break;
+        return Types.MISSED_CALL_TYPE;
       case CALL_FIRST_MISSED:
-        typeMask = Types.FIRST_MISSED_CALL_TYPE;
-        break;
+        return Types.FIRST_MISSED_CALL_TYPE;
+      default:
+        return 0;
     }
-    return typeMask;
   }
 
   public Optional<InsertResult> insertMessageInbox(IncomingTextMessage message, boolean runThreadUpdate) {
