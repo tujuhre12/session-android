@@ -103,7 +103,7 @@ data class VisibleMessage(
         val storage = MessagingModuleConfiguration.shared.storage
         if (storage.isClosedGroup(recipient!!)) {
             try {
-                setGroupContext(dataMessage)
+                dataMessage.setGroupContext()
             } catch (e: Exception) {
                 Log.w(TAG, "Couldn't construct visible message proto from: $this")
                 return null

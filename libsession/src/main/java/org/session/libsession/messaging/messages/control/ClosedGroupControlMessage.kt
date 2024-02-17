@@ -141,10 +141,10 @@ class ClosedGroupControlMessage() : ControlMessage() {
                     closedGroupControlMessage.type = DataMessage.ClosedGroupControlMessage.Type.NEW
                     closedGroupControlMessage.publicKey = kind.publicKey
                     closedGroupControlMessage.name = kind.name
-                    val encryptionKeyPair = SignalServiceProtos.KeyPair.newBuilder()
-                    encryptionKeyPair.publicKey = ByteString.copyFrom(kind.encryptionKeyPair!!.publicKey.serialize().removingIdPrefixIfNeeded())
-                    encryptionKeyPair.privateKey = ByteString.copyFrom(kind.encryptionKeyPair!!.privateKey.serialize())
-                    closedGroupControlMessage.encryptionKeyPair = encryptionKeyPair.build()
+                    closedGroupControlMessage.encryptionKeyPair = SignalServiceProtos.KeyPair.newBuilder().also {
+                        it.publicKey = ByteString.copyFrom(kind.encryptionKeyPair!!.publicKey.serialize().removingIdPrefixIfNeeded())
+                        it.privateKey = ByteString.copyFrom(kind.encryptionKeyPair!!.privateKey.serialize())
+                    }.build()
                     closedGroupControlMessage.addAllMembers(kind.members)
                     closedGroupControlMessage.addAllAdmins(kind.admins)
                     closedGroupControlMessage.expirationTimer = kind.expirationTimer
@@ -170,16 +170,14 @@ class ClosedGroupControlMessage() : ControlMessage() {
                     closedGroupControlMessage.type = DataMessage.ClosedGroupControlMessage.Type.MEMBER_LEFT
                 }
             }
-            val contentProto = SignalServiceProtos.Content.newBuilder()
-            val dataMessageProto = DataMessage.newBuilder()
-            dataMessageProto.closedGroupControlMessage = closedGroupControlMessage.build()
-            // Group context
-            setGroupContext(dataMessageProto)
-            contentProto.dataMessage = dataMessageProto.build()
-            // Expiration timer
-            val threadId = groupID?.let { MessagingModuleConfiguration.shared.storage.getOrCreateThreadIdFor(Address.fromSerialized(it)) }
-            contentProto.applyExpiryMode()
-            return contentProto.build()
+            return SignalServiceProtos.Content.newBuilder().apply {
+                dataMessage = DataMessage.newBuilder().also {
+                    it.closedGroupControlMessage = closedGroupControlMessage.build()
+                    it.setGroupContext()
+                }.build()
+                // Expiration timer
+                applyExpiryMode()
+            }.build()
         } catch (e: Exception) {
             Log.w(TAG, "Couldn't construct closed group control message proto from: $this.")
             return null
@@ -200,11 +198,9 @@ class ClosedGroupControlMessage() : ControlMessage() {
         }
 
         fun toProto(): DataMessage.ClosedGroupControlMessage.KeyPairWrapper? {
-            val publicKey = publicKey ?: return null
-            val encryptedKeyPair = encryptedKeyPair ?: return null
             val result = DataMessage.ClosedGroupControlMessage.KeyPairWrapper.newBuilder()
-            result.publicKey = ByteString.copyFrom(Hex.fromStringCondensed(publicKey))
-            result.encryptedKeyPair = encryptedKeyPair
+            result.publicKey = ByteString.copyFrom(Hex.fromStringCondensed(publicKey ?: return null))
+            result.encryptedKeyPair = encryptedKeyPair ?: return null
             return try {
                 result.build()
             } catch (e: Exception) {

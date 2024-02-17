@@ -53,8 +53,8 @@ abstract class Message {
 
     abstract fun toProto(): SignalServiceProtos.Content?
 
-    fun setGroupContext(dataMessage: SignalServiceProtos.DataMessage.Builder) {
-        dataMessage.group = SignalServiceProtos.GroupContext.newBuilder().apply {
+    fun SignalServiceProtos.DataMessage.Builder.setGroupContext() {
+        group = SignalServiceProtos.GroupContext.newBuilder().apply {
             id = GroupUtil.doubleEncodeGroupID(recipient!!).let(GroupUtil::getDecodedGroupIDAsData).let(ByteString::copyFrom)
             type = SignalServiceProtos.GroupContext.Type.DELIVER
         }.build()

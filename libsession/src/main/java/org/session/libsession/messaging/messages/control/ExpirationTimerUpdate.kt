@@ -33,7 +33,7 @@ data class ExpirationTimerUpdate(var syncTarget: String? = null, val isGroup: Bo
         // Group context
         if (storage.isClosedGroup(recipient!!)) {
             try {
-                setGroupContext(dataMessageProto)
+                dataMessageProto.setGroupContext()
             } catch(e: Exception) {
                 Log.w(TAG, "Couldn't construct visible message proto from: $this", e)
                 return null
