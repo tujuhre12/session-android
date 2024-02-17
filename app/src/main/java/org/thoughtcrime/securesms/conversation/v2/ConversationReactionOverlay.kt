@@ -129,10 +129,7 @@ class ConversationReactionOverlay : FrameLayout {
              selectedConversationModel: SelectedConversationModel,
              blindedPublicKey: String?) {
         job?.cancel()
-
-        if (overlayState != OverlayState.HIDDEN) {
-            return
-        }
+        if (overlayState != OverlayState.HIDDEN) return
         this.messageRecord = messageRecord
         this.selectedConversationModel = selectedConversationModel
         this.blindedPublicKey = blindedPublicKey
