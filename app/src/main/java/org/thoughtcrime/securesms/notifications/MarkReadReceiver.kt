@@ -35,10 +35,9 @@ class MarkReadReceiver : BroadcastReceiver() {
             object : AsyncTask<Void?, Void?, Void?>() {
                 override fun doInBackground(vararg params: Void?): Void? {
                     val currentTime = nowWithOffset
-                    for (threadId in threadIds) {
-                        Log.i(TAG, "Marking as read: $threadId")
-                        val storage = shared.storage
-                        storage.markConversationAsRead(threadId, currentTime, true)
+                    threadIds.forEach {
+                        Log.i(TAG, "Marking as read: $it")
+                        shared.storage.markConversationAsRead(it, currentTime, true)
                     }
                     return null
                 }
@@ -59,8 +58,6 @@ class MarkReadReceiver : BroadcastReceiver() {
             context: Context,
             markedReadMessages: List<MarkedMessageInfo>
         ) {
-            Log.d(TAG, "process() called with: markedReadMessages = $markedReadMessages")
-
             if (markedReadMessages.isEmpty()) return
 
             sendReadReceipts(context, markedReadMessages)
@@ -131,8 +128,6 @@ class MarkReadReceiver : BroadcastReceiver() {
             context: Context,
             hashToMessage: Map<String, MarkedMessageInfo>
         ) {
-            Log.d(TAG, "fetchUpdatedExpiriesAndScheduleDeletion() called with: context = $context, hashToMessage = $hashToMessage")
-
             @Suppress("UNCHECKED_CAST")
             val expiries = SnodeAPI.getExpiries(hashToMessage.keys.toList(), TextSecurePreferences.getLocalNumber(context)!!).get()["expiries"] as Map<String, Long>
             hashToMessage.forEach { (hash, info) -> expiries[hash]?.let { scheduleDeletion(context, info.expirationInfo, it - info.expirationInfo.expireStarted) } }
@@ -143,8 +138,6 @@ class MarkReadReceiver : BroadcastReceiver() {
             expirationInfo: ExpirationInfo,
             expiresIn: Long = expirationInfo.expiresIn
         ) {
-            Log.d(TAG, "MarkReadReceiver#scheduleDeletion() called with: expirationInfo = $expirationInfo, expiresIn = $expiresIn")
-
             if (expiresIn == 0L) return
 
             val now = nowWithOffset
