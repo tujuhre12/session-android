@@ -65,8 +65,6 @@ internal fun MessageReceiver.isBlocked(publicKey: String): Boolean {
 }
 
 fun MessageReceiver.handle(message: Message, proto: SignalServiceProtos.Content, threadId: Long, openGroupID: String?) {
-    Log.d("MessageReceiver", "handle() called with: message = $message, proto = $proto, threadId = $threadId, openGroupID = $openGroupID")
-
     // Do nothing if the message was outdated
     if (MessageReceiver.messageIsOutdated(message, threadId, openGroupID)) { return }
 
@@ -290,8 +288,6 @@ fun MessageReceiver.handleVisibleMessage(
     runThreadUpdate: Boolean,
     runProfileUpdate: Boolean
 ): Long? {
-    Log.d("ReceivedMessageHandler", "handleVisibleMessage() called with: message = $message, proto = $proto, openGroupID = $openGroupID, threadId = $threadId, runThreadUpdate = $runThreadUpdate, runProfileUpdate = $runProfileUpdate")
-
     val storage = MessagingModuleConfiguration.shared.storage
     val context = MessagingModuleConfiguration.shared.context
     val userPublicKey = storage.getUserPublicKey()
