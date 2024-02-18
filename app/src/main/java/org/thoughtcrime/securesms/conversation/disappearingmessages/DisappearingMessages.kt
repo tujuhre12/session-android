@@ -45,11 +45,10 @@ class DisappearingMessages @Inject constructor(
 
     fun showFollowSettingDialog(context: Context, message: MessageRecord) = context.showSessionDialog {
         title(R.string.dialog_disappearing_messages_follow_setting_title)
-        if (message.expiresIn == 0L) {
-            text(R.string.dialog_disappearing_messages_follow_setting_off_body)
+        text(if (message.expiresIn == 0L) {
+            context.getString(R.string.dialog_disappearing_messages_follow_setting_off_body)
         } else {
-            text(
-                context.getString(
+            context.getString(
                     R.string.dialog_disappearing_messages_follow_setting_on_body,
                     ExpirationUtil.getExpirationDisplayValue(
                         context,
@@ -57,8 +56,7 @@ class DisappearingMessages @Inject constructor(
                     ),
                     context.getExpirationTypeDisplayValue(message.isNotDisappearAfterRead)
                 )
-            )
-        }
+        })
         destructiveButton(
                 text = if (message.expiresIn == 0L) R.string.dialog_disappearing_messages_follow_setting_confirm else R.string.dialog_disappearing_messages_follow_setting_set,
                 contentDescription = if (message.expiresIn == 0L) R.string.AccessibilityId_confirm else R.string.AccessibilityId_set_button

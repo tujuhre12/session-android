@@ -14,6 +14,7 @@ import network.loki.messenger.libsession_util.util.Conversation
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import network.loki.messenger.libsession_util.util.UserPic
+import network.loki.messenger.libsession_util.util.afterSend
 import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.BlindedIdMapping
@@ -498,16 +499,11 @@ open class Storage(
         }
 
         // Set or reset the shared library to use latest expiration config
-        getThreadId(recipient)?.let { ourThread ->
-            val currentExpiration = getExpirationConfiguration(ourThread)
-            if (currentExpiration != null && currentExpiration.updatedTimestampMs > messageTimestamp) {
-                setExpirationConfiguration(currentExpiration)
-            } else {
-                val expiration = ExpirationConfiguration(ourThread, userProfile.getNtsExpiry(), messageTimestamp)
-                setExpirationConfiguration(expiration)
-            }
+        getThreadId(recipient)?.let {
+            setExpirationConfiguration(
+                getExpirationConfiguration(it)?.takeIf { it.updatedTimestampMs > messageTimestamp } ?: ExpirationConfiguration(it, userProfile.getNtsExpiry(), messageTimestamp)
+            )
         }
-
     }
 
     private fun updateContacts(contacts: Contacts, messageTimestamp: Long) {
@@ -635,20 +631,11 @@ open class Storage(
                 // Start polling
                 ClosedGroupPollerV2.shared.startPolling(group.sessionId)
             }
-            getThreadId(Address.fromSerialized(groupId))?.let { conversationThreadId ->
-
-                val currentExpiration = getExpirationConfiguration(conversationThreadId)
-                if (currentExpiration != null && currentExpiration.updatedTimestampMs > messageTimestamp) {
-                    setExpirationConfiguration(currentExpiration)
-                } else {
-                    val mode =
-                        if (group.disappearingTimer == 0L) ExpiryMode.NONE
-                        else ExpiryMode.AfterSend(group.disappearingTimer)
-                    val newConfig = ExpirationConfiguration(
-                        conversationThreadId, mode, messageTimestamp
-                    )
-                    setExpirationConfiguration(newConfig)
-                }
+            getThreadId(Address.fromSerialized(groupId))?.let {
+                setExpirationConfiguration(
+                    getExpirationConfiguration(it)?.takeIf { it.updatedTimestampMs > messageTimestamp }
+                        ?: ExpirationConfiguration(it, afterSend(group.disappearingTimer), messageTimestamp)
+                )
             }
         }
     }
@@ -1213,18 +1200,11 @@ open class Storage(
                     setPinned(conversationThreadId, contact.priority == PRIORITY_PINNED)
                 }
             }
-            getThreadId(recipient)?.let { conversationThreadId ->
-                val currentExpiration = getExpirationConfiguration(conversationThreadId)
-                if (currentExpiration != null && currentExpiration.updatedTimestampMs > timestamp) {
-                    setExpirationConfiguration(currentExpiration)
-                } else {
-                    val expiration = ExpirationConfiguration(
-                        conversationThreadId,
-                        contact.expiryMode,
-                        timestamp
-                    )
-                    setExpirationConfiguration(expiration)
-                }
+            getThreadId(recipient)?.let {
+                setExpirationConfiguration(
+                    getExpirationConfiguration(it)?.takeIf { it.updatedTimestampMs > timestamp }
+                        ?: ExpirationConfiguration(it, contact.expiryMode, timestamp)
+                )
             }
             setRecipientHash(recipient, contact.hashCode().toString())
         }
@@ -1340,26 +1320,25 @@ open class Storage(
     }
 
     override fun getLastLegacyRecipient(threadRecipient: String): String? =
-            DatabaseComponent.get(context).lokiAPIDatabase().getLastLegacySenderAddress(threadRecipient)
+        DatabaseComponent.get(context).lokiAPIDatabase().getLastLegacySenderAddress(threadRecipient)
 
     override fun setLastLegacyRecipient(threadRecipient: String, senderRecipient: String?) {
         DatabaseComponent.get(context).lokiAPIDatabase().setLastLegacySenderAddress(threadRecipient, senderRecipient)
     }
 
     override fun deleteConversation(threadID: Long) {
-        val recipient = getRecipientForThread(threadID)
         val threadDB = DatabaseComponent.get(context).threadDatabase()
         val groupDB = DatabaseComponent.get(context).groupDatabase()
         threadDB.deleteConversation(threadID)
-        if (recipient != null) {
-            if (recipient.isContactRecipient) {
+        val recipient = getRecipientForThread(threadID) ?: return
+        when {
+            recipient.isContactRecipient -> {
                 if (recipient.isLocalNumber) return
                 val contacts = configFactory.contacts ?: return
-                contacts.upsertContact(recipient.address.serialize()) {
-                    this.priority = PRIORITY_HIDDEN
-                }
+                contacts.upsertContact(recipient.address.serialize()) { priority = PRIORITY_HIDDEN }
                 ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(context)
-            } else if (recipient.isClosedGroupRecipient) {
+            }
+            recipient.isClosedGroupRecipient -> {
                 // TODO: handle closed group
                 val volatile = configFactory.convoVolatile ?: return
                 val groups = configFactory.userGroups ?: return

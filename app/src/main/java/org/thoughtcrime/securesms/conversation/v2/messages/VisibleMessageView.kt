@@ -36,6 +36,7 @@ import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ViewUtil
 import org.session.libsession.utilities.getColorFromAttr
+import org.session.libsession.utilities.modifyLayoutParams
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.ThreadUtils
 import org.thoughtcrime.securesms.ApplicationContext
@@ -243,14 +244,12 @@ class VisibleMessageView : LinearLayout {
     private fun showStatusMessage(message: MessageRecord) {
         val disappearing = message.expiresIn > 0
 
-        binding.messageInnerLayout.apply {
-            layoutParams = (layoutParams as FrameLayout.LayoutParams)
-                .apply { gravity = if (message.isOutgoing) Gravity.END else Gravity.START }
+        binding.messageInnerLayout.modifyLayoutParams<FrameLayout.LayoutParams> {
+            gravity = if (message.isOutgoing) Gravity.END else Gravity.START
         }
 
-        binding.statusContainer.apply {
-            layoutParams = (layoutParams as ConstraintLayout.LayoutParams)
-                .apply { horizontalBias = if (message.isOutgoing) 1f else 0f }
+        binding.statusContainer.modifyLayoutParams<ConstraintLayout.LayoutParams> {
+            horizontalBias = if (message.isOutgoing) 1f else 0f
         }
 
         binding.expirationTimerView.isGone = true
@@ -356,7 +355,7 @@ class VisibleMessageView : LinearLayout {
         swipeToReplyIconRect.right = right
         swipeToReplyIconRect.bottom = bottom
 
-        if (translationX < 0 /*&& !binding.expirationTimerView.isVisible*/) {
+        if (translationX < 0 && !binding.expirationTimerView.isVisible) {
             val threshold = swipeToReplyThreshold
             swipeToReplyIcon.bounds = swipeToReplyIconRect
             swipeToReplyIcon.alpha = (255.0f * (min(abs(translationX), threshold) / threshold)).roundToInt()

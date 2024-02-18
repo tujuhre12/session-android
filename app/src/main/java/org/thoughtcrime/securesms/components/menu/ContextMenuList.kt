@@ -43,18 +43,15 @@ class ContextMenuList(recyclerView: RecyclerView, onItemClick: () -> Unit) {
     mappingAdapter.submitList(items.toAdapterItems())
   }
 
-  private fun List<ActionItem>.toAdapterItems(): List<DisplayItem> {
-    return this.mapIndexed { index, item ->
-      val displayType: DisplayType = when {
-        this.size == 1 -> DisplayType.ONLY
+  private fun List<ActionItem>.toAdapterItems(): List<DisplayItem> =
+    mapIndexed { index, item ->
+      when {
+        size == 1 -> DisplayType.ONLY
         index == 0 -> DisplayType.TOP
-        index == this.size - 1 -> DisplayType.BOTTOM
+        index == size - 1 -> DisplayType.BOTTOM
         else -> DisplayType.MIDDLE
-      }
-
-      DisplayItem(item, displayType)
+      }.let { DisplayItem(item, it) }
     }
-  }
 
   private data class DisplayItem(
     val item: ActionItem,
@@ -94,9 +91,7 @@ class ContextMenuList(recyclerView: RecyclerView, onItemClick: () -> Unit) {
       color?.let(title::setTextColor)
       color?.let(subtitle::setTextColor)
       subtitle.isGone = true
-      item.subtitle?.let {
-        startSubtitleJob(subtitle, it)
-      }
+      item.subtitle?.let { startSubtitleJob(subtitle, it) }
       itemView.setOnClickListener {
         item.action.run()
         onItemClick()

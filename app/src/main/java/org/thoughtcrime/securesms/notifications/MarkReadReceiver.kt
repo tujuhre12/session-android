@@ -28,21 +28,18 @@ class MarkReadReceiver : BroadcastReceiver() {
     @SuppressLint("StaticFieldLeak")
     override fun onReceive(context: Context, intent: Intent) {
         if (CLEAR_ACTION != intent.action) return
-        val threadIds = intent.getLongArrayExtra(THREAD_IDS_EXTRA)
-        if (threadIds != null) {
-            NotificationManagerCompat.from(context)
-                .cancel(intent.getIntExtra(NOTIFICATION_ID_EXTRA, -1))
-            object : AsyncTask<Void?, Void?, Void?>() {
-                override fun doInBackground(vararg params: Void?): Void? {
-                    val currentTime = nowWithOffset
-                    threadIds.forEach {
-                        Log.i(TAG, "Marking as read: $it")
-                        shared.storage.markConversationAsRead(it, currentTime, true)
-                    }
-                    return null
+        val threadIds = intent.getLongArrayExtra(THREAD_IDS_EXTRA) ?: return
+        NotificationManagerCompat.from(context).cancel(intent.getIntExtra(NOTIFICATION_ID_EXTRA, -1))
+        object : AsyncTask<Void?, Void?, Void?>() {
+            override fun doInBackground(vararg params: Void?): Void? {
+                val currentTime = nowWithOffset
+                threadIds.forEach {
+                    Log.i(TAG, "Marking as read: $it")
+                    shared.storage.markConversationAsRead(it, currentTime, true)
                 }
-            }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR)
-        }
+                return null
+            }
+        }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR)
     }
 
     companion object {
@@ -111,17 +108,17 @@ class MarkReadReceiver : BroadcastReceiver() {
             context: Context,
             markedReadMessages: List<MarkedMessageInfo>
         ) {
-            if (isReadReceiptsEnabled(context)) {
-                markedReadMessages.map { it.syncMessageId }
-                    .filter { shouldSendReadReceipt(Recipient.from(context, it.address, false)) }
-                    .groupBy { it.address }
-                    .forEach { (address, messages) ->
-                        messages.map { it.timetamp }
-                            .let(::ReadReceipt)
-                            .apply { sentTimestamp = nowWithOffset }
-                            .let { send(it, address) }
-                    }
-            }
+            if (!isReadReceiptsEnabled(context)) return
+
+            markedReadMessages.map { it.syncMessageId }
+                .filter { shouldSendReadReceipt(Recipient.from(context, it.address, false)) }
+                .groupBy { it.address }
+                .forEach { (address, messages) ->
+                    messages.map { it.timetamp }
+                        .let(::ReadReceipt)
+                        .apply { sentTimestamp = nowWithOffset }
+                        .let { send(it, address) }
+                }
         }
 
         private fun fetchUpdatedExpiriesAndScheduleDeletion(

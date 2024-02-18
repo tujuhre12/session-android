@@ -60,8 +60,8 @@ class DisappearingMessagesActivity: PassphraseRequiredActionBarActivity() {
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.state.collect { state ->
-                    supportActionBar?.subtitle = state.subtitle(this@DisappearingMessagesActivity)
+                viewModel.state.collect {
+                    supportActionBar?.subtitle = it.subtitle(this@DisappearingMessagesActivity)
                 }
             }
         }

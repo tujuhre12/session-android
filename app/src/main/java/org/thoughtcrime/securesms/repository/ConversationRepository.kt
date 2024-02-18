@@ -154,7 +154,7 @@ class DefaultConversationRepository @Inject constructor(
             openGroupInvitation.url = openGroup.joinURL
             message.openGroupInvitation = openGroupInvitation
             val expirationConfig = storage.getExpirationConfiguration(threadId)
-            val expiresInMillis = (expirationConfig?.expiryMode?.expiryMillis ?: 0)
+            val expiresInMillis = expirationConfig?.expiryMode?.expiryMillis ?: 0
             val expireStartedAt = if (expirationConfig?.expiryMode is ExpiryMode.AfterSend) message.sentTimestamp!! else 0
             val outgoingTextMessage = OutgoingTextMessage.fromOpenGroupInvitation(
                 openGroupInvitation,
@@ -225,14 +225,10 @@ class DefaultConversationRepository @Inject constructor(
     override fun buildUnsendRequest(recipient: Recipient, message: MessageRecord): UnsendRequest? {
         if (recipient.isOpenGroupRecipient) return null
         messageDataProvider.getServerHashForMessage(message.id, message.isMms) ?: return null
-        return UnsendRequest().apply {
-            author = if (message.isOutgoing) {
-                textSecurePreferences.getLocalNumber()
-            } else {
-                message.individualRecipient.address.contactIdentifier()
-            }
+        return UnsendRequest(
+            author = message.takeUnless { it.isOutgoing }?.run { individualRecipient.address.contactIdentifier() } ?: textSecurePreferences.getLocalNumber(),
             timestamp = message.timestamp
-        }
+        )
     }
 
     override suspend fun deleteMessageWithoutUnsendRequest(

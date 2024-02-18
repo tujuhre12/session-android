@@ -46,8 +46,6 @@ class SSKEnvironment(
         fun startAnyExpiration(timestamp: Long, author: String, expireStartedAt: Long)
 
         fun maybeStartExpiration(message: Message, startDisappearAfterRead: Boolean = false) {
-            Log.d("MessageExpirationManagerProtocol", "maybeStartExpiration() called with: message = $message, startDisappearAfterRead = $startDisappearAfterRead")
-
             if (message is ExpirationTimerUpdate && message.isGroup) return
 
             maybeStartExpiration(
@@ -59,8 +57,6 @@ class SSKEnvironment(
         }
 
         fun startDisappearAfterRead(timestamp: Long, sender: String) {
-            Log.d("MessageExpirationManagerProtocol", "startDisappearAfterRead() called with: timestamp = $timestamp, sender = $sender")
-
             startAnyExpiration(
                 timestamp,
                 sender,
@@ -69,8 +65,6 @@ class SSKEnvironment(
         }
 
         fun maybeStartExpiration(timestamp: Long, sender: String, mode: ExpiryMode, startDisappearAfterRead: Boolean = false) {
-            Log.d("MessageExpirationManagerProtocol", "maybeStartExpiration() called with: timestamp = $timestamp, sender = $sender, mode = $mode, startDisappearAfterRead = $startDisappearAfterRead")
-
             val expireStartedAt = when (mode) {
                 is ExpiryMode.AfterSend -> timestamp
                 is ExpiryMode.AfterRead -> if (startDisappearAfterRead) nowWithOffset.coerceAtLeast(timestamp + 1) else return
