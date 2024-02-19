@@ -43,8 +43,8 @@ abstract class Message {
     }
 
     open fun isValid(): Boolean =
-        sentTimestamp?.let { it > 0 } == true
-            && receivedTimestamp?.let { it > 0 } == true
+        sentTimestamp?.let { it > 0 } != false
+            && receivedTimestamp?.let { it > 0 } != false
             && sender != null
             && recipient != null
 
