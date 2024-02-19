@@ -1,9 +1,7 @@
 package org.session.libsession.messaging.messages.control
 
 import com.google.protobuf.ByteString
-import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.messages.copyExpiration
-import org.session.libsession.utilities.Address
 import org.session.libsignal.crypto.ecc.DjbECPrivateKey
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
@@ -119,7 +117,6 @@ class ClosedGroupControlMessage() : ControlMessage() {
                 }
             }
             return ClosedGroupControlMessage(kind)
-                    .copyExpiration(proto)
         }
     }
 
@@ -175,8 +172,6 @@ class ClosedGroupControlMessage() : ControlMessage() {
                     it.closedGroupControlMessage = closedGroupControlMessage.build()
                     it.setGroupContext()
                 }.build()
-                // Expiration timer
-                applyExpiryMode()
             }.build()
         } catch (e: Exception) {
             Log.w(TAG, "Couldn't construct closed group control message proto from: $this.")
