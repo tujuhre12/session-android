@@ -252,19 +252,18 @@ object MessageSender {
         return promise
     }
 
-    private fun getSpecifiedTtl(message: Message, isSyncMessage: Boolean): Long? {
-        val storage = MessagingModuleConfiguration.shared.storage
-        val threadId = message.threadID
-            ?: run {
-                val address = if (isSyncMessage && message is VisibleMessage) message.syncTarget else message.recipient
-                storage.getThreadId(Address.fromSerialized(address!!)) ?: return null
-            }
-        val config = storage.getExpirationConfiguration(threadId)?.takeIf { it.isEnabled } ?: return null
-        val expiryMode = config.expiryMode
-        return if (expiryMode is ExpiryMode.AfterSend || isSyncMessage) {
-            expiryMode.expiryMillis
-        } else null
-    }
+    private fun getSpecifiedTtl(
+        message: Message,
+        isSyncMessage: Boolean
+    ): Long? = message.takeUnless { it is ClosedGroupControlMessage }?.run {
+        threadID ?: (if (isSyncMessage && this is VisibleMessage) syncTarget else recipient)
+            ?.let(Address.Companion::fromSerialized)
+            ?.let(MessagingModuleConfiguration.shared.storage::getThreadId)
+    }?.let(MessagingModuleConfiguration.shared.storage::getExpirationConfiguration)
+    ?.takeIf { it.isEnabled }
+    ?.expiryMode
+    ?.takeIf { it is ExpiryMode.AfterSend || isSyncMessage }
+    ?.expiryMillis
 
     // Open Groups
     private fun sendToOpenGroupDestination(destination: Destination, message: Message): Promise<Unit, Exception> {
