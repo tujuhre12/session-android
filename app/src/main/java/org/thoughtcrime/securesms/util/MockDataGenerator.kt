@@ -239,8 +239,7 @@ object MockDataGenerator {
                 // Add the group created message
                 if (userSessionId == adminUserId) {
                     storage.insertOutgoingInfoMessage(context, groupId, SignalServiceGroup.Type.CREATION, groupName, members, listOf(adminUserId), threadId, (timestampNow - (numMessages * 5000)))
-                }
-                else {
+                } else {
                     storage.insertIncomingInfoMessage(context, adminUserId, groupId, SignalServiceGroup.Type.CREATION, groupName, members, listOf(adminUserId), (timestampNow - (numMessages * 5000)))
                 }
 
