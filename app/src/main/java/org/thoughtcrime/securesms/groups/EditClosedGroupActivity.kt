@@ -336,7 +336,7 @@ class EditClosedGroupActivity : PassphraseRequiredActionBarActivity() {
             ?: return Log.w("Loki", "No recipient settings when trying to update group config")
         val latestGroup = storage.getGroup(groupID)
             ?: return Log.w("Loki", "No group record when trying to update group config")
-        groupConfigFactory.updateLegacyGroup(latestRecipient, latestGroup)
+        groupConfigFactory.updateLegacyGroup(latestGroup)
     }
 
     class GroupMembers(val members: List<String>, val zombieMembers: List<String>)

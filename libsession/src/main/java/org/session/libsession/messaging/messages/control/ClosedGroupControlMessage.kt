@@ -1,7 +1,6 @@
 package org.session.libsession.messaging.messages.control
 
 import com.google.protobuf.ByteString
-import org.session.libsession.messaging.messages.copyExpiration
 import org.session.libsignal.crypto.ecc.DjbECPrivateKey
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
@@ -91,7 +90,7 @@ class ClosedGroupControlMessage() : ControlMessage() {
                     when (type) {
                         NEW -> takeIf { it.hasPublicKey() && it.hasEncryptionKeyPair() && it.hasName() }?.let {
                             ECKeyPair(
-                                DjbECPublicKey(publicKey.toByteArray()),
+                                DjbECPublicKey(encryptionKeyPair.publicKey.toByteArray()),
                                 DjbECPrivateKey(encryptionKeyPair.privateKey.toByteArray())
                             ).let { Kind.New(publicKey, name, it, membersList, adminsList, expirationTimer) }
                         }
