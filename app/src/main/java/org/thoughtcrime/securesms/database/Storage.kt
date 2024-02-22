@@ -875,9 +875,10 @@ open class Storage(
         DatabaseComponent.get(context).groupDatabase().create(groupId, title, members, avatar, relay, admins, formationTimestamp)
     }
 
-    override fun createInitialConfigGroup(groupPublicKey: String, name: String, members: Map<String, Boolean>, formationTimestamp: Long, encryptionKeyPair: ECKeyPair) {
+    override fun createInitialConfigGroup(groupPublicKey: String, name: String, members: Map<String, Boolean>, formationTimestamp: Long, encryptionKeyPair: ECKeyPair, expirationTimer: Int) {
         val volatiles = configFactory.convoVolatile ?: return
         val userGroups = configFactory.userGroups ?: return
+        if (volatiles.getLegacyClosedGroup(groupPublicKey) != null && userGroups.getLegacyGroupInfo(groupPublicKey) != null) return
         val groupVolatileConfig = volatiles.getOrConstructLegacyGroup(groupPublicKey)
         groupVolatileConfig.lastRead = formationTimestamp
         volatiles.set(groupVolatileConfig)
@@ -888,7 +889,7 @@ open class Storage(
             priority = ConfigBase.PRIORITY_VISIBLE,
             encPubKey = (encryptionKeyPair.publicKey as DjbECPublicKey).publicKey,  // 'serialize()' inserts an extra byte
             encSecKey = encryptionKeyPair.privateKey.serialize(),
-            disappearingTimer = 0L,
+            disappearingTimer = expirationTimer.toLong(),
             joinedAt = (formationTimestamp / 1000L)
         )
         // shouldn't exist, don't use getOrConstruct + copy
