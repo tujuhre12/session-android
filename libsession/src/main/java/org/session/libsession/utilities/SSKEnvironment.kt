@@ -6,6 +6,7 @@ import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.messages.Message
+import org.session.libsession.messaging.messages.control.ClosedGroupControlMessage
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.snode.SnodeAPI.nowWithOffset
@@ -46,7 +47,7 @@ class SSKEnvironment(
         fun startAnyExpiration(timestamp: Long, author: String, expireStartedAt: Long)
 
         fun maybeStartExpiration(message: Message, startDisappearAfterRead: Boolean = false) {
-            if (message is ExpirationTimerUpdate && message.isGroup) return
+            if (message is ExpirationTimerUpdate && message.isGroup || message is ClosedGroupControlMessage) return
 
             maybeStartExpiration(
                 message.sentTimestamp ?: return,
