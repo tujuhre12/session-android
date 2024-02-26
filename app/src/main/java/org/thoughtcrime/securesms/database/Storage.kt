@@ -92,6 +92,7 @@ import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
 import java.security.MessageDigest
+import kotlin.time.Duration.Companion.days
 import network.loki.messenger.libsession_util.util.Contact as LibSessionContact
 
 private const val TAG = "Storage"
@@ -1186,6 +1187,7 @@ open class Storage(
             } else {
                 getOrCreateThreadIdFor(fromSerialized(contact.id)).let { conversationThreadId ->
                     setPinned(conversationThreadId, contact.priority == PRIORITY_PINNED)
+                    setThreadDate(conversationThreadId, SnodeAPI.nowWithOffset - 14.days.inWholeMilliseconds)
                 }
             }
             getThreadId(recipient)?.let {
