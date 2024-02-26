@@ -1181,14 +1181,13 @@ open class Storage(
                 profileManager.setProfilePicture(context, recipient, null, null)
             }
             if (contact.priority == PRIORITY_HIDDEN) {
-                getThreadId(fromSerialized(contact.id))?.let { conversationThreadId ->
-                    deleteConversation(conversationThreadId)
-                }
+                getThreadId(fromSerialized(contact.id))?.let(::deleteConversation)
             } else {
-                getOrCreateThreadIdFor(fromSerialized(contact.id)).let { conversationThreadId ->
-                    setPinned(conversationThreadId, contact.priority == PRIORITY_PINNED)
-                    setThreadDate(conversationThreadId, SnodeAPI.nowWithOffset - 14.days.inWholeMilliseconds)
-                }
+                (
+                    getThreadId(address) ?: getOrCreateThreadIdFor(address).also {
+                        setThreadDate(it, SnodeAPI.nowWithOffset - 14.days.inWholeMilliseconds)
+                    }
+                ).also { setPinned(it, contact.priority == PRIORITY_PINNED) }
             }
             getThreadId(recipient)?.let {
                 setExpirationConfiguration(
