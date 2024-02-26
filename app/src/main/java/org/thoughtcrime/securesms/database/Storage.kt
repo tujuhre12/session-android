@@ -494,7 +494,10 @@ open class Storage(
             deleteConversation(ourThread)
         } else {
             // create note to self thread if needed (?)
-            val ourThread = getOrCreateThreadIdFor(recipient.address)
+            val address = recipient.address
+            val ourThread = getThreadId(address) ?: getOrCreateThreadIdFor(address).also {
+                setThreadDate(it, SnodeAPI.nowWithOffset - 14.days.inWholeMilliseconds)
+            }
             DatabaseComponent.get(context).threadDatabase().setHasSent(ourThread, true)
             setPinned(ourThread, userProfile.getNtsPriority() > 0)
         }
