@@ -496,7 +496,7 @@ open class Storage(
             // create note to self thread if needed (?)
             val address = recipient.address
             val ourThread = getThreadId(address) ?: getOrCreateThreadIdFor(address).also {
-                setThreadDate(it, SnodeAPI.nowWithOffset - 14.days.inWholeMilliseconds)
+                setThreadDate(it, 0)
             }
             DatabaseComponent.get(context).threadDatabase().setHasSent(ourThread, true)
             setPinned(ourThread, userProfile.getNtsPriority() > 0)
@@ -1188,7 +1188,7 @@ open class Storage(
             } else {
                 (
                     getThreadId(address) ?: getOrCreateThreadIdFor(address).also {
-                        setThreadDate(it, SnodeAPI.nowWithOffset - 14.days.inWholeMilliseconds)
+                        setThreadDate(it, 0)
                     }
                 ).also { setPinned(it, contact.priority == PRIORITY_PINNED) }
             }
