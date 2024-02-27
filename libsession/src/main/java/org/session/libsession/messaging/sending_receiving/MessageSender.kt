@@ -39,7 +39,6 @@ import org.session.libsignal.crypto.PushTransportDetails
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.IdPrefix
-import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Namespace
 import org.session.libsignal.utilities.defaultRequiresAuth
 import org.session.libsignal.utilities.hasNamespaces
@@ -420,7 +419,6 @@ object MessageSender {
             storage.markAsSent(timestamp, userPublicKey)
             storage.markUnidentified(timestamp, userPublicKey)
             // Start the disappearing messages timer if needed
-            Log.d("MessageSender", "Start the disappearing messages timer if needed message.recipient = ${message.recipient}, userPublicKey = $userPublicKey, isSyncMessage = $isSyncMessage")
             SSKEnvironment.shared.messageExpirationManager.maybeStartExpiration(message, startDisappearAfterRead = true)
         } ?: run {
             storage.updateReactionIfNeeded(message, message.sender?:userPublicKey, openGroupSentTimestamp)
