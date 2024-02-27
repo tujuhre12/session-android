@@ -1040,4 +1040,13 @@
     <string name="unread_marker">Unread Messages</string>
     <string name="activity_recovery_password">Recovery Password</string>
 
+    <string name="onboarding_privacy_in_your_pocket">Privacy in your pocket.</string>
+    <string name="onboarding_welcome_to_session">Welcome to Session 👋</string>
+    <string name="onboarding_session_is_engineered_to_protect_your_privacy">Session is engineered\nto protect your privacy.</string>
+    <string name="onboarding_you_don_t_even_need_a_phone_number_to_sign_up">"You don’t even need a phone number to sign up. "</string>
+    <string name="onboarding_creating_an_account_is_instant_free_and_anonymous">Creating an account is \ninstant, free, and \nanonymous 👇</string>
+    <string name="onboarding_create_account">Create account</string>
+    <string name="onboarding_i_have_an_account">I have an account</string>
+    <string name="onboarding_by_using_this_service_you_agree_to_our_terms_of_service_and_privacy_policy">By using this service, you agree to our Terms of Service and Privacy Policy</string>
+
 </resources>

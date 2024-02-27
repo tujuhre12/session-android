@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -47,8 +48,6 @@ class LandingActivity : BaseActionBarActivity() {
         // Session then close this activity to resume the last activity from the previous instance.
         if (!isTaskRoot) { finish(); return }
 
-        val binding = ActivityLandingBinding.inflate(layoutInflater)
-        setContentView(binding.root)
         setUpActionBarSessionLogo(true)
 
         ComposeView(this)
@@ -67,27 +66,27 @@ class LandingActivity : BaseActionBarActivity() {
         AppTheme {
             Column(modifier = Modifier.padding(horizontal = 36.dp)) {
                 Spacer(modifier = Modifier.weight(1f))
-                Text("Privacy in your pocket.", modifier = Modifier.align(Alignment.CenterHorizontally), style = MaterialTheme.typography.h4, textAlign = TextAlign.Center)
+                Text(stringResource(R.string.onboarding_privacy_in_your_pocket), modifier = Modifier.align(Alignment.CenterHorizontally), style = MaterialTheme.typography.h4, textAlign = TextAlign.Center)
                 Spacer(modifier = Modifier.height(24.dp))
-                IncomingText("Welcome to Session \uD83D\uDC4B")
+                IncomingText(stringResource(R.string.onboarding_welcome_to_session))
                 Spacer(modifier = Modifier.height(14.dp))
-                OutgoingText("Session is engineered\nto protect your privacy.")
+                OutgoingText(stringResource(R.string.onboarding_session_is_engineered_to_protect_your_privacy))
                 Spacer(modifier = Modifier.height(14.dp))
-                IncomingText("You don’t even need a phone number to sign up. ")
+                IncomingText(stringResource(R.string.onboarding_you_don_t_even_need_a_phone_number_to_sign_up))
                 Spacer(modifier = Modifier.height(14.dp))
-                OutgoingText("Creating an account is \ninstant, free, and \nanonymous \uD83D\uDC47")
+                OutgoingText(stringResource(R.string.onboarding_creating_an_account_is_instant_free_and_anonymous))
                 Spacer(modifier = Modifier.weight(1f))
 
-                OutlineButton(text = "Create account", modifier = Modifier
+                OutlineButton(text = stringResource(R.string.onboarding_create_account), modifier = Modifier
                     .width(262.dp)
                     .align(Alignment.CenterHorizontally)) { startPickDisplayNameActivity() }
                 Spacer(modifier = Modifier.height(14.dp))
-                FilledButton(text = "I have an account", modifier = Modifier
+                FilledButton(text = stringResource(R.string.onboarding_i_have_an_account), modifier = Modifier
                     .width(262.dp)
                     .align(Alignment.CenterHorizontally)) { startLinkDeviceActivity() }
                 Spacer(modifier = Modifier.height(8.dp))
                 BorderlessButton(
-                    text = "By using this service, you agree to our Terms of Service and Privacy Policy",
+                    text = stringResource(R.string.onboarding_by_using_this_service_you_agree_to_our_terms_of_service_and_privacy_policy),
                     modifier = Modifier
                         .width(262.dp)
                         .align(Alignment.CenterHorizontally),
