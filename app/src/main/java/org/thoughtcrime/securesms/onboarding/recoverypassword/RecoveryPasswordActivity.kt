@@ -1,14 +1,12 @@
 package org.thoughtcrime.securesms.onboarding.recoverypassword
 
-import android.content.ClipData
-import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -17,6 +15,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -33,7 +32,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.ComposeView
@@ -44,7 +42,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import network.loki.messenger.R
-import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.ui.AppTheme
@@ -69,21 +66,9 @@ class RecoveryPasswordActivity : BaseActionBarActivity() {
 
         ComposeView(this).apply {
             setContent {
-                RecoveryPassword(viewModel.seed, viewModel.qrBitmap, { copySeed() }) { onHide() }
+                RecoveryPassword(viewModel.seed, viewModel.qrBitmap, { viewModel.copySeed(context) }) { onHide() }
             }
         }.let(::setContentView)
-    }
-
-    private fun revealSeed() {
-        TextSecurePreferences.setHasViewedSeed(this, true)
-    }
-
-    private fun copySeed() {
-        revealSeed()
-        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        val clip = ClipData.newPlainText("Seed", viewModel.seed)
-        clipboard.setPrimaryClip(clip)
-        Toast.makeText(this, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show()
     }
 
     private fun onHide() {
@@ -130,7 +115,8 @@ fun RecoveryPassword(
     AppTheme {
         Column(
             verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.verticalScroll(rememberScrollState())
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
                 .padding(bottom = 16.dp)
         ) {
             RecoveryPasswordCell(seed, qrBitmap, copySeed)
@@ -142,6 +128,10 @@ fun RecoveryPassword(
 @Composable
 fun RecoveryPasswordCell(seed: String = "", qrBitmap: Bitmap? = null, copySeed:() -> Unit = {}) {
     val showQr = remember {
+        mutableStateOf(false)
+    }
+
+    val copied = remember {
         mutableStateOf(false)
     }
 
@@ -159,13 +149,13 @@ fun RecoveryPasswordCell(seed: String = "", qrBitmap: Bitmap? = null, copySeed:(
                 Text(
                     seed,
                     modifier = Modifier
-                        .padding(vertical = 24.dp)
-                        .border(
-                            width = 1.dp,
-                            color = classicDarkColors[3],
-                            shape = RoundedCornerShape(11.dp)
-                        )
-                        .padding(24.dp),
+                            .padding(vertical = 24.dp)
+                            .border(
+                                    width = 1.dp,
+                                    color = classicDarkColors[3],
+                                    shape = RoundedCornerShape(11.dp)
+                            )
+                            .padding(24.dp),
                     style = MaterialTheme.typography.small.copy(fontFamily = FontFamily.Monospace),
                     color = LocalExtraColors.current.prominentButtonColor,
                 )
@@ -176,8 +166,8 @@ fun RecoveryPasswordCell(seed: String = "", qrBitmap: Bitmap? = null, copySeed:(
                     backgroundColor = LocalExtraColors.current.lightCell,
                     elevation = 0.dp,
                     modifier = Modifier
-                        .align(Alignment.CenterHorizontally)
-                        .padding(vertical = 24.dp)
+                            .align(Alignment.CenterHorizontally)
+                            .padding(vertical = 24.dp)
                 ) {
                     Box {
                         qrBitmap?.let {
@@ -192,11 +182,12 @@ fun RecoveryPasswordCell(seed: String = "", qrBitmap: Bitmap? = null, copySeed:(
                             painter = painterResource(id = R.drawable.session_shield),
                             contentDescription = "",
                             tint = LocalExtraColors.current.onLightCell,
-                            modifier = Modifier.align(Alignment.Center)
-                                .width(46.dp)
-                                .height(56.dp)
-                                .background(color = LocalExtraColors.current.lightCell)
-                                .padding(horizontal = 3.dp, vertical = 1.dp)
+                            modifier = Modifier
+                                    .align(Alignment.Center)
+                                    .width(46.dp)
+                                    .height(56.dp)
+                                    .background(color = LocalExtraColors.current.lightCell)
+                                    .padding(horizontal = 3.dp, vertical = 1.dp)
                         )
                     }
                 }
@@ -204,7 +195,9 @@ fun RecoveryPasswordCell(seed: String = "", qrBitmap: Bitmap? = null, copySeed:(
 
             AnimatedVisibility(!showQr.value) {
                 Row(horizontalArrangement = Arrangement.spacedBy(32.dp)) {
-                    OutlineButton(text = stringResource(R.string.copy), modifier = Modifier.weight(1f), color = MaterialTheme.colors.onPrimary) { copySeed() }
+                    Crossfade(targetState = if (copied.value) R.string.copied else R.string.copy, modifier = Modifier.weight(1f), label = "Copy to Copied CrossFade") {
+                        OutlineButton(text = stringResource(it), modifier = Modifier.fillMaxWidth(), color = MaterialTheme.colors.onPrimary) { copySeed(); copied.value = true }
+                    }
                     OutlineButton(text = "View QR", modifier = Modifier.weight(1f), color = MaterialTheme.colors.onPrimary) { showQr.toggle() }
                 }
             }

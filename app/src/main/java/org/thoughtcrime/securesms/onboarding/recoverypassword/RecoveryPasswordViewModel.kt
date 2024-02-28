@@ -1,6 +1,9 @@
 package org.thoughtcrime.securesms.onboarding.recoverypassword
 
 import android.app.Application
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.graphics.Bitmap
 import androidx.lifecycle.AndroidViewModel
 import androidx.preference.PreferenceFragmentCompat.OnPreferenceStartFragmentCallback
@@ -24,6 +27,13 @@ class RecoveryPasswordViewModel @Inject constructor(
 
     fun permanentlyHidePassword() {
         prefs.setHidePassword(true)
+    }
+
+    fun copySeed(context: Context) {
+        TextSecurePreferences.setHasViewedSeed(context, true)
+        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val clip = ClipData.newPlainText("Seed", seed)
+        clipboard.setPrimaryClip(clip)
     }
 
     val seed by lazy {
