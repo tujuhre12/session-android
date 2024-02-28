@@ -38,6 +38,7 @@ import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import javax.inject.Inject
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -149,11 +150,12 @@ class DefaultConversationRepository @Inject constructor(
         for (contact in contacts) {
             val message = VisibleMessage()
             message.sentTimestamp = SnodeAPI.nowWithOffset
-            val openGroupInvitation = OpenGroupInvitation()
-            openGroupInvitation.name = openGroup.name
-            openGroupInvitation.url = openGroup.joinURL
+            val openGroupInvitation = OpenGroupInvitation().apply {
+                name = openGroup.name
+                url = openGroup.joinURL
+            }
             message.openGroupInvitation = openGroupInvitation
-            val expirationConfig = storage.getExpirationConfiguration(threadId)
+            val expirationConfig = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(contact).let(storage::getExpirationConfiguration)
             val expiresInMillis = expirationConfig?.expiryMode?.expiryMillis ?: 0
             val expireStartedAt = if (expirationConfig?.expiryMode is ExpiryMode.AfterSend) message.sentTimestamp!! else 0
             val outgoingTextMessage = OutgoingTextMessage.fromOpenGroupInvitation(
