@@ -11,7 +11,7 @@ data class ExpirationConfiguration(
     val isEnabled = expiryMode.expirySeconds > 0
 
     companion object {
-        val isNewConfigEnabled = SnodeAPI.nowWithOffset >= 171028440000
+        val isNewConfigEnabled = SnodeAPI.nowWithOffset >= 1710284400000
     }
 }
 
