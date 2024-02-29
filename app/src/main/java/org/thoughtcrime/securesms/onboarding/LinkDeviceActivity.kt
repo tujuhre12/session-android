@@ -2,13 +2,16 @@ package org.thoughtcrime.securesms.onboarding
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS
 import androidx.activity.viewModels
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -30,14 +33,22 @@ import androidx.compose.material.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
+import com.google.accompanist.permissions.shouldShowRationale
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
@@ -48,6 +59,7 @@ import org.thoughtcrime.securesms.ui.OutlineButton
 import org.thoughtcrime.securesms.ui.baseBold
 import org.thoughtcrime.securesms.ui.colorDestructive
 import javax.inject.Inject
+
 
 @AndroidEntryPoint
 class LinkDeviceActivity : BaseActionBarActivity() {
@@ -71,7 +83,6 @@ class LinkDeviceActivity : BaseActionBarActivity() {
             }
         }
 
-
         ComposeView(this).apply {
             setContent {
                 val state by viewModel.stateFlow.collectAsState()
@@ -93,8 +104,9 @@ class LinkDeviceActivity : BaseActionBarActivity() {
                 selectedTabIndex = pagerState.currentPage,
                 modifier = Modifier.height(48.dp)
             ) {
+                val animationScope = rememberCoroutineScope()
                 tabs.forEachIndexed { i, it ->
-                    Tab(i == pagerState.currentPage, onClick = { pagerState.targetPage }) {
+                    Tab(i == pagerState.currentPage, onClick = { animationScope.launch { pagerState.animateScrollToPage(i) } }) {
                         Text(stringResource(id = it))
                     }
                 }
@@ -105,11 +117,82 @@ class LinkDeviceActivity : BaseActionBarActivity() {
             ) { i ->
                 when(tabs[i]) {
                     R.string.activity_recovery_password -> RecoveryPassword(state, onChange, onContinue)
-                    R.string.activity_link_device_scan_qr_code -> ScanQrCode()
+                    R.string.activity_link_device_scan_qr_code -> MaybeScanQrCode()
                 }
             }
         }
     }
+
+
+    @OptIn(ExperimentalPermissionsApi::class)
+    @Composable
+    fun MaybeScanQrCode() {
+        Box(modifier = Modifier.fillMaxSize()) {
+            val cameraPermissionState = rememberPermissionState(android.Manifest.permission.CAMERA)
+
+            if (cameraPermissionState.status.isGranted) {
+                ScanQrCode()
+            } else if (cameraPermissionState.status.shouldShowRationale) {
+                Column(
+                    modifier = Modifier.align(Alignment.Center)
+                        .padding(horizontal = 60.dp)
+                ) {
+                    Text(
+                        "Camera Permission permanently denied. Configure in settings.",
+                            textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.size(20.dp))
+                    OutlineButton(
+                        text = "Settings",
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    ) {
+                        Intent(ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                            data = Uri.fromParts("package", packageName, null)
+                        }.let(::startActivity)
+                    }
+                }
+            } else {
+                OutlineButton(
+                    text = "Grant Camera Permission",
+                    modifier = Modifier.align(Alignment.Center)
+                ) {
+                    cameraPermissionState.run { launchPermissionRequest() }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ScanQrCode() {
+    val localContext = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+//    val cameraProviderFuture = remember {
+//        ProcessCameraProvider.getInstance(localContext)
+//    }
+//    AndroidView(
+//        modifier = Modifier.fillMaxSize(),
+//        factory = { context ->
+//            val previewView = PreviewView(context)
+//            val preview = Preview.Builder().build()
+//            val selector = CameraSelector.Builder()
+//                .requireLensFacing(CameraSelector.LENS_FACING_BACK)
+//                .build()
+//
+//            preview.setSurfaceProvider(previewView.surfaceProvider)
+//
+//            runCatching {
+//                cameraProviderFuture.get().bindToLifecycle(
+//                    lifecycleOwner,
+//                    selector,
+//                    preview
+//                )
+//            }.onFailure {
+//                Log.e("CAMERA", "Camera bind error", it)
+//            }
+//            previewView
+//        }
+//    )
 }
 
 @Composable
@@ -157,14 +240,12 @@ fun RecoveryPassword(state: LinkDeviceState, onChange: (String) -> Unit = {}, on
         Spacer(Modifier.weight(2f))
         OutlineButton(
             text = stringResource(id = R.string.continue_2),
-            modifier = Modifier.align(Alignment.CenterHorizontally).padding(horizontal = 64.dp, vertical = 20.dp).width(200.dp)
+            modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .padding(horizontal = 64.dp, vertical = 20.dp)
+                    .width(200.dp)
         ) { onContinue() }
     }
-}
-
-@Composable
-fun ScanQrCode() {
-
 }
 
 fun Context.startLinkDeviceActivity() {
