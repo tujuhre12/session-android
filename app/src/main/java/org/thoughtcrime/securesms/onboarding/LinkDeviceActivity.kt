@@ -7,6 +7,8 @@ import android.os.Bundle
 import android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS
 import androidx.activity.viewModels
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.ExperimentalGetImage
+import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
@@ -59,19 +61,28 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
+import com.google.mlkit.vision.barcode.BarcodeScanner
+import com.google.mlkit.vision.barcode.BarcodeScannerOptions
+import com.google.mlkit.vision.barcode.BarcodeScanning
+import com.google.mlkit.vision.barcode.common.Barcode
+import com.google.mlkit.vision.common.InputImage
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.OutlineButton
 import org.thoughtcrime.securesms.ui.baseBold
 import org.thoughtcrime.securesms.ui.colorDestructive
+import java.util.concurrent.Executors
 import javax.inject.Inject
 
+private const val TAG = "LinkDeviceActivity"
 
 @AndroidEntryPoint
+@androidx.annotation.OptIn(ExperimentalGetImage::class)
 class LinkDeviceActivity : BaseActionBarActivity() {
 
     @Inject
@@ -134,16 +145,20 @@ class LinkDeviceActivity : BaseActionBarActivity() {
                 val localContext = LocalContext.current
                 val cameraProvider = remember { ProcessCameraProvider.getInstance(localContext) }
 
+                val options = BarcodeScannerOptions.Builder()
+                        .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
+                        .build()
+                val scanner = BarcodeScanning.getClient(options)
+
                 runCatching {
                     when (title) {
                         R.string.activity_link_device_scan_qr_code -> {
-                            cameraProvider.get().bindToLifecycle(LocalLifecycleOwner.current, selector, preview)
                             LocalSoftwareKeyboardController.current?.hide()
+                            cameraProvider.get().bindToLifecycle(LocalLifecycleOwner.current, selector, preview, buildAnalysisUseCase(scanner, viewModel::onQrPhrase))
                         }
                         else -> cameraProvider.get().unbind(preview)
                     }
-                }
-
+                }.onFailure { Log.e(TAG, "error binding camera", it) }
                 when (title) {
                     R.string.activity_recovery_password -> RecoveryPassword(state, onChange, onContinue)
                     R.string.activity_link_device_scan_qr_code -> MaybeScanQrCode()
@@ -167,7 +182,7 @@ class LinkDeviceActivity : BaseActionBarActivity() {
                 ) {
                     Text(
                         "Camera Permission permanently denied. Configure in settings.",
-                            textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center
                     )
                     Spacer(modifier = Modifier.size(20.dp))
                     OutlineButton(
@@ -196,11 +211,7 @@ fun ScanQrCode(preview: Preview) {
     Box {
         AndroidView(
             modifier = Modifier.fillMaxSize(),
-            factory = { context ->
-                PreviewView(context).apply {
-                    preview.setSurfaceProvider(surfaceProvider)
-                }
-            }
+            factory = { PreviewView(it).apply { preview.setSurfaceProvider(surfaceProvider) } }
         )
 
         Box(
@@ -270,3 +281,26 @@ fun RecoveryPassword(state: LinkDeviceState, onChange: (String) -> Unit = {}, on
 fun Context.startLinkDeviceActivity() {
     Intent(this, LinkDeviceActivity::class.java).let(::startActivity)
 }
+
+private fun buildAnalysisUseCase(
+        scanner: BarcodeScanner,
+        onBarcodeScanned: (String) -> Unit
+): ImageAnalysis = ImageAnalysis.Builder()
+    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+    .build().apply {
+        setAnalyzer(Executors.newSingleThreadExecutor()) { imageProxy ->
+            InputImage.fromMediaImage(
+                imageProxy.image!!,
+                imageProxy.imageInfo.rotationDegrees
+            ).let(scanner::process).apply {
+                addOnSuccessListener { barcodes ->
+                    barcodes.forEach {
+                        it.takeIf { it.valueType == Barcode.TYPE_TEXT }?.rawValue?.let(onBarcodeScanned)
+                    }
+                }
+                addOnCompleteListener {
+                    imageProxy.close()
+                }
+            }
+        }
+    }

@@ -30,7 +30,14 @@ class LinkDeviceViewModel @Inject constructor(
 
     fun onRecoveryPhrase() {
         val mnemonic = state.value.recoveryPhrase
+        tryPhrase(mnemonic)
+    }
 
+    fun onQrPhrase(string: String) {
+        tryPhrase(string)
+    }
+
+    private fun tryPhrase(mnemonic: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 MnemonicCodec { MnemonicUtilities.loadFileContents(getApplication(), it) }
@@ -39,10 +46,14 @@ class LinkDeviceViewModel @Inject constructor(
                     .let(::LinkDeviceEvent)
                     .let { event.send(it) }
             } catch (exception: Exception) {
-                when (exception) {
-                    is MnemonicCodec.DecodingError -> exception.description
-                    else -> "An error occurred."
-                }.let { error -> state.update { it.copy(error = error) } }
+                state.update {
+                    it.copy(
+                        error = when (exception) {
+                            is MnemonicCodec.DecodingError -> exception.description
+                            else -> "An error occurred."
+                        }
+                    )
+                }
             }
         }
     }
