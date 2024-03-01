@@ -6,6 +6,10 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS
 import androidx.activity.viewModels
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.Preview
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,6 +37,7 @@ import androidx.compose.material.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,6 +49,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.lifecycleScope
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
@@ -68,6 +74,11 @@ class LinkDeviceActivity : BaseActionBarActivity() {
     lateinit var prefs: TextSecurePreferences
 
     val viewModel: LinkDeviceViewModel by viewModels()
+
+    val preview = Preview.Builder().build()
+    val selector = CameraSelector.Builder()
+            .requireLensFacing(CameraSelector.LENS_FACING_BACK)
+            .build()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -96,8 +107,8 @@ class LinkDeviceActivity : BaseActionBarActivity() {
     @OptIn(ExperimentalFoundationApi::class)
     @Composable
     fun LoadAccountScreen(state: LinkDeviceState, onChange: (String) -> Unit = {}, onContinue: () -> Unit = {}) {
-        val tabs = listOf(R.string.activity_recovery_password, R.string.activity_link_device_scan_qr_code)
-        val pagerState = rememberPagerState { tabs.size }
+        val titles = listOf(R.string.activity_recovery_password, R.string.activity_link_device_scan_qr_code)
+        val pagerState = rememberPagerState { titles.size }
 
         Column {
             TabRow(
@@ -105,7 +116,7 @@ class LinkDeviceActivity : BaseActionBarActivity() {
                 modifier = Modifier.height(48.dp)
             ) {
                 val animationScope = rememberCoroutineScope()
-                tabs.forEachIndexed { i, it ->
+                titles.forEachIndexed { i, it ->
                     Tab(i == pagerState.currentPage, onClick = { animationScope.launch { pagerState.animateScrollToPage(i) } }) {
                         Text(stringResource(id = it))
                     }
@@ -114,15 +125,25 @@ class LinkDeviceActivity : BaseActionBarActivity() {
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.weight(1f)
-            ) { i ->
-                when(tabs[i]) {
+            ) { page ->
+                val title = titles[page]
+                val localContext = LocalContext.current
+                val cameraProvider = remember { ProcessCameraProvider.getInstance(localContext) }
+
+                runCatching {
+                    when (title) {
+                        R.string.activity_link_device_scan_qr_code -> cameraProvider.get().bindToLifecycle(LocalLifecycleOwner.current, selector, preview)
+                        else -> cameraProvider.get().unbind(preview)
+                    }
+                }
+
+                when (title) {
                     R.string.activity_recovery_password -> RecoveryPassword(state, onChange, onContinue)
                     R.string.activity_link_device_scan_qr_code -> MaybeScanQrCode()
                 }
             }
         }
     }
-
 
     @OptIn(ExperimentalPermissionsApi::class)
     @Composable
@@ -131,7 +152,7 @@ class LinkDeviceActivity : BaseActionBarActivity() {
             val cameraPermissionState = rememberPermissionState(android.Manifest.permission.CAMERA)
 
             if (cameraPermissionState.status.isGranted) {
-                ScanQrCode()
+                ScanQrCode(preview)
             } else if (cameraPermissionState.status.shouldShowRationale) {
                 Column(
                     modifier = Modifier.align(Alignment.Center)
@@ -164,35 +185,15 @@ class LinkDeviceActivity : BaseActionBarActivity() {
 }
 
 @Composable
-fun ScanQrCode() {
-    val localContext = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
-//    val cameraProviderFuture = remember {
-//        ProcessCameraProvider.getInstance(localContext)
-//    }
-//    AndroidView(
-//        modifier = Modifier.fillMaxSize(),
-//        factory = { context ->
-//            val previewView = PreviewView(context)
-//            val preview = Preview.Builder().build()
-//            val selector = CameraSelector.Builder()
-//                .requireLensFacing(CameraSelector.LENS_FACING_BACK)
-//                .build()
-//
-//            preview.setSurfaceProvider(previewView.surfaceProvider)
-//
-//            runCatching {
-//                cameraProviderFuture.get().bindToLifecycle(
-//                    lifecycleOwner,
-//                    selector,
-//                    preview
-//                )
-//            }.onFailure {
-//                Log.e("CAMERA", "Camera bind error", it)
-//            }
-//            previewView
-//        }
-//    )
+fun ScanQrCode(preview: Preview) {
+    AndroidView(
+        modifier = Modifier.fillMaxSize(),
+        factory = { context ->
+            PreviewView(context).apply {
+                preview.setSurfaceProvider(surfaceProvider)
+            }
+        }
+    )
 }
 
 @Composable
