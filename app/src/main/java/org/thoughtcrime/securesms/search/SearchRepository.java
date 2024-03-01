@@ -129,11 +129,10 @@ public class SearchRepository {
     }
 
     executor.execute(() -> {
-      // If the sanitized search query is empty or just contains a single space (" ") then abort
-      // the search to prevent SQLite errors.
-      String cleanQuery = sanitizeQuery(query);
-      if (cleanQuery.equalsIgnoreCase(" ") || cleanQuery.isEmpty()) { return; }
-
+      // If the sanitized search query is empty then abort the search to prevent SQLite errors.
+      String cleanQuery = sanitizeQuery(query).trim();
+      if (cleanQuery.isEmpty()) { return; }
+            
       CursorList<MessageResult> messages = queryMessages(cleanQuery, threadId);
       callback.onResult(messages);
     });
