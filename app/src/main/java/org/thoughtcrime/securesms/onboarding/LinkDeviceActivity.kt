@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.onboarding
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -9,6 +10,8 @@ import androidx.activity.viewModels
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.ImageAnalysis.Analyzer
+import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
@@ -113,7 +116,7 @@ class LinkDeviceActivity : BaseActionBarActivity() {
             setContent {
                 val state by viewModel.stateFlow.collectAsState()
                 AppTheme {
-                    LoadAccountScreen(state, viewModel::onChange, viewModel::onRecoveryPhrase)
+                    LoadAccountScreen(state, viewModel::onChange, viewModel::tryPhrase)
                 }
             }
         }.let(::setContentView)
@@ -154,7 +157,7 @@ class LinkDeviceActivity : BaseActionBarActivity() {
                     when (title) {
                         R.string.activity_link_device_scan_qr_code -> {
                             LocalSoftwareKeyboardController.current?.hide()
-                            cameraProvider.get().bindToLifecycle(LocalLifecycleOwner.current, selector, preview, buildAnalysisUseCase(scanner, viewModel::onQrPhrase))
+                            cameraProvider.get().bindToLifecycle(LocalLifecycleOwner.current, selector, preview, buildAnalysisUseCase(scanner, viewModel::tryPhrase))
                         }
                         else -> cameraProvider.get().unbind(preview)
                     }
@@ -271,9 +274,9 @@ fun RecoveryPassword(state: LinkDeviceState, onChange: (String) -> Unit = {}, on
         OutlineButton(
             text = stringResource(id = R.string.continue_2),
             modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .padding(horizontal = 64.dp, vertical = 20.dp)
-                    .width(200.dp)
+                .align(Alignment.CenterHorizontally)
+                .padding(horizontal = 64.dp, vertical = 20.dp)
+                .width(200.dp)
         ) { onContinue() }
     }
 }
@@ -282,25 +285,34 @@ fun Context.startLinkDeviceActivity() {
     Intent(this, LinkDeviceActivity::class.java).let(::startActivity)
 }
 
+@SuppressLint("UnsafeOptInUsageError")
 private fun buildAnalysisUseCase(
-        scanner: BarcodeScanner,
-        onBarcodeScanned: (String) -> Unit
+    scanner: BarcodeScanner,
+    onBarcodeScanned: (String) -> Unit
 ): ImageAnalysis = ImageAnalysis.Builder()
     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
     .build().apply {
-        setAnalyzer(Executors.newSingleThreadExecutor()) { imageProxy ->
-            InputImage.fromMediaImage(
-                imageProxy.image!!,
-                imageProxy.imageInfo.rotationDegrees
-            ).let(scanner::process).apply {
-                addOnSuccessListener { barcodes ->
-                    barcodes.forEach {
-                        it.takeIf { it.valueType == Barcode.TYPE_TEXT }?.rawValue?.let(onBarcodeScanned)
-                    }
+        setAnalyzer(Executors.newSingleThreadExecutor(), Analyzer(scanner, onBarcodeScanned))
+    }
+
+class Analyzer(
+    private val scanner: BarcodeScanner,
+    private val onBarcodeScanned: (String) -> Unit
+): Analyzer {
+    @SuppressLint("UnsafeOptInUsageError")
+    override fun analyze(image: ImageProxy) {
+        InputImage.fromMediaImage(
+            image.image!!,
+            image.imageInfo.rotationDegrees
+        ).let(scanner::process).apply {
+            addOnSuccessListener { barcodes ->
+                barcodes.forEach {
+                    it.takeIf { it.valueType == Barcode.TYPE_TEXT }?.rawValue?.let(onBarcodeScanned)
                 }
-                addOnCompleteListener {
-                    imageProxy.close()
-                }
+            }
+            addOnCompleteListener {
+                image.close()
             }
         }
     }
+}

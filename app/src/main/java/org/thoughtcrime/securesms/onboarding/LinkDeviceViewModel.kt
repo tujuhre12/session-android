@@ -55,13 +55,7 @@ class LinkDeviceViewModel @Inject constructor(
         }
     }
 
-    fun onRecoveryPhrase() {
-        viewModelScope.launch {
-            phrases.send(state.value.recoveryPhrase)
-        }
-    }
-
-    fun onQrPhrase(string: String) {
+    fun tryPhrase(string: String = state.value.recoveryPhrase) {
         viewModelScope.launch {
             phrases.send(string)
         }
