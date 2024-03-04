@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -37,15 +36,12 @@ import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
-import androidx.compose.material.Tab
-import androidx.compose.material.TabRow
 import androidx.compose.material.Text
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -79,10 +75,13 @@ import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.OutlineButton
 import org.thoughtcrime.securesms.ui.baseBold
 import org.thoughtcrime.securesms.ui.colorDestructive
+import org.thoughtcrime.securesms.ui.components.SessionTabRow
 import java.util.concurrent.Executors
 import javax.inject.Inject
 
 private const val TAG = "LinkDeviceActivity"
+
+private val TITLES = listOf(R.string.activity_recovery_password, R.string.activity_link_device_scan_qr_code)
 
 @AndroidEntryPoint
 @androidx.annotation.OptIn(ExperimentalGetImage::class)
@@ -122,29 +121,20 @@ class LinkDeviceActivity : BaseActionBarActivity() {
         }.let(::setContentView)
     }
 
+
+
     @OptIn(ExperimentalFoundationApi::class)
     @Composable
     fun LoadAccountScreen(state: LinkDeviceState, onChange: (String) -> Unit = {}, onContinue: () -> Unit = {}) {
-        val titles = listOf(R.string.activity_recovery_password, R.string.activity_link_device_scan_qr_code)
-        val pagerState = rememberPagerState { titles.size }
+        val pagerState = rememberPagerState { TITLES.size }
 
         Column {
-            TabRow(
-                selectedTabIndex = pagerState.currentPage,
-                modifier = Modifier.height(48.dp)
-            ) {
-                val animationScope = rememberCoroutineScope()
-                titles.forEachIndexed { i, it ->
-                    Tab(i == pagerState.currentPage, onClick = { animationScope.launch { pagerState.animateScrollToPage(i) } }) {
-                        Text(stringResource(id = it))
-                    }
-                }
-            }
+            SessionTabRow(pagerState, TITLES)
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.weight(1f)
             ) { page ->
-                val title = titles[page]
+                val title = TITLES[page]
                 val localContext = LocalContext.current
                 val cameraProvider = remember { ProcessCameraProvider.getInstance(localContext) }
 
@@ -180,7 +170,8 @@ class LinkDeviceActivity : BaseActionBarActivity() {
                 ScanQrCode(preview)
             } else if (cameraPermissionState.status.shouldShowRationale) {
                 Column(
-                    modifier = Modifier.align(Alignment.Center)
+                    modifier = Modifier
+                        .align(Alignment.Center)
                         .padding(horizontal = 60.dp)
                 ) {
                     Text(
@@ -274,9 +265,9 @@ fun RecoveryPassword(state: LinkDeviceState, onChange: (String) -> Unit = {}, on
         OutlineButton(
             text = stringResource(id = R.string.continue_2),
             modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .padding(horizontal = 64.dp, vertical = 20.dp)
-                .width(200.dp)
+                    .align(Alignment.CenterHorizontally)
+                    .padding(horizontal = 64.dp, vertical = 20.dp)
+                    .width(200.dp)
         ) { onContinue() }
     }
 }
@@ -306,8 +297,8 @@ class Analyzer(
             image.imageInfo.rotationDegrees
         ).let(scanner::process).apply {
             addOnSuccessListener { barcodes ->
-                barcodes.forEach {
-                    it.takeIf { it.valueType == Barcode.TYPE_TEXT }?.rawValue?.let(onBarcodeScanned)
+                barcodes.filter { it.valueType == Barcode.TYPE_TEXT }.forEach {
+                    it.rawValue?.let(onBarcodeScanned)
                 }
             }
             addOnCompleteListener {
