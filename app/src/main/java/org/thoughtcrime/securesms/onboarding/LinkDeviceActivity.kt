@@ -66,6 +66,7 @@ import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
@@ -78,6 +79,7 @@ import org.thoughtcrime.securesms.ui.colorDestructive
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
 import java.util.concurrent.Executors
 import javax.inject.Inject
+import kotlin.coroutines.CoroutineContext
 
 private const val TAG = "LinkDeviceActivity"
 
@@ -108,6 +110,7 @@ class LinkDeviceActivity : BaseActionBarActivity() {
         lifecycleScope.launch {
             viewModel.eventFlow.collect {
                 startLoadingActivity(it.mnemonic)
+                finish()
             }
         }
 
@@ -115,7 +118,7 @@ class LinkDeviceActivity : BaseActionBarActivity() {
             setContent {
                 val state by viewModel.stateFlow.collectAsState()
                 AppTheme {
-                    LoadAccountScreen(state, viewModel::onChange, viewModel::tryPhrase)
+                    LoadAccountScreen(state, viewModel::onChange, viewModel::onContinue)
                 }
             }
         }.let(::setContentView)
