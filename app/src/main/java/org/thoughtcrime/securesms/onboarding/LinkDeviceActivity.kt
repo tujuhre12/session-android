@@ -129,14 +129,14 @@ class LinkDeviceActivity : BaseActionBarActivity() {
         val pagerState = rememberPagerState { TITLES.size }
 
         Column {
+            val localContext = LocalContext.current
+            val cameraProvider = remember { ProcessCameraProvider.getInstance(localContext) }
             SessionTabRow(pagerState, TITLES)
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.weight(1f)
             ) { page ->
                 val title = TITLES[page]
-                val localContext = LocalContext.current
-                val cameraProvider = remember { ProcessCameraProvider.getInstance(localContext) }
 
                 val options = BarcodeScannerOptions.Builder()
                         .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
@@ -147,9 +147,12 @@ class LinkDeviceActivity : BaseActionBarActivity() {
                     when (title) {
                         R.string.activity_link_device_scan_qr_code -> {
                             LocalSoftwareKeyboardController.current?.hide()
-                            cameraProvider.get().bindToLifecycle(LocalLifecycleOwner.current, selector, preview, buildAnalysisUseCase(scanner, viewModel::tryPhrase))
+                            cameraProvider.get().apply {
+                                unbindAll()
+                                bindToLifecycle(LocalLifecycleOwner.current, selector, preview, buildAnalysisUseCase(scanner, viewModel::scan))
+                            }
                         }
-                        else -> cameraProvider.get().unbind(preview)
+                        else -> cameraProvider.get().unbindAll()
                     }
                 }.onFailure { Log.e(TAG, "error binding camera", it) }
                 when (title) {
