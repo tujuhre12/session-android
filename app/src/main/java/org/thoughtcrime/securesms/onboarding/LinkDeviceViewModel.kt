@@ -11,12 +11,15 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.session.libsignal.crypto.MnemonicCodec
+import org.session.libsignal.crypto.MnemonicCodec.DecodingError.InputTooShort
+import org.session.libsignal.crypto.MnemonicCodec.DecodingError.InvalidWord
 import org.session.libsignal.utilities.Hex
 import org.thoughtcrime.securesms.crypto.MnemonicUtilities
 import javax.inject.Inject
@@ -35,7 +38,9 @@ class LinkDeviceViewModel @Inject constructor(
     private val event = Channel<LinkDeviceEvent>()
     val eventFlow = event.receiveAsFlow().take(1)
     private val qrErrors = Channel<Throwable>()
-    private val qrErrorsFlow = qrErrors.receiveAsFlow().debounce(QR_ERROR_TIME).takeWhile { event.isEmpty }
+    val qrErrorsFlow = qrErrors.receiveAsFlow().debounce(QR_ERROR_TIME).takeWhile { event.isEmpty }.mapNotNull {
+        "This QR code does not contain a Recovery Password."
+    }
 
     private val codec by lazy { MnemonicCodec { MnemonicUtilities.loadFileContents(getApplication(), it) } }
 
@@ -64,11 +69,19 @@ class LinkDeviceViewModel @Inject constructor(
     }
 
     private fun onFailure(error: Throwable) {
-        state.update { it.copy(error = error.message) }
+        state.update {
+            it.copy(
+                error = when (error) {
+                    is InputTooShort -> "The Recovery Password you entered is not long enough. Please check and try again."
+                    is InvalidWord -> "Some of the words in your Recovery Password are incorrect. Please check and try again."
+                    else -> "Please check your Recovery Password and try again."
+                }
+            )
+        }
     }
 
     private fun onScanFailure(error: Throwable) {
-        state.update { it.copy(error = error.message) }
+        viewModelScope.launch { qrErrors.send(error) }
     }
 
     private fun runDecodeCatching(mnemonic: String) = runCatching {

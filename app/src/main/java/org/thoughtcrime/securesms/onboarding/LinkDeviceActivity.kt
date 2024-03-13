@@ -12,7 +12,6 @@ import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageAnalysis.Analyzer
 import androidx.camera.core.ImageProxy
-import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -36,9 +35,14 @@ import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
+import androidx.compose.material.Scaffold
+import androidx.compose.material.Snackbar
+import androidx.compose.material.SnackbarHost
 import androidx.compose.material.Text
 import androidx.compose.material.TextFieldDefaults
+import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -53,6 +57,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.lifecycleScope
@@ -66,7 +71,7 @@ import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
@@ -79,7 +84,6 @@ import org.thoughtcrime.securesms.ui.colorDestructive
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
 import java.util.concurrent.Executors
 import javax.inject.Inject
-import kotlin.coroutines.CoroutineContext
 
 private const val TAG = "LinkDeviceActivity"
 
@@ -94,7 +98,7 @@ class LinkDeviceActivity : BaseActionBarActivity() {
 
     val viewModel: LinkDeviceViewModel by viewModels()
 
-    val preview = Preview.Builder().build()
+    val preview = androidx.camera.core.Preview.Builder().build()
     val selector = CameraSelector.Builder()
             .requireLensFacing(CameraSelector.LENS_FACING_BACK)
             .build()
@@ -147,15 +151,15 @@ class LinkDeviceActivity : BaseActionBarActivity() {
                 val scanner = BarcodeScanning.getClient(options)
 
                 runCatching {
-                    when (title) {
-                        R.string.activity_link_device_scan_qr_code -> {
-                            LocalSoftwareKeyboardController.current?.hide()
-                            cameraProvider.get().apply {
-                                unbindAll()
-                                bindToLifecycle(LocalLifecycleOwner.current, selector, preview, buildAnalysisUseCase(scanner, viewModel::scan))
-                            }
-                        }
-                        else -> cameraProvider.get().unbindAll()
+                    cameraProvider.get().unbindAll()
+                    if (title == R.string.activity_link_device_scan_qr_code) {
+                        LocalSoftwareKeyboardController.current?.hide()
+                        cameraProvider.get().bindToLifecycle(
+                            LocalLifecycleOwner.current,
+                            selector,
+                            preview,
+                            buildAnalysisUseCase(scanner, viewModel::scan)
+                        )
                     }
                 }.onFailure { Log.e(TAG, "error binding camera", it) }
                 when (title) {
@@ -166,6 +170,7 @@ class LinkDeviceActivity : BaseActionBarActivity() {
         }
     }
 
+
     @OptIn(ExperimentalPermissionsApi::class)
     @Composable
     fun MaybeScanQrCode() {
@@ -173,7 +178,7 @@ class LinkDeviceActivity : BaseActionBarActivity() {
             val cameraPermissionState = rememberPermissionState(android.Manifest.permission.CAMERA)
 
             if (cameraPermissionState.status.isGranted) {
-                ScanQrCode(preview)
+                ScanQrCode(preview, viewModel.qrErrorsFlow)
             } else if (cameraPermissionState.status.shouldShowRationale) {
                 Column(
                     modifier = Modifier
@@ -204,26 +209,58 @@ class LinkDeviceActivity : BaseActionBarActivity() {
             }
         }
     }
-}
 
-@Composable
-fun ScanQrCode(preview: Preview) {
-    Box {
-        AndroidView(
-            modifier = Modifier.fillMaxSize(),
-            factory = { PreviewView(it).apply { preview.setSurfaceProvider(surfaceProvider) } }
-        )
+    @Composable
+    fun ScanQrCode(preview: androidx.camera.core.Preview, errors: Flow<String>) {
+        val scaffoldState = rememberScaffoldState()
 
-        Box(
-            Modifier
-                .aspectRatio(1f)
-                .padding(20.dp)
-                .clip(shape = RoundedCornerShape(20.dp))
-                .background(Color(0x33ffffff))
-                .align(Alignment.Center)
-        )
+        LaunchedEffect(Unit) {
+            errors.collect { error ->
+                lifecycleScope.launch {
+                    scaffoldState.snackbarHostState.showSnackbar(
+                        message = error,
+                        actionLabel = "Dismiss"
+                    )
+                }
+            }
+        }
+
+        Scaffold(
+            scaffoldState = scaffoldState,
+            snackbarHost = {
+                SnackbarHost(
+                    hostState = scaffoldState.snackbarHostState,
+                    modifier = Modifier.padding(16.dp)
+                ) { data ->
+                    Snackbar(
+                        snackbarData = data,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            }
+        ) { padding ->
+            Box(modifier = Modifier.padding(padding)) {
+                AndroidView(
+                    modifier = Modifier.fillMaxSize(),
+                    factory = { PreviewView(it).apply { preview.setSurfaceProvider(surfaceProvider) } }
+                )
+
+                Box(
+                    Modifier
+                        .aspectRatio(1f)
+                        .padding(20.dp)
+                        .clip(shape = RoundedCornerShape(20.dp))
+                        .background(Color(0x33ffffff))
+                        .align(Alignment.Center)
+                )
+            }
+        }
     }
 }
+
+@Preview
+@Composable
+fun PreviewRecoveryPassword() = RecoveryPassword(state = LinkDeviceState())
 
 @Composable
 fun RecoveryPassword(state: LinkDeviceState, onChange: (String) -> Unit = {}, onContinue: () -> Unit = {}) {
@@ -271,9 +308,9 @@ fun RecoveryPassword(state: LinkDeviceState, onChange: (String) -> Unit = {}, on
         OutlineButton(
             text = stringResource(id = R.string.continue_2),
             modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .padding(horizontal = 64.dp, vertical = 20.dp)
-                    .width(200.dp)
+                .align(Alignment.CenterHorizontally)
+                .padding(horizontal = 64.dp, vertical = 20.dp)
+                .width(200.dp)
         ) { onContinue() }
     }
 }
