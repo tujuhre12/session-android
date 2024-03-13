@@ -105,7 +105,7 @@ class LinkDeviceActivity : BaseActionBarActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        supportActionBar?.title = "Load Account"
+        supportActionBar?.setTitle(R.string.activity_link_load_account)
         prefs.setHasViewedSeed(true)
         prefs.setConfigurationMessageSynced(false)
         prefs.setRestorationTime(System.currentTimeMillis())
@@ -186,12 +186,12 @@ class LinkDeviceActivity : BaseActionBarActivity() {
                         .padding(horizontal = 60.dp)
                 ) {
                     Text(
-                        "Camera Permission permanently denied. Configure in settings.",
+                        stringResource(R.string.activity_link_camera_permission_permanently_denied_configure_in_settings),
                         textAlign = TextAlign.Center
                     )
                     Spacer(modifier = Modifier.size(20.dp))
                     OutlineButton(
-                        text = "Settings",
+                        text = stringResource(R.string.activity_link_settings),
                         modifier = Modifier.align(Alignment.CenterHorizontally)
                     ) {
                         Intent(ACTION_APPLICATION_DETAILS_SETTINGS).apply {
@@ -201,7 +201,7 @@ class LinkDeviceActivity : BaseActionBarActivity() {
                 }
             } else {
                 OutlineButton(
-                    text = "Grant Camera Permission",
+                    text = stringResource(R.string.activity_link_grant_camera_permission),
                     modifier = Modifier.align(Alignment.Center)
                 ) {
                     cameraPermissionState.run { launchPermissionRequest() }
@@ -218,8 +218,7 @@ class LinkDeviceActivity : BaseActionBarActivity() {
             errors.collect { error ->
                 lifecycleScope.launch {
                     scaffoldState.snackbarHostState.showSnackbar(
-                        message = error,
-                        actionLabel = "Dismiss"
+                        message = error
                     )
                 }
             }
@@ -269,20 +268,20 @@ fun RecoveryPassword(state: LinkDeviceState, onChange: (String) -> Unit = {}, on
     ) {
         Spacer(Modifier.weight(1f))
         Row {
-            Text("Recovery Password", style = MaterialTheme.typography.h4)
+            Text(stringResource(R.string.activity_link_recovery_password), style = MaterialTheme.typography.h4)
             Spacer(Modifier.width(6.dp))
             Icon(
                 painter = painterResource(id = R.drawable.ic_recovery_phrase),
-                contentDescription = "",
+                contentDescription = null,
             )
         }
         Spacer(Modifier.size(28.dp))
-        Text("Enter your recovery password to load your account. If you haven't saved it, you can find it in your app settings.")
+        Text(stringResource(R.string.activity_link_enter_your_recovery_password_to_load_your_account_if_you_haven_t_saved_it_you_can_find_it_in_your_app_settings))
         Spacer(Modifier.size(24.dp))
         OutlinedTextField(
             value = state.recoveryPhrase,
             onValueChange = { onChange(it) },
-            placeholder = { Text("Enter your recovery password") },
+            placeholder = { Text(stringResource(R.string.activity_link_enter_your_recovery_password)) },
             colors = TextFieldDefaults.outlinedTextFieldColors(
                 textColor = state.error?.let { colorDestructive } ?: LocalContentColor.current.copy(LocalContentAlpha.current),
                 focusedBorderColor = Color(0xff414141),

@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import network.loki.messenger.R
 import org.session.libsignal.crypto.MnemonicCodec
 import org.session.libsignal.crypto.MnemonicCodec.DecodingError.InputTooShort
 import org.session.libsignal.crypto.MnemonicCodec.DecodingError.InvalidWord
@@ -29,7 +30,7 @@ class LinkDeviceEvent(val mnemonic: ByteArray)
 
 @HiltViewModel
 class LinkDeviceViewModel @Inject constructor(
-    application: Application
+    private val application: Application
 ): AndroidViewModel(application) {
     private val QR_ERROR_TIME = 3.seconds
     private val state = MutableStateFlow(LinkDeviceState())
@@ -38,9 +39,10 @@ class LinkDeviceViewModel @Inject constructor(
     private val event = Channel<LinkDeviceEvent>()
     val eventFlow = event.receiveAsFlow().take(1)
     private val qrErrors = Channel<Throwable>()
-    val qrErrorsFlow = qrErrors.receiveAsFlow().debounce(QR_ERROR_TIME).takeWhile { event.isEmpty }.mapNotNull {
-        "This QR code does not contain a Recovery Password."
-    }
+    val qrErrorsFlow = qrErrors.receiveAsFlow()
+        .debounce(QR_ERROR_TIME)
+        .takeWhile { event.isEmpty }
+        .mapNotNull { application.getString(R.string.activity_link_this_qr_code_does_not_contain_a_recovery_password) }
 
     private val codec by lazy { MnemonicCodec { MnemonicUtilities.loadFileContents(getApplication(), it) } }
 
@@ -60,7 +62,6 @@ class LinkDeviceViewModel @Inject constructor(
         }
     }
 
-
     fun onChange(recoveryPhrase: String) {
         state.value = LinkDeviceState(recoveryPhrase)
     }
@@ -72,10 +73,10 @@ class LinkDeviceViewModel @Inject constructor(
         state.update {
             it.copy(
                 error = when (error) {
-                    is InputTooShort -> "The Recovery Password you entered is not long enough. Please check and try again."
-                    is InvalidWord -> "Some of the words in your Recovery Password are incorrect. Please check and try again."
-                    else -> "Please check your Recovery Password and try again."
-                }
+                    is InputTooShort -> R.string.activity_link_the_recovery_password_you_entered_is_not_long_enough_please_check_and_try_again
+                    is InvalidWord -> R.string.activity_link_some_of_the_words_in_your_recovery_password_are_incorrect_please_check_and_try_again
+                    else -> R.string.activity_link_please_check_your_recovery_password_and_try_again
+                }.let(application::getString)
             )
         }
     }
