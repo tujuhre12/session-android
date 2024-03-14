@@ -271,7 +271,7 @@ fun RecoveryPassword(state: LinkDeviceState, onChange: (String) -> Unit = {}, on
             Text(stringResource(R.string.activity_link_recovery_password), style = MaterialTheme.typography.h4)
             Spacer(Modifier.width(6.dp))
             Icon(
-                painter = painterResource(id = R.drawable.ic_recovery_phrase),
+                painter = painterResource(id = R.drawable.ic_shield_outline),
                 contentDescription = null,
             )
         }
