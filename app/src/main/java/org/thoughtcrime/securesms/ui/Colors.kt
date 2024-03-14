@@ -80,7 +80,7 @@ fun destructiveButtonColors() = ButtonDefaults.buttonColors(backgroundColor = Co
 
 @Preview
 @Composable
-fun Context.PreviewMessageDetails(
+fun PreviewMessageDetails(
     @PreviewParameter(ThemeResPreviewParameterProvider::class) themeResId: Int
 ) {
     PreviewTheme(themeResId) {
@@ -127,6 +127,5 @@ fun outlinedTextFieldColors(
     textColor = if (isError) colorDestructive else LocalContentColor.current.copy(LocalContentAlpha.current),
     focusedBorderColor = Color(classicDark3),
     unfocusedBorderColor = Color(classicDark3),
-    cursorColor = LocalContentColor.current,
     placeholderColor = if (isError) colorDestructive else MaterialTheme.colors.onSurface.copy(ContentAlpha.medium)
 )

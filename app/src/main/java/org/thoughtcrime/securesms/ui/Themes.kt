@@ -5,6 +5,8 @@ import androidx.annotation.AttrRes
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.text.selection.LocalTextSelectionColors
+import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Shapes
@@ -55,9 +57,15 @@ fun AppTheme(
 
     val surface = context.getColorFromTheme(R.attr.colorSettingsBackground)
 
+
     CompositionLocalProvider(LocalExtraColors provides extraColors) {
         AppCompatTheme(surface = surface) {
-            content()
+            CompositionLocalProvider(LocalTextSelectionColors provides TextSelectionColors(
+                handleColor = MaterialTheme.colors.secondary,
+                backgroundColor = MaterialTheme.colors.secondary.copy(alpha = 0.5f)
+            )) {
+                content()
+            }
         }
     }
 }
