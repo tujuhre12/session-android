@@ -80,8 +80,10 @@ import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.OutlineButton
 import org.thoughtcrime.securesms.ui.baseBold
+import org.thoughtcrime.securesms.ui.classicDark3
 import org.thoughtcrime.securesms.ui.colorDestructive
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
+import org.thoughtcrime.securesms.ui.outlinedTextFieldColors
 import java.util.concurrent.Executors
 import javax.inject.Inject
 
@@ -282,13 +284,7 @@ fun RecoveryPassword(state: LinkDeviceState, onChange: (String) -> Unit = {}, on
             value = state.recoveryPhrase,
             onValueChange = { onChange(it) },
             placeholder = { Text(stringResource(R.string.activity_link_enter_your_recovery_password)) },
-            colors = TextFieldDefaults.outlinedTextFieldColors(
-                textColor = state.error?.let { colorDestructive } ?: LocalContentColor.current.copy(LocalContentAlpha.current),
-                focusedBorderColor = Color(0xff414141),
-                unfocusedBorderColor = Color(0xff414141),
-                cursorColor = LocalContentColor.current,
-                placeholderColor = state.error?.let { colorDestructive } ?: MaterialTheme.colors.onSurface.copy(ContentAlpha.medium)
-            ),
+            colors = outlinedTextFieldColors(state.error != null),
             singleLine = true,
             keyboardActions = KeyboardActions(
                 onDone = { onContinue() },

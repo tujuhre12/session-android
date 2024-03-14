@@ -7,8 +7,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Card
 import androidx.compose.material.Colors
+import androidx.compose.material.ContentAlpha
+import androidx.compose.material.LocalContentAlpha
+import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
+import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.primarySurface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -115,3 +119,14 @@ private fun Colors() {
         }
     }
 }
+
+@Composable
+fun outlinedTextFieldColors(
+    isError: Boolean
+) = TextFieldDefaults.outlinedTextFieldColors(
+    textColor = if (isError) colorDestructive else LocalContentColor.current.copy(LocalContentAlpha.current),
+    focusedBorderColor = Color(classicDark3),
+    unfocusedBorderColor = Color(classicDark3),
+    cursorColor = LocalContentColor.current,
+    placeholderColor = if (isError) colorDestructive else MaterialTheme.colors.onSurface.copy(ContentAlpha.medium)
+)
