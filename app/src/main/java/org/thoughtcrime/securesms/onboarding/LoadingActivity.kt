@@ -28,6 +28,7 @@ import org.thoughtcrime.securesms.onboarding.messagenotifications.startPNModeAct
 import org.thoughtcrime.securesms.onboarding.pickname.startPickDisplayNameActivity
 import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.ProgressArc
+import org.thoughtcrime.securesms.util.setUpActionBarSessionLogo
 import javax.inject.Inject
 
 private const val EXTRA_MNEMONIC = "mnemonic"
@@ -65,6 +66,8 @@ class LoadingActivity: BaseActionBarActivity() {
         ComposeView(this)
             .apply { setContent { LoadingScreen() } }
             .let(::setContentView)
+
+        setUpActionBarSessionLogo(true)
 
         viewModel.restore(application, intent.getByteArrayExtra(EXTRA_MNEMONIC)!!)
 
