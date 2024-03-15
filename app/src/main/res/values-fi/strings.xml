@@ -529,9 +529,6 @@ on viallinen!</string>
     <string name="invalid_session_id">Virheellinen Session ID</string>
     <string name="cancel">Peruuta</string>
     <string name="your_session_id">Sinun Session ID</string>
-    <string name="activity_landing_title_2">Session alkaa täältä...</string>
-    <string name="activity_landing_register_button_title">Tee Session ID</string>
-    <string name="activity_landing_restore_button_title">Jatka Istuntoasi</string>
     <string name="view_fake_chat_bubble_1">Mikä on Session?</string>
     <string name="view_fake_chat_bubble_2">Se on hajautettu, salattu viestisovellus</string>
     <string name="view_fake_chat_bubble_3">Joten se ei kerää henkilökohtaisia tietoja tai keskustelun metatietoja? Miten se toimii?</string>

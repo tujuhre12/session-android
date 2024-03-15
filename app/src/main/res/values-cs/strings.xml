@@ -553,9 +553,6 @@
     <string name="invalid_session_id">Neplatné Session ID</string>
     <string name="cancel">Zrušit</string>
     <string name="your_session_id">ID vaší relace</string>
-    <string name="activity_landing_title_2">Vaše Session začíná zde...</string>
-    <string name="activity_landing_register_button_title">Vytvořit ID relace</string>
-    <string name="activity_landing_restore_button_title">Pokračujte ve své relaci</string>
     <string name="view_fake_chat_bubble_1">Co je Session?</string>
     <string name="view_fake_chat_bubble_2">Je to decentralizovaná a šifrovaná aplikace pro zasílání zpráv</string>
     <string name="view_fake_chat_bubble_3">Takže neshromažďuje mé osobní údaje ani metadata mých konverzací? Jak to funguje?</string>

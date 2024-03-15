@@ -531,9 +531,6 @@
     <string name="invalid_session_id">Etibarsız Session Kimliyi</string>
     <string name="cancel">İmtina</string>
     <string name="your_session_id">Session Kimliyiniz</string>
-    <string name="activity_landing_title_2">Session-unuz burada başlayır...</string>
-    <string name="activity_landing_register_button_title">Session Kimliyini yarat</string>
-    <string name="activity_landing_restore_button_title">Seansınıza davam edin</string>
     <string name="view_fake_chat_bubble_1">Session nədir?</string>
     <string name="view_fake_chat_bubble_2">Mərkəzi olmayan, şifrəli bir mesajlaşma tətbiqidir</string>
     <string name="view_fake_chat_bubble_3">Yəni, şəxsi məlumatlarımı və ya danışıq meta verilənlərimi yığmır? Necə işləyir?</string>

@@ -530,9 +530,6 @@
     <string name="invalid_session_id">Malvalida Session ID</string>
     <string name="cancel">Nuligi</string>
     <string name="your_session_id">Via Session ID</string>
-    <string name="activity_landing_title_2">Via Sesio komenci ĉi tie...</string>
-    <string name="activity_landing_register_button_title">Krei Session ID-on</string>
-    <string name="activity_landing_restore_button_title">Daŭrigi Vian Sesion</string>
     <string name="view_fake_chat_bubble_1">Kio estas Session?</string>
     <string name="view_fake_chat_bubble_2">Ĝi estas malcentraliza kaj ĉifrita mesaĝilo</string>
     <string name="view_fake_chat_bubble_3">Do ĝi ne kolektas miajn personajn informojn aŭ miajn konversaciajn metadatumojn? Kiel ĝi funkcias?</string>

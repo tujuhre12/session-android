@@ -336,9 +336,6 @@ trao đổi chìa khóa bị hỏng!</string>
     <string name="invalid_session_id">Session ID không hợp lệ</string>
     <string name="cancel">Huỷ</string>
     <string name="your_session_id">Session ID của bạn</string>
-    <string name="activity_landing_title_2">Session của bạn bắt đầu từ đây...</string>
-    <string name="activity_landing_register_button_title">Tạo Session ID</string>
-    <string name="activity_landing_restore_button_title">Tiếp tục Session của bạn</string>
     <string name="view_fake_chat_bubble_1">Session là gì?</string>
     <string name="view_fake_chat_bubble_2">Đây là một ứng dụng nhắn tin phân cấp và mã hoá</string>
     <string name="view_fake_chat_bubble_3">Vậy ứng dụng có thu thập dữ liệu cá nhân của tôi hoặc siêu dữ liệu về cuộc hội thoại của tôi không? Ứng dụng hoạt động như thế nào?</string>

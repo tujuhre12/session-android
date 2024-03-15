@@ -531,9 +531,6 @@
     <string name="invalid_session_id">Μη έγκυρη Session ταυτότητα</string>
     <string name="cancel">Ακύρωση</string>
     <string name="your_session_id">Η ταυτότητά σας</string>
-    <string name="activity_landing_title_2">Η συνομιλία σας ξεκινά εδώ...</string>
-    <string name="activity_landing_register_button_title">Δημιουργία Session ταυτότητας</string>
-    <string name="activity_landing_restore_button_title">Συνέχεια συνομιλίας</string>
     <string name="view_fake_chat_bubble_1">Τι είναι το Session;</string>
     <string name="view_fake_chat_bubble_2">Είναι μια αποκεντρωμένη, κρυπτογραφημένη εφαρμογή μηνυμάτων</string>
     <string name="view_fake_chat_bubble_3">Δηλαδή δεν συλλέγει τα προσωπικά μου στοιχεία ή τα μεταδεδομένα των συνομιλιών μου; Πώς λειτουργεί;</string>

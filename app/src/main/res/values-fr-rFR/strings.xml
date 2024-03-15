@@ -556,9 +556,6 @@
     <string name="invalid_session_id">Session ID non valide</string>
     <string name="cancel">Annuler</string>
     <string name="your_session_id">Votre Session ID</string>
-    <string name="activity_landing_title_2">Votre Session débute ici...</string>
-    <string name="activity_landing_register_button_title">Créer un Session ID</string>
-    <string name="activity_landing_restore_button_title">Continuez votre Session</string>
     <string name="view_fake_chat_bubble_1">Qu\'est-ce que Session ?</string>
     <string name="view_fake_chat_bubble_2">C\'est une application de messagerie décentralisée et cryptée</string>
     <string name="view_fake_chat_bubble_3">Elle ne recueille donc pas mes informations personnelles ou mes métadonnées de conversations ? Comment ça marche ?</string>

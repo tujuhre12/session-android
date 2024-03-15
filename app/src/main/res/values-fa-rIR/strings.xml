@@ -553,9 +553,6 @@
     <string name="invalid_session_id">شناسه‌ی Session نامعتبر است.</string>
     <string name="cancel">لغو</string>
     <string name="your_session_id">شناسه‌ی Session شما</string>
-    <string name="activity_landing_title_2">Session شما از اینجا شروع می‌شود...</string>
-    <string name="activity_landing_register_button_title">ساخت شناسه‌ی Session</string>
-    <string name="activity_landing_restore_button_title">Session خود را ادامه دهید</string>
     <string name="view_fake_chat_bubble_1">Session چیست؟</string>
     <string name="view_fake_chat_bubble_2">Session یک برنامه پیام‌رسان غیرمتمرکز و رمزگذاری شده است.</string>
     <string name="view_fake_chat_bubble_3">پس اطلاعات شخصی من یا داده‌های گفت‌وگو‌هایم جمع‌آوری نمی‌شود؟ چگونه کار می‌کند؟</string>

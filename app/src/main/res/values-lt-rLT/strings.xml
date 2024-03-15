@@ -548,9 +548,6 @@
     <string name="invalid_session_id">Neteisingas Session ID</string>
     <string name="cancel">Atsisakyti</string>
     <string name="your_session_id">Jūsų Session ID</string>
-    <string name="activity_landing_title_2">Jūsų Session prasideda čia...</string>
-    <string name="activity_landing_register_button_title">Susikurti Session ID</string>
-    <string name="activity_landing_restore_button_title">Tęsti savo Session</string>
     <string name="view_fake_chat_bubble_1">Kas yra Session?</string>
     <string name="view_fake_chat_bubble_2">Tai – decentralizuota, šifruota pokalbių programėlė</string>
     <string name="view_fake_chat_bubble_3">Ji nerenka mano asmeninės informacijos ar mano pokalbių metaduomenų? Kaip ji veikia?</string>

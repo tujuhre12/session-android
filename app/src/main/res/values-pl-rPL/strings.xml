@@ -553,9 +553,6 @@
     <string name="invalid_session_id">Nieprawidłowy identyfikator Session</string>
     <string name="cancel">Anuluj</string>
     <string name="your_session_id">Twój identyfikator Session</string>
-    <string name="activity_landing_title_2">Twoja sesja zaczyna się tutaj...</string>
-    <string name="activity_landing_register_button_title">Utwórz identyfikator Session</string>
-    <string name="activity_landing_restore_button_title">Kontynuuj swoją sesję</string>
     <string name="view_fake_chat_bubble_1">Czym jest Session?</string>
     <string name="view_fake_chat_bubble_2">To zdecentralizowana, szyfrowana aplikacja do przesyłania wiadomości</string>
     <string name="view_fake_chat_bubble_3">Więc nie zbiera moich danych osobowych ani metadanych z mojej rozmowy? Jak to działa?</string>

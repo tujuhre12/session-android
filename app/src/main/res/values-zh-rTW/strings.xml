@@ -524,9 +524,6 @@
     <string name="invalid_session_id">無效的 Session ID</string>
     <string name="cancel">取消</string>
     <string name="your_session_id">您的 Session ID</string>
-    <string name="activity_landing_title_2">您的 Session 將從此開始⋯</string>
-    <string name="activity_landing_register_button_title">創建 Session ID</string>
-    <string name="activity_landing_restore_button_title">繼續使用 Session</string>
     <string name="view_fake_chat_bubble_1">Session 是什麼？</string>
     <string name="view_fake_chat_bubble_2">這是一個去中心化並且加密的訊息 app</string>
     <string name="view_fake_chat_bubble_3">所以牠不會收集我的個人資訊或我的對話元數據？ 它是如何工作的？</string>

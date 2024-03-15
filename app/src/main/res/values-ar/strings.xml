@@ -577,9 +577,6 @@
     <string name="invalid_session_id">عنوان تعريف خاطئ</string>
     <string name="cancel">إلغاء</string>
     <string name="your_session_id">عنوان تعريفك</string>
-    <string name="activity_landing_title_2">اِبدأ من هنا...</string>
-    <string name="activity_landing_register_button_title">أنشئ عنوان تعريف</string>
-    <string name="activity_landing_restore_button_title">واصل بالحساب القديم</string>
     <string name="view_fake_chat_bubble_1">ما هي الجلسة (Session)؟</string>
     <string name="view_fake_chat_bubble_2">هو تطبيق مراسلة مشفر, لامركزي</string>
     <string name="view_fake_chat_bubble_3">اِذن لا يقوم بجمع المعلومات الشخصية أو المعلومات الوصفية لمحادثاتي؟ كيف يعمل؟</string>

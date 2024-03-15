@@ -530,9 +530,6 @@ nøkkelutvekslingsmelding.</string>
     <string name="invalid_session_id">Ugyldig Session ID</string>
     <string name="cancel">Avbryt</string>
     <string name="your_session_id">Din Session ID</string>
-    <string name="activity_landing_title_2">Din Session begynner her...</string>
-    <string name="activity_landing_register_button_title">Opprett Session-ID</string>
-    <string name="activity_landing_restore_button_title">Fortsett din Session</string>
     <string name="view_fake_chat_bubble_1">Hva er Session?</string>
     <string name="view_fake_chat_bubble_2">Det er en desentralisert, kryptert meldingsapp</string>
     <string name="view_fake_chat_bubble_3">Så den henter ikke min personlige informasjon eller samtaletadata? Hvordan virker det?</string>

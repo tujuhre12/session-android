@@ -531,9 +531,6 @@
     <string name="invalid_session_id">Ongeldige Sessie-ID</string>
     <string name="cancel">Annuleren</string>
     <string name="your_session_id">Uw Sessie-ID</string>
-    <string name="activity_landing_title_2">Uw sessie begint hier...</string>
-    <string name="activity_landing_register_button_title">Sessie-ID aanmaken</string>
-    <string name="activity_landing_restore_button_title">Doorgaan met uw sessie</string>
     <string name="view_fake_chat_bubble_1">Wat is Sessie?</string>
     <string name="view_fake_chat_bubble_2">Het is een gedecentraliseerde, versleutelde berichten-app</string>
     <string name="view_fake_chat_bubble_3">Dus het verzamelt geen persoonlijke informatie of de metagegevens van mijn gesprek? Hoe werkt het?</string>

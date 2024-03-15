@@ -556,9 +556,6 @@
     <string name="invalid_session_id">Невірна Session ID адресса</string>
     <string name="cancel">Відміна</string>
     <string name="your_session_id">Ваша Session ID адресса</string>
-    <string name="activity_landing_title_2">Ваша сесія починається тут...</string>
-    <string name="activity_landing_register_button_title">Створити Session ID адрессу</string>
-    <string name="activity_landing_restore_button_title">Продовжити вашу сесію</string>
     <string name="view_fake_chat_bubble_1">Що таке Session?</string>
     <string name="view_fake_chat_bubble_2">Це децентралізований, шифрований мессенджер обміну повідомленнями</string>
     <string name="view_fake_chat_bubble_3">Отже, він не збирає мою особисту інформацію чи мою метадані розмови? Як це працює?</string>

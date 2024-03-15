@@ -526,9 +526,6 @@ foi recebida está corrompida!</string>
     <string name="invalid_session_id">ID Session inválido</string>
     <string name="cancel">Cancelar</string>
     <string name="your_session_id">Seu ID Session</string>
-    <string name="activity_landing_title_2">O Session começa aqui...</string>
-    <string name="activity_landing_register_button_title">Criar ID Session</string>
-    <string name="activity_landing_restore_button_title">Continuar com seu Session</string>
     <string name="view_fake_chat_bubble_1">O que é o Session?</string>
     <string name="view_fake_chat_bubble_2">É um aplicativo de mensagens criptografado e descentralizado</string>
     <string name="view_fake_chat_bubble_3">Então ele não coleta minhas informações pessoais ou meus metadados de conversa? Como funciona?</string>

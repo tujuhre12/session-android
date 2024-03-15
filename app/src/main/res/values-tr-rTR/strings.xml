@@ -530,9 +530,6 @@ iletisi alındı!</string>
     <string name="invalid_session_id">Geçersiz Session ID\'si</string>
     <string name="cancel">İptal</string>
     <string name="your_session_id">Session ID\'niz</string>
-    <string name="activity_landing_title_2">Your Session begins here...</string>
-    <string name="activity_landing_register_button_title">Session Kimliği Oluştur</string>
-    <string name="activity_landing_restore_button_title">Oturumunuza Devam Edin</string>
     <string name="view_fake_chat_bubble_1">Session Nedir?</string>
     <string name="view_fake_chat_bubble_2">Merkezi olmayan, şifreli bir mesajlaşma uygulamasıdır</string>
     <string name="view_fake_chat_bubble_3">Yani kişisel bilgilerimi veya konuşma meta verilerimi toplamaz mı? Nasıl çalışır?</string>

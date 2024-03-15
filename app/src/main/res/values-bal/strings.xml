@@ -429,9 +429,6 @@ memproses pertukaran kunci korupsi.</string>
     <string name="invalid_session_id">Session salah</string>
     <string name="cancel">Batal</string>
     <string name="your_session_id">Session ID anda</string>
-    <string name="activity_landing_title_2">Session anda dimulai di sini</string>
-    <string name="activity_landing_register_button_title">Buat Session ID</string>
-    <string name="activity_landing_restore_button_title">Lanjutkan Session</string>
     <string name="view_fake_chat_bubble_1">Apa itu Session?</string>
     <string name="view_fake_chat_bubble_2">Session adalah aplikasi pesan terenkripsi yang terdesentralisasi</string>
     <string name="view_fake_chat_bubble_3">Bagaimana dengan pengumpulan informasi personal atau metadata percakapan? Bagaimana cara kerjanya?</string>

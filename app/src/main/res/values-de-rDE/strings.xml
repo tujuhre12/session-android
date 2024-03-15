@@ -529,9 +529,6 @@
     <string name="invalid_session_id">Ungültige Session ID</string>
     <string name="cancel">Abbrechen</string>
     <string name="your_session_id">Ihre Session ID</string>
-    <string name="activity_landing_title_2">Ihre Session beginnt hier...</string>
-    <string name="activity_landing_register_button_title">Session ID erstellen</string>
-    <string name="activity_landing_restore_button_title">Ihre Session fortsetzen</string>
     <string name="view_fake_chat_bubble_1">Was ist Session?</string>
     <string name="view_fake_chat_bubble_2">Es ist eine dezentrale, verschlüsselte Messaging-App.</string>
     <string name="view_fake_chat_bubble_3">Es werden also weder meine persönlichen Daten noch die Metadaten meiner Konversation erfasst? Wie funktioniert das?</string>

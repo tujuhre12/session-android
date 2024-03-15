@@ -523,9 +523,6 @@ d\'intercanvi de claus!</string>
     <string name="invalid_session_id">ID de Session invàlid</string>
     <string name="cancel">Cancel·la</string>
     <string name="your_session_id">El teu ID de Session</string>
-    <string name="activity_landing_title_2">El teu Session comença aquí...</string>
-    <string name="activity_landing_register_button_title">Crea un ID de Session</string>
-    <string name="activity_landing_restore_button_title">Continua el teu Session</string>
     <string name="view_fake_chat_bubble_1">Què és Session?</string>
     <string name="view_fake_chat_bubble_2">És una app xifrada i descentralitzada</string>
     <string name="view_fake_chat_bubble_3">Per tant, no agafa les meves dades personals o les metadades de les meves converses? Com funciona?</string>

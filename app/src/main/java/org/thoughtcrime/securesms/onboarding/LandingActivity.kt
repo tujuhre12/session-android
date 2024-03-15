@@ -100,8 +100,8 @@ class LandingActivity : BaseActionBarActivity() {
 
     private fun openDialog() {
         showSessionDialog {
-            title(R.string.activity_landing_open_url_title)
-            text(R.string.activity_landing_open_url_explanation)
+            title(R.string.urlOpen)
+            text(R.string.urlOpenBrowser)
             button(R.string.activity_landing_terms_of_service) { open("https://getsession.org/terms-of-service") }
             button(R.string.activity_landing_privacy_policy) { open("https://getsession.org/privacy-policy") }
         }

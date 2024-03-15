@@ -538,9 +538,6 @@
     <string name="invalid_session_id">Սխալ Session ID</string>
     <string name="cancel">Փակել</string>
     <string name="your_session_id">Ձեր Session ID֊ն</string>
-    <string name="activity_landing_title_2">Ձեր Սեանսը սկսվում է այստեղ...</string>
-    <string name="activity_landing_register_button_title">Ստեղծել Session֊ի հաշիվ</string>
-    <string name="activity_landing_restore_button_title">Շարունակել Session֊ից օգտվելը</string>
     <string name="view_fake_chat_bubble_1">Ի՞նչ է Սեանսը։</string>
     <string name="view_fake_chat_bubble_2">Այն ապահով, ծածկագրված նամակների ծրագիր է</string>
     <string name="view_fake_chat_bubble_3">Դա նշանակում է, որ այն չի՞ հավաքում իմ անձնական տվյալները կամ իմ զրույցի մետատվյալները։</string>

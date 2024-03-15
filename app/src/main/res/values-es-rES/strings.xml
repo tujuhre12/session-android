@@ -530,9 +530,6 @@ de intercambio de claves!</string>
     <string name="invalid_session_id">ID de Session no válida</string>
     <string name="cancel">Cancelar</string>
     <string name="your_session_id">Tu ID de Session</string>
-    <string name="activity_landing_title_2">Tu Session comienza aquí...</string>
-    <string name="activity_landing_register_button_title">Crear ID de Session</string>
-    <string name="activity_landing_restore_button_title">Continúa tu Session</string>
     <string name="view_fake_chat_bubble_1">¿Qué es Session?</string>
     <string name="view_fake_chat_bubble_2">Es una aplicación de mensajería descentralizada y cifrada</string>
     <string name="view_fake_chat_bubble_3">¿Entonces no recopila mi información personal ni los metadatos de mi conversación? ¿Cómo funciona?</string>

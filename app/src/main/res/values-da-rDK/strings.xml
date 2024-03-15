@@ -529,9 +529,6 @@ udveksel besked!</string>
     <string name="invalid_session_id">Ugyldigt Session ID</string>
     <string name="cancel">Annuller</string>
     <string name="your_session_id">Dit Sessions-ID</string>
-    <string name="activity_landing_title_2">Dit eventyr med Session begynder her...</string>
-    <string name="activity_landing_register_button_title">Opret Session ID</string>
-    <string name="activity_landing_restore_button_title">Fortsæt din Session</string>
     <string name="view_fake_chat_bubble_1">Hvad er Session?</string>
     <string name="view_fake_chat_bubble_2">Det er en decentraliseret, krypteret besked app</string>
     <string name="view_fake_chat_bubble_3">Så den indsamler ikke mine personlige oplysninger eller min samtale metadata? Hvordan virker det?</string>

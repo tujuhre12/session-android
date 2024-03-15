@@ -530,9 +530,6 @@ för nyckelutbyte!</string>
     <string name="invalid_session_id">Ogiltigt Sessions-ID</string>
     <string name="cancel">Avbryt</string>
     <string name="your_session_id">Ditt Session ID</string>
-    <string name="activity_landing_title_2">Din Session börjar här...</string>
-    <string name="activity_landing_register_button_title">Skapa Session-ID</string>
-    <string name="activity_landing_restore_button_title">Fortsätt din Session</string>
     <string name="view_fake_chat_bubble_1">Vad är Session?</string>
     <string name="view_fake_chat_bubble_2">Det är en decentraliserad, krypterad meddelandeapp</string>
     <string name="view_fake_chat_bubble_3">Så det samlar inte in mina personuppgifter eller mina konversationers metadata? Hur fungerar det?</string>

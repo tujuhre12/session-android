@@ -531,9 +531,6 @@ scambia un altro messaggio!</string>
     <string name="invalid_session_id">ID Sessione non valido</string>
     <string name="cancel">Annulla</string>
     <string name="your_session_id">Il tuo ID Sessione</string>
-    <string name="activity_landing_title_2">La tua Sessione inizia qui...</string>
-    <string name="activity_landing_register_button_title">Crea ID Sessione</string>
-    <string name="activity_landing_restore_button_title">Continua la Sessione</string>
     <string name="view_fake_chat_bubble_1">Cos\'è Session?</string>
     <string name="view_fake_chat_bubble_2">È un\'app di messaggistica decentralizzata e crittografata</string>
     <string name="view_fake_chat_bubble_3">Quindi non raccoglie informazioni personali o metadati di conversazione? Come funziona?</string>

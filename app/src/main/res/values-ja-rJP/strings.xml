@@ -515,9 +515,6 @@
     <string name="invalid_session_id">Session ID が無効です</string>
     <string name="cancel">取り消す</string>
     <string name="your_session_id">あなたの Session ID</string>
-    <string name="activity_landing_title_2">ここから Session が始まります...</string>
-    <string name="activity_landing_register_button_title">Session ID を作成する</string>
-    <string name="activity_landing_restore_button_title">Session を続ける</string>
     <string name="view_fake_chat_bubble_1">Session とは？</string>
     <string name="view_fake_chat_bubble_2">分散型の暗号化されたメッセージングアプリです</string>
     <string name="view_fake_chat_bubble_3">個人情報や会話のメタデータは収集されませんか？どのように機能しますか？</string>

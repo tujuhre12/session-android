@@ -532,9 +532,6 @@
     <string name="invalid_session_id">Érvénytelen Session azonosító</string>
     <string name="cancel">Mégse</string>
     <string name="your_session_id">A session azonosítód</string>
-    <string name="activity_landing_title_2">A Session itt kezdődik...</string>
-    <string name="activity_landing_register_button_title">Session azonosító létrehozása</string>
-    <string name="activity_landing_restore_button_title">Session azonosító helyreállítása</string>
     <string name="view_fake_chat_bubble_1">Mi az a Session?</string>
     <string name="view_fake_chat_bubble_2">Ez egy decentralizált, titkosított üzenetküldő alkalmazás</string>
     <string name="view_fake_chat_bubble_3">Tehát nem gyűjti a személyes adataimat vagy a beszélgetés metaadatait? Hogyan működik?</string>

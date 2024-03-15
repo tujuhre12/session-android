@@ -545,7 +545,6 @@ výmeny kľúčov.</string>
     <string name="invalid_session_id">Neplatné Session ID</string>
     <string name="cancel">Zrušiť</string>
     <string name="your_session_id">Vaše Session ID</string>
-    <string name="activity_landing_register_button_title">Vytvoriť Session ID</string>
     <string name="view_fake_chat_bubble_1">Čo je Session?</string>
     <string name="view_fake_chat_bubble_2">Je to decentralizovaná, šifrovaná aplikácia na posielanie správ</string>
     <string name="view_fake_chat_bubble_3">Takže nezbiera moje osobné informácie alebo metadáta mojich konverzácií? Ako to funguje?</string>

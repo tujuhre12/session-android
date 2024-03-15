@@ -518,9 +518,6 @@
     <string name="invalid_session_id">无效的Session ID</string>
     <string name="cancel">取消</string>
     <string name="your_session_id">您的Session ID</string>
-    <string name="activity_landing_title_2">您的Session从这里开始...</string>
-    <string name="activity_landing_register_button_title">创建Session ID</string>
-    <string name="activity_landing_restore_button_title">继续使用您的Session ID</string>
     <string name="view_fake_chat_bubble_1">什么是Session？</string>
     <string name="view_fake_chat_bubble_2">Session是一个去中心化的加密消息应用。</string>
     <string name="view_fake_chat_bubble_3">所以Session不会收集我的个人信息或者对话元数据？怎么做到的？</string>

@@ -545,9 +545,6 @@ schimbul de chei este corupt </string>
     <string name="invalid_session_id">ID sesiune nevalid</string>
     <string name="cancel">Anulare</string>
     <string name="your_session_id">ID-ul sesiunii dvs</string>
-    <string name="activity_landing_title_2">Sesiunea dvs. începe aici...</string>
-    <string name="activity_landing_register_button_title">Creați ID sesiune</string>
-    <string name="activity_landing_restore_button_title">Continuați sesiunea</string>
     <string name="view_fake_chat_bubble_1">Ce este Session?</string>
     <string name="view_fake_chat_bubble_2">Este o aplicație de mesagerie descentralizată, criptată</string>
     <string name="view_fake_chat_bubble_3">Deci nu colectează informaţii personale sau metadatele conversaţiei? Cum funcţionează?</string>

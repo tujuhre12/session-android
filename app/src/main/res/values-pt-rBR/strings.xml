@@ -531,9 +531,6 @@
     <string name="invalid_session_id">Session ID inválida</string>
     <string name="cancel">Cancelar</string>
     <string name="your_session_id">Sua Session ID</string>
-    <string name="activity_landing_title_2">Seu Session começa aqui...</string>
-    <string name="activity_landing_register_button_title">Criar Session ID</string>
-    <string name="activity_landing_restore_button_title">Continuar Seu Session</string>
     <string name="view_fake_chat_bubble_1">O que é Session?</string>
     <string name="view_fake_chat_bubble_2">É um app de mensageria encriptada, descentralizada</string>
     <string name="view_fake_chat_bubble_3">Então ele não coleta minha informação pessoal ou meus metadados de conversa? Como funciona?</string>

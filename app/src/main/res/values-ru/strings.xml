@@ -555,9 +555,6 @@
     <string name="invalid_session_id">Неверный Session ID</string>
     <string name="cancel">Отмена</string>
     <string name="your_session_id">Ваш Session ID</string>
-    <string name="activity_landing_title_2">Здесь начинается Session...</string>
-    <string name="activity_landing_register_button_title">Создать Session ID</string>
-    <string name="activity_landing_restore_button_title">Восстановить Session ID</string>
     <string name="view_fake_chat_bubble_1">Что такое Session?</string>
     <string name="view_fake_chat_bubble_2">Это децентрализованное, зашифрованное приложение для обмена сообщениями</string>
     <string name="view_fake_chat_bubble_3">Значит ли это, что оно не собирает мою личную информацию или метаданные моего разговора? Как оно работает?</string>
