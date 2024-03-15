@@ -124,7 +124,8 @@ private fun Colors() {
 fun outlinedTextFieldColors(
     isError: Boolean
 ) = TextFieldDefaults.outlinedTextFieldColors(
-    textColor = if (isError) colorDestructive else LocalContentColor.current.copy(LocalContentAlpha.current),
+    textColor = if (isError) colorDestructive else LocalContentColor.current,
+    cursorColor = if (isError) colorDestructive else LocalContentColor.current,
     focusedBorderColor = Color(classicDark3),
     unfocusedBorderColor = Color(classicDark3),
     placeholderColor = if (isError) colorDestructive else MaterialTheme.colors.onSurface.copy(ContentAlpha.medium)
