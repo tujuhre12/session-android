@@ -536,11 +536,11 @@ d\'intercanvi de claus!</string>
     <string name="activity_restore_title">Restableix el teu compte</string>
     <string name="activity_restore_explanation">Introdueix la frase de recuperació que se\'t va proporcionar quan et vas registrar per a restaurar el compte.</string>
     <string name="activity_restore_seed_edit_text_hint">Introdueix la frase de recuperació</string>
-    <string name="activity_display_name_title_2">Tria el nom que es mostrarà</string>
-    <string name="activity_display_name_explanation">Aquest serà el teu nom quan facis servir Session. Pot ser el teu nom real, un àlies o qualsevol altra cosa que t\'agradi.</string>
-    <string name="activity_display_name_edit_text_hint">Escriu el nom a mostrar</string>
-    <string name="activity_display_name_display_name_missing_error">Tria un nom a mostrar, si us plau</string>
-    <string name="activity_display_name_display_name_too_long_error">Selecciona un nom de visualització més curt</string>
+    <string name="displayNamePick">Tria el nom que es mostrarà</string>
+    <string name="displayNameDescription">Aquest serà el teu nom quan facis servir Session. Pot ser el teu nom real, un àlies o qualsevol altra cosa que t\'agradi.</string>
+    <string name="displayNameEnter">Escriu el nom a mostrar</string>
+    <string name="displayNameErrorDescription">Tria un nom a mostrar, si us plau</string>
+    <string name="displayNameErrorDescriptionShorter">Selecciona un nom de visualització més curt</string>
     <string name="activity_pn_mode_recommended_option_tag">Recomanat</string>
     <string name="activity_pn_mode_no_option_picked_dialog_title">Selecciona una opció, si us plau</string>
     <string name="activity_home_empty_state_message">Encara no tens cap contacte</string>
@@ -637,7 +637,6 @@ d\'intercanvi de claus!</string>
     <string name="activity_backup_restore_explanation_1">Selecciona un fitxer de còpia de seguretat i entra la frase de pas amb el qual va ser creat.</string>
     <string name="activity_backup_restore_passphrase">Frase de pas de 30 dígits</string>
     <string name="activity_link_device_skip_prompt">Això triga un xic, t\'ho vols saltar?</string>
-    <string name="activity_link_device_link_device">Enllaça un dispositiu</string>
     <string name="activity_join_public_chat_join_rooms">O uneix-te a alguns d\'aquests…</string>
     <string name="activity_pn_mode_message_notifications">Notificacions de missatge</string>
     <string name="activity_pn_mode_explanation">Hi ha dues maneres per les quals Session et pot notificar els missatges nous.</string>
@@ -645,7 +644,6 @@ d\'intercanvi de claus!</string>
     <string name="activity_pn_mode_slow_mode">Mode lent</string>
     <string name="activity_pn_mode_fast_mode_explanation">Es notificaran els missatges de forma immediata i fiable fent servir els servidors de notificació de Google.</string>
     <string name="activity_pn_mode_slow_mode_explanation">Session ocasionalment comprovarà en pla secundari si hi ha nous missatges.</string>
-    <string name="fragment_recovery_phrase_title">Frase de recuperació</string>
     <string name="activity_prompt_passphrase_session_locked">El Session està blocat</string>
     <string name="activity_prompt_passphrase_tap_to_unlock">Toca per a desblocar</string>
     <string name="fragment_user_details_bottom_sheet_edit_text_hint">Introdueix una sobrenom</string>

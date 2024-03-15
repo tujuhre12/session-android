@@ -531,11 +531,11 @@
     <string name="activity_restore_title">恢复您的帐号</string>
     <string name="activity_restore_explanation">在您重新登陆并需要恢复账户时，请输入您注册帐号时的恢复口令</string>
     <string name="activity_restore_seed_edit_text_hint">输入您的恢复口令</string>
-    <string name="activity_display_name_title_2">选择您想显示的名称</string>
-    <string name="activity_display_name_explanation">这就是您在使用Session时的名字。它可以是您的真实姓名，别名或您喜欢的其他任何名称</string>
-    <string name="activity_display_name_edit_text_hint">输入您想显示的名称</string>
-    <string name="activity_display_name_display_name_missing_error">请设定一个名称</string>
-    <string name="activity_display_name_display_name_too_long_error">请设定一个较短的名称</string>
+    <string name="displayNamePick">选择您想显示的名称</string>
+    <string name="displayNameDescription">这就是您在使用Session时的名字。它可以是您的真实姓名，别名或您喜欢的其他任何名称</string>
+    <string name="displayNameEnter">输入您想显示的名称</string>
+    <string name="displayNameErrorDescription">请设定一个名称</string>
+    <string name="displayNameErrorDescriptionShorter">请设定一个较短的名称</string>
     <string name="activity_pn_mode_recommended_option_tag">推荐的选项</string>
     <string name="activity_pn_mode_no_option_picked_dialog_title">请选择一个选项</string>
     <string name="activity_home_empty_state_message">您还没有任何联系人</string>
@@ -643,7 +643,6 @@
     <string name="activity_backup_restore_explanation_1">选择一个备份文件，并输入创建该文件时使用的密码</string>
     <string name="activity_backup_restore_passphrase">30位数的密码</string>
     <string name="activity_link_device_skip_prompt">这需要一点时间，您想要跳过吗？</string>
-    <string name="activity_link_device_link_device">关联设备</string>
     <string name="activity_link_device_recovery_phrase">恢复口令</string>
     <string name="activity_link_device_scan_qr_code">扫描二维码</string>
     <string name="activity_link_device_qr_message">在您的其他设备上导航到设置 -> 恢复口令以显示您的 QR 代码</string>
@@ -654,7 +653,6 @@
     <string name="activity_pn_mode_slow_mode">慢速模式</string>
     <string name="activity_pn_mode_fast_mode_explanation">新消息将通过 Google 通知服务器即时可靠地发送</string>
     <string name="activity_pn_mode_slow_mode_explanation">Session 将不时在后台获取新消息</string>
-    <string name="fragment_recovery_phrase_title">恢复口令</string>
     <string name="activity_prompt_passphrase_session_locked">Session 已锁定</string>
     <string name="activity_prompt_passphrase_tap_to_unlock">点击解锁</string>
     <string name="fragment_user_details_bottom_sheet_edit_text_hint">输入昵称</string>

@@ -544,11 +544,11 @@ scambia un altro messaggio!</string>
     <string name="activity_restore_title">Ripristina il tuo account</string>
     <string name="activity_restore_explanation">Inserisci la frase di recupero che ti è stata data quando ti sei registrato per ripristinare il tuo account.</string>
     <string name="activity_restore_seed_edit_text_hint">Inserisci la frase di recupero</string>
-    <string name="activity_display_name_title_2">Scegli il nome da visualizzare</string>
-    <string name="activity_display_name_explanation">Questo sarà il tuo nome quando usi una Sessione. Può essere il tuo vero nome, un soprannome o qualsiasi altra cosa.</string>
-    <string name="activity_display_name_edit_text_hint">Inserisci il nome da visualizzare</string>
-    <string name="activity_display_name_display_name_missing_error">Scegli il nome da visualizzare</string>
-    <string name="activity_display_name_display_name_too_long_error">Scegli un nome più breve</string>
+    <string name="displayNamePick">Scegli il nome da visualizzare</string>
+    <string name="displayNameDescription">Questo sarà il tuo nome quando usi una Sessione. Può essere il tuo vero nome, un soprannome o qualsiasi altra cosa.</string>
+    <string name="displayNameEnter">Inserisci il nome da visualizzare</string>
+    <string name="displayNameErrorDescription">Scegli il nome da visualizzare</string>
+    <string name="displayNameErrorDescriptionShorter">Scegli un nome più breve</string>
     <string name="activity_pn_mode_recommended_option_tag">Consigliato</string>
     <string name="activity_pn_mode_no_option_picked_dialog_title">Scegli un\'opzione</string>
     <string name="activity_home_empty_state_message">Non hai ancora nessun contatto</string>
@@ -656,7 +656,6 @@ scambia un altro messaggio!</string>
     <string name="activity_backup_restore_explanation_1">Selezionare un file di backup ed inserire la passphrase con cui è stato creato.</string>
     <string name="activity_backup_restore_passphrase">Frase di recupero di 30 caratteri</string>
     <string name="activity_link_device_skip_prompt">Questo sta impiegando un po\' di tempo, vorresti saltare?</string>
-    <string name="activity_link_device_link_device">Collega dispositivo</string>
     <string name="activity_link_device_recovery_phrase">Frase di recupero</string>
     <string name="activity_link_device_scan_qr_code">Scansiona codice QR</string>
     <string name="activity_link_device_qr_message">Vai su Impostazioni → Frase di recupero sul tuo altro dispositivo per mostrare il tuo codice QR.</string>
@@ -667,7 +666,6 @@ scambia un altro messaggio!</string>
     <string name="activity_pn_mode_slow_mode">Modalità Lenta</string>
     <string name="activity_pn_mode_fast_mode_explanation">Riceverai notifiche di nuovi messaggi in modo affidabile e immediato utilizzando i server di notifica di Google.</string>
     <string name="activity_pn_mode_slow_mode_explanation">Session controllerà di tanto in tanto la presenza di nuovi messaggi in background.</string>
-    <string name="fragment_recovery_phrase_title">Frase di recupero</string>
     <string name="activity_prompt_passphrase_session_locked">Session è Bloccato</string>
     <string name="activity_prompt_passphrase_tap_to_unlock">Tocca per Sbloccare</string>
     <string name="fragment_user_details_bottom_sheet_edit_text_hint">Inserisci un nickname</string>

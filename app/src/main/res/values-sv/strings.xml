@@ -543,11 +543,11 @@ för nyckelutbyte!</string>
     <string name="activity_restore_title">Återställ ditt konto</string>
     <string name="activity_restore_explanation">Ange den återställningsfras du fick när du skapade ditt konto för att kunna återställa ditt konto.</string>
     <string name="activity_restore_seed_edit_text_hint">Ange din återställningsfras</string>
-    <string name="activity_display_name_title_2">Välj visningsnamn</string>
-    <string name="activity_display_name_explanation">Detta blir ditt namn när du använder Session. Det kan vara ditt riktiga namn, ett alias eller något annat du gillar.</string>
-    <string name="activity_display_name_edit_text_hint">Ange ett visningsnamn</string>
-    <string name="activity_display_name_display_name_missing_error">Vänligen välj ett visningsnamn</string>
-    <string name="activity_display_name_display_name_too_long_error">Vänligen välj ett kortare visningsnamn</string>
+    <string name="displayNamePick">Välj visningsnamn</string>
+    <string name="displayNameDescription">Detta blir ditt namn när du använder Session. Det kan vara ditt riktiga namn, ett alias eller något annat du gillar.</string>
+    <string name="displayNameEnter">Ange ett visningsnamn</string>
+    <string name="displayNameErrorDescription">Vänligen välj ett visningsnamn</string>
+    <string name="displayNameErrorDescriptionShorter">Vänligen välj ett kortare visningsnamn</string>
     <string name="activity_pn_mode_recommended_option_tag">Rekommenderat</string>
     <string name="activity_pn_mode_no_option_picked_dialog_title">Välj ett alternativ</string>
     <string name="activity_home_empty_state_message">Du har inga kontakter än</string>
@@ -655,7 +655,6 @@ för nyckelutbyte!</string>
     <string name="activity_backup_restore_explanation_1">Välj en säkerhetskopieringsfil och ange lösenfrasen som den skapades med.</string>
     <string name="activity_backup_restore_passphrase">30-siffrig lösenfras</string>
     <string name="activity_link_device_skip_prompt">Detta tar ett tag, vill du hoppa över?</string>
-    <string name="activity_link_device_link_device">Länka en enhet</string>
     <string name="activity_link_device_recovery_phrase">Återställningsfras</string>
     <string name="activity_link_device_scan_qr_code">Skanna QR-kod</string>
     <string name="activity_link_device_qr_message">Navigera till Inställningar → Återställningsfras på din andra enhet för att visa din QR-kod.</string>
@@ -666,7 +665,6 @@ för nyckelutbyte!</string>
     <string name="activity_pn_mode_slow_mode">Långsamt läge</string>
     <string name="activity_pn_mode_fast_mode_explanation">Du kommer att meddelas om nya meddelanden på ett tillförlitligt sätt och omedelbart genom att använda Googles aviseringsservrar.</string>
     <string name="activity_pn_mode_slow_mode_explanation">Session kommer då och då att leta efter nya meddelanden i bakgrunden.</string>
-    <string name="fragment_recovery_phrase_title">Återställningsfras</string>
     <string name="activity_prompt_passphrase_session_locked">Session är låst</string>
     <string name="activity_prompt_passphrase_tap_to_unlock">Tryck om du vill låsa upp</string>
     <string name="fragment_user_details_bottom_sheet_edit_text_hint">Ange smeknamn</string>

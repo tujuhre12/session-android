@@ -542,11 +542,11 @@ udveksel besked!</string>
     <string name="activity_restore_title">Gendan din konto</string>
     <string name="activity_restore_explanation">Angiv den genoprettelsessætning, du fik, da du tilmeldte dig, for at kunne gendanne din konto.</string>
     <string name="activity_restore_seed_edit_text_hint">Angiv din genoprettelsessætning</string>
-    <string name="activity_display_name_title_2">Vælg dit visningsnavn</string>
-    <string name="activity_display_name_explanation">Dette vil være dit navn, når du bruger Session. Det kan være dit rigtige navn, et alias eller noget helt andet.</string>
-    <string name="activity_display_name_edit_text_hint">Tast et visningsnavn</string>
-    <string name="activity_display_name_display_name_missing_error">Vælg venligst et display navn</string>
-    <string name="activity_display_name_display_name_too_long_error">Vælg venligst et kortere display navn</string>
+    <string name="displayNamePick">Vælg dit visningsnavn</string>
+    <string name="displayNameDescription">Dette vil være dit navn, når du bruger Session. Det kan være dit rigtige navn, et alias eller noget helt andet.</string>
+    <string name="displayNameEnter">Tast et visningsnavn</string>
+    <string name="displayNameErrorDescription">Vælg venligst et display navn</string>
+    <string name="displayNameErrorDescriptionShorter">Vælg venligst et kortere display navn</string>
     <string name="activity_pn_mode_recommended_option_tag">Anbefalet</string>
     <string name="activity_home_empty_state_message">Du har ingen kontakter endnu</string>
     <string name="activity_home_empty_state_button_title">Start en Session</string>
@@ -632,7 +632,6 @@ udveksel besked!</string>
     <string name="activity_backup_restore_title">Gendan sikkerhedskopi</string>
     <string name="activity_backup_restore_select_file">Vælg en fil</string>
     <string name="activity_link_device_skip_prompt">Dette tager et stykke tid, vil du gerne springe over?</string>
-    <string name="activity_link_device_link_device">Forbind en enhed</string>
     <string name="activity_link_device_recovery_phrase">Gendannelsessætning</string>
     <string name="activity_link_device_scan_qr_code">Skan QR-kode</string>
     <string name="activity_link_device_qr_message">Naviger til Indstillinger → Gendannelsessætning på din anden enhed, for at vise din QR-kode.</string>

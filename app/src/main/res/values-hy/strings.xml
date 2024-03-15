@@ -551,11 +551,11 @@
     <string name="activity_restore_title">Վերականգնել ձեր հաշիվը</string>
     <string name="activity_restore_explanation">Մուտքագրեք վերականգնման բառակապակցությունը, որը տրվել է ձեզ, երբ գրանցվել եք ձեր հաշիվը վերականգնելու համար:</string>
     <string name="activity_restore_seed_edit_text_hint">Գրեք գաղտնի արտահայտությունը</string>
-    <string name="activity_display_name_title_2">Ընտրեք ցուցադրվող անուն</string>
-    <string name="activity_display_name_explanation">Այս անունը կցուցադրվի, երբ Դուք կօգտվեք Սեանսից։ Այն կարող է լինել Ձեր անունը, կեղծանուն, կամ որևիցե այլ բան։</string>
-    <string name="activity_display_name_edit_text_hint">Մուտքագրեք ցուցադրվող անուն</string>
-    <string name="activity_display_name_display_name_missing_error">Խնդրում ենք գրել անուն</string>
-    <string name="activity_display_name_display_name_too_long_error">Խնդրում ենք ընտրել կարճ անուն</string>
+    <string name="displayNamePick">Ընտրեք ցուցադրվող անուն</string>
+    <string name="displayNameDescription">Այս անունը կցուցադրվի, երբ Դուք կօգտվեք Սեանսից։ Այն կարող է լինել Ձեր անունը, կեղծանուն, կամ որևիցե այլ բան։</string>
+    <string name="displayNameEnter">Մուտքագրեք ցուցադրվող անուն</string>
+    <string name="displayNameErrorDescription">Խնդրում ենք գրել անուն</string>
+    <string name="displayNameErrorDescriptionShorter">Խնդրում ենք ընտրել կարճ անուն</string>
     <string name="activity_pn_mode_recommended_option_tag">[Խորհուրդ է տրվում]</string>
     <string name="activity_pn_mode_no_option_picked_dialog_title">Խնդրում ենք ընտրել</string>
     <string name="activity_home_empty_state_message">Դուք չունեք կոնտակտներ</string>
@@ -663,7 +663,6 @@
     <string name="activity_backup_restore_explanation_1">Ընտրեք կրկնօրինակի ֆայլ և մուտքագրեք այն գաղտնաբառը, որով ստեղծվել է:</string>
     <string name="activity_backup_restore_passphrase">30֊թվանոց գախտնաբառ</string>
     <string name="activity_link_device_skip_prompt">Սա որոշ ժամանակ է տևում, կցանկանա՞ք բաց թողնել:</string>
-    <string name="activity_link_device_link_device">Ավելացնել սարք</string>
     <string name="activity_link_device_recovery_phrase">Վերականգնման բառակապակցություն</string>
     <string name="activity_link_device_scan_qr_code">Սկանավորել QR Կոդը</string>
     <string name="activity_link_device_qr_message">Անցեք Կարգավորումներ → Վերականգնման Բառակապակցություն՝ ձեր QR կոդը ցուցադրելու համար:</string>
@@ -674,7 +673,6 @@
     <string name="activity_pn_mode_slow_mode">Դանդաղ ռեժիմ</string>
     <string name="activity_pn_mode_fast_mode_explanation">Դուք մշտապես և անմիջապես կտեղեկացվեք նոր հաղորդագրությունների մասին՝ օգտագործելով Google-ի ծանուցումների սերվերները:</string>
     <string name="activity_pn_mode_slow_mode_explanation">Session-ը երբեմն, ֆոնային կստուգի նոր հաղորդագրությունների առկայությունը:</string>
-    <string name="fragment_recovery_phrase_title">Գաղտնի արտահայտություն</string>
     <string name="activity_prompt_passphrase_session_locked">Session֊ը արգելափակված է</string>
     <string name="activity_prompt_passphrase_tap_to_unlock">Հպեք՝ ապակողպելու համար</string>
     <string name="fragment_user_details_bottom_sheet_edit_text_hint">Մուտքագրե՛ք կեղծանունը</string>

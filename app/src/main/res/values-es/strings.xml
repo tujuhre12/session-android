@@ -543,11 +543,11 @@ de intercambio de claves!</string>
     <string name="activity_restore_title">Restaura tu cuenta</string>
     <string name="activity_restore_explanation">Ingresa la frase de recuperación que se te dio cuando te registraste para restaurar tu cuenta.</string>
     <string name="activity_restore_seed_edit_text_hint">Ingresa tu frase de recuperación</string>
-    <string name="activity_display_name_title_2">Elige tu nombre</string>
-    <string name="activity_display_name_explanation">Este será tu nombre al usar Session. Puede ser tu nombre real, un alias, o lo que prefieras.</string>
-    <string name="activity_display_name_edit_text_hint">Ingresa un nombre para mostrar</string>
-    <string name="activity_display_name_display_name_missing_error">Por favor, elige un nombre para mostrar</string>
-    <string name="activity_display_name_display_name_too_long_error">Por favor, elige un nombre para mostrar más corto</string>
+    <string name="displayNamePick">Elige tu nombre</string>
+    <string name="displayNameDescription">Este será tu nombre al usar Session. Puede ser tu nombre real, un alias, o lo que prefieras.</string>
+    <string name="displayNameEnter">Ingresa un nombre para mostrar</string>
+    <string name="displayNameErrorDescription">Por favor, elige un nombre para mostrar</string>
+    <string name="displayNameErrorDescriptionShorter">Por favor, elige un nombre para mostrar más corto</string>
     <string name="activity_pn_mode_recommended_option_tag">Recomendado</string>
     <string name="activity_pn_mode_no_option_picked_dialog_title">Por favor, elige una opción</string>
     <string name="activity_home_empty_state_message">Aún no tienes contactos</string>
@@ -655,7 +655,6 @@ de intercambio de claves!</string>
     <string name="activity_backup_restore_explanation_1">Seleccione un archivo de copia de seguridad e introduzca la clave de acceso con la que fue creada.</string>
     <string name="activity_backup_restore_passphrase">Clave de acceso de 30 dígitos</string>
     <string name="activity_link_device_skip_prompt">Esto está tomando un tiempo, ¿te gustaría saltarlo?</string>
-    <string name="activity_link_device_link_device">Vincular un Dispositivo</string>
     <string name="activity_link_device_recovery_phrase">Frase de Recuperación</string>
     <string name="activity_link_device_scan_qr_code">Escanear Código QR</string>
     <string name="activity_link_device_qr_message">Navega a Ajustes → Frase de Recuperación en tu otro dispositivo para mostrar tu código QR.</string>
@@ -666,7 +665,6 @@ de intercambio de claves!</string>
     <string name="activity_pn_mode_slow_mode">Modo Lento</string>
     <string name="activity_pn_mode_fast_mode_explanation">Se le notificará de los nuevos mensajes de forma fiable e inmediata usando los servidores de notificaciones de Google.</string>
     <string name="activity_pn_mode_slow_mode_explanation">Session comprobará ocasionalmente si hay nuevos mensajes en segundo plano.</string>
-    <string name="fragment_recovery_phrase_title">Frase de recuperación</string>
     <string name="activity_prompt_passphrase_session_locked">Session está Bloqueado</string>
     <string name="activity_prompt_passphrase_tap_to_unlock">Toca para Desbloquear</string>
     <string name="fragment_user_details_bottom_sheet_edit_text_hint">Escriba un apodo</string>

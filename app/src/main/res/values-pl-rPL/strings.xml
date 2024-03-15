@@ -566,11 +566,11 @@
     <string name="activity_restore_title">Przywróć swoje konto</string>
     <string name="activity_restore_explanation">Wprowadź frazę odzyskiwania, która została Ci przekazana podczas rejestracji w celu przywrócenia konta.</string>
     <string name="activity_restore_seed_edit_text_hint">Wpisz swoją frazę odzyskiwania</string>
-    <string name="activity_display_name_title_2">Wybierz swoją nazwę wyświetlaną</string>
-    <string name="activity_display_name_explanation">To będzie twoje imię, kiedy będziesz używać Session. Może to być twoje prawdziwe imię, pseudonim lub cokolwiek innego, co lubisz.</string>
-    <string name="activity_display_name_edit_text_hint">Wprowadź wyświetlaną nazwę</string>
-    <string name="activity_display_name_display_name_missing_error">Wybierz wyświetlaną nazwę</string>
-    <string name="activity_display_name_display_name_too_long_error">Wybierz krótszą wyświetlaną nazwę</string>
+    <string name="displayNamePick">Wybierz swoją nazwę wyświetlaną</string>
+    <string name="displayNameDescription">To będzie twoje imię, kiedy będziesz używać Session. Może to być twoje prawdziwe imię, pseudonim lub cokolwiek innego, co lubisz.</string>
+    <string name="displayNameEnter">Wprowadź wyświetlaną nazwę</string>
+    <string name="displayNameErrorDescription">Wybierz wyświetlaną nazwę</string>
+    <string name="displayNameErrorDescriptionShorter">Wybierz krótszą wyświetlaną nazwę</string>
     <string name="activity_pn_mode_recommended_option_tag">Zalecana</string>
     <string name="activity_pn_mode_no_option_picked_dialog_title">Wybierz opcję</string>
     <string name="activity_home_empty_state_message">Nie masz jeszcze żadnych kontaktów</string>
@@ -678,7 +678,6 @@
     <string name="activity_backup_restore_explanation_1">Wybierz plik kopii zapasowej i wpisz hasło, z którym został utworzony.</string>
     <string name="activity_backup_restore_passphrase">Hasło złożone z 30 znaków</string>
     <string name="activity_link_device_skip_prompt">To zajmuje chwilę, czy chcesz pominąć?</string>
-    <string name="activity_link_device_link_device">Połącz urządzenie</string>
     <string name="activity_link_device_recovery_phrase">Fraza odzyskiwania</string>
     <string name="activity_link_device_scan_qr_code">Skanuj kod QR</string>
     <string name="activity_link_device_qr_message">Przejdź do Ustawień → Fraza odzyskiwania na innym urządzeniu, aby wyświetlić kod QR.</string>
@@ -689,7 +688,6 @@
     <string name="activity_pn_mode_slow_mode">Tryb wolny</string>
     <string name="activity_pn_mode_fast_mode_explanation">Zostaniesz natychmiast powiadomiony o nowych wiadomościach w niezawodny sposób przy użyciu serwerów powiadomień Google.</string>
     <string name="activity_pn_mode_slow_mode_explanation">Session będzie czasami sprawdzać w tle czy są nowe wiadomości.</string>
-    <string name="fragment_recovery_phrase_title">Fraza odzyskiwania</string>
     <string name="activity_prompt_passphrase_session_locked">Session jest zablokowany</string>
     <string name="activity_prompt_passphrase_tap_to_unlock">Dotknij by odblokować</string>
     <string name="fragment_user_details_bottom_sheet_edit_text_hint">Wpisz pseudonim</string>

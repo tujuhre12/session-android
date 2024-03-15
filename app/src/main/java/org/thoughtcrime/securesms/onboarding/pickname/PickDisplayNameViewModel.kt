@@ -48,8 +48,8 @@ class PickDisplayNameViewModel(
         val x25519KeyPair = keyPairGenerationResult.x25519KeyPair
 
         when {
-            displayName.isEmpty() -> { state.update { it.copy(error = R.string.activity_display_name_display_name_missing_error) } }
-            displayName.length > NAME_PADDED_LENGTH -> { state.update { it.copy(error = R.string.activity_display_name_display_name_too_long_error) } }
+            displayName.isEmpty() -> { state.update { it.copy(error = R.string.displayNameErrorDescription) } }
+            displayName.length > NAME_PADDED_LENGTH -> { state.update { it.copy(error = R.string.displayNameErrorDescriptionShorter) } }
             else -> {
                 prefs.setProfileName(displayName)
 
@@ -75,7 +75,7 @@ class PickDisplayNameViewModel(
     fun onChange(value: String) {
         state.update { state -> state.copy(
                 displayName = value,
-                error = value.takeIf { it.length > NAME_PADDED_LENGTH }?.let { R.string.activity_display_name_display_name_too_long_error }
+                error = value.takeIf { it.length > NAME_PADDED_LENGTH }?.let { R.string.displayNameErrorDescriptionShorter }
             )
         }
     }
@@ -99,15 +99,15 @@ class PickDisplayNameViewModel(
 }
 
 data class State(
-    @StringRes val title: Int = R.string.activity_display_name_title_2,
-    @StringRes val description: Int = R.string.activity_display_name_explanation,
+    @StringRes val title: Int = R.string.displayNamePick,
+    @StringRes val description: Int = R.string.displayNameDescription,
     @StringRes val error: Int? = null,
     val displayName: String = ""
 )
 
 fun pickNewNameState() = State(
-    title = R.string.activity_display_name_pick_a_new_display_name,
-    description = R.string.activity_display_name_unable_to_load_new_name_explanation
+    title = R.string.displayNameNew,
+    description = R.string.displayNameErrorNew
 )
 
 sealed interface Event {

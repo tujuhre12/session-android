@@ -417,11 +417,11 @@
     <string name="activity_restore_title">Memulihkan akun Anda</string>
     <string name="activity_restore_explanation">Masukkan kata pemulihan yang diberikan saat anda masuk untuk memulihkan akun anda.</string>
     <string name="activity_restore_seed_edit_text_hint">Masukan kata pemulihan</string>
-    <string name="activity_display_name_title_2">Pilih nama yang ditampilkan</string>
-    <string name="activity_display_name_explanation">Ini akan menjadi nama anda ketika menggunakan Session. Bisa merupakan nama asli, alias, atau apapun yang anda suka.</string>
-    <string name="activity_display_name_edit_text_hint">Masukkan nama</string>
-    <string name="activity_display_name_display_name_missing_error">Pilih nama yang ditampilkan</string>
-    <string name="activity_display_name_display_name_too_long_error">Pilih nama yang lebih pendek</string>
+    <string name="displayNamePick">Pilih nama yang ditampilkan</string>
+    <string name="displayNameDescription">Ini akan menjadi nama anda ketika menggunakan Session. Bisa merupakan nama asli, alias, atau apapun yang anda suka.</string>
+    <string name="displayNameEnter">Masukkan nama</string>
+    <string name="displayNameErrorDescription">Pilih nama yang ditampilkan</string>
+    <string name="displayNameErrorDescriptionShorter">Pilih nama yang lebih pendek</string>
     <string name="activity_pn_mode_recommended_option_tag">Direkomendasikan</string>
     <string name="activity_pn_mode_no_option_picked_dialog_title">Pilih salah satu opsi</string>
     <string name="activity_home_empty_state_message">Anda belum memiliki kontak</string>

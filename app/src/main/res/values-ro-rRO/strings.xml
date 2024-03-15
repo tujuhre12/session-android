@@ -558,10 +558,10 @@ schimbul de chei este corupt </string>
     <string name="activity_restore_title">Recuperează-ți contul</string>
     <string name="activity_restore_explanation">Introduceți fraza de recuperare care v-a fost dată atunci când v-ați înregistrat pentru a vă restaura contul.</string>
     <string name="activity_restore_seed_edit_text_hint">Introduceți fraza de recuperare</string>
-    <string name="activity_display_name_title_2">Alegeți numele afișat</string>
-    <string name="activity_display_name_explanation">Acesta va fi numele tău când folosești Session. Poate fi numele tău, un pseudonim, sau orice altceva dorești.</string>
-    <string name="activity_display_name_edit_text_hint">Alege un nume de afișat</string>
-    <string name="activity_display_name_display_name_missing_error">Vă rugăm să alegeți un nume de afișare</string>
+    <string name="displayNamePick">Alegeți numele afișat</string>
+    <string name="displayNameDescription">Acesta va fi numele tău când folosești Session. Poate fi numele tău, un pseudonim, sau orice altceva dorești.</string>
+    <string name="displayNameEnter">Alege un nume de afișat</string>
+    <string name="displayNameErrorDescription">Vă rugăm să alegeți un nume de afișare</string>
     <string name="activity_path_guard_node_row_title">Nod de intrare</string>
     <string name="activity_path_service_node_row_title">Nod servicii</string>
     <string name="activity_path_destination_row_title">Destinație</string>

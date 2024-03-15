@@ -545,11 +545,11 @@
     <string name="activity_restore_title">Fiók visszaállítása</string>
     <string name="activity_restore_explanation">Írja be azt a helyreállítási kifejezést, amelyet a fiók visszaállításához regisztrálásakor kapott.</string>
     <string name="activity_restore_seed_edit_text_hint">Írja be a helyreállítási kifejezést</string>
-    <string name="activity_display_name_title_2">Válassza ki a megjelenítendő nevet</string>
-    <string name="activity_display_name_explanation">Ez lesz az ön neve, amikor használja a Session alkalmazást. Ez lehet a valódi neve, álneve, vagy bármi más, ami tetszik.</string>
-    <string name="activity_display_name_edit_text_hint">Írja be a megjelenítendő nevet</string>
-    <string name="activity_display_name_display_name_missing_error">Kérjük, válassza ki a megjelenítendő nevet</string>
-    <string name="activity_display_name_display_name_too_long_error">Válasszon rövidebb megjelenítési nevet</string>
+    <string name="displayNamePick">Válassza ki a megjelenítendő nevet</string>
+    <string name="displayNameDescription">Ez lesz az ön neve, amikor használja a Session alkalmazást. Ez lehet a valódi neve, álneve, vagy bármi más, ami tetszik.</string>
+    <string name="displayNameEnter">Írja be a megjelenítendő nevet</string>
+    <string name="displayNameErrorDescription">Kérjük, válassza ki a megjelenítendő nevet</string>
+    <string name="displayNameErrorDescriptionShorter">Válasszon rövidebb megjelenítési nevet</string>
     <string name="activity_pn_mode_recommended_option_tag">Ajánlott</string>
     <string name="activity_pn_mode_no_option_picked_dialog_title">Kérjük, válasszon egy lehetőséget</string>
     <string name="activity_home_empty_state_message">Még nincsenek névjegyei</string>
@@ -657,7 +657,6 @@
     <string name="activity_backup_restore_explanation_1">Válassz ki egy visszaállítási fájlt és add meg a hozzá tartozó visszaálítási kódmondatot.</string>
     <string name="activity_backup_restore_passphrase">30-betűs kódmondat</string>
     <string name="activity_link_device_skip_prompt">Ez eltarthat egy ideig, szeretnéd átugrani?</string>
-    <string name="activity_link_device_link_device">Eszköz társítása</string>
     <string name="activity_link_device_recovery_phrase">Visszaállítási kódmondat</string>
     <string name="activity_link_device_scan_qr_code">QR kód beolvasása</string>
     <string name="activity_link_device_qr_message">A QR-kód megjelenítéséhez nyissa meg a Beállítások → Helyreállítási kifejezés elemet másik eszközén. </string>
@@ -668,7 +667,6 @@
     <string name="activity_pn_mode_slow_mode">Lassított mód</string>
     <string name="activity_pn_mode_fast_mode_explanation">A Google értesítési szerverein keresztül megbízhatóan és azonnal értesítést kapsz az új üzenetekről.</string>
     <string name="activity_pn_mode_slow_mode_explanation">A Session alkalmanként, az új üzeneteket a háttérben fogja ellenőrizni.</string>
-    <string name="fragment_recovery_phrase_title">Visszaállítási kódmondat</string>
     <string name="activity_prompt_passphrase_session_locked">Session zárolva</string>
     <string name="activity_prompt_passphrase_tap_to_unlock">Koppintson a feloldáshoz</string>
     <string name="fragment_user_details_bottom_sheet_edit_text_hint">Írjon be egy becenevet</string>

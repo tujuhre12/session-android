@@ -528,11 +528,11 @@
     <string name="activity_restore_title">アカウントを復元する</string>
     <string name="activity_restore_explanation">アカウントを復元するためにサインアップしたときに与えられたリカバリーフレーズを入力します。</string>
     <string name="activity_restore_seed_edit_text_hint">リカバリーフレーズを入力してください</string>
-    <string name="activity_display_name_title_2">表示名を選択してください</string>
-    <string name="activity_display_name_explanation">これは、Session を使用するときの名前になります。あなたの本当の名前、エイリアス、またはあなたが好きな他のものに設定することができます。</string>
-    <string name="activity_display_name_edit_text_hint">表示名を入力してください</string>
-    <string name="activity_display_name_display_name_missing_error">表示名を選択してください</string>
-    <string name="activity_display_name_display_name_too_long_error">短い表示名を選択してください</string>
+    <string name="displayNamePick">表示名を選択してください</string>
+    <string name="displayNameDescription">これは、Session を使用するときの名前になります。あなたの本当の名前、エイリアス、またはあなたが好きな他のものに設定することができます。</string>
+    <string name="displayNameEnter">表示名を入力してください</string>
+    <string name="displayNameErrorDescription">表示名を選択してください</string>
+    <string name="displayNameErrorDescriptionShorter">短い表示名を選択してください</string>
     <string name="activity_pn_mode_recommended_option_tag">オススメ</string>
     <string name="activity_pn_mode_no_option_picked_dialog_title">オプションを選択してください</string>
     <string name="activity_home_empty_state_message">まだ連絡先がありません</string>

@@ -543,11 +543,11 @@
     <string name="activity_restore_title">अकाउंट रिस्टोर करें</string>
     <string name="activity_restore_explanation">अकाउंट बनाते समय बनाया गया अपना रिकवरी वाक्य डालें।</string>
     <string name="activity_restore_seed_edit_text_hint">अपना पुनर्प्राप्ति वाक्यांश लिखें</string>
-    <string name="activity_display_name_title_2">अपना प्रदर्शन नाम चुनें</string>
-    <string name="activity_display_name_explanation">यह सेशन इस्तेमाल करते समय आपका नाम होगा। यह आपका असली नाम, उपनाम या कुछ और भी हो सकता है।</string>
-    <string name="activity_display_name_edit_text_hint">डिस्प्ले नाम डालें</string>
-    <string name="activity_display_name_display_name_missing_error">कृपया एक डिस्प्ले नाम चुनें</string>
-    <string name="activity_display_name_display_name_too_long_error">कृपया एक छोटा डिसप्ले नाम चुनें</string>
+    <string name="displayNamePick">अपना प्रदर्शन नाम चुनें</string>
+    <string name="displayNameDescription">यह सेशन इस्तेमाल करते समय आपका नाम होगा। यह आपका असली नाम, उपनाम या कुछ और भी हो सकता है।</string>
+    <string name="displayNameEnter">डिस्प्ले नाम डालें</string>
+    <string name="displayNameErrorDescription">कृपया एक डिस्प्ले नाम चुनें</string>
+    <string name="displayNameErrorDescriptionShorter">कृपया एक छोटा डिसप्ले नाम चुनें</string>
     <string name="activity_pn_mode_recommended_option_tag">सुझाया गया</string>
     <string name="activity_pn_mode_no_option_picked_dialog_title">कृपया एक विकल्प चुनें।</string>
     <string name="activity_home_empty_state_message">अभी तक आपके पास कोई कॉन्टैक्ट्स नहीं हैं</string>
@@ -655,7 +655,6 @@
     <string name="activity_backup_restore_explanation_1">एक बैकअप फ़ाइल चुनें और वह पासफ़्रेज़ दर्ज करें जिसके साथ इसे बनाया गया था।</string>
     <string name="activity_backup_restore_passphrase">30 अंक का पासफ्रेस</string>
     <string name="activity_link_device_skip_prompt">यह समय ले रहा है, इसे छोड़ दें?</string>
-    <string name="activity_link_device_link_device">डिवाइस को लिंक करें</string>
     <string name="activity_link_device_recovery_phrase">पुनर्प्राप्ति वाक्यांश</string>
     <string name="activity_link_device_scan_qr_code">QR कोड को स्कैन करें</string>
     <string name="activity_link_device_qr_message">अपना क्यूआर कोड दिखाने के लिए अपने अन्य डिवाइस पर सेटिंग्स →पुनर्प्राप्ति वाक्यांश में जाएंं।</string>
@@ -666,7 +665,6 @@
     <string name="activity_pn_mode_slow_mode">स्लो मोड</string>
     <string name="activity_pn_mode_fast_mode_explanation">आपको नई सूचनाओं के बारे में google के नोटीफिकेशन servers से तत्काल सूचित किया जाएगा।</string>
     <string name="activity_pn_mode_slow_mode_explanation">Session कभी-कभी पृष्ठभूमि में नए संदेशों की जांच करेगा।</string>
-    <string name="fragment_recovery_phrase_title">पुनर्प्राप्ति वाक्यांश</string>
     <string name="activity_prompt_passphrase_session_locked">Session लॉक है</string>
     <string name="activity_prompt_passphrase_tap_to_unlock">अनलॉक करने के लिए टैप करें</string>
     <string name="fragment_user_details_bottom_sheet_edit_text_hint">उपनाम चुनें</string>

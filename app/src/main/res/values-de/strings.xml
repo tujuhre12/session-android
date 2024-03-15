@@ -542,11 +542,11 @@
     <string name="activity_restore_title">Ihr Konto wiederherstellen</string>
     <string name="activity_restore_explanation">Geben Sie den Wiederherstellungssatz ein, den Sie bei der Anmeldung zur Wiederherstellung Ihres Kontos erhalten haben.</string>
     <string name="activity_restore_seed_edit_text_hint">Ihr Wiederherstellungssatz</string>
-    <string name="activity_display_name_title_2">Wählen Sie Ihren Anzeigenamen</string>
-    <string name="activity_display_name_explanation">Dies ist Ihr Name, wenn Sie Session verwenden. Es kann Ihr richtiger Name, ein Alias oder etwas andere sein.</string>
-    <string name="activity_display_name_edit_text_hint">Geben Sie einen Anzeigenamen ein</string>
-    <string name="activity_display_name_display_name_missing_error">Bitte wählen Sie einen Anzeigenamen</string>
-    <string name="activity_display_name_display_name_too_long_error">Bitte wählen Sie einen kürzeren Anzeigenamen</string>
+    <string name="displayNamePick">Wählen Sie Ihren Anzeigenamen</string>
+    <string name="displayNameDescription">Dies ist Ihr Name, wenn Sie Session verwenden. Es kann Ihr richtiger Name, ein Alias oder etwas andere sein.</string>
+    <string name="displayNameEnter">Geben Sie einen Anzeigenamen ein</string>
+    <string name="displayNameErrorDescription">Bitte wählen Sie einen Anzeigenamen</string>
+    <string name="displayNameErrorDescriptionShorter">Bitte wählen Sie einen kürzeren Anzeigenamen</string>
     <string name="activity_pn_mode_recommended_option_tag">Empfohlen</string>
     <string name="activity_pn_mode_no_option_picked_dialog_title">Bitte wählen Sie eine Option aus.</string>
     <string name="activity_home_empty_state_message">Sie haben noch keine Kontakte.</string>
@@ -654,7 +654,6 @@
     <string name="activity_backup_restore_explanation_1">Wähle eine Sicherungs-Datei aus und gib die Passphrase von ihrer Erstellung ein.</string>
     <string name="activity_backup_restore_passphrase">30-stellige Passphrase</string>
     <string name="activity_link_device_skip_prompt">Dies dauert eine Weile, möchtest du überspringen?</string>
-    <string name="activity_link_device_link_device">Gerät verbinden</string>
     <string name="activity_link_device_recovery_phrase">Wiederherstellungssatz</string>
     <string name="activity_link_device_scan_qr_code">QR-Code scannen</string>
     <string name="activity_link_device_qr_message">Navigiere zu Einstellungen → Wiederherstellungssatz auf deinem anderen Gerät, um deinen QR-Code anzuzeigen.</string>
@@ -665,7 +664,6 @@
     <string name="activity_pn_mode_slow_mode">Langsamer Modus</string>
     <string name="activity_pn_mode_fast_mode_explanation">Du wirst über neue Nachrichten zuverlässig und sofort über Google\'s Server benachrichtigt.</string>
     <string name="activity_pn_mode_slow_mode_explanation">Session sucht gelegentlich nach neuen Nachrichten im Hintergrund.</string>
-    <string name="fragment_recovery_phrase_title">Sicherungs-Passphrase</string>
     <string name="activity_prompt_passphrase_session_locked">Session ist gesperrt</string>
     <string name="activity_prompt_passphrase_tap_to_unlock">Tippe zum entsperren</string>
     <string name="fragment_user_details_bottom_sheet_edit_text_hint">Spitznamen eingeben</string>

@@ -590,11 +590,11 @@
     <string name="activity_restore_title">استرجع حسابك</string>
     <string name="activity_restore_explanation">أدخل عبارة الأسترجاع التي اعطيت لك عندما سجلت الدخول لاِسترجاع حسابك.</string>
     <string name="activity_restore_seed_edit_text_hint">ادخل عبارة الاسترجاع</string>
-    <string name="activity_display_name_title_2">أختر اِسم الاِظهار</string>
-    <string name="activity_display_name_explanation">هذا سيكون اِسمك عندما تستخدم Session. قد يكون اِسمك الحقيقي, اِسم مستعار أو اي شيئ ترغب به.</string>
-    <string name="activity_display_name_edit_text_hint">ادخل اسم الِاظهار</string>
-    <string name="activity_display_name_display_name_missing_error">اِختر اسم من فضلك</string>
-    <string name="activity_display_name_display_name_too_long_error">اِختر اسم اقصر من فضلك</string>
+    <string name="displayNamePick">أختر اِسم الاِظهار</string>
+    <string name="displayNameDescription">هذا سيكون اِسمك عندما تستخدم Session. قد يكون اِسمك الحقيقي, اِسم مستعار أو اي شيئ ترغب به.</string>
+    <string name="displayNameEnter">ادخل اسم الِاظهار</string>
+    <string name="displayNameErrorDescription">اِختر اسم من فضلك</string>
+    <string name="displayNameErrorDescriptionShorter">اِختر اسم اقصر من فضلك</string>
     <string name="activity_pn_mode_recommended_option_tag">محبذ</string>
     <string name="activity_pn_mode_no_option_picked_dialog_title">اِختر</string>
     <string name="activity_home_empty_state_message">لا تملك اي متصلين لحد الان</string>
@@ -702,7 +702,6 @@
     <string name="activity_backup_restore_explanation_1">اِختر ملف النسخ الاحتياطي وأدخل عبارة المرور التي تم إنشاؤه بها.</string>
     <string name="activity_backup_restore_passphrase">جملة مرور مكونة من 30 عنصر</string>
     <string name="activity_link_device_skip_prompt">هذا يستغرق بعض الوقت، هل تريد أن تتخطى؟</string>
-    <string name="activity_link_device_link_device">اربط جهاز</string>
     <string name="activity_link_device_recovery_phrase">جملة الاسترجاع</string>
     <string name="activity_link_device_scan_qr_code">اِفحص رمز QR</string>
     <string name="activity_link_device_qr_message">اِذهب إلى التعديلات جملة الاِسترجاع في جهازك الاآخر لإظهار رمز QR الخاص بك.</string>
@@ -713,7 +712,6 @@
     <string name="activity_pn_mode_slow_mode">الوضع البطيء</string>
     <string name="activity_pn_mode_fast_mode_explanation">سوف يتم إشعارك بالرسائل بشكل موثوق و فوري بإستخدام خوادم جوجل للإشعارات.</string>
     <string name="activity_pn_mode_slow_mode_explanation">سيقوم سيشن بالتحقق من وجود رسائل جديدة بشكل دوري في الخلفية.</string>
-    <string name="fragment_recovery_phrase_title">عبارة الإسترداد</string>
     <string name="activity_prompt_passphrase_session_locked">إن سيشن مُقفَل</string>
     <string name="activity_prompt_passphrase_tap_to_unlock">انقر للفتح</string>
     <string name="fragment_user_details_bottom_sheet_edit_text_hint">أدخل اسم</string>

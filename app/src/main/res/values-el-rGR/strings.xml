@@ -544,11 +544,11 @@
     <string name="activity_restore_title">Επαναφορά του λογαριασμού σας</string>
     <string name="activity_restore_explanation">Εισάγετε τη φράση ανάκτησης που σας δόθηκε κατά την εγγραφή σας για να επαναφέρετε το λογαριασμό σας.</string>
     <string name="activity_restore_seed_edit_text_hint">Εισάγετε τη φράση ανάκτησης σας</string>
-    <string name="activity_display_name_title_2">Επιλέξτε το εμφανιζόμενο όνομα σας</string>
-    <string name="activity_display_name_explanation">Αυτό θα είναι το όνομά σας όταν χρησιμοποιείτε το Session. Μπορεί να είναι το πραγματικό σας όνομα, ένα ψευδώνυμο ή οτιδήποτε άλλο θέλετε.</string>
-    <string name="activity_display_name_edit_text_hint">Εισάγετε όνομα εμφάνισης</string>
-    <string name="activity_display_name_display_name_missing_error">Παρακαλώ επιλέξτε ένα εμφανιζόμενο όνομα</string>
-    <string name="activity_display_name_display_name_too_long_error">Παρακαλώ επιλέξτε ένα μικρότερο όνομα εμφάνισης</string>
+    <string name="displayNamePick">Επιλέξτε το εμφανιζόμενο όνομα σας</string>
+    <string name="displayNameDescription">Αυτό θα είναι το όνομά σας όταν χρησιμοποιείτε το Session. Μπορεί να είναι το πραγματικό σας όνομα, ένα ψευδώνυμο ή οτιδήποτε άλλο θέλετε.</string>
+    <string name="displayNameEnter">Εισάγετε όνομα εμφάνισης</string>
+    <string name="displayNameErrorDescription">Παρακαλώ επιλέξτε ένα εμφανιζόμενο όνομα</string>
+    <string name="displayNameErrorDescriptionShorter">Παρακαλώ επιλέξτε ένα μικρότερο όνομα εμφάνισης</string>
     <string name="activity_pn_mode_recommended_option_tag">Προτεινόμενο</string>
     <string name="activity_pn_mode_no_option_picked_dialog_title">Παρακαλούμε κάντε μια επιλογή</string>
     <string name="activity_home_empty_state_message">Δεν υπάρχουν επαφές</string>
@@ -656,7 +656,6 @@
     <string name="activity_backup_restore_explanation_1">Επιλέξτε ένα αντίγραφο ασφαλείας και εισάγετε τη φράση πρόσβασης με την οποία δημιουργήθηκε.</string>
     <string name="activity_backup_restore_passphrase">φράση 30-ψηφίων</string>
     <string name="activity_link_device_skip_prompt">Αυτό παίρνει λίγο χρόνο, θα θέλατε να παραλείψετε;</string>
-    <string name="activity_link_device_link_device">Σύνδεση Συσκευής</string>
     <string name="activity_link_device_recovery_phrase">Φράση Ανάκτησης</string>
     <string name="activity_link_device_scan_qr_code">Σάρωση QR κωδικού</string>
     <string name="activity_link_device_qr_message">Μεταβείτε στις Ρυθμίσεις → Φράση Ανάκτησης στην άλλη συσκευή σας για να εμφανίσετε τον QR κωδικό σας.</string>
@@ -667,7 +666,6 @@
     <string name="activity_pn_mode_slow_mode">Αργή Επιλογή</string>
     <string name="activity_pn_mode_fast_mode_explanation">Θα ειδοποιηθείτε για νέα μηνύματα αξιόπιστα και άμεσα χρησιμοποιώντας τους διακομιστές ειδοποιήσεων της Google.</string>
     <string name="activity_pn_mode_slow_mode_explanation">Το Session θα ελέγχει κατά καιρούς για νέα μηνύματα στο παρασκήνιο.</string>
-    <string name="fragment_recovery_phrase_title">Φράση Ανάκτησης</string>
     <string name="activity_prompt_passphrase_session_locked">Το Session είναι κλειδωμένο</string>
     <string name="activity_prompt_passphrase_tap_to_unlock">Πατήστε για ξεκλείδωμα</string>
     <string name="fragment_user_details_bottom_sheet_edit_text_hint">Εισαγωγή ψευδώνυμου</string>

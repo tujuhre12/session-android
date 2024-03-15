@@ -537,11 +537,11 @@
     <string name="activity_restore_title">恢復您的帳號</string>
     <string name="activity_restore_explanation">輸入您註冊時提供的恢復短語以恢復您的帳號。</string>
     <string name="activity_restore_seed_edit_text_hint">請輸入您的回復用字句</string>
-    <string name="activity_display_name_title_2">請輸入您的名稱</string>
-    <string name="activity_display_name_explanation">當您使用 Session 時，這將是您的名字。 它可以是您的真實姓名、別名或您喜歡的任何名稱。</string>
-    <string name="activity_display_name_edit_text_hint">輸入您的名稱</string>
-    <string name="activity_display_name_display_name_missing_error">請選擇一個名稱</string>
-    <string name="activity_display_name_display_name_too_long_error">請選擇一個較短的名稱</string>
+    <string name="displayNamePick">請輸入您的名稱</string>
+    <string name="displayNameDescription">當您使用 Session 時，這將是您的名字。 它可以是您的真實姓名、別名或您喜歡的任何名稱。</string>
+    <string name="displayNameEnter">輸入您的名稱</string>
+    <string name="displayNameErrorDescription">請選擇一個名稱</string>
+    <string name="displayNameErrorDescriptionShorter">請選擇一個較短的名稱</string>
     <string name="activity_pn_mode_recommended_option_tag">建議</string>
     <string name="activity_pn_mode_no_option_picked_dialog_title">請選擇其中一個選項</string>
     <string name="activity_home_empty_state_message">您尚未添加聯絡人</string>
@@ -649,7 +649,6 @@
     <string name="activity_backup_restore_explanation_1">選擇一個備份檔案，並輸入建立時的密碼。</string>
     <string name="activity_backup_restore_passphrase">30 位數密碼</string>
     <string name="activity_link_device_skip_prompt">這可能需要一些時間，要跳過嗎？</string>
-    <string name="activity_link_device_link_device">連結裝置</string>
     <string name="activity_link_device_recovery_phrase">回復用字句</string>
     <string name="activity_link_device_scan_qr_code">掃描 QR Code</string>
     <string name="activity_link_device_qr_message">請使用您其他的裝置並前往「設定」→「回復用字句」來顯示您的QR Code。</string>
@@ -660,7 +659,6 @@
     <string name="activity_pn_mode_slow_mode">慢速模式</string>
     <string name="activity_pn_mode_fast_mode_explanation">您將會透過 Google 的通知服務可靠且迅速的收到通知。</string>
     <string name="activity_pn_mode_slow_mode_explanation">Session 會偶爾在背景執行時檢查新訊息。</string>
-    <string name="fragment_recovery_phrase_title">回復用字句</string>
     <string name="activity_prompt_passphrase_session_locked">Session 已被鎖定</string>
     <string name="activity_prompt_passphrase_tap_to_unlock">輕觸即可解鎖</string>
     <string name="fragment_user_details_bottom_sheet_edit_text_hint">輸入暱稱</string>

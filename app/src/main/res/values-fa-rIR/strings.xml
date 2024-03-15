@@ -566,11 +566,11 @@
     <string name="activity_restore_title">حساب کاربری خود را بازیابی کنید</string>
     <string name="activity_restore_explanation">عبارت بازیابی را که هنگام نام‌نویسی برای بازیابی حساب به شما داده شده، وارد کنید.</string>
     <string name="activity_restore_seed_edit_text_hint">عبارت بازیابی خود را وارد کنید</string>
-    <string name="activity_display_name_title_2">نام خود را برای نمایش انتخاب کنید</string>
-    <string name="activity_display_name_explanation">این نام شما هنگام استفاده از Session خواهد بود. این نام می‌تواند نام واقعی شما، نام مستعار یا هر چیز دیگری که دوست دارید، باشد.</string>
-    <string name="activity_display_name_edit_text_hint">یک نام وارد کنید</string>
-    <string name="activity_display_name_display_name_missing_error">لطفا یک نام انتخاب کنید</string>
-    <string name="activity_display_name_display_name_too_long_error">لطفا نام کوتاه‌تری انتخاب کنید</string>
+    <string name="displayNamePick">نام خود را برای نمایش انتخاب کنید</string>
+    <string name="displayNameDescription">این نام شما هنگام استفاده از Session خواهد بود. این نام می‌تواند نام واقعی شما، نام مستعار یا هر چیز دیگری که دوست دارید، باشد.</string>
+    <string name="displayNameEnter">یک نام وارد کنید</string>
+    <string name="displayNameErrorDescription">لطفا یک نام انتخاب کنید</string>
+    <string name="displayNameErrorDescriptionShorter">لطفا نام کوتاه‌تری انتخاب کنید</string>
     <string name="activity_pn_mode_recommended_option_tag">گزینه پیشنهادی</string>
     <string name="activity_pn_mode_no_option_picked_dialog_title">لطفا یک گزینه را انتخاب کنید</string>
     <string name="activity_home_empty_state_message">فهرست مخاطبان شما خالی است.</string>
@@ -693,7 +693,6 @@
     <string name="activity_backup_restore_explanation_1">یک فایل پشتیبان انتخاب و عبارت عبوری که با آن ساخته شده است را وارد کنید.</string>
     <string name="activity_backup_restore_passphrase">عبارت عبور ۳۰رقمی</string>
     <string name="activity_link_device_skip_prompt">این فرآیند کمی طولانی است، دوست دارید ردش کنید؟</string>
-    <string name="activity_link_device_link_device">اتصال به یک دستگاه</string>
     <string name="activity_link_device_recovery_phrase">عبارت بازیابی</string>
     <string name="activity_link_device_scan_qr_code">اسکن کد QR</string>
     <string name="activity_link_device_qr_message">برای دیدن کد QR خود، در دستگاه دیگرتان به «تنظیمات ← عبارت بازیابی» مراجعه کنید.</string>
@@ -704,7 +703,6 @@
     <string name="activity_pn_mode_slow_mode">حالت آهسته</string>
     <string name="activity_pn_mode_fast_mode_explanation">با استفاده از سرورهای گوگل، شما به صورت سریع و مطمئن از پیام‌های جدید مطلع می‌شوید.</string>
     <string name="activity_pn_mode_slow_mode_explanation">Session هرازگاهی در پس زمینه وجود پیام‌های جدید را بررسی می‌کند.</string>
-    <string name="fragment_recovery_phrase_title">متن بازیابی</string>
     <string name="activity_prompt_passphrase_session_locked">نشست قفل شده‌است</string>
     <string name="activity_prompt_passphrase_tap_to_unlock"> ﺑﺮﺍﯼ ﮔﺸﻮﺩﻥ ﺿﺮﺑﻪ ﺑﺰﻧﻴﺪ</string>
     <string name="fragment_user_details_bottom_sheet_edit_text_hint">یک نام مستعار وارد کنید</string>

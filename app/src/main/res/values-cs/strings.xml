@@ -566,11 +566,11 @@
     <string name="activity_restore_title">Obnovit účet</string>
     <string name="activity_restore_explanation">Zadejte frázi pro obnovení, která vám byla vygenerována během registrace účtu.</string>
     <string name="activity_restore_seed_edit_text_hint">Zadejte frázi pro obnovení</string>
-    <string name="activity_display_name_title_2">Vaše jméno</string>
-    <string name="activity_display_name_explanation">Toto bude váš pseudonym během používání Session. Může to být vaše skutečné jméno, alias, nebo cokoliv jiného, co se vám líbí.</string>
-    <string name="activity_display_name_edit_text_hint">Zadejte pseudonym</string>
-    <string name="activity_display_name_display_name_missing_error">Vyberte prosím pseudonym</string>
-    <string name="activity_display_name_display_name_too_long_error">Vyberte prosím kratší pseudonym</string>
+    <string name="displayNamePick">Vaše jméno</string>
+    <string name="displayNameDescription">Toto bude váš pseudonym během používání Session. Může to být vaše skutečné jméno, alias, nebo cokoliv jiného, co se vám líbí.</string>
+    <string name="displayNameEnter">Zadejte pseudonym</string>
+    <string name="displayNameErrorDescription">Vyberte prosím pseudonym</string>
+    <string name="displayNameErrorDescriptionShorter">Vyberte prosím kratší pseudonym</string>
     <string name="activity_pn_mode_recommended_option_tag">Doporučeno</string>
     <string name="activity_pn_mode_no_option_picked_dialog_title">Prosím vyberte možnost</string>
     <string name="activity_home_empty_state_message">Zatím nemáte žádné kontakty</string>
@@ -678,7 +678,6 @@
     <string name="activity_backup_restore_explanation_1">Vyberte soubor se zálohou a vložte frázi pro obnovení, s níž byl vytvořen.</string>
     <string name="activity_backup_restore_passphrase">Přístupové heslo o délce 30 čísel</string>
     <string name="activity_link_device_skip_prompt">Trvá to trochu déle, chcete přeskočit?</string>
-    <string name="activity_link_device_link_device">Propojit zařízení</string>
     <string name="activity_link_device_recovery_phrase">Fráze pro obnovení</string>
     <string name="activity_link_device_scan_qr_code">Naskenovat QR kód</string>
     <string name="activity_link_device_qr_message">Přejděte do Nastavení → Fráze pro obnovení na vašem dalším zařízení a zobrazte svůj QR kód.</string>
@@ -689,7 +688,6 @@
     <string name="activity_pn_mode_slow_mode">Pomalý režim</string>
     <string name="activity_pn_mode_fast_mode_explanation">Budete spolehlivě a okamžitě informováni o nových zprávách pomocí oznamovacích serverů Google.</string>
     <string name="activity_pn_mode_slow_mode_explanation">Session občas zkontroluje nové zprávy na pozadí.</string>
-    <string name="fragment_recovery_phrase_title">Fráze pro obnovení</string>
     <string name="activity_prompt_passphrase_session_locked">Session je zamčený</string>
     <string name="activity_prompt_passphrase_tap_to_unlock">Klepněte pro odemčení</string>
     <string name="fragment_user_details_bottom_sheet_edit_text_hint">Zadej přezdívku</string>

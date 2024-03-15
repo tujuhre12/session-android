@@ -544,11 +544,11 @@
     <string name="activity_restore_title">Uw account herstellen</string>
     <string name="activity_restore_explanation">Voer de herstel zin in die u hebt gekregen toen u uwzelf hebt aangemeld om uw account te herstellen.</string>
     <string name="activity_restore_seed_edit_text_hint">Voer uw herstel zin in</string>
-    <string name="activity_display_name_title_2">Kies je weergavenaam</string>
-    <string name="activity_display_name_explanation">Dit is je naam wanneer je Sessie gebruikt. Het kan je echte naam zijn, een alias, of wat je maar wilt.</string>
-    <string name="activity_display_name_edit_text_hint">Voer een weergavenaam in</string>
-    <string name="activity_display_name_display_name_missing_error">Kies a.u.b. een weergavenaam</string>
-    <string name="activity_display_name_display_name_too_long_error">Kies a.u.b. een kortere weergavenaam</string>
+    <string name="displayNamePick">Kies je weergavenaam</string>
+    <string name="displayNameDescription">Dit is je naam wanneer je Sessie gebruikt. Het kan je echte naam zijn, een alias, of wat je maar wilt.</string>
+    <string name="displayNameEnter">Voer een weergavenaam in</string>
+    <string name="displayNameErrorDescription">Kies a.u.b. een weergavenaam</string>
+    <string name="displayNameErrorDescriptionShorter">Kies a.u.b. een kortere weergavenaam</string>
     <string name="activity_pn_mode_recommended_option_tag">Aanbevolen</string>
     <string name="activity_pn_mode_no_option_picked_dialog_title">Gelieve een optie te selecteren</string>
     <string name="activity_home_empty_state_message">U heeft nog geen contactpersonen</string>
@@ -656,7 +656,6 @@
     <string name="activity_backup_restore_explanation_1">Selecteer een backup-bestand en voer de wachtwoordzin in waarmee het is gemaakt.</string>
     <string name="activity_backup_restore_passphrase">Wachtwoordzin met 30 tekens</string>
     <string name="activity_link_device_skip_prompt">Dit duurt een tijdje, wilt u het overslaan?</string>
-    <string name="activity_link_device_link_device">Koppel een apparaat</string>
     <string name="activity_link_device_recovery_phrase">Herstel zin</string>
     <string name="activity_link_device_scan_qr_code">QR-code scannen</string>
     <string name="activity_link_device_qr_message">Navigeer naar Instellingen → Herstel zin op je andere apparaat om je QR-code te tonen.</string>
@@ -667,7 +666,6 @@
     <string name="activity_pn_mode_slow_mode">Langzame modus</string>
     <string name="activity_pn_mode_fast_mode_explanation">U wordt op een betrouwbare en directe manier op de hoogte gebracht van nieuwe berichten via Googles notificatieservers.</string>
     <string name="activity_pn_mode_slow_mode_explanation">Sessie controleert af en toe op nieuwe berichten op de achtergrond.</string>
-    <string name="fragment_recovery_phrase_title">Herstel zin</string>
     <string name="activity_prompt_passphrase_session_locked">Sessie is vergrendeld</string>
     <string name="activity_prompt_passphrase_tap_to_unlock">Tik om te ontgrendelen</string>
     <string name="fragment_user_details_bottom_sheet_edit_text_hint">Bijnaam invoeren</string>

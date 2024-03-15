@@ -349,11 +349,11 @@ trao đổi chìa khóa bị hỏng!</string>
     <string name="activity_restore_title">Khôi phục lại tài khoản của bạn</string>
     <string name="activity_restore_explanation">Nhập cụm từ khôi phục mà bạn nhận được khi đăng ký khôi phục tài khoản.</string>
     <string name="activity_restore_seed_edit_text_hint">Nhập cụm từ khôi phục của bạn.</string>
-    <string name="activity_display_name_title_2">Chọn tên hiển thị của bạn</string>
-    <string name="activity_display_name_explanation">Đây là tên của bạn khi sử dụng Session. Nó có thể là tên thật, tên gọi khác của bạn hoặc bất kì tên nào bạn thích.</string>
-    <string name="activity_display_name_edit_text_hint">Nhập một tên hiển thị</string>
-    <string name="activity_display_name_display_name_missing_error">Vui lòng chọn một tên hiển thị</string>
-    <string name="activity_display_name_display_name_too_long_error">Vui lòng chọn tên hiển thị ngắn hơn</string>
+    <string name="displayNamePick">Chọn tên hiển thị của bạn</string>
+    <string name="displayNameDescription">Đây là tên của bạn khi sử dụng Session. Nó có thể là tên thật, tên gọi khác của bạn hoặc bất kì tên nào bạn thích.</string>
+    <string name="displayNameEnter">Nhập một tên hiển thị</string>
+    <string name="displayNameErrorDescription">Vui lòng chọn một tên hiển thị</string>
+    <string name="displayNameErrorDescriptionShorter">Vui lòng chọn tên hiển thị ngắn hơn</string>
     <string name="activity_pn_mode_recommended_option_tag">Khuyến nghị</string>
     <string name="activity_pn_mode_no_option_picked_dialog_title">Vui lòng lựa chọn </string>
     <string name="activity_home_empty_state_message">Bạn chưa có danh bạ </string>

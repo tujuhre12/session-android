@@ -510,7 +510,7 @@
     <string name="AppProtectionPreferenceFragment_none">Ништа</string>
     <!-- Conversation activity -->
     <!-- Session -->
-    <string name="activity_display_name_display_name_too_long_error">Молимо вас да изаберете краће приказно име</string>
+    <string name="displayNameErrorDescriptionShorter">Молимо вас да изаберете краће приказно име</string>
     <string name="activity_pn_mode_recommended_option_tag">Препоручено</string>
     <string name="activity_pn_mode_no_option_picked_dialog_title">Молимо Вас да одаберете опцију</string>
     <string name="activity_home_empty_state_message">Још увек немате ниједан контакт</string>

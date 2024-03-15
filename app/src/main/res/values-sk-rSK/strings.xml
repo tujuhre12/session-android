@@ -556,11 +556,11 @@ výmeny kľúčov.</string>
     <string name="activity_restore_title">Obnoviť účet</string>
     <string name="activity_restore_explanation">Zadajte frázu na obnovenie, ktorá vám bola poskytnutá pri registrácii na obnovenie účtu.</string>
     <string name="activity_restore_seed_edit_text_hint">Zadajte vašu obnovovaciu frázu</string>
-    <string name="activity_display_name_title_2">Vyberte svoje zobrazované meno</string>
-    <string name="activity_display_name_explanation">Toto bude vaše meno pri používaní Session. Môže to byť vaše skutočné meno, prezývka alebo čokoľvek čo chcete.</string>
-    <string name="activity_display_name_edit_text_hint">Zadajte zobrazované meno</string>
-    <string name="activity_display_name_display_name_missing_error">Zvoľte prosím zobrazované meno</string>
-    <string name="activity_display_name_display_name_too_long_error">Zvoľte prosím kratšie zobrazované meno</string>
+    <string name="displayNamePick">Vyberte svoje zobrazované meno</string>
+    <string name="displayNameDescription">Toto bude vaše meno pri používaní Session. Môže to byť vaše skutočné meno, prezývka alebo čokoľvek čo chcete.</string>
+    <string name="displayNameEnter">Zadajte zobrazované meno</string>
+    <string name="displayNameErrorDescription">Zvoľte prosím zobrazované meno</string>
+    <string name="displayNameErrorDescriptionShorter">Zvoľte prosím kratšie zobrazované meno</string>
     <string name="activity_pn_mode_recommended_option_tag">Odporúčané</string>
     <string name="activity_pn_mode_no_option_picked_dialog_title">Prosím, zvoľte možnosť</string>
     <string name="activity_home_empty_state_message">Zatiaľ nemáte žiadne kontakty</string>
@@ -646,7 +646,6 @@ výmeny kľúčov.</string>
     <string name="activity_backup_restore_select_file">Vybrať súbor</string>
     <string name="activity_backup_restore_explanation_1">Vyberte súbor zálohy a zadajte prístupovú frázu, pomocou ktorej bol vytvorený.</string>
     <string name="activity_backup_restore_passphrase">30-znaková prístupová fráza</string>
-    <string name="activity_link_device_link_device">Pripojiť zariadenie</string>
     <string name="activity_join_public_chat_join_rooms">Alebo sa pripojte k jednej z týchto…</string>
     <string name="activity_pn_mode_message_notifications">Upozornenia na správy</string>
     <string name="activity_pn_mode_fast_mode">Rýchly režim</string>

@@ -569,11 +569,11 @@
     <string name="activity_restore_title">Відновити обліковий запис</string>
     <string name="activity_restore_explanation">Введіть фразу відновлення, яку вам було сказано записати на папері під час реєстрації, для відновлення облікового запису.</string>
     <string name="activity_restore_seed_edit_text_hint">Введіть вашу фразу відновлення</string>
-    <string name="activity_display_name_title_2">Виберіть ваш псевдонім для показу</string>
-    <string name="activity_display_name_explanation">Це буде ваше ім\'я яке ви використовуєте в Session. Воно може бути вашим дійсним ім\'ям, альясом або чимусь іншим.</string>
-    <string name="activity_display_name_edit_text_hint">Введіть відображуватинимий псевдонім</string>
-    <string name="activity_display_name_display_name_missing_error">Будь ласка, виберіть відображуватимий псевдонім</string>
-    <string name="activity_display_name_display_name_too_long_error">Будь ласка, виберіть коротший псевдонім</string>
+    <string name="displayNamePick">Виберіть ваш псевдонім для показу</string>
+    <string name="displayNameDescription">Це буде ваше ім\'я яке ви використовуєте в Session. Воно може бути вашим дійсним ім\'ям, альясом або чимусь іншим.</string>
+    <string name="displayNameEnter">Введіть відображуватинимий псевдонім</string>
+    <string name="displayNameErrorDescription">Будь ласка, виберіть відображуватимий псевдонім</string>
+    <string name="displayNameErrorDescriptionShorter">Будь ласка, виберіть коротший псевдонім</string>
     <string name="activity_pn_mode_recommended_option_tag">Рекомендовано</string>
     <string name="activity_pn_mode_no_option_picked_dialog_title">Будь ласка виберіть варіант</string>
     <string name="activity_home_empty_state_message">У вас ще немає Session контактів</string>
@@ -681,7 +681,6 @@
     <string name="activity_backup_restore_explanation_1">Виберіть файл резервної копії та введіть секретну фразу, з якою він був створений.</string>
     <string name="activity_backup_restore_passphrase">30-символьний пароль</string>
     <string name="activity_link_device_skip_prompt">Це займає деякий час, ви б хотіли це пропустити?</string>
-    <string name="activity_link_device_link_device">Зв\'язати пристрій</string>
     <string name="activity_link_device_recovery_phrase">Фраза відновлення</string>
     <string name="activity_link_device_scan_qr_code">Сканувати QR-код</string>
     <string name="activity_link_device_qr_message">Перейдіть до Налаштувань → Фраза відновлення на вашому іншому пристрої, щоб відобразити ваш QR-код.</string>
@@ -692,7 +691,6 @@
     <string name="activity_pn_mode_slow_mode">Медленний режим</string>
     <string name="activity_pn_mode_fast_mode_explanation">Вас надійно повідомлятимуть про нові сповіщщеня негайно, використовуючи сервери сповіщень Google.</string>
     <string name="activity_pn_mode_slow_mode_explanation">Session буде періодично перевіряти наявність нових повідомлень у фоновому режимі.</string>
-    <string name="fragment_recovery_phrase_title">Фраза відновлення</string>
     <string name="activity_prompt_passphrase_session_locked">Ви заблоковали Session</string>
     <string name="activity_prompt_passphrase_tap_to_unlock">Торкніться, щоб розблокувати</string>
     <string name="fragment_user_details_bottom_sheet_edit_text_hint">Введіть псевдонім</string>

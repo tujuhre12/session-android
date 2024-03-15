@@ -569,11 +569,11 @@
     <string name="activity_restore_title">Restaurez votre compte</string>
     <string name="activity_restore_explanation">Pour restaurer votre compte, veuillez entrer la phrase de récupération qui vous a été fournie lors de la création de votre compte.</string>
     <string name="activity_restore_seed_edit_text_hint">Saisissez votre phrase de récupération</string>
-    <string name="activity_display_name_title_2">Choisissez votre nom d\'utilisateur</string>
-    <string name="activity_display_name_explanation">Ce sera votre nom lorsque vous utiliserez Session. Il peut s\'agir de votre vrai nom, d\'un pseudo ou de ce que vous voulez.</string>
-    <string name="activity_display_name_edit_text_hint">Saisissez un nom d\'utilisateur</string>
-    <string name="activity_display_name_display_name_missing_error">Veuillez choisir un nom d\'utilisateur</string>
-    <string name="activity_display_name_display_name_too_long_error">Veuillez choisir un nom d\'utilisateur plus court</string>
+    <string name="displayNamePick">Choisissez votre nom d\'utilisateur</string>
+    <string name="displayNameDescription">Ce sera votre nom lorsque vous utiliserez Session. Il peut s\'agir de votre vrai nom, d\'un pseudo ou de ce que vous voulez.</string>
+    <string name="displayNameEnter">Saisissez un nom d\'utilisateur</string>
+    <string name="displayNameErrorDescription">Veuillez choisir un nom d\'utilisateur</string>
+    <string name="displayNameErrorDescriptionShorter">Veuillez choisir un nom d\'utilisateur plus court</string>
     <string name="activity_pn_mode_recommended_option_tag">Recommandé</string>
     <string name="activity_pn_mode_no_option_picked_dialog_title">Veuillez choisir une option</string>
     <string name="activity_home_empty_state_message">Vous n\'avez pas encore de contacts</string>
@@ -696,7 +696,6 @@
     <string name="activity_backup_restore_explanation_1">Sélectionnez un fichier de sauvegarde et entrez la phrase de passe avec laquelle il a été créé.</string>
     <string name="activity_backup_restore_passphrase">Phrase de passe de 30 caractères</string>
     <string name="activity_link_device_skip_prompt">Cela prend un certain temps, voulez-vous passer ?</string>
-    <string name="activity_link_device_link_device">Relier un appareil</string>
     <string name="activity_link_device_recovery_phrase">Phrase de récupération</string>
     <string name="activity_link_device_scan_qr_code">Scanner le QR Code</string>
     <string name="activity_link_device_qr_message">Allez dans Paramètres → Phrase de récupération sur votre autre appareil pour afficher votre QR code.</string>
@@ -707,7 +706,6 @@
     <string name="activity_pn_mode_slow_mode">Mode lent</string>
     <string name="activity_pn_mode_fast_mode_explanation">Vous serez averti de nouveaux messages de manière fiable et immédiate en utilisant les serveurs de notification de Google.</string>
     <string name="activity_pn_mode_slow_mode_explanation">Session vérifiera occasionnellement la présence de nouveaux messages en tâche de fond.</string>
-    <string name="fragment_recovery_phrase_title">Phrase de récupération</string>
     <string name="activity_prompt_passphrase_session_locked">Session est Verrouillé</string>
     <string name="activity_prompt_passphrase_tap_to_unlock">Toucher pour déverrouiller</string>
     <string name="fragment_user_details_bottom_sheet_edit_text_hint">Saisissez un nom</string>

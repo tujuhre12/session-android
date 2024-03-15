@@ -543,11 +543,11 @@
     <string name="activity_restore_title">Restaŭri vian konton</string>
     <string name="activity_restore_explanation">Entajpu la riparan frazon, kiu estis donita al vi kiam vi aliĝis, por ripari vian konton.</string>
     <string name="activity_restore_seed_edit_text_hint">Entajpu vian riparan frazon</string>
-    <string name="activity_display_name_title_2">Elektu vian vidigan nomon</string>
-    <string name="activity_display_name_explanation">Ĉi tio estos via nomo kiam vi uzas Sesion. Ĝi povas esti via vera nomo, alinomo, aŭ io ajn alia vi volas.</string>
-    <string name="activity_display_name_edit_text_hint">Entajpu vidigan nomon</string>
-    <string name="activity_display_name_display_name_missing_error">Bonvolu elekti vidigan nomon</string>
-    <string name="activity_display_name_display_name_too_long_error">Bonvolu elekti plej mallongan vidigan nomon</string>
+    <string name="displayNamePick">Elektu vian vidigan nomon</string>
+    <string name="displayNameDescription">Ĉi tio estos via nomo kiam vi uzas Sesion. Ĝi povas esti via vera nomo, alinomo, aŭ io ajn alia vi volas.</string>
+    <string name="displayNameEnter">Entajpu vidigan nomon</string>
+    <string name="displayNameErrorDescription">Bonvolu elekti vidigan nomon</string>
+    <string name="displayNameErrorDescriptionShorter">Bonvolu elekti plej mallongan vidigan nomon</string>
     <string name="activity_pn_mode_recommended_option_tag">Rekomendate</string>
     <string name="activity_pn_mode_no_option_picked_dialog_title">Bonvolu Elekti Opcion</string>
     <string name="activity_home_empty_state_message">Vi ankoraŭ ne havas kontaktojn</string>
@@ -648,7 +648,6 @@
     <string name="activity_backup_restore_title">Restaŭri savkopion</string>
     <string name="activity_backup_restore_select_file">Elekti dosieron</string>
     <string name="activity_backup_restore_passphrase">30-cifera pasfrazo</string>
-    <string name="activity_link_device_link_device">Ligi Aparaton</string>
     <string name="activity_link_device_recovery_phrase">Ripara Frazo</string>
     <string name="activity_link_device_scan_qr_code">Skani QR-Kodon</string>
     <string name="activity_join_public_chat_join_rooms">Aŭ aliĝu unu de ĉi tiuj…</string>
@@ -656,7 +655,6 @@
     <string name="activity_pn_mode_fast_mode">Rapida Reĝimo</string>
     <string name="activity_pn_mode_slow_mode">Malrapida Maniero</string>
     <string name="activity_pn_mode_slow_mode_explanation">Session foje serĉos novajn mesaĝojn en la fono.</string>
-    <string name="fragment_recovery_phrase_title">Ripara Frazo</string>
     <string name="activity_prompt_passphrase_session_locked">Session estas Ŝlosita</string>
     <string name="activity_prompt_passphrase_tap_to_unlock">Tuŝetu por Malŝlosi</string>
     <string name="fragment_user_details_bottom_sheet_edit_text_hint">Entajpu alnomon</string>

@@ -543,11 +543,11 @@ iletisi alındı!</string>
     <string name="activity_restore_title">Hesabınızı geri yükleyin</string>
     <string name="activity_restore_explanation">Hesabınızı geri yüklemek için kaydolduğunuzda size verilen kurtarma ifadesini girin.</string>
     <string name="activity_restore_seed_edit_text_hint">Kurtarma ifadenizi girin</string>
-    <string name="activity_display_name_title_2">Görünen adınızı seçin</string>
-    <string name="activity_display_name_explanation">Bu, Session kullandığınızda adınız olacaktır. Gerçek adınız, takma adınız veya istediğiniz herhangi bir şey olabilir.</string>
-    <string name="activity_display_name_edit_text_hint">Bir görünen ad girin</string>
-    <string name="activity_display_name_display_name_missing_error">Lütfen bir görünen ad seçin</string>
-    <string name="activity_display_name_display_name_too_long_error">Lütfen daha kısa bir görünen ad seçin</string>
+    <string name="displayNamePick">Görünen adınızı seçin</string>
+    <string name="displayNameDescription">Bu, Session kullandığınızda adınız olacaktır. Gerçek adınız, takma adınız veya istediğiniz herhangi bir şey olabilir.</string>
+    <string name="displayNameEnter">Bir görünen ad girin</string>
+    <string name="displayNameErrorDescription">Lütfen bir görünen ad seçin</string>
+    <string name="displayNameErrorDescriptionShorter">Lütfen daha kısa bir görünen ad seçin</string>
     <string name="activity_pn_mode_recommended_option_tag">Önerilenler</string>
     <string name="activity_pn_mode_no_option_picked_dialog_title">Lütfen Bir Seçenek Seçin</string>
     <string name="activity_home_empty_state_message">Henüz kayıtlı kişi yok</string>
@@ -655,7 +655,6 @@ iletisi alındı!</string>
     <string name="activity_backup_restore_explanation_1">Bir yedekleme dosyası seçin ve oluşturulduğu parolayı girin.</string>
     <string name="activity_backup_restore_passphrase">30 basamaklı parola</string>
     <string name="activity_link_device_skip_prompt">Bu biraz uzun sürüyor, atlamak ister misiniz?</string>
-    <string name="activity_link_device_link_device">Bir Cihazı Bağla</string>
     <string name="activity_link_device_recovery_phrase">Kurtarma Sözcük Grubu</string>
     <string name="activity_link_device_scan_qr_code">QR Kodunu Tara</string>
     <string name="activity_link_device_qr_message">QR kodunuzu göstermek için diğer cihazınızda Ayarlar → Kurtarma İfadesi\'ne gidin.</string>
@@ -666,7 +665,6 @@ iletisi alındı!</string>
     <string name="activity_pn_mode_slow_mode">Yavaş Mod</string>
     <string name="activity_pn_mode_fast_mode_explanation">Google\'ın bildirim sunucularını kullanarak yeni iletilerden güvenilir ve anında haberdar olacaksınız.</string>
     <string name="activity_pn_mode_slow_mode_explanation">Session ara sıra arka planda yeni mesajları kontrol eder.</string>
-    <string name="fragment_recovery_phrase_title">Kurtarma Sözcük Grubu</string>
     <string name="activity_prompt_passphrase_session_locked">Session kilitli</string>
     <string name="activity_prompt_passphrase_tap_to_unlock">Açmak için dokun</string>
     <string name="fragment_user_details_bottom_sheet_edit_text_hint">Bir kullanıcı adı girin</string>

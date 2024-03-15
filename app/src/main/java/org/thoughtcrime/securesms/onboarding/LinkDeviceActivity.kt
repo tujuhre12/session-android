@@ -213,9 +213,7 @@ class LinkDeviceActivity : BaseActionBarActivity() {
         LaunchedEffect(Unit) {
             errors.collect { error ->
                 lifecycleScope.launch {
-                    scaffoldState.snackbarHostState.showSnackbar(
-                        message = error
-                    )
+                    scaffoldState.snackbarHostState.showSnackbar(message = error)
                 }
             }
         }

@@ -542,11 +542,11 @@ on viallinen!</string>
     <string name="activity_restore_title">Palauta sinun tili</string>
     <string name="activity_restore_explanation">Syötä palautuslause joka annettiin sinulle, kun olet rekisteröitynyt palauttamaan tilisi.</string>
     <string name="activity_restore_seed_edit_text_hint">Syötä palautuslauseesi</string>
-    <string name="activity_display_name_title_2">Valitse näyttönimi</string>
-    <string name="activity_display_name_explanation">Tämä on nimesi, kun käytät Sessionia. Se voi olla oikea nimesi, kutsumanimi tai mitä tahansa muuta haluat.</string>
-    <string name="activity_display_name_edit_text_hint">Syötä näyttönimi</string>
-    <string name="activity_display_name_display_name_missing_error">Valitse näyttönimi</string>
-    <string name="activity_display_name_display_name_too_long_error">Valitse lyhyempi näyttönimi</string>
+    <string name="displayNamePick">Valitse näyttönimi</string>
+    <string name="displayNameDescription">Tämä on nimesi, kun käytät Sessionia. Se voi olla oikea nimesi, kutsumanimi tai mitä tahansa muuta haluat.</string>
+    <string name="displayNameEnter">Syötä näyttönimi</string>
+    <string name="displayNameErrorDescription">Valitse näyttönimi</string>
+    <string name="displayNameErrorDescriptionShorter">Valitse lyhyempi näyttönimi</string>
     <string name="activity_pn_mode_recommended_option_tag">Suositeltu</string>
     <string name="activity_pn_mode_no_option_picked_dialog_title">Valitse vaihtoehto</string>
     <string name="activity_home_empty_state_message">Sinulla ei ole yhteystietoja</string>
@@ -654,7 +654,6 @@ on viallinen!</string>
     <string name="activity_backup_restore_explanation_1">Valitse varmuuskopiotiedosto ja kirjoita salasana, jonka kanssa se on luotu.</string>
     <string name="activity_backup_restore_passphrase">30-merkkinen pääsykoodi</string>
     <string name="activity_link_device_skip_prompt">Tämä kestää jonkin aikaa, haluaisitko ohittaa?</string>
-    <string name="activity_link_device_link_device">Yhdistä laite</string>
     <string name="activity_link_device_recovery_phrase">Palautusvirke</string>
     <string name="activity_link_device_scan_qr_code">Skannaa QR-koodi</string>
     <string name="activity_link_device_qr_message">Siirry asetuksiin → palautusvirke toisella laitteellasi näyttääksesi QR-koodisi.</string>
@@ -665,7 +664,6 @@ on viallinen!</string>
     <string name="activity_pn_mode_slow_mode">Hidastila</string>
     <string name="activity_pn_mode_fast_mode_explanation">Sinulle ilmoitetaan uusista viesteistä luotettavasti ja viivyttelemättä Applen ilmoituspalvelua käyttäen.</string>
     <string name="activity_pn_mode_slow_mode_explanation">Session tarkistaa taustalla ajoittain uudet viestit.</string>
-    <string name="fragment_recovery_phrase_title">Palautusvirke</string>
     <string name="activity_prompt_passphrase_session_locked">Session on lukittu</string>
     <string name="activity_prompt_passphrase_tap_to_unlock">Avaa napauttamalla</string>
     <string name="fragment_user_details_bottom_sheet_edit_text_hint">Anna nimimerkki</string>

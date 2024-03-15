@@ -543,11 +543,11 @@ nøkkelutvekslingsmelding.</string>
     <string name="activity_restore_title">Gjenopprett kontoen din</string>
     <string name="activity_restore_explanation">Angi gjenopprettingsfrasen som ble gitt til deg når du registrerte deg for å gjenopprette din konto.</string>
     <string name="activity_restore_seed_edit_text_hint">Skriv inn din gjenopprettelsesfrase</string>
-    <string name="activity_display_name_title_2">Velg ditt visningsnavn</string>
-    <string name="activity_display_name_explanation">Dette vil være navnet ditt når du bruker Session. Det kan være ditt virkelige navn, en alias, eller alt annet du vil.</string>
-    <string name="activity_display_name_edit_text_hint">Skriv inn et visningsnavn</string>
-    <string name="activity_display_name_display_name_missing_error">Vennligst velg et visningsnavn</string>
-    <string name="activity_display_name_display_name_too_long_error">Vennligst velg et kortere visningsnavn</string>
+    <string name="displayNamePick">Velg ditt visningsnavn</string>
+    <string name="displayNameDescription">Dette vil være navnet ditt når du bruker Session. Det kan være ditt virkelige navn, en alias, eller alt annet du vil.</string>
+    <string name="displayNameEnter">Skriv inn et visningsnavn</string>
+    <string name="displayNameErrorDescription">Vennligst velg et visningsnavn</string>
+    <string name="displayNameErrorDescriptionShorter">Vennligst velg et kortere visningsnavn</string>
     <string name="activity_pn_mode_recommended_option_tag">Anbefalt</string>
     <string name="activity_pn_mode_no_option_picked_dialog_title">Vennligst velg et alternativ</string>
     <string name="activity_home_empty_state_message">Du har ingen kontakter ennå</string>
@@ -655,7 +655,6 @@ nøkkelutvekslingsmelding.</string>
     <string name="activity_backup_restore_explanation_1">Velg en sikkerhetskopifil og skriv inn passordfrasen den ble opprettet med.</string>
     <string name="activity_backup_restore_passphrase">30-digit passphrase</string>
     <string name="activity_link_device_skip_prompt">Dette tar en stund, vil du hoppe over?</string>
-    <string name="activity_link_device_link_device">Koble til en enhet</string>
     <string name="activity_link_device_recovery_phrase">Gjenopprettingsfrase</string>
     <string name="activity_link_device_scan_qr_code">Skann QR-kode</string>
     <string name="activity_link_device_qr_message">Naviger til innstillinger → Gjenopprettingsfrasen på din andre enhet for å vise QR-koden.</string>
@@ -666,7 +665,6 @@ nøkkelutvekslingsmelding.</string>
     <string name="activity_pn_mode_slow_mode">Langsom Modus</string>
     <string name="activity_pn_mode_fast_mode_explanation">Du vil bli varslet om nye meldinger på en pålitelig måte, og umiddelbart ved hjelp av Googles varslingsservere.</string>
     <string name="activity_pn_mode_slow_mode_explanation">Session vil av og til sjekke nye meldinger i bakgrunnen.</string>
-    <string name="fragment_recovery_phrase_title">Gjenopprettingsfrase</string>
     <string name="activity_prompt_passphrase_session_locked">Session er låst</string>
     <string name="activity_prompt_passphrase_tap_to_unlock">Trykk for å låse opp</string>
     <string name="fragment_user_details_bottom_sheet_edit_text_hint">Skriv inn et kallenavn</string>

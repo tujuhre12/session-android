@@ -107,7 +107,7 @@ class PickDisplayNameActivity : BaseActionBarActivity() {
             OutlinedTextField(
                 value = state.displayName,
                 onValueChange = { onChange(it) },
-                placeholder = { Text(stringResource(R.string.activity_display_name_edit_text_hint)) },
+                placeholder = { Text(stringResource(R.string.displayNameEnter)) },
                 colors = outlinedTextFieldColors(state.error != null),
                 singleLine = true,
                 keyboardActions = KeyboardActions(

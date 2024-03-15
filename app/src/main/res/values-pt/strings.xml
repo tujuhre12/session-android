@@ -544,11 +544,11 @@
     <string name="activity_restore_title">Restaurar sua conta</string>
     <string name="activity_restore_explanation">Entre a frase de recuperação que lhe foi dada quando você fez signup para restaurar sua conta.</string>
     <string name="activity_restore_seed_edit_text_hint">Entre sua frase de recuperação</string>
-    <string name="activity_display_name_title_2">Escolha seu nome de display</string>
-    <string name="activity_display_name_explanation">Este será o seu nome quando você usar Session. Pode ser seu nome verdadeiro, um alias, ou qualquer outra coisa que você quiser.</string>
-    <string name="activity_display_name_edit_text_hint">Entre um nome de display</string>
-    <string name="activity_display_name_display_name_missing_error">Escolha um nome de display</string>
-    <string name="activity_display_name_display_name_too_long_error">Escolha um nome de exibição mais curto</string>
+    <string name="displayNamePick">Escolha seu nome de display</string>
+    <string name="displayNameDescription">Este será o seu nome quando você usar Session. Pode ser seu nome verdadeiro, um alias, ou qualquer outra coisa que você quiser.</string>
+    <string name="displayNameEnter">Entre um nome de display</string>
+    <string name="displayNameErrorDescription">Escolha um nome de display</string>
+    <string name="displayNameErrorDescriptionShorter">Escolha um nome de exibição mais curto</string>
     <string name="activity_pn_mode_recommended_option_tag">Recomendado</string>
     <string name="activity_pn_mode_no_option_picked_dialog_title">Escolha uma opção</string>
     <string name="activity_home_empty_state_message">Você ainda não possui contatos</string>
@@ -656,7 +656,6 @@
     <string name="activity_backup_restore_explanation_1">Selecione uma cópia de segurança e coloque a senha frase que foi criada.</string>
     <string name="activity_backup_restore_passphrase">Senha de 30 dígitos</string>
     <string name="activity_link_device_skip_prompt">Isto está demorando um pouco, tu gostarias de pular?</string>
-    <string name="activity_link_device_link_device">Vincular um Dispositivo</string>
     <string name="activity_link_device_recovery_phrase">Frase de Recuperação</string>
     <string name="activity_link_device_scan_qr_code">Ler Código QR</string>
     <string name="activity_link_device_qr_message">Vá até as configurações → Frase de Recuperação em seu outro dispositivo para mostrar o seu código QR.</string>
@@ -667,7 +666,6 @@
     <string name="activity_pn_mode_slow_mode">Modo Lento</string>
     <string name="activity_pn_mode_fast_mode_explanation">Você será notificado de forma confiável e imediata sobre novas mensagens usando os servidores de notificação da Google.</string>
     <string name="activity_pn_mode_slow_mode_explanation">O session verificará ocasionalmente por novas mensagens em segundo plano.</string>
-    <string name="fragment_recovery_phrase_title">Frase de Recuperação</string>
     <string name="activity_prompt_passphrase_session_locked">Session está Trancado</string>
     <string name="activity_prompt_passphrase_tap_to_unlock">Toque para destrancar</string>
     <string name="fragment_user_details_bottom_sheet_edit_text_hint">Digite um apelido</string>
