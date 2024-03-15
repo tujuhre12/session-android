@@ -29,17 +29,13 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.material.ContentAlpha
 import androidx.compose.material.Icon
-import androidx.compose.material.LocalContentAlpha
-import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Snackbar
 import androidx.compose.material.SnackbarHost
 import androidx.compose.material.Text
-import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -80,8 +76,6 @@ import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.OutlineButton
 import org.thoughtcrime.securesms.ui.baseBold
-import org.thoughtcrime.securesms.ui.classicDark3
-import org.thoughtcrime.securesms.ui.colorDestructive
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
 import org.thoughtcrime.securesms.ui.outlinedTextFieldColors
 import java.util.concurrent.Executors
@@ -89,7 +83,7 @@ import javax.inject.Inject
 
 private const val TAG = "LinkDeviceActivity"
 
-private val TITLES = listOf(R.string.activity_recovery_password, R.string.activity_link_device_scan_qr_code)
+private val TITLES = listOf(R.string.sessionRecoveryPassword, R.string.qrScan)
 
 @AndroidEntryPoint
 @androidx.annotation.OptIn(ExperimentalGetImage::class)
@@ -154,7 +148,7 @@ class LinkDeviceActivity : BaseActionBarActivity() {
 
                 runCatching {
                     cameraProvider.get().unbindAll()
-                    if (title == R.string.activity_link_device_scan_qr_code) {
+                    if (title == R.string.qrScan) {
                         LocalSoftwareKeyboardController.current?.hide()
                         cameraProvider.get().bindToLifecycle(
                             LocalLifecycleOwner.current,
@@ -165,8 +159,8 @@ class LinkDeviceActivity : BaseActionBarActivity() {
                     }
                 }.onFailure { Log.e(TAG, "error binding camera", it) }
                 when (title) {
-                    R.string.activity_recovery_password -> RecoveryPassword(state, onChange, onContinue)
-                    R.string.activity_link_device_scan_qr_code -> MaybeScanQrCode()
+                    R.string.sessionRecoveryPassword -> RecoveryPassword(state, onChange, onContinue)
+                    R.string.qrScan -> MaybeScanQrCode()
                 }
             }
         }
@@ -193,7 +187,7 @@ class LinkDeviceActivity : BaseActionBarActivity() {
                     )
                     Spacer(modifier = Modifier.size(20.dp))
                     OutlineButton(
-                        text = stringResource(R.string.activity_link_settings),
+                        text = stringResource(R.string.sessionSettings),
                         modifier = Modifier.align(Alignment.CenterHorizontally)
                     ) {
                         Intent(ACTION_APPLICATION_DETAILS_SETTINGS).apply {
@@ -203,7 +197,7 @@ class LinkDeviceActivity : BaseActionBarActivity() {
                 }
             } else {
                 OutlineButton(
-                    text = stringResource(R.string.activity_link_grant_camera_permission),
+                    text = stringResource(R.string.cameraGrantAccess),
                     modifier = Modifier.align(Alignment.Center)
                 ) {
                     cameraPermissionState.run { launchPermissionRequest() }
@@ -270,7 +264,7 @@ fun RecoveryPassword(state: LinkDeviceState, onChange: (String) -> Unit = {}, on
     ) {
         Spacer(Modifier.weight(1f))
         Row {
-            Text(stringResource(R.string.activity_link_recovery_password), style = MaterialTheme.typography.h4)
+            Text(stringResource(R.string.sessionRecoveryPassword), style = MaterialTheme.typography.h4)
             Spacer(Modifier.width(6.dp))
             Icon(
                 painter = painterResource(id = R.drawable.ic_shield_outline),
@@ -283,7 +277,7 @@ fun RecoveryPassword(state: LinkDeviceState, onChange: (String) -> Unit = {}, on
         OutlinedTextField(
             value = state.recoveryPhrase,
             onValueChange = { onChange(it) },
-            placeholder = { Text(stringResource(R.string.activity_link_enter_your_recovery_password)) },
+            placeholder = { Text(stringResource(R.string.recoveryPasswordEnter)) },
             colors = outlinedTextFieldColors(state.error != null),
             singleLine = true,
             keyboardActions = KeyboardActions(

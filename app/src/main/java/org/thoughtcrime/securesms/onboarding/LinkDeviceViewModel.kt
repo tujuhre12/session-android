@@ -42,7 +42,7 @@ class LinkDeviceViewModel @Inject constructor(
     val qrErrorsFlow = qrErrors.receiveAsFlow()
         .debounce(QR_ERROR_TIME)
         .takeWhile { event.isEmpty }
-        .mapNotNull { application.getString(R.string.activity_link_this_qr_code_does_not_contain_a_recovery_password) }
+        .mapNotNull { application.getString(R.string.qrNotRecoveryPassword) }
 
     private val codec by lazy { MnemonicCodec { MnemonicUtilities.loadFileContents(getApplication(), it) } }
 
@@ -73,9 +73,9 @@ class LinkDeviceViewModel @Inject constructor(
         state.update {
             it.copy(
                 error = when (error) {
-                    is InputTooShort -> R.string.activity_link_the_recovery_password_you_entered_is_not_long_enough_please_check_and_try_again
-                    is InvalidWord -> R.string.activity_link_some_of_the_words_in_your_recovery_password_are_incorrect_please_check_and_try_again
-                    else -> R.string.activity_link_please_check_your_recovery_password_and_try_again
+                    is InputTooShort -> R.string.recoveryPasswordErrorMessageShort
+                    is InvalidWord -> R.string.recoveryPasswordErrorMessageIncorrect
+                    else -> R.string.recoveryPasswordErrorMessageGeneric
                 }.let(application::getString)
             )
         }

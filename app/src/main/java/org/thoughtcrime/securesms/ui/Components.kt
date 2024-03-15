@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import network.loki.messenger.R
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.runIf
 import org.thoughtcrime.securesms.components.ProfilePictureView

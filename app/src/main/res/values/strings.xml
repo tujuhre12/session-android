@@ -17,7 +17,6 @@
     <!-- Landing Page -->
     <string name="AccessibilityId_create_session_id">Create session ID</string>
     <string name="AccessibilityId_restore_your_session">Restore Your Session</string>
-    <string name="AccessibilityId_link_a_device">Link a device</string>
     <string name="AccessibilityId_link_device">Link Device</string>
     <!-- Session ID Page-->
     <string name="AccessibilityId_session_id">Session ID</string>
@@ -880,9 +879,7 @@
     <string name="activity_backup_restore_explanation_1">Select a backup file and enter the passphrase it was created with.</string>
     <string name="activity_backup_restore_passphrase">30-digit passphrase</string>
     <string name="activity_link_device_skip_prompt">This is taking a while, would you like to skip?</string>
-    <string name="activity_link_device_link_device">Link a Device</string>
-    <string name="activity_link_device_recovery_phrase">Recovery Phrase</string>
-    <string name="activity_link_device_scan_qr_code">Scan QR Code</string>
+    <string name="qrScan">Scan QR Code</string>
     <string name="activity_link_device_qr_message">Navigate to Settings → Recovery Phrase on your other device to show your QR code.</string>
     <string name="activity_join_public_chat_join_rooms">Or join one of these…</string>
     <string name="activity_pn_mode_message_notifications">Message Notifications</string>
@@ -1076,26 +1073,30 @@
     <string name="unread_marker">Unread Messages</string>
     <string name="auto_deletes_in">Auto-deletes in %1$s</string>
 
-    <string name="activity_recovery_password">Recovery Password</string>
+    <string name="onboardingBubblePrivacyInYourPocket">Privacy in your pocket.</string>
+    <string name="onboardingBubbleWelcomeToSession">Welcome to Session 👋</string>
+    <string name="onboardingBubbleSessionIsEngineered">Session is engineered to protect your privacy.</string>
+    <string name="onboardingBubbleNoPhoneNumber">"You don’t even need a phone number to sign up. "</string>
+    <string name="onboardingBubbleCreatingAnAccountIsEasy">Creating an account is \ninstant, free, and \nanonymous 👇</string>
+    <string name="onboardingAccountCreate">Create account</string>
+    <string name="onboardingAccountExists">I have an account</string>
+    <string name="onboardingTosPrivacy">By using this service, you agree to our Terms of Service and Privacy Policy</string>
 
-    <string name="onboarding_privacy_in_your_pocket">Privacy in your pocket.</string>
-    <string name="onboarding_welcome_to_session">Welcome to Session 👋</string>
-    <string name="onboarding_session_is_engineered_to_protect_your_privacy">Session is engineered\nto protect your privacy.</string>
-    <string name="onboarding_you_don_t_even_need_a_phone_number_to_sign_up">"You don’t even need a phone number to sign up. "</string>
-    <string name="onboarding_creating_an_account_is_instant_free_and_anonymous">Creating an account is \ninstant, free, and \nanonymous 👇</string>
-    <string name="onboarding_create_account">Create account</string>
-    <string name="onboarding_i_have_an_account">I have an account</string>
-    <string name="onboarding_by_using_this_service_you_agree_to_our_terms_of_service_and_privacy_policy">By using this service, you agree to our Terms of Service and Privacy Policy</string>
-    <string name="activity_link_this_qr_code_does_not_contain_a_recovery_password">This QR code does not contain a Recovery Password.</string>
-    <string name="activity_link_the_recovery_password_you_entered_is_not_long_enough_please_check_and_try_again">The Recovery Password you entered is not long enough. Please check and try again.</string>
-    <string name="activity_link_some_of_the_words_in_your_recovery_password_are_incorrect_please_check_and_try_again">Some of the words in your Recovery Password are incorrect. Please check and try again.</string>
-    <string name="activity_link_please_check_your_recovery_password_and_try_again">Please check your Recovery Password and try again.</string>
+    <string name="qrNotRecoveryPassword">This QR code does not contain a Recovery Password.</string>
+
+    <string name="recoveryPasswordErrorMessageShort">The Recovery Password you entered is not long enough. Please check and try again.</string>
+    <string name="recoveryPasswordErrorMessageIncorrect">Some of the words in your Recovery Password are incorrect. Please check and try again.</string>
+    <string name="recoveryPasswordErrorMessageGeneric">Please check your Recovery Password and try again.</string>
+
+    <string name="cameraGrantAccess">Grant Camera Access</string>
+    <string name="sessionRecoveryPassword">Recovery Password</string>
+    <string name="recoveryPasswordEnter">Enter your recovery password</string>
+
+    <string name="sessionSettings">Settings</string>
+
     <string name="activity_link_load_account">Load Account</string>
     <string name="activity_link_camera_permission_permanently_denied_configure_in_settings">Camera Permission permanently denied. Configure in settings.</string>
-    <string name="activity_link_settings">Settings</string>
-    <string name="activity_link_grant_camera_permission">Grant Camera Permission</string>
-    <string name="activity_link_recovery_password">Recovery Password</string>
     <string name="activity_link_enter_your_recovery_password_to_load_your_account_if_you_haven_t_saved_it_you_can_find_it_in_your_app_settings">Enter your recovery password to load your account. If you haven\'t saved it, you can find it in your app settings.</string>
-    <string name="activity_link_enter_your_recovery_password">Enter your recovery password</string>
+
 
 </resources>

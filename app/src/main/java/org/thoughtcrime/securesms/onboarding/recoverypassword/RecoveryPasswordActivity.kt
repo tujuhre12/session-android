@@ -62,7 +62,7 @@ class RecoveryPasswordActivity : BaseActionBarActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        supportActionBar!!.title = resources.getString(R.string.activity_recovery_password)
+        supportActionBar!!.title = resources.getString(R.string.sessionRecoveryPassword)
 
         ComposeView(this).apply {
             setContent {

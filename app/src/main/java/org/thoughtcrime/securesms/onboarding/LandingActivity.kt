@@ -66,27 +66,27 @@ class LandingActivity : BaseActionBarActivity() {
         AppTheme {
             Column(modifier = Modifier.padding(horizontal = 36.dp)) {
                 Spacer(modifier = Modifier.weight(1f))
-                Text(stringResource(R.string.onboarding_privacy_in_your_pocket), modifier = Modifier.align(Alignment.CenterHorizontally), style = MaterialTheme.typography.h4, textAlign = TextAlign.Center)
+                Text(stringResource(R.string.onboardingBubblePrivacyInYourPocket), modifier = Modifier.align(Alignment.CenterHorizontally), style = MaterialTheme.typography.h4, textAlign = TextAlign.Center)
                 Spacer(modifier = Modifier.height(24.dp))
-                IncomingText(stringResource(R.string.onboarding_welcome_to_session))
+                IncomingText(stringResource(R.string.onboardingBubbleWelcomeToSession))
                 Spacer(modifier = Modifier.height(14.dp))
-                OutgoingText(stringResource(R.string.onboarding_session_is_engineered_to_protect_your_privacy))
+                OutgoingText(stringResource(R.string.onboardingBubbleSessionIsEngineered))
                 Spacer(modifier = Modifier.height(14.dp))
-                IncomingText(stringResource(R.string.onboarding_you_don_t_even_need_a_phone_number_to_sign_up))
+                IncomingText(stringResource(R.string.onboardingBubbleNoPhoneNumber))
                 Spacer(modifier = Modifier.height(14.dp))
-                OutgoingText(stringResource(R.string.onboarding_creating_an_account_is_instant_free_and_anonymous))
+                OutgoingText(stringResource(R.string.onboardingBubbleCreatingAnAccountIsEasy))
                 Spacer(modifier = Modifier.weight(1f))
 
-                OutlineButton(text = stringResource(R.string.onboarding_create_account), modifier = Modifier
+                OutlineButton(text = stringResource(R.string.onboardingAccountCreate), modifier = Modifier
                     .width(262.dp)
                     .align(Alignment.CenterHorizontally)) { startPickDisplayNameActivity() }
                 Spacer(modifier = Modifier.height(14.dp))
-                FilledButton(text = stringResource(R.string.onboarding_i_have_an_account), modifier = Modifier
+                FilledButton(text = stringResource(R.string.onboardingAccountExists), modifier = Modifier
                     .width(262.dp)
                     .align(Alignment.CenterHorizontally)) { startLinkDeviceActivity() }
                 Spacer(modifier = Modifier.height(8.dp))
                 BorderlessButton(
-                    text = stringResource(R.string.onboarding_by_using_this_service_you_agree_to_our_terms_of_service_and_privacy_policy),
+                    text = stringResource(R.string.onboardingTosPrivacy),
                     modifier = Modifier
                         .width(262.dp)
                         .align(Alignment.CenterHorizontally),

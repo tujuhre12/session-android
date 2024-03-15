@@ -23,7 +23,7 @@ import org.thoughtcrime.securesms.ui.LocalExtraColors
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
 
-private val TITLES = listOf(R.string.activity_recovery_password, R.string.activity_link_device_scan_qr_code)
+private val TITLES = listOf(R.string.sessionRecoveryPassword, R.string.qrScan)
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
