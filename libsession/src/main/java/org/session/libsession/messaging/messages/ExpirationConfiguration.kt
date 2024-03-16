@@ -10,7 +10,7 @@ data class ExpirationConfiguration(
     val isEnabled = expiryMode.expirySeconds > 0
 
     companion object {
-        val isNewConfigEnabled = true /* TODO: System.currentTimeMillis() > 1_676_851_200_000 // 13/02/2023 */
+        val isNewConfigEnabled = true
     }
 }
 
