@@ -71,7 +71,7 @@ fun OutlineButton(
     onClick: () -> Unit
 ) {
     OutlinedButton(
-        modifier = modifier,
+        modifier = modifier.contentDescription(GetString(text)),
         onClick = onClick,
         border = BorderStroke(1.dp, color),
         shape = RoundedCornerShape(50), // = 50% percent
@@ -260,6 +260,12 @@ fun <T> TitledRadioButton(option: RadioOption<T>, onClick: () -> Unit) {
 fun Modifier.contentDescription(text: GetString?): Modifier {
     val context = LocalContext.current
     return text?.let { semantics { contentDescription = it(context) } } ?: this
+}
+
+@Composable
+fun Modifier.contentDescription(id: Int?): Modifier {
+    val context = LocalContext.current
+    return id?.let { semantics { contentDescription = context.getString(it) } } ?: this
 }
 
 @Composable

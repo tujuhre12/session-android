@@ -36,6 +36,7 @@ import org.thoughtcrime.securesms.ui.BorderlessButton
 import org.thoughtcrime.securesms.ui.FilledButton
 import org.thoughtcrime.securesms.ui.OutlineButton
 import org.thoughtcrime.securesms.ui.classicDarkColors
+import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.session_accent
 import org.thoughtcrime.securesms.util.setUpActionBarSessionLogo
 
@@ -77,9 +78,11 @@ class LandingActivity : BaseActionBarActivity() {
                 OutgoingText(stringResource(R.string.onboardingBubbleCreatingAnAccountIsEasy))
                 Spacer(modifier = Modifier.weight(1f))
 
-                OutlineButton(text = stringResource(R.string.onboardingAccountCreate), modifier = Modifier
-                    .width(262.dp)
-                    .align(Alignment.CenterHorizontally)) { startPickDisplayNameActivity() }
+                OutlineButton(
+                    text = stringResource(R.string.onboardingAccountCreate),
+                    modifier = Modifier
+                        .width(262.dp)
+                        .align(Alignment.CenterHorizontally)) { startPickDisplayNameActivity() }
                 Spacer(modifier = Modifier.height(14.dp))
                 FilledButton(text = stringResource(R.string.onboardingAccountExists), modifier = Modifier
                     .width(262.dp)

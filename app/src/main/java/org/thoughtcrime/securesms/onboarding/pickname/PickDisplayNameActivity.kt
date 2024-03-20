@@ -22,8 +22,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -38,8 +38,7 @@ import org.thoughtcrime.securesms.ui.OutlineButton
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.baseBold
-import org.thoughtcrime.securesms.ui.classicDark3
-import org.thoughtcrime.securesms.ui.colorDestructive
+import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.outlinedTextFieldColors
 import org.thoughtcrime.securesms.util.setUpActionBarSessionLogo
 import javax.inject.Inject
@@ -106,6 +105,7 @@ class PickDisplayNameActivity : BaseActionBarActivity() {
 
             OutlinedTextField(
                 value = state.displayName,
+                modifier = Modifier.contentDescription(R.string.displayNameEnter),
                 onValueChange = { onChange(it) },
                 placeholder = { Text(stringResource(R.string.displayNameEnter)) },
                 colors = outlinedTextFieldColors(state.error != null),
