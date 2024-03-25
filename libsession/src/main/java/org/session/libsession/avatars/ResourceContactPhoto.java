@@ -32,7 +32,7 @@ public class ResourceContactPhoto implements FallbackContactPhoto {
   @Override
   public Drawable asDrawable(Context context, int color, boolean inverted) {
     Drawable        background = TextDrawable.builder().buildRound(" ", inverted ? Color.WHITE : color);
-    RoundedDrawable foreground = (RoundedDrawable) RoundedDrawable.fromDrawable(AppCompatResources.getDrawable(context, resourceId);
+    RoundedDrawable foreground = (RoundedDrawable) RoundedDrawable.fromDrawable(AppCompatResources.getDrawable(context, resourceId));
 
     foreground.setScaleType(ImageView.ScaleType.CENTER_CROP);
 
