@@ -33,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.painterResource
@@ -166,28 +167,13 @@ fun RecoveryPasswordCell(seed: String = "", qrBitmap: Bitmap? = null, copySeed:(
                     backgroundColor = LocalExtraColors.current.lightCell,
                     elevation = 0.dp,
                     modifier = Modifier
-                            .align(Alignment.CenterHorizontally)
-                            .padding(vertical = 24.dp)
+                        .align(Alignment.CenterHorizontally)
+                        .padding(vertical = 24.dp)
                 ) {
-                    Box {
-                        qrBitmap?.let {
-                            Image(
-                                bitmap = it.asImageBitmap(),
-                                contentDescription = "QR code of your recovery password",
-                                colorFilter = ColorFilter.tint(LocalExtraColors.current.onLightCell)
-                            )
-                        }
-
-                        Icon(
-                            painter = painterResource(id = R.drawable.session_shield),
-                            contentDescription = "",
-                            tint = LocalExtraColors.current.onLightCell,
-                            modifier = Modifier
-                                    .align(Alignment.Center)
-                                    .width(46.dp)
-                                    .height(56.dp)
-                                    .background(color = LocalExtraColors.current.lightCell)
-                                    .padding(horizontal = 3.dp, vertical = 1.dp)
+                    qrBitmap?.let {
+                        QrImage(
+                            bitmap = it,
+                            contentDescription = "QR code of your recovery password",
                         )
                     }
                 }
@@ -210,6 +196,29 @@ fun RecoveryPasswordCell(seed: String = "", qrBitmap: Bitmap? = null, copySeed:(
                 ) { showQr.toggle() }
             }
         }
+    }
+}
+
+@Composable
+fun QrImage(bitmap: Bitmap, contentDescription: String, icon: Int = R.drawable.session_shield) {
+    Box {
+        Image(
+            bitmap = bitmap.asImageBitmap(),
+            contentDescription = contentDescription,
+            colorFilter = ColorFilter.tint(LocalExtraColors.current.onLightCell)
+        )
+
+        Icon(
+            painter = painterResource(id = icon),
+            contentDescription = "",
+            tint = LocalExtraColors.current.onLightCell,
+            modifier = Modifier
+                .align(Alignment.Center)
+                .width(46.dp)
+                .height(56.dp)
+                .background(color = LocalExtraColors.current.lightCell)
+                .padding(horizontal = 3.dp, vertical = 1.dp)
+        )
     }
 }
 
