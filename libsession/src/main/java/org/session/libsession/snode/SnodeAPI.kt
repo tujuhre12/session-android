@@ -91,7 +91,7 @@ object SnodeAPI {
     const val useTestnet = false
 
     // Error
-    internal sealed class Error(val description: String) : Exception(description) {
+    sealed class Error(val description: String) : Exception(description) {
         object Generic : Error("An error occurred.")
         object ClockOutOfSync : Error("Your clock is out of sync with the Service Node network.")
         object NoKeyPair : Error("Missing user key pair.")

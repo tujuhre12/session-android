@@ -46,7 +46,7 @@ class NewConversationFragment : BottomSheetDialogFragment(), NewConversationDele
             val bottomSheetDialog = it as BottomSheetDialog
             val parentLayout =
                 bottomSheetDialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
-            parentLayout?.let { it ->
+            parentLayout?.let {
                 val behaviour = BottomSheetBehavior.from(it)
                 val layoutParams = it.layoutParams
                 layoutParams.height = defaultPeekHeight

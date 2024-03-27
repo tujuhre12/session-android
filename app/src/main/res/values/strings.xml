@@ -1081,4 +1081,5 @@
     <string name="activity_link_load_account">Load Account</string>
     <string name="activity_link_camera_permission_permanently_denied_configure_in_settings">Camera Permission permanently denied. Configure in settings.</string>
     <string name="activity_link_enter_your_recovery_password_to_load_your_account_if_you_haven_t_saved_it_you_can_find_it_in_your_app_settings">Enter your recovery password to load your account. If you haven\'t saved it, you can find it in your app settings.</string>
+    <string name="accountIdErrorInvalid">This Account ID is invalid. Please check and try again.</string>
 </resources>

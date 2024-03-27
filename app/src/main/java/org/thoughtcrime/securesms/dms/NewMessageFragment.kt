@@ -60,8 +60,12 @@ class NewMessageFragment : Fragment() {
     }
 
     private fun createPrivateChatIfPossible(onsNameOrPublicKey: String) {
-        if (PublicKeyValidation.isValid(onsNameOrPublicKey)) {
-            createPrivateChat(onsNameOrPublicKey)
+        if (PublicKeyValidation.isValid(onsNameOrPublicKey, isPrefixRequired = false)) {
+            if (PublicKeyValidation.hasValidPrefix(onsNameOrPublicKey)) {
+                createPrivateChat(onsNameOrPublicKey)
+            } else {
+                Toast.makeText(requireContext(), R.string.accountIdErrorInvalid, Toast.LENGTH_SHORT).show()
+            }
         } else {
             // This could be an ONS name
             showLoader()
@@ -70,9 +74,9 @@ class NewMessageFragment : Fragment() {
                 createPrivateChat(hexEncodedPublicKey)
             }.failUi { exception ->
                 hideLoader()
-                var message = getString(R.string.fragment_enter_public_key_error_message)
-                exception.localizedMessage?.let {
-                    message = it
+                val message = when (exception) {
+                    is SnodeAPI.Error.Generic -> "We couldn’t recognize this ONS. Please check and try again."
+                    else -> exception.localizedMessage ?: getString(R.string.fragment_enter_public_key_error_message)
                 }
                 Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
             }
@@ -81,12 +85,11 @@ class NewMessageFragment : Fragment() {
 
     private fun createPrivateChat(hexEncodedPublicKey: String) {
         val recipient = Recipient.from(requireContext(), Address.fromSerialized(hexEncodedPublicKey), false)
-        val intent = Intent(requireContext(), ConversationActivityV2::class.java)
-        intent.putExtra(ConversationActivityV2.ADDRESS, recipient.address)
-        intent.setDataAndType(requireActivity().intent.data, requireActivity().intent.type)
-        val existingThread = DatabaseComponent.get(requireContext()).threadDatabase().getThreadIdIfExistsFor(recipient)
-        intent.putExtra(ConversationActivityV2.THREAD_ID, existingThread)
-        requireContext().startActivity(intent)
+        Intent(requireContext(), ConversationActivityV2::class.java).apply {
+            putExtra(ConversationActivityV2.ADDRESS, recipient.address)
+            setDataAndType(requireActivity().intent.data, requireActivity().intent.type)
+            putExtra(ConversationActivityV2.THREAD_ID, DatabaseComponent.get(requireContext()).threadDatabase().getThreadIdIfExistsFor(recipient))
+        }.let(requireContext()::startActivity)
         delegate.onDialogClosePressed()
     }
 
