@@ -34,6 +34,8 @@
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.USE_FINGERPRINT" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"/>
     <uses-permission android:name="network.loki.messenger.ACCESS_SESSION_SECRETS" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
@@ -105,11 +107,6 @@
             android:screenOrientation="portrait"
             android:theme="@style/Theme.Session.DayNight.FlatActionBar" />
         <activity
-            android:name="org.thoughtcrime.securesms.onboarding.RecoveryPhraseRestoreActivity"
-            android:screenOrientation="portrait"
-            android:windowSoftInputMode="adjustResize"
-            android:theme="@style/Theme.Session.DayNight.FlatActionBar" />
-        <activity
             android:name="org.thoughtcrime.securesms.onboarding.LinkDeviceActivity"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize"
@@ -176,6 +173,9 @@
             android:screenOrientation="portrait" />
         <activity android:name="org.thoughtcrime.securesms.preferences.appearance.AppearanceSettingsActivity"
             android:screenOrientation="portrait"/>
+        <activity android:name="org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Session.DayNight.NoActionBar" />
 
         <activity
             android:exported="true"
@@ -225,20 +225,18 @@
             android:name="org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2"
             android:screenOrientation="portrait"
             android:parentActivityName="org.thoughtcrime.securesms.home.HomeActivity"
-            android:theme="@style/Theme.Session.DayNight.NoActionBar">
+            android:theme="@style/Theme.Session.DayNight.NoActionBar"
+            android:windowSoftInputMode="adjustResize" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="org.thoughtcrime.securesms.home.HomeActivity" />
         </activity>
+
         <activity
             android:name="org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.Session.DayNight">
         </activity>
-        <activity
-            android:name="org.thoughtcrime.securesms.longmessage.LongMessageActivity"
-            android:screenOrientation="portrait"
-            android:theme="@style/Theme.Session.DayNight" />
         <activity
             android:name="org.thoughtcrime.securesms.DatabaseUpgradeActivity"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
@@ -311,11 +309,15 @@
                 android:value="org.thoughtcrime.securesms.home.HomeActivity" />
         </activity>
         <service android:enabled="true" android:name="org.thoughtcrime.securesms.service.WebRtcCallService"
+            android:foregroundServiceType="microphone"
             android:exported="false" />
         <service
             android:name="org.thoughtcrime.securesms.service.KeyCachingService"
             android:enabled="true"
-            android:exported="false" />
+            android:exported="false" android:foregroundServiceType="specialUse">
+<!--            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"-->
+<!--                android:value="@string/preferences_app_protection__lock_signal_access_with_android_screen_lock_or_fingerprint"/>-->
+        </service>
         <service
             android:name="org.thoughtcrime.securesms.service.DirectShareService"
             android:exported="true"
