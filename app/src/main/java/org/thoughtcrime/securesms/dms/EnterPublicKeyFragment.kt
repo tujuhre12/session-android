@@ -27,9 +27,7 @@ class EnterPublicKeyFragment : Fragment() {
     var delegate: EnterPublicKeyDelegate? = null
 
     private val hexEncodedPublicKey: String
-        get() {
-            return TextSecurePreferences.getLocalNumber(requireContext())!!
-        }
+        get() = TextSecurePreferences.getLocalNumber(requireContext())!!
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         binding = FragmentEnterPublicKeyBinding.inflate(inflater, container, false)

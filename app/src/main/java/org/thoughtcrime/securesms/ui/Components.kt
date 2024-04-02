@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.ui
 
 import androidx.annotation.DrawableRes
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ScrollState
@@ -25,7 +26,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ButtonColors
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Card
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Colors
+import androidx.compose.material.ContentAlpha
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedButton
@@ -68,6 +71,7 @@ fun OutlineButton(
     text: String,
     modifier: Modifier = Modifier,
     color: Color = LocalExtraColors.current.prominentButtonColor,
+    loading: Boolean = false,
     onClick: () -> Unit
 ) {
     OutlinedButton(
@@ -80,7 +84,14 @@ fun OutlineButton(
             backgroundColor = Color.Unspecified
         )
     ) {
-        Text(text = text)
+        AnimatedVisibility(loading) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(20.dp),
+                color = color,
+                strokeWidth = 2.dp
+            )
+        }
+        AnimatedVisibility(!loading) { Text(text = text) }
     }
 }
 
@@ -100,19 +111,34 @@ fun FilledButton(text: String, modifier: Modifier = Modifier, onClick: () -> Uni
 }
 
 @Composable
+fun BorderlessButtonSecondary(
+    text: String,
+    onClick: () -> Unit
+) {
+    BorderlessButton(
+        text,
+        contentColor = MaterialTheme.colors.onSurface.copy(ContentAlpha.medium),
+        onClick = onClick
+    )
+}
+
+@Composable
 fun BorderlessButton(
     text: String,
     modifier: Modifier = Modifier,
     fontSize: TextUnit = TextUnit.Unspecified,
     lineHeight: TextUnit = TextUnit.Unspecified,
-    onClick: () -> Unit) {
+    contentColor: Color = MaterialTheme.colors.onBackground,
+    backgroundColor: Color = Color.Transparent,
+    onClick: () -> Unit
+) {
     TextButton(
         onClick = onClick,
         modifier = modifier,
-        shape = RoundedCornerShape(50), // = 50% percent
+        shape = RoundedCornerShape(percent = 50),
         colors = ButtonDefaults.outlinedButtonColors(
-            contentColor = MaterialTheme.colors.onBackground,
-            backgroundColor = MaterialTheme.colors.background
+            contentColor = contentColor,
+            backgroundColor = backgroundColor
         )
     ) {
         Text(
@@ -170,15 +196,15 @@ fun ItemButton(
 ) {
     TextButton(
         modifier = Modifier
-            .fillMaxWidth()
-            .height(60.dp),
+                .fillMaxWidth()
+                .height(60.dp),
         colors = colors,
         onClick = onClick,
         shape = RectangleShape,
     ) {
         Box(modifier = Modifier
-            .width(80.dp)
-            .fillMaxHeight()) {
+                .width(80.dp)
+                .fillMaxHeight()) {
             Icon(
                 painter = painterResource(id = icon),
                 contentDescription = contentDescription,
@@ -209,9 +235,9 @@ fun CellWithPaddingAndMargin(
         shape = RoundedCornerShape(16.dp),
         elevation = 0.dp,
         modifier = Modifier
-            .wrapContentHeight()
-            .fillMaxWidth()
-            .padding(horizontal = margin),
+                .wrapContentHeight()
+                .fillMaxWidth()
+                .padding(horizontal = margin),
     ) {
         Box(Modifier.padding(padding)) { content() }
     }
@@ -222,14 +248,14 @@ fun <T> TitledRadioButton(option: RadioOption<T>, onClick: () -> Unit) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         modifier = Modifier
-            .runIf(option.enabled) { clickable { if (!option.selected) onClick() } }
-            .heightIn(min = 60.dp)
-            .padding(horizontal = 32.dp)
-            .contentDescription(option.contentDescription)
+                .runIf(option.enabled) { clickable { if (!option.selected) onClick() } }
+                .heightIn(min = 60.dp)
+                .padding(horizontal = 32.dp)
+                .contentDescription(option.contentDescription)
     ) {
         Column(modifier = Modifier
-            .weight(1f)
-            .align(Alignment.CenterVertically)) {
+                .weight(1f)
+                .align(Alignment.CenterVertically)) {
             Column {
                 Text(
                     text = option.title(),
@@ -250,8 +276,8 @@ fun <T> TitledRadioButton(option: RadioOption<T>, onClick: () -> Unit) {
             onClick = null,
             enabled = option.enabled,
             modifier = Modifier
-                .height(26.dp)
-                .align(Alignment.CenterVertically)
+                    .height(26.dp)
+                    .align(Alignment.CenterVertically)
         )
     }
 }
@@ -271,8 +297,9 @@ fun Modifier.contentDescription(id: Int?): Modifier {
 @Composable
 fun OutlineButton(text: GetString, contentDescription: GetString? = text, modifier: Modifier = Modifier, onClick: () -> Unit) {
     OutlinedButton(
-        modifier = modifier.size(108.dp, 34.dp)
-            .contentDescription(contentDescription),
+        modifier = modifier
+                .size(108.dp, 34.dp)
+                .contentDescription(contentDescription),
         onClick = onClick,
         border = BorderStroke(1.dp, LocalExtraColors.current.prominentButtonColor),
         shape = RoundedCornerShape(50), // = 50% percent
@@ -294,37 +321,37 @@ fun Modifier.fadingEdges(
     topEdgeHeight: Dp = 0.dp,
     bottomEdgeHeight: Dp = 20.dp
 ): Modifier = this.then(
-    Modifier
-        // adding layer fixes issue with blending gradient and content
-        .graphicsLayer { alpha = 0.99F }
-        .drawWithContent {
-            drawContent()
+        Modifier
+                // adding layer fixes issue with blending gradient and content
+                .graphicsLayer { alpha = 0.99F }
+                .drawWithContent {
+                    drawContent()
 
-            val topColors = listOf(Color.Transparent, Color.Black)
-            val topStartY = scrollState.value.toFloat()
-            val topGradientHeight = min(topEdgeHeight.toPx(), topStartY)
-            if (topGradientHeight > 0f) drawRect(
-                brush = Brush.verticalGradient(
-                    colors = topColors,
-                    startY = topStartY,
-                    endY = topStartY + topGradientHeight
-                ),
-                blendMode = BlendMode.DstIn
-            )
+                    val topColors = listOf(Color.Transparent, Color.Black)
+                    val topStartY = scrollState.value.toFloat()
+                    val topGradientHeight = min(topEdgeHeight.toPx(), topStartY)
+                    if (topGradientHeight > 0f) drawRect(
+                            brush = Brush.verticalGradient(
+                                    colors = topColors,
+                                    startY = topStartY,
+                                    endY = topStartY + topGradientHeight
+                            ),
+                            blendMode = BlendMode.DstIn
+                    )
 
-            val bottomColors = listOf(Color.Black, Color.Transparent)
-            val bottomEndY = size.height - scrollState.maxValue + scrollState.value
-            val bottomGradientHeight =
-                min(bottomEdgeHeight.toPx(), scrollState.maxValue.toFloat() - scrollState.value)
-            if (bottomGradientHeight > 0f) drawRect(
-                brush = Brush.verticalGradient(
-                    colors = bottomColors,
-                    startY = bottomEndY - bottomGradientHeight,
-                    endY = bottomEndY
-                ),
-                blendMode = BlendMode.DstIn
-            )
-        }
+                    val bottomColors = listOf(Color.Black, Color.Transparent)
+                    val bottomEndY = size.height - scrollState.maxValue + scrollState.value
+                    val bottomGradientHeight =
+                            min(bottomEdgeHeight.toPx(), scrollState.maxValue.toFloat() - scrollState.value)
+                    if (bottomGradientHeight > 0f) drawRect(
+                            brush = Brush.verticalGradient(
+                                    colors = bottomColors,
+                                    startY = bottomEndY - bottomGradientHeight,
+                                    endY = bottomEndY
+                            ),
+                            blendMode = BlendMode.DstIn
+                    )
+                }
 )
 
 @Composable
@@ -338,16 +365,16 @@ fun Divider() {
 fun RowScope.Avatar(recipient: Recipient) {
     Box(
         modifier = Modifier
-            .width(60.dp)
-            .align(Alignment.CenterVertically)
+                .width(60.dp)
+                .align(Alignment.CenterVertically)
     ) {
         AndroidView(
             factory = {
                 ProfilePictureView(it).apply { update(recipient) }
             },
             modifier = Modifier
-                .width(46.dp)
-                .height(46.dp)
+                    .width(46.dp)
+                    .height(46.dp)
         )
     }
 }
@@ -374,8 +401,8 @@ fun Arc(
 ) {
     Canvas(
         modifier = modifier
-            .padding(strokeWidth)
-            .size(186.dp)
+                .padding(strokeWidth)
+                .size(186.dp)
     ) {
         // Background Line
         drawArc(
@@ -403,7 +430,8 @@ fun RowScope.SessionShieldIcon() {
     Icon(
         painter = painterResource(R.drawable.session_shield),
         contentDescription = null,
-        modifier = Modifier.align(Alignment.CenterVertically)
-            .wrapContentSize(unbounded = true)
+        modifier = Modifier
+                .align(Alignment.CenterVertically)
+                .wrapContentSize(unbounded = true)
     )
 }

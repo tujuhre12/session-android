@@ -48,7 +48,7 @@ sealed class GetString {
 fun GetString(@StringRes resId: Int) = GetString.FromResId(resId)
 fun GetString(string: String) = GetString.FromString(string)
 fun GetString(function: (Context) -> String) = GetString.FromFun(function)
-fun <T> GetString(value: T, function: (Context, T) -> String) = GetString.FromMap(value, function)
+fun <T> GetString(value: T, function: Context.(T) -> String) = GetString.FromMap(value, function)
 fun GetString(duration: Duration) = GetString.FromMap(duration, ExpirationUtil::getExpirationDisplayValue)
 
 
