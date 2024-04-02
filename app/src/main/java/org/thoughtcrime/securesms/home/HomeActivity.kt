@@ -293,7 +293,6 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                     }
 
                     val newData = contactResults + messageResults
-
                     globalSearchAdapter.setNewData(result.query, newData)
                 }
             }
