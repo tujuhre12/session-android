@@ -86,7 +86,15 @@ public class SearchRepository {
   }
 
   public void query(@NonNull String query, @NonNull Callback<SearchResult> callback) {
-    if (TextUtils.isEmpty(query)) {
+
+    Log.w("[ACL]", "Hit SearchRepository.query - query string is: \"" + query + "\"");
+
+    String cleanQuery = sanitizeQuery(query).trim();
+    Log.w("[ACL]", "When sanitized and trimmed this is: \"" + cleanQuery + "\"");
+
+    // If the sanitized search is empty or is less than 2 chars then abort
+    if (cleanQuery.isEmpty() || cleanQuery.length() < 2) {
+      Log.w("[ACL]", "Trimmed query is empty or less than 2 chars so returning empty SearchResult");
       callback.onResult(SearchResult.EMPTY);
       return;
     }
@@ -94,25 +102,36 @@ public class SearchRepository {
     executor.execute(() -> {
       Stopwatch timer = new Stopwatch("FtsQuery");
 
-      String cleanQuery = sanitizeQuery(query);
+      // ACL
+      //String cleanQuery = sanitizeQuery(query).trim();
 
-      // If the search is for a single character and it was stripped by `sanitizeQuery` then abort
-      // the search for an empty string to avoid SQLite error.
-      if (cleanQuery.length() == 0)
+
+      /*
+      if (cleanQuery.isEmpty())
       {
+        Log.w("[ACL]", "Aborting empty search query.");
         Log.d(TAG, "Aborting empty search query.");
         timer.stop(TAG);
         return;
       }
+      else {
+        Log.w("[ACL]", "Clean query is non-empty and is: \"" + cleanQuery + "\"");
+      }
+      */
+
 
       timer.split("clean");
 
+      Log.w("[ACL]", "About to query contacts.");
       Pair<CursorList<Contact>, List<String>> contacts = queryContacts(cleanQuery);
       timer.split("contacts");
 
+
+      Log.w("[ACL]", "About to query conversations.");
       CursorList<GroupRecord> conversations = queryConversations(cleanQuery, contacts.getSecond());
       timer.split("conversations");
 
+      Log.w("[ACL]", "About to query messages.");
       CursorList<MessageResult> messages = queryMessages(cleanQuery);
       timer.split("messages");
 
@@ -123,23 +142,20 @@ public class SearchRepository {
   }
 
   public void query(@NonNull String query, long threadId, @NonNull Callback<CursorList<MessageResult>> callback) {
-    if (TextUtils.isEmpty(query)) {
+    // If the sanitized search query is empty or less than 2 chars then abort the search
+    String cleanQuery = sanitizeQuery(query).trim();
+    if (cleanQuery.isEmpty() || cleanQuery.length() < 2) {
       callback.onResult(CursorList.emptyList());
       return;
     }
 
     executor.execute(() -> {
-      // If the sanitized search query is empty then abort the search to prevent SQLite errors.
-      String cleanQuery = sanitizeQuery(query).trim();
-      if (cleanQuery.isEmpty()) { return; }
-            
       CursorList<MessageResult> messages = queryMessages(cleanQuery, threadId);
       callback.onResult(messages);
     });
   }
 
   private Pair<CursorList<Contact>, List<String>> queryContacts(String query) {
-
     Cursor contacts = contactDatabase.queryContactsByName(query);
     List<Address> contactList = new ArrayList<>();
     List<String> contactStrings = new ArrayList<>();
@@ -189,9 +205,7 @@ public class SearchRepository {
       membersGroupList.close();
     }
 
-
     Cursor conversations = threadDatabase.getFilteredConversationList(new ArrayList<>(addresses));
-
     return conversations != null ? new CursorList<>(conversations, new GroupModelBuilder(threadDatabase, groupDatabase))
             : CursorList.emptyList();
   }

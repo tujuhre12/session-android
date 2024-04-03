@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.plus
+import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.SettableFuture
 import org.thoughtcrime.securesms.search.SearchRepository
 import org.thoughtcrime.securesms.search.model.SearchResult
@@ -31,6 +32,9 @@ class GlobalSearchViewModel @Inject constructor(private val searchRepository: Se
 
     private val _queryText: MutableStateFlow<CharSequence> = MutableStateFlow("")
 
+    private var settableFuture = SettableFuture<SearchResult>()
+
+
     fun postQuery(charSequence: CharSequence?) {
         charSequence ?: return
         _queryText.value = charSequence
@@ -41,6 +45,7 @@ class GlobalSearchViewModel @Inject constructor(private val searchRepository: Se
         _queryText
                 .buffer(onBufferOverflow = BufferOverflow.DROP_OLDEST)
                 .mapLatest { query ->
+                    // Minimum search term is 2 characters - for a single char we do nothing
                     if (query.trim().length < 2) {
                         SearchResult.EMPTY
                     } else {
@@ -48,7 +53,13 @@ class GlobalSearchViewModel @Inject constructor(private val searchRepository: Se
                         // this coroutine will be cancelled and expensive query will not be run if typing quickly
                         // first query of 2 characters will be instant however
                         delay(300)
-                        val settableFuture = SettableFuture<SearchResult>()
+
+                        // If we already have a search running then stop it
+                        if (!settableFuture.isDone) {
+                            Log.w("[ACL]", "Cancelling settable future..")
+                            settableFuture.cancel(true); }
+
+                        settableFuture = SettableFuture<SearchResult>()
                         searchRepository.query(query.toString(), settableFuture::set)
                         try {
                             // search repository doesn't play nicely with suspend functions (yet)
@@ -64,6 +75,4 @@ class GlobalSearchViewModel @Inject constructor(private val searchRepository: Se
                 }
                 .launchIn(executor)
     }
-
-
 }
