@@ -2,9 +2,7 @@ package org.thoughtcrime.securesms.home.search
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-
 import dagger.hilt.android.lifecycle.HiltViewModel
-
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
@@ -15,14 +13,10 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.plus
-
 import org.session.libsignal.utilities.SettableFuture
-
 import org.thoughtcrime.securesms.search.SearchRepository
 import org.thoughtcrime.securesms.search.model.SearchResult
-
 import java.util.concurrent.TimeUnit
-
 import javax.inject.Inject
 
 @HiltViewModel
@@ -51,7 +45,7 @@ class GlobalSearchViewModel @Inject constructor(private val searchRepository: Se
                         SearchResult.EMPTY
                     } else {
                         // User input delay in case we get a new query within a few hundred ms this
-                        // coroutine will be cancelled and expensive query will not be run
+                        // coroutine will be cancelled and the expensive query will not be run.
                         delay(300)
 
                         val settableFuture = SettableFuture<SearchResult>()
