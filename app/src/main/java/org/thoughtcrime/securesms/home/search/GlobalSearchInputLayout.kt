@@ -2,6 +2,8 @@ package org.thoughtcrime.securesms.home.search
 
 import android.content.Context
 import android.text.Editable
+import android.text.InputFilter
+import android.text.InputFilter.LengthFilter
 import android.text.TextWatcher
 import android.util.AttributeSet
 import android.view.KeyEvent
@@ -14,6 +16,7 @@ import android.widget.TextView
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import network.loki.messenger.databinding.ViewGlobalSearchInputBinding
+
 
 class GlobalSearchInputLayout @JvmOverloads constructor(
         context: Context, attrs: AttributeSet? = null
@@ -34,6 +37,7 @@ class GlobalSearchInputLayout @JvmOverloads constructor(
         binding.searchInput.onFocusChangeListener = this
         binding.searchInput.addTextChangedListener(this)
         binding.searchInput.setOnEditorActionListener(this)
+        binding.searchInput.setFilters( arrayOf<InputFilter>(LengthFilter(100)) ) // 100 char search limit
         binding.searchCancel.setOnClickListener(this)
         binding.searchClear.setOnClickListener(this)
     }

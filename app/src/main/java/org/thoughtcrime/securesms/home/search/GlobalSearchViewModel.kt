@@ -36,8 +36,6 @@ class GlobalSearchViewModel @Inject constructor(private val searchRepository: Se
 
     private val _queryText: MutableStateFlow<CharSequence> = MutableStateFlow("")
 
-    private var settableFuture = SettableFuture<SearchResult>()
-
     fun postQuery(charSequence: CharSequence?) {
         charSequence ?: return
         _queryText.value = charSequence
@@ -48,19 +46,15 @@ class GlobalSearchViewModel @Inject constructor(private val searchRepository: Se
         _queryText
                 .buffer(onBufferOverflow = BufferOverflow.DROP_OLDEST)
                 .mapLatest { query ->
-                    // Minimum search term is 2 characters
-                    if (query.trim().length < 2) {
+                    // Early exit on empty search query
+                    if (query.trim().isEmpty()) {
                         SearchResult.EMPTY
                     } else {
-                        // user input delay here in case we get a new query within a few hundred ms
-                        // this coroutine will be cancelled and expensive query will not be run if typing quickly
-                        // first query of 2 characters will be instant however
+                        // User input delay in case we get a new query within a few hundred ms this
+                        // coroutine will be cancelled and expensive query will not be run
                         delay(300)
 
-                        // If we already have a search running then stop it
-                        if (!settableFuture.isDone) { settableFuture.cancel(true) }
-
-                        settableFuture = SettableFuture<SearchResult>()
+                        val settableFuture = SettableFuture<SearchResult>()
                         searchRepository.query(query.toString(), settableFuture::set)
                         try {
                             // search repository doesn't play nicely with suspend functions (yet)

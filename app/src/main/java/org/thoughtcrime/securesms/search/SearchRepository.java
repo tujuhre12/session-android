@@ -4,11 +4,8 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.MergeCursor;
-
 import androidx.annotation.NonNull;
-
 import com.annimon.stream.Stream;
-
 import org.session.libsession.messaging.contacts.Contact;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.GroupRecord;
@@ -26,13 +23,11 @@ import org.thoughtcrime.securesms.database.model.ThreadRecord;
 import org.thoughtcrime.securesms.search.model.MessageResult;
 import org.thoughtcrime.securesms.search.model.SearchResult;
 import org.thoughtcrime.securesms.util.Stopwatch;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executor;
-
 import kotlin.Pair;
 
 // Class to manage data retrieval for search
@@ -75,9 +70,9 @@ public class SearchRepository {
   }
 
   public void query(@NonNull String query, @NonNull Callback<SearchResult> callback) {
-    // If the sanitized search is empty or is less than 2 chars then abort without search
+    // If the sanitized search is empty then abort without search
     String cleanQuery = sanitizeQuery(query).trim();
-    if (cleanQuery.isEmpty() || cleanQuery.length() < 2) {
+    if (cleanQuery.isEmpty()) {
       callback.onResult(SearchResult.EMPTY);
       return;
     }
@@ -102,9 +97,9 @@ public class SearchRepository {
   }
 
   public void query(@NonNull String query, long threadId, @NonNull Callback<CursorList<MessageResult>> callback) {
-    // If the sanitized search query is empty or less than 2 chars then abort the search
+    // If the sanitized search query is empty then abort the search
     String cleanQuery = sanitizeQuery(query).trim();
-    if (cleanQuery.isEmpty() || cleanQuery.length() < 2) {
+    if (cleanQuery.isEmpty()) {
       callback.onResult(CursorList.emptyList());
       return;
     }
