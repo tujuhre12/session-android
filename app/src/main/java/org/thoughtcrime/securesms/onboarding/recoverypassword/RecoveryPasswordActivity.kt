@@ -7,6 +7,8 @@ import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.animateValue
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -27,9 +29,11 @@ import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
@@ -41,6 +45,9 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.showSessionDialog
@@ -55,6 +62,7 @@ import org.thoughtcrime.securesms.ui.classicDarkColors
 import org.thoughtcrime.securesms.ui.colorDestructive
 import org.thoughtcrime.securesms.ui.h8
 import org.thoughtcrime.securesms.ui.small
+import kotlin.time.Duration.Companion.seconds
 
 class RecoveryPasswordActivity : BaseActionBarActivity() {
 
@@ -73,20 +81,18 @@ class RecoveryPasswordActivity : BaseActionBarActivity() {
 
     private fun onHide() {
         showSessionDialog {
-            title("Hide Recovery Password Permanently")
-            text("Without your recovery password, you cannot load your account on new devices.\n" +
-                "\n" +
-                "We strongly recommend you save your recovery password in a safe and secure place before continuing.")
+            title(R.string.recoveryPasswordHidePermanently)
+            htmlText(R.string.recoveryPasswordHidePermanentlyDescription1)
             destructiveButton(R.string.continue_2) { onHideConfirm() }
-            button(R.string.cancel) {}
+            cancelButton()
         }
     }
 
     private fun onHideConfirm() {
         showSessionDialog {
-            title("Hide Recovery Password Permanently")
-            text("Are you sure you want to permanently hide your recovery password on this device? This cannot be undone.")
-            button(R.string.cancel) {}
+            title(R.string.recoveryPasswordHidePermanently)
+            text(R.string.recoveryPasswordHidePermanentlyDescription2)
+            cancelButton()
             destructiveButton(R.string.yes) {
                 viewModel.permanentlyHidePassword()
                 finish()
@@ -131,31 +137,27 @@ fun RecoveryPasswordCell(seed: String = "", qrBitmap: Bitmap? = null, copySeed:(
         mutableStateOf(false)
     }
 
-    val copied = remember {
-        mutableStateOf(false)
-    }
-
     CellWithPaddingAndMargin {
         Column {
             Row {
-                Text("Recovery Password")
+                Text(stringResource(R.string.sessionRecoveryPassword))
                 Spacer(Modifier.width(8.dp))
                 SessionShieldIcon()
             }
 
-            Text("Use your recovery password to load your account on new devices.\n\nYour account cannot be recovered without your recovery password. Make sure it's stored somewhere safe and secure — and don't share it with anyone.")
+            Text(stringResource(R.string.recoveryPasswordDescription))
 
             AnimatedVisibility(!showQr.value) {
                 Text(
                     seed,
                     modifier = Modifier
-                            .padding(vertical = 24.dp)
-                            .border(
-                                    width = 1.dp,
-                                    color = classicDarkColors[3],
-                                    shape = RoundedCornerShape(11.dp)
-                            )
-                            .padding(24.dp),
+                        .padding(vertical = 24.dp)
+                        .border(
+                            width = 1.dp,
+                            color = classicDarkColors[3],
+                            shape = RoundedCornerShape(11.dp)
+                        )
+                        .padding(24.dp),
                     style = MaterialTheme.typography.small.copy(fontFamily = FontFamily.Monospace),
                     color = LocalExtraColors.current.prominentButtonColor,
                 )
@@ -166,8 +168,8 @@ fun RecoveryPasswordCell(seed: String = "", qrBitmap: Bitmap? = null, copySeed:(
                     backgroundColor = LocalExtraColors.current.lightCell,
                     elevation = 0.dp,
                     modifier = Modifier
-                            .align(Alignment.CenterHorizontally)
-                            .padding(vertical = 24.dp)
+                        .align(Alignment.CenterHorizontally)
+                        .padding(vertical = 24.dp)
                 ) {
                     Box {
                         qrBitmap?.let {
@@ -183,11 +185,11 @@ fun RecoveryPasswordCell(seed: String = "", qrBitmap: Bitmap? = null, copySeed:(
                             contentDescription = "",
                             tint = LocalExtraColors.current.onLightCell,
                             modifier = Modifier
-                                    .align(Alignment.Center)
-                                    .width(46.dp)
-                                    .height(56.dp)
-                                    .background(color = LocalExtraColors.current.lightCell)
-                                    .padding(horizontal = 3.dp, vertical = 1.dp)
+                                .align(Alignment.Center)
+                                .width(46.dp)
+                                .height(56.dp)
+                                .background(color = LocalExtraColors.current.lightCell)
+                                .padding(horizontal = 3.dp, vertical = 1.dp)
                         )
                     }
                 }
@@ -195,16 +197,36 @@ fun RecoveryPasswordCell(seed: String = "", qrBitmap: Bitmap? = null, copySeed:(
 
             AnimatedVisibility(!showQr.value) {
                 Row(horizontalArrangement = Arrangement.spacedBy(32.dp)) {
-                    Crossfade(targetState = if (copied.value) R.string.copied else R.string.copy, modifier = Modifier.weight(1f), label = "Copy to Copied CrossFade") {
-                        OutlineButton(text = stringResource(it), modifier = Modifier.fillMaxWidth(), color = MaterialTheme.colors.onPrimary) { copySeed(); copied.value = true }
+                    val scope = rememberCoroutineScope()
+                    val revertCopiedTextJob = remember { mutableStateOf<Job?>(null) }
+                    val copied = remember { mutableStateOf(false) }
+                    OutlineButton(
+                        modifier = Modifier.weight(1f),
+                        color = MaterialTheme.colors.onPrimary,
+                        onClick = {
+                            copySeed()
+                            revertCopiedTextJob.value?.cancel()
+                            revertCopiedTextJob.value = scope.launch {
+                                copied.value = true
+                                delay(2.seconds)
+                                copied.value = false
+                            }
+                        }
+                    ) {
+                        AnimatedVisibility(!copied.value) {
+                            Text(stringResource(R.string.copy))
+                        }
+                        AnimatedVisibility(copied.value) {
+                            Text(stringResource(R.string.copied))
+                        }
                     }
-                    OutlineButton(text = "View QR", modifier = Modifier.weight(1f), color = MaterialTheme.colors.onPrimary) { showQr.toggle() }
+                    OutlineButton(text = stringResource(R.string.qrView), modifier = Modifier.weight(1f), color = MaterialTheme.colors.onPrimary) { showQr.toggle() }
                 }
             }
 
             AnimatedVisibility(showQr.value, modifier = Modifier.align(Alignment.CenterHorizontally)) {
                 OutlineButton(
-                    text = "View Password",
+                    text = stringResource(R.string.recoveryPasswordView),
                     color = MaterialTheme.colors.onPrimary,
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 ) { showQr.toggle() }
@@ -220,11 +242,11 @@ fun HideRecoveryPasswordCell(onHide: () -> Unit = {}) {
     CellWithPaddingAndMargin {
         Row {
             Column(Modifier.weight(1f)) {
-                Text(text = "Hide Recovery Password", style = MaterialTheme.typography.h8)
-                Text(text = "Permanently hide your recovery password on this device.")
+                Text(text = stringResource(R.string.recoveryPasswordHideRecoveryPassword), style = MaterialTheme.typography.h8)
+                Text(text = stringResource(R.string.recoveryPasswordHideRecoveryPasswordDescription))
             }
             OutlineButton(
-                "Hide",
+                stringResource(R.string.hide),
                 modifier = Modifier.align(Alignment.CenterVertically),
                 color = colorDestructive
             ) { onHide() }

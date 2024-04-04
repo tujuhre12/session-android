@@ -85,6 +85,27 @@ fun OutlineButton(
 }
 
 @Composable
+fun OutlineButton(
+    modifier: Modifier = Modifier,
+    color: Color = LocalExtraColors.current.prominentButtonColor,
+    onClick: () -> Unit = {},
+    content: @Composable () -> Unit = {}
+) {
+    OutlinedButton(
+        modifier = modifier,
+        onClick = onClick,
+        border = BorderStroke(1.dp, color),
+        shape = RoundedCornerShape(50), // = 50% percent
+        colors = ButtonDefaults.outlinedButtonColors(
+            contentColor = color,
+            backgroundColor = Color.Unspecified
+        )
+    ) {
+        content()
+    }
+}
+
+@Composable
 fun FilledButton(text: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
     OutlinedButton(
         modifier = modifier.size(108.dp, 34.dp),

@@ -14,13 +14,13 @@ import androidx.annotation.LayoutRes
 import androidx.annotation.StringRes
 import androidx.annotation.StyleRes
 import androidx.appcompat.app.AlertDialog
+import androidx.core.text.HtmlCompat
 import androidx.core.view.setMargins
 import androidx.core.view.setPadding
 import androidx.core.view.updateMargins
 import androidx.fragment.app.Fragment
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.util.toPx
-
 
 @DslMarker
 @Target(AnnotationTarget.CLASS, AnnotationTarget.TYPE)
@@ -64,7 +64,6 @@ class SessionDialogBuilder(val context: Context) {
         }
     }
 
-
     private fun text(text: CharSequence?, @StyleRes style: Int, modify: TextView.() -> Unit) {
         text ?: return
         TextView(context, null, 0, style)
@@ -74,6 +73,8 @@ class SessionDialogBuilder(val context: Context) {
                 modify()
             }.let(topView::addView)
     }
+
+    fun htmlText(@StringRes id: Int, @StyleRes style: Int = 0, modify: TextView.() -> Unit = {}) { text(context.resources.getText(id)) }
 
     fun view(view: View) = contentView.addView(view)
 

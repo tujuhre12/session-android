@@ -18,9 +18,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
@@ -99,8 +101,8 @@ class LoadingActivity: BaseActionBarActivity() {
             Column {
                 Spacer(modifier = Modifier.weight(1f))
                 ProgressArc(animatable.value, modifier = Modifier.align(Alignment.CenterHorizontally))
-                Text("One moment please..", modifier = Modifier.align(Alignment.CenterHorizontally), style = MaterialTheme.typography.h6)
-                Text("Loading your account", modifier = Modifier.align(Alignment.CenterHorizontally))
+                Text(stringResource(R.string.waitOneMoment), modifier = Modifier.align(Alignment.CenterHorizontally), style = MaterialTheme.typography.h6)
+                Text(stringResource(R.string.loadAccountProgressMessage), modifier = Modifier.align(Alignment.CenterHorizontally))
                 Spacer(modifier = Modifier.weight(2f))
             }
         }

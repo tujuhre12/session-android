@@ -61,16 +61,16 @@ class MessageNotificationsActivity : BaseActionBarActivity() {
         TextSecurePreferences.setHasSeenWelcomeScreen(this, true)
 
         ComposeView(this)
-            .apply { setContent { MessageNotifications() } }
+            .apply { setContent { MessageNotificationsScreen() } }
             .let(::setContentView)
     }
 
     @Composable
-    private fun MessageNotifications() {
+    private fun MessageNotificationsScreen() {
         val state by viewModel.stateFlow.collectAsState()
 
         AppTheme {
-            MessageNotifications(state, viewModel::setEnabled, ::register)
+            MessageNotificationsScreen(state, viewModel::setEnabled, ::register)
         }
     }
 
@@ -87,25 +87,25 @@ class MessageNotificationsActivity : BaseActionBarActivity() {
 
 @Preview
 @Composable
-fun MessageNotificationsPreview(
+fun MessageNotificationsScreenPreview(
     @PreviewParameter(ThemeResPreviewParameterProvider::class) themeResId: Int
 ) {
     PreviewTheme(themeResId) {
-        MessageNotifications()
+        MessageNotificationsScreen()
     }
 }
 
 @Composable
-fun MessageNotifications(
+fun MessageNotificationsScreen(
     state: MessageNotificationsState = MessageNotificationsState(),
     setEnabled: (Boolean) -> Unit = {},
     onContinue: () -> Unit = {}
 ) {
     Column(Modifier.padding(horizontal = 32.dp)) {
         Spacer(Modifier.weight(1f))
-        Text("Message notifications", style = MaterialTheme.typography.h4)
+        Text(stringResource(R.string.notificationsMessage), style = MaterialTheme.typography.h4)
         Spacer(Modifier.height(16.dp))
-        Text("There are two ways Session can notify you of new messages.")
+        Text(stringResource(R.string.onboardingMessageNotificationExplaination))
         Spacer(Modifier.height(16.dp))
         NotificationRadioButton(
             R.string.activity_pn_mode_fast_mode,
@@ -125,8 +125,8 @@ fun MessageNotifications(
         OutlineButton(
             stringResource(R.string.continue_2),
             modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .width(262.dp),
+                    .align(Alignment.CenterHorizontally)
+                    .width(262.dp),
             onClick = onContinue
         )
         Spacer(modifier = Modifier.height(12.dp))
