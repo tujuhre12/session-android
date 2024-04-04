@@ -39,13 +39,9 @@ public class Stopwatch {
         out.append(splits.get(i).time - splits.get(i - 1).time);
         out.append("ms  ");
       }
-
       out.append("total: ").append(splits.get(splits.size() - 1).time - startTime).append("ms.");
     }
-
     Log.d(tag, out.toString());
-
-    Log.w("[ACL]", out.toString());
   }
 
   private static class Split {

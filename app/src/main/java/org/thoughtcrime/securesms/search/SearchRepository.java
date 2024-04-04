@@ -4,7 +4,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.MergeCursor;
-import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 
@@ -36,28 +35,18 @@ import java.util.concurrent.Executor;
 
 import kotlin.Pair;
 
-/**
- * Manages data retrieval for search.
- */
+// Class to manage data retrieval for search
 public class SearchRepository {
-
   private static final String TAG = SearchRepository.class.getSimpleName();
 
   private static final Set<Character> BANNED_CHARACTERS = new HashSet<>();
   static {
-    // Several ranges of invalid ASCII characters
-    for (int i = 33; i <= 47; i++) {
-      BANNED_CHARACTERS.add((char) i);
-    }
-    for (int i = 58; i <= 64; i++) {
-      BANNED_CHARACTERS.add((char) i);
-    }
-    for (int i = 91; i <= 96; i++) {
-      BANNED_CHARACTERS.add((char) i);
-    }
-    for (int i = 123; i <= 126; i++) {
-      BANNED_CHARACTERS.add((char) i);
-    }
+    // Construct a list containing several ranges of invalid ASCII characters
+    // See: https://www.ascii-code.com/
+    for (int i = 33; i <= 47; i++)   { BANNED_CHARACTERS.add((char) i); } // !, ", #, $, %, &, ', (, ), *, +, ,, -, ., /
+    for (int i = 58; i <= 64; i++)   { BANNED_CHARACTERS.add((char) i); } // :, ;, <, =, >, ?, @
+    for (int i = 91; i <= 96; i++)   { BANNED_CHARACTERS.add((char) i); } // [, \, ], ^, _, `
+    for (int i = 123; i <= 126; i++) { BANNED_CHARACTERS.add((char) i); } // {, |, }, ~
   }
 
   private final Context                context;
@@ -86,54 +75,25 @@ public class SearchRepository {
   }
 
   public void query(@NonNull String query, @NonNull Callback<SearchResult> callback) {
-
-    Log.w("[ACL]", "Hit SearchRepository.query - query string is: \"" + query + "\"");
-
-    String cleanQuery = sanitizeQuery(query).trim();
-    Log.w("[ACL]", "When sanitized and trimmed this is: \"" + cleanQuery + "\"");
-
     // If the sanitized search is empty or is less than 2 chars then abort
+    String cleanQuery = sanitizeQuery(query).trim();
     if (cleanQuery.isEmpty() || cleanQuery.length() < 2) {
-      Log.w("[ACL]", "Trimmed query is empty or less than 2 chars so returning empty SearchResult");
       callback.onResult(SearchResult.EMPTY);
       return;
     }
 
     executor.execute(() -> {
       Stopwatch timer = new Stopwatch("FtsQuery");
-
-      // ACL
-      //String cleanQuery = sanitizeQuery(query).trim();
-
-
-      /*
-      if (cleanQuery.isEmpty())
-      {
-        Log.w("[ACL]", "Aborting empty search query.");
-        Log.d(TAG, "Aborting empty search query.");
-        timer.stop(TAG);
-        return;
-      }
-      else {
-        Log.w("[ACL]", "Clean query is non-empty and is: \"" + cleanQuery + "\"");
-      }
-      */
-
-
       timer.split("clean");
 
-      Log.w("[ACL]", "About to query contacts.");
       Pair<CursorList<Contact>, List<String>> contacts = queryContacts(cleanQuery);
-      timer.split("contacts");
+      timer.split("Contacts");
 
-
-      Log.w("[ACL]", "About to query conversations.");
       CursorList<GroupRecord> conversations = queryConversations(cleanQuery, contacts.getSecond());
-      timer.split("conversations");
+      timer.split("Conversations");
 
-      Log.w("[ACL]", "About to query messages.");
       CursorList<MessageResult> messages = queryMessages(cleanQuery);
-      timer.split("messages");
+      timer.split("Messages");
 
       timer.stop(TAG);
 
@@ -182,11 +142,10 @@ public class SearchRepository {
     MergeCursor merged = new MergeCursor(new Cursor[]{addressThreads, individualRecipients});
 
     return new Pair<>(new CursorList<>(merged, new ContactModelBuilder(contactDatabase, threadDatabase)), contactStrings);
-
   }
 
   private CursorList<GroupRecord> queryConversations(@NonNull String query, List<String> matchingAddresses) {
-    List<String>  numbers   = contactAccessor.getNumbersForThreadSearchFilter(context, query);
+    List<String> numbers = contactAccessor.getNumbersForThreadSearchFilter(context, query);
     String localUserNumber = TextSecurePreferences.getLocalNumber(context);
     if (localUserNumber != null) {
       matchingAddresses.remove(localUserNumber);
@@ -270,9 +229,7 @@ public class SearchRepository {
 
     private final Context context;
 
-    RecipientModelBuilder(@NonNull Context context) {
-      this.context = context;
-    }
+    RecipientModelBuilder(@NonNull Context context) { this.context = context; }
 
     @Override
     public Recipient build(@NonNull Cursor cursor) {
@@ -315,9 +272,7 @@ public class SearchRepository {
 
     private final Context context;
 
-    MessageModelBuilder(@NonNull Context context) {
-      this.context = context;
-    }
+    MessageModelBuilder(@NonNull Context context) { this.context = context; }
 
     @Override
     public MessageResult build(@NonNull Cursor cursor) {
