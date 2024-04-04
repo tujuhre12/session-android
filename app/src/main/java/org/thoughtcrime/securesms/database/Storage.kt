@@ -92,7 +92,6 @@ import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
 import java.security.MessageDigest
-import kotlin.time.Duration.Companion.days
 import network.loki.messenger.libsession_util.util.Contact as LibSessionContact
 
 private const val TAG = "Storage"
@@ -767,13 +766,36 @@ open class Storage(
 
     override fun markAsSent(timestamp: Long, author: String) {
         val database = DatabaseComponent.get(context).mmsSmsDatabase()
-        val messageRecord = database.getMessageFor(timestamp, author) ?: return
+        val messageRecord = database.getSentMessageFor(timestamp, author)
+        if (messageRecord == null) {
+            Log.w(TAG, "Failed to retrieve local message record in Storage.markAsSent - aborting.")
+            return
+        }
+
         if (messageRecord.isMms) {
-            val mmsDatabase = DatabaseComponent.get(context).mmsDatabase()
-            mmsDatabase.markAsSent(messageRecord.getId(), true)
+            DatabaseComponent.get(context).mmsDatabase().markAsSent(messageRecord.getId(), true)
         } else {
-            val smsDatabase = DatabaseComponent.get(context).smsDatabase()
-            smsDatabase.markAsSent(messageRecord.getId(), true)
+            DatabaseComponent.get(context).smsDatabase().markAsSent(messageRecord.getId(), true)
+        }
+    }
+
+    // Method that marks a message as sent in Communities (only!) - where the server modifies the
+    // message timestamp and as such we cannot use that to identify the local message.
+    override fun markAsSentToCommunity(threadId: Long, messageID: Long) {
+        val database = DatabaseComponent.get(context).mmsSmsDatabase()
+        val message = database.getLastSentMessageRecordFromSender(threadId, TextSecurePreferences.getLocalNumber(context))
+
+        // Ensure we can find the local message..
+        if (message == null) {
+            Log.w(TAG, "Could not find local message in Storage.markAsSentToCommunity - aborting.")
+            return
+        }
+
+        // ..and mark as sent if found.
+        if (message.isMms) {
+            DatabaseComponent.get(context).mmsDatabase().markAsSent(message.getId(), true)
+        } else {
+            DatabaseComponent.get(context).smsDatabase().markAsSent(message.getId(), true)
         }
     }
 
@@ -808,13 +830,37 @@ open class Storage(
 
     override fun markUnidentified(timestamp: Long, author: String) {
         val database = DatabaseComponent.get(context).mmsSmsDatabase()
-        val messageRecord = database.getMessageFor(timestamp, author) ?: return
+        val messageRecord = database.getMessageFor(timestamp, author)
+        if (messageRecord == null) {
+            Log.w(TAG, "Could not identify message with timestamp: $timestamp from author: $author")
+            return
+        }
         if (messageRecord.isMms) {
             val mmsDatabase = DatabaseComponent.get(context).mmsDatabase()
             mmsDatabase.markUnidentified(messageRecord.getId(), true)
         } else {
             val smsDatabase = DatabaseComponent.get(context).smsDatabase()
             smsDatabase.markUnidentified(messageRecord.getId(), true)
+        }
+    }
+
+    // Method that marks a message as unidentified in Communities (only!) - where the server
+    // modifies the message timestamp and as such we cannot use that to identify the local message.
+    override fun markUnidentifiedInCommunity(threadId: Long, messageId: Long) {
+        val database = DatabaseComponent.get(context).mmsSmsDatabase()
+        val message = database.getLastSentMessageRecordFromSender(threadId, TextSecurePreferences.getLocalNumber(context))
+
+        // Check to ensure the message exists
+        if (message == null) {
+            Log.w(TAG, "Could not find local message in Storage.markUnidentifiedInCommunity - aborting.")
+            return
+        }
+
+        // Mark it as unidentified if we found the message successfully
+        if (message.isMms) {
+            DatabaseComponent.get(context).mmsDatabase().markUnidentified(message.getId(), true)
+        } else {
+            DatabaseComponent.get(context).smsDatabase().markUnidentified(message.getId(), true)
         }
     }
 
@@ -971,7 +1017,10 @@ open class Storage(
         val infoMessage = OutgoingGroupMediaMessage(recipient, updateData, groupID, null, sentTimestamp, 0, 0, true, null, listOf(), listOf())
         val mmsDB = DatabaseComponent.get(context).mmsDatabase()
         val mmsSmsDB = DatabaseComponent.get(context).mmsSmsDatabase()
-        if (mmsSmsDB.getMessageFor(sentTimestamp, userPublicKey) != null) return
+        if (mmsSmsDB.getMessageFor(sentTimestamp, userPublicKey) != null) {
+            Log.w(TAG, "Bailing from insertOutgoingInfoMessage because we believe the message has already been sent!")
+            return
+        }
         val infoMessageID = mmsDB.insertMessageOutbox(infoMessage, threadID, false, null, runThreadUpdate = true)
         mmsDB.markAsSent(infoMessageID, true)
     }
