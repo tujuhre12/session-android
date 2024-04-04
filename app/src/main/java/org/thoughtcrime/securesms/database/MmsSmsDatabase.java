@@ -183,7 +183,7 @@ public class MmsSmsDatabase extends Database {
     String limitStr  = limit > 0 || offset > 0 ? offset + ", " + limit : null;
 
     Cursor cursor = queryTables(PROJECTION, selection, order, limitStr);
-    setNotifyConverationListeners(cursor, threadId);
+    setNotifyConversationListeners(cursor, threadId);
 
     return cursor;
   }
@@ -207,6 +207,44 @@ public class MmsSmsDatabase extends Database {
       cursor.moveToFirst();
       return cursor.getLong(cursor.getColumnIndexOrThrow(MmsSmsColumns.ID));
     }
+  }
+
+  // Builds up and returns a list of all all the messages sent by this user in the given thread.
+  // Used to do a pass through our local database to remove records when a user has "Ban & Delete"
+  // called on them in a Community.
+  public Set<MessageRecord> getAllMessageRecordsFromSenderInThread(long threadId, String serializedAuthor) {
+    String selection = MmsSmsColumns.THREAD_ID + " = " + threadId + " AND " + MmsSmsColumns.ADDRESS + " = \"" + serializedAuthor + "\"";
+    Set<MessageRecord> identifiedMessages = new HashSet<MessageRecord>();
+
+    // Try everything with resources so that they auto-close on end of scope
+    try (Cursor cursor = queryTables(PROJECTION, selection, null, null)) {
+      try (MmsSmsDatabase.Reader reader = readerFor(cursor)) {
+        MessageRecord messageRecord;
+        while ((messageRecord = reader.getNext()) != null) {
+          identifiedMessages.add(messageRecord);
+        }
+      }
+    }
+    return identifiedMessages;
+  }
+
+  // Version of the above `getAllMessageRecordsFromSenderInThread` method that returns the message
+  // Ids rather than the set of MessageRecords - currently unused by potentially useful in the future.
+  public Set<Long> getAllMessageIdsFromSenderInThread(long threadId, String serializedAuthor) {
+    String selection = MmsSmsColumns.THREAD_ID + " = " + threadId + " AND " + MmsSmsColumns.ADDRESS + " = \"" + serializedAuthor + "\"";
+
+    Set<Long> identifiedMessages = new HashSet<Long>();
+
+    // Try everything with resources so that they auto-close on end of scope
+    try (Cursor cursor = queryTables(PROJECTION, selection, null, null)) {
+      try (MmsSmsDatabase.Reader reader = readerFor(cursor)) {
+        MessageRecord messageRecord;
+        while ((messageRecord = reader.getNext()) != null) {
+          identifiedMessages.add(messageRecord.id);
+        }
+      }
+    }
+    return identifiedMessages;
   }
 
   public long getLastSentMessageFromSender(long threadId, String serializedAuthor) {

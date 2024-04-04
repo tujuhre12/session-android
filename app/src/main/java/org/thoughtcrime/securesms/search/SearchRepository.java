@@ -75,7 +75,7 @@ public class SearchRepository {
   }
 
   public void query(@NonNull String query, @NonNull Callback<SearchResult> callback) {
-    // If the sanitized search is empty or is less than 2 chars then abort
+    // If the sanitized search is empty or is less than 2 chars then abort without search
     String cleanQuery = sanitizeQuery(query).trim();
     if (cleanQuery.isEmpty() || cleanQuery.length() < 2) {
       callback.onResult(SearchResult.EMPTY);
