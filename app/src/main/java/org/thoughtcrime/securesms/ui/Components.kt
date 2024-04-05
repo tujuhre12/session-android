@@ -33,6 +33,8 @@ import androidx.compose.material.RadioButton
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -55,6 +57,8 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.runIf
@@ -427,4 +431,9 @@ fun RowScope.SessionShieldIcon() {
         modifier = Modifier.align(Alignment.CenterVertically)
             .wrapContentSize(unbounded = true)
     )
+}
+
+@Composable
+fun LaunchedEffectAsync(block: suspend CoroutineScope.() -> Unit) {
+    rememberCoroutineScope().apply { LaunchedEffect(Unit) { launch { block() } } }
 }

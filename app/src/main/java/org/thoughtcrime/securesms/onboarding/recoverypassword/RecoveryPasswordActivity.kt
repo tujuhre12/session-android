@@ -6,9 +6,6 @@ import android.graphics.Bitmap
 import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.animateValue
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -17,7 +14,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -31,9 +27,11 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
@@ -45,7 +43,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
@@ -53,6 +51,7 @@ import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.CellWithPaddingAndMargin
+import org.thoughtcrime.securesms.ui.LaunchedEffectAsync
 import org.thoughtcrime.securesms.ui.LocalExtraColors
 import org.thoughtcrime.securesms.ui.OutlineButton
 import org.thoughtcrime.securesms.ui.PreviewTheme
@@ -197,26 +196,23 @@ fun RecoveryPasswordCell(seed: String = "", qrBitmap: Bitmap? = null, copySeed:(
 
             AnimatedVisibility(!showQr.value) {
                 Row(horizontalArrangement = Arrangement.spacedBy(32.dp)) {
-                    val scope = rememberCoroutineScope()
-                    val revertCopiedTextJob = remember { mutableStateOf<Job?>(null) }
-                    val copied = remember { mutableStateOf(false) }
+                    var copied by remember { mutableStateOf(false) }
+                    if (copied) LaunchedEffectAsync {
+                        delay(2.seconds)
+                        copied = false
+                    }
                     OutlineButton(
                         modifier = Modifier.weight(1f),
                         color = MaterialTheme.colors.onPrimary,
                         onClick = {
                             copySeed()
-                            revertCopiedTextJob.value?.cancel()
-                            revertCopiedTextJob.value = scope.launch {
-                                copied.value = true
-                                delay(2.seconds)
-                                copied.value = false
-                            }
+                            copied = true
                         }
                     ) {
-                        AnimatedVisibility(!copied.value) {
+                        AnimatedVisibility(!copied) {
                             Text(stringResource(R.string.copy))
                         }
-                        AnimatedVisibility(copied.value) {
+                        AnimatedVisibility(copied) {
                             Text(stringResource(R.string.copied))
                         }
                     }
