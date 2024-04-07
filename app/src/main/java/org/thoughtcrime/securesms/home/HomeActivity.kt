@@ -364,11 +364,11 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                 ) {
                     Column(Modifier.weight(1f)) {
                         Row {
-                            Text("Save your recovery password", style = MaterialTheme.typography.h8)
+                            Text(stringResource(R.string.save_your_recovery_password), style = MaterialTheme.typography.h8)
                             Spacer(Modifier.requiredWidth(8.dp))
                             SessionShieldIcon()
                         }
-                        Text("Save your recovery password to make sure you don't lose access to your account.", style = MaterialTheme.typography.small)
+                        Text(stringResource(R.string.save_your_recovery_password_to_make_sure_you_don_t_lose_access_to_your_account), style = MaterialTheme.typography.small)
                     }
                     Spacer(Modifier.width(12.dp))
                     OutlineButton(
@@ -391,18 +391,17 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             ) {
                 Spacer(modifier = Modifier.weight(1f))
                 Icon(
-                    painter = painterResource(id = R.drawable.emoji_tada),
+                    painter = painterResource(id = R.drawable.ic_logo_large),
                     contentDescription = null,
                     tint = Color.Unspecified
                 )
-                Text("Account Created", style = MaterialTheme.typography.h4, textAlign = TextAlign.Center)
-                Text("Welcome to Session", color = MaterialTheme.colors.secondary, textAlign = TextAlign.Center)
                 Divider(modifier = Modifier.padding(vertical = 16.dp))
-                Text("You don't have any conversations yet",
+                Text(
+                    stringResource(R.string.conversationsNone),
                     style = MaterialTheme.typography.h8,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(bottom = 12.dp))
-                Text("Hit the plus button to start a chat, create a group, or join an official communitiy!", textAlign = TextAlign.Center)
+                Text(stringResource(R.string.onboardingHitThePlusButton), textAlign = TextAlign.Center)
                 Spacer(modifier = Modifier.weight(2f))
             }
         }
@@ -717,7 +716,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         val message = if (recipient.isGroupRecipient) {
             val group = groupDatabase.getGroup(recipient.address.toString()).orNull()
             if (group != null && group.admins.map { it.toString() }.contains(textSecurePreferences.getLocalNumber())) {
-                "Because you are the creator of this group it will be deleted for everyone. This cannot be undone."
+                getString(R.string.admin_group_leave_warning)
             } else {
                 resources.getString(R.string.activity_home_leave_group_dialog_message)
             }
@@ -773,7 +772,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
 
     private fun hideMessageRequests() {
         showSessionDialog {
-            text("Hide message requests?")
+            text(getString(R.string.hide_message_requests))
             button(R.string.yes) {
                 textSecurePreferences.setHasHiddenMessageRequests()
                 setupMessageRequestsBanner()

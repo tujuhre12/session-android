@@ -1094,4 +1094,10 @@
     <string name="qrView">View QR</string>
     <string name="recoveryPasswordView">View Password</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Permanently hide your recovery password on this device.</string>
+    <string name="conversationsNone">You don\'t have any conversations yet</string>
+    <string name="onboardingHitThePlusButton">Hit the plus button to start a chat, create a group, or join an official communitiy!</string>
+    <string name="admin_group_leave_warning">Because you are the creator of this group it will be deleted for everyone. This cannot be undone.</string>
+    <string name="hide_message_requests">Hide message requests?</string>
+    <string name="save_your_recovery_password">Save your recovery password</string>
+    <string name="save_your_recovery_password_to_make_sure_you_don_t_lose_access_to_your_account">Save your recovery password to make sure you don\'t lose access to your account.</string>
 </resources>
