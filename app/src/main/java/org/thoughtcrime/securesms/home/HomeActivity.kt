@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.Divider
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
@@ -103,7 +102,6 @@ import org.thoughtcrime.securesms.ui.OutlineButton
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionShieldIcon
 import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
-import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.h8
 import org.thoughtcrime.securesms.ui.small
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
@@ -226,7 +224,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         }
 
         // Set up empty state view
-        binding.emptyStateContainer.setContent { EmptyView() }
+        binding.emptyStateContainer.setContent { EmptyView(textSecurePreferences.isNewAccount()) }
 
         IP2Country.configureIfNeeded(this@HomeActivity)
         startObservingUpdates()
@@ -381,7 +379,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
     }
 
     @Composable
-    private fun EmptyView() {
+    private fun EmptyView(newAccount: Boolean) {
         AppTheme {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -391,10 +389,13 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             ) {
                 Spacer(modifier = Modifier.weight(1f))
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_logo_large),
+                    painter = painterResource(id = if (newAccount) R.drawable.emoji_tada_large else R.drawable.ic_logo_large),
                     contentDescription = null,
                     tint = Color.Unspecified
                 )
+                if (newAccount) Text(stringResource(R.string.onboardingAccountCreated), style = MaterialTheme.typography.h4, textAlign = TextAlign.Center)
+                if (newAccount) Text(stringResource(R.string.onboardingBubbleWelcomeToSession), color = MaterialTheme.colors.secondary, textAlign = TextAlign.Center)
+
                 Divider(modifier = Modifier.padding(vertical = 16.dp))
                 Text(
                     stringResource(R.string.conversationsNone),

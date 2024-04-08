@@ -19,6 +19,7 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.CLASSIC_
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CLASSIC_LIGHT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FOLLOW_SYSTEM_SETTINGS
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HIDE_PASSWORD
+import org.session.libsession.utilities.TextSecurePreferences.Companion.NEW_ACCOUNT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_VACUUM_TIME
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LEGACY_PREF_KEY_SELECTED_UI_MODE
 import org.session.libsession.utilities.TextSecurePreferences.Companion.OCEAN_DARK
@@ -186,6 +187,8 @@ interface TextSecurePreferences {
     fun clearAll()
     fun getHidePassword(): Boolean
     fun setHidePassword(value: Boolean)
+    fun isNewAccount(): Boolean
+    fun setNewAccount(value: Boolean)
 
     companion object {
         val TAG = TextSecurePreferences::class.simpleName
@@ -288,6 +291,7 @@ interface TextSecurePreferences {
         const val SELECTED_STYLE = "pref_selected_style" // classic_dark/light, ocean_dark/light
         const val FOLLOW_SYSTEM_SETTINGS = "pref_follow_system" // follow system day/night
         const val HIDE_PASSWORD = "pref_hide_password"
+        const val NEW_ACCOUNT = "new_account"
 
         const val LEGACY_PREF_KEY_SELECTED_UI_MODE = "SELECTED_UI_MODE" // this will be cleared upon launching app, for users migrating to theming build
         const val CLASSIC_DARK = "classic.dark"
@@ -1721,5 +1725,11 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setHidePassword(value: Boolean) {
         setBooleanPreference(HIDE_PASSWORD, value)
+    }
+
+    override fun isNewAccount(): Boolean = getBooleanPreference(NEW_ACCOUNT, false)
+
+    override fun setNewAccount(value: Boolean) {
+        setBooleanPreference(NEW_ACCOUNT, value)
     }
 }

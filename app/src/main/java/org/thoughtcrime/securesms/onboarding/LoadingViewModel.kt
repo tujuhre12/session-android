@@ -31,8 +31,8 @@ data class State(val duration: Duration)
 private val DONE_TIME = 1.seconds
 private val DONE_ANIMATE_TIME = 500.milliseconds
 
-private val TOTAL_ANIMATE_TIME = 44.seconds
-private val TOTAL_TIME = 45.seconds
+private val TOTAL_ANIMATE_TIME = 14.seconds
+private val TOTAL_TIME = 15.seconds
 
 @HiltViewModel
 class LoadingViewModel @Inject constructor(

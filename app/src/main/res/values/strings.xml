@@ -1058,7 +1058,7 @@
     <string name="auto_deletes_in">Auto-deletes in %1$s</string>
 
     <string name="onboardingBubblePrivacyInYourPocket">Privacy in your pocket.</string>
-    <string name="onboardingBubbleWelcomeToSession">Welcome to Session 👋</string>
+    <string name="onboardingBubbleWelcomeToSession">Welcome to Session</string>
     <string name="onboardingBubbleSessionIsEngineered">Session is engineered to protect your privacy.</string>
     <string name="onboardingBubbleNoPhoneNumber">"You don’t even need a phone number to sign up. "</string>
     <string name="onboardingBubbleCreatingAnAccountIsEasy">Creating an account is \ninstant, free, and \nanonymous 👇</string>
@@ -1100,4 +1100,5 @@
     <string name="hide_message_requests">Hide message requests?</string>
     <string name="save_your_recovery_password">Save your recovery password</string>
     <string name="save_your_recovery_password_to_make_sure_you_don_t_lose_access_to_your_account">Save your recovery password to make sure you don\'t lose access to your account.</string>
+    <string name="onboardingAccountCreated">Account Created</string>
 </resources>
