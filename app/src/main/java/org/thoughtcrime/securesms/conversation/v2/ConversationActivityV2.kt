@@ -1883,9 +1883,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             Log.w("ConversationActivityV2", "Asked to delete messages but could not obtain viewModel recipient - aborting.")
             return
         }
-
-
-
+        
         val allSentByCurrentUser = messages.all { it.isOutgoing }
         val allHasHash = messages.all { lokiMessageDb.getMessageServerHash(it.id, it.isMms) != null }
 
