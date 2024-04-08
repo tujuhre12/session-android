@@ -1095,8 +1095,7 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
         }
         val whereString = where.substring(0, where.length - 4)
         try {
-            cursor =
-                db!!.query(TABLE_NAME, arrayOf<String?>(ID), whereString, null, null, null, null)
+            cursor = db!!.query(TABLE_NAME, arrayOf<String?>(ID), whereString, null, null, null, null)
             val toDeleteStringMessageIds = mutableListOf<String>()
             while (cursor.moveToNext()) {
                 toDeleteStringMessageIds += cursor.getLong(0).toString()

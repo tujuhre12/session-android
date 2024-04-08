@@ -515,11 +515,13 @@ public class ThreadDatabase extends Database {
     return getConversationList(where);
   }
 
+  /*
   public Cursor getArchivedConversationList() {
     String where  = "(" + MESSAGE_COUNT + " != 0 OR " + GroupDatabase.TABLE_NAME + "." + GROUP_ID + " LIKE '" + COMMUNITY_PREFIX + "%') " +
             "AND " + ARCHIVED + " = 1 ";
     return getConversationList(where);
   }
+  */
 
   private Cursor getConversationList(String where) {
     SQLiteDatabase db     = databaseHelper.getReadableDatabase();
@@ -771,11 +773,11 @@ public class ThreadDatabase extends Database {
           deleteThread(threadId);
           return true;
         }
+        // todo: add empty snippet that clears existing data
         return false;
       }
     } finally {
-      if (reader != null)
-        reader.close();
+      if (reader != null) { reader.close(); }
       notifyConversationListListeners();
       notifyConversationListeners(threadId);
     }
