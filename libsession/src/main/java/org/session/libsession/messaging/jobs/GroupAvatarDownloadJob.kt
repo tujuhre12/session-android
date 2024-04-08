@@ -3,6 +3,7 @@ package org.session.libsession.messaging.jobs
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.utilities.Data
+import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.GroupUtil
 
 class GroupAvatarDownloadJob(val server: String, val room: String, val imageId: String?) : Job {
@@ -12,14 +13,18 @@ class GroupAvatarDownloadJob(val server: String, val room: String, val imageId: 
     override var failureCount: Int = 0
     override val maxFailureCount: Int = 10
 
-    override fun execute(dispatcherName: String) {
+    override suspend fun execute(dispatcherName: String) {
         if (imageId == null) {
             delegate?.handleJobFailedPermanently(this, dispatcherName, Exception("GroupAvatarDownloadJob now requires imageId"))
             return
         }
-
         val storage = MessagingModuleConfiguration.shared.storage
-        val storedImageId = storage.getOpenGroup(room, server)?.imageId
+        val openGroup = storage.getOpenGroup(room, server)
+        if (openGroup == null || storage.getThreadId(openGroup) == null) {
+            delegate?.handleJobFailedPermanently(this, dispatcherName, Exception("GroupAvatarDownloadJob openGroup is null"))
+            return
+        }
+        val storedImageId = openGroup.imageId
 
         if (storedImageId == null || storedImageId != imageId) {
             delegate?.handleJobFailedPermanently(this, dispatcherName, Exception("GroupAvatarDownloadJob imageId does not match the OpenGroup"))
@@ -39,7 +44,7 @@ class GroupAvatarDownloadJob(val server: String, val room: String, val imageId: 
 
             val groupId = GroupUtil.getEncodedOpenGroupID("$server.$room".toByteArray())
             storage.updateProfilePicture(groupId, bytes)
-            storage.updateTimestampUpdated(groupId, System.currentTimeMillis())
+            storage.updateTimestampUpdated(groupId, SnodeAPI.nowWithOffset)
             delegate?.handleJobSucceeded(this, dispatcherName)
         } catch (e: Exception) {
             delegate?.handleJobFailed(this, dispatcherName, e)

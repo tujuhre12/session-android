@@ -94,7 +94,7 @@ class JobQueue : JobDelegate {
         }
     }
 
-    private fun Job.process(dispatcherName: String) {
+    private suspend fun Job.process(dispatcherName: String) {
         Log.d(dispatcherName,"processJob: ${javaClass.simpleName} (id: $id)")
         delegate = this@JobQueue
 
@@ -122,9 +122,10 @@ class JobQueue : JobDelegate {
 
             while (isActive) {
                 when (val job = queue.receive()) {
-                    is NotifyPNServerJob, is AttachmentUploadJob, is MessageSendJob -> {
+                    is NotifyPNServerJob, is AttachmentUploadJob, is MessageSendJob, is ConfigurationSyncJob -> {
                         txQueue.send(job)
                     }
+                    is RetrieveProfileAvatarJob,
                     is AttachmentDownloadJob -> {
                         mediaQueue.send(job)
                     }
@@ -143,7 +144,7 @@ class JobQueue : JobDelegate {
                         }
                     }
                     else -> {
-                        throw IllegalStateException("Unexpected job type.")
+                        throw IllegalStateException("Unexpected job type: ${job.getFactoryKey()}")
                     }
                 }
             }
@@ -224,6 +225,8 @@ class JobQueue : JobDelegate {
             GroupAvatarDownloadJob.KEY,
             BackgroundGroupAddJob.KEY,
             OpenGroupDeleteJob.KEY,
+            RetrieveProfileAvatarJob.KEY,
+            ConfigurationSyncJob.KEY,
         )
         allJobTypes.forEach { type ->
             resumePendingJobs(type)

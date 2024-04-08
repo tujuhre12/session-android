@@ -23,6 +23,7 @@ import org.session.libsession.messaging.utilities.SessionId
 import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.OnionResponse
+import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Base64.decode
 import org.session.libsignal.utilities.Base64.encodeBytes
@@ -108,7 +109,24 @@ object OpenGroupApi {
         val defaultWrite: Boolean = false,
         val upload: Boolean = false,
         val defaultUpload: Boolean = false,
-    )
+    ) {
+        fun toPollInfo() = RoomPollInfo(
+            token = token,
+            activeUsers = activeUsers,
+            admin = admin,
+            globalAdmin = globalAdmin,
+            moderator = moderator,
+            globalModerator = globalModerator,
+            read = read,
+            defaultRead = defaultRead,
+            defaultAccessible = defaultAccessible,
+            write = write,
+            defaultWrite = defaultWrite,
+            upload = upload,
+            defaultUpload = defaultUpload,
+            details = this
+        )
+    }
 
     @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy::class)
     data class PinnedMessage(
@@ -303,7 +321,7 @@ object OpenGroupApi {
             val headers = request.headers.toMutableMap()
             if (request.isAuthRequired) {
                 val nonce = sodium.nonce(16)
-                val timestamp = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis())
+                val timestamp = TimeUnit.MILLISECONDS.toSeconds(SnodeAPI.nowWithOffset)
                 var pubKey = ""
                 var signature = ByteArray(Sign.BYTES)
                 var bodyHash = ByteArray(0)
@@ -584,8 +602,7 @@ object OpenGroupApi {
     // region Message Deletion
     @JvmStatic
     fun deleteMessage(serverID: Long, room: String, server: String): Promise<Unit, Exception> {
-        val request =
-            Request(verb = DELETE, room = room, server = server, endpoint = Endpoint.RoomMessageIndividual(room, serverID))
+        val request = Request(verb = DELETE, room = room, server = server, endpoint = Endpoint.RoomMessageIndividual(room, serverID))
         return send(request).map {
             Log.d("Loki", "Message deletion successful.")
         }
@@ -641,7 +658,9 @@ object OpenGroupApi {
     }
 
     fun banAndDeleteAll(publicKey: String, room: String, server: String): Promise<Unit, Exception> {
+
         val requests = mutableListOf<BatchRequestInfo<*>>(
+            // Ban request
             BatchRequestInfo(
                 request = BatchRequest(
                     method = POST,
@@ -651,6 +670,7 @@ object OpenGroupApi {
                 endpoint = Endpoint.UserBan(publicKey),
                 responseType = object: TypeReference<Any>(){}
             ),
+            // Delete request
             BatchRequestInfo(
                 request = BatchRequest(DELETE, "/room/$room/all/$publicKey"),
                 endpoint = Endpoint.RoomDeleteMessages(room, publicKey),
@@ -735,7 +755,8 @@ object OpenGroupApi {
             )
         }
         val serverCapabilities = storage.getServerCapabilities(server)
-        if (serverCapabilities.contains(Capability.BLIND.name.lowercase())) {
+        val isAcceptingCommunityRequests = storage.isCheckingCommunityRequests()
+        if (serverCapabilities.contains(Capability.BLIND.name.lowercase()) && isAcceptingCommunityRequests) {
             requests.add(
                 if (lastInboxMessageId == null) {
                     BatchRequestInfo(
@@ -951,6 +972,18 @@ object OpenGroupApi {
         )
         return getResponseBody(request).map { response ->
             JsonUtil.fromJson(response, DirectMessage::class.java)
+        }
+    }
+
+    fun deleteAllInboxMessages(server: String): Promise<Map<*, *>, java.lang.Exception> {
+        val request = Request(
+            verb = DELETE,
+            room = null,
+            server = server,
+            endpoint = Endpoint.Inbox
+        )
+        return getResponseBody(request).map { response ->
+            JsonUtil.fromJson(response, Map::class.java)
         }
     }
 

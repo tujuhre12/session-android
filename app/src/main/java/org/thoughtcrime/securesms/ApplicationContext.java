@@ -40,6 +40,8 @@ import org.session.libsession.messaging.sending_receiving.pollers.ClosedGroupPol
 import org.session.libsession.messaging.sending_receiving.pollers.Poller;
 import org.session.libsession.snode.SnodeModule;
 import org.session.libsession.utilities.Address;
+import org.session.libsession.utilities.ConfigFactoryUpdateListener;
+import org.session.libsession.utilities.Device;
 import org.session.libsession.utilities.ProfilePictureUtilities;
 import org.session.libsession.utilities.SSKEnvironment;
 import org.session.libsession.utilities.TextSecurePreferences;
@@ -55,34 +57,29 @@ import org.signal.aesgcmprovider.AesGcmProvider;
 import org.thoughtcrime.securesms.components.TypingStatusSender;
 import org.thoughtcrime.securesms.crypto.KeyPairUtilities;
 import org.thoughtcrime.securesms.database.EmojiSearchDatabase;
-import org.thoughtcrime.securesms.database.JobDatabase;
 import org.thoughtcrime.securesms.database.LokiAPIDatabase;
 import org.thoughtcrime.securesms.database.Storage;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
 import org.thoughtcrime.securesms.database.model.EmojiSearchData;
+import org.thoughtcrime.securesms.dependencies.AppComponent;
+import org.thoughtcrime.securesms.dependencies.ConfigFactory;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 import org.thoughtcrime.securesms.dependencies.DatabaseModule;
 import org.thoughtcrime.securesms.emoji.EmojiSource;
 import org.thoughtcrime.securesms.groups.OpenGroupManager;
 import org.thoughtcrime.securesms.home.HomeActivity;
-import org.thoughtcrime.securesms.jobmanager.JobManager;
-import org.thoughtcrime.securesms.jobmanager.impl.JsonDataSerializer;
 import org.thoughtcrime.securesms.jobmanager.impl.NetworkConstraint;
-import org.thoughtcrime.securesms.jobs.FastJobStorage;
-import org.thoughtcrime.securesms.jobs.JobManagerFactories;
 import org.thoughtcrime.securesms.logging.AndroidLogger;
 import org.thoughtcrime.securesms.logging.PersistentLogger;
 import org.thoughtcrime.securesms.logging.UncaughtExceptionLogger;
 import org.thoughtcrime.securesms.notifications.BackgroundPollWorker;
 import org.thoughtcrime.securesms.notifications.DefaultMessageNotifier;
-import org.thoughtcrime.securesms.notifications.FcmUtils;
-import org.thoughtcrime.securesms.notifications.LokiPushNotificationManager;
 import org.thoughtcrime.securesms.notifications.NotificationChannels;
 import org.thoughtcrime.securesms.notifications.OptimizedMessageNotifier;
+import org.thoughtcrime.securesms.notifications.PushRegistry;
 import org.thoughtcrime.securesms.providers.BlobProvider;
 import org.thoughtcrime.securesms.service.ExpiringMessageManager;
 import org.thoughtcrime.securesms.service.KeyCachingService;
-import org.thoughtcrime.securesms.service.UpdateApkRefreshListener;
 import org.thoughtcrime.securesms.sskenvironment.ProfileManager;
 import org.thoughtcrime.securesms.sskenvironment.ReadReceiptManager;
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository;
@@ -113,6 +110,8 @@ import dagger.hilt.android.HiltAndroidApp;
 import kotlin.Unit;
 import kotlinx.coroutines.Job;
 import network.loki.messenger.BuildConfig;
+import network.loki.messenger.libsession_util.ConfigBase;
+import network.loki.messenger.libsession_util.UserProfile;
 
 /**
  * Will be called once when the TextSecure process is created.
@@ -123,7 +122,7 @@ import network.loki.messenger.BuildConfig;
  * @author Moxie Marlinspike
  */
 @HiltAndroidApp
-public class ApplicationContext extends Application implements DefaultLifecycleObserver {
+public class ApplicationContext extends Application implements DefaultLifecycleObserver, ConfigFactoryUpdateListener {
 
     public static final String PREFERENCES_NAME = "SecureSMS-Preferences";
 
@@ -132,7 +131,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     private ExpiringMessageManager expiringMessageManager;
     private TypingStatusRepository typingStatusRepository;
     private TypingStatusSender typingStatusSender;
-    private JobManager jobManager;
     private ReadReceiptManager readReceiptManager;
     private ProfileManager profileManager;
     public MessageNotifier messageNotifier = null;
@@ -145,10 +143,12 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     private PersistentLogger persistentLogger;
 
     @Inject LokiAPIDatabase lokiAPIDatabase;
-    @Inject Storage storage;
+    @Inject public Storage storage;
+    @Inject Device device;
     @Inject MessageDataProvider messageDataProvider;
-    @Inject JobDatabase jobDatabase;
     @Inject TextSecurePreferences textSecurePreferences;
+    @Inject PushRegistry pushRegistry;
+    @Inject ConfigFactory configFactory;
     CallMessageProcessor callMessageProcessor;
     MessagingModuleConfiguration messagingModuleConfiguration;
 
@@ -167,7 +167,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     }
 
     public TextSecurePreferences getPrefs() {
-        return textSecurePreferences;
+        return EntryPoints.get(getApplicationContext(), AppComponent.class).getPrefs();
     }
 
     public DatabaseComponent getDatabaseComponent() {
@@ -197,14 +197,29 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     }
 
     @Override
+    public void notifyUpdates(@NonNull ConfigBase forConfigObject, long messageTimestamp) {
+        // forward to the config factory / storage ig
+        if (forConfigObject instanceof UserProfile && !textSecurePreferences.getConfigurationMessageSynced()) {
+            textSecurePreferences.setConfigurationMessageSynced(true);
+        }
+        storage.notifyConfigUpdates(forConfigObject, messageTimestamp);
+    }
+
+    @Override
     public void onCreate() {
+        TextSecurePreferences.setPushSuffix(BuildConfig.PUSH_KEY_SUFFIX);
+
         DatabaseModule.init(this);
         MessagingModuleConfiguration.configure(this);
         super.onCreate();
-        messagingModuleConfiguration = new MessagingModuleConfiguration(this,
+        messagingModuleConfiguration = new MessagingModuleConfiguration(
+                this,
                 storage,
+                device,
                 messageDataProvider,
-                ()-> KeyPairUtilities.INSTANCE.getUserED25519KeyPair(this));
+                ()-> KeyPairUtilities.INSTANCE.getUserED25519KeyPair(this),
+                configFactory
+                );
         callMessageProcessor = new CallMessageProcessor(this, textSecurePreferences, ProcessLifecycleOwner.get().getLifecycle(), storage);
         Log.i(TAG, "onCreate()");
         startKovenant();
@@ -218,10 +233,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         broadcaster = new Broadcaster(this);
         LokiAPIDatabase apiDB = getDatabaseComponent().lokiAPIDatabase();
         SnodeModule.Companion.configure(apiDB, broadcaster);
-        String userPublicKey = TextSecurePreferences.getLocalNumber(this);
-        if (userPublicKey != null) {
-            registerForFCMIfNeeded(false);
-        }
         initializeExpiringMessageManager();
         initializeTypingStatusRepository();
         initializeTypingStatusSender();
@@ -229,7 +240,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         initializeProfileManager();
         initializePeriodicTasks();
         SSKEnvironment.Companion.configure(getTypingStatusRepository(), getReadReceiptManager(), getProfileManager(), messageNotifier, getExpiringMessageManager());
-        initializeJobManager();
         initializeWebRtc();
         initializeBlobProvider();
         resubmitProfilePictureIfNeeded();
@@ -272,7 +282,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         if (poller != null) {
             poller.stopIfNeeded();
         }
-        ClosedGroupPollerV2.getShared().stop();
+        ClosedGroupPollerV2.getShared().stopAll();
     }
 
     @Override
@@ -284,10 +294,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
 
     public void initializeLocaleParser() {
         LocaleParser.Companion.configure(new LocaleParseHelper());
-    }
-
-    public JobManager getJobManager() {
-        return jobManager;
     }
 
     public ExpiringMessageManager getExpiringMessageManager() {
@@ -352,16 +358,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionLogger(originalHandler));
     }
 
-    private void initializeJobManager() {
-        this.jobManager = new JobManager(this, new JobManager.Configuration.Builder()
-            .setDataSerializer(new JsonDataSerializer())
-            .setJobFactories(JobManagerFactories.getJobFactories(this))
-            .setConstraintFactories(JobManagerFactories.getConstraintFactories(this))
-            .setConstraintObservers(JobManagerFactories.getConstraintObservers(this))
-            .setJobStorage(new FastJobStorage(jobDatabase))
-            .build());
-    }
-
     private void initializeExpiringMessageManager() {
         this.expiringMessageManager = new ExpiringMessageManager(this);
     }
@@ -375,7 +371,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     }
 
     private void initializeProfileManager() {
-        this.profileManager = new ProfileManager();
+        this.profileManager = new ProfileManager(this, configFactory);
     }
 
     private void initializeTypingStatusSender() {
@@ -384,10 +380,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
 
     private void initializePeriodicTasks() {
         BackgroundPollWorker.schedulePeriodic(this);
-
-        if (BuildConfig.PLAY_STORE_DISABLED) {
-            UpdateApkRefreshListener.schedule(this);
-        }
     }
 
     private void initializeWebRtc() {
@@ -438,29 +430,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     }
 
     private static class ProviderInitializationException extends RuntimeException { }
-
-    public void registerForFCMIfNeeded(final Boolean force) {
-        if (firebaseInstanceIdJob != null && firebaseInstanceIdJob.isActive() && !force) return;
-        if (force && firebaseInstanceIdJob != null) {
-            firebaseInstanceIdJob.cancel(null);
-        }
-        firebaseInstanceIdJob = FcmUtils.getFcmInstanceId(task->{
-            if (!task.isSuccessful()) {
-                Log.w("Loki", "FirebaseInstanceId.getInstance().getInstanceId() failed." + task.getException());
-                return Unit.INSTANCE;
-            }
-            String token = task.getResult().getToken();
-            String userPublicKey = TextSecurePreferences.getLocalNumber(this);
-            if (userPublicKey == null) return Unit.INSTANCE;
-            if (TextSecurePreferences.isUsingFCM(this)) {
-                LokiPushNotificationManager.register(token, userPublicKey, this, force);
-            } else {
-                LokiPushNotificationManager.unregister(token, this);
-            }
-            return Unit.INSTANCE;
-        });
-    }
-
     private void setUpPollingIfNeeded() {
         String userPublicKey = TextSecurePreferences.getLocalNumber(this);
         if (userPublicKey == null) return;
@@ -468,7 +437,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
             poller.setUserPublicKey(userPublicKey);
             return;
         }
-        poller = new Poller();
+        poller = new Poller(configFactory, new Timer());
     }
 
     public void startPollingIfNeeded() {
@@ -509,8 +478,8 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
                     Log.d("Loki-Avatar", "Uploading Avatar Finished");
                     return Unit.INSTANCE;
                 });
-            } catch (Exception exception) {
-                // Do nothing
+            } catch (Exception e) {
+                Log.e("Loki-Avatar", "Uploading avatar failed.");
             }
         });
     }
@@ -530,24 +499,21 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     }
 
     public void clearAllData(boolean isMigratingToV2KeyPair) {
-        String token = TextSecurePreferences.getFCMToken(this);
-        if (token != null && !token.isEmpty()) {
-            LokiPushNotificationManager.unregister(token, this);
-        }
         if (firebaseInstanceIdJob != null && firebaseInstanceIdJob.isActive()) {
             firebaseInstanceIdJob.cancel(null);
         }
         String displayName = TextSecurePreferences.getProfileName(this);
-        boolean isUsingFCM = TextSecurePreferences.isUsingFCM(this);
+        boolean isUsingFCM = TextSecurePreferences.isPushEnabled(this);
         TextSecurePreferences.clearAll(this);
         if (isMigratingToV2KeyPair) {
-            TextSecurePreferences.setIsUsingFCM(this, isUsingFCM);
+            TextSecurePreferences.setPushEnabled(this, isUsingFCM);
             TextSecurePreferences.setProfileName(this, displayName);
         }
         getSharedPreferences(PREFERENCES_NAME, 0).edit().clear().commit();
         if (!deleteDatabase(SQLCipherOpenHelper.DATABASE_NAME)) {
             Log.d("Loki", "Failed to delete database.");
         }
+        configFactory.keyPairChanged();
         Util.runOnMain(() -> new Handler().postDelayed(ApplicationContext.this::restartApplication, 200));
     }
 
