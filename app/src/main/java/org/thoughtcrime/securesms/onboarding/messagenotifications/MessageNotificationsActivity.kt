@@ -38,9 +38,11 @@ import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.notifications.PushRegistry
 import org.thoughtcrime.securesms.ui.AppTheme
+import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.OutlineButton
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
+import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.h8
 import org.thoughtcrime.securesms.ui.h9
 import org.thoughtcrime.securesms.ui.session_accent
@@ -111,6 +113,7 @@ fun MessageNotificationsScreen(
             R.string.activity_pn_mode_fast_mode,
             R.string.activity_pn_mode_fast_mode_explanation,
             R.string.activity_pn_mode_recommended_option_tag,
+            contentDescription = R.string.AccessibilityId_fast_mode_notifications_button,
             selected = state.pushEnabled,
             onClick = { setEnabled(true) }
         )
@@ -118,6 +121,7 @@ fun MessageNotificationsScreen(
         NotificationRadioButton(
             R.string.activity_pn_mode_slow_mode,
             R.string.activity_pn_mode_slow_mode_explanation,
+            contentDescription = R.string.AccessibilityId_slow_mode_notifications_button,
             selected = state.pushDisabled,
             onClick = { setEnabled(false) }
         )
@@ -125,8 +129,8 @@ fun MessageNotificationsScreen(
         OutlineButton(
             stringResource(R.string.continue_2),
             modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .width(262.dp),
+                .align(Alignment.CenterHorizontally)
+                .width(262.dp),
             onClick = onContinue
         )
         Spacer(modifier = Modifier.height(12.dp))
@@ -138,13 +142,14 @@ fun NotificationRadioButton(
     @StringRes title: Int,
     @StringRes explanation: Int,
     @StringRes tag: Int? = null,
+    @StringRes contentDescription: Int? = null,
     selected: Boolean = false,
     onClick: () -> Unit = {}
 ) {
     Row {
         OutlinedButton(
             onClick = onClick,
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f).contentDescription(contentDescription),
             colors = ButtonDefaults.outlinedButtonColors(backgroundColor = MaterialTheme.colors.background, contentColor = Color.White),
             border = if (selected) BorderStroke(ButtonDefaults.OutlinedBorderSize, session_accent) else ButtonDefaults.outlinedBorder,
             shape = RoundedCornerShape(8.dp)

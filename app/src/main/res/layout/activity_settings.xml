@@ -85,7 +85,7 @@
                 android:textColor="?android:textColorPrimary"
                 android:fontFamily="@font/space_mono_regular"
                 android:textAlignment="center"
-                android:contentDescription="@string/AccessibilityId_session_id"
+                android:contentDescription="@string/AccessibilityId_account_id"
                 tools:text="05987d601943c267879be41830888066c6a024cbdc9a548d06813924bf3372ea78" />
 
             <LinearLayout
@@ -379,7 +379,7 @@
                     android:paddingHorizontal="@dimen/large_spacing"
                     android:layout_width="match_parent"
                     android:layout_height="@dimen/setting_button_height"
-                    android:contentDescription="@string/AccessibilityId_recovery_password">
+                    android:contentDescription="@string/AccessibilityId_recovery_password_menu_item">
                     <ImageView
                         android:id="@+id/passwordContainer"
                         android:layout_width="@dimen/small_profile_picture_size"

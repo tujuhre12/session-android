@@ -20,6 +20,7 @@
     <string name="AccessibilityId_link_device">Link Device</string>
     <!-- Session ID Page-->
     <string name="AccessibilityId_session_id">Session ID</string>
+    <string name="AccessibilityId_account_id">Account ID</string>
     <string name="AccessibilityId_continue">Continue</string>
     <!-- Recovery phrase input -->
 
@@ -132,7 +133,8 @@
     <string name="AccessibilityId_user_settings">User settings</string>
     <string name="AccessibilityId_username">Username</string>
     <string name="AccessibilityId_privacy">Privacy</string>
-    <string name="AccessibilityId_recovery_password">Show recovery password</string>
+    <string name="AccessibilityId_recovery_password_menu_item">Recovery password</string>
+    <string name="AccessibilityId_recovery_password_menu_item">Recovery password menu item</string>
     <string name="AccessibilityId_edit_user_nickname">Edit user nickname</string>
     <string name="AccessibilityId_apply">Apply</string>
     <string name="AccessibilityId_cancel">Cancel</string>
@@ -1058,7 +1060,8 @@
     <string name="auto_deletes_in">Auto-deletes in %1$s</string>
 
     <string name="onboardingBubblePrivacyInYourPocket">Privacy in your pocket.</string>
-    <string name="onboardingBubbleWelcomeToSession">Welcome to Session</string>
+    <string name="onboardingBubbleWelcomeToSession">Welcome to Session 👋</string>
+    <string name="welcome_to_session">Welcome to Session</string>
     <string name="onboardingBubbleSessionIsEngineered">Session is engineered to protect your privacy.</string>
     <string name="onboardingBubbleNoPhoneNumber">"You don’t even need a phone number to sign up. "</string>
     <string name="onboardingBubbleCreatingAnAccountIsEasy">Creating an account is \ninstant, free, and \nanonymous 👇</string>
@@ -1101,4 +1104,16 @@
     <string name="save_your_recovery_password">Save your recovery password</string>
     <string name="save_your_recovery_password_to_make_sure_you_don_t_lose_access_to_your_account">Save your recovery password to make sure you don\'t lose access to your account.</string>
     <string name="onboardingAccountCreated">Account Created</string>
+    <string name="AccessibilityId_fast_mode_notifications_button">Fast mode notifications button</string>
+    <string name="AccessibilityId_slow_mode_notifications_button">Slow mode notifications button</string>
+    <string name="AccessibilityId_reveal_recovery_phrase_button">Reveal recovery phrase button</string>
+    <string name="AccessibilityId_create_account_button">Create account button</string>
+    <string name="AccessibilityId_restore_account_button">Restore your session button</string>
+    <string name="AccessibilityId_privacy_policy_link">Privacy policy link</string>
+    <string name="AccessibilityId_terms_of_service_link">Terms of service link</string>
+    <string name="AccessibilityId_loading_animation">Loading animation</string>
+    <string name="AccessibilityId_recovery_phrase_input">Recovery phrase input</string>
+    <string name="AccessibilityId_error_message">Error message</string>
+    <string name="AccessibilityId_hide_recovery_password_button">Hide recovery password button</string>
+    <string name="AccessibilityId_confirm_button">Confirm button</string>
 </resources>

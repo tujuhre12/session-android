@@ -98,6 +98,7 @@ import org.thoughtcrime.securesms.preferences.SettingsActivity
 import org.thoughtcrime.securesms.showMuteDialog
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.ui.AppTheme
+import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.OutlineButton
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionShieldIcon
@@ -371,7 +372,8 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                     Spacer(Modifier.width(12.dp))
                     OutlineButton(
                         stringResource(R.string.continue_2),
-                        Modifier.align(Alignment.CenterVertically)
+                        Modifier.align(Alignment.CenterVertically),
+                        contentDescription = GetString(R.string.AccessibilityId_reveal_recovery_phrase_button)
                     ) { startRecoveryPasswordActivity() }
                 }
             }
@@ -394,7 +396,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                     tint = Color.Unspecified
                 )
                 if (newAccount) Text(stringResource(R.string.onboardingAccountCreated), style = MaterialTheme.typography.h4, textAlign = TextAlign.Center)
-                if (newAccount) Text(stringResource(R.string.onboardingBubbleWelcomeToSession), color = MaterialTheme.colors.secondary, textAlign = TextAlign.Center)
+                if (newAccount) Text(stringResource(R.string.welcome_to_session), color = MaterialTheme.colors.secondary, textAlign = TextAlign.Center)
 
                 Divider(modifier = Modifier.padding(vertical = 16.dp))
                 Text(

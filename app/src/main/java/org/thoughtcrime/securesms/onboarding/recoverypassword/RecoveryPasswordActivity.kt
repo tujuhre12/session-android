@@ -51,6 +51,7 @@ import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.CellWithPaddingAndMargin
+import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LaunchedEffectAsync
 import org.thoughtcrime.securesms.ui.LocalExtraColors
 import org.thoughtcrime.securesms.ui.OutlineButton
@@ -59,6 +60,7 @@ import org.thoughtcrime.securesms.ui.SessionShieldIcon
 import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
 import org.thoughtcrime.securesms.ui.classicDarkColors
 import org.thoughtcrime.securesms.ui.colorDestructive
+import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.h8
 import org.thoughtcrime.securesms.ui.small
 import kotlin.time.Duration.Companion.seconds
@@ -92,7 +94,10 @@ class RecoveryPasswordActivity : BaseActionBarActivity() {
             title(R.string.recoveryPasswordHidePermanently)
             text(R.string.recoveryPasswordHidePermanentlyDescription2)
             cancelButton()
-            destructiveButton(R.string.yes) {
+            destructiveButton(
+                R.string.yes,
+                contentDescription = R.string.AccessibilityId_confirm_button
+            ) {
                 viewModel.permanentlyHidePassword()
                 finish()
             }
@@ -102,7 +107,7 @@ class RecoveryPasswordActivity : BaseActionBarActivity() {
 
 @Preview
 @Composable
-fun PreviewMessageDetails(
+fun PreviewRecoveryPassword(
     @PreviewParameter(ThemeResPreviewParameterProvider::class) themeResId: Int
 ) {
     PreviewTheme(themeResId) {
@@ -150,6 +155,7 @@ fun RecoveryPasswordCell(seed: String = "", qrBitmap: Bitmap? = null, copySeed:(
                 Text(
                     seed,
                     modifier = Modifier
+                        .contentDescription(R.string.AccessibilityId_hide_recovery_password_button)
                         .padding(vertical = 24.dp)
                         .border(
                             width = 1.dp,
@@ -243,6 +249,7 @@ fun HideRecoveryPasswordCell(onHide: () -> Unit = {}) {
             }
             OutlineButton(
                 stringResource(R.string.hide),
+                contentDescription = GetString(R.string.AccessibilityId_hide_recovery_password_button),
                 modifier = Modifier.align(Alignment.CenterVertically),
                 color = colorDestructive
             ) { onHide() }

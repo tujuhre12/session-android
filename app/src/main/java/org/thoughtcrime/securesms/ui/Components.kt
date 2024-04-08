@@ -71,11 +71,12 @@ import kotlin.math.roundToInt
 fun OutlineButton(
     text: String,
     modifier: Modifier = Modifier,
+    contentDescription: GetString = GetString(text),
     color: Color = LocalExtraColors.current.prominentButtonColor,
     onClick: () -> Unit
 ) {
     OutlinedButton(
-        modifier = modifier.contentDescription(GetString(text)),
+        modifier = modifier.contentDescription(contentDescription),
         onClick = onClick,
         border = BorderStroke(1.dp, color),
         shape = RoundedCornerShape(50), // = 50% percent
@@ -99,7 +100,7 @@ fun OutlineButton(
         modifier = modifier,
         onClick = onClick,
         border = BorderStroke(1.dp, color),
-        shape = RoundedCornerShape(50), // = 50% percent
+        shape = RoundedCornerShape(percent = 50),
         colors = ButtonDefaults.outlinedButtonColors(
             contentColor = color,
             backgroundColor = Color.Unspecified
@@ -110,7 +111,11 @@ fun OutlineButton(
 }
 
 @Composable
-fun FilledButton(text: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+fun FilledButton(
+    text: String,
+    modifier: Modifier = Modifier,
+    contentDescription: GetString? = GetString(text),
+    onClick: () -> Unit) {
     OutlinedButton(
         modifier = modifier.size(108.dp, 34.dp),
         onClick = onClick,
@@ -128,12 +133,13 @@ fun FilledButton(text: String, modifier: Modifier = Modifier, onClick: () -> Uni
 fun BorderlessButton(
     text: String,
     modifier: Modifier = Modifier,
+    contentDescription: GetString = GetString(text),
     fontSize: TextUnit = TextUnit.Unspecified,
     lineHeight: TextUnit = TextUnit.Unspecified,
     onClick: () -> Unit) {
     TextButton(
         onClick = onClick,
-        modifier = modifier,
+        modifier = modifier.contentDescription(contentDescription),
         shape = RoundedCornerShape(50), // = 50% percent
         colors = ButtonDefaults.outlinedButtonColors(
             contentColor = MaterialTheme.colors.onBackground,
@@ -283,8 +289,10 @@ fun <T> TitledRadioButton(option: RadioOption<T>, onClick: () -> Unit) {
 
 @Composable
 fun Modifier.contentDescription(text: GetString?): Modifier {
-    val context = LocalContext.current
-    return text?.let { semantics { contentDescription = it(context) } } ?: this
+    return text?.let {
+        val context = LocalContext.current
+        semantics { contentDescription = it(context) }
+    } ?: this
 }
 
 @Composable

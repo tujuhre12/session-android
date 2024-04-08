@@ -77,6 +77,7 @@ import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.OutlineButton
 import org.thoughtcrime.securesms.ui.baseBold
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
+import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.outlinedTextFieldColors
 import java.util.concurrent.Executors
 import javax.inject.Inject
@@ -275,6 +276,7 @@ fun RecoveryPassword(state: LinkDeviceState, onChange: (String) -> Unit = {}, on
         OutlinedTextField(
             value = state.recoveryPhrase,
             onValueChange = { onChange(it) },
+            modifier = Modifier.contentDescription(R.string.AccessibilityId_recovery_phrase_input),
             placeholder = { Text(stringResource(R.string.recoveryPasswordEnter)) },
             colors = outlinedTextFieldColors(state.error != null),
             singleLine = true,
@@ -289,7 +291,12 @@ fun RecoveryPassword(state: LinkDeviceState, onChange: (String) -> Unit = {}, on
         )
         Spacer(Modifier.size(12.dp))
         state.error?.let {
-            Text(it, style = MaterialTheme.typography.baseBold, color = MaterialTheme.colors.error)
+            Text(
+                it,
+                modifier = Modifier.contentDescription(R.string.AccessibilityId_error_message),
+                style = MaterialTheme.typography.baseBold,
+                color = MaterialTheme.colors.error
+            )
         }
         Spacer(Modifier.weight(2f))
         OutlineButton(

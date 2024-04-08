@@ -31,6 +31,7 @@ import org.thoughtcrime.securesms.onboarding.messagenotifications.startPNModeAct
 import org.thoughtcrime.securesms.onboarding.pickname.startPickDisplayNameActivity
 import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.ProgressArc
+import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.util.setUpActionBarSessionLogo
 import javax.inject.Inject
 
@@ -103,7 +104,7 @@ class LoadingActivity: BaseActionBarActivity() {
         AppTheme {
             Column {
                 Spacer(modifier = Modifier.weight(1f))
-                ProgressArc(animatable.value, modifier = Modifier.align(Alignment.CenterHorizontally))
+                ProgressArc(animatable.value, modifier = Modifier.align(Alignment.CenterHorizontally).contentDescription(R.string.AccessibilityId_loading_animation))
                 Text(stringResource(R.string.waitOneMoment), modifier = Modifier.align(Alignment.CenterHorizontally), style = MaterialTheme.typography.h6)
                 Text(stringResource(R.string.loadAccountProgressMessage), modifier = Modifier.align(Alignment.CenterHorizontally))
                 Spacer(modifier = Modifier.weight(2f))
