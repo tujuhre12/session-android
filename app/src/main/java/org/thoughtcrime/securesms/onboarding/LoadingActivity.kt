@@ -25,6 +25,7 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.AppTextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences
+import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.onboarding.messagenotifications.startPNModeActivity
@@ -67,7 +68,7 @@ class LoadingActivity: BaseActionBarActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        prefs.setNewAccount(false)
+        ApplicationContext.getInstance(this).newAccount = false
 
         ComposeView(this)
             .apply { setContent { LoadingScreen() } }

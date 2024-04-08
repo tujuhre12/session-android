@@ -32,6 +32,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.AppTextSecurePreferences
+import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.onboarding.messagenotifications.startPNModeActivity
 import org.thoughtcrime.securesms.ui.AppTheme
@@ -138,7 +139,7 @@ class PickDisplayNameActivity : BaseActionBarActivity() {
 }
 
 fun Context.startPickDisplayNameActivity(failedToLoad: Boolean = false, flags: Int = 0) {
-    AppTextSecurePreferences(this).setNewAccount(!failedToLoad)
+    ApplicationContext.getInstance(this).newAccount = !failedToLoad
 
     Intent(this, PickDisplayNameActivity::class.java)
         .apply { putExtra(EXTRA_PICK_NEW_NAME, failedToLoad) }

@@ -225,7 +225,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         }
 
         // Set up empty state view
-        binding.emptyStateContainer.setContent { EmptyView(textSecurePreferences.isNewAccount()) }
+        binding.emptyStateContainer.setContent { EmptyView(ApplicationContext.getInstance(this).newAccount) }
 
         IP2Country.configureIfNeeded(this@HomeActivity)
         startObservingUpdates()
