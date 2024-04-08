@@ -133,7 +133,6 @@
     <string name="AccessibilityId_user_settings">User settings</string>
     <string name="AccessibilityId_username">Username</string>
     <string name="AccessibilityId_privacy">Privacy</string>
-    <string name="AccessibilityId_recovery_password_menu_item">Recovery password</string>
     <string name="AccessibilityId_recovery_password_menu_item">Recovery password menu item</string>
     <string name="AccessibilityId_edit_user_nickname">Edit user nickname</string>
     <string name="AccessibilityId_apply">Apply</string>

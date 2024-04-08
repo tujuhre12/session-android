@@ -202,25 +202,13 @@ fun RecoveryPasswordCell(seed: String = "", qrBitmap: Bitmap? = null, copySeed:(
 
             AnimatedVisibility(!showQr.value) {
                 Row(horizontalArrangement = Arrangement.spacedBy(32.dp)) {
-                    var copied by remember { mutableStateOf(false) }
-                    if (copied) LaunchedEffectAsync {
-                        delay(2.seconds)
-                        copied = false
-                    }
                     OutlineButton(
                         modifier = Modifier.weight(1f),
                         color = MaterialTheme.colors.onPrimary,
-                        onClick = {
-                            copySeed()
-                            copied = true
-                        }
+                        onClick = copySeed,
+                        temporaryContent = { Text(stringResource(R.string.copied)) }
                     ) {
-                        AnimatedVisibility(!copied) {
-                            Text(stringResource(R.string.copy))
-                        }
-                        AnimatedVisibility(copied) {
-                            Text(stringResource(R.string.copied))
-                        }
+                        Text(stringResource(R.string.copy))
                     }
                     OutlineButton(text = stringResource(R.string.qrView), modifier = Modifier.weight(1f), color = MaterialTheme.colors.onPrimary) { showQr.toggle() }
                 }
