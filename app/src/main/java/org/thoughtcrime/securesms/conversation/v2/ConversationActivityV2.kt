@@ -46,7 +46,6 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.loader.app.LoaderManager
 import androidx.loader.content.Loader
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -57,8 +56,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.consumeAsFlow
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -181,8 +178,6 @@ import org.thoughtcrime.securesms.util.push
 import org.thoughtcrime.securesms.util.show
 import org.thoughtcrime.securesms.util.toPx
 import java.lang.ref.WeakReference
-import java.time.Instant
-import java.util.Date
 import java.util.Locale
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.atomic.AtomicBoolean
@@ -193,8 +188,6 @@ import kotlin.math.abs
 import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
 
 private const val TAG = "ConversationActivityV2"
 
@@ -1119,6 +1112,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         val blindedRecipient = viewModel.blindedRecipient
         val binding = binding ?: return
         val openGroup = viewModel.openGroup
+
         val (textResource, insertParam) = when {
             recipient.isLocalNumber -> R.string.activity_conversation_empty_state_note_to_self to null
             openGroup != null && !openGroup.canWrite -> R.string.activity_conversation_empty_state_read_only to recipient.toShortString()
@@ -1887,14 +1881,13 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             Log.w("ConversationActivityV2", "Asked to delete messages but could not obtain viewModel recipient - aborting.")
             return
         }
-
+        
         val allSentByCurrentUser = messages.all { it.isOutgoing }
         val allHasHash = messages.all { lokiMessageDb.getMessageServerHash(it.id, it.isMms) != null }
 
-        // If the recipient is a community then we delete the message for everyone
-        if (recipient.isCommunityRecipient) {
+        // If the recipient is a community OR a Note-to-Self then we delete the message for everyone
+        if (recipient.isCommunityRecipient || recipient.isLocalNumber) {
             val messageCount = 1 // Only used for plurals string
-
             showSessionDialog {
                 title(resources.getQuantityString(R.plurals.ConversationFragment_delete_selected_messages, messageCount, messageCount))
                 text(resources.getQuantityString(R.plurals.ConversationFragment_this_will_permanently_delete_all_n_selected_messages, messageCount, messageCount))
@@ -1923,8 +1916,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             }
             bottomSheet.show(supportFragmentManager, bottomSheet.tag)
         }
-        else // Finally, if this is a closed group and you are deleting someone else's message(s)
-        // then we can only delete locally.
+        else // Finally, if this is a closed group and you are deleting someone else's message(s) then we can only delete locally.
         {
             val messageCount = 1
             showSessionDialog {
@@ -2033,7 +2025,6 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         val message = messages.first() as MmsMessageRecord
 
         // Do not allow the user to download a file attachment before it has finished downloading
-        // TODO: Localise the msg in this toast!
         if (message.isMediaPending) {
             Toast.makeText(this, resources.getString(R.string.conversation_activity__wait_until_attachment_has_finished_downloading), Toast.LENGTH_LONG).show()
             return

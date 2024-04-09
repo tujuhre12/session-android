@@ -30,6 +30,7 @@ import net.zetetic.database.sqlcipher.SQLiteQueryBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.Util;
+import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.database.MessagingDatabase.SyncMessageId;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
 import org.thoughtcrime.securesms.database.model.MessageRecord;
@@ -112,6 +113,53 @@ public class MmsSmsDatabase extends Database {
       }
     }
 
+    return null;
+  }
+
+  public @Nullable MessageRecord getSentMessageFor(long timestamp, String serializedAuthor) {
+    // Early exit if the author is not us
+    boolean isOwnNumber = Util.isOwnNumber(context, serializedAuthor);
+    if (!isOwnNumber) {
+      Log.i(TAG, "Asked to find sent messages but provided author is not us - returning null.");
+      return null;
+    }
+
+    try (Cursor cursor = queryTables(PROJECTION, MmsSmsColumns.NORMALIZED_DATE_SENT + " = " + timestamp, null, null)) {
+      MmsSmsDatabase.Reader reader = readerFor(cursor);
+
+      MessageRecord messageRecord;
+      while ((messageRecord = reader.getNext()) != null) {
+        if (messageRecord.isOutgoing())
+        {
+          return messageRecord;
+        }
+      }
+    }
+    Log.i(TAG, "Could not find any message sent from us at provided timestamp - returning null.");
+    return null;
+  }
+
+  public MessageRecord getLastSentMessageRecordFromSender(long threadId, String serializedAuthor) {
+    // Early exit if the author is not us
+    boolean isOwnNumber = Util.isOwnNumber(context, serializedAuthor);
+    if (!isOwnNumber) {
+      Log.i(TAG, "Asked to find last sent message but provided author is not us - returning null.");
+      return null;
+    }
+
+    String order = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
+    String selection = MmsSmsColumns.THREAD_ID + " = " + threadId;
+
+    // Try everything with resources so that they auto-close on end of scope
+    try (Cursor cursor = queryTables(PROJECTION, selection, order, null)) {
+      try (MmsSmsDatabase.Reader reader = readerFor(cursor)) {
+        MessageRecord messageRecord;
+        while ((messageRecord = reader.getNext()) != null) {
+          if (messageRecord.isOutgoing()) { return messageRecord; }
+        }
+      }
+    }
+    Log.i(TAG, "Could not find last sent message from us in given thread - returning null.");
     return null;
   }
 
@@ -248,20 +296,27 @@ public class MmsSmsDatabase extends Database {
   }
 
   public long getLastSentMessageFromSender(long threadId, String serializedAuthor) {
+
+    // Early exit
+    boolean isOwnNumber = Util.isOwnNumber(context, serializedAuthor);
+    if (!isOwnNumber) {
+      Log.i(TAG, "Asked to find last sent message but sender isn't us - returning null.");
+      return -1;
+    }
+
     String order = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
     String selection = MmsSmsColumns.THREAD_ID + " = " + threadId;
-
-    boolean isOwnNumber = Util.isOwnNumber(context, serializedAuthor);
 
     // Try everything with resources so that they auto-close on end of scope
     try (Cursor cursor = queryTables(PROJECTION, selection, order, null)) {
       try (MmsSmsDatabase.Reader reader = readerFor(cursor)) {
         MessageRecord messageRecord;
         while ((messageRecord = reader.getNext()) != null) {
-          if (isOwnNumber && messageRecord.isOutgoing()) { return messageRecord.id; }
+          if (messageRecord.isOutgoing()) { return messageRecord.id; }
         }
       }
     }
+    Log.i(TAG, "Could not find last sent message from us - returning -1.");
     return -1;
   }
 
