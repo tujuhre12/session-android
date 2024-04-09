@@ -20,6 +20,7 @@
     <string name="AccessibilityId_link_device">Link Device</string>
     <!-- Session ID Page-->
     <string name="AccessibilityId_session_id">Session ID</string>
+    <string name="AccessibilityId_account_id">Account ID</string>
     <string name="AccessibilityId_continue">Continue</string>
     <!-- Recovery phrase input -->
 
@@ -132,7 +133,7 @@
     <string name="AccessibilityId_user_settings">User settings</string>
     <string name="AccessibilityId_username">Username</string>
     <string name="AccessibilityId_privacy">Privacy</string>
-    <string name="AccessibilityId_recovery_password">Show recovery password</string>
+    <string name="AccessibilityId_recovery_password_menu_item">Recovery password menu item</string>
     <string name="AccessibilityId_edit_user_nickname">Edit user nickname</string>
     <string name="AccessibilityId_apply">Apply</string>
     <string name="AccessibilityId_cancel">Cancel</string>
@@ -1059,6 +1060,7 @@
 
     <string name="onboardingBubblePrivacyInYourPocket">Privacy in your pocket.</string>
     <string name="onboardingBubbleWelcomeToSession">Welcome to Session 👋</string>
+    <string name="welcome_to_session">Welcome to Session</string>
     <string name="onboardingBubbleSessionIsEngineered">Session is engineered to protect your privacy.</string>
     <string name="onboardingBubbleNoPhoneNumber">"You don’t even need a phone number to sign up. "</string>
     <string name="onboardingBubbleCreatingAnAccountIsEasy">Creating an account is \ninstant, free, and \nanonymous 👇</string>
@@ -1081,6 +1083,38 @@
     <string name="activity_link_load_account">Load Account</string>
     <string name="activity_link_camera_permission_permanently_denied_configure_in_settings">Camera Permission permanently denied. Configure in settings.</string>
     <string name="activity_link_enter_your_recovery_password_to_load_your_account_if_you_haven_t_saved_it_you_can_find_it_in_your_app_settings">Enter your recovery password to load your account. If you haven\'t saved it, you can find it in your app settings.</string>
+    <string name="waitOneMoment">One moment please..</string>
+    <string name="loadAccountProgressMessage">Loading your account</string>
+    <string name="notificationsMessage">Message notifications</string>
+    <string name="onboardingMessageNotificationExplaination">There are two ways Session can notify you of new messages.</string>
+    <string name="recoveryPasswordHidePermanently">Hide Recovery Password Permanently</string>
+    <string name="recoveryPasswordHidePermanentlyDescription1"><![CDATA[Without your recovery password, you cannot load your account on new devices. <br /><br />We strongly recommend you save your recovery password in a safe and secure place before continuing.]]></string>
+    <string name="recoveryPasswordHidePermanentlyDescription2">Are you sure you want to permanently hide your recovery password on this device? This cannot be undone.</string>
+    <string name="recoveryPasswordDescription">Use your recovery password to load your account on new devices. Your account cannot be recovered without your recovery password. Make sure it\'s stored somewhere safe and secure — and don\'t share it with anyone.</string>
+    <string name="hide">Hide</string>
+    <string name="recoveryPasswordHideRecoveryPassword">Hide Recovery Password</string>
+    <string name="qrView">View QR</string>
+    <string name="recoveryPasswordView">View Password</string>
+    <string name="recoveryPasswordHideRecoveryPasswordDescription">Permanently hide your recovery password on this device.</string>
+    <string name="conversationsNone">You don\'t have any conversations yet</string>
+    <string name="onboardingHitThePlusButton">Hit the plus button to start a chat, create a group, or join an official communitiy!</string>
+    <string name="admin_group_leave_warning">Because you are the creator of this group it will be deleted for everyone. This cannot be undone.</string>
+    <string name="hide_message_requests">Hide message requests?</string>
+    <string name="save_your_recovery_password">Save your recovery password</string>
+    <string name="save_your_recovery_password_to_make_sure_you_don_t_lose_access_to_your_account">Save your recovery password to make sure you don\'t lose access to your account.</string>
+    <string name="onboardingAccountCreated">Account Created</string>
+    <string name="AccessibilityId_fast_mode_notifications_button">Fast mode notifications button</string>
+    <string name="AccessibilityId_slow_mode_notifications_button">Slow mode notifications button</string>
+    <string name="AccessibilityId_reveal_recovery_phrase_button">Reveal recovery phrase button</string>
+    <string name="AccessibilityId_create_account_button">Create account button</string>
+    <string name="AccessibilityId_restore_account_button">Restore your session button</string>
+    <string name="AccessibilityId_privacy_policy_link">Privacy policy link</string>
+    <string name="AccessibilityId_terms_of_service_link">Terms of service link</string>
+    <string name="AccessibilityId_loading_animation">Loading animation</string>
+    <string name="AccessibilityId_recovery_phrase_input">Recovery phrase input</string>
+    <string name="AccessibilityId_error_message">Error message</string>
+    <string name="AccessibilityId_hide_recovery_password_button">Hide recovery password button</string>
+    <string name="AccessibilityId_confirm_button">Confirm button</string>
     <string name="accountIdErrorInvalid">This Account ID is invalid. Please check and try again.</string>
     <string name="enter_account_id">Enter Account ID</string>
 </resources>

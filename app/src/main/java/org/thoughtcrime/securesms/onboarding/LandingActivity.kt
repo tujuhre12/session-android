@@ -22,6 +22,7 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import network.loki.messenger.R
@@ -34,7 +35,10 @@ import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.BorderlessButton
 import org.thoughtcrime.securesms.ui.FilledButton
+import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.OutlineButton
+import org.thoughtcrime.securesms.ui.PreviewTheme
+import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
 import org.thoughtcrime.securesms.ui.classicDarkColors
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.session_accent
@@ -52,7 +56,7 @@ class LandingActivity : BaseActionBarActivity() {
         setUpActionBarSessionLogo(true)
 
         ComposeView(this)
-            .apply { setContent { LandingScreen() } }
+            .apply { setContent { AppTheme { LandingScreen() } } }
             .let(::setContentView)
 
         IdentityKeyUtil.generateIdentityKeyPair(this)
@@ -63,41 +67,55 @@ class LandingActivity : BaseActionBarActivity() {
 
     @Preview
     @Composable
-    private fun LandingScreen() {
-        AppTheme {
-            Column(modifier = Modifier.padding(horizontal = 36.dp)) {
-                Spacer(modifier = Modifier.weight(1f))
-                Text(stringResource(R.string.onboardingBubblePrivacyInYourPocket), modifier = Modifier.align(Alignment.CenterHorizontally), style = MaterialTheme.typography.h4, textAlign = TextAlign.Center)
-                Spacer(modifier = Modifier.height(24.dp))
-                IncomingText(stringResource(R.string.onboardingBubbleWelcomeToSession))
-                Spacer(modifier = Modifier.height(14.dp))
-                OutgoingText(stringResource(R.string.onboardingBubbleSessionIsEngineered))
-                Spacer(modifier = Modifier.height(14.dp))
-                IncomingText(stringResource(R.string.onboardingBubbleNoPhoneNumber))
-                Spacer(modifier = Modifier.height(14.dp))
-                OutgoingText(stringResource(R.string.onboardingBubbleCreatingAnAccountIsEasy))
-                Spacer(modifier = Modifier.weight(1f))
+    private fun LandingScreen(
+        @PreviewParameter(ThemeResPreviewParameterProvider::class) themeResId: Int
+    ) {
+        PreviewTheme(themeResId) {
+            LandingScreen()
+        }
+    }
 
-                OutlineButton(
-                    text = stringResource(R.string.onboardingAccountCreate),
-                    modifier = Modifier
-                        .width(262.dp)
-                        .align(Alignment.CenterHorizontally)) { startPickDisplayNameActivity() }
-                Spacer(modifier = Modifier.height(14.dp))
-                FilledButton(text = stringResource(R.string.onboardingAccountExists), modifier = Modifier
+    @Composable
+    private fun LandingScreen() {
+        Column(modifier = Modifier.padding(horizontal = 36.dp)) {
+            Spacer(modifier = Modifier.weight(1f))
+            Text(stringResource(R.string.onboardingBubblePrivacyInYourPocket), modifier = Modifier.align(Alignment.CenterHorizontally), style = MaterialTheme.typography.h4, textAlign = TextAlign.Center)
+            Spacer(modifier = Modifier.height(24.dp))
+            IncomingText(stringResource(R.string.onboardingBubbleWelcomeToSession))
+            Spacer(modifier = Modifier.height(14.dp))
+            OutgoingText(stringResource(R.string.onboardingBubbleSessionIsEngineered))
+            Spacer(modifier = Modifier.height(14.dp))
+            IncomingText(stringResource(R.string.onboardingBubbleNoPhoneNumber))
+            Spacer(modifier = Modifier.height(14.dp))
+            OutgoingText(stringResource(R.string.onboardingBubbleCreatingAnAccountIsEasy))
+            Spacer(modifier = Modifier.weight(1f))
+
+            OutlineButton(
+                text = stringResource(R.string.onboardingAccountCreate),
+                modifier = Modifier
                     .width(262.dp)
-                    .align(Alignment.CenterHorizontally)) { startLinkDeviceActivity() }
-                Spacer(modifier = Modifier.height(8.dp))
-                BorderlessButton(
-                    text = stringResource(R.string.onboardingTosPrivacy),
-                    modifier = Modifier
-                        .width(262.dp)
-                        .align(Alignment.CenterHorizontally),
-                    fontSize = 11.sp,
-                    lineHeight = 13.sp
-                ) { openDialog() }
-                Spacer(modifier = Modifier.height(8.dp))
-            }
+                    .align(Alignment.CenterHorizontally),
+                contentDescription = GetString(R.string.AccessibilityId_create_account_button)
+            ) { startPickDisplayNameActivity() }
+            Spacer(modifier = Modifier.height(14.dp))
+            FilledButton(
+                text = stringResource(R.string.onboardingAccountExists),
+                modifier = Modifier
+                    .width(262.dp)
+                    .align(Alignment.CenterHorizontally),
+                contentDescription = GetString(R.string.AccessibilityId_restore_account_button)
+            ) { startLinkDeviceActivity() }
+            Spacer(modifier = Modifier.height(8.dp))
+            BorderlessButton(
+                text = stringResource(R.string.onboardingTosPrivacy),
+                modifier = Modifier
+                    .width(262.dp)
+                    .align(Alignment.CenterHorizontally),
+                contentDescription = GetString(R.string.AccessibilityId_privacy_policy_link),
+                fontSize = 11.sp,
+                lineHeight = 13.sp
+            ) { openDialog() }
+            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 
@@ -105,8 +123,14 @@ class LandingActivity : BaseActionBarActivity() {
         showSessionDialog {
             title(R.string.urlOpen)
             text(R.string.urlOpenBrowser)
-            button(R.string.activity_landing_terms_of_service) { open("https://getsession.org/terms-of-service") }
-            button(R.string.activity_landing_privacy_policy) { open("https://getsession.org/privacy-policy") }
+            button(
+                R.string.activity_landing_terms_of_service,
+                contentDescriptionRes = R.string.AccessibilityId_terms_of_service_link
+            ) { open("https://getsession.org/terms-of-service") }
+            button(
+                R.string.activity_landing_privacy_policy,
+                contentDescriptionRes = R.string.AccessibilityId_privacy_policy_link
+            ) { open("https://getsession.org/privacy-policy") }
         }
     }
 
@@ -136,8 +160,8 @@ class LandingActivity : BaseActionBarActivity() {
     private fun ChatText(
         text: String,
         color: Color,
-        textColor: Color = Color.Unspecified,
-        modifier: Modifier = Modifier
+        modifier: Modifier = Modifier,
+        textColor: Color = Color.Unspecified
     ) {
         Text(
             text,

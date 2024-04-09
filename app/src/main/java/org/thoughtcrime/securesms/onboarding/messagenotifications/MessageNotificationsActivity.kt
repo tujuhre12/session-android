@@ -38,9 +38,11 @@ import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.notifications.PushRegistry
 import org.thoughtcrime.securesms.ui.AppTheme
+import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.OutlineButton
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
+import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.h8
 import org.thoughtcrime.securesms.ui.h9
 import org.thoughtcrime.securesms.ui.session_accent
@@ -61,16 +63,16 @@ class MessageNotificationsActivity : BaseActionBarActivity() {
         TextSecurePreferences.setHasSeenWelcomeScreen(this, true)
 
         ComposeView(this)
-            .apply { setContent { MessageNotifications() } }
+            .apply { setContent { MessageNotificationsScreen() } }
             .let(::setContentView)
     }
 
     @Composable
-    private fun MessageNotifications() {
+    private fun MessageNotificationsScreen() {
         val state by viewModel.stateFlow.collectAsState()
 
         AppTheme {
-            MessageNotifications(state, viewModel::setEnabled, ::register)
+            MessageNotificationsScreen(state, viewModel::setEnabled, ::register)
         }
     }
 
@@ -87,30 +89,31 @@ class MessageNotificationsActivity : BaseActionBarActivity() {
 
 @Preview
 @Composable
-fun MessageNotificationsPreview(
+fun MessageNotificationsScreenPreview(
     @PreviewParameter(ThemeResPreviewParameterProvider::class) themeResId: Int
 ) {
     PreviewTheme(themeResId) {
-        MessageNotifications()
+        MessageNotificationsScreen()
     }
 }
 
 @Composable
-fun MessageNotifications(
+fun MessageNotificationsScreen(
     state: MessageNotificationsState = MessageNotificationsState(),
     setEnabled: (Boolean) -> Unit = {},
     onContinue: () -> Unit = {}
 ) {
     Column(Modifier.padding(horizontal = 32.dp)) {
         Spacer(Modifier.weight(1f))
-        Text("Message notifications", style = MaterialTheme.typography.h4)
+        Text(stringResource(R.string.notificationsMessage), style = MaterialTheme.typography.h4)
         Spacer(Modifier.height(16.dp))
-        Text("There are two ways Session can notify you of new messages.")
+        Text(stringResource(R.string.onboardingMessageNotificationExplaination))
         Spacer(Modifier.height(16.dp))
         NotificationRadioButton(
             R.string.activity_pn_mode_fast_mode,
             R.string.activity_pn_mode_fast_mode_explanation,
             R.string.activity_pn_mode_recommended_option_tag,
+            contentDescription = R.string.AccessibilityId_fast_mode_notifications_button,
             selected = state.pushEnabled,
             onClick = { setEnabled(true) }
         )
@@ -118,6 +121,7 @@ fun MessageNotifications(
         NotificationRadioButton(
             R.string.activity_pn_mode_slow_mode,
             R.string.activity_pn_mode_slow_mode_explanation,
+            contentDescription = R.string.AccessibilityId_slow_mode_notifications_button,
             selected = state.pushDisabled,
             onClick = { setEnabled(false) }
         )
@@ -138,13 +142,14 @@ fun NotificationRadioButton(
     @StringRes title: Int,
     @StringRes explanation: Int,
     @StringRes tag: Int? = null,
+    @StringRes contentDescription: Int? = null,
     selected: Boolean = false,
     onClick: () -> Unit = {}
 ) {
     Row {
         OutlinedButton(
             onClick = onClick,
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f).contentDescription(contentDescription),
             colors = ButtonDefaults.outlinedButtonColors(backgroundColor = MaterialTheme.colors.background, contentColor = Color.White),
             border = if (selected) BorderStroke(ButtonDefaults.OutlinedBorderSize, session_accent) else ButtonDefaults.outlinedBorder,
             shape = RoundedCornerShape(8.dp)

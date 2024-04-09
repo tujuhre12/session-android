@@ -45,6 +45,7 @@ import org.thoughtcrime.securesms.ui.baseBold
 import org.thoughtcrime.securesms.ui.components.MaybeScanQrCode
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
+import org.thoughtcrime.securesms.ui.contentDescription
 import javax.inject.Inject
 
 private const val TAG = "LinkDeviceActivity"
@@ -130,15 +131,22 @@ fun RecoveryPassword(state: LinkDeviceState, onChange: (String) -> Unit = {}, on
         Spacer(Modifier.size(24.dp))
         SessionOutlinedTextField(
                 text = state.recoveryPhrase,
+                modifier = Modifier
+                    .contentDescription(R.string.AccessibilityId_recovery_phrase_input)
+                    .padding(horizontal = 64.dp),
                 placeholder = stringResource(R.string.recoveryPasswordEnter),
                 onChange = onChange,
                 onContinue = onContinue,
-                error = state.error,
-                modifier = Modifier.padding(horizontal = 64.dp)
+                error = state.error
         )
         Spacer(Modifier.size(12.dp))
         state.error?.let {
-            Text(it, style = MaterialTheme.typography.baseBold, color = MaterialTheme.colors.error)
+            Text(
+                it,
+                modifier = Modifier.contentDescription(R.string.AccessibilityId_error_message),
+                style = MaterialTheme.typography.baseBold,
+                color = MaterialTheme.colors.error
+            )
         }
         Spacer(Modifier.weight(2f))
         OutlineButton(
