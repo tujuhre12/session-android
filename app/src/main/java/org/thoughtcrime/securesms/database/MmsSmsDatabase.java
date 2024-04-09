@@ -325,9 +325,12 @@ public class MmsSmsDatabase extends Database {
     String selection = MmsSmsColumns.THREAD_ID + " = " + threadId;
 
     try (Cursor cursor = queryTables(PROJECTION, selection, order, "1")) {
-      cursor.moveToFirst();
-      return cursor.getLong(cursor.getColumnIndexOrThrow(MmsSmsColumns.NORMALIZED_DATE_SENT));
+      if (cursor.moveToFirst()) {
+        return cursor.getLong(cursor.getColumnIndexOrThrow(MmsSmsColumns.NORMALIZED_DATE_SENT));
+      }
     }
+
+    return -1;
   }
 
   public Cursor getUnread() {

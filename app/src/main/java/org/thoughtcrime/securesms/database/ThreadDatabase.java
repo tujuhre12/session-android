@@ -939,7 +939,9 @@ public class ThreadDatabase extends Database {
       if (count > 0) {
         MmsSmsDatabase mmsSmsDatabase = DatabaseComponent.get(context).mmsSmsDatabase();
         long messageTimestamp = mmsSmsDatabase.getLastMessageTimestamp(threadId);
-        lastMessage = mmsSmsDatabase.getMessageForTimestamp(messageTimestamp);
+        if (messageTimestamp > 0) {
+          lastMessage = mmsSmsDatabase.getMessageForTimestamp(messageTimestamp);
+        }
       }
 
       return new ThreadRecord(body, snippetUri, lastMessage, recipient, date, count,
