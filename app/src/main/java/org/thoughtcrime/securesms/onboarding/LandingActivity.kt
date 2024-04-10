@@ -31,6 +31,7 @@ import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.onboarding.pickname.startPickDisplayNameActivity
 import org.thoughtcrime.securesms.service.KeyCachingService
+import org.thoughtcrime.securesms.showOpenUrlDialog
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.BorderlessButton
@@ -120,9 +121,7 @@ class LandingActivity : BaseActionBarActivity() {
     }
 
     private fun openDialog() {
-        showSessionDialog {
-            title(R.string.urlOpen)
-            text(R.string.urlOpenBrowser)
+        showOpenUrlDialog {
             button(
                 R.string.activity_landing_terms_of_service,
                 contentDescriptionRes = R.string.AccessibilityId_terms_of_service_link

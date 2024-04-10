@@ -140,6 +140,12 @@ class SessionDialogBuilder(val context: Context) {
 
 fun Context.showSessionDialog(build: SessionDialogBuilder.() -> Unit): AlertDialog =
     SessionDialogBuilder(this).apply { build() }.show()
+fun Context.showOpenUrlDialog(build: SessionDialogBuilder.() -> Unit): AlertDialog =
+    SessionDialogBuilder(this).apply {
+        title(R.string.urlOpen)
+        text(R.string.urlOpenBrowser)
+        build()
+    }.show()
 
 fun Fragment.showSessionDialog(build: SessionDialogBuilder.() -> Unit): AlertDialog =
     SessionDialogBuilder(requireContext()).apply { build() }.show()

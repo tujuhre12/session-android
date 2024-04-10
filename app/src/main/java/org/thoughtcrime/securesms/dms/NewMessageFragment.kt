@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.dms
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -22,6 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -37,6 +39,7 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.conversation.start.NewConversationDelegate
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
+import org.thoughtcrime.securesms.showOpenUrlDialog
 import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.BorderlessButtonSecondary
 import org.thoughtcrime.securesms.ui.OutlineButton
@@ -78,7 +81,12 @@ class NewMessageFragment : Fragment() {
                     viewModel,
                     onClose = { delegate.onDialogClosePressed() },
                     onBack = { delegate.onDialogBackPressed() },
-                    onHelp = { Toast.makeText(requireContext(), "todo, not implemented.", Toast.LENGTH_LONG).show() }
+                    onHelp = {
+                        requireContext().showOpenUrlDialog {
+                            okButton { Intent(Intent.ACTION_VIEW, Uri.parse("https://sessionapp.zendesk.com/hc/en-us/articles/4439132747033-How-do-Session-ID-usernames-work")).let(::startActivity) }
+                            cancelButton()
+                        }
+                    }
                 )
             }
         }
@@ -147,9 +155,10 @@ fun EnterAccountId(
             placeholder = stringResource(R.string.accountIdOrOnsEnter),
             onChange = callbacks::onChange,
             onContinue = callbacks::onContinue,
-            error = state.error?.string()
+            error = state.error?.string(),
         )
-        BorderlessButtonSecondary(text = stringResource(R.string.messageNewDescription)) { onHelp() }
+        if (state.error == null) BorderlessButtonSecondary(text = stringResource(R.string.messageNewDescription)) { onHelp() }
+
         Spacer(modifier = Modifier.weight(1f))
 
         OutlineButton(
