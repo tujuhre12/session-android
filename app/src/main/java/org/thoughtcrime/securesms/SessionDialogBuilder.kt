@@ -1,6 +1,8 @@
 package org.thoughtcrime.securesms
 
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -146,6 +148,14 @@ fun Context.showOpenUrlDialog(build: SessionDialogBuilder.() -> Unit): AlertDial
         text(R.string.urlOpenBrowser)
         build()
     }.show()
+
+fun Context.showOpenUrlDialog(url: String): AlertDialog =
+    showOpenUrlDialog {
+        okButton { openUrl(url) }
+        cancelButton()
+    }
+
+fun Context.openUrl(url: String) = Intent(Intent.ACTION_VIEW, Uri.parse(url)).let(::startActivity)
 
 fun Fragment.showSessionDialog(build: SessionDialogBuilder.() -> Unit): AlertDialog =
     SessionDialogBuilder(requireContext()).apply { build() }.show()

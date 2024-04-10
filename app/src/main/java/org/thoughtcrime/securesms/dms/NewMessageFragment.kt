@@ -81,12 +81,7 @@ class NewMessageFragment : Fragment() {
                     viewModel,
                     onClose = { delegate.onDialogClosePressed() },
                     onBack = { delegate.onDialogBackPressed() },
-                    onHelp = {
-                        requireContext().showOpenUrlDialog {
-                            okButton { Intent(Intent.ACTION_VIEW, Uri.parse("https://sessionapp.zendesk.com/hc/en-us/articles/4439132747033-How-do-Session-ID-usernames-work")).let(::startActivity) }
-                            cancelButton()
-                        }
-                    }
+                    onHelp = { requireContext().showOpenUrlDialog("https://sessionapp.zendesk.com/hc/en-us/articles/4439132747033-How-do-Session-ID-usernames-work") }
                 )
             }
         }
