@@ -119,7 +119,7 @@ private fun NewMessage(
     val pagerState = rememberPagerState { TITLES.size }
 
     Column(modifier = Modifier.background(MaterialTheme.colors.background)) {
-        AppBar("New Message", onClose = { onClose() }, onBack = { onBack() })
+        AppBar(stringResource(R.string.messageNew), onClose = { onClose() }, onBack = { onBack() })
         SessionTabRow(pagerState, TITLES)
         HorizontalPager(pagerState) {
             when (TITLES[it]) {
@@ -144,12 +144,12 @@ fun EnterAccountId(
         SessionOutlinedTextField(
             text = state.newMessageIdOrOns,
             modifier = Modifier.padding(horizontal = 64.dp),
-            placeholder = "Enter account ID or ONS",
+            placeholder = stringResource(R.string.accountIdOrOnsEnter),
             onChange = callbacks::onChange,
             onContinue = callbacks::onContinue,
             error = state.error?.string()
         )
-        BorderlessButtonSecondary(text = "Start a new conversation by entering your friend's Account ID, ONS or scanning their QR code.") { onHelp() }
+        BorderlessButtonSecondary(text = stringResource(R.string.messageNewDescription)) { onHelp() }
         Spacer(modifier = Modifier.weight(1f))
 
         OutlineButton(
