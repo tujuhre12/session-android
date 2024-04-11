@@ -161,7 +161,7 @@ import org.thoughtcrime.securesms.mms.MediaConstraints
 import org.thoughtcrime.securesms.mms.Slide
 import org.thoughtcrime.securesms.mms.SlideDeck
 import org.thoughtcrime.securesms.mms.VideoSlide
-import org.thoughtcrime.securesms.onboarding.recoverypassword.startRecoveryPasswordActivity
+import org.thoughtcrime.securesms.onboarding.recoverypassword.RecoveryPasswordActivity
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.reactions.ReactionsDialogFragment
 import org.thoughtcrime.securesms.reactions.any.ReactWithAnyEmojiDialogFragment
@@ -176,6 +176,7 @@ import org.thoughtcrime.securesms.util.isScrolledToBottom
 import org.thoughtcrime.securesms.util.isScrolledToWithin30dpOfBottom
 import org.thoughtcrime.securesms.util.push
 import org.thoughtcrime.securesms.util.show
+import org.thoughtcrime.securesms.util.start
 import org.thoughtcrime.securesms.util.toPx
 import java.lang.ref.WeakReference
 import java.util.Locale
@@ -1602,7 +1603,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         val userPublicKey = textSecurePreferences.getLocalNumber()
         val isNoteToSelf = (recipient.isContactRecipient && recipient.address.toString() == userPublicKey)
         if (text.contains(seed) && !isNoteToSelf && !hasPermissionToSendSeed) {
-            startRecoveryPasswordActivity()
+            start<RecoveryPasswordActivity>()
         }
         // Create the message
         val message = VisibleMessage().applyExpiryMode(viewModel.threadId)

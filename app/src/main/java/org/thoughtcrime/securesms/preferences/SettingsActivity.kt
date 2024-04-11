@@ -2,15 +2,14 @@ package org.thoughtcrime.securesms.preferences
 
 import android.Manifest
 import android.app.Activity
+import android.content.BroadcastReceiver
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.net.Uri
-import android.os.AsyncTask
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.os.Parcelable
 import android.util.SparseArray
 import android.view.ActionMode
@@ -20,9 +19,38 @@ import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.Card
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.dp
 import androidx.core.view.isGone
+import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
+import androidx.lifecycle.lifecycleScope
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivitySettingsBinding
@@ -34,23 +62,37 @@ import nl.komponents.kovenant.ui.successUi
 import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.avatars.ProfileContactPhoto
 import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.SnodeAPI
-import org.session.libsession.utilities.*
+import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.ProfileKeyUtil
+import org.session.libsession.utilities.ProfilePictureUtilities
 import org.session.libsession.utilities.SSKEnvironment.ProfileManagerProtocol
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.truncateIdForDisplay
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.avatar.AvatarSelection
 import org.thoughtcrime.securesms.components.ProfilePictureView
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.home.PathActivity
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
-import org.thoughtcrime.securesms.mms.GlideApp
-import org.thoughtcrime.securesms.mms.GlideRequests
-import org.thoughtcrime.securesms.onboarding.recoverypassword.startRecoveryPasswordActivity
+import org.thoughtcrime.securesms.onboarding.recoverypassword.RecoveryPasswordActivity
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.appearance.AppearanceSettingsActivity
 import org.thoughtcrime.securesms.profiles.ProfileMediaConstraints
 import org.thoughtcrime.securesms.showSessionDialog
+import org.thoughtcrime.securesms.ui.AppTheme
+import org.thoughtcrime.securesms.ui.BorderlessButton
+import org.thoughtcrime.securesms.ui.Cell
+import org.thoughtcrime.securesms.ui.Divider
+import org.thoughtcrime.securesms.ui.ItemButton
+import org.thoughtcrime.securesms.ui.ItemButtonWithDrawable
+import org.thoughtcrime.securesms.ui.OutlineButton
+import org.thoughtcrime.securesms.ui.PreviewTheme
+import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
+import org.thoughtcrime.securesms.ui.destructiveButtonColors
 import org.thoughtcrime.securesms.util.BitmapDecodingException
 import org.thoughtcrime.securesms.util.BitmapUtil
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
@@ -61,6 +103,8 @@ import java.io.File
 import java.security.SecureRandom
 import javax.inject.Inject
 
+private const val TAG = "SettingsActivity"
+
 @AndroidEntryPoint
 class SettingsActivity : PassphraseRequiredActionBarActivity() {
 
@@ -69,21 +113,14 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
     @Inject
     lateinit var prefs: TextSecurePreferences
 
-
-
     private lateinit var binding: ActivitySettingsBinding
     private var displayNameEditActionMode: ActionMode? = null
         set(value) { field = value; handleDisplayNameEditActionModeChanged() }
-    private lateinit var glide: GlideRequests
     private var tempFile: File? = null
 
-    private val hexEncodedPublicKey: String
-        get() {
-            return TextSecurePreferences.getLocalNumber(this)!!
-        }
+    private val hexEncodedPublicKey: String get() = TextSecurePreferences.getLocalNumber(this)!!
 
     companion object {
-        const val updatedProfileResultCode = 1234
         private const val SCROLL_STATE = "SCROLL_STATE"
     }
 
@@ -92,7 +129,12 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
         super.onCreate(savedInstanceState, isReady)
         binding = ActivitySettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        glide = GlideApp.with(this)
+
+        binding.composeView.setContent {
+            AppTheme {
+                Buttons()
+            }
+        }
     }
 
     override fun onStart() {
@@ -104,21 +146,6 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
             ctnGroupNameSection.setOnClickListener { startActionMode(DisplayNameEditActionModeCallback()) }
             btnGroupNameDisplay.text = getDisplayName()
             publicKeyTextView.text = hexEncodedPublicKey
-            copyButton.setOnClickListener { copyPublicKey() }
-            shareButton.setOnClickListener { sharePublicKey() }
-            pathButton.setOnClickListener { showPath() }
-            pathContainer.disableClipping()
-            privacyButton.setOnClickListener { showPrivacySettings() }
-            notificationsButton.setOnClickListener { showNotificationSettings() }
-            messageRequestsButton.setOnClickListener { showMessageRequests() }
-            chatsButton.setOnClickListener { showChatSettings() }
-            appearanceButton.setOnClickListener { showAppearanceSettings() }
-            inviteFriendButton.setOnClickListener { sendInvitation() }
-            helpButton.setOnClickListener { showHelp() }
-            passwordDivider.isGone = prefs.getHidePassword()
-            passwordButton.isGone = prefs.getHidePassword()
-            passwordButton.setOnClickListener { showPassword() }
-            clearAllDataButton.setOnClickListener { clearAllData() }
             versionTextView.text = String.format(getString(R.string.version_s), "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")
         }
     }
@@ -167,30 +194,22 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        if (resultCode != Activity.RESULT_OK) return
         when (requestCode) {
             AvatarSelection.REQUEST_CODE_AVATAR -> {
-                if (resultCode != Activity.RESULT_OK) {
-                    return
-                }
                 val outputFile = Uri.fromFile(File(cacheDir, "cropped"))
-                var inputFile: Uri? = data?.data
-                if (inputFile == null && tempFile != null) {
-                    inputFile = Uri.fromFile(tempFile)
-                }
+                val inputFile: Uri? = data?.data ?: tempFile?.let(Uri::fromFile)
                 AvatarSelection.circularCropImage(this, inputFile, outputFile, R.string.CropImageActivity_profile_avatar)
             }
             AvatarSelection.REQUEST_CODE_CROP_IMAGE -> {
-                if (resultCode != Activity.RESULT_OK) {
-                    return
-                }
-                AsyncTask.execute {
+                lifecycleScope.launch(Dispatchers.IO) {
                     try {
                         val profilePictureToBeUploaded = BitmapUtil.createScaledBytes(this@SettingsActivity, AvatarSelection.getResultUri(data), ProfileMediaConstraints()).bitmap
-                        Handler(Looper.getMainLooper()).post {
+                        launch(Dispatchers.Main) {
                             updateProfile(true, profilePictureToBeUploaded)
                         }
                     } catch (e: BitmapDecodingException) {
-                        e.printStackTrace()
+                        Log.e(TAG, e)
                     }
                 }
             }
@@ -205,10 +224,10 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
 
     // region Updating
     private fun handleDisplayNameEditActionModeChanged() {
-        val isEditingDisplayName = this.displayNameEditActionMode !== null
+        val isEditingDisplayName = this.displayNameEditActionMode != null
 
-        binding.btnGroupNameDisplay.visibility = if (isEditingDisplayName) View.INVISIBLE else View.VISIBLE
-        binding.displayNameEditText.visibility = if (isEditingDisplayName) View.VISIBLE else View.INVISIBLE
+        binding.btnGroupNameDisplay.isInvisible = isEditingDisplayName
+        binding.displayNameEditText.isInvisible = !isEditingDisplayName
 
         val inputMethodManager = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         if (isEditingDisplayName) {
@@ -255,12 +274,11 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
                 MessagingModuleConfiguration.shared.storage.clearUserPic()
             }
         }
-        val compoundPromise = all(promises)
-        compoundPromise.successUi { // Do this on the UI thread so that it happens before the alwaysUi clause below
+        all(promises) successUi { // Do this on the UI thread so that it happens before the alwaysUi clause below
             val userConfig = configFactory.user
             if (isUpdatingProfilePicture) {
                 AvatarHelper.setAvatar(this, Address.fromSerialized(TextSecurePreferences.getLocalNumber(this)!!), profilePicture)
-                TextSecurePreferences.setProfileAvatarId(this, profilePicture?.let { SecureRandom().nextInt() } ?: 0 )
+                prefs.setProfileAvatarId(profilePicture?.let { SecureRandom().nextInt() } ?: 0 )
                 ProfileKeyUtil.setEncodedProfileKey(this, encodedProfileKey)
                 // new config
                 val url = TextSecurePreferences.getProfilePictureURL(this)
@@ -275,8 +293,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
                 configFactory.persist(userConfig, SnodeAPI.nowWithOffset)
             }
             ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(this@SettingsActivity)
-        }
-        compoundPromise.alwaysUi {
+        } alwaysUi {
             if (displayName != null) {
                 binding.btnGroupNameDisplay.text = displayName
             }
@@ -318,23 +335,23 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
             title(R.string.activity_settings_set_display_picture)
             view(R.layout.dialog_change_avatar)
             button(R.string.activity_settings_upload) { startAvatarSelection() }
-            if (TextSecurePreferences.getProfileAvatarId(context) != 0) {
+            if (prefs.getProfileAvatarId() != 0) {
                 button(R.string.activity_settings_remove) { removeAvatar() }
             }
             cancelButton()
         }.apply {
-                val profilePic = findViewById<ProfilePictureView>(R.id.profile_picture_view)
-                    ?.also(::setupProfilePictureView)
+            val profilePic = findViewById<ProfilePictureView>(R.id.profile_picture_view)
+                ?.also(::setupProfilePictureView)
 
-                val pictureIcon = findViewById<View>(R.id.ic_pictures)
+            val pictureIcon = findViewById<View>(R.id.ic_pictures)
 
-                val recipient = Recipient.from(context, Address.fromSerialized(hexEncodedPublicKey), false)
+            val recipient = Recipient.from(context, Address.fromSerialized(hexEncodedPublicKey), false)
 
-                val photoSet = (recipient.contactPhoto as ProfileContactPhoto).avatarObject !in setOf("0", "")
+            val photoSet = (recipient.contactPhoto as ProfileContactPhoto).avatarObject !in setOf("0", "")
 
-                profilePic?.isVisible = photoSet
-                pictureIcon?.isVisible = !photoSet
-            }
+            profilePic?.isVisible = photoSet
+            pictureIcon?.isVisible = !photoSet
+        }
     }
 
     private fun removeAvatar() {
@@ -359,65 +376,21 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
     }
 
     private fun sharePublicKey() {
-        val intent = Intent()
-        intent.action = Intent.ACTION_SEND
-        intent.putExtra(Intent.EXTRA_TEXT, hexEncodedPublicKey)
-        intent.type = "text/plain"
-        val chooser = Intent.createChooser(intent, getString(R.string.share))
-        startActivity(chooser)
-    }
-
-    private fun showPrivacySettings() {
-        val intent = Intent(this, PrivacySettingsActivity::class.java)
-        push(intent)
-    }
-
-    private fun showNotificationSettings() {
-        val intent = Intent(this, NotificationSettingsActivity::class.java)
-        push(intent)
-    }
-
-    private fun showMessageRequests() {
-        val intent = Intent(this, MessageRequestsActivity::class.java)
-        push(intent)
-    }
-
-    private fun showChatSettings() {
-        val intent = Intent(this, ChatSettingsActivity::class.java)
-        push(intent)
-    }
-
-    private fun showAppearanceSettings() {
-        val intent = Intent(this, AppearanceSettingsActivity::class.java)
-        push(intent)
+        Intent().apply {
+            action = Intent.ACTION_SEND
+            putExtra(Intent.EXTRA_TEXT, hexEncodedPublicKey)
+            type = "text/plain"
+        }.let { Intent.createChooser(it, getString(R.string.share)) }
+            .let(::startActivity)
     }
 
     private fun sendInvitation() {
-        val intent = Intent()
-        intent.action = Intent.ACTION_SEND
-        val invitation = "Hey, I've been using Session to chat with complete privacy and security. Come join me! Download it at https://getsession.org/. My Session ID is $hexEncodedPublicKey !"
-        intent.putExtra(Intent.EXTRA_TEXT, invitation)
-        intent.type = "text/plain"
-        val chooser = Intent.createChooser(intent, getString(R.string.activity_settings_invite_button_title))
-        startActivity(chooser)
-    }
-
-    private fun showHelp() {
-        val intent = Intent(this, HelpSettingsActivity::class.java)
-        push(intent)
-    }
-
-    private fun showPath() {
-        val intent = Intent(this, PathActivity::class.java)
-        show(intent)
-    }
-
-    private fun showPassword() {
-        startRecoveryPasswordActivity()
-    }
-
-    private fun clearAllData() {
-        ClearAllDataDialog().show(supportFragmentManager, "Clear All Data Dialog")
+        Intent().apply {
+            action = Intent.ACTION_SEND
+            putExtra(Intent.EXTRA_TEXT, "Hey, I've been using Session to chat with complete privacy and security. Come join me! Download it at https://getsession.org/. My Session ID is $hexEncodedPublicKey !")
+            type = "text/plain"
+        }.let { Intent.createChooser(it, getString(R.string.activity_settings_invite_button_title)) }
+            .let(::startActivity)
     }
 
     // endregion
@@ -451,4 +424,88 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
             return false;
         }
     }
+
+    @Composable
+    fun Buttons() {
+        Column {
+            Row(
+                modifier = Modifier.padding(horizontal = 24.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                OutlineButton(
+                    modifier = Modifier.weight(1f),
+                    onClick = { sharePublicKey() }
+                ) { Text(stringResource(R.string.share)) }
+
+                OutlineButton(
+                    modifier = Modifier.weight(1f),
+                    onClick = { copyPublicKey() },
+                    temporaryContent = { Text(stringResource(R.string.copied)) }
+                ) {
+                    Text(stringResource(R.string.copy))
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(24.dp))
+
+            var hasPaths by remember {
+                mutableStateOf(false)
+            }
+
+            CheckPaths { hasPaths = it }
+
+            Cell {
+                Column {
+                    ItemButtonWithDrawable(R.string.activity_path_title, icon = if (hasPaths) R.drawable.ic_status else R.drawable.ic_path_yellow) { show<PathActivity>() }
+                    Divider()
+                    ItemButton(R.string.activity_settings_privacy_button_title, icon = R.drawable.ic_privacy_icon) { show<PrivacySettingsActivity>() }
+                    Divider()
+                    ItemButton(R.string.activity_settings_notifications_button_title, icon = R.drawable.ic_speaker, contentDescription = R.string.AccessibilityId_notifications) { show<NotificationSettingsActivity>() }
+                    Divider()
+                    ItemButton(R.string.activity_settings_conversations_button_title, icon = R.drawable.ic_conversations, contentDescription = R.string.AccessibilityId_conversations) { show<ChatSettingsActivity>() }
+                    Divider()
+                    ItemButton(R.string.activity_settings_message_requests_button_title, icon = R.drawable.ic_message_requests, contentDescription = R.string.AccessibilityId_message_requests) { show<MessageRequestsActivity>() }
+                    Divider()
+                    ItemButton(R.string.activity_settings_message_appearance_button_title, icon = R.drawable.ic_appearance, contentDescription = R.string.AccessibilityId_appearance) { show<AppearanceSettingsActivity>() }
+                    Divider()
+                    ItemButton(R.string.activity_settings_invite_button_title, icon = R.drawable.ic_invite_friend, contentDescription = R.string.AccessibilityId_invite_friend) { sendInvitation() }
+                    Divider()
+                    if (!prefs.getHidePassword()) {
+                        ItemButton(R.string.sessionRecoveryPassword, icon = R.drawable.ic_recovery_phrase, contentDescription = R.string.AccessibilityId_recovery_password_menu_item) { show<RecoveryPasswordActivity>() }
+                        Divider()
+                    }
+                    ItemButton(R.string.activity_settings_help_button, icon = R.drawable.ic_help, contentDescription = R.string.AccessibilityId_help) { show<HelpSettingsActivity>() }
+                    Divider()
+                    ItemButton(R.string.activity_settings_clear_all_data_button_title, colors = destructiveButtonColors(), icon = R.drawable.ic_clear_data, contentDescription = R.string.AccessibilityId_clear_data) { ClearAllDataDialog().show(supportFragmentManager, "Clear All Data Dialog") }
+                }
+            }
+        }
+    }
+
+    @Composable
+    fun CheckPaths(setHasPaths: (Boolean) -> Unit) {
+        val context = LocalContext.current
+        val manager = LocalBroadcastManager.getInstance(context)
+
+        fun update() {
+            lifecycleScope.launch {
+                val paths = withContext(Dispatchers.IO) { OnionRequestAPI.paths }
+                setHasPaths(paths.isNotEmpty())
+            }
+        }
+
+        fun addReceiver(action: String): BroadcastReceiver = createReceiver { update() }.also { manager.registerReceiver(it, IntentFilter(action)) }
+
+        val receivers = listOf("buildingPaths", "pathsBuilt").map(::addReceiver)
+
+        DisposableEffect(Unit) {
+            onDispose {
+                receivers.forEach(manager::unregisterReceiver)
+            }
+        }
+    }
+}
+
+fun createReceiver(update: () -> Unit) = object : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) { update() }
 }

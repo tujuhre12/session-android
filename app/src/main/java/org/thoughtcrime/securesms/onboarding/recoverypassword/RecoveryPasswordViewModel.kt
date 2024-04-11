@@ -42,13 +42,4 @@ class RecoveryPasswordViewModel @Inject constructor(
         MnemonicCodec { MnemonicUtilities.loadFileContents(application, it) }
             .encode(hexEncodedSeed, MnemonicCodec.Language.Configuration.english)
     }
-
-    val qrBitmap by lazy {
-        QRCodeUtilities.encode(
-            data = seed,
-            size = toPx(280, application.resources),
-            isInverted = false,
-            hasTransparentBackground = true
-        )
-    }
 }

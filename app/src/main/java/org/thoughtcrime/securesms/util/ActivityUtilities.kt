@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.util
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.view.View
@@ -90,12 +91,17 @@ fun String.getThemeStyle(): Int = when (this) {
 }
 
 @StyleRes
-fun Int.getDefaultAccentColor(): Int =
-    if (this == R.style.Ocean_Dark || this == R.style.Ocean_Light) R.style.PrimaryBlue
-    else R.style.PrimaryGreen
+fun Int.getDefaultAccentColor(): Int = when (this) {
+    R.style.Ocean_Dark, R.style.Ocean_Light -> R.style.PrimaryBlue
+    else -> R.style.PrimaryGreen
+}
 
 data class ThemeState (
     @StyleRes val theme: Int,
     @StyleRes val accentStyle: Int,
     val followSystem: Boolean
 )
+
+inline fun <reified T: Activity> Context.start() = Intent(this, T::class.java).also(::startActivity)
+inline fun <reified T: Activity> Activity.show() = Intent(this, T::class.java).also(::startActivity).also { overridePendingTransition(R.anim.slide_from_bottom, R.anim.fade_scale_out) }
+inline fun <reified T: Activity> Activity.push() = Intent(this, T::class.java).also(::startActivity).also { overridePendingTransition(R.anim.slide_from_right, R.anim.fade_scale_out) }

@@ -1,27 +1,21 @@
 package org.thoughtcrime.securesms.onboarding.recoverypassword
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
 import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.Card
-import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -30,10 +24,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Preview
@@ -52,6 +43,7 @@ import org.thoughtcrime.securesms.ui.SessionShieldIcon
 import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
 import org.thoughtcrime.securesms.ui.classicDarkColors
 import org.thoughtcrime.securesms.ui.colorDestructive
+import org.thoughtcrime.securesms.ui.components.QrImageCard
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.h8
 import org.thoughtcrime.securesms.ui.small
@@ -68,7 +60,6 @@ class RecoveryPasswordActivity : BaseActionBarActivity() {
             setContent {
                 RecoveryPassword(
                     viewModel.seed,
-                    viewModel.qrBitmap,
                     { viewModel.copySeed(context) }
                 ) { onHide() }
             }
@@ -113,7 +104,6 @@ fun PreviewRecoveryPassword(
 @Composable
 fun RecoveryPassword(
     seed: String = "",
-    qrBitmap: Bitmap? = null,
     copySeed:() -> Unit = {},
     onHide:() -> Unit = {}
 ) {
@@ -124,14 +114,14 @@ fun RecoveryPassword(
                 .verticalScroll(rememberScrollState())
                 .padding(bottom = 16.dp)
         ) {
-            RecoveryPasswordCell(seed, qrBitmap, copySeed)
+            RecoveryPasswordCell(seed, copySeed)
             HideRecoveryPasswordCell(onHide)
         }
     }
 }
 
 @Composable
-fun RecoveryPasswordCell(seed: String = "", qrBitmap: Bitmap? = null, copySeed:() -> Unit = {}) {
+fun RecoveryPasswordCell(seed: String, copySeed:() -> Unit = {}) {
     val showQr = remember {
         mutableStateOf(false)
     }
@@ -163,21 +153,15 @@ fun RecoveryPasswordCell(seed: String = "", qrBitmap: Bitmap? = null, copySeed:(
                 )
             }
 
-            AnimatedVisibility(showQr.value, modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                Card(
-                    backgroundColor = LocalExtraColors.current.lightCell,
-                    elevation = 0.dp,
-                    modifier = Modifier
-                        .align(Alignment.CenterHorizontally)
-                        .padding(vertical = 24.dp)
-                ) {
-                    qrBitmap?.let {
-                        QrImage(
-                            bitmap = it,
-                            contentDescription = "QR code of your recovery password",
-                        )
-                    }
-                }
+            AnimatedVisibility(
+                showQr.value,
+                modifier = Modifier.align(Alignment.CenterHorizontally).padding(vertical = 24.dp)
+            ) {
+                QrImageCard(
+                    seed,
+                    contentDescription = "QR code of your recovery password",
+                    icon = R.drawable.session_shield
+                )
             }
 
             AnimatedVisibility(!showQr.value) {
@@ -205,29 +189,6 @@ fun RecoveryPasswordCell(seed: String = "", qrBitmap: Bitmap? = null, copySeed:(
     }
 }
 
-@Composable
-fun QrImage(bitmap: Bitmap, contentDescription: String, icon: Int = R.drawable.session_shield) {
-    Box {
-        Image(
-            bitmap = bitmap.asImageBitmap(),
-            contentDescription = contentDescription,
-            colorFilter = ColorFilter.tint(LocalExtraColors.current.onLightCell)
-        )
-
-        Icon(
-            painter = painterResource(id = icon),
-            contentDescription = "",
-            tint = LocalExtraColors.current.onLightCell,
-            modifier = Modifier
-                .align(Alignment.Center)
-                .width(46.dp)
-                .height(56.dp)
-                .background(color = LocalExtraColors.current.lightCell)
-                .padding(horizontal = 3.dp, vertical = 1.dp)
-        )
-    }
-}
-
 private fun MutableState<Boolean>.toggle() { value = !value }
 
 @Composable
@@ -246,8 +207,4 @@ fun HideRecoveryPasswordCell(onHide: () -> Unit = {}) {
             ) { onHide() }
         }
     }
-}
-
-fun Context.startRecoveryPasswordActivity() {
-    Intent(this, RecoveryPasswordActivity::class.java).also(::startActivity)
 }

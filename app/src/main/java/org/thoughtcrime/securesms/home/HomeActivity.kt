@@ -92,7 +92,7 @@ import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
 import org.thoughtcrime.securesms.mms.GlideApp
 import org.thoughtcrime.securesms.mms.GlideRequests
 import org.thoughtcrime.securesms.notifications.PushRegistry
-import org.thoughtcrime.securesms.onboarding.recoverypassword.startRecoveryPasswordActivity
+import org.thoughtcrime.securesms.onboarding.recoverypassword.RecoveryPasswordActivity
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.SettingsActivity
 import org.thoughtcrime.securesms.showMuteDialog
@@ -111,6 +111,7 @@ import org.thoughtcrime.securesms.util.IP2Country
 import org.thoughtcrime.securesms.util.disableClipping
 import org.thoughtcrime.securesms.util.push
 import org.thoughtcrime.securesms.util.show
+import org.thoughtcrime.securesms.util.start
 import org.thoughtcrime.securesms.util.themeState
 import java.io.IOException
 import java.util.Locale
@@ -374,7 +375,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                         stringResource(R.string.continue_2),
                         Modifier.align(Alignment.CenterVertically),
                         contentDescription = GetString(R.string.AccessibilityId_reveal_recovery_phrase_button)
-                    ) { startRecoveryPasswordActivity() }
+                    ) { start<RecoveryPasswordActivity>() }
                 }
             }
         }

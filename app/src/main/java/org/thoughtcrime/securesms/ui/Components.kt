@@ -1,13 +1,17 @@
 package org.thoughtcrime.securesms.ui
 
+import android.graphics.drawable.BitmapDrawable
 import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -23,6 +27,7 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.Button
 import androidx.compose.material.ButtonColors
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Card
@@ -52,10 +57,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
@@ -64,6 +71,8 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.res.ResourcesCompat
+import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -261,30 +270,85 @@ fun <T> OptionsCard(card: OptionsCard<T>, callbacks: Callbacks<T>) {
 
 @Composable
 fun ItemButton(
+    @StringRes textId: Int,
+    @DrawableRes icon: Int,
+    colors: ButtonColors = transparentButtonColors(),
+    @StringRes contentDescription: Int = textId,
+    onClick: () -> Unit
+) {
+    ItemButton(stringResource(textId), icon, colors, stringResource(contentDescription), onClick)
+}
+
+@Composable
+fun ItemButtonWithDrawable(
+    @StringRes textId: Int,
+    @DrawableRes icon: Int,
+    colors: ButtonColors = transparentButtonColors(),
+    @StringRes contentDescription: Int = textId,
+    onClick: () -> Unit
+) {
+    val context = LocalContext.current
+
+    ItemButton(
+        text = stringResource(textId),
+        icon = {
+            Image(
+                painter = rememberDrawablePainter(drawable = context.getDrawable(icon)),
+                contentDescription = stringResource(contentDescription),
+                modifier = Modifier.align(Alignment.Center)
+            )
+        },
+        colors = colors,
+        contentDescription = stringResource(contentDescription),
+        onClick = onClick
+    )
+}
+
+@Composable
+fun ItemButton(
     text: String,
     @DrawableRes icon: Int,
     colors: ButtonColors = transparentButtonColors(),
     contentDescription: String = text,
     onClick: () -> Unit
 ) {
-    TextButton(
-        modifier = Modifier
-                .fillMaxWidth()
-                .height(60.dp),
-        colors = colors,
-        onClick = onClick,
-        shape = RectangleShape,
-    ) {
-        Box(modifier = Modifier
-                .width(80.dp)
-                .fillMaxHeight()) {
+    ItemButton(
+        text = text,
+        icon = {
             Icon(
                 painter = painterResource(id = icon),
                 contentDescription = contentDescription,
                 modifier = Modifier.align(Alignment.Center)
             )
+        },
+        colors = colors,
+        contentDescription = contentDescription,
+        onClick = onClick
+    )
+}
+
+@Composable
+fun ItemButton(
+    text: String,
+    icon: @Composable BoxScope.() -> Unit,
+    colors: ButtonColors = transparentButtonColors(),
+    contentDescription: String = text,
+    onClick: () -> Unit
+) {
+    TextButton(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(60.dp),
+        colors = colors,
+        onClick = onClick,
+        shape = RectangleShape,
+    ) {
+        Box(modifier = Modifier
+            .width(80.dp)
+            .fillMaxHeight()) {
+            icon()
         }
-        Text(text, modifier = Modifier.fillMaxWidth())
+        Text(text, modifier = Modifier.fillMaxWidth(), style = MaterialTheme.typography.h8)
     }
 }
 
@@ -308,9 +372,9 @@ fun CellWithPaddingAndMargin(
         shape = RoundedCornerShape(16.dp),
         elevation = 0.dp,
         modifier = Modifier
-                .wrapContentHeight()
-                .fillMaxWidth()
-                .padding(horizontal = margin),
+            .wrapContentHeight()
+            .fillMaxWidth()
+            .padding(horizontal = margin),
     ) {
         Box(Modifier.padding(padding)) { content() }
     }
@@ -321,14 +385,14 @@ fun <T> TitledRadioButton(option: RadioOption<T>, onClick: () -> Unit) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         modifier = Modifier
-                .runIf(option.enabled) { clickable { if (!option.selected) onClick() } }
-                .heightIn(min = 60.dp)
-                .padding(horizontal = 32.dp)
-                .contentDescription(option.contentDescription)
+            .runIf(option.enabled) { clickable { if (!option.selected) onClick() } }
+            .heightIn(min = 60.dp)
+            .padding(horizontal = 32.dp)
+            .contentDescription(option.contentDescription)
     ) {
         Column(modifier = Modifier
-                .weight(1f)
-                .align(Alignment.CenterVertically)) {
+            .weight(1f)
+            .align(Alignment.CenterVertically)) {
             Column {
                 Text(
                     text = option.title(),
@@ -349,8 +413,8 @@ fun <T> TitledRadioButton(option: RadioOption<T>, onClick: () -> Unit) {
             onClick = null,
             enabled = option.enabled,
             modifier = Modifier
-                    .height(26.dp)
-                    .align(Alignment.CenterVertically)
+                .height(26.dp)
+                .align(Alignment.CenterVertically)
         )
     }
 }
@@ -373,8 +437,8 @@ fun Modifier.contentDescription(id: Int?): Modifier {
 fun OutlineButton(text: GetString, contentDescription: GetString? = text, modifier: Modifier = Modifier, onClick: () -> Unit) {
     OutlinedButton(
         modifier = modifier
-                .size(108.dp, 34.dp)
-                .contentDescription(contentDescription),
+            .size(108.dp, 34.dp)
+            .contentDescription(contentDescription),
         onClick = onClick,
         border = BorderStroke(1.dp, LocalExtraColors.current.prominentButtonColor),
         shape = RoundedCornerShape(50), // = 50% percent
@@ -396,37 +460,37 @@ fun Modifier.fadingEdges(
     topEdgeHeight: Dp = 0.dp,
     bottomEdgeHeight: Dp = 20.dp
 ): Modifier = this.then(
-        Modifier
-                // adding layer fixes issue with blending gradient and content
-                .graphicsLayer { alpha = 0.99F }
-                .drawWithContent {
-                    drawContent()
+    Modifier
+        // adding layer fixes issue with blending gradient and content
+        .graphicsLayer { alpha = 0.99F }
+        .drawWithContent {
+            drawContent()
 
-                    val topColors = listOf(Color.Transparent, Color.Black)
-                    val topStartY = scrollState.value.toFloat()
-                    val topGradientHeight = min(topEdgeHeight.toPx(), topStartY)
-                    if (topGradientHeight > 0f) drawRect(
-                            brush = Brush.verticalGradient(
-                                    colors = topColors,
-                                    startY = topStartY,
-                                    endY = topStartY + topGradientHeight
-                            ),
-                            blendMode = BlendMode.DstIn
-                    )
+            val topColors = listOf(Color.Transparent, Color.Black)
+            val topStartY = scrollState.value.toFloat()
+            val topGradientHeight = min(topEdgeHeight.toPx(), topStartY)
+            if (topGradientHeight > 0f) drawRect(
+                brush = Brush.verticalGradient(
+                    colors = topColors,
+                    startY = topStartY,
+                    endY = topStartY + topGradientHeight
+                ),
+                blendMode = BlendMode.DstIn
+            )
 
-                    val bottomColors = listOf(Color.Black, Color.Transparent)
-                    val bottomEndY = size.height - scrollState.maxValue + scrollState.value
-                    val bottomGradientHeight =
-                            min(bottomEdgeHeight.toPx(), scrollState.maxValue.toFloat() - scrollState.value)
-                    if (bottomGradientHeight > 0f) drawRect(
-                            brush = Brush.verticalGradient(
-                                    colors = bottomColors,
-                                    startY = bottomEndY - bottomGradientHeight,
-                                    endY = bottomEndY
-                            ),
-                            blendMode = BlendMode.DstIn
-                    )
-                }
+            val bottomColors = listOf(Color.Black, Color.Transparent)
+            val bottomEndY = size.height - scrollState.maxValue + scrollState.value
+            val bottomGradientHeight =
+                min(bottomEdgeHeight.toPx(), scrollState.maxValue.toFloat() - scrollState.value)
+            if (bottomGradientHeight > 0f) drawRect(
+                brush = Brush.verticalGradient(
+                    colors = bottomColors,
+                    startY = bottomEndY - bottomGradientHeight,
+                    endY = bottomEndY
+                ),
+                blendMode = BlendMode.DstIn
+            )
+        }
 )
 
 @Composable
@@ -440,16 +504,16 @@ fun Divider() {
 fun RowScope.Avatar(recipient: Recipient) {
     Box(
         modifier = Modifier
-                .width(60.dp)
-                .align(Alignment.CenterVertically)
+            .width(60.dp)
+            .align(Alignment.CenterVertically)
     ) {
         AndroidView(
             factory = {
                 ProfilePictureView(it).apply { update(recipient) }
             },
             modifier = Modifier
-                    .width(46.dp)
-                    .height(46.dp)
+                .width(46.dp)
+                .height(46.dp)
         )
     }
 }
@@ -476,8 +540,8 @@ fun Arc(
 ) {
     Canvas(
         modifier = modifier
-                .padding(strokeWidth)
-                .size(186.dp)
+            .padding(strokeWidth)
+            .size(186.dp)
     ) {
         // Background Line
         drawArc(
@@ -506,8 +570,8 @@ fun RowScope.SessionShieldIcon() {
         painter = painterResource(R.drawable.session_shield),
         contentDescription = null,
         modifier = Modifier
-                .align(Alignment.CenterVertically)
-                .wrapContentSize(unbounded = true)
+            .align(Alignment.CenterVertically)
+            .wrapContentSize(unbounded = true)
     )
 }
 
