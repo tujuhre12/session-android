@@ -140,6 +140,8 @@ class InputBar : RelativeLayout, InputBarEditTextDelegate, QuoteViewDelegate, Li
     }
 
     fun draftQuote(thread: Recipient, message: MessageRecord, glide: GlideRequests) {
+        quoteView?.let(binding.inputBarAdditionalContentContainer::removeView)
+
         quote = message
 
         // If we already have a link preview View then clear the 'additional content' layout so that
