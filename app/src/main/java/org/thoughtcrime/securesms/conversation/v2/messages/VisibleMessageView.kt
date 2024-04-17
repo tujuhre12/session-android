@@ -66,6 +66,7 @@ private const val TAG = "VisibleMessageView"
 
 @AndroidEntryPoint
 class VisibleMessageView : LinearLayout {
+    private var replyDisabled: Boolean = false
     @Inject lateinit var threadDb: ThreadDatabase
     @Inject lateinit var lokiThreadDb: LokiThreadDatabase
     @Inject lateinit var lokiApiDb: LokiAPIDatabase
@@ -136,6 +137,7 @@ class VisibleMessageView : LinearLayout {
         onAttachmentNeedsDownload: (Long, Long) -> Unit,
         lastSentMessageId: Long
     ) {
+        replyDisabled = message.isOpenGroupInvitation
         val threadID = message.threadId
         val thread = threadDb.getRecipientForThreadId(threadID) ?: return
         val isGroupThread = thread.isGroupRecipient
@@ -474,6 +476,7 @@ class VisibleMessageView : LinearLayout {
         } else {
             longPressCallback?.let { gestureHandler.removeCallbacks(it) }
         }
+        if (replyDisabled) return
         if (translationX > 0) { return } // Only allow swipes to the left
         // The idea here is to asymptotically approach a maximum drag distance
         val damping = 50.0f

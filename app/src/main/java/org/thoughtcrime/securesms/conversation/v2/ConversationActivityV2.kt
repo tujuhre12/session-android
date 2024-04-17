@@ -1251,6 +1251,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     // `position` is the adapter position; not the visual position
     private fun handleSwipeToReply(message: MessageRecord) {
+        if (message.isOpenGroupInvitation) return
         val recipient = viewModel.recipient ?: return
         binding?.inputBar?.draftQuote(recipient, message, glide)
     }
