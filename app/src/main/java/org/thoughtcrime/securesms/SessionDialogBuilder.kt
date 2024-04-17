@@ -8,13 +8,14 @@ import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.LinearLayout.VERTICAL
+import android.widget.Space
 import android.widget.TextView
 import androidx.annotation.AttrRes
 import androidx.annotation.LayoutRes
 import androidx.annotation.StringRes
 import androidx.annotation.StyleRes
 import androidx.appcompat.app.AlertDialog
-import androidx.core.view.setPadding
+import androidx.core.view.setMargins
 import androidx.core.view.updateMargins
 import androidx.fragment.app.Fragment
 import network.loki.messenger.R
@@ -36,7 +37,9 @@ class SessionDialogBuilder(val context: Context) {
     private var dialog: AlertDialog? = null
     private fun dismiss() = dialog?.dismiss()
 
-    private val topView = LinearLayout(context).apply { orientation = VERTICAL }
+    private val topView = LinearLayout(context)
+        .apply { setPadding(0, dp20, 0, 0) }
+        .apply { orientation = VERTICAL }
         .also(dialogBuilder::setCustomTitle)
     private val contentView = LinearLayout(context).apply { orientation = VERTICAL }
     private val buttonLayout = LinearLayout(context)
@@ -52,14 +55,14 @@ class SessionDialogBuilder(val context: Context) {
 
     fun title(text: CharSequence?) = title(text?.toString())
     fun title(text: String?) {
-        text(text, R.style.TextAppearance_AppCompat_Title) { setPadding(dp20) }
+        text(text, R.style.TextAppearance_AppCompat_Title) { setPadding(dp20, 0, dp20, 0) }
     }
 
     fun text(@StringRes id: Int, style: Int = 0) = text(context.getString(id), style)
     fun text(text: CharSequence?, @StyleRes style: Int = 0) {
         text(text, style) {
             layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT)
-                .apply { updateMargins(dp40, 0, dp40, dp20) }
+                .apply { updateMargins(dp40, 0, dp40, 0) }
         }
     }
 
@@ -71,6 +74,10 @@ class SessionDialogBuilder(val context: Context) {
                 textAlignment = View.TEXT_ALIGNMENT_CENTER
                 modify()
             }.let(topView::addView)
+
+        Space(context).apply {
+            layoutParams = LinearLayout.LayoutParams(0, dp20)
+        }.let(topView::addView)
     }
 
     fun view(view: View) = contentView.addView(view)
@@ -123,7 +130,8 @@ class SessionDialogBuilder(val context: Context) {
     ) = Button(context, null, 0, style).apply {
             setText(text)
             contentDescription = resources.getString(contentDescriptionRes)
-            layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, dp60, 1f)
+            layoutParams = LinearLayout.LayoutParams(WRAP_CONTENT, dp60, 1f)
+                .apply { setMargins(dp20) }
             setOnClickListener {
                 listener.invoke()
                 if (dismiss) dismiss()

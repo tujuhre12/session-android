@@ -934,7 +934,17 @@ public class ThreadDatabase extends Database {
         readReceiptCount = 0;
       }
 
-      return new ThreadRecord(body, snippetUri, recipient, date, count,
+      MessageRecord lastMessage = null;
+
+      if (count > 0) {
+        MmsSmsDatabase mmsSmsDatabase = DatabaseComponent.get(context).mmsSmsDatabase();
+        long messageTimestamp = mmsSmsDatabase.getLastMessageTimestamp(threadId);
+        if (messageTimestamp > 0) {
+          lastMessage = mmsSmsDatabase.getMessageForTimestamp(messageTimestamp);
+        }
+      }
+
+      return new ThreadRecord(body, snippetUri, lastMessage, recipient, date, count,
                               unreadCount, unreadMentionCount, threadId, deliveryReceiptCount, status, type,
                               distributionType, archived, expiresIn, lastSeen, readReceiptCount, pinned);
     }
