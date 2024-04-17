@@ -131,7 +131,6 @@ class SessionDialogBuilder(val context: Context) {
             setText(text)
             contentDescription = resources.getString(contentDescriptionRes)
             layoutParams = LinearLayout.LayoutParams(WRAP_CONTENT, dp60, 1f)
-                .apply { setMargins(dp20) }
             setOnClickListener {
                 listener.invoke()
                 if (dismiss) dismiss()
