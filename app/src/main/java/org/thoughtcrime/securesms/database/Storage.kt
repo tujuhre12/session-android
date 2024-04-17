@@ -1371,7 +1371,12 @@ open class Storage(
         val threadDB = DatabaseComponent.get(context).threadDatabase()
         val groupDB = DatabaseComponent.get(context).groupDatabase()
         threadDB.deleteConversation(threadID)
-        val recipient = getRecipientForThread(threadID) ?: return
+
+        val recipient = getRecipientForThread(threadID)
+        if (recipient == null) { Log.w(TAG, "Got null recipient when deleting conversation - aborting."); return }
+
+        Log.w("[ACL]", "When deleting conversation, recipient is: ${recipient.name}")
+
         when {
             recipient.isContactRecipient -> {
                 if (recipient.isLocalNumber) return

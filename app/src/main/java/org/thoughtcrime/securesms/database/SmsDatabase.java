@@ -634,7 +634,7 @@ public class SmsDatabase extends MessagingDatabase {
     long threadId = getThreadIdForMessage(messageId);
     db.delete(TABLE_NAME, ID_WHERE, new String[] {messageId+""});
     notifyConversationListeners(threadId);
-    boolean threadDeleted = DatabaseComponent.get(context).threadDatabase().update(threadId, false, true);
+    boolean threadDeleted = DatabaseComponent.get(context).threadDatabase().update(threadId, false, false);
     return threadDeleted;
   }
 
