@@ -1378,25 +1378,22 @@ open class Storage(
             return
         }
 
-        when {
-            // Note: We don't do anything if the thread is a 1-on-1 and the recipient is a contact
-            // of ours (i.e., when recipient.isContactRecipient)
+        // There is nothing further we need to do if this is a 1-on-1 conversation, and it's not
+        // possible to delete communities in this manner so bail.
+        if (recipient.isContactRecipient || recipient.isCommunityRecipient) return
 
-            recipient.isClosedGroupRecipient -> {
-                // TODO: handle closed group
-                val volatile = configFactory.convoVolatile ?: return
-                val groups = configFactory.userGroups ?: return
-                val groupID = recipient.address.toGroupString()
-                val closedGroup = getGroup(groupID)
-                val groupPublicKey = GroupUtil.doubleDecodeGroupId(recipient.address.serialize())
-                if (closedGroup != null) {
-                    groupDB.delete(groupID) // TODO: Should we delete the group? (seems odd to leave it)
-                    volatile.eraseLegacyClosedGroup(groupPublicKey)
-                    groups.eraseLegacyGroup(groupPublicKey)
-                } else {
-                    Log.w("Loki-DBG", "Failed to find a closed group for ${groupPublicKey.take(4)}")
-                }
-            }
+        // If we get here then this is a closed group conversation (i.e., recipient.isClosedGroupRecipient)
+        val volatile = configFactory.convoVolatile ?: return
+        val groups = configFactory.userGroups ?: return
+        val groupID = recipient.address.toGroupString()
+        val closedGroup = getGroup(groupID)
+        val groupPublicKey = GroupUtil.doubleDecodeGroupId(recipient.address.serialize())
+        if (closedGroup != null) {
+            groupDB.delete(groupID)
+            volatile.eraseLegacyClosedGroup(groupPublicKey)
+            groups.eraseLegacyGroup(groupPublicKey)
+        } else {
+            Log.w("Loki-DBG", "Failed to find a closed group for ${groupPublicKey.take(4)}")
         }
     }
 
