@@ -22,15 +22,11 @@ import android.content.Context;
 import android.database.Cursor;
 import android.text.TextUtils;
 import android.util.Pair;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
 import com.annimon.stream.Stream;
-
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 import net.zetetic.database.sqlcipher.SQLiteStatement;
-
 import org.apache.commons.lang3.StringUtils;
 import org.session.libsession.messaging.calls.CallMessageType;
 import org.session.libsession.messaging.messages.signal.IncomingGroupMessage;
@@ -51,7 +47,6 @@ import org.thoughtcrime.securesms.database.model.MessageRecord;
 import org.thoughtcrime.securesms.database.model.ReactionRecord;
 import org.thoughtcrime.securesms.database.model.SmsMessageRecord;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.security.SecureRandom;
