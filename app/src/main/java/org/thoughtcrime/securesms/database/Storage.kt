@@ -99,7 +99,7 @@ private const val TAG = "Storage"
 open class Storage(
     context: Context,
     helper: SQLCipherOpenHelper,
-    private val configFactory: ConfigFactory
+    val configFactory: ConfigFactory
 ) : Database(context, helper), StorageProtocol, ThreadDatabase.ConversationThreadUpdateListener {
 
     override fun threadCreated(address: Address, threadId: Long) {
@@ -1378,12 +1378,9 @@ open class Storage(
         Log.w("[ACL]", "When deleting conversation, recipient is: ${recipient.name}")
 
         when {
-            recipient.isContactRecipient -> {
-                if (recipient.isLocalNumber) return
-                val contacts = configFactory.contacts ?: return
-                contacts.upsertContact(recipient.address.serialize()) { priority = PRIORITY_HIDDEN }
-                ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(context)
-            }
+            // Note: We don't do anything if the thread is a 1-on-1 and the recipient is a contact
+            // of ours (i.e., when recipient.isContactRecipient)
+
             recipient.isClosedGroupRecipient -> {
                 // TODO: handle closed group
                 val volatile = configFactory.convoVolatile ?: return
