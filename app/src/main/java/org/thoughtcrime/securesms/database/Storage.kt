@@ -1373,9 +1373,10 @@ open class Storage(
         threadDB.deleteConversation(threadID)
 
         val recipient = getRecipientForThread(threadID)
-        if (recipient == null) { Log.w(TAG, "Got null recipient when deleting conversation - aborting."); return }
-
-        Log.w("[ACL]", "When deleting conversation, recipient is: ${recipient.name}")
+        if (recipient == null) {
+            Log.w(TAG, "Got null recipient when deleting conversation - aborting.");
+            return
+        }
 
         when {
             // Note: We don't do anything if the thread is a 1-on-1 and the recipient is a contact

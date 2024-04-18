@@ -63,6 +63,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class ThreadDatabase extends Database {
 
@@ -187,8 +188,6 @@ public class ThreadDatabase extends Database {
     notifyConversationListListeners();
   }
 
-  // ACL remove unused method
-  /*
   public void updateSnippet(long threadId, String snippet, @Nullable Uri attachment, long date, long type, boolean unarchive) {
     ContentValues contentValues = new ContentValues(4);
 
@@ -207,7 +206,6 @@ public class ThreadDatabase extends Database {
     db.update(TABLE_NAME, contentValues, ID + " = ?", new String[] {threadId + ""});
     notifyConversationListListeners();
   }
-  */
 
   private void deleteThread(long threadId) {
     Recipient recipient = getRecipientForThreadId(threadId);
@@ -220,15 +218,11 @@ public class ThreadDatabase extends Database {
     }
   }
 
-  // ACL remove unused methods
-  /*
   private void deleteThreads(Set<Long> threadIds) {
     SQLiteDatabase db = databaseHelper.getWritableDatabase();
     String where      = "";
 
-    for (long threadId : threadIds) {
-      where += ID + " = '" + threadId + "' OR ";
-    }
+    for (long threadId : threadIds) { where += ID + " = '" + threadId + "' OR "; }
 
     where = where.substring(0, where.length() - 4);
 
@@ -245,7 +239,6 @@ public class ThreadDatabase extends Database {
     addressCache.clear();
     notifyConversationListListeners();
   }
-  */
 
   public void trimAllThreads(int length, ProgressListener listener) {
     Cursor cursor   = null;
@@ -353,17 +346,14 @@ public class ThreadDatabase extends Database {
     }};
   }
 
-  // ACL remove unused method
-  /*
   public void setDistributionType(long threadId, int distributionType) {
     ContentValues contentValues = new ContentValues(1);
-    contentValues.put(CONVERSATION_TYPE, distributionType);
+    contentValues.put(DISTRIBUTION_TYPE, distributionType);
 
     SQLiteDatabase db = databaseHelper.getWritableDatabase();
     db.update(TABLE_NAME, contentValues, ID_WHERE, new String[] {threadId + ""});
     notifyConversationListListeners();
   }
-  */
 
   public void setDate(long threadId, long date) {
     ContentValues contentValues = new ContentValues(1);
@@ -622,9 +612,6 @@ public class ThreadDatabase extends Database {
   }
 
   public void deleteConversation(long threadId) {
-
-    Log.w("[ACL]", "Hit ThreadDatabase.deleteConversation");
-
     DatabaseComponent.get(context).smsDatabase().deleteThread(threadId);
     DatabaseComponent.get(context).mmsDatabase().deleteThread(threadId);
     DatabaseComponent.get(context).draftDatabase().clearDrafts(threadId);
@@ -736,9 +723,6 @@ public class ThreadDatabase extends Database {
   }
 
   public boolean update(long threadId, boolean unarchive, boolean shouldDeleteOnEmpty) {
-
-    Log.w("[ACL]", "Hit ThreadDatabase.update!");
-
     MmsSmsDatabase mmsSmsDatabase = DatabaseComponent.get(context).mmsSmsDatabase();
     long count                    = mmsSmsDatabase.getConversationCount(threadId);
 

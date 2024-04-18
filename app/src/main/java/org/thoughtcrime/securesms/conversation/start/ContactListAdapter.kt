@@ -4,15 +4,10 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import network.loki.messenger.R
 import network.loki.messenger.databinding.ContactSectionHeaderBinding
 import network.loki.messenger.databinding.ViewContactBinding
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.mms.GlideRequests
-import org.thoughtcrime.securesms.showSessionDialog
-import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 
 sealed class ContactListItem {
     class Header(val name: String) : ContactListItem()
@@ -41,7 +36,7 @@ class ContactListAdapter(
             binding.nameTextView.text = contact.displayName
             binding.root.setOnClickListener { listener(contact.recipient) }
 
-            // TODO: When we implement deleting contacts then probably do it here w/ something like:
+            // TODO: When we implement deleting contacts (hide might be safest) then probably set a long-click listener here w/ something like:
             /*
             binding.root.setOnLongClickListener {
                 Log.w("[ACL]", "Long clicked on contact ${contact.recipient.name}")
