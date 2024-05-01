@@ -1,8 +1,5 @@
 package org.thoughtcrime.securesms.onboarding.recoverypassword
 
-import android.app.Activity
-import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
@@ -13,15 +10,19 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
@@ -35,15 +36,16 @@ import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.CellWithPaddingAndMargin
-import org.thoughtcrime.securesms.ui.GetString
-import org.thoughtcrime.securesms.ui.LocalExtraColors
-import org.thoughtcrime.securesms.ui.OutlineButton
+import org.thoughtcrime.securesms.ui.LocalButtonColor
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionShieldIcon
 import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
 import org.thoughtcrime.securesms.ui.classicDarkColors
 import org.thoughtcrime.securesms.ui.colorDestructive
+import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.components.QrImageCard
+import org.thoughtcrime.securesms.ui.components.SmallButtons
+import org.thoughtcrime.securesms.ui.components.TemporaryStateButton
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.h8
 import org.thoughtcrime.securesms.ui.small
@@ -114,15 +116,17 @@ fun RecoveryPassword(
                 .verticalScroll(rememberScrollState())
                 .padding(bottom = 16.dp)
         ) {
-            RecoveryPasswordCell(seed, copySeed)
-            HideRecoveryPasswordCell(onHide)
+            SmallButtons {
+                RecoveryPasswordCell(seed, copySeed)
+                HideRecoveryPasswordCell(onHide)
+            }
         }
     }
 }
 
 @Composable
 fun RecoveryPasswordCell(seed: String, copySeed:() -> Unit = {}) {
-    val showQr = remember {
+    var showQr by remember {
         mutableStateOf(false)
     }
 
@@ -136,7 +140,7 @@ fun RecoveryPasswordCell(seed: String, copySeed:() -> Unit = {}) {
 
             Text(stringResource(R.string.recoveryPasswordDescription))
 
-            AnimatedVisibility(!showQr.value) {
+            AnimatedVisibility(!showQr) {
                 Text(
                     seed,
                     modifier = Modifier
@@ -149,62 +153,70 @@ fun RecoveryPasswordCell(seed: String, copySeed:() -> Unit = {}) {
                         )
                         .padding(24.dp),
                     style = MaterialTheme.typography.small.copy(fontFamily = FontFamily.Monospace),
-                    color = LocalExtraColors.current.prominentButtonColor,
+                    color = MaterialTheme.colors.run { if (isLight) onSurface else secondary },
                 )
             }
 
             AnimatedVisibility(
-                showQr.value,
-                modifier = Modifier.align(Alignment.CenterHorizontally).padding(vertical = 24.dp)
+                showQr,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
             ) {
                 QrImageCard(
                     seed,
+                    modifier = Modifier.padding(vertical = 24.dp),
                     contentDescription = "QR code of your recovery password",
                     icon = R.drawable.session_shield
                 )
             }
 
-            AnimatedVisibility(!showQr.value) {
+            AnimatedVisibility(!showQr) {
                 Row(horizontalArrangement = Arrangement.spacedBy(32.dp)) {
-                    OutlineButton(
-                        modifier = Modifier.weight(1f),
-                        color = MaterialTheme.colors.onPrimary,
-                        onClick = copySeed,
-                        temporaryContent = { Text(stringResource(R.string.copied)) }
-                    ) {
-                        Text(stringResource(R.string.copy))
+                    TemporaryStateButton { source, temporary ->
+                        OutlineButton(
+                            modifier = Modifier.weight(1f),
+                            interactionSource = source,
+                            onClick = { copySeed() },
+                        ) {
+                            AnimatedVisibility(temporary) { Text(stringResource(R.string.copied)) }
+                            AnimatedVisibility(!temporary) { Text(stringResource(R.string.copy)) }
+                        }
                     }
-                    OutlineButton(text = stringResource(R.string.qrView), modifier = Modifier.weight(1f), color = MaterialTheme.colors.onPrimary) { showQr.toggle() }
+                    OutlineButton(textId = R.string.qrView, modifier = Modifier.weight(1f), onClick = { showQr = !showQr })
                 }
             }
 
-            AnimatedVisibility(showQr.value, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+            AnimatedVisibility(showQr, modifier = Modifier.align(Alignment.CenterHorizontally)) {
                 OutlineButton(
-                    text = stringResource(R.string.recoveryPasswordView),
-                    color = MaterialTheme.colors.onPrimary,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                ) { showQr.toggle() }
+                    textId = R.string.recoveryPasswordView,
+                    onClick = { showQr = !showQr }
+                )
             }
         }
     }
 }
 
-private fun MutableState<Boolean>.toggle() { value = !value }
-
 @Composable
 fun HideRecoveryPasswordCell(onHide: () -> Unit = {}) {
     CellWithPaddingAndMargin {
         Row {
-            Column(Modifier.weight(1f)) {
+            Column(
+                Modifier.weight(1f)
+            ) {
                 Text(text = stringResource(R.string.recoveryPasswordHideRecoveryPassword), style = MaterialTheme.typography.h8)
                 Text(text = stringResource(R.string.recoveryPasswordHideRecoveryPasswordDescription))
             }
-            OutlineButton(
-                stringResource(R.string.hide),
-                contentDescription = GetString(R.string.AccessibilityId_hide_recovery_password_button),
-                modifier = Modifier.align(Alignment.CenterVertically),
-                color = colorDestructive
-            ) { onHide() }
+            CompositionLocalProvider(
+                LocalButtonColor provides colorDestructive,
+            ) {
+                OutlineButton(
+                    textId = R.string.hide,
+                    modifier = Modifier
+                        .wrapContentWidth()
+                        .align(Alignment.CenterVertically)
+                        .contentDescription(R.string.AccessibilityId_hide_recovery_password_button),
+                    onClick = onHide
+                )
+            }
         }
     }
 }

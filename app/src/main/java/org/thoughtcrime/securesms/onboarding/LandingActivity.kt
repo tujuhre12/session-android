@@ -32,15 +32,14 @@ import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.onboarding.pickname.startPickDisplayNameActivity
 import org.thoughtcrime.securesms.service.KeyCachingService
 import org.thoughtcrime.securesms.showOpenUrlDialog
-import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.ui.AppTheme
-import org.thoughtcrime.securesms.ui.BorderlessButton
-import org.thoughtcrime.securesms.ui.FilledButton
 import org.thoughtcrime.securesms.ui.GetString
-import org.thoughtcrime.securesms.ui.OutlineButton
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
 import org.thoughtcrime.securesms.ui.classicDarkColors
+import org.thoughtcrime.securesms.ui.components.BorderlessButton
+import org.thoughtcrime.securesms.ui.components.FilledButton
+import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.session_accent
 import org.thoughtcrime.securesms.util.setUpActionBarSessionLogo
@@ -94,28 +93,30 @@ class LandingActivity : BaseActionBarActivity() {
             OutlineButton(
                 text = stringResource(R.string.onboardingAccountCreate),
                 modifier = Modifier
+                    .contentDescription(R.string.AccessibilityId_create_account_button)
                     .width(262.dp)
                     .align(Alignment.CenterHorizontally),
-                contentDescription = GetString(R.string.AccessibilityId_create_account_button)
-            ) { startPickDisplayNameActivity() }
+                onClick = ::startPickDisplayNameActivity
+            )
             Spacer(modifier = Modifier.height(14.dp))
             FilledButton(
                 text = stringResource(R.string.onboardingAccountExists),
                 modifier = Modifier
                     .width(262.dp)
-                    .align(Alignment.CenterHorizontally),
-                contentDescription = GetString(R.string.AccessibilityId_restore_account_button)
+                    .align(Alignment.CenterHorizontally)
+                    .contentDescription(R.string.AccessibilityId_restore_account_button)
             ) { startLinkDeviceActivity() }
             Spacer(modifier = Modifier.height(8.dp))
             BorderlessButton(
                 text = stringResource(R.string.onboardingTosPrivacy),
                 modifier = Modifier
                     .width(262.dp)
-                    .align(Alignment.CenterHorizontally),
-                contentDescription = GetString(R.string.AccessibilityId_privacy_policy_link),
+                    .align(Alignment.CenterHorizontally)
+                    .contentDescription(R.string.AccessibilityId_privacy_policy_link),
                 fontSize = 11.sp,
-                lineHeight = 13.sp
-            ) { openDialog() }
+                lineHeight = 13.sp,
+                onClick = ::openDialog
+            )
             Spacer(modifier = Modifier.height(8.dp))
         }
     }
@@ -136,44 +137,44 @@ class LandingActivity : BaseActionBarActivity() {
     private fun open(url: String) {
         Intent(Intent.ACTION_VIEW, Uri.parse(url)).let(::startActivity)
     }
+}
 
-    @Composable
-    private fun IncomingText(text: String) {
-        ChatText(
-            text,
-            color = classicDarkColors[2]
-        )
-    }
+@Composable
+private fun IncomingText(text: String) {
+    ChatText(
+        text,
+        color = classicDarkColors[2]
+    )
+}
 
-    @Composable
-    private fun ColumnScope.OutgoingText(text: String) {
-        ChatText(
-            text,
-            color = session_accent,
-            textColor = MaterialTheme.colors.primary,
-            modifier = Modifier.align(Alignment.End)
-        )
-    }
+@Composable
+private fun ColumnScope.OutgoingText(text: String) {
+    ChatText(
+        text,
+        color = session_accent,
+        textColor = MaterialTheme.colors.primary,
+        modifier = Modifier.align(Alignment.End)
+    )
+}
 
-    @Composable
-    private fun ChatText(
-        text: String,
-        color: Color,
-        modifier: Modifier = Modifier,
-        textColor: Color = Color.Unspecified
-    ) {
-        Text(
-            text,
-            fontSize = 16.sp,
-            lineHeight = 19.sp,
-            color = textColor,
-            modifier = modifier
-                .fillMaxWidth(0.666f)
-                .background(
-                    color = color,
-                    shape = RoundedCornerShape(size = 13.dp)
-                )
-                .padding(horizontal = 16.dp, vertical = 12.dp)
-        )
-    }
+@Composable
+private fun ChatText(
+    text: String,
+    color: Color,
+    modifier: Modifier = Modifier,
+    textColor: Color = Color.Unspecified
+) {
+    Text(
+        text,
+        fontSize = 16.sp,
+        lineHeight = 19.sp,
+        color = textColor,
+        modifier = modifier
+            .fillMaxWidth(0.666f)
+            .background(
+                color = color,
+                shape = RoundedCornerShape(size = 13.dp)
+            )
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+    )
 }

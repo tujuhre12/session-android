@@ -19,12 +19,15 @@ import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.interaction.InteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material.Card
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -84,19 +87,16 @@ import org.thoughtcrime.securesms.preferences.appearance.AppearanceSettingsActiv
 import org.thoughtcrime.securesms.profiles.ProfileMediaConstraints
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.ui.AppTheme
-import org.thoughtcrime.securesms.ui.BorderlessButton
 import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.ItemButton
 import org.thoughtcrime.securesms.ui.ItemButtonWithDrawable
-import org.thoughtcrime.securesms.ui.OutlineButton
-import org.thoughtcrime.securesms.ui.PreviewTheme
-import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
+import org.thoughtcrime.securesms.ui.components.OutlineButton
+import org.thoughtcrime.securesms.ui.components.TemporaryStateButton
 import org.thoughtcrime.securesms.ui.destructiveButtonColors
 import org.thoughtcrime.securesms.util.BitmapDecodingException
 import org.thoughtcrime.securesms.util.BitmapUtil
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
-import org.thoughtcrime.securesms.util.disableClipping
 import org.thoughtcrime.securesms.util.push
 import org.thoughtcrime.securesms.util.show
 import java.io.File
@@ -429,20 +429,25 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
     fun Buttons() {
         Column {
             Row(
-                modifier = Modifier.padding(horizontal = 24.dp),
+                modifier = Modifier.padding(horizontal = 24.dp).padding(top = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 OutlineButton(
                     modifier = Modifier.weight(1f),
-                    onClick = { sharePublicKey() }
-                ) { Text(stringResource(R.string.share)) }
-
-                OutlineButton(
-                    modifier = Modifier.weight(1f),
-                    onClick = { copyPublicKey() },
-                    temporaryContent = { Text(stringResource(R.string.copied)) }
+                    onClick = ::sharePublicKey
                 ) {
-                    Text(stringResource(R.string.copy))
+                    Text(stringResource(R.string.share))
+                }
+
+                TemporaryStateButton { source, temporary ->
+                    OutlineButton(
+                        modifier = Modifier.weight(1f),
+                        interactionSource = source,
+                        onClick = { copyPublicKey() },
+                    ) {
+                        AnimatedVisibility(temporary) { Text(stringResource(R.string.copied)) }
+                        AnimatedVisibility(!temporary) { Text(stringResource(R.string.copy)) }
+                    }
                 }
             }
             

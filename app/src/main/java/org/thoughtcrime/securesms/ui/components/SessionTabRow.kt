@@ -19,7 +19,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
-import org.thoughtcrime.securesms.ui.LocalExtraColors
+import org.thoughtcrime.securesms.ui.LocalButtonColor
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
 
@@ -31,7 +31,7 @@ fun SessionTabRow(pagerState: PagerState, titles: List<Int>) {
     TabRow(
             backgroundColor = Color.Unspecified,
             selectedTabIndex = pagerState.currentPage,
-            contentColor = LocalExtraColors.current.prominentButtonColor,
+            contentColor = LocalButtonColor.current,
             divider = { TabRowDefaults.Divider(color = MaterialTheme.colors.onPrimary.copy(alpha = TabRowDefaults.DividerOpacity)) },
             modifier = Modifier
                 .height(48.dp)

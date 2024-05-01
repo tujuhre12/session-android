@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.conversation.disappearingmessages.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,8 +25,8 @@ import org.thoughtcrime.securesms.ui.Callbacks
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.NoOpCallbacks
 import org.thoughtcrime.securesms.ui.OptionsCard
-import org.thoughtcrime.securesms.ui.OutlineButton
 import org.thoughtcrime.securesms.ui.RadioOption
+import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.fadingEdges
 
@@ -64,9 +65,9 @@ fun DisappearingMessages(
         }
 
         if (state.showSetButton) OutlineButton(
-            GetString(R.string.disappearing_messages_set_button_title),
+            textId = R.string.disappearing_messages_set_button_title,
             modifier = Modifier
-                .contentDescription(GetString(R.string.AccessibilityId_set_button))
+                .contentDescription(R.string.AccessibilityId_set_button)
                 .align(Alignment.CenterHorizontally)
                 .padding(bottom = 20.dp),
             onClick = callbacks::onSetClick

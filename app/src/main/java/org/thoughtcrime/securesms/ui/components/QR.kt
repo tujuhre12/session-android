@@ -52,7 +52,6 @@ import kotlinx.coroutines.flow.emptyFlow
 import network.loki.messenger.R
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.onboarding.Analyzer
-import org.thoughtcrime.securesms.ui.OutlineButton
 import java.util.concurrent.Executors
 
 typealias CameraPreview = androidx.camera.core.Preview
@@ -96,17 +95,18 @@ fun MaybeScanQrCode(
                 )
                 Spacer(modifier = Modifier.size(20.dp))
                 OutlineButton(
-                    text = stringResource(R.string.sessionSettings),
                     modifier = Modifier.align(Alignment.CenterHorizontally),
                     onClick = onClickSettings
-                )
+                ) {
+                    Text(stringResource(R.string.sessionSettings))
+                }
             }
         } else {
             OutlineButton(
-                text = stringResource(R.string.cameraGrantAccess),
-                modifier = Modifier.align(Alignment.Center)
+                modifier = Modifier.align(Alignment.Center),
+                onClick = { cameraPermissionState.run { launchPermissionRequest() } }
             ) {
-                cameraPermissionState.run { launchPermissionRequest() }
+                Text(stringResource(R.string.cameraGrantAccess))
             }
         }
     }
@@ -173,12 +173,12 @@ fun ScanQrCode(errors: Flow<String>, onScan: (String) -> Unit) {
             )
 
             Box(
-                    Modifier
-                            .aspectRatio(1f)
-                            .padding(20.dp)
-                            .clip(shape = RoundedCornerShape(20.dp))
-                            .background(Color(0x33ffffff))
-                            .align(Alignment.Center)
+                Modifier
+                    .aspectRatio(1f)
+                    .padding(20.dp)
+                    .clip(shape = RoundedCornerShape(20.dp))
+                    .background(Color(0x33ffffff))
+                    .align(Alignment.Center)
             )
         }
     }

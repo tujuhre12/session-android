@@ -1,14 +1,13 @@
 package org.thoughtcrime.securesms.ui
 
-import android.graphics.drawable.BitmapDrawable
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -27,7 +26,6 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Button
 import androidx.compose.material.ButtonColors
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Card
@@ -35,12 +33,14 @@ import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Colors
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.Icon
+import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedButton
 import androidx.compose.material.RadioButton
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -49,6 +49,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Size
@@ -57,7 +58,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
@@ -71,10 +71,9 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.content.res.ResourcesCompat
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.recipients.Recipient
@@ -83,155 +82,6 @@ import org.thoughtcrime.securesms.components.ProfilePictureView
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.OptionsCard
 import kotlin.math.min
 import kotlin.math.roundToInt
-import kotlin.time.Duration.Companion.seconds
-
-@Composable
-fun OutlineButton(
-    text: String,
-    modifier: Modifier = Modifier,
-    contentDescription: GetString = GetString(text),
-    color: Color = LocalExtraColors.current.prominentButtonColor,
-    loading: Boolean = false,
-    onClick: () -> Unit
-) {
-    OutlinedButton(
-        modifier = modifier.contentDescription(contentDescription),
-        onClick = onClick,
-        border = BorderStroke(1.dp, color),
-        shape = RoundedCornerShape(50), // = 50% percent
-        colors = ButtonDefaults.outlinedButtonColors(
-            contentColor = color,
-            backgroundColor = Color.Unspecified
-        )
-    ) {
-        AnimatedVisibility(loading) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(20.dp),
-                color = color,
-                strokeWidth = 2.dp
-            )
-        }
-        AnimatedVisibility(!loading) { Text(text = text) }
-    }
-}
-
-@Composable
-fun OutlineButton(
-    modifier: Modifier = Modifier,
-    color: Color = LocalExtraColors.current.prominentButtonColor,
-    onClick: () -> Unit = {},
-    content: @Composable () -> Unit = {}
-) {
-    OutlinedButton(
-        modifier = modifier,
-        onClick = onClick,
-        border = BorderStroke(1.dp, color),
-        shape = RoundedCornerShape(percent = 50),
-        colors = ButtonDefaults.outlinedButtonColors(
-            contentColor = color,
-            backgroundColor = Color.Unspecified
-        )
-    ) {
-        content()
-    }
-}
-
-@Composable
-fun OutlineButton(
-    temporaryContent: @Composable () -> Unit,
-    modifier: Modifier = Modifier,
-    color: Color = LocalExtraColors.current.prominentButtonColor,
-    onClick: () -> Unit = {},
-    content: @Composable () -> Unit = {}
-) {
-    var clicked by remember { mutableStateOf(false) }
-    if (clicked) LaunchedEffectAsync {
-        delay(2.seconds)
-        clicked = false
-    }
-
-    OutlinedButton(
-        modifier = modifier,
-        onClick = {
-            onClick()
-            clicked = true
-        },
-        border = BorderStroke(1.dp, color),
-        shape = RoundedCornerShape(percent = 50),
-        colors = ButtonDefaults.outlinedButtonColors(
-            contentColor = color,
-            backgroundColor = Color.Unspecified
-        )
-    ) {
-        AnimatedVisibility(clicked) {
-            temporaryContent()
-        }
-        AnimatedVisibility(!clicked) {
-            content()
-        }
-    }
-}
-
-@Composable
-fun FilledButton(
-    text: String,
-    modifier: Modifier = Modifier,
-    contentDescription: GetString? = GetString(text),
-    onClick: () -> Unit) {
-    OutlinedButton(
-        modifier = modifier.size(108.dp, 34.dp),
-        onClick = onClick,
-        shape = RoundedCornerShape(50), // = 50% percent
-        colors = ButtonDefaults.outlinedButtonColors(
-            contentColor = MaterialTheme.colors.background,
-            backgroundColor = LocalExtraColors.current.prominentButtonColor
-        )
-    ) {
-        Text(text = text)
-    }
-}
-
-@Composable
-fun BorderlessButtonSecondary(
-    text: String,
-    onClick: () -> Unit
-) {
-    BorderlessButton(
-        text,
-        contentColor = MaterialTheme.colors.onSurface.copy(ContentAlpha.medium),
-        onClick = onClick
-    )
-}
-
-@Composable
-fun BorderlessButton(
-    text: String,
-    modifier: Modifier = Modifier,
-    contentDescription: GetString = GetString(text),
-    fontSize: TextUnit = TextUnit.Unspecified,
-    lineHeight: TextUnit = TextUnit.Unspecified,
-    contentColor: Color = MaterialTheme.colors.onBackground,
-    backgroundColor: Color = Color.Transparent,
-    onClick: () -> Unit
-) {
-    TextButton(
-        onClick = onClick,
-        modifier = modifier.contentDescription(contentDescription),
-        shape = RoundedCornerShape(percent = 50),
-        colors = ButtonDefaults.outlinedButtonColors(
-            contentColor = contentColor,
-            backgroundColor = backgroundColor
-        )
-    ) {
-        Text(
-            text = text,
-            textAlign = TextAlign.Center,
-            fontSize = fontSize,
-            lineHeight = lineHeight,
-            modifier = Modifier.padding(horizontal = 2.dp)
-        )
-    }
-}
 
 interface Callbacks<in T> {
     fun onSetClick(): Any?
@@ -367,16 +217,18 @@ fun CellWithPaddingAndMargin(
     margin: Dp = 32.dp,
     content: @Composable () -> Unit
 ) {
-    Card(
-        backgroundColor = MaterialTheme.colors.cellColor,
-        shape = RoundedCornerShape(16.dp),
-        elevation = 0.dp,
-        modifier = Modifier
-            .wrapContentHeight()
-            .fillMaxWidth()
-            .padding(horizontal = margin),
-    ) {
-        Box(Modifier.padding(padding)) { content() }
+    CompositionLocalProvider(LocalButtonColor provides MaterialTheme.colors.onPrimary) {
+        Card(
+            backgroundColor = LocalCellColor.current,
+            shape = RoundedCornerShape(16.dp),
+            elevation = 0.dp,
+            modifier = Modifier
+                .wrapContentHeight()
+                .fillMaxWidth()
+                .padding(horizontal = margin),
+        ) {
+            Box(Modifier.padding(padding)) { content() }
+        }
     }
 }
 
@@ -434,26 +286,9 @@ fun Modifier.contentDescription(id: Int?): Modifier {
 }
 
 @Composable
-fun OutlineButton(text: GetString, contentDescription: GetString? = text, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    OutlinedButton(
-        modifier = modifier
-            .size(108.dp, 34.dp)
-            .contentDescription(contentDescription),
-        onClick = onClick,
-        border = BorderStroke(1.dp, LocalExtraColors.current.prominentButtonColor),
-        shape = RoundedCornerShape(50), // = 50% percent
-        colors = ButtonDefaults.outlinedButtonColors(
-            contentColor = LocalExtraColors.current.prominentButtonColor,
-            backgroundColor = MaterialTheme.colors.background
-        )
-    ){
-        Text(text = text())
-    }
+fun Modifier.contentDescription(text: String?): Modifier {
+    return text?.let { semantics { contentDescription = it } } ?: this
 }
-
-private val Colors.cellColor: Color
-    @Composable
-    get() = LocalExtraColors.current.settingsBackground
 
 fun Modifier.fadingEdges(
     scrollState: ScrollState,
@@ -577,5 +412,20 @@ fun RowScope.SessionShieldIcon() {
 
 @Composable
 fun LaunchedEffectAsync(block: suspend CoroutineScope.() -> Unit) {
-    rememberCoroutineScope().apply { LaunchedEffect(Unit) { launch { block() } } }
+    val scope = rememberCoroutineScope()
+    LaunchedEffect(Unit) { scope.launch(Dispatchers.IO) { block() } }
+}
+
+@Composable
+fun LoadingArcOr(loading: Boolean, content: @Composable () -> Unit) {
+    AnimatedVisibility(loading) {
+        CircularProgressIndicator(
+            modifier = Modifier.size(20.dp),
+            color = LocalContentColor.current,
+            strokeWidth = 2.dp
+        )
+    }
+    AnimatedVisibility(!loading) {
+        content()
+    }
 }

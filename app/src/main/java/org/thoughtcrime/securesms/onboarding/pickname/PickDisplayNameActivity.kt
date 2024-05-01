@@ -36,10 +36,10 @@ import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.onboarding.messagenotifications.startPNModeActivity
 import org.thoughtcrime.securesms.ui.AppTheme
-import org.thoughtcrime.securesms.ui.OutlineButton
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.baseBold
+import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.outlinedTextFieldColors
 import org.thoughtcrime.securesms.util.setUpActionBarSessionLogo
@@ -129,11 +129,12 @@ class PickDisplayNameActivity : BaseActionBarActivity() {
             Spacer(modifier = Modifier.weight(2f))
 
             OutlineButton(
-                stringResource(R.string.continue_2),
+                textId = R.string.continue_2,
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
-                    .width(262.dp)
-            ) { onContinue() }
+                    .width(262.dp),
+                onClick = onContinue,
+            )
         }
     }
 }

@@ -27,15 +27,10 @@ import com.google.accompanist.themeadapter.appcompat.createAppCompatTheme
 import com.google.android.material.color.MaterialColors
 import network.loki.messenger.R
 
-val LocalExtraColors = staticCompositionLocalOf<ExtraColors> { error("No Custom Attribute value provided") }
-
-
-data class ExtraColors(
-    val settingsBackground: Color,
-    val prominentButtonColor: Color,
-    val lightCell: Color,
-    val onLightCell: Color,
-)
+val LocalCellColor = staticCompositionLocalOf { Color.Black }
+val LocalButtonColor = staticCompositionLocalOf { Color.Black }
+val LocalLightCell = staticCompositionLocalOf { Color.Black }
+val LocalOnLightCell = staticCompositionLocalOf { Color.Black }
 
 /**
  * Converts current Theme to Compose Theme.
@@ -46,19 +41,16 @@ fun AppTheme(
 ) {
     val context = LocalContext.current
 
-    val extraColors = context.run {
-        ExtraColors(
-            settingsBackground = getColorFromTheme(R.attr.colorSettingsBackground),
-            prominentButtonColor = getColorFromTheme(R.attr.prominentButtonColor),
-            lightCell = getColorFromTheme(R.attr.lightCell),
-            onLightCell = getColorFromTheme(R.attr.onLightCell),
-        )
-    }
-
     val surface = context.getColorFromTheme(R.attr.colorSettingsBackground)
 
-
-    CompositionLocalProvider(LocalExtraColors provides extraColors) {
+    CompositionLocalProvider(
+        *listOf(
+            LocalCellColor to R.attr.colorSettingsBackground,
+            LocalButtonColor to R.attr.prominentButtonColor,
+            LocalLightCell to R.attr.lightCell,
+            LocalOnLightCell to R.attr.onLightCell
+        ).map { (local, attr) -> local provides context.getColorFromTheme(attr) }.toTypedArray()
+    ) {
         AppCompatTheme(surface = surface) {
             CompositionLocalProvider(LocalTextSelectionColors provides TextSelectionColors(
                 handleColor = MaterialTheme.colors.secondary,

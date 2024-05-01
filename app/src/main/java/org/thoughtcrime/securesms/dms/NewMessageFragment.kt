@@ -1,12 +1,10 @@
 package org.thoughtcrime.securesms.dms
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -17,13 +15,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -41,14 +39,16 @@ import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.showOpenUrlDialog
 import org.thoughtcrime.securesms.ui.AppTheme
-import org.thoughtcrime.securesms.ui.BorderlessButtonSecondary
-import org.thoughtcrime.securesms.ui.OutlineButton
+import org.thoughtcrime.securesms.ui.LoadingArcOr
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
 import org.thoughtcrime.securesms.ui.components.AppBar
+import org.thoughtcrime.securesms.ui.components.BorderlessButtonSecondary
 import org.thoughtcrime.securesms.ui.components.MaybeScanQrCode
+import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
+import org.thoughtcrime.securesms.ui.contentDescription
 
 @AndroidEntryPoint
 class NewMessageFragment : Fragment() {
@@ -157,12 +157,16 @@ fun EnterAccountId(
         Spacer(modifier = Modifier.weight(1f))
 
         OutlineButton(
-            text = stringResource(id = R.string.continue_2),
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
                 .padding(horizontal = 64.dp, vertical = 20.dp)
-                .width(200.dp),
-            loading = state.loading
-        ) { callbacks.onContinue() }
+                .width(200.dp)
+                .contentDescription(R.string.continue_2),
+            onClick = { callbacks.onContinue() }
+        ) {
+            LoadingArcOr(state.loading) {
+                Text(stringResource(R.string.continue_2))
+            }
+        }
     }
 }

@@ -40,9 +40,9 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.ui.AppTheme
-import org.thoughtcrime.securesms.ui.OutlineButton
 import org.thoughtcrime.securesms.ui.baseBold
 import org.thoughtcrime.securesms.ui.components.MaybeScanQrCode
+import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
 import org.thoughtcrime.securesms.ui.contentDescription
@@ -150,12 +150,13 @@ fun RecoveryPassword(state: LinkDeviceState, onChange: (String) -> Unit = {}, on
         }
         Spacer(Modifier.weight(2f))
         OutlineButton(
-            text = stringResource(id = R.string.continue_2),
+            textId = R.string.continue_2,
             modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .padding(horizontal = 64.dp, vertical = 20.dp)
-                    .width(200.dp)
-        ) { onContinue() }
+                .align(Alignment.CenterHorizontally)
+                .padding(horizontal = 64.dp, vertical = 20.dp)
+                .width(200.dp),
+            onClick = onContinue
+        )
     }
 }
 
