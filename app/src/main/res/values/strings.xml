@@ -1094,6 +1094,8 @@
     <string name="hide">Hide</string>
     <string name="recoveryPasswordHideRecoveryPassword">Hide Recovery Password</string>
     <string name="qrView">View QR</string>
+    <string name="view">View</string>
+    <string name="scan">Scan</string>
     <string name="recoveryPasswordView">View Password</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Permanently hide your recovery password on this device.</string>
     <string name="conversationsNone">You don\'t have any conversations yet</string>

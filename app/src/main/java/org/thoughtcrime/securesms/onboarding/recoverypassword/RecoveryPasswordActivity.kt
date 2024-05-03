@@ -43,7 +43,7 @@ import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
 import org.thoughtcrime.securesms.ui.classicDarkColors
 import org.thoughtcrime.securesms.ui.colorDestructive
 import org.thoughtcrime.securesms.ui.components.OutlineButton
-import org.thoughtcrime.securesms.ui.components.QrImageCard
+import org.thoughtcrime.securesms.ui.components.QrImage
 import org.thoughtcrime.securesms.ui.components.SmallButtons
 import org.thoughtcrime.securesms.ui.components.TemporaryStateButton
 import org.thoughtcrime.securesms.ui.contentDescription
@@ -161,7 +161,7 @@ fun RecoveryPasswordCell(seed: String, copySeed:() -> Unit = {}) {
                 showQr,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             ) {
-                QrImageCard(
+                QrImage(
                     seed,
                     modifier = Modifier.padding(vertical = 24.dp),
                     contentDescription = "QR code of your recovery password",

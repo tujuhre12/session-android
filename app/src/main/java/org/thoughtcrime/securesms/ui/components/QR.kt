@@ -58,13 +58,6 @@ typealias CameraPreview = androidx.camera.core.Preview
 
 private const val TAG = "NewMessageFragment"
 
-@Composable
-fun MaybeScanQrCode(errors: Flow<String> = emptyFlow()) {
-    LocalContext.current.run {
-        MaybeScanQrCode(onScan = {})
-    }
-}
-
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun MaybeScanQrCode(

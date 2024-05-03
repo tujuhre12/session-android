@@ -43,6 +43,7 @@ import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.session_accent
 import org.thoughtcrime.securesms.util.setUpActionBarSessionLogo
+import org.thoughtcrime.securesms.util.start
 
 class LandingActivity : BaseActionBarActivity() {
 
@@ -105,7 +106,7 @@ class LandingActivity : BaseActionBarActivity() {
                     .width(262.dp)
                     .align(Alignment.CenterHorizontally)
                     .contentDescription(R.string.AccessibilityId_restore_account_button)
-            ) { startLinkDeviceActivity() }
+            ) { start<LinkDeviceActivity>() }
             Spacer(modifier = Modifier.height(8.dp))
             BorderlessButton(
                 text = stringResource(R.string.onboardingTosPrivacy),

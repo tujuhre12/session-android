@@ -102,6 +102,7 @@ data class ThemeState (
     val followSystem: Boolean
 )
 
-inline fun <reified T: Activity> Context.start() = Intent(this, T::class.java).also(::startActivity)
 inline fun <reified T: Activity> Activity.show() = Intent(this, T::class.java).also(::startActivity).also { overridePendingTransition(R.anim.slide_from_bottom, R.anim.fade_scale_out) }
 inline fun <reified T: Activity> Activity.push() = Intent(this, T::class.java).also(::startActivity).also { overridePendingTransition(R.anim.slide_from_right, R.anim.fade_scale_out) }
+inline fun <reified T: Activity> Context.start() = Intent(this, T::class.java).also(::startActivity)
+inline fun <reified T: Activity> Context.start(modify: Intent.() -> Unit) = Intent(this, T::class.java).also(modify).also(::startActivity)

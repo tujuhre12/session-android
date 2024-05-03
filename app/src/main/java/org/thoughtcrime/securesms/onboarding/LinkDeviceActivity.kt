@@ -1,8 +1,6 @@
 package org.thoughtcrime.securesms.onboarding
 
 import android.annotation.SuppressLint
-import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.camera.core.ExperimentalGetImage
@@ -158,10 +156,6 @@ fun RecoveryPassword(state: LinkDeviceState, onChange: (String) -> Unit = {}, on
             onClick = onContinue
         )
     }
-}
-
-fun Context.startLinkDeviceActivity() {
-    Intent(this, LinkDeviceActivity::class.java).let(::startActivity)
 }
 
 class Analyzer(
