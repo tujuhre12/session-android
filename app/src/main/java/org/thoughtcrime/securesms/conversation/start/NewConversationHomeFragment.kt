@@ -4,26 +4,33 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.content.ContextCompat
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.Divider
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
-import androidx.recyclerview.widget.DividerItemDecoration
-import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
-import network.loki.messenger.databinding.FragmentNewConversationHomeBinding
-import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsignal.utilities.PublicKeyValidation
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent
-import org.thoughtcrime.securesms.mms.GlideApp
+import org.thoughtcrime.securesms.ui.AppTheme
+import org.thoughtcrime.securesms.ui.ItemButton
+import org.thoughtcrime.securesms.ui.classicDarkColors
+import org.thoughtcrime.securesms.ui.components.AppBar
+import org.thoughtcrime.securesms.ui.components.QrImage
+import org.thoughtcrime.securesms.ui.medium
+import org.thoughtcrime.securesms.ui.small
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class NewConversationHomeFragment : Fragment() {
-
-    private lateinit var binding: FragmentNewConversationHomeBinding
-    private val viewModel: NewConversationHomeViewModel by viewModels()
 
     @Inject
     lateinit var textSecurePreferences: TextSecurePreferences
@@ -31,40 +38,35 @@ class NewConversationHomeFragment : Fragment() {
     lateinit var delegate: NewConversationDelegate
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View {
-        binding = FragmentNewConversationHomeBinding.inflate(inflater)
-        return binding.root
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        binding.closeButton.setOnClickListener { delegate.onDialogClosePressed() }
-        binding.createPrivateChatButton.setOnClickListener { delegate.onNewMessageSelected() }
-        binding.createClosedGroupButton.setOnClickListener { delegate.onCreateGroupSelected() }
-        binding.joinCommunityButton.setOnClickListener { delegate.onJoinCommunitySelected() }
-        val adapter = ContactListAdapter(requireContext(), GlideApp.with(requireContext())) {
-            delegate.onContactSelected(it.address.serialize())
-        }
-        val unknownSectionTitle = getString(R.string.new_conversation_unknown_contacts_section_title)
-        val recipients = viewModel.recipients.value?.filter { !it.isGroupRecipient && it.address.serialize() != textSecurePreferences.getLocalNumber()!! } ?: emptyList()
-        val contactGroups = recipients.map {
-            val sessionId = it.address.serialize()
-            val contact = DatabaseComponent.get(requireContext()).sessionContactDatabase().getContactWithSessionID(sessionId)
-            val displayName = contact?.displayName(Contact.ContactContext.REGULAR) ?: sessionId
-            ContactListItem.Contact(it, displayName)
-        }.sortedBy { it.displayName }
-            .groupBy { if (PublicKeyValidation.isValid(it.displayName)) unknownSectionTitle else it.displayName.firstOrNull()?.uppercase() ?: unknownSectionTitle }
-            .toMutableMap()
-        contactGroups.remove(unknownSectionTitle)?.let { contactGroups.put(unknownSectionTitle, it) }
-        adapter.items = contactGroups.flatMap { entry -> listOf(ContactListItem.Header(entry.key)) + entry.value }
-        binding.contactsRecyclerView.adapter = adapter
-        val divider = ContextCompat.getDrawable(requireActivity(), R.drawable.conversation_menu_divider)!!.let {
-            DividerItemDecoration(requireActivity(), RecyclerView.VERTICAL).apply {
-                setDrawable(it)
+    ): View = ComposeView(requireContext()).apply {
+        setContent {
+            AppTheme {
+                NewConversationScreen()
             }
         }
-        binding.contactsRecyclerView.addItemDecoration(divider)
+    }
+
+    @Composable
+    fun NewConversationScreen() {
+        Column {
+            AppBar(stringResource(R.string.dialog_new_conversation_title), onClose = { delegate.onDialogClosePressed() })
+            ItemButton(textId = R.string.messageNew, icon = R.drawable.ic_message) { delegate.onNewMessageSelected() }
+            Divider(modifier = Modifier.padding(start = 80.dp))
+            ItemButton(textId = R.string.activity_create_group_title, icon = R.drawable.ic_group) { delegate.onCreateGroupSelected() }
+            Divider(modifier = Modifier.padding(start = 80.dp))
+            ItemButton(textId = R.string.dialog_join_community_title, icon = R.drawable.ic_globe) { delegate.onJoinCommunitySelected() }
+            Divider(modifier = Modifier.padding(start = 80.dp))
+            ItemButton(textId = R.string.activity_settings_invite_button_title, icon = R.drawable.ic_invite_friend) { delegate.onInviteFriend() }
+            Column(modifier = Modifier.padding(horizontal = 32.dp).padding(top = 20.dp)) {
+                Text(text = "Your Account ID", style = MaterialTheme.typography.medium)
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(text = "Friends can message you by scanning your QR code.", color = classicDarkColors[5], style = MaterialTheme.typography.small)
+                Spacer(modifier = Modifier.height(20.dp))
+                QrImage(string = TextSecurePreferences.getLocalNumber(requireContext())!!, contentDescription = "Your session id")
+            }
+        }
     }
 }

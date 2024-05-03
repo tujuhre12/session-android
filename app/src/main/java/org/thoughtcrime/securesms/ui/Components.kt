@@ -193,9 +193,11 @@ fun ItemButton(
         onClick = onClick,
         shape = RectangleShape,
     ) {
-        Box(modifier = Modifier
-            .width(80.dp)
-            .fillMaxHeight()) {
+        Box(
+            modifier = Modifier
+                .width(80.dp)
+                .fillMaxHeight()
+        ) {
             icon()
         }
         Text(text, modifier = Modifier.fillMaxWidth(), style = MaterialTheme.typography.h8)

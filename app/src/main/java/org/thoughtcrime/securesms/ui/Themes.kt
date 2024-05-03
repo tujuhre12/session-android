@@ -112,6 +112,7 @@ val sessionTypography = Typography(
     h6 = boldStyle(20.sp),
 )
 
+val Typography.medium get() = defaultStyle(18.sp)
 val Typography.base get() = defaultStyle(14.sp)
 val Typography.baseBold get() = boldStyle(14.sp)
 val Typography.small get() = defaultStyle(12.sp)

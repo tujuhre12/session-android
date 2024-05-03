@@ -7,4 +7,5 @@ interface NewConversationDelegate {
     fun onContactSelected(address: String)
     fun onDialogBackPressed()
     fun onDialogClosePressed()
+    fun onInviteFriend()
 }

@@ -80,6 +80,10 @@ class NewConversationFragment : BottomSheetDialogFragment(), NewConversationDele
         childFragmentManager.popBackStack()
     }
 
+    override fun onInviteFriend() {
+
+    }
+
     override fun onDialogClosePressed() {
         dismiss()
     }

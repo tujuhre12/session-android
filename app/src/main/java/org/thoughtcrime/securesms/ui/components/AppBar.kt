@@ -13,8 +13,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import network.loki.messenger.R
+
+@Preview
+@Composable
+fun AppBarPreview() {
+    AppBar(title = "Title", {}, {})
+}
 
 @Composable
 fun AppBar(title: String, onClose: () -> Unit = {}, onBack: (() -> Unit)? = null) {
