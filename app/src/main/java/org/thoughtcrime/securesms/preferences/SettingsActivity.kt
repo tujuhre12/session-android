@@ -118,12 +118,6 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
         super.onCreate(savedInstanceState, isReady)
         binding = ActivitySettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
-        binding.composeView.setContent {
-            AppTheme {
-                Buttons()
-            }
-        }
     }
 
     override fun onStart() {
@@ -136,6 +130,12 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
             btnGroupNameDisplay.text = getDisplayName()
             publicKeyTextView.text = hexEncodedPublicKey
             versionTextView.text = String.format(getString(R.string.version_s), "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")
+        }
+
+        binding.composeView.setContent {
+            AppTheme {
+                Buttons()
+            }
         }
     }
 
@@ -379,7 +379,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
                     return true
                 }
             }
-            return false;
+            return false
         }
     }
 
