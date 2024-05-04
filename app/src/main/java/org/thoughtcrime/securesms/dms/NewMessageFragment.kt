@@ -16,6 +16,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
+import androidx.compose.material.primarySurface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -121,7 +122,7 @@ private fun NewMessage(
 ) {
     val pagerState = rememberPagerState { TITLES.size }
 
-    Column(modifier = Modifier.background(MaterialTheme.colors.surface)) {
+    Column(modifier = Modifier.background(MaterialTheme.colors.primarySurface)) {
         AppBar(stringResource(R.string.messageNew), onClose = { onClose() }, onBack = { onBack() })
         SessionTabRow(pagerState, TITLES)
         HorizontalPager(pagerState) {

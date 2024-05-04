@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
+import androidx.compose.material.primarySurface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
@@ -52,7 +53,7 @@ class NewConversationHomeFragment : Fragment() {
 
     @Composable
     fun NewConversationScreen() {
-        Column(modifier = Modifier.background(MaterialTheme.colors.surface)) {
+        Column(modifier = Modifier.background(MaterialTheme.colors.primarySurface)) {
             AppBar(stringResource(R.string.dialog_new_conversation_title), onClose = { delegate.onDialogClosePressed() })
             ItemButton(textId = R.string.messageNew, icon = R.drawable.ic_message) { delegate.onNewMessageSelected() }
             Divider(modifier = Modifier.padding(start = 80.dp))

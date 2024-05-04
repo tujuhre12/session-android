@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
+import androidx.compose.material.primarySurface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,7 +57,7 @@ class InviteFriendFragment : Fragment() {
 
     @Composable
     private fun InviteFriend() {
-        Column(modifier = Modifier.background(MaterialTheme.colors.surface)) {
+        Column(modifier = Modifier.background(MaterialTheme.colors.primarySurface)) {
             AppBar("Invite a Friend", onBack = { delegate.onDialogBackPressed() }, onClose = { delegate.onDialogClosePressed() })
             Column(
                 modifier = Modifier.padding(horizontal = 24.dp),
