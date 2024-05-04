@@ -30,6 +30,8 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
@@ -61,10 +63,8 @@ class NewMessageFragment : Fragment() {
         super.onCreate(savedInstanceState)
 
         lifecycleScope.launch {
-            viewModel.event.collect {
-                when (it) {
-                    is Event.Success -> createPrivateChat(it.key)
-                }
+            viewModel.event.filterIsInstance<Event.Success>().collect {
+                createPrivateChat(it.key)
             }
         }
     }
@@ -121,7 +121,7 @@ private fun NewMessage(
 ) {
     val pagerState = rememberPagerState { TITLES.size }
 
-    Column(modifier = Modifier.background(MaterialTheme.colors.background)) {
+    Column(modifier = Modifier.background(MaterialTheme.colors.surface)) {
         AppBar(stringResource(R.string.messageNew), onClose = { onClose() }, onBack = { onBack() })
         SessionTabRow(pagerState, TITLES)
         HorizontalPager(pagerState) {

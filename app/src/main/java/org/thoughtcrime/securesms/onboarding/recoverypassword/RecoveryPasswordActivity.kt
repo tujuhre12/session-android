@@ -42,6 +42,7 @@ import org.thoughtcrime.securesms.ui.SessionShieldIcon
 import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
 import org.thoughtcrime.securesms.ui.classicDarkColors
 import org.thoughtcrime.securesms.ui.colorDestructive
+import org.thoughtcrime.securesms.ui.components.DestructiveButtons
 import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.components.QrImage
 import org.thoughtcrime.securesms.ui.components.SmallButtons
@@ -205,9 +206,7 @@ fun HideRecoveryPasswordCell(onHide: () -> Unit = {}) {
                 Text(text = stringResource(R.string.recoveryPasswordHideRecoveryPassword), style = MaterialTheme.typography.h8)
                 Text(text = stringResource(R.string.recoveryPasswordHideRecoveryPasswordDescription))
             }
-            CompositionLocalProvider(
-                LocalButtonColor provides colorDestructive,
-            ) {
+            DestructiveButtons {
                 OutlineButton(
                     textId = R.string.hide,
                     modifier = Modifier

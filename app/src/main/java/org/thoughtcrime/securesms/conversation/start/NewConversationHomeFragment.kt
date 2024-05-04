@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -51,7 +52,7 @@ class NewConversationHomeFragment : Fragment() {
 
     @Composable
     fun NewConversationScreen() {
-        Column {
+        Column(modifier = Modifier.background(MaterialTheme.colors.surface)) {
             AppBar(stringResource(R.string.dialog_new_conversation_title), onClose = { delegate.onDialogClosePressed() })
             ItemButton(textId = R.string.messageNew, icon = R.drawable.ic_message) { delegate.onNewMessageSelected() }
             Divider(modifier = Modifier.padding(start = 80.dp))

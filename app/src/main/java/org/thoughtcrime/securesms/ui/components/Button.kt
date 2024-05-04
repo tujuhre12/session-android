@@ -172,3 +172,8 @@ fun SmallButtons(content: @Composable () -> Unit) {
 fun DestructiveButtons(content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalButtonColor provides colorDestructive) { content() }
 }
+
+@Composable
+fun OnPrimaryButtons(content: @Composable () -> Unit) {
+    CompositionLocalProvider(LocalButtonColor provides MaterialTheme.colors.onPrimary) { content() }
+}

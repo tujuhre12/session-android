@@ -35,7 +35,7 @@ class NewConversationFragment : BottomSheetDialogFragment(), NewConversationDele
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         replaceFragment(
-            fragment = NewConversationHomeFragment().apply { delegate = this@NewConversationFragment },
+            fragment = NewConversationHomeFragment().also { it.delegate = this },
             fragmentKey = NewConversationHomeFragment::class.java.simpleName
         )
     }
@@ -44,8 +44,7 @@ class NewConversationFragment : BottomSheetDialogFragment(), NewConversationDele
         val dialog = BottomSheetDialog(requireContext(), R.style.Theme_Session_BottomSheet)
         dialog.setOnShowListener {
             val bottomSheetDialog = it as BottomSheetDialog
-            val parentLayout =
-                bottomSheetDialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+            val parentLayout = bottomSheetDialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
             parentLayout?.let {
                 val behaviour = BottomSheetBehavior.from(it)
                 val layoutParams = it.layoutParams
@@ -58,15 +57,15 @@ class NewConversationFragment : BottomSheetDialogFragment(), NewConversationDele
     }
 
     override fun onNewMessageSelected() {
-        replaceFragment(NewMessageFragment().apply { delegate = this@NewConversationFragment })
+        replaceFragment(NewMessageFragment().also { it.delegate = this })
     }
 
     override fun onCreateGroupSelected() {
-        replaceFragment(CreateGroupFragment().apply { delegate = this@NewConversationFragment })
+        replaceFragment(CreateGroupFragment().also { it.delegate = this })
     }
 
     override fun onJoinCommunitySelected() {
-        replaceFragment(JoinCommunityFragment().apply { delegate = this@NewConversationFragment })
+        replaceFragment(JoinCommunityFragment().also { it.delegate = this })
     }
 
     override fun onContactSelected(address: String) {
@@ -81,7 +80,7 @@ class NewConversationFragment : BottomSheetDialogFragment(), NewConversationDele
     }
 
     override fun onInviteFriend() {
-
+        replaceFragment(InviteFriendFragment().also { it.delegate = this })
     }
 
     override fun onDialogClosePressed() {

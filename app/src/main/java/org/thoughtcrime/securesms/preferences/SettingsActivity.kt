@@ -3,8 +3,6 @@ package org.thoughtcrime.securesms.preferences
 import android.Manifest
 import android.app.Activity
 import android.content.BroadcastReceiver
-import android.content.ClipData
-import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -353,32 +351,6 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
             }
             .execute()
     }
-
-    private fun copyPublicKey() {
-        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        val clip = ClipData.newPlainText("Session ID", hexEncodedPublicKey)
-        clipboard.setPrimaryClip(clip)
-        Toast.makeText(this, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show()
-    }
-
-    private fun sharePublicKey() {
-        Intent().apply {
-            action = Intent.ACTION_SEND
-            putExtra(Intent.EXTRA_TEXT, hexEncodedPublicKey)
-            type = "text/plain"
-        }.let { Intent.createChooser(it, getString(R.string.share)) }
-            .let(::startActivity)
-    }
-
-    private fun sendInvitation() {
-        Intent().apply {
-            action = Intent.ACTION_SEND
-            putExtra(Intent.EXTRA_TEXT, "Hey, I've been using Session to chat with complete privacy and security. Come join me! Download it at https://getsession.org/. My Session ID is $hexEncodedPublicKey !")
-            type = "text/plain"
-        }.let { Intent.createChooser(it, getString(R.string.activity_settings_invite_button_title)) }
-            .let(::startActivity)
-    }
-
     // endregion
 
     private inner class DisplayNameEditActionModeCallback: ActionMode.Callback {
@@ -420,7 +392,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
             ) {
                 OutlineButton(
                     modifier = Modifier.weight(1f),
-                    onClick = ::sharePublicKey
+                    onClick = { sendInvitation() }
                 ) {
                     Text(stringResource(R.string.share))
                 }
