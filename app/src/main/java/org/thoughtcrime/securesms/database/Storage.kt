@@ -1491,14 +1491,8 @@ open class Storage(
                     val address = recipient.address.serialize()
                     val blindedId = when {
                         recipient.isGroupRecipient -> null
-                        recipient.isOpenGroupInboxRecipient -> {
-                            GroupUtil.getDecodedOpenGroupInboxSessionId(address)
-                        }
-                        else -> {
-                            if (SessionId(address).prefix == IdPrefix.BLINDED) {
-                                address
-                            } else null
-                        }
+                        recipient.isOpenGroupInboxRecipient -> GroupUtil.getDecodedOpenGroupInboxSessionId(address)
+                        else -> address.takeIf { SessionId(it).prefix == IdPrefix.BLINDED }
                     } ?: continue
                     mappingDb.getBlindedIdMapping(blindedId).firstOrNull()?.let {
                         mappings[address] = it
@@ -1516,8 +1510,8 @@ open class Storage(
                 smsDb.updateThreadId(blindedThreadId, threadId)
                 threadDB.deleteConversation(blindedThreadId)
             }
-            recipientDb.setApproved(sender, true)
-            recipientDb.setApprovedMe(sender, true)
+            setRecipientApproved(sender, true)
+            setRecipientApprovedMe(sender, true)
             val message = IncomingMediaMessage(
                 sender.address,
                 response.sentTimestamp!!,
