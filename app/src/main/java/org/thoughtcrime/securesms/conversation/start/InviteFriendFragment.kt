@@ -39,6 +39,7 @@ import org.thoughtcrime.securesms.ui.components.OnPrimaryButtons
 import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.components.SmallButtons
 import org.thoughtcrime.securesms.ui.components.TemporaryStateButton
+import org.thoughtcrime.securesms.ui.small
 
 @AndroidEntryPoint
 class InviteFriendFragment : Fragment() {
@@ -85,6 +86,8 @@ class InviteFriendFragment : Fragment() {
                 Text(
                     "Invite your friend to chat with you on Session by sharing your Account ID with them.",
                     textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.small,
+                    color = classicDarkColors[5],
                     modifier = Modifier.padding(horizontal = 8.dp)
                 )
                 OnPrimaryButtons {
