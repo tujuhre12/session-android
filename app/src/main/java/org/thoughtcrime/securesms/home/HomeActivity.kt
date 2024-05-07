@@ -300,9 +300,8 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                     }
 
                     val unreadThreadMap = result.messages
-                            .groupBy { it.threadId }.keys
-                            .map { it to mmsSmsDatabase.getUnreadCount(it) }
-                            .toMap()
+                        .map { it.threadId }.toSet()
+                        .associateWith { mmsSmsDatabase.getUnreadCount(it) }
 
                     val messageResults: MutableList<GlobalSearchAdapter.Model> = result.messages
                             .map { messageResult ->
@@ -330,11 +329,9 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                     .request(Manifest.permission.POST_NOTIFICATIONS)
                     .execute()
             }
-            configFactory.user?.let { user ->
-                if (!user.isBlockCommunityMessageRequestsSet()) {
-                    user.setCommunityMessageRequests(false)
-                }
-            }
+            configFactory.user
+                ?.takeUnless { it.isBlockCommunityMessageRequestsSet() }
+                ?.setCommunityMessageRequests(false)
         }
     }
 
@@ -441,7 +438,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                     Locale.getDefault(),
                     threadDb.latestUnapprovedConversationTimestamp
                 )
-                root.setOnClickListener { showMessageRequests() }
+                root.setOnClickListener { push<MessageRequestsActivity>() }
                 root.setOnLongClickListener { hideMessageRequests(); true }
                 root.layoutParams = RecyclerView.LayoutParams(RecyclerView.LayoutParams.MATCH_PARENT, RecyclerView.LayoutParams.WRAP_CONTENT)
                 val hadHeader = homeAdapter.hasHeaderView()
@@ -768,11 +765,6 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
     private fun openSettings() {
         val intent = Intent(this, SettingsActivity::class.java)
         show(intent, isForResult = true)
-    }
-
-    private fun showMessageRequests() {
-        val intent = Intent(this, MessageRequestsActivity::class.java)
-        push(intent)
     }
 
     private fun hideMessageRequests() {
