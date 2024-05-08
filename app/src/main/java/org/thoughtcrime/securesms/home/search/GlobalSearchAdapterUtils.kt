@@ -15,6 +15,7 @@ import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter.Model.GroupCon
 import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter.Model.Header
 import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter.Model.Message
 import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter.Model.SavedMessages
+import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter.Model.SubHeader
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.SearchUtil
 import java.util.Locale
@@ -78,6 +79,7 @@ fun ContentView.bindQuery(query: String, model: GlobalSearchAdapter.Model) {
             binding.searchResultSubtitle.text = getHighlight(query, membersString)
         }
         is Header, // do nothing for header
+        is SubHeader, // do nothing for subheader
         is SavedMessages -> Unit // do nothing for saved messages (displays note to self)
     }
 }

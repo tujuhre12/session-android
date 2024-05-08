@@ -72,10 +72,6 @@ public class SearchRepository {
   public void query(@NonNull String query, @NonNull Callback<SearchResult> callback) {
     // If the sanitized search is empty then abort without search
     String cleanQuery = sanitizeQuery(query).trim();
-    if (cleanQuery.isEmpty()) {
-      callback.onResult(SearchResult.EMPTY);
-      return;
-    }
 
     executor.execute(() -> {
       Stopwatch timer = new Stopwatch("FtsQuery");
@@ -110,7 +106,7 @@ public class SearchRepository {
     });
   }
 
-  private Pair<CursorList<Contact>, List<String>> queryContacts(String query) {
+  public Pair<CursorList<Contact>, List<String>> queryContacts(String query) {
     Cursor contacts = contactDatabase.queryContactsByName(query);
     List<Address> contactList = new ArrayList<>();
     List<String> contactStrings = new ArrayList<>();

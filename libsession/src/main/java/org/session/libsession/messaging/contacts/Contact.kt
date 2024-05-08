@@ -36,21 +36,12 @@ class Contact(val sessionID: String) {
     /**
      * The name to display in the UI. For local use only.
      */
-    fun displayName(context: ContactContext): String? {
-        nickname?.let { return it }
-        return when (context) {
-            ContactContext.REGULAR -> name
-            ContactContext.OPEN_GROUP -> {
-                // In open groups, where it's more likely that multiple users have the same name,
-                // we display a bit of the Session ID after a user's display name for added context.
-                name?.let {
-                    return "$name (${sessionID.take(4)}...${sessionID.takeLast(4)})"
-                }
-                return null
-            }
-        }
+    fun displayName(context: ContactContext): String? = nickname ?: when (context) {
+        ContactContext.REGULAR -> name
+        // In open groups, where it's more likely that multiple users have the same name,
+        // we display a bit of the Session ID after a user's display name for added context.
+        ContactContext.OPEN_GROUP -> name?.let { "$it (${sessionID.take(4)}...${sessionID.takeLast(4)})" }
     }
-    // endregion
 
     enum class ContactContext {
         REGULAR, OPEN_GROUP
@@ -75,7 +66,6 @@ class Contact(val sessionID: String) {
     }
 
     companion object {
-
         fun contextForRecipient(recipient: Recipient): ContactContext {
             return if (recipient.isCommunityRecipient) ContactContext.OPEN_GROUP else ContactContext.REGULAR
         }

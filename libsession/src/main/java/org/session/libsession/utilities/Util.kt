@@ -383,3 +383,9 @@ fun <T, K: Any, V: Any> Iterable<T>.associateByNotNull(
         this[key] = value
     }
 }
+
+inline fun <T, K> Iterable<T>.groupByNotNull(keySelector: (T) -> K?): Map<K, List<T>> {
+    val map = mutableMapOf<K, MutableList<T>>()
+    forEach { e -> keySelector(e)?.let { k -> map.getOrPut(k) { mutableListOf() }.add(e) } }
+    return map
+}

@@ -13,14 +13,18 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.plus
+import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.utilities.SettableFuture
+import org.thoughtcrime.securesms.database.SessionContactDatabase
 import org.thoughtcrime.securesms.search.SearchRepository
 import org.thoughtcrime.securesms.search.model.SearchResult
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @HiltViewModel
-class GlobalSearchViewModel @Inject constructor(private val searchRepository: SearchRepository) : ViewModel() {
+class GlobalSearchViewModel @Inject constructor(
+    private val searchRepository: SearchRepository,
+) : ViewModel() {
 
     private val executor = viewModelScope + SupervisorJob()
 
@@ -36,32 +40,27 @@ class GlobalSearchViewModel @Inject constructor(private val searchRepository: Se
     }
 
     init {
-        //
-        _queryText
-                .buffer(onBufferOverflow = BufferOverflow.DROP_OLDEST)
-                .mapLatest { query ->
-                    // Early exit on empty search query
-                    if (query.trim().isEmpty()) {
-                        SearchResult.EMPTY
-                    } else {
-                        // User input delay in case we get a new query within a few hundred ms this
-                        // coroutine will be cancelled and the expensive query will not be run.
-                        delay(300)
+        _queryText.buffer(onBufferOverflow = BufferOverflow.DROP_OLDEST)
+            .mapLatest { query ->
+                // User input delay in case we get a new query within a few hundred ms this
+                // coroutine will be cancelled and the expensive query will not be run.
+                delay(300)
 
-                        val settableFuture = SettableFuture<SearchResult>()
-                        searchRepository.query(query.toString(), settableFuture::set)
-                        try {
-                            // search repository doesn't play nicely with suspend functions (yet)
-                            settableFuture.get(10_000, TimeUnit.MILLISECONDS)
-                        } catch (e: Exception) {
-                            SearchResult.EMPTY
-                        }
+                if (query.trim().isEmpty()) {
+                    GlobalSearchResult(query.toString(), searchRepository.queryContacts("05").first.toList())
+                } else {
+                    val settableFuture = SettableFuture<SearchResult>()
+                    searchRepository.query(query.toString(), settableFuture::set)
+                    try {
+                        // search repository doesn't play nicely with suspend functions (yet)
+                        settableFuture.get(10_000, TimeUnit.MILLISECONDS).toGlobalSearchResult()
+                    } catch (e: Exception) {
+                        GlobalSearchResult(query.toString())
                     }
                 }
-                .onEach { result ->
-                    // update the latest _result value
-                    _result.value = GlobalSearchResult.from(result)
-                }
-                .launchIn(executor)
+            }.onEach { result ->
+                // update the latest _result value
+                _result.value = result
+            }.launchIn(executor)
     }
 }

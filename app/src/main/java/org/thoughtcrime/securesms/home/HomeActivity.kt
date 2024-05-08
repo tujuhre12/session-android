@@ -59,6 +59,7 @@ import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.snode.SnodeAPI
@@ -66,6 +67,8 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.ProfilePictureModifiedEvent
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.associateByNotNull
+import org.session.libsession.utilities.groupByNotNull
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.ThreadUtils
@@ -274,49 +277,69 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             // monitor the global search VM query
             launch {
                 binding.globalSearchInputLayout.query
-                        .onEach(globalSearchViewModel::postQuery)
-                        .collect()
+                    .onEach(globalSearchViewModel::postQuery)
+                    .collect()
             }
             // Get group results and display them
             launch {
                 globalSearchViewModel.result.collect { result ->
-                    val currentUserPublicKey = publicKey
-                    val contactAndGroupList = result.contacts.map { GlobalSearchAdapter.Model.Contact(it) } +
+                    if (result.query.isEmpty()) {
+                        val hasNames = result.contacts.filter { it.nickname != null || it.name != null }
+                            .groupByNotNull { (it.nickname?.firstOrNull() ?: it.name?.firstOrNull())?.uppercase() }
+                            .toSortedMap(compareBy { it })
+                            .flatMap { (key, contacts) -> listOf(GlobalSearchAdapter.Model.SubHeader(key)) + contacts.map(GlobalSearchAdapter.Model::Contact) }
+
+                        val noNames = result.contacts.filter { it.nickname == null && it.name == null }
+                            .sortedBy { it.sessionID }
+                            .map { GlobalSearchAdapter.Model.Contact(it) }
+                            .takeIf { it.isNotEmpty() }
+                            ?.let {
+                                buildList {
+                                    add(GlobalSearchAdapter.Model.Header("Unknown"))
+                                    addAll(it)
+                                }
+                            } ?: emptyList()
+
+                        buildList {
+                            add(GlobalSearchAdapter.Model.Header("Contacts"))
+                            add(GlobalSearchAdapter.Model.SavedMessages(publicKey))
+                            addAll(hasNames)
+                            addAll(noNames)
+                        }
+                    } else {
+                        val currentUserPublicKey = publicKey
+                        val contactAndGroupList = result.contacts.map { GlobalSearchAdapter.Model.Contact(it) } +
                             result.threads.map { GlobalSearchAdapter.Model.GroupConversation(it) }
 
-                    val contactResults = contactAndGroupList.toMutableList()
+                        val contactResults = contactAndGroupList.toMutableList()
 
-                    if (contactResults.isEmpty()) {
-                        contactResults.add(GlobalSearchAdapter.Model.SavedMessages(currentUserPublicKey))
-                    }
+                        if (contactResults.isEmpty()) {
+                            contactResults.add(GlobalSearchAdapter.Model.SavedMessages(currentUserPublicKey))
+                        }
 
-                    val userIndex = contactResults.indexOfFirst { it is GlobalSearchAdapter.Model.Contact && it.contact.sessionID == currentUserPublicKey }
-                    if (userIndex >= 0) {
-                        contactResults[userIndex] = GlobalSearchAdapter.Model.SavedMessages(currentUserPublicKey)
-                    }
+                        val userIndex = contactResults.indexOfFirst { it is GlobalSearchAdapter.Model.Contact && it.contact.sessionID == currentUserPublicKey }
+                        if (userIndex >= 0) {
+                            contactResults[userIndex] = GlobalSearchAdapter.Model.SavedMessages(currentUserPublicKey)
+                        }
 
-                    if (contactResults.isNotEmpty()) {
-                        contactResults.add(0, GlobalSearchAdapter.Model.Header(R.string.global_search_contacts_groups))
-                    }
+                        if (contactResults.isNotEmpty()) {
+                            contactResults.add(0, GlobalSearchAdapter.Model.Header(R.string.global_search_contacts_groups))
+                        }
 
-                    val unreadThreadMap = result.messages
-                        .map { it.threadId }.toSet()
-                        .associateWith { mmsSmsDatabase.getUnreadCount(it) }
+                        val unreadThreadMap = result.messages
+                            .map { it.threadId }.toSet()
+                            .associateWith { mmsSmsDatabase.getUnreadCount(it) }
 
-                    val messageResults: MutableList<GlobalSearchAdapter.Model> = result.messages
-                            .map { messageResult ->
-                                GlobalSearchAdapter.Model.Message(
-                                        messageResult,
-                                        unreadThreadMap[messageResult.threadId] ?: 0
-                                )
-                            }.toMutableList()
+                        val messageResults: MutableList<GlobalSearchAdapter.Model> = result.messages
+                            .map { GlobalSearchAdapter.Model.Message(it, unreadThreadMap[it.threadId] ?: 0) }
+                            .toMutableList()
 
-                    if (messageResults.isNotEmpty()) {
-                        messageResults.add(0, GlobalSearchAdapter.Model.Header(R.string.global_search_messages))
-                    }
+                        if (messageResults.isNotEmpty()) {
+                            messageResults.add(0, GlobalSearchAdapter.Model.Header(R.string.global_search_messages))
+                        }
 
-                    val newData = contactResults + messageResults
-                    globalSearchAdapter.setNewData(result.query, newData)
+                        contactResults + messageResults
+                    }.let { globalSearchAdapter.setNewData(result.query, it) }
                 }
             }
         }
@@ -586,7 +609,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                 Toast.makeText(this, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show()
             }
             else if (thread.recipient.isCommunityRecipient) {
-                val threadId = threadDb.getThreadIdIfExistsFor(thread.recipient) ?: return@onCopyConversationId Unit
+                val threadId = threadDb.getThreadIdIfExistsFor(thread.recipient)
                 val openGroup = DatabaseComponent.get(this@HomeActivity).lokiThreadDatabase().getOpenGroupChat(threadId) ?: return@onCopyConversationId Unit
 
                 val clip = ClipData.newPlainText("Community URL", openGroup.joinURL)
@@ -784,4 +807,11 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
     }
 
     // endregion
+}
+
+data class NameIdContact(val name: String?, val id: String, val contact: Contact): Comparable<NameIdContact> {
+    override fun compareTo(other: NameIdContact): Int = comparator.compare(this, other)
+    companion object {
+        val comparator = compareBy<NameIdContact>({ it.name }, { it.id })
+    }
 }
