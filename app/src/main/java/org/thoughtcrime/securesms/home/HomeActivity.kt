@@ -206,6 +206,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         // Set up toolbar buttons
         binding.profileButton.setOnClickListener { openSettings() }
         binding.searchViewContainer.setOnClickListener {
+            globalSearchViewModel.refresh()
             binding.globalSearchInputLayout.requestFocus()
         }
         binding.sessionToolbar.disableClipping()
@@ -287,29 +288,25 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                         val hasNames = result.contacts.filter { it.nickname != null || it.name != null }
                             .groupByNotNull { (it.nickname?.firstOrNull() ?: it.name?.firstOrNull())?.uppercase() }
                             .toSortedMap(compareBy { it })
-                            .flatMap { (key, contacts) -> listOf(GlobalSearchAdapter.Model.SubHeader(key)) + contacts.map(GlobalSearchAdapter.Model::Contact) }
+                            .flatMap { (key, contacts) -> listOf(GlobalSearchAdapter.Model.SubHeader(key)) + contacts.sortedBy { it.nickname ?: it.name }.map(GlobalSearchAdapter.Model::Contact) }
 
                         val noNames = result.contacts.filter { it.nickname == null && it.name == null }
                             .sortedBy { it.sessionID }
                             .map { GlobalSearchAdapter.Model.Contact(it) }
-                            .takeIf { it.isNotEmpty() }
-                            ?.let {
-                                buildList {
-                                    add(GlobalSearchAdapter.Model.Header("Unknown"))
-                                    addAll(it)
-                                }
-                            } ?: emptyList()
 
                         buildList {
-                            add(GlobalSearchAdapter.Model.Header("Contacts"))
+                            add(GlobalSearchAdapter.Model.Header(R.string.contacts))
                             add(GlobalSearchAdapter.Model.SavedMessages(publicKey))
                             addAll(hasNames)
-                            addAll(noNames)
+                            noNames.takeIf { it.isNotEmpty() }?.let {
+                                add(GlobalSearchAdapter.Model.Header(R.string.unknown))
+                                addAll(it)
+                            }
                         }
                     } else {
                         val currentUserPublicKey = publicKey
-                        val contactAndGroupList = result.contacts.map { GlobalSearchAdapter.Model.Contact(it) } +
-                            result.threads.map { GlobalSearchAdapter.Model.GroupConversation(it) }
+                        val contactAndGroupList = result.contacts.map(GlobalSearchAdapter.Model::Contact) +
+                            result.threads.map(GlobalSearchAdapter.Model::GroupConversation)
 
                         val contactResults = contactAndGroupList.toMutableList()
 
@@ -323,7 +320,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                         }
 
                         if (contactResults.isNotEmpty()) {
-                            contactResults.add(0, GlobalSearchAdapter.Model.Header(R.string.global_search_contacts_groups))
+                            contactResults.add(0, GlobalSearchAdapter.Model.Header(R.string.conversations))
                         }
 
                         val unreadThreadMap = result.messages
@@ -393,7 +390,8 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                     Spacer(Modifier.width(12.dp))
                     OutlineButton(
                         textId = R.string.continue_2,
-                        Modifier.align(Alignment.CenterVertically)
+                        Modifier
+                            .align(Alignment.CenterVertically)
                             .contentDescription(R.string.AccessibilityId_reveal_recovery_phrase_button),
                         onClick = { start<RecoveryPasswordActivity>() }
                     )

@@ -3,19 +3,27 @@ package org.thoughtcrime.securesms.home.search
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
-import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.utilities.SettableFuture
-import org.thoughtcrime.securesms.database.SessionContactDatabase
 import org.thoughtcrime.securesms.search.SearchRepository
 import org.thoughtcrime.securesms.search.model.SearchResult
 import java.util.concurrent.TimeUnit
@@ -32,6 +40,8 @@ class GlobalSearchViewModel @Inject constructor(
 
     val result: StateFlow<GlobalSearchResult> = _result
 
+    val refreshes = Channel<Unit>()
+
     private val _queryText: MutableStateFlow<CharSequence> = MutableStateFlow("")
 
     fun postQuery(charSequence: CharSequence?) {
@@ -39,14 +49,22 @@ class GlobalSearchViewModel @Inject constructor(
         _queryText.value = charSequence
     }
 
+    fun refresh() {
+        executor.launch { refreshes.send(Unit) }
+    }
+
     init {
-        _queryText.buffer(onBufferOverflow = BufferOverflow.DROP_OLDEST)
+        _queryText
+            .reEmit(refreshes)
+            .buffer(onBufferOverflow = BufferOverflow.DROP_OLDEST)
             .mapLatest { query ->
                 // User input delay in case we get a new query within a few hundred ms this
                 // coroutine will be cancelled and the expensive query will not be run.
                 delay(300)
 
                 if (query.trim().isEmpty()) {
+                    // searching for 05 as contactDb#getAllContacts was not returning contacts
+                    // without a nickname/name who haven't approved us.
                     GlobalSearchResult(query.toString(), searchRepository.queryContacts("05").first.toList())
                 } else {
                     val settableFuture = SettableFuture<SearchResult>()
@@ -64,3 +82,9 @@ class GlobalSearchViewModel @Inject constructor(
             }.launchIn(executor)
     }
 }
+
+/**
+ * Re-emit whenevr refreshes emits.
+ * */
+@OptIn(ExperimentalCoroutinesApi::class)
+private fun <T> Flow<T>.reEmit(refreshes: Channel<Unit>) = flatMapLatest { query -> merge(flowOf(query), refreshes.consumeAsFlow().map { query }) }
