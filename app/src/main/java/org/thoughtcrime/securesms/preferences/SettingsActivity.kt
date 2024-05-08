@@ -64,6 +64,7 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.utilities.Log
+import org.session.libsignal.utilities.getProperty
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.avatar.AvatarSelection
 import org.thoughtcrime.securesms.components.ProfilePictureView
@@ -129,7 +130,8 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
             ctnGroupNameSection.setOnClickListener { startActionMode(DisplayNameEditActionModeCallback()) }
             btnGroupNameDisplay.text = getDisplayName()
             publicKeyTextView.text = hexEncodedPublicKey
-            versionTextView.text = String.format(getString(R.string.version_s), "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")
+            val gitCommitFirstSixChars = BuildConfig.GIT_HASH.take(6)
+            versionTextView.text = String.format(getString(R.string.version_s), "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE} - $gitCommitFirstSixChars)")
         }
 
         binding.composeView.setContent {
@@ -408,7 +410,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
                     }
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(24.dp))
 
             var hasPaths by remember {
