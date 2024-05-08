@@ -12,6 +12,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import network.loki.messenger.R
@@ -27,7 +28,6 @@ import org.thoughtcrime.securesms.ui.components.QrImage
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
 import org.thoughtcrime.securesms.ui.setComposeContent
 import org.thoughtcrime.securesms.ui.small
-import org.thoughtcrime.securesms.util.ScanQRCodeWrapperFragmentDelegate
 import org.thoughtcrime.securesms.util.start
 
 private val TITLES = listOf(R.string.view, R.string.scan)
@@ -79,7 +79,9 @@ fun Tabs(sessionId: String, onScan: (String) -> Unit) {
 
 @Composable
 fun QrPage(string: String) {
-    Column(modifier = Modifier.padding(horizontal = 32.dp).fillMaxSize()) {
+    Column(modifier = Modifier
+        .padding(horizontal = 32.dp)
+        .fillMaxSize()) {
         QrImage(
             string = string,
             contentDescription = "Your session id",
@@ -88,7 +90,7 @@ fun QrPage(string: String) {
         )
 
         Text(
-            text = "This is your Account ID. Other users can scan it to start a conversation with you.",
+            text = stringResource(R.string.this_is_your_account_id_other_users_can_scan_it_to_start_a_conversation_with_you),
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.small
         )

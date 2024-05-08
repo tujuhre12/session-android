@@ -59,7 +59,7 @@ class InviteFriendFragment : Fragment() {
     @Composable
     private fun InviteFriend() {
         Column(modifier = Modifier.background(MaterialTheme.colors.primarySurface)) {
-            AppBar("Invite a Friend", onBack = { delegate.onDialogBackPressed() }, onClose = { delegate.onDialogClosePressed() })
+            AppBar(stringResource(R.string.invite_a_friend), onBack = { delegate.onDialogBackPressed() }, onClose = { delegate.onDialogClosePressed() })
             Column(
                 modifier = Modifier.padding(horizontal = 24.dp),
                 verticalArrangement = spacedBy(10.dp)
@@ -84,7 +84,7 @@ class InviteFriendFragment : Fragment() {
                 }
 
                 Text(
-                    "Invite your friend to chat with you on Session by sharing your Account ID with them.",
+                    stringResource(R.string.invite_your_friend_to_chat_with_you_on_session_by_sharing_your_account_id_with_them),
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.small,
                     color = classicDarkColors[5],

@@ -13,11 +13,10 @@ fun Context.sendInvitation() {
         action = Intent.ACTION_SEND
         putExtra(
             Intent.EXTRA_TEXT,
-            """Hey, I've been using Session to chat with complete privacy and security. Come join me! My Account ID is 
-
-${TextSecurePreferences.getLocalNumber(this@sendInvitation)}
-
-Download it at https://getsession.org/"""
+            getString(
+                R.string.accountIdShare,
+                TextSecurePreferences.getLocalNumber(this@sendInvitation)
+            )
         )
         type = "text/plain"
     }.let { Intent.createChooser(it, getString(R.string.activity_settings_invite_button_title)) }

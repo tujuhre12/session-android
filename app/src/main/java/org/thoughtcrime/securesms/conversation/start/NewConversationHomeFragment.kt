@@ -62,10 +62,13 @@ class NewConversationHomeFragment : Fragment() {
             ItemButton(textId = R.string.dialog_join_community_title, icon = R.drawable.ic_globe) { delegate.onJoinCommunitySelected() }
             Divider(modifier = Modifier.padding(start = 80.dp))
             ItemButton(textId = R.string.activity_settings_invite_button_title, icon = R.drawable.ic_invite_friend) { delegate.onInviteFriend() }
-            Column(modifier = Modifier.padding(horizontal = 32.dp).padding(top = 20.dp)) {
-                Text(text = "Your Account ID", style = MaterialTheme.typography.medium)
+            Column(
+                modifier = Modifier
+                    .padding(horizontal = 32.dp)
+                    .padding(top = 20.dp)) {
+                Text(text = stringResource(R.string.accountIdYours), style = MaterialTheme.typography.medium)
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(text = "Friends can message you by scanning your QR code.", color = classicDarkColors[5], style = MaterialTheme.typography.small)
+                Text(text = stringResource(R.string.qrYoursDescription), color = classicDarkColors[5], style = MaterialTheme.typography.small)
                 Spacer(modifier = Modifier.height(20.dp))
                 QrImage(string = TextSecurePreferences.getLocalNumber(requireContext())!!, contentDescription = "Your session id")
             }

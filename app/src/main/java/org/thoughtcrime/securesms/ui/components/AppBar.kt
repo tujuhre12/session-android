@@ -38,7 +38,7 @@ fun AppBar(title: String, onClose: () -> Unit = {}, onBack: (() -> Unit)? = null
         Spacer(modifier = Modifier.weight(1f))
         Box(contentAlignment = Alignment.Center, modifier = Modifier.size(64.dp)) {
             IconButton(onClick = onClose) {
-                Icon(painter = painterResource(id = R.drawable.ic_x), contentDescription = "back")
+                Icon(painter = painterResource(id = R.drawable.ic_x), contentDescription = "close")
             }
         }
     }

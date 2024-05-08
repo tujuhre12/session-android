@@ -70,7 +70,7 @@ class NewMessageViewModel @Inject constructor(
     }
 
     private fun Exception.toMessage() = when (this) {
-        is SnodeAPI.Error.Generic -> "We couldn’t recognize this ONS. Please check and try again."
+        is SnodeAPI.Error.Generic -> application.getString(R.string.onsErrorNotRecognized)
         else -> localizedMessage ?: application.getString(R.string.fragment_enter_public_key_error_message)
     }
 }
