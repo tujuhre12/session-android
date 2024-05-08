@@ -1122,4 +1122,7 @@
     <string name="accountIdOrOnsEnter">Enter account ID or ONS</string>
     <string name="messageNewDescription">Start a new conversation by entering your friend\'s Account ID, ONS or scanning their QR code.</string>
     <string name="messageNew">New Message</string>
+    <string name="unknown">Unknown</string>
+    <string name="contacts">Contacts</string>
+    <string name="conversations">Conversations</string>
 </resources>

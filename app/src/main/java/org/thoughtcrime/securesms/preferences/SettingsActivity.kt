@@ -64,7 +64,6 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.getProperty
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.avatar.AvatarSelection
 import org.thoughtcrime.securesms.components.ProfilePictureView

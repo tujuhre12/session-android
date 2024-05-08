@@ -17,8 +17,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,12 +34,10 @@ import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.CellWithPaddingAndMargin
-import org.thoughtcrime.securesms.ui.LocalButtonColor
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionShieldIcon
 import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
 import org.thoughtcrime.securesms.ui.classicDarkColors
-import org.thoughtcrime.securesms.ui.colorDestructive
 import org.thoughtcrime.securesms.ui.components.DestructiveButtons
 import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.components.QrImage

@@ -32,18 +32,18 @@ import org.thoughtcrime.securesms.util.start
 
 private val TITLES = listOf(R.string.view, R.string.scan)
 
-class QRCodeActivity : PassphraseRequiredActionBarActivity(), ScanQRCodeWrapperFragmentDelegate {
+class QRCodeActivity : PassphraseRequiredActionBarActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?, isReady: Boolean) {
         super.onCreate(savedInstanceState, isReady)
         supportActionBar!!.title = resources.getString(R.string.activity_qr_code_title)
 
         setComposeContent {
-            Tabs(TextSecurePreferences.getLocalNumber(this)!!)
+            Tabs(TextSecurePreferences.getLocalNumber(this)!!, onScan = ::handleQRCodeScanned)
         }
     }
 
-    override fun handleQRCodeScanned(string: String) {
+    fun handleQRCodeScanned(string: String) {
         if (!PublicKeyValidation.isValid(string)) {
             return Toast.makeText(this, R.string.invalid_session_id, Toast.LENGTH_SHORT).show()
         }
@@ -60,7 +60,7 @@ class QRCodeActivity : PassphraseRequiredActionBarActivity(), ScanQRCodeWrapperF
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun Tabs(sessionId: String) {
+fun Tabs(sessionId: String, onScan: (String) -> Unit) {
     val pagerState = rememberPagerState { TITLES.size }
 
     Column {
@@ -71,7 +71,7 @@ fun Tabs(sessionId: String) {
         ) { page ->
             when (TITLES[page]) {
                 R.string.view -> QrPage(sessionId)
-                R.string.scan -> MaybeScanQrCode()
+                R.string.scan -> MaybeScanQrCode(onScan = onScan)
             }
         }
     }

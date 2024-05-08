@@ -122,12 +122,12 @@ private fun NewMessage(
     val pagerState = rememberPagerState { TITLES.size }
 
     Column(modifier = Modifier.background(MaterialTheme.colors.primarySurface)) {
-        AppBar(stringResource(R.string.messageNew), onClose = { onClose() }, onBack = { onBack() })
+        AppBar(stringResource(R.string.messageNew), onClose = onClose, onBack = onBack)
         SessionTabRow(pagerState, TITLES)
         HorizontalPager(pagerState) {
             when (TITLES[it]) {
                 R.string.enter_account_id -> EnterAccountId(state, callbacks, onHelp)
-                R.string.qrScan -> MaybeScanQrCode()
+                R.string.qrScan -> MaybeScanQrCode(onScan = callbacks::onScan)
             }
         }
     }

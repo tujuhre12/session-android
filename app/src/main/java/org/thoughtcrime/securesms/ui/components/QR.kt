@@ -67,7 +67,7 @@ fun MaybeScanQrCode(
                 data = Uri.fromParts("package", packageName, null)
             }.let(::startActivity)
         } },
-        onScan: (String) -> Unit = {}
+        onScan: (String) -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         LocalSoftwareKeyboardController.current?.hide()

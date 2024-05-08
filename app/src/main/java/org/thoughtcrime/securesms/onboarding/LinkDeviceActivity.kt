@@ -10,6 +10,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -78,7 +79,7 @@ class LinkDeviceActivity : BaseActionBarActivity() {
             setContent {
                 val state by viewModel.stateFlow.collectAsState()
                 AppTheme {
-                    LoadAccountScreen(state, viewModel::onChange, viewModel::onContinue)
+                    LoadAccountScreen(state, viewModel::onChange, viewModel::onContinue, viewModel::scan)
                 }
             }
         }.let(::setContentView)
@@ -86,7 +87,12 @@ class LinkDeviceActivity : BaseActionBarActivity() {
 
     @OptIn(ExperimentalFoundationApi::class)
     @Composable
-    fun LoadAccountScreen(state: LinkDeviceState, onChange: (String) -> Unit = {}, onContinue: () -> Unit = {}) {
+    fun LoadAccountScreen(
+        state: LinkDeviceState,
+        onChange: (String) -> Unit = {},
+        onContinue: () -> Unit = {},
+        onScan: (String) -> Unit = {}
+    ) {
         val pagerState = rememberPagerState { TITLES.size }
 
         Column {
@@ -99,7 +105,7 @@ class LinkDeviceActivity : BaseActionBarActivity() {
 
                 when (title) {
                     R.string.sessionRecoveryPassword -> RecoveryPassword(state, onChange, onContinue)
-                    R.string.qrScan -> MaybeScanQrCode(viewModel.qrErrorsFlow)
+                    R.string.qrScan -> MaybeScanQrCode(viewModel.qrErrorsFlow, onScan = onScan)
                 }
             }
         }
@@ -128,14 +134,15 @@ fun RecoveryPassword(state: LinkDeviceState, onChange: (String) -> Unit = {}, on
         Text(stringResource(R.string.activity_link_enter_your_recovery_password_to_load_your_account_if_you_haven_t_saved_it_you_can_find_it_in_your_app_settings))
         Spacer(Modifier.size(24.dp))
         SessionOutlinedTextField(
-                text = state.recoveryPhrase,
-                modifier = Modifier
-                    .contentDescription(R.string.AccessibilityId_recovery_phrase_input)
-                    .padding(horizontal = 64.dp),
-                placeholder = stringResource(R.string.recoveryPasswordEnter),
-                onChange = onChange,
-                onContinue = onContinue,
-                error = state.error
+            text = state.recoveryPhrase,
+            modifier = Modifier
+                .fillMaxWidth()
+                .contentDescription(R.string.AccessibilityId_recovery_phrase_input)
+                .padding(horizontal = 64.dp),
+            placeholder = stringResource(R.string.recoveryPasswordEnter),
+            onChange = onChange,
+            onContinue = onContinue,
+            error = state.error
         )
         Spacer(Modifier.size(12.dp))
         state.error?.let {
