@@ -37,6 +37,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.core.os.bundleOf
+import androidx.core.view.isGone
+import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -67,7 +69,6 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.ProfilePictureModifiedEvent
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.associateByNotNull
 import org.session.libsession.utilities.groupByNotNull
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
@@ -278,8 +279,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             // monitor the global search VM query
             launch {
                 binding.globalSearchInputLayout.query
-                    .onEach(globalSearchViewModel::postQuery)
-                    .collect()
+                    .collect(globalSearchViewModel::setQuery)
             }
             // Get group results and display them
             launch {
@@ -434,7 +434,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         if (hasFocus) {
             setSearchShown(true)
         } else {
-            setSearchShown(!binding.globalSearchInputLayout.query.value.isNullOrEmpty())
+            setSearchShown(binding.globalSearchInputLayout.query.value.isNotEmpty())
         }
     }
 
@@ -444,7 +444,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         binding.recyclerView.isVisible = !isShown
         binding.emptyStateContainer.isVisible = (binding.recyclerView.adapter as HomeAdapter).itemCount == 0 && binding.recyclerView.isVisible
         binding.seedReminderView.isVisible = !TextSecurePreferences.getHasViewedSeed(this) && !isShown
-        binding.globalSearchRecycler.isVisible = isShown
+        binding.globalSearchRecycler.isInvisible = !isShown
         binding.newConversationButton.isVisible = !isShown
     }
 
@@ -572,11 +572,8 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
     // region Interaction
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
-        if (binding.globalSearchRecycler.isVisible) {
-            binding.globalSearchInputLayout.clearSearch(true)
-            return
-        }
-        super.onBackPressed()
+        if (binding.globalSearchRecycler.isVisible) binding.globalSearchInputLayout.clearSearch(true)
+        else super.onBackPressed()
     }
 
     override fun onConversationClick(thread: ThreadRecord) {

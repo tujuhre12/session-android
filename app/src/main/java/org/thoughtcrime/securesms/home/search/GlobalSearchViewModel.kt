@@ -29,6 +29,7 @@ import org.thoughtcrime.securesms.search.model.SearchResult
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class GlobalSearchViewModel @Inject constructor(
     private val searchRepository: SearchRepository,
@@ -40,12 +41,11 @@ class GlobalSearchViewModel @Inject constructor(
 
     val result: StateFlow<GlobalSearchResult> = _result
 
-    val refreshes = Channel<Unit>()
+    private val refreshes = Channel<Unit>()
 
     private val _queryText: MutableStateFlow<CharSequence> = MutableStateFlow("")
 
-    fun postQuery(charSequence: CharSequence?) {
-        charSequence ?: return
+    fun setQuery(charSequence: CharSequence) {
         _queryText.value = charSequence
     }
 
@@ -58,15 +58,14 @@ class GlobalSearchViewModel @Inject constructor(
             .reEmit(refreshes)
             .buffer(onBufferOverflow = BufferOverflow.DROP_OLDEST)
             .mapLatest { query ->
-                // User input delay in case we get a new query within a few hundred ms this
-                // coroutine will be cancelled and the expensive query will not be run.
-                delay(300)
-
                 if (query.trim().isEmpty()) {
                     // searching for 05 as contactDb#getAllContacts was not returning contacts
                     // without a nickname/name who haven't approved us.
                     GlobalSearchResult(query.toString(), searchRepository.queryContacts("05").first.toList())
                 } else {
+                    // User input delay in case we get a new query within a few hundred ms this
+                    // coroutine will be cancelled and the expensive query will not be run.
+                    delay(300)
                     val settableFuture = SettableFuture<SearchResult>()
                     searchRepository.query(query.toString(), settableFuture::set)
                     try {
@@ -84,7 +83,7 @@ class GlobalSearchViewModel @Inject constructor(
 }
 
 /**
- * Re-emit whenevr refreshes emits.
+ * Re-emit whenever refreshes emits.
  * */
 @OptIn(ExperimentalCoroutinesApi::class)
 private fun <T> Flow<T>.reEmit(refreshes: Channel<Unit>) = flatMapLatest { query -> merge(flowOf(query), refreshes.consumeAsFlow().map { query }) }

@@ -708,12 +708,9 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             viewContainer.setTypists(recipients)
         }
         if (textSecurePreferences.isTypingIndicatorsEnabled()) {
-            binding!!.inputBar.addTextChangedListener(object : SimpleTextWatcher() {
-
-                override fun onTextChanged(text: String?) {
-                    ApplicationContext.getInstance(this@ConversationActivityV2).typingStatusSender.onTypingStarted(viewModel.threadId)
-                }
-            })
+            binding!!.inputBar.addTextChangedListener {
+                ApplicationContext.getInstance(this).typingStatusSender.onTypingStarted(viewModel.threadId)
+            }
         }
     }
 
