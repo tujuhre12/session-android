@@ -7,6 +7,7 @@ import android.net.Uri
 import android.provider.Settings
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.ImageProxy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.background
@@ -47,12 +48,18 @@ import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
+import com.google.mlkit.vision.common.InputImage
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filter
 import network.loki.messenger.R
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.onboarding.Analyzer
 import java.util.concurrent.Executors
+import kotlin.time.Duration.Companion.seconds
 
 typealias CameraPreview = androidx.camera.core.Preview
 
@@ -61,7 +68,7 @@ private const val TAG = "NewMessageFragment"
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun MaybeScanQrCode(
-        errors: Flow<String> = emptyFlow(),
+        errors: Flow<String>,
         onClickSettings: () -> Unit = LocalContext.current.run { {
             Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
                 data = Uri.fromParts("package", packageName, null)
@@ -75,7 +82,10 @@ fun MaybeScanQrCode(
         val cameraPermissionState = rememberPermissionState(Manifest.permission.CAMERA)
 
         if (cameraPermissionState.status.isGranted) {
-            ScanQrCode(errors, onScan)
+            ScanQrCode(errors) {
+                Log.d("QR", "scan: $it")
+                onScan(it)
+            }
         } else if (cameraPermissionState.status.shouldShowRationale) {
             Column(
                 modifier = Modifier
@@ -105,6 +115,7 @@ fun MaybeScanQrCode(
     }
 }
 
+@OptIn(FlowPreview::class)
 @Composable
 fun ScanQrCode(errors: Flow<String>, onScan: (String) -> Unit) {
     val localContext = LocalContext.current
@@ -140,9 +151,11 @@ fun ScanQrCode(errors: Flow<String>, onScan: (String) -> Unit) {
     val scaffoldState = rememberScaffoldState()
 
     LaunchedEffect(Unit) {
-        errors.collect { error ->
-            scaffoldState.snackbarHostState.showSnackbar(message = error)
-        }
+        errors.filter { scaffoldState.snackbarHostState.currentSnackbarData == null }
+            .buffer(0, BufferOverflow.DROP_OLDEST)
+            .collect { error ->
+                scaffoldState.snackbarHostState.showSnackbar(message = error)
+            }
     }
 
     Scaffold(
@@ -186,3 +199,25 @@ private fun buildAnalysisUseCase(
     .build().apply {
         setAnalyzer(Executors.newSingleThreadExecutor(), Analyzer(scanner, onBarcodeScanned))
     }
+
+class Analyzer(
+    private val scanner: BarcodeScanner,
+    private val onBarcodeScanned: (String) -> Unit
+): ImageAnalysis.Analyzer {
+    @SuppressLint("UnsafeOptInUsageError")
+    override fun analyze(image: ImageProxy) {
+        InputImage.fromMediaImage(
+            image.image!!,
+            image.imageInfo.rotationDegrees
+        ).let(scanner::process).apply {
+            addOnSuccessListener { barcodes ->
+                barcodes.forEach {
+                    it.rawValue?.let(onBarcodeScanned)
+                }
+            }
+            addOnCompleteListener {
+                image.close()
+            }
+        }
+    }
+}

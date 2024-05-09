@@ -45,9 +45,12 @@ fun QrImage(
     val scope = rememberCoroutineScope()
     LaunchedEffect(string) {
         scope.launch(Dispatchers.IO) {
-            bitmap = QRCodeUtilities.encode(string, 400).also {
-                for (y in 150 until 250) {
-                    for (x in 150 until 250) {
+            val c = 150
+            val w = c * 2
+            bitmap = QRCodeUtilities.encode(string, w).also {
+                val hw = 30
+                for (y in c - hw until c + hw) {
+                    for (x in c - hw until c + hw) {
                         it.setPixel(x, y, 0x00000000)
                     }
                 }

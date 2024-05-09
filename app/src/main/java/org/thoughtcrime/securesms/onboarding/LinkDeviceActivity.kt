@@ -137,8 +137,7 @@ fun RecoveryPassword(state: LinkDeviceState, onChange: (String) -> Unit = {}, on
             text = state.recoveryPhrase,
             modifier = Modifier
                 .fillMaxWidth()
-                .contentDescription(R.string.AccessibilityId_recovery_phrase_input)
-                .padding(horizontal = 64.dp),
+                .contentDescription(R.string.AccessibilityId_recovery_phrase_input),
             placeholder = stringResource(R.string.recoveryPasswordEnter),
             onChange = onChange,
             onContinue = onContinue,
@@ -165,24 +164,3 @@ fun RecoveryPassword(state: LinkDeviceState, onChange: (String) -> Unit = {}, on
     }
 }
 
-class Analyzer(
-    private val scanner: BarcodeScanner,
-    private val onBarcodeScanned: (String) -> Unit
-): Analyzer {
-    @SuppressLint("UnsafeOptInUsageError")
-    override fun analyze(image: ImageProxy) {
-        InputImage.fromMediaImage(
-            image.image!!,
-            image.imageInfo.rotationDegrees
-        ).let(scanner::process).apply {
-            addOnSuccessListener { barcodes ->
-                barcodes.filter { it.valueType == Barcode.TYPE_TEXT }.forEach {
-                    it.rawValue?.let(onBarcodeScanned)
-                }
-            }
-            addOnCompleteListener {
-                image.close()
-            }
-        }
-    }
-}

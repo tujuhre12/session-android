@@ -1132,4 +1132,5 @@
     <string name="onsErrorNotRecognized">We couldn\'t recognize this ONS. Please check it and try again.</string>
     <string name="this_is_your_account_id_other_users_can_scan_it_to_start_a_conversation_with_you">This is your Account ID. Other users can scan it to start a conversation with you.</string>
     <string name="accountIdShare">Hey, I\'ve been using Session to chat with complete privacy and security. Come join me! My Account ID is \n\n%1$s\n\nDownload it at https://getsession.org/</string>
+    <string name="this_qr_code_does_not_contain_an_account_id">This QR code does not contain an Account ID.</string>
 </resources>

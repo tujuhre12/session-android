@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -23,13 +24,15 @@ class NewMessageViewModel @Inject constructor(
     private val application: Application
 ): AndroidViewModel(application), Callbacks {
 
-    private val _state = MutableStateFlow(
-        State()
-    )
+
+    private val _state = MutableStateFlow(State())
     val state = _state.asStateFlow()
 
     private val _event = Channel<Event>()
     val event = _event.receiveAsFlow()
+
+    private val _qrErrors = Channel<String>()
+    val qrErrors: Flow<String> = _qrErrors.receiveAsFlow()
 
     override fun onChange(value: String) {
         _state.update { it.copy(
@@ -37,12 +40,17 @@ class NewMessageViewModel @Inject constructor(
             error = null
         ) }
     }
+
     override fun onContinue() {
         createPrivateChatIfPossible(state.value.newMessageIdOrOns)
     }
 
     override fun onScan(value: String) {
-        createPrivateChatIfPossible(value)
+        if (PublicKeyValidation.isValid(value, isPrefixRequired = false) && PublicKeyValidation.hasValidPrefix(value)) {
+            onPublicKey(value)
+        } else {
+            _qrErrors.trySend(application.getString(R.string.this_qr_code_does_not_contain_an_account_id))
+        }
     }
 
     private fun createPrivateChatIfPossible(onsNameOrPublicKey: String) {

@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.preferences
 
 import android.os.Bundle
-import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,6 +14,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.receiveAsFlow
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
@@ -34,33 +36,36 @@ private val TITLES = listOf(R.string.view, R.string.scan)
 
 class QRCodeActivity : PassphraseRequiredActionBarActivity() {
 
+    private val errors = Channel<String>()
+
     override fun onCreate(savedInstanceState: Bundle?, isReady: Boolean) {
         super.onCreate(savedInstanceState, isReady)
         supportActionBar!!.title = resources.getString(R.string.activity_qr_code_title)
 
         setComposeContent {
-            Tabs(TextSecurePreferences.getLocalNumber(this)!!, onScan = ::handleQRCodeScanned)
+            Tabs(TextSecurePreferences.getLocalNumber(this)!!, errors.receiveAsFlow(), onScan = ::onScan)
         }
     }
 
-    fun handleQRCodeScanned(string: String) {
+    fun onScan(string: String) {
         if (!PublicKeyValidation.isValid(string)) {
-            return Toast.makeText(this, R.string.invalid_session_id, Toast.LENGTH_SHORT).show()
+            errors.trySend(getString(R.string.this_qr_code_does_not_contain_an_account_id))
+        } else if (!isFinishing) {
+            val recipient = Recipient.from(this, Address.fromSerialized(string), false)
+            start<ConversationActivityV2> {
+                putExtra(ConversationActivityV2.ADDRESS, recipient.address)
+                setDataAndType(intent.data, intent.type)
+                val existingThread = threadDatabase().getThreadIdIfExistsFor(recipient)
+                putExtra(ConversationActivityV2.THREAD_ID, existingThread)
+            }
+            finish()
         }
-        val recipient = Recipient.from(this, Address.fromSerialized(string), false)
-        start<ConversationActivityV2> {
-            putExtra(ConversationActivityV2.ADDRESS, recipient.address)
-            setDataAndType(intent.data, intent.type)
-            val existingThread = threadDatabase().getThreadIdIfExistsFor(recipient)
-            putExtra(ConversationActivityV2.THREAD_ID, existingThread)
-        }
-        finish()
     }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun Tabs(sessionId: String, onScan: (String) -> Unit) {
+private fun Tabs(sessionId: String, errors: Flow<String>, onScan: (String) -> Unit) {
     val pagerState = rememberPagerState { TITLES.size }
 
     Column {
@@ -71,7 +76,7 @@ fun Tabs(sessionId: String, onScan: (String) -> Unit) {
         ) { page ->
             when (TITLES[page]) {
                 R.string.view -> QrPage(sessionId)
-                R.string.scan -> MaybeScanQrCode(onScan = onScan)
+                R.string.scan -> MaybeScanQrCode(errors, onScan = onScan)
             }
         }
     }
@@ -79,9 +84,11 @@ fun Tabs(sessionId: String, onScan: (String) -> Unit) {
 
 @Composable
 fun QrPage(string: String) {
-    Column(modifier = Modifier
-        .padding(horizontal = 32.dp)
-        .fillMaxSize()) {
+    Column(
+        modifier = Modifier
+            .padding(horizontal = 32.dp)
+            .fillMaxSize()
+    ) {
         QrImage(
             string = string,
             contentDescription = "Your session id",

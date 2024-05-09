@@ -31,6 +31,8 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
@@ -78,6 +80,7 @@ class NewMessageFragment : Fragment() {
                 val uiState by viewModel.state.collectAsState(State())
                 NewMessage(
                     uiState,
+                    viewModel.qrErrors,
                     viewModel,
                     onClose = { delegate.onDialogClosePressed() },
                     onBack = { delegate.onDialogBackPressed() },
@@ -104,7 +107,7 @@ private fun PreviewNewMessage(
     @PreviewParameter(ThemeResPreviewParameterProvider::class) themeResId: Int
 ) {
     PreviewTheme(themeResId) {
-        NewMessage(State(), object: Callbacks {})
+        NewMessage(State())
     }
 }
 
@@ -114,7 +117,8 @@ private val TITLES = listOf(R.string.enter_account_id, R.string.qrScan)
 @Composable
 private fun NewMessage(
     state: State,
-    callbacks: Callbacks,
+    errors: Flow<String> = emptyFlow(),
+    callbacks: Callbacks = object: Callbacks {},
     onClose: () -> Unit = {},
     onBack: () -> Unit = {},
     onHelp: () -> Unit = {},
@@ -127,7 +131,7 @@ private fun NewMessage(
         HorizontalPager(pagerState) {
             when (TITLES[it]) {
                 R.string.enter_account_id -> EnterAccountId(state, callbacks, onHelp)
-                R.string.qrScan -> MaybeScanQrCode(onScan = callbacks::onScan)
+                R.string.qrScan -> MaybeScanQrCode(errors, onScan = callbacks::onScan)
             }
         }
     }

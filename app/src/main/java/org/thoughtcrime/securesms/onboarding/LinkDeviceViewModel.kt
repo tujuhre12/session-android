@@ -4,6 +4,8 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -38,9 +40,12 @@ class LinkDeviceViewModel @Inject constructor(
 
     private val event = Channel<LinkDeviceEvent>()
     val eventFlow = event.receiveAsFlow().take(1)
+
     private val qrErrors = Channel<Throwable>()
+
+    @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
     val qrErrorsFlow = qrErrors.receiveAsFlow()
-        .debounce(QR_ERROR_TIME)
+//        .debounce(QR_ERROR_TIME)
         .takeWhile { event.isEmpty }
         .mapNotNull { application.getString(R.string.qrNotRecoveryPassword) }
 
