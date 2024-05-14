@@ -219,13 +219,6 @@ public class MediaPreviewActivity extends PassphraseRequiredActionBarActivity im
     Permissions.onRequestPermissionsResult(this, requestCode, permissions, grantResults);
   }
 
-  @TargetApi(VERSION_CODES.JELLY_BEAN)
-  private void setFullscreenIfPossible() {
-    if (VERSION.SDK_INT >= VERSION_CODES.JELLY_BEAN) {
-      getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN);
-    }
-  }
-
   @Override
   public void onModified(Recipient recipient) {
     Util.runOnMain(this::updateActionBar);
@@ -760,8 +753,8 @@ public class MediaPreviewActivity extends PassphraseRequiredActionBarActivity im
     }
 
     private int getCursorPosition(int position) {
-      if (leftIsRecent) return position;
-      else              return cursor.getCount() - 1 - position;
+        int unclamped = leftIsRecent ? position : cursor.getCount() - 1 - position;
+        return Math.max(Math.min(unclamped, cursor.getCount() - 1), 0);
     }
   }
 
