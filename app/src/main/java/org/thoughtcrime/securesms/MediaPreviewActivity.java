@@ -565,8 +565,12 @@ public class MediaPreviewActivity extends PassphraseRequiredActionBarActivity im
     public void onPageUnselected(int position) {
       if (adapter == null) return;
 
-      MediaItem item = adapter.getMediaItemFor(position);
-      if (item.recipient != null) item.recipient.removeListener(MediaPreviewActivity.this);
+      try {
+        MediaItem item = adapter.getMediaItemFor(position);
+        if (item.recipient != null) item.recipient.removeListener(MediaPreviewActivity.this);
+      } catch (CursorIndexOutOfBoundsException e) {
+        throw new RuntimeException("position = " + position + " leftIsRecent = " + leftIsRecent, e);
+      }
 
       adapter.pause(position);
     }
