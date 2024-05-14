@@ -287,9 +287,6 @@ public class MediaPreviewActivity extends PassphraseRequiredActionBarActivity im
     mediaPager = findViewById(R.id.media_pager);
     mediaPager.setOffscreenPageLimit(1);
 
-    viewPagerListener = new ViewPagerListener();
-    mediaPager.addOnPageChangeListener(viewPagerListener);
-
     albumRail        = findViewById(R.id.media_preview_album_rail);
     albumRailAdapter = new MediaRailAdapter(GlideApp.with(this), this, false);
 
@@ -526,12 +523,17 @@ public class MediaPreviewActivity extends PassphraseRequiredActionBarActivity im
   public void onLoadFinished(@NonNull Loader<Pair<Cursor, Integer>> loader, @Nullable Pair<Cursor, Integer> data) {
     if (data == null) return;
 
+    mediaPager.removeOnPageChangeListener(viewPagerListener);
+
     adapter = new CursorPagerAdapter(this, GlideApp.with(this), getWindow(), data.first, data.second, leftIsRecent);
     mediaPager.setAdapter(adapter);
 
     viewModel.setCursor(this, data.first, leftIsRecent);
 
     int item = restartItem >= 0  && restartItem < adapter.getCount() ? restartItem : Math.max(Math.min(data.second, adapter.getCount() - 1), 0);
+
+    viewPagerListener = new ViewPagerListener();
+    mediaPager.addOnPageChangeListener(viewPagerListener);
 
     try {
       mediaPager.setCurrentItem(item);
