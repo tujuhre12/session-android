@@ -21,6 +21,7 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.database.CursorIndexOutOfBoundsException;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -526,23 +527,24 @@ public class MediaPreviewActivity extends PassphraseRequiredActionBarActivity im
 
   @Override
   public void onLoadFinished(@NonNull Loader<Pair<Cursor, Integer>> loader, @Nullable Pair<Cursor, Integer> data) {
-    if (data != null) {
-      CursorPagerAdapter adapter = new CursorPagerAdapter(this, GlideApp.with(this), getWindow(), data.first, data.second, leftIsRecent);
-      mediaPager.setAdapter(adapter);
-      adapter.setActive(true);
+    if (data == null) return;
 
-      viewModel.setCursor(this, data.first, leftIsRecent);
+    CursorPagerAdapter adapter = new CursorPagerAdapter(this, GlideApp.with(this), getWindow(), data.first, data.second, leftIsRecent);
+    mediaPager.setAdapter(adapter);
+    adapter.setActive(true);
 
-      if (restartItem >= 0 || data.second >= 0) {
-        int item = restartItem >= 0 ? restartItem : data.second;
-        mediaPager.setCurrentItem(item);
+    viewModel.setCursor(this, data.first, leftIsRecent);
 
-        if (item == 0) {
-          viewPagerListener.onPageSelected(0);
-        }
-      } else {
-        Log.w(TAG, "one of restartItem "+restartItem+" and data.second "+data.second+" would cause OOB exception");
-      }
+    int item = restartItem >= 0  && restartItem < adapter.getCount() ? restartItem : Math.max(Math.min(data.second, adapter.getCount() - 1), 0);
+
+    try {
+      mediaPager.setCurrentItem(item);
+    } catch (CursorIndexOutOfBoundsException e) {
+      throw new RuntimeException("restartItem = " + restartItem + ", data.second = " + data.second + " leftIsRecent = " + leftIsRecent, e);
+    }
+
+    if (item == 0) {
+      viewPagerListener.onPageSelected(0);
     }
   }
 
