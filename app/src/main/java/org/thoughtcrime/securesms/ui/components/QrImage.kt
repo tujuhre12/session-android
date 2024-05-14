@@ -45,7 +45,7 @@ fun QrImage(
     val scope = rememberCoroutineScope()
     LaunchedEffect(string) {
         scope.launch(Dispatchers.IO) {
-            val c = 150
+            val c = 100
             val w = c * 2
             bitmap = QRCodeUtilities.encode(string, w).also {
                 val hw = 30

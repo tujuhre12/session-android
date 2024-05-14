@@ -61,7 +61,7 @@ class NewConversationHomeFragment : Fragment() {
             Divider(modifier = Modifier.padding(start = 80.dp))
             ItemButton(textId = R.string.dialog_join_community_title, icon = R.drawable.ic_globe) { delegate.onJoinCommunitySelected() }
             Divider(modifier = Modifier.padding(start = 80.dp))
-            ItemButton(textId = R.string.activity_settings_invite_button_title, icon = R.drawable.ic_invite_friend) { delegate.onInviteFriend() }
+            ItemButton(textId = R.string.activity_settings_invite_button_title, icon = R.drawable.ic_invite_friend, contentDescription = R.string.AccessibilityId_invite_friend_button) { delegate.onInviteFriend() }
             Column(
                 modifier = Modifier
                     .padding(horizontal = 32.dp)

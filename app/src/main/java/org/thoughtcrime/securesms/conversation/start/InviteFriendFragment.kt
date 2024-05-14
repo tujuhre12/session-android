@@ -39,6 +39,7 @@ import org.thoughtcrime.securesms.ui.components.OnPrimaryButtons
 import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.components.SmallButtons
 import org.thoughtcrime.securesms.ui.components.TemporaryStateButton
+import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.small
 
 @AndroidEntryPoint
@@ -78,6 +79,7 @@ class InviteFriendFragment : Fragment() {
                         TextSecurePreferences.getLocalNumber(LocalContext.current)!!,
                         textAlign = TextAlign.Center,
                         modifier = Modifier
+                            .contentDescription("Your account ID")
                             .align(Alignment.Center)
                             .padding(22.dp)
                     )
@@ -94,7 +96,8 @@ class InviteFriendFragment : Fragment() {
                     SmallButtons {
                         Row(horizontalArrangement = spacedBy(20.dp)) {
                             OutlineButton(
-                                modifier = Modifier.weight(1f),
+                                modifier = Modifier.weight(1f)
+                                    .contentDescription("Share button"),
                                 onClick = { requireContext().sendInvitation() }
                             ) {
                                 Text(stringResource(R.string.share))
@@ -102,7 +105,8 @@ class InviteFriendFragment : Fragment() {
 
                             TemporaryStateButton { source, temporary ->
                                 OutlineButton(
-                                    modifier = Modifier.weight(1f),
+                                    modifier = Modifier.weight(1f)
+                                        .contentDescription("Copy button"),
                                     interactionSource = source,
                                     onClick = { requireContext().copyPublicKey() },
                                 ) {

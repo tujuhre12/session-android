@@ -43,6 +43,7 @@ import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.showOpenUrlDialog
 import org.thoughtcrime.securesms.ui.AppTheme
+import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LoadingArcOr
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
@@ -150,13 +151,19 @@ fun EnterAccountId(
     ) {
         SessionOutlinedTextField(
             text = state.newMessageIdOrOns,
-            modifier = Modifier.padding(horizontal = 64.dp),
+            modifier = Modifier.padding(horizontal = 64.dp)
+                .contentDescription("Session id input box"),
             placeholder = stringResource(R.string.accountIdOrOnsEnter),
             onChange = callbacks::onChange,
             onContinue = callbacks::onContinue,
             error = state.error?.string(),
         )
-        if (state.error == null) BorderlessButtonSecondary(text = stringResource(R.string.messageNewDescription)) { onHelp() }
+        if (state.error == null) {
+            BorderlessButtonSecondary(
+                text = stringResource(R.string.messageNewDescription),
+                contentDescription = GetString(R.string.AccessibilityId_help_desk_link),
+            ) { onHelp() }
+        }
 
         Spacer(modifier = Modifier.weight(1f))
 
@@ -165,11 +172,11 @@ fun EnterAccountId(
                 .align(Alignment.CenterHorizontally)
                 .padding(horizontal = 64.dp, vertical = 20.dp)
                 .width(200.dp)
-                .contentDescription(R.string.continue_2),
+                .contentDescription(R.string.next),
             onClick = { callbacks.onContinue() }
         ) {
             LoadingArcOr(state.loading) {
-                Text(stringResource(R.string.continue_2))
+                Text(stringResource(R.string.next))
             }
         }
     }

@@ -34,7 +34,6 @@ class LinkDeviceEvent(val mnemonic: ByteArray)
 class LinkDeviceViewModel @Inject constructor(
     private val application: Application
 ): AndroidViewModel(application) {
-    private val QR_ERROR_TIME = 3.seconds
     private val state = MutableStateFlow(LinkDeviceState())
     val stateFlow = state.asStateFlow()
 
@@ -43,10 +42,7 @@ class LinkDeviceViewModel @Inject constructor(
 
     private val qrErrors = Channel<Throwable>()
 
-    @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
     val qrErrorsFlow = qrErrors.receiveAsFlow()
-//        .debounce(QR_ERROR_TIME)
-        .takeWhile { event.isEmpty }
         .mapNotNull { application.getString(R.string.qrNotRecoveryPassword) }
 
     private val codec by lazy { MnemonicCodec { MnemonicUtilities.loadFileContents(getApplication(), it) } }

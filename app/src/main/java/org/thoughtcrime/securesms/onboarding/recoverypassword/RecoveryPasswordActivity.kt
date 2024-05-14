@@ -141,7 +141,6 @@ fun RecoveryPasswordCell(seed: String, copySeed:() -> Unit = {}) {
                 Text(
                     seed,
                     modifier = Modifier
-                        .contentDescription(R.string.AccessibilityId_hide_recovery_password_button)
                         .padding(vertical = 24.dp)
                         .border(
                             width = 1.dp,
