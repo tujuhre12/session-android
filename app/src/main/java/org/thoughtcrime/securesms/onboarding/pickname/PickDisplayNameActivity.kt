@@ -34,7 +34,8 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.AppTextSecurePreferences
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.BaseActionBarActivity
-import org.thoughtcrime.securesms.onboarding.messagenotifications.startPNModeActivity
+import org.thoughtcrime.securesms.onboarding.messagenotifications.MessageNotificationsActivity
+import org.thoughtcrime.securesms.onboarding.messagenotifications.startMessageNotificationsActivity
 import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.OutlineButton
 import org.thoughtcrime.securesms.ui.PreviewTheme
@@ -68,7 +69,7 @@ class PickDisplayNameActivity : BaseActionBarActivity() {
 
         lifecycleScope.launch {
             viewModel.eventFlow.collect {
-                startPNModeActivity()
+                startMessageNotificationsActivity()
             }
         }
     }

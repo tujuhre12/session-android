@@ -28,7 +28,8 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.onboarding.messagenotifications.startPNModeActivity
+import org.thoughtcrime.securesms.onboarding.messagenotifications.MessageNotificationsActivity
+import org.thoughtcrime.securesms.onboarding.messagenotifications.startMessageNotificationsActivity
 import org.thoughtcrime.securesms.onboarding.pickname.startPickDisplayNameActivity
 import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.ProgressArc
@@ -61,7 +62,7 @@ class LoadingActivity: BaseActionBarActivity() {
 
         when {
             skipped -> startPickDisplayNameActivity(true, flags)
-            else -> startPNModeActivity(flags)
+            else -> startMessageNotificationsActivity(flags)
         }
     }
 

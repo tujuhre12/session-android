@@ -38,7 +38,6 @@ import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.notifications.PushRegistry
 import org.thoughtcrime.securesms.ui.AppTheme
-import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.OutlineButton
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
@@ -166,7 +165,7 @@ fun NotificationRadioButton(
     }
 }
 
-fun Context.startPNModeActivity(flags: Int = 0) {
+fun Context.startMessageNotificationsActivity(flags: Int = 0) {
     Intent(this, MessageNotificationsActivity::class.java)
         .also { it.flags = flags }
         .also(::startActivity)
