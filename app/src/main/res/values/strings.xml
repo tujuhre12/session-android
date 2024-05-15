@@ -1117,6 +1117,7 @@
     <string name="AccessibilityId_error_message">Error message</string>
     <string name="AccessibilityId_hide_recovery_password_button">Hide recovery password button</string>
     <string name="AccessibilityId_confirm_button">Confirm button</string>
+    <string name="AccessibilityId_open_url">Open URL</string>
     <string name="accountIdErrorInvalid">This Account ID is invalid. Please check and try again.</string>
     <string name="enter_account_id">Enter Account ID</string>
     <string name="accountIdOrOnsEnter">Enter account ID or ONS</string>

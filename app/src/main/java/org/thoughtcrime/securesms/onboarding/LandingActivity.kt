@@ -113,7 +113,7 @@ class LandingActivity : BaseActionBarActivity() {
                 modifier = Modifier
                     .width(262.dp)
                     .align(Alignment.CenterHorizontally)
-                    .contentDescription(R.string.AccessibilityId_privacy_policy_link),
+                    .contentDescription(R.string.AccessibilityId_open_url),
                 fontSize = 11.sp,
                 lineHeight = 13.sp,
                 onClick = ::openDialog

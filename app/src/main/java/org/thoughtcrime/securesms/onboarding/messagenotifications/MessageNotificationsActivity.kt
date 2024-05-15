@@ -165,7 +165,7 @@ fun NotificationRadioButton(
     }
 }
 
-fun Context.startPNModeActivity(flags: Int = 0) {
+fun Context.startMessageNotificationsActivity(flags: Int = 0) {
     Intent(this, MessageNotificationsActivity::class.java)
         .also { it.flags = flags }
         .also(::startActivity)
