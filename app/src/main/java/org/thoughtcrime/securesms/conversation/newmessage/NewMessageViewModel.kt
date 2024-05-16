@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.dms
+package org.thoughtcrime.securesms.conversation.newmessage
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel

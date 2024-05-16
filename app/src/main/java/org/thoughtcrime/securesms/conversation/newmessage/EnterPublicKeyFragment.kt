@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.dms
+package org.thoughtcrime.securesms.conversation.new
 
 import android.content.ClipData
 import android.content.ClipboardManager

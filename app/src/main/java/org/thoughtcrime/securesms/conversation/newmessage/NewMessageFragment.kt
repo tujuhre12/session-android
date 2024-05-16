@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.dms
+package org.thoughtcrime.securesms.conversation.new
 
 import android.content.Intent
 import android.os.Bundle
@@ -38,6 +38,10 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
+import org.thoughtcrime.securesms.conversation.newmessage.Callbacks
+import org.thoughtcrime.securesms.conversation.newmessage.Event
+import org.thoughtcrime.securesms.conversation.newmessage.NewMessageViewModel
+import org.thoughtcrime.securesms.conversation.newmessage.State
 import org.thoughtcrime.securesms.conversation.start.NewConversationDelegate
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent

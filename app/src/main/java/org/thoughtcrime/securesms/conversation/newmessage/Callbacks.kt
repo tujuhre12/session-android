@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.dms
+package org.thoughtcrime.securesms.conversation.newmessage
 
 interface Callbacks {
     fun onChange(value: String) {}
