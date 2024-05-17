@@ -107,6 +107,7 @@ class ConversationViewModel(
     override fun onCleared() {
         super.onCleared()
 
+        // Stop all voice message when existing the convo page
         AudioSlidePlayer.stopAll()
     }
 
