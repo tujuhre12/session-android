@@ -96,6 +96,11 @@ class ConversationViewModel(
     init {
         viewModelScope.launch(Dispatchers.IO) {
             repository.recipientUpdateFlow(threadId)
+                    .collect { recipient ->
+                        if (recipient == null && _uiState.value.conversationExists) {
+                            _uiState.update { it.copy(conversationExists = false) }
+                        }
+                    }
         }
     }
 
