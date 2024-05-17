@@ -27,10 +27,11 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.database.MmsSmsDatabase
+import org.thoughtcrime.securesms.audio.AudioSlidePlayer
 
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.model.MessageRecord
+import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.repository.ConversationRepository
 
 import java.util.UUID
@@ -95,12 +96,13 @@ class ConversationViewModel(
     init {
         viewModelScope.launch(Dispatchers.IO) {
             repository.recipientUpdateFlow(threadId)
-                .collect { recipient ->
-                    if (recipient == null && _uiState.value.conversationExists) {
-                        _uiState.update { it.copy(conversationExists = false) }
-                    }
-                }
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+
+        AudioSlidePlayer.stopAll()
     }
 
     fun saveDraft(text: String) {
@@ -142,8 +144,22 @@ class ConversationViewModel(
     }
 
     fun deleteLocally(message: MessageRecord) {
+        stopPlayingAudioMessage(message)
         val recipient = recipient ?: return Log.w("Loki", "Recipient was null for delete locally action")
         repository.deleteLocally(recipient, message)
+    }
+
+    /**
+     * Stops audio player if its current playing is the one given in the message.
+     */
+    private fun stopPlayingAudioMessage(message: MessageRecord) {
+        val player = AudioSlidePlayer.getInstance()
+        val audioSlide = player?.audioSlide
+        if (audioSlide != null &&
+                message is MmsMessageRecord &&
+                message.slideDeck.audioSlide == audioSlide) {
+            player.stop()
+        }
     }
 
     fun setRecipientApproved() {
@@ -157,6 +173,7 @@ class ConversationViewModel(
         repository.deleteForEveryone(threadId, recipient, message)
             .onSuccess {
                 Log.d("Loki", "Deleted message ${message.id} ")
+                stopPlayingAudioMessage(message)
             }
             .onFailure {
                 Log.w("Loki", "FAILED TO delete message ${message.id} ")
