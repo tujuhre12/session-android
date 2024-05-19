@@ -107,7 +107,7 @@ class ConversationViewModel(
     override fun onCleared() {
         super.onCleared()
 
-        // Stop all voice message when existing the convo page
+        // Stop all voice message when exiting the convo page
         AudioSlidePlayer.stopAll()
     }
 
@@ -159,13 +159,9 @@ class ConversationViewModel(
      * Stops audio player if its current playing is the one given in the message.
      */
     private fun stopPlayingAudioMessage(message: MessageRecord) {
-        val player = AudioSlidePlayer.getInstance()
-        val audioSlide = player?.audioSlide
-        if (audioSlide != null &&
-                message is MmsMessageRecord &&
-                message.slideDeck.audioSlide == audioSlide) {
-            player.stop()
-        }
+        val mmsMessage = message as? MmsMessageRecord ?: return
+        val audioSlide = mmsMessage.slideDeck.audioSlide ?: return
+        AudioSlidePlayer.getInstance()?.takeIf { it.audioSlide == audioSlide }?.stop()
     }
 
     fun setRecipientApproved() {
