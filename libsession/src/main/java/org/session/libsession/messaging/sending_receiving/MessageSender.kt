@@ -73,6 +73,7 @@ object MessageSender {
 
     // Convenience
     fun send(message: Message, destination: Destination, isSyncMessage: Boolean): Promise<Unit, Exception> {
+        if (message is VisibleMessage) MessagingModuleConfiguration.shared.lastSentTimestampCache.submitTimestamp(message.threadID!!, message.sentTimestamp!!)
         return if (destination is Destination.LegacyOpenGroup || destination is Destination.OpenGroup || destination is Destination.OpenGroupInbox) {
             sendToOpenGroupDestination(destination, message)
         } else {
