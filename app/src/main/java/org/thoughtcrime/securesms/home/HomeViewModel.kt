@@ -22,7 +22,7 @@ class HomeViewModel @Inject constructor(private val threadDb: ThreadDatabase): V
 
     private val executor = viewModelScope + SupervisorJob()
     private var lastContext: WeakReference<Context>? = null
-    private var updateJobs: MutableList<Job> = mutableListOf()
+    private val updateJobs: MutableList<Job> = mutableListOf()
 
     private val _conversations = MutableLiveData<List<ThreadRecord>>()
     val conversations: LiveData<List<ThreadRecord>> = _conversations
@@ -30,6 +30,15 @@ class HomeViewModel @Inject constructor(private val threadDb: ThreadDatabase): V
     private val listUpdateChannel = Channel<Unit>(capacity = Channel.CONFLATED)
 
     fun tryUpdateChannel() = listUpdateChannel.trySend(Unit)
+
+    override fun onCleared() {
+        super.onCleared()
+
+        for (job in updateJobs) {
+            job.cancel()
+        }
+        updateJobs.clear()
+    }
 
     fun getObservable(context: Context): LiveData<List<ThreadRecord>> {
         // If the context has changed (eg. the activity gets recreated) then

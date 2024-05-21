@@ -240,19 +240,22 @@ class PathActivity : PassphraseRequiredActionBarActivity() {
             dotViewLayoutParams.addRule(CENTER_IN_PARENT)
             dotView.layoutParams = dotViewLayoutParams
             addView(dotView)
-            Handler().postDelayed({
+            postDelayed({
                 performAnimation()
             }, dotAnimationStartDelay)
         }
 
         private fun performAnimation() {
-            expand()
-            Handler().postDelayed({
-                collapse()
-                Handler().postDelayed({
-                    performAnimation()
-                }, dotAnimationRepeatInterval)
-            }, 1000)
+            if (isAttachedToWindow) {
+                expand()
+
+                postDelayed({
+                    collapse()
+                    postDelayed({
+                        performAnimation()
+                    }, dotAnimationRepeatInterval)
+                }, 1000)
+            }
         }
 
         private fun expand() {

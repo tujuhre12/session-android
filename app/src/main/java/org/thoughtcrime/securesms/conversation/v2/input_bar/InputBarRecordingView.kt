@@ -132,7 +132,12 @@ class InputBarRecordingView : RelativeLayout {
     private fun updateTimer() {
         val duration = (Date().time - startTimestamp) / 1000L
         binding.recordingViewDurationTextView.text = DateUtils.formatElapsedTime(duration)
-        snHandler.postDelayed({ updateTimer() }, 500)
+
+        if (isAttachedToWindow) {
+            // Should only update the timer if the view is still attached to the window.
+            // Otherwise, the timer will keep running even after the view is detached.
+            snHandler.postDelayed({ updateTimer() }, 500)
+        }
     }
 
     fun lock() {
