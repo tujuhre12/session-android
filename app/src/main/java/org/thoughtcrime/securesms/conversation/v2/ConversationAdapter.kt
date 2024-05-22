@@ -22,12 +22,10 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewVisibleMessageBinding
 import org.session.libsession.messaging.contacts.Contact
-import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.conversation.v2.messages.ControlMessageView
 import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageView
 import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageViewDelegate
 import org.thoughtcrime.securesms.database.CursorRecyclerViewAdapter
-import org.thoughtcrime.securesms.database.MmsSmsColumns
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.mms.GlideRequests
@@ -205,19 +203,6 @@ class ConversationAdapter(
         if (!isReversed && !cursor.moveToPosition(position + 1)) { return null }
 
         return messageDB.readerFor(cursor).current
-    }
-
-    private fun getLastSentMessageId(cursor: Cursor): Long {
-        // If we don't move to first (or at least step backwards) we can step off the end of the
-        // cursor and any query will return an "Index = -1" error.
-        val cursorHasContent = cursor.moveToFirst()
-        if (cursorHasContent) {
-            val thisThreadId = cursor.getLong(4) // Column index 4 is "thread_id"
-            if (thisThreadId != -1L) {
-                return messageDB.getLastOutgoingMessage(thisThreadId)
-            }
-        }
-        return -1L
     }
 
     override fun changeCursor(cursor: Cursor?) {

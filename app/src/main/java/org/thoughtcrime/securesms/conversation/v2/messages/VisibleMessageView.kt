@@ -22,7 +22,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
-import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.core.view.marginBottom
 import dagger.hilt.android.AndroidEntryPoint
@@ -32,13 +31,12 @@ import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.contacts.Contact.ContactContext
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.ViewUtil
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.modifyLayoutParams
 import org.session.libsignal.utilities.IdPrefix
-import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
+import org.thoughtcrime.securesms.database.LastSentTimestampCache
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.MmsDatabase
@@ -73,6 +71,7 @@ class VisibleMessageView : LinearLayout {
     @Inject lateinit var mmsSmsDb: MmsSmsDatabase
     @Inject lateinit var smsDb: SmsDatabase
     @Inject lateinit var mmsDb: MmsDatabase
+    @Inject lateinit var lastSentTimestampCache: LastSentTimestampCache
 
     private val binding by lazy { ViewVisibleMessageBinding.bind(this) }
     private val swipeToReplyIcon = ContextCompat.getDrawable(context, R.drawable.ic_baseline_reply_24)!!.mutate()
@@ -302,9 +301,6 @@ class VisibleMessageView : LinearLayout {
 
         // --- If we got here then we know the message is outgoing ---
 
-        val lastSentMessageId = ConversationActivityV2.lastSentMessageId;
-        val isLastSentMessage = lastSentMessageId == message.id
-
         // ----- Case ii.) Message is outgoing but NOT scheduled to disappear -----
         if (!scheduledToDisappear) {
             // If this isn't a disappearing message then we never show the timer
@@ -317,9 +313,11 @@ class VisibleMessageView : LinearLayout {
             } else {
                 // ..but if the message HAS been successfully sent or read then only display the delivery status
                 // text and image if this is the last sent message.
-                binding.messageStatusTextView.isVisible  = isLastSentMessage
-                binding.messageStatusImageView.isVisible = isLastSentMessage
-                if (isLastSentMessage) { binding.messageStatusImageView.bringToFront() }
+                val lastSentTimestamp = lastSentTimestampCache.getTimestamp(message.threadId)
+                val isLastSent = lastSentTimestamp == message.timestamp
+                binding.messageStatusTextView.isVisible  = isLastSent
+                binding.messageStatusImageView.isVisible = isLastSent
+                if (isLastSent) { binding.messageStatusImageView.bringToFront() }
             }
         }
         else // ----- Case iii.) Message is outgoing AND scheduled to disappear -----

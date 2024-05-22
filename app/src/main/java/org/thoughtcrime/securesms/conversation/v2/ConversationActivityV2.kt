@@ -332,11 +332,10 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                 }
             },
             onAttachmentNeedsDownload = { attachmentId, mmsId ->
-
                 alreadyAttemptedAttachmentDownloads.takeUnless {
-                    attachmentId in alreadyAttemptedAttachmentDownloads
-                }.let {
-                    alreadyAttemptedAttachmentDownloads += attachmentId
+                    attachmentId in it
+                }?.let {
+                    it += attachmentId
                     lifecycleScope.launch(Dispatchers.IO) {
                         JobQueue.shared.add(AttachmentDownloadJob(attachmentId, mmsId))
                     }
@@ -387,8 +386,6 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         const val PICK_GIF = 10
         const val PICK_FROM_LIBRARY = 12
         const val INVITE_CONTACTS = 124
-
-        var lastSentMessageId = -1L;
     }
     // endregion
 
@@ -515,9 +512,6 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         viewModel.run {
             binding?.toolbarContent?.update(recipient ?: return, openGroup, expirationConfiguration)
         }
-
-        // Update our last sent message Id on startup / resume (resume is called after onCreate)
-        lastSentMessageId = mmsSmsDb.getLastOutgoingMessage(viewModel.threadId)
     }
 
     override fun onPause() {
@@ -2226,11 +2220,6 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                 // to the bottom of long messages as required by Jira SES-789 / GitHub 1364).
                 recyclerView.scrollToPosition(adapter.itemCount)
             }
-
-            // Update our cached last sent message to ensure we have accurate details.
-            // Note: This `onChanged` method is not triggered when scrolling so should minimally
-            // affect performance.
-            lastSentMessageId = mmsSmsDb.getLastOutgoingMessage(viewModel.threadId)
         }
     }
 
