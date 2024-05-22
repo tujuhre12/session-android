@@ -4,8 +4,6 @@ import android.animation.FloatEvaluator
 import android.animation.IntEvaluator
 import android.animation.ValueAnimator
 import android.content.Context
-import android.os.Handler
-import android.os.Looper
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.widget.ImageView
@@ -25,10 +23,12 @@ import java.util.Date
 class InputBarRecordingView : RelativeLayout {
     private lateinit var binding: ViewInputBarRecordingBinding
     private var startTimestamp = 0L
-    private val snHandler = Handler(Looper.getMainLooper())
     private var dotViewAnimation: ValueAnimator? = null
     private var pulseAnimation: ValueAnimator? = null
     var delegate: InputBarRecordingViewDelegate? = null
+    private val updateTimerRunnable = Runnable {
+        updateTimer()
+    }
 
     val lockView: LinearLayout
         get() = binding.lockView
@@ -134,9 +134,21 @@ class InputBarRecordingView : RelativeLayout {
         binding.recordingViewDurationTextView.text = DateUtils.formatElapsedTime(duration)
 
         if (isAttachedToWindow) {
+            // Make sure there's only one runnable in the handler at a time.
+            removeCallbacks(updateTimerRunnable)
+
             // Should only update the timer if the view is still attached to the window.
             // Otherwise, the timer will keep running even after the view is detached.
-            snHandler.postDelayed({ updateTimer() }, 500)
+            postDelayed(updateTimerRunnable, 500)
+        }
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+
+        if (isVisible) {
+            // If the view was visible (i.e. recording) when it was detached, start the timer again.
+            updateTimer()
         }
     }
 

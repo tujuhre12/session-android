@@ -6,7 +6,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.net.Uri
 import android.os.Bundle
-import android.os.Handler
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.Gravity
@@ -21,7 +20,6 @@ import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityPathBinding
 import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.utilities.getColorFromAttr
-import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.util.GlowViewUtilities
@@ -240,9 +238,6 @@ class PathActivity : PassphraseRequiredActionBarActivity() {
             dotViewLayoutParams.addRule(CENTER_IN_PARENT)
             dotView.layoutParams = dotViewLayoutParams
             addView(dotView)
-            postDelayed({
-                performAnimation()
-            }, dotAnimationStartDelay)
         }
 
         private fun performAnimation() {
@@ -256,6 +251,14 @@ class PathActivity : PassphraseRequiredActionBarActivity() {
                     }, dotAnimationRepeatInterval)
                 }, 1000)
             }
+        }
+
+        override fun onAttachedToWindow() {
+            super.onAttachedToWindow()
+
+            postDelayed({
+                performAnimation()
+            }, dotAnimationStartDelay)
         }
 
         private fun expand() {
