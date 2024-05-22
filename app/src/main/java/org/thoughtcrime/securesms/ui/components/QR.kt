@@ -8,6 +8,7 @@ import android.provider.Settings
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
+import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.background
@@ -49,19 +50,13 @@ import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.buffer
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
 import network.loki.messenger.R
 import org.session.libsignal.utilities.Log
 import java.util.concurrent.Executors
-import kotlin.time.Duration.Companion.seconds
-
-typealias CameraPreview = androidx.camera.core.Preview
 
 private const val TAG = "NewMessageFragment"
 
@@ -76,16 +71,16 @@ fun MaybeScanQrCode(
         } },
         onScan: (String) -> Unit
 ) {
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(
+        modifier = Modifier.fillMaxSize()
+            .background(MaterialTheme.colors.surface)
+    ) {
         LocalSoftwareKeyboardController.current?.hide()
 
         val cameraPermissionState = rememberPermissionState(Manifest.permission.CAMERA)
 
         if (cameraPermissionState.status.isGranted) {
-            ScanQrCode(errors) {
-                Log.d("QR", "scan: $it")
-                onScan(it)
-            }
+            ScanQrCode(errors, onScan)
         } else if (cameraPermissionState.status.shouldShowRationale) {
             Column(
                 modifier = Modifier
@@ -115,13 +110,12 @@ fun MaybeScanQrCode(
     }
 }
 
-@OptIn(FlowPreview::class)
 @Composable
 fun ScanQrCode(errors: Flow<String>, onScan: (String) -> Unit) {
     val localContext = LocalContext.current
     val cameraProvider = remember { ProcessCameraProvider.getInstance(localContext) }
 
-    val preview = androidx.camera.core.Preview.Builder().build()
+    val preview = Preview.Builder().build()
     val selector = CameraSelector.Builder()
             .requireLensFacing(CameraSelector.LENS_FACING_BACK)
             .build()
@@ -142,7 +136,7 @@ fun ScanQrCode(errors: Flow<String>, onScan: (String) -> Unit) {
         )
     }.onFailure { Log.e(TAG, "error binding camera", it) }
 
-    DisposableEffect(key1 = cameraProvider) {
+    DisposableEffect(cameraProvider) {
         onDispose {
             cameraProvider.get().unbindAll()
         }

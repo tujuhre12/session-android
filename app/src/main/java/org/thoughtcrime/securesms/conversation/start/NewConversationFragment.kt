@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewGroup.LayoutParams
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import com.google.android.material.bottomsheet.BottomSheetBehavior
@@ -15,6 +16,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.modifyLayoutParams
 import org.thoughtcrime.securesms.conversation.new.NewMessageFragment
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.groups.CreateGroupFragment
@@ -40,21 +42,18 @@ class NewConversationFragment : BottomSheetDialogFragment(), NewConversationDele
         )
     }
 
-    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val dialog = BottomSheetDialog(requireContext(), R.style.Theme_Session_BottomSheet)
-        dialog.setOnShowListener {
-            val bottomSheetDialog = it as BottomSheetDialog
-            val parentLayout = bottomSheetDialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
-            parentLayout?.let {
-                val behaviour = BottomSheetBehavior.from(it)
-                val layoutParams = it.layoutParams
-                layoutParams.height = defaultPeekHeight
-                it.layoutParams = layoutParams
-                behaviour.state = BottomSheetBehavior.STATE_EXPANDED
+    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =
+        BottomSheetDialog(requireContext(), R.style.Theme_Session_BottomSheet).apply {
+            setOnShowListener { _ ->
+                findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)?.let {
+                    it.modifyLayoutParams<LayoutParams> { height = defaultPeekHeight }
+                    BottomSheetBehavior.from(it).apply {
+                        skipCollapsed = true
+                        state = BottomSheetBehavior.STATE_EXPANDED
+                    }
+                }
             }
         }
-        return dialog
-    }
 
     override fun onNewMessageSelected() {
         replaceFragment(NewMessageFragment().also { it.delegate = this })

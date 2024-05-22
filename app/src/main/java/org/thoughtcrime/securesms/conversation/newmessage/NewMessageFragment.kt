@@ -9,7 +9,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
@@ -30,7 +30,6 @@ import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
-import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filterIsInstance
@@ -59,7 +58,6 @@ import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
 import org.thoughtcrime.securesms.ui.contentDescription
 
-@AndroidEntryPoint
 class NewMessageFragment : Fragment() {
 
     val viewModel: NewMessageViewModel by viewModels()
@@ -149,9 +147,9 @@ fun EnterAccountId(
     onHelp: () -> Unit = {}
 ) {
     Column(
-        modifier = Modifier.padding(12.dp),
+        modifier = Modifier.padding(horizontal = 12.dp, vertical = 16.dp).fillMaxHeight(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         SessionOutlinedTextField(
             text = state.newMessageIdOrOns,
@@ -169,12 +167,10 @@ fun EnterAccountId(
             ) { onHelp() }
         }
 
-        Spacer(modifier = Modifier.weight(1f))
-
         OutlineButton(
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
-                .padding(horizontal = 64.dp, vertical = 20.dp)
+                .padding(horizontal = 64.dp)
                 .width(200.dp)
                 .contentDescription(R.string.next),
             onClick = { callbacks.onContinue() }
