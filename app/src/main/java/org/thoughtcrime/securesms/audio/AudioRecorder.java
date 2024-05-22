@@ -45,7 +45,7 @@ public class AudioRecorder {
       Log.i(TAG, "Running startRecording() + " + Thread.currentThread().getId());
       try {
         if (audioCodec != null) {
-          Log.e(TAG, "We can only record once at a time.");
+          Log.e(TAG, "Trying to start recording while another recording is in progress, exiting...");
           return;
         }
 
