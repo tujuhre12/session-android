@@ -2,12 +2,9 @@ package org.thoughtcrime.securesms.home
 
 import android.Manifest
 import android.app.NotificationManager
-import android.content.BroadcastReceiver
 import android.content.ClipData
 import android.content.ClipboardManager
-import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
 import android.text.SpannableString
@@ -18,7 +15,6 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
@@ -426,7 +422,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         if (event.recipient.isLocalNumber) {
             updateProfileButton()
         } else {
-            homeViewModel.tryUpdateChannel()
+            homeViewModel.tryReload()
         }
     }
 
@@ -597,7 +593,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
     private fun setConversationPinned(threadId: Long, pinned: Boolean) {
         lifecycleScope.launch(Dispatchers.IO) {
             storage.setPinned(threadId, pinned)
-            homeViewModel.tryUpdateChannel()
+            homeViewModel.tryReload()
         }
     }
 
@@ -673,7 +669,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             button(R.string.yes) {
                 textSecurePreferences.setHasHiddenMessageRequests()
                 setupMessageRequestsBanner()
-                homeViewModel.tryUpdateChannel()
+                homeViewModel.tryReload()
             }
             button(R.string.no)
         }

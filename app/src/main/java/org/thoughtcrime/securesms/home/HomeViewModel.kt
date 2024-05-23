@@ -59,7 +59,7 @@ class HomeViewModel @Inject constructor(
             }
             .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-    fun tryUpdateChannel() = manualReloadTrigger.tryEmit(Unit)
+    fun tryReload() = manualReloadTrigger.tryEmit(Unit)
 
     companion object {
         private const val CHANGE_NOTIFICATION_DEBOUNCE_MILLS = 100L
