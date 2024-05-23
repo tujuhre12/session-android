@@ -202,10 +202,6 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         binding.createNewPrivateChatButton.setOnClickListener { showNewConversation() }
         IP2Country.configureIfNeeded(this@HomeActivity)
 
-        ApplicationContext.getInstance(this@HomeActivity).typingStatusRepository.typingThreads.observe(this) { threadIds ->
-            homeAdapter.typingThreadIDs = (threadIds ?: setOf())
-        }
-
         // Set up new conversation button
         binding.newConversationButton.setOnClickListener { showNewConversation() }
         // Observe blocked contacts changed events

@@ -9,7 +9,6 @@ import androidx.recyclerview.widget.ListUpdateCallback
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.NO_ID
 import network.loki.messenger.R
-import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.mms.GlideRequests
 
@@ -26,7 +25,7 @@ class HomeAdapter(
 
     var header: View? = null
 
-    var data: List<ThreadRecord> = emptyList()
+    var data: HomeViewModel.HomeData = HomeViewModel.HomeData(emptyList(), emptySet())
         set(newData) {
             if (field !== newData) {
                 val diff = HomeDiffUtil(field, newData, context, configFactory)
@@ -60,18 +59,10 @@ class HomeAdapter(
     override fun getItemId(position: Int): Long  {
         if (hasHeaderView() && position == 0) return NO_ID
         val offsetPosition = if (hasHeaderView()) position-1 else position
-        return data[offsetPosition].threadId
+        return data.threads[offsetPosition].threadId
     }
 
     lateinit var glide: GlideRequests
-    var typingThreadIDs = setOf<Long>()
-        set(value) {
-            if (field == value) { return }
-
-            field = value
-            // TODO: replace this with a diffed update or a partial change set with payloads
-            notifyDataSetChanged()
-        }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder =
         when (viewType) {
@@ -94,8 +85,8 @@ class HomeAdapter(
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         if (holder is ConversationViewHolder) {
             val offset = if (hasHeaderView()) position - 1 else position
-            val thread = data[offset]
-            val isTyping = typingThreadIDs.contains(thread.threadId)
+            val thread = data.threads[offset]
+            val isTyping = data.typingThreadIDs.contains(thread.threadId)
             holder.view.bind(thread, isTyping, glide)
         }
     }
@@ -112,7 +103,7 @@ class HomeAdapter(
         if (hasHeaderView() && position == 0) HEADER
         else ITEM
 
-    override fun getItemCount(): Int = data.size + if (hasHeaderView()) 1 else 0
+    override fun getItemCount(): Int = data.threads.size + if (hasHeaderView()) 1 else 0
 
     class ConversationViewHolder(val view: ConversationView) : RecyclerView.ViewHolder(view)
 

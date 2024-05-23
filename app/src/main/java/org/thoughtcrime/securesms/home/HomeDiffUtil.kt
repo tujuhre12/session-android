@@ -7,22 +7,22 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.util.getConversationUnread
 
 class HomeDiffUtil(
-    private val old: List<ThreadRecord>,
-    private val new: List<ThreadRecord>,
+    private val old: HomeViewModel.HomeData,
+    private val new: HomeViewModel.HomeData,
     private val context: Context,
     private val configFactory: ConfigFactory
 ): DiffUtil.Callback() {
 
-    override fun getOldListSize(): Int = old.size
+    override fun getOldListSize(): Int = old.threads.size
 
-    override fun getNewListSize(): Int = new.size
+    override fun getNewListSize(): Int = new.threads.size
 
     override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean =
-        old[oldItemPosition].threadId == new[newItemPosition].threadId
+        old.threads[oldItemPosition].threadId == new.threads[newItemPosition].threadId
 
     override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
-        val oldItem = old[oldItemPosition]
-        val newItem = new[newItemPosition]
+        val oldItem = old.threads[oldItemPosition]
+        val newItem = new.threads[newItemPosition]
 
         // return early to save getDisplayBody or expensive calls
         var isSameItem = true
@@ -47,7 +47,8 @@ class HomeDiffUtil(
                 oldItem.isSent == newItem.isSent &&
                 oldItem.isPending == newItem.isPending &&
                 oldItem.lastSeen == newItem.lastSeen &&
-                configFactory.convoVolatile?.getConversationUnread(newItem) != true
+                configFactory.convoVolatile?.getConversationUnread(newItem) != true &&
+                old.typingThreadIDs.contains(oldItem.threadId) == new.typingThreadIDs.contains(newItem.threadId)
             )
         }
 
