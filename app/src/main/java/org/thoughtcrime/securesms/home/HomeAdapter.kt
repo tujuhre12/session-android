@@ -26,15 +26,14 @@ class HomeAdapter(
 
     var header: View? = null
 
-    private var _data: List<ThreadRecord> = emptyList()
-    var data: List<ThreadRecord>
-        get() = _data.toList()
+    var data: List<ThreadRecord> = emptyList()
         set(newData) {
-            val previousData = _data.toList()
-            val diff = HomeDiffUtil(previousData, newData, context, configFactory)
-            val diffResult = DiffUtil.calculateDiff(diff)
-            _data = newData
-            diffResult.dispatchUpdatesTo(this as ListUpdateCallback)
+            if (field !== newData) {
+                val diff = HomeDiffUtil(field, newData, context, configFactory)
+                val diffResult = DiffUtil.calculateDiff(diff)
+                field = newData
+                diffResult.dispatchUpdatesTo(this as ListUpdateCallback)
+            }
         }
 
     fun hasHeaderView(): Boolean = header != null
@@ -61,7 +60,7 @@ class HomeAdapter(
     override fun getItemId(position: Int): Long  {
         if (hasHeaderView() && position == 0) return NO_ID
         val offsetPosition = if (hasHeaderView()) position-1 else position
-        return _data[offsetPosition].threadId
+        return data[offsetPosition].threadId
     }
 
     lateinit var glide: GlideRequests

@@ -24,7 +24,9 @@ import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -81,7 +83,6 @@ import org.thoughtcrime.securesms.util.IP2Country
 import org.thoughtcrime.securesms.util.disableClipping
 import org.thoughtcrime.securesms.util.push
 import org.thoughtcrime.securesms.util.show
-import org.thoughtcrime.securesms.util.themeState
 import java.io.IOException
 import java.util.Locale
 import javax.inject.Inject
@@ -99,7 +100,6 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
 
     private lateinit var binding: ActivityHomeBinding
     private lateinit var glide: GlideRequests
-    private var broadcastReceiver: BroadcastReceiver? = null
 
     @Inject lateinit var threadDb: ThreadDatabase
     @Inject lateinit var mmsSmsDatabase: MmsSmsDatabase
@@ -205,18 +205,14 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         // Set up empty state view
         binding.createNewPrivateChatButton.setOnClickListener { showNewConversation() }
         IP2Country.configureIfNeeded(this@HomeActivity)
-        startObservingUpdates()
+
+        ApplicationContext.getInstance(this@HomeActivity).typingStatusRepository.typingThreads.observe(this) { threadIds ->
+            homeAdapter.typingThreadIDs = (threadIds ?: setOf())
+        }
 
         // Set up new conversation button
         binding.newConversationButton.setOnClickListener { showNewConversation() }
         // Observe blocked contacts changed events
-        val broadcastReceiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context, intent: Intent) {
-                binding.recyclerView.adapter!!.notifyDataSetChanged()
-            }
-        }
-        this.broadcastReceiver = broadcastReceiver
-        LocalBroadcastManager.getInstance(this).registerReceiver(broadcastReceiver, IntentFilter("blockedContactsChanged"))
 
         // subscribe to outdated config updates, this should be removed after long enough time for device migration
         lifecycleScope.launch {
@@ -224,6 +220,27 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                 TextSecurePreferences.events.filter { it == TextSecurePreferences.HAS_RECEIVED_LEGACY_CONFIG }.collect {
                     updateLegacyConfigView()
                 }
+            }
+        }
+
+        // Subscribe to threads and update the UI
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                homeViewModel.threads
+                    .filterNotNull() // We don't actually want the null value here as it indicates a loading state (maybe we need a loading state?)
+                    .collectLatest { threads ->
+                        val manager = binding.recyclerView.layoutManager as LinearLayoutManager
+                        val firstPos = manager.findFirstCompletelyVisibleItemPosition()
+                        val offsetTop = if(firstPos >= 0) {
+                            manager.findViewByPosition(firstPos)?.let { view ->
+                                manager.getDecoratedTop(view) - manager.getTopDecorationHeight(view)
+                            } ?: 0
+                        } else 0
+                        homeAdapter.data = threads
+                        if(firstPos >= 0) { manager.scrollToPositionWithOffset(firstPos, offsetTop) }
+                        setupMessageRequestsBanner()
+                        updateEmptyState()
+                    }
             }
         }
 
@@ -385,52 +402,20 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                 ConfigurationMessageUtilities.syncConfigurationIfNeeded(this@HomeActivity)
             }
         }
-
-        // If the theme hasn't changed then start observing updates again (if it does change then we
-        // will recreate the activity resulting in it responding to changes multiple times)
-        if (currentThemeState == textSecurePreferences.themeState() && !homeViewModel.getObservable(this).hasActiveObservers()) {
-            startObservingUpdates()
-        }
     }
 
     override fun onPause() {
         super.onPause()
         ApplicationContext.getInstance(this).messageNotifier.setHomeScreenVisible(false)
-
-        homeViewModel.getObservable(this).removeObservers(this)
     }
 
     override fun onDestroy() {
-        val broadcastReceiver = this.broadcastReceiver
-        if (broadcastReceiver != null) {
-            LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver)
-        }
         super.onDestroy()
         EventBus.getDefault().unregister(this)
     }
     // endregion
 
     // region Updating
-    private fun startObservingUpdates() {
-        homeViewModel.getObservable(this).observe(this) { newData ->
-            val manager = binding.recyclerView.layoutManager as LinearLayoutManager
-            val firstPos = manager.findFirstCompletelyVisibleItemPosition()
-            val offsetTop = if(firstPos >= 0) {
-                manager.findViewByPosition(firstPos)?.let { view ->
-                    manager.getDecoratedTop(view) - manager.getTopDecorationHeight(view)
-                } ?: 0
-            } else 0
-            homeAdapter.data = newData
-            if(firstPos >= 0) { manager.scrollToPositionWithOffset(firstPos, offsetTop) }
-            setupMessageRequestsBanner()
-            updateEmptyState()
-        }
-
-        ApplicationContext.getInstance(this@HomeActivity).typingStatusRepository.typingThreads.observe(this) { threadIds ->
-            homeAdapter.typingThreadIDs = (threadIds ?: setOf())
-        }
-    }
-
     private fun updateEmptyState() {
         val threadCount = (binding.recyclerView.adapter)!!.itemCount
         binding.emptyStateContainer.isVisible = threadCount == 0 && binding.recyclerView.isVisible

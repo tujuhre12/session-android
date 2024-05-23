@@ -287,8 +287,10 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         if (hexEncodedSeed == null) {
             hexEncodedSeed = IdentityKeyUtil.getIdentityKeyPair(this).hexEncodedPrivateKey // Legacy account
         }
+
+        val appContext = applicationContext
         val loadFileContents: (String) -> String = { fileName ->
-            MnemonicUtilities.loadFileContents(this, fileName)
+            MnemonicUtilities.loadFileContents(appContext, fileName)
         }
         MnemonicCodec(loadFileContents).encode(hexEncodedSeed!!, MnemonicCodec.Language.Configuration.english)
     }
