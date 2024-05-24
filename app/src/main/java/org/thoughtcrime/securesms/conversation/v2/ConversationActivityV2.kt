@@ -325,7 +325,6 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                 }
             },
             onAttachmentNeedsDownload = { attachmentId, mmsId ->
-                // Start download (on IO thread)
                 lifecycleScope.launch(Dispatchers.IO) {
                     JobQueue.shared.add(AttachmentDownloadJob(attachmentId, mmsId))
                 }
@@ -335,8 +334,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         )
         adapter.visibleMessageViewDelegate = this
 
-        // Register an AdapterDataObserver to scroll us to the bottom of the RecyclerView if we're
-        // already near the the bottom and the data changes.
+        // Register an AdapterDataObserver to scroll us to the bottom of the RecyclerView for if
+        // we're already near the the bottom and the data changes.
         adapter.registerAdapterDataObserver(ConversationAdapterDataObserver(binding?.conversationRecyclerView!!, adapter))
 
         adapter
@@ -360,6 +359,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     private var currentLastVisibleRecyclerViewIndex:  Int = RecyclerView.NO_POSITION
     private var recyclerScrollState: Int = RecyclerView.SCROLL_STATE_IDLE
 
+
     // region Settings
     companion object {
         // Extras
@@ -374,7 +374,6 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         const val PICK_GIF = 10
         const val PICK_FROM_LIBRARY = 12
         const val INVITE_CONTACTS = 124
-
     }
     // endregion
 
