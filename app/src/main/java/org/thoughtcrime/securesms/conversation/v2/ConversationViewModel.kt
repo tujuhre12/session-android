@@ -171,6 +171,7 @@ class ConversationViewModel(
 
     fun deleteForEveryone(message: MessageRecord) = viewModelScope.launch {
         val recipient = recipient ?: return@launch Log.w("Loki", "Recipient was null for delete for everyone - aborting delete operation.")
+        stopPlayingAudioMessage(message)
 
         repository.deleteForEveryone(threadId, recipient, message)
             .onSuccess {
