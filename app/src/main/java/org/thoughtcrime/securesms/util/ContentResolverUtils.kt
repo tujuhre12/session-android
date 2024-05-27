@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 
 /**
- * Observe changes to a content URI. This function will emit the URI whenever the content or
+ * Observe changes to a content Uri. This function will emit the Uri whenever the content or
  * its descendants change, according to the parameter [notifyForDescendants].
  */
 @CheckResult

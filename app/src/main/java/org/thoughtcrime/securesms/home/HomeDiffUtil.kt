@@ -2,15 +2,14 @@ package org.thoughtcrime.securesms.home
 
 import android.content.Context
 import androidx.recyclerview.widget.DiffUtil
-import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.util.getConversationUnread
 
 class HomeDiffUtil(
-    private val old: HomeViewModel.HomeData,
-    private val new: HomeViewModel.HomeData,
-    private val context: Context,
-    private val configFactory: ConfigFactory
+        private val old: HomeViewModel.Data,
+        private val new: HomeViewModel.Data,
+        private val context: Context,
+        private val configFactory: ConfigFactory
 ): DiffUtil.Callback() {
 
     override fun getOldListSize(): Int = old.threads.size

@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -30,8 +31,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext as ApplicationContextQu
 @HiltViewModel
 class HomeViewModel @Inject constructor(
         private val threadDb: ThreadDatabase,
-        contentResolver: ContentResolver,
-        @ApplicationContextQualifier context: Context,
+        private val contentResolver: ContentResolver,
+        @ApplicationContextQualifier private val context: Context,
 ) : ViewModel() {
     // SharedFlow that emits whenever the user asks us to reload  the conversation
     private val manualReloadTrigger = MutableSharedFlow<Unit>(
@@ -45,45 +46,40 @@ class HomeViewModel @Inject constructor(
      * This flow will emit whenever the user asks us to reload the conversation list or
      * whenever the conversation list changes.
      */
-    @Suppress("OPT_IN_USAGE")
-    val threads: StateFlow<HomeData?> =
-            combine(
-                    // The conversation list data
-                    merge(
-                        manualReloadTrigger,
-                        contentResolver.observeChanges(DatabaseContentProviders.ConversationList.CONTENT_URI))
-                        .debounce(CHANGE_NOTIFICATION_DEBOUNCE_MILLS)
-                        .onStart { emit(Unit) }
-                        .mapLatest { _ ->
-                            withContext(Dispatchers.IO) {
-                                threadDb.approvedConversationList.use { openCursor ->
-                                    val reader = threadDb.readerFor(openCursor)
-                                    buildList(reader.length) {
-                                        while (true) {
-                                            add(reader.next ?: break)
-                                        }
-                                    }
-                                }
-                            }
-                        },
-
-                    // The typing status of each thread
-                    ApplicationContext.getInstance(context).typingStatusRepository
-                        .typingThreads
-                        .asFlow()
-                        .onStart { emit(emptySet()) }
-                        .distinctUntilChanged(),
-
-                    // The final result that we emit to the UI
-                    ::HomeData
-            )
+    val threads: StateFlow<Data?> = combine(observeConversationList(), observeTypingStatus(), ::Data)
             .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    private fun observeTypingStatus(): Flow<Set<Long>> =
+            ApplicationContext.getInstance(context).typingStatusRepository
+                    .typingThreads
+                    .asFlow()
+                    .onStart { emit(emptySet()) }
+                    .distinctUntilChanged()
+
+    @Suppress("OPT_IN_USAGE")
+    private fun observeConversationList(): Flow<List<ThreadRecord>> = merge(
+            manualReloadTrigger,
+            contentResolver.observeChanges(DatabaseContentProviders.ConversationList.CONTENT_URI))
+            .debounce(CHANGE_NOTIFICATION_DEBOUNCE_MILLS)
+            .onStart { emit(Unit) }
+            .mapLatest { _ ->
+                withContext(Dispatchers.IO) {
+                    threadDb.approvedConversationList.use { openCursor ->
+                        val reader = threadDb.readerFor(openCursor)
+                        buildList(reader.count) {
+                            while (true) {
+                                add(reader.next ?: break)
+                            }
+                        }
+                    }
+                }
+            }
 
     fun tryReload() = manualReloadTrigger.tryEmit(Unit)
 
-    data class HomeData(
-        val threads: List<ThreadRecord>,
-        val typingThreadIDs: Set<Long>
+    data class Data(
+            val threads: List<ThreadRecord>,
+            val typingThreadIDs: Set<Long>
     )
 
     companion object {

@@ -25,14 +25,16 @@ class HomeAdapter(
 
     var header: View? = null
 
-    var data: HomeViewModel.HomeData = HomeViewModel.HomeData(emptyList(), emptySet())
+    var data: HomeViewModel.Data = HomeViewModel.Data(emptyList(), emptySet())
         set(newData) {
-            if (field !== newData) {
-                val diff = HomeDiffUtil(field, newData, context, configFactory)
-                val diffResult = DiffUtil.calculateDiff(diff)
-                field = newData
-                diffResult.dispatchUpdatesTo(this as ListUpdateCallback)
+            if (field === newData) {
+                return
             }
+
+            val diff = HomeDiffUtil(field, newData, context, configFactory)
+            val diffResult = DiffUtil.calculateDiff(diff)
+            field = newData
+            diffResult.dispatchUpdatesTo(this as ListUpdateCallback)
         }
 
     fun hasHeaderView(): Boolean = header != null
