@@ -16,6 +16,13 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.ColorRes
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityPathBinding
 import org.session.libsession.snode.OnionRequestAPI
@@ -182,6 +189,7 @@ class PathActivity : PassphraseRequiredActionBarActivity() {
         private lateinit var location: Location
         private var dotAnimationStartDelay: Long = 0
         private var dotAnimationRepeatInterval: Long = 0
+        private var job: Job? = null
 
         private val dotView by lazy {
             val result = PathDotView(context)
@@ -240,25 +248,36 @@ class PathActivity : PassphraseRequiredActionBarActivity() {
             addView(dotView)
         }
 
-        private fun performAnimation() {
-            if (isAttachedToWindow) {
-                expand()
-
-                postDelayed({
-                    collapse()
-                    postDelayed({
-                        performAnimation()
-                    }, dotAnimationRepeatInterval)
-                }, 1000)
-            }
-        }
-
         override fun onAttachedToWindow() {
             super.onAttachedToWindow()
 
-            postDelayed({
-                performAnimation()
-            }, dotAnimationStartDelay)
+            startAnimation()
+        }
+
+        override fun onDetachedFromWindow() {
+            super.onDetachedFromWindow()
+
+            stopAnimation()
+        }
+
+        private fun startAnimation() {
+            job?.cancel()
+            job = GlobalScope.launch {
+                withContext(Dispatchers.Main) {
+                    while (isActive) {
+                        delay(dotAnimationStartDelay)
+                        expand()
+                        delay(EXPAND_ANIM_DELAY_MILLS)
+                        collapse()
+                        delay(dotAnimationRepeatInterval)
+                    }
+                }
+            }
+        }
+
+        private fun stopAnimation() {
+            job?.cancel()
+            job = null
         }
 
         private fun expand() {
@@ -275,6 +294,10 @@ class PathActivity : PassphraseRequiredActionBarActivity() {
             val startColor = context.getAccentColor()
             val endColor = context.resources.getColorWithID(endColorID, context.theme)
             GlowViewUtilities.animateShadowColorChange(dotView, startColor, endColor)
+        }
+
+        companion object {
+            private const val EXPAND_ANIM_DELAY_MILLS = 1000L
         }
     }
     // endregion

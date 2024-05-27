@@ -1024,7 +1024,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     }
 
     override fun showVoiceMessageUI() {
-        binding?.inputBarRecordingView?.show()
+        binding?.inputBarRecordingView?.show(lifecycleScope)
         binding?.inputBar?.alpha = 0.0f
         val animation = ValueAnimator.ofObject(FloatEvaluator(), 1.0f, 0.0f)
         animation.duration = 250L

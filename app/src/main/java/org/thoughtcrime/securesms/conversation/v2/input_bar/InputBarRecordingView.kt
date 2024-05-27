@@ -12,6 +12,11 @@ import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.view.isVisible
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewInputBarRecordingBinding
 import org.thoughtcrime.securesms.util.DateUtils
@@ -26,9 +31,7 @@ class InputBarRecordingView : RelativeLayout {
     private var dotViewAnimation: ValueAnimator? = null
     private var pulseAnimation: ValueAnimator? = null
     var delegate: InputBarRecordingViewDelegate? = null
-    private val updateTimerRunnable = Runnable {
-        updateTimer()
-    }
+    private var timerJob: Job? = null
 
     val lockView: LinearLayout
         get() = binding.lockView
@@ -50,9 +53,10 @@ class InputBarRecordingView : RelativeLayout {
         binding = ViewInputBarRecordingBinding.inflate(LayoutInflater.from(context), this, true)
         binding.inputBarMiddleContentContainer.disableClipping()
         binding.inputBarCancelButton.setOnClickListener { hide() }
+
     }
 
-    fun show() {
+    fun show(scope: CoroutineScope) {
         startTimestamp = Date().time
         binding.recordButtonOverlayImageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.ic_microphone, context.theme))
         binding.inputBarCancelButton.alpha = 0.0f
@@ -69,7 +73,7 @@ class InputBarRecordingView : RelativeLayout {
         animateDotView()
         pulse()
         animateLockViewUp()
-        updateTimer()
+        startTimer(scope)
     }
 
     fun hide() {
@@ -86,6 +90,24 @@ class InputBarRecordingView : RelativeLayout {
         }
         animation.start()
         delegate?.handleVoiceMessageUIHidden()
+        stopTimer()
+    }
+
+    private fun startTimer(scope: CoroutineScope) {
+        timerJob?.cancel()
+        timerJob = scope.launch {
+            while (isActive) {
+                val duration = (Date().time - startTimestamp) / 1000L
+                binding.recordingViewDurationTextView.text = DateUtils.formatElapsedTime(duration)
+
+                delay(500)
+            }
+        }
+    }
+
+    private fun stopTimer() {
+        timerJob?.cancel()
+        timerJob = null
     }
 
     private fun animateDotView() {
@@ -127,29 +149,6 @@ class InputBarRecordingView : RelativeLayout {
             binding.lockView.layoutParams = layoutParams
         }
         animation.start()
-    }
-
-    private fun updateTimer() {
-        val duration = (Date().time - startTimestamp) / 1000L
-        binding.recordingViewDurationTextView.text = DateUtils.formatElapsedTime(duration)
-
-        if (isAttachedToWindow) {
-            // Make sure there's only one runnable in the handler at a time.
-            removeCallbacks(updateTimerRunnable)
-
-            // Should only update the timer if the view is still attached to the window.
-            // Otherwise, the timer will keep running even after the view is detached.
-            postDelayed(updateTimerRunnable, 500)
-        }
-    }
-
-    override fun onAttachedToWindow() {
-        super.onAttachedToWindow()
-
-        if (isVisible) {
-            // If the view was visible (i.e. recording) when it was detached, start the timer again.
-            updateTimer()
-        }
     }
 
     fun lock() {
