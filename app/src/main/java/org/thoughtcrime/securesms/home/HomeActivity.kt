@@ -16,7 +16,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
@@ -28,7 +27,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityHomeBinding
-import network.loki.messenger.databinding.ViewMessageRequestBannerBinding
 import network.loki.messenger.libsession_util.ConfigBase
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
@@ -74,13 +72,11 @@ import org.thoughtcrime.securesms.preferences.SettingsActivity
 import org.thoughtcrime.securesms.showMuteDialog
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
-import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.IP2Country
 import org.thoughtcrime.securesms.util.disableClipping
 import org.thoughtcrime.securesms.util.push
 import org.thoughtcrime.securesms.util.show
 import java.io.IOException
-import java.util.Locale
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -113,7 +109,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         get() = textSecurePreferences.getLocalNumber()!!
 
     private val homeAdapter: HomeAdapter by lazy {
-        HomeAdapter(context = this, configFactory = configFactory, listener = this)
+        HomeAdapter(context = this, configFactory = configFactory, listener = this, ::showMessageRequests, ::hideMessageRequests)
     }
 
     private val globalSearchAdapter = GlobalSearchAdapter { model ->
@@ -229,7 +225,6 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                         } else 0
                         homeAdapter.data = data
                         if(firstPos >= 0) { manager.scrollToPositionWithOffset(firstPos, offsetTop) }
-                        setupMessageRequestsBanner(data.unapprovedConversationCount, data.hasHiddenMessageRequests)
                         updateEmptyState()
                     }
             }
@@ -338,33 +333,6 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         binding.seedReminderView.isVisible = !TextSecurePreferences.getHasViewedSeed(this) && !isShown
         binding.globalSearchRecycler.isVisible = isShown
         binding.newConversationButton.isVisible = !isShown
-    }
-
-    private fun setupMessageRequestsBanner(messageRequestCount: Int, hasHiddenMessageRequests: Boolean) {
-        // Set up message requests
-        if (messageRequestCount > 0 && !hasHiddenMessageRequests) {
-            with(ViewMessageRequestBannerBinding.inflate(layoutInflater)) {
-                unreadCountTextView.text = messageRequestCount.toString()
-                timestampTextView.text = DateUtils.getDisplayFormattedTimeSpanString(
-                    this@HomeActivity,
-                    Locale.getDefault(),
-                    threadDb.latestUnapprovedConversationTimestamp
-                )
-                root.setOnClickListener { showMessageRequests() }
-                root.setOnLongClickListener { hideMessageRequests(); true }
-                root.layoutParams = RecyclerView.LayoutParams(RecyclerView.LayoutParams.MATCH_PARENT, RecyclerView.LayoutParams.WRAP_CONTENT)
-                val hadHeader = homeAdapter.hasHeaderView()
-                homeAdapter.header = root
-                if (hadHeader) homeAdapter.notifyItemChanged(0)
-                else homeAdapter.notifyItemInserted(0)
-            }
-        } else {
-            val hadHeader = homeAdapter.hasHeaderView()
-            homeAdapter.header = null
-            if (hadHeader) {
-                homeAdapter.notifyItemRemoved(0)
-            }
-        }
     }
 
     private fun updateLegacyConfigView() {
