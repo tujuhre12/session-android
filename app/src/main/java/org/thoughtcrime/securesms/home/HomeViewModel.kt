@@ -65,6 +65,7 @@ class HomeViewModel @Inject constructor(
 
     private fun hasHiddenMessageRequests() = TextSecurePreferences.events
         .filter { it == TextSecurePreferences.HAS_HIDDEN_MESSAGE_REQUESTS }
+        .flowOn(Dispatchers.IO)
         .map { prefs.hasHiddenMessageRequests() }
         .onStart { emit(prefs.hasHiddenMessageRequests()) }
 
