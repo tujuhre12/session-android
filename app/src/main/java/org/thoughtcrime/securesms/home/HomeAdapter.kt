@@ -25,11 +25,9 @@ class HomeAdapter(
 
     var header: View? = null
 
-    var data: HomeViewModel.Data = HomeViewModel.Data(emptyList(), emptySet())
+    var data: HomeViewModel.Data = HomeViewModel.Data(emptyList(), 0, false, emptySet())
         set(newData) {
-            if (field === newData) {
-                return
-            }
+            if (field === newData) return
 
             val diff = HomeDiffUtil(field, newData, context, configFactory)
             val diffResult = DiffUtil.calculateDiff(diff)

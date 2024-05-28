@@ -185,7 +185,6 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                 binding.seedReminderView.isVisible = false
             }
         }
-        setupMessageRequestsBanner()
         // Set up recycler view
         binding.globalSearchInputLayout.listener = this
         homeAdapter.setHasStableIds(true)
@@ -218,9 +217,9 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         // Subscribe to threads and update the UI
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                homeViewModel.threads
+                homeViewModel.data
                     .filterNotNull() // We don't actually want the null value here as it indicates a loading state (maybe we need a loading state?)
-                    .collectLatest { threads ->
+                    .collectLatest { data ->
                         val manager = binding.recyclerView.layoutManager as LinearLayoutManager
                         val firstPos = manager.findFirstCompletelyVisibleItemPosition()
                         val offsetTop = if(firstPos >= 0) {
@@ -228,9 +227,9 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                                 manager.getDecoratedTop(view) - manager.getTopDecorationHeight(view)
                             } ?: 0
                         } else 0
-                        homeAdapter.data = threads
+                        homeAdapter.data = data
                         if(firstPos >= 0) { manager.scrollToPositionWithOffset(firstPos, offsetTop) }
-                        setupMessageRequestsBanner()
+                        setupMessageRequestsBanner(data.unapprovedConversationCount, data.hasHiddenMessageRequests)
                         updateEmptyState()
                     }
             }
@@ -341,10 +340,9 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         binding.newConversationButton.isVisible = !isShown
     }
 
-    private fun setupMessageRequestsBanner() {
-        val messageRequestCount = threadDb.unapprovedConversationCount
+    private fun setupMessageRequestsBanner(messageRequestCount: Int, hasHiddenMessageRequests: Boolean) {
         // Set up message requests
-        if (messageRequestCount > 0 && !textSecurePreferences.hasHiddenMessageRequests()) {
+        if (messageRequestCount > 0 && !hasHiddenMessageRequests) {
             with(ViewMessageRequestBannerBinding.inflate(layoutInflater)) {
                 unreadCountTextView.text = messageRequestCount.toString()
                 timestampTextView.text = DateUtils.getDisplayFormattedTimeSpanString(
@@ -664,7 +662,6 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             text("Hide message requests?")
             button(R.string.yes) {
                 textSecurePreferences.setHasHiddenMessageRequests()
-                setupMessageRequestsBanner()
                 homeViewModel.tryReload()
             }
             button(R.string.no)
