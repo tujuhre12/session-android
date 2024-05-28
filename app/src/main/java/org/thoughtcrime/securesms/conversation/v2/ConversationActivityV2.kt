@@ -287,8 +287,10 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         if (hexEncodedSeed == null) {
             hexEncodedSeed = IdentityKeyUtil.getIdentityKeyPair(this).hexEncodedPrivateKey // Legacy account
         }
+
+        val appContext = applicationContext
         val loadFileContents: (String) -> String = { fileName ->
-            MnemonicUtilities.loadFileContents(this, fileName)
+            MnemonicUtilities.loadFileContents(appContext, fileName)
         }
         MnemonicCodec(loadFileContents).encode(hexEncodedSeed!!, MnemonicCodec.Language.Configuration.english)
     }
@@ -831,6 +833,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     override fun onDestroy() {
         viewModel.saveDraft(binding?.inputBar?.text?.trim() ?: "")
+        cancelVoiceMessage()
         tearDownRecipientObserver()
         super.onDestroy()
         binding = null
@@ -1019,7 +1022,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     }
 
     override fun showVoiceMessageUI() {
-        binding?.inputBarRecordingView?.show()
+        binding?.inputBarRecordingView?.show(lifecycleScope)
         binding?.inputBar?.alpha = 0.0f
         val animation = ValueAnimator.ofObject(FloatEvaluator(), 1.0f, 0.0f)
         animation.duration = 250L
