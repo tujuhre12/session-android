@@ -113,7 +113,7 @@ Java_network_loki_messenger_libsession_1util_ConfigBase_merge__Lkotlin_Pair_2(JN
         auto returned = conf->merge(configs);
         auto string_stack = util::build_string_stack(env, returned);
         return string_stack;
-    }
+    });
 }
 
 #pragma clang diagnostic pop
