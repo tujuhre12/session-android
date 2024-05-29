@@ -30,6 +30,7 @@ class HomeAdapter(
 
     var messageRequests: HomeViewModel.MessageRequests? = null
         set(value) {
+            if (field == value) return
             val hadHeader = hasHeaderView()
             field = value
             if (value != null) {
