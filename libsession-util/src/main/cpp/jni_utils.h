@@ -42,7 +42,7 @@ namespace jni_utils {
             if (msg) {
                 env->ThrowNew(exceptionClass, msg);
             } else {
-                env->ThrowNew(exceptionClass, "Unknown C++ exception");
+                env->ThrowNew(exceptionClass, "Unknown C++ exception from libsession");
             }
 
             return RetT();
