@@ -40,9 +40,10 @@ namespace jni_utils {
         return run_catching_cxx_exception_or<RetT>(f, [env](const char *msg) {
             jclass exceptionClass = env->FindClass("java/lang/RuntimeException");
             if (msg) {
-                env->ThrowNew(exceptionClass, msg);
+                auto formatted_message = std::string("libsession: C++ exception: ") + msg;
+                env->ThrowNew(exceptionClass, formatted_message.c_str());
             } else {
-                env->ThrowNew(exceptionClass, "Unknown C++ exception from libsession");
+                env->ThrowNew(exceptionClass, "libsession: Unknown C++ exception");
             }
 
             return RetT();
