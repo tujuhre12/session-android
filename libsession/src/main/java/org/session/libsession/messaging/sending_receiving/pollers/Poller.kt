@@ -251,6 +251,10 @@ class Poller(private val configFactory: ConfigFactoryProtocol, debounceTimer: Ti
                             responseList.getOrNull(personalResponseIndex)?.let { rawResponse ->
                                 if (rawResponse["code"] as? Int != 200) {
                                     Log.e("Loki", "Batch sub-request for personal messages had non-200 response code, returned code ${(rawResponse["code"] as? Int) ?: "[unknown]"}")
+                                    // If we got a non-success response then the snode might be bad so we should try rotate
+                                    // to a different one just in case
+                                    pollNextSnode(deferred)
+                                    return@bind Promise.ofSuccess(Unit)
                                 } else {
                                     val body = rawResponse["body"] as? RawResponse
                                     if (body == null) {
