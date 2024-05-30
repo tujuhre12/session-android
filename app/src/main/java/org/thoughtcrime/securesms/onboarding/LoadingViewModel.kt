@@ -82,7 +82,7 @@ class LoadingViewModel @Inject constructor(
             }
 
             // start polling and wait for updated message
-            ApplicationContext.getInstance(context).apply { startPollingIfNeeded() }
+            ApplicationContext.getInstance(context).apply { retrieveUserProfile() }
             TextSecurePreferences.events.filter { it == TextSecurePreferences.CONFIGURATION_SYNCED }.collect {
                 // handle we've synced
                 skipJob.cancel()

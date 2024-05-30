@@ -61,6 +61,16 @@ class Poller(private val configFactory: ConfigFactoryProtocol, debounceTimer: Ti
         hasStarted = false
         usedSnodes.clear()
     }
+
+    fun retrieveUserProfile() {
+        Log.d("Loki", "Retrieving user profile.")
+        SnodeAPI.getSwarm(userPublicKey).bind {
+            usedSnodes.clear()
+            val deferred = deferred<Unit, Exception>()
+            pollNextSnode(userProfileOnly = true, deferred)
+            deferred.promise
+        }
+    }
     // endregion
 
     // region Private API
@@ -70,7 +80,7 @@ class Poller(private val configFactory: ConfigFactoryProtocol, debounceTimer: Ti
         SnodeAPI.getSwarm(userPublicKey).bind {
             usedSnodes.clear()
             val deferred = deferred<Unit, Exception>()
-            pollNextSnode(deferred)
+            pollNextSnode(deferred = deferred)
             deferred.promise
         }.success {
             val nextDelay = if (isCaughtUp) retryInterval else 0
@@ -89,7 +99,7 @@ class Poller(private val configFactory: ConfigFactoryProtocol, debounceTimer: Ti
         }
     }
 
-    private fun pollNextSnode(deferred: Deferred<Unit, Exception>) {
+    private fun pollNextSnode(userProfileOnly: Boolean = false, deferred: Deferred<Unit, Exception>) {
         val swarm = SnodeModule.shared.storage.getSwarm(userPublicKey) ?: setOf()
         val unusedSnodes = swarm.subtract(usedSnodes)
         if (unusedSnodes.isNotEmpty()) {
@@ -97,13 +107,13 @@ class Poller(private val configFactory: ConfigFactoryProtocol, debounceTimer: Ti
             val nextSnode = unusedSnodes.elementAt(index)
             usedSnodes.add(nextSnode)
             Log.d("Loki", "Polling $nextSnode.")
-            poll(nextSnode, deferred).fail { exception ->
+            poll(userProfileOnly, nextSnode, deferred).fail { exception ->
                 if (exception is PromiseCanceledException) {
                     Log.d("Loki", "Polling $nextSnode canceled.")
                 } else {
                     Log.d("Loki", "Polling $nextSnode failed; dropping it and switching to next snode.")
                     SnodeAPI.dropSnodeFromSwarmIfNeeded(nextSnode, userPublicKey)
-                    pollNextSnode(deferred)
+                    pollNextSnode(userProfileOnly, deferred)
                 }
             }
         } else {
@@ -165,6 +175,67 @@ class Poller(private val configFactory: ConfigFactoryProtocol, debounceTimer: Ti
         // latestMessageTimestamp should always be non-null if the config object needs dump
         if (forConfigObject.needsDump() && latestMessageTimestamp != null) {
             configFactory.persist(forConfigObject, latestMessageTimestamp ?: SnodeAPI.nowWithOffset)
+        }
+    }
+
+    private fun poll(userProfileOnly: Boolean, snode: Snode, deferred: Deferred<Unit, Exception>): Promise<Unit, Exception> {
+        if (userProfileOnly) {
+            return pollUserProfile(snode, deferred)
+        }
+        return poll(snode, deferred)
+    }
+
+    private fun pollUserProfile(snode: Snode, deferred: Deferred<Unit, Exception>): Promise<Unit, Exception> {
+        return task {
+            runBlocking(Dispatchers.IO) {
+                val requests = mutableListOf<SnodeAPI.SnodeBatchRequestInfo>()
+                val hashesToExtend = mutableSetOf<String>()
+                configFactory.user?.let { config ->
+                    hashesToExtend += config.currentHashes()
+                    SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
+                            snode, userPublicKey,
+                            config.configNamespace(),
+                            maxSize = -8
+                    )
+                }?.let { request ->
+                    requests += request
+                }
+
+                if (hashesToExtend.isNotEmpty()) {
+                    SnodeAPI.buildAuthenticatedAlterTtlBatchRequest(
+                            messageHashes = hashesToExtend.toList(),
+                            publicKey = userPublicKey,
+                            newExpiry = SnodeAPI.nowWithOffset + 14.days.inWholeMilliseconds,
+                            extend = true
+                    )?.let { extensionRequest ->
+                        requests += extensionRequest
+                    }
+                }
+
+                SnodeAPI.getRawBatchResponse(snode, userPublicKey, requests).bind { rawResponses ->
+                    isCaughtUp = true
+                    if (deferred.promise.isDone()) {
+                        return@bind Promise.ofSuccess(Unit)
+                    } else {
+                        val responseList = (rawResponses["results"] as List<RawResponse>)
+                        responseList.getOrNull(0)?.let { rawResponse ->
+                            if (rawResponse["code"] as? Int != 200) {
+                                Log.e("Loki", "Batch sub-request had non-200 response code, returned code ${(rawResponse["code"] as? Int) ?: "[unknown]"}")
+                                return@bind Promise.ofSuccess(Unit)
+                            }
+                            val body = rawResponse["body"] as? RawResponse
+                            if (body == null) {
+                                Log.e("Loki", "Batch sub-request didn't contain a body")
+                                return@bind Promise.ofSuccess(Unit)
+                            }
+                            processConfig(snode, body, configFactory.user!!.configNamespace(), configFactory.user)
+                        }
+                        return@bind Promise.ofSuccess(Unit)
+                    }
+                }.fail {
+                    Log.e("Loki", "Failed to get raw batch response", it)
+                }
+            }
         }
     }
 
@@ -253,7 +324,7 @@ class Poller(private val configFactory: ConfigFactoryProtocol, debounceTimer: Ti
                                     Log.e("Loki", "Batch sub-request for personal messages had non-200 response code, returned code ${(rawResponse["code"] as? Int) ?: "[unknown]"}")
                                     // If we got a non-success response then the snode might be bad so we should try rotate
                                     // to a different one just in case
-                                    pollNextSnode(deferred)
+                                    pollNextSnode(deferred = deferred)
                                     return@bind Promise.ofSuccess(Unit)
                                 } else {
                                     val body = rawResponse["body"] as? RawResponse
