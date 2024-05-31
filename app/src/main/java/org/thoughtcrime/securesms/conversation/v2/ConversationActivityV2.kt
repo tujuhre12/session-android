@@ -287,8 +287,10 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         if (hexEncodedSeed == null) {
             hexEncodedSeed = IdentityKeyUtil.getIdentityKeyPair(this).hexEncodedPrivateKey // Legacy account
         }
+
+        val appContext = applicationContext
         val loadFileContents: (String) -> String = { fileName ->
-            MnemonicUtilities.loadFileContents(this, fileName)
+            MnemonicUtilities.loadFileContents(appContext, fileName)
         }
         MnemonicCodec(loadFileContents).encode(hexEncodedSeed!!, MnemonicCodec.Language.Configuration.english)
     }
@@ -358,7 +360,6 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     private var previousLastVisibleRecyclerViewIndex: Int = RecyclerView.NO_POSITION
     private var currentLastVisibleRecyclerViewIndex:  Int = RecyclerView.NO_POSITION
     private var recyclerScrollState: Int = RecyclerView.SCROLL_STATE_IDLE
-
 
     // region Settings
     companion object {
@@ -571,7 +572,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         binding!!.conversationRecyclerView.layoutManager = layoutManager
         // Workaround for the fact that CursorRecyclerViewAdapter doesn't auto-update automatically (even though it says it will)
         LoaderManager.getInstance(this).restartLoader(0, null, this)
-        binding!!.conversationRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() { 
+        binding!!.conversationRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
 
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 // The unreadCount check is to prevent us scrolling to the bottom when we first enter a conversation
@@ -832,6 +833,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     override fun onDestroy() {
         viewModel.saveDraft(binding?.inputBar?.text?.trim() ?: "")
+        cancelVoiceMessage()
         tearDownRecipientObserver()
         super.onDestroy()
         binding = null
@@ -1020,7 +1022,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     }
 
     override fun showVoiceMessageUI() {
-        binding?.inputBarRecordingView?.show()
+        binding?.inputBarRecordingView?.show(lifecycleScope)
         binding?.inputBar?.alpha = 0.0f
         val animation = ValueAnimator.ofObject(FloatEvaluator(), 1.0f, 0.0f)
         animation.duration = 250L
@@ -1884,7 +1886,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             Log.w("ConversationActivityV2", "Asked to delete messages but could not obtain viewModel recipient - aborting.")
             return
         }
-        
+
         val allSentByCurrentUser = messages.all { it.isOutgoing }
         val allHasHash = messages.all { lokiMessageDb.getMessageServerHash(it.id, it.isMms) != null }
 

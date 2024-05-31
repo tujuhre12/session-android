@@ -22,10 +22,12 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewVisibleMessageBinding
 import org.session.libsession.messaging.contacts.Contact
+import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.conversation.v2.messages.ControlMessageView
 import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageView
 import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageViewDelegate
 import org.thoughtcrime.securesms.database.CursorRecyclerViewAdapter
+import org.thoughtcrime.securesms.database.MmsSmsColumns
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.mms.GlideRequests
@@ -57,6 +59,7 @@ class ConversationAdapter(
     private val contactCache = SparseArray<Contact>(100)
     private val contactLoadedCache = SparseBooleanArray(100)
     private val lastSeen = AtomicLong(originalLastSeen)
+    private var lastSentMessageId: Long = -1L
 
     init {
         lifecycleCoroutineScope.launch(IO) {
@@ -136,7 +139,8 @@ class ConversationAdapter(
                         senderId,
                         lastSeen.get(),
                         visibleMessageViewDelegate,
-                        onAttachmentNeedsDownload
+                        onAttachmentNeedsDownload,
+                        lastSentMessageId
                 )
 
                 if (!message.isDeleted) {

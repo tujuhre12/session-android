@@ -186,7 +186,6 @@ class DatabaseAttachmentProvider(context: Context, helper: SQLCipherOpenHelper) 
     override fun deleteMessage(messageID: Long, isSms: Boolean) {
         val messagingDatabase: MessagingDatabase = if (isSms)  DatabaseComponent.get(context).smsDatabase()
                                                    else DatabaseComponent.get(context).mmsDatabase()
-
         val (threadId, timestamp) = runCatching { messagingDatabase.getMessageRecord(messageID).run { threadId to timestamp } }.getOrNull() ?: (null to null)
 
         messagingDatabase.deleteMessage(messageID)
