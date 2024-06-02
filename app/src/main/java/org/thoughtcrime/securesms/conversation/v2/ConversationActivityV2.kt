@@ -252,7 +252,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         viewModelFactory.create(threadId, MessagingModuleConfiguration.shared.getUserED25519KeyPair())
     }
     private var actionMode: ActionMode? = null
-    private var unreadCount = 0
+    private var unreadCount = Int.MAX_VALUE
     // Attachments
     private val audioRecorder = AudioRecorder(this)
     private val stopAudioHandler = Handler(Looper.getMainLooper())
@@ -287,8 +287,10 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         if (hexEncodedSeed == null) {
             hexEncodedSeed = IdentityKeyUtil.getIdentityKeyPair(this).hexEncodedPrivateKey // Legacy account
         }
+
+        val appContext = applicationContext
         val loadFileContents: (String) -> String = { fileName ->
-            MnemonicUtilities.loadFileContents(this, fileName)
+            MnemonicUtilities.loadFileContents(appContext, fileName)
         }
         MnemonicCodec(loadFileContents).encode(hexEncodedSeed!!, MnemonicCodec.Language.Configuration.english)
     }
@@ -325,7 +327,6 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                 }
             },
             onAttachmentNeedsDownload = { attachmentId, mmsId ->
-                // Start download (on IO thread)
                 lifecycleScope.launch(Dispatchers.IO) {
                     JobQueue.shared.add(AttachmentDownloadJob(attachmentId, mmsId))
                 }
@@ -335,8 +336,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         )
         adapter.visibleMessageViewDelegate = this
 
-        // Register an AdapterDataObserver to scroll us to the bottom of the RecyclerView if we're
-        // already near the the bottom and the data changes.
+        // Register an AdapterDataObserver to scroll us to the bottom of the RecyclerView for if
+        // we're already near the the bottom and the data changes.
         adapter.registerAdapterDataObserver(ConversationAdapterDataObserver(binding?.conversationRecyclerView!!, adapter))
 
         adapter
@@ -374,7 +375,6 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         const val PICK_GIF = 10
         const val PICK_FROM_LIBRARY = 12
         const val INVITE_CONTACTS = 124
-
     }
     // endregion
 
@@ -575,7 +575,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         binding!!.conversationRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
 
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                if (recyclerScrollState == RecyclerView.SCROLL_STATE_IDLE) {
+                // The unreadCount check is to prevent us scrolling to the bottom when we first enter a conversation
+                if (recyclerScrollState == RecyclerView.SCROLL_STATE_IDLE && unreadCount != Int.MAX_VALUE) {
                     scrollToMostRecentMessageIfWeShould()
                 }
                 handleRecyclerViewScrolled()
@@ -832,6 +833,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     override fun onDestroy() {
         viewModel.saveDraft(binding?.inputBar?.text?.trim() ?: "")
+        cancelVoiceMessage()
         tearDownRecipientObserver()
         super.onDestroy()
         binding = null
@@ -1020,7 +1022,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     }
 
     override fun showVoiceMessageUI() {
-        binding?.inputBarRecordingView?.show()
+        binding?.inputBarRecordingView?.show(lifecycleScope)
         binding?.inputBar?.alpha = 0.0f
         val animation = ValueAnimator.ofObject(FloatEvaluator(), 1.0f, 0.0f)
         animation.duration = 250L
@@ -1112,6 +1114,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         val blindedRecipient = viewModel.blindedRecipient
         val binding = binding ?: return
         val openGroup = viewModel.openGroup
+
         val (textResource, insertParam) = when {
             recipient.isLocalNumber -> R.string.activity_conversation_empty_state_note_to_self to null
             openGroup != null && !openGroup.canWrite -> R.string.activity_conversation_empty_state_read_only to recipient.toShortString()
@@ -1250,6 +1253,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     // `position` is the adapter position; not the visual position
     private fun handleSwipeToReply(message: MessageRecord) {
+        if (message.isOpenGroupInvitation) return
         val recipient = viewModel.recipient ?: return
         binding?.inputBar?.draftQuote(recipient, message, glide)
     }
@@ -1886,8 +1890,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         val allSentByCurrentUser = messages.all { it.isOutgoing }
         val allHasHash = messages.all { lokiMessageDb.getMessageServerHash(it.id, it.isMms) != null }
 
-        // If the recipient is a community then we delete the message for everyone
-        if (recipient.isCommunityRecipient) {
+        // If the recipient is a community OR a Note-to-Self then we delete the message for everyone
+        if (recipient.isCommunityRecipient || recipient.isLocalNumber) {
             val messageCount = 1 // Only used for plurals string
             showSessionDialog {
                 title(resources.getQuantityString(R.plurals.ConversationFragment_delete_selected_messages, messageCount, messageCount))
@@ -1917,8 +1921,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             }
             bottomSheet.show(supportFragmentManager, bottomSheet.tag)
         }
-        else // Finally, if this is a closed group and you are deleting someone else's message(s)
-        // then we can only delete locally.
+        else // Finally, if this is a closed group and you are deleting someone else's message(s) then we can only delete locally.
         {
             val messageCount = 1
             showSessionDialog {
@@ -2027,7 +2030,6 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         val message = messages.first() as MmsMessageRecord
 
         // Do not allow the user to download a file attachment before it has finished downloading
-        // TODO: Localise the msg in this toast!
         if (message.isMediaPending) {
             Toast.makeText(this, resources.getString(R.string.conversation_activity__wait_until_attachment_has_finished_downloading), Toast.LENGTH_LONG).show()
             return
