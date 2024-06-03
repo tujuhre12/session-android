@@ -214,24 +214,22 @@ class Poller(private val configFactory: ConfigFactoryProtocol, debounceTimer: Ti
             if (requests.isNotEmpty()) {
                 SnodeAPI.getRawBatchResponse(snode, userPublicKey, requests).bind { rawResponses ->
                     isCaughtUp = true
-                    if (deferred.promise.isDone()) {
-                        return@bind Promise.ofSuccess(Unit)
-                    } else {
+                    if (!deferred.promise.isDone()) {
                         val responseList = (rawResponses["results"] as List<RawResponse>)
                         responseList.getOrNull(0)?.let { rawResponse ->
                             if (rawResponse["code"] as? Int != 200) {
                                 Log.e("Loki", "Batch sub-request had non-200 response code, returned code ${(rawResponse["code"] as? Int) ?: "[unknown]"}")
-                                return@bind Promise.ofSuccess(Unit)
+                            } else {
+                                val body = rawResponse["body"] as? RawResponse
+                                if (body == null) {
+                                    Log.e("Loki", "Batch sub-request didn't contain a body")
+                                } else {
+                                    processConfig(snode, body, configFactory.user!!.configNamespace(), configFactory.user)
+                                }
                             }
-                            val body = rawResponse["body"] as? RawResponse
-                            if (body == null) {
-                                Log.e("Loki", "Batch sub-request didn't contain a body")
-                                return@bind Promise.ofSuccess(Unit)
-                            }
-                            processConfig(snode, body, configFactory.user!!.configNamespace(), configFactory.user)
                         }
-                        return@bind Promise.ofSuccess(Unit)
                     }
+                    Promise.ofSuccess(Unit)
                 }.fail {
                     Log.e("Loki", "Failed to get raw batch response", it)
                 }
