@@ -8,7 +8,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,6 +15,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -32,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
@@ -103,7 +104,6 @@ class LandingActivity : BaseActionBarActivity() {
         }
     }
 
-    @OptIn(ExperimentalFoundationApi::class)
     @Composable
     private fun LandingScreen() {
 
@@ -132,18 +132,18 @@ class LandingActivity : BaseActionBarActivity() {
             LazyColumn(
                 state = listState,
                 modifier = Modifier
+                    .heightIn(min = 200.dp)
                     .fillMaxWidth()
-                    .weight(1f),
+                    .weight(2f),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 items(
                     MESSAGES.take(count),
                     key = { it.stringId }
                 ) { item ->
-                    MessageText(
+                    AnimateMessageText(
                         stringResource(item.stringId),
-                        item.isOutgoing,
-                        modifier = Modifier.animateItemPlacement()
+                        item.isOutgoing
                     )
                 }
             }
@@ -199,12 +199,31 @@ class LandingActivity : BaseActionBarActivity() {
     }
 
     @Composable
+    private fun AnimateMessageText(text: String, isOutgoing: Boolean, modifier: Modifier = Modifier) {
+        var visible by remember { mutableStateOf(false) }
+        LaunchedEffect(Unit) { visible = true }
+
+        Box {
+            // TODO [SES-2077] Use LazyList itemAnimation when we update to compose 1.7 or so.
+            MessageText(text, isOutgoing, Modifier.alpha(0f))
+
+            AnimatedVisibility(
+                visible = visible,
+                enter = fadeIn(animationSpec = tween(durationMillis = 300)) +
+                        slideInVertically(animationSpec = tween(durationMillis = 300)) { it }
+            ) {
+                MessageText(text, isOutgoing, modifier)
+            }
+        }
+    }
+
+    @Composable
     private fun MessageText(text: String, isOutgoing: Boolean, modifier: Modifier) {
         if (isOutgoing) OutgoingText(text, modifier) else IncomingText(text, modifier)
     }
 
     @Composable
-    private fun IncomingText(text: String, modifier: Modifier) {
+    private fun IncomingText(text: String, modifier: Modifier = Modifier) {
         ChatText(
             text,
             color = classicDarkColors[2],
@@ -213,7 +232,7 @@ class LandingActivity : BaseActionBarActivity() {
     }
 
     @Composable
-    private fun OutgoingText(text: String, modifier: Modifier) {
+    private fun OutgoingText(text: String, modifier: Modifier = Modifier) {
         Box(modifier = modifier then Modifier.fillMaxWidth()) {
             ChatText(
                 text,
