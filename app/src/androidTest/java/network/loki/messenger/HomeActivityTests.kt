@@ -87,9 +87,9 @@ class HomeActivityTests {
 
         // display name selection
         objectFromDesc(R.string.displayNameEnter).click()
-        device.pressKeyCode(28)
-        device.pressKeyCode(29)
-        device.pressKeyCode(30)
+        device.pressKeyCode(65)
+        device.pressKeyCode(66)
+        device.pressKeyCode(67)
 
         // Continue with display name
         objectFromDesc(R.string.continue_2).click()
