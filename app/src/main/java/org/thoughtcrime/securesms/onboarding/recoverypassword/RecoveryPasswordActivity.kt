@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
@@ -150,6 +151,7 @@ fun RecoveryPasswordCell(seed: String, copySeed:() -> Unit = {}) {
                             shape = RoundedCornerShape(11.dp)
                         )
                         .padding(24.dp),
+                    textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.small.copy(fontFamily = FontFamily.Monospace),
                     color = MaterialTheme.colors.run { if (isLight) onSurface else secondary },
                 )
