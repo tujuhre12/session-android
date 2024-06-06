@@ -1118,6 +1118,7 @@
     <string name="AccessibilityId_recovery_phrase_input">Recovery phrase input</string>
     <string name="AccessibilityId_error_message">Error message</string>
     <string name="AccessibilityId_hide_recovery_password_button">Hide recovery password button</string>
+    <string name="AccessibilityId_recovery_password_container">Recovery password container</string>
     <string name="AccessibilityId_confirm_button">Confirm button</string>
     <string name="AccessibilityId_open_url">Open URL</string>
     <string name="accountIdErrorInvalid">This Account ID is invalid. Please check and try again.</string>
@@ -1139,4 +1140,6 @@
     <string name="AccessibilityId_invite_friend_button">Invite friend button</string>
     <string name="AccessibilityId_help_desk_link">Help desk link</string>
     <string name="AccessibilityId_copy_button">Copy button</string>
+    <string name="AccessibilityId_view_qr_code">View QR code</string>
+    <string name="AccessibilityId_qr_code">QR code</string>
 </resources>

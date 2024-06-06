@@ -91,7 +91,7 @@ fun QrPage(string: String) {
     ) {
         QrImage(
             string = string,
-            contentDescription = "Your session id",
+            contentDescription = stringResource(R.string.AccessibilityId_qr_code),
             modifier = Modifier.padding(top = 32.dp, bottom = 12.dp),
             icon = R.drawable.session
         )

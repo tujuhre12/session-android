@@ -163,7 +163,7 @@ fun EnterAccountId(
         if (state.error == null) {
             BorderlessButtonSecondary(
                 text = stringResource(R.string.messageNewDescription),
-                contentDescription = GetString(R.string.AccessibilityId_help_desk_link),
+                modifier = Modifier.contentDescription(R.string.AccessibilityId_help_desk_link)
             ) { onHelp() }
         }
 

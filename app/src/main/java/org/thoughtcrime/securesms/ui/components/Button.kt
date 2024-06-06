@@ -148,12 +148,12 @@ fun FilledButton(
 @Composable
 fun BorderlessButtonSecondary(
     text: String,
-    contentDescription: GetString = GetString(text),
+    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     BorderlessButton(
         text,
-        contentDescription = contentDescription,
+        modifier = modifier,
         contentColor = MaterialTheme.colors.onSurface.copy(ContentAlpha.medium),
         onClick = onClick
     )

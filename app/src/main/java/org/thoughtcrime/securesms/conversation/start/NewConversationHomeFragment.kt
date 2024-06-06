@@ -70,7 +70,7 @@ class NewConversationHomeFragment : Fragment() {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(text = stringResource(R.string.qrYoursDescription), color = classicDarkColors[5], style = MaterialTheme.typography.small)
                 Spacer(modifier = Modifier.height(20.dp))
-                QrImage(string = TextSecurePreferences.getLocalNumber(requireContext())!!, contentDescription = "Your session id")
+                QrImage(string = TextSecurePreferences.getLocalNumber(requireContext())!!, contentDescription = stringResource(R.string.AccessibilityId_qr_code))
             }
         }
     }

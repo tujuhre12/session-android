@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement.Absolute.spacedBy
@@ -25,6 +24,7 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
 import dagger.hilt.android.AndroidEntryPoint
@@ -39,7 +39,6 @@ import org.thoughtcrime.securesms.ui.components.OnPrimaryButtons
 import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.components.OutlineTemporaryStateButton
 import org.thoughtcrime.securesms.ui.components.SmallButtons
-import org.thoughtcrime.securesms.ui.components.TemporaryStateButton
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.small
 
@@ -53,66 +52,82 @@ class InviteFriendFragment : Fragment() {
     ): View = ComposeView(requireContext()).apply {
         setContent {
             AppTheme {
-                InviteFriend()
+                InviteFriend(
+                    onBack = { delegate.onDialogBackPressed() },
+                    onClose = { delegate.onDialogClosePressed() },
+                    copyPublicKey = requireContext()::copyPublicKey,
+                    sendInvitation = requireContext()::sendInvitation,
+                )
             }
         }
     }
+}
 
-    @Composable
-    private fun InviteFriend() {
-        Column(modifier = Modifier.background(MaterialTheme.colors.primarySurface)) {
-            AppBar(stringResource(R.string.invite_a_friend), onBack = { delegate.onDialogBackPressed() }, onClose = { delegate.onDialogClosePressed() })
-            Column(
-                modifier = Modifier.padding(horizontal = 24.dp),
-                verticalArrangement = spacedBy(10.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .border(
-                            width = 1.dp,
-                            color = classicDarkColors[5],
-                            shape = RoundedCornerShape(size = 13.dp)
-                        )
-                        .fillMaxWidth()
-                        .wrapContentHeight()
-                ) {
-                    Text(
-                        TextSecurePreferences.getLocalNumber(LocalContext.current)!!,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .contentDescription("Your account ID")
-                            .align(Alignment.Center)
-                            .padding(22.dp)
+@Preview
+@Composable
+private fun PreviewInviteFriend() {
+    InviteFriend()
+}
+
+@Composable
+private fun InviteFriend(
+    onBack: () -> Unit = {},
+    onClose: () -> Unit = {},
+    copyPublicKey: () -> Unit = {},
+    sendInvitation: () -> Unit = {},
+) {
+    Column(modifier = Modifier.background(MaterialTheme.colors.primarySurface)) {
+        AppBar(stringResource(R.string.invite_a_friend), onBack = onBack, onClose = onClose)
+        Column(
+            modifier = Modifier.padding(horizontal = 24.dp),
+            verticalArrangement = spacedBy(10.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .border(
+                        width = 1.dp,
+                        color = classicDarkColors[5],
+                        shape = RoundedCornerShape(size = 13.dp)
                     )
-                }
-
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+            ) {
                 Text(
-                    stringResource(R.string.invite_your_friend_to_chat_with_you_on_session_by_sharing_your_account_id_with_them),
+                    TextSecurePreferences.getLocalNumber(LocalContext.current)!!,
                     textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.small,
-                    color = classicDarkColors[5],
-                    modifier = Modifier.padding(horizontal = 8.dp)
+                    modifier = Modifier
+                        .contentDescription("Your account ID")
+                        .align(Alignment.Center)
+                        .padding(22.dp)
                 )
-                OnPrimaryButtons {
-                    SmallButtons {
-                        Row(horizontalArrangement = spacedBy(20.dp)) {
-                            OutlineButton(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .contentDescription("Share button"),
-                                onClick = { requireContext().sendInvitation() }
-                            ) {
-                                Text(stringResource(R.string.share))
-                            }
+            }
 
-                            OutlineTemporaryStateButton(
-                                Modifier
-                                    .weight(1f)
-                                    .contentDescription("Copy button"),
-                                onClick = { requireContext().copyPublicKey() }
-                            ) { isTemporary ->
-                                Text(stringResource(if (isTemporary) R.string.copied else R.string.copy))
-                            }
+            Text(
+                stringResource(R.string.invite_your_friend_to_chat_with_you_on_session_by_sharing_your_account_id_with_them),
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.small,
+                color = classicDarkColors[5],
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
+            OnPrimaryButtons {
+                SmallButtons {
+                    Row(horizontalArrangement = spacedBy(20.dp)) {
+                        OutlineButton(
+                            modifier = Modifier
+                                .weight(1f)
+                                .contentDescription("Share button"),
+                            onClick = sendInvitation
+                        ) {
+                            Text(stringResource(R.string.share))
+                        }
+
+                        OutlineTemporaryStateButton(
+                            Modifier
+                                .weight(1f)
+                                .contentDescription(R.string.AccessibilityId_copy_button),
+                            onClick = copyPublicKey
+                        ) { isTemporary ->
+                            Text(stringResource(if (isTemporary) R.string.copied else R.string.copy))
                         }
                     }
                 }
