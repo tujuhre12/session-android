@@ -81,6 +81,7 @@ import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.ItemButton
 import org.thoughtcrime.securesms.ui.ItemButtonWithDrawable
 import org.thoughtcrime.securesms.ui.components.OutlineButton
+import org.thoughtcrime.securesms.ui.components.OutlineTemporaryStateButton
 import org.thoughtcrime.securesms.ui.components.TemporaryStateButton
 import org.thoughtcrime.securesms.ui.destructiveButtonColors
 import org.thoughtcrime.securesms.util.BitmapDecodingException
@@ -388,7 +389,9 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
     fun Buttons() {
         Column {
             Row(
-                modifier = Modifier.padding(horizontal = 24.dp).padding(top = 8.dp),
+                modifier = Modifier
+                    .padding(horizontal = 24.dp)
+                    .padding(top = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 OutlineButton(
@@ -398,15 +401,11 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
                     Text(stringResource(R.string.share))
                 }
 
-                TemporaryStateButton { source, temporary ->
-                    OutlineButton(
-                        modifier = Modifier.weight(1f),
-                        interactionSource = source,
-                        onClick = { copyPublicKey() },
-                    ) {
-                        AnimatedVisibility(temporary) { Text(stringResource(R.string.copied)) }
-                        AnimatedVisibility(!temporary) { Text(stringResource(R.string.copy)) }
-                    }
+                OutlineTemporaryStateButton(
+                    modifier = Modifier.weight(1f),
+                    onClick = { copyPublicKey() },
+                ) { isTemporary ->
+                    Text(stringResource(if (isTemporary) R.string.copied else R.string.copy))
                 }
             }
 

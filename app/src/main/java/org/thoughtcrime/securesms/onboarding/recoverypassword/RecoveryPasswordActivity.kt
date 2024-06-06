@@ -43,6 +43,7 @@ import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
 import org.thoughtcrime.securesms.ui.classicDarkColors
 import org.thoughtcrime.securesms.ui.components.DestructiveButtons
 import org.thoughtcrime.securesms.ui.components.OutlineButton
+import org.thoughtcrime.securesms.ui.components.OutlineTemporaryStateButton
 import org.thoughtcrime.securesms.ui.components.QrImage
 import org.thoughtcrime.securesms.ui.components.SmallButtons
 import org.thoughtcrime.securesms.ui.components.TemporaryStateButton
@@ -172,16 +173,13 @@ fun RecoveryPasswordCell(seed: String, copySeed:() -> Unit = {}) {
 
             AnimatedVisibility(!showQr) {
                 Row(horizontalArrangement = Arrangement.spacedBy(32.dp)) {
-                    TemporaryStateButton { source, isTemporary ->
-                        OutlineButton(
-                            modifier = Modifier.weight(1f)
-                                .contentDescription(R.string.AccessibilityId_copy_button),
-                            interactionSource = source,
-                            onClick = copySeed,
-                        ) {
-                            AnimatedVisibility(isTemporary) { Text(stringResource(R.string.copied)) }
-                            AnimatedVisibility(!isTemporary) { Text(stringResource(R.string.copy)) }
-                        }
+                    OutlineTemporaryStateButton(
+                        Modifier
+                            .weight(1f)
+                            .contentDescription(R.string.AccessibilityId_copy_button),
+                        onClick = copySeed
+                    ) { isTemporary ->
+                        Text(stringResource( if (isTemporary) R.string.copied else R.string.copy))
                     }
                     OutlineButton(textId = R.string.qrView, modifier = Modifier.weight(1f), onClick = { showQr = !showQr })
                 }

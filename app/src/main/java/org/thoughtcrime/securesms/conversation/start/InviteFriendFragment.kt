@@ -37,6 +37,7 @@ import org.thoughtcrime.securesms.ui.classicDarkColors
 import org.thoughtcrime.securesms.ui.components.AppBar
 import org.thoughtcrime.securesms.ui.components.OnPrimaryButtons
 import org.thoughtcrime.securesms.ui.components.OutlineButton
+import org.thoughtcrime.securesms.ui.components.OutlineTemporaryStateButton
 import org.thoughtcrime.securesms.ui.components.SmallButtons
 import org.thoughtcrime.securesms.ui.components.TemporaryStateButton
 import org.thoughtcrime.securesms.ui.contentDescription
@@ -96,23 +97,21 @@ class InviteFriendFragment : Fragment() {
                     SmallButtons {
                         Row(horizontalArrangement = spacedBy(20.dp)) {
                             OutlineButton(
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier
+                                    .weight(1f)
                                     .contentDescription("Share button"),
                                 onClick = { requireContext().sendInvitation() }
                             ) {
                                 Text(stringResource(R.string.share))
                             }
 
-                            TemporaryStateButton { source, isTemporary ->
-                                OutlineButton(
-                                    modifier = Modifier.weight(1f)
-                                        .contentDescription("Copy button"),
-                                    interactionSource = source,
-                                    onClick = { requireContext().copyPublicKey() },
-                                ) {
-                                    AnimatedVisibility(isTemporary) { Text(stringResource(R.string.copied)) }
-                                    AnimatedVisibility(!isTemporary) { Text(stringResource(R.string.copy)) }
-                                }
+                            OutlineTemporaryStateButton(
+                                Modifier
+                                    .weight(1f)
+                                    .contentDescription("Copy button"),
+                                onClick = { requireContext().copyPublicKey() }
+                            ) { isTemporary ->
+                                Text(stringResource(if (isTemporary) R.string.copied else R.string.copy))
                             }
                         }
                     }
