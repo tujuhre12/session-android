@@ -124,7 +124,12 @@ class PickDisplayNameActivity : BaseActionBarActivity() {
             )
 
             state.error?.let {
-                Text(stringResource(it), style = MaterialTheme.typography.baseBold, color = MaterialTheme.colors.error)
+                Text(
+                    stringResource(it),
+                    modifier = Modifier.contentDescription(R.string.AccessibilityId_error_message),
+                    style = MaterialTheme.typography.baseBold,
+                    color = MaterialTheme.colors.error
+                )
             }
 
             Spacer(modifier = Modifier.weight(2f))
@@ -132,6 +137,7 @@ class PickDisplayNameActivity : BaseActionBarActivity() {
             OutlineButton(
                 textId = R.string.continue_2,
                 modifier = Modifier
+                    .contentDescription(R.string.AccessibilityId_continue)
                     .align(Alignment.CenterHorizontally)
                     .width(262.dp),
                 onClick = onContinue,

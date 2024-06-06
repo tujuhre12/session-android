@@ -185,11 +185,11 @@ class LandingActivity : BaseActionBarActivity() {
         showOpenUrlDialog {
             button(
                 R.string.activity_landing_terms_of_service,
-                contentDescriptionRes = R.string.AccessibilityId_terms_of_service_link
+                contentDescriptionRes = R.string.AccessibilityId_terms_of_service_button
             ) { open("https://getsession.org/terms-of-service") }
             button(
                 R.string.activity_landing_privacy_policy,
-                contentDescriptionRes = R.string.AccessibilityId_privacy_policy_link
+                contentDescriptionRes = R.string.AccessibilityId_privacy_policy_button
             ) { open("https://getsession.org/privacy-policy") }
         }
     }

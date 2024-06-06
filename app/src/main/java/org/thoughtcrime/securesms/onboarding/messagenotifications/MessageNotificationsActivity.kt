@@ -128,6 +128,7 @@ fun MessageNotificationsScreen(
         OutlineButton(
             textId = R.string.continue_2,
             modifier = Modifier
+                .contentDescription(R.string.AccessibilityId_continue)
                 .align(Alignment.CenterHorizontally)
                 .width(262.dp),
             onClick = onContinue

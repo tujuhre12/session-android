@@ -103,6 +103,7 @@ import org.thoughtcrime.securesms.ui.SessionShieldIcon
 import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
 import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.contentDescription
+import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.h8
 import org.thoughtcrime.securesms.ui.small
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
@@ -393,7 +394,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                     Spacer(Modifier.width(12.dp))
                     OutlineButton(
                         textId = R.string.continue_2,
-                        Modifier
+                        modifier = Modifier
                             .align(Alignment.CenterVertically)
                             .contentDescription(R.string.AccessibilityId_reveal_recovery_phrase_button),
                         onClick = { start<RecoveryPasswordActivity>() }

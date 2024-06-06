@@ -283,7 +283,7 @@ fun Modifier.contentDescription(text: GetString?): Modifier {
 }
 
 @Composable
-fun Modifier.contentDescription(id: Int?): Modifier {
+fun Modifier.contentDescription(@StringRes id: Int?): Modifier {
     val context = LocalContext.current
     return id?.let { semantics { contentDescription = context.getString(it) } } ?: this
 }

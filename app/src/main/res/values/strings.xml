@@ -134,6 +134,7 @@
     <string name="AccessibilityId_username">Username</string>
     <string name="AccessibilityId_privacy">Privacy</string>
     <string name="AccessibilityId_recovery_password_menu_item">Recovery password menu item</string>
+    <string name="AccessibilityId_recovery_password">Recovery password</string>
     <string name="AccessibilityId_edit_user_nickname">Edit user nickname</string>
     <string name="AccessibilityId_apply">Apply</string>
     <string name="AccessibilityId_cancel">Cancel</string>
@@ -1111,7 +1112,8 @@
     <string name="AccessibilityId_create_account_button">Create account button</string>
     <string name="AccessibilityId_restore_account_button">Restore your session button</string>
     <string name="AccessibilityId_privacy_policy_link">Privacy policy link</string>
-    <string name="AccessibilityId_terms_of_service_link">Terms of service link</string>
+    <string name="AccessibilityId_terms_of_service_button">Terms of service button</string>
+    <string name="AccessibilityId_privacy_policy_button">Privacy policy button</string>
     <string name="AccessibilityId_loading_animation">Loading animation</string>
     <string name="AccessibilityId_recovery_phrase_input">Recovery phrase input</string>
     <string name="AccessibilityId_error_message">Error message</string>
@@ -1136,4 +1138,5 @@
     <string name="this_qr_code_does_not_contain_an_account_id">This QR code does not contain an Account ID.</string>
     <string name="AccessibilityId_invite_friend_button">Invite friend button</string>
     <string name="AccessibilityId_help_desk_link">Help desk link</string>
+    <string name="AccessibilityId_copy_button">Copy button</string>
 </resources>

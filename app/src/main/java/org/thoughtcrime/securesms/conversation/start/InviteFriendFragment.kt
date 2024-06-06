@@ -103,15 +103,15 @@ class InviteFriendFragment : Fragment() {
                                 Text(stringResource(R.string.share))
                             }
 
-                            TemporaryStateButton { source, temporary ->
+                            TemporaryStateButton { source, isTemporary ->
                                 OutlineButton(
                                     modifier = Modifier.weight(1f)
                                         .contentDescription("Copy button"),
                                     interactionSource = source,
                                     onClick = { requireContext().copyPublicKey() },
                                 ) {
-                                    AnimatedVisibility(temporary) { Text(stringResource(R.string.copied)) }
-                                    AnimatedVisibility(!temporary) { Text(stringResource(R.string.copy)) }
+                                    AnimatedVisibility(isTemporary) { Text(stringResource(R.string.copied)) }
+                                    AnimatedVisibility(!isTemporary) { Text(stringResource(R.string.copy)) }
                                 }
                             }
                         }

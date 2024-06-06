@@ -24,13 +24,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContentProviderCompat.requireContext
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.BaseActionBarActivity
+import org.thoughtcrime.securesms.preferences.copyPublicKey
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.CellWithPaddingAndMargin
@@ -69,7 +72,7 @@ class RecoveryPasswordActivity : BaseActionBarActivity() {
         showSessionDialog {
             title(R.string.recoveryPasswordHidePermanently)
             htmlText(R.string.recoveryPasswordHidePermanentlyDescription1)
-            destructiveButton(R.string.continue_2) { onHideConfirm() }
+            destructiveButton(R.string.continue_2, R.string.AccessibilityId_continue) { onHideConfirm() }
             cancelButton()
         }
     }
@@ -110,6 +113,7 @@ fun RecoveryPassword(
         Column(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier
+                .contentDescription(R.string.AccessibilityId_recovery_password)
                 .verticalScroll(rememberScrollState())
                 .padding(bottom = 16.dp)
         ) {
@@ -141,6 +145,7 @@ fun RecoveryPasswordCell(seed: String, copySeed:() -> Unit = {}) {
                 Text(
                     seed,
                     modifier = Modifier
+                        .contentDescription(R.string.AccessibilityId_hide_recovery_password_button)
                         .padding(vertical = 24.dp)
                         .border(
                             width = 1.dp,
@@ -167,14 +172,15 @@ fun RecoveryPasswordCell(seed: String, copySeed:() -> Unit = {}) {
 
             AnimatedVisibility(!showQr) {
                 Row(horizontalArrangement = Arrangement.spacedBy(32.dp)) {
-                    TemporaryStateButton { source, temporary ->
+                    TemporaryStateButton { source, isTemporary ->
                         OutlineButton(
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier.weight(1f)
+                                .contentDescription(R.string.AccessibilityId_copy_button),
                             interactionSource = source,
-                            onClick = { copySeed() },
+                            onClick = copySeed,
                         ) {
-                            AnimatedVisibility(temporary) { Text(stringResource(R.string.copied)) }
-                            AnimatedVisibility(!temporary) { Text(stringResource(R.string.copy)) }
+                            AnimatedVisibility(isTemporary) { Text(stringResource(R.string.copied)) }
+                            AnimatedVisibility(!isTemporary) { Text(stringResource(R.string.copy)) }
                         }
                     }
                     OutlineButton(textId = R.string.qrView, modifier = Modifier.weight(1f), onClick = { showQr = !showQr })
