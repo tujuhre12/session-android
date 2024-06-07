@@ -31,7 +31,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.preferences.copyPublicKey
-import org.thoughtcrime.securesms.preferences.sendInvitation
+import org.thoughtcrime.securesms.preferences.sendInvitationToUseSession
 import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.classicDarkColors
 import org.thoughtcrime.securesms.ui.components.AppBar
@@ -56,7 +56,7 @@ class InviteFriendFragment : Fragment() {
                     onBack = { delegate.onDialogBackPressed() },
                     onClose = { delegate.onDialogClosePressed() },
                     copyPublicKey = requireContext()::copyPublicKey,
-                    sendInvitation = requireContext()::sendInvitation,
+                    sendInvitation = requireContext()::sendInvitationToUseSession,
                 )
             }
         }

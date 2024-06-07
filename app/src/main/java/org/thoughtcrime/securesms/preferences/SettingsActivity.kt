@@ -17,7 +17,6 @@ import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -82,7 +81,6 @@ import org.thoughtcrime.securesms.ui.ItemButton
 import org.thoughtcrime.securesms.ui.ItemButtonWithDrawable
 import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.components.OutlineTemporaryStateButton
-import org.thoughtcrime.securesms.ui.components.TemporaryStateButton
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.destructiveButtonColors
 import org.thoughtcrime.securesms.util.BitmapDecodingException
@@ -397,7 +395,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
             ) {
                 OutlineButton(
                     modifier = Modifier.weight(1f),
-                    onClick = { sendInvitation() }
+                    onClick = { sendInvitationToUseSession() }
                 ) {
                     Text(stringResource(R.string.share))
                 }
@@ -433,7 +431,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
                     Divider()
                     ItemButton(R.string.activity_settings_message_appearance_button_title, icon = R.drawable.ic_appearance, contentDescription = R.string.AccessibilityId_appearance) { show<AppearanceSettingsActivity>() }
                     Divider()
-                    ItemButton(R.string.activity_settings_invite_button_title, icon = R.drawable.ic_invite_friend, contentDescription = R.string.AccessibilityId_invite_friend) { sendInvitation() }
+                    ItemButton(R.string.activity_settings_invite_button_title, icon = R.drawable.ic_invite_friend, contentDescription = R.string.AccessibilityId_invite_friend) { sendInvitationToUseSession() }
                     Divider()
                     if (!prefs.getHidePassword()) {
                         ItemButton(R.string.sessionRecoveryPassword, icon = R.drawable.ic_recovery_phrase, contentDescription = R.string.AccessibilityId_recovery_password_menu_item) { show<RecoveryPasswordActivity>() }

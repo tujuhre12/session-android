@@ -8,14 +8,14 @@ import android.widget.Toast
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 
-fun Context.sendInvitation() {
+fun Context.sendInvitationToUseSession() {
     Intent().apply {
         action = Intent.ACTION_SEND
         putExtra(
             Intent.EXTRA_TEXT,
             getString(
                 R.string.accountIdShare,
-                TextSecurePreferences.getLocalNumber(this@sendInvitation)
+                TextSecurePreferences.getLocalNumber(this@sendInvitationToUseSession)
             )
         )
         type = "text/plain"
