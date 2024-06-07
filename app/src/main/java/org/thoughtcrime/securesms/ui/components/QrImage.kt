@@ -4,9 +4,11 @@ import android.graphics.Bitmap
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.Card
 import androidx.compose.material.Icon
@@ -20,8 +22,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
@@ -34,7 +39,6 @@ import org.thoughtcrime.securesms.util.QRCodeUtilities
 @Composable
 fun QrImage(
     string: String,
-    contentDescription: String,
     modifier: Modifier = Modifier,
     icon: Int = R.drawable.session_shield
 ) {
@@ -45,60 +49,63 @@ fun QrImage(
     val scope = rememberCoroutineScope()
     LaunchedEffect(string) {
         scope.launch(Dispatchers.IO) {
-            val c = 100
-            val w = c * 2
-            bitmap = QRCodeUtilities.encode(string, w).also {
-                val hw = 30
-                for (y in c - hw until c + hw) {
-                    for (x in c - hw until c + hw) {
-                        it.setPixel(x, y, 0x00000000)
-                    }
-                }
+            bitmap = (300..500 step 100).firstNotNullOf {
+                runCatching { QRCodeUtilities.encode(string, it) }.getOrNull()
             }
-        }
-    }
-
-    @Composable
-    fun content(modifier: Modifier = Modifier) {
-        Box(
-            modifier = modifier
-                .fillMaxWidth()
-                .aspectRatio(1f)
-        ) {
-            AnimatedVisibility(
-                visible = bitmap != null,
-                enter = fadeIn(),
-            ) {
-                bitmap?.let {
-                    Image(
-                        bitmap = it.asImageBitmap(),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .aspectRatio(1f),
-                        contentDescription = contentDescription,
-                        colorFilter = ColorFilter.tint(LocalOnLightCell.current)
-                    )
-                }
-            }
-
-            Icon(
-                painter = painterResource(id = icon),
-                contentDescription = "",
-                tint = LocalOnLightCell.current,
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .size(60.dp)
-            )
         }
     }
 
     if (MaterialTheme.colors.isLight) {
-        content(modifier)
+        Content(bitmap, icon, modifier = modifier, backgroundColor = MaterialTheme.colors.surface)
     } else {
         Card(
             backgroundColor = LocalLightCell.current,
             elevation = 0.dp,
             modifier = modifier
-        ) { content() }
+        ) { Content(bitmap, icon, modifier = Modifier.padding(16.dp), backgroundColor = LocalLightCell.current) }
+    }
+}
+
+@Composable
+private fun Content(
+    bitmap: Bitmap?,
+    icon: Int,
+    modifier: Modifier = Modifier,
+    qrColor: Color = LocalOnLightCell.current,
+    backgroundColor: Color,
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .aspectRatio(1f)
+    ) {
+        AnimatedVisibility(
+            visible = bitmap != null,
+            enter = fadeIn(),
+        ) {
+            bitmap?.let {
+                Image(
+                    bitmap = it.asImageBitmap(),
+                    contentDescription = "",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(1f),
+                    colorFilter = ColorFilter.tint(qrColor),
+                    // Use FilterQuality.None to keep QR edges sharp
+                    filterQuality = FilterQuality.None
+                )
+            }
+        }
+
+        Icon(
+            painter = painterResource(id = icon),
+            contentDescription = "",
+            tint = LocalOnLightCell.current,
+            modifier = Modifier
+                .align(Alignment.Center)
+                .size(60.dp)
+                .background(color = backgroundColor)
+        )
     }
 }

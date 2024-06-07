@@ -46,7 +46,6 @@ import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.showOpenUrlDialog
 import org.thoughtcrime.securesms.ui.AppTheme
-import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LoadingArcOr
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
@@ -134,7 +133,7 @@ private fun NewMessage(
         HorizontalPager(pagerState) {
             when (TITLES[it]) {
                 R.string.enter_account_id -> EnterAccountId(state, callbacks, onHelp)
-                R.string.qrScan -> MaybeScanQrCode(errors, onScan = callbacks::onScan)
+                R.string.qrScan -> MaybeScanQrCode(errors, onScan = callbacks::onScanQrCode)
             }
         }
     }

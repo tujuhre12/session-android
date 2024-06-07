@@ -4,19 +4,12 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.consumeAsFlow
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.take
-import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
@@ -26,7 +19,6 @@ import org.session.libsignal.crypto.MnemonicCodec.DecodingError.InvalidWord
 import org.session.libsignal.utilities.Hex
 import org.thoughtcrime.securesms.crypto.MnemonicUtilities
 import javax.inject.Inject
-import kotlin.time.Duration.Companion.seconds
 
 class LinkDeviceEvent(val mnemonic: ByteArray)
 
@@ -59,7 +51,7 @@ class LinkDeviceViewModel @Inject constructor(
         viewModelScope.launch {
             runDecodeCatching(string)
                 .onSuccess(::onSuccess)
-                .onFailure(::onScanFailure)
+                .onFailure(::onQrCodeScanFailure)
         }
     }
 
@@ -82,7 +74,7 @@ class LinkDeviceViewModel @Inject constructor(
         }
     }
 
-    private fun onScanFailure(error: Throwable) {
+    private fun onQrCodeScanFailure(error: Throwable) {
         viewModelScope.launch { qrErrors.send(error) }
     }
 

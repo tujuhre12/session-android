@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.preferences
 
 import android.os.Bundle
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -28,6 +29,7 @@ import org.thoughtcrime.securesms.database.threadDatabase
 import org.thoughtcrime.securesms.ui.components.MaybeScanQrCode
 import org.thoughtcrime.securesms.ui.components.QrImage
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
+import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.setComposeContent
 import org.thoughtcrime.securesms.ui.small
 import org.thoughtcrime.securesms.util.start
@@ -43,7 +45,11 @@ class QRCodeActivity : PassphraseRequiredActionBarActivity() {
         supportActionBar!!.title = resources.getString(R.string.activity_qr_code_title)
 
         setComposeContent {
-            Tabs(TextSecurePreferences.getLocalNumber(this)!!, errors.receiveAsFlow(), onScan = ::onScan)
+            Tabs(
+                TextSecurePreferences.getLocalNumber(this)!!,
+                errors.receiveAsFlow(),
+                onScan = ::onScan
+            )
         }
     }
 
@@ -86,13 +92,15 @@ private fun Tabs(sessionId: String, errors: Flow<String>, onScan: (String) -> Un
 fun QrPage(string: String) {
     Column(
         modifier = Modifier
+            .background(MaterialTheme.colors.surface)
             .padding(horizontal = 32.dp)
             .fillMaxSize()
     ) {
         QrImage(
             string = string,
-            contentDescription = stringResource(R.string.AccessibilityId_qr_code),
-            modifier = Modifier.padding(top = 32.dp, bottom = 12.dp),
+            modifier = Modifier
+                .padding(top = 32.dp, bottom = 12.dp)
+                .contentDescription(R.string.AccessibilityId_qr_code),
             icon = R.drawable.session
         )
 

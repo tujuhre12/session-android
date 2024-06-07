@@ -45,7 +45,7 @@ class NewMessageViewModel @Inject constructor(
         createPrivateChatIfPossible(state.value.newMessageIdOrOns)
     }
 
-    override fun onScan(value: String) {
+    override fun onScanQrCode(value: String) {
         if (PublicKeyValidation.isValid(value, isPrefixRequired = false) && PublicKeyValidation.hasValidPrefix(value)) {
             onPublicKey(value)
         } else {

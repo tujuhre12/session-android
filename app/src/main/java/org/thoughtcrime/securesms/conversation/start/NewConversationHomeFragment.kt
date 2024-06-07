@@ -27,6 +27,7 @@ import org.thoughtcrime.securesms.ui.ItemButton
 import org.thoughtcrime.securesms.ui.classicDarkColors
 import org.thoughtcrime.securesms.ui.components.AppBar
 import org.thoughtcrime.securesms.ui.components.QrImage
+import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.medium
 import org.thoughtcrime.securesms.ui.small
 import javax.inject.Inject
@@ -70,7 +71,7 @@ class NewConversationHomeFragment : Fragment() {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(text = stringResource(R.string.qrYoursDescription), color = classicDarkColors[5], style = MaterialTheme.typography.small)
                 Spacer(modifier = Modifier.height(20.dp))
-                QrImage(string = TextSecurePreferences.getLocalNumber(requireContext())!!, contentDescription = stringResource(R.string.AccessibilityId_qr_code))
+                QrImage(string = TextSecurePreferences.getLocalNumber(requireContext())!!, Modifier.contentDescription(R.string.AccessibilityId_qr_code))
             }
         }
     }

@@ -163,8 +163,8 @@ fun RecoveryPasswordCell(seed: String, copySeed:() -> Unit = {}) {
             ) {
                 QrImage(
                     seed,
-                    modifier = Modifier.padding(vertical = 24.dp),
-                    contentDescription = stringResource(R.string.AccessibilityId_qr_code),
+                    modifier = Modifier.padding(vertical = 24.dp)
+                        .contentDescription(R.string.AccessibilityId_qr_code),
                     icon = R.drawable.session_shield
                 )
             }
