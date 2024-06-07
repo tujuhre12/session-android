@@ -1,11 +1,8 @@
 package org.thoughtcrime.securesms.onboarding
 
-import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.camera.core.ExperimentalGetImage
-import androidx.camera.core.ImageAnalysis.Analyzer
-import androidx.camera.core.ImageProxy
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -30,9 +27,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
-import com.google.mlkit.vision.barcode.BarcodeScanner
-import com.google.mlkit.vision.barcode.common.Barcode
-import com.google.mlkit.vision.common.InputImage
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
@@ -79,7 +73,7 @@ class LinkDeviceActivity : BaseActionBarActivity() {
             setContent {
                 val state by viewModel.stateFlow.collectAsState()
                 AppTheme {
-                    LoadAccountScreen(state, viewModel::onChange, viewModel::onContinue, viewModel::scan)
+                    LoadAccountScreen(state, viewModel::onChange, viewModel::onContinue, viewModel::onScanQrCode)
                 }
             }
         }.let(::setContentView)

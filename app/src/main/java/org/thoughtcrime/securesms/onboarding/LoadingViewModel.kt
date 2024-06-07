@@ -28,11 +28,10 @@ import kotlin.time.Duration.Companion.seconds
 
 data class State(val duration: Duration)
 
-private val DONE_TIME = 1.seconds
-private val DONE_ANIMATE_TIME = 500.milliseconds
-
-private val TOTAL_ANIMATE_TIME = 14.seconds
-private val TOTAL_TIME = 15.seconds
+private val ANIMATE_TO_DONE_TIME = 500.milliseconds
+private val IDLE_DONE_TIME = 1.seconds
+private val TIMEOUT_TIME = 15.seconds
+private val TOTAL_ANIMATION_TIME = TIMEOUT_TIME - IDLE_DONE_TIME
 
 @HiltViewModel
 class LoadingViewModel @Inject constructor(
@@ -40,7 +39,7 @@ class LoadingViewModel @Inject constructor(
     private val prefs: TextSecurePreferences,
 ) : ViewModel() {
 
-    private val state = MutableStateFlow(State(TOTAL_ANIMATE_TIME))
+    private val state = MutableStateFlow(State(TOTAL_ANIMATION_TIME))
     val stateFlow = state.asStateFlow()
 
     private val event = Channel<Event>()
@@ -77,7 +76,7 @@ class LoadingViewModel @Inject constructor(
             }
 
             val skipJob = launch(Dispatchers.IO) {
-                delay(TOTAL_TIME)
+                delay(TIMEOUT_TIME)
                 event.send(Event.TIMEOUT)
             }
 
@@ -87,8 +86,8 @@ class LoadingViewModel @Inject constructor(
                 // handle we've synced
                 skipJob.cancel()
 
-                state.value = State(DONE_ANIMATE_TIME)
-                delay(DONE_TIME)
+                state.value = State(ANIMATE_TO_DONE_TIME)
+                delay(IDLE_DONE_TIME)
                 event.send(Event.SUCCESS)
             }
         }

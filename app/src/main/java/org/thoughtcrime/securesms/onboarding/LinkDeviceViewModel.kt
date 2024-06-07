@@ -47,7 +47,7 @@ class LinkDeviceViewModel @Inject constructor(
         }
     }
 
-    fun scan(string: String) {
+    fun onScanQrCode(string: String) {
         viewModelScope.launch {
             runDecodeCatching(string)
                 .onSuccess(::onSuccess)
