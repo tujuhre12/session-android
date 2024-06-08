@@ -101,7 +101,10 @@ fun boldStyle(size: TextUnit) = TextStyle.Default.copy(
     fontSize = size
 )
 
-fun defaultStyle(size: TextUnit) = TextStyle.Default.copy(fontSize = size)
+fun defaultStyle(size: TextUnit) = TextStyle.Default.copy(
+    fontSize = size,
+    lineHeight = size * 1.2
+)
 
 val sessionTypography = Typography(
     h1 = boldStyle(36.sp),
@@ -113,6 +116,7 @@ val sessionTypography = Typography(
 )
 
 val Typography.medium get() = defaultStyle(18.sp)
+val Typography.large get() = defaultStyle(16.sp)
 val Typography.base get() = defaultStyle(14.sp)
 val Typography.baseBold get() = boldStyle(14.sp)
 val Typography.small get() = defaultStyle(12.sp)

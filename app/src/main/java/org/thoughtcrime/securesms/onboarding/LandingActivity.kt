@@ -40,7 +40,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
@@ -57,6 +56,7 @@ import org.thoughtcrime.securesms.ui.components.BorderlessButton
 import org.thoughtcrime.securesms.ui.components.FilledButton
 import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.contentDescription
+import org.thoughtcrime.securesms.ui.large
 import org.thoughtcrime.securesms.ui.session_accent
 import org.thoughtcrime.securesms.util.setUpActionBarSessionLogo
 import org.thoughtcrime.securesms.util.start
@@ -173,8 +173,6 @@ class LandingActivity : BaseActionBarActivity() {
                     .width(262.dp)
                     .align(Alignment.CenterHorizontally)
                     .contentDescription(R.string.AccessibilityId_open_url),
-                fontSize = 11.sp,
-                lineHeight = 13.sp,
                 onClick = ::openDialog
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -253,8 +251,7 @@ private fun ChatText(
 ) {
     Text(
         text,
-        fontSize = 16.sp,
-        lineHeight = 19.sp,
+        style = MaterialTheme.typography.large,
         color = textColor,
         modifier = modifier
             .fillMaxWidth(0.666f)

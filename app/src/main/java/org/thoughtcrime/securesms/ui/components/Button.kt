@@ -2,12 +2,6 @@ package org.thoughtcrime.securesms.ui.components
 
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideIn
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
@@ -34,18 +28,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
-import network.loki.messenger.R
-import org.thoughtcrime.securesms.preferences.copyPublicKey
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LaunchedEffectAsync
 import org.thoughtcrime.securesms.ui.LocalButtonColor
 import org.thoughtcrime.securesms.ui.colorDestructive
 import org.thoughtcrime.securesms.ui.contentDescription
+import org.thoughtcrime.securesms.ui.extraSmall
 import kotlin.time.Duration.Companion.seconds
 
 val LocalButtonSize = staticCompositionLocalOf { mediumButton }
@@ -164,8 +156,6 @@ fun BorderlessButton(
     text: String,
     modifier: Modifier = Modifier,
     contentDescription: GetString = GetString(text),
-    fontSize: TextUnit = TextUnit.Unspecified,
-    lineHeight: TextUnit = TextUnit.Unspecified,
     contentColor: Color = MaterialTheme.colors.onBackground,
     backgroundColor: Color = Color.Transparent,
     onClick: () -> Unit
@@ -182,8 +172,7 @@ fun BorderlessButton(
         Text(
             text = text,
             textAlign = TextAlign.Center,
-            fontSize = fontSize,
-            lineHeight = lineHeight,
+            style = MaterialTheme.typography.extraSmall,
             modifier = Modifier.padding(horizontal = 2.dp)
         )
     }
