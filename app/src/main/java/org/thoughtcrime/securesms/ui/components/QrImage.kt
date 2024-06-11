@@ -103,9 +103,10 @@ private fun Content(
             contentDescription = "",
             tint = LocalOnLightCell.current,
             modifier = Modifier
+                .size(62.dp)
                 .align(Alignment.Center)
-                .size(60.dp)
                 .background(color = backgroundColor)
+                .size(66.dp)
         )
     }
 }
