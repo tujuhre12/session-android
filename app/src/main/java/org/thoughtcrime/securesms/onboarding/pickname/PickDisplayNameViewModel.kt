@@ -73,7 +73,8 @@ class PickDisplayNameViewModel(
     }
 
     fun onChange(value: String) {
-        state.update { state -> state.copy(
+        state.update { state ->
+            state.copy(
                 displayName = value,
                 error = value.takeIf { it.length > NAME_PADDED_LENGTH }?.let { R.string.displayNameErrorDescriptionShorter }
             )

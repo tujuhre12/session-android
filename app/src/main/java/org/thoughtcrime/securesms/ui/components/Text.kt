@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.baseBold
 import org.thoughtcrime.securesms.ui.outlinedTextFieldColors
@@ -51,7 +52,7 @@ fun SessionOutlinedTextField(
         error?.let {
             Text(
                 it,
-                modifier = Modifier.padding(top = 12.dp),
+                modifier = Modifier.padding(top = LocalDimensions.current.marginExtraExtraSmall),
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.baseBold,
                 color = MaterialTheme.colors.error

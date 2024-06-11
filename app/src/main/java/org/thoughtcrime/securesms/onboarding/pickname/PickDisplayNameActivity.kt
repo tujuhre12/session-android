@@ -7,6 +7,7 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -37,10 +38,12 @@ import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.onboarding.messagenotifications.MessageNotificationsActivity
 import org.thoughtcrime.securesms.onboarding.messagenotifications.startMessageNotificationsActivity
 import org.thoughtcrime.securesms.ui.AppTheme
+import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.baseBold
 import org.thoughtcrime.securesms.ui.components.OutlineButton
+import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.outlinedTextFieldColors
 import org.thoughtcrime.securesms.util.setUpActionBarSessionLogo
@@ -106,31 +109,16 @@ class PickDisplayNameActivity : BaseActionBarActivity() {
                 style = MaterialTheme.typography.base,
                 modifier = Modifier.padding(bottom = 12.dp))
 
-            OutlinedTextField(
-                value = state.displayName,
-                modifier = Modifier.contentDescription(R.string.AccessibilityId_enter_display_name),
-                onValueChange = { onChange(it) },
-                placeholder = { Text(stringResource(R.string.displayNameEnter)) },
-                colors = outlinedTextFieldColors(state.error != null),
-                singleLine = true,
-                keyboardActions = KeyboardActions(
-                    onDone = { onContinue() },
-                    onGo = { onContinue() },
-                    onSearch = { onContinue() },
-                    onSend = { onContinue() },
-                ),
-                isError = state.error != null,
-                shape = RoundedCornerShape(12.dp)
+            SessionOutlinedTextField(
+                text = state.displayName,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .contentDescription(R.string.AccessibilityId_enter_display_name),
+                placeholder = stringResource(R.string.displayNameEnter),
+                onChange = onChange,
+                onContinue = onContinue,
+                error = state.error?.let { stringResource(it) }
             )
-
-            state.error?.let {
-                Text(
-                    stringResource(it),
-                    modifier = Modifier.contentDescription(R.string.AccessibilityId_error_message),
-                    style = MaterialTheme.typography.baseBold,
-                    color = MaterialTheme.colors.error
-                )
-            }
 
             Spacer(modifier = Modifier.weight(2f))
 

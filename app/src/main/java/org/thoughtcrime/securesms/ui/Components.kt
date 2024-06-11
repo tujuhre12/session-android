@@ -91,7 +91,10 @@ data class RadioOption<T>(
 
 @Composable
 fun <T> OptionsCard(card: OptionsCard<T>, callbacks: Callbacks<T>) {
-    Text(text = card.title())
+    Text(
+        card.title(),
+        style = MaterialTheme.typography.base
+    )
     CellNoMargin {
         LazyColumn(
             modifier = Modifier.heightIn(max = 5000.dp)
@@ -348,7 +351,12 @@ fun ProgressArc(progress: Float, modifier: Modifier = Modifier) {
 
     Box(modifier = modifier) {
         Arc(percentage = progress, modifier = Modifier.align(Alignment.Center))
-        Text("${text}%", color = Color.White, modifier = Modifier.align(Alignment.Center), style = MaterialTheme.typography.h2)
+        Text(
+            "${text}%",
+            color = Color.White,
+            modifier = Modifier.align(Alignment.Center),
+            style = MaterialTheme.typography.h2
+        )
     }
 }
 

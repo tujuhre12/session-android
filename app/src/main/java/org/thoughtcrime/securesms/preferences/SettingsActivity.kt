@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -79,6 +80,7 @@ import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.ItemButton
 import org.thoughtcrime.securesms.ui.ItemButtonWithDrawable
+import org.thoughtcrime.securesms.ui.baseBold
 import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.components.OutlineTemporaryStateButton
 import org.thoughtcrime.securesms.ui.contentDescription
@@ -394,18 +396,20 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 OutlineButton(
+                    stringResource(R.string.share),
                     modifier = Modifier.weight(1f),
                     onClick = { sendInvitationToUseSession() }
-                ) {
-                    Text(stringResource(R.string.share))
-                }
+                )
 
                 OutlineTemporaryStateButton(
                     modifier = Modifier.weight(1f)
                         .contentDescription(R.string.AccessibilityId_copy_button),
                     onClick = { copyPublicKey() },
                 ) { isTemporary ->
-                    Text(stringResource(if (isTemporary) R.string.copied else R.string.copy))
+                    Text(
+                        stringResource(if (isTemporary) R.string.copied else R.string.copy),
+                        style = MaterialTheme.typography.baseBold
+                    )
                 }
             }
 

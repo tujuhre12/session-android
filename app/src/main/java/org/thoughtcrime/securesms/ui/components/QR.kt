@@ -56,6 +56,7 @@ import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.filter
 import network.loki.messenger.R
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.ui.base
 import java.util.concurrent.Executors
 
 private const val TAG = "NewMessageFragment"
@@ -89,23 +90,22 @@ fun MaybeScanQrCode(
             ) {
                 Text(
                     stringResource(R.string.activity_link_camera_permission_permanently_denied_configure_in_settings),
+                    style = MaterialTheme.typography.base,
                     textAlign = TextAlign.Center
                 )
                 Spacer(modifier = Modifier.size(20.dp))
                 OutlineButton(
+                    stringResource(R.string.sessionSettings),
                     modifier = Modifier.align(Alignment.CenterHorizontally),
                     onClick = onClickSettings
-                ) {
-                    Text(stringResource(R.string.sessionSettings))
-                }
+                )
             }
         } else {
             OutlineButton(
+                stringResource(R.string.cameraGrantAccess),
                 modifier = Modifier.align(Alignment.Center),
                 onClick = { cameraPermissionState.run { launchPermissionRequest() } }
-            ) {
-                Text(stringResource(R.string.cameraGrantAccess))
-            }
+            )
         }
     }
 }
@@ -117,8 +117,8 @@ fun ScanQrCode(errors: Flow<String>, onScan: (String) -> Unit) {
 
     val preview = Preview.Builder().build()
     val selector = CameraSelector.Builder()
-            .requireLensFacing(CameraSelector.LENS_FACING_BACK)
-            .build()
+        .requireLensFacing(CameraSelector.LENS_FACING_BACK)
+        .build()
 
     runCatching {
         cameraProvider.get().unbindAll()

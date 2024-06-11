@@ -40,6 +40,7 @@ import org.thoughtcrime.securesms.notifications.PushRegistry
 import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
+import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.h8
@@ -106,7 +107,7 @@ fun MessageNotificationsScreen(
         Spacer(Modifier.weight(1f))
         Text(stringResource(R.string.notificationsMessage), style = MaterialTheme.typography.h4)
         Spacer(Modifier.height(16.dp))
-        Text(stringResource(R.string.onboardingMessageNotificationExplaination))
+        Text(stringResource(R.string.onboardingMessageNotificationExplaination), style = MaterialTheme.typography.base)
         Spacer(Modifier.height(16.dp))
         NotificationRadioButton(
             R.string.activity_pn_mode_fast_mode,
