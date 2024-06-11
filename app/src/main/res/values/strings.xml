@@ -1067,7 +1067,7 @@
     <string name="onboardingBubbleCreatingAnAccountIsEasy">Creating an account is \ninstant, free, and \nanonymous 👇</string>
     <string name="onboardingAccountCreate">Create account</string>
     <string name="onboardingAccountExists">I have an account</string>
-    <string name="onboardingTosPrivacy">By using this service, you agree to our Terms of Service and Privacy Policy</string>
+    <string name="onboardingTosPrivacy">By using this service, you agree to our <b>Terms of Service</b> and <b>Privacy Policy</b></string>
 
     <string name="qrNotRecoveryPassword">This QR code does not contain a Recovery Password.</string>
 
@@ -1091,7 +1091,7 @@
     <string name="recoveryPasswordHidePermanently">Hide Recovery Password Permanently</string>
     <string name="recoveryPasswordHidePermanentlyDescription1"><![CDATA[Without your recovery password, you cannot load your account on new devices. <br /><br />We strongly recommend you save your recovery password in a safe and secure place before continuing.]]></string>
     <string name="recoveryPasswordHidePermanentlyDescription2">Are you sure you want to permanently hide your recovery password on this device? This cannot be undone.</string>
-    <string name="recoveryPasswordDescription">Use your recovery password to load your account on new devices. Your account cannot be recovered without your recovery password. Make sure it\'s stored somewhere safe and secure — and don\'t share it with anyone.</string>
+    <string name="recoveryPasswordDescription">Use your recovery password to load your account on new devices.\n\nYour account cannot be recovered without your recovery password. Make sure it\'s stored somewhere safe and secure — and don\'t share it with anyone.</string>
     <string name="hide">Hide</string>
     <string name="recoveryPasswordHideRecoveryPassword">Hide Recovery Password</string>
     <string name="qrView">View QR</string>

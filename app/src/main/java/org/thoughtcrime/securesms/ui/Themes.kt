@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.Dp
@@ -43,7 +44,9 @@ data class Dimensions(
     val itemSpacingSmall: Dp = 16.dp,
     val itemSpacingMedium: Dp = 24.dp,
     val marginTiny: Dp = 8.dp,
-    val marginSmall: Dp = 16.dp,
+    val marginExtraExtraSmall: Dp = 12.dp,
+    val marginExtraSmall: Dp = 16.dp,
+    val marginSmall: Dp = 24.dp,
     val marginMedium: Dp = 32.dp,
     val marginLarge: Dp = 64.dp,
     val dividerIndent: Dp = 80.dp,
@@ -65,7 +68,7 @@ fun AppTheme(
             LocalCellColor to R.attr.colorSettingsBackground,
             LocalButtonColor to R.attr.prominentButtonColor,
             LocalLightCell to R.attr.lightCell,
-            LocalOnLightCell to R.attr.onLightCell
+            LocalOnLightCell to R.attr.onLightCell,
         ).map { (local, attr) -> local provides context.getColorFromTheme(attr) }.toTypedArray()
     ) {
         AppCompatTheme(surface = surface) {
@@ -134,12 +137,14 @@ val sessionTypography = Typography(
     h6 = boldStyle(20.sp),
 )
 
-val Typography.medium get() = defaultStyle(18.sp)
+val Typography.xl get() = defaultStyle(18.sp)
 val Typography.large get() = defaultStyle(16.sp)
 val Typography.base get() = defaultStyle(14.sp)
 val Typography.baseBold get() = boldStyle(14.sp)
+val Typography.baseMonospace get() = defaultStyle(14.sp).copy(fontFamily = FontFamily.Monospace)
 val Typography.small get() = defaultStyle(12.sp)
 val Typography.extraSmall get() = defaultStyle(11.sp)
+val Typography.fine get() = defaultStyle(9.sp)
 
 val Typography.h7 get() = boldStyle(18.sp)
 val Typography.h8 get() = boldStyle(16.sp)

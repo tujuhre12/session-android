@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
@@ -35,9 +36,11 @@ import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.CellWithPaddingAndMargin
+import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionShieldIcon
 import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
+import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.classicDarkColors
 import org.thoughtcrime.securesms.ui.components.DestructiveButtons
 import org.thoughtcrime.securesms.ui.components.OutlineButton
@@ -58,7 +61,7 @@ class RecoveryPasswordActivity : BaseActionBarActivity() {
 
         ComposeView(this).apply {
             setContent {
-                RecoveryPassword(
+                RecoveryPasswordScreen(
                     viewModel.seed,
                     { viewModel.copySeed(context) }
                 ) { onHide() }
@@ -93,27 +96,27 @@ class RecoveryPasswordActivity : BaseActionBarActivity() {
 
 @Preview
 @Composable
-fun PreviewRecoveryPassword(
+fun PreviewRecoveryPasswordScreen(
     @PreviewParameter(ThemeResPreviewParameterProvider::class) themeResId: Int
 ) {
     PreviewTheme(themeResId) {
-        RecoveryPassword(seed = "Voyage  urban  toyed  maverick peculiar tuxedo penguin tree grass building listen speak withdraw terminal plane")
+        RecoveryPasswordScreen(seed = "Voyage  urban  toyed  maverick peculiar tuxedo penguin tree grass building listen speak withdraw terminal plane")
     }
 }
 
 @Composable
-fun RecoveryPassword(
+fun RecoveryPasswordScreen(
     seed: String = "",
     copySeed:() -> Unit = {},
     onHide:() -> Unit = {}
 ) {
     AppTheme {
         Column(
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.marginExtraSmall),
             modifier = Modifier
                 .contentDescription(R.string.AccessibilityId_recovery_password)
                 .verticalScroll(rememberScrollState())
-                .padding(bottom = 16.dp)
+                .padding(bottom = LocalDimensions.current.marginExtraSmall)
         ) {
             SmallButtons {
                 RecoveryPasswordCell(seed, copySeed)
@@ -132,29 +135,17 @@ fun RecoveryPasswordCell(seed: String, copySeed:() -> Unit = {}) {
     CellWithPaddingAndMargin {
         Column {
             Row {
-                Text(stringResource(R.string.sessionRecoveryPassword))
+                Text(stringResource(R.string.sessionRecoveryPassword), style = MaterialTheme.typography.h8)
                 Spacer(Modifier.width(8.dp))
                 SessionShieldIcon()
             }
 
-            Text(stringResource(R.string.recoveryPasswordDescription))
+            Spacer(modifier = Modifier.height(LocalDimensions.current.marginTiny))
+
+            Text(stringResource(R.string.recoveryPasswordDescription), style = MaterialTheme.typography.base)
 
             AnimatedVisibility(!showQr) {
-                Text(
-                    seed,
-                    modifier = Modifier
-                        .contentDescription(R.string.AccessibilityId_recovery_password_container)
-                        .padding(vertical = 24.dp)
-                        .border(
-                            width = 1.dp,
-                            color = classicDarkColors[3],
-                            shape = RoundedCornerShape(11.dp)
-                        )
-                        .padding(24.dp),
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.small.copy(fontFamily = FontFamily.Monospace),
-                    color = MaterialTheme.colors.run { if (isLight) onSurface else secondary },
-                )
+                RecoveryPassword(seed)
             }
 
             AnimatedVisibility(
@@ -163,7 +154,8 @@ fun RecoveryPasswordCell(seed: String, copySeed:() -> Unit = {}) {
             ) {
                 QrImage(
                     seed,
-                    modifier = Modifier.padding(vertical = 24.dp)
+                    modifier = Modifier
+                        .padding(vertical = 24.dp)
                         .contentDescription(R.string.AccessibilityId_qr_code),
                     icon = R.drawable.session_shield
                 )
@@ -194,7 +186,26 @@ fun RecoveryPasswordCell(seed: String, copySeed:() -> Unit = {}) {
 }
 
 @Composable
-fun HideRecoveryPasswordCell(onHide: () -> Unit = {}) {
+private fun RecoveryPassword(seed: String) {
+    Text(
+        seed,
+        modifier = Modifier
+            .contentDescription(R.string.AccessibilityId_recovery_password_container)
+            .padding(vertical = 24.dp)
+            .border(
+                width = 1.dp,
+                color = classicDarkColors[3],
+                shape = RoundedCornerShape(11.dp)
+            )
+            .padding(24.dp),
+        textAlign = TextAlign.Center,
+        style = MaterialTheme.typography.small.copy(fontFamily = FontFamily.Monospace),
+        color = MaterialTheme.colors.run { if (isLight) onSurface else secondary },
+    )
+}
+
+@Composable
+private fun HideRecoveryPasswordCell(onHide: () -> Unit = {}) {
     CellWithPaddingAndMargin {
         Row {
             Column(

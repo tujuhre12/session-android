@@ -17,7 +17,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
@@ -29,8 +28,8 @@ import org.thoughtcrime.securesms.ui.classicDarkColors
 import org.thoughtcrime.securesms.ui.components.AppBar
 import org.thoughtcrime.securesms.ui.components.QrImage
 import org.thoughtcrime.securesms.ui.contentDescription
-import org.thoughtcrime.securesms.ui.medium
 import org.thoughtcrime.securesms.ui.small
+import org.thoughtcrime.securesms.ui.xl
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -67,10 +66,18 @@ class NewConversationHomeFragment : Fragment() {
             Column(
                 modifier = Modifier
                     .padding(horizontal = LocalDimensions.current.marginMedium)
-                    .padding(top = LocalDimensions.current.itemSpacingMedium)) {
-                Text(text = stringResource(R.string.accountIdYours), style = MaterialTheme.typography.medium)
+                    .padding(top = LocalDimensions.current.itemSpacingMedium)
+            ) {
+                Text(
+                    text = stringResource(R.string.accountIdYours),
+                    style = MaterialTheme.typography.xl
+                )
                 Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacingTiny))
-                Text(text = stringResource(R.string.qrYoursDescription), color = classicDarkColors[5], style = MaterialTheme.typography.small)
+                Text(
+                    text = stringResource(R.string.qrYoursDescription),
+                    color = classicDarkColors[5],
+                    style = MaterialTheme.typography.small
+                )
                 Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacingSmall))
                 QrImage(string = TextSecurePreferences.getLocalNumber(requireContext())!!, Modifier.contentDescription(R.string.AccessibilityId_qr_code))
             }

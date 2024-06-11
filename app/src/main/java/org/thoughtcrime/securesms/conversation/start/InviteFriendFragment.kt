@@ -33,6 +33,8 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.preferences.copyPublicKey
 import org.thoughtcrime.securesms.preferences.sendInvitationToUseSession
 import org.thoughtcrime.securesms.ui.AppTheme
+import org.thoughtcrime.securesms.ui.base
+import org.thoughtcrime.securesms.ui.baseBold
 import org.thoughtcrime.securesms.ui.classicDarkColors
 import org.thoughtcrime.securesms.ui.components.AppBar
 import org.thoughtcrime.securesms.ui.components.OnPrimaryButtons
@@ -53,6 +55,7 @@ class InviteFriendFragment : Fragment() {
         setContent {
             AppTheme {
                 InviteFriend(
+                    TextSecurePreferences.getLocalNumber(LocalContext.current)!!,
                     onBack = { delegate.onDialogBackPressed() },
                     onClose = { delegate.onDialogClosePressed() },
                     copyPublicKey = requireContext()::copyPublicKey,
@@ -66,11 +69,12 @@ class InviteFriendFragment : Fragment() {
 @Preview
 @Composable
 private fun PreviewInviteFriend() {
-    InviteFriend()
+    InviteFriend("050000000")
 }
 
 @Composable
 private fun InviteFriend(
+    accountId: String,
     onBack: () -> Unit = {},
     onClose: () -> Unit = {},
     copyPublicKey: () -> Unit = {},
@@ -93,12 +97,13 @@ private fun InviteFriend(
                     .wrapContentHeight()
             ) {
                 Text(
-                    TextSecurePreferences.getLocalNumber(LocalContext.current)!!,
-                    textAlign = TextAlign.Center,
+                    accountId,
                     modifier = Modifier
                         .contentDescription("Your account ID")
                         .align(Alignment.Center)
-                        .padding(22.dp)
+                        .padding(22.dp),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.base
                 )
             }
 
@@ -118,7 +123,10 @@ private fun InviteFriend(
                                 .contentDescription("Share button"),
                             onClick = sendInvitation
                         ) {
-                            Text(stringResource(R.string.share))
+                            Text(
+                                stringResource(R.string.share),
+                                style = MaterialTheme.typography.baseBold
+                            )
                         }
 
                         OutlineTemporaryStateButton(
@@ -127,7 +135,10 @@ private fun InviteFriend(
                                 .contentDescription(R.string.AccessibilityId_copy_button),
                             onClick = copyPublicKey
                         ) { isTemporary ->
-                            Text(stringResource(if (isTemporary) R.string.copied else R.string.copy))
+                            Text(
+                                stringResource(if (isTemporary) R.string.copied else R.string.copy),
+                                style = MaterialTheme.typography.baseBold
+                            )
                         }
                     }
                 }

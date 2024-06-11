@@ -22,6 +22,7 @@ import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.LocalButtonColor
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
+import org.thoughtcrime.securesms.ui.h8
 
 private val TITLES = listOf(R.string.sessionRecoveryPassword, R.string.qrScan)
 
@@ -45,7 +46,10 @@ fun SessionTabRow(pagerState: PagerState, titles: List<Int>) {
                 selectedContentColor = MaterialTheme.colors.onPrimary,
                 unselectedContentColor = MaterialTheme.colors.onPrimary,
             ) {
-                Text(stringResource(id = it))
+                Text(
+                    stringResource(id = it),
+                    style = MaterialTheme.typography.h8
+                )
             }
         }
     }

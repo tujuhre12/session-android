@@ -98,9 +98,11 @@ import org.thoughtcrime.securesms.preferences.SettingsActivity
 import org.thoughtcrime.securesms.showMuteDialog
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.ui.AppTheme
+import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionShieldIcon
 import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
+import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.h8
@@ -372,25 +374,33 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
     private fun SeedReminder() {
         AppTheme {
             Column {
+                // Color Strip
                 Box(
                     Modifier
                         .fillMaxWidth()
                         .height(4.dp)
-                        .background(MaterialTheme.colors.secondary))
+                        .background(MaterialTheme.colors.secondary)
+                )
                 Row(
                     Modifier
                         .background(MaterialTheme.colors.surface)
-                        .padding(horizontal = 24.dp, vertical = 16.dp)
+                        .padding(horizontal = LocalDimensions.current.marginSmall, vertical = LocalDimensions.current.marginExtraSmall)
                 ) {
                     Column(Modifier.weight(1f)) {
                         Row {
-                            Text(stringResource(R.string.save_your_recovery_password), style = MaterialTheme.typography.h8)
-                            Spacer(Modifier.requiredWidth(8.dp))
+                            Text(
+                                stringResource(R.string.save_your_recovery_password),
+                                style = MaterialTheme.typography.h8
+                            )
+                            Spacer(Modifier.requiredWidth(LocalDimensions.current.itemSpacingSmall))
                             SessionShieldIcon()
                         }
-                        Text(stringResource(R.string.save_your_recovery_password_to_make_sure_you_don_t_lose_access_to_your_account), style = MaterialTheme.typography.small)
+                        Text(
+                            stringResource(R.string.save_your_recovery_password_to_make_sure_you_don_t_lose_access_to_your_account),
+                            style = MaterialTheme.typography.small
+                        )
                     }
-                    Spacer(Modifier.width(12.dp))
+                    Spacer(Modifier.width(LocalDimensions.current.marginExtraExtraSmall))
                     OutlineButton(
                         textId = R.string.continue_2,
                         modifier = Modifier
@@ -418,27 +428,38 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                     contentDescription = null,
                     tint = Color.Unspecified
                 )
-                if (newAccount) Text(stringResource(R.string.onboardingAccountCreated), style = MaterialTheme.typography.h4, textAlign = TextAlign.Center)
-                if (newAccount) Text(stringResource(R.string.welcome_to_session), color = MaterialTheme.colors.secondary, textAlign = TextAlign.Center)
+                if (newAccount) {
+                    Text(
+                        stringResource(R.string.onboardingAccountCreated),
+                        style = MaterialTheme.typography.h4,
+                        textAlign = TextAlign.Center
+                    )
+                    Text(
+                        stringResource(R.string.welcome_to_session),
+                        style = MaterialTheme.typography.base,
+                        color = MaterialTheme.colors.secondary,
+                        textAlign = TextAlign.Center
+                    )
+                }
 
-                Divider(modifier = Modifier.padding(vertical = 16.dp))
+                Divider(modifier = Modifier.padding(vertical = LocalDimensions.current.marginExtraSmall))
                 Text(
                     stringResource(R.string.conversationsNone),
                     style = MaterialTheme.typography.h8,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(bottom = 12.dp))
-                Text(stringResource(R.string.onboardingHitThePlusButton), textAlign = TextAlign.Center)
+                Text(
+                    stringResource(R.string.onboardingHitThePlusButton),
+                    style = MaterialTheme.typography.small,
+                    textAlign = TextAlign.Center
+                )
                 Spacer(modifier = Modifier.weight(2f))
             }
         }
     }
 
     override fun onInputFocusChanged(hasFocus: Boolean) {
-        if (hasFocus) {
-            setSearchShown(true)
-        } else {
-            setSearchShown(binding.globalSearchInputLayout.query.value.isNotEmpty())
-        }
+        setSearchShown(hasFocus || binding.globalSearchInputLayout.query.value.isNotEmpty())
     }
 
     private fun setSearchShown(isShown: Boolean) {

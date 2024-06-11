@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.baseBold
 import org.thoughtcrime.securesms.ui.outlinedTextFieldColors
 
@@ -28,8 +29,14 @@ fun SessionOutlinedTextField(
         OutlinedTextField(
             value = text,
             modifier = Modifier.fillMaxWidth(),
+            textStyle = MaterialTheme.typography.base,
             onValueChange = { onChange(it) },
-            placeholder = { Text(placeholder) },
+            placeholder = {
+                Text(
+                    placeholder,
+                    style = MaterialTheme.typography.base
+                )
+            },
             colors = outlinedTextFieldColors(error != null),
             singleLine = true,
             keyboardActions = KeyboardActions(

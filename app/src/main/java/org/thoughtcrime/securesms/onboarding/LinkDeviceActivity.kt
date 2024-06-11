@@ -33,6 +33,8 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.ui.AppTheme
+import org.thoughtcrime.securesms.ui.LocalDimensions
+import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.baseBold
 import org.thoughtcrime.securesms.ui.components.MaybeScanQrCode
 import org.thoughtcrime.securesms.ui.components.OutlineButton
@@ -113,11 +115,14 @@ fun PreviewRecoveryPassword() = RecoveryPassword(state = LinkDeviceState())
 @Composable
 fun RecoveryPassword(state: LinkDeviceState, onChange: (String) -> Unit = {}, onContinue: () -> Unit = {}) {
     Column(
-        modifier = Modifier.padding(horizontal = 60.dp)
+        modifier = Modifier.padding(horizontal = LocalDimensions.current.marginLarge)
     ) {
         Spacer(Modifier.weight(1f))
         Row {
-            Text(stringResource(R.string.sessionRecoveryPassword), style = MaterialTheme.typography.h4)
+            Text(
+                stringResource(R.string.sessionRecoveryPassword),
+                style = MaterialTheme.typography.h4
+            )
             Spacer(Modifier.width(6.dp))
             Icon(
                 painter = painterResource(id = R.drawable.ic_shield_outline),
@@ -125,7 +130,10 @@ fun RecoveryPassword(state: LinkDeviceState, onChange: (String) -> Unit = {}, on
             )
         }
         Spacer(Modifier.size(28.dp))
-        Text(stringResource(R.string.activity_link_enter_your_recovery_password_to_load_your_account_if_you_haven_t_saved_it_you_can_find_it_in_your_app_settings))
+        Text(
+            stringResource(R.string.activity_link_enter_your_recovery_password_to_load_your_account_if_you_haven_t_saved_it_you_can_find_it_in_your_app_settings),
+            style = MaterialTheme.typography.base
+        )
         Spacer(Modifier.size(24.dp))
         SessionOutlinedTextField(
             text = state.recoveryPhrase,
@@ -137,24 +145,14 @@ fun RecoveryPassword(state: LinkDeviceState, onChange: (String) -> Unit = {}, on
             onContinue = onContinue,
             error = state.error
         )
-        Spacer(Modifier.size(12.dp))
-        state.error?.let {
-            Text(
-                it,
-                modifier = Modifier.contentDescription(R.string.AccessibilityId_error_message),
-                style = MaterialTheme.typography.baseBold,
-                color = MaterialTheme.colors.error
-            )
-        }
         Spacer(Modifier.weight(2f))
         OutlineButton(
             textId = R.string.continue_2,
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
-                .padding(horizontal = 64.dp, vertical = 20.dp)
+                .padding(horizontal = LocalDimensions.current.marginLarge, vertical = 20.dp)
                 .width(200.dp),
             onClick = onContinue
         )
     }
 }
-

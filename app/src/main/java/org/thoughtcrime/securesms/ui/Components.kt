@@ -187,7 +187,7 @@ fun ItemButton(
         ) {
             icon()
         }
-        Text(text, modifier = Modifier.fillMaxWidth(), style = MaterialTheme.typography.h8)
+        Text(text, modifier = Modifier.fillMaxWidth(), style = MaterialTheme.typography.xl)
     }
 }
 

@@ -29,6 +29,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Icon
 import androidx.compose.material.LocalTextStyle
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -72,6 +73,9 @@ import org.thoughtcrime.securesms.ui.ItemButton
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
 import org.thoughtcrime.securesms.ui.TitledText
+import org.thoughtcrime.securesms.ui.base
+import org.thoughtcrime.securesms.ui.baseBold
+import org.thoughtcrime.securesms.ui.baseMonospace
 import org.thoughtcrime.securesms.ui.blackAlpha40
 import org.thoughtcrime.securesms.ui.colorDestructive
 import org.thoughtcrime.securesms.ui.destructiveButtonColors
@@ -364,7 +368,7 @@ fun FileDetails(fileDetails: List<TitledText>) {
 fun TitledErrorText(titledText: TitledText?) {
     TitledText(
         titledText,
-        style = LocalTextStyle.current.copy(color = colorDestructive)
+        style = MaterialTheme.typography.base.copy(color = colorDestructive)
     )
 }
 
@@ -372,7 +376,7 @@ fun TitledErrorText(titledText: TitledText?) {
 fun TitledMonospaceText(titledText: TitledText?) {
     TitledText(
         titledText,
-        style = LocalTextStyle.current.copy(fontFamily = FontFamily.Monospace)
+        style = MaterialTheme.typography.baseMonospace
     )
 }
 
@@ -380,11 +384,15 @@ fun TitledMonospaceText(titledText: TitledText?) {
 fun TitledText(
     titledText: TitledText?,
     modifier: Modifier = Modifier,
-    style: TextStyle = LocalTextStyle.current,
+    style: TextStyle = MaterialTheme.typography.base,
 ) {
     titledText?.apply {
         TitledView(title, modifier) {
-            Text(text, style = style, modifier = Modifier.fillMaxWidth())
+            Text(
+                text,
+                style = style,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
@@ -399,5 +407,8 @@ fun TitledView(title: GetString, modifier: Modifier = Modifier, content: @Compos
 
 @Composable
 fun Title(title: GetString) {
-    Text(title.string(), fontWeight = FontWeight.Bold)
+    Text(
+        title.string(),
+        style = MaterialTheme.typography.baseBold
+    )
 }

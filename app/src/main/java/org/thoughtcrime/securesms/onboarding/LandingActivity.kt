@@ -8,7 +8,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -49,12 +48,12 @@ import org.thoughtcrime.securesms.onboarding.pickname.startPickDisplayNameActivi
 import org.thoughtcrime.securesms.service.KeyCachingService
 import org.thoughtcrime.securesms.showOpenUrlDialog
 import org.thoughtcrime.securesms.ui.AppTheme
-import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
 import org.thoughtcrime.securesms.ui.classicDarkColors
 import org.thoughtcrime.securesms.ui.components.BorderlessButton
+import org.thoughtcrime.securesms.ui.components.BorderlessHtmlButton
 import org.thoughtcrime.securesms.ui.components.FilledButton
 import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.contentDescription
@@ -173,8 +172,8 @@ class LandingActivity : BaseActionBarActivity() {
                         .align(Alignment.CenterHorizontally)
                         .contentDescription(R.string.AccessibilityId_restore_account_button)
                 ) { start<LinkDeviceActivity>() }
-                BorderlessButton(
-                    text = stringResource(R.string.onboardingTosPrivacy),
+                BorderlessHtmlButton(
+                    textId = R.string.onboardingTosPrivacy,
                     modifier = Modifier
                         .fillMaxWidth()
                         .align(Alignment.CenterHorizontally)

@@ -7,7 +7,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ButtonDefaults
@@ -23,19 +22,19 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
+import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LaunchedEffectAsync
 import org.thoughtcrime.securesms.ui.LocalButtonColor
+import org.thoughtcrime.securesms.ui.baseBold
 import org.thoughtcrime.securesms.ui.colorDestructive
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.extraSmall
@@ -59,7 +58,7 @@ fun OutlineButton(text: String, modifier: Modifier = Modifier, onClick: () -> Un
     OutlineButton(
         modifier.contentDescription(text),
         onClick = onClick
-    ) { Text(text) }
+    ) { Text(text, style = MaterialTheme.typography.baseBold) }
 }
 
 @Composable
@@ -129,13 +128,12 @@ fun FilledButton(
     OutlinedButton(
         modifier = modifier,
         onClick = onClick,
-        shape = RoundedCornerShape(50),
         colors = ButtonDefaults.outlinedButtonColors(
             contentColor = MaterialTheme.colors.background,
             backgroundColor = LocalButtonColor.current
         )
     ) {
-        Text(text = text)
+        Text(text = text, style = MaterialTheme.typography.baseBold)
     }
 }
 
@@ -165,7 +163,6 @@ fun BorderlessButton(
     TextButton(
         onClick = onClick,
         modifier = modifier.contentDescription(contentDescription),
-        shape = RoundedCornerShape(percent = 50),
         colors = ButtonDefaults.outlinedButtonColors(
             contentColor = contentColor,
             backgroundColor = backgroundColor
@@ -173,6 +170,31 @@ fun BorderlessButton(
     ) {
         Text(
             text = text,
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.extraSmall,
+            modifier = Modifier.padding(horizontal = 2.dp)
+        )
+    }
+}
+
+@Composable
+fun BorderlessHtmlButton(
+    textId: Int,
+    modifier: Modifier = Modifier,
+    contentColor: Color = MaterialTheme.colors.onBackground,
+    backgroundColor: Color = Color.Transparent,
+    onClick: () -> Unit
+) {
+    TextButton(
+        onClick = onClick,
+        modifier = modifier,
+        colors = ButtonDefaults.outlinedButtonColors(
+            contentColor = contentColor,
+            backgroundColor = backgroundColor
+        )
+    ) {
+        Text(
+            text = annotatedStringResource(textId),
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.extraSmall,
             modifier = Modifier.padding(horizontal = 2.dp)

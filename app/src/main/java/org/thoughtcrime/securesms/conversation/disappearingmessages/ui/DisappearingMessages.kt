@@ -52,7 +52,8 @@ fun DisappearingMessages(
                     OptionsCard(it, callbacks)
                 }
 
-                if (state.showGroupFooter) Text(text = stringResource(R.string.activity_disappearing_messages_group_footer),
+                if (state.showGroupFooter) Text(
+                    text = stringResource(R.string.activity_disappearing_messages_group_footer),
                     style = MaterialTheme.typography.extraSmall,
                     fontWeight = FontWeight(400),
                     color = Color(0xFFA1A2A1),

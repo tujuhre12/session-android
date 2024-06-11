@@ -49,6 +49,7 @@ import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.LoadingArcOr
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
+import org.thoughtcrime.securesms.ui.baseBold
 import org.thoughtcrime.securesms.ui.components.AppBar
 import org.thoughtcrime.securesms.ui.components.BorderlessButtonSecondary
 import org.thoughtcrime.securesms.ui.components.MaybeScanQrCode
@@ -175,7 +176,10 @@ fun EnterAccountId(
             onClick = { callbacks.onContinue() }
         ) {
             LoadingArcOr(state.loading) {
-                Text(stringResource(R.string.next))
+                Text(
+                    stringResource(R.string.next),
+                    style = MaterialTheme.typography.baseBold
+                )
             }
         }
     }
