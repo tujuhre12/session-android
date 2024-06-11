@@ -5,6 +5,7 @@ import androidx.annotation.AttrRes
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material.LocalContentColor
@@ -21,7 +22,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.accompanist.themeadapter.appcompat.createAppCompatTheme
 import com.google.android.material.color.MaterialColors
@@ -31,6 +34,20 @@ val LocalCellColor = staticCompositionLocalOf { Color.Black }
 val LocalButtonColor = staticCompositionLocalOf { Color.Black }
 val LocalLightCell = staticCompositionLocalOf { Color.Black }
 val LocalOnLightCell = staticCompositionLocalOf { Color.Black }
+
+val LocalDimensions = staticCompositionLocalOf { Dimensions() }
+
+data class Dimensions(
+    val itemSpacingTiny: Dp = 4.dp,
+    val itemSpacingExtraSmall: Dp = 8.dp,
+    val itemSpacingSmall: Dp = 16.dp,
+    val itemSpacingMedium: Dp = 24.dp,
+    val marginTiny: Dp = 8.dp,
+    val marginSmall: Dp = 16.dp,
+    val marginMedium: Dp = 32.dp,
+    val marginLarge: Dp = 64.dp,
+    val dividerIndent: Dp = 80.dp,
+)
 
 /**
  * Converts current Theme to Compose Theme.
@@ -85,7 +102,9 @@ fun AppCompatTheme(
             surface = surface ?: colors.surface
         ),
         typography = typography,
-        shapes = shapes,
+        shapes = shapes.copy(
+            small = RoundedCornerShape(50)
+        ),
     ) {
         // We update the LocalContentColor to match our onBackground. This allows the default
         // content color to be more appropriate to the theme background

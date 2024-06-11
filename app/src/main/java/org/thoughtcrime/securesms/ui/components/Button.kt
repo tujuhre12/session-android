@@ -23,6 +23,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
@@ -41,7 +42,6 @@ import org.thoughtcrime.securesms.ui.extraSmall
 import kotlin.time.Duration.Companion.seconds
 
 val LocalButtonSize = staticCompositionLocalOf { mediumButton }
-val LocalButtonShape = staticCompositionLocalOf<Shape> { RoundedCornerShape(percent = 50) }
 
 @Composable
 fun Modifier.applyButtonSize() = then(LocalButtonSize.current)
@@ -56,7 +56,10 @@ fun OutlineButton(@StringRes textId: Int, modifier: Modifier = Modifier, onClick
 
 @Composable
 fun OutlineButton(text: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    OutlineButton(modifier.contentDescription(text), onClick = onClick) { Text(text) }
+    OutlineButton(
+        modifier.contentDescription(text),
+        onClick = onClick
+    ) { Text(text) }
 }
 
 @Composable
@@ -71,7 +74,6 @@ fun OutlineButton(
         interactionSource = interactionSource,
         onClick = onClick,
         border = BorderStroke(1.dp, LocalButtonColor.current),
-        shape = LocalButtonShape.current,
         colors = ButtonDefaults.outlinedButtonColors(
             contentColor = LocalButtonColor.current,
             backgroundColor = Color.Unspecified
@@ -125,7 +127,7 @@ fun FilledButton(
     onClick: () -> Unit
 ) {
     OutlinedButton(
-        modifier = modifier.size(108.dp, 34.dp),
+        modifier = modifier,
         onClick = onClick,
         shape = RoundedCornerShape(50),
         colors = ButtonDefaults.outlinedButtonColors(

@@ -17,11 +17,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.Card
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -49,6 +49,8 @@ import org.thoughtcrime.securesms.onboarding.pickname.startPickDisplayNameActivi
 import org.thoughtcrime.securesms.service.KeyCachingService
 import org.thoughtcrime.securesms.showOpenUrlDialog
 import org.thoughtcrime.securesms.ui.AppTheme
+import org.thoughtcrime.securesms.ui.Cell
+import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
 import org.thoughtcrime.securesms.ui.classicDarkColors
@@ -119,63 +121,68 @@ class LandingActivity : BaseActionBarActivity() {
             }
         }
 
-        Column(modifier = Modifier.padding(horizontal = 36.dp)) {
-            Spacer(modifier = Modifier.weight(1f))
-            Text(
-                stringResource(R.string.onboardingBubblePrivacyInYourPocket),
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-                style = MaterialTheme.typography.h4,
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(24.dp))
+        Column {
+            Column(modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = LocalDimensions.current.marginMedium)) {
+                Spacer(modifier = Modifier.weight(1f))
+                Text(
+                    stringResource(R.string.onboardingBubblePrivacyInYourPocket),
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    style = MaterialTheme.typography.h4,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacingMedium))
 
-            LazyColumn(
-                state = listState,
-                modifier = Modifier
-                    .heightIn(min = 200.dp)
-                    .fillMaxWidth()
-                    .weight(2f),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                items(
-                    MESSAGES.take(count),
-                    key = { it.stringId }
-                ) { item ->
-                    AnimateMessageText(
-                        stringResource(item.stringId),
-                        item.isOutgoing
-                    )
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier
+                        .heightIn(min = 200.dp)
+                        .fillMaxWidth()
+                        .weight(3f),
+                    verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.itemSpacingSmall)
+                ) {
+                    items(
+                        MESSAGES.take(count),
+                        key = { it.stringId }
+                    ) { item ->
+                        AnimateMessageText(
+                            stringResource(item.stringId),
+                            item.isOutgoing
+                        )
+                    }
                 }
+
+                Spacer(modifier = Modifier.weight(1f))
             }
 
-            Spacer(modifier = Modifier.weight(1f))
-
-            OutlineButton(
-                text = stringResource(R.string.onboardingAccountCreate),
-                modifier = Modifier
-                    .contentDescription(R.string.AccessibilityId_create_account_button)
-                    .width(262.dp)
-                    .align(Alignment.CenterHorizontally),
-                onClick = ::startPickDisplayNameActivity
-            )
-            Spacer(modifier = Modifier.height(14.dp))
-            FilledButton(
-                text = stringResource(R.string.onboardingAccountExists),
-                modifier = Modifier
-                    .width(262.dp)
-                    .align(Alignment.CenterHorizontally)
-                    .contentDescription(R.string.AccessibilityId_restore_account_button)
-            ) { start<LinkDeviceActivity>() }
-            Spacer(modifier = Modifier.height(8.dp))
-            BorderlessButton(
-                text = stringResource(R.string.onboardingTosPrivacy),
-                modifier = Modifier
-                    .width(262.dp)
-                    .align(Alignment.CenterHorizontally)
-                    .contentDescription(R.string.AccessibilityId_open_url),
-                onClick = ::openDialog
-            )
-            Spacer(modifier = Modifier.height(8.dp))
+            Column(modifier = Modifier.padding(horizontal = LocalDimensions.current.marginLarge)) {
+                FilledButton(
+                    text = stringResource(R.string.onboardingAccountCreate),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.CenterHorizontally)
+                        .contentDescription(R.string.AccessibilityId_create_account_button),
+                    onClick = ::startPickDisplayNameActivity
+                )
+                Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacingSmall))
+                OutlineButton(
+                    text = stringResource(R.string.onboardingAccountExists),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.CenterHorizontally)
+                        .contentDescription(R.string.AccessibilityId_restore_account_button)
+                ) { start<LinkDeviceActivity>() }
+                BorderlessButton(
+                    text = stringResource(R.string.onboardingTosPrivacy),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.CenterHorizontally)
+                        .contentDescription(R.string.AccessibilityId_open_url),
+                    onClick = ::openDialog
+                )
+                Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacingExtraSmall))
+            }
         }
     }
 
@@ -218,47 +225,34 @@ private fun AnimateMessageText(text: String, isOutgoing: Boolean, modifier: Modi
 
 @Composable
 private fun MessageText(text: String, isOutgoing: Boolean, modifier: Modifier) {
-    if (isOutgoing) OutgoingText(text, modifier) else IncomingText(text, modifier)
-}
-
-@Composable
-private fun IncomingText(text: String, modifier: Modifier = Modifier) {
-    ChatText(
-        text,
-        color = classicDarkColors[2],
-        modifier = modifier
-    )
-}
-
-@Composable
-private fun OutgoingText(text: String, modifier: Modifier = Modifier) {
     Box(modifier = modifier then Modifier.fillMaxWidth()) {
-        ChatText(
+        MessageText(
             text,
-            color = session_accent,
-            textColor = MaterialTheme.colors.primary,
-            modifier = Modifier.align(Alignment.TopEnd)
+            color = if (isOutgoing) session_accent else classicDarkColors[2],
+            textColor = if (isOutgoing) MaterialTheme.colors.primary else Color.Unspecified,
+            modifier = Modifier.align(if (isOutgoing) Alignment.TopEnd else Alignment.TopStart)
         )
     }
 }
 
 @Composable
-private fun ChatText(
+private fun MessageText(
     text: String,
     color: Color,
     modifier: Modifier = Modifier,
     textColor: Color = Color.Unspecified
 ) {
-    Text(
-        text,
-        style = MaterialTheme.typography.large,
-        color = textColor,
-        modifier = modifier
-            .fillMaxWidth(0.666f)
-            .background(
-                color = color,
-                shape = RoundedCornerShape(size = 13.dp)
-            )
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-    )
+    Card(
+        modifier = modifier.fillMaxWidth(0.666f),
+        shape = RoundedCornerShape(size = 13.dp),
+        backgroundColor = color,
+        elevation = 0.dp
+    ) {
+        Text(
+            text,
+            style = MaterialTheme.typography.large,
+            color = textColor,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+        )
+    }
 }

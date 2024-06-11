@@ -24,6 +24,7 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.ItemButton
+import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.classicDarkColors
 import org.thoughtcrime.securesms.ui.components.AppBar
 import org.thoughtcrime.securesms.ui.components.QrImage
@@ -57,20 +58,20 @@ class NewConversationHomeFragment : Fragment() {
         Column(modifier = Modifier.background(MaterialTheme.colors.primarySurface)) {
             AppBar(stringResource(R.string.dialog_new_conversation_title), onClose = { delegate.onDialogClosePressed() })
             ItemButton(textId = R.string.messageNew, icon = R.drawable.ic_message) { delegate.onNewMessageSelected() }
-            Divider(modifier = Modifier.padding(start = 80.dp))
+            Divider(startIndent = LocalDimensions.current.dividerIndent)
             ItemButton(textId = R.string.activity_create_group_title, icon = R.drawable.ic_group) { delegate.onCreateGroupSelected() }
-            Divider(modifier = Modifier.padding(start = 80.dp))
+            Divider(startIndent = LocalDimensions.current.dividerIndent)
             ItemButton(textId = R.string.dialog_join_community_title, icon = R.drawable.ic_globe) { delegate.onJoinCommunitySelected() }
-            Divider(modifier = Modifier.padding(start = 80.dp))
+            Divider(startIndent = LocalDimensions.current.dividerIndent)
             ItemButton(textId = R.string.activity_settings_invite_button_title, icon = R.drawable.ic_invite_friend, contentDescription = R.string.AccessibilityId_invite_friend_button) { delegate.onInviteFriend() }
             Column(
                 modifier = Modifier
-                    .padding(horizontal = 32.dp)
-                    .padding(top = 20.dp)) {
+                    .padding(horizontal = LocalDimensions.current.marginMedium)
+                    .padding(top = LocalDimensions.current.itemSpacingMedium)) {
                 Text(text = stringResource(R.string.accountIdYours), style = MaterialTheme.typography.medium)
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacingTiny))
                 Text(text = stringResource(R.string.qrYoursDescription), color = classicDarkColors[5], style = MaterialTheme.typography.small)
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacingSmall))
                 QrImage(string = TextSecurePreferences.getLocalNumber(requireContext())!!, Modifier.contentDescription(R.string.AccessibilityId_qr_code))
             }
         }
