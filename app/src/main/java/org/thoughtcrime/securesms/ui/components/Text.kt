@@ -4,7 +4,6 @@ import androidx.annotation.DrawableRes
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.KeyboardActions
@@ -16,17 +15,16 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.thoughtcrime.securesms.ui.LocalColors
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.baseBold
@@ -70,39 +68,10 @@ fun SessionOutlinedTextField(
                 modifier = Modifier.padding(top = LocalDimensions.current.marginExtraExtraSmall),
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.baseBold,
-                color = MaterialTheme.colors.error
+                color = LocalColors.current.danger
             )
         }
     }
-}
-
-@Composable
-fun AnnotatedTextWithIcon(
-    text: String,
-    icon: ImageVector,
-    modifier: Modifier = Modifier,
-    style: TextStyle = MaterialTheme.typography.base
-) {
-    val myId = "inlineContent"
-    val annotatedText = buildAnnotatedString {
-        append(text)
-        appendInlineContent(myId, "[icon]")
-    }
-
-    val inlineContent = mapOf(
-        myId to Placeholder(
-            width = TextUnit.Unspecified,
-            height = TextUnit.Unspecified,
-            placeholderVerticalAlign = PlaceholderVerticalAlign.AboveBaseline
-        ).let { InlineTextContent(it) { Icon(icon, contentDescription = null) } }
-    )
-
-    Text(
-        text = annotatedText,
-        modifier = modifier,
-        inlineContent = inlineContent,
-        style = style
-    )
 }
 
 @Composable

@@ -28,7 +28,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Icon
-import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
@@ -43,8 +42,6 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
@@ -59,7 +56,6 @@ import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
 import org.thoughtcrime.securesms.MediaPreviewActivity.getPreviewIntent
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.database.Storage
-import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.Avatar
 import org.thoughtcrime.securesms.ui.CarouselNextButton
 import org.thoughtcrime.securesms.ui.CarouselPrevButton
@@ -70,14 +66,15 @@ import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.HorizontalPagerIndicator
 import org.thoughtcrime.securesms.ui.ItemButton
+import org.thoughtcrime.securesms.ui.LocalColors
 import org.thoughtcrime.securesms.ui.PreviewTheme
-import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
+import org.thoughtcrime.securesms.ui.SessionColors
+import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
+import org.thoughtcrime.securesms.ui.SessionMaterialTheme
 import org.thoughtcrime.securesms.ui.TitledText
 import org.thoughtcrime.securesms.ui.base
-import org.thoughtcrime.securesms.ui.baseBold
 import org.thoughtcrime.securesms.ui.baseMonospace
 import org.thoughtcrime.securesms.ui.blackAlpha40
-import org.thoughtcrime.securesms.ui.colorDestructive
 import org.thoughtcrime.securesms.ui.components.SessionButtonText
 import org.thoughtcrime.securesms.ui.destructiveButtonColors
 import javax.inject.Inject
@@ -125,7 +122,7 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
     @Composable
     private fun MessageDetailsScreen() {
         val state by viewModel.stateFlow.collectAsState()
-        AppTheme {
+        SessionMaterialTheme {
             MessageDetails(
                 state = state,
                 onReply = if (state.canReply) { { setResultAndFinish(ON_REPLY) } } else null,
@@ -320,9 +317,9 @@ fun ExpandButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
 @Preview
 @Composable
 fun PreviewMessageDetails(
-    @PreviewParameter(ThemeResPreviewParameterProvider::class) themeResId: Int
+    @PreviewParameter(SessionColorsParameterProvider::class) sessionColors: SessionColors
 ) {
-    PreviewTheme(themeResId) {
+    PreviewTheme(sessionColors) {
         MessageDetails(
             state = MessageDetailsState(
                 nonImageAttachmentFileDetails = listOf(
@@ -369,7 +366,7 @@ fun FileDetails(fileDetails: List<TitledText>) {
 fun TitledErrorText(titledText: TitledText?) {
     TitledText(
         titledText,
-        style = MaterialTheme.typography.base.copy(color = colorDestructive)
+        style = MaterialTheme.typography.base.copy(color = LocalColors.current.danger)
     )
 }
 

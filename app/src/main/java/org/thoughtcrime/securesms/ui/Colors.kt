@@ -19,8 +19,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import org.session.libsession.utilities.TextSecurePreferences
 
-val colorDestructive = Color(0xffFF453A)
-
 const val classicDark0 = 0xff111111
 const val classicDark1 = 0xff1B1B1B
 const val classicDark2 = 0xff2D2D2D
@@ -73,12 +71,7 @@ val blackAlpha40 = Color.Black.copy(alpha = 0.4f)
 fun transparentButtonColors() = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent)
 
 @Composable
-fun destructiveButtonColors() = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent, contentColor = colorDestructive)
-
-@Preview @Composable fun ClassicLight() { Colors("classic light", classicLightColors) }
-@Preview @Composable fun ClassicDark() { Colors("classic dark", classicDarkColors) }
-@Preview @Composable fun OceanLight() { Colors("ocean light", oceanLightColors) }
-@Preview @Composable fun OceanDark() { Colors("ocean dark", oceanDarkColors) }
+fun destructiveButtonColors() = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent, contentColor = LocalColors.current.danger)
 
 @Composable
 fun Colors(name: String, colors: List<Color>) {
@@ -94,41 +87,37 @@ fun Colors(name: String, colors: List<Color>) {
 @Preview
 @Composable
 fun PreviewThemeColors(
-    @PreviewParameter(ThemeResPreviewParameterProvider::class) themeResId: Int
+    @PreviewParameter(SessionColorsParameterProvider::class) sessionColors: SessionColors
 ) {
-    PreviewTheme(themeResId) {
-        ThemeColors()
-    }
+    PreviewTheme(sessionColors) { ThemeColors() }
 }
 
 @Composable
 private fun ThemeColors() {
-    AppTheme {
-        Column {
-            Box(Modifier.background(MaterialTheme.colors.primary)) {
-                Text("primary", style = MaterialTheme.typography.base)
-            }
-            Box(Modifier.background(MaterialTheme.colors.primaryVariant)) {
-                Text("primaryVariant", style = MaterialTheme.typography.base)
-            }
-            Box(Modifier.background(MaterialTheme.colors.secondary)) {
-                Text("secondary", style = MaterialTheme.typography.base)
-            }
-            Box(Modifier.background(MaterialTheme.colors.secondaryVariant)) {
-                Text("secondaryVariant", style = MaterialTheme.typography.base)
-            }
-            Box(Modifier.background(MaterialTheme.colors.surface)) {
-                Text("surface", style = MaterialTheme.typography.base)
-            }
-            Box(Modifier.background(MaterialTheme.colors.primarySurface)) {
-                Text("primarySurface", style = MaterialTheme.typography.base)
-            }
-            Box(Modifier.background(MaterialTheme.colors.background)) {
-                Text("background", style = MaterialTheme.typography.base)
-            }
-            Box(Modifier.background(MaterialTheme.colors.error)) {
-                Text("error", style = MaterialTheme.typography.base)
-            }
+    Column {
+        Box(Modifier.background(MaterialTheme.colors.primary)) {
+            Text("primary", style = MaterialTheme.typography.base)
+        }
+        Box(Modifier.background(MaterialTheme.colors.primaryVariant)) {
+            Text("primaryVariant", style = MaterialTheme.typography.base)
+        }
+        Box(Modifier.background(MaterialTheme.colors.secondary)) {
+            Text("secondary", style = MaterialTheme.typography.base)
+        }
+        Box(Modifier.background(MaterialTheme.colors.secondaryVariant)) {
+            Text("secondaryVariant", style = MaterialTheme.typography.base)
+        }
+        Box(Modifier.background(MaterialTheme.colors.surface)) {
+            Text("surface", style = MaterialTheme.typography.base)
+        }
+        Box(Modifier.background(MaterialTheme.colors.primarySurface)) {
+            Text("primarySurface", style = MaterialTheme.typography.base)
+        }
+        Box(Modifier.background(MaterialTheme.colors.background)) {
+            Text("background", style = MaterialTheme.typography.base)
+        }
+        Box(Modifier.background(MaterialTheme.colors.error)) {
+            Text("error", style = MaterialTheme.typography.base)
         }
     }
 }
@@ -137,11 +126,11 @@ private fun ThemeColors() {
 fun outlinedTextFieldColors(
     isError: Boolean
 ) = TextFieldDefaults.outlinedTextFieldColors(
-    textColor = if (isError) colorDestructive else LocalContentColor.current,
-    cursorColor = if (isError) colorDestructive else LocalContentColor.current,
-    focusedBorderColor = Color(classicDark3),
-    unfocusedBorderColor = Color(classicDark3),
-    placeholderColor = if (isError) colorDestructive else MaterialTheme.colors.onSurface.copy(ContentAlpha.medium)
+    textColor = if (isError) LocalColors.current.danger else LocalContentColor.current,
+    cursorColor = if (isError) LocalColors.current.danger else LocalContentColor.current,
+    focusedBorderColor = LocalColors.current.borders,
+    unfocusedBorderColor = LocalColors.current.borders,
+    placeholderColor = if (isError) LocalColors.current.danger else LocalColors.current.textSecondary
 )
 
 fun TextSecurePreferences.Companion.getAccentColor(context: Context): Color = when (getAccentColorName(context)) {

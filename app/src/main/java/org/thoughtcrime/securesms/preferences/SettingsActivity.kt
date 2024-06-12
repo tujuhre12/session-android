@@ -73,12 +73,12 @@ import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.appearance.AppearanceSettingsActivity
 import org.thoughtcrime.securesms.profiles.ProfileMediaConstraints
 import org.thoughtcrime.securesms.showSessionDialog
-import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.ItemButton
 import org.thoughtcrime.securesms.ui.ItemButtonWithDrawable
 import org.thoughtcrime.securesms.ui.LocalDimensions
+import org.thoughtcrime.securesms.ui.SessionMaterialTheme
 import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.components.OutlineCopyButton
 import org.thoughtcrime.securesms.ui.destructiveButtonColors
@@ -133,7 +133,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
         }
 
         binding.composeView.setContent {
-            AppTheme {
+            SessionMaterialTheme {
                 Buttons()
             }
         }

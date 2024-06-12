@@ -43,12 +43,12 @@ import kotlinx.coroutines.flow.filter
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LaunchedEffectAsync
-import org.thoughtcrime.securesms.ui.LocalButtonColor
+import org.thoughtcrime.securesms.ui.LocalColors
 import org.thoughtcrime.securesms.ui.baseBold
-import org.thoughtcrime.securesms.ui.colorDestructive
 import org.thoughtcrime.securesms.ui.contentDescription
-import org.thoughtcrime.securesms.ui.disabled
 import org.thoughtcrime.securesms.ui.extraSmall
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 val LocalButtonSize = staticCompositionLocalOf { mediumButton }
 
@@ -61,12 +61,15 @@ val smallButton = Modifier.wrapContentHeight()
 @Composable
 fun SessionButtonText(
     text: String,
-    modifier: Modifier = Modifier
-){
+    modifier: Modifier = Modifier,
+    color: Color = LocalColors.current.primary,
+    enabled: Boolean = true
+) {
     Text(
         modifier = modifier,
         text = text,
-        style = MaterialTheme.typography.baseBold
+        style = MaterialTheme.typography.baseBold,
+        color = if (enabled) color else LocalColors.current.disabled
     )
 }
 
@@ -74,20 +77,23 @@ fun SessionButtonText(
 fun OutlineButton(
     @StringRes textId: Int,
     modifier: Modifier = Modifier,
+    color: Color = LocalColors.current.primary,
     onClick: () -> Unit
-) { OutlineButton(stringResource(textId), modifier, onClick) }
+) { OutlineButton(stringResource(textId), modifier, color, onClick) }
 
 @Composable
 fun OutlineButton(
     text: String,
     modifier: Modifier = Modifier,
+    color: Color = LocalColors.current.primary,
     onClick: () -> Unit
 ) {
     OutlineButton(
         modifier = modifier,
+        color = color,
         onClick = onClick
     ) {
-        SessionButtonText(text = text)
+        SessionButtonText(text = text, color = color)
     }
 }
 
@@ -96,6 +102,7 @@ fun OutlineButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    color: Color = LocalColors.current.primary,
     onClick: () -> Unit,
     content: @Composable () -> Unit = {}
 ) {
@@ -104,9 +111,9 @@ fun OutlineButton(
         enabled = enabled,
         interactionSource = interactionSource,
         onClick = onClick,
-        border = BorderStroke(1.dp, if (enabled) LocalButtonColor.current else MaterialTheme.colors.disabled),
+        border = BorderStroke(1.dp, if (enabled) color else LocalColors.current.disabled),
         colors = ButtonDefaults.outlinedButtonColors(
-            contentColor = if (enabled) LocalButtonColor.current else Color.Unspecified,
+            contentColor = if (enabled) color else Color.Unspecified,
             backgroundColor = Color.Unspecified
         )
     ) {
@@ -117,6 +124,7 @@ fun OutlineButton(
 @Composable
 fun OutlineCopyButton(
     modifier: Modifier = Modifier,
+    color: Color = LocalColors.current.primary,
     onClick: () -> Unit = {}
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -124,6 +132,7 @@ fun OutlineCopyButton(
     OutlineButton(
         modifier = modifier,
         interactionSource = interactionSource,
+        color = color,
         onClick = onClick
     ) {
         TemporaryClickedContent(
@@ -134,8 +143,9 @@ fun OutlineCopyButton(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     SessionButtonText(
+                        text = stringResource(R.string.copy),
                         modifier = Modifier.align(Alignment.Center),
-                        text = stringResource(R.string.copy)
+                        color = color
                     )
                 }
             },
@@ -145,8 +155,9 @@ fun OutlineCopyButton(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     SessionButtonText(
+                        text = stringResource(R.string.copied),
                         modifier = Modifier.align(Alignment.Center),
-                        text = stringResource(R.string.copied)
+                        color = color
                     )
                 }
             }
@@ -160,7 +171,7 @@ fun TemporaryClickedContent(
     interactionSource: MutableInteractionSource,
     content: @Composable () -> Unit,
     temporaryContent: @Composable () -> Unit,
-    temporaryDelay: Long = 2000
+    temporaryDelay: Duration = 2.seconds
 ) {
     var clicked by remember { mutableStateOf(false) }
 
@@ -193,11 +204,11 @@ fun FilledButton(
         modifier = modifier,
         onClick = onClick,
         colors = ButtonDefaults.outlinedButtonColors(
-            contentColor = MaterialTheme.colors.background,
-            backgroundColor = LocalButtonColor.current
+            contentColor = LocalColors.current.background,
+            backgroundColor = LocalColors.current.primary
         )
     ) {
-        SessionButtonText(text)
+        SessionButtonText(text, color = LocalColors.current.background)
     }
 }
 
@@ -292,14 +303,4 @@ private val MutableInteractionSource.releases
 @Composable
 fun SmallButtons(content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalButtonSize provides smallButton) { content() }
-}
-
-@Composable
-fun DestructiveButtons(content: @Composable () -> Unit) {
-    CompositionLocalProvider(LocalButtonColor provides colorDestructive) { content() }
-}
-
-@Composable
-fun OnPrimaryButtons(content: @Composable () -> Unit) {
-    CompositionLocalProvider(LocalButtonColor provides MaterialTheme.colors.onPrimary) { content() }
 }

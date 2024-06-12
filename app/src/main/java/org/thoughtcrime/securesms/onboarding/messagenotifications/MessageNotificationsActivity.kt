@@ -24,7 +24,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -37,11 +36,12 @@ import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.notifications.PushRegistry
-import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.LocalColors
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
-import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
+import org.thoughtcrime.securesms.ui.SessionColors
+import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
+import org.thoughtcrime.securesms.ui.SessionMaterialTheme
 import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.contentDescription
@@ -72,7 +72,7 @@ class MessageNotificationsActivity : BaseActionBarActivity() {
     private fun MessageNotificationsScreen() {
         val state by viewModel.stateFlow.collectAsState()
 
-        AppTheme {
+        SessionMaterialTheme {
             MessageNotificationsScreen(state, viewModel::setEnabled, ::register)
         }
     }
@@ -91,9 +91,9 @@ class MessageNotificationsActivity : BaseActionBarActivity() {
 @Preview
 @Composable
 fun MessageNotificationsScreenPreview(
-    @PreviewParameter(ThemeResPreviewParameterProvider::class) themeResId: Int
+    @PreviewParameter(SessionColorsParameterProvider::class) sessionColors: SessionColors
 ) {
-    PreviewTheme(themeResId) {
+    PreviewTheme(sessionColors) {
         MessageNotificationsScreen()
     }
 }
@@ -104,32 +104,35 @@ fun MessageNotificationsScreen(
     setEnabled: (Boolean) -> Unit = {},
     onContinue: () -> Unit = {}
 ) {
-    Column(Modifier.padding(horizontal = LocalDimensions.current.marginMedium)) {
+    Column {
         Spacer(Modifier.weight(1f))
-        Text(stringResource(R.string.notificationsMessage), style = MaterialTheme.typography.h4)
-        Spacer(Modifier.height(LocalDimensions.current.marginExtraSmall))
-        Text(stringResource(R.string.onboardingMessageNotificationExplaination), style = MaterialTheme.typography.base)
-        Spacer(Modifier.height(LocalDimensions.current.marginExtraSmall))
-        NotificationRadioButton(
-            R.string.activity_pn_mode_fast_mode,
-            R.string.activity_pn_mode_fast_mode_explanation,
-            R.string.activity_pn_mode_recommended_option_tag,
-            contentDescription = R.string.AccessibilityId_fast_mode_notifications_button,
-            selected = state.pushEnabled,
-            onClick = { setEnabled(true) }
-        )
-        Spacer(Modifier.height(LocalDimensions.current.marginExtraSmall))
-        NotificationRadioButton(
-            R.string.activity_pn_mode_slow_mode,
-            R.string.activity_pn_mode_slow_mode_explanation,
-            contentDescription = R.string.AccessibilityId_slow_mode_notifications_button,
-            selected = state.pushDisabled,
-            onClick = { setEnabled(false) }
-        )
+        Column(modifier = Modifier.padding(horizontal = LocalDimensions.current.marginMedium)) {
+            Text(stringResource(R.string.notificationsMessage), style = MaterialTheme.typography.h4)
+            Spacer(Modifier.height(LocalDimensions.current.marginExtraSmall))
+            Text(stringResource(R.string.onboardingMessageNotificationExplaination), style = MaterialTheme.typography.base)
+            Spacer(Modifier.height(LocalDimensions.current.marginExtraSmall))
+            NotificationRadioButton(
+                R.string.activity_pn_mode_fast_mode,
+                R.string.activity_pn_mode_fast_mode_explanation,
+                R.string.activity_pn_mode_recommended_option_tag,
+                contentDescription = R.string.AccessibilityId_fast_mode_notifications_button,
+                selected = state.pushEnabled,
+                onClick = { setEnabled(true) }
+            )
+            Spacer(Modifier.height(LocalDimensions.current.marginExtraSmall))
+            NotificationRadioButton(
+                R.string.activity_pn_mode_slow_mode,
+                R.string.activity_pn_mode_slow_mode_explanation,
+                contentDescription = R.string.AccessibilityId_slow_mode_notifications_button,
+                selected = state.pushDisabled,
+                onClick = { setEnabled(false) }
+            )
+        }
         Spacer(Modifier.weight(1f))
         OutlineButton(
             textId = R.string.continue_2,
             modifier = Modifier
+                .padding(horizontal = LocalDimensions.current.marginLarge)
                 .contentDescription(R.string.AccessibilityId_continue)
                 .align(Alignment.CenterHorizontally)
                 .fillMaxWidth(),
@@ -151,8 +154,10 @@ fun NotificationRadioButton(
     Row {
         OutlinedButton(
             onClick = onClick,
-            modifier = Modifier.weight(1f).contentDescription(contentDescription),
-            colors = ButtonDefaults.outlinedButtonColors(backgroundColor = MaterialTheme.colors.background, contentColor = Color.White),
+            modifier = Modifier
+                .weight(1f)
+                .contentDescription(contentDescription),
+            colors = ButtonDefaults.outlinedButtonColors(backgroundColor = LocalColors.current.background, contentColor = LocalColors.current.text),
             border = if (selected) BorderStroke(ButtonDefaults.OutlinedBorderSize, LocalColors.current.primary) else ButtonDefaults.outlinedBorder,
             shape = RoundedCornerShape(8.dp)
         ) {

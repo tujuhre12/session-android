@@ -8,9 +8,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.TextSelectionColors
+import androidx.compose.material.Colors
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Shapes
+import androidx.compose.material.TabRowDefaults
 import androidx.compose.material.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -31,10 +33,9 @@ import com.google.accompanist.themeadapter.appcompat.createAppCompatTheme
 import com.google.android.material.color.MaterialColors
 import network.loki.messenger.R
 import org.session.libsession.utilities.AppTextSecurePreferences
+import org.thoughtcrime.securesms.util.ThemeState
 import org.thoughtcrime.securesms.util.themeState
 
-val LocalCellColor = staticCompositionLocalOf { Color.Black }
-val LocalButtonColor = staticCompositionLocalOf { Color.Black }
 val LocalLightCell = staticCompositionLocalOf { Color.Black }
 val LocalOnLightCell = staticCompositionLocalOf { Color.Black }
 
@@ -54,9 +55,10 @@ data class Dimensions(
     val dividerIndent: Dp = 80.dp,
 )
 
-val LocalColors = staticCompositionLocalOf { SessionColors() }
+val LocalColors = staticCompositionLocalOf { sessionColors(isLight = false, isClassic = true) }
 
 data class SessionColors(
+    val isLight: Boolean = false,
     val primary: Color = Color.Unspecified,
     val danger: Color = Color.Unspecified,
     val disabled: Color = Color.Unspecified,
@@ -69,6 +71,7 @@ data class SessionColors(
     val backgroundBubbleReceived: Color = Color.Unspecified,
     val textBubbleReceived: Color = Color.Unspecified,
 ) {
+    val divider get() = text.copy(alpha = TabRowDefaults.DividerOpacity)
     val backgroundBubbleSent get() = primary
 }
 
@@ -102,107 +105,90 @@ private class UnresolvedColor(val function: (Boolean, Boolean) -> Color) {
     constructor(classicDark: Color, classicLight: Color, oceanDark: Color, oceanLight: Color): this(function = { isLight, isClassic -> if (isLight) if (isClassic) classicLight else oceanLight else if (isClassic) classicDark else oceanDark })
 }
 
-private class UnresolvedSessionColors(
-    val danger: UnresolvedColor = UnresolvedColor(dark = dangerDark, light = dangerLight),
-    val disabled: UnresolvedColor = UnresolvedColor(dark = disabledDark, light = disabledLioht),
-    val background: UnresolvedColor = UnresolvedColor(Color.Black, Color.White, oceanDarkColors[2], oceanLightColors[7]),
-    val backgroundSecondary: UnresolvedColor = UnresolvedColor(classicDarkColors[1], classicLightColors[5], oceanDarkColors[1], oceanLightColors[6]),
-    val text: UnresolvedColor = UnresolvedColor(Color.White, Color.Black, oceanDarkColors[1], oceanLightColors[1]),
-    val textSecondary: UnresolvedColor = UnresolvedColor(classicDarkColors[5], classicLightColors[1], oceanDarkColors[5], oceanLightColors[2]),
-    val borders: UnresolvedColor = UnresolvedColor(classicDarkColors[3], classicLightColors[3], oceanDarkColors[4], oceanLightColors[3]),
-    val textBubbleSent: UnresolvedColor = UnresolvedColor(Color.Black, Color.Black, Color.Black, oceanLightColors[1]),
-    val backgroundBubbleReceived: UnresolvedColor = UnresolvedColor(classicDarkColors[2], classicLightColors[4], oceanDarkColors[4], oceanLightColors[4]),
-    val textBubbleReceived: UnresolvedColor = UnresolvedColor(Color.White, classicLightColors[4], oceanDarkColors[4], oceanLightColors[4]),
-) {
-    operator fun invoke(primary: Color, isLight: Boolean, isClassic: Boolean) = SessionColors(
+private fun sessionColors(
+    isLight: Boolean,
+    isClassic: Boolean,
+    primary: Color = if (isClassic) primaryGreen else primaryBlue
+): SessionColors {
+    val index = (if (isLight) 1 else 0) + if (isClassic) 0 else 2
+    return SessionColors(
+        isLight = isLight,
         primary = primary,
-        danger = danger(isLight, isClassic),
-        disabled = disabled(isLight, isClassic),
-        background = background(isLight, isClassic),
-        backgroundSecondary = backgroundSecondary(isLight, isClassic),
-        text = text(isLight, isClassic),
-        textSecondary = textSecondary(isLight, isClassic),
-        borders = borders(isLight, isClassic),
-        textBubbleSent = textBubbleSent(isLight, isClassic),
-        backgroundBubbleReceived = backgroundBubbleReceived(isLight, isClassic),
-        textBubbleReceived = textBubbleReceived(isLight, isClassic),
+        danger = if (isLight) dangerLight else dangerDark,
+        disabled = if (isLight) disabledLioht else disabledDark,
+        background = listOf(Color.Black, Color.White, oceanDarkColors[2], oceanLightColors[7])[index],
+        backgroundSecondary = listOf(classicDarkColors[1], classicLightColors[5], oceanDarkColors[1], oceanLightColors[6])[index],
+        text = listOf(Color.White, Color.Black, oceanDarkColors[1], oceanLightColors[1])[index],
+        textSecondary = listOf(classicDarkColors[5], classicLightColors[1], oceanDarkColors[5], oceanLightColors[2])[index],
+        borders = listOf(classicDarkColors[3], classicLightColors[3], oceanDarkColors[4], oceanLightColors[3])[index],
+        textBubbleSent = listOf(Color.Black, Color.Black, Color.Black, oceanLightColors[1])[index],
+        backgroundBubbleReceived = listOf(classicDarkColors[2], classicLightColors[4], oceanDarkColors[4], oceanLightColors[4])[index],
+        textBubbleReceived = listOf(Color.White, classicLightColors[4], oceanDarkColors[4], oceanLightColors[4])[index],
     )
 }
 
+
+private fun Context.sessionColors() = AppTextSecurePreferences(this).themeState().sessionColors()
+private fun ThemeState.sessionColors() = sessionColors(isLight, isClassic, accent)
+
 /**
- * Converts current Theme to Compose Theme.
+ * Sets a Material2 compose theme based on your selections in SharedPreferences.
  */
 @Composable
-fun AppTheme(
+fun SessionMaterialTheme(
     content: @Composable () -> Unit
 ) {
-    val context = LocalContext.current
+    SessionMaterialTheme(LocalContext.current.sessionColors()) { content() }
+}
 
-    val surface = context.getColorFromTheme(R.attr.colorSettingsBackground)
 
-    val themeState = AppTextSecurePreferences(context).themeState()
-
-    val sessionColors = UnresolvedSessionColors()(themeState.accent, themeState.isLight, themeState.isClassic)
-
-    val textSelectionColors = TextSelectionColors(
-        handleColor = MaterialTheme.colors.secondary,
-        backgroundColor = MaterialTheme.colors.secondary.copy(alpha = 0.5f)
-    )
-
-    CompositionLocalProvider(
-        *listOf(
-            LocalCellColor to R.attr.colorSettingsBackground,
-            LocalButtonColor to R.attr.prominentButtonColor,
-            LocalLightCell to R.attr.lightCell,
-            LocalOnLightCell to R.attr.onLightCell,
-        ).map { (local, attr) -> local provides context.getColorFromTheme(attr) }.toTypedArray()
+/**
+ *
+ **/
+@Composable
+fun SessionMaterialTheme(
+    sessionColors: SessionColors,
+    content: @Composable () -> Unit
+) {
+    MaterialTheme(
+        colors = sessionColors.toMaterialColors(),
+        typography = sessionTypography,
+        shapes = sessionShapes,
     ) {
-        AppCompatTheme(surface = surface) {
-            CompositionLocalProvider(
-                LocalColors provides sessionColors,
-                LocalTextSelectionColors provides textSelectionColors
-            ) {
-                content()
-            }
+        val textSelectionColors = TextSelectionColors(
+            handleColor = LocalColors.current.primary,
+            backgroundColor = LocalColors.current.primary.copy(alpha = 0.5f)
+        )
+
+        CompositionLocalProvider(
+            LocalColors provides sessionColors,
+            LocalContentColor provides sessionColors.text,
+            LocalTextSelectionColors provides textSelectionColors
+        ) {
+            content()
         }
     }
 }
 
-@Composable
-fun AppCompatTheme(
-    context: Context = LocalContext.current,
-    readColors: Boolean = true,
-    typography: Typography = sessionTypography,
-    shapes: Shapes = MaterialTheme.shapes,
-    surface: Color? = null,
-    content: @Composable () -> Unit
-) {
-    val themeParams = remember(context.theme) {
-        context.createAppCompatTheme(
-            readColors = readColors,
-            readTypography = false
-        )
-    }
+private fun SessionColors.toMaterialColors() = Colors(
+    primary = background,
+    primaryVariant = backgroundSecondary,
+    secondary = background,
+    secondaryVariant = background,
+    background = background,
+    surface = background,
+    error = danger,
+    onPrimary = text,
+    onSecondary = text,
+    onBackground = text,
+    onSurface = background,
+    onError = text,
+    isLight = isLight
+)
 
-    val colors = themeParams.colors ?: MaterialTheme.colors
-
-    MaterialTheme(
-        colors = colors.copy(
-            surface = surface ?: colors.surface
-        ),
-        typography = typography,
-        shapes = shapes.copy(
-            small = RoundedCornerShape(50)
-        ),
-    ) {
-        // We update the LocalContentColor to match our onBackground. This allows the default
-        // content color to be more appropriate to the theme background
-        CompositionLocalProvider(
-            LocalContentColor provides MaterialTheme.colors.onBackground,
-            content = content
-        )
-    }
-}
+val sessionShapes = Shapes(
+    small = RoundedCornerShape(50)
+)
 
 fun boldStyle(size: TextUnit) = TextStyle.Default.copy(
     fontWeight = FontWeight.Bold,
@@ -246,25 +232,21 @@ fun Context.getColorFromTheme(@AttrRes attr: Int, defaultValue: Int = 0x0): Colo
  */
 @Composable
 fun PreviewTheme(
-    themeResId: Int,
+    sessionColors: SessionColors = LocalColors.current,
     content: @Composable () -> Unit
 ) {
-    CompositionLocalProvider(
-        LocalContext provides ContextThemeWrapper(LocalContext.current, themeResId)
-    ) {
-        AppTheme {
-            Box(modifier = Modifier.background(color = MaterialTheme.colors.background)) {
-                content()
-            }
+    SessionMaterialTheme(sessionColors) {
+        Box(modifier = Modifier.background(color = LocalColors.current.background)) {
+            content()
         }
     }
 }
 
-class ThemeResPreviewParameterProvider : PreviewParameterProvider<Int> {
+class SessionColorsParameterProvider : PreviewParameterProvider<SessionColors> {
     override val values = sequenceOf(
-        R.style.Classic_Dark,
-        R.style.Classic_Light,
-        R.style.Ocean_Dark,
-        R.style.Ocean_Light,
+        sessionColors(isLight = false, isClassic = true),
+        sessionColors(isLight = true, isClassic = true),
+        sessionColors(isLight = false, isClassic = false),
+        sessionColors(isLight = true, isClassic = false),
     )
 }

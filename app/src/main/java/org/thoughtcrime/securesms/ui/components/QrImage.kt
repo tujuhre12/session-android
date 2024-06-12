@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
+import org.thoughtcrime.securesms.ui.LocalColors
 import org.thoughtcrime.securesms.ui.LocalLightCell
 import org.thoughtcrime.securesms.ui.LocalOnLightCell
 import org.thoughtcrime.securesms.util.QRCodeUtilities
@@ -55,7 +56,7 @@ fun QrImage(
         }
     }
 
-    if (MaterialTheme.colors.isLight) {
+    if (LocalColors.current.isLight) {
         Content(bitmap, icon, modifier = modifier, backgroundColor = MaterialTheme.colors.surface)
     } else {
         Card(

@@ -33,9 +33,9 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.onboarding.messagenotifications.startMessageNotificationsActivity
-import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
+import org.thoughtcrime.securesms.ui.SessionMaterialTheme
 import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.baseBold
 import org.thoughtcrime.securesms.ui.components.MaybeScanQrCode
@@ -78,7 +78,7 @@ class LinkDeviceActivity : BaseActionBarActivity() {
         ComposeView(this).apply {
             setContent {
                 val state by viewModel.stateFlow.collectAsState()
-                AppTheme {
+                SessionMaterialTheme {
                     LoadAccountScreen(state, viewModel::onChange, viewModel::onContinue, viewModel::onScanQrCode)
                 }
             }
@@ -115,7 +115,7 @@ class LinkDeviceActivity : BaseActionBarActivity() {
 @Preview
 @Composable
 fun PreviewRecoveryPassword() {
-    PreviewTheme(R.style.Classic_Dark) {
+    PreviewTheme {
         RecoveryPassword(state = LinkDeviceState())
     }
 }

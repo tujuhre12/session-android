@@ -20,7 +20,6 @@ import androidx.compose.material.primarySurface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -32,15 +31,14 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.preferences.copyPublicKey
 import org.thoughtcrime.securesms.preferences.sendInvitationToUseSession
-import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.classicDarkColors
 import org.thoughtcrime.securesms.ui.components.AppBar
-import org.thoughtcrime.securesms.ui.components.OnPrimaryButtons
 import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.components.OutlineCopyButton
 import org.thoughtcrime.securesms.ui.components.SmallButtons
 import org.thoughtcrime.securesms.ui.contentDescription
+import org.thoughtcrime.securesms.ui.onCreateView
 import org.thoughtcrime.securesms.ui.small
 
 @AndroidEntryPoint
@@ -50,18 +48,14 @@ class InviteFriendFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View = ComposeView(requireContext()).apply {
-        setContent {
-            AppTheme {
-                InviteFriend(
-                    TextSecurePreferences.getLocalNumber(LocalContext.current)!!,
-                    onBack = { delegate.onDialogBackPressed() },
-                    onClose = { delegate.onDialogClosePressed() },
-                    copyPublicKey = requireContext()::copyPublicKey,
-                    sendInvitation = requireContext()::sendInvitationToUseSession,
-                )
-            }
-        }
+    ): View = onCreateView {
+        InviteFriend(
+            TextSecurePreferences.getLocalNumber(LocalContext.current)!!,
+            onBack = { delegate.onDialogBackPressed() },
+            onClose = { delegate.onDialogClosePressed() },
+            copyPublicKey = requireContext()::copyPublicKey,
+            sendInvitation = requireContext()::sendInvitationToUseSession,
+        )
     }
 }
 
@@ -113,22 +107,20 @@ private fun InviteFriend(
                 color = classicDarkColors[5],
                 modifier = Modifier.padding(horizontal = 8.dp)
             )
-            OnPrimaryButtons {
-                SmallButtons {
-                    Row(horizontalArrangement = spacedBy(20.dp)) {
-                        OutlineButton(
-                            modifier = Modifier
-                                .weight(1f)
-                                .contentDescription("Share button"),
-                            text = stringResource(R.string.share),
-                            onClick = sendInvitation
-                        )
+            SmallButtons {
+                Row(horizontalArrangement = spacedBy(20.dp)) {
+                    OutlineButton(
+                        modifier = Modifier
+                            .weight(1f)
+                            .contentDescription("Share button"),
+                        text = stringResource(R.string.share),
+                        onClick = sendInvitation
+                    )
 
-                        OutlineCopyButton(
-                            modifier = Modifier.weight(1f),
-                            onClick = copyPublicKey
-                        )
-                    }
+                    OutlineCopyButton(
+                        modifier = Modifier.weight(1f),
+                        onClick = copyPublicKey
+                    )
                 }
             }
         }

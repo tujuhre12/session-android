@@ -66,7 +66,6 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.runIf
 import org.thoughtcrime.securesms.components.ProfilePictureView
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.OptionsCard
-import org.thoughtcrime.securesms.ui.components.OnPrimaryButtons
 import kotlin.math.min
 import kotlin.math.roundToInt
 
@@ -209,18 +208,16 @@ fun CellWithPaddingAndMargin(
     margin: Dp = 32.dp,
     content: @Composable () -> Unit
 ) {
-    OnPrimaryButtons {
-        Card(
-            backgroundColor = LocalCellColor.current,
-            shape = RoundedCornerShape(16.dp),
-            elevation = 0.dp,
-            modifier = Modifier
-                .wrapContentHeight()
-                .fillMaxWidth()
-                .padding(horizontal = margin),
-        ) {
-            Box(Modifier.padding(padding)) { content() }
-        }
+    Card(
+        backgroundColor = LocalColors.current.backgroundSecondary,
+        shape = RoundedCornerShape(16.dp),
+        elevation = 0.dp,
+        modifier = Modifier
+            .wrapContentHeight()
+            .fillMaxWidth()
+            .padding(horizontal = margin),
+    ) {
+        Box(Modifier.padding(padding)) { content() }
     }
 }
 

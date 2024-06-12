@@ -15,19 +15,18 @@ import androidx.compose.material.Text
 import androidx.compose.material.primarySurface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
 import androidx.fragment.app.Fragment
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
-import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.ItemButton
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.classicDarkColors
 import org.thoughtcrime.securesms.ui.components.AppBar
 import org.thoughtcrime.securesms.ui.components.QrImage
 import org.thoughtcrime.securesms.ui.contentDescription
+import org.thoughtcrime.securesms.ui.onCreateView
 import org.thoughtcrime.securesms.ui.small
 import org.thoughtcrime.securesms.ui.xl
 import javax.inject.Inject
@@ -44,13 +43,7 @@ class NewConversationHomeFragment : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View = ComposeView(requireContext()).apply {
-        setContent {
-            AppTheme {
-                NewConversationScreen()
-            }
-        }
-    }
+    ): View = onCreateView { NewConversationScreen() }
 
     @Composable
     fun NewConversationScreen() {

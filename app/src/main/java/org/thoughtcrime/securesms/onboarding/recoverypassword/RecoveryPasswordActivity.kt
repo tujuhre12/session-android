@@ -33,15 +33,15 @@ import androidx.compose.ui.unit.dp
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.showSessionDialog
-import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.CellWithPaddingAndMargin
+import org.thoughtcrime.securesms.ui.LocalColors
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
+import org.thoughtcrime.securesms.ui.SessionColors
+import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
+import org.thoughtcrime.securesms.ui.SessionMaterialTheme
 import org.thoughtcrime.securesms.ui.SessionShieldIcon
-import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
 import org.thoughtcrime.securesms.ui.base
-import org.thoughtcrime.securesms.ui.classicDarkColors
-import org.thoughtcrime.securesms.ui.components.DestructiveButtons
 import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.components.OutlineCopyButton
 import org.thoughtcrime.securesms.ui.components.QrImage
@@ -96,9 +96,9 @@ class RecoveryPasswordActivity : BaseActionBarActivity() {
 @Preview
 @Composable
 fun PreviewRecoveryPasswordScreen(
-    @PreviewParameter(ThemeResPreviewParameterProvider::class) themeResId: Int
+    @PreviewParameter(SessionColorsParameterProvider::class) sessionColors: SessionColors
 ) {
-    PreviewTheme(themeResId) {
+    PreviewTheme(sessionColors) {
         RecoveryPasswordScreen(seed = "Voyage  urban  toyed  maverick peculiar tuxedo penguin tree grass building listen speak withdraw terminal plane")
     }
 }
@@ -109,7 +109,7 @@ fun RecoveryPasswordScreen(
     copySeed:() -> Unit = {},
     onHide:() -> Unit = {}
 ) {
-    AppTheme {
+    SessionMaterialTheme {
         Column(
             verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.marginExtraSmall),
             modifier = Modifier
@@ -172,11 +172,13 @@ fun RecoveryPasswordCell(seed: String, copySeed:() -> Unit = {}) {
                         Modifier
                             .weight(1f)
                             .contentDescription(R.string.AccessibilityId_copy_button),
+                        color = LocalColors.current.text,
                         onClick = copySeed
                     )
                     OutlineButton(
                         textId = R.string.qrView,
                         modifier = Modifier.weight(1f),
+                        color = LocalColors.current.text,
                         onClick = { showQr = !showQr }
                     )
                 }
@@ -201,13 +203,13 @@ private fun RecoveryPassword(seed: String) {
             .padding(vertical = LocalDimensions.current.marginSmall)
             .border(
                 width = 1.dp,
-                color = classicDarkColors[3],
+                color = LocalColors.current.borders,
                 shape = RoundedCornerShape(11.dp)
             )
             .padding(LocalDimensions.current.marginSmall),
         textAlign = TextAlign.Center,
         style = MaterialTheme.typography.extraSmallMonospace,
-        color = MaterialTheme.colors.run { if (isLight) onSurface else secondary },
+        color = LocalColors.current.run { if (isLight) text else primary },
     )
 }
 
@@ -228,16 +230,15 @@ private fun HideRecoveryPasswordCell(onHide: () -> Unit = {}) {
                 )
             }
             Spacer(modifier = Modifier.width(LocalDimensions.current.marginExtraExtraSmall))
-            DestructiveButtons {
-                OutlineButton(
-                    textId = R.string.hide,
-                    modifier = Modifier
-                        .wrapContentWidth()
-                        .align(Alignment.CenterVertically)
-                        .contentDescription(R.string.AccessibilityId_hide_recovery_password_button),
-                    onClick = onHide
-                )
-            }
+            OutlineButton(
+                textId = R.string.hide,
+                modifier = Modifier
+                    .wrapContentWidth()
+                    .align(Alignment.CenterVertically)
+                    .contentDescription(R.string.AccessibilityId_hide_recovery_password_button),
+                color = LocalColors.current.danger,
+                onClick = onHide
+            )
         }
     }
 }

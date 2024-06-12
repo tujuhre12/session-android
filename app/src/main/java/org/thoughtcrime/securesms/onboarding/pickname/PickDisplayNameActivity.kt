@@ -10,21 +10,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.material.ContentAlpha
-import androidx.compose.material.LocalContentAlpha
-import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
-import androidx.compose.material.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -32,20 +24,16 @@ import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
-import org.session.libsession.utilities.AppTextSecurePreferences
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.BaseActionBarActivity
-import org.thoughtcrime.securesms.onboarding.messagenotifications.MessageNotificationsActivity
 import org.thoughtcrime.securesms.onboarding.messagenotifications.startMessageNotificationsActivity
-import org.thoughtcrime.securesms.ui.AppTheme
-import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.PreviewTheme
+import org.thoughtcrime.securesms.ui.SessionMaterialTheme
 import org.thoughtcrime.securesms.ui.base
-import org.thoughtcrime.securesms.ui.baseBold
 import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.contentDescription
-import org.thoughtcrime.securesms.ui.outlinedTextFieldColors
+import org.thoughtcrime.securesms.ui.setComposeContent
 import org.thoughtcrime.securesms.util.setUpActionBarSessionLogo
 import javax.inject.Inject
 
@@ -66,9 +54,7 @@ class PickDisplayNameActivity : BaseActionBarActivity() {
         super.onCreate(savedInstanceState)
         setUpActionBarSessionLogo()
 
-        ComposeView(this)
-            .apply { setContent { DisplayNameScreen(viewModel) } }
-            .let(::setContentView)
+        setComposeContent { DisplayNameScreen(viewModel) }
 
         lifecycleScope.launch {
             viewModel.eventFlow.collect {
@@ -80,16 +66,13 @@ class PickDisplayNameActivity : BaseActionBarActivity() {
     @Composable
     private fun DisplayNameScreen(viewModel: PickDisplayNameViewModel) {
         val state = viewModel.stateFlow.collectAsState()
-
-        AppTheme {
-            DisplayName(state.value, viewModel::onChange) { viewModel.onContinue(this) }
-        }
+        DisplayName(state.value, viewModel::onChange) { viewModel.onContinue(this) }
     }
 
     @Preview
     @Composable
     fun PreviewDisplayName() {
-        PreviewTheme(R.style.Classic_Dark) {
+        PreviewTheme {
             DisplayName(State())
         }
     }

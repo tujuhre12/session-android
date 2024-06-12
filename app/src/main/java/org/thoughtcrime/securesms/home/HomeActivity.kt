@@ -34,7 +34,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.core.os.bundleOf
-import androidx.core.view.isGone
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
@@ -43,11 +42,9 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
@@ -97,11 +94,12 @@ import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.SettingsActivity
 import org.thoughtcrime.securesms.showMuteDialog
 import org.thoughtcrime.securesms.showSessionDialog
-import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
+import org.thoughtcrime.securesms.ui.SessionColors
+import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
+import org.thoughtcrime.securesms.ui.SessionMaterialTheme
 import org.thoughtcrime.securesms.ui.SessionShieldIcon
-import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
 import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.contentDescription
@@ -363,16 +361,16 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
     @Preview
     @Composable
     fun PreviewMessageDetails(
-        @PreviewParameter(ThemeResPreviewParameterProvider::class) themeResId: Int
+        @PreviewParameter(SessionColorsParameterProvider::class) sessionColors: SessionColors
     ) {
-        PreviewTheme(themeResId) {
+        PreviewTheme(sessionColors) {
             SeedReminder()
         }
     }
 
     @Composable
     private fun SeedReminder() {
-        AppTheme {
+        SessionMaterialTheme {
             Column {
                 // Color Strip
                 Box(
@@ -384,7 +382,10 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                 Row(
                     Modifier
                         .background(MaterialTheme.colors.surface)
-                        .padding(horizontal = LocalDimensions.current.marginSmall, vertical = LocalDimensions.current.marginExtraSmall)
+                        .padding(
+                            horizontal = LocalDimensions.current.marginSmall,
+                            vertical = LocalDimensions.current.marginExtraSmall
+                        )
                 ) {
                     Column(Modifier.weight(1f)) {
                         Row {
@@ -415,7 +416,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
 
     @Composable
     private fun EmptyView(newAccount: Boolean) {
-        AppTheme {
+        SessionMaterialTheme {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier

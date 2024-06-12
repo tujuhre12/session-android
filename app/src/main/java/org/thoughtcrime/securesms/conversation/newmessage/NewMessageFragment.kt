@@ -44,11 +44,12 @@ import org.thoughtcrime.securesms.conversation.start.NewConversationDelegate
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.showOpenUrlDialog
-import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.LoadingArcOr
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
-import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
+import org.thoughtcrime.securesms.ui.SessionColors
+import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
+import org.thoughtcrime.securesms.ui.SessionMaterialTheme
 import org.thoughtcrime.securesms.ui.classicDarkColors
 import org.thoughtcrime.securesms.ui.components.AppBar
 import org.thoughtcrime.securesms.ui.components.BorderlessButtonWithIcon
@@ -80,7 +81,7 @@ class NewMessageFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View = ComposeView(requireContext()).apply {
         setContent {
-            AppTheme {
+            SessionMaterialTheme {
                 val uiState by viewModel.state.collectAsState(State())
                 NewMessage(
                     uiState,
@@ -108,9 +109,9 @@ class NewMessageFragment : Fragment() {
 @Preview
 @Composable
 private fun PreviewNewMessage(
-    @PreviewParameter(ThemeResPreviewParameterProvider::class) themeResId: Int
+    @PreviewParameter(SessionColorsParameterProvider::class) sessionColors: SessionColors
 ) {
-    PreviewTheme(themeResId) {
+    PreviewTheme(sessionColors) {
         NewMessage(State())
     }
 }
@@ -148,13 +149,16 @@ fun EnterAccountId(
     onHelp: () -> Unit = {}
 ) {
     Column(
-        modifier = Modifier.padding(horizontal = 12.dp, vertical = 16.dp).fillMaxHeight(),
+        modifier = Modifier
+            .padding(horizontal = 12.dp, vertical = 16.dp)
+            .fillMaxHeight(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         SessionOutlinedTextField(
             text = state.newMessageIdOrOns,
-            modifier = Modifier.padding(horizontal = LocalDimensions.current.marginSmall)
+            modifier = Modifier
+                .padding(horizontal = LocalDimensions.current.marginSmall)
                 .contentDescription("Session id input box"),
             placeholder = stringResource(R.string.accountIdOrOnsEnter),
             onChange = callbacks::onChange,
@@ -183,7 +187,7 @@ fun EnterAccountId(
             onClick = { callbacks.onContinue() }
         ) {
             LoadingArcOr(state.loading) {
-                SessionButtonText(stringResource(R.string.next))
+                SessionButtonText(stringResource(R.string.next), enabled = state.isNextButtonEnabled)
             }
         }
     }

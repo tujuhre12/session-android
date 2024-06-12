@@ -47,17 +47,17 @@ import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.onboarding.pickname.startPickDisplayNameActivity
 import org.thoughtcrime.securesms.service.KeyCachingService
 import org.thoughtcrime.securesms.showOpenUrlDialog
-import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.LocalColors
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
-import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
-import org.thoughtcrime.securesms.ui.classicDarkColors
+import org.thoughtcrime.securesms.ui.SessionColors
+import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.components.BorderlessHtmlButton
 import org.thoughtcrime.securesms.ui.components.FilledButton
 import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.large
+import org.thoughtcrime.securesms.ui.setComposeContent
 import org.thoughtcrime.securesms.util.setUpActionBarSessionLogo
 import org.thoughtcrime.securesms.util.start
 import kotlin.time.Duration.Companion.milliseconds
@@ -85,9 +85,7 @@ class LandingActivity : BaseActionBarActivity() {
 
         setUpActionBarSessionLogo(true)
 
-        ComposeView(this)
-            .apply { setContent { AppTheme { LandingScreen() } } }
-            .let(::setContentView)
+        setComposeContent { LandingScreen() }
 
         IdentityKeyUtil.generateIdentityKeyPair(this)
         TextSecurePreferences.setPasswordDisabled(this, true)
@@ -98,9 +96,9 @@ class LandingActivity : BaseActionBarActivity() {
     @Preview
     @Composable
     private fun LandingScreen(
-        @PreviewParameter(ThemeResPreviewParameterProvider::class) themeResId: Int
+        @PreviewParameter(SessionColorsParameterProvider::class) sessionColors: SessionColors
     ) {
-        PreviewTheme(themeResId) {
+        PreviewTheme(sessionColors) {
             LandingScreen()
         }
     }

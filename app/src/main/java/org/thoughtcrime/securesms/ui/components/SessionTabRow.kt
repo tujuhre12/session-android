@@ -19,9 +19,10 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
-import org.thoughtcrime.securesms.ui.LocalButtonColor
+import org.thoughtcrime.securesms.ui.LocalColors
 import org.thoughtcrime.securesms.ui.PreviewTheme
-import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
+import org.thoughtcrime.securesms.ui.SessionColors
+import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.h8
 
 private val TITLES = listOf(R.string.sessionRecoveryPassword, R.string.qrScan)
@@ -32,8 +33,8 @@ fun SessionTabRow(pagerState: PagerState, titles: List<Int>) {
     TabRow(
             backgroundColor = Color.Unspecified,
             selectedTabIndex = pagerState.currentPage,
-            contentColor = LocalButtonColor.current,
-            divider = { TabRowDefaults.Divider(color = MaterialTheme.colors.onPrimary.copy(alpha = TabRowDefaults.DividerOpacity)) },
+            contentColor = LocalColors.current.primary,
+            divider = { TabRowDefaults.Divider(color = LocalColors.current.divider) },
             modifier = Modifier
                 .height(48.dp)
                 .background(color = Color.Unspecified)
@@ -43,8 +44,8 @@ fun SessionTabRow(pagerState: PagerState, titles: List<Int>) {
             Tab(
                 i == pagerState.currentPage,
                 onClick = { animationScope.launch { pagerState.animateScrollToPage(i) } },
-                selectedContentColor = MaterialTheme.colors.onPrimary,
-                unselectedContentColor = MaterialTheme.colors.onPrimary,
+                selectedContentColor = LocalColors.current.text,
+                unselectedContentColor = LocalColors.current.text,
             ) {
                 Text(
                     stringResource(id = it),
@@ -59,9 +60,9 @@ fun SessionTabRow(pagerState: PagerState, titles: List<Int>) {
 @androidx.compose.ui.tooling.preview.Preview
 @Composable
 fun PreviewSessionTabRow(
-        @PreviewParameter(ThemeResPreviewParameterProvider::class) themeResId: Int
+        @PreviewParameter(SessionColorsParameterProvider::class) sessionColors: SessionColors
 ) {
-    PreviewTheme(themeResId) {
+    PreviewTheme(sessionColors) {
         val pagerState = rememberPagerState { TITLES.size }
         SessionTabRow(pagerState = pagerState, titles = TITLES)
     }
