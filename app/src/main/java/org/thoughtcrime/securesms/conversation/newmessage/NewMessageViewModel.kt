@@ -36,11 +36,11 @@ class NewMessageViewModel @Inject constructor(
     private val _qrErrors = Channel<String>()
     val qrErrors: Flow<String> = _qrErrors.receiveAsFlow()
 
-    private var job: Job? = null
+    private var loadOnsJob: Job? = null
 
     override fun onChange(value: String) {
-        job?.cancel()
-        job = null
+        loadOnsJob?.cancel()
+        loadOnsJob = null
 
         _state.update { State(newMessageIdOrOns = value) }
     }
@@ -58,7 +58,7 @@ class NewMessageViewModel @Inject constructor(
     }
 
     private fun createPrivateChatIfPossible(onsNameOrPublicKey: String) {
-        if (job?.isActive == true) return
+        if (loadOnsJob?.isActive == true) return
 
         if (PublicKeyValidation.isValid(onsNameOrPublicKey, isPrefixRequired = false)) {
             if (PublicKeyValidation.hasValidPrefix(onsNameOrPublicKey)) {
@@ -70,7 +70,7 @@ class NewMessageViewModel @Inject constructor(
             // This could be an ONS name
             _state.update { it.copy(error = null, loading = true) }
 
-            job = viewModelScope.launch(Dispatchers.IO) {
+            loadOnsJob = viewModelScope.launch(Dispatchers.IO) {
                 try {
                     withTimeout(5.seconds) {
                         SnodeAPI.getSessionID(onsNameOrPublicKey).get()

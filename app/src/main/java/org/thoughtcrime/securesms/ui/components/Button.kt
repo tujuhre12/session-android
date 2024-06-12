@@ -105,7 +105,7 @@ fun OutlineButton(
         onClick = onClick,
         border = BorderStroke(1.dp, LocalButtonColor.current),
         colors = ButtonDefaults.outlinedButtonColors(
-            contentColor = LocalButtonColor.current,
+            contentColor = if (enabled) LocalButtonColor.current else Color.Unspecified,
             backgroundColor = Color.Unspecified
         )
     ) {
@@ -198,20 +198,6 @@ fun FilledButton(
     ) {
         SessionButtonText(text)
     }
-}
-
-@Composable
-fun BorderlessButtonSecondary(
-    text: String,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    BorderlessButton(
-        text,
-        modifier = modifier,
-        contentColor = MaterialTheme.colors.onSurface.copy(ContentAlpha.medium),
-        onClick = onClick
-    )
 }
 
 @Composable
