@@ -32,8 +32,10 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.BaseActionBarActivity
+import org.thoughtcrime.securesms.onboarding.messagenotifications.startMessageNotificationsActivity
 import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.LocalDimensions
+import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.baseBold
 import org.thoughtcrime.securesms.ui.components.MaybeScanQrCode
@@ -41,6 +43,7 @@ import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
 import org.thoughtcrime.securesms.ui.contentDescription
+import org.thoughtcrime.securesms.util.start
 import javax.inject.Inject
 
 private const val TAG = "LinkDeviceActivity"
@@ -66,6 +69,7 @@ class LinkDeviceActivity : BaseActionBarActivity() {
 
         lifecycleScope.launch {
             viewModel.eventFlow.collect {
+                startMessageNotificationsActivity()
                 startLoadingActivity(it.mnemonic)
                 finish()
             }
@@ -110,7 +114,11 @@ class LinkDeviceActivity : BaseActionBarActivity() {
 
 @Preview
 @Composable
-fun PreviewRecoveryPassword() = RecoveryPassword(state = LinkDeviceState())
+fun PreviewRecoveryPassword() {
+    PreviewTheme(R.style.Classic_Dark) {
+        RecoveryPassword(state = LinkDeviceState())
+    }
+}
 
 @Composable
 fun RecoveryPassword(state: LinkDeviceState, onChange: (String) -> Unit = {}, onContinue: () -> Unit = {}) {
@@ -150,8 +158,8 @@ fun RecoveryPassword(state: LinkDeviceState, onChange: (String) -> Unit = {}, on
             textId = R.string.continue_2,
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
-                .padding(horizontal = LocalDimensions.current.marginLarge, vertical = 20.dp)
-                .width(200.dp),
+                .padding(vertical = 20.dp)
+                .fillMaxWidth(),
             onClick = onContinue
         )
     }

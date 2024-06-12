@@ -10,9 +10,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.MaterialTheme
@@ -38,6 +38,7 @@ import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.notifications.PushRegistry
 import org.thoughtcrime.securesms.ui.AppTheme
+import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
 import org.thoughtcrime.securesms.ui.base
@@ -103,12 +104,12 @@ fun MessageNotificationsScreen(
     setEnabled: (Boolean) -> Unit = {},
     onContinue: () -> Unit = {}
 ) {
-    Column(Modifier.padding(horizontal = 32.dp)) {
+    Column(Modifier.padding(horizontal = LocalDimensions.current.marginMedium)) {
         Spacer(Modifier.weight(1f))
         Text(stringResource(R.string.notificationsMessage), style = MaterialTheme.typography.h4)
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(LocalDimensions.current.marginExtraSmall))
         Text(stringResource(R.string.onboardingMessageNotificationExplaination), style = MaterialTheme.typography.base)
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(LocalDimensions.current.marginExtraSmall))
         NotificationRadioButton(
             R.string.activity_pn_mode_fast_mode,
             R.string.activity_pn_mode_fast_mode_explanation,
@@ -117,7 +118,7 @@ fun MessageNotificationsScreen(
             selected = state.pushEnabled,
             onClick = { setEnabled(true) }
         )
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(LocalDimensions.current.marginExtraSmall))
         NotificationRadioButton(
             R.string.activity_pn_mode_slow_mode,
             R.string.activity_pn_mode_slow_mode_explanation,
@@ -131,10 +132,10 @@ fun MessageNotificationsScreen(
             modifier = Modifier
                 .contentDescription(R.string.AccessibilityId_continue)
                 .align(Alignment.CenterHorizontally)
-                .width(262.dp),
+                .fillMaxWidth(),
             onClick = onContinue
         )
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(LocalDimensions.current.marginExtraExtraSmall))
     }
 }
 

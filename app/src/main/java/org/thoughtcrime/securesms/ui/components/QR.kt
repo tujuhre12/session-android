@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -56,6 +57,7 @@ import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.filter
 import network.loki.messenger.R
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.base
 import java.util.concurrent.Executors
 
@@ -101,11 +103,15 @@ fun MaybeScanQrCode(
                 )
             }
         } else {
-            OutlineButton(
-                stringResource(R.string.cameraGrantAccess),
-                modifier = Modifier.align(Alignment.Center),
-                onClick = { cameraPermissionState.run { launchPermissionRequest() } }
-            )
+            Box(modifier = Modifier.fillMaxSize().padding(LocalDimensions.current.marginLarge)) {
+                OutlineButton(
+                    stringResource(R.string.cameraGrantAccess),
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .fillMaxWidth(),
+                    onClick = { cameraPermissionState.run { launchPermissionRequest() } }
+                )
+            }
         }
     }
 }
