@@ -47,6 +47,7 @@ import org.thoughtcrime.securesms.ui.LocalButtonColor
 import org.thoughtcrime.securesms.ui.baseBold
 import org.thoughtcrime.securesms.ui.colorDestructive
 import org.thoughtcrime.securesms.ui.contentDescription
+import org.thoughtcrime.securesms.ui.disabled
 import org.thoughtcrime.securesms.ui.extraSmall
 
 val LocalButtonSize = staticCompositionLocalOf { mediumButton }
@@ -103,7 +104,7 @@ fun OutlineButton(
         enabled = enabled,
         interactionSource = interactionSource,
         onClick = onClick,
-        border = BorderStroke(1.dp, LocalButtonColor.current),
+        border = BorderStroke(1.dp, if (enabled) LocalButtonColor.current else MaterialTheme.colors.disabled),
         colors = ButtonDefaults.outlinedButtonColors(
             contentColor = if (enabled) LocalButtonColor.current else Color.Unspecified,
             backgroundColor = Color.Unspecified

@@ -60,6 +60,8 @@ const val oceanLight7 = 0xffFCFFFF
 val session_accent = Color(0xFF31F196)
 val ocean_accent = Color(0xff57C9FA)
 
+val Colors.disabled @Composable get() = onSurface.copy(alpha = ContentAlpha.disabled)
+
 val oceanLights = arrayOf(oceanLight0, oceanLight1, oceanLight2, oceanLight3, oceanLight4, oceanLight5, oceanLight6, oceanLight7)
 val oceanDarks = arrayOf(oceanDark0, oceanDark1, oceanDark2, oceanDark3, oceanDark4, oceanDark5, oceanDark6, oceanDark7)
 val classicLights = arrayOf(classicLight0, classicLight1, classicLight2, classicLight3, classicLight4, classicLight5, classicLight6)
