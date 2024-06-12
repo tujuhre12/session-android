@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.ui.components
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -16,8 +17,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -78,10 +81,7 @@ fun AnnotatedTextWithIcon(
     text: String,
     icon: ImageVector,
     modifier: Modifier = Modifier,
-    iconTint: Color = Color.Unspecified,
-    iconDescription: String = "",
-    iconSize: TextUnit = 12.sp,
-    textWidth: Dp = 100.dp
+    style: TextStyle = MaterialTheme.typography.base
 ) {
     val myId = "inlineContent"
     val annotatedText = buildAnnotatedString {
@@ -91,15 +91,59 @@ fun AnnotatedTextWithIcon(
 
     val inlineContent = mapOf(
         myId to Placeholder(
-            width = iconSize,
-            height = iconSize,
+            width = TextUnit.Unspecified,
+            height = TextUnit.Unspecified,
             placeholderVerticalAlign = PlaceholderVerticalAlign.AboveBaseline
-        ).let { InlineTextContent(it) { Icon(icon, iconDescription, tint = iconTint) } }
+        ).let { InlineTextContent(it) { Icon(icon, contentDescription = null) } }
     )
 
     Text(
         text = annotatedText,
-        modifier = modifier.width(textWidth),
+        modifier = modifier,
+        inlineContent = inlineContent,
+        style = style
+    )
+}
+
+@Composable
+fun AnnotatedTextWithIcon(
+    text: String,
+    @DrawableRes iconRes: Int,
+    modifier: Modifier = Modifier,
+    style: TextStyle = MaterialTheme.typography.base,
+    iconTint: Color = Color.Unspecified,
+    iconSize: TextUnit = 12.sp
+) {
+    val myId = "inlineContent"
+    val annotated = buildAnnotatedString {
+        append(text)
+        appendInlineContent(myId, "[icon]")
+    }
+
+    val inlineContent = mapOf(
+        Pair(
+            myId,
+            InlineTextContent(
+                Placeholder(
+                    width = iconSize,
+                    height = iconSize,
+                    placeholderVerticalAlign = PlaceholderVerticalAlign.AboveBaseline
+                )
+            ) {
+                Icon(
+                    painter = painterResource(id = iconRes),
+                    contentDescription = null,
+                    modifier = Modifier.padding(1.dp),
+                    tint = iconTint
+                )
+            }
+        )
+    )
+
+    Text(
+        text = annotated,
+        modifier = modifier.fillMaxWidth(),
+        style = style,
         inlineContent = inlineContent
     )
 }

@@ -10,10 +10,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.primarySurface
@@ -47,11 +49,13 @@ import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.showOpenUrlDialog
 import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.LoadingArcOr
+import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
 import org.thoughtcrime.securesms.ui.baseBold
+import org.thoughtcrime.securesms.ui.classicDarkColors
 import org.thoughtcrime.securesms.ui.components.AppBar
-import org.thoughtcrime.securesms.ui.components.BorderlessButtonSecondary
+import org.thoughtcrime.securesms.ui.components.BorderlessButtonWithIcon
 import org.thoughtcrime.securesms.ui.components.MaybeScanQrCode
 import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
@@ -153,7 +157,7 @@ fun EnterAccountId(
     ) {
         SessionOutlinedTextField(
             text = state.newMessageIdOrOns,
-            modifier = Modifier.padding(horizontal = 64.dp)
+            modifier = Modifier.padding(horizontal = LocalDimensions.current.marginSmall)
                 .contentDescription("Session id input box"),
             placeholder = stringResource(R.string.accountIdOrOnsEnter),
             onChange = callbacks::onChange,
@@ -163,7 +167,12 @@ fun EnterAccountId(
         if (state.error == null) {
             BorderlessButtonWithIcon(
                 text = stringResource(R.string.messageNewDescription),
-                modifier = Modifier.contentDescription(R.string.AccessibilityId_help_desk_link)
+                iconRes = R.drawable.ic_circle_question_mark,
+                contentColor = classicDarkColors[5],
+                modifier = Modifier
+                    .contentDescription(R.string.AccessibilityId_help_desk_link)
+                    .fillMaxWidth()
+                    .padding(horizontal = LocalDimensions.current.marginMedium),
             ) { onHelp() }
         }
 
