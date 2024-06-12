@@ -2,15 +2,19 @@ package org.thoughtcrime.securesms.ui.components
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.Icon
@@ -25,6 +29,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -43,7 +48,6 @@ import org.thoughtcrime.securesms.ui.baseBold
 import org.thoughtcrime.securesms.ui.colorDestructive
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.extraSmall
-import kotlin.time.Duration.Companion.seconds
 
 val LocalButtonSize = staticCompositionLocalOf { mediumButton }
 
@@ -52,6 +56,18 @@ fun Modifier.applyButtonSize() = then(LocalButtonSize.current)
 
 val mediumButton = Modifier.height(41.dp)
 val smallButton = Modifier.wrapContentHeight()
+
+@Composable
+fun SessionButtonText(
+    text: String,
+    modifier: Modifier = Modifier
+){
+    Text(
+        modifier = modifier,
+        text = text,
+        style = MaterialTheme.typography.baseBold
+    )
+}
 
 @Composable
 fun OutlineButton(
@@ -69,7 +85,9 @@ fun OutlineButton(
     OutlineButton(
         modifier = modifier,
         onClick = onClick
-    ) { Text(text, style = MaterialTheme.typography.baseBold) }
+    ) {
+        SessionButtonText(text = text)
+    }
 }
 
 @Composable
@@ -98,62 +116,66 @@ fun OutlineCopyButton(
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {}
 ) {
-    OutlineTemporaryStateButton(
-        text = stringResource(R.string.copy),
-        temporaryText = stringResource(R.string.copy),
-        modifier = modifier.contentDescription(R.string.AccessibilityId_copy_button),
-        onClick = onClick
-    )
-}
+    val interactionSource = remember { MutableInteractionSource() }
 
-@Composable
-fun OutlineTemporaryStateButton(
-    text: String,
-    temporaryText: String,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit = {}
-) {
-    OutlineTemporaryStateButton(modifier, onClick) { isTemporary ->
-        Text(
-            if (isTemporary) temporaryText else text,
-            style = MaterialTheme.typography.baseBold
+    OutlineButton(
+        modifier = modifier,
+        interactionSource = interactionSource,
+        onClick = onClick
+    ) {
+        TemporaryClickedContent(
+            interactionSource = interactionSource,
+            content = {
+                // using a centered box because the outline button uses rowscope internally and it shows the crossfade
+                Box(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    SessionButtonText(
+                        modifier = Modifier.align(Alignment.Center),
+                        text = stringResource(R.string.copy)
+                    )
+                }
+            },
+            temporaryContent = {
+                // using a centered box because the outline button uses rowscope internally and it shows the crossfade
+                Box(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    SessionButtonText(
+                        modifier = Modifier.align(Alignment.Center),
+                        text = stringResource(R.string.copied)
+                    )
+                }
+            }
         )
     }
 }
 
 @Composable
-fun OutlineTemporaryStateButton(
+fun TemporaryClickedContent(
     modifier: Modifier = Modifier,
-    onClick: () -> Unit = {},
-    content: @Composable (Boolean) -> Unit,
+    interactionSource: MutableInteractionSource,
+    content: @Composable () -> Unit,
+    temporaryContent: @Composable () -> Unit,
+    temporaryDelay: Long = 2000
 ) {
-    TemporaryStateButton { source, isTemporary ->
-        OutlineButton(
-            modifier = modifier,
-            interactionSource = source,
-            onClick = onClick,
-        ) {
-            AnimatedVisibility(isTemporary) { content(true) }
-            AnimatedVisibility(!isTemporary) { content(false) }
-        }
-    }
-}
-
-@Composable
-fun TemporaryStateButton(
-    content: @Composable (MutableInteractionSource, Boolean) -> Unit,
-) {
-    val interactions = remember { MutableInteractionSource() }
-
     var clicked by remember { mutableStateOf(false) }
 
-    content(interactions, clicked)
-
     LaunchedEffectAsync {
-        interactions.releases.collectLatest {
+        interactionSource.releases.collectLatest {
             clicked = true
-            delay(2.seconds)
+            delay(temporaryDelay)
             clicked = false
+        }
+    }
+
+    Crossfade(
+        modifier = modifier,
+        targetState = clicked
+    ) {
+        when(it) {
+            false -> content()
+            true -> temporaryContent()
         }
     }
 }
@@ -172,7 +194,7 @@ fun FilledButton(
             backgroundColor = LocalButtonColor.current
         )
     ) {
-        Text(text = text, style = MaterialTheme.typography.baseBold)
+        SessionButtonText(text)
     }
 }
 
@@ -192,32 +214,6 @@ fun BorderlessButtonSecondary(
 
 @Composable
 fun BorderlessButton(
-    text: String,
-    modifier: Modifier = Modifier,
-    contentDescription: GetString = GetString(text),
-    contentColor: Color = MaterialTheme.colors.onBackground,
-    backgroundColor: Color = Color.Transparent,
-    onClick: () -> Unit
-) {
-    TextButton(
-        onClick = onClick,
-        modifier = modifier.contentDescription(contentDescription),
-        colors = ButtonDefaults.outlinedButtonColors(
-            contentColor = contentColor,
-            backgroundColor = backgroundColor
-        )
-    ) {
-        Text(
-            text = text,
-            textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.extraSmall,
-            modifier = Modifier.padding(horizontal = 2.dp)
-        )
-    }
-}
-
-@Composable
-fun BorderlessButton(
     modifier: Modifier = Modifier,
     contentColor: Color = MaterialTheme.colors.onBackground,
     backgroundColor: Color = Color.Transparent,
@@ -232,6 +228,30 @@ fun BorderlessButton(
             backgroundColor = backgroundColor
         )
     ) { content() }
+}
+
+@Composable
+fun BorderlessButton(
+    text: String,
+    modifier: Modifier = Modifier,
+    contentDescription: GetString = GetString(text),
+    contentColor: Color = MaterialTheme.colors.onBackground,
+    backgroundColor: Color = Color.Transparent,
+    onClick: () -> Unit
+) {
+    BorderlessButton(
+        modifier = modifier.contentDescription(contentDescription),
+        contentColor = contentColor,
+        backgroundColor = backgroundColor,
+        onClick = onClick
+    ) {
+        Text(
+            text = text,
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.extraSmall,
+            modifier = Modifier.padding(horizontal = 2.dp)
+        )
+    }
 }
 
 @Composable

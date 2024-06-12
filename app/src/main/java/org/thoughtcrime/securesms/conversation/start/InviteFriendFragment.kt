@@ -34,13 +34,11 @@ import org.thoughtcrime.securesms.preferences.copyPublicKey
 import org.thoughtcrime.securesms.preferences.sendInvitationToUseSession
 import org.thoughtcrime.securesms.ui.AppTheme
 import org.thoughtcrime.securesms.ui.base
-import org.thoughtcrime.securesms.ui.baseBold
 import org.thoughtcrime.securesms.ui.classicDarkColors
 import org.thoughtcrime.securesms.ui.components.AppBar
 import org.thoughtcrime.securesms.ui.components.OnPrimaryButtons
 import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.components.OutlineCopyButton
-import org.thoughtcrime.securesms.ui.components.OutlineTemporaryStateButton
 import org.thoughtcrime.securesms.ui.components.SmallButtons
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.small
@@ -122,13 +120,9 @@ private fun InviteFriend(
                             modifier = Modifier
                                 .weight(1f)
                                 .contentDescription("Share button"),
+                            text = stringResource(R.string.share),
                             onClick = sendInvitation
-                        ) {
-                            Text(
-                                stringResource(R.string.share),
-                                style = MaterialTheme.typography.baseBold
-                            )
-                        }
+                        )
 
                         OutlineCopyButton(
                             modifier = Modifier.weight(1f),

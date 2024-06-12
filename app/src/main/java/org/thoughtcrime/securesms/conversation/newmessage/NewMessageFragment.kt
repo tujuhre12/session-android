@@ -58,6 +58,7 @@ import org.thoughtcrime.securesms.ui.components.AppBar
 import org.thoughtcrime.securesms.ui.components.BorderlessButtonWithIcon
 import org.thoughtcrime.securesms.ui.components.MaybeScanQrCode
 import org.thoughtcrime.securesms.ui.components.OutlineButton
+import org.thoughtcrime.securesms.ui.components.SessionButtonText
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
 import org.thoughtcrime.securesms.ui.contentDescription
@@ -165,7 +166,7 @@ fun EnterAccountId(
             error = state.error?.string(),
         )
         if (state.error == null) {
-            BorderlessButtonWithIcon(
+            BorderlessButtonSecondary(
                 text = stringResource(R.string.messageNewDescription),
                 iconRes = R.drawable.ic_circle_question_mark,
                 contentColor = classicDarkColors[5],
@@ -185,10 +186,7 @@ fun EnterAccountId(
             onClick = { callbacks.onContinue() }
         ) {
             LoadingArcOr(state.loading) {
-                Text(
-                    stringResource(R.string.next),
-                    style = MaterialTheme.typography.baseBold
-                )
+                SessionButtonText(stringResource(R.string.next))
             }
         }
     }
