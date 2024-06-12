@@ -179,8 +179,8 @@ fun EnterAccountId(
         OutlineButton(
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
-                .padding(horizontal = 64.dp)
-                .width(200.dp)
+                .padding(horizontal = LocalDimensions.current.marginLarge)
+                .fillMaxWidth()
                 .contentDescription(R.string.next),
             onClick = { callbacks.onContinue() }
         ) {
