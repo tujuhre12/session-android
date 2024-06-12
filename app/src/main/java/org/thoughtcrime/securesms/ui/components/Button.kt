@@ -93,12 +93,14 @@ fun OutlineButton(
 @Composable
 fun OutlineButton(
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     onClick: () -> Unit,
     content: @Composable () -> Unit = {}
 ) {
     OutlinedButton(
         modifier = modifier.applyButtonSize(),
+        enabled = enabled,
         interactionSource = interactionSource,
         onClick = onClick,
         border = BorderStroke(1.dp, LocalButtonColor.current),

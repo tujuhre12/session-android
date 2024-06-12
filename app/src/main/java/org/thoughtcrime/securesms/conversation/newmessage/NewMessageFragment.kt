@@ -183,6 +183,7 @@ fun EnterAccountId(
                 .padding(horizontal = LocalDimensions.current.marginLarge)
                 .fillMaxWidth()
                 .contentDescription(R.string.next),
+            enabled = state.isNextButtonEnabled,
             onClick = { callbacks.onContinue() }
         ) {
             LoadingArcOr(state.loading) {
