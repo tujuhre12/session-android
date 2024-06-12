@@ -1,14 +1,11 @@
 package org.thoughtcrime.securesms.ui
 
-import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.Card
 import androidx.compose.material.Colors
 import androidx.compose.material.ContentAlpha
-import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -19,7 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.unit.dp
 
 val colorDestructive = Color(0xffFF453A)
 
@@ -111,28 +107,28 @@ private fun ThemeColors() {
     AppTheme {
         Column {
             Box(Modifier.background(MaterialTheme.colors.primary)) {
-                Text("primary")
+                Text("primary", style = MaterialTheme.typography.base)
             }
             Box(Modifier.background(MaterialTheme.colors.primaryVariant)) {
-                Text("primaryVariant")
+                Text("primaryVariant", style = MaterialTheme.typography.base)
             }
             Box(Modifier.background(MaterialTheme.colors.secondary)) {
-                Text("secondary")
+                Text("secondary", style = MaterialTheme.typography.base)
             }
             Box(Modifier.background(MaterialTheme.colors.secondaryVariant)) {
-                Text("secondaryVariant")
+                Text("secondaryVariant", style = MaterialTheme.typography.base)
             }
             Box(Modifier.background(MaterialTheme.colors.surface)) {
-                Text("surface")
+                Text("surface", style = MaterialTheme.typography.base)
             }
             Box(Modifier.background(MaterialTheme.colors.primarySurface)) {
-                Text("primarySurface")
+                Text("primarySurface", style = MaterialTheme.typography.base)
             }
             Box(Modifier.background(MaterialTheme.colors.background)) {
-                Text("background")
+                Text("background", style = MaterialTheme.typography.base)
             }
             Box(Modifier.background(MaterialTheme.colors.error)) {
-                Text("error")
+                Text("error", style = MaterialTheme.typography.base)
             }
         }
     }
