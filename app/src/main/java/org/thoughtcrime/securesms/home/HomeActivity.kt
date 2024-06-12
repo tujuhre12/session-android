@@ -392,7 +392,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                                 stringResource(R.string.save_your_recovery_password),
                                 style = MaterialTheme.typography.h8
                             )
-                            Spacer(Modifier.requiredWidth(LocalDimensions.current.itemSpacingSmall))
+                            Spacer(Modifier.requiredWidth(LocalDimensions.current.itemSpacingExtraSmall))
                             SessionShieldIcon()
                         }
                         Text(

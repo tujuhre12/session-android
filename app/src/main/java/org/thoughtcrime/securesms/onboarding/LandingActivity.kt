@@ -52,7 +52,6 @@ import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
 import org.thoughtcrime.securesms.ui.classicDarkColors
-import org.thoughtcrime.securesms.ui.components.BorderlessButton
 import org.thoughtcrime.securesms.ui.components.BorderlessHtmlButton
 import org.thoughtcrime.securesms.ui.components.FilledButton
 import org.thoughtcrime.securesms.ui.components.OutlineButton

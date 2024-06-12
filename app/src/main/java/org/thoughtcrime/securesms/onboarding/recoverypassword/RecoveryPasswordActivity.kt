@@ -227,6 +227,7 @@ private fun HideRecoveryPasswordCell(onHide: () -> Unit = {}) {
                     style = MaterialTheme.typography.base
                 )
             }
+            Spacer(modifier = Modifier.width(LocalDimensions.current.marginExtraExtraSmall))
             DestructiveButtons {
                 OutlineButton(
                     textId = R.string.hide,

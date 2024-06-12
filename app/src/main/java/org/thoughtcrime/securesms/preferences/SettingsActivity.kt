@@ -78,6 +78,7 @@ import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.ItemButton
 import org.thoughtcrime.securesms.ui.ItemButtonWithDrawable
+import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.components.OutlineCopyButton
 import org.thoughtcrime.securesms.ui.destructiveButtonColors
@@ -387,9 +388,9 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
         Column {
             Row(
                 modifier = Modifier
-                    .padding(horizontal = 24.dp)
-                    .padding(top = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    .padding(horizontal = LocalDimensions.current.marginSmall)
+                    .padding(top = LocalDimensions.current.marginTiny),
+                horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.itemSpacingSmall),
             ) {
                 OutlineButton(
                     stringResource(R.string.share),

@@ -78,18 +78,34 @@ fun transparentButtonColors() = ButtonDefaults.buttonColors(backgroundColor = Co
 @Composable
 fun destructiveButtonColors() = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent, contentColor = colorDestructive)
 
+@Preview @Composable fun ClassicLight() { Colors("classic light", classicLightColors) }
+@Preview @Composable fun ClassicDark() { Colors("classic dark", classicDarkColors) }
+@Preview @Composable fun OceanLight() { Colors("ocean light", oceanLightColors) }
+@Preview @Composable fun OceanDark() { Colors("ocean dark", oceanDarkColors) }
+
+@Composable
+fun Colors(name: String, colors: List<Color>) {
+    Column {
+        colors.forEachIndexed { i, it ->
+            Box(Modifier.background(it)) {
+                Text("$name: $i")
+            }
+        }
+    }
+}
+
 @Preview
 @Composable
-fun PreviewMessageDetails(
+fun PreviewThemeColors(
     @PreviewParameter(ThemeResPreviewParameterProvider::class) themeResId: Int
 ) {
     PreviewTheme(themeResId) {
-        Colors()
+        ThemeColors()
     }
 }
 
 @Composable
-private fun Colors() {
+private fun ThemeColors() {
     AppTheme {
         Column {
             Box(Modifier.background(MaterialTheme.colors.primary)) {
