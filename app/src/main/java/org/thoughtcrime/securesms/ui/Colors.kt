@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.ui
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import org.session.libsession.utilities.TextSecurePreferences
 
 val colorDestructive = Color(0xffFF453A)
 
@@ -52,9 +54,6 @@ const val oceanLight4 = 0xffB3EDF2
 const val oceanLight5 = 0xffE7F3F4
 const val oceanLight6 = 0xffECFAFB
 const val oceanLight7 = 0xffFCFFFF
-
-val session_accent = Color(0xFF31F196)
-val ocean_accent = Color(0xff57C9FA)
 
 val Colors.disabled @Composable get() = onSurface.copy(alpha = ContentAlpha.disabled)
 
@@ -144,3 +143,13 @@ fun outlinedTextFieldColors(
     unfocusedBorderColor = Color(classicDark3),
     placeholderColor = if (isError) colorDestructive else MaterialTheme.colors.onSurface.copy(ContentAlpha.medium)
 )
+
+fun TextSecurePreferences.Companion.getAccentColor(context: Context): Color = when (getAccentColorName(context)) {
+    BLUE_ACCENT -> primaryBlue
+    PURPLE_ACCENT -> primaryPurple
+    PINK_ACCENT -> primaryPink
+    RED_ACCENT -> primaryRed
+    ORANGE_ACCENT -> primaryOrange
+    YELLOW_ACCENT -> primaryYellow
+    else -> primaryGreen
+}

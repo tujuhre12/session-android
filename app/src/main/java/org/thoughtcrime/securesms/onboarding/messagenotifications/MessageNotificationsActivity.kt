@@ -38,6 +38,7 @@ import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.notifications.PushRegistry
 import org.thoughtcrime.securesms.ui.AppTheme
+import org.thoughtcrime.securesms.ui.LocalColors
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
@@ -46,7 +47,6 @@ import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.h8
 import org.thoughtcrime.securesms.ui.h9
-import org.thoughtcrime.securesms.ui.session_accent
 import org.thoughtcrime.securesms.ui.small
 import org.thoughtcrime.securesms.util.setUpActionBarSessionLogo
 import javax.inject.Inject
@@ -153,7 +153,7 @@ fun NotificationRadioButton(
             onClick = onClick,
             modifier = Modifier.weight(1f).contentDescription(contentDescription),
             colors = ButtonDefaults.outlinedButtonColors(backgroundColor = MaterialTheme.colors.background, contentColor = Color.White),
-            border = if (selected) BorderStroke(ButtonDefaults.OutlinedBorderSize, session_accent) else ButtonDefaults.outlinedBorder,
+            border = if (selected) BorderStroke(ButtonDefaults.OutlinedBorderSize, LocalColors.current.primary) else ButtonDefaults.outlinedBorder,
             shape = RoundedCornerShape(8.dp)
         ) {
             Column(
@@ -161,7 +161,7 @@ fun NotificationRadioButton(
             ) {
                 Text(stringResource(title), style = MaterialTheme.typography.h8)
                 Text(stringResource(explanation), style = MaterialTheme.typography.small)
-                tag?.let { Text(stringResource(it), color = session_accent, style = MaterialTheme.typography.h9) }
+                tag?.let { Text(stringResource(it), color = LocalColors.current.primary, style = MaterialTheme.typography.h9) }
             }
         }
         RadioButton(selected = selected, modifier = Modifier.align(Alignment.CenterVertically), onClick = onClick)

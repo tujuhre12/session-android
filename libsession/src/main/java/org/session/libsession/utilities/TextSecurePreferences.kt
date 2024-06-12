@@ -1,6 +1,7 @@
 package org.session.libsession.utilities
 
 import android.content.Context
+import android.graphics.Color
 import android.hardware.Camera
 import android.net.Uri
 import android.provider.Settings
@@ -986,18 +987,19 @@ interface TextSecurePreferences {
             setBooleanPreference(context, FINGERPRINT_KEY_GENERATED, true)
         }
 
+        @JvmStatic
+        fun getAccentColorName(context: Context): String? = getStringPreference(context, SELECTED_ACCENT_COLOR, ORANGE_ACCENT)
+
         @JvmStatic @StyleRes
-        fun getAccentColorStyle(context: Context): Int? {
-            return when (getStringPreference(context, SELECTED_ACCENT_COLOR, ORANGE_ACCENT)) {
-                GREEN_ACCENT -> R.style.PrimaryGreen
-                BLUE_ACCENT -> R.style.PrimaryBlue
-                PURPLE_ACCENT -> R.style.PrimaryPurple
-                PINK_ACCENT -> R.style.PrimaryPink
-                RED_ACCENT -> R.style.PrimaryRed
-                ORANGE_ACCENT -> R.style.PrimaryOrange
-                YELLOW_ACCENT -> R.style.PrimaryYellow
-                else -> null
-            }
+        fun getAccentColorStyle(context: Context): Int? = when (getAccentColorName(context)) {
+            GREEN_ACCENT -> R.style.PrimaryGreen
+            BLUE_ACCENT -> R.style.PrimaryBlue
+            PURPLE_ACCENT -> R.style.PrimaryPurple
+            PINK_ACCENT -> R.style.PrimaryPink
+            RED_ACCENT -> R.style.PrimaryRed
+            ORANGE_ACCENT -> R.style.PrimaryOrange
+            YELLOW_ACCENT -> R.style.PrimaryYellow
+            else -> null
         }
 
         @JvmStatic

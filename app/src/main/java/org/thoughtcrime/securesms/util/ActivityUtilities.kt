@@ -12,6 +12,13 @@ import androidx.fragment.app.DialogFragment
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.BaseActionBarActivity
+import org.thoughtcrime.securesms.ui.primaryBlue
+import org.thoughtcrime.securesms.ui.primaryGreen
+import org.thoughtcrime.securesms.ui.primaryOrange
+import org.thoughtcrime.securesms.ui.primaryPink
+import org.thoughtcrime.securesms.ui.primaryPurple
+import org.thoughtcrime.securesms.ui.primaryRed
+import org.thoughtcrime.securesms.ui.primaryYellow
 
 fun BaseActionBarActivity.setUpActionBarSessionLogo(hideBackButton: Boolean = false) {
     val actionbar = supportActionBar!!
@@ -100,7 +107,21 @@ data class ThemeState (
     @StyleRes val theme: Int,
     @StyleRes val accentStyle: Int,
     val followSystem: Boolean
-)
+) {
+    val isLight = theme in setOf(R.style.Classic_Light, R.style.Ocean_Light)
+    val isClassic = theme in setOf(R.style.Classic_Light, R.style.Classic_Dark)
+
+    val accent = when(accentStyle) {
+        R.style.PrimaryGreen -> primaryGreen
+        R.style.PrimaryBlue -> primaryBlue
+        R.style.PrimaryPurple -> primaryPurple
+        R.style.PrimaryPink -> primaryPink
+        R.style.PrimaryRed -> primaryRed
+        R.style.PrimaryOrange -> primaryOrange
+        R.style.PrimaryYellow -> primaryYellow
+        else -> primaryGreen
+    }
+}
 
 inline fun <reified T: Activity> Activity.show() = Intent(this, T::class.java).also(::startActivity).also { overridePendingTransition(R.anim.slide_from_bottom, R.anim.fade_scale_out) }
 inline fun <reified T: Activity> Activity.push() = Intent(this, T::class.java).also(::startActivity).also { overridePendingTransition(R.anim.slide_from_right, R.anim.fade_scale_out) }

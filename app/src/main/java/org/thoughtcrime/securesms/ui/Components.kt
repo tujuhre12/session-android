@@ -364,7 +364,7 @@ fun ProgressArc(progress: Float, modifier: Modifier = Modifier) {
 fun Arc(
     modifier: Modifier = Modifier,
     percentage: Float = 0.25f,
-    fillColor: Color = session_accent,
+    fillColor: Color = LocalColors.current.primary,
     backgroundColor: Color = classicDarkColors[3],
     strokeWidth: Dp = 18.dp,
     sweepAngle: Float = 310f,
