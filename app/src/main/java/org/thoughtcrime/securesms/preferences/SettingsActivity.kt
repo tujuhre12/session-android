@@ -23,8 +23,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -80,11 +78,8 @@ import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.ItemButton
 import org.thoughtcrime.securesms.ui.ItemButtonWithDrawable
-import org.thoughtcrime.securesms.ui.baseBold
 import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.components.OutlineCopyButton
-import org.thoughtcrime.securesms.ui.components.OutlineTemporaryStateButton
-import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.destructiveButtonColors
 import org.thoughtcrime.securesms.util.BitmapDecodingException
 import org.thoughtcrime.securesms.util.BitmapUtil
