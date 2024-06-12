@@ -94,6 +94,7 @@ import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.SettingsActivity
 import org.thoughtcrime.securesms.showMuteDialog
 import org.thoughtcrime.securesms.showSessionDialog
+import org.thoughtcrime.securesms.ui.LocalColors
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionColors
@@ -438,12 +439,15 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                     Text(
                         stringResource(R.string.welcome_to_session),
                         style = MaterialTheme.typography.base,
-                        color = MaterialTheme.colors.secondary,
+                        color = LocalColors.current.primary,
                         textAlign = TextAlign.Center
                     )
                 }
 
-                Divider(modifier = Modifier.padding(vertical = LocalDimensions.current.marginExtraSmall))
+                Divider(
+                    modifier = Modifier.padding(vertical = LocalDimensions.current.marginExtraSmall),
+                    color = LocalColors.current.borders
+                )
                 Text(
                     stringResource(R.string.conversationsNone),
                     style = MaterialTheme.typography.h8,

@@ -62,7 +62,7 @@ val smallButton = Modifier.wrapContentHeight()
 fun SessionButtonText(
     text: String,
     modifier: Modifier = Modifier,
-    color: Color = LocalColors.current.primary,
+    color: Color = LocalColors.current.text,
     enabled: Boolean = true
 ) {
     Text(
@@ -77,7 +77,7 @@ fun SessionButtonText(
 fun OutlineButton(
     @StringRes textId: Int,
     modifier: Modifier = Modifier,
-    color: Color = LocalColors.current.primary,
+    color: Color = LocalColors.current.button,
     onClick: () -> Unit
 ) { OutlineButton(stringResource(textId), modifier, color, onClick) }
 
@@ -85,7 +85,7 @@ fun OutlineButton(
 fun OutlineButton(
     text: String,
     modifier: Modifier = Modifier,
-    color: Color = LocalColors.current.primary,
+    color: Color = LocalColors.current.button,
     onClick: () -> Unit
 ) {
     OutlineButton(
@@ -102,7 +102,7 @@ fun OutlineButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    color: Color = LocalColors.current.primary,
+    color: Color = LocalColors.current.button,
     onClick: () -> Unit,
     content: @Composable () -> Unit = {}
 ) {
@@ -124,7 +124,7 @@ fun OutlineButton(
 @Composable
 fun OutlineCopyButton(
     modifier: Modifier = Modifier,
-    color: Color = LocalColors.current.primary,
+    color: Color = LocalColors.current.button,
     onClick: () -> Unit = {}
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -215,7 +215,7 @@ fun FilledButton(
 @Composable
 fun BorderlessButton(
     modifier: Modifier = Modifier,
-    contentColor: Color = MaterialTheme.colors.onBackground,
+    contentColor: Color = LocalColors.current.text,
     backgroundColor: Color = Color.Transparent,
     onClick: () -> Unit,
     content: @Composable () -> Unit
@@ -235,7 +235,7 @@ fun BorderlessButton(
     text: String,
     modifier: Modifier = Modifier,
     contentDescription: GetString = GetString(text),
-    contentColor: Color = MaterialTheme.colors.onBackground,
+    contentColor: Color = LocalColors.current.text,
     backgroundColor: Color = Color.Transparent,
     onClick: () -> Unit
 ) {
@@ -260,7 +260,7 @@ fun BorderlessButtonWithIcon(
     @DrawableRes iconRes: Int,
     modifier: Modifier = Modifier,
     style: TextStyle = MaterialTheme.typography.baseBold,
-    contentColor: Color = MaterialTheme.colors.onBackground,
+    contentColor: Color = LocalColors.current.text,
     backgroundColor: Color = Color.Transparent,
     onClick: () -> Unit
 ) {
@@ -278,7 +278,7 @@ fun BorderlessButtonWithIcon(
 fun BorderlessHtmlButton(
     textId: Int,
     modifier: Modifier = Modifier,
-    contentColor: Color = MaterialTheme.colors.onBackground,
+    contentColor: Color = LocalColors.current.text,
     backgroundColor: Color = Color.Transparent,
     onClick: () -> Unit
 ) {

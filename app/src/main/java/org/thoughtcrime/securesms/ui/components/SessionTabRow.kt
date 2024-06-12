@@ -33,7 +33,7 @@ fun SessionTabRow(pagerState: PagerState, titles: List<Int>) {
     TabRow(
             backgroundColor = Color.Unspecified,
             selectedTabIndex = pagerState.currentPage,
-            contentColor = LocalColors.current.primary,
+            contentColor = LocalColors.current.text,
             divider = { TabRowDefaults.Divider(color = LocalColors.current.divider) },
             modifier = Modifier
                 .height(48.dp)

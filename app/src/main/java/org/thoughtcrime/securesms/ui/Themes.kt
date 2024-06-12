@@ -71,6 +71,7 @@ data class SessionColors(
     val backgroundBubbleReceived: Color = Color.Unspecified,
     val textBubbleReceived: Color = Color.Unspecified,
 ) {
+    val button get() = if (isLight) text else primary
     val divider get() = text.copy(alpha = TabRowDefaults.DividerOpacity)
     val backgroundBubbleSent get() = primary
 }

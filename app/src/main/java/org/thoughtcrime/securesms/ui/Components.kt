@@ -321,6 +321,7 @@ fun Modifier.fadingEdges(
 fun Divider() {
     androidx.compose.material.Divider(
         modifier = Modifier.padding(horizontal = 16.dp),
+        color = LocalColors.current.divider
     )
 }
 
@@ -362,7 +363,7 @@ fun Arc(
     modifier: Modifier = Modifier,
     percentage: Float = 0.25f,
     fillColor: Color = LocalColors.current.primary,
-    backgroundColor: Color = classicDarkColors[3],
+    backgroundColor: Color = LocalColors.current.borders,
     strokeWidth: Dp = 18.dp,
     sweepAngle: Float = 310f,
     startAngle: Float = (360f - sweepAngle) / 2 + 90f
