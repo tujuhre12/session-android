@@ -145,6 +145,7 @@ val Typography.baseMonospace get() = defaultStyle(14.sp).copy(fontFamily = FontF
 val Typography.small get() = defaultStyle(12.sp)
 val Typography.smallMonospace get() = defaultStyle(12.sp).copy(fontFamily = FontFamily.Monospace)
 val Typography.extraSmall get() = defaultStyle(11.sp)
+val Typography.extraSmallMonospace get() = defaultStyle(11.sp).copy(fontFamily = FontFamily.Monospace)
 val Typography.fine get() = defaultStyle(9.sp)
 
 val Typography.h7 get() = boldStyle(18.sp)

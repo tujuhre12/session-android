@@ -39,6 +39,7 @@ import org.thoughtcrime.securesms.ui.classicDarkColors
 import org.thoughtcrime.securesms.ui.components.AppBar
 import org.thoughtcrime.securesms.ui.components.OnPrimaryButtons
 import org.thoughtcrime.securesms.ui.components.OutlineButton
+import org.thoughtcrime.securesms.ui.components.OutlineCopyButton
 import org.thoughtcrime.securesms.ui.components.OutlineTemporaryStateButton
 import org.thoughtcrime.securesms.ui.components.SmallButtons
 import org.thoughtcrime.securesms.ui.contentDescription
@@ -129,17 +130,10 @@ private fun InviteFriend(
                             )
                         }
 
-                        OutlineTemporaryStateButton(
-                            Modifier
-                                .weight(1f)
-                                .contentDescription(R.string.AccessibilityId_copy_button),
+                        OutlineCopyButton(
+                            modifier = Modifier.weight(1f),
                             onClick = copyPublicKey
-                        ) { isTemporary ->
-                            Text(
-                                stringResource(if (isTemporary) R.string.copied else R.string.copy),
-                                style = MaterialTheme.typography.baseBold
-                            )
-                        }
+                        )
                     }
                 }
             }

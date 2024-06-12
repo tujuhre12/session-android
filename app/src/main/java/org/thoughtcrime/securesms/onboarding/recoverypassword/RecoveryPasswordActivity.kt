@@ -40,16 +40,15 @@ import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionShieldIcon
 import org.thoughtcrime.securesms.ui.ThemeResPreviewParameterProvider
 import org.thoughtcrime.securesms.ui.base
-import org.thoughtcrime.securesms.ui.baseBold
 import org.thoughtcrime.securesms.ui.classicDarkColors
 import org.thoughtcrime.securesms.ui.components.DestructiveButtons
 import org.thoughtcrime.securesms.ui.components.OutlineButton
-import org.thoughtcrime.securesms.ui.components.OutlineTemporaryStateButton
+import org.thoughtcrime.securesms.ui.components.OutlineCopyButton
 import org.thoughtcrime.securesms.ui.components.QrImage
 import org.thoughtcrime.securesms.ui.components.SmallButtons
 import org.thoughtcrime.securesms.ui.contentDescription
+import org.thoughtcrime.securesms.ui.extraSmallMonospace
 import org.thoughtcrime.securesms.ui.h8
-import org.thoughtcrime.securesms.ui.smallMonospace
 
 class RecoveryPasswordActivity : BaseActionBarActivity() {
 
@@ -168,18 +167,13 @@ fun RecoveryPasswordCell(seed: String, copySeed:() -> Unit = {}) {
             }
 
             AnimatedVisibility(!showQr) {
-                Row(horizontalArrangement = Arrangement.spacedBy(32.dp)) {
-                    OutlineTemporaryStateButton(
+                Row(horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.marginMedium)) {
+                    OutlineCopyButton(
                         Modifier
                             .weight(1f)
                             .contentDescription(R.string.AccessibilityId_copy_button),
                         onClick = copySeed
-                    ) { isTemporary ->
-                        Text(
-                            stringResource( if (isTemporary) R.string.copied else R.string.copy),
-                            style = MaterialTheme.typography.baseBold
-                        )
-                    }
+                    )
                     OutlineButton(
                         textId = R.string.qrView,
                         modifier = Modifier.weight(1f),
@@ -212,7 +206,7 @@ private fun RecoveryPassword(seed: String) {
             )
             .padding(LocalDimensions.current.marginSmall),
         textAlign = TextAlign.Center,
-        style = MaterialTheme.typography.smallMonospace,
+        style = MaterialTheme.typography.extraSmallMonospace,
         color = MaterialTheme.colors.run { if (isLight) onSurface else secondary },
     )
 }

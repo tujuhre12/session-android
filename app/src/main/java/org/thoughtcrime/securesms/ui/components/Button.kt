@@ -49,14 +49,20 @@ val mediumButton = Modifier.height(41.dp)
 val smallButton = Modifier.wrapContentHeight()
 
 @Composable
-fun OutlineButton(@StringRes textId: Int, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    OutlineButton(stringResource(textId), modifier, onClick)
-}
+fun OutlineButton(
+    @StringRes textId: Int,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) { OutlineButton(stringResource(textId), modifier, onClick) }
 
 @Composable
-fun OutlineButton(text: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+fun OutlineButton(
+    text: String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
     OutlineButton(
-        modifier.contentDescription(text),
+        modifier = modifier,
         onClick = onClick
     ) { Text(text, style = MaterialTheme.typography.baseBold) }
 }
@@ -79,6 +85,34 @@ fun OutlineButton(
         )
     ) {
         content()
+    }
+}
+
+@Composable
+fun OutlineCopyButton(
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit = {}
+) {
+    OutlineTemporaryStateButton(
+        text = stringResource(R.string.copy),
+        temporaryText = stringResource(R.string.copy),
+        modifier = modifier.contentDescription(R.string.AccessibilityId_copy_button),
+        onClick = onClick
+    )
+}
+
+@Composable
+fun OutlineTemporaryStateButton(
+    text: String,
+    temporaryText: String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit = {}
+) {
+    OutlineTemporaryStateButton(modifier, onClick) { isTemporary ->
+        Text(
+            if (isTemporary) temporaryText else text,
+            style = MaterialTheme.typography.baseBold
+        )
     }
 }
 
@@ -178,12 +212,12 @@ fun BorderlessButton(
 }
 
 @Composable
-fun BorderlessHtmlButton(
-    textId: Int,
+fun BorderlessButton(
     modifier: Modifier = Modifier,
     contentColor: Color = MaterialTheme.colors.onBackground,
     backgroundColor: Color = Color.Transparent,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    content: @Composable () -> Unit
 ) {
     TextButton(
         onClick = onClick,
@@ -192,6 +226,22 @@ fun BorderlessHtmlButton(
             contentColor = contentColor,
             backgroundColor = backgroundColor
         )
+    ) { content() }
+}
+
+@Composable
+fun BorderlessHtmlButton(
+    textId: Int,
+    modifier: Modifier = Modifier,
+    contentColor: Color = MaterialTheme.colors.onBackground,
+    backgroundColor: Color = Color.Transparent,
+    onClick: () -> Unit
+) {
+    BorderlessButton(
+        modifier,
+        contentColor = contentColor,
+        backgroundColor = backgroundColor,
+        onClick = onClick
     ) {
         Text(
             text = annotatedStringResource(textId),

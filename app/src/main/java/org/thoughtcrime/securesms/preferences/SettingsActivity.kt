@@ -82,6 +82,7 @@ import org.thoughtcrime.securesms.ui.ItemButton
 import org.thoughtcrime.securesms.ui.ItemButtonWithDrawable
 import org.thoughtcrime.securesms.ui.baseBold
 import org.thoughtcrime.securesms.ui.components.OutlineButton
+import org.thoughtcrime.securesms.ui.components.OutlineCopyButton
 import org.thoughtcrime.securesms.ui.components.OutlineTemporaryStateButton
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.destructiveButtonColors
@@ -401,16 +402,10 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
                     onClick = { sendInvitationToUseSession() }
                 )
 
-                OutlineTemporaryStateButton(
-                    modifier = Modifier.weight(1f)
-                        .contentDescription(R.string.AccessibilityId_copy_button),
-                    onClick = { copyPublicKey() },
-                ) { isTemporary ->
-                    Text(
-                        stringResource(if (isTemporary) R.string.copied else R.string.copy),
-                        style = MaterialTheme.typography.baseBold
-                    )
-                }
+                OutlineCopyButton(
+                    modifier = Modifier.weight(1f),
+                    onClick = ::copyPublicKey,
+                )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
