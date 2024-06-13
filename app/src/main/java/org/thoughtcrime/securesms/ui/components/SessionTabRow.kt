@@ -9,6 +9,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Tab
 import androidx.compose.material.TabRow
 import androidx.compose.material.TabRowDefaults
+import androidx.compose.material.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
@@ -34,6 +35,13 @@ fun SessionTabRow(pagerState: PagerState, titles: List<Int>) {
             backgroundColor = Color.Unspecified,
             selectedTabIndex = pagerState.currentPage,
             contentColor = LocalColors.current.text,
+            indicator = { tabPositions ->
+                TabRowDefaults.Indicator(
+                    Modifier.tabIndicatorOffset(tabPositions[pagerState.currentPage]),
+                    color = LocalColors.current.primary,
+                    height = 5.dp
+                )
+            },
             divider = { TabRowDefaults.Divider(color = LocalColors.current.divider) },
             modifier = Modifier
                 .height(48.dp)
