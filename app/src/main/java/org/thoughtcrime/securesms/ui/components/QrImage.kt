@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -46,7 +47,7 @@ fun QrImage(
         mutableStateOf(null)
     }
 
-    val dark = LocalColors.current.onBackgroundLight.value.toInt()
+    val dark = LocalColors.current.onBackgroundLight.toArgb()
 
     val scope = rememberCoroutineScope()
     LaunchedEffect(string) {
@@ -58,13 +59,13 @@ fun QrImage(
     }
 
     if (LocalColors.current.isLight) {
-        Content(bitmap, icon, modifier = modifier, backgroundColor = LocalColors.current.backgroundSecondary)
+        Content(bitmap, icon, modifier = modifier, backgroundColor = LocalColors.current.backgroundLight)
     } else {
         Card(
-            backgroundColor = Color.White,
+            backgroundColor = LocalColors.current.backgroundLight,
             elevation = 0.dp,
             modifier = modifier
-        ) { Content(bitmap, icon, modifier = Modifier.padding(16.dp), backgroundColor = Color.White) }
+        ) { Content(bitmap, icon, modifier = Modifier.padding(16.dp), backgroundColor = LocalColors.current.backgroundLight) }
     }
 }
 
