@@ -97,37 +97,77 @@ val dangerLight = Color(0xFFE12D19)
 val disabledDark = Color(0xFFA1A2A1)
 val disabledLioht = Color(0xFF6D6D6D)
 
-val primaryColors = listOf(
-    primaryGreen,
-    primaryBlue,
-    primaryPurple,
-    primaryPink,
-    primaryRed,
-    primaryOrange,
-    primaryYellow,
-)
-
 fun sessionColors(
     isLight: Boolean,
     isClassic: Boolean,
     primary: Color = if (isClassic) primaryGreen else primaryBlue
-): SessionColors {
-    val index = (if (isLight) 1 else 0) + if (isClassic) 0 else 2
-    return SessionColors(
-        isLight = isLight,
-        primary = primary,
-        danger = if (isLight) dangerLight else dangerDark,
-        disabled = if (isLight) disabledLioht else disabledDark,
-        background = listOf(Color.Black, Color.White, oceanDark2, oceanLight7)[index],
-        backgroundSecondary = listOf(classicDark1, classicLight5, oceanDark1, oceanLight6)[index],
-        text = listOf(Color.White, Color.Black, Color.White, oceanLight1)[index],
-        textSecondary = listOf(classicDark5, classicLight1, oceanDark5, oceanLight2)[index],
-        borders = listOf(classicDark3, classicLight3, oceanDark4, oceanLight3)[index],
-        textBubbleSent = listOf(Color.Black, Color.Black, Color.Black, oceanLight1)[index],
-        backgroundBubbleReceived = listOf(classicDark2, classicLight4, oceanDark4, oceanLight4)[index],
-        textBubbleReceived = listOf(Color.White, classicLight4, oceanDark4, oceanLight4)[index],
-    )
-}
+): SessionColors = if (isClassic) {
+    if (isLight) classicLight else classicDark
+} else {
+    if (isLight) oceanLight else oceanDark
+}.copy(
+    primary = primary
+)
+
+val classicDark = SessionColors(
+    isLight = false,
+    primary = primaryGreen,
+    danger = dangerDark,
+    disabled = disabledDark,
+    background = Color.Black,
+    backgroundSecondary = classicDark1,
+    text = Color.White,
+    textSecondary = classicDark5,
+    borders = classicDark3,
+    textBubbleSent = Color.Black,
+    backgroundBubbleReceived = classicDark2,
+    textBubbleReceived = Color.White,
+)
+
+val classicLight = SessionColors(
+    isLight = true,
+    primary = primaryGreen,
+    danger = dangerLight,
+    disabled = disabledLioht,
+    background = Color.White,
+    backgroundSecondary = classicLight5,
+    text = Color.Black,
+    textSecondary = classicLight1,
+    borders = classicLight3,
+    textBubbleSent = Color.Black,
+    backgroundBubbleReceived = classicLight4,
+    textBubbleReceived = classicLight4,
+)
+
+val oceanDark = SessionColors(
+    isLight = false,
+    primary = primaryBlue,
+    danger = dangerDark,
+    disabled = disabledDark,
+    background = oceanDark2,
+    backgroundSecondary = oceanDark1,
+    text = Color.White,
+    textSecondary = oceanDark5,
+    borders = oceanDark4,
+    textBubbleSent = Color.Black,
+    backgroundBubbleReceived = oceanDark4,
+    textBubbleReceived = oceanDark4,
+)
+
+val oceanLight = SessionColors(
+    isLight = true,
+    primary = primaryBlue,
+    danger = dangerLight,
+    disabled = disabledLioht,
+    background = oceanLight7,
+    backgroundSecondary = oceanLight6,
+    text = oceanLight1,
+    textSecondary = oceanLight2,
+    borders = oceanLight3,
+    textBubbleSent = oceanLight1,
+    backgroundBubbleReceived = oceanLight4,
+    textBubbleReceived = oceanLight4
+)
 
 @Composable
 fun transparentButtonColors() = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent)
