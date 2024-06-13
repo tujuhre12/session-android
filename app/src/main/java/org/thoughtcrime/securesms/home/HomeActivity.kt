@@ -16,9 +16,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -26,7 +28,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -95,16 +96,16 @@ import org.thoughtcrime.securesms.preferences.SettingsActivity
 import org.thoughtcrime.securesms.showMuteDialog
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.ui.Divider
-import org.thoughtcrime.securesms.ui.LocalColors
+import org.thoughtcrime.securesms.ui.LocalPalette
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
-import org.thoughtcrime.securesms.ui.SessionColors
+import org.thoughtcrime.securesms.ui.Palette
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
-import org.thoughtcrime.securesms.ui.SessionMaterialTheme
 import org.thoughtcrime.securesms.ui.SessionShieldIcon
 import org.thoughtcrime.securesms.ui.base
-import org.thoughtcrime.securesms.ui.components.OutlineButton
+import org.thoughtcrime.securesms.ui.components.SessionOutlinedButton
 import org.thoughtcrime.securesms.ui.contentDescription
+import org.thoughtcrime.securesms.ui.h4
 import org.thoughtcrime.securesms.ui.h8
 import org.thoughtcrime.securesms.ui.setContentWithTheme
 import org.thoughtcrime.securesms.ui.small
@@ -366,9 +367,9 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
     @Preview
     @Composable
     fun PreviewMessageDetails(
-        @PreviewParameter(SessionColorsParameterProvider::class) sessionColors: SessionColors
+        @PreviewParameter(SessionColorsParameterProvider::class) palette: Palette
     ) {
-        PreviewTheme(sessionColors) {
+        PreviewTheme(palette) {
             SeedReminder()
         }
     }
@@ -381,11 +382,11 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                 Modifier
                     .fillMaxWidth()
                     .height(4.dp)
-                    .background(LocalColors.current.primary)
+                    .background(LocalPalette.current.primary)
             )
             Row(
                 Modifier
-                    .background(LocalColors.current.backgroundSecondary)
+                    .background(LocalPalette.current.backgroundSecondary)
                     .padding(
                         horizontal = LocalDimensions.current.marginSmall,
                         vertical = LocalDimensions.current.marginExtraSmall
@@ -395,19 +396,19 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                     Row {
                         Text(
                             stringResource(R.string.save_your_recovery_password),
-                            style = MaterialTheme.typography.h8
+                            style = h8
                         )
                         Spacer(Modifier.requiredWidth(LocalDimensions.current.itemSpacingExtraSmall))
                         SessionShieldIcon()
                     }
                     Text(
                         stringResource(R.string.save_your_recovery_password_to_make_sure_you_don_t_lose_access_to_your_account),
-                        style = MaterialTheme.typography.small
+                        style = small
                     )
                 }
                 Spacer(Modifier.width(LocalDimensions.current.marginExtraExtraSmall))
-                OutlineButton(
-                    textId = R.string.continue_2,
+                SessionOutlinedButton(
+                    text = stringResource(R.string.continue_2),
                     modifier = Modifier
                         .align(Alignment.CenterVertically)
                         .contentDescription(R.string.AccessibilityId_reveal_recovery_phrase_button),
@@ -434,13 +435,13 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             if (newAccount) {
                 Text(
                     stringResource(R.string.onboardingAccountCreated),
-                    style = MaterialTheme.typography.h4,
+                    style = h4,
                     textAlign = TextAlign.Center
                 )
                 Text(
                     stringResource(R.string.welcome_to_session),
-                    style = MaterialTheme.typography.base,
-                    color = LocalColors.current.primary,
+                    style = base,
+                    color = LocalPalette.current.primary,
                     textAlign = TextAlign.Center
                 )
             }
@@ -449,12 +450,12 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
 
             Text(
                 stringResource(R.string.conversationsNone),
-                style = MaterialTheme.typography.h8,
+                style = h8,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(bottom = 12.dp))
             Text(
                 stringResource(R.string.onboardingHitThePlusButton),
-                style = MaterialTheme.typography.small,
+                style = small,
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.weight(2f))

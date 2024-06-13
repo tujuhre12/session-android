@@ -56,7 +56,7 @@ fun BoxScope.HorizontalPagerIndicator(pagerState: PagerState) {
                 pagerState = pagerState,
                 pageCount = pagerState.pageCount,
                 activeColor = Color.White,
-                inactiveColor = LocalColors.current.textSecondary)
+                inactiveColor = LocalPalette.current.textSecondary)
         }
     }
 }

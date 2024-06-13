@@ -110,11 +110,11 @@ class LoadingActivity: BaseActionBarActivity() {
             )
             Text(
                 stringResource(R.string.waitOneMoment),
-                style = MaterialTheme.typography.h7
+                style = h7
             )
             Text(
                 stringResource(R.string.loadAccountProgressMessage),
-                style = MaterialTheme.typography.base
+                style = base
             )
             Spacer(modifier = Modifier.weight(2f))
         }

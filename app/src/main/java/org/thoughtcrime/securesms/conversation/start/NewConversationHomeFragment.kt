@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
-import androidx.compose.material.primarySurface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -21,7 +20,7 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.ItemButton
-import org.thoughtcrime.securesms.ui.LocalColors
+import org.thoughtcrime.securesms.ui.LocalPalette
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.components.AppBar
 import org.thoughtcrime.securesms.ui.components.QrImage
@@ -47,7 +46,7 @@ class NewConversationHomeFragment : Fragment() {
 
     @Composable
     fun NewConversationScreen() {
-        Column(modifier = Modifier.background(MaterialTheme.colors.primarySurface)) {
+        Column(modifier = Modifier.background(LocalPalette.current.backgroundSecondary)) {
             AppBar(stringResource(R.string.dialog_new_conversation_title), onClose = { delegate.onDialogClosePressed() })
             ItemButton(textId = R.string.messageNew, icon = R.drawable.ic_message) { delegate.onNewMessageSelected() }
             Divider(startIndent = LocalDimensions.current.dividerIndent)
@@ -63,13 +62,13 @@ class NewConversationHomeFragment : Fragment() {
             ) {
                 Text(
                     text = stringResource(R.string.accountIdYours),
-                    style = MaterialTheme.typography.xl
+                    style = xl
                 )
                 Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacingTiny))
                 Text(
                     text = stringResource(R.string.qrYoursDescription),
-                    color = LocalColors.current.textSecondary,
-                    style = MaterialTheme.typography.small
+                    color = LocalPalette.current.textSecondary,
+                    style = small
                 )
                 Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacingSmall))
                 QrImage(string = TextSecurePreferences.getLocalNumber(requireContext())!!, Modifier.contentDescription(R.string.AccessibilityId_qr_code))

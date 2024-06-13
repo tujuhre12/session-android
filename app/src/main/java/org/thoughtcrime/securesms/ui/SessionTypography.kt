@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.ui
 import androidx.compose.material.Typography
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontFamily.Companion.Monospace
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
@@ -12,31 +13,44 @@ fun boldStyle(size: TextUnit) = TextStyle.Default.copy(
     fontSize = size
 )
 
-fun defaultStyle(size: TextUnit) = TextStyle.Default.copy(
+fun defaultStyle(size: TextUnit, fontFamily: FontFamily? = TextStyle.Default.fontFamily) = TextStyle.Default.copy(
     fontSize = size,
-    lineHeight = size * 1.2
+    lineHeight = size * 1.2,
+    fontFamily = fontFamily
 )
+
+val xl = defaultStyle(18.sp)
+val large = defaultStyle(16.sp)
+
+val base = defaultStyle(14.sp)
+val baseBold = boldStyle(14.sp)
+val baseMonospace = defaultStyle(14.sp, fontFamily = Monospace)
+
+val small = defaultStyle(12.sp)
+val smallBold = boldStyle(12.sp)
+val smallMonospace = defaultStyle(12.sp, fontFamily = Monospace)
+
+val extraSmall = defaultStyle(11.sp)
+val extraSmallBold = boldStyle(11.sp)
+val extraSmallMonospace = defaultStyle(11.sp, fontFamily = Monospace)
+
+val fine = defaultStyle(9.sp)
+
+val h1 = boldStyle(36.sp)
+val h2 = boldStyle(32.sp)
+val h3 = boldStyle(29.sp)
+val h4 = boldStyle(26.sp)
+val h5 = boldStyle(23.sp)
+val h6 = boldStyle(20.sp)
+val h7 = boldStyle(18.sp)
+val h8 = boldStyle(16.sp)
+val h9 = boldStyle(14.sp)
 
 val sessionTypography = Typography(
-    h1 = boldStyle(36.sp),
-    h2 = boldStyle(32.sp),
-    h3 = boldStyle(29.sp),
-    h4 = boldStyle(26.sp),
-    h5 = boldStyle(23.sp),
-    h6 = boldStyle(20.sp),
+    h1 = h1,
+    h2 = h2,
+    h3 = h3,
+    h4 = h4,
+    h5 = h5,
+    h6 = h6,
 )
-
-val Typography.xl get() = defaultStyle(18.sp)
-val Typography.large get() = defaultStyle(16.sp)
-val Typography.base get() = defaultStyle(14.sp)
-val Typography.baseBold get() = boldStyle(14.sp)
-val Typography.baseMonospace get() = defaultStyle(14.sp).copy(fontFamily = FontFamily.Monospace)
-val Typography.small get() = defaultStyle(12.sp)
-val Typography.smallMonospace get() = defaultStyle(12.sp).copy(fontFamily = FontFamily.Monospace)
-val Typography.extraSmall get() = defaultStyle(11.sp)
-val Typography.extraSmallMonospace get() = defaultStyle(11.sp).copy(fontFamily = FontFamily.Monospace)
-val Typography.fine get() = defaultStyle(9.sp)
-
-val Typography.h7 get() = boldStyle(18.sp)
-val Typography.h8 get() = boldStyle(16.sp)
-val Typography.h9 get() = boldStyle(14.sp)

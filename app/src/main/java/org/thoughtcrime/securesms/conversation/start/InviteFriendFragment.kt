@@ -14,9 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
-import androidx.compose.material.primarySurface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,12 +29,14 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.preferences.copyPublicKey
 import org.thoughtcrime.securesms.preferences.sendInvitationToUseSession
-import org.thoughtcrime.securesms.ui.LocalColors
+import org.thoughtcrime.securesms.ui.LocalPalette
+import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.components.AppBar
-import org.thoughtcrime.securesms.ui.components.OutlineButton
-import org.thoughtcrime.securesms.ui.components.OutlineCopyButton
-import org.thoughtcrime.securesms.ui.components.SmallButtons
+import org.thoughtcrime.securesms.ui.components.MediumButtonSize
+import org.thoughtcrime.securesms.ui.components.SessionOutlinedCopyButton
+import org.thoughtcrime.securesms.ui.components.SessionOutlinedButton
+import org.thoughtcrime.securesms.ui.components.SmallButtonSize
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.onCreateView
 import org.thoughtcrime.securesms.ui.small
@@ -62,7 +62,9 @@ class InviteFriendFragment : Fragment() {
 @Preview
 @Composable
 private fun PreviewInviteFriend() {
-    InviteFriend("050000000")
+    PreviewTheme {
+        InviteFriend("050000000")
+    }
 }
 
 @Composable
@@ -73,7 +75,7 @@ private fun InviteFriend(
     copyPublicKey: () -> Unit = {},
     sendInvitation: () -> Unit = {},
 ) {
-    Column(modifier = Modifier.background(MaterialTheme.colors.primarySurface)) {
+    Column(modifier = Modifier.background(LocalPalette.current.backgroundSecondary)) {
         AppBar(stringResource(R.string.invite_a_friend), onBack = onBack, onClose = onClose)
         Column(
             modifier = Modifier.padding(horizontal = 24.dp),
@@ -83,7 +85,7 @@ private fun InviteFriend(
                 modifier = Modifier
                     .border(
                         width = 1.dp,
-                        color = LocalColors.current.textSecondary,
+                        color = LocalPalette.current.textSecondary,
                         shape = RoundedCornerShape(size = 13.dp)
                     )
                     .fillMaxWidth()
@@ -96,32 +98,34 @@ private fun InviteFriend(
                         .align(Alignment.Center)
                         .padding(22.dp),
                     textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.base
+                    style = base
                 )
             }
 
             Text(
                 stringResource(R.string.invite_your_friend_to_chat_with_you_on_session_by_sharing_your_account_id_with_them),
                 textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.small,
-                color = LocalColors.current.textSecondary,
+                style = small,
+                color = LocalPalette.current.textSecondary,
                 modifier = Modifier.padding(horizontal = 8.dp)
             )
-            SmallButtons {
-                Row(horizontalArrangement = spacedBy(20.dp)) {
-                    OutlineButton(
-                        modifier = Modifier
-                            .weight(1f)
-                            .contentDescription("Share button"),
-                        text = stringResource(R.string.share),
-                        onClick = sendInvitation
-                    )
+            Row(horizontalArrangement = spacedBy(20.dp)) {
+                SessionOutlinedButton(
+                    stringResource(R.string.share),
+                    modifier = Modifier
+                        .weight(1f)
+                        .contentDescription("Share button"),
+                    size = MediumButtonSize,
+                    color = LocalPalette.current.text,
+                    onClick = sendInvitation
+                )
 
-                    OutlineCopyButton(
-                        modifier = Modifier.weight(1f),
-                        onClick = copyPublicKey
-                    )
-                }
+                SessionOutlinedCopyButton(
+                    modifier = Modifier.weight(1f),
+                    size = MediumButtonSize,
+                    color = LocalPalette.current.text,
+                    onClick = copyPublicKey
+                )
             }
         }
     }

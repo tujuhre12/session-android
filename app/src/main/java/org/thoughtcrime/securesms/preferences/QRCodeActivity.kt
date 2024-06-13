@@ -26,6 +26,8 @@ import org.session.libsignal.utilities.PublicKeyValidation
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.database.threadDatabase
+import org.thoughtcrime.securesms.ui.LocalDimensions
+import org.thoughtcrime.securesms.ui.LocalPalette
 import org.thoughtcrime.securesms.ui.components.MaybeScanQrCode
 import org.thoughtcrime.securesms.ui.components.QrImage
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
@@ -92,14 +94,14 @@ private fun Tabs(sessionId: String, errors: Flow<String>, onScan: (String) -> Un
 fun QrPage(string: String) {
     Column(
         modifier = Modifier
-            .background(MaterialTheme.colors.surface)
-            .padding(horizontal = 32.dp)
+            .background(LocalPalette.current.backgroundSecondary)
+            .padding(horizontal = LocalDimensions.current.marginMedium)
             .fillMaxSize()
     ) {
         QrImage(
             string = string,
             modifier = Modifier
-                .padding(top = 32.dp, bottom = 12.dp)
+                .padding(top = LocalDimensions.current.marginMedium, bottom = LocalDimensions.current.marginExtraExtraSmall)
                 .contentDescription(R.string.AccessibilityId_qr_code),
             icon = R.drawable.session
         )
@@ -107,7 +109,7 @@ fun QrPage(string: String) {
         Text(
             text = stringResource(R.string.this_is_your_account_id_other_users_can_scan_it_to_start_a_conversation_with_you),
             textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.small
+            style = small
         )
     }
 }

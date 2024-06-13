@@ -30,9 +30,10 @@ import org.thoughtcrime.securesms.onboarding.messagenotifications.startMessageNo
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionMaterialTheme
 import org.thoughtcrime.securesms.ui.base
-import org.thoughtcrime.securesms.ui.components.OutlineButton
+import org.thoughtcrime.securesms.ui.components.SessionOutlinedButton
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.contentDescription
+import org.thoughtcrime.securesms.ui.h4
 import org.thoughtcrime.securesms.ui.setComposeContent
 import org.thoughtcrime.securesms.util.setUpActionBarSessionLogo
 import javax.inject.Inject
@@ -86,10 +87,10 @@ class PickDisplayNameActivity : BaseActionBarActivity() {
                 .padding(bottom = 12.dp)
         ) {
             Spacer(modifier = Modifier.weight(1f))
-            Text(stringResource(state.title), style = MaterialTheme.typography.h4)
+            Text(stringResource(state.title), style = h4)
             Text(
                 stringResource(state.description),
-                style = MaterialTheme.typography.base,
+                style = base,
                 modifier = Modifier.padding(bottom = 12.dp))
 
             SessionOutlinedTextField(
@@ -105,8 +106,8 @@ class PickDisplayNameActivity : BaseActionBarActivity() {
 
             Spacer(modifier = Modifier.weight(2f))
 
-            OutlineButton(
-                textId = R.string.continue_2,
+            SessionOutlinedButton(
+                stringResource(R.string.continue_2),
                 modifier = Modifier
                     .contentDescription(R.string.AccessibilityId_continue)
                     .align(Alignment.CenterHorizontally)

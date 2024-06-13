@@ -38,7 +38,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -66,11 +65,10 @@ import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.HorizontalPagerIndicator
 import org.thoughtcrime.securesms.ui.ItemButton
-import org.thoughtcrime.securesms.ui.LocalColors
+import org.thoughtcrime.securesms.ui.LocalPalette
 import org.thoughtcrime.securesms.ui.PreviewTheme
-import org.thoughtcrime.securesms.ui.SessionColors
+import org.thoughtcrime.securesms.ui.Palette
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
-import org.thoughtcrime.securesms.ui.SessionMaterialTheme
 import org.thoughtcrime.securesms.ui.TitledText
 import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.baseMonospace
@@ -314,9 +312,9 @@ fun ExpandButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
 @Preview
 @Composable
 fun PreviewMessageDetails(
-    @PreviewParameter(SessionColorsParameterProvider::class) sessionColors: SessionColors
+    @PreviewParameter(SessionColorsParameterProvider::class) palette: Palette
 ) {
-    PreviewTheme(sessionColors) {
+    PreviewTheme(palette) {
         MessageDetails(
             state = MessageDetailsState(
                 nonImageAttachmentFileDetails = listOf(
@@ -363,7 +361,7 @@ fun FileDetails(fileDetails: List<TitledText>) {
 fun TitledErrorText(titledText: TitledText?) {
     TitledText(
         titledText,
-        style = MaterialTheme.typography.base.copy(color = LocalColors.current.danger)
+        style = base.copy(color = LocalPalette.current.danger)
     )
 }
 
@@ -371,7 +369,7 @@ fun TitledErrorText(titledText: TitledText?) {
 fun TitledMonospaceText(titledText: TitledText?) {
     TitledText(
         titledText,
-        style = MaterialTheme.typography.baseMonospace
+        style = baseMonospace
     )
 }
 
@@ -379,7 +377,7 @@ fun TitledMonospaceText(titledText: TitledText?) {
 fun TitledText(
     titledText: TitledText?,
     modifier: Modifier = Modifier,
-    style: TextStyle = MaterialTheme.typography.base,
+    style: TextStyle = base,
 ) {
     titledText?.apply {
         TitledView(title, modifier) {

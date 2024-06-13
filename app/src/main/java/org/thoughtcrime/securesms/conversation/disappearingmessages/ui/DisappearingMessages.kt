@@ -12,7 +12,6 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -20,11 +19,11 @@ import androidx.compose.ui.unit.dp
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.thoughtcrime.securesms.ui.Callbacks
-import org.thoughtcrime.securesms.ui.LocalColors
+import org.thoughtcrime.securesms.ui.LocalPalette
 import org.thoughtcrime.securesms.ui.NoOpCallbacks
 import org.thoughtcrime.securesms.ui.OptionsCard
 import org.thoughtcrime.securesms.ui.RadioOption
-import org.thoughtcrime.securesms.ui.components.OutlineButton
+import org.thoughtcrime.securesms.ui.components.SessionOutlinedButton
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.extraSmall
 import org.thoughtcrime.securesms.ui.fadingEdges
@@ -55,16 +54,16 @@ fun DisappearingMessages(
 
                 if (state.showGroupFooter) Text(
                     text = stringResource(R.string.activity_disappearing_messages_group_footer),
-                    style = MaterialTheme.typography.extraSmall,
+                    style = extraSmall,
                     fontWeight = FontWeight(400),
-                    color = LocalColors.current.textSecondary,
+                    color = LocalPalette.current.textSecondary,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth())
             }
         }
 
-        if (state.showSetButton) OutlineButton(
-            textId = R.string.disappearing_messages_set_button_title,
+        if (state.showSetButton) SessionOutlinedButton(
+            stringResource(R.string.disappearing_messages_set_button_title),
             modifier = Modifier
                 .contentDescription(R.string.AccessibilityId_set_button)
                 .align(Alignment.CenterHorizontally)

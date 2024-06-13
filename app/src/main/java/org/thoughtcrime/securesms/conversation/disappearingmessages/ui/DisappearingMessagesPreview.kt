@@ -11,7 +11,7 @@ import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ExpiryType
 import org.thoughtcrime.securesms.conversation.disappearingmessages.State
 import org.thoughtcrime.securesms.ui.PreviewTheme
-import org.thoughtcrime.securesms.ui.SessionColors
+import org.thoughtcrime.securesms.ui.Palette
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
 
 @Preview(widthDp = 450, heightDp = 700)
@@ -51,9 +51,9 @@ class StatePreviewParameterProvider : PreviewParameterProvider<State> {
 @Preview
 @Composable
 fun PreviewThemes(
-    @PreviewParameter(SessionColorsParameterProvider::class) sessionColors: SessionColors
+    @PreviewParameter(SessionColorsParameterProvider::class) palette: Palette
 ) {
-    PreviewTheme(sessionColors) {
+    PreviewTheme(palette) {
         DisappearingMessages(
             State(expiryMode = ExpiryMode.AfterSend(43200)).toUiState(),
             modifier = Modifier.size(400.dp, 600.dp)

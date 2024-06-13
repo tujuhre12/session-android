@@ -32,7 +32,6 @@ import androidx.compose.material.Icon
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.RadioButton
-import androidx.compose.material.RadioButtonDefaults
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
@@ -40,7 +39,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
@@ -93,7 +91,7 @@ data class RadioOption<T>(
 fun <T> OptionsCard(card: OptionsCard<T>, callbacks: Callbacks<T>) {
     Text(
         card.title(),
-        style = MaterialTheme.typography.base
+        style = base
     )
     CellNoMargin {
         LazyColumn(
@@ -190,7 +188,7 @@ fun ItemButton(
         ) {
             icon()
         }
-        Text(text, modifier = Modifier.fillMaxWidth(), style = MaterialTheme.typography.xl)
+        Text(text, modifier = Modifier.fillMaxWidth(), style = xl)
     }
 }
 
@@ -210,7 +208,7 @@ fun CellWithPaddingAndMargin(
     content: @Composable () -> Unit
 ) {
     Card(
-        backgroundColor = LocalColors.current.backgroundSecondary,
+        backgroundColor = LocalPalette.current.backgroundSecondary,
         shape = RoundedCornerShape(16.dp),
         elevation = 0.dp,
         modifier = Modifier
@@ -224,7 +222,7 @@ fun CellWithPaddingAndMargin(
 
 @Composable
 fun <T> TitledRadioButton(option: RadioOption<T>, onClick: () -> Unit) {
-    val color = if (option.enabled) LocalColors.current.text else LocalColors.current.disabled
+    val color = if (option.enabled) LocalPalette.current.text else LocalPalette.current.disabled
     Row(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         modifier = Modifier
@@ -239,13 +237,13 @@ fun <T> TitledRadioButton(option: RadioOption<T>, onClick: () -> Unit) {
             Column {
                 Text(
                     text = option.title(),
-                    style = MaterialTheme.typography.large,
+                    style = large,
                     color = color
                 )
                 option.subtitle?.let {
                     Text(
                         text = it(),
-                        style = MaterialTheme.typography.extraSmall,
+                        style = extraSmall,
                         color = color
                     )
                 }
@@ -258,7 +256,7 @@ fun <T> TitledRadioButton(option: RadioOption<T>, onClick: () -> Unit) {
                 .height(26.dp)
                 .align(Alignment.CenterVertically),
             enabled = option.enabled,
-            colors = LocalColors.current.radioButtonColors()
+            colors = LocalPalette.current.radioButtonColors()
         )
     }
 }
@@ -324,7 +322,7 @@ fun Modifier.fadingEdges(
 fun Divider(modifier: Modifier = Modifier, startIndent: Dp = 0.dp) {
     androidx.compose.material.Divider(
         modifier = modifier.padding(horizontal = LocalDimensions.current.marginExtraSmall),
-        color = LocalColors.current.divider,
+        color = LocalPalette.current.divider,
         startIndent = startIndent
     )
 }
@@ -357,7 +355,7 @@ fun ProgressArc(progress: Float, modifier: Modifier = Modifier) {
             "${text}%",
             color = Color.White,
             modifier = Modifier.align(Alignment.Center),
-            style = MaterialTheme.typography.h2
+            style = h2
         )
     }
 }
@@ -366,8 +364,8 @@ fun ProgressArc(progress: Float, modifier: Modifier = Modifier) {
 fun Arc(
     modifier: Modifier = Modifier,
     percentage: Float = 0.25f,
-    fillColor: Color = LocalColors.current.primary,
-    backgroundColor: Color = LocalColors.current.borders,
+    fillColor: Color = LocalPalette.current.primary,
+    backgroundColor: Color = LocalPalette.current.borders,
     strokeWidth: Dp = 18.dp,
     sweepAngle: Float = 310f,
     startAngle: Float = (360f - sweepAngle) / 2 + 90f

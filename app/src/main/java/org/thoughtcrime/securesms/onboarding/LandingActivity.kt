@@ -33,7 +33,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -47,15 +46,16 @@ import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.onboarding.pickname.startPickDisplayNameActivity
 import org.thoughtcrime.securesms.service.KeyCachingService
 import org.thoughtcrime.securesms.showOpenUrlDialog
-import org.thoughtcrime.securesms.ui.LocalColors
+import org.thoughtcrime.securesms.ui.LocalPalette
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
-import org.thoughtcrime.securesms.ui.SessionColors
+import org.thoughtcrime.securesms.ui.Palette
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.components.BorderlessHtmlButton
 import org.thoughtcrime.securesms.ui.components.FilledButton
-import org.thoughtcrime.securesms.ui.components.OutlineButton
+import org.thoughtcrime.securesms.ui.components.SessionOutlinedButton
 import org.thoughtcrime.securesms.ui.contentDescription
+import org.thoughtcrime.securesms.ui.h4
 import org.thoughtcrime.securesms.ui.large
 import org.thoughtcrime.securesms.ui.setComposeContent
 import org.thoughtcrime.securesms.util.setUpActionBarSessionLogo
@@ -96,9 +96,9 @@ class LandingActivity : BaseActionBarActivity() {
     @Preview
     @Composable
     private fun LandingScreen(
-        @PreviewParameter(SessionColorsParameterProvider::class) sessionColors: SessionColors
+        @PreviewParameter(SessionColorsParameterProvider::class) palette: Palette
     ) {
-        PreviewTheme(sessionColors) {
+        PreviewTheme(palette) {
             LandingScreen()
         }
     }
@@ -125,7 +125,7 @@ class LandingActivity : BaseActionBarActivity() {
                 Text(
                     stringResource(R.string.onboardingBubblePrivacyInYourPocket),
                     modifier = Modifier.align(Alignment.CenterHorizontally),
-                    style = MaterialTheme.typography.h4,
+                    style = h4,
                     textAlign = TextAlign.Center
                 )
                 Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacingMedium))
@@ -162,7 +162,7 @@ class LandingActivity : BaseActionBarActivity() {
                     onClick = ::startPickDisplayNameActivity
                 )
                 Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacingSmall))
-                OutlineButton(
+                SessionOutlinedButton(
                     text = stringResource(R.string.onboardingAccountExists),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -224,8 +224,8 @@ private fun MessageText(text: String, isOutgoing: Boolean, modifier: Modifier) {
     Box(modifier = modifier then Modifier.fillMaxWidth()) {
         MessageText(
             text,
-            color = if (isOutgoing) LocalColors.current.backgroundBubbleSent else LocalColors.current.backgroundBubbleReceived,
-            textColor = if (isOutgoing) LocalColors.current.textBubbleSent else LocalColors.current.textBubbleReceived,
+            color = if (isOutgoing) LocalPalette.current.backgroundBubbleSent else LocalPalette.current.backgroundBubbleReceived,
+            textColor = if (isOutgoing) LocalPalette.current.textBubbleSent else LocalPalette.current.textBubbleReceived,
             modifier = Modifier.align(if (isOutgoing) Alignment.TopEnd else Alignment.TopStart)
         )
     }
@@ -246,7 +246,7 @@ private fun MessageText(
     ) {
         Text(
             text,
-            style = MaterialTheme.typography.large,
+            style = large,
             color = textColor,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
         )

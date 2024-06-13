@@ -24,7 +24,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.thoughtcrime.securesms.ui.LocalColors
+import org.thoughtcrime.securesms.ui.LocalPalette
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.baseBold
@@ -43,15 +43,15 @@ fun SessionOutlinedTextField(
         OutlinedTextField(
             value = text,
             modifier = Modifier.fillMaxWidth(),
-            textStyle = MaterialTheme.typography.base,
+            textStyle = base,
             onValueChange = { onChange(it) },
             placeholder = {
                 Text(
                     placeholder,
-                    style = MaterialTheme.typography.base
+                    style = base
                 )
             },
-            colors = outlinedTextFieldColors(error != null),
+            colors = LocalPalette.current.outlinedTextFieldColors(error != null),
             singleLine = true,
             keyboardActions = KeyboardActions(
                 onDone = { onContinue() },
@@ -67,8 +67,8 @@ fun SessionOutlinedTextField(
                 it,
                 modifier = Modifier.padding(top = LocalDimensions.current.marginExtraExtraSmall),
                 textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.baseBold,
-                color = LocalColors.current.danger
+                style = baseBold,
+                color = LocalPalette.current.danger
             )
         }
     }
@@ -79,7 +79,7 @@ fun AnnotatedTextWithIcon(
     text: String,
     @DrawableRes iconRes: Int,
     modifier: Modifier = Modifier,
-    style: TextStyle = MaterialTheme.typography.base,
+    style: TextStyle = base,
     iconTint: Color = Color.Unspecified,
     iconSize: TextUnit = 12.sp
 ) {

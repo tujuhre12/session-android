@@ -8,7 +8,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.Card
 import androidx.compose.material.Icon
@@ -31,7 +30,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
-import org.thoughtcrime.securesms.ui.LocalColors
+import org.thoughtcrime.securesms.ui.LocalPalette
 import org.thoughtcrime.securesms.util.QRCodeUtilities
 
 @Composable
@@ -53,15 +52,11 @@ fun QrImage(
         }
     }
 
-    if (LocalColors.current.isLight) {
-        Content(bitmap, icon, modifier = modifier, backgroundColor = LocalColors.current.backgroundLight)
-    } else {
-        Card(
-            backgroundColor = LocalColors.current.backgroundLight,
-            elevation = 0.dp,
-            modifier = modifier
-        ) { Content(bitmap, icon, modifier = Modifier.padding(16.dp), backgroundColor = LocalColors.current.backgroundLight) }
-    }
+    Card(
+        backgroundColor = LocalPalette.current.qrCodeBackground,
+        elevation = 0.dp,
+        modifier = modifier
+    ) { Content(bitmap, icon, backgroundColor = LocalPalette.current.qrCodeBackground) }
 }
 
 @Composable
@@ -69,7 +64,7 @@ private fun Content(
     bitmap: Bitmap?,
     icon: Int,
     modifier: Modifier = Modifier,
-    qrColor: Color = LocalColors.current.onBackgroundLight,
+    qrColor: Color = LocalPalette.current.qrCodeContent,
     backgroundColor: Color,
 ) {
     Box(

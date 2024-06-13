@@ -31,26 +31,26 @@ fun SessionMaterialTheme(
 }
 
 /**
- * Apply a given [SessionColors], and our typography and shapes as a Material 2 Compose Theme.
+ * Apply a given [Palette], and our typography and shapes as a Material 2 Compose Theme.
  **/
 @Composable
 fun SessionMaterialTheme(
-    sessionColors: SessionColors,
+    palette: Palette,
     content: @Composable () -> Unit
 ) {
     MaterialTheme(
-        colors = sessionColors.toMaterialColors(),
+        colors = palette.toMaterialColors(),
         typography = sessionTypography,
         shapes = sessionShapes,
     ) {
         val textSelectionColors = TextSelectionColors(
-            handleColor = LocalColors.current.primary,
-            backgroundColor = LocalColors.current.primary.copy(alpha = 0.5f)
+            handleColor = LocalPalette.current.primary,
+            backgroundColor = LocalPalette.current.primary.copy(alpha = 0.5f)
         )
 
         CompositionLocalProvider(
-            LocalColors provides sessionColors,
-            LocalContentColor provides sessionColors.text,
+            LocalPalette provides palette,
+            LocalContentColor provides palette.text,
             LocalTextSelectionColors provides textSelectionColors
         ) {
             content()
@@ -58,7 +58,7 @@ fun SessionMaterialTheme(
     }
 }
 
-private fun SessionColors.toMaterialColors() = Colors(
+private fun Palette.toMaterialColors() = Colors(
     primary = background,
     primaryVariant = backgroundSecondary,
     secondary = background,
@@ -86,21 +86,16 @@ val sessionShapes = Shapes(
  */
 @Composable
 fun PreviewTheme(
-    sessionColors: SessionColors = LocalColors.current,
+    palette: Palette = LocalPalette.current,
     content: @Composable () -> Unit
 ) {
-    SessionMaterialTheme(sessionColors) {
-        Box(modifier = Modifier.background(color = LocalColors.current.background)) {
+    SessionMaterialTheme(palette) {
+        Box(modifier = Modifier.background(color = LocalPalette.current.background)) {
             content()
         }
     }
 }
 
-class SessionColorsParameterProvider : PreviewParameterProvider<SessionColors> {
-    override val values = sequenceOf(
-        sessionColors(isLight = false, isClassic = true),
-        sessionColors(isLight = true, isClassic = true),
-        sessionColors(isLight = false, isClassic = false),
-        sessionColors(isLight = true, isClassic = false),
-    )
+class SessionColorsParameterProvider : PreviewParameterProvider<Palette> {
+    override val values = sequenceOf(ClassicDark(), ClassicLight(), OceanDark(), OceanLight())
 }

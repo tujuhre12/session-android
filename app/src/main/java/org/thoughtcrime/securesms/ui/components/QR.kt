@@ -58,6 +58,7 @@ import kotlinx.coroutines.flow.filter
 import network.loki.messenger.R
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ui.LocalDimensions
+import org.thoughtcrime.securesms.ui.LocalPalette
 import org.thoughtcrime.securesms.ui.base
 import java.util.concurrent.Executors
 
@@ -76,7 +77,7 @@ fun MaybeScanQrCode(
 ) {
     Box(
         modifier = Modifier.fillMaxSize()
-            .background(MaterialTheme.colors.surface)
+            .background(LocalPalette.current.background)
     ) {
         LocalSoftwareKeyboardController.current?.hide()
 
@@ -92,11 +93,11 @@ fun MaybeScanQrCode(
             ) {
                 Text(
                     stringResource(R.string.activity_link_camera_permission_permanently_denied_configure_in_settings),
-                    style = MaterialTheme.typography.base,
+                    style = base,
                     textAlign = TextAlign.Center
                 )
                 Spacer(modifier = Modifier.size(20.dp))
-                OutlineButton(
+                SessionOutlinedButton(
                     stringResource(R.string.sessionSettings),
                     modifier = Modifier.align(Alignment.CenterHorizontally),
                     onClick = onClickSettings
@@ -104,7 +105,7 @@ fun MaybeScanQrCode(
             }
         } else {
             Box(modifier = Modifier.fillMaxSize().padding(LocalDimensions.current.marginLarge)) {
-                OutlineButton(
+                SessionOutlinedButton(
                     stringResource(R.string.cameraGrantAccess),
                     modifier = Modifier
                         .align(Alignment.Center)

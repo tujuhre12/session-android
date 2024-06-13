@@ -78,9 +78,8 @@ import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.ItemButton
 import org.thoughtcrime.securesms.ui.ItemButtonWithDrawable
 import org.thoughtcrime.securesms.ui.LocalDimensions
-import org.thoughtcrime.securesms.ui.SessionMaterialTheme
-import org.thoughtcrime.securesms.ui.components.OutlineButton
-import org.thoughtcrime.securesms.ui.components.OutlineCopyButton
+import org.thoughtcrime.securesms.ui.components.SessionOutlinedCopyButton
+import org.thoughtcrime.securesms.ui.components.SessionOutlinedButton
 import org.thoughtcrime.securesms.ui.destructiveButtonColors
 import org.thoughtcrime.securesms.ui.setContentWithTheme
 import org.thoughtcrime.securesms.util.BitmapDecodingException
@@ -391,13 +390,13 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
                     .padding(top = LocalDimensions.current.marginTiny),
                 horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.itemSpacingSmall),
             ) {
-                OutlineButton(
+                SessionOutlinedButton(
                     stringResource(R.string.share),
                     modifier = Modifier.weight(1f),
                     onClick = { sendInvitationToUseSession() }
                 )
 
-                OutlineCopyButton(
+                SessionOutlinedCopyButton(
                     modifier = Modifier.weight(1f),
                     onClick = ::copyPublicKey,
                 )

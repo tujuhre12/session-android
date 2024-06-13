@@ -39,10 +39,11 @@ import org.thoughtcrime.securesms.ui.SessionMaterialTheme
 import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.baseBold
 import org.thoughtcrime.securesms.ui.components.MaybeScanQrCode
-import org.thoughtcrime.securesms.ui.components.OutlineButton
+import org.thoughtcrime.securesms.ui.components.SessionOutlinedButton
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
 import org.thoughtcrime.securesms.ui.contentDescription
+import org.thoughtcrime.securesms.ui.h4
 import org.thoughtcrime.securesms.ui.setComposeContent
 import org.thoughtcrime.securesms.util.start
 import javax.inject.Inject
@@ -126,7 +127,7 @@ fun RecoveryPassword(state: LinkDeviceState, onChange: (String) -> Unit = {}, on
         Row {
             Text(
                 stringResource(R.string.sessionRecoveryPassword),
-                style = MaterialTheme.typography.h4
+                style = h4
             )
             Spacer(Modifier.width(6.dp))
             Icon(
@@ -137,7 +138,7 @@ fun RecoveryPassword(state: LinkDeviceState, onChange: (String) -> Unit = {}, on
         Spacer(Modifier.size(28.dp))
         Text(
             stringResource(R.string.activity_link_enter_your_recovery_password_to_load_your_account_if_you_haven_t_saved_it_you_can_find_it_in_your_app_settings),
-            style = MaterialTheme.typography.base
+            style = base
         )
         Spacer(Modifier.size(24.dp))
         SessionOutlinedTextField(
@@ -151,8 +152,8 @@ fun RecoveryPassword(state: LinkDeviceState, onChange: (String) -> Unit = {}, on
             error = state.error
         )
         Spacer(Modifier.weight(2f))
-        OutlineButton(
-            textId = R.string.continue_2,
+        SessionOutlinedButton(
+            stringResource(R.string.continue_2),
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
                 .padding(vertical = 20.dp)

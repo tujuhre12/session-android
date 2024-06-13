@@ -42,16 +42,17 @@ import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.showOpenUrlDialog
 import org.thoughtcrime.securesms.ui.LoadingArcOr
-import org.thoughtcrime.securesms.ui.LocalColors
+import org.thoughtcrime.securesms.ui.LocalPalette
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
-import org.thoughtcrime.securesms.ui.SessionColors
+import org.thoughtcrime.securesms.ui.Palette
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.components.AppBar
 import org.thoughtcrime.securesms.ui.components.BorderlessButtonWithIcon
 import org.thoughtcrime.securesms.ui.components.MaybeScanQrCode
-import org.thoughtcrime.securesms.ui.components.OutlineButton
+import org.thoughtcrime.securesms.ui.components.MediumButtonSize
 import org.thoughtcrime.securesms.ui.components.SessionButtonText
+import org.thoughtcrime.securesms.ui.components.SessionOutlinedButton
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
 import org.thoughtcrime.securesms.ui.contentDescription
@@ -102,9 +103,9 @@ class NewMessageFragment : Fragment() {
 @Preview
 @Composable
 private fun PreviewNewMessage(
-    @PreviewParameter(SessionColorsParameterProvider::class) sessionColors: SessionColors
+    @PreviewParameter(SessionColorsParameterProvider::class) palette: Palette
 ) {
-    PreviewTheme(sessionColors) {
+    PreviewTheme(palette) {
         NewMessage(State())
     }
 }
@@ -123,7 +124,7 @@ private fun NewMessage(
 ) {
     val pagerState = rememberPagerState { TITLES.size }
 
-    Column(modifier = Modifier.background(LocalColors.current.backgroundSecondary)) {
+    Column(modifier = Modifier.background(LocalPalette.current.backgroundSecondary)) {
         AppBar(stringResource(R.string.messageNew), onClose = onClose, onBack = onBack)
         SessionTabRow(pagerState, TITLES)
         HorizontalPager(pagerState) {
@@ -162,7 +163,7 @@ fun EnterAccountId(
             BorderlessButtonWithIcon(
                 text = stringResource(R.string.messageNewDescription),
                 iconRes = R.drawable.ic_circle_question_mark,
-                contentColor = LocalColors.current.textSecondary,
+                contentColor = LocalPalette.current.textSecondary,
                 modifier = Modifier
                     .contentDescription(R.string.AccessibilityId_help_desk_link)
                     .fillMaxWidth()
@@ -170,12 +171,13 @@ fun EnterAccountId(
             ) { onHelp() }
         }
 
-        OutlineButton(
+        SessionOutlinedButton(
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
                 .padding(horizontal = LocalDimensions.current.marginLarge)
                 .fillMaxWidth()
                 .contentDescription(R.string.next),
+            size = MediumButtonSize,
             enabled = state.isNextButtonEnabled,
             onClick = { callbacks.onContinue() }
         ) {
