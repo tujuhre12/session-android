@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.Card
 import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -26,7 +25,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -34,7 +32,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.LocalColors
-import org.thoughtcrime.securesms.ui.LocalOnLightCell
 import org.thoughtcrime.securesms.util.QRCodeUtilities
 
 @Composable
@@ -47,13 +44,11 @@ fun QrImage(
         mutableStateOf(null)
     }
 
-    val dark = LocalColors.current.onBackgroundLight.toArgb()
-
     val scope = rememberCoroutineScope()
     LaunchedEffect(string) {
         scope.launch(Dispatchers.IO) {
             bitmap = (300..500 step 100).firstNotNullOf {
-                runCatching { QRCodeUtilities.encode(string, it, dark = dark) }.getOrNull()
+                runCatching { QRCodeUtilities.encode(string, it) }.getOrNull()
             }
         }
     }
@@ -74,7 +69,7 @@ private fun Content(
     bitmap: Bitmap?,
     icon: Int,
     modifier: Modifier = Modifier,
-    qrColor: Color = LocalOnLightCell.current,
+    qrColor: Color = LocalColors.current.onBackgroundLight,
     backgroundColor: Color,
 ) {
     Box(
@@ -104,7 +99,7 @@ private fun Content(
         Icon(
             painter = painterResource(id = icon),
             contentDescription = "",
-            tint = LocalOnLightCell.current,
+            tint = qrColor,
             modifier = Modifier
                 .size(62.dp)
                 .align(Alignment.Center)

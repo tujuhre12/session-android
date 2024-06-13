@@ -9,15 +9,21 @@ import androidx.compose.material.Colors
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.RadioButtonDefaults
+import androidx.compose.material.TabRowDefaults
 import androidx.compose.material.Text
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.primarySurface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import org.session.libsession.utilities.AppTextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences
+import org.thoughtcrime.securesms.util.ThemeState
+import org.thoughtcrime.securesms.util.themeState
 
 const val classicDark0 = 0xff111111
 const val classicDark1 = 0xff1B1B1B
@@ -66,6 +72,82 @@ val classicLightColors = classicLights.map(::Color)
 val classicDarkColors = classicDarks.map(::Color)
 
 val blackAlpha40 = Color.Black.copy(alpha = 0.4f)
+
+val LocalColors = staticCompositionLocalOf { sessionColors(isLight = false, isClassic = true) }
+
+data class SessionColors(
+    val isLight: Boolean = false,
+    val primary: Color = Color.Unspecified,
+    val danger: Color = Color.Unspecified,
+    val disabled: Color = Color.Unspecified,
+    val background: Color = Color.Unspecified,
+    val backgroundSecondary: Color = Color.Unspecified,
+    val text: Color = Color.Unspecified,
+    val textSecondary: Color = Color.Unspecified,
+    val borders: Color = Color.Unspecified,
+    val textBubbleSent: Color = Color.Unspecified,
+    val backgroundBubbleReceived: Color = Color.Unspecified,
+    val textBubbleReceived: Color = Color.Unspecified,
+) {
+    val backgroundLight get() = if (isLight) backgroundSecondary else Color.White
+    val onBackgroundLight get() = if (isLight) text else background
+    val button get() = if (isLight) text else primary
+    val divider get() = text.copy(alpha = TabRowDefaults.DividerOpacity)
+    val backgroundBubbleSent get() = primary
+    @Composable fun radioButtonColors() = RadioButtonDefaults.colors(selectedColor = primary, unselectedColor = text, disabledColor = disabled)
+}
+
+val primaryGreen = Color(0xFF31F196)
+val primaryBlue = Color(0xFF57C9FA)
+val primaryPurple = Color(0xFFC993FF)
+val primaryPink = Color(0xFFFF95EF)
+val primaryRed = Color(0xFFFF9C8E)
+val primaryOrange = Color(0xFFFCB159)
+val primaryYellow = Color(0xFFFAD657)
+
+val dangerDark = Color(0xFFFF3A3A)
+val dangerLight = Color(0xFFE12D19)
+val disabledDark = Color(0xFFA1A2A1)
+val disabledLioht = Color(0xFF6D6D6D)
+
+val primaryColors = listOf(
+    primaryGreen,
+    primaryBlue,
+    primaryPurple,
+    primaryPink,
+    primaryRed,
+    primaryOrange,
+    primaryYellow,
+)
+
+private class UnresolvedColor(val function: (Boolean, Boolean) -> Color) {
+    operator fun invoke(isLight: Boolean, isClassic: Boolean) = function(isLight, isClassic)
+
+    constructor(light: Color, dark: Color): this(function = { isLight, _ -> if (isLight) light else dark })
+    constructor(classicDark: Color, classicLight: Color, oceanDark: Color, oceanLight: Color): this(function = { isLight, isClassic -> if (isLight) if (isClassic) classicLight else oceanLight else if (isClassic) classicDark else oceanDark })
+}
+
+fun sessionColors(
+    isLight: Boolean,
+    isClassic: Boolean,
+    primary: Color = if (isClassic) primaryGreen else primaryBlue
+): SessionColors {
+    val index = (if (isLight) 1 else 0) + if (isClassic) 0 else 2
+    return SessionColors(
+        isLight = isLight,
+        primary = primary,
+        danger = if (isLight) dangerLight else dangerDark,
+        disabled = if (isLight) disabledLioht else disabledDark,
+        background = listOf(Color.Black, Color.White, oceanDarkColors[2], oceanLightColors[7])[index],
+        backgroundSecondary = listOf(classicDarkColors[1], classicLightColors[5], oceanDarkColors[1], oceanLightColors[6])[index],
+        text = listOf(Color.White, Color.Black, Color.White, oceanLightColors[1])[index],
+        textSecondary = listOf(classicDarkColors[5], classicLightColors[1], oceanDarkColors[5], oceanLightColors[2])[index],
+        borders = listOf(classicDarkColors[3], classicLightColors[3], oceanDarkColors[4], oceanLightColors[3])[index],
+        textBubbleSent = listOf(Color.Black, Color.Black, Color.Black, oceanLightColors[1])[index],
+        backgroundBubbleReceived = listOf(classicDarkColors[2], classicLightColors[4], oceanDarkColors[4], oceanLightColors[4])[index],
+        textBubbleReceived = listOf(Color.White, classicLightColors[4], oceanDarkColors[4], oceanLightColors[4])[index],
+    )
+}
 
 @Composable
 fun transparentButtonColors() = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent)
