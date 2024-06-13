@@ -21,8 +21,8 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.ItemButton
+import org.thoughtcrime.securesms.ui.LocalColors
 import org.thoughtcrime.securesms.ui.LocalDimensions
-import org.thoughtcrime.securesms.ui.classicDarkColors
 import org.thoughtcrime.securesms.ui.components.AppBar
 import org.thoughtcrime.securesms.ui.components.QrImage
 import org.thoughtcrime.securesms.ui.contentDescription
@@ -68,7 +68,7 @@ class NewConversationHomeFragment : Fragment() {
                 Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacingTiny))
                 Text(
                     text = stringResource(R.string.qrYoursDescription),
-                    color = classicDarkColors[5],
+                    color = LocalColors.current.textSecondary,
                     style = MaterialTheme.typography.small
                 )
                 Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacingSmall))

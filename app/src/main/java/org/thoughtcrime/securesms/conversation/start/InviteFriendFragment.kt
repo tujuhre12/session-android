@@ -31,8 +31,8 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.preferences.copyPublicKey
 import org.thoughtcrime.securesms.preferences.sendInvitationToUseSession
+import org.thoughtcrime.securesms.ui.LocalColors
 import org.thoughtcrime.securesms.ui.base
-import org.thoughtcrime.securesms.ui.classicDarkColors
 import org.thoughtcrime.securesms.ui.components.AppBar
 import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.components.OutlineCopyButton
@@ -83,7 +83,7 @@ private fun InviteFriend(
                 modifier = Modifier
                     .border(
                         width = 1.dp,
-                        color = classicDarkColors[5],
+                        color = LocalColors.current.textSecondary,
                         shape = RoundedCornerShape(size = 13.dp)
                     )
                     .fillMaxWidth()
@@ -104,7 +104,7 @@ private fun InviteFriend(
                 stringResource(R.string.invite_your_friend_to_chat_with_you_on_session_by_sharing_your_account_id_with_them),
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.small,
-                color = classicDarkColors[5],
+                color = LocalColors.current.textSecondary,
                 modifier = Modifier.padding(horizontal = 8.dp)
             )
             SmallButtons {

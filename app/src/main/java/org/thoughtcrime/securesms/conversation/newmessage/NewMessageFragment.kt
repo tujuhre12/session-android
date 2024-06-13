@@ -45,12 +45,12 @@ import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.showOpenUrlDialog
 import org.thoughtcrime.securesms.ui.LoadingArcOr
+import org.thoughtcrime.securesms.ui.LocalColors
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionColors
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.SessionMaterialTheme
-import org.thoughtcrime.securesms.ui.classicDarkColors
 import org.thoughtcrime.securesms.ui.components.AppBar
 import org.thoughtcrime.securesms.ui.components.BorderlessButtonWithIcon
 import org.thoughtcrime.securesms.ui.components.MaybeScanQrCode
@@ -169,7 +169,7 @@ fun EnterAccountId(
             BorderlessButtonWithIcon(
                 text = stringResource(R.string.messageNewDescription),
                 iconRes = R.drawable.ic_circle_question_mark,
-                contentColor = classicDarkColors[5],
+                contentColor = LocalColors.current.textSecondary,
                 modifier = Modifier
                     .contentDescription(R.string.AccessibilityId_help_desk_link)
                     .fillMaxWidth()
