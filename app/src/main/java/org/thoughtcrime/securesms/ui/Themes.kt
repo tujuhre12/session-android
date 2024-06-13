@@ -37,7 +37,6 @@ import org.session.libsession.utilities.AppTextSecurePreferences
 import org.thoughtcrime.securesms.util.ThemeState
 import org.thoughtcrime.securesms.util.themeState
 
-val LocalLightCell = staticCompositionLocalOf { Color.Black }
 val LocalOnLightCell = staticCompositionLocalOf { Color.Black }
 
 val LocalDimensions = staticCompositionLocalOf { Dimensions() }
@@ -72,6 +71,8 @@ data class SessionColors(
     val backgroundBubbleReceived: Color = Color.Unspecified,
     val textBubbleReceived: Color = Color.Unspecified,
 ) {
+    val backgroundLight get() = if (isLight) backgroundSecondary else Color.White
+    val onBackgroundLight get() = if (isLight) text else background
     val button get() = if (isLight) text else primary
     val divider get() = text.copy(alpha = TabRowDefaults.DividerOpacity)
     val backgroundBubbleSent get() = primary

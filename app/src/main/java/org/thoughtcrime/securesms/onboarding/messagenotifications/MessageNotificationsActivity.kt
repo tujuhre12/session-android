@@ -169,7 +169,7 @@ fun NotificationRadioButton(
                 tag?.let { Text(stringResource(it), color = LocalColors.current.primary, style = MaterialTheme.typography.h9) }
             }
         }
-        RadioButton(selected = selected, modifier = Modifier.align(Alignment.CenterVertically), onClick = onClick)
+        RadioButton(selected = selected, modifier = Modifier.align(Alignment.CenterVertically), onClick = onClick, colors = LocalColors.current.radioButtonColors())
     }
 }
 

@@ -33,7 +33,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.LocalColors
-import org.thoughtcrime.securesms.ui.LocalLightCell
 import org.thoughtcrime.securesms.ui.LocalOnLightCell
 import org.thoughtcrime.securesms.util.QRCodeUtilities
 
@@ -47,23 +46,25 @@ fun QrImage(
         mutableStateOf(null)
     }
 
+    val dark = LocalColors.current.onBackgroundLight.value.toInt()
+
     val scope = rememberCoroutineScope()
     LaunchedEffect(string) {
         scope.launch(Dispatchers.IO) {
             bitmap = (300..500 step 100).firstNotNullOf {
-                runCatching { QRCodeUtilities.encode(string, it) }.getOrNull()
+                runCatching { QRCodeUtilities.encode(string, it, dark = dark) }.getOrNull()
             }
         }
     }
 
     if (LocalColors.current.isLight) {
-        Content(bitmap, icon, modifier = modifier, backgroundColor = MaterialTheme.colors.surface)
+        Content(bitmap, icon, modifier = modifier, backgroundColor = LocalColors.current.backgroundSecondary)
     } else {
         Card(
-            backgroundColor = LocalLightCell.current,
+            backgroundColor = Color.White,
             elevation = 0.dp,
             modifier = modifier
-        ) { Content(bitmap, icon, modifier = Modifier.padding(16.dp), backgroundColor = LocalLightCell.current) }
+        ) { Content(bitmap, icon, modifier = Modifier.padding(16.dp), backgroundColor = Color.White) }
     }
 }
 

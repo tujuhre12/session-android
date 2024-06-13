@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.Divider
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -94,6 +93,7 @@ import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.SettingsActivity
 import org.thoughtcrime.securesms.showMuteDialog
 import org.thoughtcrime.securesms.showSessionDialog
+import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.LocalColors
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
@@ -444,10 +444,8 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                     )
                 }
 
-                Divider(
-                    modifier = Modifier.padding(vertical = LocalDimensions.current.marginExtraSmall),
-                    color = LocalColors.current.borders
-                )
+                Divider(modifier = Modifier.padding(vertical = LocalDimensions.current.marginExtraSmall))
+
                 Text(
                     stringResource(R.string.conversationsNone),
                     style = MaterialTheme.typography.h8,
