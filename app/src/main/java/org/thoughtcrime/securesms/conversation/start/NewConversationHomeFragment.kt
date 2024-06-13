@@ -58,7 +58,7 @@ class NewConversationHomeFragment : Fragment() {
                 onClose = { delegate.onDialogClosePressed() })
 
             // this component is scrollable from here, but is inside a bottom sheet
-            // so we need to cater for nested scrollingÒ
+            // so we need to cater for nested scrolling
             Surface(
                 // this component is scrollable
                 modifier = Modifier.nestedScroll(rememberNestedScrollInteropConnection())
