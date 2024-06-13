@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.ui
 import android.content.Context
 import androidx.annotation.AttrRes
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
@@ -71,13 +72,13 @@ private fun SessionColors.toMaterialColors() = Colors(
     onPrimary = text,
     onSecondary = text,
     onBackground = text,
-    onSurface = background,
+    onSurface = text,
     onError = text,
     isLight = isLight
 )
 
-private fun Context.sessionColors() = AppTextSecurePreferences(this).themeState().sessionColors()
-private fun ThemeState.sessionColors() = sessionColors(isLight, isClassic, accent)
+@Composable private fun Context.sessionColors() = AppTextSecurePreferences(this).themeState().sessionColors()
+@Composable private fun ThemeState.sessionColors() = sessionColors(if (followSystem) !isSystemInDarkTheme() else isLight, isClassic, accent)
 
 val sessionShapes = Shapes(
     small = RoundedCornerShape(50)
