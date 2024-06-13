@@ -60,30 +60,6 @@ val Colors.disabled @Composable get() = onSurface.copy(alpha = ContentAlpha.disa
 
 val blackAlpha40 = Color.Black.copy(alpha = 0.4f)
 
-val LocalColors = staticCompositionLocalOf { sessionColors(isLight = false, isClassic = true) }
-
-data class SessionColors(
-    val isLight: Boolean = false,
-    val primary: Color = Color.Unspecified,
-    val danger: Color = Color.Unspecified,
-    val disabled: Color = Color.Unspecified,
-    val background: Color = Color.Unspecified,
-    val backgroundSecondary: Color = Color.Unspecified,
-    val text: Color = Color.Unspecified,
-    val textSecondary: Color = Color.Unspecified,
-    val borders: Color = Color.Unspecified,
-    val textBubbleSent: Color = Color.Unspecified,
-    val backgroundBubbleReceived: Color = Color.Unspecified,
-    val textBubbleReceived: Color = Color.Unspecified,
-) {
-    val backgroundLight get() = if (isLight) backgroundSecondary else Color.White
-    val onBackgroundLight get() = if (isLight) text else background
-    val button get() = if (isLight) text else primary
-    val divider get() = text.copy(alpha = TabRowDefaults.DividerOpacity)
-    val backgroundBubbleSent get() = primary
-    @Composable fun radioButtonColors() = RadioButtonDefaults.colors(selectedColor = primary, unselectedColor = text, disabledColor = disabled)
-}
-
 val primaryGreen = Color(0xFF31F196)
 val primaryBlue = Color(0xFF57C9FA)
 val primaryPurple = Color(0xFFC993FF)
@@ -97,132 +73,12 @@ val dangerLight = Color(0xFFE12D19)
 val disabledDark = Color(0xFFA1A2A1)
 val disabledLight = Color(0xFF6D6D6D)
 
-fun sessionColors(
-    isLight: Boolean,
-    isClassic: Boolean,
-    primary: Color = if (isClassic) primaryGreen else primaryBlue
-): SessionColors = if (isClassic) {
-    if (isLight) classicLight else classicDark
-} else {
-    if (isLight) oceanLight else oceanDark
-}.copy(
-    primary = primary
-)
-
-val classicDark = SessionColors(
-    isLight = false,
-    primary = primaryGreen,
-    danger = dangerDark,
-    disabled = disabledDark,
-    background = Color.Black,
-    backgroundSecondary = classicDark1,
-    text = Color.White,
-    textSecondary = classicDark5,
-    borders = classicDark3,
-    textBubbleSent = Color.Black,
-    backgroundBubbleReceived = classicDark2,
-    textBubbleReceived = Color.White,
-)
-
-val classicLight = SessionColors(
-    isLight = true,
-    primary = primaryGreen,
-    danger = dangerLight,
-    disabled = disabledLight,
-    background = Color.White,
-    backgroundSecondary = classicLight5,
-    text = Color.Black,
-    textSecondary = classicLight1,
-    borders = classicLight3,
-    textBubbleSent = Color.Black,
-    backgroundBubbleReceived = classicLight4,
-    textBubbleReceived = classicLight4,
-)
-
-val oceanDark = SessionColors(
-    isLight = false,
-    primary = primaryBlue,
-    danger = dangerDark,
-    disabled = disabledDark,
-    background = oceanDark2,
-    backgroundSecondary = oceanDark1,
-    text = Color.White,
-    textSecondary = oceanDark5,
-    borders = oceanDark4,
-    textBubbleSent = Color.Black,
-    backgroundBubbleReceived = oceanDark4,
-    textBubbleReceived = oceanDark4,
-)
-
-val oceanLight = SessionColors(
-    isLight = true,
-    primary = primaryBlue,
-    danger = dangerLight,
-    disabled = disabledLight,
-    background = oceanLight7,
-    backgroundSecondary = oceanLight6,
-    text = oceanLight1,
-    textSecondary = oceanLight2,
-    borders = oceanLight3,
-    textBubbleSent = oceanLight1,
-    backgroundBubbleReceived = oceanLight4,
-    textBubbleReceived = oceanLight4
-)
 
 @Composable
 fun transparentButtonColors() = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent)
 
 @Composable
 fun destructiveButtonColors() = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent, contentColor = LocalColors.current.danger)
-
-@Composable
-fun Colors(name: String, colors: List<Color>) {
-    Column {
-        colors.forEachIndexed { i, it ->
-            Box(Modifier.background(it)) {
-                Text("$name: $i")
-            }
-        }
-    }
-}
-
-@Preview
-@Composable
-fun PreviewThemeColors(
-    @PreviewParameter(SessionColorsParameterProvider::class) sessionColors: SessionColors
-) {
-    PreviewTheme(sessionColors) { ThemeColors() }
-}
-
-@Composable
-private fun ThemeColors() {
-    Column {
-        Box(Modifier.background(MaterialTheme.colors.primary)) {
-            Text("primary", style = MaterialTheme.typography.base)
-        }
-        Box(Modifier.background(MaterialTheme.colors.primaryVariant)) {
-            Text("primaryVariant", style = MaterialTheme.typography.base)
-        }
-        Box(Modifier.background(MaterialTheme.colors.secondary)) {
-            Text("secondary", style = MaterialTheme.typography.base)
-        }
-        Box(Modifier.background(MaterialTheme.colors.secondaryVariant)) {
-            Text("secondaryVariant", style = MaterialTheme.typography.base)
-        }
-        Box(Modifier.background(MaterialTheme.colors.surface)) {
-            Text("surface", style = MaterialTheme.typography.base)
-        }
-        Box(Modifier.background(MaterialTheme.colors.primarySurface)) {
-            Text("primarySurface", style = MaterialTheme.typography.base)
-        }
-        Box(Modifier.background(MaterialTheme.colors.background)) {
-            Text("background", style = MaterialTheme.typography.base)
-        }
-        Box(Modifier.background(MaterialTheme.colors.error)) {
-            Text("error", style = MaterialTheme.typography.base)
-        }
-    }
-}
 
 @Composable
 fun outlinedTextFieldColors(
@@ -234,13 +90,3 @@ fun outlinedTextFieldColors(
     unfocusedBorderColor = LocalColors.current.borders,
     placeholderColor = if (isError) LocalColors.current.danger else LocalColors.current.textSecondary
 )
-
-fun TextSecurePreferences.Companion.getAccentColor(context: Context): Color = when (getAccentColorName(context)) {
-    BLUE_ACCENT -> primaryBlue
-    PURPLE_ACCENT -> primaryPurple
-    PINK_ACCENT -> primaryPink
-    RED_ACCENT -> primaryRed
-    ORANGE_ACCENT -> primaryOrange
-    YELLOW_ACCENT -> primaryYellow
-    else -> primaryGreen
-}
