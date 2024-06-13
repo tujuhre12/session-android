@@ -14,14 +14,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.primarySurface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -50,7 +47,6 @@ import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionColors
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
-import org.thoughtcrime.securesms.ui.SessionMaterialTheme
 import org.thoughtcrime.securesms.ui.components.AppBar
 import org.thoughtcrime.securesms.ui.components.BorderlessButtonWithIcon
 import org.thoughtcrime.securesms.ui.components.MaybeScanQrCode
@@ -59,6 +55,7 @@ import org.thoughtcrime.securesms.ui.components.SessionButtonText
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
 import org.thoughtcrime.securesms.ui.contentDescription
+import org.thoughtcrime.securesms.ui.onCreateView
 
 class NewMessageFragment : Fragment() {
 
@@ -79,20 +76,16 @@ class NewMessageFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View = ComposeView(requireContext()).apply {
-        setContent {
-            SessionMaterialTheme {
-                val uiState by viewModel.state.collectAsState(State())
-                NewMessage(
-                    uiState,
-                    viewModel.qrErrors,
-                    viewModel,
-                    onClose = { delegate.onDialogClosePressed() },
-                    onBack = { delegate.onDialogBackPressed() },
-                    onHelp = { requireContext().showOpenUrlDialog("https://sessionapp.zendesk.com/hc/en-us/articles/4439132747033-How-do-Session-ID-usernames-work") }
-                )
-            }
-        }
+    ): View = onCreateView {
+        val uiState by viewModel.state.collectAsState(State())
+        NewMessage(
+            uiState,
+            viewModel.qrErrors,
+            viewModel,
+            onClose = { delegate.onDialogClosePressed() },
+            onBack = { delegate.onDialogBackPressed() },
+            onHelp = { requireContext().showOpenUrlDialog("https://sessionapp.zendesk.com/hc/en-us/articles/4439132747033-How-do-Session-ID-usernames-work") }
+        )
     }
 
     private fun createPrivateChat(hexEncodedPublicKey: String) {
@@ -130,7 +123,7 @@ private fun NewMessage(
 ) {
     val pagerState = rememberPagerState { TITLES.size }
 
-    Column(modifier = Modifier.background(MaterialTheme.colors.primarySurface)) {
+    Column(modifier = Modifier.background(LocalColors.current.backgroundSecondary)) {
         AppBar(stringResource(R.string.messageNew), onClose = onClose, onBack = onBack)
         SessionTabRow(pagerState, TITLES)
         HorizontalPager(pagerState) {

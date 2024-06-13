@@ -49,6 +49,7 @@ import org.thoughtcrime.securesms.ui.components.SmallButtons
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.extraSmallMonospace
 import org.thoughtcrime.securesms.ui.h8
+import org.thoughtcrime.securesms.ui.setComposeContent
 
 class RecoveryPasswordActivity : BaseActionBarActivity() {
 
@@ -58,14 +59,12 @@ class RecoveryPasswordActivity : BaseActionBarActivity() {
         super.onCreate(savedInstanceState)
         supportActionBar!!.title = resources.getString(R.string.sessionRecoveryPassword)
 
-        ComposeView(this).apply {
-            setContent {
-                RecoveryPasswordScreen(
-                    viewModel.seed,
-                    { viewModel.copySeed(context) }
-                ) { onHide() }
-            }
-        }.let(::setContentView)
+        setComposeContent {
+            RecoveryPasswordScreen(
+                viewModel.seed,
+                { viewModel.copySeed(this) }
+            ) { onHide() }
+        }
     }
 
     private fun onHide() {
@@ -109,18 +108,16 @@ fun RecoveryPasswordScreen(
     copySeed:() -> Unit = {},
     onHide:() -> Unit = {}
 ) {
-    SessionMaterialTheme {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.marginExtraSmall),
-            modifier = Modifier
-                .contentDescription(R.string.AccessibilityId_recovery_password)
-                .verticalScroll(rememberScrollState())
-                .padding(bottom = LocalDimensions.current.marginExtraSmall)
-        ) {
-            SmallButtons {
-                RecoveryPasswordCell(seed, copySeed)
-                HideRecoveryPasswordCell(onHide)
-            }
+    Column(
+        verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.marginExtraSmall),
+        modifier = Modifier
+            .contentDescription(R.string.AccessibilityId_recovery_password)
+            .verticalScroll(rememberScrollState())
+            .padding(bottom = LocalDimensions.current.marginExtraSmall)
+    ) {
+        SmallButtons {
+            RecoveryPasswordCell(seed, copySeed)
+            HideRecoveryPasswordCell(onHide)
         }
     }
 }

@@ -77,6 +77,7 @@ import org.thoughtcrime.securesms.ui.baseMonospace
 import org.thoughtcrime.securesms.ui.blackAlpha40
 import org.thoughtcrime.securesms.ui.components.SessionButtonText
 import org.thoughtcrime.securesms.ui.destructiveButtonColors
+import org.thoughtcrime.securesms.ui.setComposeContent
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -103,9 +104,7 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
 
         viewModel.timestamp = intent.getLongExtra(MESSAGE_TIMESTAMP, -1L)
 
-        ComposeView(this)
-            .apply { setContent { MessageDetailsScreen() } }
-            .let(::setContentView)
+        setComposeContent { MessageDetailsScreen() }
 
         lifecycleScope.launch {
             viewModel.eventFlow.collect {
@@ -122,16 +121,14 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
     @Composable
     private fun MessageDetailsScreen() {
         val state by viewModel.stateFlow.collectAsState()
-        SessionMaterialTheme {
-            MessageDetails(
-                state = state,
-                onReply = if (state.canReply) { { setResultAndFinish(ON_REPLY) } } else null,
-                onResend = state.error?.let { { setResultAndFinish(ON_RESEND) } },
-                onDelete = { setResultAndFinish(ON_DELETE) },
-                onClickImage = { viewModel.onClickImage(it) },
-                onAttachmentNeedsDownload = viewModel::onAttachmentNeedsDownload,
-            )
-        }
+        MessageDetails(
+            state = state,
+            onReply = if (state.canReply) { { setResultAndFinish(ON_REPLY) } } else null,
+            onResend = state.error?.let { { setResultAndFinish(ON_RESEND) } },
+            onDelete = { setResultAndFinish(ON_DELETE) },
+            onClickImage = { viewModel.onClickImage(it) },
+            onAttachmentNeedsDownload = viewModel::onAttachmentNeedsDownload,
+        )
     }
 
     private fun setResultAndFinish(code: Int) {

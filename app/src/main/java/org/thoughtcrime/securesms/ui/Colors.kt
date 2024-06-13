@@ -95,7 +95,7 @@ val primaryYellow = Color(0xFFFAD657)
 val dangerDark = Color(0xFFFF3A3A)
 val dangerLight = Color(0xFFE12D19)
 val disabledDark = Color(0xFFA1A2A1)
-val disabledLioht = Color(0xFF6D6D6D)
+val disabledLight = Color(0xFF6D6D6D)
 
 fun sessionColors(
     isLight: Boolean,
@@ -128,7 +128,7 @@ val classicLight = SessionColors(
     isLight = true,
     primary = primaryGreen,
     danger = dangerLight,
-    disabled = disabledLioht,
+    disabled = disabledLight,
     background = Color.White,
     backgroundSecondary = classicLight5,
     text = Color.Black,
@@ -158,7 +158,7 @@ val oceanLight = SessionColors(
     isLight = true,
     primary = primaryBlue,
     danger = dangerLight,
-    disabled = disabledLioht,
+    disabled = disabledLight,
     background = oceanLight7,
     backgroundSecondary = oceanLight6,
     text = oceanLight1,

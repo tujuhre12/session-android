@@ -18,3 +18,9 @@ fun Fragment.onCreateView(content: @Composable () -> Unit): ComposeView = Compos
         }
     }
 }
+
+fun ComposeView.setContentWithTheme(content: @Composable () -> Unit) = setContent {
+    SessionMaterialTheme {
+        content()
+    }
+}

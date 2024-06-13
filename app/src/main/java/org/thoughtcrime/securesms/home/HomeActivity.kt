@@ -26,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -105,6 +106,7 @@ import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.h8
+import org.thoughtcrime.securesms.ui.setContentWithTheme
 import org.thoughtcrime.securesms.ui.small
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 import org.thoughtcrime.securesms.util.IP2Country
@@ -206,7 +208,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         binding.sessionToolbar.disableClipping()
         // Set up seed reminder view
         lifecycleScope.launchWhenStarted {
-            binding.seedReminderView.setContent {
+            binding.seedReminderView.setContentWithTheme {
                 if (!textSecurePreferences.getHasViewedSeed()) SeedReminder()
             }
         }
@@ -223,7 +225,9 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         }
 
         // Set up empty state view
-        binding.emptyStateContainer.setContent { EmptyView(ApplicationContext.getInstance(this).newAccount) }
+        binding.emptyStateContainer.setContentWithTheme {
+            EmptyView(ApplicationContext.getInstance(this).newAccount)
+        }
 
         IP2Country.configureIfNeeded(this@HomeActivity)
 
@@ -371,93 +375,89 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
 
     @Composable
     private fun SeedReminder() {
-        SessionMaterialTheme {
-            Column {
-                // Color Strip
-                Box(
-                    Modifier
-                        .fillMaxWidth()
-                        .height(4.dp)
-                        .background(MaterialTheme.colors.secondary)
-                )
-                Row(
-                    Modifier
-                        .background(MaterialTheme.colors.surface)
-                        .padding(
-                            horizontal = LocalDimensions.current.marginSmall,
-                            vertical = LocalDimensions.current.marginExtraSmall
-                        )
-                ) {
-                    Column(Modifier.weight(1f)) {
-                        Row {
-                            Text(
-                                stringResource(R.string.save_your_recovery_password),
-                                style = MaterialTheme.typography.h8
-                            )
-                            Spacer(Modifier.requiredWidth(LocalDimensions.current.itemSpacingExtraSmall))
-                            SessionShieldIcon()
-                        }
+        Column {
+            // Color Strip
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(4.dp)
+                    .background(LocalColors.current.primary)
+            )
+            Row(
+                Modifier
+                    .background(LocalColors.current.backgroundSecondary)
+                    .padding(
+                        horizontal = LocalDimensions.current.marginSmall,
+                        vertical = LocalDimensions.current.marginExtraSmall
+                    )
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Row {
                         Text(
-                            stringResource(R.string.save_your_recovery_password_to_make_sure_you_don_t_lose_access_to_your_account),
-                            style = MaterialTheme.typography.small
+                            stringResource(R.string.save_your_recovery_password),
+                            style = MaterialTheme.typography.h8
                         )
+                        Spacer(Modifier.requiredWidth(LocalDimensions.current.itemSpacingExtraSmall))
+                        SessionShieldIcon()
                     }
-                    Spacer(Modifier.width(LocalDimensions.current.marginExtraExtraSmall))
-                    OutlineButton(
-                        textId = R.string.continue_2,
-                        modifier = Modifier
-                            .align(Alignment.CenterVertically)
-                            .contentDescription(R.string.AccessibilityId_reveal_recovery_phrase_button),
-                        onClick = { start<RecoveryPasswordActivity>() }
+                    Text(
+                        stringResource(R.string.save_your_recovery_password_to_make_sure_you_don_t_lose_access_to_your_account),
+                        style = MaterialTheme.typography.small
                     )
                 }
+                Spacer(Modifier.width(LocalDimensions.current.marginExtraExtraSmall))
+                OutlineButton(
+                    textId = R.string.continue_2,
+                    modifier = Modifier
+                        .align(Alignment.CenterVertically)
+                        .contentDescription(R.string.AccessibilityId_reveal_recovery_phrase_button),
+                    onClick = { start<RecoveryPasswordActivity>() }
+                )
             }
         }
     }
 
     @Composable
     private fun EmptyView(newAccount: Boolean) {
-        SessionMaterialTheme {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .padding(horizontal = 50.dp)
-                    .padding(bottom = 12.dp)
-            ) {
-                Spacer(modifier = Modifier.weight(1f))
-                Icon(
-                    painter = painterResource(id = if (newAccount) R.drawable.emoji_tada_large else R.drawable.ic_logo_large),
-                    contentDescription = null,
-                    tint = Color.Unspecified
-                )
-                if (newAccount) {
-                    Text(
-                        stringResource(R.string.onboardingAccountCreated),
-                        style = MaterialTheme.typography.h4,
-                        textAlign = TextAlign.Center
-                    )
-                    Text(
-                        stringResource(R.string.welcome_to_session),
-                        style = MaterialTheme.typography.base,
-                        color = LocalColors.current.primary,
-                        textAlign = TextAlign.Center
-                    )
-                }
-
-                Divider(modifier = Modifier.padding(vertical = LocalDimensions.current.marginExtraSmall))
-
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .padding(horizontal = 50.dp)
+                .padding(bottom = 12.dp)
+        ) {
+            Spacer(modifier = Modifier.weight(1f))
+            Icon(
+                painter = painterResource(id = if (newAccount) R.drawable.emoji_tada_large else R.drawable.ic_logo_large),
+                contentDescription = null,
+                tint = Color.Unspecified
+            )
+            if (newAccount) {
                 Text(
-                    stringResource(R.string.conversationsNone),
-                    style = MaterialTheme.typography.h8,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(bottom = 12.dp))
-                Text(
-                    stringResource(R.string.onboardingHitThePlusButton),
-                    style = MaterialTheme.typography.small,
+                    stringResource(R.string.onboardingAccountCreated),
+                    style = MaterialTheme.typography.h4,
                     textAlign = TextAlign.Center
                 )
-                Spacer(modifier = Modifier.weight(2f))
+                Text(
+                    stringResource(R.string.welcome_to_session),
+                    style = MaterialTheme.typography.base,
+                    color = LocalColors.current.primary,
+                    textAlign = TextAlign.Center
+                )
             }
+
+            Divider(modifier = Modifier.padding(vertical = LocalDimensions.current.marginExtraSmall))
+
+            Text(
+                stringResource(R.string.conversationsNone),
+                style = MaterialTheme.typography.h8,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(bottom = 12.dp))
+            Text(
+                stringResource(R.string.onboardingHitThePlusButton),
+                style = MaterialTheme.typography.small,
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.weight(2f))
         }
     }
 

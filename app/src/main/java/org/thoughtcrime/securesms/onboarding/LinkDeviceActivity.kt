@@ -43,6 +43,7 @@ import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
 import org.thoughtcrime.securesms.ui.contentDescription
+import org.thoughtcrime.securesms.ui.setComposeContent
 import org.thoughtcrime.securesms.util.start
 import javax.inject.Inject
 
@@ -75,14 +76,10 @@ class LinkDeviceActivity : BaseActionBarActivity() {
             }
         }
 
-        ComposeView(this).apply {
-            setContent {
-                val state by viewModel.stateFlow.collectAsState()
-                SessionMaterialTheme {
-                    LoadAccountScreen(state, viewModel::onChange, viewModel::onContinue, viewModel::onScanQrCode)
-                }
-            }
-        }.let(::setContentView)
+        setComposeContent {
+            val state by viewModel.stateFlow.collectAsState()
+            LoadAccountScreen(state, viewModel::onChange, viewModel::onContinue, viewModel::onScanQrCode)
+        }
     }
 
     @OptIn(ExperimentalFoundationApi::class)

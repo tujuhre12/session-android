@@ -34,6 +34,7 @@ import org.thoughtcrime.securesms.ui.SessionMaterialTheme
 import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.h7
+import org.thoughtcrime.securesms.ui.setComposeContent
 import org.thoughtcrime.securesms.util.setUpActionBarSessionLogo
 import javax.inject.Inject
 
@@ -71,9 +72,7 @@ class LoadingActivity: BaseActionBarActivity() {
 
         ApplicationContext.getInstance(this).newAccount = false
 
-        ComposeView(this)
-            .apply { setContent { LoadingScreen() } }
-            .let(::setContentView)
+        setComposeContent { LoadingScreen() }
 
         setUpActionBarSessionLogo(true)
 
@@ -103,23 +102,21 @@ class LoadingActivity: BaseActionBarActivity() {
             )
         }
 
-        SessionMaterialTheme {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Spacer(modifier = Modifier.weight(1f))
-                ProgressArc(
-                    animatable.value,
-                    modifier = Modifier.contentDescription(R.string.AccessibilityId_loading_animation)
-                )
-                Text(
-                    stringResource(R.string.waitOneMoment),
-                    style = MaterialTheme.typography.h7
-                )
-                Text(
-                    stringResource(R.string.loadAccountProgressMessage),
-                    style = MaterialTheme.typography.base
-                )
-                Spacer(modifier = Modifier.weight(2f))
-            }
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Spacer(modifier = Modifier.weight(1f))
+            ProgressArc(
+                animatable.value,
+                modifier = Modifier.contentDescription(R.string.AccessibilityId_loading_animation)
+            )
+            Text(
+                stringResource(R.string.waitOneMoment),
+                style = MaterialTheme.typography.h7
+            )
+            Text(
+                stringResource(R.string.loadAccountProgressMessage),
+                style = MaterialTheme.typography.base
+            )
+            Spacer(modifier = Modifier.weight(2f))
         }
     }
 }

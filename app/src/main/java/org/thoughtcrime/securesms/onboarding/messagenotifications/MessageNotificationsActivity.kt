@@ -47,6 +47,7 @@ import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.h8
 import org.thoughtcrime.securesms.ui.h9
+import org.thoughtcrime.securesms.ui.setComposeContent
 import org.thoughtcrime.securesms.ui.small
 import org.thoughtcrime.securesms.util.setUpActionBarSessionLogo
 import javax.inject.Inject
@@ -63,18 +64,13 @@ class MessageNotificationsActivity : BaseActionBarActivity() {
         setUpActionBarSessionLogo(true)
         TextSecurePreferences.setHasSeenWelcomeScreen(this, true)
 
-        ComposeView(this)
-            .apply { setContent { MessageNotificationsScreen() } }
-            .let(::setContentView)
+        setComposeContent { MessageNotificationsScreen() }
     }
 
     @Composable
     private fun MessageNotificationsScreen() {
         val state by viewModel.stateFlow.collectAsState()
-
-        SessionMaterialTheme {
-            MessageNotificationsScreen(state, viewModel::setEnabled, ::register)
-        }
+        MessageNotificationsScreen(state, viewModel::setEnabled, ::register)
     }
 
     private fun register() {
