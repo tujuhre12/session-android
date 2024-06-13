@@ -32,6 +32,7 @@ import androidx.compose.material.Icon
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.RadioButton
+import androidx.compose.material.RadioButtonDefaults
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
@@ -223,6 +224,7 @@ fun CellWithPaddingAndMargin(
 
 @Composable
 fun <T> TitledRadioButton(option: RadioOption<T>, onClick: () -> Unit) {
+    val color = if (option.enabled) LocalColors.current.text else LocalColors.current.disabled
     Row(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         modifier = Modifier
@@ -238,13 +240,13 @@ fun <T> TitledRadioButton(option: RadioOption<T>, onClick: () -> Unit) {
                 Text(
                     text = option.title(),
                     style = MaterialTheme.typography.large,
-                    modifier = Modifier.alpha(if (option.enabled) 1f else 0.5f)
+                    color = color
                 )
                 option.subtitle?.let {
                     Text(
                         text = it(),
                         style = MaterialTheme.typography.extraSmall,
-                        modifier = Modifier.alpha(if (option.enabled) 1f else 0.5f)
+                        color = color
                     )
                 }
             }
@@ -252,10 +254,11 @@ fun <T> TitledRadioButton(option: RadioOption<T>, onClick: () -> Unit) {
         RadioButton(
             selected = option.selected,
             onClick = null,
-            enabled = option.enabled,
             modifier = Modifier
                 .height(26.dp)
-                .align(Alignment.CenterVertically)
+                .align(Alignment.CenterVertically),
+            enabled = option.enabled,
+            colors = LocalColors.current.radioButtonColors()
         )
     }
 }

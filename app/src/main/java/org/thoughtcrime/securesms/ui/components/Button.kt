@@ -62,7 +62,7 @@ val smallButton = Modifier.wrapContentHeight()
 fun SessionButtonText(
     text: String,
     modifier: Modifier = Modifier,
-    color: Color = LocalColors.current.text,
+    color: Color = LocalColors.current.button,
     enabled: Boolean = true
 ) {
     Text(
@@ -113,7 +113,7 @@ fun OutlineButton(
         onClick = onClick,
         border = BorderStroke(1.dp, if (enabled) color else LocalColors.current.disabled),
         colors = ButtonDefaults.outlinedButtonColors(
-            contentColor = if (enabled) color else Color.Unspecified,
+            contentColor = if (enabled) color else LocalColors.current.disabled,
             backgroundColor = Color.Unspecified
         )
     ) {

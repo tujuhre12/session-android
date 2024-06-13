@@ -11,6 +11,7 @@ import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material.Colors
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.RadioButtonDefaults
 import androidx.compose.material.Shapes
 import androidx.compose.material.TabRowDefaults
 import androidx.compose.material.Typography
@@ -74,6 +75,7 @@ data class SessionColors(
     val button get() = if (isLight) text else primary
     val divider get() = text.copy(alpha = TabRowDefaults.DividerOpacity)
     val backgroundBubbleSent get() = primary
+    @Composable fun radioButtonColors() = RadioButtonDefaults.colors(selectedColor = primary, unselectedColor = text, disabledColor = disabled)
 }
 
 val primaryGreen = Color(0xFF31F196)
@@ -119,7 +121,7 @@ private fun sessionColors(
         disabled = if (isLight) disabledLioht else disabledDark,
         background = listOf(Color.Black, Color.White, oceanDarkColors[2], oceanLightColors[7])[index],
         backgroundSecondary = listOf(classicDarkColors[1], classicLightColors[5], oceanDarkColors[1], oceanLightColors[6])[index],
-        text = listOf(Color.White, Color.Black, oceanDarkColors[1], oceanLightColors[1])[index],
+        text = listOf(Color.White, Color.Black, Color.White, oceanLightColors[1])[index],
         textSecondary = listOf(classicDarkColors[5], classicLightColors[1], oceanDarkColors[5], oceanLightColors[2])[index],
         borders = listOf(classicDarkColors[3], classicLightColors[3], oceanDarkColors[4], oceanLightColors[3])[index],
         textBubbleSent = listOf(Color.Black, Color.Black, Color.Black, oceanLightColors[1])[index],
