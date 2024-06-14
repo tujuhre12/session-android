@@ -71,6 +71,7 @@ import org.thoughtcrime.securesms.ui.Palette
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.TitledText
 import org.thoughtcrime.securesms.ui.base
+import org.thoughtcrime.securesms.ui.baseBold
 import org.thoughtcrime.securesms.ui.baseMonospace
 import org.thoughtcrime.securesms.ui.blackAlpha40
 import org.thoughtcrime.securesms.ui.destructiveButtonColors
@@ -392,7 +393,7 @@ fun TitledText(
 @Composable
 fun TitledView(title: GetString, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(title.string())
+        Text(title.string(), style = baseBold)
         content()
     }
 }
