@@ -33,119 +33,6 @@ import org.thoughtcrime.securesms.ui.contentDescription
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-//@Composable
-//fun OutlineButton(
-//    text: String,
-//    modifier: Modifier = Modifier,
-//    size: ButtonSize = LargeButtonSize,
-//    color: Color = LocalPalette.current.buttonOutline,
-//    onClick: () -> Unit
-//) {
-//    OutlineButton(
-//        modifier = modifier,
-//        size = size,
-//        color = color,
-//        onClick = onClick
-//    ) {
-//        SessionButtonText(text = text, style = size.textStyle, color = color)
-//    }
-//}
-//
-///**
-// * Base implementation of [SessionOutlinedButton]
-// */
-//@Composable
-//fun OutlineButton(
-//    modifier: Modifier = Modifier,
-//    size: ButtonSize = LargeButtonSize,
-//    enabled: Boolean = true,
-//    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-//    color: Color = LocalPalette.current.buttonOutline,
-//    border: BorderStroke = BorderStroke(1.dp, if (enabled) color else LocalPalette.current.disabled),
-//    shape: Shape = MaterialTheme.shapes.small,
-//    onClick: () -> Unit,
-//    content: @Composable () -> Unit = {}
-//) {
-//    Button(
-//        modifier = modifier.heightIn(min = size.minHeight),
-//        enabled = enabled,
-//        interactionSource = interactionSource,
-//        onClick = onClick,
-//        border = border,
-//        shape = shape,
-//        type = ButtonType.Outline,
-//        color = color
-//    ) {
-//        size.applyTextStyle {
-//            content()
-//        }
-//    }
-//}
-
-@Composable
-fun SlimOutlineCopyButton(
-    modifier: Modifier = Modifier,
-    color: Color = LocalPalette.current.buttonOutline,
-    onClick: () -> Unit
-) {
-    OutlineCopyButton(modifier, SlimButtonSize, color, onClick)
-}
-
-@Composable
-fun OutlineCopyButton(
-    modifier: Modifier = Modifier,
-    size: ButtonSize = LargeButtonSize,
-    color: Color = LocalPalette.current.buttonOutline,
-    onClick: () -> Unit
-) {
-    val interactionSource = remember { MutableInteractionSource() }
-
-    Button(
-        modifier = modifier.contentDescription(R.string.AccessibilityId_copy_button),
-        interactionSource = interactionSource,
-        size = size,
-        type = ButtonType.Outline,
-        color = color,
-        onClick = onClick
-    ) {
-        TemporaryClickedContent(
-            interactionSource = interactionSource,
-            content = { Text(stringResource(R.string.copy)) },
-            temporaryContent = { Text(stringResource(R.string.copied)) }
-        )
-    }
-}
-
-@Composable
-fun TemporaryClickedContent(
-    modifier: Modifier = Modifier,
-    interactionSource: MutableInteractionSource,
-    content: @Composable () -> Unit,
-    temporaryContent: @Composable () -> Unit,
-    temporaryDelay: Duration = 2.seconds
-) {
-    var clicked by remember { mutableStateOf(false) }
-
-    LaunchedEffectAsync {
-        interactionSource.releases.collectLatest {
-            clicked = true
-            delay(temporaryDelay)
-            clicked = false
-        }
-    }
-
-    // Using a Box because the Buttons add children in a Row
-    // and they will jank as they are added and removed.
-    Box(contentAlignment = Alignment.Center) {
-        AnimatedVisibility(!clicked, enter = fadeIn(), exit = fadeOut()) {
-            content()
-        }
-        AnimatedVisibility(clicked, enter = fadeIn(), exit = fadeOut()) {
-            temporaryContent()
-        }
-    }
-}
-
 interface ButtonType {
     @Composable fun border(color: Color, enabled: Boolean): BorderStroke?
     @Composable fun buttonColors(color: Color): ButtonColors
@@ -251,4 +138,67 @@ fun Button(
 
 @Composable fun SlimOutlineButton(onClick: () -> Unit, modifier: Modifier = Modifier, color: Color = LocalPalette.current.buttonOutline, enabled: Boolean = true, content: @Composable () -> Unit) {
     Button(onClick, color, ButtonType.Outline, modifier, enabled, SlimButtonSize) { content() }
+}
+
+@Composable
+fun SlimOutlineCopyButton(
+    modifier: Modifier = Modifier,
+    color: Color = LocalPalette.current.buttonOutline,
+    onClick: () -> Unit
+) {
+    OutlineCopyButton(modifier, SlimButtonSize, color, onClick)
+}
+
+@Composable
+fun OutlineCopyButton(
+    modifier: Modifier = Modifier,
+    size: ButtonSize = LargeButtonSize,
+    color: Color = LocalPalette.current.buttonOutline,
+    onClick: () -> Unit
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+
+    Button(
+        modifier = modifier.contentDescription(R.string.AccessibilityId_copy_button),
+        interactionSource = interactionSource,
+        size = size,
+        type = ButtonType.Outline,
+        color = color,
+        onClick = onClick
+    ) {
+        TemporaryClickedContent(
+            interactionSource = interactionSource,
+            content = { Text(stringResource(R.string.copy)) },
+            temporaryContent = { Text(stringResource(R.string.copied)) }
+        )
+    }
+}
+
+@Composable
+fun TemporaryClickedContent(
+    interactionSource: MutableInteractionSource,
+    content: @Composable () -> Unit,
+    temporaryContent: @Composable () -> Unit,
+    temporaryDelay: Duration = 2.seconds
+) {
+    var clicked by remember { mutableStateOf(false) }
+
+    LaunchedEffectAsync {
+        interactionSource.releases.collectLatest {
+            clicked = true
+            delay(temporaryDelay)
+            clicked = false
+        }
+    }
+
+    // Using a Box because the Buttons add children in a Row
+    // and they will jank as they are added and removed.
+    Box(contentAlignment = Alignment.Center) {
+        AnimatedVisibility(!clicked, enter = fadeIn(), exit = fadeOut()) {
+            content()
+        }
+        AnimatedVisibility(clicked, enter = fadeIn(), exit = fadeOut()) {
+            temporaryContent()
+        }
+    }
 }

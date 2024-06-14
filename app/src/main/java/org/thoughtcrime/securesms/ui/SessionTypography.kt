@@ -9,8 +9,9 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 
 fun boldStyle(size: TextUnit) = TextStyle.Default.copy(
+    fontSize = size,
+    lineHeight = size * 1.2,
     fontWeight = FontWeight.Bold,
-    fontSize = size
 )
 
 fun defaultStyle(size: TextUnit, fontFamily: FontFamily? = TextStyle.Default.fontFamily) = TextStyle.Default.copy(
@@ -20,6 +21,7 @@ fun defaultStyle(size: TextUnit, fontFamily: FontFamily? = TextStyle.Default.fon
 )
 
 val xl = defaultStyle(18.sp)
+
 val large = defaultStyle(16.sp)
 
 val base = defaultStyle(14.sp)

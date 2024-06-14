@@ -165,9 +165,8 @@ fun RecoveryPasswordCell(seed: String, copySeed:() -> Unit = {}) {
                     )
                     SlimOutlineButton(
                         stringResource(R.string.qrView),
-                        modifier = Modifier.weight(1f),
-                        onClick = { showQr = !showQr }
-                    )
+                        Modifier.weight(1f),
+                    ) { showQr = !showQr }
                 }
             }
 
