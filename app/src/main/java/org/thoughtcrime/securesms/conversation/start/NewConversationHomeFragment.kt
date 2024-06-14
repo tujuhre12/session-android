@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -25,7 +24,7 @@ import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.components.AppBar
 import org.thoughtcrime.securesms.ui.components.QrImage
 import org.thoughtcrime.securesms.ui.contentDescription
-import org.thoughtcrime.securesms.ui.onCreateView
+import org.thoughtcrime.securesms.ui.onCreateComposeView
 import org.thoughtcrime.securesms.ui.small
 import org.thoughtcrime.securesms.ui.xl
 import javax.inject.Inject
@@ -42,7 +41,7 @@ class NewConversationHomeFragment : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View = onCreateView { NewConversationScreen() }
+    ): View = onCreateComposeView { NewConversationScreen() }
 
     @Composable
     fun NewConversationScreen() {

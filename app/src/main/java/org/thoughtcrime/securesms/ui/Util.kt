@@ -11,7 +11,7 @@ fun Activity.setComposeContent(content: @Composable () -> Unit) {
         .let(::setContentView)
 }
 
-fun Fragment.onCreateView(content: @Composable () -> Unit): ComposeView = ComposeView(requireContext()).apply {
+fun Fragment.onCreateComposeView(content: @Composable () -> Unit): ComposeView = ComposeView(requireContext()).apply {
     setContent {
         SessionMaterialTheme {
             content()

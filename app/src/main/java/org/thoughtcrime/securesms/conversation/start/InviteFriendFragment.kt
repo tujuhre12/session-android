@@ -36,7 +36,7 @@ import org.thoughtcrime.securesms.ui.components.AppBar
 import org.thoughtcrime.securesms.ui.components.SlimOutlineButton
 import org.thoughtcrime.securesms.ui.components.SlimOutlineCopyButton
 import org.thoughtcrime.securesms.ui.contentDescription
-import org.thoughtcrime.securesms.ui.onCreateView
+import org.thoughtcrime.securesms.ui.onCreateComposeView
 import org.thoughtcrime.securesms.ui.small
 
 @AndroidEntryPoint
@@ -46,7 +46,7 @@ class InviteFriendFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View = onCreateView {
+    ): View = onCreateComposeView {
         InviteFriend(
             TextSecurePreferences.getLocalNumber(LocalContext.current)!!,
             onBack = { delegate.onDialogBackPressed() },

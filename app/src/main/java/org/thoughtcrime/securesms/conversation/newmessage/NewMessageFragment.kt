@@ -55,7 +55,7 @@ import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
 import org.thoughtcrime.securesms.ui.components.SlimOutlineButton
 import org.thoughtcrime.securesms.ui.contentDescription
-import org.thoughtcrime.securesms.ui.onCreateView
+import org.thoughtcrime.securesms.ui.onCreateComposeView
 
 class NewMessageFragment : Fragment() {
 
@@ -76,7 +76,7 @@ class NewMessageFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View = onCreateView {
+    ): View = onCreateComposeView {
         val uiState by viewModel.state.collectAsState(State())
         NewMessage(
             uiState,
