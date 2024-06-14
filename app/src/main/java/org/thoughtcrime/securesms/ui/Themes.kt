@@ -36,7 +36,6 @@ fun SessionMaterialTheme(
 /**
  * Apply a given [Palette], and our typography and shapes as a Material 2 Compose Theme.
  **/
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun SessionMaterialTheme(
     palette: Palette,
@@ -96,7 +95,6 @@ fun PreviewTheme(
     SessionMaterialTheme(palette) {
         Box(modifier = Modifier.background(color = LocalPalette.current.background)) {
             content()
-            LocalTextStyle
         }
     }
 }
