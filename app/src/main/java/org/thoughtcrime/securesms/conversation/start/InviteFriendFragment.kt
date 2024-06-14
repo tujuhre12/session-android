@@ -107,6 +107,7 @@ private fun InviteFriend(
                 color = LocalColors.current.textSecondary,
                 modifier = Modifier.padding(horizontal = 8.dp)
             )
+
             Row(horizontalArrangement = spacedBy(20.dp)) {
                 SlimOutlineButton(
                     stringResource(R.string.share),

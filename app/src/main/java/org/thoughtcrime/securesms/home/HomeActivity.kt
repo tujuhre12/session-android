@@ -52,7 +52,6 @@ import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import org.session.libsession.messaging.MessagingModuleConfiguration
-import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.snode.SnodeAPI
@@ -207,7 +206,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         // Set up seed reminder view
         lifecycleScope.launchWhenStarted {
             binding.seedReminderView.setThemedContent {
-                if (!textSecurePreferences.getHasViewedSeed()) SeedReminder()
+                if (!textSecurePreferences.getHasViewedSeed()) SeedReminder { start<RecoveryPasswordActivity>() }
             }
         }
         // Set up recycler view
@@ -358,104 +357,6 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             configFactory.user
                 ?.takeUnless { it.isBlockCommunityMessageRequestsSet() }
                 ?.setCommunityMessageRequests(false)
-        }
-    }
-
-    @Preview
-    @Composable
-    fun PreviewMessageDetails(
-        @PreviewParameter(SessionColorsParameterProvider::class) colors: Colors
-    ) {
-        PreviewTheme(colors) {
-            SeedReminder()
-        }
-    }
-
-    @Composable
-    private fun SeedReminder() {
-        Column {
-            // Color Strip
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .height(4.dp)
-                    .background(LocalColors.current.primary)
-            )
-            Row(
-                Modifier
-                    .background(LocalColors.current.backgroundSecondary)
-                    .padding(
-                        horizontal = LocalDimensions.current.marginSmall,
-                        vertical = LocalDimensions.current.marginExtraSmall
-                    )
-            ) {
-                Column(Modifier.weight(1f)) {
-                    Row {
-                        Text(
-                            stringResource(R.string.save_your_recovery_password),
-                            style = h8
-                        )
-                        Spacer(Modifier.requiredWidth(LocalDimensions.current.itemSpacingExtraSmall))
-                        SessionShieldIcon()
-                    }
-                    Text(
-                        stringResource(R.string.save_your_recovery_password_to_make_sure_you_don_t_lose_access_to_your_account),
-                        style = small
-                    )
-                }
-                Spacer(Modifier.width(LocalDimensions.current.marginExtraExtraSmall))
-                SlimOutlineButton(
-                    text = stringResource(R.string.continue_2),
-                    modifier = Modifier
-                        .align(Alignment.CenterVertically)
-                        .contentDescription(R.string.AccessibilityId_reveal_recovery_phrase_button),
-                    onClick = { start<RecoveryPasswordActivity>() }
-                )
-            }
-        }
-    }
-
-    @Composable
-    private fun EmptyView(newAccount: Boolean) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .padding(horizontal = 50.dp)
-                .padding(bottom = 12.dp)
-        ) {
-            Spacer(modifier = Modifier.weight(1f))
-            Icon(
-                painter = painterResource(id = if (newAccount) R.drawable.emoji_tada_large else R.drawable.ic_logo_large),
-                contentDescription = null,
-                tint = Color.Unspecified
-            )
-            if (newAccount) {
-                Text(
-                    stringResource(R.string.onboardingAccountCreated),
-                    style = h4,
-                    textAlign = TextAlign.Center
-                )
-                Text(
-                    stringResource(R.string.welcome_to_session),
-                    style = base,
-                    color = LocalColors.current.primary,
-                    textAlign = TextAlign.Center
-                )
-            }
-
-            Divider(modifier = Modifier.padding(vertical = LocalDimensions.current.marginExtraSmall))
-
-            Text(
-                stringResource(R.string.conversationsNone),
-                style = h8,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(bottom = 12.dp))
-            Text(
-                stringResource(R.string.onboardingHitThePlusButton),
-                style = small,
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.weight(2f))
         }
     }
 
@@ -773,9 +674,120 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
     // endregion
 }
 
-data class NameIdContact(val name: String?, val id: String, val contact: Contact): Comparable<NameIdContact> {
-    override fun compareTo(other: NameIdContact): Int = comparator.compare(this, other)
-    companion object {
-        val comparator = compareBy<NameIdContact>({ it.name }, { it.id })
+@Preview
+@Composable
+fun PreviewSeedReminder(
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: Colors
+) {
+    PreviewTheme(colors) {
+        SeedReminder {}
+    }
+}
+
+@Composable
+private fun SeedReminder(startRecoveryPasswordActivity: () -> Unit) {
+    Column {
+        // Color Strip
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(4.dp)
+                .background(LocalColors.current.primary)
+        )
+        Row(
+            Modifier
+                .background(LocalColors.current.backgroundSecondary)
+                .padding(
+                    horizontal = LocalDimensions.current.marginSmall,
+                    vertical = LocalDimensions.current.marginExtraSmall
+                )
+        ) {
+            Column(Modifier.weight(1f)) {
+                Row {
+                    Text(
+                        stringResource(R.string.save_your_recovery_password),
+                        style = h8
+                    )
+                    Spacer(Modifier.requiredWidth(LocalDimensions.current.itemSpacingExtraSmall))
+                    SessionShieldIcon()
+                }
+                Text(
+                    stringResource(R.string.save_your_recovery_password_to_make_sure_you_don_t_lose_access_to_your_account),
+                    style = small
+                )
+            }
+            Spacer(Modifier.width(LocalDimensions.current.marginExtraExtraSmall))
+            SlimOutlineButton(
+                text = stringResource(R.string.continue_2),
+                modifier = Modifier
+                    .align(Alignment.CenterVertically)
+                    .contentDescription(R.string.AccessibilityId_reveal_recovery_phrase_button),
+                onClick = { startRecoveryPasswordActivity() }
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+fun PreviewEmptyView(
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: Colors
+) {
+    PreviewTheme(colors) {
+        EmptyView(newAccount = false)
+    }
+}
+
+@Preview
+@Composable
+fun PreviewEmptyViewNew(
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: Colors
+) {
+    PreviewTheme(colors) {
+        EmptyView(newAccount = true)
+    }
+}
+
+@Composable
+private fun EmptyView(newAccount: Boolean) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .padding(horizontal = 50.dp)
+            .padding(bottom = 12.dp)
+    ) {
+        Spacer(modifier = Modifier.weight(1f))
+        Icon(
+            painter = painterResource(id = if (newAccount) R.drawable.emoji_tada_large else R.drawable.ic_logo_large),
+            contentDescription = null,
+            tint = Color.Unspecified
+        )
+        if (newAccount) {
+            Text(
+                stringResource(R.string.onboardingAccountCreated),
+                style = h4,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                stringResource(R.string.welcome_to_session),
+                style = base,
+                color = LocalColors.current.primary,
+                textAlign = TextAlign.Center
+            )
+        }
+
+        Divider(modifier = Modifier.padding(vertical = LocalDimensions.current.marginExtraSmall))
+
+        Text(
+            stringResource(R.string.conversationsNone),
+            style = h8,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(bottom = 12.dp))
+        Text(
+            stringResource(R.string.onboardingHitThePlusButton),
+            style = small,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.weight(2f))
     }
 }

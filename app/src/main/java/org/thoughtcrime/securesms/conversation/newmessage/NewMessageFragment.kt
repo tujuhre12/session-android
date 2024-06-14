@@ -171,7 +171,7 @@ fun EnterAccountId(
             modifier = Modifier
                 .animateContentSize()
                 .contentDescription(R.string.AccessibilityId_help_desk_link)
-//                    .padding(horizontal = LocalDimensions.current.marginMedium)
+                .padding(horizontal = LocalDimensions.current.marginMedium)
                 .fillMaxWidth(),
         ) { onHelp() }
 

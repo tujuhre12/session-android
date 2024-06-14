@@ -45,15 +45,15 @@ class NewConversationFragment : BottomSheetDialogFragment(), NewConversationDele
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =
         BottomSheetDialog(requireContext(), R.style.Theme_Session_BottomSheet).apply {
             setOnShowListener { _ ->
-                findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)?.let {
-                    it.modifyLayoutParams<LayoutParams> { height = defaultPeekHeight }
-                    BottomSheetBehavior.from(it).apply {
-                        skipCollapsed = true
-                        state = BottomSheetBehavior.STATE_EXPANDED
-                    }
+                findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)?.apply {
+                    modifyLayoutParams<LayoutParams> { height = defaultPeekHeight }
+                }?.let { BottomSheetBehavior.from(it) }?.apply {
+                    skipCollapsed = true
+                    state = BottomSheetBehavior.STATE_EXPANDED
                 }
             }
         }
+
 
     override fun onNewMessageSelected() {
         replaceFragment(NewMessageFragment().also { it.delegate = this })
