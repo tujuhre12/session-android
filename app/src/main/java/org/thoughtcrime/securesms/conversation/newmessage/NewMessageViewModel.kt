@@ -31,7 +31,7 @@ class NewMessageViewModel @Inject constructor(
     val state = _state.asStateFlow()
 
     private val _event = Channel<Event>()
-    val event = _event.receiveAsFlow()
+    val event: Flow<Event> get() = _event.receiveAsFlow()
 
     private val _qrErrors = Channel<String>()
     val qrErrors: Flow<String> = _qrErrors.receiveAsFlow()
