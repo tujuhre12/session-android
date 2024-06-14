@@ -30,9 +30,7 @@ import androidx.compose.material.Card
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Icon
 import androidx.compose.material.LocalContentColor
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.RadioButton
-import androidx.compose.material.RadioButtonDefaults
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
@@ -40,7 +38,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
@@ -93,7 +90,7 @@ data class RadioOption<T>(
 fun <T> OptionsCard(card: OptionsCard<T>, callbacks: Callbacks<T>) {
     Text(
         card.title(),
-        style = MaterialTheme.typography.base
+        style = LocalType.current.base
     )
     CellNoMargin {
         LazyColumn(
@@ -190,7 +187,7 @@ fun ItemButton(
         ) {
             icon()
         }
-        Text(text, modifier = Modifier.fillMaxWidth(), style = MaterialTheme.typography.xl)
+        Text(text, modifier = Modifier.fillMaxWidth(), style = LocalType.current.xl)
     }
 }
 
@@ -239,13 +236,13 @@ fun <T> TitledRadioButton(option: RadioOption<T>, onClick: () -> Unit) {
             Column {
                 Text(
                     text = option.title(),
-                    style = MaterialTheme.typography.large,
+                    style = LocalType.current.large,
                     color = color
                 )
                 option.subtitle?.let {
                     Text(
                         text = it(),
-                        style = MaterialTheme.typography.extraSmall,
+                        style = LocalType.current.extraSmall,
                         color = color
                     )
                 }
@@ -357,7 +354,7 @@ fun ProgressArc(progress: Float, modifier: Modifier = Modifier) {
             "${text}%",
             color = Color.White,
             modifier = Modifier.align(Alignment.Center),
-            style = MaterialTheme.typography.h2
+            style = LocalType.current.h2
         )
     }
 }

@@ -14,14 +14,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -34,17 +32,14 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.onboarding.messagenotifications.startMessageNotificationsActivity
 import org.thoughtcrime.securesms.ui.LocalDimensions
+import org.thoughtcrime.securesms.ui.LocalType
 import org.thoughtcrime.securesms.ui.PreviewTheme
-import org.thoughtcrime.securesms.ui.SessionMaterialTheme
-import org.thoughtcrime.securesms.ui.base
-import org.thoughtcrime.securesms.ui.baseBold
 import org.thoughtcrime.securesms.ui.components.MaybeScanQrCode
 import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.setComposeContent
-import org.thoughtcrime.securesms.util.start
 import javax.inject.Inject
 
 private const val TAG = "LinkDeviceActivity"
@@ -126,7 +121,7 @@ fun RecoveryPassword(state: LinkDeviceState, onChange: (String) -> Unit = {}, on
         Row {
             Text(
                 stringResource(R.string.sessionRecoveryPassword),
-                style = MaterialTheme.typography.h4
+                style = LocalType.current.h4
             )
             Spacer(Modifier.width(6.dp))
             Icon(
@@ -137,7 +132,7 @@ fun RecoveryPassword(state: LinkDeviceState, onChange: (String) -> Unit = {}, on
         Spacer(Modifier.size(28.dp))
         Text(
             stringResource(R.string.activity_link_enter_your_recovery_password_to_load_your_account_if_you_haven_t_saved_it_you_can_find_it_in_your_app_settings),
-            style = MaterialTheme.typography.base
+            style = LocalType.current.base
         )
         Spacer(Modifier.size(24.dp))
         SessionOutlinedTextField(

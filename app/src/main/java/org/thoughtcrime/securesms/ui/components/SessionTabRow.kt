@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Tab
 import androidx.compose.material.TabRow
 import androidx.compose.material.TabRowDefaults
@@ -21,10 +20,10 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.LocalColors
+import org.thoughtcrime.securesms.ui.LocalType
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionColors
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
-import org.thoughtcrime.securesms.ui.h8
 
 private val TITLES = listOf(R.string.sessionRecoveryPassword, R.string.qrScan)
 
@@ -57,7 +56,7 @@ fun SessionTabRow(pagerState: PagerState, titles: List<Int>) {
             ) {
                 Text(
                     stringResource(id = it),
-                    style = MaterialTheme.typography.h8
+                    style = LocalType.current.h8
                 )
             }
         }

@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -24,7 +23,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -36,19 +34,17 @@ import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.ui.CellWithPaddingAndMargin
 import org.thoughtcrime.securesms.ui.LocalColors
 import org.thoughtcrime.securesms.ui.LocalDimensions
+import org.thoughtcrime.securesms.ui.LocalType
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionColors
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
-import org.thoughtcrime.securesms.ui.SessionMaterialTheme
 import org.thoughtcrime.securesms.ui.SessionShieldIcon
-import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.components.OutlineCopyButton
 import org.thoughtcrime.securesms.ui.components.QrImage
 import org.thoughtcrime.securesms.ui.components.SmallButtons
 import org.thoughtcrime.securesms.ui.contentDescription
-import org.thoughtcrime.securesms.ui.extraSmallMonospace
-import org.thoughtcrime.securesms.ui.h8
+import org.thoughtcrime.securesms.ui.monospace
 import org.thoughtcrime.securesms.ui.setComposeContent
 
 class RecoveryPasswordActivity : BaseActionBarActivity() {
@@ -133,7 +129,7 @@ fun RecoveryPasswordCell(seed: String, copySeed:() -> Unit = {}) {
             Row {
                 Text(
                     stringResource(R.string.sessionRecoveryPassword),
-                    style = MaterialTheme.typography.h8
+                    style = LocalType.current.h8
                 )
                 Spacer(Modifier.width(LocalDimensions.current.itemSpacingExtraSmall))
                 SessionShieldIcon()
@@ -143,7 +139,7 @@ fun RecoveryPasswordCell(seed: String, copySeed:() -> Unit = {}) {
 
             Text(
                 stringResource(R.string.recoveryPasswordDescription),
-                style = MaterialTheme.typography.base
+                style = LocalType.current.base
             )
 
             AnimatedVisibility(!showQr) {
@@ -205,7 +201,7 @@ private fun RecoveryPassword(seed: String) {
             )
             .padding(LocalDimensions.current.marginSmall),
         textAlign = TextAlign.Center,
-        style = MaterialTheme.typography.extraSmallMonospace,
+        style = LocalType.current.extraSmall.monospace(),
         color = LocalColors.current.run { if (isLight) text else primary },
     )
 }
@@ -219,11 +215,11 @@ private fun HideRecoveryPasswordCell(onHide: () -> Unit = {}) {
             ) {
                 Text(
                     stringResource(R.string.recoveryPasswordHideRecoveryPassword),
-                    style = MaterialTheme.typography.h8
+                    style = LocalType.current.h8
                 )
                 Text(
                     stringResource(R.string.recoveryPasswordHideRecoveryPasswordDescription),
-                    style = MaterialTheme.typography.base
+                    style = LocalType.current.base
                 )
             }
             Spacer(modifier = Modifier.width(LocalDimensions.current.marginExtraExtraSmall))

@@ -9,7 +9,6 @@ import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -26,8 +25,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.thoughtcrime.securesms.ui.LocalColors
 import org.thoughtcrime.securesms.ui.LocalDimensions
-import org.thoughtcrime.securesms.ui.base
-import org.thoughtcrime.securesms.ui.baseBold
+import org.thoughtcrime.securesms.ui.LocalType
+import org.thoughtcrime.securesms.ui.bold
 import org.thoughtcrime.securesms.ui.outlinedTextFieldColors
 
 @Composable
@@ -43,12 +42,12 @@ fun SessionOutlinedTextField(
         OutlinedTextField(
             value = text,
             modifier = Modifier.fillMaxWidth(),
-            textStyle = MaterialTheme.typography.base,
+            textStyle = LocalType.current.base,
             onValueChange = { onChange(it) },
             placeholder = {
                 Text(
                     placeholder,
-                    style = MaterialTheme.typography.base
+                    style = LocalType.current.base
                 )
             },
             colors = outlinedTextFieldColors(error != null),
@@ -67,7 +66,7 @@ fun SessionOutlinedTextField(
                 it,
                 modifier = Modifier.padding(top = LocalDimensions.current.marginExtraExtraSmall),
                 textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.baseBold,
+                style = LocalType.current.base.bold(),
                 color = LocalColors.current.danger
             )
         }
@@ -79,7 +78,7 @@ fun AnnotatedTextWithIcon(
     text: String,
     @DrawableRes iconRes: Int,
     modifier: Modifier = Modifier,
-    style: TextStyle = MaterialTheme.typography.base,
+    style: TextStyle = LocalType.current.base,
     iconTint: Color = Color.Unspecified,
     iconSize: TextUnit = 12.sp
 ) {

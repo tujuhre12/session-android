@@ -4,21 +4,14 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.ContentAlpha
-import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
@@ -32,7 +25,6 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -44,9 +36,9 @@ import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LaunchedEffectAsync
 import org.thoughtcrime.securesms.ui.LocalColors
-import org.thoughtcrime.securesms.ui.baseBold
+import org.thoughtcrime.securesms.ui.LocalType
+import org.thoughtcrime.securesms.ui.bold
 import org.thoughtcrime.securesms.ui.contentDescription
-import org.thoughtcrime.securesms.ui.extraSmall
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -68,7 +60,7 @@ fun SessionButtonText(
     Text(
         modifier = modifier,
         text = text,
-        style = MaterialTheme.typography.baseBold,
+        style = LocalType.current.base.bold(),
         color = if (enabled) color else LocalColors.current.disabled
     )
 }
@@ -248,7 +240,7 @@ fun BorderlessButton(
         Text(
             text = text,
             textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.extraSmall,
+            style = LocalType.current.extraSmall,
             modifier = Modifier.padding(horizontal = 2.dp)
         )
     }
@@ -259,7 +251,7 @@ fun BorderlessButtonWithIcon(
     text: String,
     @DrawableRes iconRes: Int,
     modifier: Modifier = Modifier,
-    style: TextStyle = MaterialTheme.typography.baseBold,
+    style: TextStyle = LocalType.current.base.bold(),
     contentColor: Color = LocalColors.current.text,
     backgroundColor: Color = Color.Transparent,
     onClick: () -> Unit
@@ -291,7 +283,7 @@ fun BorderlessHtmlButton(
         Text(
             text = annotatedStringResource(textId),
             textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.extraSmall,
+            style = LocalType.current.extraSmall,
             modifier = Modifier.padding(horizontal = 2.dp)
         )
     }

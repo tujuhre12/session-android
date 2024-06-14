@@ -32,14 +32,13 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.preferences.copyPublicKey
 import org.thoughtcrime.securesms.preferences.sendInvitationToUseSession
 import org.thoughtcrime.securesms.ui.LocalColors
-import org.thoughtcrime.securesms.ui.base
+import org.thoughtcrime.securesms.ui.LocalType
 import org.thoughtcrime.securesms.ui.components.AppBar
 import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.components.OutlineCopyButton
 import org.thoughtcrime.securesms.ui.components.SmallButtons
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.onCreateView
-import org.thoughtcrime.securesms.ui.small
 
 @AndroidEntryPoint
 class InviteFriendFragment : Fragment() {
@@ -96,14 +95,14 @@ private fun InviteFriend(
                         .align(Alignment.Center)
                         .padding(22.dp),
                     textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.base
+                    style = LocalType.current.base
                 )
             }
 
             Text(
                 stringResource(R.string.invite_your_friend_to_chat_with_you_on_session_by_sharing_your_account_id_with_them),
                 textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.small,
+                style = LocalType.current.small,
                 color = LocalColors.current.textSecondary,
                 modifier = Modifier.padding(horizontal = 8.dp)
             )

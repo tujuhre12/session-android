@@ -28,12 +28,11 @@ import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.ItemButton
 import org.thoughtcrime.securesms.ui.LocalColors
 import org.thoughtcrime.securesms.ui.LocalDimensions
+import org.thoughtcrime.securesms.ui.LocalType
 import org.thoughtcrime.securesms.ui.components.AppBar
 import org.thoughtcrime.securesms.ui.components.QrImage
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.onCreateView
-import org.thoughtcrime.securesms.ui.small
-import org.thoughtcrime.securesms.ui.xl
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -93,13 +92,13 @@ class NewConversationHomeFragment : Fragment() {
                     ) {
                         Text(
                             text = stringResource(R.string.accountIdYours),
-                            style = MaterialTheme.typography.xl
+                            style = LocalType.current.xl
                         )
                         Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacingTiny))
                         Text(
                             text = stringResource(R.string.qrYoursDescription),
                             color = LocalColors.current.textSecondary,
-                            style = MaterialTheme.typography.small
+                            style = LocalType.current.small
                         )
                         Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacingSmall))
                         QrImage(

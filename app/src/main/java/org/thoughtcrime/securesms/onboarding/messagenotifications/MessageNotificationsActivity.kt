@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedButton
 import androidx.compose.material.RadioButton
 import androidx.compose.material.Text
@@ -24,7 +23,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -38,17 +36,13 @@ import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.notifications.PushRegistry
 import org.thoughtcrime.securesms.ui.LocalColors
 import org.thoughtcrime.securesms.ui.LocalDimensions
+import org.thoughtcrime.securesms.ui.LocalType
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionColors
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
-import org.thoughtcrime.securesms.ui.SessionMaterialTheme
-import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.contentDescription
-import org.thoughtcrime.securesms.ui.h8
-import org.thoughtcrime.securesms.ui.h9
 import org.thoughtcrime.securesms.ui.setComposeContent
-import org.thoughtcrime.securesms.ui.small
 import org.thoughtcrime.securesms.util.setUpActionBarSessionLogo
 import javax.inject.Inject
 
@@ -103,9 +97,9 @@ fun MessageNotificationsScreen(
     Column {
         Spacer(Modifier.weight(1f))
         Column(modifier = Modifier.padding(horizontal = LocalDimensions.current.marginMedium)) {
-            Text(stringResource(R.string.notificationsMessage), style = MaterialTheme.typography.h4)
+            Text(stringResource(R.string.notificationsMessage), style = LocalType.current.h4)
             Spacer(Modifier.height(LocalDimensions.current.marginExtraSmall))
-            Text(stringResource(R.string.onboardingMessageNotificationExplaination), style = MaterialTheme.typography.base)
+            Text(stringResource(R.string.onboardingMessageNotificationExplaination), style = LocalType.current.base)
             Spacer(Modifier.height(LocalDimensions.current.marginExtraSmall))
             NotificationRadioButton(
                 R.string.activity_pn_mode_fast_mode,
@@ -160,9 +154,9 @@ fun NotificationRadioButton(
             Column(
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Text(stringResource(title), style = MaterialTheme.typography.h8)
-                Text(stringResource(explanation), style = MaterialTheme.typography.small)
-                tag?.let { Text(stringResource(it), color = LocalColors.current.primary, style = MaterialTheme.typography.h9) }
+                Text(stringResource(title), style = LocalType.current.h8)
+                Text(stringResource(explanation), style = LocalType.current.small)
+                tag?.let { Text(stringResource(it), color = LocalColors.current.primary, style = LocalType.current.h9) }
             }
         }
         RadioButton(selected = selected, modifier = Modifier.align(Alignment.CenterVertically), onClick = onClick, colors = LocalColors.current.radioButtonColors())

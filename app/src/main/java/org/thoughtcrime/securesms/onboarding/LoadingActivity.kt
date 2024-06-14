@@ -8,7 +8,6 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.TweenSpec
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -17,7 +16,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
@@ -29,11 +27,9 @@ import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.onboarding.messagenotifications.startMessageNotificationsActivity
 import org.thoughtcrime.securesms.onboarding.pickname.startPickDisplayNameActivity
+import org.thoughtcrime.securesms.ui.LocalType
 import org.thoughtcrime.securesms.ui.ProgressArc
-import org.thoughtcrime.securesms.ui.SessionMaterialTheme
-import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.contentDescription
-import org.thoughtcrime.securesms.ui.h7
 import org.thoughtcrime.securesms.ui.setComposeContent
 import org.thoughtcrime.securesms.util.setUpActionBarSessionLogo
 import javax.inject.Inject
@@ -110,11 +106,11 @@ class LoadingActivity: BaseActionBarActivity() {
             )
             Text(
                 stringResource(R.string.waitOneMoment),
-                style = MaterialTheme.typography.h7
+                style = LocalType.current.h7
             )
             Text(
                 stringResource(R.string.loadAccountProgressMessage),
-                style = MaterialTheme.typography.base
+                style = LocalType.current.base
             )
             Spacer(modifier = Modifier.weight(2f))
         }

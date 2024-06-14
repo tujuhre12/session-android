@@ -20,13 +20,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -97,17 +95,14 @@ import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.LocalColors
 import org.thoughtcrime.securesms.ui.LocalDimensions
+import org.thoughtcrime.securesms.ui.LocalType
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionColors
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
-import org.thoughtcrime.securesms.ui.SessionMaterialTheme
 import org.thoughtcrime.securesms.ui.SessionShieldIcon
-import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.contentDescription
-import org.thoughtcrime.securesms.ui.h8
 import org.thoughtcrime.securesms.ui.setContentWithTheme
-import org.thoughtcrime.securesms.ui.small
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 import org.thoughtcrime.securesms.util.IP2Country
 import org.thoughtcrime.securesms.util.disableClipping
@@ -395,14 +390,14 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                     Row {
                         Text(
                             stringResource(R.string.save_your_recovery_password),
-                            style = MaterialTheme.typography.h8
+                            style = LocalType.current.h8
                         )
                         Spacer(Modifier.requiredWidth(LocalDimensions.current.itemSpacingExtraSmall))
                         SessionShieldIcon()
                     }
                     Text(
                         stringResource(R.string.save_your_recovery_password_to_make_sure_you_don_t_lose_access_to_your_account),
-                        style = MaterialTheme.typography.small
+                        style = LocalType.current.small
                     )
                 }
                 Spacer(Modifier.width(LocalDimensions.current.marginExtraExtraSmall))
@@ -434,12 +429,12 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             if (newAccount) {
                 Text(
                     stringResource(R.string.onboardingAccountCreated),
-                    style = MaterialTheme.typography.h4,
+                    style = LocalType.current.h4,
                     textAlign = TextAlign.Center
                 )
                 Text(
                     stringResource(R.string.welcome_to_session),
-                    style = MaterialTheme.typography.base,
+                    style = LocalType.current.base,
                     color = LocalColors.current.primary,
                     textAlign = TextAlign.Center
                 )
@@ -449,12 +444,12 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
 
             Text(
                 stringResource(R.string.conversationsNone),
-                style = MaterialTheme.typography.h8,
+                style = LocalType.current.h8,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(bottom = 12.dp))
             Text(
                 stringResource(R.string.onboardingHitThePlusButton),
-                style = MaterialTheme.typography.small,
+                style = LocalType.current.small,
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.weight(2f))

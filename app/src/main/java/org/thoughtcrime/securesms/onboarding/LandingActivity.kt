@@ -21,7 +21,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,7 +32,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -49,6 +47,7 @@ import org.thoughtcrime.securesms.service.KeyCachingService
 import org.thoughtcrime.securesms.showOpenUrlDialog
 import org.thoughtcrime.securesms.ui.LocalColors
 import org.thoughtcrime.securesms.ui.LocalDimensions
+import org.thoughtcrime.securesms.ui.LocalType
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionColors
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
@@ -56,7 +55,6 @@ import org.thoughtcrime.securesms.ui.components.BorderlessHtmlButton
 import org.thoughtcrime.securesms.ui.components.FilledButton
 import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.contentDescription
-import org.thoughtcrime.securesms.ui.large
 import org.thoughtcrime.securesms.ui.setComposeContent
 import org.thoughtcrime.securesms.util.setUpActionBarSessionLogo
 import org.thoughtcrime.securesms.util.start
@@ -125,7 +123,7 @@ class LandingActivity : BaseActionBarActivity() {
                 Text(
                     stringResource(R.string.onboardingBubblePrivacyInYourPocket),
                     modifier = Modifier.align(Alignment.CenterHorizontally),
-                    style = MaterialTheme.typography.h4,
+                    style = LocalType.current.h4,
                     textAlign = TextAlign.Center
                 )
                 Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacingMedium))
@@ -246,7 +244,7 @@ private fun MessageText(
     ) {
         Text(
             text,
-            style = MaterialTheme.typography.large,
+            style = LocalType.current.large,
             color = textColor,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
         )
