@@ -23,7 +23,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
@@ -143,10 +142,10 @@ fun EnterAccountId(
 ) {
     Column(
         modifier = Modifier
-            .padding(horizontal = 12.dp, vertical = 16.dp)
+            .padding(horizontal = LocalDimensions.current.marginExtraExtraSmall, vertical = LocalDimensions.current.marginExtraSmall)
             .fillMaxHeight(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.marginExtraSmall)
     ) {
         SessionOutlinedTextField(
             text = state.newMessageIdOrOns,
