@@ -16,13 +16,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -96,14 +93,14 @@ import org.thoughtcrime.securesms.preferences.SettingsActivity
 import org.thoughtcrime.securesms.showMuteDialog
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.ui.Divider
-import org.thoughtcrime.securesms.ui.LocalPalette
 import org.thoughtcrime.securesms.ui.LocalDimensions
-import org.thoughtcrime.securesms.ui.PreviewTheme
+import org.thoughtcrime.securesms.ui.LocalPalette
 import org.thoughtcrime.securesms.ui.Palette
+import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.SessionShieldIcon
 import org.thoughtcrime.securesms.ui.base
-import org.thoughtcrime.securesms.ui.components.SessionOutlinedButton
+import org.thoughtcrime.securesms.ui.components.SlimOutlineButton
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.h4
 import org.thoughtcrime.securesms.ui.h8
@@ -407,7 +404,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                     )
                 }
                 Spacer(Modifier.width(LocalDimensions.current.marginExtraExtraSmall))
-                SessionOutlinedButton(
+                SlimOutlineButton(
                     text = stringResource(R.string.continue_2),
                     modifier = Modifier
                         .align(Alignment.CenterVertically)

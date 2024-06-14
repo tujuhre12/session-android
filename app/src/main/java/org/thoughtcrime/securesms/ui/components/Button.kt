@@ -11,8 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.OutlinedButton
+import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.RadioButton
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
@@ -28,7 +27,6 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.filter
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LocalPalette
-import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.baseBold
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.extraSmall
@@ -36,45 +34,6 @@ import org.thoughtcrime.securesms.ui.h8
 import org.thoughtcrime.securesms.ui.h9
 import org.thoughtcrime.securesms.ui.radioButtonColors
 import org.thoughtcrime.securesms.ui.small
-
-val LocalButtonTextStyle = staticCompositionLocalOf { baseBold }
-
-/**
- * Text to be used in buttons.
- *
- * This text gets its style from [LocalButtonTextStyle] which may vary if button size is changed
- * by passing in a [ButtonSize] to some Session Button.
- */
-@Composable
-fun SessionButtonText(
-    text: String,
-    modifier: Modifier = Modifier,
-    style: TextStyle = LocalButtonTextStyle.current,
-    color: Color = LocalPalette.current.buttonOutline,
-    enabled: Boolean = true
-) {
-    Text(
-        modifier = modifier,
-        text = text,
-        style = style,
-        color = if (enabled) color else LocalPalette.current.disabled
-    )
-}
-
-@Composable
-fun FilledButton(
-    text: String,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    OutlinedButton(
-        modifier = modifier,
-        onClick = onClick,
-        colors = LocalPalette.current.filledButtonColors()
-    ) {
-        SessionButtonText(text, color = LocalPalette.current.background)
-    }
-}
 
 @Composable
 fun BorderlessButton(
@@ -171,11 +130,12 @@ fun NotificationRadioButton(
     onClick: () -> Unit = {}
 ) {
     Row {
-        SessionOutlinedButton(
+        Button(
             onClick = onClick,
             modifier = Modifier
                 .weight(1f)
                 .contentDescription(contentDescription),
+            type = ButtonType.Outline,
             color = LocalPalette.current.text,
             border = BorderStroke(
                 width = ButtonDefaults.OutlinedBorderSize,

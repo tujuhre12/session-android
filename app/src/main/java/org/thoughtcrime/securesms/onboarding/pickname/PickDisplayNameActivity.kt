@@ -10,13 +10,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -28,9 +26,8 @@ import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.onboarding.messagenotifications.startMessageNotificationsActivity
 import org.thoughtcrime.securesms.ui.PreviewTheme
-import org.thoughtcrime.securesms.ui.SessionMaterialTheme
 import org.thoughtcrime.securesms.ui.base
-import org.thoughtcrime.securesms.ui.components.SessionOutlinedButton
+import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.h4
@@ -106,7 +103,7 @@ class PickDisplayNameActivity : BaseActionBarActivity() {
 
             Spacer(modifier = Modifier.weight(2f))
 
-            SessionOutlinedButton(
+            OutlineButton(
                 stringResource(R.string.continue_2),
                 modifier = Modifier
                     .contentDescription(R.string.AccessibilityId_continue)

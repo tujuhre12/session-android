@@ -32,7 +32,7 @@ import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.components.NotificationRadioButton
-import org.thoughtcrime.securesms.ui.components.SessionOutlinedButton
+import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.h4
 import org.thoughtcrime.securesms.ui.setComposeContent
@@ -112,7 +112,7 @@ fun MessageNotificationsScreen(
             )
         }
         Spacer(Modifier.weight(1f))
-        SessionOutlinedButton(
+        OutlineButton(
             stringResource(R.string.continue_2),
             modifier = Modifier
                 .padding(horizontal = LocalDimensions.current.marginLarge)

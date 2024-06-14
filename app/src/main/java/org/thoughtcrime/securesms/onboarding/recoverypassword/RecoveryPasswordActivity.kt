@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.showSessionDialog
+import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.CellWithPaddingAndMargin
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.LocalPalette
@@ -39,10 +40,9 @@ import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.SessionShieldIcon
 import org.thoughtcrime.securesms.ui.base
-import org.thoughtcrime.securesms.ui.components.SessionOutlinedCopyButton
 import org.thoughtcrime.securesms.ui.components.QrImage
-import org.thoughtcrime.securesms.ui.components.SessionOutlinedButton
-import org.thoughtcrime.securesms.ui.components.SmallButtonSize
+import org.thoughtcrime.securesms.ui.components.SlimOutlineButton
+import org.thoughtcrime.securesms.ui.components.SlimOutlineCopyButton
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.extraSmallMonospace
 import org.thoughtcrime.securesms.ui.h8
@@ -160,26 +160,21 @@ fun RecoveryPasswordCell(seed: String, copySeed:() -> Unit = {}) {
 
             AnimatedVisibility(!showQr) {
                 Row(horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.marginMedium)) {
-                    SessionOutlinedCopyButton(
+                    SlimOutlineCopyButton(
                         Modifier.weight(1f),
-                        color = LocalPalette.current.text,
-                        size = SmallButtonSize,
                         onClick = copySeed
                     )
-                    SessionOutlinedButton(
-                        text = stringResource(R.string.qrView),
+                    SlimOutlineButton(
+                        stringResource(R.string.qrView),
                         modifier = Modifier.weight(1f),
-                        color = LocalPalette.current.text,
-                        size = SmallButtonSize,
                         onClick = { showQr = !showQr }
                     )
                 }
             }
 
             AnimatedVisibility(showQr, modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                SessionOutlinedButton(
-                    text = stringResource(R.string.recoveryPasswordView),
-                    color = LocalPalette.current.text,
+                SlimOutlineButton(
+                    stringResource(R.string.recoveryPasswordView),
                     onClick = { showQr = !showQr }
                 )
             }
@@ -223,7 +218,7 @@ private fun HideRecoveryPasswordCell(onHide: () -> Unit = {}) {
                 )
             }
             Spacer(modifier = Modifier.width(LocalDimensions.current.marginExtraExtraSmall))
-            SessionOutlinedButton(
+            SlimOutlineButton(
                 text = stringResource(R.string.hide),
                 modifier = Modifier
                     .wrapContentWidth()

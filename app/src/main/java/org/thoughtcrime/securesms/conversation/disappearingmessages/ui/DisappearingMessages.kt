@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -23,7 +22,7 @@ import org.thoughtcrime.securesms.ui.LocalPalette
 import org.thoughtcrime.securesms.ui.NoOpCallbacks
 import org.thoughtcrime.securesms.ui.OptionsCard
 import org.thoughtcrime.securesms.ui.RadioOption
-import org.thoughtcrime.securesms.ui.components.SessionOutlinedButton
+import org.thoughtcrime.securesms.ui.components.SlimOutlineButton
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.extraSmall
 import org.thoughtcrime.securesms.ui.fadingEdges
@@ -62,7 +61,7 @@ fun DisappearingMessages(
             }
         }
 
-        if (state.showSetButton) SessionOutlinedButton(
+        if (state.showSetButton) SlimOutlineButton(
             stringResource(R.string.disappearing_messages_set_button_title),
             modifier = Modifier
                 .contentDescription(R.string.AccessibilityId_set_button)

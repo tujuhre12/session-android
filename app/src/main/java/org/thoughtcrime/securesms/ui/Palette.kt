@@ -71,20 +71,6 @@ val blackAlpha40 = Color.Black.copy(alpha = 0.4f)
 val LocalPalette = staticCompositionLocalOf<Palette> { ClassicDark() }
 
 interface Palette {
-    @Composable
-    fun outlinedButtonColors(color: Color) = ButtonDefaults.outlinedButtonColors(
-        contentColor = color,
-        backgroundColor = Color.Unspecified,
-        disabledContentColor = disabled
-    )
-
-    @Composable
-    fun filledButtonColors() = ButtonDefaults.outlinedButtonColors(
-        contentColor = background,
-        backgroundColor = primary,
-        disabledContentColor = disabled
-    )
-
     val isLight: Boolean
     val primary: Color
     val danger: Color

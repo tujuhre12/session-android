@@ -1,6 +1,9 @@
 package org.thoughtcrime.securesms.ui.components
 
 import android.annotation.SuppressLint
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.LocalMinimumInteractiveComponentEnforcement
+import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -13,9 +16,13 @@ import org.thoughtcrime.securesms.ui.extraSmallBold
 import org.thoughtcrime.securesms.ui.smallBold
 
 interface ButtonSize {
+    @OptIn(ExperimentalMaterialApi::class)
     @SuppressLint("ComposableNaming")
-    @Composable fun applyTextStyle(content: @Composable () -> Unit) {
-        CompositionLocalProvider(LocalButtonTextStyle provides textStyle) {
+    @Composable fun applyConstraints(content: @Composable () -> Unit) {
+        CompositionLocalProvider(
+            LocalMinimumInteractiveComponentEnforcement provides false,
+            LocalTextStyle provides textStyle,
+        ) {
             content()
         }
     }
@@ -34,7 +41,7 @@ object MediumButtonSize: ButtonSize {
     override val minHeight = 34.dp
 }
 
-object SmallButtonSize: ButtonSize {
+object SlimButtonSize: ButtonSize {
     override val textStyle @Composable get() = extraSmallBold
     override val minHeight = 29.dp
 }

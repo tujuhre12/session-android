@@ -193,8 +193,12 @@ fun ItemButton(
 }
 
 @Composable
-fun Cell(content: @Composable () -> Unit) {
-    CellWithPaddingAndMargin(padding = 0.dp) { content() }
+fun Cell(
+    padding: Dp = 0.dp,
+    margin: Dp = 32.dp,
+    content: @Composable () -> Unit
+) {
+    CellWithPaddingAndMargin(padding, margin) { content() }
 }
 @Composable
 fun CellNoMargin(content: @Composable () -> Unit) {

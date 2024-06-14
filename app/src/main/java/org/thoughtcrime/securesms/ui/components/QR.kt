@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Snackbar
 import androidx.compose.material.SnackbarHost
@@ -97,7 +96,7 @@ fun MaybeScanQrCode(
                     textAlign = TextAlign.Center
                 )
                 Spacer(modifier = Modifier.size(20.dp))
-                SessionOutlinedButton(
+                OutlineButton(
                     stringResource(R.string.sessionSettings),
                     modifier = Modifier.align(Alignment.CenterHorizontally),
                     onClick = onClickSettings
@@ -105,7 +104,7 @@ fun MaybeScanQrCode(
             }
         } else {
             Box(modifier = Modifier.fillMaxSize().padding(LocalDimensions.current.marginLarge)) {
-                SessionOutlinedButton(
+                SlimOutlineButton(
                     stringResource(R.string.cameraGrantAccess),
                     modifier = Modifier
                         .align(Alignment.Center)

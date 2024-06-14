@@ -14,14 +14,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -35,17 +33,14 @@ import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.onboarding.messagenotifications.startMessageNotificationsActivity
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
-import org.thoughtcrime.securesms.ui.SessionMaterialTheme
 import org.thoughtcrime.securesms.ui.base
-import org.thoughtcrime.securesms.ui.baseBold
 import org.thoughtcrime.securesms.ui.components.MaybeScanQrCode
-import org.thoughtcrime.securesms.ui.components.SessionOutlinedButton
+import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.h4
 import org.thoughtcrime.securesms.ui.setComposeContent
-import org.thoughtcrime.securesms.util.start
 import javax.inject.Inject
 
 private const val TAG = "LinkDeviceActivity"
@@ -152,7 +147,7 @@ fun RecoveryPassword(state: LinkDeviceState, onChange: (String) -> Unit = {}, on
             error = state.error
         )
         Spacer(Modifier.weight(2f))
-        SessionOutlinedButton(
+        OutlineButton(
             stringResource(R.string.continue_2),
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)

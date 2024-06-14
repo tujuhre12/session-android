@@ -8,7 +8,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material.Colors
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.LocalContentColor
+import androidx.compose.material.LocalMinimumInteractiveComponentEnforcement
+import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Shapes
 import androidx.compose.runtime.Composable
@@ -33,6 +36,7 @@ fun SessionMaterialTheme(
 /**
  * Apply a given [Palette], and our typography and shapes as a Material 2 Compose Theme.
  **/
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun SessionMaterialTheme(
     palette: Palette,
@@ -51,7 +55,7 @@ fun SessionMaterialTheme(
         CompositionLocalProvider(
             LocalPalette provides palette,
             LocalContentColor provides palette.text,
-            LocalTextSelectionColors provides textSelectionColors
+            LocalTextSelectionColors provides textSelectionColors,
         ) {
             content()
         }
@@ -92,6 +96,7 @@ fun PreviewTheme(
     SessionMaterialTheme(palette) {
         Box(modifier = Modifier.background(color = LocalPalette.current.background)) {
             content()
+            LocalTextStyle
         }
     }
 }

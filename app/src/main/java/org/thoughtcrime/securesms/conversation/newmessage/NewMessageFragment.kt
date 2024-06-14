@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -42,19 +43,17 @@ import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.showOpenUrlDialog
 import org.thoughtcrime.securesms.ui.LoadingArcOr
-import org.thoughtcrime.securesms.ui.LocalPalette
 import org.thoughtcrime.securesms.ui.LocalDimensions
-import org.thoughtcrime.securesms.ui.PreviewTheme
+import org.thoughtcrime.securesms.ui.LocalPalette
 import org.thoughtcrime.securesms.ui.Palette
+import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.components.AppBar
 import org.thoughtcrime.securesms.ui.components.BorderlessButtonWithIcon
 import org.thoughtcrime.securesms.ui.components.MaybeScanQrCode
-import org.thoughtcrime.securesms.ui.components.MediumButtonSize
-import org.thoughtcrime.securesms.ui.components.SessionButtonText
-import org.thoughtcrime.securesms.ui.components.SessionOutlinedButton
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
+import org.thoughtcrime.securesms.ui.components.SlimOutlineButton
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.onCreateView
 
@@ -171,18 +170,17 @@ fun EnterAccountId(
             ) { onHelp() }
         }
 
-        SessionOutlinedButton(
+        SlimOutlineButton(
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
                 .padding(horizontal = LocalDimensions.current.marginLarge)
                 .fillMaxWidth()
                 .contentDescription(R.string.next),
-            size = MediumButtonSize,
             enabled = state.isNextButtonEnabled,
             onClick = { callbacks.onContinue() }
         ) {
             LoadingArcOr(state.loading) {
-                SessionButtonText(stringResource(R.string.next), enabled = state.isNextButtonEnabled)
+                Text(stringResource(R.string.next))
             }
         }
     }

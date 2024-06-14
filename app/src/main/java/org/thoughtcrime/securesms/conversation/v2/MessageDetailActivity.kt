@@ -73,7 +73,6 @@ import org.thoughtcrime.securesms.ui.TitledText
 import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.baseMonospace
 import org.thoughtcrime.securesms.ui.blackAlpha40
-import org.thoughtcrime.securesms.ui.components.SessionButtonText
 import org.thoughtcrime.securesms.ui.destructiveButtonColors
 import org.thoughtcrime.securesms.ui.setComposeContent
 import javax.inject.Inject
@@ -393,7 +392,7 @@ fun TitledText(
 @Composable
 fun TitledView(title: GetString, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        SessionButtonText(text = title.string())
+        Text(title.string())
         content()
     }
 }

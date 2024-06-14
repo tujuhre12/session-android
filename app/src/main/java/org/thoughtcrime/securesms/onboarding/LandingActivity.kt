@@ -21,7 +21,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -46,14 +45,14 @@ import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.onboarding.pickname.startPickDisplayNameActivity
 import org.thoughtcrime.securesms.service.KeyCachingService
 import org.thoughtcrime.securesms.showOpenUrlDialog
-import org.thoughtcrime.securesms.ui.LocalPalette
 import org.thoughtcrime.securesms.ui.LocalDimensions
-import org.thoughtcrime.securesms.ui.PreviewTheme
+import org.thoughtcrime.securesms.ui.LocalPalette
 import org.thoughtcrime.securesms.ui.Palette
+import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.components.BorderlessHtmlButton
-import org.thoughtcrime.securesms.ui.components.FilledButton
-import org.thoughtcrime.securesms.ui.components.SessionOutlinedButton
+import org.thoughtcrime.securesms.ui.components.PrimaryFillButton
+import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.h4
 import org.thoughtcrime.securesms.ui.large
@@ -153,7 +152,7 @@ class LandingActivity : BaseActionBarActivity() {
             }
 
             Column(modifier = Modifier.padding(horizontal = LocalDimensions.current.marginLarge)) {
-                FilledButton(
+                PrimaryFillButton(
                     text = stringResource(R.string.onboardingAccountCreate),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -161,13 +160,13 @@ class LandingActivity : BaseActionBarActivity() {
                         .contentDescription(R.string.AccessibilityId_create_account_button),
                     onClick = ::startPickDisplayNameActivity
                 )
-                Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacingSmall))
-                SessionOutlinedButton(
-                    text = stringResource(R.string.onboardingAccountExists),
+                Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacingExtraSmall))
+                PrimaryOutlineButton(
+                    stringResource(R.string.onboardingAccountExists),
                     modifier = Modifier
                         .fillMaxWidth()
                         .align(Alignment.CenterHorizontally)
-                        .contentDescription(R.string.AccessibilityId_restore_account_button)
+                        .contentDescription(R.string.AccessibilityId_restore_account_button),
                 ) { start<LinkDeviceActivity>() }
                 BorderlessHtmlButton(
                     textId = R.string.onboardingTosPrivacy,

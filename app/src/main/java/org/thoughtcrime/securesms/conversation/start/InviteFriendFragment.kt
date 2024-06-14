@@ -33,10 +33,8 @@ import org.thoughtcrime.securesms.ui.LocalPalette
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.components.AppBar
-import org.thoughtcrime.securesms.ui.components.MediumButtonSize
-import org.thoughtcrime.securesms.ui.components.SessionOutlinedCopyButton
-import org.thoughtcrime.securesms.ui.components.SessionOutlinedButton
-import org.thoughtcrime.securesms.ui.components.SmallButtonSize
+import org.thoughtcrime.securesms.ui.components.SlimOutlineButton
+import org.thoughtcrime.securesms.ui.components.SlimOutlineCopyButton
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.onCreateView
 import org.thoughtcrime.securesms.ui.small
@@ -110,19 +108,16 @@ private fun InviteFriend(
                 modifier = Modifier.padding(horizontal = 8.dp)
             )
             Row(horizontalArrangement = spacedBy(20.dp)) {
-                SessionOutlinedButton(
+                SlimOutlineButton(
                     stringResource(R.string.share),
                     modifier = Modifier
                         .weight(1f)
                         .contentDescription("Share button"),
-                    size = MediumButtonSize,
-                    color = LocalPalette.current.text,
                     onClick = sendInvitation
                 )
 
-                SessionOutlinedCopyButton(
+                SlimOutlineCopyButton(
                     modifier = Modifier.weight(1f),
-                    size = MediumButtonSize,
                     color = LocalPalette.current.text,
                     onClick = copyPublicKey
                 )
