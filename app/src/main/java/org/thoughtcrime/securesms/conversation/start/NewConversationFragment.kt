@@ -37,7 +37,7 @@ class NewConversationFragment : BottomSheetDialogFragment(), NewConversationDele
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         replaceFragment(
-            fragment = NewConversationHomeFragment().also { it.delegate = this },
+            fragment = NewConversationHomeFragment().also { it.delegate.value = this },
             fragmentKey = NewConversationHomeFragment::class.java.simpleName
         )
     }
