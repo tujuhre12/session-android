@@ -5,21 +5,25 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.timeout
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeout
 import network.loki.messenger.R
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsignal.utilities.PublicKeyValidation
+import org.session.libsignal.utilities.asFlow
 import org.thoughtcrime.securesms.ui.GetString
 import javax.inject.Inject
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.seconds
 
 @HiltViewModel
@@ -57,6 +61,7 @@ class NewMessageViewModel @Inject constructor(
         }
     }
 
+    @OptIn(FlowPreview::class)
     private fun createPrivateChatIfPossible(onsNameOrPublicKey: String) {
         if (loadOnsJob?.isActive == true) return
 
@@ -72,15 +77,20 @@ class NewMessageViewModel @Inject constructor(
 
             loadOnsJob = viewModelScope.launch(Dispatchers.IO) {
                 try {
-                    withTimeout(5.seconds) {
-                        SnodeAPI.getSessionID(onsNameOrPublicKey).get()
-                    }
-                    if (isActive) {
-                        _state.update { it.copy(loading = false) }
-                        onPublicKey(onsNameOrPublicKey)
-                    }
+                    // TODO move timeout to SnodeAPI#getSessionID
+                    SnodeAPI.getSessionID(onsNameOrPublicKey).asFlow()
+                        .timeout(30.seconds)
+                        .collectLatest {
+                            _state.update { it.copy(loading = false) }
+                            onPublicKey(onsNameOrPublicKey)
+                        }
                 } catch (e: Exception) {
-                    if (isActive) _state.update { it.copy(loading = false, error = GetString(e) { it.toMessage() }) }
+                    // JobCancellationException is thrown if we cancel the job
+                    // but it is internal, so this excludes other subclasses of CancellationException
+                    // than TimeoutCancellationException
+                    if (e is TimeoutCancellationException == e is CancellationException) {
+                        _state.update { it.copy(loading = false, error = GetString(e) { it.toMessage() }) }
+                    }
                 }
             }
         }

@@ -1,8 +1,11 @@
 package org.thoughtcrime.securesms.ui.components
 
 import androidx.annotation.DrawableRes
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.InlineTextContent
@@ -24,7 +27,6 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.thoughtcrime.securesms.ui.LocalColors
-import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.baseBold
 import org.thoughtcrime.securesms.ui.outlinedTextFieldColors
@@ -38,7 +40,7 @@ fun SessionOutlinedTextField(
         onContinue: () -> Unit,
         error: String? = null
 ) {
-    Column(modifier = modifier) {
+    Column(modifier = modifier.animateContentSize()) {
         OutlinedTextField(
             value = text,
             modifier = Modifier.fillMaxWidth(),
@@ -62,9 +64,10 @@ fun SessionOutlinedTextField(
             shape = RoundedCornerShape(12.dp)
         )
         error?.let {
+            Spacer(modifier = Modifier.height(14.dp))
             Text(
                 it,
-                modifier = Modifier.padding(top = LocalDimensions.current.marginExtraExtraSmall),
+                modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center,
                 style = baseBold,
                 color = LocalColors.current.danger
@@ -79,7 +82,7 @@ fun AnnotatedTextWithIcon(
     @DrawableRes iconRes: Int,
     modifier: Modifier = Modifier,
     style: TextStyle = base,
-    iconTint: Color = Color.Unspecified,
+    color: Color = Color.Unspecified,
     iconSize: TextUnit = 12.sp
 ) {
     val myId = "inlineContent"
@@ -102,7 +105,7 @@ fun AnnotatedTextWithIcon(
                     painter = painterResource(id = iconRes),
                     contentDescription = null,
                     modifier = Modifier.padding(1.dp),
-                    tint = iconTint
+                    tint = color
                 )
             }
         )
@@ -112,6 +115,8 @@ fun AnnotatedTextWithIcon(
         text = annotated,
         modifier = modifier.fillMaxWidth(),
         style = style,
+        color = color,
+        textAlign = TextAlign.Center,
         inlineContent = inlineContent
     )
 }

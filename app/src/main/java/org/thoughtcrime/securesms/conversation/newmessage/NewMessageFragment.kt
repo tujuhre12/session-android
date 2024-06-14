@@ -5,6 +5,12 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.expandIn
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.shrinkOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -41,10 +47,10 @@ import org.thoughtcrime.securesms.conversation.start.NewConversationDelegate
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.showOpenUrlDialog
-import org.thoughtcrime.securesms.ui.LoadingArcOr
-import org.thoughtcrime.securesms.ui.LocalDimensions
-import org.thoughtcrime.securesms.ui.LocalColors
 import org.thoughtcrime.securesms.ui.Colors
+import org.thoughtcrime.securesms.ui.LoadingArcOr
+import org.thoughtcrime.securesms.ui.LocalColors
+import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.components.AppBar
@@ -75,7 +81,7 @@ class NewMessageFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View = requireContext().createThemedComposeView {
+    ): View = createThemedComposeView {
         val uiState by viewModel.state.collectAsState(State())
         NewMessage(
             uiState,
@@ -157,17 +163,17 @@ fun EnterAccountId(
             onContinue = callbacks::onContinue,
             error = state.error?.string(),
         )
-        if (state.error == null) {
-            BorderlessButtonWithIcon(
-                text = stringResource(R.string.messageNewDescription),
-                iconRes = R.drawable.ic_circle_question_mark,
-                contentColor = LocalColors.current.textSecondary,
-                modifier = Modifier
-                    .contentDescription(R.string.AccessibilityId_help_desk_link)
-                    .fillMaxWidth()
-                    .padding(horizontal = LocalDimensions.current.marginMedium),
-            ) { onHelp() }
-        }
+
+        BorderlessButtonWithIcon(
+            text = stringResource(R.string.messageNewDescription),
+            iconRes = R.drawable.ic_circle_question_mark,
+            contentColor = LocalColors.current.textSecondary,
+            modifier = Modifier
+                .animateContentSize()
+                .contentDescription(R.string.AccessibilityId_help_desk_link)
+//                    .padding(horizontal = LocalDimensions.current.marginMedium)
+                .fillMaxWidth(),
+        ) { onHelp() }
 
         SlimOutlineButton(
             modifier = Modifier
@@ -175,6 +181,7 @@ fun EnterAccountId(
                 .padding(horizontal = LocalDimensions.current.marginLarge)
                 .fillMaxWidth()
                 .contentDescription(R.string.next),
+            color = LocalColors.current.primary,
             enabled = state.isNextButtonEnabled,
             onClick = { callbacks.onContinue() }
         ) {
