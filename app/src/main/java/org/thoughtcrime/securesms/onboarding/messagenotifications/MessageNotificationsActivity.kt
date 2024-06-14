@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -27,7 +26,7 @@ import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.notifications.PushRegistry
 import org.thoughtcrime.securesms.ui.LocalDimensions
-import org.thoughtcrime.securesms.ui.Palette
+import org.thoughtcrime.securesms.ui.Colors
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.base
@@ -74,9 +73,9 @@ class MessageNotificationsActivity : BaseActionBarActivity() {
 @Preview
 @Composable
 fun MessageNotificationsScreenPreview(
-    @PreviewParameter(SessionColorsParameterProvider::class) palette: Palette
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: Colors
 ) {
-    PreviewTheme(palette) {
+    PreviewTheme(colors) {
         MessageNotificationsScreen()
     }
 }

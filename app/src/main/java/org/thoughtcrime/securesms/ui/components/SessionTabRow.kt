@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Tab
 import androidx.compose.material.TabRow
 import androidx.compose.material.TabRowDefaults
@@ -19,9 +18,9 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
-import org.thoughtcrime.securesms.ui.LocalPalette
+import org.thoughtcrime.securesms.ui.LocalColors
 import org.thoughtcrime.securesms.ui.PreviewTheme
-import org.thoughtcrime.securesms.ui.Palette
+import org.thoughtcrime.securesms.ui.Colors
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.divider
 import org.thoughtcrime.securesms.ui.h8
@@ -34,8 +33,8 @@ fun SessionTabRow(pagerState: PagerState, titles: List<Int>) {
     TabRow(
             backgroundColor = Color.Unspecified,
             selectedTabIndex = pagerState.currentPage,
-            contentColor = LocalPalette.current.text,
-            divider = { TabRowDefaults.Divider(color = LocalPalette.current.divider) },
+            contentColor = LocalColors.current.text,
+            divider = { TabRowDefaults.Divider(color = LocalColors.current.divider) },
             modifier = Modifier
                 .height(48.dp)
                 .background(color = Color.Unspecified)
@@ -45,8 +44,8 @@ fun SessionTabRow(pagerState: PagerState, titles: List<Int>) {
             Tab(
                 i == pagerState.currentPage,
                 onClick = { animationScope.launch { pagerState.animateScrollToPage(i) } },
-                selectedContentColor = LocalPalette.current.text,
-                unselectedContentColor = LocalPalette.current.text,
+                selectedContentColor = LocalColors.current.text,
+                unselectedContentColor = LocalColors.current.text,
             ) {
                 Text(
                     stringResource(id = it),
@@ -61,9 +60,9 @@ fun SessionTabRow(pagerState: PagerState, titles: List<Int>) {
 @androidx.compose.ui.tooling.preview.Preview
 @Composable
 fun PreviewSessionTabRow(
-        @PreviewParameter(SessionColorsParameterProvider::class) palette: Palette
+        @PreviewParameter(SessionColorsParameterProvider::class) colors: Colors
 ) {
-    PreviewTheme(palette) {
+    PreviewTheme(colors) {
         val pagerState = rememberPagerState { TITLES.size }
         SessionTabRow(pagerState = pagerState, titles = TITLES)
     }

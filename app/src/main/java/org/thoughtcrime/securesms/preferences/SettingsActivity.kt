@@ -81,7 +81,7 @@ import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.components.OutlineCopyButton
 import org.thoughtcrime.securesms.ui.destructiveButtonColors
-import org.thoughtcrime.securesms.ui.setContentWithTheme
+import org.thoughtcrime.securesms.ui.setThemedContent
 import org.thoughtcrime.securesms.util.BitmapDecodingException
 import org.thoughtcrime.securesms.util.BitmapUtil
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
@@ -132,7 +132,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
             versionTextView.text = String.format(getString(R.string.version_s), "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE} - $gitCommitFirstSixChars)")
         }
 
-        binding.composeView.setContentWithTheme {
+        binding.composeView.setThemedContent {
             Buttons()
         }
     }

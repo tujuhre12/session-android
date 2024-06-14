@@ -28,7 +28,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.LaunchedEffectAsync
-import org.thoughtcrime.securesms.ui.LocalPalette
+import org.thoughtcrime.securesms.ui.LocalColors
 import org.thoughtcrime.securesms.ui.contentDescription
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -39,11 +39,11 @@ interface ButtonType {
     val elevation: ButtonElevation? @Composable get
 
     object Outline: ButtonType {
-        @Composable override fun border(color: Color, enabled: Boolean) = BorderStroke(1.dp, if (enabled) color else LocalPalette.current.disabled)
+        @Composable override fun border(color: Color, enabled: Boolean) = BorderStroke(1.dp, if (enabled) color else LocalColors.current.disabled)
         @Composable override fun buttonColors(color: Color) = ButtonDefaults.buttonColors(
             contentColor = color,
             backgroundColor = Color.Unspecified,
-            disabledContentColor = LocalPalette.current.disabled,
+            disabledContentColor = LocalColors.current.disabled,
             disabledBackgroundColor = Color.Unspecified
         )
         override val elevation: ButtonElevation? @Composable get() = null
@@ -51,9 +51,9 @@ interface ButtonType {
     object Fill: ButtonType {
         @Composable override fun border(color: Color, enabled: Boolean) = null
         @Composable override fun buttonColors(color: Color) = ButtonDefaults.buttonColors(
-            contentColor = LocalPalette.current.background,
+            contentColor = LocalColors.current.background,
             backgroundColor = color,
-            disabledContentColor = LocalPalette.current.disabled,
+            disabledContentColor = LocalColors.current.disabled,
             disabledBackgroundColor = Color.Unspecified
         )
         override val elevation: ButtonElevation? @Composable get() = ButtonDefaults.elevation()
@@ -117,33 +117,33 @@ fun Button(
 }
 
 @Composable fun FillButton(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit) {
-    Button(text, onClick, LocalPalette.current.buttonOutline, ButtonType.Fill, modifier, enabled)
+    Button(text, onClick, LocalColors.current.buttonOutline, ButtonType.Fill, modifier, enabled)
 }
 
 @Composable fun PrimaryFillButton(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit) {
-    Button(text, onClick, LocalPalette.current.primary, ButtonType.Fill, modifier, enabled)
+    Button(text, onClick, LocalColors.current.primary, ButtonType.Fill, modifier, enabled)
 }
 
-@Composable fun OutlineButton(text: String, modifier: Modifier = Modifier, color: Color = LocalPalette.current.buttonOutline, enabled: Boolean = true, onClick: () -> Unit) {
+@Composable fun OutlineButton(text: String, modifier: Modifier = Modifier, color: Color = LocalColors.current.buttonOutline, enabled: Boolean = true, onClick: () -> Unit) {
     Button(text, onClick, color, ButtonType.Outline, modifier, enabled)
 }
 
 @Composable fun PrimaryOutlineButton(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit) {
-    Button(text, onClick, LocalPalette.current.primary, ButtonType.Outline, modifier, enabled)
+    Button(text, onClick, LocalColors.current.primary, ButtonType.Outline, modifier, enabled)
 }
 
-@Composable fun SlimOutlineButton(text: String, modifier: Modifier = Modifier, color: Color = LocalPalette.current.buttonOutline, enabled: Boolean = true, onClick: () -> Unit) {
+@Composable fun SlimOutlineButton(text: String, modifier: Modifier = Modifier, color: Color = LocalColors.current.buttonOutline, enabled: Boolean = true, onClick: () -> Unit) {
     Button(text, onClick, color, ButtonType.Outline, modifier, enabled, SlimButtonSize)
 }
 
-@Composable fun SlimOutlineButton(onClick: () -> Unit, modifier: Modifier = Modifier, color: Color = LocalPalette.current.buttonOutline, enabled: Boolean = true, content: @Composable () -> Unit) {
+@Composable fun SlimOutlineButton(onClick: () -> Unit, modifier: Modifier = Modifier, color: Color = LocalColors.current.buttonOutline, enabled: Boolean = true, content: @Composable () -> Unit) {
     Button(onClick, color, ButtonType.Outline, modifier, enabled, SlimButtonSize) { content() }
 }
 
 @Composable
 fun SlimOutlineCopyButton(
     modifier: Modifier = Modifier,
-    color: Color = LocalPalette.current.buttonOutline,
+    color: Color = LocalColors.current.buttonOutline,
     onClick: () -> Unit
 ) {
     OutlineCopyButton(modifier, SlimButtonSize, color, onClick)
@@ -153,7 +153,7 @@ fun SlimOutlineCopyButton(
 fun OutlineCopyButton(
     modifier: Modifier = Modifier,
     size: ButtonSize = LargeButtonSize,
-    color: Color = LocalPalette.current.buttonOutline,
+    color: Color = LocalColors.current.buttonOutline,
     onClick: () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }

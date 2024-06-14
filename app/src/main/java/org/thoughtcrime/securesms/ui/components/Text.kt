@@ -9,7 +9,6 @@ import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -24,7 +23,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.thoughtcrime.securesms.ui.LocalPalette
+import org.thoughtcrime.securesms.ui.LocalColors
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.baseBold
@@ -51,7 +50,7 @@ fun SessionOutlinedTextField(
                     style = base
                 )
             },
-            colors = LocalPalette.current.outlinedTextFieldColors(error != null),
+            colors = LocalColors.current.outlinedTextFieldColors(error != null),
             singleLine = true,
             keyboardActions = KeyboardActions(
                 onDone = { onContinue() },
@@ -68,7 +67,7 @@ fun SessionOutlinedTextField(
                 modifier = Modifier.padding(top = LocalDimensions.current.marginExtraExtraSmall),
                 textAlign = TextAlign.Center,
                 style = baseBold,
-                color = LocalPalette.current.danger
+                color = LocalColors.current.danger
             )
         }
     }

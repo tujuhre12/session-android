@@ -11,12 +11,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.RadioButton
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,7 +24,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.filter
 import org.thoughtcrime.securesms.ui.GetString
-import org.thoughtcrime.securesms.ui.LocalPalette
+import org.thoughtcrime.securesms.ui.LocalColors
 import org.thoughtcrime.securesms.ui.baseBold
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.extraSmall
@@ -38,7 +36,7 @@ import org.thoughtcrime.securesms.ui.small
 @Composable
 fun BorderlessButton(
     modifier: Modifier = Modifier,
-    contentColor: Color = LocalPalette.current.text,
+    contentColor: Color = LocalColors.current.text,
     backgroundColor: Color = Color.Transparent,
     onClick: () -> Unit,
     content: @Composable () -> Unit
@@ -58,7 +56,7 @@ fun BorderlessButton(
     text: String,
     modifier: Modifier = Modifier,
     contentDescription: GetString = GetString(text),
-    contentColor: Color = LocalPalette.current.text,
+    contentColor: Color = LocalColors.current.text,
     backgroundColor: Color = Color.Transparent,
     onClick: () -> Unit
 ) {
@@ -83,7 +81,7 @@ fun BorderlessButtonWithIcon(
     @DrawableRes iconRes: Int,
     modifier: Modifier = Modifier,
     style: TextStyle = baseBold,
-    contentColor: Color = LocalPalette.current.text,
+    contentColor: Color = LocalColors.current.text,
     backgroundColor: Color = Color.Transparent,
     onClick: () -> Unit
 ) {
@@ -101,7 +99,7 @@ fun BorderlessButtonWithIcon(
 fun BorderlessHtmlButton(
     textId: Int,
     modifier: Modifier = Modifier,
-    contentColor: Color = LocalPalette.current.text,
+    contentColor: Color = LocalColors.current.text,
     backgroundColor: Color = Color.Transparent,
     onClick: () -> Unit
 ) {
@@ -136,10 +134,10 @@ fun NotificationRadioButton(
                 .weight(1f)
                 .contentDescription(contentDescription),
             type = ButtonType.Outline,
-            color = LocalPalette.current.text,
+            color = LocalColors.current.text,
             border = BorderStroke(
                 width = ButtonDefaults.OutlinedBorderSize,
-                color = if (selected) LocalPalette.current.primary else LocalPalette.current.borders
+                color = if (selected) LocalColors.current.primary else LocalColors.current.borders
             ),
             shape = RoundedCornerShape(8.dp)
         ) {
@@ -151,7 +149,7 @@ fun NotificationRadioButton(
                 tag?.let {
                     Text(
                         stringResource(it),
-                        color = LocalPalette.current.primary,
+                        color = LocalColors.current.primary,
                         style = h9
                     )
                 }
@@ -161,7 +159,7 @@ fun NotificationRadioButton(
             selected = selected,
             modifier = Modifier.align(Alignment.CenterVertically),
             onClick = onClick,
-            colors = LocalPalette.current.radioButtonColors()
+            colors = LocalColors.current.radioButtonColors()
         )
     }
 }

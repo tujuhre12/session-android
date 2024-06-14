@@ -30,7 +30,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
-import org.thoughtcrime.securesms.ui.LocalPalette
+import org.thoughtcrime.securesms.ui.LocalColors
 import org.thoughtcrime.securesms.util.QRCodeUtilities
 
 @Composable
@@ -53,10 +53,10 @@ fun QrImage(
     }
 
     Card(
-        backgroundColor = LocalPalette.current.qrCodeBackground,
+        backgroundColor = LocalColors.current.qrCodeBackground,
         elevation = 0.dp,
         modifier = modifier
-    ) { Content(bitmap, icon, backgroundColor = LocalPalette.current.qrCodeBackground) }
+    ) { Content(bitmap, icon, backgroundColor = LocalColors.current.qrCodeBackground) }
 }
 
 @Composable
@@ -64,7 +64,7 @@ private fun Content(
     bitmap: Bitmap?,
     icon: Int,
     modifier: Modifier = Modifier,
-    qrColor: Color = LocalPalette.current.qrCodeContent,
+    qrColor: Color = LocalColors.current.qrCodeContent,
     backgroundColor: Color,
 ) {
     Box(

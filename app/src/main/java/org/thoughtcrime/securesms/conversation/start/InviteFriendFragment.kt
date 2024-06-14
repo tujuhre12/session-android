@@ -29,14 +29,14 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.preferences.copyPublicKey
 import org.thoughtcrime.securesms.preferences.sendInvitationToUseSession
-import org.thoughtcrime.securesms.ui.LocalPalette
+import org.thoughtcrime.securesms.ui.LocalColors
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.components.AppBar
 import org.thoughtcrime.securesms.ui.components.SlimOutlineButton
 import org.thoughtcrime.securesms.ui.components.SlimOutlineCopyButton
 import org.thoughtcrime.securesms.ui.contentDescription
-import org.thoughtcrime.securesms.ui.onCreateComposeView
+import org.thoughtcrime.securesms.ui.createThemedComposeView
 import org.thoughtcrime.securesms.ui.small
 
 @AndroidEntryPoint
@@ -46,7 +46,7 @@ class InviteFriendFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View = onCreateComposeView {
+    ): View = createThemedComposeView {
         InviteFriend(
             TextSecurePreferences.getLocalNumber(LocalContext.current)!!,
             onBack = { delegate.onDialogBackPressed() },
@@ -73,7 +73,7 @@ private fun InviteFriend(
     copyPublicKey: () -> Unit = {},
     sendInvitation: () -> Unit = {},
 ) {
-    Column(modifier = Modifier.background(LocalPalette.current.backgroundSecondary)) {
+    Column(modifier = Modifier.background(LocalColors.current.backgroundSecondary)) {
         AppBar(stringResource(R.string.invite_a_friend), onBack = onBack, onClose = onClose)
         Column(
             modifier = Modifier.padding(horizontal = 24.dp),
@@ -83,7 +83,7 @@ private fun InviteFriend(
                 modifier = Modifier
                     .border(
                         width = 1.dp,
-                        color = LocalPalette.current.textSecondary,
+                        color = LocalColors.current.textSecondary,
                         shape = RoundedCornerShape(size = 13.dp)
                     )
                     .fillMaxWidth()
@@ -104,7 +104,7 @@ private fun InviteFriend(
                 stringResource(R.string.invite_your_friend_to_chat_with_you_on_session_by_sharing_your_account_id_with_them),
                 textAlign = TextAlign.Center,
                 style = small,
-                color = LocalPalette.current.textSecondary,
+                color = LocalColors.current.textSecondary,
                 modifier = Modifier.padding(horizontal = 8.dp)
             )
             Row(horizontalArrangement = spacedBy(20.dp)) {
@@ -118,7 +118,7 @@ private fun InviteFriend(
 
                 SlimOutlineCopyButton(
                     modifier = Modifier.weight(1f),
-                    color = LocalPalette.current.text,
+                    color = LocalColors.current.text,
                     onClick = copyPublicKey
                 )
             }

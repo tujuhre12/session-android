@@ -7,11 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.TextSelectionColors
-import androidx.compose.material.Colors
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.LocalContentColor
-import androidx.compose.material.LocalMinimumInteractiveComponentEnforcement
-import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Shapes
 import androidx.compose.runtime.Composable
@@ -34,26 +30,26 @@ fun SessionMaterialTheme(
 }
 
 /**
- * Apply a given [Palette], and our typography and shapes as a Material 2 Compose Theme.
+ * Apply a given [Colors], and our typography and shapes as a Material 2 Compose Theme.
  **/
 @Composable
 fun SessionMaterialTheme(
-    palette: Palette,
+    colors: Colors,
     content: @Composable () -> Unit
 ) {
     MaterialTheme(
-        colors = palette.toMaterialColors(),
+        colors = colors.toMaterialColors(),
         typography = sessionTypography,
         shapes = sessionShapes,
     ) {
         val textSelectionColors = TextSelectionColors(
-            handleColor = LocalPalette.current.primary,
-            backgroundColor = LocalPalette.current.primary.copy(alpha = 0.5f)
+            handleColor = LocalColors.current.primary,
+            backgroundColor = LocalColors.current.primary.copy(alpha = 0.5f)
         )
 
         CompositionLocalProvider(
-            LocalPalette provides palette,
-            LocalContentColor provides palette.text,
+            LocalColors provides colors,
+            LocalContentColor provides colors.text,
             LocalTextSelectionColors provides textSelectionColors,
         ) {
             content()
@@ -61,7 +57,7 @@ fun SessionMaterialTheme(
     }
 }
 
-private fun Palette.toMaterialColors() = Colors(
+private fun Colors.toMaterialColors() = androidx.compose.material.Colors(
     primary = background,
     primaryVariant = backgroundSecondary,
     secondary = background,
@@ -89,16 +85,16 @@ val sessionShapes = Shapes(
  */
 @Composable
 fun PreviewTheme(
-    palette: Palette = LocalPalette.current,
+    colors: Colors = LocalColors.current,
     content: @Composable () -> Unit
 ) {
-    SessionMaterialTheme(palette) {
-        Box(modifier = Modifier.background(color = LocalPalette.current.background)) {
+    SessionMaterialTheme(colors) {
+        Box(modifier = Modifier.background(color = LocalColors.current.background)) {
             content()
         }
     }
 }
 
-class SessionColorsParameterProvider : PreviewParameterProvider<Palette> {
+class SessionColorsParameterProvider : PreviewParameterProvider<Colors> {
     override val values = sequenceOf(ClassicDark(), ClassicLight(), OceanDark(), OceanLight())
 }

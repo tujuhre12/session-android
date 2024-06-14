@@ -19,12 +19,12 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.ItemButton
-import org.thoughtcrime.securesms.ui.LocalPalette
+import org.thoughtcrime.securesms.ui.LocalColors
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.components.AppBar
 import org.thoughtcrime.securesms.ui.components.QrImage
 import org.thoughtcrime.securesms.ui.contentDescription
-import org.thoughtcrime.securesms.ui.onCreateComposeView
+import org.thoughtcrime.securesms.ui.createThemedComposeView
 import org.thoughtcrime.securesms.ui.small
 import org.thoughtcrime.securesms.ui.xl
 import javax.inject.Inject
@@ -41,11 +41,11 @@ class NewConversationHomeFragment : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View = onCreateComposeView { NewConversationScreen() }
+    ): View = createThemedComposeView { NewConversationScreen() }
 
     @Composable
     fun NewConversationScreen() {
-        Column(modifier = Modifier.background(LocalPalette.current.backgroundSecondary)) {
+        Column(modifier = Modifier.background(LocalColors.current.backgroundSecondary)) {
             AppBar(stringResource(R.string.dialog_new_conversation_title), onClose = { delegate.onDialogClosePressed() })
             ItemButton(textId = R.string.messageNew, icon = R.drawable.ic_message) { delegate.onNewMessageSelected() }
             Divider(startIndent = LocalDimensions.current.dividerIndent)
@@ -66,7 +66,7 @@ class NewConversationHomeFragment : Fragment() {
                 Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacingTiny))
                 Text(
                     text = stringResource(R.string.qrYoursDescription),
-                    color = LocalPalette.current.textSecondary,
+                    color = LocalColors.current.textSecondary,
                     style = small
                 )
                 Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacingSmall))

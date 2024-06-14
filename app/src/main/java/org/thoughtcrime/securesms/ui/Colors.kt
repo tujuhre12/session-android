@@ -68,9 +68,9 @@ val disabledLight = Color(0xFF6D6D6D)
 
 val blackAlpha40 = Color.Black.copy(alpha = 0.4f)
 
-val LocalPalette = staticCompositionLocalOf<Palette> { ClassicDark() }
+val LocalColors = staticCompositionLocalOf<Colors> { ClassicDark() }
 
-interface Palette {
+interface Colors {
     val isLight: Boolean
     val primary: Color
     val danger: Color
@@ -94,14 +94,14 @@ fun sessionColors(
     isLight: Boolean,
     isClassic: Boolean,
     primary: Color
-): Palette = when {
+): Colors = when {
     isClassic && isLight -> ::ClassicLight
     isLight -> ::OceanLight
     isClassic -> ::ClassicDark
     else -> ::OceanDark
 }(primary)
 
-data class ClassicDark(override val primary: Color = primaryGreen): Palette {
+data class ClassicDark(override val primary: Color = primaryGreen): Colors {
     override val isLight = false
     override val danger = dangerDark
     override val disabled = disabledDark
@@ -119,7 +119,7 @@ data class ClassicDark(override val primary: Color = primaryGreen): Palette {
     override val qrCodeBackground = text
 }
 
-data class ClassicLight(override val primary: Color = primaryGreen): Palette {
+data class ClassicLight(override val primary: Color = primaryGreen): Colors {
     override val isLight = true
     override val danger = dangerLight
     override val disabled = disabledLight
@@ -137,7 +137,7 @@ data class ClassicLight(override val primary: Color = primaryGreen): Palette {
     override val qrCodeBackground = backgroundSecondary
 }
 
-data class OceanDark(override val primary: Color = primaryBlue): Palette {
+data class OceanDark(override val primary: Color = primaryBlue): Colors {
     override val isLight = false
     override val danger = dangerDark
     override val disabled = disabledDark
@@ -155,7 +155,7 @@ data class OceanDark(override val primary: Color = primaryBlue): Palette {
     override val qrCodeBackground = text
 }
 
-data class OceanLight(override val primary: Color = primaryBlue): Palette {
+data class OceanLight(override val primary: Color = primaryBlue): Colors {
     override val isLight = true
     override val danger = dangerLight
     override val disabled = disabledLight
@@ -177,7 +177,7 @@ data class OceanLight(override val primary: Color = primaryBlue): Palette {
 fun transparentButtonColors() = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent)
 
 @Composable
-fun destructiveButtonColors() = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent, contentColor = LocalPalette.current.danger)
+fun destructiveButtonColors() = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent, contentColor = LocalColors.current.danger)
 
 @Composable
 fun Colors(name: String, colors: List<Color>) {
@@ -193,9 +193,9 @@ fun Colors(name: String, colors: List<Color>) {
 @Preview
 @Composable
 fun PreviewThemeColors(
-    @PreviewParameter(SessionColorsParameterProvider::class) palette: Palette
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: Colors
 ) {
-    PreviewTheme(palette) { ThemeColors() }
+    PreviewTheme(colors) { ThemeColors() }
 }
 
 @Composable
@@ -229,7 +229,7 @@ private fun ThemeColors() {
 }
 
 @Composable
-fun Palette.outlinedTextFieldColors(
+fun Colors.outlinedTextFieldColors(
     isError: Boolean
 ) = TextFieldDefaults.outlinedTextFieldColors(
     textColor = if (isError) danger else text,
@@ -239,10 +239,10 @@ fun Palette.outlinedTextFieldColors(
     placeholderColor = if (isError) danger else textSecondary
 )
 
-val Palette.divider get() = text.copy(alpha = TabRowDefaults.DividerOpacity)
+val Colors.divider get() = text.copy(alpha = TabRowDefaults.DividerOpacity)
 
 @Composable
-fun Palette.radioButtonColors() = RadioButtonDefaults.colors(
+fun Colors.radioButtonColors() = RadioButtonDefaults.colors(
     selectedColor = primary,
     unselectedColor = text,
     disabledColor = disabled

@@ -18,8 +18,7 @@ import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.Disappear
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.UiState
 import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
-import org.thoughtcrime.securesms.ui.SessionMaterialTheme
-import org.thoughtcrime.securesms.ui.setContentWithTheme
+import org.thoughtcrime.securesms.ui.setThemedContent
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -46,7 +45,7 @@ class DisappearingMessagesActivity: PassphraseRequiredActionBarActivity() {
 
         setUpToolbar()
 
-        binding.container.setContentWithTheme { DisappearingMessagesScreen() }
+        binding.container.setThemedContent { DisappearingMessagesScreen() }
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {

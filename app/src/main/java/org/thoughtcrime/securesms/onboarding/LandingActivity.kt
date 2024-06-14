@@ -46,8 +46,8 @@ import org.thoughtcrime.securesms.onboarding.pickname.startPickDisplayNameActivi
 import org.thoughtcrime.securesms.service.KeyCachingService
 import org.thoughtcrime.securesms.showOpenUrlDialog
 import org.thoughtcrime.securesms.ui.LocalDimensions
-import org.thoughtcrime.securesms.ui.LocalPalette
-import org.thoughtcrime.securesms.ui.Palette
+import org.thoughtcrime.securesms.ui.LocalColors
+import org.thoughtcrime.securesms.ui.Colors
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.components.BorderlessHtmlButton
@@ -95,9 +95,9 @@ class LandingActivity : BaseActionBarActivity() {
     @Preview
     @Composable
     private fun LandingScreen(
-        @PreviewParameter(SessionColorsParameterProvider::class) palette: Palette
+        @PreviewParameter(SessionColorsParameterProvider::class) colors: Colors
     ) {
-        PreviewTheme(palette) {
+        PreviewTheme(colors) {
             LandingScreen()
         }
     }
@@ -223,8 +223,8 @@ private fun MessageText(text: String, isOutgoing: Boolean, modifier: Modifier) {
     Box(modifier = modifier then Modifier.fillMaxWidth()) {
         MessageText(
             text,
-            color = if (isOutgoing) LocalPalette.current.backgroundBubbleSent else LocalPalette.current.backgroundBubbleReceived,
-            textColor = if (isOutgoing) LocalPalette.current.textBubbleSent else LocalPalette.current.textBubbleReceived,
+            color = if (isOutgoing) LocalColors.current.backgroundBubbleSent else LocalColors.current.backgroundBubbleReceived,
+            textColor = if (isOutgoing) LocalColors.current.textBubbleSent else LocalColors.current.textBubbleReceived,
             modifier = Modifier.align(if (isOutgoing) Alignment.TopEnd else Alignment.TopStart)
         )
     }

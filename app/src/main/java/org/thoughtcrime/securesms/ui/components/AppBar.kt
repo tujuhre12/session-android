@@ -16,7 +16,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import network.loki.messenger.R
-import org.thoughtcrime.securesms.ui.Palette
+import org.thoughtcrime.securesms.ui.Colors
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.h4
@@ -24,9 +24,9 @@ import org.thoughtcrime.securesms.ui.h4
 @Preview
 @Composable
 fun AppBarPreview(
-    @PreviewParameter(SessionColorsParameterProvider::class) palette: Palette
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: Colors
 ) {
-    PreviewTheme(palette) {
+    PreviewTheme(colors) {
         AppBar(title = "Title", {}, {})
     }
 }

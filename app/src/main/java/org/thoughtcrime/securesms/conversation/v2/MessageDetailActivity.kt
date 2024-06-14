@@ -28,7 +28,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -65,9 +64,9 @@ import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.HorizontalPagerIndicator
 import org.thoughtcrime.securesms.ui.ItemButton
-import org.thoughtcrime.securesms.ui.LocalPalette
+import org.thoughtcrime.securesms.ui.LocalColors
 import org.thoughtcrime.securesms.ui.PreviewTheme
-import org.thoughtcrime.securesms.ui.Palette
+import org.thoughtcrime.securesms.ui.Colors
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.TitledText
 import org.thoughtcrime.securesms.ui.base
@@ -312,9 +311,9 @@ fun ExpandButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
 @Preview
 @Composable
 fun PreviewMessageDetails(
-    @PreviewParameter(SessionColorsParameterProvider::class) palette: Palette
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: Colors
 ) {
-    PreviewTheme(palette) {
+    PreviewTheme(colors) {
         MessageDetails(
             state = MessageDetailsState(
                 nonImageAttachmentFileDetails = listOf(
@@ -361,7 +360,7 @@ fun FileDetails(fileDetails: List<TitledText>) {
 fun TitledErrorText(titledText: TitledText?) {
     TitledText(
         titledText,
-        style = base.copy(color = LocalPalette.current.danger)
+        style = base.copy(color = LocalColors.current.danger)
     )
 }
 

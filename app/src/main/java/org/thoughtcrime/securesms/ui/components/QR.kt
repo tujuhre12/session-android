@@ -57,7 +57,7 @@ import kotlinx.coroutines.flow.filter
 import network.loki.messenger.R
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ui.LocalDimensions
-import org.thoughtcrime.securesms.ui.LocalPalette
+import org.thoughtcrime.securesms.ui.LocalColors
 import org.thoughtcrime.securesms.ui.base
 import java.util.concurrent.Executors
 
@@ -76,7 +76,7 @@ fun MaybeScanQrCode(
 ) {
     Box(
         modifier = Modifier.fillMaxSize()
-            .background(LocalPalette.current.background)
+            .background(LocalColors.current.background)
     ) {
         LocalSoftwareKeyboardController.current?.hide()
 

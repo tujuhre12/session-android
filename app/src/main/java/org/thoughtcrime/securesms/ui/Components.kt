@@ -30,7 +30,6 @@ import androidx.compose.material.Card
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Icon
 import androidx.compose.material.LocalContentColor
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.RadioButton
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
@@ -212,7 +211,7 @@ fun CellWithPaddingAndMargin(
     content: @Composable () -> Unit
 ) {
     Card(
-        backgroundColor = LocalPalette.current.backgroundSecondary,
+        backgroundColor = LocalColors.current.backgroundSecondary,
         shape = RoundedCornerShape(16.dp),
         elevation = 0.dp,
         modifier = Modifier
@@ -226,7 +225,7 @@ fun CellWithPaddingAndMargin(
 
 @Composable
 fun <T> TitledRadioButton(option: RadioOption<T>, onClick: () -> Unit) {
-    val color = if (option.enabled) LocalPalette.current.text else LocalPalette.current.disabled
+    val color = if (option.enabled) LocalColors.current.text else LocalColors.current.disabled
     Row(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         modifier = Modifier
@@ -260,7 +259,7 @@ fun <T> TitledRadioButton(option: RadioOption<T>, onClick: () -> Unit) {
                 .height(26.dp)
                 .align(Alignment.CenterVertically),
             enabled = option.enabled,
-            colors = LocalPalette.current.radioButtonColors()
+            colors = LocalColors.current.radioButtonColors()
         )
     }
 }
@@ -326,7 +325,7 @@ fun Modifier.fadingEdges(
 fun Divider(modifier: Modifier = Modifier, startIndent: Dp = 0.dp) {
     androidx.compose.material.Divider(
         modifier = modifier.padding(horizontal = LocalDimensions.current.marginExtraSmall),
-        color = LocalPalette.current.divider,
+        color = LocalColors.current.divider,
         startIndent = startIndent
     )
 }
@@ -368,8 +367,8 @@ fun ProgressArc(progress: Float, modifier: Modifier = Modifier) {
 fun Arc(
     modifier: Modifier = Modifier,
     percentage: Float = 0.25f,
-    fillColor: Color = LocalPalette.current.primary,
-    backgroundColor: Color = LocalPalette.current.borders,
+    fillColor: Color = LocalColors.current.primary,
+    backgroundColor: Color = LocalColors.current.borders,
     strokeWidth: Dp = 18.dp,
     sweepAngle: Float = 310f,
     startAngle: Float = (360f - sweepAngle) / 2 + 90f

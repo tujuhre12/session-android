@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.dp
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.thoughtcrime.securesms.ui.Callbacks
-import org.thoughtcrime.securesms.ui.LocalPalette
+import org.thoughtcrime.securesms.ui.LocalColors
 import org.thoughtcrime.securesms.ui.NoOpCallbacks
 import org.thoughtcrime.securesms.ui.OptionsCard
 import org.thoughtcrime.securesms.ui.RadioOption
@@ -55,7 +55,7 @@ fun DisappearingMessages(
                     text = stringResource(R.string.activity_disappearing_messages_group_footer),
                     style = extraSmall,
                     fontWeight = FontWeight(400),
-                    color = LocalPalette.current.textSecondary,
+                    color = LocalColors.current.textSecondary,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth())
             }

@@ -33,8 +33,8 @@ import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.ui.CellWithPaddingAndMargin
 import org.thoughtcrime.securesms.ui.LocalDimensions
-import org.thoughtcrime.securesms.ui.LocalPalette
-import org.thoughtcrime.securesms.ui.Palette
+import org.thoughtcrime.securesms.ui.LocalColors
+import org.thoughtcrime.securesms.ui.Colors
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.SessionShieldIcon
@@ -91,9 +91,9 @@ class RecoveryPasswordActivity : BaseActionBarActivity() {
 @Preview
 @Composable
 fun PreviewRecoveryPasswordScreen(
-    @PreviewParameter(SessionColorsParameterProvider::class) palette: Palette
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: Colors
 ) {
-    PreviewTheme(palette) {
+    PreviewTheme(colors) {
         RecoveryPasswordScreen(seed = "Voyage  urban  toyed  maverick peculiar tuxedo penguin tree grass building listen speak withdraw terminal plane")
     }
 }
@@ -189,13 +189,13 @@ private fun RecoveryPassword(seed: String) {
             .padding(vertical = LocalDimensions.current.marginSmall)
             .border(
                 width = 1.dp,
-                color = LocalPalette.current.borders,
+                color = LocalColors.current.borders,
                 shape = RoundedCornerShape(11.dp)
             )
             .padding(LocalDimensions.current.marginSmall),
         textAlign = TextAlign.Center,
         style = extraSmallMonospace,
-        color = LocalPalette.current.run { if (isLight) text else primary },
+        color = LocalColors.current.run { if (isLight) text else primary },
     )
 }
 
@@ -222,7 +222,7 @@ private fun HideRecoveryPasswordCell(onHide: () -> Unit = {}) {
                     .wrapContentWidth()
                     .align(Alignment.CenterVertically)
                     .contentDescription(R.string.AccessibilityId_hide_recovery_password_button),
-                color = LocalPalette.current.danger,
+                color = LocalColors.current.danger,
                 onClick = onHide
             )
         }

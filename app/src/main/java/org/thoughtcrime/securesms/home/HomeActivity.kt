@@ -94,8 +94,8 @@ import org.thoughtcrime.securesms.showMuteDialog
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.LocalDimensions
-import org.thoughtcrime.securesms.ui.LocalPalette
-import org.thoughtcrime.securesms.ui.Palette
+import org.thoughtcrime.securesms.ui.LocalColors
+import org.thoughtcrime.securesms.ui.Colors
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.SessionShieldIcon
@@ -104,7 +104,7 @@ import org.thoughtcrime.securesms.ui.components.SlimOutlineButton
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.h4
 import org.thoughtcrime.securesms.ui.h8
-import org.thoughtcrime.securesms.ui.setContentWithTheme
+import org.thoughtcrime.securesms.ui.setThemedContent
 import org.thoughtcrime.securesms.ui.small
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 import org.thoughtcrime.securesms.util.IP2Country
@@ -206,7 +206,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         binding.sessionToolbar.disableClipping()
         // Set up seed reminder view
         lifecycleScope.launchWhenStarted {
-            binding.seedReminderView.setContentWithTheme {
+            binding.seedReminderView.setThemedContent {
                 if (!textSecurePreferences.getHasViewedSeed()) SeedReminder()
             }
         }
@@ -223,7 +223,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         }
 
         // Set up empty state view
-        binding.emptyStateContainer.setContentWithTheme {
+        binding.emptyStateContainer.setThemedContent {
             EmptyView(ApplicationContext.getInstance(this).newAccount)
         }
 
@@ -364,9 +364,9 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
     @Preview
     @Composable
     fun PreviewMessageDetails(
-        @PreviewParameter(SessionColorsParameterProvider::class) palette: Palette
+        @PreviewParameter(SessionColorsParameterProvider::class) colors: Colors
     ) {
-        PreviewTheme(palette) {
+        PreviewTheme(colors) {
             SeedReminder()
         }
     }
@@ -379,11 +379,11 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                 Modifier
                     .fillMaxWidth()
                     .height(4.dp)
-                    .background(LocalPalette.current.primary)
+                    .background(LocalColors.current.primary)
             )
             Row(
                 Modifier
-                    .background(LocalPalette.current.backgroundSecondary)
+                    .background(LocalColors.current.backgroundSecondary)
                     .padding(
                         horizontal = LocalDimensions.current.marginSmall,
                         vertical = LocalDimensions.current.marginExtraSmall
@@ -438,7 +438,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                 Text(
                     stringResource(R.string.welcome_to_session),
                     style = base,
-                    color = LocalPalette.current.primary,
+                    color = LocalColors.current.primary,
                     textAlign = TextAlign.Center
                 )
             }
