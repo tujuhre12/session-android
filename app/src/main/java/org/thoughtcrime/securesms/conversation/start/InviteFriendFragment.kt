@@ -118,7 +118,6 @@ private fun InviteFriend(
 
                 SlimOutlineCopyButton(
                     modifier = Modifier.weight(1f),
-                    color = LocalColors.current.text,
                     onClick = copyPublicKey
                 )
             }

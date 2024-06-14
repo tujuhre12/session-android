@@ -90,6 +90,8 @@ interface Colors {
     val qrCodeBackground: Color
 }
 
+val Colors.slimOutlineButton: Color get() = text
+
 fun sessionColors(
     isLight: Boolean,
     isClassic: Boolean,

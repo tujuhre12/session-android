@@ -40,7 +40,6 @@ sealed class GetString {
     data class FromMap<T>(val value: T, val function: (Context, T) -> String): GetString() {
         @Composable
         override fun string(): String = function(LocalContext.current, value)
-
         override fun string(context: Context): String = function(context, value)
     }
 }

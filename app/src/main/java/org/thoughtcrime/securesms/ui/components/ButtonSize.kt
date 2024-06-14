@@ -6,7 +6,6 @@ import androidx.compose.material.LocalMinimumInteractiveComponentEnforcement
 import androidx.compose.material.LocalTextStyle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -27,14 +26,15 @@ interface ButtonSize {
 
     val textStyle: TextStyle @Composable get
     val minHeight: Dp
-}
 
-object LargeButtonSize: ButtonSize {
-    override val textStyle @Composable get() = baseBold
-    override val minHeight = 41.dp
-}
+    object Large: ButtonSize {
+        override val textStyle @Composable get() = baseBold
+        override val minHeight = 41.dp
+    }
 
-object SlimButtonSize: ButtonSize {
-    override val textStyle @Composable get() = extraSmallBold
-    override val minHeight = 29.dp
+    object Slim: ButtonSize {
+        override val textStyle @Composable get() = extraSmallBold
+        override val minHeight = 29.dp
+    }
+
 }
