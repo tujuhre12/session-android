@@ -360,7 +360,8 @@ fun FileDetails(fileDetails: List<TitledText>) {
 fun TitledErrorText(titledText: TitledText?) {
     TitledText(
         titledText,
-        style = base.copy(color = LocalColors.current.danger)
+        style = base,
+        color = LocalColors.current.danger
     )
 }
 
@@ -377,12 +378,14 @@ fun TitledText(
     titledText: TitledText?,
     modifier: Modifier = Modifier,
     style: TextStyle = base,
+    color: Color = Color.Unspecified
 ) {
     titledText?.apply {
         TitledView(title, modifier) {
             Text(
                 text,
                 style = style,
+                color = color,
                 modifier = Modifier.fillMaxWidth()
             )
         }
