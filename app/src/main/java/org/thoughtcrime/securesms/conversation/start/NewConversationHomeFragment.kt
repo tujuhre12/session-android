@@ -27,10 +27,11 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.MutableStateFlow
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
-import org.thoughtcrime.securesms.ui.Colors
+import org.thoughtcrime.securesms.ui.Divider
+import org.thoughtcrime.securesms.ui.color.Colors
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.ItemButton
-import org.thoughtcrime.securesms.ui.LocalColors
+import org.thoughtcrime.securesms.ui.color.LocalColors
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider

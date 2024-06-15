@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.ui
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -64,6 +65,10 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.runIf
 import org.thoughtcrime.securesms.components.ProfilePictureView
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.OptionsCard
+import org.thoughtcrime.securesms.ui.color.LocalColors
+import org.thoughtcrime.securesms.ui.color.divider
+import org.thoughtcrime.securesms.ui.color.radioButtonColors
+import org.thoughtcrime.securesms.ui.color.transparentButtonColors
 import kotlin.math.min
 import kotlin.math.roundToInt
 
@@ -130,13 +135,12 @@ fun ItemButtonWithDrawable(
         text = stringResource(textId),
         icon = {
             Image(
-                painter = rememberDrawablePainter(drawable = context.getDrawable(icon)),
+                painter = rememberDrawablePainter(drawable = AppCompatResources.getDrawable(context, icon)),
                 contentDescription = stringResource(contentDescription),
                 modifier = Modifier.align(Alignment.Center)
             )
         },
         colors = colors,
-        contentDescription = stringResource(contentDescription),
         onClick = onClick
     )
 }
@@ -159,7 +163,6 @@ fun ItemButton(
             )
         },
         colors = colors,
-        contentDescription = contentDescription,
         onClick = onClick
     )
 }
@@ -167,9 +170,8 @@ fun ItemButton(
 @Composable
 fun ItemButton(
     text: String,
-    icon: @Composable BoxScope.() -> Unit,
+    icon: @Composable() (BoxScope.() -> Unit),
     colors: ButtonColors = transparentButtonColors(),
-    contentDescription: String = text,
     onClick: () -> Unit
 ) {
     TextButton(

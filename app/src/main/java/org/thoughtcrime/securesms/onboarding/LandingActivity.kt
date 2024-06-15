@@ -46,10 +46,11 @@ import org.thoughtcrime.securesms.onboarding.pickname.startPickDisplayNameActivi
 import org.thoughtcrime.securesms.service.KeyCachingService
 import org.thoughtcrime.securesms.showOpenUrlDialog
 import org.thoughtcrime.securesms.ui.LocalDimensions
-import org.thoughtcrime.securesms.ui.LocalColors
-import org.thoughtcrime.securesms.ui.Colors
+import org.thoughtcrime.securesms.ui.color.LocalColors
+import org.thoughtcrime.securesms.ui.color.Colors
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
+import org.thoughtcrime.securesms.ui.color.LocalColors
 import org.thoughtcrime.securesms.ui.components.BorderlessHtmlButton
 import org.thoughtcrime.securesms.ui.components.PrimaryFillButton
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton

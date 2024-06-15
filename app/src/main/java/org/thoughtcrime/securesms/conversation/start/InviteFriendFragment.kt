@@ -29,7 +29,7 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.preferences.copyPublicKey
 import org.thoughtcrime.securesms.preferences.sendInvitationToUseSession
-import org.thoughtcrime.securesms.ui.LocalColors
+import org.thoughtcrime.securesms.ui.color.LocalColors
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.components.AppBar

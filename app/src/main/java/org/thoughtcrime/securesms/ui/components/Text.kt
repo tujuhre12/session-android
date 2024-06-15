@@ -26,10 +26,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.thoughtcrime.securesms.ui.LocalColors
 import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.baseBold
-import org.thoughtcrime.securesms.ui.outlinedTextFieldColors
+import org.thoughtcrime.securesms.ui.color.LocalColors
+import org.thoughtcrime.securesms.ui.color.outlinedTextFieldColors
 
 @Composable
 fun SessionOutlinedTextField(

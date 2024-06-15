@@ -11,7 +11,7 @@ import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ExpiryType
 import org.thoughtcrime.securesms.conversation.disappearingmessages.State
 import org.thoughtcrime.securesms.ui.PreviewTheme
-import org.thoughtcrime.securesms.ui.Colors
+import org.thoughtcrime.securesms.ui.color.Colors
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
 
 @Preview(widthDp = 450, heightDp = 700)

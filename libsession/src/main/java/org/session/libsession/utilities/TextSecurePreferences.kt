@@ -14,6 +14,7 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import org.session.libsession.R
+import org.session.libsession.utilities.TextSecurePreferences.Companion
 import org.session.libsession.utilities.TextSecurePreferences.Companion.AUTOPLAY_AUDIO_MESSAGES
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOTIFICATIONS_ENABLED
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CLASSIC_DARK
@@ -24,6 +25,8 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_VAC
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LEGACY_PREF_KEY_SELECTED_UI_MODE
 import org.session.libsession.utilities.TextSecurePreferences.Companion.OCEAN_DARK
 import org.session.libsession.utilities.TextSecurePreferences.Companion.OCEAN_LIGHT
+import org.session.libsession.utilities.TextSecurePreferences.Companion.ORANGE_ACCENT
+import org.session.libsession.utilities.TextSecurePreferences.Companion.SELECTED_ACCENT_COLOR
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SELECTED_STYLE
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOWN_CALL_NOTIFICATION
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOWN_CALL_WARNING
@@ -175,6 +178,7 @@ interface TextSecurePreferences {
     fun setLastVacuumNow()
     fun getFingerprintKeyGenerated(): Boolean
     fun setFingerprintKeyGenerated()
+    fun getSelectedAccentColor(): String?
     @StyleRes fun getAccentColorStyle(): Int?
     fun setAccentColorStyle(@StyleRes newColorStyle: Int?)
     fun getThemeStyle(): String
@@ -988,35 +992,6 @@ interface TextSecurePreferences {
         }
 
         @JvmStatic
-        fun getAccentColorName(context: Context): String? = getStringPreference(context, SELECTED_ACCENT_COLOR, ORANGE_ACCENT)
-
-        @JvmStatic @StyleRes
-        fun getAccentColorStyle(context: Context): Int? = when (getAccentColorName(context)) {
-            GREEN_ACCENT -> R.style.PrimaryGreen
-            BLUE_ACCENT -> R.style.PrimaryBlue
-            PURPLE_ACCENT -> R.style.PrimaryPurple
-            PINK_ACCENT -> R.style.PrimaryPink
-            RED_ACCENT -> R.style.PrimaryRed
-            ORANGE_ACCENT -> R.style.PrimaryOrange
-            YELLOW_ACCENT -> R.style.PrimaryYellow
-            else -> null
-        }
-
-        @JvmStatic
-        fun setAccentColorStyle(context: Context, @StyleRes newColor: Int?) {
-            setStringPreference(context, SELECTED_ACCENT_COLOR, when (newColor) {
-                R.style.PrimaryGreen -> GREEN_ACCENT
-                R.style.PrimaryBlue -> BLUE_ACCENT
-                R.style.PrimaryPurple -> PURPLE_ACCENT
-                R.style.PrimaryPink -> PINK_ACCENT
-                R.style.PrimaryRed -> RED_ACCENT
-                R.style.PrimaryOrange -> ORANGE_ACCENT
-                R.style.PrimaryYellow -> YELLOW_ACCENT
-                else -> null
-            })
-        }
-
-        @JvmStatic
         fun clearAll(context: Context) {
             getDefaultSharedPreferences(context).edit().clear().commit()
         }
@@ -1628,13 +1603,12 @@ class AppTextSecurePreferences @Inject constructor(
         setBooleanPreference(TextSecurePreferences.FINGERPRINT_KEY_GENERATED, true)
     }
 
+    override fun getSelectedAccentColor(): String? =
+        getStringPreference(SELECTED_ACCENT_COLOR, null)
+
     @StyleRes
     override fun getAccentColorStyle(): Int? {
-        val prefColor = getStringPreference(
-            TextSecurePreferences.SELECTED_ACCENT_COLOR,
-            null
-        )
-        return when (prefColor) {
+        return when (getSelectedAccentColor()) {
             TextSecurePreferences.GREEN_ACCENT -> R.style.PrimaryGreen
             TextSecurePreferences.BLUE_ACCENT -> R.style.PrimaryBlue
             TextSecurePreferences.PURPLE_ACCENT -> R.style.PrimaryPurple

@@ -1,7 +1,7 @@
-package org.thoughtcrime.securesms.ui
+package org.thoughtcrime.securesms.ui.color
 
-import android.content.Context
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.ButtonDefaults
@@ -15,58 +15,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import org.session.libsession.utilities.TextSecurePreferences
-
-val classicDark0 = Color(0xff111111)
-val classicDark1 = Color(0xff1B1B1B)
-val classicDark2 = Color(0xff2D2D2D)
-val classicDark3 = Color(0xff414141)
-val classicDark4 = Color(0xff767676)
-val classicDark5 = Color(0xffA1A2A1)
-val classicDark6 = Color(0xffFFFFFF)
-
-val classicLight0 = Color(0xff000000)
-val classicLight1 = Color(0xff6D6D6D)
-val classicLight2 = Color(0xffA1A2A1)
-val classicLight3 = Color(0xffDFDFDF)
-val classicLight4 = Color(0xffF0F0F0)
-val classicLight5 = Color(0xffF9F9F9)
-val classicLight6 = Color(0xffFFFFFF)
-
-val oceanDark0 = Color(0xff000000)
-val oceanDark1 = Color(0xff1A1C28)
-val oceanDark2 = Color(0xff252735)
-val oceanDark3 = Color(0xff2B2D40)
-val oceanDark4 = Color(0xff3D4A5D)
-val oceanDark5 = Color(0xffA6A9CE)
-val oceanDark6 = Color(0xff5CAACC)
-val oceanDark7 = Color(0xffFFFFFF)
-
-val oceanLight0 = Color(0xff000000)
-val oceanLight1 = Color(0xff19345D)
-val oceanLight2 = Color(0xff6A6E90)
-val oceanLight3 = Color(0xff5CAACC)
-val oceanLight4 = Color(0xffB3EDF2)
-val oceanLight5 = Color(0xffE7F3F4)
-val oceanLight6 = Color(0xffECFAFB)
-val oceanLight7 = Color(0xffFCFFFF)
-
-val primaryGreen = Color(0xFF31F196)
-val primaryBlue = Color(0xFF57C9FA)
-val primaryPurple = Color(0xFFC993FF)
-val primaryPink = Color(0xFFFF95EF)
-val primaryRed = Color(0xFFFF9C8E)
-val primaryOrange = Color(0xFFFCB159)
-val primaryYellow = Color(0xFFFAD657)
-
-val dangerDark = Color(0xFFFF3A3A)
-val dangerLight = Color(0xFFE12D19)
-val disabledDark = Color(0xFFA1A2A1)
-val disabledLight = Color(0xFF6D6D6D)
-
-val blackAlpha40 = Color.Black.copy(alpha = 0.4f)
+import org.thoughtcrime.securesms.ui.PreviewTheme
+import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
+import org.thoughtcrime.securesms.ui.base
 
 val LocalColors = staticCompositionLocalOf<Colors> { ClassicDark() }
 
@@ -89,19 +43,6 @@ interface Colors {
     val qrCodeContent: Color
     val qrCodeBackground: Color
 }
-
-val Colors.slimOutlineButton: Color get() = text
-
-fun sessionColors(
-    isLight: Boolean,
-    isClassic: Boolean,
-    primary: Color
-): Colors = when {
-    isClassic && isLight -> ::ClassicLight
-    isLight -> ::OceanLight
-    isClassic -> ::ClassicDark
-    else -> ::OceanDark
-}(primary)
 
 data class ClassicDark(override val primary: Color = primaryGreen): Colors {
     override val isLight = false
@@ -175,11 +116,7 @@ data class OceanLight(override val primary: Color = primaryBlue): Colors {
     override val qrCodeBackground = backgroundSecondary
 }
 
-@Composable
-fun transparentButtonColors() = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent)
-
-@Composable
-fun destructiveButtonColors() = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent, contentColor = LocalColors.current.danger)
+val Colors.slimOutlineButton: Color get() = text
 
 @Composable
 fun Colors(name: String, colors: List<Color>) {
@@ -250,12 +187,39 @@ fun Colors.radioButtonColors() = RadioButtonDefaults.colors(
     disabledColor = disabled
 )
 
-fun TextSecurePreferences.Companion.getAccentColor(context: Context): Color = when (getAccentColorName(context)) {
-    BLUE_ACCENT -> primaryBlue
-    PURPLE_ACCENT -> primaryPurple
-    PINK_ACCENT -> primaryPink
-    RED_ACCENT -> primaryRed
-    ORANGE_ACCENT -> primaryOrange
-    YELLOW_ACCENT -> primaryYellow
-    else -> primaryGreen
+@Composable
+fun transparentButtonColors() = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent)
+
+@Composable
+fun destructiveButtonColors() = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent, contentColor = LocalColors.current.danger)
+
+
+/**
+ * This class holds two instances of [Colors], [light] representing the [Colors] to use when the system is in a
+ * light theme, and [dark] representing the [Colors] to use when the system is in a dark theme.
+ *
+ * If the user has [followSystemSettings] turned on then [light] should be equal to [dark].
+ */
+data class LightDarkColors(
+    val light: Colors,
+    val dark: Colors
+) {
+    @Composable
+    fun colors() = if (light == dark || isSystemInDarkTheme()) dark else light
+}
+
+/**
+ * Courtesy constructor that sets [light] and [dark] based on properties.
+ */
+fun LightDarkColors(isClassic: Boolean, isLight: Boolean, followSystemSettings: Boolean, primaryOrUnspecified: Color): LightDarkColors {
+    val primary = primaryOrUnspecified.takeOrElse { if (isClassic) primaryGreen else primaryBlue }
+    val light = when {
+        isLight || followSystemSettings -> if (isClassic) ClassicLight(primary) else OceanLight(primary)
+        else -> if (isClassic) ClassicDark(primary) else OceanDark(primary)
+    }
+    val dark = when {
+        isLight && !followSystemSettings -> if (isClassic) ClassicLight(primary) else OceanLight(primary)
+        else -> if (isClassic) ClassicDark(primary) else OceanDark(primary)
+    }
+    return LightDarkColors(light, dark)
 }

@@ -42,14 +42,14 @@ import kotlinx.coroutines.flow.filter
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LaunchedEffectAsync
-import org.thoughtcrime.securesms.ui.LocalColors
+import org.thoughtcrime.securesms.ui.color.LocalColors
 import org.thoughtcrime.securesms.ui.baseBold
+import org.thoughtcrime.securesms.ui.color.radioButtonColors
+import org.thoughtcrime.securesms.ui.color.slimOutlineButton
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.extraSmall
 import org.thoughtcrime.securesms.ui.h8
 import org.thoughtcrime.securesms.ui.h9
-import org.thoughtcrime.securesms.ui.radioButtonColors
-import org.thoughtcrime.securesms.ui.slimOutlineButton
 import org.thoughtcrime.securesms.ui.small
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds

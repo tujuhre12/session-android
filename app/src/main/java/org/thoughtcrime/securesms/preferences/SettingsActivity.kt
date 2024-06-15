@@ -80,7 +80,7 @@ import org.thoughtcrime.securesms.ui.ItemButtonWithDrawable
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.components.OutlineCopyButton
-import org.thoughtcrime.securesms.ui.destructiveButtonColors
+import org.thoughtcrime.securesms.ui.color.destructiveButtonColors
 import org.thoughtcrime.securesms.ui.setThemedContent
 import org.thoughtcrime.securesms.util.BitmapDecodingException
 import org.thoughtcrime.securesms.util.BitmapUtil

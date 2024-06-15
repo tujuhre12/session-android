@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.dp
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.thoughtcrime.securesms.ui.Callbacks
-import org.thoughtcrime.securesms.ui.LocalColors
+import org.thoughtcrime.securesms.ui.color.LocalColors
 import org.thoughtcrime.securesms.ui.NoOpCallbacks
 import org.thoughtcrime.securesms.ui.OptionsCard
 import org.thoughtcrime.securesms.ui.RadioOption

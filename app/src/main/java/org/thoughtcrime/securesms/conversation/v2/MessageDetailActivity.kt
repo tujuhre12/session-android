@@ -64,16 +64,16 @@ import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.HorizontalPagerIndicator
 import org.thoughtcrime.securesms.ui.ItemButton
-import org.thoughtcrime.securesms.ui.LocalColors
+import org.thoughtcrime.securesms.ui.color.LocalColors
 import org.thoughtcrime.securesms.ui.PreviewTheme
-import org.thoughtcrime.securesms.ui.Colors
+import org.thoughtcrime.securesms.ui.color.Colors
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.TitledText
 import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.baseBold
 import org.thoughtcrime.securesms.ui.baseMonospace
-import org.thoughtcrime.securesms.ui.blackAlpha40
-import org.thoughtcrime.securesms.ui.destructiveButtonColors
+import org.thoughtcrime.securesms.ui.color.blackAlpha40
+import org.thoughtcrime.securesms.ui.color.destructiveButtonColors
 import org.thoughtcrime.securesms.ui.setComposeContent
 import javax.inject.Inject
 

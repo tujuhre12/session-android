@@ -2,7 +2,6 @@ package org.thoughtcrime.securesms.ui
 
 import android.content.Context
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
@@ -16,8 +15,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import org.session.libsession.utilities.AppTextSecurePreferences
-import org.thoughtcrime.securesms.util.ThemeState
-import org.thoughtcrime.securesms.util.themeState
+import org.thoughtcrime.securesms.ui.color.ClassicDark
+import org.thoughtcrime.securesms.ui.color.ClassicLight
+import org.thoughtcrime.securesms.ui.color.Colors
+import org.thoughtcrime.securesms.ui.color.LocalColors
+import org.thoughtcrime.securesms.ui.color.OceanDark
+import org.thoughtcrime.securesms.ui.color.OceanLight
+import org.thoughtcrime.securesms.ui.color.colors
 
 /**
  * Apply a Material2 compose theme based on user selections in SharedPreferences.
@@ -26,7 +30,7 @@ import org.thoughtcrime.securesms.util.themeState
 fun SessionMaterialTheme(
     content: @Composable () -> Unit
 ) {
-    SessionMaterialTheme(LocalContext.current.sessionColors()) { content() }
+    SessionMaterialTheme(LocalContext.current.colors()) { content() }
 }
 
 /**
@@ -73,8 +77,7 @@ private fun Colors.toMaterialColors() = androidx.compose.material.Colors(
     isLight = isLight
 )
 
-@Composable private fun Context.sessionColors() = AppTextSecurePreferences(this).themeState().sessionColors()
-@Composable private fun ThemeState.sessionColors() = sessionColors(if (followSystem) !isSystemInDarkTheme() else isLight, isClassic, accent)
+@Composable private fun Context.colors() = AppTextSecurePreferences(this).colors()
 
 val sessionShapes = Shapes(
     small = RoundedCornerShape(50)
