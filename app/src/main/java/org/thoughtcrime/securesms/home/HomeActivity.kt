@@ -670,8 +670,6 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
     private fun showNewConversation() {
         NewConversationFragment().show(supportFragmentManager, "NewConversationFragment")
     }
-
-    // endregion
 }
 
 @Preview
@@ -722,6 +720,7 @@ private fun SeedReminder(startRecoveryPasswordActivity: () -> Unit) {
                 modifier = Modifier
                     .align(Alignment.CenterVertically)
                     .contentDescription(R.string.AccessibilityId_reveal_recovery_phrase_button),
+                color = LocalColors.current.buttonOutline,
                 onClick = { startRecoveryPasswordActivity() }
             )
         }
