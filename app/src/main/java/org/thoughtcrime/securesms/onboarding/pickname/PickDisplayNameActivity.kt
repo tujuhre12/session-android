@@ -22,8 +22,10 @@ import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
+import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.BaseActionBarActivity
+import org.thoughtcrime.securesms.home.startHomeActivity
 import org.thoughtcrime.securesms.onboarding.messagenotifications.startMessageNotificationsActivity
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.base
@@ -35,17 +37,18 @@ import org.thoughtcrime.securesms.ui.setComposeContent
 import org.thoughtcrime.securesms.util.setUpActionBarSessionLogo
 import javax.inject.Inject
 
-private const val EXTRA_PICK_NEW_NAME = "extra_pick_new_name"
+private const val EXTRA_FAILED_TO_LOAD = "extra_failed_to_load"
 
 @AndroidEntryPoint
 class PickDisplayNameActivity : BaseActionBarActivity() {
 
-    @Inject
-    lateinit var viewModelFactory: PickDisplayNameViewModel.AssistedFactory
+    @Inject lateinit var viewModelFactory: PickDisplayNameViewModel.AssistedFactory
+    @Inject lateinit var prefs: TextSecurePreferences
+
+    val failedToLoad get() = intent.getBooleanExtra(EXTRA_FAILED_TO_LOAD, false)
 
     private val viewModel: PickDisplayNameViewModel by viewModels {
-        val pickNewName = intent.getBooleanExtra(EXTRA_PICK_NEW_NAME, false)
-        viewModelFactory.create(pickNewName)
+        viewModelFactory.create(failedToLoad)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -54,9 +57,11 @@ class PickDisplayNameActivity : BaseActionBarActivity() {
 
         setComposeContent { DisplayNameScreen(viewModel) }
 
+        if (!failedToLoad) prefs.setHasViewedSeed(false)
+
         lifecycleScope.launch {
             viewModel.eventFlow.collect {
-                startMessageNotificationsActivity()
+                if (failedToLoad) startHomeActivity() else startMessageNotificationsActivity()
             }
         }
     }
@@ -119,7 +124,7 @@ fun Context.startPickDisplayNameActivity(failedToLoad: Boolean = false, flags: I
     ApplicationContext.getInstance(this).newAccount = !failedToLoad
 
     Intent(this, PickDisplayNameActivity::class.java)
-        .apply { putExtra(EXTRA_PICK_NEW_NAME, failedToLoad) }
+        .apply { putExtra(EXTRA_FAILED_TO_LOAD, failedToLoad) }
         .also { it.flags = flags }
         .also(::startActivity)
 }

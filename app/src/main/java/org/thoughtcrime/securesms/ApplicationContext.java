@@ -264,7 +264,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
 
         // If the user account hasn't been created or onboarding wasn't finished then don't start
         // the pollers
-        if (TextSecurePreferences.getLocalNumber(this) == null || !TextSecurePreferences.hasSeenWelcomeScreen(this)) {
+        if (textSecurePreferences.getLocalNumber() == null || !textSecurePreferences.hasSeenWelcomeScreen()) {
             return;
         }
 

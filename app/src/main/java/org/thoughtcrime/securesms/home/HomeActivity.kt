@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.NotificationManager
 import android.content.ClipData
 import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -788,4 +789,11 @@ private fun EmptyView(newAccount: Boolean) {
         )
         Spacer(modifier = Modifier.weight(2f))
     }
+}
+
+fun Context.startHomeActivity() {
+    Intent(this, HomeActivity::class.java).apply {
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        putExtra(HomeActivity.FROM_ONBOARDING, true)
+    }.also(::startActivity)
 }

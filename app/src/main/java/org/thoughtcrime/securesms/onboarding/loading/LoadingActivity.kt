@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.onboarding.loading
 
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.viewModels
@@ -13,13 +12,11 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.onboarding.messagenotifications.startMessageNotificationsActivity
+import org.thoughtcrime.securesms.home.startHomeActivity
 import org.thoughtcrime.securesms.onboarding.pickname.startPickDisplayNameActivity
 import org.thoughtcrime.securesms.ui.setComposeContent
 import org.thoughtcrime.securesms.util.setUpActionBarSessionLogo
 import javax.inject.Inject
-
-private const val EXTRA_MNEMONIC = "mnemonic"
 
 @AndroidEntryPoint
 class LoadingActivity: BaseActionBarActivity() {
@@ -40,11 +37,12 @@ class LoadingActivity: BaseActionBarActivity() {
     private fun register(skipped: Boolean) {
         prefs.setLastConfigurationSyncTime(System.currentTimeMillis())
 
-        val flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-
         when {
-            skipped -> startPickDisplayNameActivity(true, flags)
-            else -> startMessageNotificationsActivity(flags)
+            skipped -> startPickDisplayNameActivity(
+                failedToLoad = true,
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            )
+            else -> startHomeActivity()
         }
     }
 
@@ -60,8 +58,6 @@ class LoadingActivity: BaseActionBarActivity() {
 
         setUpActionBarSessionLogo(true)
 
-        viewModel.restore(application, intent.getByteArrayExtra(EXTRA_MNEMONIC)!!)
-
         lifecycleScope.launch {
             viewModel.eventFlow.collect {
                 when (it) {
@@ -71,10 +67,4 @@ class LoadingActivity: BaseActionBarActivity() {
             }
         }
     }
-}
-
-fun Context.startLoadingActivity(mnemonic: ByteArray) {
-    Intent(this, LoadingActivity::class.java)
-        .apply { putExtra(EXTRA_MNEMONIC, mnemonic) }
-        .also(::startActivity)
 }

@@ -12,22 +12,28 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.home.HomeActivity
+import org.thoughtcrime.securesms.home.startHomeActivity
 import org.thoughtcrime.securesms.notifications.PushRegistry
+import org.thoughtcrime.securesms.onboarding.loading.LoadingActivity
+import org.thoughtcrime.securesms.onboarding.loading.LoadingManager
 import org.thoughtcrime.securesms.ui.setComposeContent
 import org.thoughtcrime.securesms.util.setUpActionBarSessionLogo
+import org.thoughtcrime.securesms.util.start
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class MessageNotificationsActivity : BaseActionBarActivity() {
 
     @Inject lateinit var pushRegistry: PushRegistry
+    @Inject lateinit var prefs: TextSecurePreferences
+    @Inject lateinit var loadingManager: LoadingManager
 
     private val viewModel: MessageNotificationsViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setUpActionBarSessionLogo(true)
-        TextSecurePreferences.setHasSeenWelcomeScreen(this, true)
+        prefs.setHasSeenWelcomeScreen(true)
 
         setComposeContent { MessageNotificationsScreen() }
     }
@@ -39,13 +45,15 @@ class MessageNotificationsActivity : BaseActionBarActivity() {
     }
 
     private fun register() {
-        TextSecurePreferences.setPushEnabled(this, viewModel.stateFlow.value.pushEnabled)
+        prefs.setPushEnabled(viewModel.stateFlow.value.pushEnabled)
         ApplicationContext.getInstance(this).startPollingIfNeeded()
         pushRegistry.refresh(true)
-        Intent(this, HomeActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            putExtra(HomeActivity.FROM_ONBOARDING, true)
-        }.also(::startActivity)
+
+        when {
+            prefs.getHasViewedSeed() && !prefs.getConfigurationMessageSynced() -> start<LoadingActivity>()
+            prefs.getProfileName() != null -> startHomeActivity()
+            else -> startHomeActivity()
+        }
     }
 }
 

@@ -37,6 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
@@ -46,10 +47,9 @@ import org.thoughtcrime.securesms.onboarding.pickname.startPickDisplayNameActivi
 import org.thoughtcrime.securesms.service.KeyCachingService
 import org.thoughtcrime.securesms.showOpenUrlDialog
 import org.thoughtcrime.securesms.ui.LocalDimensions
-import org.thoughtcrime.securesms.ui.color.LocalColors
-import org.thoughtcrime.securesms.ui.color.Colors
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
+import org.thoughtcrime.securesms.ui.color.Colors
 import org.thoughtcrime.securesms.ui.color.LocalColors
 import org.thoughtcrime.securesms.ui.components.BorderlessHtmlButton
 import org.thoughtcrime.securesms.ui.components.PrimaryFillButton
@@ -60,21 +60,13 @@ import org.thoughtcrime.securesms.ui.large
 import org.thoughtcrime.securesms.ui.setComposeContent
 import org.thoughtcrime.securesms.util.setUpActionBarSessionLogo
 import org.thoughtcrime.securesms.util.start
+import javax.inject.Inject
 import kotlin.time.Duration.Companion.milliseconds
 
-private data class TextData(
-    @StringRes val stringId: Int,
-    val isOutgoing: Boolean = false
-)
+@AndroidEntryPoint
+class LandingActivity: BaseActionBarActivity() {
 
-private val MESSAGES = listOf(
-    TextData(R.string.onboardingBubbleWelcomeToSession),
-    TextData(R.string.onboardingBubbleSessionIsEngineered, isOutgoing = true),
-    TextData(R.string.onboardingBubbleNoPhoneNumber),
-    TextData(R.string.onboardingBubbleCreatingAnAccountIsEasy, isOutgoing = true)
-)
-
-class LandingActivity : BaseActionBarActivity() {
+    @Inject lateinit var prefs: TextSecurePreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -85,7 +77,14 @@ class LandingActivity : BaseActionBarActivity() {
 
         setUpActionBarSessionLogo(true)
 
-        setComposeContent { LandingScreen() }
+        setComposeContent {
+            LandingScreen(
+                createAccount = {
+                    prefs.setHasViewedSeed(false)
+                    startPickDisplayNameActivity()
+                }
+            )
+        }
 
         IdentityKeyUtil.generateIdentityKeyPair(this)
         TextSecurePreferences.setPasswordDisabled(this, true)
@@ -99,12 +98,12 @@ class LandingActivity : BaseActionBarActivity() {
         @PreviewParameter(SessionColorsParameterProvider::class) colors: Colors
     ) {
         PreviewTheme(colors) {
-            LandingScreen()
+            LandingScreen {}
         }
     }
 
     @Composable
-    private fun LandingScreen() {
+    private fun LandingScreen(createAccount: () -> Unit) {
         var count by remember { mutableStateOf(0) }
         val listState = rememberLazyListState()
 
@@ -159,7 +158,7 @@ class LandingActivity : BaseActionBarActivity() {
                         .fillMaxWidth()
                         .align(Alignment.CenterHorizontally)
                         .contentDescription(R.string.AccessibilityId_create_account_button),
-                    onClick = ::startPickDisplayNameActivity
+                    onClick = createAccount
                 )
                 Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacingExtraSmall))
                 PrimaryOutlineButton(
@@ -252,3 +251,15 @@ private fun MessageText(
         )
     }
 }
+
+private data class TextData(
+    @StringRes val stringId: Int,
+    val isOutgoing: Boolean = false
+)
+
+private val MESSAGES = listOf(
+    TextData(R.string.onboardingBubbleWelcomeToSession),
+    TextData(R.string.onboardingBubbleSessionIsEngineered, isOutgoing = true),
+    TextData(R.string.onboardingBubbleNoPhoneNumber),
+    TextData(R.string.onboardingBubbleCreatingAnAccountIsEasy, isOutgoing = true)
+)

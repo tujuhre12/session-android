@@ -65,7 +65,6 @@ class PickDisplayNameViewModel(
                 prefs.setLocalRegistrationId(registrationID)
                 prefs.setLocalNumber(userHexEncodedPublicKey)
                 prefs.setRestorationTime(0)
-                prefs.setHasViewedSeed(false)
 
                 viewModelScope.launch { event.send(Event.DONE) }
             }

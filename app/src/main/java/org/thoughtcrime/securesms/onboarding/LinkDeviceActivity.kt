@@ -30,7 +30,7 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.BaseActionBarActivity
-import org.thoughtcrime.securesms.onboarding.loading.startLoadingActivity
+import org.thoughtcrime.securesms.onboarding.loading.LoadingManager
 import org.thoughtcrime.securesms.onboarding.messagenotifications.startMessageNotificationsActivity
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
@@ -52,8 +52,8 @@ private val TITLES = listOf(R.string.sessionRecoveryPassword, R.string.qrScan)
 @androidx.annotation.OptIn(ExperimentalGetImage::class)
 class LinkDeviceActivity : BaseActionBarActivity() {
 
-    @Inject
-    lateinit var prefs: TextSecurePreferences
+    @Inject lateinit var prefs: TextSecurePreferences
+    @Inject lateinit var loadingManager: LoadingManager
 
     val viewModel: LinkDeviceViewModel by viewModels()
 
@@ -67,8 +67,8 @@ class LinkDeviceActivity : BaseActionBarActivity() {
 
         lifecycleScope.launch {
             viewModel.eventFlow.collect {
+                loadingManager.load(it.mnemonic)
                 startMessageNotificationsActivity()
-                startLoadingActivity(it.mnemonic)
                 finish()
             }
         }

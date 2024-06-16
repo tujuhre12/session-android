@@ -19,10 +19,10 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.YELLOW_A
  */
 @Composable
 fun TextSecurePreferences.colors(): Colors = lightDarkColors().colors()
-fun TextSecurePreferences.lightDarkColors() = LightDarkColors(isClassic(), isLight(), getFollowSystemSettings(), primaryColor())
-fun TextSecurePreferences.isLight(): Boolean = getThemeStyle() in setOf(CLASSIC_LIGHT, OCEAN_LIGHT)
-fun TextSecurePreferences.isClassic(): Boolean = getThemeStyle() in setOf(CLASSIC_DARK, CLASSIC_LIGHT)
-fun TextSecurePreferences.primaryColor(): Color = when(getSelectedAccentColor()) {
+private fun TextSecurePreferences.lightDarkColors() = LightDarkColors(isClassic(), isLight(), getFollowSystemSettings(), primaryColor())
+private fun TextSecurePreferences.isLight(): Boolean = getThemeStyle() in setOf(CLASSIC_LIGHT, OCEAN_LIGHT)
+private fun TextSecurePreferences.isClassic(): Boolean = getThemeStyle() in setOf(CLASSIC_DARK, CLASSIC_LIGHT)
+private fun TextSecurePreferences.primaryColor(): Color = when(getSelectedAccentColor()) {
     GREEN_ACCENT -> primaryGreen
     BLUE_ACCENT -> primaryBlue
     PURPLE_ACCENT -> primaryPurple
