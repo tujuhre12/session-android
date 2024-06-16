@@ -123,7 +123,6 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         const val FROM_ONBOARDING = "HomeActivity_FROM_ONBOARDING"
     }
 
-
     private lateinit var binding: ActivityHomeBinding
     private lateinit var glide: GlideRequests
 

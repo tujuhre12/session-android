@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.onboarding
+package org.thoughtcrime.securesms.onboarding.loading
 
 import android.content.Context
 import androidx.lifecycle.ViewModel
