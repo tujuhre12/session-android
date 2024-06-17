@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.dp
 import org.thoughtcrime.securesms.ui.baseBold
 import org.thoughtcrime.securesms.ui.extraSmallBold
 
-interface ButtonSize {
+interface ButtonStyle {
     @OptIn(ExperimentalMaterialApi::class)
     @SuppressLint("ComposableNaming")
     @Composable fun applyButtonConstraints(content: @Composable () -> Unit) {
@@ -34,14 +34,13 @@ interface ButtonSize {
     val textStyle: TextStyle
     val minHeight: Dp
 
-    object Large: ButtonSize {
+    object Large: ButtonStyle {
         override val textStyle = baseBold.copy(textAlign = TextAlign.Center)
         override val minHeight = 41.dp
     }
 
-    object Slim: ButtonSize {
+    object Slim: ButtonStyle {
         override val textStyle = extraSmallBold.copy(textAlign = TextAlign.Center)
         override val minHeight = 29.dp
     }
-
 }

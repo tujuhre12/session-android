@@ -10,6 +10,7 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.utilities.hexEncodedPublicKey
 import org.thoughtcrime.securesms.ApplicationContext
+import org.thoughtcrime.securesms.crypto.KeyPairUtilities
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -40,9 +41,9 @@ class LoadingManager @Inject constructor(
             database.clearReceivedMessageHashValues()
 
             // RestoreActivity handles seed this way
-            val keyPairGenerationResult = org.thoughtcrime.securesms.crypto.KeyPairUtilities.generate(seed)
+            val keyPairGenerationResult = KeyPairUtilities.generate(seed)
             val x25519KeyPair = keyPairGenerationResult.x25519KeyPair
-            org.thoughtcrime.securesms.crypto.KeyPairUtilities.store(context, seed, keyPairGenerationResult.ed25519KeyPair, x25519KeyPair)
+            KeyPairUtilities.store(context, seed, keyPairGenerationResult.ed25519KeyPair, x25519KeyPair)
             configFactory.keyPairChanged()
             val userHexEncodedPublicKey = x25519KeyPair.hexEncodedPublicKey
             val registrationID = org.session.libsignal.utilities.KeyHelper.generateRegistrationId(false)

@@ -96,7 +96,7 @@ fun Button(
     type: ButtonType,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    size: ButtonSize = ButtonSize.Large,
+    size: ButtonStyle = ButtonStyle.Large,
     elevation: ButtonElevation? = type.elevation,
     shape: Shape = MaterialTheme.shapes.small,
     border: BorderStroke? = type.border(color, enabled),
@@ -134,7 +134,7 @@ fun Button(
     type: ButtonType,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    size: ButtonSize = ButtonSize.Large,
+    size: ButtonStyle = ButtonStyle.Large,
     elevation: ButtonElevation? = type.elevation,
     shape: Shape = MaterialTheme.shapes.small,
     border: BorderStroke? = type.border(color, enabled),
@@ -163,14 +163,14 @@ fun Button(
 }
 
 @Composable fun SlimOutlineButton(onClick: () -> Unit, modifier: Modifier = Modifier, color: Color = LocalColors.current.text, enabled: Boolean = true, content: @Composable () -> Unit) {
-    Button(onClick, color, ButtonType.Outline, modifier, enabled, ButtonSize.Slim) { content() }
+    Button(onClick, color, ButtonType.Outline, modifier, enabled, ButtonStyle.Slim) { content() }
 }
 
 /**
  * Courtesy [SlimOutlineButton] implementation for buttons that just display text.
  */
 @Composable fun SlimOutlineButton(text: String, modifier: Modifier = Modifier, color: Color = LocalColors.current.text, enabled: Boolean = true, onClick: () -> Unit) {
-    Button(text, onClick, color, ButtonType.Outline, modifier, enabled, ButtonSize.Slim)
+    Button(text, onClick, color, ButtonType.Outline, modifier, enabled, ButtonStyle.Slim)
 }
 
 @Composable
@@ -179,13 +179,13 @@ fun SlimOutlineCopyButton(
     color: Color = LocalColors.current.text,
     onClick: () -> Unit
 ) {
-    OutlineCopyButton(modifier, ButtonSize.Slim, color, onClick)
+    OutlineCopyButton(modifier, ButtonStyle.Slim, color, onClick)
 }
 
 @Composable
 fun OutlineCopyButton(
     modifier: Modifier = Modifier,
-    size: ButtonSize = ButtonSize.Large,
+    size: ButtonStyle = ButtonStyle.Large,
     color: Color = LocalColors.current.buttonOutline,
     onClick: () -> Unit
 ) {
