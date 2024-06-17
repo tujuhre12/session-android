@@ -84,16 +84,20 @@ class NewMessageViewModel @Inject constructor(
                             _state.update { it.copy(loading = false) }
                             onPublicKey(onsNameOrPublicKey)
                         }
-                } catch (e: Exception) {
-                    // JobCancellationException is thrown if we cancel the job
-                    // but it is internal, so this excludes other subclasses of CancellationException
-                    // than TimeoutCancellationException
-                    if (e is TimeoutCancellationException == e is CancellationException) {
-                        _state.update { it.copy(loading = false, error = GetString(e) { it.toMessage() }) }
+                } catch (e: CancellationException) {
+                    if (e is TimeoutCancellationException) {
+                        // Ignore JobCancellationException, which is called when we cancel the job.
+                        onError(e)
                     }
+                } catch (e: Exception) {
+                    onError(e)
                 }
             }
         }
+    }
+
+    private fun onError(e: Exception) {
+        _state.update { it.copy(loading = false, error = GetString(e) { it.toMessage() }) }
     }
 
     private fun onPublicKey(onsNameOrPublicKey: String) {
