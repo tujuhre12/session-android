@@ -50,7 +50,6 @@ class MessageNotificationsActivity : BaseActionBarActivity() {
 
         when {
             prefs.getHasViewedSeed() && !prefs.getConfigurationMessageSynced() -> start<LoadingActivity>()
-            prefs.getProfileName() != null -> startHomeActivity()
             else -> startHomeActivity()
         }
     }
