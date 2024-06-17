@@ -21,5 +21,6 @@ data class Dimensions(
     val marginLarge: Dp = 64.dp,
     val dividerIndent: Dp = 80.dp,
     val appBarHeight: Dp = 64.dp,
-    val minScrollableViewHeight: Dp = 200.dp
+    val minScrollableViewHeight: Dp = 200.dp,
+    val marginHomeEmptyView: Dp = 50.dp
 )
