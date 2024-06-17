@@ -94,7 +94,7 @@ class LandingActivity: BaseActionBarActivity() {
 
     @Preview
     @Composable
-    private fun LandingScreen(
+    private fun PreviewLandingScreen(
         @PreviewParameter(SessionColorsParameterProvider::class) colors: Colors
     ) {
         PreviewTheme(colors) {
@@ -119,7 +119,8 @@ class LandingActivity: BaseActionBarActivity() {
         Column {
             Column(modifier = Modifier
                 .weight(1f)
-                .padding(horizontal = LocalDimensions.current.marginMedium)) {
+                .padding(horizontal = LocalDimensions.current.marginOnboarding)
+            ) {
                 Spacer(modifier = Modifier.weight(1f))
                 Text(
                     stringResource(R.string.onboardingBubblePrivacyInYourPocket),
@@ -132,7 +133,7 @@ class LandingActivity: BaseActionBarActivity() {
                 LazyColumn(
                     state = listState,
                     modifier = Modifier
-                        .heightIn(min = 200.dp)
+                        .heightIn(min = LocalDimensions.current.minScrollableViewHeight)
                         .fillMaxWidth()
                         .weight(3f),
                     verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.itemSpacingSmall)

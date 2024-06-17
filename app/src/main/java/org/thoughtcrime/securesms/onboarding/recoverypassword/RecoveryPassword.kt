@@ -42,7 +42,6 @@ import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.extraSmallMonospace
 import org.thoughtcrime.securesms.ui.h8
 
-
 @Preview
 @Composable
 fun PreviewRecoveryPasswordScreen(

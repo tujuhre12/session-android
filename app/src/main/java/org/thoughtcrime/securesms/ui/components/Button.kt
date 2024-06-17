@@ -50,7 +50,6 @@ import org.thoughtcrime.securesms.ui.baseBold
 import org.thoughtcrime.securesms.ui.color.Colors
 import org.thoughtcrime.securesms.ui.color.LocalColors
 import org.thoughtcrime.securesms.ui.color.radioButtonColors
-import org.thoughtcrime.securesms.ui.color.slimOutlineButton
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.extraSmall
 import org.thoughtcrime.securesms.ui.h8

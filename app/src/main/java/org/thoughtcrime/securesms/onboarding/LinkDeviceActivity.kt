@@ -32,6 +32,7 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.onboarding.loading.LoadingManager
 import org.thoughtcrime.securesms.onboarding.messagenotifications.startMessageNotificationsActivity
+import org.thoughtcrime.securesms.onboarding.ui.ContinueButton
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.base
@@ -116,45 +117,43 @@ fun PreviewRecoveryPassword() {
 
 @Composable
 fun RecoveryPassword(state: LinkDeviceState, onChange: (String) -> Unit = {}, onContinue: () -> Unit = {}) {
-    Column(
-        modifier = Modifier.padding(horizontal = LocalDimensions.current.marginLarge)
-    ) {
-        Spacer(Modifier.weight(1f))
-        Row {
+    Column {
+        Column(
+            modifier = Modifier.padding(horizontal = LocalDimensions.current.marginLarge)
+                .weight(1f)
+        ) {
+            Spacer(Modifier.weight(1f))
+            Row {
+                Text(
+                    stringResource(R.string.sessionRecoveryPassword),
+                    style = h4
+                )
+                Spacer(Modifier.width(6.dp))
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_shield_outline),
+                    contentDescription = null,
+                )
+            }
+            Spacer(Modifier.size(28.dp))
             Text(
-                stringResource(R.string.sessionRecoveryPassword),
-                style = h4
+                stringResource(R.string.activity_link_enter_your_recovery_password_to_load_your_account_if_you_haven_t_saved_it_you_can_find_it_in_your_app_settings),
+                style = base
             )
-            Spacer(Modifier.width(6.dp))
-            Icon(
-                painter = painterResource(id = R.drawable.ic_shield_outline),
-                contentDescription = null,
+            Spacer(Modifier.size(24.dp))
+            SessionOutlinedTextField(
+                text = state.recoveryPhrase,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .contentDescription(R.string.AccessibilityId_recovery_phrase_input),
+                placeholder = stringResource(R.string.recoveryPasswordEnter),
+                onChange = onChange,
+                onContinue = onContinue,
+                error = state.error
             )
+
+            Spacer(Modifier.weight(2f))
         }
-        Spacer(Modifier.size(28.dp))
-        Text(
-            stringResource(R.string.activity_link_enter_your_recovery_password_to_load_your_account_if_you_haven_t_saved_it_you_can_find_it_in_your_app_settings),
-            style = base
-        )
-        Spacer(Modifier.size(24.dp))
-        SessionOutlinedTextField(
-            text = state.recoveryPhrase,
-            modifier = Modifier
-                .fillMaxWidth()
-                .contentDescription(R.string.AccessibilityId_recovery_phrase_input),
-            placeholder = stringResource(R.string.recoveryPasswordEnter),
-            onChange = onChange,
-            onContinue = onContinue,
-            error = state.error
-        )
-        Spacer(Modifier.weight(2f))
-        OutlineButton(
-            stringResource(R.string.continue_2),
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .padding(vertical = 20.dp)
-                .fillMaxWidth(),
-            onClick = onContinue
-        )
+
+        ContinueButton(modifier = Modifier.align(Alignment.CenterHorizontally), onContinue)
     }
 }

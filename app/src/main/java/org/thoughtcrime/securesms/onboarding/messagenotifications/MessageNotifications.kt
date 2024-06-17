@@ -13,6 +13,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import network.loki.messenger.R
+import org.thoughtcrime.securesms.onboarding.ui.ContinueButton
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
@@ -42,7 +43,8 @@ fun MessageNotificationsScreen(
 ) {
     Column {
         Spacer(Modifier.weight(1f))
-        Column(modifier = Modifier.padding(horizontal = LocalDimensions.current.marginMedium)) {
+
+        Column(modifier = Modifier.padding(horizontal = LocalDimensions.current.marginOnboarding)) {
             Text(stringResource(R.string.notificationsMessage), style = h4)
             Spacer(Modifier.height(LocalDimensions.current.marginExtraSmall))
             Text(stringResource(R.string.onboardingMessageNotificationExplaination), style = base)
@@ -64,16 +66,9 @@ fun MessageNotificationsScreen(
                 onClick = { setEnabled(false) }
             )
         }
+
         Spacer(Modifier.weight(1f))
-        OutlineButton(
-            stringResource(R.string.continue_2),
-            modifier = Modifier
-                .padding(horizontal = LocalDimensions.current.marginLarge)
-                .contentDescription(R.string.AccessibilityId_continue)
-                .align(Alignment.CenterHorizontally)
-                .fillMaxWidth(),
-            onClick = onContinue
-        )
-        Spacer(modifier = Modifier.height(LocalDimensions.current.marginExtraExtraSmall))
+
+        ContinueButton(Modifier.align(Alignment.CenterHorizontally), onContinue)
     }
 }
