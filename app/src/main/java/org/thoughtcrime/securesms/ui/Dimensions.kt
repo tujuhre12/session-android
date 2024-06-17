@@ -18,4 +18,5 @@ data class Dimensions(
     val marginMedium: Dp = 32.dp,
     val marginLarge: Dp = 64.dp,
     val dividerIndent: Dp = 80.dp,
+    val appBarHeight: Dp = 64.dp
 )

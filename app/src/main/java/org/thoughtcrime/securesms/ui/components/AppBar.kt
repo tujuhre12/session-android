@@ -14,11 +14,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.unit.dp
 import network.loki.messenger.R
-import org.thoughtcrime.securesms.ui.color.Colors
+import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
+import org.thoughtcrime.securesms.ui.color.Colors
 import org.thoughtcrime.securesms.ui.h4
 
 @Preview
@@ -33,8 +33,8 @@ fun AppBarPreview(
 
 @Composable
 fun AppBar(title: String, onClose: () -> Unit = {}, onBack: (() -> Unit)? = null) {
-    Row(modifier = Modifier.height(64.dp), verticalAlignment = Alignment.CenterVertically) {
-        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(64.dp)) {
+    Row(modifier = Modifier.height(LocalDimensions.current.appBarHeight), verticalAlignment = Alignment.CenterVertically) {
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(LocalDimensions.current.appBarHeight)) {
             onBack?.let {
                 IconButton(onClick = it) {
                     Icon(painter = painterResource(id = R.drawable.ic_prev), contentDescription = "back")
@@ -44,7 +44,7 @@ fun AppBar(title: String, onClose: () -> Unit = {}, onBack: (() -> Unit)? = null
         Spacer(modifier = Modifier.weight(1f))
         Text(text = title, style = h4)
         Spacer(modifier = Modifier.weight(1f))
-        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(64.dp)) {
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(LocalDimensions.current.appBarHeight)) {
             IconButton(onClick = onClose) {
                 Icon(painter = painterResource(id = R.drawable.ic_x), contentDescription = "close")
             }
