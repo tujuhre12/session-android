@@ -100,7 +100,7 @@
             android:value="false" />
 
         <activity
-            android:name="org.thoughtcrime.securesms.onboarding.LandingActivity"
+            android:name="org.thoughtcrime.securesms.onboarding.landing.LandingActivity"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.Session.DayNight.FlatActionBar" />
         <activity
