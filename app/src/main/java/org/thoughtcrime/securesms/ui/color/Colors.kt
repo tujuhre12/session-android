@@ -116,8 +116,6 @@ data class OceanLight(override val primary: Color = primaryBlue): Colors {
     override val qrCodeBackground = backgroundSecondary
 }
 
-val Colors.slimOutlineButton: Color get() = text
-
 @Composable
 fun Colors(name: String, colors: List<Color>) {
     Column {

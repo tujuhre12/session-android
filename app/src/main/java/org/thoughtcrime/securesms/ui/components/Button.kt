@@ -163,21 +163,21 @@ fun Button(
     Button(text, onClick, LocalColors.current.primary, ButtonType.Outline, modifier, enabled)
 }
 
-@Composable fun SlimOutlineButton(onClick: () -> Unit, modifier: Modifier = Modifier, color: Color = LocalColors.current.slimOutlineButton, enabled: Boolean = true, content: @Composable () -> Unit) {
+@Composable fun SlimOutlineButton(onClick: () -> Unit, modifier: Modifier = Modifier, color: Color = LocalColors.current.text, enabled: Boolean = true, content: @Composable () -> Unit) {
     Button(onClick, color, ButtonType.Outline, modifier, enabled, ButtonSize.Slim) { content() }
 }
 
 /**
  * Courtesy [SlimOutlineButton] implementation for buttons that just display text.
  */
-@Composable fun SlimOutlineButton(text: String, modifier: Modifier = Modifier, color: Color = LocalColors.current.slimOutlineButton, enabled: Boolean = true, onClick: () -> Unit) {
+@Composable fun SlimOutlineButton(text: String, modifier: Modifier = Modifier, color: Color = LocalColors.current.text, enabled: Boolean = true, onClick: () -> Unit) {
     Button(text, onClick, color, ButtonType.Outline, modifier, enabled, ButtonSize.Slim)
 }
 
 @Composable
 fun SlimOutlineCopyButton(
     modifier: Modifier = Modifier,
-    color: Color = LocalColors.current.slimOutlineButton,
+    color: Color = LocalColors.current.text,
     onClick: () -> Unit
 ) {
     OutlineCopyButton(modifier, ButtonSize.Slim, color, onClick)
@@ -384,8 +384,10 @@ private fun VariousButtons(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             PrimaryFillButton("Primary Fill") {}
-            OutlineButton(text = "Outline Button") {}
-            SlimOutlineButton(text = "Slim Outline") {}
+            OutlineButton("Outline Button") {}
+            SlimOutlineButton("Slim Outline") {}
+            SlimOutlineButton("Slim Primary", color = LocalColors.current.buttonOutline) {}
+            SlimOutlineButton("Slim Danger", color = LocalColors.current.danger) {}
             SlimOutlineCopyButton {}
         }
     }
