@@ -322,52 +322,6 @@ fun BorderlessHtmlButton(
     }
 }
 
-@Composable
-fun NotificationRadioButton(
-    @StringRes title: Int,
-    @StringRes explanation: Int,
-    @StringRes tag: Int? = null,
-    @StringRes contentDescription: Int? = null,
-    selected: Boolean = false,
-    onClick: () -> Unit = {}
-) {
-    Row {
-        Button(
-            onClick = onClick,
-            modifier = Modifier
-                .weight(1f)
-                .contentDescription(contentDescription),
-            type = ButtonType.Outline,
-            color = LocalColors.current.text,
-            border = BorderStroke(
-                width = ButtonDefaults.OutlinedBorderSize,
-                color = if (selected) LocalColors.current.primary else LocalColors.current.borders
-            ),
-            shape = RoundedCornerShape(8.dp)
-        ) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Text(stringResource(title), style = h8)
-                Text(stringResource(explanation), style = small)
-                tag?.let {
-                    Text(
-                        stringResource(it),
-                        color = LocalColors.current.primary,
-                        style = h9
-                    )
-                }
-            }
-        }
-        RadioButton(
-            selected = selected,
-            modifier = Modifier.align(Alignment.CenterVertically),
-            onClick = onClick,
-            colors = LocalColors.current.radioButtonColors()
-        )
-    }
-}
-
 val MutableInteractionSource.releases
     get() = interactions.filter { it is PressInteraction.Release }
 
