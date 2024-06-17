@@ -6,14 +6,18 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.color.LocalColors
 import org.thoughtcrime.securesms.ui.components.BorderlessButton
 
@@ -36,6 +40,13 @@ fun AlertDialog(
         backgroundColor = LocalColors.current.backgroundSecondary,
         buttons = {
             Box {
+                IconButton(
+                    onClick = onDismissRequest,
+                    modifier = Modifier.align(Alignment.TopEnd)
+                ) {
+                    Icon(painter = painterResource(id = R.drawable.ic_dialog_x), tint = LocalColors.current.text, contentDescription = "back")
+                }
+
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
