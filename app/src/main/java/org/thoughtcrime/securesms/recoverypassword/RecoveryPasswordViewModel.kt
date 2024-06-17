@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.onboarding.recoverypassword
+package org.thoughtcrime.securesms.recoverypassword
 
 import android.app.Application
 import android.content.ClipData
@@ -18,7 +18,6 @@ import javax.inject.Inject
 class RecoveryPasswordViewModel @Inject constructor(
     private val application: Application
 ): AndroidViewModel(application) {
-
     val prefs = AppTextSecurePreferences(application)
 
     fun permanentlyHidePassword() {

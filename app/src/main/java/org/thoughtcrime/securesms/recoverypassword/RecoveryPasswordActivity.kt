@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.onboarding.recoverypassword
+package org.thoughtcrime.securesms.recoverypassword
 
 import android.os.Bundle
 import androidx.activity.viewModels

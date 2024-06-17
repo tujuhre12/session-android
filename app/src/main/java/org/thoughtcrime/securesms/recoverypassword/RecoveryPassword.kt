@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.onboarding.recoverypassword
+package org.thoughtcrime.securesms.recoverypassword
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.border
@@ -44,7 +44,7 @@ import org.thoughtcrime.securesms.ui.h8
 
 @Preview
 @Composable
-fun PreviewRecoveryPasswordScreen(
+private fun PreviewRecoveryPasswordScreen(
     @PreviewParameter(SessionColorsParameterProvider::class) colors: Colors
 ) {
     PreviewTheme(colors) {
@@ -53,7 +53,7 @@ fun PreviewRecoveryPasswordScreen(
 }
 
 @Composable
-fun RecoveryPasswordScreen(
+internal fun RecoveryPasswordScreen(
     seed: String = "",
     copySeed:() -> Unit = {},
     onHide:() -> Unit = {}
@@ -71,7 +71,7 @@ fun RecoveryPasswordScreen(
 }
 
 @Composable
-fun RecoveryPasswordCell(seed: String, copySeed:() -> Unit = {}) {
+private fun RecoveryPasswordCell(seed: String, copySeed:() -> Unit = {}) {
     var showQr by remember {
         mutableStateOf(false)
     }
