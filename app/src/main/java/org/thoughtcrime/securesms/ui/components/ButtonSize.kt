@@ -7,6 +7,7 @@ import androidx.compose.material.LocalTextStyle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.thoughtcrime.securesms.ui.baseBold
@@ -34,12 +35,12 @@ interface ButtonSize {
     val minHeight: Dp
 
     object Large: ButtonSize {
-        override val textStyle = baseBold
+        override val textStyle = baseBold.copy(textAlign = TextAlign.Center)
         override val minHeight = 41.dp
     }
 
     object Slim: ButtonSize {
-        override val textStyle = extraSmallBold
+        override val textStyle = extraSmallBold.copy(textAlign = TextAlign.Center)
         override val minHeight = 29.dp
     }
 

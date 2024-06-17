@@ -111,7 +111,7 @@ fun ColumnScope.Items(
     Divider(startIndent = LocalDimensions.current.dividerIndent)
     ItemButton(textId = R.string.dialog_join_community_title, icon = R.drawable.ic_globe, onClick = delegate::onJoinCommunitySelected)
     Divider(startIndent = LocalDimensions.current.dividerIndent)
-    ItemButton(textId = R.string.activity_settings_invite_button_title, icon = R.drawable.ic_invite_friend, contentDescription = R.string.AccessibilityId_invite_friend_button, onClick = delegate::onInviteFriend)
+    ItemButton(textId = R.string.activity_settings_invite_button_title, icon = R.drawable.ic_invite_friend, Modifier.contentDescription(R.string.AccessibilityId_invite_friend_button), onClick = delegate::onInviteFriend)
     Column(
         modifier = Modifier
             .padding(horizontal = LocalDimensions.current.marginMedium)

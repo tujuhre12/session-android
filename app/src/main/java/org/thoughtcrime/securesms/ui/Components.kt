@@ -110,20 +110,10 @@ fun <T> OptionsCard(card: OptionsCard<T>, callbacks: Callbacks<T>) {
 }
 
 @Composable
-fun ItemButton(
-    @StringRes textId: Int,
-    @DrawableRes icon: Int,
-    colors: ButtonColors = transparentButtonColors(),
-    @StringRes contentDescription: Int = textId,
-    onClick: () -> Unit
-) {
-    ItemButton(stringResource(textId), icon, colors, stringResource(contentDescription), onClick)
-}
-
-@Composable
 fun ItemButtonWithDrawable(
     @StringRes textId: Int,
     @DrawableRes icon: Int,
+    modifier: Modifier = Modifier,
     colors: ButtonColors = transparentButtonColors(),
     onClick: () -> Unit
 ) {
@@ -131,6 +121,7 @@ fun ItemButtonWithDrawable(
 
     ItemButton(
         text = stringResource(textId),
+        modifier = modifier,
         icon = {
             Image(
                 painter = rememberDrawablePainter(drawable = AppCompatResources.getDrawable(context, icon)),
@@ -143,20 +134,24 @@ fun ItemButtonWithDrawable(
     )
 }
 
+/**
+ * Courtesy [ItemButton] implementation that takes a [DrawableRes] for the [icon]
+ */
 @Composable
 fun ItemButton(
-    text: String,
+    @StringRes textId: Int,
     @DrawableRes icon: Int,
+    modifier: Modifier = Modifier,
     colors: ButtonColors = transparentButtonColors(),
-    contentDescription: String = text,
     onClick: () -> Unit
 ) {
     ItemButton(
-        text = text,
+        text = stringResource(textId),
+        modifier = modifier,
         icon = {
             Icon(
                 painter = painterResource(id = icon),
-                contentDescription = contentDescription,
+                contentDescription = null,
                 modifier = Modifier.align(Alignment.Center)
             )
         },
@@ -165,15 +160,21 @@ fun ItemButton(
     )
 }
 
+/**
+* Base [ItemButton] implementation.
+ *
+ * A button to be used in a list of buttons, usually in a [Cell] or [Card]
+*/
 @Composable
 fun ItemButton(
     text: String,
-    icon: @Composable() (BoxScope.() -> Unit),
+    icon: @Composable (BoxScope.() -> Unit),
+    modifier: Modifier = Modifier,
     colors: ButtonColors = transparentButtonColors(),
     onClick: () -> Unit
 ) {
     TextButton(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .height(60.dp),
         colors = colors,

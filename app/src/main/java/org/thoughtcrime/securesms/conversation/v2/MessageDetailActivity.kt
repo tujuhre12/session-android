@@ -218,7 +218,7 @@ fun CellButtons(
         Column {
             onReply?.let {
                 ItemButton(
-                    stringResource(R.string.reply),
+                    R.string.reply,
                     R.drawable.ic_message_details__reply,
                     onClick = it
                 )
@@ -226,14 +226,14 @@ fun CellButtons(
             }
             onResend?.let {
                 ItemButton(
-                    stringResource(R.string.resend),
+                    R.string.resend,
                     R.drawable.ic_message_details__refresh,
                     onClick = it
                 )
                 Divider()
             }
             ItemButton(
-                stringResource(R.string.delete),
+                R.string.delete,
                 R.drawable.ic_message_details__trash,
                 colors = destructiveButtonColors(),
                 onClick = onDelete
