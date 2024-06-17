@@ -45,7 +45,9 @@ import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.onboarding.pickname.startPickDisplayNameActivity
 import org.thoughtcrime.securesms.service.KeyCachingService
-import org.thoughtcrime.securesms.showOpenUrlDialog
+import org.thoughtcrime.securesms.ui.AlertDialog
+import org.thoughtcrime.securesms.ui.DialogButtonModel
+import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
@@ -106,6 +108,26 @@ class LandingActivity: BaseActionBarActivity() {
     private fun LandingScreen(createAccount: () -> Unit) {
         var count by remember { mutableStateOf(0) }
         val listState = rememberLazyListState()
+
+        var isUrlDialogVisible by remember { mutableStateOf(false) }
+
+        if (isUrlDialogVisible) {
+            AlertDialog(
+                onDismissRequest = { isUrlDialogVisible = false },
+                title = stringResource(R.string.urlOpen),
+                text = stringResource(R.string.urlOpenBrowser),
+                buttons = listOf(
+                    DialogButtonModel(
+                        GetString(R.string.activity_landing_terms_of_service),
+                        GetString(R.string.AccessibilityId_terms_of_service_button),
+                    ) { open("https://getsession.org/terms-of-service") },
+                    DialogButtonModel(
+                        GetString(R.string.activity_landing_privacy_policy),
+                        GetString(R.string.AccessibilityId_privacy_policy_button),
+                    ) { open("https://getsession.org/privacy-policy") }
+                )
+            )
+        }
 
         LaunchedEffect(Unit) {
             delay(500.milliseconds)
@@ -175,23 +197,10 @@ class LandingActivity: BaseActionBarActivity() {
                         .fillMaxWidth()
                         .align(Alignment.CenterHorizontally)
                         .contentDescription(R.string.AccessibilityId_open_url),
-                    onClick = ::openDialog
+                    onClick = { isUrlDialogVisible = true }
                 )
                 Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacingExtraSmall))
             }
-        }
-    }
-
-    private fun openDialog() {
-        showOpenUrlDialog {
-            button(
-                R.string.activity_landing_terms_of_service,
-                contentDescriptionRes = R.string.AccessibilityId_terms_of_service_button
-            ) { open("https://getsession.org/terms-of-service") }
-            button(
-                R.string.activity_landing_privacy_policy,
-                contentDescriptionRes = R.string.AccessibilityId_privacy_policy_button
-            ) { open("https://getsession.org/privacy-policy") }
         }
     }
 

@@ -23,6 +23,7 @@ fun defaultStyle(size: TextUnit, fontFamily: FontFamily? = TextStyle.Default.fon
 val xl = defaultStyle(18.sp)
 
 val large = defaultStyle(16.sp)
+val largeBold = boldStyle(16.sp)
 
 val base = defaultStyle(14.sp)
 val baseBold = boldStyle(14.sp)
