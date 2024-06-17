@@ -112,7 +112,10 @@ private fun RecoveryPasswordCell(seed: String, copySeed:() -> Unit = {}) {
             }
 
             AnimatedVisibility(!showQr) {
-                Row(horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.marginMedium)) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.marginMedium),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     SlimOutlineCopyButton(
                         Modifier.weight(1f),
                         onClick = copySeed
