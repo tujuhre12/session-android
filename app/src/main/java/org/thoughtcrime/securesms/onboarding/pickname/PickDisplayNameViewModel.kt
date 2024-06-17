@@ -42,11 +42,6 @@ class PickDisplayNameViewModel(
 
         val displayName = state.value.displayName
 
-        val keyPairGenerationResult = KeyPairUtilities.generate()
-        val seed = keyPairGenerationResult.seed
-        val ed25519KeyPair = keyPairGenerationResult.ed25519KeyPair
-        val x25519KeyPair = keyPairGenerationResult.x25519KeyPair
-
         when {
             displayName.isEmpty() -> { state.update { it.copy(error = R.string.displayNameErrorDescription) } }
             displayName.length > NAME_PADDED_LENGTH -> { state.update { it.copy(error = R.string.displayNameErrorDescriptionShorter) } }
@@ -57,6 +52,11 @@ class PickDisplayNameViewModel(
                 // which can result in an invalid database state
                 database.clearAllLastMessageHashes()
                 database.clearReceivedMessageHashValues()
+
+                val keyPairGenerationResult = KeyPairUtilities.generate()
+                val seed = keyPairGenerationResult.seed
+                val ed25519KeyPair = keyPairGenerationResult.ed25519KeyPair
+                val x25519KeyPair = keyPairGenerationResult.x25519KeyPair
 
                 KeyPairUtilities.store(context, seed, ed25519KeyPair, x25519KeyPair)
                 configFactory.keyPairChanged()
