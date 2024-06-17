@@ -19,7 +19,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.color.LocalColors
-import org.thoughtcrime.securesms.ui.components.BorderlessButton
 
 class DialogButtonModel(
     val text: GetString,
@@ -65,25 +64,14 @@ fun AlertDialog(
                     buttons?.takeIf { it.isNotEmpty() }?.let {
                         Row {
                             it.forEach {
-                                TextButton(
+                                DialogButton(
+                                    text = it.text(),
                                     modifier = Modifier
                                         .contentDescription(it.contentDescription())
-                                        .weight(1f),
-                                    shape = RectangleShape,
-                                    onClick = {
-                                        it.onClick
-                                        onDismissRequest()
-                                    }
+                                        .weight(1f)
                                 ) {
-                                    Text(
-                                        it.text(),
-                                        color = LocalColors.current.text,
-                                        style = largeBold,
-                                        modifier = Modifier.padding(
-                                            top = 16.dp,
-                                            bottom = 24.dp
-                                        )
-                                    )
+                                    it.onClick()
+                                    onDismissRequest()
                                 }
                             }
                         }
@@ -95,6 +83,20 @@ fun AlertDialog(
 }
 
 @Composable
-fun DialogButton(text: String, contentDescription: String, onClick: () -> Unit) {
-    BorderlessButton(text, modifier = Modifier.contentDescription(contentDescription), onClick = onClick)
+fun DialogButton(text: String, modifier: Modifier, onClick: () -> Unit) {
+    TextButton(
+        modifier = modifier,
+        shape = RectangleShape,
+        onClick = onClick
+    ) {
+        Text(
+            text,
+            color = LocalColors.current.text,
+            style = largeBold,
+            modifier = Modifier.padding(
+                top = 16.dp,
+                bottom = 24.dp
+            )
+        )
+    }
 }
