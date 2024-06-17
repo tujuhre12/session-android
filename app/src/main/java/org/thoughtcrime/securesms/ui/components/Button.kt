@@ -35,15 +35,21 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LaunchedEffectAsync
+import org.thoughtcrime.securesms.ui.PreviewTheme
+import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.color.LocalColors
 import org.thoughtcrime.securesms.ui.baseBold
+import org.thoughtcrime.securesms.ui.color.Colors
 import org.thoughtcrime.securesms.ui.color.radioButtonColors
 import org.thoughtcrime.securesms.ui.color.slimOutlineButton
 import org.thoughtcrime.securesms.ui.contentDescription
@@ -100,7 +106,7 @@ fun Button(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     content: @Composable RowScope.() -> Unit
 ) {
-    size.applyConstraints {
+    size.applyButtonConstraints {
         androidx.compose.material.Button(
             onClick,
             modifier.heightIn(min = size.minHeight),
@@ -109,9 +115,13 @@ fun Button(
             elevation,
             shape,
             border,
-            colors,
-            content = content
-        )
+            colors
+        ) {
+            // Button sets LocalTextStyle, so text style is applied inside to override that.
+            size.applyTextConstraints {
+                content()
+            }
+        }
     }
 }
 
@@ -362,3 +372,22 @@ fun NotificationRadioButton(
 
 val MutableInteractionSource.releases
     get() = interactions.filter { it is PressInteraction.Release }
+
+@Preview
+@Composable
+private fun VariousButtons(
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: Colors
+) {
+    PreviewTheme(colors) {
+        Column(
+            modifier = Modifier.padding(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            PrimaryFillButton("Primary Fill") {}
+            OutlineButton(text = "Outline Button") {}
+            SlimOutlineButton(text = "Slim Outline") {}
+            SlimOutlineCopyButton {}
+        }
+    }
+}

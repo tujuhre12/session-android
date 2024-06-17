@@ -109,7 +109,6 @@ fun <T> OptionsCard(card: OptionsCard<T>, callbacks: Callbacks<T>) {
     }
 }
 
-
 @Composable
 fun ItemButton(
     @StringRes textId: Int,
@@ -126,7 +125,6 @@ fun ItemButtonWithDrawable(
     @StringRes textId: Int,
     @DrawableRes icon: Int,
     colors: ButtonColors = transparentButtonColors(),
-    @StringRes contentDescription: Int = textId,
     onClick: () -> Unit
 ) {
     val context = LocalContext.current
@@ -136,7 +134,7 @@ fun ItemButtonWithDrawable(
         icon = {
             Image(
                 painter = rememberDrawablePainter(drawable = AppCompatResources.getDrawable(context, icon)),
-                contentDescription = stringResource(contentDescription),
+                contentDescription = null,
                 modifier = Modifier.align(Alignment.Center)
             )
         },

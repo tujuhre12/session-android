@@ -48,16 +48,14 @@ class NewConversationHomeFragment : Fragment() {
     @Inject
     lateinit var textSecurePreferences: TextSecurePreferences
 
-    var delegate = MutableStateFlow<NewConversationDelegate?>(null)
+    var delegate = MutableStateFlow<NewConversationDelegate>(NullNewConversationDelegate)
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View = createThemedComposeView {
-        // Warning, brittle code, NewConversationScreen will not be visible if no delegate is set
-        // before onCreateView is called.
-        delegate.collectAsState().value?.let {
+        delegate.collectAsState().value.let {
             NewConversationScreen(
                 accountId = TextSecurePreferences.getLocalNumber(requireContext())!!,
                 delegate = it
@@ -74,15 +72,7 @@ fun PreviewNewConversationScreen(
     PreviewTheme(colors) {
         NewConversationScreen(
             accountId = "059287129387123",
-            object: NewConversationDelegate {
-                override fun onNewMessageSelected() {}
-                override fun onCreateGroupSelected() {}
-                override fun onJoinCommunitySelected() {}
-                override fun onContactSelected(address: String) {}
-                override fun onDialogBackPressed() {}
-                override fun onDialogClosePressed() {}
-                override fun onInviteFriend() {}
-            }
+            NullNewConversationDelegate
         )
     }
 }

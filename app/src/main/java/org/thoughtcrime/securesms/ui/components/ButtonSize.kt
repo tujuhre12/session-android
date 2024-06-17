@@ -15,25 +15,31 @@ import org.thoughtcrime.securesms.ui.extraSmallBold
 interface ButtonSize {
     @OptIn(ExperimentalMaterialApi::class)
     @SuppressLint("ComposableNaming")
-    @Composable fun applyConstraints(content: @Composable () -> Unit) {
+    @Composable fun applyButtonConstraints(content: @Composable () -> Unit) {
         CompositionLocalProvider(
             LocalMinimumInteractiveComponentEnforcement provides false,
-            LocalTextStyle provides textStyle,
-        ) {
-            content()
-        }
+            content = content
+        )
     }
 
-    val textStyle: TextStyle @Composable get
+    @SuppressLint("ComposableNaming")
+    @Composable fun applyTextConstraints(content: @Composable () -> Unit) {
+        CompositionLocalProvider(
+            LocalTextStyle provides textStyle,
+            content = content
+        )
+    }
+
+    val textStyle: TextStyle
     val minHeight: Dp
 
     object Large: ButtonSize {
-        override val textStyle @Composable get() = baseBold
+        override val textStyle = baseBold
         override val minHeight = 41.dp
     }
 
     object Slim: ButtonSize {
-        override val textStyle @Composable get() = extraSmallBold
+        override val textStyle = extraSmallBold
         override val minHeight = 29.dp
     }
 

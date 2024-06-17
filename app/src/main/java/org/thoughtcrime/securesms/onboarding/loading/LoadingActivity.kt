@@ -61,8 +61,8 @@ class LoadingActivity: BaseActionBarActivity() {
         lifecycleScope.launch {
             viewModel.eventFlow.collect {
                 when (it) {
-                    Event.TIMEOUT -> register(skipped = true)
-                    Event.SUCCESS -> register(skipped = false)
+                    Event.TIMEOUT -> register(loadFailed = true)
+                    Event.SUCCESS -> register(loadFailed = false)
                 }
             }
         }

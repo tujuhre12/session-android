@@ -117,7 +117,7 @@ class LandingActivity: BaseActionBarActivity() {
         }
 
         Column {
-            Column(modifier = Modifier
+            /*Column(modifier = Modifier
                 .weight(1f)
                 .padding(horizontal = LocalDimensions.current.marginMedium)) {
                 Spacer(modifier = Modifier.weight(1f))
@@ -149,7 +149,7 @@ class LandingActivity: BaseActionBarActivity() {
                 }
 
                 Spacer(modifier = Modifier.weight(1f))
-            }
+            }*/
 
             Column(modifier = Modifier.padding(horizontal = LocalDimensions.current.marginLarge)) {
                 PrimaryFillButton(
