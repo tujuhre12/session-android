@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.ui.components
 
 import androidx.annotation.DrawableRes
-import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -11,16 +10,13 @@ import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ButtonColors
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.ButtonElevation
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.RadioButton
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
@@ -49,42 +45,10 @@ import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.baseBold
 import org.thoughtcrime.securesms.ui.color.Colors
 import org.thoughtcrime.securesms.ui.color.LocalColors
-import org.thoughtcrime.securesms.ui.color.radioButtonColors
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.extraSmall
-import org.thoughtcrime.securesms.ui.h8
-import org.thoughtcrime.securesms.ui.h9
-import org.thoughtcrime.securesms.ui.small
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
-
-interface ButtonType {
-    @Composable fun border(color: Color, enabled: Boolean): BorderStroke?
-    @Composable fun buttonColors(color: Color): ButtonColors
-    val elevation: ButtonElevation? @Composable get
-
-    object Outline: ButtonType {
-        @Composable override fun border(color: Color, enabled: Boolean) = BorderStroke(1.dp, if (enabled) color else LocalColors.current.disabled)
-        @Composable override fun buttonColors(color: Color) = ButtonDefaults.buttonColors(
-            contentColor = color,
-            backgroundColor = Color.Unspecified,
-            disabledContentColor = LocalColors.current.disabled,
-            disabledBackgroundColor = Color.Unspecified
-        )
-        override val elevation: ButtonElevation? @Composable get() = null
-    }
-
-    object Fill: ButtonType {
-        @Composable override fun border(color: Color, enabled: Boolean) = null
-        @Composable override fun buttonColors(color: Color) = ButtonDefaults.buttonColors(
-            contentColor = LocalColors.current.background,
-            backgroundColor = color,
-            disabledContentColor = LocalColors.current.disabled,
-            disabledBackgroundColor = Color.Unspecified
-        )
-        override val elevation: ButtonElevation @Composable get() = ButtonDefaults.elevation()
-    }
-}
 
 /**
  * Base [Button] implementation
