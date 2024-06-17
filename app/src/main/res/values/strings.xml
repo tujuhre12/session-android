@@ -15,8 +15,6 @@
     <string name="expand">Expand</string>
 <!--Accessibility ID's-->
     <!-- Landing Page -->
-    <string name="AccessibilityId_create_session_id">Create session ID</string>
-    <string name="AccessibilityId_restore_your_session">Restore Your Session</string>
     <string name="AccessibilityId_link_device">Link Device</string>
     <!-- Session ID Page-->
     <string name="AccessibilityId_session_id">Session ID</string>
