@@ -11,7 +11,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.BaseActionBarActivity
-import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.home.startHomeActivity
 import org.thoughtcrime.securesms.notifications.PushRegistry
 import org.thoughtcrime.securesms.onboarding.loading.LoadingActivity

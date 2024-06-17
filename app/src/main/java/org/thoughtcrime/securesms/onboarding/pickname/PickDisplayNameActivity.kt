@@ -18,7 +18,7 @@ import org.thoughtcrime.securesms.ui.setComposeContent
 import org.thoughtcrime.securesms.util.setUpActionBarSessionLogo
 import javax.inject.Inject
 
-private const val EXTRA_FAILED_TO_LOAD = "extra_failed_to_load"
+private const val EXTRA_LOAD_FAILED = "extra_load_failed"
 
 @AndroidEntryPoint
 class PickDisplayNameActivity : BaseActionBarActivity() {
@@ -26,10 +26,10 @@ class PickDisplayNameActivity : BaseActionBarActivity() {
     @Inject lateinit var viewModelFactory: PickDisplayNameViewModel.AssistedFactory
     @Inject lateinit var prefs: TextSecurePreferences
 
-    val failedToLoad get() = intent.getBooleanExtra(EXTRA_FAILED_TO_LOAD, false)
+    private val loadFailed get() = intent.getBooleanExtra(EXTRA_LOAD_FAILED, false)
 
     private val viewModel: PickDisplayNameViewModel by viewModels {
-        viewModelFactory.create(failedToLoad)
+        viewModelFactory.create(loadFailed)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,11 +38,11 @@ class PickDisplayNameActivity : BaseActionBarActivity() {
 
         setComposeContent { DisplayNameScreen(viewModel) }
 
-        if (!failedToLoad) prefs.setHasViewedSeed(false)
+        if (!loadFailed) prefs.setHasViewedSeed(false)
 
         lifecycleScope.launch {
             viewModel.eventFlow.collect {
-                if (failedToLoad) startHomeActivity() else startMessageNotificationsActivity()
+                if (loadFailed) startHomeActivity() else startMessageNotificationsActivity()
             }
         }
     }
@@ -54,11 +54,11 @@ class PickDisplayNameActivity : BaseActionBarActivity() {
     }
 }
 
-fun Context.startPickDisplayNameActivity(failedToLoad: Boolean = false, flags: Int = 0) {
-    ApplicationContext.getInstance(this).newAccount = !failedToLoad
+fun Context.startPickDisplayNameActivity(loadFailed: Boolean = false, flags: Int = 0) {
+    ApplicationContext.getInstance(this).newAccount = !loadFailed
 
     Intent(this, PickDisplayNameActivity::class.java)
-        .apply { putExtra(EXTRA_FAILED_TO_LOAD, failedToLoad) }
+        .apply { putExtra(EXTRA_LOAD_FAILED, loadFailed) }
         .also { it.flags = flags }
         .also(::startActivity)
 }

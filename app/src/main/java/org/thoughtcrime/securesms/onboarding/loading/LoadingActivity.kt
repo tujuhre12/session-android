@@ -34,12 +34,12 @@ class LoadingActivity: BaseActionBarActivity() {
         return
     }
 
-    private fun register(skipped: Boolean) {
+    private fun register(loadFailed: Boolean) {
         prefs.setLastConfigurationSyncTime(System.currentTimeMillis())
 
         when {
-            skipped -> startPickDisplayNameActivity(
-                failedToLoad = true,
+            loadFailed -> startPickDisplayNameActivity(
+                loadFailed = true,
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             )
             else -> startHomeActivity()
