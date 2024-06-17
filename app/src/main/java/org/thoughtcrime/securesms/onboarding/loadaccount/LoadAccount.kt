@@ -1,8 +1,5 @@
-package org.thoughtcrime.securesms.onboarding
+package org.thoughtcrime.securesms.onboarding.loadaccount
 
-import android.os.Bundle
-import androidx.activity.viewModels
-import androidx.camera.core.ExperimentalGetImage
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,92 +13,46 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.lifecycleScope
-import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.Flow
 import network.loki.messenger.R
-import org.session.libsession.utilities.TextSecurePreferences
-import org.thoughtcrime.securesms.BaseActionBarActivity
-import org.thoughtcrime.securesms.onboarding.loading.LoadingManager
-import org.thoughtcrime.securesms.onboarding.messagenotifications.startMessageNotificationsActivity
 import org.thoughtcrime.securesms.onboarding.ui.ContinueButton
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.components.MaybeScanQrCode
-import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.h4
-import org.thoughtcrime.securesms.ui.setComposeContent
-import javax.inject.Inject
-
-private const val TAG = "LinkDeviceActivity"
 
 private val TITLES = listOf(R.string.sessionRecoveryPassword, R.string.qrScan)
 
-@AndroidEntryPoint
-@androidx.annotation.OptIn(ExperimentalGetImage::class)
-class LinkDeviceActivity : BaseActionBarActivity() {
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+internal fun LoadAccountScreen(
+    state: State,
+    qrErrors: Flow<String>,
+    onChange: (String) -> Unit = {},
+    onContinue: () -> Unit = {},
+    onScan: (String) -> Unit = {}
+) {
+    val pagerState = rememberPagerState { TITLES.size }
 
-    @Inject lateinit var prefs: TextSecurePreferences
-    @Inject lateinit var loadingManager: LoadingManager
-
-    val viewModel: LinkDeviceViewModel by viewModels()
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        supportActionBar?.setTitle(R.string.activity_link_load_account)
-        prefs.setHasViewedSeed(true)
-        prefs.setConfigurationMessageSynced(false)
-        prefs.setRestorationTime(System.currentTimeMillis())
-        prefs.setLastProfileUpdateTime(0)
-
-        lifecycleScope.launch {
-            viewModel.eventFlow.collect {
-                loadingManager.load(it.mnemonic)
-                startMessageNotificationsActivity()
-                finish()
-            }
-        }
-
-        setComposeContent {
-            val state by viewModel.stateFlow.collectAsState()
-            LoadAccountScreen(state, viewModel::onChange, viewModel::onContinue, viewModel::onScanQrCode)
-        }
-    }
-
-    @OptIn(ExperimentalFoundationApi::class)
-    @Composable
-    fun LoadAccountScreen(
-        state: LinkDeviceState,
-        onChange: (String) -> Unit = {},
-        onContinue: () -> Unit = {},
-        onScan: (String) -> Unit = {}
-    ) {
-        val pagerState = rememberPagerState { TITLES.size }
-
-        Column {
-            SessionTabRow(pagerState, TITLES)
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.weight(1f)
-            ) { page ->
-                val title = TITLES[page]
-
-                when (title) {
-                    R.string.sessionRecoveryPassword -> RecoveryPassword(state, onChange, onContinue)
-                    R.string.qrScan -> MaybeScanQrCode(viewModel.qrErrorsFlow, onScan = onScan)
-                }
+    Column {
+        SessionTabRow(pagerState, TITLES)
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.weight(1f)
+        ) { page ->
+            when (TITLES[page]) {
+                R.string.sessionRecoveryPassword -> RecoveryPassword(state, onChange, onContinue)
+                R.string.qrScan -> MaybeScanQrCode(qrErrors, onScan = onScan)
             }
         }
     }
@@ -109,14 +60,14 @@ class LinkDeviceActivity : BaseActionBarActivity() {
 
 @Preview
 @Composable
-fun PreviewRecoveryPassword() {
+private fun PreviewRecoveryPassword() {
     PreviewTheme {
-        RecoveryPassword(state = LinkDeviceState())
+        RecoveryPassword(state = State())
     }
 }
 
 @Composable
-fun RecoveryPassword(state: LinkDeviceState, onChange: (String) -> Unit = {}, onContinue: () -> Unit = {}) {
+private fun RecoveryPassword(state: State, onChange: (String) -> Unit = {}, onContinue: () -> Unit = {}) {
     Column {
         Column(
             modifier = Modifier.padding(horizontal = LocalDimensions.current.marginLarge)

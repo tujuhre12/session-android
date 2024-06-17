@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.onboarding
+package org.thoughtcrime.securesms.onboarding.loadaccount
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
@@ -22,11 +22,16 @@ import javax.inject.Inject
 
 class LinkDeviceEvent(val mnemonic: ByteArray)
 
+internal data class State(
+    val recoveryPhrase: String = "",
+    val error: String? = null
+)
+
 @HiltViewModel
-class LinkDeviceViewModel @Inject constructor(
+internal class LinkDeviceViewModel @Inject constructor(
     private val application: Application
 ): AndroidViewModel(application) {
-    private val state = MutableStateFlow(LinkDeviceState())
+    private val state = MutableStateFlow(State())
     val stateFlow = state.asStateFlow()
 
     private val event = Channel<LinkDeviceEvent>()
@@ -56,7 +61,7 @@ class LinkDeviceViewModel @Inject constructor(
     }
 
     fun onChange(recoveryPhrase: String) {
-        state.value = LinkDeviceState(recoveryPhrase)
+        state.value = State(recoveryPhrase)
     }
     private fun onSuccess(seed: ByteArray) {
         viewModelScope.launch { event.send(LinkDeviceEvent(seed)) }

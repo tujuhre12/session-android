@@ -7,7 +7,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
-import org.thoughtcrime.securesms.onboarding.LinkDeviceActivity
+import org.thoughtcrime.securesms.onboarding.loadaccount.LoadAccountActivity
 import org.thoughtcrime.securesms.onboarding.pickname.startPickDisplayNameActivity
 import org.thoughtcrime.securesms.service.KeyCachingService
 import org.thoughtcrime.securesms.ui.setComposeContent
@@ -35,7 +35,7 @@ class LandingActivity: BaseActionBarActivity() {
                     prefs.setHasViewedSeed(false)
                     startPickDisplayNameActivity()
                 },
-                loadAccount = { start<LinkDeviceActivity>() },
+                loadAccount = { start<LoadAccountActivity>() },
                 openTerms = { open("https://getsession.org/terms-of-service") },
                 openPrivacyPolicy = { open("https://getsession.org/privacy-policy") }
             )
