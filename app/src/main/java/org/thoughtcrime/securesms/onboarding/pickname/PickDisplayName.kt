@@ -23,14 +23,14 @@ import org.thoughtcrime.securesms.ui.h4
 
 @Preview
 @Composable
-fun PreviewDisplayName() {
+private fun PreviewDisplayName() {
     PreviewTheme {
         DisplayName(State())
     }
 }
 
 @Composable
-fun DisplayName(state: State, onChange: (String) -> Unit = {}, onContinue: () -> Unit = {}) {
+internal fun DisplayName(state: State, onChange: (String) -> Unit = {}, onContinue: () -> Unit = {}) {
     Column {
         Column(
             verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.itemSpacingOnboarding),

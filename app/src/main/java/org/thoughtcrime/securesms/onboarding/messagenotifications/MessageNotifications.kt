@@ -2,7 +2,6 @@ package org.thoughtcrime.securesms.onboarding.messagenotifications
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Text
@@ -20,14 +19,11 @@ import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.color.Colors
 import org.thoughtcrime.securesms.ui.components.NotificationRadioButton
-import org.thoughtcrime.securesms.ui.components.OutlineButton
-import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.h4
-
 
 @Preview
 @Composable
-fun MessageNotificationsScreenPreview(
+private fun MessageNotificationsScreenPreview(
     @PreviewParameter(SessionColorsParameterProvider::class) colors: Colors
 ) {
     PreviewTheme(colors) {
@@ -36,7 +32,7 @@ fun MessageNotificationsScreenPreview(
 }
 
 @Composable
-fun MessageNotificationsScreen(
+internal fun MessageNotificationsScreen(
     state: MessageNotificationsState = MessageNotificationsState(),
     setEnabled: (Boolean) -> Unit = {},
     onContinue: () -> Unit = {}

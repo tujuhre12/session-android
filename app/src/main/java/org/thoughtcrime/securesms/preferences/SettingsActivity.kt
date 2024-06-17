@@ -68,7 +68,7 @@ import org.thoughtcrime.securesms.components.ProfilePictureView
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.home.PathActivity
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
-import org.thoughtcrime.securesms.onboarding.recoverypassword.RecoveryPasswordActivity
+import org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.appearance.AppearanceSettingsActivity
 import org.thoughtcrime.securesms.profiles.ProfileMediaConstraints

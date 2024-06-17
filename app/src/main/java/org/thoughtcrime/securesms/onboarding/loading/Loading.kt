@@ -18,7 +18,7 @@ import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.h7
 
 @Composable
-fun LoadingScreen(state: State) {
+internal fun LoadingScreen(state: State) {
     val animatable = remember { Animatable(initialValue = 0f, visibilityThreshold = 0.005f) }
 
     LaunchedEffect(state) {

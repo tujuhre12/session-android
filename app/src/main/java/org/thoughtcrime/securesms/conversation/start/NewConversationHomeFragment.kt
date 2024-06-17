@@ -64,7 +64,7 @@ class NewConversationHomeFragment : Fragment() {
 
 @Preview
 @Composable
-fun PreviewNewConversationScreen(
+private fun PreviewNewConversationScreen(
     @PreviewParameter(SessionColorsParameterProvider::class) colors: Colors
 ) {
     PreviewTheme(colors) {
@@ -76,7 +76,7 @@ fun PreviewNewConversationScreen(
 }
 
 @Composable
-fun NewConversationScreen(
+private fun NewConversationScreen(
     accountId: String,
     delegate: NewConversationDelegate
 ) {
@@ -99,7 +99,7 @@ fun NewConversationScreen(
  */
 @Suppress("UnusedReceiverParameter")
 @Composable
-fun ColumnScope.Items(
+private fun ColumnScope.Items(
     accountId: String,
     delegate: NewConversationDelegate
 ) {
