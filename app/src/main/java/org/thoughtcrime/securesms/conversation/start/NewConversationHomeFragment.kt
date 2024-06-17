@@ -55,12 +55,10 @@ class NewConversationHomeFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View = createThemedComposeView {
-        delegate.collectAsState().value.let {
-            NewConversationScreen(
-                accountId = TextSecurePreferences.getLocalNumber(requireContext())!!,
-                delegate = it
-            )
-        }
+        NewConversationScreen(
+            accountId = TextSecurePreferences.getLocalNumber(requireContext())!!,
+            delegate = delegate.collectAsState().value
+        )
     }
 }
 
