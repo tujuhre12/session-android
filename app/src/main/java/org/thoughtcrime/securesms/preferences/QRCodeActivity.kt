@@ -13,9 +13,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
@@ -38,7 +38,7 @@ private val TITLES = listOf(R.string.view, R.string.scan)
 
 class QRCodeActivity : PassphraseRequiredActionBarActivity() {
 
-    private val errors = Channel<String>()
+    private val errors = MutableSharedFlow<String>()
 
     override fun onCreate(savedInstanceState: Bundle?, isReady: Boolean) {
         super.onCreate(savedInstanceState, isReady)
@@ -47,7 +47,7 @@ class QRCodeActivity : PassphraseRequiredActionBarActivity() {
         setComposeContent {
             Tabs(
                 TextSecurePreferences.getLocalNumber(this)!!,
-                errors.receiveAsFlow(),
+                errors.asSharedFlow(),
                 onScan = ::onScan
             )
         }
@@ -55,7 +55,7 @@ class QRCodeActivity : PassphraseRequiredActionBarActivity() {
 
     fun onScan(string: String) {
         if (!PublicKeyValidation.isValid(string)) {
-            errors.trySend(getString(R.string.this_qr_code_does_not_contain_an_account_id))
+            errors.tryEmit(getString(R.string.this_qr_code_does_not_contain_an_account_id))
         } else if (!isFinishing) {
             val recipient = Recipient.from(this, Address.fromSerialized(string), false)
             start<ConversationActivityV2> {
