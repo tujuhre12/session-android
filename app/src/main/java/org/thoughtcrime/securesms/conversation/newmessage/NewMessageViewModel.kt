@@ -34,10 +34,10 @@ internal class NewMessageViewModel @Inject constructor(
     val state = _state.asStateFlow()
 
     private val _success = MutableSharedFlow<Success>()
-    val success: Flow<Success> get() = _success.asSharedFlow()
+    val success get() = _success.asSharedFlow()
 
-    private val _qrErrors = Channel<String>()
-    val qrErrors: Flow<String> = _qrErrors.receiveAsFlow()
+    private val _qrErrors = MutableSharedFlow<String>()
+    val qrErrors = _qrErrors.asSharedFlow()
 
     private var loadOnsJob: Job? = null
 
@@ -62,7 +62,7 @@ internal class NewMessageViewModel @Inject constructor(
         if (PublicKeyValidation.isValid(value, isPrefixRequired = false) && PublicKeyValidation.hasValidPrefix(value)) {
             onPublicKey(value)
         } else {
-            _qrErrors.trySend(application.getString(R.string.this_qr_code_does_not_contain_an_account_id))
+            _qrErrors.tryEmit(application.getString(R.string.this_qr_code_does_not_contain_an_account_id))
         }
     }
 
