@@ -5,27 +5,20 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement.Absolute.spacedBy
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
@@ -33,15 +26,15 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.preferences.copyPublicKey
 import org.thoughtcrime.securesms.preferences.sendInvitationToUseSession
 import org.thoughtcrime.securesms.ui.LocalDimensions
-import org.thoughtcrime.securesms.ui.color.LocalColors
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.base
+import org.thoughtcrime.securesms.ui.color.LocalColors
 import org.thoughtcrime.securesms.ui.components.AppBar
 import org.thoughtcrime.securesms.ui.components.SlimOutlineButton
 import org.thoughtcrime.securesms.ui.components.SlimOutlineCopyButton
+import org.thoughtcrime.securesms.ui.components.border
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.createThemedComposeView
-import org.thoughtcrime.securesms.ui.extraSmallMonospace
 import org.thoughtcrime.securesms.ui.small
 
 @AndroidEntryPoint
@@ -88,11 +81,7 @@ private fun InviteFriend(
                 modifier = Modifier
                     .contentDescription(R.string.AccessibilityId_recovery_password_container)
                     .fillMaxWidth()
-                    .border(
-                        width = LocalDimensions.current.borderStroke,
-                        color = LocalColors.current.borders,
-                        shape = MaterialTheme.shapes.small
-                    )
+                    .border()
                     .padding(LocalDimensions.current.marginSmall),
                 textAlign = TextAlign.Center,
                 style = base

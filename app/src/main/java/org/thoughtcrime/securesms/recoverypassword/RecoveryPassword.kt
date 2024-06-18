@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.recoverypassword
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,9 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -26,7 +23,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.unit.dp
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.CellWithPaddingAndMargin
 import org.thoughtcrime.securesms.ui.LocalDimensions
@@ -39,6 +35,7 @@ import org.thoughtcrime.securesms.ui.color.LocalColors
 import org.thoughtcrime.securesms.ui.components.QrImage
 import org.thoughtcrime.securesms.ui.components.SlimOutlineButton
 import org.thoughtcrime.securesms.ui.components.SlimOutlineCopyButton
+import org.thoughtcrime.securesms.ui.components.border
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.extraSmallMonospace
 import org.thoughtcrime.securesms.ui.h8
@@ -135,11 +132,7 @@ private fun RecoveryPassword(seed: String) {
         modifier = Modifier
             .contentDescription(R.string.AccessibilityId_recovery_password_container)
             .padding(vertical = LocalDimensions.current.marginSmall)
-            .border(
-                width = LocalDimensions.current.borderStroke,
-                color = LocalColors.current.borders,
-                shape = MaterialTheme.shapes.small
-            )
+            .border()
             .padding(LocalDimensions.current.marginSmall),
         textAlign = TextAlign.Center,
         style = extraSmallMonospace,
