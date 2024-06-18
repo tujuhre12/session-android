@@ -1,9 +1,6 @@
 @file:JvmName("PromiseUtilities")
 package org.session.libsignal.utilities
 
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.isActive
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.deferred
 import nl.komponents.kovenant.functional.map
@@ -69,20 +66,4 @@ infix fun <V, E: Exception> Promise<V, E>.sideEffect(
 ) = map {
     callback(it)
     it
-}
-
-/**
- * Observe a [Promise] as a flow
- *
- * Warning: Promise will not be canceled on unsubscribe.
- */
-fun <V, E: Exception> Promise<V, E>.asFlow() = callbackFlow {
-    success {
-        if (isActive) trySend(it)
-        close()
-    } fail {
-        close(it)
-    }
-
-    awaitClose()
 }

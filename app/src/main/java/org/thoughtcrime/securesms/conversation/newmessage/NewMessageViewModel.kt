@@ -5,37 +5,34 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.timeout
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import network.loki.messenger.R
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsignal.utilities.PublicKeyValidation
-import org.session.libsignal.utilities.asFlow
 import org.thoughtcrime.securesms.ui.GetString
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.seconds
 
 @HiltViewModel
-class NewMessageViewModel @Inject constructor(
+internal class NewMessageViewModel @Inject constructor(
     private val application: Application
 ): AndroidViewModel(application), Callbacks {
 
     private val _state = MutableStateFlow(State())
     val state = _state.asStateFlow()
 
-    private val _event = Channel<Event>()
-    val event: Flow<Event> get() = _event.receiveAsFlow()
+    private val _success = Channel<Success>()
+    val success: Flow<Success> get() = _success.receiveAsFlow()
 
     private val _qrErrors = Channel<String>()
     val qrErrors: Flow<String> = _qrErrors.receiveAsFlow()
@@ -50,7 +47,13 @@ class NewMessageViewModel @Inject constructor(
     }
 
     override fun onContinue() {
-        createPrivateChatIfPossible(state.value.newMessageIdOrOns)
+        val idOrONS = state.value.newMessageIdOrOns
+
+        if (PublicKeyValidation.isValid(idOrONS, isPrefixRequired = false)) {
+            onUnvalidatedPublicKey(idOrONS)
+        } else {
+            resolveONS(idOrONS)
+        }
     }
 
     override fun onScanQrCode(value: String) {
@@ -61,38 +64,23 @@ class NewMessageViewModel @Inject constructor(
         }
     }
 
-    @OptIn(FlowPreview::class)
-    private fun createPrivateChatIfPossible(onsNameOrPublicKey: String) {
+    private fun resolveONS(ons: String) {
         if (loadOnsJob?.isActive == true) return
 
-        if (PublicKeyValidation.isValid(onsNameOrPublicKey, isPrefixRequired = false)) {
-            if (PublicKeyValidation.hasValidPrefix(onsNameOrPublicKey)) {
-                onPublicKey(onsNameOrPublicKey)
-            } else {
-                _state.update { it.copy(error = GetString(R.string.accountIdErrorInvalid), loading = false) }
-            }
-        } else {
-            // This could be an ONS name
-            _state.update { it.copy(error = null, loading = true) }
+        // This could be an ONS name
+        _state.update { it.copy(error = null, loading = true) }
 
-            loadOnsJob = viewModelScope.launch(Dispatchers.IO) {
-                try {
-                    // TODO move timeout to SnodeAPI#getSessionID
-                    SnodeAPI.getSessionID(onsNameOrPublicKey).asFlow()
-                        .timeout(30.seconds)
-                        .collectLatest {
-                            _state.update { it.copy(loading = false) }
-                            onPublicKey(onsNameOrPublicKey)
-                        }
-                } catch (e: TimeoutCancellationException) {
-                    onError(e)
-                } catch (e: CancellationException) {
-                    // Ignore JobCancellationException, which is called when we cancel the job and
-                    // is handled where the job is canceled.
-                    // Can't reference JobCancellationException directly, it is internal.
-                } catch (e: Exception) {
-                    onError(e)
-                }
+        loadOnsJob = viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val publicKey = withTimeout(30.seconds) { SnodeAPI.getSessionID(ons).get() }
+                onPublicKey(publicKey)
+            } catch (e: TimeoutCancellationException) {
+                onError(e)
+            } catch (e: CancellationException) {
+                // Attempting to just ignore internal JobCancellationException, which is called
+                // when we cancel the job, state update is handled there.
+            } catch (e: Exception) {
+                onError(e)
             }
         }
     }
@@ -101,8 +89,17 @@ class NewMessageViewModel @Inject constructor(
         _state.update { it.copy(loading = false, error = GetString(e) { it.toMessage() }) }
     }
 
-    private fun onPublicKey(onsNameOrPublicKey: String) {
-        viewModelScope.launch { _event.send(Event.Success(onsNameOrPublicKey)) }
+    private fun onPublicKey(publicKey: String) {
+        _state.update { it.copy(loading = false) }
+        viewModelScope.launch { _success.send(Success(publicKey)) }
+    }
+
+    private fun onUnvalidatedPublicKey(publicKey: String) {
+        if (PublicKeyValidation.hasValidPrefix(publicKey)) {
+            onPublicKey(publicKey)
+        } else {
+            _state.update { it.copy(error = GetString(R.string.accountIdErrorInvalid), loading = false) }
+        }
     }
 
     private fun Exception.toMessage() = when (this) {
@@ -111,7 +108,7 @@ class NewMessageViewModel @Inject constructor(
     }
 }
 
-data class State(
+internal data class State(
     val newMessageIdOrOns: String = "",
     val error: GetString? = null,
     val loading: Boolean = false
@@ -119,6 +116,4 @@ data class State(
     val isNextButtonEnabled: Boolean get() = newMessageIdOrOns.isNotBlank()
 }
 
-sealed interface Event {
-    data class Success(val key: String): Event
-}
+internal data class Success(val publicKey: String)
