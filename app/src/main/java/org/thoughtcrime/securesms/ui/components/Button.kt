@@ -122,6 +122,18 @@ fun Button(
     Button(text, onClick, color, ButtonType.Outline, modifier, enabled)
 }
 
+@Composable fun OutlineButton(modifier: Modifier = Modifier, color: Color = LocalColors.current.buttonOutline, enabled: Boolean = true, onClick: () -> Unit, content: @Composable () -> Unit) {
+    Button(
+        onClick = onClick,
+        color = color,
+        type = ButtonType.Outline,
+        modifier = modifier,
+        enabled = enabled
+    ){
+        content()
+    }
+}
+
 @Composable fun PrimaryOutlineButton(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit) {
     Button(text, onClick, LocalColors.current.primary, ButtonType.Outline, modifier, enabled)
 }
