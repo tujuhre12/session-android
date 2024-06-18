@@ -1,9 +1,5 @@
-package org.thoughtcrime.securesms.conversation.start
+package org.thoughtcrime.securesms.conversation.start.home
 
-import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -15,18 +11,15 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.fragment.app.Fragment
-import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.MutableStateFlow
 import network.loki.messenger.R
-import org.session.libsession.utilities.TextSecurePreferences
+import org.thoughtcrime.securesms.conversation.start.NewConversationDelegate
+import org.thoughtcrime.securesms.conversation.start.NullNewConversationDelegate
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.ItemButton
 import org.thoughtcrime.securesms.ui.LocalDimensions
@@ -37,46 +30,11 @@ import org.thoughtcrime.securesms.ui.color.LocalColors
 import org.thoughtcrime.securesms.ui.components.AppBar
 import org.thoughtcrime.securesms.ui.components.QrImage
 import org.thoughtcrime.securesms.ui.contentDescription
-import org.thoughtcrime.securesms.ui.createThemedComposeView
 import org.thoughtcrime.securesms.ui.small
 import org.thoughtcrime.securesms.ui.xl
-import javax.inject.Inject
-
-@AndroidEntryPoint
-class NewConversationHomeFragment : Fragment() {
-
-    @Inject
-    lateinit var textSecurePreferences: TextSecurePreferences
-
-    var delegate = MutableStateFlow<NewConversationDelegate>(NullNewConversationDelegate)
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View = createThemedComposeView {
-        NewConversationScreen(
-            accountId = TextSecurePreferences.getLocalNumber(requireContext())!!,
-            delegate = delegate.collectAsState().value
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun PreviewNewConversationScreen(
-    @PreviewParameter(SessionColorsParameterProvider::class) colors: Colors
-) {
-    PreviewTheme(colors) {
-        NewConversationScreen(
-            accountId = "059287129387123",
-            NullNewConversationDelegate
-        )
-    }
-}
 
 @Composable
-private fun NewConversationScreen(
+internal fun NewConversationScreen(
     accountId: String,
     delegate: NewConversationDelegate
 ) {
@@ -109,7 +67,8 @@ private fun ColumnScope.Items(
     Divider(startIndent = LocalDimensions.current.dividerIndent)
     ItemButton(textId = R.string.dialog_join_community_title, icon = R.drawable.ic_globe, onClick = delegate::onJoinCommunitySelected)
     Divider(startIndent = LocalDimensions.current.dividerIndent)
-    ItemButton(textId = R.string.activity_settings_invite_button_title, icon = R.drawable.ic_invite_friend, Modifier.contentDescription(R.string.AccessibilityId_invite_friend_button), onClick = delegate::onInviteFriend)
+    ItemButton(textId = R.string.activity_settings_invite_button_title, icon = R.drawable.ic_invite_friend, Modifier.contentDescription(
+        R.string.AccessibilityId_invite_friend_button), onClick = delegate::onInviteFriend)
     Column(
         modifier = Modifier
             .padding(horizontal = LocalDimensions.current.marginMedium)
@@ -124,5 +83,18 @@ private fun ColumnScope.Items(
         )
         Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacingSmall))
         QrImage(string = accountId, Modifier.contentDescription(R.string.AccessibilityId_qr_code))
+    }
+}
+
+@Preview
+@Composable
+private fun PreviewNewConversationScreen(
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: Colors
+) {
+    PreviewTheme(colors) {
+        NewConversationScreen(
+            accountId = "059287129387123",
+            NullNewConversationDelegate
+        )
     }
 }
