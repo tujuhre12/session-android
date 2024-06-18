@@ -1,6 +1,6 @@
-package org.thoughtcrime.securesms.conversation.newmessage
+package org.thoughtcrime.securesms.conversation.start.newmessage
 
-interface Callbacks {
+internal interface Callbacks {
     fun onChange(value: String) {}
     fun onContinue() {}
     fun onScanQrCode(value: String) {}

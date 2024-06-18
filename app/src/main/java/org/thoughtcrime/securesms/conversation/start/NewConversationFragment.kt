@@ -17,9 +17,9 @@ import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.modifyLayoutParams
-import org.thoughtcrime.securesms.conversation.new.NewMessageFragment
 import org.thoughtcrime.securesms.conversation.start.home.NewConversationHomeFragment
 import org.thoughtcrime.securesms.conversation.start.invitefriend.InviteFriendFragment
+import org.thoughtcrime.securesms.conversation.start.newmessage.NewMessageFragment
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.groups.CreateGroupFragment
 import org.thoughtcrime.securesms.groups.JoinCommunityFragment

@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.conversation.newmessage
+package org.thoughtcrime.securesms.conversation.start.newmessage
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
