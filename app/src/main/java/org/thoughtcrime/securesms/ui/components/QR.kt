@@ -182,7 +182,7 @@ fun ScanQrCode(errors: Flow<String>, onScan: (String) -> Unit) {
                 Modifier
                     .aspectRatio(1f)
                     .padding(20.dp)
-                    .clip(shape = RoundedCornerShape(20.dp))
+                    .clip(shape = RoundedCornerShape(26.dp))
                     .background(Color(0x33ffffff))
                     .align(Alignment.Center)
             )

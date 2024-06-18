@@ -31,6 +31,7 @@ import androidx.compose.material.Card
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Icon
 import androidx.compose.material.LocalContentColor
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.RadioButton
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
@@ -213,7 +214,7 @@ fun CellWithPaddingAndMargin(
 ) {
     Card(
         backgroundColor = LocalColors.current.backgroundSecondary,
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.medium,
         elevation = 0.dp,
         modifier = Modifier
             .wrapContentHeight()

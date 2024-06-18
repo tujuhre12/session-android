@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -148,7 +149,7 @@ internal fun LandingScreen(
                     .contentDescription(R.string.AccessibilityId_create_account_button),
                 onClick = createAccount
             )
-            Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacingExtraSmall))
+            Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacingSmall))
             PrimaryOutlineButton(
                 stringResource(R.string.onboardingAccountExists),
                 modifier = Modifier
@@ -165,7 +166,7 @@ internal fun LandingScreen(
                     .contentDescription(R.string.AccessibilityId_open_url),
                 onClick = { isUrlDialogVisible = true }
             )
-            Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacingExtraSmall))
+            Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacingXXSmall))
         }
     }
 }
@@ -210,7 +211,7 @@ private fun MessageText(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(0.666f),
-        shape = RoundedCornerShape(size = 13.dp),
+        shape = MaterialTheme.shapes.small,
         backgroundColor = color,
         elevation = 0.dp
     ) {
@@ -218,7 +219,10 @@ private fun MessageText(
             text,
             style = large,
             color = textColor,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+            modifier = Modifier.padding(
+                horizontal = LocalDimensions.current.itemSpacingSmall,
+                vertical = LocalDimensions.current.itemSpacingXSmall
+            )
         )
     }
 }

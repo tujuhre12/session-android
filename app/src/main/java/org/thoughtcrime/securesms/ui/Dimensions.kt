@@ -8,7 +8,8 @@ val LocalDimensions = staticCompositionLocalOf { Dimensions() }
 
 data class Dimensions(
     val itemSpacingTiny: Dp = 4.dp,
-    val itemSpacingExtraSmall: Dp = 8.dp,
+    val itemSpacingXXSmall: Dp = 8.dp,
+    val itemSpacingXSmall: Dp = 12.dp,
     val itemSpacingSmall: Dp = 16.dp,
     val itemSpacingOnboarding: Dp = 20.dp,
     val itemSpacingMedium: Dp = 24.dp,
