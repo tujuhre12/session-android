@@ -80,10 +80,12 @@ private fun Colors.toMaterialColors() = androidx.compose.material.Colors(
 
 @Composable private fun Context.colors() = AppTextSecurePreferences(this).colors()
 
+val pillShape = RoundedCornerShape(percent = 50)
+val buttonShape = pillShape
+
 val sessionShapes = Shapes(
     small = RoundedCornerShape(12.dp),
-    medium = RoundedCornerShape(16.dp),
-    large = RoundedCornerShape(50.dp)
+    medium = RoundedCornerShape(16.dp)
 )
 
 /**

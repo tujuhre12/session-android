@@ -16,14 +16,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.LocalContentColor
-import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -47,7 +45,7 @@ import kotlin.math.sign
 @Composable
 fun BoxScope.HorizontalPagerIndicator(pagerState: PagerState) {
     if (pagerState.pageCount >= 2) Card(
-        shape = MaterialTheme.shapes.large,
+        shape = pillShape,
         backgroundColor = Color.Black.copy(alpha = 0.4f),
         modifier = Modifier
             .align(Alignment.BottomCenter)
