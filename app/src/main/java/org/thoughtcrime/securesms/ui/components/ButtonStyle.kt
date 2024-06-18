@@ -11,6 +11,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.thoughtcrime.securesms.ui.baseBold
+import org.thoughtcrime.securesms.ui.extraSmall
 import org.thoughtcrime.securesms.ui.extraSmallBold
 
 interface ButtonStyle {
@@ -42,5 +43,10 @@ interface ButtonStyle {
     object Slim: ButtonStyle {
         override val textStyle = extraSmallBold.copy(textAlign = TextAlign.Center)
         override val minHeight = 29.dp
+    }
+
+    object Borderless: ButtonStyle {
+        override val textStyle = extraSmall.copy(textAlign = TextAlign.Center)
+        override val minHeight = 37.dp
     }
 }

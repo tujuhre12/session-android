@@ -11,13 +11,13 @@ import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.ButtonColors
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Text
-import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -65,6 +65,7 @@ fun Button(
     border: BorderStroke? = type.border(color, enabled),
     colors: ButtonColors = type.buttonColors(color),
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    contentPadding: PaddingValues = type.contentPadding,
     content: @Composable RowScope.() -> Unit
 ) {
     style.applyButtonConstraints {
@@ -76,7 +77,8 @@ fun Button(
             elevation = null,
             shape,
             border,
-            colors
+            colors,
+            contentPadding
         ) {
             // Button sets LocalTextStyle, so text style is applied inside to override that.
             style.applyTextConstraints {
@@ -205,47 +207,37 @@ fun TemporaryClickedContent(
     }
 }
 
+/**
+ * Base [BorderlessButton] implementation.
+ */
 @Composable
 fun BorderlessButton(
     modifier: Modifier = Modifier,
-    contentColor: Color = LocalColors.current.text,
-    backgroundColor: Color = Color.Transparent,
+    color: Color = LocalColors.current.text,
     onClick: () -> Unit,
     content: @Composable RowScope.() -> Unit
 ) {
-    TextButton(
+    Button(
         onClick = onClick,
+        color = color,
         modifier = modifier,
-        colors = ButtonDefaults.outlinedButtonColors(
-            contentColor = contentColor,
-            backgroundColor = backgroundColor
-        ),
+        style = ButtonStyle.Borderless,
+        type = ButtonType.Borderless,
         content = content
     )
 }
 
+/**
+ * Courtesy [BorderlessButton] implementation that accepts [text] as a [String].
+ */
 @Composable
 fun BorderlessButton(
     text: String,
     modifier: Modifier = Modifier,
-    contentDescription: GetString = GetString(text),
-    contentColor: Color = LocalColors.current.text,
-    backgroundColor: Color = Color.Transparent,
+    color: Color = LocalColors.current.text,
     onClick: () -> Unit
 ) {
-    BorderlessButton(
-        modifier = modifier.contentDescription(contentDescription),
-        contentColor = contentColor,
-        backgroundColor = backgroundColor,
-        onClick = onClick
-    ) {
-        Text(
-            text = text,
-            textAlign = TextAlign.Center,
-            style = extraSmall,
-            modifier = Modifier.padding(horizontal = 2.dp)
-        )
-    }
+    BorderlessButton(modifier, color, onClick) { Text(text) }
 }
 
 @Composable
@@ -254,14 +246,12 @@ fun BorderlessButtonWithIcon(
     @DrawableRes iconRes: Int,
     modifier: Modifier = Modifier,
     style: TextStyle = baseBold,
-    contentColor: Color = LocalColors.current.text,
-    backgroundColor: Color = Color.Transparent,
+    color: Color = LocalColors.current.text,
     onClick: () -> Unit
 ) {
     BorderlessButton(
         modifier = modifier,
-        contentColor = contentColor,
-        backgroundColor = backgroundColor,
+        color = color,
         onClick = onClick
     ) {
         AnnotatedTextWithIcon(text, iconRes, style = style)
@@ -272,20 +262,12 @@ fun BorderlessButtonWithIcon(
 fun BorderlessHtmlButton(
     textId: Int,
     modifier: Modifier = Modifier,
-    contentColor: Color = LocalColors.current.text,
-    backgroundColor: Color = Color.Transparent,
+    color: Color = LocalColors.current.text,
     onClick: () -> Unit
 ) {
-    BorderlessButton(
-        modifier,
-        contentColor = contentColor,
-        backgroundColor = backgroundColor,
-        onClick = onClick
-    ) {
+    BorderlessButton(modifier, color, onClick) {
         Text(
             text = annotatedStringResource(textId),
-            textAlign = TextAlign.Center,
-            style = extraSmall,
             modifier = Modifier.padding(horizontal = 2.dp)
         )
     }
@@ -311,6 +293,8 @@ private fun VariousButtons(
             SlimOutlineButton("Slim Primary", color = LocalColors.current.buttonOutline) {}
             SlimOutlineButton("Slim Danger", color = LocalColors.current.danger) {}
             SlimOutlineCopyButton {}
+            BorderlessButton("Borderless Button") {}
+            BorderlessButton("Borderless Secondary", color = LocalColors.current.textSecondary) {}
         }
     }
 }

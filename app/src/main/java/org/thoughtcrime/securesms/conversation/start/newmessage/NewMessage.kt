@@ -86,13 +86,13 @@ private fun EnterAccountId(
 
         BorderlessButtonWithIcon(
             text = stringResource(R.string.messageNewDescription),
-            iconRes = R.drawable.ic_circle_question_mark,
-            contentColor = LocalColors.current.textSecondary,
             modifier = Modifier
                 .animateContentSize()
                 .contentDescription(R.string.AccessibilityId_help_desk_link)
                 .padding(horizontal = LocalDimensions.current.margin)
                 .fillMaxWidth(),
+            color = LocalColors.current.textSecondary,
+            iconRes = R.drawable.ic_circle_question_mark
         ) { onHelp() }
 
         OutlineButton(

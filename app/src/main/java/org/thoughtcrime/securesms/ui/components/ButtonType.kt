@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.ui.components
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material.ButtonColors
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.runtime.Composable
@@ -10,6 +11,8 @@ import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.color.LocalColors
 
 interface ButtonType {
+    val contentPadding: PaddingValues get() = ButtonDefaults.ContentPadding
+
     @Composable
     fun border(color: Color, enabled: Boolean): BorderStroke?
     @Composable
@@ -40,6 +43,19 @@ interface ButtonType {
             backgroundColor = color,
             disabledContentColor = LocalColors.current.disabled,
             disabledBackgroundColor = Color.Unspecified
+        )
+    }
+
+    object Borderless: ButtonType {
+        override val contentPadding: PaddingValues
+            get() = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
+        @Composable
+        override fun border(color: Color, enabled: Boolean) = null
+        @Composable
+        override fun buttonColors(color: Color) = ButtonDefaults.outlinedButtonColors(
+            contentColor = color,
+            backgroundColor = Color.Transparent,
+            disabledContentColor = LocalColors.current.disabled
         )
     }
 }
