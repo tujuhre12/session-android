@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.ButtonColors
 import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.ButtonElevation
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
@@ -62,7 +61,6 @@ fun Button(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     size: ButtonStyle = ButtonStyle.Large,
-    elevation: ButtonElevation? = type.elevation,
     shape: Shape = MaterialTheme.shapes.small,
     border: BorderStroke? = type.border(color, enabled),
     colors: ButtonColors = type.buttonColors(color),
@@ -75,7 +73,7 @@ fun Button(
             modifier.heightIn(min = size.minHeight),
             enabled,
             interactionSource,
-            elevation,
+            elevation = null,
             shape,
             border,
             colors
@@ -100,13 +98,12 @@ fun Button(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     size: ButtonStyle = ButtonStyle.Large,
-    elevation: ButtonElevation? = type.elevation,
     shape: Shape = MaterialTheme.shapes.small,
     border: BorderStroke? = type.border(color, enabled),
     colors: ButtonColors = type.buttonColors(color),
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
-    Button(onClick, color, type, modifier, enabled, size, elevation, shape, border, colors, interactionSource) {
+    Button(onClick, color, type, modifier, enabled, size, shape, border, colors, interactionSource) {
         Text(text)
     }
 }
