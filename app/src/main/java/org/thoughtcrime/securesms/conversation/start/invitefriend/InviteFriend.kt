@@ -37,7 +37,7 @@ internal fun InviteFriend(
     Column(modifier = Modifier.background(LocalColors.current.backgroundSecondary)) {
         AppBar(stringResource(R.string.invite_a_friend), onBack = onBack, onClose = onClose)
         Column(
-            modifier = Modifier.padding(horizontal = LocalDimensions.current.itemSpacingMedium),
+            modifier = Modifier.padding(horizontal = LocalDimensions.current.itemSpacing),
         ) {
             Text(
                 accountId,
@@ -45,24 +45,24 @@ internal fun InviteFriend(
                     .contentDescription(R.string.AccessibilityId_recovery_password_container)
                     .fillMaxWidth()
                     .border()
-                    .padding(LocalDimensions.current.marginSmall),
+                    .padding(LocalDimensions.current.smallMargin),
                 textAlign = TextAlign.Center,
                 style = base
             )
 
-            Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacingXSmall))
+            Spacer(modifier = Modifier.height(LocalDimensions.current.xsItemSpacing))
 
             Text(
                 stringResource(R.string.invite_your_friend_to_chat_with_you_on_session_by_sharing_your_account_id_with_them),
                 textAlign = TextAlign.Center,
                 style = small,
                 color = LocalColors.current.textSecondary,
-                modifier = Modifier.padding(horizontal = LocalDimensions.current.itemSpacingSmall)
+                modifier = Modifier.padding(horizontal = LocalDimensions.current.smallItemSpacing)
             )
 
-            Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacingSmall))
+            Spacer(modifier = Modifier.height(LocalDimensions.current.smallItemSpacing))
 
-            Row(horizontalArrangement = spacedBy(LocalDimensions.current.itemSpacingSmall)) {
+            Row(horizontalArrangement = spacedBy(LocalDimensions.current.smallItemSpacing)) {
                 SlimOutlineButton(
                     stringResource(R.string.share),
                     modifier = Modifier

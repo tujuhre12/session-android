@@ -107,7 +107,7 @@ internal fun LandingScreen(
     Column {
         Column(modifier = Modifier
             .weight(1f)
-            .padding(horizontal = LocalDimensions.current.marginOnboarding)
+            .padding(horizontal = LocalDimensions.current.onboardingMargin)
         ) {
             Spacer(modifier = Modifier.weight(1f))
             Text(
@@ -116,7 +116,7 @@ internal fun LandingScreen(
                 style = h4,
                 textAlign = TextAlign.Center
             )
-            Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacingMedium))
+            Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacing))
 
             LazyColumn(
                 state = listState,
@@ -124,7 +124,7 @@ internal fun LandingScreen(
                     .heightIn(min = LocalDimensions.current.minScrollableViewHeight)
                     .fillMaxWidth()
                     .weight(3f),
-                verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.itemSpacingSmall)
+                verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallItemSpacing)
             ) {
                 items(
                     MESSAGES.take(count),
@@ -140,7 +140,7 @@ internal fun LandingScreen(
             Spacer(modifier = Modifier.weight(1f))
         }
 
-        Column(modifier = Modifier.padding(horizontal = LocalDimensions.current.marginLarge)) {
+        Column(modifier = Modifier.padding(horizontal = LocalDimensions.current.largeMargin)) {
             PrimaryFillButton(
                 text = stringResource(R.string.onboardingAccountCreate),
                 modifier = Modifier
@@ -149,7 +149,7 @@ internal fun LandingScreen(
                     .contentDescription(R.string.AccessibilityId_create_account_button),
                 onClick = createAccount
             )
-            Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacingSmall))
+            Spacer(modifier = Modifier.height(LocalDimensions.current.smallItemSpacing))
             PrimaryOutlineButton(
                 stringResource(R.string.onboardingAccountExists),
                 modifier = Modifier
@@ -166,7 +166,7 @@ internal fun LandingScreen(
                     .contentDescription(R.string.AccessibilityId_open_url),
                 onClick = { isUrlDialogVisible = true }
             )
-            Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacingXXSmall))
+            Spacer(modifier = Modifier.height(LocalDimensions.current.xxsItemSpacing))
         }
     }
 }
@@ -220,8 +220,8 @@ private fun MessageText(
             style = large,
             color = textColor,
             modifier = Modifier.padding(
-                horizontal = LocalDimensions.current.itemSpacingSmall,
-                vertical = LocalDimensions.current.itemSpacingXSmall
+                horizontal = LocalDimensions.current.smallItemSpacing,
+                vertical = LocalDimensions.current.xsItemSpacing
             )
         )
     }

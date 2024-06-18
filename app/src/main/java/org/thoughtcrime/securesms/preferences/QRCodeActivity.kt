@@ -93,13 +93,13 @@ fun QrPage(string: String) {
     Column(
         modifier = Modifier
             .background(LocalColors.current.backgroundSecondary)
-            .padding(horizontal = LocalDimensions.current.marginMedium)
+            .padding(horizontal = LocalDimensions.current.margin)
             .fillMaxSize()
     ) {
         QrImage(
             string = string,
             modifier = Modifier
-                .padding(top = LocalDimensions.current.marginMedium, bottom = LocalDimensions.current.marginExtraExtraSmall)
+                .padding(top = LocalDimensions.current.margin, bottom = LocalDimensions.current.xxsMargin)
                 .contentDescription(R.string.AccessibilityId_qr_code),
             icon = R.drawable.session
         )

@@ -41,7 +41,7 @@ internal fun LoadingScreen(state: State) {
             stringResource(R.string.waitOneMoment),
             style = h7
         )
-        Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacingTiny))
+        Spacer(modifier = Modifier.height(LocalDimensions.current.xxxsItemSpacing))
         Text(
             stringResource(R.string.loadAccountProgressMessage),
             style = base

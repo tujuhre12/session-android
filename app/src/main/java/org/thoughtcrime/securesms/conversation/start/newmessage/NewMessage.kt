@@ -68,15 +68,15 @@ private fun EnterAccountId(
 ) {
     Column(
         modifier = Modifier
-            .padding(horizontal = LocalDimensions.current.marginExtraExtraSmall, vertical = LocalDimensions.current.marginExtraSmall)
+            .padding(horizontal = LocalDimensions.current.xxsMargin, vertical = LocalDimensions.current.xsMargin)
             .fillMaxHeight(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.marginExtraSmall)
+        verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.xsMargin)
     ) {
         SessionOutlinedTextField(
             text = state.newMessageIdOrOns,
             modifier = Modifier
-                .padding(horizontal = LocalDimensions.current.marginSmall)
+                .padding(horizontal = LocalDimensions.current.smallMargin)
                 .contentDescription("Session id input box"),
             placeholder = stringResource(R.string.accountIdOrOnsEnter),
             onChange = callbacks::onChange,
@@ -91,14 +91,14 @@ private fun EnterAccountId(
             modifier = Modifier
                 .animateContentSize()
                 .contentDescription(R.string.AccessibilityId_help_desk_link)
-                .padding(horizontal = LocalDimensions.current.marginMedium)
+                .padding(horizontal = LocalDimensions.current.margin)
                 .fillMaxWidth(),
         ) { onHelp() }
 
         OutlineButton(
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
-                .padding(horizontal = LocalDimensions.current.marginLarge)
+                .padding(horizontal = LocalDimensions.current.largeMargin)
                 .fillMaxWidth()
                 .contentDescription(R.string.next),
             color = LocalColors.current.primary,

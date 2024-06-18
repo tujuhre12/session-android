@@ -339,7 +339,7 @@ fun FileDetails(fileDetails: List<TitledText>) {
 
     CellWithPaddingAndMargin(padding = 0.dp) {
         FlowRow(
-            modifier = Modifier.padding(vertical = 24.dp, horizontal = LocalDimensions.current.itemSpacingXSmall),
+            modifier = Modifier.padding(vertical = 24.dp, horizontal = LocalDimensions.current.xsItemSpacing),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             fileDetails.forEach {
@@ -348,7 +348,7 @@ fun FileDetails(fileDetails: List<TitledText>) {
                         it,
                         modifier = Modifier
                             .widthIn(min = maxWidth.div(2))
-                            .padding(horizontal = LocalDimensions.current.itemSpacingXSmall)
+                            .padding(horizontal = LocalDimensions.current.xsItemSpacing)
                             .width(IntrinsicSize.Max)
                     )
                 }

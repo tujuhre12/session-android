@@ -36,17 +36,17 @@ internal fun DisplayName(state: State, onChange: (String) -> Unit = {}, onContin
     Column {
         Column(
             modifier = Modifier
-                .padding(horizontal = LocalDimensions.current.marginOnboarding)
+                .padding(horizontal = LocalDimensions.current.onboardingMargin)
                 .weight(1f)
         ) {
             Spacer(modifier = Modifier.weight(1f))
             Text(stringResource(state.title), style = h4)
-            Spacer(Modifier.height(LocalDimensions.current.itemSpacingSmall))
+            Spacer(Modifier.height(LocalDimensions.current.smallItemSpacing))
             Text(
                 stringResource(state.description),
                 style = base,
-                modifier = Modifier.padding(bottom = LocalDimensions.current.itemSpacingXSmall))
-            Spacer(Modifier.height(LocalDimensions.current.itemSpacingMedium))
+                modifier = Modifier.padding(bottom = LocalDimensions.current.xsItemSpacing))
+            Spacer(Modifier.height(LocalDimensions.current.itemSpacing))
             SessionOutlinedTextField(
                 text = state.displayName,
                 modifier = Modifier

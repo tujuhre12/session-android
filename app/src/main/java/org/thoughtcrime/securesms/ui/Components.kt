@@ -326,7 +326,7 @@ fun Modifier.fadingEdges(
 @Composable
 fun Divider(modifier: Modifier = Modifier, startIndent: Dp = 0.dp) {
     androidx.compose.material.Divider(
-        modifier = modifier.padding(horizontal = LocalDimensions.current.marginExtraSmall),
+        modifier = modifier.padding(horizontal = LocalDimensions.current.xsMargin),
         color = LocalColors.current.divider,
         startIndent = startIndent
     )

@@ -71,17 +71,17 @@ private fun ColumnScope.Items(
         R.string.AccessibilityId_invite_friend_button), onClick = delegate::onInviteFriend)
     Column(
         modifier = Modifier
-            .padding(horizontal = LocalDimensions.current.marginMedium)
-            .padding(top = LocalDimensions.current.itemSpacingMedium)
+            .padding(horizontal = LocalDimensions.current.margin)
+            .padding(top = LocalDimensions.current.itemSpacing)
     ) {
         Text(stringResource(R.string.accountIdYours), style = xl)
-        Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacingTiny))
+        Spacer(modifier = Modifier.height(LocalDimensions.current.xxxsItemSpacing))
         Text(
             text = stringResource(R.string.qrYoursDescription),
             color = LocalColors.current.textSecondary,
             style = small
         )
-        Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacingSmall))
+        Spacer(modifier = Modifier.height(LocalDimensions.current.smallItemSpacing))
         QrImage(string = accountId, Modifier.contentDescription(R.string.AccessibilityId_qr_code))
     }
 }

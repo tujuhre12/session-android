@@ -71,7 +71,7 @@ private fun PreviewRecoveryPassword() {
 private fun RecoveryPassword(state: State, onChange: (String) -> Unit = {}, onContinue: () -> Unit = {}) {
     Column {
         Column(
-            modifier = Modifier.padding(horizontal = LocalDimensions.current.marginLarge)
+            modifier = Modifier.padding(horizontal = LocalDimensions.current.largeMargin)
                 .weight(1f)
         ) {
             Spacer(Modifier.weight(1f))
@@ -80,18 +80,18 @@ private fun RecoveryPassword(state: State, onChange: (String) -> Unit = {}, onCo
                     stringResource(R.string.sessionRecoveryPassword),
                     style = h4
                 )
-                Spacer(Modifier.width(LocalDimensions.current.itemSpacingXXSmall))
+                Spacer(Modifier.width(LocalDimensions.current.xxsItemSpacing))
                 Icon(
                     painter = painterResource(id = R.drawable.ic_shield_outline),
                     contentDescription = null,
                 )
             }
-            Spacer(Modifier.height(LocalDimensions.current.itemSpacingSmall))
+            Spacer(Modifier.height(LocalDimensions.current.smallItemSpacing))
             Text(
                 stringResource(R.string.activity_link_enter_your_recovery_password_to_load_your_account_if_you_haven_t_saved_it_you_can_find_it_in_your_app_settings),
                 style = base
             )
-            Spacer(Modifier.height(LocalDimensions.current.itemSpacingMedium))
+            Spacer(Modifier.height(LocalDimensions.current.itemSpacing))
             SessionOutlinedTextField(
                 text = state.recoveryPhrase,
                 modifier = Modifier

@@ -17,8 +17,8 @@ fun ContinueButton(modifier: Modifier, onContinue: () -> Unit) {
         modifier = modifier
             .contentDescription(R.string.AccessibilityId_continue)
             .fillMaxWidth()
-            .padding(horizontal = LocalDimensions.current.marginLarge)
-            .padding(bottom = LocalDimensions.current.marginExtraExtraSmall),
+            .padding(horizontal = LocalDimensions.current.largeMargin)
+            .padding(bottom = LocalDimensions.current.xxsMargin),
         onClick = onContinue,
     )
 }
@@ -29,8 +29,8 @@ fun OnboardingButton(text: String, modifier: Modifier, onClick: () -> Unit) {
         text,
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = LocalDimensions.current.marginLarge)
-            .padding(bottom = LocalDimensions.current.marginExtraExtraSmall),
+            .padding(horizontal = LocalDimensions.current.largeMargin)
+            .padding(bottom = LocalDimensions.current.xxsMargin),
         onClick = onClick,
     )
 }

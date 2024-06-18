@@ -387,9 +387,9 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
         Column {
             Row(
                 modifier = Modifier
-                    .padding(horizontal = LocalDimensions.current.marginSmall)
-                    .padding(top = LocalDimensions.current.marginTiny),
-                horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.itemSpacingSmall),
+                    .padding(horizontal = LocalDimensions.current.smallMargin)
+                    .padding(top = LocalDimensions.current.xxxsMargin),
+                horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallItemSpacing),
             ) {
                 OutlineButton(
                     stringResource(R.string.share),
@@ -403,7 +403,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
                 )
             }
 
-            Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacingMedium))
+            Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacing))
 
             var hasPaths by remember {
                 mutableStateOf(false)

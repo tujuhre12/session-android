@@ -32,7 +32,7 @@ internal fun EmptyView(newAccount: Boolean) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-            .padding(horizontal = LocalDimensions.current.marginHomeEmptyView)
+            .padding(horizontal = LocalDimensions.current.homeEmptyViewMargin)
     ) {
         Spacer(modifier = Modifier.weight(1f))
         Icon(
@@ -54,13 +54,13 @@ internal fun EmptyView(newAccount: Boolean) {
             )
         }
 
-        Divider(modifier = Modifier.padding(vertical = LocalDimensions.current.marginExtraSmall))
+        Divider(modifier = Modifier.padding(vertical = LocalDimensions.current.xsMargin))
 
         Text(
             stringResource(R.string.conversationsNone),
             style = h8,
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(bottom = LocalDimensions.current.itemSpacingXSmall))
+            modifier = Modifier.padding(bottom = LocalDimensions.current.xsItemSpacing))
         Text(
             stringResource(R.string.onboardingHitThePlusButton),
             style = small,

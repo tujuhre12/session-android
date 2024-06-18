@@ -66,7 +66,7 @@ fun SessionOutlinedTextField(
             shape = MaterialTheme.shapes.small
         )
         error?.let {
-            Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacingXSmall))
+            Spacer(modifier = Modifier.height(LocalDimensions.current.xsItemSpacing))
             Text(
                 it,
                 modifier = Modifier.fillMaxWidth(),

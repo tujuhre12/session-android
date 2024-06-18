@@ -95,7 +95,7 @@ fun MaybeScanQrCode(
                     style = base,
                     textAlign = TextAlign.Center
                 )
-                Spacer(modifier = Modifier.size(LocalDimensions.current.itemSpacingMedium))
+                Spacer(modifier = Modifier.size(LocalDimensions.current.itemSpacing))
                 OutlineButton(
                     stringResource(R.string.sessionSettings),
                     modifier = Modifier.align(Alignment.CenterHorizontally),
@@ -103,7 +103,7 @@ fun MaybeScanQrCode(
                 )
             }
         } else {
-            Box(modifier = Modifier.fillMaxSize().padding(LocalDimensions.current.marginLarge)) {
+            Box(modifier = Modifier.fillMaxSize().padding(LocalDimensions.current.largeMargin)) {
                 SlimOutlineButton(
                     stringResource(R.string.cameraGrantAccess),
                     modifier = Modifier
@@ -163,11 +163,11 @@ fun ScanQrCode(errors: Flow<String>, onScan: (String) -> Unit) {
         snackbarHost = {
             SnackbarHost(
                 hostState = scaffoldState.snackbarHostState,
-                modifier = Modifier.padding(LocalDimensions.current.itemSpacingSmall)
+                modifier = Modifier.padding(LocalDimensions.current.smallItemSpacing)
             ) { data ->
                 Snackbar(
                     snackbarData = data,
-                    modifier = Modifier.padding(LocalDimensions.current.itemSpacingSmall)
+                    modifier = Modifier.padding(LocalDimensions.current.smallItemSpacing)
                 )
             }
         }
@@ -181,7 +181,7 @@ fun ScanQrCode(errors: Flow<String>, onScan: (String) -> Unit) {
             Box(
                 Modifier
                     .aspectRatio(1f)
-                    .padding(LocalDimensions.current.itemSpacingMedium)
+                    .padding(LocalDimensions.current.itemSpacing)
                     .clip(shape = RoundedCornerShape(26.dp))
                     .background(Color(0x33ffffff))
                     .align(Alignment.Center)

@@ -47,11 +47,11 @@ internal fun RecoveryPasswordScreen(
     onHide:() -> Unit = {}
 ) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.marginExtraSmall),
+        verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.xsMargin),
         modifier = Modifier
             .contentDescription(R.string.AccessibilityId_recovery_password)
             .verticalScroll(rememberScrollState())
-            .padding(bottom = LocalDimensions.current.marginExtraSmall)
+            .padding(bottom = LocalDimensions.current.xsMargin)
     ) {
         RecoveryPasswordCell(seed, copySeed)
         HideRecoveryPasswordCell(onHide)
@@ -71,11 +71,11 @@ private fun RecoveryPasswordCell(seed: String, copySeed:() -> Unit = {}) {
                     stringResource(R.string.sessionRecoveryPassword),
                     style = h8
                 )
-                Spacer(Modifier.width(LocalDimensions.current.itemSpacingXXSmall))
+                Spacer(Modifier.width(LocalDimensions.current.xxsItemSpacing))
                 SessionShieldIcon()
             }
 
-            Spacer(modifier = Modifier.height(LocalDimensions.current.marginTiny))
+            Spacer(modifier = Modifier.height(LocalDimensions.current.xxxsMargin))
 
             Text(
                 stringResource(R.string.recoveryPasswordDescription),
@@ -93,7 +93,7 @@ private fun RecoveryPasswordCell(seed: String, copySeed:() -> Unit = {}) {
                 QrImage(
                     seed,
                     modifier = Modifier
-                        .padding(vertical = LocalDimensions.current.marginSmall)
+                        .padding(vertical = LocalDimensions.current.smallMargin)
                         .contentDescription(R.string.AccessibilityId_qr_code),
                     icon = R.drawable.session_shield
                 )
@@ -101,7 +101,7 @@ private fun RecoveryPasswordCell(seed: String, copySeed:() -> Unit = {}) {
 
             AnimatedVisibility(!showQr) {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.itemSpacingSmall),
+                    horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallItemSpacing),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     SlimOutlineCopyButton(
@@ -131,9 +131,9 @@ private fun RecoveryPassword(seed: String) {
         seed,
         modifier = Modifier
             .contentDescription(R.string.AccessibilityId_recovery_password_container)
-            .padding(vertical = LocalDimensions.current.marginSmall)
+            .padding(vertical = LocalDimensions.current.smallMargin)
             .border()
-            .padding(LocalDimensions.current.marginSmall),
+            .padding(LocalDimensions.current.smallMargin),
         textAlign = TextAlign.Center,
         style = extraSmallMonospace,
         color = LocalColors.current.run { if (isLight) text else primary },
@@ -156,7 +156,7 @@ private fun HideRecoveryPasswordCell(onHide: () -> Unit = {}) {
                     style = base
                 )
             }
-            Spacer(modifier = Modifier.width(LocalDimensions.current.marginExtraExtraSmall))
+            Spacer(modifier = Modifier.width(LocalDimensions.current.xxsMargin))
             SlimOutlineButton(
                 text = stringResource(R.string.hide),
                 modifier = Modifier

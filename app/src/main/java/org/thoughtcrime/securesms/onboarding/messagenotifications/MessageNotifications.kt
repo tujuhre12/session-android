@@ -46,11 +46,11 @@ internal fun MessageNotificationsScreen(
     Column {
         Spacer(Modifier.weight(1f))
 
-        Column(modifier = Modifier.padding(horizontal = LocalDimensions.current.marginOnboarding)) {
+        Column(modifier = Modifier.padding(horizontal = LocalDimensions.current.onboardingMargin)) {
             Text(stringResource(R.string.notificationsMessage), style = h4)
-            Spacer(Modifier.height(LocalDimensions.current.marginExtraSmall))
+            Spacer(Modifier.height(LocalDimensions.current.xsMargin))
             Text(stringResource(R.string.onboardingMessageNotificationExplaination), style = base)
-            Spacer(Modifier.height(LocalDimensions.current.itemSpacingMedium))
+            Spacer(Modifier.height(LocalDimensions.current.itemSpacing))
             NotificationRadioButton(
                 R.string.activity_pn_mode_fast_mode,
                 R.string.activity_pn_mode_fast_mode_explanation,
@@ -59,7 +59,7 @@ internal fun MessageNotificationsScreen(
                 selected = state.pushEnabled,
                 onClick = { setEnabled(true) }
             )
-            Spacer(Modifier.height(LocalDimensions.current.itemSpacingXSmall))
+            Spacer(Modifier.height(LocalDimensions.current.xsItemSpacing))
             NotificationRadioButton(
                 R.string.activity_pn_mode_slow_mode,
                 R.string.activity_pn_mode_slow_mode_explanation,
@@ -99,7 +99,7 @@ private fun NotificationRadioButton(
             shape = RoundedCornerShape(8.dp)
         ) {
             Column(
-                verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.itemSpacingXXSmall)
+                verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxsItemSpacing)
             ) {
                 Text(stringResource(title), style = h8)
                 Text(stringResource(explanation), style = small)

@@ -44,8 +44,8 @@ internal fun SeedReminder(startRecoveryPasswordActivity: () -> Unit) {
             Modifier
                 .background(LocalColors.current.backgroundSecondary)
                 .padding(
-                    horizontal = LocalDimensions.current.marginSmall,
-                    vertical = LocalDimensions.current.marginExtraSmall
+                    horizontal = LocalDimensions.current.smallMargin,
+                    vertical = LocalDimensions.current.xsMargin
                 )
         ) {
             Column(Modifier.weight(1f)) {
@@ -54,7 +54,7 @@ internal fun SeedReminder(startRecoveryPasswordActivity: () -> Unit) {
                         stringResource(R.string.save_your_recovery_password),
                         style = h8
                     )
-                    Spacer(Modifier.requiredWidth(LocalDimensions.current.itemSpacingXXSmall))
+                    Spacer(Modifier.requiredWidth(LocalDimensions.current.xxsItemSpacing))
                     SessionShieldIcon()
                 }
                 Text(
@@ -62,7 +62,7 @@ internal fun SeedReminder(startRecoveryPasswordActivity: () -> Unit) {
                     style = small
                 )
             }
-            Spacer(Modifier.width(LocalDimensions.current.marginExtraExtraSmall))
+            Spacer(Modifier.width(LocalDimensions.current.xxsMargin))
             SlimOutlineButton(
                 text = stringResource(R.string.continue_2),
                 modifier = Modifier
