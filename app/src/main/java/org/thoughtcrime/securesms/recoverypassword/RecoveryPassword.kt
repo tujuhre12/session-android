@@ -104,7 +104,7 @@ private fun RecoveryPasswordCell(seed: String, copySeed:() -> Unit = {}) {
 
             AnimatedVisibility(!showQr) {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.marginMedium),
+                    horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.itemSpacingSmall),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     SlimOutlineCopyButton(
@@ -136,7 +136,7 @@ private fun RecoveryPassword(seed: String) {
             .contentDescription(R.string.AccessibilityId_recovery_password_container)
             .padding(vertical = LocalDimensions.current.marginSmall)
             .border(
-                width = 1.dp,
+                width = LocalDimensions.current.borderStroke,
                 color = LocalColors.current.borders,
                 shape = MaterialTheme.shapes.small
             )

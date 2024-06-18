@@ -44,7 +44,11 @@ fun AlertDialog(
                     onClick = onDismissRequest,
                     modifier = Modifier.align(Alignment.TopEnd)
                 ) {
-                    Icon(painter = painterResource(id = R.drawable.ic_dialog_x), tint = LocalColors.current.text, contentDescription = "back")
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_dialog_x),
+                        tint = LocalColors.current.text,
+                        contentDescription = "back"
+                    )
                 }
 
                 Column(modifier = Modifier.fillMaxWidth()) {
@@ -52,14 +56,24 @@ fun AlertDialog(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 24.dp)
-                            .padding(horizontal = 24.dp)
+                            .padding(top = LocalDimensions.current.itemSpacingSmall)
+                            .padding(horizontal = LocalDimensions.current.itemSpacingSmall)
                     ) {
                         title?.let {
-                            Text(it, textAlign = TextAlign.Center, style = h7, modifier = Modifier.padding(bottom = 8.dp))
+                            Text(
+                                it,
+                                textAlign = TextAlign.Center,
+                                style = h7,
+                                modifier = Modifier.padding(bottom = LocalDimensions.current.itemSpacingXXSmall)
+                            )
                         }
                         text?.let {
-                            Text(it, textAlign = TextAlign.Center, style = large, modifier = Modifier.padding(bottom = 8.dp))
+                            Text(
+                                it,
+                                textAlign = TextAlign.Center,
+                                style = large,
+                                modifier = Modifier.padding(bottom = LocalDimensions.current.itemSpacingXXSmall)
+                            )
                         }
                     }
                     buttons?.takeIf { it.isNotEmpty() }?.let {
@@ -95,8 +109,8 @@ fun DialogButton(text: String, modifier: Modifier, onClick: () -> Unit) {
             color = LocalColors.current.text,
             style = largeBold,
             modifier = Modifier.padding(
-                top = 16.dp,
-                bottom = 24.dp
+                top = LocalDimensions.current.itemSpacingSmall,
+                bottom = LocalDimensions.current.itemSpacingMedium
             )
         )
     }

@@ -37,7 +37,7 @@ internal fun SeedReminder(startRecoveryPasswordActivity: () -> Unit) {
         Box(
             Modifier
                 .fillMaxWidth()
-                .height(4.dp)
+                .height(LocalDimensions.current.indicatorHeight)
                 .background(LocalColors.current.primary)
         )
         Row(

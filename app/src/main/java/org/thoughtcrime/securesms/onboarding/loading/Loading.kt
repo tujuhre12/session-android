@@ -4,6 +4,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.TweenSpec
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -12,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import network.loki.messenger.R
+import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.ProgressArc
 import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.contentDescription
@@ -39,6 +41,7 @@ internal fun LoadingScreen(state: State) {
             stringResource(R.string.waitOneMoment),
             style = h7
         )
+        Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacingTiny))
         Text(
             stringResource(R.string.loadAccountProgressMessage),
             style = base
