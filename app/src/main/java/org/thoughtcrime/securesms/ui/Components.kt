@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -25,7 +24,6 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ButtonColors
 import androidx.compose.material.Card
 import androidx.compose.material.CircularProgressIndicator
@@ -177,7 +175,7 @@ fun ItemButton(
     TextButton(
         modifier = modifier
             .fillMaxWidth()
-            .height(60.dp),
+            .heightIn(min = 60.dp),
         colors = colors,
         onClick = onClick,
         shape = RectangleShape,
@@ -185,18 +183,24 @@ fun ItemButton(
         Box(
             modifier = Modifier
                 .width(80.dp)
-                .fillMaxHeight()
+                .height(60.dp)
+                .align(Alignment.CenterVertically)
         ) {
             icon()
         }
-        Text(text, modifier = Modifier.fillMaxWidth(), style = xl)
+        Text(
+            text,
+            Modifier.fillMaxWidth()
+                .align(Alignment.CenterVertically),
+            style = xl
+        )
     }
 }
 
 @Composable
 fun Cell(
     padding: Dp = 0.dp,
-    margin: Dp = 32.dp,
+    margin: Dp = LocalDimensions.current.margin,
     content: @Composable () -> Unit
 ) {
     CellWithPaddingAndMargin(padding, margin) { content() }
@@ -208,8 +212,8 @@ fun CellNoMargin(content: @Composable () -> Unit) {
 
 @Composable
 fun CellWithPaddingAndMargin(
-    padding: Dp = 24.dp,
-    margin: Dp = 32.dp,
+    padding: Dp = LocalDimensions.current.smallMargin,
+    margin: Dp = LocalDimensions.current.margin,
     content: @Composable () -> Unit
 ) {
     Card(
@@ -229,11 +233,11 @@ fun CellWithPaddingAndMargin(
 fun <T> TitledRadioButton(option: RadioOption<T>, onClick: () -> Unit) {
     val color = if (option.enabled) LocalColors.current.text else LocalColors.current.disabled
     Row(
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallItemSpacing),
         modifier = Modifier
             .runIf(option.enabled) { clickable { if (!option.selected) onClick() } }
             .heightIn(min = 60.dp)
-            .padding(horizontal = 32.dp)
+            .padding(horizontal = LocalDimensions.current.margin)
             .contentDescription(option.contentDescription)
     ) {
         Column(modifier = Modifier
