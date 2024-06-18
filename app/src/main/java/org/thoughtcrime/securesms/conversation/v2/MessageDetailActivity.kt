@@ -64,6 +64,7 @@ import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.HorizontalPagerIndicator
 import org.thoughtcrime.securesms.ui.ItemButton
+import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.color.LocalColors
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.color.Colors
@@ -338,7 +339,7 @@ fun FileDetails(fileDetails: List<TitledText>) {
 
     CellWithPaddingAndMargin(padding = 0.dp) {
         FlowRow(
-            modifier = Modifier.padding(vertical = 24.dp, horizontal = 12.dp),
+            modifier = Modifier.padding(vertical = 24.dp, horizontal = LocalDimensions.current.itemSpacingXSmall),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             fileDetails.forEach {
@@ -347,7 +348,7 @@ fun FileDetails(fileDetails: List<TitledText>) {
                         it,
                         modifier = Modifier
                             .widthIn(min = maxWidth.div(2))
-                            .padding(horizontal = 12.dp)
+                            .padding(horizontal = LocalDimensions.current.itemSpacingXSmall)
                             .width(IntrinsicSize.Max)
                     )
                 }

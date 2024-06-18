@@ -14,6 +14,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
+import androidx.compose.ui.unit.dp
 import org.session.libsession.utilities.AppTextSecurePreferences
 import org.thoughtcrime.securesms.ui.color.ClassicDark
 import org.thoughtcrime.securesms.ui.color.ClassicLight
@@ -80,7 +81,9 @@ private fun Colors.toMaterialColors() = androidx.compose.material.Colors(
 @Composable private fun Context.colors() = AppTextSecurePreferences(this).colors()
 
 val sessionShapes = Shapes(
-    small = RoundedCornerShape(50)
+    small = RoundedCornerShape(12.dp),
+    medium = RoundedCornerShape(16.dp),
+    large = RoundedCornerShape(50.dp)
 )
 
 /**

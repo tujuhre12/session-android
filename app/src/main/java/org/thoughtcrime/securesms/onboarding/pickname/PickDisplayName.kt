@@ -4,7 +4,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -33,18 +35,18 @@ private fun PreviewDisplayName() {
 internal fun DisplayName(state: State, onChange: (String) -> Unit = {}, onContinue: () -> Unit = {}) {
     Column {
         Column(
-            verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.itemSpacingOnboarding),
             modifier = Modifier
                 .padding(horizontal = LocalDimensions.current.marginOnboarding)
                 .weight(1f)
         ) {
             Spacer(modifier = Modifier.weight(1f))
             Text(stringResource(state.title), style = h4)
+            Spacer(Modifier.height(LocalDimensions.current.itemSpacingSmall))
             Text(
                 stringResource(state.description),
                 style = base,
-                modifier = Modifier.padding(bottom = 12.dp))
-
+                modifier = Modifier.padding(bottom = LocalDimensions.current.itemSpacingXSmall))
+            Spacer(Modifier.height(LocalDimensions.current.itemSpacingMedium))
             SessionOutlinedTextField(
                 text = state.displayName,
                 modifier = Modifier

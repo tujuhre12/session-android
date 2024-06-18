@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -83,7 +84,7 @@ private fun RecoveryPasswordCell(seed: String, copySeed:() -> Unit = {}) {
                     stringResource(R.string.sessionRecoveryPassword),
                     style = h8
                 )
-                Spacer(Modifier.width(LocalDimensions.current.itemSpacingExtraSmall))
+                Spacer(Modifier.width(LocalDimensions.current.itemSpacingXXSmall))
                 SessionShieldIcon()
             }
 
@@ -147,7 +148,7 @@ private fun RecoveryPassword(seed: String) {
             .border(
                 width = 1.dp,
                 color = LocalColors.current.borders,
-                shape = RoundedCornerShape(11.dp)
+                shape = MaterialTheme.shapes.small
             )
             .padding(LocalDimensions.current.marginSmall),
         textAlign = TextAlign.Center,

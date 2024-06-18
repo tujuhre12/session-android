@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.RadioButton
@@ -49,7 +50,7 @@ internal fun MessageNotificationsScreen(
             Text(stringResource(R.string.notificationsMessage), style = h4)
             Spacer(Modifier.height(LocalDimensions.current.marginExtraSmall))
             Text(stringResource(R.string.onboardingMessageNotificationExplaination), style = base)
-            Spacer(Modifier.height(LocalDimensions.current.marginExtraSmall))
+            Spacer(Modifier.height(LocalDimensions.current.itemSpacingMedium))
             NotificationRadioButton(
                 R.string.activity_pn_mode_fast_mode,
                 R.string.activity_pn_mode_fast_mode_explanation,
@@ -58,7 +59,7 @@ internal fun MessageNotificationsScreen(
                 selected = state.pushEnabled,
                 onClick = { setEnabled(true) }
             )
-            Spacer(Modifier.height(LocalDimensions.current.marginExtraSmall))
+            Spacer(Modifier.height(LocalDimensions.current.itemSpacingXSmall))
             NotificationRadioButton(
                 R.string.activity_pn_mode_slow_mode,
                 R.string.activity_pn_mode_slow_mode_explanation,

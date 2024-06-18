@@ -12,6 +12,7 @@ import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material.Icon
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -26,6 +27,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.baseBold
 import org.thoughtcrime.securesms.ui.color.LocalColors
@@ -61,7 +63,7 @@ fun SessionOutlinedTextField(
                 onSend = { onContinue() },
             ),
             isError = error != null,
-            shape = RoundedCornerShape(12.dp)
+            shape = MaterialTheme.shapes.small
         )
         error?.let {
             Spacer(modifier = Modifier.height(14.dp))

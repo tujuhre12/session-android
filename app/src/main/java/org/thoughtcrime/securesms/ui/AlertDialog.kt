@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
@@ -35,7 +36,7 @@ fun AlertDialog(
 ) {
     androidx.compose.material.AlertDialog(
         onDismissRequest,
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.small,
         backgroundColor = LocalColors.current.backgroundSecondary,
         buttons = {
             Box {

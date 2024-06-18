@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -85,12 +86,12 @@ private fun RecoveryPassword(state: State, onChange: (String) -> Unit = {}, onCo
                     contentDescription = null,
                 )
             }
-            Spacer(Modifier.size(28.dp))
+            Spacer(Modifier.height(LocalDimensions.current.itemSpacingSmall))
             Text(
                 stringResource(R.string.activity_link_enter_your_recovery_password_to_load_your_account_if_you_haven_t_saved_it_you_can_find_it_in_your_app_settings),
                 style = base
             )
-            Spacer(Modifier.size(24.dp))
+            Spacer(Modifier.height(LocalDimensions.current.itemSpacingMedium))
             SessionOutlinedTextField(
                 text = state.recoveryPhrase,
                 modifier = Modifier
