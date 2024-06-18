@@ -9,7 +9,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
@@ -31,8 +33,8 @@ internal class NewMessageViewModel @Inject constructor(
     private val _state = MutableStateFlow(State())
     val state = _state.asStateFlow()
 
-    private val _success = Channel<Success>()
-    val success: Flow<Success> get() = _success.receiveAsFlow()
+    private val _success = MutableSharedFlow<Success>()
+    val success: Flow<Success> get() = _success.asSharedFlow()
 
     private val _qrErrors = Channel<String>()
     val qrErrors: Flow<String> = _qrErrors.receiveAsFlow()
@@ -91,7 +93,7 @@ internal class NewMessageViewModel @Inject constructor(
 
     private fun onPublicKey(publicKey: String) {
         _state.update { it.copy(loading = false) }
-        viewModelScope.launch { _success.send(Success(publicKey)) }
+        viewModelScope.launch { _success.emit(Success(publicKey)) }
     }
 
     private fun onUnvalidatedPublicKey(publicKey: String) {
