@@ -18,7 +18,8 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class LandingActivity: BaseActionBarActivity() {
 
-    @Inject lateinit var prefs: TextSecurePreferences
+    @Inject
+    internal lateinit var prefs: TextSecurePreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

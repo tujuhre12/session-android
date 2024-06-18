@@ -20,8 +20,10 @@ import javax.inject.Inject
 @androidx.annotation.OptIn(ExperimentalGetImage::class)
 class LoadAccountActivity : BaseActionBarActivity() {
 
-    @Inject lateinit var prefs: TextSecurePreferences
-    @Inject lateinit var loadingManager: LoadingManager
+    @Inject
+    internal lateinit var prefs: TextSecurePreferences
+    @Inject
+    internal lateinit var loadingManager: LoadingManager
 
     private val viewModel: LinkDeviceViewModel by viewModels()
 
@@ -34,7 +36,7 @@ class LoadAccountActivity : BaseActionBarActivity() {
         prefs.setLastProfileUpdateTime(0)
 
         lifecycleScope.launch {
-            viewModel.eventFlow.collect {
+            viewModel.events.collect {
                 loadingManager.load(it.mnemonic)
                 startMessageNotificationsActivity()
                 finish()
@@ -43,7 +45,7 @@ class LoadAccountActivity : BaseActionBarActivity() {
 
         setComposeContent {
             val state by viewModel.stateFlow.collectAsState()
-            LoadAccountScreen(state, viewModel.qrErrorsFlow, viewModel::onChange, viewModel::onContinue, viewModel::onScanQrCode)
+            LoadAccountScreen(state, viewModel.qrErrors, viewModel::onChange, viewModel::onContinue, viewModel::onScanQrCode)
         }
     }
 }

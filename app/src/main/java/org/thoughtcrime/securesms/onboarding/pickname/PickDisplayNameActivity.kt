@@ -23,8 +23,10 @@ private const val EXTRA_LOAD_FAILED = "extra_load_failed"
 @AndroidEntryPoint
 class PickDisplayNameActivity : BaseActionBarActivity() {
 
-    @Inject lateinit var viewModelFactory: PickDisplayNameViewModel.AssistedFactory
-    @Inject lateinit var prefs: TextSecurePreferences
+    @Inject
+    internal lateinit var viewModelFactory: PickDisplayNameViewModel.AssistedFactory
+    @Inject
+    internal lateinit var prefs: TextSecurePreferences
 
     private val loadFailed get() = intent.getBooleanExtra(EXTRA_LOAD_FAILED, false)
 
@@ -41,7 +43,7 @@ class PickDisplayNameActivity : BaseActionBarActivity() {
         if (!loadFailed) prefs.setHasViewedSeed(false)
 
         lifecycleScope.launch {
-            viewModel.eventFlow.collect {
+            viewModel.events.collect {
                 if (loadFailed) startHomeActivity() else startMessageNotificationsActivity()
             }
         }
@@ -49,7 +51,7 @@ class PickDisplayNameActivity : BaseActionBarActivity() {
 
     @Composable
     private fun DisplayNameScreen(viewModel: PickDisplayNameViewModel) {
-        val state = viewModel.stateFlow.collectAsState()
+        val state = viewModel.states.collectAsState()
         DisplayName(state.value, viewModel::onChange) { viewModel.onContinue(this) }
     }
 }

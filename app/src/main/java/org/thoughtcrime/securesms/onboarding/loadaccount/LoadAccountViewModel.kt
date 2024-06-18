@@ -4,12 +4,11 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.mapNotNull
-import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
@@ -20,7 +19,7 @@ import org.session.libsignal.utilities.Hex
 import org.thoughtcrime.securesms.crypto.MnemonicUtilities
 import javax.inject.Inject
 
-class LinkDeviceEvent(val mnemonic: ByteArray)
+class LoadAccountEvent(val mnemonic: ByteArray)
 
 internal data class State(
     val recoveryPhrase: String = "",
@@ -34,12 +33,11 @@ internal class LinkDeviceViewModel @Inject constructor(
     private val state = MutableStateFlow(State())
     val stateFlow = state.asStateFlow()
 
-    private val event = Channel<LinkDeviceEvent>()
-    val eventFlow = event.receiveAsFlow().take(1)
+    private val _events = MutableSharedFlow<LoadAccountEvent>()
+    val events = _events.asSharedFlow()
 
-    private val qrErrors = Channel<Throwable>()
-
-    val qrErrorsFlow = qrErrors.receiveAsFlow()
+    private val _qrErrors = MutableSharedFlow<Throwable>()
+    val qrErrors = _qrErrors.asSharedFlow()
         .mapNotNull { application.getString(R.string.qrNotRecoveryPassword) }
 
     private val codec by lazy { MnemonicCodec { MnemonicUtilities.loadFileContents(getApplication(), it) } }
@@ -64,7 +62,7 @@ internal class LinkDeviceViewModel @Inject constructor(
         state.value = State(recoveryPhrase)
     }
     private fun onSuccess(seed: ByteArray) {
-        viewModelScope.launch { event.send(LinkDeviceEvent(seed)) }
+        viewModelScope.launch { _events.emit(LoadAccountEvent(seed)) }
     }
 
     private fun onFailure(error: Throwable) {
@@ -80,7 +78,7 @@ internal class LinkDeviceViewModel @Inject constructor(
     }
 
     private fun onQrCodeScanFailure(error: Throwable) {
-        viewModelScope.launch { qrErrors.send(error) }
+        viewModelScope.launch { _qrErrors.emit(error) }
     }
 
     private fun runDecodeCatching(mnemonic: String) = runCatching {

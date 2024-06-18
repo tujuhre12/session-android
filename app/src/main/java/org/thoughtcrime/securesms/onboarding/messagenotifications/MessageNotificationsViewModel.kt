@@ -8,12 +8,12 @@ import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
 @HiltViewModel
-class MessageNotificationsViewModel @Inject constructor(): ViewModel() {
-    private val state = MutableStateFlow(MessageNotificationsState())
-    val stateFlow = state.asStateFlow()
+internal class MessageNotificationsViewModel @Inject constructor(): ViewModel() {
+    private val _states = MutableStateFlow(MessageNotificationsState())
+    val states = _states.asStateFlow()
 
     fun setEnabled(enabled: Boolean) {
-        state.update { MessageNotificationsState(pushEnabled = enabled) }
+        _states.update { MessageNotificationsState(pushEnabled = enabled) }
     }
 }
 

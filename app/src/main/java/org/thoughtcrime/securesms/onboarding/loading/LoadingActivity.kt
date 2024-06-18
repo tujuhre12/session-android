@@ -22,10 +22,10 @@ import javax.inject.Inject
 class LoadingActivity: BaseActionBarActivity() {
 
     @Inject
-    lateinit var configFactory: ConfigFactory
+    internal lateinit var configFactory: ConfigFactory
 
     @Inject
-    lateinit var prefs: TextSecurePreferences
+    internal lateinit var prefs: TextSecurePreferences
 
     private val viewModel: LoadingViewModel by viewModels()
 
@@ -52,14 +52,14 @@ class LoadingActivity: BaseActionBarActivity() {
         ApplicationContext.getInstance(this).newAccount = false
 
         setComposeContent {
-            val state by viewModel.stateFlow.collectAsState()
+            val state by viewModel.states.collectAsState()
             LoadingScreen(state)
         }
 
         setUpActionBarSessionLogo(true)
 
         lifecycleScope.launch {
-            viewModel.eventFlow.collect {
+            viewModel.events.collect {
                 when (it) {
                     Event.TIMEOUT -> register(loadFailed = true)
                     Event.SUCCESS -> register(loadFailed = false)

@@ -17,12 +17,10 @@ import javax.inject.Singleton
 
 @Singleton
 class LoadingManager @Inject constructor(
-    @dagger.hilt.android.qualifiers.ApplicationContext val context: Context,
-    val configFactory: ConfigFactory,
-    val prefs: TextSecurePreferences
+    @dagger.hilt.android.qualifiers.ApplicationContext private val context: Context,
+    private val configFactory: ConfigFactory,
+    private val prefs: TextSecurePreferences
 ) {
-    val isLoading: Boolean get() = restoreJob?.isActive == true
-
     private val database: LokiAPIDatabaseProtocol
         get() = SnodeModule.shared.storage
 

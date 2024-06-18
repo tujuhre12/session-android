@@ -5,14 +5,14 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.timeout
 import kotlinx.coroutines.launch
 import org.session.libsession.utilities.TextSecurePreferences
@@ -29,15 +29,15 @@ private val TIMEOUT_TIME = 15.seconds
 
 @OptIn(FlowPreview::class)
 @HiltViewModel
-class LoadingViewModel @Inject constructor(
+internal class LoadingViewModel @Inject constructor(
     val prefs: TextSecurePreferences
 ): ViewModel() {
 
-    private val state = MutableStateFlow(State(TIMEOUT_TIME))
-    val stateFlow = state.asStateFlow()
+    private val _states = MutableStateFlow(State(TIMEOUT_TIME))
+    val states = _states.asStateFlow()
 
-    private val event = Channel<Event>()
-    val eventFlow = event.receiveAsFlow()
+    private val _events = MutableSharedFlow<Event>()
+    val events = _events.asSharedFlow()
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
@@ -56,13 +56,13 @@ class LoadingViewModel @Inject constructor(
     }
 
     private suspend fun onSuccess() {
-        state.value = State(ANIMATE_TO_DONE_TIME)
+        _states.value = State(ANIMATE_TO_DONE_TIME)
         delay(IDLE_DONE_TIME)
-        event.send(Event.SUCCESS)
+        _events.emit(Event.SUCCESS)
     }
 
     private fun onFail() {
-        event.trySend(Event.TIMEOUT)
+        _events.tryEmit(Event.TIMEOUT)
     }
 }
 

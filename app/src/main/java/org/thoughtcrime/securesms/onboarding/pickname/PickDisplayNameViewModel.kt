@@ -7,10 +7,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
@@ -23,28 +23,28 @@ import org.session.libsignal.utilities.hexEncodedPublicKey
 import org.thoughtcrime.securesms.crypto.KeyPairUtilities
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 
-class PickDisplayNameViewModel(
+internal class PickDisplayNameViewModel(
     pickNewName: Boolean,
     private val prefs: TextSecurePreferences,
     private val configFactory: ConfigFactory
 ): ViewModel() {
-    private val state = MutableStateFlow(if (pickNewName) pickNewNameState() else State())
-    val stateFlow = state.asStateFlow()
+    private val _states = MutableStateFlow(if (pickNewName) pickNewNameState() else State())
+    val states = _states.asStateFlow()
 
-    private val event = Channel<Event>()
-    val eventFlow = event.receiveAsFlow()
+    private val _events = MutableSharedFlow<Event>()
+    val events = _events.asSharedFlow()
 
     private val database: LokiAPIDatabaseProtocol
         get() = SnodeModule.shared.storage
 
     fun onContinue(context: Context) {
-        state.update { it.copy(displayName = it.displayName.trim()) }
+        _states.update { it.copy(displayName = it.displayName.trim()) }
 
-        val displayName = state.value.displayName
+        val displayName = _states.value.displayName
 
         when {
-            displayName.isEmpty() -> { state.update { it.copy(error = R.string.displayNameErrorDescription) } }
-            displayName.length > NAME_PADDED_LENGTH -> { state.update { it.copy(error = R.string.displayNameErrorDescriptionShorter) } }
+            displayName.isEmpty() -> { _states.update { it.copy(error = R.string.displayNameErrorDescription) } }
+            displayName.length > NAME_PADDED_LENGTH -> { _states.update { it.copy(error = R.string.displayNameErrorDescriptionShorter) } }
             else -> {
                 prefs.setProfileName(displayName)
 
@@ -66,13 +66,13 @@ class PickDisplayNameViewModel(
                 prefs.setLocalNumber(userHexEncodedPublicKey)
                 prefs.setRestorationTime(0)
 
-                viewModelScope.launch { event.send(Event.DONE) }
+                viewModelScope.launch { _events.emit(Event.DONE) }
             }
         }
     }
 
     fun onChange(value: String) {
-        state.update { state ->
+        _states.update { state ->
             state.copy(
                 displayName = value,
                 error = value.takeIf { it.length > NAME_PADDED_LENGTH }?.let { R.string.displayNameErrorDescriptionShorter }

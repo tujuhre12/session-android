@@ -39,12 +39,12 @@ class MessageNotificationsActivity : BaseActionBarActivity() {
 
     @Composable
     private fun MessageNotificationsScreen() {
-        val state by viewModel.stateFlow.collectAsState()
+        val state by viewModel.states.collectAsState()
         MessageNotificationsScreen(state, viewModel::setEnabled, ::register)
     }
 
     private fun register() {
-        prefs.setPushEnabled(viewModel.stateFlow.value.pushEnabled)
+        prefs.setPushEnabled(viewModel.states.value.pushEnabled)
         ApplicationContext.getInstance(this).startPollingIfNeeded()
         pushRegistry.refresh(true)
 
