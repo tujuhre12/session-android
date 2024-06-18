@@ -9,6 +9,7 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.buffer
@@ -41,7 +42,7 @@ class GlobalSearchViewModel @Inject constructor(
 
     val result: StateFlow<GlobalSearchResult> = _result
 
-    private val refreshes = Channel<Unit>()
+    private val refreshes = MutableSharedFlow<Unit>()
 
     private val _queryText: MutableStateFlow<CharSequence> = MutableStateFlow("")
 
@@ -50,7 +51,7 @@ class GlobalSearchViewModel @Inject constructor(
     }
 
     fun refresh() {
-        executor.launch { refreshes.send(Unit) }
+        refreshes.tryEmit(Unit)
     }
 
     init {
@@ -86,4 +87,4 @@ class GlobalSearchViewModel @Inject constructor(
  * Re-emit whenever refreshes emits.
  * */
 @OptIn(ExperimentalCoroutinesApi::class)
-private fun <T> Flow<T>.reEmit(refreshes: Channel<Unit>) = flatMapLatest { query -> merge(flowOf(query), refreshes.consumeAsFlow().map { query }) }
+private fun <T> Flow<T>.reEmit(refreshes: Flow<Unit>) = flatMapLatest { query -> merge(flowOf(query), refreshes.map { query }) }
