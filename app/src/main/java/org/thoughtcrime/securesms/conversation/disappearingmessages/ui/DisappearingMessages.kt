@@ -18,10 +18,11 @@ import androidx.compose.ui.unit.dp
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.thoughtcrime.securesms.ui.Callbacks
-import org.thoughtcrime.securesms.ui.color.LocalColors
+import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.NoOpCallbacks
 import org.thoughtcrime.securesms.ui.OptionsCard
 import org.thoughtcrime.securesms.ui.RadioOption
+import org.thoughtcrime.securesms.ui.color.LocalColors
 import org.thoughtcrime.securesms.ui.components.SlimOutlineButton
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.extraSmall
@@ -38,14 +39,14 @@ fun DisappearingMessages(
 ) {
     val scrollState = rememberScrollState()
 
-    Column(modifier = modifier.padding(horizontal = 32.dp)) {
+    Column(modifier = modifier.padding(horizontal = LocalDimensions.current.margin)) {
         Box(modifier = Modifier.weight(1f)) {
             Column(
                 modifier = Modifier
                     .padding(bottom = 20.dp)
                     .verticalScroll(scrollState)
                     .fadingEdges(scrollState),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallItemSpacing)
             ) {
                 state.cards.forEach {
                     OptionsCard(it, callbacks)
@@ -57,7 +58,8 @@ fun DisappearingMessages(
                     fontWeight = FontWeight(400),
                     color = LocalColors.current.textSecondary,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth())
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
 
