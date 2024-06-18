@@ -44,6 +44,6 @@ interface ButtonType {
             disabledContentColor = LocalColors.current.disabled,
             disabledBackgroundColor = Color.Unspecified
         )
-        override val elevation: ButtonElevation @Composable get() = ButtonDefaults.elevation()
+        override val elevation: ButtonElevation? @Composable get() = null
     }
 }
