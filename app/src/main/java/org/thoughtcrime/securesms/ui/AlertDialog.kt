@@ -2,8 +2,11 @@ package org.thoughtcrime.securesms.ui
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
@@ -75,11 +78,12 @@ fun AlertDialog(
                         }
                     }
                     buttons?.takeIf { it.isNotEmpty() }?.let {
-                        Row {
+                        Row(Modifier.height(IntrinsicSize.Min)) {
                             it.forEach {
                                 DialogButton(
                                     text = it.text(),
                                     modifier = Modifier
+                                        .fillMaxHeight()
                                         .contentDescription(it.contentDescription())
                                         .weight(1f)
                                 ) {
@@ -106,6 +110,7 @@ fun DialogButton(text: String, modifier: Modifier, onClick: () -> Unit) {
             text,
             color = LocalColors.current.text,
             style = largeBold,
+            textAlign = TextAlign.Center,
             modifier = Modifier.padding(
                 top = LocalDimensions.current.smallItemSpacing,
                 bottom = LocalDimensions.current.itemSpacing
