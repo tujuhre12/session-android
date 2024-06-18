@@ -151,12 +151,12 @@ fun MessageDetails(
     Column(
         modifier = Modifier
             .verticalScroll(rememberScrollState())
-            .padding(vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(vertical = LocalDimensions.current.smallItemSpacing),
+        verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallItemSpacing)
     ) {
         state.record?.let { message ->
             AndroidView(
-                modifier = Modifier.padding(horizontal = 32.dp),
+                modifier = Modifier.padding(horizontal = LocalDimensions.current.margin),
                 factory = {
                     ViewVisibleMessageContentBinding.inflate(LayoutInflater.from(it)).mainContainerConstraint.apply {
                         bind(
@@ -192,7 +192,7 @@ fun CellMetadata(
     state.apply {
         if (listOfNotNull(sent, received, error, senderInfo).isEmpty()) return
         CellWithPaddingAndMargin {
-            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallItemSpacing)) {
                 TitledText(sent)
                 TitledText(received)
                 TitledErrorText(error)
@@ -250,7 +250,7 @@ fun Carousel(attachments: List<Attachment>, onClick: (Int) -> Unit) {
 
     val pagerState = rememberPagerState { attachments.size }
 
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallItemSpacing)) {
         Row {
             CarouselPrevButton(pagerState)
             Box(modifier = Modifier.weight(1f)) {
@@ -259,7 +259,7 @@ fun Carousel(attachments: List<Attachment>, onClick: (Int) -> Unit) {
                 ExpandButton(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
-                        .padding(8.dp)
+                        .padding(LocalDimensions.current.xxsItemSpacing)
                 ) { onClick(pagerState.currentPage) }
             }
             CarouselNextButton(pagerState)
@@ -337,10 +337,10 @@ fun PreviewMessageDetails(
 fun FileDetails(fileDetails: List<TitledText>) {
     if (fileDetails.isEmpty()) return
 
-    CellWithPaddingAndMargin(padding = 0.dp) {
+    Cell {
         FlowRow(
-            modifier = Modifier.padding(vertical = 24.dp, horizontal = LocalDimensions.current.xsItemSpacing),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            modifier = Modifier.padding(horizontal = LocalDimensions.current.xsItemSpacing, vertical = LocalDimensions.current.itemSpacing),
+            verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallItemSpacing)
         ) {
             fileDetails.forEach {
                 BoxWithConstraints {
@@ -395,7 +395,7 @@ fun TitledText(
 
 @Composable
 fun TitledView(title: GetString, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsItemSpacing)) {
         Text(title.string(), style = baseBold)
         content()
     }
