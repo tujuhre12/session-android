@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.ui.components
 
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
@@ -122,12 +123,23 @@ fun Button(
     Button(text, onClick, color, ButtonType.Outline, modifier, enabled)
 }
 
+@Composable fun OutlineButton(modifier: Modifier = Modifier, color: Color = LocalColors.current.buttonOutline, enabled: Boolean = true, onClick: () -> Unit, content: @Composable RowScope.() -> Unit) {
+    Button(
+        onClick = onClick,
+        color = color,
+        type = ButtonType.Outline,
+        modifier = modifier,
+        enabled = enabled,
+        content = content
+    )
+}
+
 @Composable fun PrimaryOutlineButton(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit) {
     Button(text, onClick, LocalColors.current.primary, ButtonType.Outline, modifier, enabled)
 }
 
-@Composable fun SlimOutlineButton(onClick: () -> Unit, modifier: Modifier = Modifier, color: Color = LocalColors.current.text, enabled: Boolean = true, content: @Composable () -> Unit) {
-    Button(onClick, color, ButtonType.Outline, modifier, enabled, ButtonStyle.Slim) { content() }
+@Composable fun SlimOutlineButton(onClick: () -> Unit, modifier: Modifier = Modifier, color: Color = LocalColors.current.text, enabled: Boolean = true, content: @Composable RowScope.() -> Unit) {
+    Button(onClick, color, ButtonType.Outline, modifier, enabled, ButtonStyle.Slim, content = content)
 }
 
 /**
@@ -174,8 +186,8 @@ fun OutlineCopyButton(
 @Composable
 fun TemporaryClickedContent(
     interactionSource: MutableInteractionSource,
-    content: @Composable () -> Unit,
-    temporaryContent: @Composable () -> Unit,
+    content: @Composable AnimatedVisibilityScope.() -> Unit,
+    temporaryContent: @Composable AnimatedVisibilityScope.() -> Unit,
     temporaryDelay: Duration = 2.seconds
 ) {
     var clicked by remember { mutableStateOf(false) }
@@ -191,15 +203,10 @@ fun TemporaryClickedContent(
     // Using a Box because the Buttons add children in a Row
     // and they will jank as they are added and removed.
     Box(contentAlignment = Alignment.Center) {
-        AnimatedVisibility(!clicked, enter = fadeIn(), exit = fadeOut()) {
-            content()
-        }
-        AnimatedVisibility(clicked, enter = fadeIn(), exit = fadeOut()) {
-            temporaryContent()
-        }
+        AnimatedVisibility(!clicked, enter = fadeIn(), exit = fadeOut(), content = content)
+        AnimatedVisibility(clicked, enter = fadeIn(), exit = fadeOut(), content = temporaryContent)
     }
 }
-
 
 @Composable
 fun BorderlessButton(
@@ -207,7 +214,7 @@ fun BorderlessButton(
     contentColor: Color = LocalColors.current.text,
     backgroundColor: Color = Color.Transparent,
     onClick: () -> Unit,
-    content: @Composable () -> Unit
+    content: @Composable RowScope.() -> Unit
 ) {
     TextButton(
         onClick = onClick,
@@ -215,8 +222,9 @@ fun BorderlessButton(
         colors = ButtonDefaults.outlinedButtonColors(
             contentColor = contentColor,
             backgroundColor = backgroundColor
-        )
-    ) { content() }
+        ),
+        content = content
+    )
 }
 
 @Composable

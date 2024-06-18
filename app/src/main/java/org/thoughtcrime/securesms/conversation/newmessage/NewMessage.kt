@@ -29,9 +29,9 @@ import org.thoughtcrime.securesms.ui.color.LocalColors
 import org.thoughtcrime.securesms.ui.components.AppBar
 import org.thoughtcrime.securesms.ui.components.BorderlessButtonWithIcon
 import org.thoughtcrime.securesms.ui.components.MaybeScanQrCode
+import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
-import org.thoughtcrime.securesms.ui.components.SlimOutlineButton
 import org.thoughtcrime.securesms.ui.contentDescription
 
 private val TITLES = listOf(R.string.enter_account_id, R.string.qrScan)
@@ -95,7 +95,7 @@ private fun EnterAccountId(
                 .fillMaxWidth(),
         ) { onHelp() }
 
-        SlimOutlineButton(
+        OutlineButton(
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
                 .padding(horizontal = LocalDimensions.current.marginLarge)
