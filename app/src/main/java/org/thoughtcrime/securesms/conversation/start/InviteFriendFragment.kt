@@ -10,7 +10,9 @@ import androidx.compose.foundation.layout.Arrangement.Absolute.spacedBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -39,6 +41,7 @@ import org.thoughtcrime.securesms.ui.components.SlimOutlineButton
 import org.thoughtcrime.securesms.ui.components.SlimOutlineCopyButton
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.createThemedComposeView
+import org.thoughtcrime.securesms.ui.extraSmallMonospace
 import org.thoughtcrime.securesms.ui.small
 
 @AndroidEntryPoint
@@ -78,39 +81,36 @@ private fun InviteFriend(
     Column(modifier = Modifier.background(LocalColors.current.backgroundSecondary)) {
         AppBar(stringResource(R.string.invite_a_friend), onBack = onBack, onClose = onClose)
         Column(
-            modifier = Modifier.padding(horizontal = 24.dp),
-            verticalArrangement = spacedBy(10.dp)
+            modifier = Modifier.padding(horizontal = LocalDimensions.current.itemSpacingMedium),
         ) {
-            Box(
+            Text(
+                accountId,
                 modifier = Modifier
+                    .contentDescription(R.string.AccessibilityId_recovery_password_container)
+                    .fillMaxWidth()
                     .border(
-                        width = 1.dp,
-                        color = LocalColors.current.textSecondary,
+                        width = LocalDimensions.current.borderStroke,
+                        color = LocalColors.current.borders,
                         shape = MaterialTheme.shapes.small
                     )
-                    .fillMaxWidth()
-                    .wrapContentHeight()
-            ) {
-                Text(
-                    accountId,
-                    modifier = Modifier
-                        .contentDescription("Your account ID")
-                        .align(Alignment.Center)
-                        .padding(22.dp),
-                    textAlign = TextAlign.Center,
-                    style = base
-                )
-            }
+                    .padding(LocalDimensions.current.marginSmall),
+                textAlign = TextAlign.Center,
+                style = base
+            )
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacingXSmall))
 
             Text(
                 stringResource(R.string.invite_your_friend_to_chat_with_you_on_session_by_sharing_your_account_id_with_them),
                 textAlign = TextAlign.Center,
                 style = small,
                 color = LocalColors.current.textSecondary,
-                modifier = Modifier.padding(horizontal = 8.dp)
+                modifier = Modifier.padding(horizontal = LocalDimensions.current.itemSpacingSmall)
             )
 
-            Row(horizontalArrangement = spacedBy(20.dp)) {
+            Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacingSmall))
+
+            Row(horizontalArrangement = spacedBy(LocalDimensions.current.itemSpacingSmall)) {
                 SlimOutlineButton(
                     stringResource(R.string.share),
                     modifier = Modifier

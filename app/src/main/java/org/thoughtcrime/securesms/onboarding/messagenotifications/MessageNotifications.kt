@@ -99,7 +99,7 @@ private fun NotificationRadioButton(
             shape = RoundedCornerShape(8.dp)
         ) {
             Column(
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+                verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.itemSpacingXXSmall)
             ) {
                 Text(stringResource(title), style = h8)
                 Text(stringResource(explanation), style = small)

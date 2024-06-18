@@ -403,7 +403,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
                 )
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacingMedium))
 
             var hasPaths by remember {
                 mutableStateOf(false)

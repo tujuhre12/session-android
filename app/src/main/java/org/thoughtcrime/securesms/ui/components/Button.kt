@@ -60,7 +60,7 @@ fun Button(
     type: ButtonType,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    size: ButtonStyle = ButtonStyle.Large,
+    style: ButtonStyle = ButtonStyle.Large,
     elevation: ButtonElevation? = type.elevation,
     shape: Shape = MaterialTheme.shapes.large,
     border: BorderStroke? = type.border(color, enabled),
@@ -68,10 +68,10 @@ fun Button(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     content: @Composable RowScope.() -> Unit
 ) {
-    size.applyButtonConstraints {
+    style.applyButtonConstraints {
         androidx.compose.material.Button(
             onClick,
-            modifier.heightIn(min = size.minHeight),
+            modifier.heightIn(min = style.minHeight),
             enabled,
             interactionSource,
             elevation,
@@ -80,7 +80,7 @@ fun Button(
             colors
         ) {
             // Button sets LocalTextStyle, so text style is applied inside to override that.
-            size.applyTextConstraints {
+            style.applyTextConstraints {
                 content()
             }
         }
@@ -158,7 +158,7 @@ fun OutlineCopyButton(
     Button(
         modifier = modifier.contentDescription(R.string.AccessibilityId_copy_button),
         interactionSource = interactionSource,
-        size = size,
+        style = size,
         type = ButtonType.Outline,
         color = color,
         onClick = onClick

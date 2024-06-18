@@ -80,7 +80,7 @@ private fun RecoveryPassword(state: State, onChange: (String) -> Unit = {}, onCo
                     stringResource(R.string.sessionRecoveryPassword),
                     style = h4
                 )
-                Spacer(Modifier.width(6.dp))
+                Spacer(Modifier.width(LocalDimensions.current.itemSpacingXXSmall))
                 Icon(
                     painter = painterResource(id = R.drawable.ic_shield_outline),
                     contentDescription = null,

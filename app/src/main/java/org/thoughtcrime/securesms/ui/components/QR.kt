@@ -95,7 +95,7 @@ fun MaybeScanQrCode(
                     style = base,
                     textAlign = TextAlign.Center
                 )
-                Spacer(modifier = Modifier.size(20.dp))
+                Spacer(modifier = Modifier.size(LocalDimensions.current.itemSpacingMedium))
                 OutlineButton(
                     stringResource(R.string.sessionSettings),
                     modifier = Modifier.align(Alignment.CenterHorizontally),
@@ -163,11 +163,11 @@ fun ScanQrCode(errors: Flow<String>, onScan: (String) -> Unit) {
         snackbarHost = {
             SnackbarHost(
                 hostState = scaffoldState.snackbarHostState,
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier.padding(LocalDimensions.current.itemSpacingSmall)
             ) { data ->
                 Snackbar(
                     snackbarData = data,
-                    modifier = Modifier.padding(16.dp)
+                    modifier = Modifier.padding(LocalDimensions.current.itemSpacingSmall)
                 )
             }
         }
@@ -181,7 +181,7 @@ fun ScanQrCode(errors: Flow<String>, onScan: (String) -> Unit) {
             Box(
                 Modifier
                     .aspectRatio(1f)
-                    .padding(20.dp)
+                    .padding(LocalDimensions.current.itemSpacingMedium)
                     .clip(shape = RoundedCornerShape(26.dp))
                     .background(Color(0x33ffffff))
                     .align(Alignment.Center)

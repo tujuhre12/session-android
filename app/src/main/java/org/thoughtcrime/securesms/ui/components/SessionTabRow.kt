@@ -19,6 +19,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
+import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.color.LocalColors
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.color.Colors
@@ -39,7 +40,7 @@ fun SessionTabRow(pagerState: PagerState, titles: List<Int>) {
                 TabRowDefaults.Indicator(
                     Modifier.tabIndicatorOffset(tabPositions[pagerState.currentPage]),
                     color = LocalColors.current.primary,
-                    height = 5.dp
+                    height = LocalDimensions.current.indicatorHeight
                 )
             },
             divider = { TabRowDefaults.Divider(color = LocalColors.current.divider) },
