@@ -42,16 +42,6 @@ import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.extraSmallMonospace
 import org.thoughtcrime.securesms.ui.h8
 
-@Preview
-@Composable
-private fun PreviewRecoveryPasswordScreen(
-    @PreviewParameter(SessionColorsParameterProvider::class) colors: Colors
-) {
-    PreviewTheme(colors) {
-        RecoveryPasswordScreen(seed = "Voyage  urban  toyed  maverick peculiar tuxedo penguin tree grass building listen speak withdraw terminal plane")
-    }
-}
-
 @Composable
 internal fun RecoveryPasswordScreen(
     seed: String = "",
@@ -183,5 +173,15 @@ private fun HideRecoveryPasswordCell(onHide: () -> Unit = {}) {
                 onClick = onHide
             )
         }
+    }
+}
+
+@Preview
+@Composable
+private fun PreviewRecoveryPasswordScreen(
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: Colors
+) {
+    PreviewTheme(colors) {
+        RecoveryPasswordScreen(seed = "Voyage  urban  toyed  maverick peculiar tuxedo penguin tree grass building listen speak withdraw terminal plane")
     }
 }
