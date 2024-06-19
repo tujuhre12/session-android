@@ -12,9 +12,11 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.timeout
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.session.libsession.utilities.TextSecurePreferences
 import javax.inject.Inject
 import kotlin.time.Duration
@@ -44,13 +46,13 @@ internal class LoadingViewModel @Inject constructor(
             try {
                 TextSecurePreferences.events
                     .filter { it == TextSecurePreferences.CONFIGURATION_SYNCED }
-                    .timeout(TIMEOUT_TIME)
                     .onStart { emit(TextSecurePreferences.CONFIGURATION_SYNCED) }
-                    .collectLatest {
-                        if (prefs.getConfigurationMessageSynced()) onSuccess()
-                    }
+                    .filter { prefs.getConfigurationMessageSynced() }
+                    .timeout(TIMEOUT_TIME)
+                    .flowOn(Dispatchers.Main)
+                    .collectLatest { onSuccess() }
             } catch (e: Exception) {
-                onFail()
+                withContext(Dispatchers.Main) { onFail() }
             }
         }
     }
@@ -61,8 +63,8 @@ internal class LoadingViewModel @Inject constructor(
         _events.emit(Event.SUCCESS)
     }
 
-    private fun onFail() {
-        _events.tryEmit(Event.TIMEOUT)
+    private suspend fun onFail() {
+        _events.emit(Event.TIMEOUT)
     }
 }
 
