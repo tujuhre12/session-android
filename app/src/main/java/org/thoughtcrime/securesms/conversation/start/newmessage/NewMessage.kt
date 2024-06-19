@@ -116,7 +116,6 @@ private fun EnterAccountId(
                 .padding(horizontal = LocalDimensions.current.largeMargin)
                 .fillMaxWidth()
                 .contentDescription(R.string.next),
-            color = LocalColors.current.primary,
             enabled = state.isNextButtonEnabled,
             onClick = callbacks::onContinue
         ) {
