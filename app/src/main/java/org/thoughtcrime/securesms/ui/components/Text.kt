@@ -99,7 +99,7 @@ fun AnnotatedTextWithIcon(
                 Placeholder(
                     width = iconSize,
                     height = iconSize,
-                    placeholderVerticalAlign = PlaceholderVerticalAlign.AboveBaseline
+                    placeholderVerticalAlign = PlaceholderVerticalAlign.TextCenter
                 )
             ) {
                 Icon(
