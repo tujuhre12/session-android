@@ -5,11 +5,18 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -20,10 +27,12 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import network.loki.messenger.R
+import org.thoughtcrime.securesms.onboarding.ui.ContinueButton
 import org.thoughtcrime.securesms.ui.LoadingArcOr
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
+import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.color.Colors
 import org.thoughtcrime.securesms.ui.color.LocalColors
 import org.thoughtcrime.securesms.ui.components.AppBar
@@ -33,6 +42,7 @@ import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
 import org.thoughtcrime.securesms.ui.contentDescription
+import org.thoughtcrime.securesms.ui.small
 
 private val TITLES = listOf(R.string.enter_account_id, R.string.qrScan)
 
@@ -66,34 +76,45 @@ private fun EnterAccountId(
     callbacks: Callbacks,
     onHelp: () -> Unit = {}
 ) {
+
     Column(
         modifier = Modifier
-            .padding(horizontal = LocalDimensions.current.xxsMargin, vertical = LocalDimensions.current.xsMargin)
-            .fillMaxHeight(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.xsMargin)
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .imePadding()
     ) {
-        SessionOutlinedTextField(
-            text = state.newMessageIdOrOns,
-            modifier = Modifier
-                .padding(horizontal = LocalDimensions.current.smallMargin)
-                .contentDescription("Session id input box"),
-            placeholder = stringResource(R.string.accountIdOrOnsEnter),
-            onChange = callbacks::onChange,
-            onContinue = callbacks::onContinue,
-            error = state.error?.string(),
-        )
 
-        BorderlessButtonWithIcon(
-            text = stringResource(R.string.messageNewDescription),
-            modifier = Modifier
-                .animateContentSize()
-                .contentDescription(R.string.AccessibilityId_help_desk_link)
-                .padding(horizontal = LocalDimensions.current.margin)
-                .fillMaxWidth(),
-            color = LocalColors.current.textSecondary,
-            iconRes = R.drawable.ic_circle_question_mark
-        ) { onHelp() }
+        Column(
+            modifier = Modifier.padding(horizontal = LocalDimensions.current.xxsMargin, vertical = LocalDimensions.current.xsMargin),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.xsMargin)
+        ) {
+
+            SessionOutlinedTextField(
+                text = state.newMessageIdOrOns,
+                modifier = Modifier
+                    .padding(horizontal = LocalDimensions.current.smallMargin)
+                    .contentDescription("Session id input box"),
+                placeholder = stringResource(R.string.accountIdOrOnsEnter),
+                onChange = callbacks::onChange,
+                onContinue = callbacks::onContinue,
+                error = state.error?.string(),
+            )
+
+            BorderlessButtonWithIcon(
+                text = stringResource(R.string.messageNewDescription),
+                modifier = Modifier
+                    .animateContentSize()
+                    .contentDescription(R.string.AccessibilityId_help_desk_link)
+                    .padding(horizontal = LocalDimensions.current.margin)
+                    .fillMaxWidth(),
+                style = small,
+                color = LocalColors.current.textSecondary,
+                iconRes = R.drawable.ic_circle_question_mark
+            ) { onHelp() }
+        }
+
+        Spacer(Modifier.weight(2f))
 
         OutlineButton(
             modifier = Modifier

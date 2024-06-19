@@ -2,9 +2,13 @@ package org.thoughtcrime.securesms.onboarding.pickname
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -30,13 +34,21 @@ private fun PreviewDisplayName() {
 
 @Composable
 internal fun DisplayName(state: State, onChange: (String) -> Unit = {}, onContinue: () -> Unit = {}) {
-    Column {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+    ) {
+        Spacer(
+            Modifier
+                .heightIn(min = LocalDimensions.current.smallItemSpacing)
+                .weight(1f))
+        // this is to make sure the spacer above doesn't get compressed to 0
+        Spacer(modifier = Modifier.height(LocalDimensions.current.smallItemSpacing))
+
         Column(
-            modifier = Modifier
-                .padding(horizontal = LocalDimensions.current.onboardingMargin)
-                .weight(1f)
+            modifier = Modifier.padding(horizontal = LocalDimensions.current.largeMargin)
         ) {
-            Spacer(modifier = Modifier.weight(1f))
             Text(stringResource(state.title), style = h4)
             Spacer(Modifier.height(LocalDimensions.current.smallItemSpacing))
             Text(
@@ -54,10 +66,12 @@ internal fun DisplayName(state: State, onChange: (String) -> Unit = {}, onContin
                 onContinue = onContinue,
                 error = state.error?.let { stringResource(it) }
             )
-
-            Spacer(modifier = Modifier.weight(2f))
         }
 
-        ContinueButton(Modifier.align(Alignment.CenterHorizontally), onContinue)
+        // this is to make sure the spacer below doesn't get compressed to 0
+        Spacer(modifier = Modifier.height(LocalDimensions.current.smallItemSpacing))
+        Spacer(Modifier.weight(2f))
+
+        ContinueButton(modifier = Modifier.align(Alignment.CenterHorizontally), onContinue)
     }
 }
