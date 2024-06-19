@@ -4,11 +4,9 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
@@ -72,56 +70,51 @@ private fun PreviewRecoveryPassword() {
 
 @Composable
 private fun RecoveryPassword(state: State, onChange: (String) -> Unit = {}, onContinue: () -> Unit = {}) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-        ) {
-            Spacer(
-                Modifier
-                    .heightIn(min = LocalDimensions.current.smallItemSpacing)
-                    .weight(1f))
-            // this is to make sure the spacer above doesn't get compressed to 0
-            Spacer(modifier = Modifier.height(LocalDimensions.current.smallItemSpacing))
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+    ) {
+        Spacer(Modifier.weight(1f))
+        Spacer(modifier = Modifier.height(LocalDimensions.current.smallItemSpacing))
 
-            Column(
-                modifier = Modifier.padding(horizontal = LocalDimensions.current.largeMargin)
-            ) {
-                Row {
-                    Text(
-                        modifier = Modifier.weight(1f),
-                        text = stringResource(R.string.sessionRecoveryPassword),
-                        style = h4
-                    )
-                    Spacer(Modifier.width(LocalDimensions.current.xxsItemSpacing))
-                    Icon(
-                        modifier = Modifier.align(Alignment.CenterVertically),
-                        painter = painterResource(id = R.drawable.ic_shield_outline),
-                        contentDescription = null,
-                    )
-                }
-                Spacer(Modifier.height(LocalDimensions.current.smallItemSpacing))
+        Column(
+            modifier = Modifier.padding(horizontal = LocalDimensions.current.largeMargin)
+        ) {
+            Row {
                 Text(
-                    stringResource(R.string.activity_link_enter_your_recovery_password_to_load_your_account_if_you_haven_t_saved_it_you_can_find_it_in_your_app_settings),
-                    style = base
+                    modifier = Modifier.weight(1f),
+                    text = stringResource(R.string.sessionRecoveryPassword),
+                    style = h4
                 )
-                Spacer(Modifier.height(LocalDimensions.current.itemSpacing))
-                SessionOutlinedTextField(
-                    text = state.recoveryPhrase,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .contentDescription(R.string.AccessibilityId_recovery_phrase_input),
-                    placeholder = stringResource(R.string.recoveryPasswordEnter),
-                    onChange = onChange,
-                    onContinue = onContinue,
-                    error = state.error
+                Spacer(Modifier.width(LocalDimensions.current.xxsItemSpacing))
+                Icon(
+                    modifier = Modifier.align(Alignment.CenterVertically),
+                    painter = painterResource(id = R.drawable.ic_shield_outline),
+                    contentDescription = null,
                 )
             }
-
-            // this is to make sure the spacer below doesn't get compressed to 0
-            Spacer(modifier = Modifier.height(LocalDimensions.current.smallItemSpacing))
-            Spacer(Modifier.weight(2f))
-
-            ContinueButton(modifier = Modifier.align(Alignment.CenterHorizontally), onContinue)
+            Spacer(Modifier.height(LocalDimensions.current.smallItemSpacing))
+            Text(
+                stringResource(R.string.activity_link_enter_your_recovery_password_to_load_your_account_if_you_haven_t_saved_it_you_can_find_it_in_your_app_settings),
+                style = base
+            )
+            Spacer(Modifier.height(LocalDimensions.current.itemSpacing))
+            SessionOutlinedTextField(
+                text = state.recoveryPhrase,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .contentDescription(R.string.AccessibilityId_recovery_phrase_input),
+                placeholder = stringResource(R.string.recoveryPasswordEnter),
+                onChange = onChange,
+                onContinue = onContinue,
+                error = state.error
+            )
         }
+
+        Spacer(modifier = Modifier.height(LocalDimensions.current.smallItemSpacing))
+        Spacer(Modifier.weight(2f))
+
+        ContinueButton(modifier = Modifier.align(Alignment.CenterHorizontally), onContinue)
+    }
 }

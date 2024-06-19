@@ -1,16 +1,12 @@
 package org.thoughtcrime.securesms.conversation.start.newmessage
 
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
@@ -27,12 +23,10 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import network.loki.messenger.R
-import org.thoughtcrime.securesms.onboarding.ui.ContinueButton
 import org.thoughtcrime.securesms.ui.LoadingArcOr
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
-import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.color.Colors
 import org.thoughtcrime.securesms.ui.color.LocalColors
 import org.thoughtcrime.securesms.ui.components.AppBar
@@ -104,14 +98,14 @@ private fun EnterAccountId(
             BorderlessButtonWithIcon(
                 text = stringResource(R.string.messageNewDescription),
                 modifier = Modifier
-                    .animateContentSize()
                     .contentDescription(R.string.AccessibilityId_help_desk_link)
                     .padding(horizontal = LocalDimensions.current.margin)
                     .fillMaxWidth(),
                 style = small,
                 color = LocalColors.current.textSecondary,
-                iconRes = R.drawable.ic_circle_question_mark
-            ) { onHelp() }
+                iconRes = R.drawable.ic_circle_question_mark,
+                onClick = onHelp
+            )
         }
 
         Spacer(Modifier.weight(2f))
@@ -124,7 +118,7 @@ private fun EnterAccountId(
                 .contentDescription(R.string.next),
             color = LocalColors.current.primary,
             enabled = state.isNextButtonEnabled,
-            onClick = { callbacks.onContinue() }
+            onClick = callbacks::onContinue
         ) {
             LoadingArcOr(state.loading) {
                 Text(stringResource(R.string.next))
