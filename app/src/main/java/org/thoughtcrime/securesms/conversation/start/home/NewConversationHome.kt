@@ -41,7 +41,8 @@ internal fun NewConversationScreen(
     Column(modifier = Modifier.background(LocalColors.current.backgroundSecondary)) {
         AppBar(stringResource(R.string.dialog_new_conversation_title), onClose = delegate::onDialogClosePressed)
         Surface(
-            modifier = Modifier.nestedScroll(rememberNestedScrollInteropConnection())
+            modifier = Modifier.nestedScroll(rememberNestedScrollInteropConnection()),
+            color = LocalColors.current.backgroundSecondary
         ) {
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState())
@@ -73,6 +74,7 @@ private fun ColumnScope.Items(
         modifier = Modifier
             .padding(horizontal = LocalDimensions.current.margin)
             .padding(top = LocalDimensions.current.itemSpacing)
+            .padding(bottom = LocalDimensions.current.margin)
     ) {
         Text(stringResource(R.string.accountIdYours), style = xl)
         Spacer(modifier = Modifier.height(LocalDimensions.current.xxxsItemSpacing))
