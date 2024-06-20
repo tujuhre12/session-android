@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.ButtonColors
-import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -29,7 +28,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
@@ -37,7 +35,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
 import network.loki.messenger.R
-import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LaunchedEffectAsync
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
@@ -46,7 +43,6 @@ import org.thoughtcrime.securesms.ui.buttonShape
 import org.thoughtcrime.securesms.ui.color.Colors
 import org.thoughtcrime.securesms.ui.color.LocalColors
 import org.thoughtcrime.securesms.ui.contentDescription
-import org.thoughtcrime.securesms.ui.extraSmall
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -56,14 +52,13 @@ import kotlin.time.Duration.Companion.seconds
 @Composable
 fun Button(
     onClick: () -> Unit,
-    color: Color,
     type: ButtonType,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     style: ButtonStyle = ButtonStyle.Large,
     shape: Shape = buttonShape,
-    border: BorderStroke? = type.border(color, enabled),
-    colors: ButtonColors = type.buttonColors(color),
+    border: BorderStroke? = type.border(enabled),
+    colors: ButtonColors = type.buttonColors(),
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     contentPadding: PaddingValues = type.contentPadding,
     content: @Composable RowScope.() -> Unit
@@ -95,38 +90,34 @@ fun Button(
 fun Button(
     text: String,
     onClick: () -> Unit,
-    color: Color,
     type: ButtonType,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    size: ButtonStyle = ButtonStyle.Large,
+    style: ButtonStyle = ButtonStyle.Large,
     shape: Shape = buttonShape,
-    border: BorderStroke? = type.border(color, enabled),
-    colors: ButtonColors = type.buttonColors(color),
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
-    Button(onClick, color, type, modifier, enabled, size, shape, border, colors, interactionSource) {
+    Button(onClick, type, modifier, enabled, style, shape, interactionSource = interactionSource) {
         Text(text)
     }
 }
 
 @Composable fun FillButton(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit) {
-    Button(text, onClick, LocalColors.current.buttonOutline, ButtonType.Fill, modifier, enabled)
+    Button(text, onClick, ButtonType.Fill, modifier, enabled)
 }
 
 @Composable fun PrimaryFillButton(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit) {
-    Button(text, onClick, LocalColors.current.primary, ButtonType.Fill, modifier, enabled)
+    Button(text, onClick, ButtonType.PrimaryFill, modifier, enabled)
 }
 
 @Composable fun OutlineButton(text: String, modifier: Modifier = Modifier, color: Color = LocalColors.current.buttonOutline, enabled: Boolean = true, onClick: () -> Unit) {
-    Button(text, onClick, color, ButtonType.Outline, modifier, enabled)
+    Button(text, onClick, ButtonType.Outline(color), modifier, enabled)
 }
 
 @Composable fun OutlineButton(modifier: Modifier = Modifier, color: Color = LocalColors.current.buttonOutline, enabled: Boolean = true, onClick: () -> Unit, content: @Composable RowScope.() -> Unit) {
     Button(
         onClick = onClick,
-        color = color,
-        type = ButtonType.Outline,
+        type = ButtonType.Outline(color),
         modifier = modifier,
         enabled = enabled,
         content = content
@@ -134,18 +125,18 @@ fun Button(
 }
 
 @Composable fun PrimaryOutlineButton(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit) {
-    Button(text, onClick, LocalColors.current.primary, ButtonType.Outline, modifier, enabled)
+    Button(text, onClick, ButtonType.Outline(LocalColors.current.primary), modifier, enabled)
 }
 
 @Composable fun SlimOutlineButton(onClick: () -> Unit, modifier: Modifier = Modifier, color: Color = LocalColors.current.text, enabled: Boolean = true, content: @Composable RowScope.() -> Unit) {
-    Button(onClick, color, ButtonType.Outline, modifier, enabled, ButtonStyle.Slim, content = content)
+    Button(onClick, ButtonType.Outline(color), modifier, enabled, ButtonStyle.Slim, content = content)
 }
 
 /**
  * Courtesy [SlimOutlineButton] implementation for buttons that just display text.
  */
 @Composable fun SlimOutlineButton(text: String, modifier: Modifier = Modifier, color: Color = LocalColors.current.text, enabled: Boolean = true, onClick: () -> Unit) {
-    Button(text, onClick, color, ButtonType.Outline, modifier, enabled, ButtonStyle.Slim)
+    Button(text, onClick, ButtonType.Outline(color), modifier, enabled, ButtonStyle.Slim)
 }
 
 @Composable
@@ -170,8 +161,7 @@ fun OutlineCopyButton(
         modifier = modifier.contentDescription(R.string.AccessibilityId_copy_button),
         interactionSource = interactionSource,
         style = style,
-        type = ButtonType.Outline,
-        color = color,
+        type = ButtonType.Outline(color),
         onClick = onClick
     ) {
         TemporaryClickedContent(
@@ -219,10 +209,9 @@ fun BorderlessButton(
 ) {
     Button(
         onClick = onClick,
-        color = color,
         modifier = modifier,
         style = ButtonStyle.Borderless,
-        type = ButtonType.Borderless,
+        type = ButtonType.Borderless(color),
         content = content
     )
 }
@@ -288,6 +277,7 @@ private fun VariousButtons(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             PrimaryFillButton("Primary Fill") {}
+            FillButton("Fill Button") {}
             OutlineButton("Outline Button") {}
             SlimOutlineButton("Slim Outline") {}
             SlimOutlineButton("Slim Primary", color = LocalColors.current.buttonOutline) {}

@@ -38,7 +38,9 @@ interface Colors {
     val backgroundBubbleReceived: Color
     val textBubbleReceived: Color
     val backgroundBubbleSent: Color get() = primary
-    val buttonFilled: Color
+    val primaryButtonFillText: Color
+    val primaryButtonFill: Color
+    val buttonFill: Color
     val buttonOutline: Color
     val qrCodeContent: Color
     val qrCodeBackground: Color
@@ -56,7 +58,9 @@ data class ClassicDark(override val primary: Color = primaryGreen): Colors {
     override val textBubbleSent = Color.Black
     override val backgroundBubbleReceived = classicDark2
     override val textBubbleReceived = Color.White
-    override val buttonFilled = primary
+    override val primaryButtonFillText = Color.Black
+    override val primaryButtonFill = primary
+    override val buttonFill = text
     override val buttonOutline = primary
     override val qrCodeContent = background
     override val qrCodeBackground = text
@@ -74,7 +78,9 @@ data class ClassicLight(override val primary: Color = primaryGreen): Colors {
     override val textBubbleSent = Color.Black
     override val backgroundBubbleReceived = classicLight4
     override val textBubbleReceived = classicLight4
-    override val buttonFilled = classicLight0
+    override val primaryButtonFillText = Color.White
+    override val primaryButtonFill = classicLight0
+    override val buttonFill = classicLight0
     override val buttonOutline = classicLight0
     override val qrCodeContent = text
     override val qrCodeBackground = backgroundSecondary
@@ -92,7 +98,9 @@ data class OceanDark(override val primary: Color = primaryBlue): Colors {
     override val textBubbleSent = Color.Black
     override val backgroundBubbleReceived = oceanDark4
     override val textBubbleReceived = oceanDark4
-    override val buttonFilled = primary
+    override val primaryButtonFillText = Color.Black
+    override val primaryButtonFill = primary
+    override val buttonFill = text
     override val buttonOutline = primary
     override val qrCodeContent = background
     override val qrCodeBackground = text
@@ -110,7 +118,9 @@ data class OceanLight(override val primary: Color = primaryBlue): Colors {
     override val textBubbleSent = oceanLight1
     override val backgroundBubbleReceived = oceanLight4
     override val textBubbleReceived = oceanLight1
-    override val buttonFilled = oceanLight1
+    override val primaryButtonFillText = Color.White
+    override val primaryButtonFill = oceanLight1
+    override val buttonFill = oceanLight1
     override val buttonOutline = oceanLight1
     override val qrCodeContent = text
     override val qrCodeBackground = backgroundSecondary

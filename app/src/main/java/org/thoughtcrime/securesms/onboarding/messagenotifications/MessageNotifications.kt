@@ -89,8 +89,7 @@ private fun NotificationRadioButton(
             modifier = Modifier
                 .weight(1f)
                 .contentDescription(contentDescription),
-            type = ButtonType.Outline,
-            color = LocalColors.current.text,
+            type = ButtonType.Outline(LocalColors.current.text),
             border = BorderStroke(
                 width = ButtonDefaults.OutlinedBorderSize,
                 color = if (selected) LocalColors.current.primary else LocalColors.current.borders

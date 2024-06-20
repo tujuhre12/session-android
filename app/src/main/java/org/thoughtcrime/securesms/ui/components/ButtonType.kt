@@ -14,19 +14,19 @@ interface ButtonType {
     val contentPadding: PaddingValues get() = ButtonDefaults.ContentPadding
 
     @Composable
-    fun border(color: Color, enabled: Boolean): BorderStroke?
+    fun border(enabled: Boolean): BorderStroke?
     @Composable
-    fun buttonColors(color: Color): ButtonColors
+    fun buttonColors(): ButtonColors
 
-    object Outline: ButtonType {
+    class Outline(private val color: Color): ButtonType {
         @Composable
-        override fun border(color: Color, enabled: Boolean) =
+        override fun border(enabled: Boolean) =
             BorderStroke(
                 width = LocalDimensions.current.borderStroke,
                 color = if (enabled) color else LocalColors.current.disabled
             )
         @Composable
-        override fun buttonColors(color: Color) = ButtonDefaults.buttonColors(
+        override fun buttonColors() = ButtonDefaults.buttonColors(
             contentColor = color,
             backgroundColor = Color.Unspecified,
             disabledContentColor = LocalColors.current.disabled,
@@ -36,23 +36,35 @@ interface ButtonType {
 
     object Fill: ButtonType {
         @Composable
-        override fun border(color: Color, enabled: Boolean) = null
+        override fun border(enabled: Boolean) = null
         @Composable
-        override fun buttonColors(color: Color) = ButtonDefaults.buttonColors(
+        override fun buttonColors() = ButtonDefaults.buttonColors(
             contentColor = LocalColors.current.background,
-            backgroundColor = color,
+            backgroundColor = LocalColors.current.buttonFill,
             disabledContentColor = LocalColors.current.disabled,
             disabledBackgroundColor = Color.Unspecified
         )
     }
 
-    object Borderless: ButtonType {
+    object PrimaryFill: ButtonType {
+        @Composable
+        override fun border(enabled: Boolean) = null
+        @Composable
+        override fun buttonColors() = ButtonDefaults.buttonColors(
+            contentColor = LocalColors.current.primaryButtonFillText,
+            backgroundColor = LocalColors.current.primaryButtonFill,
+            disabledContentColor = LocalColors.current.disabled,
+            disabledBackgroundColor = Color.Unspecified
+        )
+    }
+
+    class Borderless(private val color: Color): ButtonType {
         override val contentPadding: PaddingValues
             get() = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
         @Composable
-        override fun border(color: Color, enabled: Boolean) = null
+        override fun border(enabled: Boolean) = null
         @Composable
-        override fun buttonColors(color: Color) = ButtonDefaults.outlinedButtonColors(
+        override fun buttonColors() = ButtonDefaults.outlinedButtonColors(
             contentColor = color,
             backgroundColor = Color.Transparent,
             disabledContentColor = LocalColors.current.disabled
