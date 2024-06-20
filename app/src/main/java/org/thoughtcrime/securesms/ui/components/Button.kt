@@ -11,7 +11,10 @@ import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -265,26 +268,42 @@ fun BorderlessHtmlButton(
 val MutableInteractionSource.releases
     get() = interactions.filter { it is PressInteraction.Release }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Preview
 @Composable
 private fun VariousButtons(
     @PreviewParameter(SessionColorsParameterProvider::class) colors: Colors
 ) {
     PreviewTheme(colors) {
+        FlowRow(
+            modifier = Modifier.padding(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            maxItemsInEachRow = 2
+        ) {
+            PrimaryFillButton("Primary Fill") {}
+            PrimaryFillButton("Primary Fill Disabled", enabled = false) {}
+            FillButton("Fill Button") {}
+            FillButton("Fill Button Disabled", enabled = false) {}
+            OutlineButton("Outline Button") {}
+            OutlineButton("Outline Button Disabled", enabled = false) {}
+            SlimOutlineButton("Slim Outline") {}
+            SlimOutlineButton("Slim Outline Disabled", enabled = false) {}
+            SlimOutlineButton("Slim Primary", color = LocalColors.current.buttonOutline) {}
+            SlimOutlineButton("Slim Danger", color = LocalColors.current.danger) {}
+            BorderlessButton("Borderless Button") {}
+            BorderlessButton("Borderless Secondary", color = LocalColors.current.textSecondary) {}
+        }
+
         Column(
             modifier = Modifier.padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            PrimaryFillButton("Primary Fill") {}
-            FillButton("Fill Button") {}
-            OutlineButton("Outline Button") {}
-            SlimOutlineButton("Slim Outline") {}
-            SlimOutlineButton("Slim Primary", color = LocalColors.current.buttonOutline) {}
-            SlimOutlineButton("Slim Danger", color = LocalColors.current.danger) {}
-            SlimOutlineCopyButton {}
-            BorderlessButton("Borderless Button") {}
-            BorderlessButton("Borderless Secondary", color = LocalColors.current.textSecondary) {}
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+
+            }
+
         }
     }
 }
