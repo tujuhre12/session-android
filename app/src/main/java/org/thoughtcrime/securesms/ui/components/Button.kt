@@ -294,16 +294,5 @@ private fun VariousButtons(
             BorderlessButton("Borderless Button") {}
             BorderlessButton("Borderless Secondary", color = LocalColors.current.textSecondary) {}
         }
-
-        Column(
-            modifier = Modifier.padding(8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-
-            }
-
-        }
     }
 }
