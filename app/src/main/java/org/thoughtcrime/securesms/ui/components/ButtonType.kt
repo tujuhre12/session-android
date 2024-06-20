@@ -10,6 +10,11 @@ import androidx.compose.ui.unit.dp
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.color.LocalColors
 
+private val disabledBorder @Composable get() = BorderStroke(
+    width = LocalDimensions.current.borderStroke,
+    color = LocalColors.current.disabled
+)
+
 interface ButtonType {
     val contentPadding: PaddingValues get() = ButtonDefaults.ContentPadding
 
@@ -20,11 +25,10 @@ interface ButtonType {
 
     class Outline(private val color: Color): ButtonType {
         @Composable
-        override fun border(enabled: Boolean) =
-            BorderStroke(
-                width = LocalDimensions.current.borderStroke,
-                color = if (enabled) color else LocalColors.current.disabled
-            )
+        override fun border(enabled: Boolean) = BorderStroke(
+            width = LocalDimensions.current.borderStroke,
+            color = if (enabled) color else LocalColors.current.disabled
+        )
         @Composable
         override fun buttonColors() = ButtonDefaults.buttonColors(
             contentColor = color,
@@ -36,7 +40,7 @@ interface ButtonType {
 
     object Fill: ButtonType {
         @Composable
-        override fun border(enabled: Boolean) = null
+        override fun border(enabled: Boolean) = if (enabled) null else disabledBorder
         @Composable
         override fun buttonColors() = ButtonDefaults.buttonColors(
             contentColor = LocalColors.current.background,
@@ -48,7 +52,7 @@ interface ButtonType {
 
     object PrimaryFill: ButtonType {
         @Composable
-        override fun border(enabled: Boolean) = null
+        override fun border(enabled: Boolean) = if (enabled) null else disabledBorder
         @Composable
         override fun buttonColors() = ButtonDefaults.buttonColors(
             contentColor = LocalColors.current.primaryButtonFillText,
