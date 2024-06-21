@@ -8,11 +8,12 @@ import androidx.compose.ui.res.stringResource
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.components.OutlineButton
+import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.contentDescription
 
 @Composable
-fun ContinueButton(modifier: Modifier, onContinue: () -> Unit) {
-    OutlineButton(
+fun ContinuePrimaryOutlineButton(modifier: Modifier, onContinue: () -> Unit) {
+    PrimaryOutlineButton(
         stringResource(R.string.continue_2),
         modifier = modifier
             .contentDescription(R.string.AccessibilityId_continue)

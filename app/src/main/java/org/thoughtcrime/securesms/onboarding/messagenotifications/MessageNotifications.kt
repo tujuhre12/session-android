@@ -20,7 +20,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import network.loki.messenger.R
-import org.thoughtcrime.securesms.onboarding.ui.ContinueButton
+import org.thoughtcrime.securesms.onboarding.ui.ContinuePrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
@@ -70,7 +70,7 @@ internal fun MessageNotificationsScreen(
 
         Spacer(Modifier.weight(1f))
 
-        ContinueButton(Modifier.align(Alignment.CenterHorizontally), onContinue)
+        ContinuePrimaryOutlineButton(Modifier.align(Alignment.CenterHorizontally), onContinue)
     }
 }
 

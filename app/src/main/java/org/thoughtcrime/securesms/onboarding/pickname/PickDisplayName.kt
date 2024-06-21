@@ -15,7 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import network.loki.messenger.R
-import org.thoughtcrime.securesms.onboarding.ui.ContinueButton
+import org.thoughtcrime.securesms.onboarding.ui.ContinuePrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.base
@@ -66,6 +66,6 @@ internal fun DisplayName(state: State, onChange: (String) -> Unit = {}, onContin
         Spacer(modifier = Modifier.height(LocalDimensions.current.smallItemSpacing))
         Spacer(Modifier.weight(2f))
 
-        ContinueButton(modifier = Modifier.align(Alignment.CenterHorizontally), onContinue)
+        ContinuePrimaryOutlineButton(modifier = Modifier.align(Alignment.CenterHorizontally), onContinue)
     }
 }

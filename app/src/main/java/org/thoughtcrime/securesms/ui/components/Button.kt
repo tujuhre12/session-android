@@ -10,11 +10,9 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -113,11 +111,11 @@ fun Button(
     Button(text, onClick, ButtonType.PrimaryFill, modifier, enabled)
 }
 
-@Composable fun OutlineButton(text: String, modifier: Modifier = Modifier, color: Color = LocalColors.current.buttonOutline, enabled: Boolean = true, onClick: () -> Unit) {
+@Composable fun OutlineButton(text: String, modifier: Modifier = Modifier, color: Color = LocalColors.current.text, enabled: Boolean = true, onClick: () -> Unit) {
     Button(text, onClick, ButtonType.Outline(color), modifier, enabled)
 }
 
-@Composable fun OutlineButton(modifier: Modifier = Modifier, color: Color = LocalColors.current.buttonOutline, enabled: Boolean = true, onClick: () -> Unit, content: @Composable RowScope.() -> Unit) {
+@Composable fun OutlineButton(modifier: Modifier = Modifier, color: Color = LocalColors.current.text, enabled: Boolean = true, onClick: () -> Unit, content: @Composable RowScope.() -> Unit) {
     Button(
         onClick = onClick,
         type = ButtonType.Outline(color),
@@ -128,7 +126,7 @@ fun Button(
 }
 
 @Composable fun PrimaryOutlineButton(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit) {
-    Button(text, onClick, ButtonType.Outline(LocalColors.current.primary), modifier, enabled)
+    Button(text, onClick, ButtonType.Outline(LocalColors.current.primaryButtonFill), modifier, enabled)
 }
 
 @Composable fun SlimOutlineButton(onClick: () -> Unit, modifier: Modifier = Modifier, color: Color = LocalColors.current.text, enabled: Boolean = true, content: @Composable RowScope.() -> Unit) {
@@ -140,6 +138,19 @@ fun Button(
  */
 @Composable fun SlimOutlineButton(text: String, modifier: Modifier = Modifier, color: Color = LocalColors.current.text, enabled: Boolean = true, onClick: () -> Unit) {
     Button(text, onClick, ButtonType.Outline(color), modifier, enabled, ButtonStyle.Slim)
+}
+
+@Composable fun SlimPrimaryOutlineButton(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit) {
+    Button(text, onClick, ButtonType.Outline(LocalColors.current.primaryButtonOutline), modifier, enabled, ButtonStyle.Slim)
+}
+
+@Composable
+fun PrimaryOutlineCopyButton(
+    modifier: Modifier = Modifier,
+    style: ButtonStyle = ButtonStyle.Large,
+    onClick: () -> Unit
+) {
+    OutlineCopyButton(modifier, style, LocalColors.current.primaryButtonOutline, onClick)
 }
 
 @Composable
@@ -155,7 +166,7 @@ fun SlimOutlineCopyButton(
 fun OutlineCopyButton(
     modifier: Modifier = Modifier,
     style: ButtonStyle = ButtonStyle.Large,
-    color: Color = LocalColors.current.buttonOutline,
+    color: Color = LocalColors.current.text,
     onClick: () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -167,12 +178,17 @@ fun OutlineCopyButton(
         type = ButtonType.Outline(color),
         onClick = onClick
     ) {
-        TemporaryClickedContent(
-            interactionSource = interactionSource,
-            content = { Text(stringResource(R.string.copy)) },
-            temporaryContent = { Text(stringResource(R.string.copied)) }
-        )
+        CopyButtonContent(interactionSource)
     }
+}
+
+@Composable
+fun CopyButtonContent(interactionSource: MutableInteractionSource) {
+    TemporaryClickedContent(
+        interactionSource = interactionSource,
+        content = { Text(stringResource(R.string.copy)) },
+        temporaryContent = { Text(stringResource(R.string.copied)) }
+    )
 }
 
 @Composable
@@ -285,11 +301,13 @@ private fun VariousButtons(
             PrimaryFillButton("Primary Fill Disabled", enabled = false) {}
             FillButton("Fill Button") {}
             FillButton("Fill Button Disabled", enabled = false) {}
+            PrimaryOutlineButton("Primary Outline Button") {}
+            PrimaryOutlineButton("Primary Outline Disabled", enabled = false) {}
             OutlineButton("Outline Button") {}
             OutlineButton("Outline Button Disabled", enabled = false) {}
             SlimOutlineButton("Slim Outline") {}
             SlimOutlineButton("Slim Outline Disabled", enabled = false) {}
-            SlimOutlineButton("Slim Primary", color = LocalColors.current.buttonOutline) {}
+            SlimOutlineButton("Slim Primary", color = LocalColors.current.primaryButtonFill) {}
             SlimOutlineButton("Slim Danger", color = LocalColors.current.danger) {}
             BorderlessButton("Borderless Button") {}
             BorderlessButton("Borderless Secondary", color = LocalColors.current.textSecondary) {}
