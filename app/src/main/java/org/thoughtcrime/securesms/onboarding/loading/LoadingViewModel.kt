@@ -49,22 +49,25 @@ internal class LoadingViewModel @Inject constructor(
                     .onStart { emit(TextSecurePreferences.CONFIGURATION_SYNCED) }
                     .filter { prefs.getConfigurationMessageSynced() }
                     .timeout(TIMEOUT_TIME)
-                    .flowOn(Dispatchers.Main)
                     .collectLatest { onSuccess() }
             } catch (e: Exception) {
-                withContext(Dispatchers.Main) { onFail() }
+                onFail()
             }
         }
     }
 
     private suspend fun onSuccess() {
-        _states.value = State(ANIMATE_TO_DONE_TIME)
-        delay(IDLE_DONE_TIME)
-        _events.emit(Event.SUCCESS)
+        withContext(Dispatchers.Main) {
+            _states.value = State(ANIMATE_TO_DONE_TIME)
+            delay(IDLE_DONE_TIME)
+            _events.emit(Event.SUCCESS)
+        }
     }
 
     private suspend fun onFail() {
-        _events.emit(Event.TIMEOUT)
+        withContext(Dispatchers.Main) {
+            _events.emit(Event.TIMEOUT)
+        }
     }
 }
 

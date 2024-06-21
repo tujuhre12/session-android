@@ -40,7 +40,7 @@ interface Colors {
     val backgroundBubbleSent: Color get() = primary
 
     // buttonFill
-    val buttonFill: Color get() = text
+    val buttonFill: Color
     val buttonFillText: Color get() = background
 
     // primaryButtonFill
