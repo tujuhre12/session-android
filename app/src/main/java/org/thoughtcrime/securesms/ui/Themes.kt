@@ -23,6 +23,7 @@ import org.thoughtcrime.securesms.ui.color.LocalColors
 import org.thoughtcrime.securesms.ui.color.OceanDark
 import org.thoughtcrime.securesms.ui.color.OceanLight
 import org.thoughtcrime.securesms.ui.color.colors
+import org.thoughtcrime.securesms.ui.color.textSelectionColors
 
 /**
  * Apply a Material2 compose theme based on user selections in SharedPreferences.
@@ -47,15 +48,10 @@ fun SessionMaterialTheme(
         typography = sessionTypography,
         shapes = sessionShapes,
     ) {
-        val textSelectionColors = TextSelectionColors(
-            handleColor = LocalColors.current.primary,
-            backgroundColor = LocalColors.current.primary.copy(alpha = 0.5f)
-        )
-
         CompositionLocalProvider(
             LocalColors provides colors,
             LocalContentColor provides colors.text,
-            LocalTextSelectionColors provides textSelectionColors,
+            LocalTextSelectionColors provides colors.textSelectionColors,
         ) {
             content()
         }

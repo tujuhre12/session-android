@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.RadioButtonDefaults
@@ -55,6 +56,11 @@ interface Colors {
     // primaryButtonOutline
     val primaryButtonOutline get() = primaryButtonFill
 }
+
+val Colors.textSelectionColors get() = TextSelectionColors(
+    handleColor = primary,
+    backgroundColor = primary.copy(alpha = 0.5f)
+)
 
 data class ClassicDark(override val primary: Color = primaryGreen): Colors {
     override val isLight = false
