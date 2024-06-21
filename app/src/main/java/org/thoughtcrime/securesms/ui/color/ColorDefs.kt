@@ -2,7 +2,6 @@ package org.thoughtcrime.securesms.ui.color
 
 import androidx.compose.ui.graphics.Color
 
-
 val classicDark0 = Color.Black
 val classicDark1 = Color(0xff1B1B1B)
 val classicDark2 = Color(0xff2D2D2D)
