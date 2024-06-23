@@ -41,20 +41,8 @@ interface Colors {
     val backgroundBubbleSent: Color get() = primary
     val qrCodeContent: Color
     val qrCodeBackground: Color
-
-    // buttonFill
-    val buttonFill: Color get() = text
-    val buttonFillText: Color get() = background
-
-    // primaryButtonFill
     val primaryButtonFill: Color
     val primaryButtonFillText: Color
-
-    // buttonOutline
-    val buttonOutline get() = text
-
-    // primaryButtonOutline
-    val primaryButtonOutline get() = primaryButtonFill
 }
 
 val Colors.textSelectionColors get() = TextSelectionColors(

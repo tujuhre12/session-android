@@ -141,7 +141,7 @@ fun Button(
 }
 
 @Composable fun SlimPrimaryOutlineButton(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit) {
-    Button(text, onClick, ButtonType.Outline(LocalColors.current.primaryButtonOutline), modifier, enabled, ButtonStyle.Slim)
+    Button(text, onClick, ButtonType.Outline(LocalColors.current.primaryButtonFill), modifier, enabled, ButtonStyle.Slim)
 }
 
 @Composable
@@ -150,7 +150,7 @@ fun PrimaryOutlineCopyButton(
     style: ButtonStyle = ButtonStyle.Large,
     onClick: () -> Unit
 ) {
-    OutlineCopyButton(modifier, style, LocalColors.current.primaryButtonOutline, onClick)
+    OutlineCopyButton(modifier, style, LocalColors.current.primaryButtonFill, onClick)
 }
 
 @Composable
@@ -307,7 +307,7 @@ private fun VariousButtons(
             OutlineButton("Outline Button Disabled", enabled = false) {}
             SlimOutlineButton("Slim Outline") {}
             SlimOutlineButton("Slim Outline Disabled", enabled = false) {}
-            SlimOutlineButton("Slim Primary", color = LocalColors.current.primaryButtonFill) {}
+            SlimPrimaryOutlineButton("Slim Primary") {}
             SlimOutlineButton("Slim Danger", color = LocalColors.current.danger) {}
             BorderlessButton("Borderless Button") {}
             BorderlessButton("Borderless Secondary", color = LocalColors.current.textSecondary) {}
