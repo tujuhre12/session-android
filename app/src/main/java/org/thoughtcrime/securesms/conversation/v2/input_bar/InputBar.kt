@@ -120,7 +120,7 @@ class InputBar : RelativeLayout, InputBarEditTextDelegate, QuoteViewDelegate, Li
 
     // region Updating
     override fun inputBarEditTextContentChanged(text: CharSequence) {
-        microphoneButton.isVisible = text.all { it.isWhitespace() }
+        microphoneButton.isVisible = text.trim().isEmpty()
         sendButton.isVisible = microphoneButton.isGone
         delegate?.inputBarEditTextContentChanged(text)
     }
