@@ -14,7 +14,7 @@ import org.whispersystems.curve25519.Curve25519
 import kotlin.experimental.xor
 
 object SodiumUtilities {
-    private val sodium by lazy { LazySodiumAndroid(SodiumAndroid()) }
+    val sodium by lazy { LazySodiumAndroid(SodiumAndroid()) }
     private val curve by lazy { Curve25519.getInstance(Curve25519.BEST) }
 
     private const val SCALAR_LENGTH: Int = 32 // crypto_core_ed25519_scalarbytes
@@ -205,7 +205,7 @@ object SodiumUtilities {
     }
 
     fun decrypt(ciphertext: ByteArray, decryptionKey: ByteArray, nonce: ByteArray): ByteArray? {
-        val plaintextSize = ciphertext.size - AEAD.CHACHA20POLY1305_ABYTES
+        val plaintextSize = ciphertext.size - AEAD.XCHACHA20POLY1305_IETF_ABYTES
         val plaintext = ByteArray(plaintextSize)
         return if (sodium.cryptoAeadXChaCha20Poly1305IetfDecrypt(
                 plaintext,

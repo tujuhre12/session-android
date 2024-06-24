@@ -31,6 +31,7 @@ import org.session.libsession.messaging.utilities.UpdateMessageData;
 import org.session.libsession.utilities.IdentityKeyMismatch;
 import org.session.libsession.utilities.NetworkFailure;
 import org.session.libsession.utilities.recipients.Recipient;
+import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 
 import java.util.List;
 import java.util.Objects;
@@ -53,6 +54,10 @@ public abstract class MessageRecord extends DisplayRecord {
   public  final long                      id;
   private final List<ReactionRecord>      reactions;
   private final boolean                   hasMention;
+
+  public final boolean isNotDisappearAfterRead() {
+    return expireStarted == getTimestamp();
+  }
 
   public abstract boolean isMms();
   public abstract boolean isMmsNotification();
@@ -116,7 +121,8 @@ public abstract class MessageRecord extends DisplayRecord {
       return new SpannableString(UpdateMessageBuilder.INSTANCE.buildGroupUpdateMessage(context, updateMessageData, getIndividualRecipient().getAddress().serialize(), isOutgoing()));
     } else if (isExpirationTimerUpdate()) {
       int seconds = (int) (getExpiresIn() / 1000);
-      return new SpannableString(UpdateMessageBuilder.INSTANCE.buildExpirationTimerMessage(context, seconds, getIndividualRecipient().getAddress().serialize(), isOutgoing()));
+      boolean isGroup = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(getThreadId()).isGroupRecipient();
+      return new SpannableString(UpdateMessageBuilder.INSTANCE.buildExpirationTimerMessage(context, seconds, isGroup, getIndividualRecipient().getAddress().serialize(), isOutgoing(), getTimestamp(), expireStarted));
     } else if (isDataExtractionNotification()) {
       if (isScreenshotNotification()) return new SpannableString((UpdateMessageBuilder.INSTANCE.buildDataExtractionMessage(context, DataExtractionNotificationInfoMessage.Kind.SCREENSHOT, getIndividualRecipient().getAddress().serialize())));
       else if (isMediaSavedNotification()) return new SpannableString((UpdateMessageBuilder.INSTANCE.buildDataExtractionMessage(context, DataExtractionNotificationInfoMessage.Kind.MEDIA_SAVED, getIndividualRecipient().getAddress().serialize())));

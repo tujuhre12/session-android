@@ -21,6 +21,7 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.database.CursorIndexOutOfBoundsException;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -47,7 +48,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AlertDialog;
 import androidx.core.util.Pair;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.loader.app.LoaderManager;
@@ -146,6 +146,7 @@ public class MediaPreviewActivity extends PassphraseRequiredActionBarActivity im
                       View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
     }
   };
+  private MediaItemAdapter adapter;
 
   public static Intent getPreviewIntent(Context context, MediaPreviewArgs args) {
     return getPreviewIntent(context, args.getSlide(), args.getMmsRecord(), args.getThread());
@@ -218,13 +219,6 @@ public class MediaPreviewActivity extends PassphraseRequiredActionBarActivity im
     Permissions.onRequestPermissionsResult(this, requestCode, permissions, grantResults);
   }
 
-  @TargetApi(VERSION_CODES.JELLY_BEAN)
-  private void setFullscreenIfPossible() {
-    if (VERSION.SDK_INT >= VERSION_CODES.JELLY_BEAN) {
-      getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN);
-    }
-  }
-
   @Override
   public void onModified(Recipient recipient) {
     Util.runOnMain(this::updateActionBar);
@@ -285,9 +279,6 @@ public class MediaPreviewActivity extends PassphraseRequiredActionBarActivity im
     rootContainer = findViewById(R.id.media_preview_root);
     mediaPager = findViewById(R.id.media_pager);
     mediaPager.setOffscreenPageLimit(1);
-
-    viewPagerListener = new ViewPagerListener();
-    mediaPager.addOnPageChangeListener(viewPagerListener);
 
     albumRail        = findViewById(R.id.media_preview_album_rail);
     albumRailAdapter = new MediaRailAdapter(GlideApp.with(this), this, false);
@@ -379,7 +370,8 @@ public class MediaPreviewActivity extends PassphraseRequiredActionBarActivity im
     if (conversationRecipient != null) {
       getSupportLoaderManager().restartLoader(0, null, this);
     } else {
-      mediaPager.setAdapter(new SingleItemPagerAdapter(this, GlideApp.with(this), getWindow(), initialMediaUri, initialMediaType, initialMediaSize));
+      adapter = new SingleItemPagerAdapter(this, GlideApp.with(this), getWindow(), initialMediaUri, initialMediaType, initialMediaSize);
+      mediaPager.setAdapter(adapter);
 
       if (initialCaption != null) {
         detailsContainer.setVisibility(View.VISIBLE);
@@ -507,13 +499,8 @@ public class MediaPreviewActivity extends PassphraseRequiredActionBarActivity im
   }
 
   private @Nullable MediaItem getCurrentMediaItem() {
-    MediaItemAdapter adapter = (MediaItemAdapter)mediaPager.getAdapter();
-
-    if (adapter != null) {
-      return adapter.getMediaItemFor(mediaPager.getCurrentItem());
-    } else {
-      return null;
-    }
+    if (adapter == null) return null;
+    return adapter.getMediaItemFor(mediaPager.getCurrentItem());
   }
 
   public static boolean isContentTypeSupported(final String contentType) {
@@ -527,19 +514,28 @@ public class MediaPreviewActivity extends PassphraseRequiredActionBarActivity im
 
   @Override
   public void onLoadFinished(@NonNull Loader<Pair<Cursor, Integer>> loader, @Nullable Pair<Cursor, Integer> data) {
-    if (data != null) {
-      CursorPagerAdapter adapter = new CursorPagerAdapter(this, GlideApp.with(this), getWindow(), data.first, data.second, leftIsRecent);
-      mediaPager.setAdapter(adapter);
-      adapter.setActive(true);
+    if (data == null) return;
 
-      viewModel.setCursor(this, data.first, leftIsRecent);
+    mediaPager.removeOnPageChangeListener(viewPagerListener);
 
-      int item = restartItem >= 0 ? restartItem : data.second;
+    adapter = new CursorPagerAdapter(this, GlideApp.with(this), getWindow(), data.first, data.second, leftIsRecent);
+    mediaPager.setAdapter(adapter);
+
+    viewModel.setCursor(this, data.first, leftIsRecent);
+
+    int item = restartItem >= 0  && restartItem < adapter.getCount() ? restartItem : Math.max(Math.min(data.second, adapter.getCount() - 1), 0);
+
+    viewPagerListener = new ViewPagerListener();
+    mediaPager.addOnPageChangeListener(viewPagerListener);
+
+    try {
       mediaPager.setCurrentItem(item);
+    } catch (CursorIndexOutOfBoundsException e) {
+      throw new RuntimeException("restartItem = " + restartItem + ", data.second = " + data.second + " leftIsRecent = " + leftIsRecent, e);
+    }
 
-      if (item == 0) {
-        viewPagerListener.onPageSelected(0);
-      }
+    if (item == 0) {
+      viewPagerListener.onPageSelected(0);
     }
   }
 
@@ -557,26 +553,26 @@ public class MediaPreviewActivity extends PassphraseRequiredActionBarActivity im
       if (currentPage != -1 && currentPage != position) onPageUnselected(currentPage);
       currentPage = position;
 
-      MediaItemAdapter adapter = (MediaItemAdapter)mediaPager.getAdapter();
+      if (adapter == null) return;
 
-      if (adapter != null) {
-        MediaItem item = adapter.getMediaItemFor(position);
-        if (item.recipient != null) item.recipient.addListener(MediaPreviewActivity.this);
-        viewModel.setActiveAlbumRailItem(MediaPreviewActivity.this, position);
-        updateActionBar();
-      }
+      MediaItem item = adapter.getMediaItemFor(position);
+      if (item.recipient != null) item.recipient.addListener(MediaPreviewActivity.this);
+      viewModel.setActiveAlbumRailItem(MediaPreviewActivity.this, position);
+      updateActionBar();
     }
 
 
     public void onPageUnselected(int position) {
-      MediaItemAdapter adapter = (MediaItemAdapter)mediaPager.getAdapter();
+      if (adapter == null) return;
 
-      if (adapter != null) {
+      try {
         MediaItem item = adapter.getMediaItemFor(position);
         if (item.recipient != null) item.recipient.removeListener(MediaPreviewActivity.this);
-
-        adapter.pause(position);
+      } catch (CursorIndexOutOfBoundsException e) {
+        throw new RuntimeException("position = " + position + " leftIsRecent = " + leftIsRecent, e);
       }
+
+      adapter.pause(position);
     }
 
     @Override
@@ -590,7 +586,7 @@ public class MediaPreviewActivity extends PassphraseRequiredActionBarActivity im
     }
   }
 
-  private static class SingleItemPagerAdapter extends PagerAdapter implements MediaItemAdapter {
+  private static class SingleItemPagerAdapter extends MediaItemAdapter {
 
     private final GlideRequests glideRequests;
     private final Window        window;
@@ -662,7 +658,7 @@ public class MediaPreviewActivity extends PassphraseRequiredActionBarActivity im
     }
   }
 
-  private static class CursorPagerAdapter extends PagerAdapter implements MediaItemAdapter {
+  private static class CursorPagerAdapter extends MediaItemAdapter {
 
     private final WeakHashMap<Integer, MediaView> mediaViews = new WeakHashMap<>();
 
@@ -672,7 +668,6 @@ public class MediaPreviewActivity extends PassphraseRequiredActionBarActivity im
     private final Cursor        cursor;
     private final boolean       leftIsRecent;
 
-    private boolean active;
     private int     autoPlayPosition;
 
     CursorPagerAdapter(@NonNull Context context, @NonNull GlideRequests glideRequests,
@@ -687,15 +682,9 @@ public class MediaPreviewActivity extends PassphraseRequiredActionBarActivity im
       this.leftIsRecent     = leftIsRecent;
     }
 
-    public void setActive(boolean active) {
-      this.active = active;
-      notifyDataSetChanged();
-    }
-
     @Override
     public int getCount() {
-      if (!active) return 0;
-      else         return cursor.getCount();
+      return cursor.getCount();
     }
 
     @Override
@@ -768,8 +757,8 @@ public class MediaPreviewActivity extends PassphraseRequiredActionBarActivity im
     }
 
     private int getCursorPosition(int position) {
-      if (leftIsRecent) return position;
-      else              return cursor.getCount() - 1 - position;
+        int unclamped = leftIsRecent ? position : cursor.getCount() - 1 - position;
+        return Math.max(Math.min(unclamped, cursor.getCount() - 1), 0);
     }
   }
 
@@ -797,9 +786,9 @@ public class MediaPreviewActivity extends PassphraseRequiredActionBarActivity im
     }
   }
 
-  interface MediaItemAdapter {
-    MediaItem getMediaItemFor(int position);
-    void pause(int position);
-    @Nullable View getPlaybackControls(int position);
+  abstract static class MediaItemAdapter extends PagerAdapter {
+    abstract MediaItem getMediaItemFor(int position);
+    abstract void pause(int position);
+    @Nullable abstract View getPlaybackControls(int position);
   }
 }

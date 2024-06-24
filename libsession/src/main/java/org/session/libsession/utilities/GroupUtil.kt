@@ -1,23 +1,31 @@
 package org.session.libsession.utilities
 
-import network.loki.messenger.libsession_util.util.GroupInfo
+import org.session.libsession.messaging.open_groups.OpenGroup
+import org.session.libsession.messaging.utilities.SessionId
 import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.utilities.Hex
 import java.io.IOException
 
 object GroupUtil {
     const val CLOSED_GROUP_PREFIX = "__textsecure_group__!"
-    const val OPEN_GROUP_PREFIX = "__loki_public_chat_group__!"
-    const val OPEN_GROUP_INBOX_PREFIX = "__open_group_inbox__!"
+    const val COMMUNITY_PREFIX = "__loki_public_chat_group__!"
+    const val COMMUNITY_INBOX_PREFIX = "__open_group_inbox__!"
 
     @JvmStatic
     fun getEncodedOpenGroupID(groupID: ByteArray): String {
-        return OPEN_GROUP_PREFIX + Hex.toStringCondensed(groupID)
+        return COMMUNITY_PREFIX + Hex.toStringCondensed(groupID)
     }
 
     @JvmStatic
-    fun getEncodedOpenGroupInboxID(groupInboxID: ByteArray): String {
-        return OPEN_GROUP_INBOX_PREFIX + Hex.toStringCondensed(groupInboxID)
+    fun getEncodedOpenGroupInboxID(openGroup: OpenGroup, sessionId: SessionId): Address {
+        val openGroupInboxId =
+            "${openGroup.server}!${openGroup.publicKey}!${sessionId.hexString}".toByteArray()
+        return getEncodedOpenGroupInboxID(openGroupInboxId)
+    }
+
+    @JvmStatic
+    fun getEncodedOpenGroupInboxID(groupInboxID: ByteArray): Address {
+        return Address.fromSerialized(COMMUNITY_INBOX_PREFIX + Hex.toStringCondensed(groupInboxID))
     }
 
     @JvmStatic
@@ -52,7 +60,7 @@ object GroupUtil {
     }
 
     @JvmStatic
-    fun getDecodedOpenGroupInbox(groupID: String): String {
+    fun getDecodedOpenGroupInboxSessionId(groupID: String): String {
         val decodedGroupId = getDecodedGroupID(groupID)
         if (decodedGroupId.split("!").count() > 2) {
             return decodedGroupId.split("!", limit = 3)[2]
@@ -61,17 +69,17 @@ object GroupUtil {
     }
 
     fun isEncodedGroup(groupId: String): Boolean {
-        return groupId.startsWith(CLOSED_GROUP_PREFIX) || groupId.startsWith(OPEN_GROUP_PREFIX)
+        return groupId.startsWith(CLOSED_GROUP_PREFIX) || groupId.startsWith(COMMUNITY_PREFIX)
     }
 
     @JvmStatic
-    fun isOpenGroup(groupId: String): Boolean {
-        return groupId.startsWith(OPEN_GROUP_PREFIX)
+    fun isCommunity(groupId: String): Boolean {
+        return groupId.startsWith(COMMUNITY_PREFIX)
     }
 
     @JvmStatic
-    fun isOpenGroupInbox(groupId: String): Boolean {
-        return groupId.startsWith(OPEN_GROUP_INBOX_PREFIX)
+    fun isCommunityInbox(groupId: String): Boolean {
+        return groupId.startsWith(COMMUNITY_INBOX_PREFIX)
     }
 
     @JvmStatic
@@ -100,22 +108,23 @@ object GroupUtil {
 
     @JvmStatic
     @Throws(IOException::class)
-    fun doubleDecodeGroupId(groupID: String): String {
-        return Hex.toStringCondensed(getDecodedGroupIDAsData(getDecodedGroupID(groupID)))
-    }
+    fun doubleDecodeGroupId(groupID: String): String =
+        Hex.toStringCondensed(getDecodedGroupIDAsData(getDecodedGroupID(groupID)))
+
+    @JvmStatic
+    fun addressToGroupSessionId(address: Address): String =
+        doubleDecodeGroupId(address.toGroupString())
 
     fun createConfigMemberMap(
         members: Collection<String>,
         admins: Collection<String>
     ): Map<String, Boolean> {
         // Start with admins
-        val memberMap = admins.associate {
-            it to true
-        }.toMutableMap()
+        val memberMap = admins.associateWith { true }.toMutableMap()
 
         // Add the remaining members (there may be duplicates, so only add ones that aren't already in there from admins)
         for (member in members) {
-            if (!memberMap.contains(member)) {
+            if (member !in memberMap) {
                 memberMap[member] = false
             }
         }

@@ -2,6 +2,7 @@
 <resources>
 
     <!-- Font Sizes -->
+    <dimen name="tiny_font_size">9sp</dimen>
     <dimen name="very_small_font_size">12sp</dimen>
     <dimen name="small_font_size">15sp</dimen>
     <dimen name="medium_font_size">17sp</dimen>
@@ -10,6 +11,7 @@
     <dimen name="massive_font_size">50sp</dimen>
 
     <!-- Element Sizes -->
+    <dimen name="dialog_button_height">60dp</dimen>
     <dimen name="small_button_height">34dp</dimen>
     <dimen name="medium_button_height">38dp</dimen>
     <dimen name="large_button_height">54dp</dimen>
