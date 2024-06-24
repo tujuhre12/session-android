@@ -4,14 +4,16 @@ import android.content.Context
 import android.content.res.Resources
 import android.graphics.Typeface
 import android.graphics.drawable.ColorDrawable
+import android.text.SpannableString
+import android.text.TextUtils
 import android.util.AttributeSet
 import android.util.TypedValue
-import android.view.LayoutInflater
 import android.view.View
 import android.widget.LinearLayout
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
+import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewConversationBinding
 import org.session.libsession.utilities.recipients.Recipient
@@ -19,23 +21,30 @@ import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities.hig
 import org.thoughtcrime.securesms.database.RecipientDatabase.NOTIFY_TYPE_ALL
 import org.thoughtcrime.securesms.database.RecipientDatabase.NOTIFY_TYPE_NONE
 import org.thoughtcrime.securesms.database.model.ThreadRecord
+import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.mms.GlideRequests
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.getAccentColor
+import org.thoughtcrime.securesms.util.getConversationUnread
 import java.util.Locale
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class ConversationView : LinearLayout {
-    private lateinit var binding: ViewConversationBinding
+
+    @Inject lateinit var configFactory: ConfigFactory
+
+    private val binding: ViewConversationBinding by lazy { ViewConversationBinding.bind(this) }
     private val screenWidth = Resources.getSystem().displayMetrics.widthPixels
     var thread: ThreadRecord? = null
 
     // region Lifecycle
-    constructor(context: Context) : super(context) { initialize() }
-    constructor(context: Context, attrs: AttributeSet) : super(context, attrs) { initialize() }
-    constructor(context: Context, attrs: AttributeSet, defStyleAttr: Int) : super(context, attrs, defStyleAttr) { initialize() }
+    constructor(context: Context) : super(context)
+    constructor(context: Context, attrs: AttributeSet) : super(context, attrs)
+    constructor(context: Context, attrs: AttributeSet, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
-    private fun initialize() {
-        binding = ViewConversationBinding.inflate(LayoutInflater.from(context), this, true)
+    override fun onFinishInflate() {
+        super.onFinishInflate()
         layoutParams = RecyclerView.LayoutParams(screenWidth, RecyclerView.LayoutParams.WRAP_CONTENT)
     }
     // endregion
@@ -53,12 +62,11 @@ class ConversationView : LinearLayout {
         } else {
             binding.conversationViewDisplayNameTextView.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, 0, 0)
         }
-        background = if (thread.unreadCount > 0) {
+        binding.root.background = if (thread.unreadCount > 0) {
             ContextCompat.getDrawable(context, R.drawable.conversation_unread_background)
         } else {
             ContextCompat.getDrawable(context, R.drawable.conversation_view_background)
         }
-        binding.profilePictureView.root.glide = glide
         val unreadCount = thread.unreadCount
         if (thread.recipient.isBlocked) {
             binding.accentView.setBackgroundResource(R.color.destructive)
@@ -71,7 +79,7 @@ class ConversationView : LinearLayout {
             // This would also not trigger the disappearing message timer which may or may not be desirable
             binding.accentView.visibility = if (unreadCount > 0 && !thread.isRead) View.VISIBLE else View.INVISIBLE
         }
-        val formattedUnreadCount = if (thread.isRead) {
+        val formattedUnreadCount = if (unreadCount == 0) {
             null
         } else {
             if (unreadCount < 10000) unreadCount.toString() else "9999+"
@@ -79,12 +87,14 @@ class ConversationView : LinearLayout {
         binding.unreadCountTextView.text = formattedUnreadCount
         val textSize = if (unreadCount < 1000) 12.0f else 10.0f
         binding.unreadCountTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, textSize)
-        binding.unreadCountIndicator.background.setTint(context.getAccentColor())
         binding.unreadCountIndicator.isVisible = (unreadCount != 0 && !thread.isRead)
-        val senderDisplayName = getUserDisplayName(thread.recipient)
+                || (configFactory.convoVolatile?.getConversationUnread(thread) == true)
+        binding.unreadMentionTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, textSize)
+        binding.unreadMentionIndicator.isVisible = (thread.unreadMentionCount != 0 && thread.recipient.address.isGroup)
+        val senderDisplayName = getTitle(thread.recipient)
                 ?: thread.recipient.address.toString()
         binding.conversationViewDisplayNameTextView.text = senderDisplayName
-        binding.timestampTextView.text = DateUtils.getDisplayFormattedTimeSpanString(context, Locale.getDefault(), thread.date)
+        binding.timestampTextView.text = thread.date.takeIf { it != 0L }?.let { DateUtils.getDisplayFormattedTimeSpanString(context, Locale.getDefault(), it) }
         val recipient = thread.recipient
         binding.muteIndicatorImageView.isVisible = recipient.isMuted || recipient.notifyType != NOTIFY_TYPE_ALL
         val drawableRes = if (recipient.isMuted || recipient.notifyType == NOTIFY_TYPE_NONE) {
@@ -93,17 +103,15 @@ class ConversationView : LinearLayout {
             R.drawable.ic_notifications_mentions
         }
         binding.muteIndicatorImageView.setImageResource(drawableRes)
-        val rawSnippet = thread.getDisplayBody(context)
-        val snippet = highlightMentions(rawSnippet, thread.threadId, context)
-        binding.snippetTextView.text = snippet
+        binding.snippetTextView.text = highlightMentions(thread.getSnippet(), thread.threadId, context)
         binding.snippetTextView.typeface = if (unreadCount > 0 && !thread.isRead) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
         binding.snippetTextView.visibility = if (isTyping) View.GONE else View.VISIBLE
         if (isTyping) {
-            binding.typingIndicatorView.startAnimation()
+            binding.typingIndicatorView.root.startAnimation()
         } else {
-            binding.typingIndicatorView.stopAnimation()
+            binding.typingIndicatorView.root.stopAnimation()
         }
-        binding.typingIndicatorView.visibility = if (isTyping) View.VISIBLE else View.GONE
+        binding.typingIndicatorView.root.visibility = if (isTyping) View.VISIBLE else View.GONE
         binding.statusIndicatorImageView.visibility = View.VISIBLE
         when {
             !thread.isOutgoing -> binding.statusIndicatorImageView.visibility = View.GONE
@@ -116,19 +124,28 @@ class ConversationView : LinearLayout {
             thread.isRead -> binding.statusIndicatorImageView.setImageResource(R.drawable.ic_filled_circle_check)
             else -> binding.statusIndicatorImageView.setImageResource(R.drawable.ic_circle_check)
         }
-        binding.profilePictureView.root.update(thread.recipient)
+        binding.profilePictureView.update(thread.recipient)
     }
 
     fun recycle() {
-        binding.profilePictureView.root.recycle()
+        binding.profilePictureView.recycle()
     }
 
-    private fun getUserDisplayName(recipient: Recipient): String? {
-        return if (recipient.isLocalNumber) {
-            context.getString(R.string.note_to_self)
-        } else {
-            recipient.name // Internally uses the Contact API
-        }
+    private fun getTitle(recipient: Recipient): String? = when {
+        recipient.isLocalNumber -> context.getString(R.string.note_to_self)
+        else -> recipient.toShortString() // Internally uses the Contact API
+    }
+
+    private fun ThreadRecord.getSnippet(): CharSequence =
+        concatSnippet(getSnippetPrefix(), getDisplayBody(context))
+
+    private fun concatSnippet(prefix: CharSequence?, body: CharSequence): CharSequence =
+        prefix?.let { TextUtils.concat(it, ": ", body) } ?: body
+
+    private fun ThreadRecord.getSnippetPrefix(): CharSequence? = when {
+        recipient.isLocalNumber || lastMessage?.isControlMessage == true -> null
+        lastMessage?.isOutgoing == true -> resources.getString(R.string.MessageRecord_you)
+        else -> lastMessage?.individualRecipient?.toShortString()
     }
     // endregion
 }

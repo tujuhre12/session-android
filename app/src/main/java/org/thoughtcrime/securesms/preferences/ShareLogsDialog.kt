@@ -1,71 +1,83 @@
 package org.thoughtcrime.securesms.preferences
 
+import android.app.Dialog
 import android.content.ContentResolver
 import android.content.ContentValues
 import android.content.Intent
 import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Build
+import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
-import android.view.LayoutInflater
 import android.webkit.MimeTypeMap
+import android.widget.ProgressBar
+import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
+import androidx.core.view.isInvisible
+import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.lifecycleScope
+
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
-import network.loki.messenger.databinding.DialogShareLogsBinding
+
 import org.session.libsignal.utilities.ExternalStorageUtil
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
-import org.thoughtcrime.securesms.conversation.v2.utilities.BaseDialog
+import org.thoughtcrime.securesms.createSessionDialog
 import org.thoughtcrime.securesms.util.FileProviderUtil
 import org.thoughtcrime.securesms.util.StreamUtil
+
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.util.Objects
 import java.util.concurrent.TimeUnit
 
-class ShareLogsDialog : BaseDialog() {
 
+class ShareLogsDialog(private val updateCallback: (Boolean)->Unit): DialogFragment() {
+
+    private val TAG = "ShareLogsDialog"
     private var shareJob: Job? = null
 
-    override fun setContentView(builder: AlertDialog.Builder) {
-        val binding = DialogShareLogsBinding.inflate(LayoutInflater.from(requireContext()))
-        binding.cancelButton.setOnClickListener {
-            dismiss()
-        }
-        binding.shareButton.setOnClickListener {
-            // start the export and share
-            shareLogs()
-        }
-        builder.setView(binding.root)
-        builder.setCancelable(false)
+    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog = createSessionDialog {
+        title(R.string.dialog_share_logs_title)
+        text(R.string.dialog_share_logs_explanation)
+        button(R.string.share, dismiss = false) { runShareLogsJob() }
+        cancelButton { updateCallback(false) }
     }
 
-    private fun shareLogs() {
+    // If the share logs dialog loses focus the job gets cancelled so we'll update the UI state
+    override fun onPause() {
+        super.onPause()
+        updateCallback(false)
+    }
+
+    private fun runShareLogsJob() {
+        // Cancel any existing share job that might already be running to start anew
         shareJob?.cancel()
+
+        updateCallback(true)
+
         shareJob = lifecycleScope.launch(Dispatchers.IO) {
             val persistentLogger = ApplicationContext.getInstance(context).persistentLogger
             try {
+                Log.d(TAG, "Starting share logs job...")
+
                 val context = requireContext()
                 val outputUri: Uri = ExternalStorageUtil.getDownloadUri()
-                val mediaUri = getExternalFile()
-                if (mediaUri == null) {
-                    // show toast saying media saved
-                    dismiss()
-                    return@launch
-                }
+                val mediaUri = getExternalFile() ?: return@launch
 
                 val inputStream = persistentLogger.logs.get().byteInputStream()
                 val updateValues = ContentValues()
+
+                // Add details into the output or media files as appropriate
                 if (outputUri.scheme == ContentResolver.SCHEME_FILE) {
                     FileOutputStream(mediaUri.path).use { outputStream ->
                         StreamUtil.copy(inputStream, outputStream)
@@ -79,6 +91,7 @@ class ShareLogsDialog : BaseDialog() {
                         }
                     }
                 }
+
                 if (Build.VERSION.SDK_INT > 28) {
                     updateValues.put(MediaStore.MediaColumns.IS_PENDING, 0)
                 }
@@ -101,13 +114,35 @@ class ShareLogsDialog : BaseDialog() {
                     }
                     startActivity(Intent.createChooser(shareIntent, getString(R.string.share)))
                 }
-
-                dismiss()
             } catch (e: Exception) {
                 withContext(Main) {
                     Log.e("Loki", "Error saving logs", e)
                     Toast.makeText(context,"Error saving logs", Toast.LENGTH_LONG).show()
                 }
+            }
+        }.also { shareJob ->
+            shareJob.invokeOnCompletion { handler ->
+                // Note: Don't show Toasts here directly - use `withContext(Main)` or such if req'd
+                handler?.message.let { msg ->
+                    if (shareJob.isCancelled) {
+                        if (msg.isNullOrBlank()) {
+                            Log.w(TAG, "Share logs job was cancelled.")
+                        } else {
+                            Log.d(TAG, "Share logs job was cancelled. Reason: $msg")
+                        }
+
+                    }
+                    else if (shareJob.isCompleted) {
+                        Log.d(TAG, "Share logs job completed. Msg: $msg")
+                    }
+                    else {
+                        Log.w(TAG, "Share logs job finished while still Active. Msg: $msg")
+                    }
+                }
+
+                // Regardless of the job's success it has now completed so update the UI
+                updateCallback(false)
+                
                 dismiss()
             }
         }
@@ -163,6 +198,5 @@ class ShareLogsDialog : BaseDialog() {
         }
         return context.contentResolver.insert(outputUri, contentValues)
     }
-
 
 }

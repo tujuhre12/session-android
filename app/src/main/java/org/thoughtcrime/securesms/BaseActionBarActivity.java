@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms;
 
+import static android.os.Build.VERSION.SDK_INT;
 import static org.session.libsession.utilities.TextSecurePreferences.SELECTED_ACCENT_COLOR;
 
 import android.app.ActivityManager;
@@ -18,6 +19,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.dynamiclanguage.DynamicLanguageActivityHelper;
 import org.session.libsession.utilities.dynamiclanguage.DynamicLanguageContextWrapper;
+import org.thoughtcrime.securesms.conversation.v2.WindowUtil;
 import org.thoughtcrime.securesms.util.ActivityUtilitiesKt;
 import org.thoughtcrime.securesms.util.ThemeState;
 import org.thoughtcrime.securesms.util.UiModeUtilities;
@@ -28,30 +30,37 @@ public abstract class BaseActionBarActivity extends AppCompatActivity {
   private static final String TAG = BaseActionBarActivity.class.getSimpleName();
   public ThemeState currentThemeState;
 
+  private Resources.Theme modifiedTheme;
+
   private TextSecurePreferences getPreferences() {
     ApplicationContext appContext = (ApplicationContext) getApplicationContext();
     return appContext.textSecurePreferences;
   }
 
   @StyleRes
-  public int getDesiredTheme() {
+  private int getDesiredTheme() {
     ThemeState themeState = ActivityUtilitiesKt.themeState(getPreferences());
     int userSelectedTheme = themeState.getTheme();
+
+    // If the user has configured Session to follow the system light/dark theme mode then do so..
     if (themeState.getFollowSystem()) {
-      // do light or dark based on the selected theme
+
+      // Use light or dark versions of the user's theme based on light-mode / dark-mode settings
       boolean isDayUi = UiModeUtilities.isDayUiMode(this);
       if (userSelectedTheme == R.style.Ocean_Dark || userSelectedTheme == R.style.Ocean_Light) {
         return isDayUi ? R.style.Ocean_Light : R.style.Ocean_Dark;
       } else {
         return isDayUi ? R.style.Classic_Light : R.style.Classic_Dark;
       }
-    } else {
+    }
+    else // ..otherwise just return their selected theme.
+    {
       return userSelectedTheme;
     }
   }
 
   @StyleRes @Nullable
-  public Integer getAccentTheme() {
+  private Integer getAccentTheme() {
     if (!getPreferences().hasPreference(SELECTED_ACCENT_COLOR)) return null;
     ThemeState themeState = ActivityUtilitiesKt.themeState(getPreferences());
     return themeState.getAccentStyle();
@@ -59,8 +68,12 @@ public abstract class BaseActionBarActivity extends AppCompatActivity {
 
   @Override
   public Resources.Theme getTheme() {
+    if (modifiedTheme != null) {
+        return modifiedTheme;
+    }
+
     // New themes
-    Resources.Theme modifiedTheme = super.getTheme();
+    modifiedTheme = super.getTheme();
     modifiedTheme.applyStyle(getDesiredTheme(), true);
     Integer accentTheme = getAccentTheme();
     if (accentTheme != null) {
@@ -92,6 +105,11 @@ public abstract class BaseActionBarActivity extends AppCompatActivity {
     if (!currentThemeState.equals(ActivityUtilitiesKt.themeState(getPreferences()))) {
       recreate();
     }
+
+    // apply lightStatusBar manually as API 26 does not update properly via applyTheme
+    // https://issuetracker.google.com/issues/65883460?pli=1
+    if (SDK_INT >= 26 && SDK_INT <= 27) WindowUtil.setLightStatusBarFromTheme(this);
+    if (SDK_INT == 27) WindowUtil.setLightNavigationBarFromTheme(this);
   }
 
   @Override

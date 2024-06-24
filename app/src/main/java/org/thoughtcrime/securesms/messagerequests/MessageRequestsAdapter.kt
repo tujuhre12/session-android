@@ -14,7 +14,6 @@ import org.thoughtcrime.securesms.database.CursorRecyclerViewAdapter
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.mms.GlideRequests
-import org.thoughtcrime.securesms.util.forceShowIcon
 
 class MessageRequestsAdapter(
     context: Context,
@@ -49,6 +48,7 @@ class MessageRequestsAdapter(
     private fun showPopupMenu(view: MessageRequestView) {
         val popupMenu = PopupMenu(ContextThemeWrapper(context, R.style.PopupMenu_MessageRequests), view)
         popupMenu.menuInflater.inflate(R.menu.menu_message_request, popupMenu.menu)
+        popupMenu.menu.findItem(R.id.menu_block_message_request)?.isVisible = !view.thread!!.recipient.isOpenGroupInboxRecipient
         popupMenu.setOnMenuItemClickListener { menuItem ->
             if (menuItem.itemId == R.id.menu_delete_message_request) {
                 listener.onDeleteConversationClick(view.thread!!)
@@ -64,7 +64,7 @@ class MessageRequestsAdapter(
             item.iconTintList = ColorStateList.valueOf(context.getColor(R.color.destructive))
             item.title = s
         }
-        popupMenu.forceShowIcon()
+        popupMenu.setForceShowIcon(true)
         popupMenu.show()
     }
 

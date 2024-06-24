@@ -5,6 +5,8 @@ import android.text.TextUtils
 import com.google.protobuf.ByteString
 import org.greenrobot.eventbus.EventBus
 import org.session.libsession.database.MessageDataProvider
+import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.messaging.messages.control.UnsendRequest
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentId
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
@@ -74,10 +76,10 @@ class DatabaseAttachmentProvider(context: Context, helper: SQLCipherOpenHelper) 
         attachmentDatabase.setTransferState(messageID, attachmentId, attachmentState.value)
     }
 
-    override fun getMessageForQuote(timestamp: Long, author: Address): Pair<Long, Boolean>? {
+    override fun getMessageForQuote(timestamp: Long, author: Address): Triple<Long, Boolean, String>? {
         val messagingDatabase = DatabaseComponent.get(context).mmsSmsDatabase()
         val message = messagingDatabase.getMessageFor(timestamp, author)
-        return if (message != null) Pair(message.id, message.isMms) else null
+        return if (message != null) Triple(message.id, message.isMms, message.body) else null
     }
 
     override fun getAttachmentsAndLinkPreviewFor(mmsId: Long): List<Attachment> {
@@ -176,35 +178,63 @@ class DatabaseAttachmentProvider(context: Context, helper: SQLCipherOpenHelper) 
         return messageDB.getMessageID(serverId, threadId)
     }
 
+    override fun getMessageIDs(serverIds: List<Long>, threadId: Long): Pair<List<Long>, List<Long>> {
+        val messageDB = DatabaseComponent.get(context).lokiMessageDatabase()
+        return messageDB.getMessageIDs(serverIds, threadId)
+    }
+
     override fun deleteMessage(messageID: Long, isSms: Boolean) {
         val messagingDatabase: MessagingDatabase = if (isSms)  DatabaseComponent.get(context).smsDatabase()
                                                    else DatabaseComponent.get(context).mmsDatabase()
+        val (threadId, timestamp) = runCatching { messagingDatabase.getMessageRecord(messageID).run { threadId to timestamp } }.getOrNull() ?: (null to null)
+
         messagingDatabase.deleteMessage(messageID)
         DatabaseComponent.get(context).lokiMessageDatabase().deleteMessage(messageID, isSms)
-        DatabaseComponent.get(context).lokiMessageDatabase().deleteMessageServerHash(messageID)
+        DatabaseComponent.get(context).lokiMessageDatabase().deleteMessageServerHash(messageID, mms = !isSms)
+
+        threadId ?: return
+        timestamp ?: return
+        MessagingModuleConfiguration.shared.lastSentTimestampCache.delete(threadId, timestamp)
     }
 
-    override fun updateMessageAsDeleted(timestamp: Long, author: String) {
+    override fun deleteMessages(messageIDs: List<Long>, threadId: Long, isSms: Boolean) {
+
+        val messagingDatabase: MessagingDatabase = if (isSms)  DatabaseComponent.get(context).smsDatabase()
+                                                   else DatabaseComponent.get(context).mmsDatabase()
+
+        val messages = messageIDs.mapNotNull { runCatching { messagingDatabase.getMessageRecord(it) }.getOrNull() }
+
+        // Perform local delete
+        messagingDatabase.deleteMessages(messageIDs.toLongArray(), threadId)
+
+        // Perform online delete
+        DatabaseComponent.get(context).lokiMessageDatabase().deleteMessages(messageIDs)
+        DatabaseComponent.get(context).lokiMessageDatabase().deleteMessageServerHashes(messageIDs, mms = !isSms)
+
+        val threadId = messages.firstOrNull()?.threadId
+        threadId?.let{ MessagingModuleConfiguration.shared.lastSentTimestampCache.delete(it, messages.map { it.timestamp }) }
+    }
+
+    override fun updateMessageAsDeleted(timestamp: Long, author: String): Long? {
         val database = DatabaseComponent.get(context).mmsSmsDatabase()
         val address = Address.fromSerialized(author)
-        val message = database.getMessageFor(timestamp, address) ?: return
+        val message = database.getMessageFor(timestamp, address) ?: return null
         val messagingDatabase: MessagingDatabase = if (message.isMms)  DatabaseComponent.get(context).mmsDatabase()
                                                    else DatabaseComponent.get(context).smsDatabase()
-        messagingDatabase.markAsDeleted(message.id, message.isRead)
+        messagingDatabase.markAsDeleted(message.id, message.isRead, message.hasMention)
         if (message.isOutgoing) {
             messagingDatabase.deleteMessage(message.id)
         }
+
+        return message.id
     }
 
-    override fun getServerHashForMessage(messageID: Long): String? {
-        val messageDB = DatabaseComponent.get(context).lokiMessageDatabase()
-        return messageDB.getMessageServerHash(messageID)
-    }
+    override fun getServerHashForMessage(messageID: Long, mms: Boolean): String? =
+        DatabaseComponent.get(context).lokiMessageDatabase().getMessageServerHash(messageID, mms)
 
-    override fun getDatabaseAttachment(attachmentId: Long): DatabaseAttachment? {
-        val attachmentDatabase = DatabaseComponent.get(context).attachmentDatabase()
-        return attachmentDatabase.getAttachment(AttachmentId(attachmentId, 0))
-    }
+    override fun getDatabaseAttachment(attachmentId: Long): DatabaseAttachment? =
+        DatabaseComponent.get(context).attachmentDatabase()
+            .getAttachment(AttachmentId(attachmentId, 0))
 
     private fun scaleAndStripExif(attachmentDatabase: AttachmentDatabase, constraints: MediaConstraints, attachment: Attachment): Attachment? {
         return try {

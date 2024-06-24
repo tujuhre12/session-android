@@ -7,13 +7,13 @@ import org.session.libsignal.utilities.toHexString
 
 sealed class Destination {
 
-    class Contact(var publicKey: String) : Destination() {
+    data class Contact(var publicKey: String) : Destination() {
         internal constructor(): this("")
     }
-    class ClosedGroup(var groupPublicKey: String) : Destination() {
+    data class ClosedGroup(var groupPublicKey: String) : Destination() {
         internal constructor(): this("")
     }
-    class LegacyOpenGroup(var roomToken: String, var server: String) : Destination() {
+    data class LegacyOpenGroup(var roomToken: String, var server: String) : Destination() {
         internal constructor(): this("", "")
     }
 
@@ -43,14 +43,14 @@ sealed class Destination {
                     val groupPublicKey = GroupUtil.doubleDecodeGroupID(groupID).toHexString()
                     ClosedGroup(groupPublicKey)
                 }
-                address.isOpenGroup -> {
+                address.isCommunity -> {
                     val storage = MessagingModuleConfiguration.shared.storage
                     val threadID = storage.getThreadId(address)!!
                     storage.getOpenGroup(threadID)?.let {
                         OpenGroup(roomToken = it.room, server = it.server, fileIds = fileIds)
                     } ?: throw Exception("Missing open group for thread with ID: $threadID.")
                 }
-                address.isOpenGroupInbox -> {
+                address.isCommunityInbox -> {
                     val groupInboxId = GroupUtil.getDecodedGroupID(address.serialize()).split("!")
                     OpenGroupInbox(
                         groupInboxId.dropLast(2).joinToString("!"),

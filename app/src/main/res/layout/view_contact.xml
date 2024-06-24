@@ -15,7 +15,7 @@
         android:paddingHorizontal="@dimen/large_spacing"
         android:paddingVertical="@dimen/small_spacing">
 
-        <include layout="@layout/view_profile_picture"
+        <org.thoughtcrime.securesms.components.ProfilePictureView
             android:id="@+id/profilePictureView"
             android:layout_width="@dimen/small_profile_picture_size"
             android:layout_height="@dimen/small_profile_picture_size" />
@@ -25,6 +25,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="@dimen/medium_spacing"
+            android:maxLength="@integer/max_user_nickname_length_chars"
             android:maxLines="1"
             android:textAlignment="viewStart"
             android:ellipsize="end"
