@@ -31,7 +31,7 @@ class MessageNotificationsActivity : BaseActionBarActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setUpActionBarSessionLogo(true)
+        setUpActionBarSessionLogo()
         prefs.setHasSeenWelcomeScreen(true)
 
         setComposeContent { MessageNotificationsScreen() }
@@ -53,10 +53,4 @@ class MessageNotificationsActivity : BaseActionBarActivity() {
             else -> startHomeActivity()
         }
     }
-}
-
-fun Context.startMessageNotificationsActivity(flags: Int = 0) {
-    Intent(this, MessageNotificationsActivity::class.java)
-        .also { it.flags = flags }
-        .also(::startActivity)
 }

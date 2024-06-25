@@ -12,8 +12,9 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.onboarding.loading.LoadingManager
-import org.thoughtcrime.securesms.onboarding.messagenotifications.startMessageNotificationsActivity
+import org.thoughtcrime.securesms.onboarding.messagenotifications.MessageNotificationsActivity
 import org.thoughtcrime.securesms.ui.setComposeContent
+import org.thoughtcrime.securesms.util.start
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -38,8 +39,7 @@ class LoadAccountActivity : BaseActionBarActivity() {
         lifecycleScope.launch {
             viewModel.events.collect {
                 loadingManager.load(it.mnemonic)
-                startMessageNotificationsActivity()
-                finish()
+                start<MessageNotificationsActivity>()
             }
         }
 
