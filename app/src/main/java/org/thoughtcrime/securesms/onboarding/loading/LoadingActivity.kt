@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.onboarding.loading
 
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.compose.runtime.collectAsState
@@ -38,12 +37,11 @@ class LoadingActivity: BaseActionBarActivity() {
         prefs.setLastConfigurationSyncTime(System.currentTimeMillis())
 
         when {
-            loadFailed -> startPickDisplayNameActivity(
-                loadFailed = true,
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            )
+            loadFailed -> startPickDisplayNameActivity(loadFailed = true)
             else -> startHomeActivity()
         }
+
+        finish()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
