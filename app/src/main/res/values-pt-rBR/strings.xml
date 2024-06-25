@@ -643,7 +643,7 @@
     <string name="dialog_ui_mode_option_day">Dia</string>
     <string name="dialog_ui_mode_option_night">Noite</string>
     <string name="dialog_ui_mode_option_system_default">Default de sistema</string>
-    <string name="activity_conversation_menu_copy_session_id">Copiar Session ID</string>
+    <string name="activity_conversation_menu_copy_account_id">Copiar Session ID</string>
     <string name="attachment">Anexo</string>
     <string name="attachment_type_voice_message">Mensagem de Voz</string>
     <string name="details">Detalhes</string>

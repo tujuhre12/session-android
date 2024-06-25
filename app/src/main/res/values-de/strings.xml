@@ -641,7 +641,7 @@
     <string name="dialog_ui_mode_option_day">Tag</string>
     <string name="dialog_ui_mode_option_night">Nacht</string>
     <string name="dialog_ui_mode_option_system_default">Systemstandard</string>
-    <string name="activity_conversation_menu_copy_session_id">Session-ID kopieren</string>
+    <string name="activity_conversation_menu_copy_account_id">Session-ID kopieren</string>
     <string name="attachment">Anhang</string>
     <string name="attachment_type_voice_message">Sprachnachricht</string>
     <string name="details">Details</string>

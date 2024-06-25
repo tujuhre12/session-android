@@ -641,7 +641,7 @@ on viallinen!</string>
     <string name="dialog_ui_mode_option_day">Päivä</string>
     <string name="dialog_ui_mode_option_night">Yö</string>
     <string name="dialog_ui_mode_option_system_default">Järjestelmän oletus</string>
-    <string name="activity_conversation_menu_copy_session_id">Kopioi Session ID</string>
+    <string name="activity_conversation_menu_copy_account_id">Kopioi Session ID</string>
     <string name="attachment">Liite</string>
     <string name="attachment_type_voice_message">Ääniviesti</string>
     <string name="details">Lisätiedot</string>

@@ -643,7 +643,7 @@
     <string name="dialog_ui_mode_option_day">Ημέρα</string>
     <string name="dialog_ui_mode_option_night">Νύχτα</string>
     <string name="dialog_ui_mode_option_system_default">Προεπιλογή συστήματος</string>
-    <string name="activity_conversation_menu_copy_session_id">Αντιγραφή Ταυτότητας</string>
+    <string name="activity_conversation_menu_copy_account_id">Αντιγραφή Ταυτότητας</string>
     <string name="attachment">Συνημμένο</string>
     <string name="attachment_type_voice_message">Ηχητικό μήνυμα</string>
     <string name="details">Λεπτομέρειες</string>

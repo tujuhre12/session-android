@@ -642,7 +642,7 @@ för nyckelutbyte!</string>
     <string name="dialog_ui_mode_option_day">Dag</string>
     <string name="dialog_ui_mode_option_night">Natt</string>
     <string name="dialog_ui_mode_option_system_default">Systemets inställning</string>
-    <string name="activity_conversation_menu_copy_session_id">Kopiera Session-ID</string>
+    <string name="activity_conversation_menu_copy_account_id">Kopiera Session-ID</string>
     <string name="attachment">Bilaga</string>
     <string name="attachment_type_voice_message">Röstmeddelande</string>
     <string name="details">Detaljer</string>

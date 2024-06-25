@@ -642,7 +642,7 @@
     <string name="dialog_ui_mode_option_day">روز</string>
     <string name="dialog_ui_mode_option_night">شب</string>
     <string name="dialog_ui_mode_option_system_default">پیش فرض سیستم</string>
-    <string name="activity_conversation_menu_copy_session_id">کپی شناسه‌ی Session</string>
+    <string name="activity_conversation_menu_copy_account_id">کپی شناسه‌ی Session</string>
     <string name="attachment">پیوست</string>
     <string name="attachment_type_voice_message">پیام صوتی</string>
     <string name="details">جزئيات</string>

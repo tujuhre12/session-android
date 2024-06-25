@@ -665,7 +665,7 @@
     <string name="dialog_ui_mode_option_day">Dzień</string>
     <string name="dialog_ui_mode_option_night">Noc</string>
     <string name="dialog_ui_mode_option_system_default">Domyślny dla systemu</string>
-    <string name="activity_conversation_menu_copy_session_id">Skopiuj ID sesji</string>
+    <string name="activity_conversation_menu_copy_account_id">Skopiuj ID sesji</string>
     <string name="attachment">Załącznik</string>
     <string name="attachment_type_voice_message">Wiadomość głosowa</string>
     <string name="details">Szczegóły</string>

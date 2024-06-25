@@ -22,7 +22,7 @@
     <string name="AccessibilityId_continue">Continue</string>
     <!-- Recovery phrase input -->
 
-    <string name="AccessibilityId_copy_session_id">Copy Session ID</string>
+    <string name="AccessibilityId_copy_account_id">Copy Account ID</string>
     <!--Restore by seed page-->
     <string name="AccessibilityId_enter_your_recovery_phrase">Enter your recovery phrase</string>
     <!--Create Display Name    -->
@@ -857,7 +857,7 @@
     <string name="dialog_ui_mode_option_day">Day</string>
     <string name="dialog_ui_mode_option_night">Night</string>
     <string name="dialog_ui_mode_option_system_default">System default</string>
-    <string name="activity_conversation_menu_copy_session_id">Copy Session ID</string>
+    <string name="activity_conversation_menu_copy_account_id">Copy Account ID</string>
     <string name="attachment">Attachment</string>
     <string name="attachment_type_voice_message">Voice Message</string>
     <string name="details">Details</string>

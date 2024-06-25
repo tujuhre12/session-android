@@ -650,7 +650,7 @@
     <string name="dialog_ui_mode_option_day">Ցերեկ</string>
     <string name="dialog_ui_mode_option_night">Գիշեր</string>
     <string name="dialog_ui_mode_option_system_default">Համակարգի լռելյայն</string>
-    <string name="activity_conversation_menu_copy_session_id">Պատճենել Session ID֊ն</string>
+    <string name="activity_conversation_menu_copy_account_id">Պատճենել Session ID֊ն</string>
     <string name="attachment">Կցում</string>
     <string name="attachment_type_voice_message">Ձայնագրություն</string>
     <string name="details">Մանրամասներ</string>

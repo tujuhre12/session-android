@@ -668,7 +668,7 @@
     <string name="dialog_ui_mode_option_day">День</string>
     <string name="dialog_ui_mode_option_night">Ніч</string>
     <string name="dialog_ui_mode_option_system_default">За замовчуванням системи</string>
-    <string name="activity_conversation_menu_copy_session_id">Скопіювати Session ID адрессу</string>
+    <string name="activity_conversation_menu_copy_account_id">Скопіювати Session ID адрессу</string>
     <string name="attachment">Вкладення</string>
     <string name="attachment_type_voice_message">Голосове повідомлення</string>
     <string name="details">Подробиці</string>

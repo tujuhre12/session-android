@@ -644,7 +644,7 @@
     <string name="dialog_ui_mode_option_day">Ki</string>
     <string name="dialog_ui_mode_option_night">Be</string>
     <string name="dialog_ui_mode_option_system_default">Alapértelmezett</string>
-    <string name="activity_conversation_menu_copy_session_id">Az ön Session azonosító kimásolása</string>
+    <string name="activity_conversation_menu_copy_account_id">Az ön Session azonosító kimásolása</string>
     <string name="attachment">Csatolmány</string>
     <string name="attachment_type_voice_message">Hangüzenet</string>
     <string name="details">Részletek</string>

@@ -636,7 +636,7 @@ výmeny kľúčov.</string>
     <string name="dialog_ui_mode_option_day">Deň</string>
     <string name="dialog_ui_mode_option_night">Nočný režim</string>
     <string name="dialog_ui_mode_option_system_default">Predvolené systémom</string>
-    <string name="activity_conversation_menu_copy_session_id">Kopírovať Session ID</string>
+    <string name="activity_conversation_menu_copy_account_id">Kopírovať Session ID</string>
     <string name="attachment">Príloha</string>
     <string name="attachment_type_voice_message">Hlasová správa</string>
     <string name="details">Podrobnosti</string>

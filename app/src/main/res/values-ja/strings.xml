@@ -627,7 +627,7 @@
     <string name="dialog_ui_mode_option_day">デイ</string>
     <string name="dialog_ui_mode_option_night">ナイト</string>
     <string name="dialog_ui_mode_option_system_default">システムの既定値</string>
-    <string name="activity_conversation_menu_copy_session_id">Session ID をコピーする</string>
+    <string name="activity_conversation_menu_copy_account_id">Session ID をコピーする</string>
     <string name="attachment">添付ファイル</string>
     <string name="attachment_type_voice_message">音声メッセージ</string>
     <string name="details">詳細</string>

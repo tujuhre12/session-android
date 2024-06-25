@@ -642,7 +642,7 @@
     <string name="dialog_ui_mode_option_day">Dieninis</string>
     <string name="dialog_ui_mode_option_night">Naktinis</string>
     <string name="dialog_ui_mode_option_system_default">Sistemos numatytasis</string>
-    <string name="activity_conversation_menu_copy_session_id">Kopijuoti Session ID</string>
+    <string name="activity_conversation_menu_copy_account_id">Kopijuoti Session ID</string>
     <string name="attachment">Priedas</string>
     <string name="attachment_type_voice_message">Balso žinutė</string>
     <string name="details">Išsamiau</string>

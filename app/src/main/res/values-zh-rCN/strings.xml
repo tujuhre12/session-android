@@ -630,7 +630,7 @@
     <string name="dialog_ui_mode_option_day">白昼</string>
     <string name="dialog_ui_mode_option_night">夜间</string>
     <string name="dialog_ui_mode_option_system_default">系统默认</string>
-    <string name="activity_conversation_menu_copy_session_id">复制 Session ID</string>
+    <string name="activity_conversation_menu_copy_account_id">复制 Session ID</string>
     <string name="attachment">附件</string>
     <string name="attachment_type_voice_message">语音消息</string>
     <string name="details">详细信息</string>

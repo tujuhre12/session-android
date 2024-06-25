@@ -683,7 +683,7 @@
     <string name="dialog_ui_mode_option_day">Jour</string>
     <string name="dialog_ui_mode_option_night">Nuit</string>
     <string name="dialog_ui_mode_option_system_default">Défaut du système</string>
-    <string name="activity_conversation_menu_copy_session_id">Copier le Session ID</string>
+    <string name="activity_conversation_menu_copy_account_id">Copier le Session ID</string>
     <string name="attachment">Fichier joint</string>
     <string name="attachment_type_voice_message">Message vocal</string>
     <string name="details">Détails</string>

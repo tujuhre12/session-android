@@ -642,7 +642,7 @@ de intercambio de claves!</string>
     <string name="dialog_ui_mode_option_day">Día</string>
     <string name="dialog_ui_mode_option_night">Noche</string>
     <string name="dialog_ui_mode_option_system_default">Predeterminado del sistema</string>
-    <string name="activity_conversation_menu_copy_session_id">Copiar ID de Session</string>
+    <string name="activity_conversation_menu_copy_account_id">Copiar ID de Session</string>
     <string name="attachment">Adjunto</string>
     <string name="attachment_type_voice_message">Mensaje de voz</string>
     <string name="details">Detalles</string>

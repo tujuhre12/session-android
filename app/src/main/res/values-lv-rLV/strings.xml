@@ -216,7 +216,7 @@
     <string name="dialog_ui_mode_title">Izskats</string>
     <string name="dialog_ui_mode_option_day">Diena</string>
     <string name="dialog_ui_mode_option_night">Nakts</string>
-    <string name="activity_conversation_menu_copy_session_id">Kopēt Session ID</string>
+    <string name="activity_conversation_menu_copy_account_id">Kopēt Session ID</string>
     <string name="attachment">Pielikums</string>
     <string name="attachment_type_voice_message">Balss ziņojums</string>
     <string name="details">Papildu informācija</string>

@@ -643,7 +643,7 @@
     <string name="dialog_ui_mode_option_day">Dag</string>
     <string name="dialog_ui_mode_option_night">Nacht</string>
     <string name="dialog_ui_mode_option_system_default">Systeemstandaard</string>
-    <string name="activity_conversation_menu_copy_session_id">Sessie-ID kopiëren</string>
+    <string name="activity_conversation_menu_copy_account_id">Sessie-ID kopiëren</string>
     <string name="attachment">Bijlage</string>
     <string name="attachment_type_voice_message">Spraakbericht</string>
     <string name="details">Details</string>

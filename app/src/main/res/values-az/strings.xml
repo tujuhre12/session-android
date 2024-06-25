@@ -641,7 +641,7 @@
     <string name="dialog_ui_mode_option_day">Gündüz</string>
     <string name="dialog_ui_mode_option_night">Gecə</string>
     <string name="dialog_ui_mode_option_system_default">İlkin sistem</string>
-    <string name="activity_conversation_menu_copy_session_id">Session kimliyini kopyala</string>
+    <string name="activity_conversation_menu_copy_account_id">Session kimliyini kopyala</string>
     <string name="attachment">Qoşma</string>
     <string name="attachment_type_voice_message">Səsyazmalı mesaj</string>
     <string name="details">Təfsilatlar</string>

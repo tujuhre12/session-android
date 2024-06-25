@@ -665,7 +665,7 @@
     <string name="dialog_ui_mode_option_day">Den</string>
     <string name="dialog_ui_mode_option_night">Noc</string>
     <string name="dialog_ui_mode_option_system_default">Výchozí nastavení</string>
-    <string name="activity_conversation_menu_copy_session_id">Kopírovat Session ID</string>
+    <string name="activity_conversation_menu_copy_account_id">Kopírovat Session ID</string>
     <string name="attachment">Příloha</string>
     <string name="attachment_type_voice_message">Hlasová zpráva</string>
     <string name="details">Detaily</string>

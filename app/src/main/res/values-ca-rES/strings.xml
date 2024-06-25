@@ -624,7 +624,7 @@ d\'intercanvi de claus!</string>
     <string name="dialog_ui_mode_option_day">Dia</string>
     <string name="dialog_ui_mode_option_night">Nit</string>
     <string name="dialog_ui_mode_option_system_default">Per defecte del sistema</string>
-    <string name="activity_conversation_menu_copy_session_id">Copia l\'ID de Session</string>
+    <string name="activity_conversation_menu_copy_account_id">Copia l\'ID de Session</string>
     <string name="attachment">Adjunt</string>
     <string name="attachment_type_voice_message">Missatge de veu</string>
     <string name="details">Detalls</string>

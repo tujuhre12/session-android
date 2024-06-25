@@ -459,7 +459,7 @@
     <string name="dialog_ui_mode_title">Tema</string>
     <string name="dialog_ui_mode_option_day">Day</string>
     <string name="dialog_ui_mode_option_night">Night</string>
-    <string name="activity_conversation_menu_copy_session_id">Salin Session ID</string>
+    <string name="activity_conversation_menu_copy_account_id">Salin Session ID</string>
     <string name="attachment_type_voice_message">Pesan Suara</string>
     <string name="details">Detail</string>
     <string name="activity_backup_restore_select_file">Pilih file</string>

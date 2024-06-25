@@ -643,7 +643,7 @@ scambia un altro messaggio!</string>
     <string name="dialog_ui_mode_option_day">Giorno</string>
     <string name="dialog_ui_mode_option_night">Notte</string>
     <string name="dialog_ui_mode_option_system_default">Predefinito di sistema</string>
-    <string name="activity_conversation_menu_copy_session_id">Copia ID Sessione</string>
+    <string name="activity_conversation_menu_copy_account_id">Copia ID Sessione</string>
     <string name="attachment">Allegato</string>
     <string name="attachment_type_voice_message">Messaggio vocale</string>
     <string name="details">Dettagli</string>

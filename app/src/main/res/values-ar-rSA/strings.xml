@@ -689,7 +689,7 @@
     <string name="dialog_ui_mode_option_day">نهار</string>
     <string name="dialog_ui_mode_option_night">ليل</string>
     <string name="dialog_ui_mode_option_system_default">اختيارات النضام</string>
-    <string name="activity_conversation_menu_copy_session_id">اِنسخ رابط التعريف</string>
+    <string name="activity_conversation_menu_copy_account_id">اِنسخ رابط التعريف</string>
     <string name="attachment">مُرفق</string>
     <string name="attachment_type_voice_message">رسالة صوتية</string>
     <string name="details">تفاصيل</string>

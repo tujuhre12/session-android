@@ -642,7 +642,7 @@ nøkkelutvekslingsmelding.</string>
     <string name="dialog_ui_mode_option_day">Dag</string>
     <string name="dialog_ui_mode_option_night">Natt</string>
     <string name="dialog_ui_mode_option_system_default">Systemstandard</string>
-    <string name="activity_conversation_menu_copy_session_id">Kopier Session-ID</string>
+    <string name="activity_conversation_menu_copy_account_id">Kopier Session-ID</string>
     <string name="attachment">Vedlegg</string>
     <string name="attachment_type_voice_message">Talemelding</string>
     <string name="details">Detaljer</string>

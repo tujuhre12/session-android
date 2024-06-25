@@ -564,7 +564,7 @@
     <string name="activity_edit_closed_group_group_name_too_long_error">Introduce un nome de grupo máis curto, por favor</string>
     <string name="activity_edit_closed_group_not_enough_group_members_error">Os grupos deben ter polo menos 1 membro</string>
     <string name="fragment_edit_group_bottom_sheet_remove">Eliminar usuario do grupo</string>
-    <string name="activity_conversation_menu_copy_session_id">Copiar ID de Session</string>
+    <string name="activity_conversation_menu_copy_account_id">Copiar ID de Session</string>
     <string name="dialog_join_open_group_title">Entrar no grupo %s?</string>
     <string name="dialog_join_open_group_explanation">Tes a certeza de querer entrar no grupo aberto %s?</string>
     <string name="activity_conversation_blocked_banner_text">%s está bloqueado. Desbloquealo?</string>

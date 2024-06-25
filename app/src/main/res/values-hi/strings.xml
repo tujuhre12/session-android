@@ -642,7 +642,7 @@
     <string name="dialog_ui_mode_option_day">हलका</string>
     <string name="dialog_ui_mode_option_night">अंधेरा</string>
     <string name="dialog_ui_mode_option_system_default">सिस्टम डिफ़ॉल्ट का इस्तेमाल करें</string>
-    <string name="activity_conversation_menu_copy_session_id">कापी सेशन आईडी</string>
+    <string name="activity_conversation_menu_copy_account_id">कापी सेशन आईडी</string>
     <string name="attachment">अटैचमेंट</string>
     <string name="attachment_type_voice_message">वौइस् मैसेज</string>
     <string name="details">विस्तार</string>
