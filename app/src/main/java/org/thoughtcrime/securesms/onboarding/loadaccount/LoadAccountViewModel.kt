@@ -15,7 +15,6 @@ import network.loki.messenger.R
 import org.session.libsignal.crypto.MnemonicCodec
 import org.session.libsignal.crypto.MnemonicCodec.DecodingError.InputTooShort
 import org.session.libsignal.crypto.MnemonicCodec.DecodingError.InvalidWord
-import org.session.libsignal.crypto.MnemonicCodec.DecodingError.MissingLastWord
 import org.session.libsignal.utilities.Hex
 import org.thoughtcrime.securesms.crypto.MnemonicUtilities
 import javax.inject.Inject
@@ -45,17 +44,21 @@ internal class LinkDeviceViewModel @Inject constructor(
 
     fun onContinue() {
         viewModelScope.launch {
-            runDecodeCatching(state.value.recoveryPhrase)
-                .onSuccess(::onSuccess)
-                .onFailure(::onFailure)
+            try {
+                decode(state.value.recoveryPhrase).let(::onSuccess)
+            } catch (e: Exception) {
+                onFailure(e)
+            }
         }
     }
 
     fun onScanQrCode(string: String) {
         viewModelScope.launch {
-            runDecodeCatching(string)
-                .onSuccess(::onSuccess)
-                .onFailure(::onQrCodeScanFailure)
+            try {
+                decode(string).let(::onSuccess)
+            } catch (e: Exception) {
+                onFailure(e)
+            }
         }
     }
 
@@ -70,9 +73,8 @@ internal class LinkDeviceViewModel @Inject constructor(
         state.update {
             it.copy(
                 error = when (error) {
-                    is InputTooShort,
-                    is MissingLastWord -> R.string.recoveryPasswordErrorMessageShort
                     is InvalidWord -> R.string.recoveryPasswordErrorMessageIncorrect
+                    is InputTooShort -> R.string.recoveryPasswordErrorMessageShort
                     else -> R.string.recoveryPasswordErrorMessageGeneric
                 }.let(application::getString)
             )
@@ -83,8 +85,5 @@ internal class LinkDeviceViewModel @Inject constructor(
         viewModelScope.launch { _qrErrors.emit(error) }
     }
 
-    private fun runDecodeCatching(mnemonic: String) = runCatching {
-        decode(mnemonic)
-    }
     private fun decode(mnemonic: String) = codec.decode(mnemonic).let(Hex::fromStringCondensed)!!
 }
