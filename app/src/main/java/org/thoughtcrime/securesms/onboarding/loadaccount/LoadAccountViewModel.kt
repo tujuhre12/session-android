@@ -15,6 +15,7 @@ import network.loki.messenger.R
 import org.session.libsignal.crypto.MnemonicCodec
 import org.session.libsignal.crypto.MnemonicCodec.DecodingError.InputTooShort
 import org.session.libsignal.crypto.MnemonicCodec.DecodingError.InvalidWord
+import org.session.libsignal.crypto.MnemonicCodec.DecodingError.MissingLastWord
 import org.session.libsignal.utilities.Hex
 import org.thoughtcrime.securesms.crypto.MnemonicUtilities
 import javax.inject.Inject
@@ -69,7 +70,8 @@ internal class LinkDeviceViewModel @Inject constructor(
         state.update {
             it.copy(
                 error = when (error) {
-                    is InputTooShort -> R.string.recoveryPasswordErrorMessageShort
+                    is InputTooShort,
+                    is MissingLastWord -> R.string.recoveryPasswordErrorMessageShort
                     is InvalidWord -> R.string.recoveryPasswordErrorMessageIncorrect
                     else -> R.string.recoveryPasswordErrorMessageGeneric
                 }.let(application::getString)
