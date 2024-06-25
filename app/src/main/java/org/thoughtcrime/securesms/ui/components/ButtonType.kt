@@ -23,15 +23,18 @@ interface ButtonType {
     @Composable
     fun buttonColors(): ButtonColors
 
-    class Outline(private val color: Color): ButtonType {
+    class Outline(
+        private val contentColor: Color,
+        private val borderColor: Color = contentColor
+    ): ButtonType {
         @Composable
         override fun border(enabled: Boolean) = BorderStroke(
             width = LocalDimensions.current.borderStroke,
-            color = if (enabled) color else LocalColors.current.disabled
+            color = if (enabled) borderColor else LocalColors.current.disabled
         )
         @Composable
         override fun buttonColors() = ButtonDefaults.buttonColors(
-            contentColor = color,
+            contentColor = contentColor,
             backgroundColor = Color.Unspecified,
             disabledContentColor = LocalColors.current.disabled,
             disabledBackgroundColor = Color.Unspecified
