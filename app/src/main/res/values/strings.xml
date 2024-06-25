@@ -739,8 +739,8 @@
     <string name="displayNameDescription">It can be your real name, an alias, or anything else you like — and you can change it any time.</string>
     <string name="displayNameErrorNew">We were unable to load your display name. Please enter a new display name to continue.</string>
     <string name="displayNameEnter">Enter a display name</string>
-    <string name="displayNameErrorDescription">Please pick a display name</string>
-    <string name="displayNameErrorDescriptionShorter">Please pick a shorter display name</string>
+    <string name="displayNameErrorDescription">Please enter a display name.</string>
+    <string name="displayNameErrorDescriptionShorter">Please enter a shorter display name.</string>
     <string name="activity_pn_mode_recommended_option_tag">Recommended</string>
     <string name="activity_pn_mode_no_option_picked_dialog_title">Please Pick an Option</string>
     <string name="activity_home_empty_state_message">You don\'t have any contacts yet</string>
