@@ -67,7 +67,7 @@ import org.session.libsignal.utilities.ThreadUtils
 import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
-import org.thoughtcrime.securesms.conversation.start.NewConversationFragment
+import org.thoughtcrime.securesms.conversation.start.StartConversationFragment
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.utilities.NotificationUtils
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
@@ -229,7 +229,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         IP2Country.configureIfNeeded(this@HomeActivity)
 
         // Set up new conversation button
-        binding.newConversationButton.setOnClickListener { showNewConversation() }
+        binding.newConversationButton.setOnClickListener { showStartConversation() }
         // Observe blocked contacts changed events
 
         // subscribe to outdated config updates, this should be removed after long enough time for device migration
@@ -667,8 +667,8 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         }
     }
 
-    private fun showNewConversation() {
-        NewConversationFragment().show(supportFragmentManager, "NewConversationFragment")
+    private fun showStartConversation() {
+        StartConversationFragment().show(supportFragmentManager, "StartConversationFragment")
     }
 }
 

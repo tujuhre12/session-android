@@ -8,14 +8,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.fragment.app.Fragment
 import dagger.hilt.android.AndroidEntryPoint
 import org.session.libsession.utilities.TextSecurePreferences
-import org.thoughtcrime.securesms.conversation.start.NewConversationDelegate
+import org.thoughtcrime.securesms.conversation.start.StartConversationDelegate
 import org.thoughtcrime.securesms.preferences.copyPublicKey
 import org.thoughtcrime.securesms.preferences.sendInvitationToUseSession
 import org.thoughtcrime.securesms.ui.createThemedComposeView
 
 @AndroidEntryPoint
 class InviteFriendFragment : Fragment() {
-    lateinit var delegate: NewConversationDelegate
+    lateinit var delegate: StartConversationDelegate
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,

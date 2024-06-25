@@ -933,9 +933,9 @@
     <string name="message_requests_accepted">Your message request has been accepted.</string>
     <string name="message_requests_pending">Your message request is currently pending.</string>
     <string name="message_request_empty_state_message">No pending message requests</string>
-    <string name="NewConversationButton_SessionTooltip">Direct Message</string>
-    <string name="NewConversationButton_ClosedGroupTooltip">Closed Group</string>
-    <string name="NewConversationButton_OpenGroupTooltip">Open Group</string>
+    <string name="StartConversationButton_SessionTooltip">Direct Message</string>
+    <string name="StartConversationButton_ClosedGroupTooltip">Closed Group</string>
+    <string name="StartConversationButton_OpenGroupTooltip">Open Group</string>
     <string name="message_requests_notification">You have a new message request</string>
     <string name="CallNotificationBuilder_connecting">Connecting…</string>
     <string name="NotificationBarManager__incoming_signal_call">Incoming call</string>

@@ -1,6 +1,6 @@
 package org.thoughtcrime.securesms.conversation.start
 
-interface NewConversationDelegate {
+interface StartConversationDelegate {
     fun onNewMessageSelected()
     fun onCreateGroupSelected()
     fun onJoinCommunitySelected()
@@ -10,7 +10,7 @@ interface NewConversationDelegate {
     fun onInviteFriend()
 }
 
-object NullNewConversationDelegate: NewConversationDelegate {
+object NullStartConversationDelegate: StartConversationDelegate {
     override fun onNewMessageSelected() {}
     override fun onCreateGroupSelected() {}
     override fun onJoinCommunitySelected() {}

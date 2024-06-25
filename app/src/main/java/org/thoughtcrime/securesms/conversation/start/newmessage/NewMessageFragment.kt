@@ -13,7 +13,7 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
-import org.thoughtcrime.securesms.conversation.start.NewConversationDelegate
+import org.thoughtcrime.securesms.conversation.start.StartConversationDelegate
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.showOpenUrlDialog
@@ -22,7 +22,7 @@ import org.thoughtcrime.securesms.ui.createThemedComposeView
 class NewMessageFragment : Fragment() {
     private val viewModel: NewMessageViewModel by viewModels()
 
-    lateinit var delegate: NewConversationDelegate
+    lateinit var delegate: StartConversationDelegate
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

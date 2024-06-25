@@ -705,6 +705,6 @@ scambia un altro messaggio!</string>
     <string name="mark_all_as_read">Segna tutto come già letto</string>
     <string name="global_search_contacts_groups">Contatti e Gruppi</string>
     <string name="global_search_messages">Messaggi</string>
-    <string name="NewConversationButton_SessionTooltip">Messaggio Privato</string>
-    <string name="NewConversationButton_ClosedGroupTooltip">Gruppo Chiuso</string>
+    <string name="StartConversationButton_SessionTooltip">Messaggio Privato</string>
+    <string name="StartConversationButton_ClosedGroupTooltip">Gruppo Chiuso</string>
 </resources>

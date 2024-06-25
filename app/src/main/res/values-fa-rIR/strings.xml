@@ -756,9 +756,9 @@
     <string name="message_requests_accepted">درخواست پیام شما قبول شد.</string>
     <string name="message_requests_pending">درخواست پیام شما در انتظار پاسخ می باشد.</string>
     <string name="message_request_empty_state_message">هیچ درخواست پیامی وجود ندارد</string>
-    <string name="NewConversationButton_SessionTooltip">پیام مستقیم</string>
-    <string name="NewConversationButton_ClosedGroupTooltip">گروه‌های خصوصی</string>
-    <string name="NewConversationButton_OpenGroupTooltip">گروه‌های باز</string>
+    <string name="StartConversationButton_SessionTooltip">پیام مستقیم</string>
+    <string name="StartConversationButton_ClosedGroupTooltip">گروه‌های خصوصی</string>
+    <string name="StartConversationButton_OpenGroupTooltip">گروه‌های باز</string>
     <string name="message_requests_notification">شما درخواست پیام جدیدی دارید</string>
     <string name="CallNotificationBuilder_connecting">در حال اتصال…</string>
     <string name="NotificationBarManager__incoming_signal_call">تماس دریافتی</string>

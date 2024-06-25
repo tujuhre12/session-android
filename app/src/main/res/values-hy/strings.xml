@@ -712,7 +712,7 @@
     <string name="mark_all_as_read">Նշել բոլորը, որպես տեսնված</string>
     <string name="global_search_contacts_groups">Կոնտակտներ և խմբեր</string>
     <string name="global_search_messages">Հաղորդագրություններ</string>
-    <string name="NewConversationButton_SessionTooltip">Անմիջական հաղորդագրություն</string>
-    <string name="NewConversationButton_ClosedGroupTooltip">Փակ խումբ</string>
-    <string name="NewConversationButton_OpenGroupTooltip">Բաց խումբ</string>
+    <string name="StartConversationButton_SessionTooltip">Անմիջական հաղորդագրություն</string>
+    <string name="StartConversationButton_ClosedGroupTooltip">Փակ խումբ</string>
+    <string name="StartConversationButton_OpenGroupTooltip">Բաց խումբ</string>
 </resources>

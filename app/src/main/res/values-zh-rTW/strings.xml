@@ -698,7 +698,7 @@
     <string name="mark_all_as_read">全部標示為已讀</string>
     <string name="global_search_contacts_groups">聯絡人群組</string>
     <string name="global_search_messages">訊息</string>
-    <string name="NewConversationButton_SessionTooltip">直接傳訊</string>
-    <string name="NewConversationButton_ClosedGroupTooltip">已關閉的群組</string>
-    <string name="NewConversationButton_OpenGroupTooltip">開啟群組</string>
+    <string name="StartConversationButton_SessionTooltip">直接傳訊</string>
+    <string name="StartConversationButton_ClosedGroupTooltip">已關閉的群組</string>
+    <string name="StartConversationButton_OpenGroupTooltip">開啟群組</string>
 </resources>

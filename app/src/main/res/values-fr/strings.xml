@@ -759,9 +759,9 @@
     <string name="message_requests_accepted">Votre demande de message a été acceptée.</string>
     <string name="message_requests_pending">Votre demande de message est en attente.</string>
     <string name="message_request_empty_state_message">Aucune demande de message en attente</string>
-    <string name="NewConversationButton_SessionTooltip">Message privé</string>
-    <string name="NewConversationButton_ClosedGroupTooltip">Groupes privés</string>
-    <string name="NewConversationButton_OpenGroupTooltip">Groupe public</string>
+    <string name="StartConversationButton_SessionTooltip">Message privé</string>
+    <string name="StartConversationButton_ClosedGroupTooltip">Groupes privés</string>
+    <string name="StartConversationButton_OpenGroupTooltip">Groupe public</string>
     <string name="message_requests_notification">Vous avez une nouvelle demande de message</string>
     <string name="CallNotificationBuilder_connecting">Connexion…</string>
     <string name="NotificationBarManager__incoming_signal_call">Appel entrant</string>

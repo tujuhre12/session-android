@@ -18,10 +18,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import network.loki.messenger.R
-import org.thoughtcrime.securesms.conversation.start.NewConversationDelegate
-import org.thoughtcrime.securesms.conversation.start.NullNewConversationDelegate
+import org.thoughtcrime.securesms.conversation.start.NullStartConversationDelegate
+import org.thoughtcrime.securesms.conversation.start.StartConversationDelegate
 import org.thoughtcrime.securesms.ui.Divider
-import org.thoughtcrime.securesms.ui.ItemButton
+import org.thoughtcrime.securesms.ui.SmallItemButton
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
@@ -34,9 +34,9 @@ import org.thoughtcrime.securesms.ui.small
 import org.thoughtcrime.securesms.ui.xl
 
 @Composable
-internal fun NewConversationScreen(
+internal fun StartConversationScreen(
     accountId: String,
-    delegate: NewConversationDelegate
+    delegate: StartConversationDelegate
 ) {
     Column(modifier = Modifier.background(LocalColors.current.backgroundSecondary)) {
         AppBar(stringResource(R.string.dialog_start_conversation_title), onClose = delegate::onDialogClosePressed)
@@ -54,21 +54,21 @@ internal fun NewConversationScreen(
 }
 
 /**
- * Items of the NewConversationHome screen. Use in a [Column]
+ * Items of the StartConversationHome screen. Use in a [Column]
  */
 @Suppress("UnusedReceiverParameter")
 @Composable
 private fun ColumnScope.Items(
     accountId: String,
-    delegate: NewConversationDelegate
+    delegate: StartConversationDelegate
 ) {
-    ItemButton(textId = R.string.messageNew, icon = R.drawable.ic_message, onClick = delegate::onNewMessageSelected)
+    SmallItemButton(textId = R.string.messageNew, icon = R.drawable.ic_message, onClick = delegate::onNewMessageSelected)
     Divider(startIndent = LocalDimensions.current.dividerIndent)
-    ItemButton(textId = R.string.activity_create_group_title, icon = R.drawable.ic_group, onClick = delegate::onCreateGroupSelected)
+    SmallItemButton(textId = R.string.activity_create_group_title, icon = R.drawable.ic_group, onClick = delegate::onCreateGroupSelected)
     Divider(startIndent = LocalDimensions.current.dividerIndent)
-    ItemButton(textId = R.string.dialog_join_community_title, icon = R.drawable.ic_globe, onClick = delegate::onJoinCommunitySelected)
+    SmallItemButton(textId = R.string.dialog_join_community_title, icon = R.drawable.ic_globe, onClick = delegate::onJoinCommunitySelected)
     Divider(startIndent = LocalDimensions.current.dividerIndent)
-    ItemButton(textId = R.string.activity_settings_invite_button_title, icon = R.drawable.ic_invite_friend, Modifier.contentDescription(
+    SmallItemButton(textId = R.string.activity_settings_invite_button_title, icon = R.drawable.ic_invite_friend, Modifier.contentDescription(
         R.string.AccessibilityId_invite_friend_button), onClick = delegate::onInviteFriend)
     Column(
         modifier = Modifier
@@ -90,13 +90,13 @@ private fun ColumnScope.Items(
 
 @Preview
 @Composable
-private fun PreviewNewConversationScreen(
+private fun PreviewStartConversationScreen(
     @PreviewParameter(SessionColorsParameterProvider::class) colors: Colors
 ) {
     PreviewTheme(colors) {
-        NewConversationScreen(
+        StartConversationScreen(
             accountId = "059287129387123",
-            NullNewConversationDelegate
+            NullStartConversationDelegate
         )
     }
 }

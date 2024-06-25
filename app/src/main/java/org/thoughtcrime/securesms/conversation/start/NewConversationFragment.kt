@@ -17,7 +17,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.modifyLayoutParams
-import org.thoughtcrime.securesms.conversation.start.home.NewConversationHomeFragment
+import org.thoughtcrime.securesms.conversation.start.home.StartConversationHomeFragment
 import org.thoughtcrime.securesms.conversation.start.invitefriend.InviteFriendFragment
 import org.thoughtcrime.securesms.conversation.start.newmessage.NewMessageFragment
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
@@ -25,7 +25,7 @@ import org.thoughtcrime.securesms.groups.CreateGroupFragment
 import org.thoughtcrime.securesms.groups.JoinCommunityFragment
 
 @AndroidEntryPoint
-class NewConversationFragment : BottomSheetDialogFragment(), NewConversationDelegate {
+class StartConversationFragment : BottomSheetDialogFragment(), StartConversationDelegate {
 
     private val defaultPeekHeight: Int by lazy { (Resources.getSystem().displayMetrics.heightPixels * 0.94).toInt() }
 
@@ -39,8 +39,8 @@ class NewConversationFragment : BottomSheetDialogFragment(), NewConversationDele
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         replaceFragment(
-            fragment = NewConversationHomeFragment().also { it.delegate.value = this },
-            fragmentKey = NewConversationHomeFragment::class.java.simpleName
+            fragment = StartConversationHomeFragment().also { it.delegate.value = this },
+            fragmentKey = StartConversationHomeFragment::class.java.simpleName
         )
     }
 
