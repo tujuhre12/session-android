@@ -31,6 +31,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -51,15 +52,13 @@ import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
-import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.buffer
-import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ui.LocalDimensions
-import org.thoughtcrime.securesms.ui.color.LocalColors
 import org.thoughtcrime.securesms.ui.base
+import org.thoughtcrime.securesms.ui.color.LocalColors
 import org.thoughtcrime.securesms.ui.xl
 import java.util.concurrent.Executors
 
@@ -161,12 +160,25 @@ fun ScanQrCode(errors: Flow<String>, onScan: (String) -> Unit) {
 
     val scaffoldState = rememberScaffoldState()
 
+    val scope = rememberCoroutineScope()
+
     LaunchedEffect(Unit) {
-        errors.filter { scaffoldState.snackbarHostState.currentSnackbarData == null }
-            .buffer(0, BufferOverflow.DROP_OLDEST)
-            .collect { error ->
-                scaffoldState.snackbarHostState.showSnackbar(message = error)
-            }
+        errors.collect { error ->
+            scaffoldState.snackbarHostState
+                .takeIf { it.currentSnackbarData == null }
+                ?.run {
+                    scope.launch {
+                        // showSnackbar() suspends until the Snackbar is dismissed.
+                        // Launch in new scope so we drop new QR scan events, to prevent spamming
+                        // snackbars to the user, or worse, queuing a chain of snackbars one after
+                        // another to show and hide for the next minute or 2.
+                        // Don't use debounce() because many QR scans can come through each second,
+                        // and each scan could restart the timer which could mean no scan gets
+                        // through until the user stops scanning; quite perplexing.
+                        showSnackbar(message = error)
+                    }
+                }
+        }
     }
 
     Scaffold(

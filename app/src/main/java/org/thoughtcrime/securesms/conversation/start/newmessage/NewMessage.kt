@@ -44,7 +44,7 @@ private val TITLES = listOf(R.string.enter_account_id, R.string.qrScan)
 @Composable
 internal fun NewMessage(
     state: State,
-    errors: Flow<String> = emptyFlow(),
+    qrErrors: Flow<String> = emptyFlow(),
     callbacks: Callbacks = object: Callbacks {},
     onClose: () -> Unit = {},
     onBack: () -> Unit = {},
@@ -58,7 +58,7 @@ internal fun NewMessage(
         HorizontalPager(pagerState) {
             when (TITLES[it]) {
                 R.string.enter_account_id -> EnterAccountId(state, callbacks, onHelp)
-                R.string.qrScan -> MaybeScanQrCode(errors, onScan = callbacks::onScanQrCode)
+                R.string.qrScan -> MaybeScanQrCode(qrErrors, onScan = callbacks::onScanQrCode)
             }
         }
     }

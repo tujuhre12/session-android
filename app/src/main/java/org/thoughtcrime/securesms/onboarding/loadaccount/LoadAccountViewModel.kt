@@ -4,10 +4,13 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -36,7 +39,7 @@ internal class LinkDeviceViewModel @Inject constructor(
     private val _events = MutableSharedFlow<LoadAccountEvent>()
     val events = _events.asSharedFlow()
 
-    private val _qrErrors = MutableSharedFlow<Throwable>()
+    private val _qrErrors = MutableSharedFlow<Throwable>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     val qrErrors = _qrErrors.asSharedFlow()
         .mapNotNull { application.getString(R.string.qrNotRecoveryPassword) }
 
@@ -57,7 +60,7 @@ internal class LinkDeviceViewModel @Inject constructor(
             try {
                 decode(string).let(::onSuccess)
             } catch (e: Exception) {
-                onFailure(e)
+                onQrCodeScanFailure(e)
             }
         }
     }

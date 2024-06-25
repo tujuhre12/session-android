@@ -7,6 +7,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -34,7 +35,7 @@ internal class NewMessageViewModel @Inject constructor(
     private val _success = MutableSharedFlow<Success>()
     val success get() = _success.asSharedFlow()
 
-    private val _qrErrors = MutableSharedFlow<String>()
+    private val _qrErrors = MutableSharedFlow<String>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     val qrErrors = _qrErrors.asSharedFlow()
 
     private var loadOnsJob: Job? = null
