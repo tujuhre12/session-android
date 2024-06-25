@@ -149,14 +149,14 @@ private fun RadioButton(
     IconButton(modifier = modifier, onClick = onClick) {
         AnimatedVisibility(
             selected,
-            modifier = Modifier.clip(CircleShape),
+            modifier = Modifier.padding(2.5.dp)
+                .clip(CircleShape),
             enter = enter,
             exit = exit
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(2.5.dp)
                     .background(
                         color = LocalColors.current.primary,
                         shape = CircleShape
