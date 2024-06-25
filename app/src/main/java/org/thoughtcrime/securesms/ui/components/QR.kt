@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -59,6 +60,7 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.color.LocalColors
 import org.thoughtcrime.securesms.ui.base
+import org.thoughtcrime.securesms.ui.xl
 import java.util.concurrent.Executors
 
 private const val TAG = "NewMessageFragment"
@@ -75,7 +77,8 @@ fun MaybeScanQrCode(
         onScan: (String) -> Unit
 ) {
     Box(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
             .background(LocalColors.current.background)
     ) {
         LocalSoftwareKeyboardController.current?.hide()
@@ -103,14 +106,22 @@ fun MaybeScanQrCode(
                 )
             }
         } else {
-            Box(modifier = Modifier.fillMaxSize().padding(LocalDimensions.current.largeMargin)) {
-                SlimOutlineButton(
+            Column(
+                modifier = Modifier
+                    .background(color = LocalColors.current.backgroundSecondary)
+                    .fillMaxSize()
+                    .padding(LocalDimensions.current.largeMargin),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Spacer(modifier = Modifier.weight(1f))
+                Text(stringResource(R.string.fragment_scan_qr_code_camera_access_explanation), style = xl, textAlign = TextAlign.Center)
+                Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacing))
+                PrimaryOutlineButton(
                     stringResource(R.string.cameraGrantAccess),
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(),
                     onClick = { cameraPermissionState.run { launchPermissionRequest() } }
                 )
+                Spacer(modifier = Modifier.weight(1f))
             }
         }
     }
