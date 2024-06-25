@@ -394,7 +394,7 @@
     <!-- KeyCachingService -->
     <string name="KeyCachingService_signal_passphrase_cached">Touch to open.</string>
     <string name="KeyCachingService_passphrase_cached">Session is unlocked</string>
-    <string name="KeyCachingService_lock">Lock Session</string>
+    <string name="KeyCachingService_lock">Lock App</string>
     <!-- MediaPreviewActivity -->
     <string name="MediaPreviewActivity_you">You</string>
     <string name="MediaPreviewActivity_unssuported_media_type">Unsupported media type</string>
@@ -713,7 +713,7 @@
     <string name="LocalBackupJob_creating_backup">Creating backup...</string>
     <string name="ProgressPreference_d_messages_so_far">%d messages so far</string>
     <string name="BackupUtil_never">Never</string>
-    <string name="preferences_app_protection__screen_lock">Lock Session</string>
+    <string name="preferences_app_protection__screen_lock">Lock App</string>
     <string name="preferences_app_protection__lock_signal_access_with_android_screen_lock_or_fingerprint">Require fingerprint, PIN, pattern or password to unlock Session.</string>
     <string name="preferences_app_protection__screen_lock_inactivity_timeout">Screen lock inactivity timeout</string>
     <string name="AppProtectionPreferenceFragment_none">None</string>
