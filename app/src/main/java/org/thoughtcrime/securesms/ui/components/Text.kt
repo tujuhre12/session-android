@@ -83,7 +83,7 @@ fun SessionOutlinedTextField(
             )
                 .fillMaxWidth()
                 .wrapContentHeight()
-                .padding(top = 28.dp, bottom = 24.dp)
+                .padding(vertical = 28.dp)
                 .padding(horizontal = 21.dp)
         ) {
             if (text.isEmpty()) {
