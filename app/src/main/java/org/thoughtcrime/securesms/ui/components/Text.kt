@@ -86,8 +86,6 @@ fun SessionOutlinedTextField(
                 .padding(top = 28.dp, bottom = 24.dp)
                 .padding(horizontal = 21.dp)
         ) {
-            val mergedTextStyle = textStyle.merge(TextStyle(color = LocalColors.current.text(error != null)))
-
             if (text.isEmpty()) {
                 Text(
                     text = placeholder,
@@ -103,7 +101,7 @@ fun SessionOutlinedTextField(
                 value = text,
                 onValueChange = onChange,
                 modifier = Modifier.wrapContentHeight().fillMaxWidth(),
-                textStyle = mergedTextStyle,
+                textStyle = textStyle.copy(color = LocalColors.current.text(error != null)),
                 cursorBrush = SolidColor(LocalColors.current.text(error != null)),
                 keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(
