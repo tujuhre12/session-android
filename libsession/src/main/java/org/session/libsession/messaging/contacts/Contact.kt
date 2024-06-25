@@ -2,7 +2,7 @@ package org.session.libsession.messaging.contacts
 
 import org.session.libsession.utilities.recipients.Recipient
 
-class Contact(val sessionID: String) {
+class Contact(val accountID: String) {
     /**
      * The URL from which to fetch the contact's profile picture.
      */
@@ -39,8 +39,8 @@ class Contact(val sessionID: String) {
     fun displayName(context: ContactContext): String? = nickname ?: when (context) {
         ContactContext.REGULAR -> name
         // In open groups, where it's more likely that multiple users have the same name,
-        // we display a bit of the Session ID after a user's display name for added context.
-        ContactContext.OPEN_GROUP -> name?.let { "$it (${sessionID.take(4)}...${sessionID.takeLast(4)})" }
+        // we display a bit of the Account ID after a user's display name for added context.
+        ContactContext.OPEN_GROUP -> name?.let { "$it (${accountID.take(4)}...${accountID.takeLast(4)})" }
     }
 
     enum class ContactContext {
@@ -54,15 +54,15 @@ class Contact(val sessionID: String) {
     }
 
     override fun equals(other: Any?): Boolean {
-        return this.sessionID == (other as? Contact)?.sessionID
+        return this.accountID == (other as? Contact)?.accountID
     }
 
     override fun hashCode(): Int {
-        return sessionID.hashCode()
+        return accountID.hashCode()
     }
 
     override fun toString(): String {
-        return nickname ?: name ?: sessionID
+        return nickname ?: name ?: accountID
     }
 
     companion object {

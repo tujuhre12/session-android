@@ -523,9 +523,9 @@ foi recebida está corrompida!</string>
     <string name="copied_to_clipboard">Copiado para a área de transferência</string>
     <string name="next">Próximo</string>
     <string name="share">Compartilhar</string>
-    <string name="invalid_session_id">ID Session inválido</string>
+    <string name="invalid_account_id">ID Session inválido</string>
     <string name="cancel">Cancelar</string>
-    <string name="your_session_id">Seu ID Session</string>
+    <string name="your_account_id">Seu ID Session</string>
     <string name="view_fake_chat_bubble_1">O que é o Session?</string>
     <string name="view_fake_chat_bubble_2">É um aplicativo de mensagens criptografado e descentralizado</string>
     <string name="view_fake_chat_bubble_3">Então ele não coleta minhas informações pessoais ou meus metadados de conversa? Como funciona?</string>
@@ -561,12 +561,12 @@ foi recebida está corrompida!</string>
     <string name="activity_path_learn_more_button_title">Saber mais</string>
     <string name="activity_path_resolving_progress">A resolver…</string>
     <string name="activity_create_private_chat_title">Nova Sessão</string>
-    <string name="activity_create_private_chat_enter_session_id_tab_title">Digite o ID Session</string>
+    <string name="activity_create_private_chat_enter_account_id_tab_title">Digite o ID Session</string>
     <string name="activity_create_private_chat_scan_qr_code_tab_title">Escanear código QR</string>
     <string name="activity_create_private_chat_scan_qr_code_explanation">Escaneie o código QR de um usuário para iniciar uma sessão. Os códigos QR podem ser encontrados tocando no ícone de código QR nas configurações da conta.</string>
-    <string name="fragment_enter_public_key_edit_text_hint">Insira um Session ID ou um nome ONS</string>
+    <string name="fragment_enter_public_key_edit_text_hint">Insira um Account ID ou um nome ONS</string>
     <string name="fragment_enter_public_key_explanation">Os usuários podem compartilhar seus IDs Session acessando as configurações da conta e tocando em Compartilhar ID Session, ou compartilhando o código QR.</string>
-    <string name="fragment_enter_public_key_error_message">Por favor, verifique o Session ID ou ONS e tente novamente.</string>
+    <string name="fragment_enter_public_key_error_message">Por favor, verifique o Account ID ou ONS e tente novamente.</string>
     <string name="fragment_scan_qr_code_camera_access_explanation">O Session precisa de acesso à câmera para escanear códigos QR</string>
     <string name="fragment_scan_qr_code_grant_camera_access_button_title">Conceder acesso à câmera</string>
     <string name="activity_create_closed_group_title">Novo grupo fechado</string>

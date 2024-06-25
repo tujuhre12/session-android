@@ -158,8 +158,8 @@
         <item name="android:layout">@layout/preference_category_session</item>
     </style>
 
-    <style name="SessionIDTextView">
-        <item name="android:background">@drawable/session_id_text_view_background</item>
+    <style name="AccountIdTextView">
+        <item name="android:background">@drawable/account_id_text_view_background</item>
         <item name="android:padding">@dimen/medium_spacing</item>
         <item name="android:textSize">20sp</item>
         <item name="android:textColor">?android:textColorPrimary</item>
@@ -168,7 +168,7 @@
     </style>
 
     <style name="SessionEditText">
-        <item name="android:background">@drawable/session_id_text_view_background</item>
+        <item name="android:background">@drawable/account_id_text_view_background</item>
         <item name="android:paddingLeft">@dimen/medium_spacing</item>
         <item name="android:paddingTop">30dp</item>
         <item name="android:paddingRight">@dimen/medium_spacing</item>
@@ -181,7 +181,7 @@
     </style>
 
     <style name="SmallSessionEditText">
-        <item name="android:background">@drawable/session_id_text_view_background</item>
+        <item name="android:background">@drawable/account_id_text_view_background</item>
         <item name="android:paddingLeft">@dimen/medium_spacing</item>
         <item name="android:paddingTop">@dimen/medium_spacing</item>
         <item name="android:paddingRight">@dimen/medium_spacing</item>

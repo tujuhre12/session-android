@@ -553,9 +553,9 @@
     <string name="copied_to_clipboard">Copié dans le presse-papier</string>
     <string name="next">Suivant</string>
     <string name="share">Partager</string>
-    <string name="invalid_session_id">Session ID non valide</string>
+    <string name="invalid_account_id">Account ID non valide</string>
     <string name="cancel">Annuler</string>
-    <string name="your_session_id">Votre Session ID</string>
+    <string name="your_account_id">Votre Account ID</string>
     <string name="view_fake_chat_bubble_1">Qu\'est-ce que Session ?</string>
     <string name="view_fake_chat_bubble_2">C\'est une application de messagerie décentralisée et cryptée</string>
     <string name="view_fake_chat_bubble_3">Elle ne recueille donc pas mes informations personnelles ou mes métadonnées de conversations ? Comment ça marche ?</string>
@@ -580,7 +580,7 @@
     <string name="activity_home_delete_conversation_dialog_message">Voulez-vous vraiment supprimer cette conversation ?</string>
     <string name="activity_home_conversation_deleted_message">Conversation supprimée</string>
     <string name="view_seed_reminder_subtitle_1">Sécurisez votre compte en sauvegardant votre phrase de récupération</string>
-    <string name="view_seed_reminder_subtitle_2">Appuyez et maintenez les mots masqués pour révéler votre phrase de récupération, puis stockez-la en toute sécurité pour sécuriser votre Session ID.</string>
+    <string name="view_seed_reminder_subtitle_2">Appuyez et maintenez les mots masqués pour révéler votre phrase de récupération, puis stockez-la en toute sécurité pour sécuriser votre Account ID.</string>
     <string name="view_seed_reminder_subtitle_3">Assurez-vous de conserver votre phrase de récupération dans un endroit sûr</string>
     <string name="activity_path_title">Chemin</string>
     <string name="activity_path_explanation">Session occulte votre adresse IP en envoyant vos messages via plusieurs nœuds de service dans le réseau décentralisé de Session. Voici les pays par le biais desquels votre connexion est actuellement envoyée :</string>
@@ -591,12 +591,12 @@
     <string name="activity_path_learn_more_button_title">En savoir plus</string>
     <string name="activity_path_resolving_progress">Contact en cours…</string>
     <string name="activity_create_private_chat_title">Nouvelle Session</string>
-    <string name="activity_create_private_chat_enter_session_id_tab_title">Saisir un Session ID</string>
+    <string name="activity_create_private_chat_enter_account_id_tab_title">Saisir un Account ID</string>
     <string name="activity_create_private_chat_scan_qr_code_tab_title">Scanner un QR Code</string>
     <string name="activity_create_private_chat_scan_qr_code_explanation">Scannez le QR code d\'un utilisateur pour démarrer une session. Les QR codes peuvent se trouver en touchant l\'icône du QR code dans les paramètres du compte.</string>
-    <string name="fragment_enter_public_key_edit_text_hint">Entrer un Session ID ou un nom ONS</string>
-    <string name="fragment_enter_public_key_explanation">Les utilisateurs peuvent partager leur Session ID depuis les paramètres du compte ou en utilisant le code QR.</string>
-    <string name="fragment_enter_public_key_error_message">Veuillez vérifier le Session ID ou le nom ONS et réessayer.</string>
+    <string name="fragment_enter_public_key_edit_text_hint">Entrer un Account ID ou un nom ONS</string>
+    <string name="fragment_enter_public_key_explanation">Les utilisateurs peuvent partager leur Account ID depuis les paramètres du compte ou en utilisant le code QR.</string>
+    <string name="fragment_enter_public_key_error_message">Veuillez vérifier le Account ID ou le nom ONS et réessayer.</string>
     <string name="fragment_scan_qr_code_camera_access_explanation">Session a besoin d\'accéder à l\'appareil photo pour scanner les QR codes</string>
     <string name="fragment_scan_qr_code_grant_camera_access_button_title">Autoriser l\'accès</string>
     <string name="activity_create_closed_group_title">Nouveau groupe privé</string>
@@ -683,7 +683,7 @@
     <string name="dialog_ui_mode_option_day">Jour</string>
     <string name="dialog_ui_mode_option_night">Nuit</string>
     <string name="dialog_ui_mode_option_system_default">Défaut du système</string>
-    <string name="activity_conversation_menu_copy_account_id">Copier le Session ID</string>
+    <string name="activity_conversation_menu_copy_account_id">Copier le Account ID</string>
     <string name="attachment">Fichier joint</string>
     <string name="attachment_type_voice_message">Message vocal</string>
     <string name="details">Détails</string>

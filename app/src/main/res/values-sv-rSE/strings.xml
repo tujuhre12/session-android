@@ -527,9 +527,9 @@ för nyckelutbyte!</string>
     <string name="copied_to_clipboard">Kopierade till urklipp</string>
     <string name="next">Nästa</string>
     <string name="share">Dela</string>
-    <string name="invalid_session_id">Ogiltigt Sessions-ID</string>
+    <string name="invalid_account_id">Ogiltigt Sessions-ID</string>
     <string name="cancel">Avbryt</string>
-    <string name="your_session_id">Ditt Session ID</string>
+    <string name="your_account_id">Ditt Account ID</string>
     <string name="view_fake_chat_bubble_1">Vad är Session?</string>
     <string name="view_fake_chat_bubble_2">Det är en decentraliserad, krypterad meddelandeapp</string>
     <string name="view_fake_chat_bubble_3">Så det samlar inte in mina personuppgifter eller mina konversationers metadata? Hur fungerar det?</string>
@@ -565,7 +565,7 @@ för nyckelutbyte!</string>
     <string name="activity_path_learn_more_button_title">Mer info</string>
     <string name="activity_path_resolving_progress">Laddar…</string>
     <string name="activity_create_private_chat_title">Ny Session</string>
-    <string name="activity_create_private_chat_enter_session_id_tab_title">Ange Sessions-ID</string>
+    <string name="activity_create_private_chat_enter_account_id_tab_title">Ange Sessions-ID</string>
     <string name="activity_create_private_chat_scan_qr_code_tab_title">Skanna QR-kod</string>
     <string name="activity_create_private_chat_scan_qr_code_explanation">Skanna en användares QR-kod för att starta en session. QR-koder kan finnas genom att trycka på ikonen för QR-kod i kontoinställningarna.</string>
     <string name="fragment_enter_public_key_edit_text_hint">Ange sessions-ID eller ONS-namn</string>

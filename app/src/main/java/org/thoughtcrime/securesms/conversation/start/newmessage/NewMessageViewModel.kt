@@ -72,7 +72,7 @@ internal class NewMessageViewModel @Inject constructor(
 
         loadOnsJob = viewModelScope.launch(Dispatchers.IO) {
             try {
-                val publicKey = SnodeAPI.getSessionID(ons).timeout(30_000).get()
+                val publicKey = SnodeAPI.getAccountID(ons).timeout(30_000).get()
                 if (isActive) onPublicKey(publicKey)
             } catch (e: Exception) {
                 if (isActive) onError(e)

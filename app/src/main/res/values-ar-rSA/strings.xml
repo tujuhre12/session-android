@@ -574,9 +574,9 @@
     <string name="copied_to_clipboard">تم النسخ الى الحافظة المؤقتة</string>
     <string name="next">التالي</string>
     <string name="share">شارك</string>
-    <string name="invalid_session_id">عنوان تعريف خاطئ</string>
+    <string name="invalid_account_id">عنوان تعريف خاطئ</string>
     <string name="cancel">إلغاء</string>
-    <string name="your_session_id">عنوان تعريفك</string>
+    <string name="your_account_id">عنوان تعريفك</string>
     <string name="view_fake_chat_bubble_1">ما هي الجلسة (Session)؟</string>
     <string name="view_fake_chat_bubble_2">هو تطبيق مراسلة مشفر, لامركزي</string>
     <string name="view_fake_chat_bubble_3">اِذن لا يقوم بجمع المعلومات الشخصية أو المعلومات الوصفية لمحادثاتي؟ كيف يعمل؟</string>
@@ -612,7 +612,7 @@
     <string name="activity_path_learn_more_button_title">لمعرفة المزيد</string>
     <string name="activity_path_resolving_progress">جار ربط الاِتصال…</string>
     <string name="activity_create_private_chat_title">جلسة جديدة</string>
-    <string name="activity_create_private_chat_enter_session_id_tab_title">أدخِل معرّف الجلسة</string>
+    <string name="activity_create_private_chat_enter_account_id_tab_title">أدخِل معرّف الجلسة</string>
     <string name="activity_create_private_chat_scan_qr_code_tab_title">مسح رمز الاستجابة السريع\"QR\"</string>
     <string name="activity_create_private_chat_scan_qr_code_explanation">امسح رمز QR المستخدم لبدء جلسة معه. يمكن الحصول على رموز الـQR بالضغط على أيقونة رمز الـQR في إعدادات الحساب.</string>
     <string name="fragment_enter_public_key_edit_text_hint">أدخل عنوان التعريف أو اسم ONS</string>

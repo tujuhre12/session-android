@@ -542,9 +542,9 @@ schimbul de chei este corupt </string>
     <string name="copied_to_clipboard">Copiat în clipboard</string>
     <string name="next">Următorul</string>
     <string name="share">Distribuie</string>
-    <string name="invalid_session_id">ID sesiune nevalid</string>
+    <string name="invalid_account_id">ID sesiune nevalid</string>
     <string name="cancel">Anulare</string>
-    <string name="your_session_id">ID-ul sesiunii dvs</string>
+    <string name="your_account_id">ID-ul sesiunii dvs</string>
     <string name="view_fake_chat_bubble_1">Ce este Session?</string>
     <string name="view_fake_chat_bubble_2">Este o aplicație de mesagerie descentralizată, criptată</string>
     <string name="view_fake_chat_bubble_3">Deci nu colectează informaţii personale sau metadatele conversaţiei? Cum funcţionează?</string>
@@ -565,7 +565,7 @@ schimbul de chei este corupt </string>
     <string name="activity_path_learn_more_button_title">Aflați mai multe</string>
     <string name="activity_path_resolving_progress">Se rezolvă…</string>
     <string name="activity_create_private_chat_title">Sesiune Nouă</string>
-    <string name="activity_create_private_chat_enter_session_id_tab_title">Introduceți ID-ul Session</string>
+    <string name="activity_create_private_chat_enter_account_id_tab_title">Introduceți ID-ul Session</string>
     <string name="activity_create_private_chat_scan_qr_code_tab_title">Scanați codul QR</string>
     <string name="activity_create_private_chat_scan_qr_code_explanation">Scanați codul QR al unui utilizator pentru a începe o sesiune. Codurile QR pot fi găsite prin atingerea pictogramei de cod QR din setările contului.</string>
     <string name="fragment_enter_public_key_edit_text_hint">Introduceți ID-ul Session sau numele ONS</string>

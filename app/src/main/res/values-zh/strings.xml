@@ -515,9 +515,9 @@
     <string name="copied_to_clipboard">复制到剪贴板</string>
     <string name="next">下一步</string>
     <string name="share">共享</string>
-    <string name="invalid_session_id">无效的Session ID</string>
+    <string name="invalid_account_id">无效的Account ID</string>
     <string name="cancel">取消</string>
-    <string name="your_session_id">您的Session ID</string>
+    <string name="your_account_id">您的Account ID</string>
     <string name="view_fake_chat_bubble_1">什么是Session？</string>
     <string name="view_fake_chat_bubble_2">Session是一个去中心化的加密消息应用。</string>
     <string name="view_fake_chat_bubble_3">所以Session不会收集我的个人信息或者对话元数据？怎么做到的？</string>
@@ -542,7 +542,7 @@
     <string name="activity_home_delete_conversation_dialog_message">您确定要删除此对话吗？</string>
     <string name="activity_home_conversation_deleted_message">对话已删除</string>
     <string name="view_seed_reminder_subtitle_1">保存恢复口令以保护您的帐号安全</string>
-    <string name="view_seed_reminder_subtitle_2">点击并按住遮盖住的单词以显示您的恢复口令，请将它安全地存储以保护您的Session ID。</string>
+    <string name="view_seed_reminder_subtitle_2">点击并按住遮盖住的单词以显示您的恢复口令，请将它安全地存储以保护您的Account ID。</string>
     <string name="view_seed_reminder_subtitle_3">请确保将恢复口令存储在安全的地方</string>
     <string name="activity_path_title">路径</string>
     <string name="activity_path_explanation">Session会通过其去中心化网络中的多个服务节点跳转消息以隐藏IP。以下国家是您目前的消息连接跳转服务节点所在地：</string>
@@ -553,11 +553,11 @@
     <string name="activity_path_learn_more_button_title">了解更多</string>
     <string name="activity_path_resolving_progress">正在解决…</string>
     <string name="activity_create_private_chat_title">新建私人聊天</string>
-    <string name="activity_create_private_chat_enter_session_id_tab_title">输入Session ID</string>
+    <string name="activity_create_private_chat_enter_account_id_tab_title">输入Account ID</string>
     <string name="activity_create_private_chat_scan_qr_code_tab_title">扫描二维码</string>
     <string name="activity_create_private_chat_scan_qr_code_explanation">扫描其他用户的二维码来发起对话。您可以在帐号设置中点击二维码图标找到二维码。</string>
-    <string name="fragment_enter_public_key_edit_text_hint">输入Session ID或ONS名称</string>
-    <string name="fragment_enter_public_key_explanation">用户可以通过进入帐号设置并点击“共享Session ID”来分享自己的Session ID，或通过共享其二维码来分享其Session ID。</string>
+    <string name="fragment_enter_public_key_edit_text_hint">输入Account ID或ONS名称</string>
+    <string name="fragment_enter_public_key_explanation">用户可以通过进入帐号设置并点击“共享Account ID”来分享自己的Account ID，或通过共享其二维码来分享其Account ID。</string>
     <string name="fragment_enter_public_key_error_message">请检查会话 ID 或 ONS 名称，然后重试。</string>
     <string name="fragment_scan_qr_code_camera_access_explanation">Session需要摄像头访问权限才能扫描二维码</string>
     <string name="fragment_scan_qr_code_grant_camera_access_button_title">授予摄像头访问权限</string>
@@ -630,7 +630,7 @@
     <string name="dialog_ui_mode_option_day">白昼</string>
     <string name="dialog_ui_mode_option_night">夜间</string>
     <string name="dialog_ui_mode_option_system_default">系统默认</string>
-    <string name="activity_conversation_menu_copy_account_id">复制 Session ID</string>
+    <string name="activity_conversation_menu_copy_account_id">复制 Account ID</string>
     <string name="attachment">附件</string>
     <string name="attachment_type_voice_message">语音消息</string>
     <string name="details">详细信息</string>

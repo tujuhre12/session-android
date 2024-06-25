@@ -527,9 +527,9 @@ nøkkelutvekslingsmelding.</string>
     <string name="copied_to_clipboard">Kopiert til utklippstavle</string>
     <string name="next">Neste</string>
     <string name="share">Del</string>
-    <string name="invalid_session_id">Ugyldig Session ID</string>
+    <string name="invalid_account_id">Ugyldig Account ID</string>
     <string name="cancel">Avbryt</string>
-    <string name="your_session_id">Din Session ID</string>
+    <string name="your_account_id">Din Account ID</string>
     <string name="view_fake_chat_bubble_1">Hva er Session?</string>
     <string name="view_fake_chat_bubble_2">Det er en desentralisert, kryptert meldingsapp</string>
     <string name="view_fake_chat_bubble_3">Så den henter ikke min personlige informasjon eller samtaletadata? Hvordan virker det?</string>
@@ -565,7 +565,7 @@ nøkkelutvekslingsmelding.</string>
     <string name="activity_path_learn_more_button_title">Lær mer</string>
     <string name="activity_path_resolving_progress">Løser…</string>
     <string name="activity_create_private_chat_title">Ny Session</string>
-    <string name="activity_create_private_chat_enter_session_id_tab_title">Skriv inn Session ID</string>
+    <string name="activity_create_private_chat_enter_account_id_tab_title">Skriv inn Account ID</string>
     <string name="activity_create_private_chat_scan_qr_code_tab_title">Skann QR-kode</string>
     <string name="activity_create_private_chat_scan_qr_code_explanation">Skann en brukers QR-kode for å starte en økt. QR-koder finnes ved å trykke på QR-koden i kontoinnstillingene.</string>
     <string name="fragment_enter_public_key_edit_text_hint">Angi Session-ID eller ONS-navn</string>

@@ -25,7 +25,7 @@ fun Context.sendInvitationToUseSession() {
 
 fun Context.copyPublicKey() {
     val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-    val clip = ClipData.newPlainText("Session ID", TextSecurePreferences.getLocalNumber(this))
+    val clip = ClipData.newPlainText("Account ID", TextSecurePreferences.getLocalNumber(this))
     clipboard.setPrimaryClip(clip)
     Toast.makeText(this, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show()
 }

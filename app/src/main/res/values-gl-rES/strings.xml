@@ -518,9 +518,9 @@
     <string name="copied_to_clipboard">Copiado ao portapapeis</string>
     <string name="next">Seguinte</string>
     <string name="share">Partillar</string>
-    <string name="invalid_session_id">ID de Session inválido</string>
+    <string name="invalid_account_id">ID de Session inválido</string>
     <string name="cancel">Cancelar</string>
-    <string name="your_session_id">O teu ID de Session</string>
+    <string name="your_account_id">O teu ID de Session</string>
     <string name="view_fake_chat_bubble_1">Que é Session?</string>
     <string name="view_fake_chat_bubble_2">É unha app de mensaxería cifrada e descentralizada</string>
     <string name="view_fake_chat_bubble_3">Entón non recompila a miña información persoal ou os metadatos das miñas conversas? Como funciona?</string>
@@ -534,7 +534,7 @@
     <string name="activity_path_device_row_title">Ti</string>
     <string name="activity_path_resolving_progress">Procesando…</string>
     <string name="activity_create_private_chat_title">Nova sesión</string>
-    <string name="activity_create_private_chat_enter_session_id_tab_title">Introducir ID de Session</string>
+    <string name="activity_create_private_chat_enter_account_id_tab_title">Introducir ID de Session</string>
     <string name="activity_create_private_chat_scan_qr_code_tab_title">Escanear código QR</string>
     <string name="fragment_scan_qr_code_grant_camera_access_button_title">Conceder acceso á cámara</string>
     <string name="activity_create_closed_group_title">Crear grupo pechado</string>

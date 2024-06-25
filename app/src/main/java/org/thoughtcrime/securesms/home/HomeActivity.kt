@@ -165,7 +165,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                 push(intent)
             }
             is GlobalSearchAdapter.Model.Contact -> {
-                val address = model.contact.sessionID
+                val address = model.contact.accountID
 
                 val intent = Intent(this, ConversationActivityV2::class.java)
                 intent.putExtra(ConversationActivityV2.ADDRESS, Address.fromSerialized(address))
@@ -296,7 +296,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                             .flatMap { (key, contacts) -> listOf(GlobalSearchAdapter.Model.SubHeader(key)) + contacts.sortedBy { it.nickname ?: it.name }.map(GlobalSearchAdapter.Model::Contact) }
 
                         val noNames = result.contacts.filter { it.nickname == null && it.name == null }
-                            .sortedBy { it.sessionID }
+                            .sortedBy { it.accountID }
                             .map { GlobalSearchAdapter.Model.Contact(it) }
 
                         buildList {
@@ -319,7 +319,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                             contactResults.add(GlobalSearchAdapter.Model.SavedMessages(currentUserPublicKey))
                         }
 
-                        val userIndex = contactResults.indexOfFirst { it is GlobalSearchAdapter.Model.Contact && it.contact.sessionID == currentUserPublicKey }
+                        val userIndex = contactResults.indexOfFirst { it is GlobalSearchAdapter.Model.Contact && it.contact.accountID == currentUserPublicKey }
                         if (userIndex >= 0) {
                             contactResults[userIndex] = GlobalSearchAdapter.Model.SavedMessages(currentUserPublicKey)
                         }
@@ -464,7 +464,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         bottomSheet.onCopyConversationId = onCopyConversationId@{
             bottomSheet.dismiss()
             if (!thread.recipient.isGroupRecipient && !thread.recipient.isLocalNumber) {
-                val clip = ClipData.newPlainText("Session ID", thread.recipient.address.toString())
+                val clip = ClipData.newPlainText("Account ID", thread.recipient.address.toString())
                 val manager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
                 manager.setPrimaryClip(clip)
                 Toast.makeText(this, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show()

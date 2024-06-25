@@ -526,9 +526,9 @@ on viallinen!</string>
     <string name="copied_to_clipboard">Kopioitu leikepöydälle</string>
     <string name="next">Seuraava</string>
     <string name="share">Jaa</string>
-    <string name="invalid_session_id">Virheellinen Session ID</string>
+    <string name="invalid_account_id">Virheellinen Account ID</string>
     <string name="cancel">Peruuta</string>
-    <string name="your_session_id">Sinun Session ID</string>
+    <string name="your_account_id">Sinun Account ID</string>
     <string name="view_fake_chat_bubble_1">Mikä on Session?</string>
     <string name="view_fake_chat_bubble_2">Se on hajautettu, salattu viestisovellus</string>
     <string name="view_fake_chat_bubble_3">Joten se ei kerää henkilökohtaisia tietoja tai keskustelun metatietoja? Miten se toimii?</string>
@@ -564,11 +564,11 @@ on viallinen!</string>
     <string name="activity_path_learn_more_button_title">Lisätietoja</string>
     <string name="activity_path_resolving_progress">Ratkaistaan…</string>
     <string name="activity_create_private_chat_title">Uusi Istunto</string>
-    <string name="activity_create_private_chat_enter_session_id_tab_title">Anna Session ID</string>
+    <string name="activity_create_private_chat_enter_account_id_tab_title">Anna Account ID</string>
     <string name="activity_create_private_chat_scan_qr_code_tab_title">Lue QR-koodi</string>
     <string name="activity_create_private_chat_scan_qr_code_explanation">Skannaa käyttäjän QR-koodi aloittaaksesi istunnon. QR-koodit löytyvät napauttamalla QR-koodin kuvaketta tilin asetuksista.</string>
-    <string name="fragment_enter_public_key_edit_text_hint">Syötä Session ID tai ONS-nimi</string>
-    <string name="fragment_enter_public_key_explanation">Käyttäjät voivat jakaa Session tunnuksensa menemällä tiliasetuksiinsa ja painamalla \"Jaa Session ID\" tai jakamalla QR-koodin.</string>
+    <string name="fragment_enter_public_key_edit_text_hint">Syötä Account ID tai ONS-nimi</string>
+    <string name="fragment_enter_public_key_explanation">Käyttäjät voivat jakaa Session tunnuksensa menemällä tiliasetuksiinsa ja painamalla \"Jaa Account ID\" tai jakamalla QR-koodin.</string>
     <string name="fragment_enter_public_key_error_message">Tarkista istunnon tunnus tai ONS nimi ja yritä uudelleen.</string>
     <string name="fragment_scan_qr_code_camera_access_explanation">Session tarvitsee kameran käyttöoikeuden skannatakseensa QR-koodit</string>
     <string name="fragment_scan_qr_code_grant_camera_access_button_title">Myönnä Kameran Käyttöoikeus</string>
@@ -641,7 +641,7 @@ on viallinen!</string>
     <string name="dialog_ui_mode_option_day">Päivä</string>
     <string name="dialog_ui_mode_option_night">Yö</string>
     <string name="dialog_ui_mode_option_system_default">Järjestelmän oletus</string>
-    <string name="activity_conversation_menu_copy_account_id">Kopioi Session ID</string>
+    <string name="activity_conversation_menu_copy_account_id">Kopioi Account ID</string>
     <string name="attachment">Liite</string>
     <string name="attachment_type_voice_message">Ääniviesti</string>
     <string name="details">Lisätiedot</string>

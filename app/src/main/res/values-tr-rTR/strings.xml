@@ -527,9 +527,9 @@ iletisi alındı!</string>
     <string name="copied_to_clipboard">Panoya kopyalandı</string>
     <string name="next">İleri</string>
     <string name="share">Paylaş</string>
-    <string name="invalid_session_id">Geçersiz Session ID\'si</string>
+    <string name="invalid_account_id">Geçersiz Account ID\'si</string>
     <string name="cancel">İptal</string>
-    <string name="your_session_id">Session ID\'niz</string>
+    <string name="your_account_id">Account ID\'niz</string>
     <string name="view_fake_chat_bubble_1">Session Nedir?</string>
     <string name="view_fake_chat_bubble_2">Merkezi olmayan, şifreli bir mesajlaşma uygulamasıdır</string>
     <string name="view_fake_chat_bubble_3">Yani kişisel bilgilerimi veya konuşma meta verilerimi toplamaz mı? Nasıl çalışır?</string>
@@ -565,7 +565,7 @@ iletisi alındı!</string>
     <string name="activity_path_learn_more_button_title">Fazlasını Öğrenin</string>
     <string name="activity_path_resolving_progress">Çözümleniyor…</string>
     <string name="activity_create_private_chat_title">Yeni Oturum</string>
-    <string name="activity_create_private_chat_enter_session_id_tab_title">Session Kimliğini Girin</string>
+    <string name="activity_create_private_chat_enter_account_id_tab_title">Session Kimliğini Girin</string>
     <string name="activity_create_private_chat_scan_qr_code_tab_title">QR Kodunu Tara</string>
     <string name="activity_create_private_chat_scan_qr_code_explanation">Bir oturumu başlatmak için bir kullanıcının QR kodunu tarayın. QR kodları, hesap ayarlarındaki QR kodu simgesine dokunarak bulunabilir.</string>
     <string name="fragment_enter_public_key_edit_text_hint">Session kimliğini veya ONS adını girin</string>

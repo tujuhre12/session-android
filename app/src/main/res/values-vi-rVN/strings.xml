@@ -333,9 +333,9 @@ trao đổi chìa khóa bị hỏng!</string>
     <string name="copied_to_clipboard">Sao chép vào bộ nhớ tạm</string>
     <string name="next">Tiếp</string>
     <string name="share">Chia sẻ</string>
-    <string name="invalid_session_id">Session ID không hợp lệ</string>
+    <string name="invalid_account_id">Account ID không hợp lệ</string>
     <string name="cancel">Huỷ</string>
-    <string name="your_session_id">Session ID của bạn</string>
+    <string name="your_account_id">Account ID của bạn</string>
     <string name="view_fake_chat_bubble_1">Session là gì?</string>
     <string name="view_fake_chat_bubble_2">Đây là một ứng dụng nhắn tin phân cấp và mã hoá</string>
     <string name="view_fake_chat_bubble_3">Vậy ứng dụng có thu thập dữ liệu cá nhân của tôi hoặc siêu dữ liệu về cuộc hội thoại của tôi không? Ứng dụng hoạt động như thế nào?</string>
@@ -360,7 +360,7 @@ trao đổi chìa khóa bị hỏng!</string>
     <string name="activity_home_delete_conversation_dialog_message">Bạn có chắc chắn rằng bạn muốn xoá cuộc hội thoại này không?</string>
     <string name="activity_home_conversation_deleted_message">Cuộc hội thoại đã được xoá </string>
     <string name="view_seed_reminder_subtitle_1">Bảo vệ tài khoản của bạn bằng việc bảo vệ cụm từ khôi phục của bạn</string>
-    <string name="view_seed_reminder_subtitle_2">Chạm và giữ cụm từ bị che để hiển thị cụm từ khôi phục của bạn, sau đó lưu nó cẩn thận để bảo vệ Session ID của bạn.</string>
+    <string name="view_seed_reminder_subtitle_2">Chạm và giữ cụm từ bị che để hiển thị cụm từ khôi phục của bạn, sau đó lưu nó cẩn thận để bảo vệ Account ID của bạn.</string>
     <string name="view_seed_reminder_subtitle_3">Hãy lưu cụm từ khôi phục của bạn ở một nơi an toàn</string>
     <string name="activity_path_title">Đường đi</string>
     <string name="activity_path_explanation">Session ẩn IP của bạn bằng cách luân chuyển tin nhắn của bạn qua một số Nút Dịch vụ trong mạng lưới phân cấp của Session. Đây là các nước mà kết nối của bạn đang được luân chuyển: </string>
@@ -370,10 +370,10 @@ trao đổi chìa khóa bị hỏng!</string>
     <string name="activity_path_destination_row_title">Điểm đến</string>
     <string name="activity_path_learn_more_button_title">Tìm hiểu thêm</string>
     <string name="activity_create_private_chat_title">Session mới</string>
-    <string name="activity_create_private_chat_enter_session_id_tab_title">Nhập Session ID</string>
+    <string name="activity_create_private_chat_enter_account_id_tab_title">Nhập Account ID</string>
     <string name="activity_create_private_chat_scan_qr_code_tab_title">Quét mã QR</string>
     <string name="activity_create_private_chat_scan_qr_code_explanation">Quét mã QR của người dùng để bắt đầu session. Tìm mã QR bằng cách chạm vào biểu tượng mã QR trong mục cài đặt tài khoản.</string>
-    <string name="fragment_enter_public_key_explanation">Người dùng có thể chia sẻ Session ID của mình bằng cách tới mục cài đặt tài khoản và chạm vào “Chia sẻ Session ID”, hoặc bằng cách chia sẻ mã QR của họ.</string>
+    <string name="fragment_enter_public_key_explanation">Người dùng có thể chia sẻ Account ID của mình bằng cách tới mục cài đặt tài khoản và chạm vào “Chia sẻ Account ID”, hoặc bằng cách chia sẻ mã QR của họ.</string>
     <string name="fragment_scan_qr_code_camera_access_explanation">Session cần truy cập máy ảnh để quét mã QR </string>
     <string name="fragment_scan_qr_code_grant_camera_access_button_title">Cho phép truy cập máy ảnh</string>
     <string name="activity_create_closed_group_title">Nhóm kín mới </string>

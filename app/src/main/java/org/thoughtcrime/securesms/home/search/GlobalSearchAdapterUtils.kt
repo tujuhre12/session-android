@@ -116,7 +116,7 @@ fun ContentView.bindModel(query: String?, model: ContactModel) {
     binding.searchResultTimestamp.isVisible = false
     binding.searchResultSubtitle.text = null
     val recipient =
-        Recipient.from(binding.root.context, Address.fromSerialized(model.contact.sessionID), false)
+        Recipient.from(binding.root.context, Address.fromSerialized(model.contact.accountID), false)
     binding.searchResultProfilePicture.update(recipient)
     val nameString = model.contact.getSearchName()
     binding.searchResultTitle.text = getHighlight(query, nameString)
@@ -159,5 +159,5 @@ fun ContentView.bindModel(query: String?, model: Message) {
 fun Recipient.getSearchName(): String = name ?: address.serialize().let { address -> "${address.take(4)}...${address.takeLast(4)}" }
 
 fun Contact.getSearchName(): String =
-        if (nickname.isNullOrEmpty()) name ?: "${sessionID.take(4)}...${sessionID.takeLast(4)}"
-        else "${name ?: "${sessionID.take(4)}...${sessionID.takeLast(4)}"} ($nickname)"
+        if (nickname.isNullOrEmpty()) name ?: "${accountID.take(4)}...${accountID.takeLast(4)}"
+        else "${name ?: "${accountID.take(4)}...${accountID.takeLast(4)}"} ($nickname)"

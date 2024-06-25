@@ -406,7 +406,7 @@
     <string name="copied_to_clipboard">클립보드에 복사됨</string>
     <string name="share">공유</string>
     <string name="cancel">취소</string>
-    <string name="your_session_id">당신의 세션 ID</string>
+    <string name="your_account_id">당신의 세션 ID</string>
     <string name="activity_home_empty_state_message">아직 연락처가 없습니다</string>
     <string name="activity_home_empty_state_button_title">세션 시작하기</string>
     <string name="activity_path_explanation">Session 분산 네트워크의 여러 서비스 노드를 통해 메시지를 분산해 IP를 숨깁니다. 이들이 현재 연결을 분산하는 국가입니다:</string>

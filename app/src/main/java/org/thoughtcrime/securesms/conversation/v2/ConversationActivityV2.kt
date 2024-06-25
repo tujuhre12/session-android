@@ -82,7 +82,7 @@ import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
-import org.session.libsession.messaging.utilities.SessionId
+import org.session.libsession.messaging.utilities.AccountId
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
@@ -235,7 +235,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             intent.getParcelableExtra<Address>(ADDRESS)?.let { it ->
                 threadId = threadDb.getThreadIdIfExistsFor(it.serialize())
                 if (threadId == -1L) {
-                    val sessionId = SessionId(it.serialize())
+                    val sessionId = AccountId(it.serialize())
                     val openGroup = lokiThreadDb.getOpenGroupChat(intent.getLongExtra(FROM_GROUP_THREAD_ID, -1))
                     val address = if (sessionId.prefix == IdPrefix.BLINDED && openGroup != null) {
                         storage.getOrCreateBlindedIdMapping(sessionId.hexString, openGroup.server, openGroup.publicKey).sessionId?.let {
@@ -732,8 +732,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     // called from onCreate
     private fun setUpBlockedBanner() {
         val recipient = viewModel.recipient?.takeUnless { it.isGroupRecipient } ?: return
-        val sessionID = recipient.address.toString()
-        val name = sessionContactDb.getContactWithSessionID(sessionID)?.displayName(Contact.ContactContext.REGULAR) ?: sessionID
+        val accountID = recipient.address.toString()
+        val name = sessionContactDb.getContactWithAccountID(accountID)?.displayName(Contact.ContactContext.REGULAR) ?: accountID
         binding?.blockedBannerTextView?.text = resources.getString(R.string.activity_conversation_blocked_banner_text, name)
         binding?.blockedBanner?.isVisible = recipient.isBlocked
         binding?.blockedBanner?.setOnClickListener { viewModel.unblock() }
@@ -1183,8 +1183,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         }
     }
 
-    override fun copySessionID(sessionId: String) {
-        val clip = ClipData.newPlainText("Session ID", sessionId)
+    override fun copyAccountID(sessionId: String) {
+        val clip = ClipData.newPlainText("Account ID", sessionId)
         val manager = getSystemService(PassphraseRequiredActionBarActivity.CLIPBOARD_SERVICE) as ClipboardManager
         manager.setPrimaryClip(clip)
         Toast.makeText(this, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show()
@@ -1977,9 +1977,9 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         endActionMode()
     }
 
-    override fun copySessionID(messages: Set<MessageRecord>) {
-        val sessionID = messages.first().individualRecipient.address.toString()
-        val clip = ClipData.newPlainText("Session ID", sessionID)
+    override fun copyAccountID(messages: Set<MessageRecord>) {
+        val accountID = messages.first().individualRecipient.address.toString()
+        val clip = ClipData.newPlainText("Account ID", accountID)
         val manager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
         manager.setPrimaryClip(clip)
         Toast.makeText(this, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show()
@@ -2189,7 +2189,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                 ConversationReactionOverlay.Action.DELETE -> deleteMessages(selectedItems)
                 ConversationReactionOverlay.Action.BAN_AND_DELETE_ALL -> banAndDeleteAll(selectedItems)
                 ConversationReactionOverlay.Action.BAN_USER -> banUser(selectedItems)
-                ConversationReactionOverlay.Action.COPY_ACCOUNT_ID -> copySessionID(selectedItems)
+                ConversationReactionOverlay.Action.COPY_ACCOUNT_ID -> copyAccountID(selectedItems)
             }
         }
     }

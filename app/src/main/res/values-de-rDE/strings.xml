@@ -526,9 +526,9 @@
     <string name="copied_to_clipboard">In die Zwischenablage kopiert.</string>
     <string name="next">Weiter</string>
     <string name="share">Teilen</string>
-    <string name="invalid_session_id">Ungültige Session ID</string>
+    <string name="invalid_account_id">Ungültige Account ID</string>
     <string name="cancel">Abbrechen</string>
-    <string name="your_session_id">Ihre Session ID</string>
+    <string name="your_account_id">Ihre Account ID</string>
     <string name="view_fake_chat_bubble_1">Was ist Session?</string>
     <string name="view_fake_chat_bubble_2">Es ist eine dezentrale, verschlüsselte Messaging-App.</string>
     <string name="view_fake_chat_bubble_3">Es werden also weder meine persönlichen Daten noch die Metadaten meiner Konversation erfasst? Wie funktioniert das?</string>
@@ -553,7 +553,7 @@
     <string name="activity_home_delete_conversation_dialog_message">Möchten Sie diese Unterhaltung wirklich löschen?</string>
     <string name="activity_home_conversation_deleted_message">Die Unterhaltung wurde gelöscht.</string>
     <string name="view_seed_reminder_subtitle_1">Sichern Sie Ihr Konto, indem Sie Ihren Wiederherstellungssatz speichern</string>
-    <string name="view_seed_reminder_subtitle_2">Tippen und halten Sie die verborgenen Wörter, um Ihren Wiederherstellungssatz anzuzeigen, und speichern Sie ihn dann sicher, um Ihre Session ID zu sichern.</string>
+    <string name="view_seed_reminder_subtitle_2">Tippen und halten Sie die verborgenen Wörter, um Ihren Wiederherstellungssatz anzuzeigen, und speichern Sie ihn dann sicher, um Ihre Account ID zu sichern.</string>
     <string name="view_seed_reminder_subtitle_3">Bewahren Sie Ihren Wiederherstellungssatz an einem sicheren Ort auf.</string>
     <string name="activity_path_title">Pfad</string>
     <string name="activity_path_explanation">Session verbirgt Ihre IP-Adresse, indem Ihre Nachrichten über mehrere Dienstknoten im dezentralen Session-Netzwerk weitergeleitet werden. Dies sind die Länder, durch die Ihre Verbindung derzeit weitergeleitet wird:</string>
@@ -564,11 +564,11 @@
     <string name="activity_path_learn_more_button_title">Mehr erfahren</string>
     <string name="activity_path_resolving_progress">Auflösung…</string>
     <string name="activity_create_private_chat_title">Neue Session</string>
-    <string name="activity_create_private_chat_enter_session_id_tab_title">Session ID eingeben</string>
+    <string name="activity_create_private_chat_enter_account_id_tab_title">Account ID eingeben</string>
     <string name="activity_create_private_chat_scan_qr_code_tab_title">QR-Code scannen</string>
     <string name="activity_create_private_chat_scan_qr_code_explanation">Scannen Sie den QR-Code eines Benutzers, um eine Session zu starten. QR-Codes finden Sie, indem Sie in den Einstellungen auf das QR-Code-Symbol tippen.</string>
     <string name="fragment_enter_public_key_edit_text_hint">Sitzungs-ID oder ONS-Name eingeben</string>
-    <string name="fragment_enter_public_key_explanation">Benutzer können ihre Session ID freigeben, indem sie in ihren Einstellungen auf \"Session ID freigeben\" tippen oder ihren QR-Code freigeben.</string>
+    <string name="fragment_enter_public_key_explanation">Benutzer können ihre Account ID freigeben, indem sie in ihren Einstellungen auf \"Account ID freigeben\" tippen oder ihren QR-Code freigeben.</string>
     <string name="fragment_enter_public_key_error_message">Bitte überprüfe die Session-ID oder den ONS-Namen und versuche es erneut.</string>
     <string name="fragment_scan_qr_code_camera_access_explanation">Session benötigt Kamerazugriff, um die QR-Codes scannen zu können.</string>
     <string name="fragment_scan_qr_code_grant_camera_access_button_title">Kamerazugriff gewähren</string>

@@ -542,9 +542,9 @@ výmeny kľúčov.</string>
     <string name="copied_to_clipboard">Skopírované do schránky</string>
     <string name="next">Ďalej</string>
     <string name="share">Zdieľať</string>
-    <string name="invalid_session_id">Neplatné Session ID</string>
+    <string name="invalid_account_id">Neplatné Account ID</string>
     <string name="cancel">Zrušiť</string>
-    <string name="your_session_id">Vaše Session ID</string>
+    <string name="your_account_id">Vaše Account ID</string>
     <string name="view_fake_chat_bubble_1">Čo je Session?</string>
     <string name="view_fake_chat_bubble_2">Je to decentralizovaná, šifrovaná aplikácia na posielanie správ</string>
     <string name="view_fake_chat_bubble_3">Takže nezbiera moje osobné informácie alebo metadáta mojich konverzácií? Ako to funguje?</string>
@@ -576,10 +576,10 @@ výmeny kľúčov.</string>
     <string name="activity_path_service_node_row_title">Servisný uzol</string>
     <string name="activity_path_destination_row_title">Cieľ</string>
     <string name="activity_path_learn_more_button_title">Viac informácií</string>
-    <string name="activity_create_private_chat_enter_session_id_tab_title">Zadajte Session ID</string>
+    <string name="activity_create_private_chat_enter_account_id_tab_title">Zadajte Account ID</string>
     <string name="activity_create_private_chat_scan_qr_code_tab_title">Skenovať QR kód</string>
     <string name="activity_create_private_chat_scan_qr_code_explanation">Začnite stretnutie naskenovaním QR kódu iného používateľa. QR kód nájdete ťuknutím na ikonu QR kódu v nastaveniach účtu.</string>
-    <string name="fragment_enter_public_key_explanation">Používatelia môžu zdieľať svoje Session ID tak, že prejdú do nastavení svojho účtu a klepnú na možnosť „Zdieľať Session ID“ alebo zdieľajú svoj QR kód.</string>
+    <string name="fragment_enter_public_key_explanation">Používatelia môžu zdieľať svoje Account ID tak, že prejdú do nastavení svojho účtu a klepnú na možnosť „Zdieľať Account ID“ alebo zdieľajú svoj QR kód.</string>
     <string name="fragment_scan_qr_code_camera_access_explanation">Session potrebuje prístup k fotoaparátu na skenovanie QR kódov</string>
     <string name="fragment_scan_qr_code_grant_camera_access_button_title">Udeliť prístup k fotoaparátu</string>
     <string name="activity_create_closed_group_title">Nová uzatvorená skupina</string>
@@ -636,7 +636,7 @@ výmeny kľúčov.</string>
     <string name="dialog_ui_mode_option_day">Deň</string>
     <string name="dialog_ui_mode_option_night">Nočný režim</string>
     <string name="dialog_ui_mode_option_system_default">Predvolené systémom</string>
-    <string name="activity_conversation_menu_copy_account_id">Kopírovať Session ID</string>
+    <string name="activity_conversation_menu_copy_account_id">Kopírovať Account ID</string>
     <string name="attachment">Príloha</string>
     <string name="attachment_type_voice_message">Hlasová správa</string>
     <string name="details">Podrobnosti</string>

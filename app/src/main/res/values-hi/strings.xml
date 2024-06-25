@@ -527,9 +527,9 @@
     <string name="copied_to_clipboard">क्लिपबोर्ड पर कॉपी किया गया है</string>
     <string name="next">अगला</string>
     <string name="share">साझा करें</string>
-    <string name="invalid_session_id">अमान्य सेशन आईडी</string>
+    <string name="invalid_account_id">अमान्य सेशन आईडी</string>
     <string name="cancel">रद्द करें</string>
-    <string name="your_session_id">आपकी सेशन आईडी</string>
+    <string name="your_account_id">आपकी सेशन आईडी</string>
     <string name="view_fake_chat_bubble_1">सेशन क्या है?</string>
     <string name="view_fake_chat_bubble_2">यह एक decentralized, encrypted मेसेजिंग ऐप है</string>
     <string name="view_fake_chat_bubble_3">इसलिए यह मेरी निजी जानकारी या बातचीत का metadata इकठ्ठा नहीं करता? यह कैसे काम करता है?</string>
@@ -554,7 +554,7 @@
     <string name="activity_home_delete_conversation_dialog_message">क्या वाकई आप इस वार्तालाप को हटाना चाहते हैं?</string>
     <string name="activity_home_conversation_deleted_message">बातचीत हटाई गई</string>
     <string name="view_seed_reminder_subtitle_1">अकाउंट सुरक्षित रखने के लिए अपनी पुनर्व्यप्ती वाक्यांश को सेव करके रखें</string>
-    <string name="view_seed_reminder_subtitle_2">अपना पुनर्प्राप्ति वाक्यांश प्रकट करने के लिए संशोधित शब्दों को टैप और होल्ड करें, फिर अपनी Session ID को सुरक्षित करने के लिए इसे सुरक्षित रूप से संग्रहीत करें।</string>
+    <string name="view_seed_reminder_subtitle_2">अपना पुनर्प्राप्ति वाक्यांश प्रकट करने के लिए संशोधित शब्दों को टैप और होल्ड करें, फिर अपनी Account ID को सुरक्षित करने के लिए इसे सुरक्षित रूप से संग्रहीत करें।</string>
     <string name="view_seed_reminder_subtitle_3">अपने रिकवरी फ्रेज को एक सुरक्षित जगह रखे</string>
     <string name="activity_path_title">पथ</string>
     <string name="activity_path_explanation">सेशन आपके मैसेज को सेशन के डेंटरलिज़्ड नेटवर्क की बहुत साडी सर्विस नोड्स में भेज देता है जो आपकी IP को छुपाती है.</string>
@@ -565,7 +565,7 @@
     <string name="activity_path_learn_more_button_title">अधिक जानें</string>
     <string name="activity_path_resolving_progress">हल किया जा रहा है</string>
     <string name="activity_create_private_chat_title">नया सेशन</string>
-    <string name="activity_create_private_chat_enter_session_id_tab_title">सेशन आईडी डालें</string>
+    <string name="activity_create_private_chat_enter_account_id_tab_title">सेशन आईडी डालें</string>
     <string name="activity_create_private_chat_scan_qr_code_tab_title">QR कोड को स्कैन करें</string>
     <string name="activity_create_private_chat_scan_qr_code_explanation">सेशन शुरू करने के लिए यूजर के क्यूआर कोड को स्कैन करें। क्यूआर कोड को अकाउंट सेटिंग में क्यूआर कोड आइकन पर टैप करके पाया जा सकता है।</string>
     <string name="fragment_enter_public_key_edit_text_hint">Session आईडी या ओएनएस नाम दर्ज करें</string>

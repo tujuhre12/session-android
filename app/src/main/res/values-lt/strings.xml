@@ -545,9 +545,9 @@
     <string name="copied_to_clipboard">Nukopijuota į iškarpinę</string>
     <string name="next">Kitas</string>
     <string name="share">Bendrinti</string>
-    <string name="invalid_session_id">Neteisingas Session ID</string>
+    <string name="invalid_account_id">Neteisingas Account ID</string>
     <string name="cancel">Atsisakyti</string>
-    <string name="your_session_id">Jūsų Session ID</string>
+    <string name="your_account_id">Jūsų Account ID</string>
     <string name="view_fake_chat_bubble_1">Kas yra Session?</string>
     <string name="view_fake_chat_bubble_2">Tai – decentralizuota, šifruota pokalbių programėlė</string>
     <string name="view_fake_chat_bubble_3">Ji nerenka mano asmeninės informacijos ar mano pokalbių metaduomenų? Kaip ji veikia?</string>
@@ -570,7 +570,7 @@
     <string name="activity_home_delete_conversation_dialog_message">Ar tikrai norite ištrinti šį pokalbį?</string>
     <string name="activity_home_conversation_deleted_message">Pokalbis ištrintas</string>
     <string name="view_seed_reminder_subtitle_1">Apsaugokite savo paskyrą įsirašydami atkūrimo frazę</string>
-    <string name="view_seed_reminder_subtitle_2">Bakstelėkite ir laikykite ant redaguotų žodžių, kad būtų atskleista jūsų atkūrimo frazė. Tuomet, laikykite ją saugioje vietoje, kad apsaugotumėte savo Session ID.</string>
+    <string name="view_seed_reminder_subtitle_2">Bakstelėkite ir laikykite ant redaguotų žodžių, kad būtų atskleista jūsų atkūrimo frazė. Tuomet, laikykite ją saugioje vietoje, kad apsaugotumėte savo Account ID.</string>
     <string name="view_seed_reminder_subtitle_3">Užtikrinkite, kad laikytumėte savo atkūrimo frazę saugioje vietoje</string>
     <string name="activity_path_title">Kelias</string>
     <string name="activity_path_explanation">Programėlė Session slepia jūsų IP adresą, peradresuodama jūsų žinutes per kelis aptarnavimo mazgus Session decentralizuotame tinkle. Štai čia yra šalys, per kurias šiuo metu yra peradresuojamas jūsų ryšys:</string>
@@ -579,9 +579,9 @@
     <string name="activity_path_service_node_row_title">Aptarnavimo mazgas</string>
     <string name="activity_path_destination_row_title">Paskirties vieta</string>
     <string name="activity_path_learn_more_button_title">Sužinoti daugiau</string>
-    <string name="activity_create_private_chat_enter_session_id_tab_title">Įveskite Session ID</string>
+    <string name="activity_create_private_chat_enter_account_id_tab_title">Įveskite Account ID</string>
     <string name="activity_create_private_chat_scan_qr_code_tab_title">Skenuoti QR kodą</string>
-    <string name="fragment_enter_public_key_edit_text_hint">Įveskite Session ID arba ONS vardą</string>
+    <string name="fragment_enter_public_key_edit_text_hint">Įveskite Account ID arba ONS vardą</string>
     <string name="fragment_scan_qr_code_grant_camera_access_button_title">Suteikti prieigą prie kameros</string>
     <string name="activity_create_closed_group_title">Nauja uždara grupė</string>
     <string name="activity_create_closed_group_edit_text_hint">Įveskite grupės pavadinimą</string>
@@ -642,7 +642,7 @@
     <string name="dialog_ui_mode_option_day">Dieninis</string>
     <string name="dialog_ui_mode_option_night">Naktinis</string>
     <string name="dialog_ui_mode_option_system_default">Sistemos numatytasis</string>
-    <string name="activity_conversation_menu_copy_account_id">Kopijuoti Session ID</string>
+    <string name="activity_conversation_menu_copy_account_id">Kopijuoti Account ID</string>
     <string name="attachment">Priedas</string>
     <string name="attachment_type_voice_message">Balso žinutė</string>
     <string name="details">Išsamiau</string>

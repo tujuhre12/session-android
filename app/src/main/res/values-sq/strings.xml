@@ -526,9 +526,9 @@
     <string name="copied_to_clipboard">Kopjo në klipbord</string>
     <string name="next">Tutje</string>
     <string name="share">Shpërndaje</string>
-    <string name="invalid_session_id">Session ID e gabuar</string>
+    <string name="invalid_account_id">Account ID e gabuar</string>
     <string name="cancel">Anuloje</string>
-    <string name="your_session_id">Session ID e juaj</string>
+    <string name="your_account_id">Account ID e juaj</string>
     <string name="view_fake_chat_bubble_1">Si është Sessioni juaj?</string>
     <string name="view_fake_chat_bubble_2">Është një app për mesazhe të koduara dhe decentralizuara</string>
     <string name="view_fake_chat_bubble_3">I bije që të dhënat personale dhe informacionet e mesazheve nuk do të grumbullohen? Si funksionon kjo?</string>

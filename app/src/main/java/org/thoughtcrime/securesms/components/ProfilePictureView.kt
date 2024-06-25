@@ -47,7 +47,7 @@ class ProfilePictureView @JvmOverloads constructor(
     // region Updating
     fun update(recipient: Recipient) {
         fun getUserDisplayName(publicKey: String): String {
-            val contact = DatabaseComponent.get(context).sessionContactDatabase().getContactWithSessionID(publicKey)
+            val contact = DatabaseComponent.get(context).sessionContactDatabase().getContactWithAccountID(publicKey)
             return contact?.displayName(Contact.ContactContext.REGULAR) ?: publicKey
         }
 
@@ -71,7 +71,7 @@ class ProfilePictureView @JvmOverloads constructor(
                 additionalDisplayName = getUserDisplayName(apk)
             }
         } else if(recipient.isOpenGroupInboxRecipient) {
-            val publicKey = GroupUtil.getDecodedOpenGroupInboxSessionId(recipient.address.serialize())
+            val publicKey = GroupUtil.getDecodedOpenGroupInboxAccountId(recipient.address.serialize())
             this.publicKey = publicKey
             displayName = getUserDisplayName(publicKey)
             additionalPublicKey = null

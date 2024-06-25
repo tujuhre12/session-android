@@ -553,9 +553,9 @@
     <string name="copied_to_clipboard">Скопійовано в буфер обміну</string>
     <string name="next">Далі</string>
     <string name="share">Поділитися</string>
-    <string name="invalid_session_id">Невірна Session ID адресса</string>
+    <string name="invalid_account_id">Невірна Account ID адресса</string>
     <string name="cancel">Відміна</string>
-    <string name="your_session_id">Ваша Session ID адресса</string>
+    <string name="your_account_id">Ваша Account ID адресса</string>
     <string name="view_fake_chat_bubble_1">Що таке Session?</string>
     <string name="view_fake_chat_bubble_2">Це децентралізований, шифрований мессенджер обміну повідомленнями</string>
     <string name="view_fake_chat_bubble_3">Отже, він не збирає мою особисту інформацію чи мою метадані розмови? Як це працює?</string>
@@ -580,7 +580,7 @@
     <string name="activity_home_delete_conversation_dialog_message">Ви дійсно хочете видалити цю бесіду?</string>
     <string name="activity_home_conversation_deleted_message">Бесіду видалено</string>
     <string name="view_seed_reminder_subtitle_1">Захистіть свій обліковий запис, записавши на папері відновлювальну фразу</string>
-    <string name="view_seed_reminder_subtitle_2">Натисніть і втримуйте приховані слова, щоб розкрити вашу фразу відновлення, запишіть її на папері, щоб безпечно захистити вашу Session ID адресу.</string>
+    <string name="view_seed_reminder_subtitle_2">Натисніть і втримуйте приховані слова, щоб розкрити вашу фразу відновлення, запишіть її на папері, щоб безпечно захистити вашу Account ID адресу.</string>
     <string name="view_seed_reminder_subtitle_3">Переконайтеся, що ви записали свою фразу відновлення на папері і поклали її в безпечне місце</string>
     <string name="activity_path_title">Шлях</string>
     <string name="activity_path_explanation">Сесія приховує вашу IP-адресу, перенаправляючи ваші повідомлення через декілька сервісних вузлів в децентралізованій мережі Session. Це країни, через які зараз перенаправляєтся ваше з\'єднання:</string>
@@ -591,12 +591,12 @@
     <string name="activity_path_learn_more_button_title">Дізнатися більше</string>
     <string name="activity_path_resolving_progress">Визначаємо…</string>
     <string name="activity_create_private_chat_title">Новий діалог</string>
-    <string name="activity_create_private_chat_enter_session_id_tab_title">Введіть Session ID адрессу</string>
+    <string name="activity_create_private_chat_enter_account_id_tab_title">Введіть Account ID адрессу</string>
     <string name="activity_create_private_chat_scan_qr_code_tab_title">Сканувати QR-код</string>
     <string name="activity_create_private_chat_scan_qr_code_explanation">Проскануйте QR-код користувача, аби почати сессію. QR-код можна знайти, натиснувши на значок QR-коду в налаштуваннях облікового запису.</string>
-    <string name="fragment_enter_public_key_edit_text_hint">Введіть Session ID або ONS ім\'я</string>
-    <string name="fragment_enter_public_key_explanation">Користувачі можуть поділитися своїм Session ID, увійшовши в налаштування свого облікового запису та натиснувши \"Поділитися Session ID\", або поділившись своїм QR-кодом.</string>
-    <string name="fragment_enter_public_key_error_message">Будь ласка, перевірте Session ID або ONS ім\'я та спробуйте ще раз.</string>
+    <string name="fragment_enter_public_key_edit_text_hint">Введіть Account ID або ONS ім\'я</string>
+    <string name="fragment_enter_public_key_explanation">Користувачі можуть поділитися своїм Account ID, увійшовши в налаштування свого облікового запису та натиснувши \"Поділитися Account ID\", або поділившись своїм QR-кодом.</string>
+    <string name="fragment_enter_public_key_error_message">Будь ласка, перевірте Account ID або ONS ім\'я та спробуйте ще раз.</string>
     <string name="fragment_scan_qr_code_camera_access_explanation">Session потрібен дозвіл до камери, щоб сканувати QR-код</string>
     <string name="fragment_scan_qr_code_grant_camera_access_button_title">Дозволити доступ до камери</string>
     <string name="activity_create_closed_group_title">Нова Закрита Група</string>
@@ -668,7 +668,7 @@
     <string name="dialog_ui_mode_option_day">День</string>
     <string name="dialog_ui_mode_option_night">Ніч</string>
     <string name="dialog_ui_mode_option_system_default">За замовчуванням системи</string>
-    <string name="activity_conversation_menu_copy_account_id">Скопіювати Session ID адрессу</string>
+    <string name="activity_conversation_menu_copy_account_id">Скопіювати Account ID адрессу</string>
     <string name="attachment">Вкладення</string>
     <string name="attachment_type_voice_message">Голосове повідомлення</string>
     <string name="details">Подробиці</string>

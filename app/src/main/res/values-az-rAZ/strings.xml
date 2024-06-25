@@ -528,9 +528,9 @@
     <string name="copied_to_clipboard">Lövhəyə kopyalandı</string>
     <string name="next">Növbəti</string>
     <string name="share">Paylaş</string>
-    <string name="invalid_session_id">Etibarsız Session Kimliyi</string>
+    <string name="invalid_account_id">Etibarsız Session Kimliyi</string>
     <string name="cancel">İmtina</string>
-    <string name="your_session_id">Session Kimliyiniz</string>
+    <string name="your_account_id">Session Kimliyiniz</string>
     <string name="view_fake_chat_bubble_1">Session nədir?</string>
     <string name="view_fake_chat_bubble_2">Mərkəzi olmayan, şifrəli bir mesajlaşma tətbiqidir</string>
     <string name="view_fake_chat_bubble_3">Yəni, şəxsi məlumatlarımı və ya danışıq meta verilənlərimi yığmır? Necə işləyir?</string>
@@ -566,7 +566,7 @@
     <string name="activity_path_learn_more_button_title">Daha Ətraflı</string>
     <string name="activity_path_resolving_progress">Həll edilir…</string>
     <string name="activity_create_private_chat_title">Yeni Seans</string>
-    <string name="activity_create_private_chat_enter_session_id_tab_title">Session kimliyini daxil edin</string>
+    <string name="activity_create_private_chat_enter_account_id_tab_title">Session kimliyini daxil edin</string>
     <string name="activity_create_private_chat_scan_qr_code_tab_title">QR kodu skan edin</string>
     <string name="activity_create_private_chat_scan_qr_code_explanation">Bir seans başlatmaq üçün istifadəçinin QR kodunu skan edin. QR kodları, hesab tənzimləmələrindəki QR kodu nişanına toxunaraq tapıla bilər.</string>
     <string name="fragment_enter_public_key_edit_text_hint">Session kimliyini və ya ONS adını daxil edin</string>

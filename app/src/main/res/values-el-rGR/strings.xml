@@ -528,9 +528,9 @@
     <string name="copied_to_clipboard">Αντιγράφηκε στο πρόχειρο</string>
     <string name="next">Επόμενο</string>
     <string name="share">Διαμοιρασμός</string>
-    <string name="invalid_session_id">Μη έγκυρη Session ταυτότητα</string>
+    <string name="invalid_account_id">Μη έγκυρη Session ταυτότητα</string>
     <string name="cancel">Ακύρωση</string>
-    <string name="your_session_id">Η ταυτότητά σας</string>
+    <string name="your_account_id">Η ταυτότητά σας</string>
     <string name="view_fake_chat_bubble_1">Τι είναι το Session;</string>
     <string name="view_fake_chat_bubble_2">Είναι μια αποκεντρωμένη, κρυπτογραφημένη εφαρμογή μηνυμάτων</string>
     <string name="view_fake_chat_bubble_3">Δηλαδή δεν συλλέγει τα προσωπικά μου στοιχεία ή τα μεταδεδομένα των συνομιλιών μου; Πώς λειτουργεί;</string>
@@ -566,12 +566,12 @@
     <string name="activity_path_learn_more_button_title">Μάθετε περισσότερα</string>
     <string name="activity_path_resolving_progress">Επίλυση…</string>
     <string name="activity_create_private_chat_title">Νέα συνομιλία</string>
-    <string name="activity_create_private_chat_enter_session_id_tab_title">Εισαγωγή Session Ταυτότητας</string>
+    <string name="activity_create_private_chat_enter_account_id_tab_title">Εισαγωγή Session Ταυτότητας</string>
     <string name="activity_create_private_chat_scan_qr_code_tab_title">Σαρώστε τον κωδικό QR</string>
     <string name="activity_create_private_chat_scan_qr_code_explanation">Σαρώστε τον κωδικό QR ενός χρήστη για να ξεκινήσετε μια συνομιλία. Οι κωδικοί QR μπορούν να βρεθούν πατώντας το εικονίδιο QR κώδικα στις ρυθμίσεις λογαριασμού.</string>
-    <string name="fragment_enter_public_key_edit_text_hint">Εισάγετε το Session ID ή το ONS όνομα</string>
+    <string name="fragment_enter_public_key_edit_text_hint">Εισάγετε το Account ID ή το ONS όνομα</string>
     <string name="fragment_enter_public_key_explanation">Οι χρήστες μπορούν να μοιραστούν τη ταυτότητα τους πηγαίνοντας στις ρυθμίσεις του λογαριασμού τους και πατώντας το \"Διαμοιρασμό Session ταυτότητας\" ή κοινοποιώντας τον κωδικό QR.</string>
-    <string name="fragment_enter_public_key_error_message">Παρακαλώ ελέγξτε το Session ID ή το ONS όνομα και προσπαθήστε ξανά.</string>
+    <string name="fragment_enter_public_key_error_message">Παρακαλώ ελέγξτε το Account ID ή το ONS όνομα και προσπαθήστε ξανά.</string>
     <string name="fragment_scan_qr_code_camera_access_explanation">Το Session χρειάζεται πρόσβαση στην κάμερα για σάρωση κωδικών QR</string>
     <string name="fragment_scan_qr_code_grant_camera_access_button_title">Χορήγηση Πρόσβασης Κάμερας</string>
     <string name="activity_create_closed_group_title">Νέα Κλειστή Ομάδα</string>

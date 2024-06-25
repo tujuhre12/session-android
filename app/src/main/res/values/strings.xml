@@ -16,8 +16,7 @@
 <!--Accessibility ID's-->
     <!-- Landing Page -->
     <string name="AccessibilityId_link_device">Link Device</string>
-    <!-- Session ID Page-->
-    <string name="AccessibilityId_session_id">Session ID</string>
+    <!-- Account ID Page-->
     <string name="AccessibilityId_account_id">Account ID</string>
     <string name="AccessibilityId_continue">Continue</string>
     <!-- Recovery phrase input -->
@@ -90,7 +89,7 @@
     <string name="AccessibilityId_blocked_banner">Blocked banner</string>
     <string name="AccessibilityId_blocked_banner_text">Blocked banner text</string>
     <!--New Session -->
-    <string name="AccessibilityId_session_id_input">Session id input box</string>
+    <string name="AccessibilityId_account_id_input">Account id input box</string>
     <string name="AccessibilityId_next">Next</string>
     <!--  New group -->
     <string name="AccessibilityId_group_name_input">Group name input</string>
@@ -728,9 +727,9 @@
     <string name="copied_to_clipboard">Copied to clipboard</string>
     <string name="next">Next</string>
     <string name="share">Share</string>
-    <string name="invalid_session_id">Invalid Session ID</string>
+    <string name="invalid_account_id">Invalid Account ID</string>
     <string name="cancel">Cancel</string>
-    <string name="your_session_id">Your Session ID</string>
+    <string name="your_account_id">Your Account ID</string>
     <string name="urlOpen">Open URL</string>
     <string name="urlOpenBrowser">This will open in your browser.</string>
     <string name="activity_landing_terms_of_service">Terms of Service</string>
@@ -751,7 +750,7 @@
     <string name="activity_home_delete_conversation_dialog_message">Are you sure you want to delete this conversation?</string>
     <string name="activity_home_conversation_deleted_message">Conversation deleted</string>
     <string name="view_seed_reminder_subtitle_1">Secure your account by saving your recovery phrase</string>
-    <string name="view_seed_reminder_subtitle_2">Tap and hold the redacted words to reveal your recovery phrase, then store it safely to secure your Session ID.</string>
+    <string name="view_seed_reminder_subtitle_2">Tap and hold the redacted words to reveal your recovery phrase, then store it safely to secure your Account ID.</string>
     <string name="view_seed_reminder_subtitle_3">Make sure to store your recovery phrase in a safe place</string>
     <string name="activity_path_title">Path</string>
     <string name="activity_path_explanation">Session hides your IP by bouncing your messages through several Service Nodes in Session\'s decentralized network. These are the countries your connection is currently being bounced through:</string>
@@ -762,12 +761,12 @@
     <string name="activity_path_learn_more_button_title">Learn More</string>
     <string name="activity_path_resolving_progress">Resolving…</string>
     <string name="activity_create_private_chat_title">New Session</string>
-    <string name="activity_create_private_chat_enter_session_id_tab_title">Enter Session ID</string>
+    <string name="activity_create_private_chat_enter_account_id_tab_title">Enter Account ID</string>
     <string name="activity_create_private_chat_scan_qr_code_tab_title">Scan QR Code</string>
     <string name="activity_create_private_chat_scan_qr_code_explanation">Scan a user\'s QR code to start a session. QR codes can be found by tapping the QR code icon in account settings.</string>
-    <string name="fragment_enter_public_key_edit_text_hint">Enter Session ID or ONS name</string>
-    <string name="fragment_enter_public_key_explanation">Users can share their Session ID by going into their account settings and tapping "Share Session ID", or by sharing their QR code.</string>
-    <string name="fragment_enter_public_key_error_message">Please check the Session ID or ONS name and try again.</string>
+    <string name="fragment_enter_public_key_edit_text_hint">Enter Account ID or ONS name</string>
+    <string name="fragment_enter_public_key_explanation">Users can share their Account ID by going into their account settings and tapping "Share Account ID", or by sharing their QR code.</string>
+    <string name="fragment_enter_public_key_error_message">Please check the Account ID or ONS name and try again.</string>
     <string name="fragment_scan_qr_code_camera_access_explanation">Session needs camera access to scan QR codes</string>
     <string name="fragment_scan_qr_code_grant_camera_access_button_title">Grant Camera Access</string>
     <string name="activity_create_closed_group_title">New Closed Group</string>
@@ -922,7 +921,7 @@
     <string name="global_search_contacts_groups">Contacts and Groups</string>
     <string name="global_search_messages">Messages</string>
     <string name="activity_message_requests_title">Message Requests</string>
-    <string name="message_requests_send_notice">Sending a message to this user will automatically accept their message request and reveal your Session ID.</string>
+    <string name="message_requests_send_notice">Sending a message to this user will automatically accept their message request and reveal your Account ID.</string>
     <string name="accept">Accept</string>
     <string name="decline">Decline</string>
     <string name="message_requests_clear_all">Clear All</string>
@@ -1014,7 +1013,7 @@
     <string name="dialog_join_community_title">Join Community</string>
     <string name="new_conversation_contacts_title">Contacts</string>
     <string name="new_conversation_unknown_contacts_section_title">Unknown</string>
-    <string name="fragment_enter_public_key_prompt">Start a new conversation by entering someone\'s Session ID or share your Session ID with them.</string>
+    <string name="fragment_enter_public_key_prompt">Start a new conversation by entering someone\'s Account ID or share your Account ID with them.</string>
     <string name="activity_create_group_create_button_title">Create</string>
     <string name="search_contacts_hint">Search contacts</string>
     <string name="activity_join_public_chat_enter_community_url_tab_title">Community URL</string>

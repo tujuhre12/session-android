@@ -528,9 +528,9 @@
     <string name="copied_to_clipboard">Copiado para clipboard</string>
     <string name="next">Próximo</string>
     <string name="share">Compartilhar</string>
-    <string name="invalid_session_id">Session ID inválida</string>
+    <string name="invalid_account_id">Account ID inválida</string>
     <string name="cancel">Cancelar</string>
-    <string name="your_session_id">Sua Session ID</string>
+    <string name="your_account_id">Sua Account ID</string>
     <string name="view_fake_chat_bubble_1">O que é Session?</string>
     <string name="view_fake_chat_bubble_2">É um app de mensageria encriptada, descentralizada</string>
     <string name="view_fake_chat_bubble_3">Então ele não coleta minha informação pessoal ou meus metadados de conversa? Como funciona?</string>
@@ -566,7 +566,7 @@
     <string name="activity_path_learn_more_button_title">Saber mais</string>
     <string name="activity_path_resolving_progress">Resolvendo…</string>
     <string name="activity_create_private_chat_title">Nova Sessão</string>
-    <string name="activity_create_private_chat_enter_session_id_tab_title">Digite o ID Session</string>
+    <string name="activity_create_private_chat_enter_account_id_tab_title">Digite o ID Session</string>
     <string name="activity_create_private_chat_scan_qr_code_tab_title">Escanear código QR</string>
     <string name="activity_create_private_chat_scan_qr_code_explanation">Escaneie o código QR de um usuário para iniciar uma sessão. Os códigos QR podem ser encontrados tocando no ícone de código QR nas configurações da conta.</string>
     <string name="fragment_enter_public_key_edit_text_hint">Insira um ID Session ou nome ONS</string>
@@ -643,7 +643,7 @@
     <string name="dialog_ui_mode_option_day">Dia</string>
     <string name="dialog_ui_mode_option_night">Noite</string>
     <string name="dialog_ui_mode_option_system_default">Default de sistema</string>
-    <string name="activity_conversation_menu_copy_account_id">Copiar Session ID</string>
+    <string name="activity_conversation_menu_copy_account_id">Copiar Account ID</string>
     <string name="attachment">Anexo</string>
     <string name="attachment_type_voice_message">Mensagem de Voz</string>
     <string name="details">Detalhes</string>

@@ -528,9 +528,9 @@ scambia un altro messaggio!</string>
     <string name="copied_to_clipboard">Copiato negli appunti</string>
     <string name="next">Successivo</string>
     <string name="share">Condividi</string>
-    <string name="invalid_session_id">ID Sessione non valido</string>
+    <string name="invalid_account_id">ID Sessione non valido</string>
     <string name="cancel">Annulla</string>
-    <string name="your_session_id">Il tuo ID Sessione</string>
+    <string name="your_account_id">Il tuo ID Sessione</string>
     <string name="view_fake_chat_bubble_1">Cos\'è Session?</string>
     <string name="view_fake_chat_bubble_2">È un\'app di messaggistica decentralizzata e crittografata</string>
     <string name="view_fake_chat_bubble_3">Quindi non raccoglie informazioni personali o metadati di conversazione? Come funziona?</string>
@@ -566,7 +566,7 @@ scambia un altro messaggio!</string>
     <string name="activity_path_learn_more_button_title">Per saperne di più</string>
     <string name="activity_path_resolving_progress">In Risoluzione…</string>
     <string name="activity_create_private_chat_title">Nuova sessione</string>
-    <string name="activity_create_private_chat_enter_session_id_tab_title">Inserisci ID Sessione</string>
+    <string name="activity_create_private_chat_enter_account_id_tab_title">Inserisci ID Sessione</string>
     <string name="activity_create_private_chat_scan_qr_code_tab_title">Scansiona il codice QR</string>
     <string name="activity_create_private_chat_scan_qr_code_explanation">Scansiona il codice QR di un utente per avviare una sessione. Puoi trovare i codici QR toccando l\'icona Codice QR nelle impostazioni dell\'account.</string>
     <string name="fragment_enter_public_key_edit_text_hint">Inserisci ID Sessione o nome ONS</string>

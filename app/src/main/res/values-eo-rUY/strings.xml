@@ -527,9 +527,9 @@
     <string name="copied_to_clipboard">Kopiite al tondejo</string>
     <string name="next">Sekva</string>
     <string name="share">Kunhavigi</string>
-    <string name="invalid_session_id">Malvalida Session ID</string>
+    <string name="invalid_account_id">Malvalida Account ID</string>
     <string name="cancel">Nuligi</string>
-    <string name="your_session_id">Via Session ID</string>
+    <string name="your_account_id">Via Account ID</string>
     <string name="view_fake_chat_bubble_1">Kio estas Session?</string>
     <string name="view_fake_chat_bubble_2">Ĝi estas malcentraliza kaj ĉifrita mesaĝilo</string>
     <string name="view_fake_chat_bubble_3">Do ĝi ne kolektas miajn personajn informojn aŭ miajn konversaciajn metadatumojn? Kiel ĝi funkcias?</string>
@@ -554,7 +554,7 @@
     <string name="activity_home_delete_conversation_dialog_message">Ĉu vi certas, ke vi volas forviŝi ĉi tiun konversacion?</string>
     <string name="activity_home_conversation_deleted_message">Konversacio forviŝite</string>
     <string name="view_seed_reminder_subtitle_1">Sekurigi vian konton per konservi vian riparan frazon</string>
-    <string name="view_seed_reminder_subtitle_2">Tuŝadu la kaŝitajn vortojn por malkaŝi vian riparan frazon, tiam konservi ĝin sekure por sekurigi vian Session ID-on.</string>
+    <string name="view_seed_reminder_subtitle_2">Tuŝadu la kaŝitajn vortojn por malkaŝi vian riparan frazon, tiam konservi ĝin sekure por sekurigi vian Account ID-on.</string>
     <string name="view_seed_reminder_subtitle_3">Certigu konservi vian riparan frazon en sekura loko</string>
     <string name="activity_path_title">Vojo</string>
     <string name="activity_path_explanation">Sesio kaŝas vian IP-adreson per resaltigi viajn mesaĝojn tra multaj Servaj Nodoj en la malcentraliza reto de Sesio. Ĉi tiuj estas la landoj via konekto estas nuntempe resaltigata tra:</string>
@@ -565,10 +565,10 @@
     <string name="activity_path_learn_more_button_title">Lerni pli</string>
     <string name="activity_path_resolving_progress">Solvante…</string>
     <string name="activity_create_private_chat_title">Nova Sesio</string>
-    <string name="activity_create_private_chat_enter_session_id_tab_title">Entajpu Session ID-on</string>
+    <string name="activity_create_private_chat_enter_account_id_tab_title">Entajpu Account ID-on</string>
     <string name="activity_create_private_chat_scan_qr_code_tab_title">Skani QR-Kodon</string>
     <string name="activity_create_private_chat_scan_qr_code_explanation">Skanu QR-kodon de uzanto por komenci sesion. QR-kodoj povas esti trovitaj per tuŝeti la QR-kodan bildeton en la konta agordo.</string>
-    <string name="fragment_enter_public_key_explanation">Uzantoj povas kunhavigi sian Session ID-on per irante en sia konta agordo kaj tuŝeti \"Kunhavigi Session ID-on\", aŭ per kunhavigi sian QR-kodon.</string>
+    <string name="fragment_enter_public_key_explanation">Uzantoj povas kunhavigi sian Account ID-on per irante en sia konta agordo kaj tuŝeti \"Kunhavigi Account ID-on\", aŭ per kunhavigi sian QR-kodon.</string>
     <string name="fragment_scan_qr_code_camera_access_explanation">Sesio bezonas fotilan aliron por skani QR-kodojn</string>
     <string name="fragment_scan_qr_code_grant_camera_access_button_title">Permesi Fotilan Aliron</string>
     <string name="activity_create_closed_group_title">Nova Ferma Grupo</string>
@@ -637,7 +637,7 @@
     <string name="dialog_ui_mode_option_day">Tage</string>
     <string name="dialog_ui_mode_option_night">Nokte</string>
     <string name="dialog_ui_mode_option_system_default">Sistema defaŭlto</string>
-    <string name="activity_conversation_menu_copy_account_id">Kopii Session ID-on</string>
+    <string name="activity_conversation_menu_copy_account_id">Kopii Account ID-on</string>
     <string name="attachment">Kunsendaĵo</string>
     <string name="attachment_type_voice_message">Voĉmesaĝo</string>
     <string name="details">Detaloj</string>

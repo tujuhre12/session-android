@@ -529,9 +529,9 @@
     <string name="copied_to_clipboard">Vágólapra másolva</string>
     <string name="next">Következő</string>
     <string name="share">Megosztás</string>
-    <string name="invalid_session_id">Érvénytelen Session azonosító</string>
+    <string name="invalid_account_id">Érvénytelen Session azonosító</string>
     <string name="cancel">Mégse</string>
-    <string name="your_session_id">A session azonosítód</string>
+    <string name="your_account_id">A session azonosítód</string>
     <string name="view_fake_chat_bubble_1">Mi az a Session?</string>
     <string name="view_fake_chat_bubble_2">Ez egy decentralizált, titkosított üzenetküldő alkalmazás</string>
     <string name="view_fake_chat_bubble_3">Tehát nem gyűjti a személyes adataimat vagy a beszélgetés metaadatait? Hogyan működik?</string>
@@ -567,7 +567,7 @@
     <string name="activity_path_learn_more_button_title">Tudj meg többet</string>
     <string name="activity_path_resolving_progress">Feloldás...</string>
     <string name="activity_create_private_chat_title">Új Session</string>
-    <string name="activity_create_private_chat_enter_session_id_tab_title">Adja meg a Session azonosítóját</string>
+    <string name="activity_create_private_chat_enter_account_id_tab_title">Adja meg a Session azonosítóját</string>
     <string name="activity_create_private_chat_scan_qr_code_tab_title">QR kód beolvasása</string>
     <string name="activity_create_private_chat_scan_qr_code_explanation">A beszélgetés elindításához olvassa be a felhasználó QR kódját. A QR kód a fiókbeállításokban található a QR kód ikonra koppintva.</string>
     <string name="fragment_enter_public_key_edit_text_hint">Írja be Session azonosítóját vagy ONS nevét</string>

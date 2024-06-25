@@ -527,9 +527,9 @@ de intercambio de claves!</string>
     <string name="copied_to_clipboard">Copiado en el portapapeles</string>
     <string name="next">Siguiente</string>
     <string name="share">Compartir</string>
-    <string name="invalid_session_id">ID de Session no válida</string>
+    <string name="invalid_account_id">ID de Session no válida</string>
     <string name="cancel">Cancelar</string>
-    <string name="your_session_id">Tu ID de Session</string>
+    <string name="your_account_id">Tu ID de Session</string>
     <string name="view_fake_chat_bubble_1">¿Qué es Session?</string>
     <string name="view_fake_chat_bubble_2">Es una aplicación de mensajería descentralizada y cifrada</string>
     <string name="view_fake_chat_bubble_3">¿Entonces no recopila mi información personal ni los metadatos de mi conversación? ¿Cómo funciona?</string>
@@ -565,7 +565,7 @@ de intercambio de claves!</string>
     <string name="activity_path_learn_more_button_title">Saber Más</string>
     <string name="activity_path_resolving_progress">Resolviendo…</string>
     <string name="activity_create_private_chat_title">Nueva Session</string>
-    <string name="activity_create_private_chat_enter_session_id_tab_title">Session ID</string>
+    <string name="activity_create_private_chat_enter_account_id_tab_title">Account ID</string>
     <string name="activity_create_private_chat_scan_qr_code_tab_title">Escanear código QR</string>
     <string name="activity_create_private_chat_scan_qr_code_explanation">Escanea el código QR de un usuario para empezar una sesión. Los códigos QR se pueden encontrar tocando el icono del código QR en los ajustes de la cuenta.</string>
     <string name="fragment_enter_public_key_edit_text_hint">Introduzca el ID de Session o el nombre ONS</string>

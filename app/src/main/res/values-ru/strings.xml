@@ -552,9 +552,9 @@
     <string name="copied_to_clipboard">Скопировано в буфер обмена</string>
     <string name="next">Далее</string>
     <string name="share">Поделиться</string>
-    <string name="invalid_session_id">Неверный Session ID</string>
+    <string name="invalid_account_id">Неверный Account ID</string>
     <string name="cancel">Отмена</string>
-    <string name="your_session_id">Ваш Session ID</string>
+    <string name="your_account_id">Ваш Account ID</string>
     <string name="view_fake_chat_bubble_1">Что такое Session?</string>
     <string name="view_fake_chat_bubble_2">Это децентрализованное, зашифрованное приложение для обмена сообщениями</string>
     <string name="view_fake_chat_bubble_3">Значит ли это, что оно не собирает мою личную информацию или метаданные моего разговора? Как оно работает?</string>
@@ -579,7 +579,7 @@
     <string name="activity_home_delete_conversation_dialog_message">Вы уверены, что хотите удалить этот разговор?</string>
     <string name="activity_home_conversation_deleted_message">Разговор удален</string>
     <string name="view_seed_reminder_subtitle_1">Защитите свой аккаунт, сохранив секретную фразу</string>
-    <string name="view_seed_reminder_subtitle_2">Нажмите и удерживайте сокращенные слова, чтобы открыть секретную фразу, а затем сохраните ее в надежном месте, чтобы защитить свой Session ID.</string>
+    <string name="view_seed_reminder_subtitle_2">Нажмите и удерживайте сокращенные слова, чтобы открыть секретную фразу, а затем сохраните ее в надежном месте, чтобы защитить свой Account ID.</string>
     <string name="view_seed_reminder_subtitle_3">Обязательно сохраните секретную фразу в надежном месте</string>
     <string name="activity_path_title">Маршрут</string>
     <string name="activity_path_explanation">Session скрывает ваш IP, перенаправляя ваши сообщения через несколько сервисных узлов своей децентрализованной сети. Вот страны, через которые в данный момент проходит ваш сеанс связи:</string>
@@ -590,12 +590,12 @@
     <string name="activity_path_learn_more_button_title">Узнать больше</string>
     <string name="activity_path_resolving_progress">Идет определение…</string>
     <string name="activity_create_private_chat_title">Новый Диалог</string>
-    <string name="activity_create_private_chat_enter_session_id_tab_title">Введите Session ID</string>
+    <string name="activity_create_private_chat_enter_account_id_tab_title">Введите Account ID</string>
     <string name="activity_create_private_chat_scan_qr_code_tab_title">Сканировать QR-код</string>
     <string name="activity_create_private_chat_scan_qr_code_explanation">Сканируйте QR-код пользователя, чтобы начать сессию. QR-коды можно найти, нажав значок QR-кода в настройках учетной записи.</string>
-    <string name="fragment_enter_public_key_edit_text_hint">Введите Session ID или ONS имя</string>
-    <string name="fragment_enter_public_key_explanation">Пользователи могут поделиться своим Session ID, зайдя в настройки своей учетной записи и нажав «Отправить Session ID», или поделившись своим QR-кодом.</string>
-    <string name="fragment_enter_public_key_error_message">Пожалуйста, проверьте Session ID или ONS имя и попробуйте снова.</string>
+    <string name="fragment_enter_public_key_edit_text_hint">Введите Account ID или ONS имя</string>
+    <string name="fragment_enter_public_key_explanation">Пользователи могут поделиться своим Account ID, зайдя в настройки своей учетной записи и нажав «Отправить Account ID», или поделившись своим QR-кодом.</string>
+    <string name="fragment_enter_public_key_error_message">Пожалуйста, проверьте Account ID или ONS имя и попробуйте снова.</string>
     <string name="fragment_scan_qr_code_camera_access_explanation">Session нужен доступ к камере для сканирования QR-кодов</string>
     <string name="fragment_scan_qr_code_grant_camera_access_button_title">Предоставить доступ к камере</string>
     <string name="activity_create_closed_group_title">Новая закрытая группа</string>
@@ -667,7 +667,7 @@
     <string name="dialog_ui_mode_option_day">День</string>
     <string name="dialog_ui_mode_option_night">Ночь</string>
     <string name="dialog_ui_mode_option_system_default">Системные настройки</string>
-    <string name="activity_conversation_menu_copy_account_id">Копировать Session ID</string>
+    <string name="activity_conversation_menu_copy_account_id">Копировать Account ID</string>
     <string name="attachment">Вложение</string>
     <string name="attachment_type_voice_message">Голосовое сообщение</string>
     <string name="details">Подробности</string>

@@ -535,9 +535,9 @@
     <string name="copied_to_clipboard">Պատճենվել է կցարանում</string>
     <string name="next">Հաջորդը</string>
     <string name="share">Կիսվել</string>
-    <string name="invalid_session_id">Սխալ Session ID</string>
+    <string name="invalid_account_id">Սխալ Account ID</string>
     <string name="cancel">Փակել</string>
-    <string name="your_session_id">Ձեր Session ID֊ն</string>
+    <string name="your_account_id">Ձեր Account ID֊ն</string>
     <string name="view_fake_chat_bubble_1">Ի՞նչ է Սեանսը։</string>
     <string name="view_fake_chat_bubble_2">Այն ապահով, ծածկագրված նամակների ծրագիր է</string>
     <string name="view_fake_chat_bubble_3">Դա նշանակում է, որ այն չի՞ հավաքում իմ անձնական տվյալները կամ իմ զրույցի մետատվյալները։</string>
@@ -562,7 +562,7 @@
     <string name="activity_home_delete_conversation_dialog_message">Վստա՞հ եք, որ ցանկանում եք ջնջել այս խոսակցությունը:</string>
     <string name="activity_home_conversation_deleted_message">Ջնջված է</string>
     <string name="view_seed_reminder_subtitle_1">Պահեք ձեր անվտանգությունը պահպանելով session-ի բանալին</string>
-    <string name="view_seed_reminder_subtitle_2">Հպեք և պահեք տրված բառերը՝ ձեր վերականգնման բանալին գտնելու համար, այնուհետև պահեք այն ապահով՝ ձեր Session ID-ն ապահով պահելու համար.</string>
+    <string name="view_seed_reminder_subtitle_2">Հպեք և պահեք տրված բառերը՝ ձեր վերականգնման բանալին գտնելու համար, այնուհետև պահեք այն ապահով՝ ձեր Account ID-ն ապահով պահելու համար.</string>
     <string name="view_seed_reminder_subtitle_3">Վստահ եղեք որ ձեր վերականգման բանալին հուսալի տեղում է</string>
     <string name="activity_path_title">Ուղի</string>
     <string name="activity_path_explanation">Սեանսը թաքցնում է Ձեր IP հասցեն Ձեր հաղորդագրությունները տանելով Սեանսի ապահով ցանցերի Ծառայության Հանգույցներով։ Սրանք այն երկրներն են, որոնցով Ձեր հաղորդագրություններն անցնում են․</string>
@@ -573,7 +573,7 @@
     <string name="activity_path_learn_more_button_title">Իմանալ Ավելին</string>
     <string name="activity_path_resolving_progress">Լուծում է…</string>
     <string name="activity_create_private_chat_title">Նոր Սեանս</string>
-    <string name="activity_create_private_chat_enter_session_id_tab_title">Մուտքագրեք Սեանսի ինքնությունը</string>
+    <string name="activity_create_private_chat_enter_account_id_tab_title">Մուտքագրեք Սեանսի ինքնությունը</string>
     <string name="activity_create_private_chat_scan_qr_code_tab_title">Սկանավորել QR Կոդ</string>
     <string name="activity_create_private_chat_scan_qr_code_explanation">Սկանավորեք մեկի QR կոդը, որ սկսեք սեանս։ QR կոդը կարող եք գտնել հաշվի կարգավորումների մեջ՝ QR կոդի նշանի վրա սեղմելուց հետո։</string>
     <string name="fragment_enter_public_key_edit_text_hint">Գրեք session այդին կամ ONS անունը</string>
@@ -650,7 +650,7 @@
     <string name="dialog_ui_mode_option_day">Ցերեկ</string>
     <string name="dialog_ui_mode_option_night">Գիշեր</string>
     <string name="dialog_ui_mode_option_system_default">Համակարգի լռելյայն</string>
-    <string name="activity_conversation_menu_copy_account_id">Պատճենել Session ID֊ն</string>
+    <string name="activity_conversation_menu_copy_account_id">Պատճենել Account ID֊ն</string>
     <string name="attachment">Կցում</string>
     <string name="attachment_type_voice_message">Ձայնագրություն</string>
     <string name="details">Մանրամասներ</string>

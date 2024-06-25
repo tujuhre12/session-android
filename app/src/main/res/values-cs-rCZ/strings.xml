@@ -550,9 +550,9 @@
     <string name="copied_to_clipboard">Zkopírováno do schránky</string>
     <string name="next">Další</string>
     <string name="share">Sdílet</string>
-    <string name="invalid_session_id">Neplatné Session ID</string>
+    <string name="invalid_account_id">Neplatné Account ID</string>
     <string name="cancel">Zrušit</string>
-    <string name="your_session_id">ID vaší relace</string>
+    <string name="your_account_id">ID vaší relace</string>
     <string name="view_fake_chat_bubble_1">Co je Session?</string>
     <string name="view_fake_chat_bubble_2">Je to decentralizovaná a šifrovaná aplikace pro zasílání zpráv</string>
     <string name="view_fake_chat_bubble_3">Takže neshromažďuje mé osobní údaje ani metadata mých konverzací? Jak to funguje?</string>
@@ -577,7 +577,7 @@
     <string name="activity_home_delete_conversation_dialog_message">Opravdu chcete smazat tuto konverzaci?</string>
     <string name="activity_home_conversation_deleted_message">Konverzace byla smazána</string>
     <string name="view_seed_reminder_subtitle_1">Zabezpečte svůj účet uložením Vašich klíčových slov</string>
-    <string name="view_seed_reminder_subtitle_2">Pro zobrazení fráze pro obnovení klepněte a podržte redigovaná slova a poté ji bezpečně uložte, abyste si ochránili své Session ID.</string>
+    <string name="view_seed_reminder_subtitle_2">Pro zobrazení fráze pro obnovení klepněte a podržte redigovaná slova a poté ji bezpečně uložte, abyste si ochránili své Account ID.</string>
     <string name="view_seed_reminder_subtitle_3">Uchovejte svou frázi pro obnovení na bezpečném místě</string>
     <string name="activity_path_title">Cesta</string>
     <string name="activity_path_explanation">Session skrývá IP adresu tak, že přesouvá zprávy mezi několika provozními uzly ve své vlastní decentralizované síti. Spojení probíhá v tuto chvíli mezi následujícími státy:</string>
@@ -588,12 +588,12 @@
     <string name="activity_path_learn_more_button_title">Další informace</string>
     <string name="activity_path_resolving_progress">Připojování…</string>
     <string name="activity_create_private_chat_title">Nová relace</string>
-    <string name="activity_create_private_chat_enter_session_id_tab_title">Zadejte Session ID</string>
+    <string name="activity_create_private_chat_enter_account_id_tab_title">Zadejte Account ID</string>
     <string name="activity_create_private_chat_scan_qr_code_tab_title">Naskenovat QR kód</string>
     <string name="activity_create_private_chat_scan_qr_code_explanation">Pro zahájení relace naskenujte QR kód uživatele. QR kódy lze nalézt po klepnutí na QR kód v nastavení účtu.</string>
-    <string name="fragment_enter_public_key_edit_text_hint">Zadejte Session ID nebo název ONS</string>
-    <string name="fragment_enter_public_key_explanation">Uživatelé mohou sdílet Session ID po klepnutí na \"Sdílet Session ID\" v nastavení účtu nebo sdílením svého QR kódu.</string>
-    <string name="fragment_enter_public_key_error_message">Zkontrolujte prosím své Session ID nebo název ONS a zkuste to znovu.</string>
+    <string name="fragment_enter_public_key_edit_text_hint">Zadejte Account ID nebo název ONS</string>
+    <string name="fragment_enter_public_key_explanation">Uživatelé mohou sdílet Account ID po klepnutí na \"Sdílet Account ID\" v nastavení účtu nebo sdílením svého QR kódu.</string>
+    <string name="fragment_enter_public_key_error_message">Zkontrolujte prosím své Account ID nebo název ONS a zkuste to znovu.</string>
     <string name="fragment_scan_qr_code_camera_access_explanation">Session potřebuje přístup ke kameře, aby bylo možné skenovat QR kódy</string>
     <string name="fragment_scan_qr_code_grant_camera_access_button_title">Udělit přístup k fotoaparátu</string>
     <string name="activity_create_closed_group_title">Nová uzavřená skupina</string>
@@ -665,7 +665,7 @@
     <string name="dialog_ui_mode_option_day">Den</string>
     <string name="dialog_ui_mode_option_night">Noc</string>
     <string name="dialog_ui_mode_option_system_default">Výchozí nastavení</string>
-    <string name="activity_conversation_menu_copy_account_id">Kopírovat Session ID</string>
+    <string name="activity_conversation_menu_copy_account_id">Kopírovat Account ID</string>
     <string name="attachment">Příloha</string>
     <string name="attachment_type_voice_message">Hlasová zpráva</string>
     <string name="details">Detaily</string>

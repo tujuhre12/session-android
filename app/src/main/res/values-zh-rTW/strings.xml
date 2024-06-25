@@ -521,9 +521,9 @@
     <string name="copied_to_clipboard">已複製到剪貼簿</string>
     <string name="next">下一步</string>
     <string name="share">分享</string>
-    <string name="invalid_session_id">無效的 Session ID</string>
+    <string name="invalid_account_id">無效的 Account ID</string>
     <string name="cancel">取消</string>
-    <string name="your_session_id">您的 Session ID</string>
+    <string name="your_account_id">您的 Account ID</string>
     <string name="view_fake_chat_bubble_1">Session 是什麼？</string>
     <string name="view_fake_chat_bubble_2">這是一個去中心化並且加密的訊息 app</string>
     <string name="view_fake_chat_bubble_3">所以牠不會收集我的個人資訊或我的對話元數據？ 它是如何工作的？</string>
@@ -548,7 +548,7 @@
     <string name="activity_home_delete_conversation_dialog_message">您確定要刪除此對話嗎？</string>
     <string name="activity_home_conversation_deleted_message">對話已刪除</string>
     <string name="view_seed_reminder_subtitle_1">透過儲存您的恢復短語來保護您的帳戶</string>
-    <string name="view_seed_reminder_subtitle_2">點擊並按住已編輯的字詞以顯示您的恢復短語，然後將其妥善保管以保護您的 Session ID。</string>
+    <string name="view_seed_reminder_subtitle_2">點擊並按住已編輯的字詞以顯示您的恢復短語，然後將其妥善保管以保護您的 Account ID。</string>
     <string name="view_seed_reminder_subtitle_3">請確保將您的恢復短語存儲在安全的地方</string>
     <string name="activity_path_title">路徑</string>
     <string name="activity_path_explanation">Session 通過 Session 去中心化網絡中的多個服務節點傳輸您的訊息以隱藏您的 IP。 這些是您傳送的訊息當前正在經過的國家/地區：</string>
@@ -559,12 +559,12 @@
     <string name="activity_path_learn_more_button_title">瞭解更多</string>
     <string name="activity_path_resolving_progress">解決中...</string>
     <string name="activity_create_private_chat_title">新的 Session</string>
-    <string name="activity_create_private_chat_enter_session_id_tab_title">輸入 Session ID</string>
+    <string name="activity_create_private_chat_enter_account_id_tab_title">輸入 Account ID</string>
     <string name="activity_create_private_chat_scan_qr_code_tab_title">掃描 QR Code</string>
     <string name="activity_create_private_chat_scan_qr_code_explanation">掃描 QR Code 以開始一個 Session，您可以在帳戶設定中找到您的 QR Code。</string>
     <string name="fragment_enter_public_key_edit_text_hint">請輸入您的 ID 或 ONS 的名稱</string>
-    <string name="fragment_enter_public_key_explanation">使用者可以進入帳戶設定中，點擊分享 Session ID 或直接分享其 QR Code。</string>
-    <string name="fragment_enter_public_key_error_message">請檢查 Session ID 或 ONS，然後再試一次。</string>
+    <string name="fragment_enter_public_key_explanation">使用者可以進入帳戶設定中，點擊分享 Account ID 或直接分享其 QR Code。</string>
+    <string name="fragment_enter_public_key_error_message">請檢查 Account ID 或 ONS，然後再試一次。</string>
     <string name="fragment_scan_qr_code_camera_access_explanation">Session 需要使用相機存取權來掃描 QR Codes</string>
     <string name="fragment_scan_qr_code_grant_camera_access_button_title">授與相機權限</string>
     <string name="activity_create_closed_group_title">新的私密群組</string>
@@ -636,7 +636,7 @@
     <string name="dialog_ui_mode_option_day">日</string>
     <string name="dialog_ui_mode_option_night">夜間模式</string>
     <string name="dialog_ui_mode_option_system_default">系統默認</string>
-    <string name="activity_conversation_menu_copy_account_id">複製 Session ID</string>
+    <string name="activity_conversation_menu_copy_account_id">複製 Account ID</string>
     <string name="attachment">附件</string>
     <string name="attachment_type_voice_message">語音訊息</string>
     <string name="details">詳細資料</string>

@@ -520,9 +520,9 @@ d\'intercanvi de claus!</string>
     <string name="copied_to_clipboard">Copiat al porta-retalls</string>
     <string name="next">Següent</string>
     <string name="share">Comparteix</string>
-    <string name="invalid_session_id">ID de Session invàlid</string>
+    <string name="invalid_account_id">ID de Session invàlid</string>
     <string name="cancel">Cancel·la</string>
-    <string name="your_session_id">El teu ID de Session</string>
+    <string name="your_account_id">El teu ID de Session</string>
     <string name="view_fake_chat_bubble_1">Què és Session?</string>
     <string name="view_fake_chat_bubble_2">És una app xifrada i descentralitzada</string>
     <string name="view_fake_chat_bubble_3">Per tant, no agafa les meves dades personals o les metadades de les meves converses? Com funciona?</string>
@@ -557,7 +557,7 @@ d\'intercanvi de claus!</string>
     <string name="activity_path_destination_row_title">Destinació</string>
     <string name="activity_path_learn_more_button_title">Aprèn-ne més</string>
     <string name="activity_create_private_chat_title">Nova sessió</string>
-    <string name="activity_create_private_chat_enter_session_id_tab_title">Introdueix el teu ID de Session</string>
+    <string name="activity_create_private_chat_enter_account_id_tab_title">Introdueix el teu ID de Session</string>
     <string name="activity_create_private_chat_scan_qr_code_tab_title">Escaneja el codi QR</string>
     <string name="activity_create_private_chat_scan_qr_code_explanation">Escaneja el codi QR d’un usuari per a iniciar una sessió. Es poden trobar codis QR tocant la icona de codi QR a la configuració del compte.</string>
     <string name="fragment_enter_public_key_explanation">Els usuaris poden compartir el seu ID de Session accedint a la configuració del compte i tocant \'Comparteix l\'ID de Session\' o compartint el seu codi QR.</string>

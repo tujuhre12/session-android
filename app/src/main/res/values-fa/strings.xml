@@ -527,9 +527,9 @@
     <string name="copied_to_clipboard">در کلیپ‌بورد کپی شد</string>
     <string name="next">بعدی</string>
     <string name="share">اشتراک‌گذاری</string>
-    <string name="invalid_session_id">شناسه‌ی Session نامعتبر است.</string>
+    <string name="invalid_account_id">شناسه‌ی Session نامعتبر است.</string>
     <string name="cancel">لغو</string>
-    <string name="your_session_id">شناسه‌ی Session شما</string>
+    <string name="your_account_id">شناسه‌ی Session شما</string>
     <string name="view_fake_chat_bubble_1">Session چیست؟</string>
     <string name="view_fake_chat_bubble_2">Session یک برنامه پیام‌رسان غیرمتمرکز و رمزگذاری شده است.</string>
     <string name="view_fake_chat_bubble_3">پس اطلاعات شخصی من یا داده‌های گفت‌وگو‌هایم جمع‌آوری نمی‌شود؟ چگونه کار می‌کند؟</string>
@@ -565,11 +565,11 @@
     <string name="activity_path_learn_more_button_title">بیشتر بدانید</string>
     <string name="activity_path_resolving_progress">در حال اصلاح…</string>
     <string name="activity_create_private_chat_title">Session جدید</string>
-    <string name="activity_create_private_chat_enter_session_id_tab_title">شناسه‌ی Session را وارد کنید</string>
+    <string name="activity_create_private_chat_enter_account_id_tab_title">شناسه‌ی Session را وارد کنید</string>
     <string name="activity_create_private_chat_scan_qr_code_tab_title">کد QR را اسکن کنید</string>
     <string name="activity_create_private_chat_scan_qr_code_explanation">برای شروع Session، کد QR کاربر را اسکن کنید. با ضربه زدن روی نماد کد QR در تنظیمات حساب کاربری، کدهای QR را می‌توان یافت.</string>
     <string name="fragment_enter_public_key_edit_text_hint">شماره session نامعتبر</string>
-    <string name="fragment_enter_public_key_explanation">کاربران می‌توانند شناسه‌ی Session خود را با رفتن به تنظیمات حساب خود و ضربه زدن به Share Session ID یا با به اشتراک گذاشتن کد QR خود‌، با دیگران به اشتراک بگذارند.</string>
+    <string name="fragment_enter_public_key_explanation">کاربران می‌توانند شناسه‌ی Session خود را با رفتن به تنظیمات حساب خود و ضربه زدن به Share Account ID یا با به اشتراک گذاشتن کد QR خود‌، با دیگران به اشتراک بگذارند.</string>
     <string name="fragment_enter_public_key_error_message">لطفا آی‌دی سشن یا اسم ONS را بررسی کنید و سپس دوباره امتحان کنید.</string>
     <string name="fragment_scan_qr_code_camera_access_explanation">اپ Session برای اسکن کدهای QR احتیاج دارد به دوربین دسترسی داشته باشد</string>
     <string name="fragment_scan_qr_code_grant_camera_access_button_title">اجازه دسترسی به دوربین</string>

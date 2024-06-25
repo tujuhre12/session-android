@@ -528,9 +528,9 @@
     <string name="copied_to_clipboard">Gekopieerd naar klembord</string>
     <string name="next">Volgende</string>
     <string name="share">Delen</string>
-    <string name="invalid_session_id">Ongeldige Sessie-ID</string>
+    <string name="invalid_account_id">Ongeldige Sessie-ID</string>
     <string name="cancel">Annuleren</string>
-    <string name="your_session_id">Uw Sessie-ID</string>
+    <string name="your_account_id">Uw Sessie-ID</string>
     <string name="view_fake_chat_bubble_1">Wat is Sessie?</string>
     <string name="view_fake_chat_bubble_2">Het is een gedecentraliseerde, versleutelde berichten-app</string>
     <string name="view_fake_chat_bubble_3">Dus het verzamelt geen persoonlijke informatie of de metagegevens van mijn gesprek? Hoe werkt het?</string>
@@ -566,10 +566,10 @@
     <string name="activity_path_learn_more_button_title">Kom meer te weten</string>
     <string name="activity_path_resolving_progress">Bezig met verwerken...</string>
     <string name="activity_create_private_chat_title">Nieuwe sessie</string>
-    <string name="activity_create_private_chat_enter_session_id_tab_title">Uw Sessie-ID</string>
+    <string name="activity_create_private_chat_enter_account_id_tab_title">Uw Sessie-ID</string>
     <string name="activity_create_private_chat_scan_qr_code_tab_title">Scan QR-code</string>
     <string name="activity_create_private_chat_scan_qr_code_explanation">Scan de QR-code van een gebruiker om een sessie te starten. QR-codes kunnen worden gevonden door op het QR-icoon in de accountinstellingen te tikken.</string>
-    <string name="fragment_enter_public_key_edit_text_hint">Voer uw Session ID of ONS naam in</string>
+    <string name="fragment_enter_public_key_edit_text_hint">Voer uw Account ID of ONS naam in</string>
     <string name="fragment_enter_public_key_explanation">Gebruikers kunnen hun Session-ID delen door naar hun accountinstellingen te gaan en op \"Deel Session-ID\" te tikken, of door hun QR-code te delen.</string>
     <string name="fragment_enter_public_key_error_message">Controleer de sessie-ID of ONS naam en probeer het opnieuw.</string>
     <string name="fragment_scan_qr_code_camera_access_explanation">Sessie heeft cameratoegang nodig om QR-codes te scannen</string>
