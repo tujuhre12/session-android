@@ -106,6 +106,7 @@ fun QrPage(string: String) {
 
         Text(
             text = stringResource(R.string.this_is_your_account_id_other_users_can_scan_it_to_start_a_conversation_with_you),
+            color = LocalColors.current.textSecondary,
             textAlign = TextAlign.Center,
             style = small
         )
