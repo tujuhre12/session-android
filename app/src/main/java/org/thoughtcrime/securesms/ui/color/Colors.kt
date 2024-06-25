@@ -45,6 +45,10 @@ interface Colors {
     val primaryButtonFillText: Color
 }
 
+fun Colors.text(isError: Boolean): Color = if (isError) danger else text
+fun Colors.textSecondary(isError: Boolean): Color = if (isError) danger else textSecondary
+fun Colors.borders(isError: Boolean): Color = if (isError) danger else borders
+
 val Colors.textSelectionColors get() = TextSelectionColors(
     handleColor = primary,
     backgroundColor = primary.copy(alpha = 0.5f)

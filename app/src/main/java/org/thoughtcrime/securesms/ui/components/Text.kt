@@ -2,68 +2,115 @@ package org.thoughtcrime.securesms.ui.components
 
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.thoughtcrime.securesms.ui.LocalDimensions
+import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.baseBold
 import org.thoughtcrime.securesms.ui.color.LocalColors
-import org.thoughtcrime.securesms.ui.color.outlinedTextFieldColors
+import org.thoughtcrime.securesms.ui.color.borders
+import org.thoughtcrime.securesms.ui.color.text
+import org.thoughtcrime.securesms.ui.color.textSecondary
+
+@Preview
+@Composable
+fun PreviewSessionOutlinedTextField() {
+    PreviewTheme {
+        Column(modifier = Modifier.padding(10.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            SessionOutlinedTextField(
+                text = "text",
+                placeholder = "placeholder"
+            )
+
+            SessionOutlinedTextField(
+                text = "",
+                placeholder = "placeholder"
+            )
+        }
+    }
+}
 
 @Composable
 fun SessionOutlinedTextField(
-        text: String,
-        placeholder: String,
-        modifier: Modifier = Modifier,
-        onChange: (String) -> Unit,
-        onContinue: () -> Unit,
-        error: String? = null
+    text: String,
+    modifier: Modifier = Modifier,
+    onChange: (String) -> Unit = {},
+    textStyle: TextStyle = base,
+    placeholder: String = "",
+    onContinue: () -> Unit = {},
+    error: String? = null
 ) {
     Column(modifier = modifier.animateContentSize()) {
-        OutlinedTextField(
-            value = text,
-            modifier = Modifier.fillMaxWidth(),
-            textStyle = base,
-            onValueChange = { onChange(it) },
-            placeholder = {
+        Box(
+            modifier = Modifier.border(
+                width = LocalDimensions.current.borderStroke,
+                color = LocalColors.current.borders(error != null),
+                shape = MaterialTheme.shapes.small
+            )
+                .fillMaxWidth()
+                .wrapContentHeight()
+                .padding(top = 28.dp, bottom = 24.dp)
+                .padding(horizontal = 21.dp)
+        ) {
+            val mergedTextStyle = textStyle.merge(TextStyle(color = LocalColors.current.text(error != null)))
+
+            if (text.isEmpty()) {
                 Text(
-                    placeholder,
-                    style = base
+                    text = placeholder,
+                    style = base,
+                    color = LocalColors.current.textSecondary(error != null),
+                    modifier = Modifier.wrapContentSize()
+                        .align(Alignment.CenterStart)
+                        .wrapContentSize()
                 )
-            },
-            colors = LocalColors.current.outlinedTextFieldColors(error != null),
-            singleLine = true,
-            keyboardActions = KeyboardActions(
-                onDone = { onContinue() },
-                onGo = { onContinue() },
-                onSearch = { onContinue() },
-                onSend = { onContinue() },
-            ),
-            isError = error != null,
-            shape = MaterialTheme.shapes.small
-        )
+            }
+
+            BasicTextField(
+                value = text,
+                onValueChange = onChange,
+                modifier = Modifier.wrapContentHeight().fillMaxWidth(),
+                textStyle = mergedTextStyle,
+                cursorBrush = SolidColor(LocalColors.current.text(error != null)),
+                keyboardActions = KeyboardActions(
+                    onDone = { onContinue() },
+                    onGo = { onContinue() },
+                    onSearch = { onContinue() },
+                    onSend = { onContinue() },
+                )
+            )
+        }
         error?.let {
             Spacer(modifier = Modifier.height(LocalDimensions.current.xsItemSpacing))
             Text(
