@@ -39,7 +39,7 @@ internal fun NewConversationScreen(
     delegate: NewConversationDelegate
 ) {
     Column(modifier = Modifier.background(LocalColors.current.backgroundSecondary)) {
-        AppBar(stringResource(R.string.dialog_new_conversation_title), onClose = delegate::onDialogClosePressed)
+        AppBar(stringResource(R.string.dialog_start_conversation_title), onClose = delegate::onDialogClosePressed)
         Surface(
             modifier = Modifier.nestedScroll(rememberNestedScrollInteropConnection()),
             color = LocalColors.current.backgroundSecondary

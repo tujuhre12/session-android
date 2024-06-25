@@ -822,7 +822,7 @@
         <item quantity="one">و %1$d نفر دیگر با %2$s به این پیام واکنش نشان داده است</item>
         <item quantity="other">و %1$d نفر دیگر با %2$s به این پیام واکنش نشان داده اند</item>
     </plurals>
-    <string name="dialog_new_conversation_title">مکالمه جدید</string>
+    <string name="dialog_start_conversation_title">مکالمه جدید</string>
     <string name="dialog_new_message_title">پیام جدید</string>
     <string name="activity_create_group_title">ایجاد گروه</string>
     <string name="dialog_join_community_title">پیوستن به انجمن</string>

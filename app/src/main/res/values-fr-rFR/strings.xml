@@ -833,7 +833,7 @@
         <item quantity="one">Et %1$d autre a réagi %2$s à ce message</item>
         <item quantity="other">Et %1$d autres ont réagi %2$s à ce message</item>
     </plurals>
-    <string name="dialog_new_conversation_title">Nouvelle conversation</string>
+    <string name="dialog_start_conversation_title">Nouvelle conversation</string>
     <string name="dialog_new_message_title">Nouveau message</string>
     <string name="activity_create_group_title">Créer un groupe</string>
     <string name="dialog_join_community_title">Rejoindre la communauté</string>
