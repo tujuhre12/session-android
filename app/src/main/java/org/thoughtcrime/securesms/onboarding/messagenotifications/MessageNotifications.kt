@@ -64,8 +64,8 @@ internal fun MessageNotificationsScreen(
         NotificationRadioButton(
             R.string.activity_pn_mode_fast_mode,
             R.string.activity_pn_mode_fast_mode_explanation,
-            R.string.activity_pn_mode_recommended_option_tag,
-            contentDescription = R.string.AccessibilityId_fast_mode_notifications_button,
+            modifier = Modifier.contentDescription(R.string.AccessibilityId_fast_mode_notifications_button),
+            tag = R.string.activity_pn_mode_recommended_option_tag,
             selected = state.pushEnabled,
             onClick = { setEnabled(true) }
         )
@@ -75,7 +75,7 @@ internal fun MessageNotificationsScreen(
         NotificationRadioButton(
             R.string.activity_pn_mode_slow_mode,
             R.string.activity_pn_mode_slow_mode_explanation,
-            contentDescription = R.string.AccessibilityId_slow_mode_notifications_button,
+            modifier = Modifier.contentDescription(R.string.AccessibilityId_slow_mode_notifications_button),
             selected = state.pushDisabled,
             onClick = { setEnabled(false) }
         )
@@ -90,13 +90,13 @@ internal fun MessageNotificationsScreen(
 private fun NotificationRadioButton(
     @StringRes title: Int,
     @StringRes explanation: Int,
+    modifier: Modifier = Modifier,
     @StringRes tag: Int? = null,
-    @StringRes contentDescription: Int? = null,
     selected: Boolean = false,
     onClick: () -> Unit = {}
 ) {
     TextButton(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         colors = transparentButtonColors(),
         onClick = onClick,
         shape = RectangleShape,
@@ -105,7 +105,6 @@ private fun NotificationRadioButton(
         Box(
             modifier = Modifier
                 .weight(1f)
-                .contentDescription(contentDescription)
                 .border(LocalDimensions.current.borderStroke, LocalColors.current.borders, RoundedCornerShape(8.dp)),
         ) {
             Column(modifier = Modifier.padding(horizontal = 15.dp).padding(top = 10.dp, bottom = 11.dp)) {

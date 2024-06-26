@@ -20,7 +20,6 @@ import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
-import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.h4
 
 @Preview
@@ -53,9 +52,8 @@ internal fun DisplayName(state: State, onChange: (String) -> Unit = {}, onContin
             Spacer(Modifier.height(LocalDimensions.current.itemSpacing))
             SessionOutlinedTextField(
                 text = state.displayName,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .contentDescription(R.string.AccessibilityId_enter_display_name),
+                modifier = Modifier.fillMaxWidth(),
+                contentDescription = stringResource(R.string.AccessibilityId_enter_display_name),
                 placeholder = stringResource(R.string.displayNameEnter),
                 onChange = onChange,
                 onContinue = onContinue,

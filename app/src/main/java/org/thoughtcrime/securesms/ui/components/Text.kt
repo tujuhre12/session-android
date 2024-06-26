@@ -44,6 +44,7 @@ import org.thoughtcrime.securesms.ui.color.LocalColors
 import org.thoughtcrime.securesms.ui.color.borders
 import org.thoughtcrime.securesms.ui.color.text
 import org.thoughtcrime.securesms.ui.color.textSecondary
+import org.thoughtcrime.securesms.ui.contentDescription
 
 @Preview
 @Composable
@@ -68,6 +69,7 @@ fun PreviewSessionOutlinedTextField() {
 fun SessionOutlinedTextField(
     text: String,
     modifier: Modifier = Modifier,
+    contentDescription: String? = null,
     onChange: (String) -> Unit = {},
     textStyle: TextStyle = base,
     placeholder: String = "",
@@ -100,7 +102,7 @@ fun SessionOutlinedTextField(
             BasicTextField(
                 value = text,
                 onValueChange = onChange,
-                modifier = Modifier.wrapContentHeight().fillMaxWidth(),
+                modifier = Modifier.wrapContentHeight().fillMaxWidth().contentDescription(contentDescription),
                 textStyle = textStyle.copy(color = LocalColors.current.text(error != null)),
                 cursorBrush = SolidColor(LocalColors.current.text(error != null)),
                 keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
