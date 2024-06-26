@@ -38,22 +38,27 @@ class ProfilePictureView @JvmOverloads constructor(
     private val unknownOpenGroupDrawable by lazy { ResourceContactPhoto(R.drawable.ic_notification)
         .asDrawable(context, ContactColors.UNKNOWN_COLOR.toConversationColor(context), false) }
 
-    // endregion
-
     constructor(context: Context, sender: Recipient): this(context) {
         update(sender)
     }
 
-    // region Updating
     fun update(recipient: Recipient) {
+        recipient.run { update(address, isClosedGroupRecipient, isOpenGroupInboxRecipient) }
+    }
+
+    fun update(
+        address: Address,
+        isClosedGroupRecipient: Boolean = false,
+        isOpenGroupInboxRecipient: Boolean = false
+    ) {
         fun getUserDisplayName(publicKey: String): String {
             val contact = DatabaseComponent.get(context).sessionContactDatabase().getContactWithAccountID(publicKey)
             return contact?.displayName(Contact.ContactContext.REGULAR) ?: publicKey
         }
 
-        if (recipient.isClosedGroupRecipient) {
+        if (isClosedGroupRecipient) {
             val members = DatabaseComponent.get(context).groupDatabase()
-                    .getGroupMemberAddresses(recipient.address.toGroupString(), true)
+                    .getGroupMemberAddresses(address.toGroupString(), true)
                     .sorted()
                     .take(2)
                     .toMutableList()
@@ -70,13 +75,13 @@ class ProfilePictureView @JvmOverloads constructor(
                 additionalPublicKey = apk
                 additionalDisplayName = getUserDisplayName(apk)
             }
-        } else if(recipient.isOpenGroupInboxRecipient) {
-            val publicKey = GroupUtil.getDecodedOpenGroupInboxAccountId(recipient.address.serialize())
+        } else if(isOpenGroupInboxRecipient) {
+            val publicKey = GroupUtil.getDecodedOpenGroupInboxAccountId(address.serialize())
             this.publicKey = publicKey
             displayName = getUserDisplayName(publicKey)
             additionalPublicKey = null
         } else {
-            val publicKey = recipient.address.toString()
+            val publicKey = address.serialize()
             this.publicKey = publicKey
             displayName = getUserDisplayName(publicKey)
             additionalPublicKey = null

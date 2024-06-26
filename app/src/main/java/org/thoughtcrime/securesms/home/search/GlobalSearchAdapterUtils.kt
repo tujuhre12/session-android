@@ -90,7 +90,6 @@ private fun getHighlight(query: String?, toSearch: String): Spannable? {
 
 fun ContentView.bindModel(query: String?, model: GroupConversation) {
     binding.searchResultProfilePicture.isVisible = true
-    binding.searchResultSavedMessages.isVisible = false
     binding.searchResultSubtitle.isVisible = model.groupRecord.isClosedGroup
     binding.searchResultTimestamp.isVisible = false
     val threadRecipient = Recipient.from(binding.root.context, Address.fromSerialized(model.groupRecord.encodedId), false)
@@ -111,7 +110,6 @@ fun ContentView.bindModel(query: String?, model: GroupConversation) {
 
 fun ContentView.bindModel(query: String?, model: ContactModel) {
     binding.searchResultProfilePicture.isVisible = true
-    binding.searchResultSavedMessages.isVisible = false
     binding.searchResultSubtitle.isVisible = false
     binding.searchResultTimestamp.isVisible = false
     binding.searchResultSubtitle.text = null
@@ -126,13 +124,12 @@ fun ContentView.bindModel(model: SavedMessages) {
     binding.searchResultSubtitle.isVisible = false
     binding.searchResultTimestamp.isVisible = false
     binding.searchResultTitle.setText(R.string.note_to_self)
-    binding.searchResultProfilePicture.isVisible = false
-    binding.searchResultSavedMessages.isVisible = true
+    binding.searchResultProfilePicture.update(Address.fromSerialized(model.currentUserPublicKey))
+    binding.searchResultProfilePicture.isVisible = true
 }
 
 fun ContentView.bindModel(query: String?, model: Message) {
     binding.searchResultProfilePicture.isVisible = true
-    binding.searchResultSavedMessages.isVisible = false
     binding.searchResultTimestamp.isVisible = true
 //    val hasUnreads = model.unread > 0
 //    binding.unreadCountIndicator.isVisible = hasUnreads
