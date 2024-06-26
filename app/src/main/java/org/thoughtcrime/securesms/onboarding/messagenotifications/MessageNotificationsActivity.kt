@@ -1,7 +1,5 @@
 package org.thoughtcrime.securesms.onboarding.messagenotifications
 
-import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.compose.runtime.Composable

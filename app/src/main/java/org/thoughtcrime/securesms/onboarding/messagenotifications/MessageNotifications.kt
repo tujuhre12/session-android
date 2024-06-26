@@ -2,31 +2,30 @@ package org.thoughtcrime.securesms.onboarding.messagenotifications
 
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.IconButton
 import androidx.compose.material.Text
+import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -39,8 +38,7 @@ import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.color.Colors
 import org.thoughtcrime.securesms.ui.color.LocalColors
-import org.thoughtcrime.securesms.ui.components.Button
-import org.thoughtcrime.securesms.ui.components.ButtonType
+import org.thoughtcrime.securesms.ui.color.transparentButtonColors
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.h4
 import org.thoughtcrime.securesms.ui.h8
@@ -61,25 +59,26 @@ internal fun MessageNotificationsScreen(
             Spacer(Modifier.height(LocalDimensions.current.xsMargin))
             Text(stringResource(R.string.onboardingMessageNotificationExplaination), style = base)
             Spacer(Modifier.height(LocalDimensions.current.itemSpacing))
-            NotificationRadioButton(
-                R.string.activity_pn_mode_fast_mode,
-                R.string.activity_pn_mode_fast_mode_explanation,
-                R.string.activity_pn_mode_recommended_option_tag,
-                contentDescription = R.string.AccessibilityId_fast_mode_notifications_button,
-                selected = state.pushEnabled,
-                onClick = { setEnabled(true) }
-            )
-            Spacer(Modifier.height(LocalDimensions.current.xsItemSpacing))
-            NotificationRadioButton(
-                R.string.activity_pn_mode_slow_mode,
-                R.string.activity_pn_mode_slow_mode_explanation,
-                contentDescription = R.string.AccessibilityId_slow_mode_notifications_button,
-                selected = state.pushDisabled,
-                radioEnterTransition = slideInVertically { -it },
-                radioExitTransition = slideOutVertically { -it },
-                onClick = { setEnabled(false) }
-            )
         }
+
+        NotificationRadioButton(
+            R.string.activity_pn_mode_fast_mode,
+            R.string.activity_pn_mode_fast_mode_explanation,
+            R.string.activity_pn_mode_recommended_option_tag,
+            contentDescription = R.string.AccessibilityId_fast_mode_notifications_button,
+            selected = state.pushEnabled,
+            onClick = { setEnabled(true) }
+        )
+
+        // spacing between buttons is provided by ripple/downstate of NotificationRadioButton
+
+        NotificationRadioButton(
+            R.string.activity_pn_mode_slow_mode,
+            R.string.activity_pn_mode_slow_mode_explanation,
+            contentDescription = R.string.AccessibilityId_slow_mode_notifications_button,
+            selected = state.pushDisabled,
+            onClick = { setEnabled(false) }
+        )
 
         Spacer(Modifier.weight(1f))
 
@@ -94,24 +93,22 @@ private fun NotificationRadioButton(
     @StringRes tag: Int? = null,
     @StringRes contentDescription: Int? = null,
     selected: Boolean = false,
-    radioEnterTransition: EnterTransition = slideInVertically { it },
-    radioExitTransition: ExitTransition = slideOutVertically { it },
     onClick: () -> Unit = {}
 ) {
-    Row {
-        Button(
-            onClick = onClick,
+    TextButton(
+        modifier = Modifier.fillMaxWidth(),
+        colors = transparentButtonColors(),
+        onClick = onClick,
+        shape = RectangleShape,
+        contentPadding = PaddingValues(horizontal = LocalDimensions.current.margin, vertical = 7.dp)
+    ) {
+        Box(
             modifier = Modifier
                 .weight(1f)
-                .contentDescription(contentDescription),
-            type = ButtonType.Outline(
-                contentColor = LocalColors.current.text,
-                borderColor = LocalColors.current.borders
-            ),
-            shape = RoundedCornerShape(8.dp),
-            contentPadding = PaddingValues(start = 15.dp, end = 15.dp, top = 10.dp, bottom = 11.dp)
+                .contentDescription(contentDescription)
+                .border(LocalDimensions.current.borderStroke, LocalColors.current.borders, RoundedCornerShape(8.dp)),
         ) {
-            Column {
+            Column(modifier = Modifier.padding(horizontal = 15.dp).padding(top = 10.dp, bottom = 11.dp)) {
                 Text(stringResource(title), style = h8)
 
                 Text(stringResource(explanation), style = small, modifier = Modifier.padding(top = 7.dp))
@@ -126,33 +123,26 @@ private fun NotificationRadioButton(
             }
         }
         Spacer(modifier = Modifier.width(20.dp))
-        RadioButton(
+        RadioButtonIndicator(
             selected = selected,
             modifier = Modifier
                 .size(22.dp)
-                .align(Alignment.CenterVertically),
-            enter = radioEnterTransition,
-            exit = radioExitTransition,
-            onClick = onClick
+                .align(Alignment.CenterVertically)
         )
     }
 }
 
 @Composable
-private fun RadioButton(
+private fun RadioButtonIndicator(
     selected: Boolean,
-    modifier: Modifier,
-    enter: EnterTransition = slideInVertically { it },
-    exit: ExitTransition = slideOutVertically { it },
-    onClick: () -> Unit
+    modifier: Modifier
 ) {
-    IconButton(modifier = modifier, onClick = onClick) {
+    Box(modifier = modifier) {
         AnimatedVisibility(
             selected,
-            modifier = Modifier.padding(2.5.dp)
-                .clip(CircleShape),
-            enter = enter,
-            exit = exit
+            modifier = Modifier.padding(2.5.dp).clip(CircleShape),
+            enter = scaleIn(),
+            exit = scaleOut()
         ) {
             Box(
                 modifier = Modifier
