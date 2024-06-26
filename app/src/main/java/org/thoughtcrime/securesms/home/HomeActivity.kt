@@ -288,47 +288,37 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             launch {
                 globalSearchViewModel.result.collect { result ->
                     if (result.query.isEmpty()) {
-                        class NamedValue<T>(val name: String, val value: T)
+                        class NamedValue<T>(val name: String?, val value: T)
 
-                        val hasNames = result.contacts
+                        val unknown = resources.getString(R.string.unknown)
+
+                        listOf(
+                            GlobalSearchAdapter.Model.Header(R.string.contacts),
+                            GlobalSearchAdapter.Model.SavedMessages(publicKey)
+                        ) + result.contacts
                             // Remove ourself, we're shown above.
                             .filter { it.accountID != publicKey }
                             // Get the name that we will display and sort by, and uppercase it to
                             // help with sorting and we need the char uppercased later.
-                            .mapNotNull { (it.nickname?.takeIf { it.isNotEmpty() } ?: it.name?.takeIf { it.isNotEmpty() })
-                                ?.let { name -> NamedValue(name.uppercase(), it) } }
+                            .map { (it.nickname?.takeIf(String::isNotEmpty) ?: it.name?.takeIf(String::isNotEmpty))
+                                .let { name -> NamedValue(name?.uppercase(), it) } }
                             // Digits are all grouped under a #, the rest are grouped by their first character.uppercased()
-                            .groupBy { (it.name.first().takeUnless(Char::isDigit) ?: '#') }
+                            // If there is no name, they go under Unknown
+                            .groupBy { it.name?.run { first().takeUnless(Char::isDigit)?.toString() ?: "#" } ?: unknown }
                             // place the # at the end, after all the names starting with alphabetic chars
                             .toSortedMap(compareBy {
                                 when (it) {
-                                    '#' -> Char.MAX_VALUE - 1
-                                    else -> it
+                                    unknown -> Char.MAX_VALUE
+                                    "#" -> Char.MAX_VALUE - 1
+                                    else -> it.first()
                                 }
                             })
                             // Flatten the map of char to lists into an actual List that can be displayed.
                             .flatMap { (key, contacts) ->
                                 listOf(
-                                    GlobalSearchAdapter.Model.SubHeader(key.toString())
-                                ) + contacts.sortedBy { it.name }.map { it.value }.map(GlobalSearchAdapter.Model::Contact)
+                                    GlobalSearchAdapter.Model.SubHeader(key)
+                                ) + contacts.sortedBy { it.name ?: it.value.accountID }.map { it.value }.map(GlobalSearchAdapter.Model::Contact)
                             }
-
-                        // Similarly we want to display
-                        val noNames = result.contacts
-                            .filter { it.accountID != publicKey }
-                            .filter { it.nickname.isNullOrEmpty() && it.name.isNullOrEmpty() }
-                            .sortedBy { it.accountID }
-                            .map { GlobalSearchAdapter.Model.Contact(it) }
-
-                        buildList {
-                            add(GlobalSearchAdapter.Model.Header(R.string.contacts))
-                            add(GlobalSearchAdapter.Model.SavedMessages(publicKey))
-                            addAll(hasNames)
-                            noNames.takeIf { it.isNotEmpty() }?.let {
-                                add(GlobalSearchAdapter.Model.Header(R.string.unknown))
-                                addAll(it)
-                            }
-                        }
                     } else {
                         val currentUserPublicKey = publicKey
                         val contactAndGroupList = result.contacts.map(GlobalSearchAdapter.Model::Contact) +
