@@ -1,5 +1,6 @@
 package org.session.libsignal.crypto
 
+import org.session.libsignal.utilities.Hex
 import java.util.zip.CRC32
 
 /**
@@ -40,6 +41,9 @@ class MnemonicCodec(private val loadFileContents: (String) -> String) {
         object VerificationFailed : DecodingError("Your mnemonic couldn't be verified. Please check what you entered and try again.")
     }
 
+    /**
+     * Accepts a [hexEncodedString] and return s a mnemonic.
+     */
     fun encode(hexEncodedString: String, languageConfiguration: Language.Configuration = Language.Configuration.english): String {
         var string = hexEncodedString
         val language = Language(loadFileContents, languageConfiguration)
@@ -68,6 +72,9 @@ class MnemonicCodec(private val loadFileContents: (String) -> String) {
         }.joinToString(" ")
     }
 
+    /**
+     * Accepts a [mnemonic] and returns a hexEncodedString
+     */
     fun decode(mnemonic: String, languageConfiguration: Language.Configuration = Language.Configuration.english): String {
         val words = mnemonic.split(" ")
         val language = Language(loadFileContents, languageConfiguration)
@@ -105,6 +112,18 @@ class MnemonicCodec(private val loadFileContents: (String) -> String) {
             val string = "0000000" + x.toString(16)
             swap(string.substring(string.length - 8 until string.length))
         }.joinToString(separator = "") { it }
+    }
+
+    fun decodeAsByteArray(mnemonic: String): ByteArray = decode(mnemonic = mnemonic).let(Hex::fromStringCondensed)
+
+    fun decodeMnemonicOrHexAsByteArray(mnemonicOrHex: String): ByteArray = try {
+        decode(mnemonic = mnemonicOrHex).let(Hex::fromStringCondensed)
+    } catch (decodeException: Exception) {
+        try {
+            Hex.fromStringCondensed(mnemonicOrHex)
+        } catch (_: Exception) {
+            throw decodeException
+        }
     }
 
     private fun swap(x: String): String {

@@ -8,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.Card
 import androidx.compose.material.Icon
@@ -30,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
+import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.color.LocalColors
 import org.thoughtcrime.securesms.util.QRCodeUtilities
 
@@ -69,6 +71,7 @@ private fun Content(
 ) {
     Box(
         modifier = modifier
+            .padding(LocalDimensions.current.xxxsItemSpacing)
             .fillMaxWidth()
             .aspectRatio(1f)
     ) {

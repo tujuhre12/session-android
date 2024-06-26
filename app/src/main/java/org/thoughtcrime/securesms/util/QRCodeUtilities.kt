@@ -19,7 +19,7 @@ object QRCodeUtilities {
     ): Bitmap? = runCatching {
         val hints = hashMapOf(
             EncodeHintType.MARGIN to 0,
-            EncodeHintType.ERROR_CORRECTION to ErrorCorrectionLevel.H
+            EncodeHintType.ERROR_CORRECTION to ErrorCorrectionLevel.M
         )
         val color = if (isInverted) light else dark
         val background = if (isInverted) dark else light
