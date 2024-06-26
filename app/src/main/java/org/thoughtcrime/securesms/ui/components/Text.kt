@@ -36,6 +36,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.base
@@ -118,7 +119,8 @@ fun SessionOutlinedTextField(
             Spacer(modifier = Modifier.height(LocalDimensions.current.xsItemSpacing))
             Text(
                 it,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth()
+                    .contentDescription(R.string.AccessibilityId_error_message),
                 textAlign = TextAlign.Center,
                 style = baseBold,
                 color = LocalColors.current.danger
