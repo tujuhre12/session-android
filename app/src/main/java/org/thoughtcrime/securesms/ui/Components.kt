@@ -52,6 +52,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -116,7 +117,7 @@ fun LargeItemButtonWithDrawable(
     colors: ButtonColors = transparentButtonColors(),
     onClick: () -> Unit
 ) {
-    ItemButtonWithDrawable(textId, icon, modifier.heightIn(min = LocalDimensions.current.minLargeItemButtonHeight), colors, onClick)
+    ItemButtonWithDrawable(textId, icon, modifier.heightIn(min = LocalDimensions.current.minLargeItemButtonHeight), h8, colors, onClick)
 }
 
 @Composable
@@ -124,6 +125,7 @@ fun ItemButtonWithDrawable(
     @StringRes textId: Int,
     @DrawableRes icon: Int,
     modifier: Modifier = Modifier,
+    textStyle: TextStyle = xl,
     colors: ButtonColors = transparentButtonColors(),
     onClick: () -> Unit
 ) {
@@ -139,6 +141,7 @@ fun ItemButtonWithDrawable(
                 modifier = Modifier.align(Alignment.Center)
             )
         },
+        textStyle = textStyle,
         colors = colors,
         onClick = onClick
     )
@@ -152,7 +155,7 @@ fun LargeItemButton(
     colors: ButtonColors = transparentButtonColors(),
     onClick: () -> Unit
 ) {
-    ItemButton(textId, icon, modifier.heightIn(min = LocalDimensions.current.minLargeItemButtonHeight), colors, onClick)
+    ItemButton(textId, icon, modifier.heightIn(min = LocalDimensions.current.minLargeItemButtonHeight), h8, colors, onClick)
 }
 
 /**
@@ -163,6 +166,7 @@ fun ItemButton(
     @StringRes textId: Int,
     @DrawableRes icon: Int,
     modifier: Modifier = Modifier,
+    textStyle: TextStyle = xl,
     colors: ButtonColors = transparentButtonColors(),
     onClick: () -> Unit
 ) {
@@ -176,6 +180,7 @@ fun ItemButton(
                 modifier = Modifier.align(Alignment.Center)
             )
         },
+        textStyle = textStyle,
         colors = colors,
         onClick = onClick
     )
@@ -191,6 +196,7 @@ fun ItemButton(
     text: String,
     icon: @Composable BoxScope.() -> Unit,
     modifier: Modifier = Modifier,
+    textStyle: TextStyle = xl,
     colors: ButtonColors = transparentButtonColors(),
     onClick: () -> Unit
 ) {
@@ -214,7 +220,7 @@ fun ItemButton(
                 .fillMaxWidth()
                 .padding(vertical = LocalDimensions.current.xsItemSpacing)
                 .align(Alignment.CenterVertically),
-            style = xl
+            style = textStyle
         )
     }
 }
