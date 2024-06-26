@@ -10,6 +10,7 @@ import network.loki.messenger.R
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.truncateIdForDisplay
 import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter.ContentView
 import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter.Model.GroupConversation
 import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter.Model.Header
@@ -100,8 +101,7 @@ fun ContentView.bindModel(query: String?, model: GroupConversation) {
     val groupRecipients = model.groupRecord.members.map { Recipient.from(binding.root.context, it, false) }
 
     val membersString = groupRecipients.joinToString {
-        val address = it.address.serialize()
-        it.name ?: "${address.take(4)}...${address.takeLast(4)}"
+        it.name ?: truncateIdForDisplay(it.address.serialize())
     }
     if (model.groupRecord.isClosedGroup) {
         binding.searchResultSubtitle.text = getHighlight(query, membersString)
@@ -153,8 +153,7 @@ fun ContentView.bindModel(query: String?, model: Message) {
     binding.searchResultSubtitle.isVisible = true
 }
 
-fun Recipient.getSearchName(): String = name ?: address.serialize().let { address -> "${address.take(4)}...${address.takeLast(4)}" }
+fun Recipient.getSearchName(): String = name ?: address.serialize().let(::truncateIdForDisplay)
 
-fun Contact.getSearchName(): String =
-        if (nickname.isNullOrEmpty()) name ?: "${accountID.take(4)}...${accountID.takeLast(4)}"
-        else "${name ?: "${accountID.take(4)}...${accountID.takeLast(4)}"} ($nickname)"
+fun Contact.getSearchName(): String = nickname?.takeIf { it.isNotEmpty() }
+    ?: name?.takeIf { it.isNotEmpty() } ?: truncateIdForDisplay(accountID)

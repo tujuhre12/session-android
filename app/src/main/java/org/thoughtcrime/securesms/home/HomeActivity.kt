@@ -138,8 +138,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
     private val globalSearchViewModel by viewModels<GlobalSearchViewModel>()
     private val homeViewModel by viewModels<HomeViewModel>()
 
-    private val publicKey: String
-        get() = textSecurePreferences.getLocalNumber()!!
+    private val publicKey: String by lazy { textSecurePreferences.getLocalNumber()!! }
 
     private val homeAdapter: HomeAdapter by lazy {
         HomeAdapter(context = this, configFactory = configFactory, listener = this, ::showMessageRequests, ::hideMessageRequests)
@@ -289,12 +288,35 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             launch {
                 globalSearchViewModel.result.collect { result ->
                     if (result.query.isEmpty()) {
-                        val hasNames = result.contacts.filter { it.nickname != null || it.name != null }
-                            .groupByNotNull { (it.nickname?.firstOrNull() ?: it.name?.firstOrNull())?.uppercase() }
-                            .toSortedMap(compareBy { it })
-                            .flatMap { (key, contacts) -> listOf(GlobalSearchAdapter.Model.SubHeader(key)) + contacts.sortedBy { it.nickname ?: it.name }.map(GlobalSearchAdapter.Model::Contact) }
+                        class NamedValue<T>(val name: String, val value: T)
 
-                        val noNames = result.contacts.filter { it.nickname == null && it.name == null }
+                        val hasNames = result.contacts
+                            // Remove ourself, we're shown above.
+                            .filter { it.accountID != publicKey }
+                            // Get the name that we will display and sort by, and uppercase it to
+                            // help with sorting and we need the char uppercased later.
+                            .mapNotNull { (it.nickname?.takeIf { it.isNotEmpty() } ?: it.name?.takeIf { it.isNotEmpty() })
+                                ?.let { name -> NamedValue(name.uppercase(), it) } }
+                            // Digits are all grouped under a #, the rest are grouped by their first character.uppercased()
+                            .groupBy { (it.name.first().takeUnless(Char::isDigit) ?: '#') }
+                            // place the # at the end, after all the names starting with alphabetic chars
+                            .toSortedMap(compareBy {
+                                when (it) {
+                                    '#' -> Char.MAX_VALUE - 1
+                                    else -> it
+                                }
+                            })
+                            // Flatten the map of char to lists into an actual List that can be displayed.
+                            .flatMap { (key, contacts) ->
+                                listOf(
+                                    GlobalSearchAdapter.Model.SubHeader(key.toString())
+                                ) + contacts.sortedBy { it.name }.map { it.value }.map(GlobalSearchAdapter.Model::Contact)
+                            }
+
+                        // Similarly we want to display
+                        val noNames = result.contacts
+                            .filter { it.accountID != publicKey }
+                            .filter { it.nickname.isNullOrEmpty() && it.name.isNullOrEmpty() }
                             .sortedBy { it.accountID }
                             .map { GlobalSearchAdapter.Model.Contact(it) }
 
