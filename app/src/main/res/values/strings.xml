@@ -1086,7 +1086,7 @@
     <string name="notificationsMessage">Message notifications</string>
     <string name="onboardingMessageNotificationExplaination">There are two ways Session can notify you of new messages.</string>
     <string name="recoveryPasswordHidePermanently">Hide Recovery Password Permanently</string>
-    <string name="recoveryPasswordHidePermanentlyDescription1"><![CDATA[Without your recovery password, you cannot load your account on new devices. <br /><br />We strongly recommend you save your recovery password in a safe and secure place before continuing.]]></string>
+    <string name="recoveryPasswordHidePermanentlyDescription1"><![CDATA[Without your recovery password, you cannot load your account on new devices.<br><br>We strongly recommend you save your recovery password in a safe and secure place before continuing.]]></string>
     <string name="recoveryPasswordHidePermanentlyDescription2">Are you sure you want to permanently hide your recovery password on this device? This cannot be undone.</string>
     <string name="recoveryPasswordDescription">Use your recovery password to load your account on new devices.\n\nYour account cannot be recovered without your recovery password. Make sure it\'s stored somewhere safe and secure — and don\'t share it with anyone.</string>
     <string name="hide">Hide</string>

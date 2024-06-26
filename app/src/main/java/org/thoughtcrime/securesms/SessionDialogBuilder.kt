@@ -18,7 +18,6 @@ import androidx.annotation.StringRes
 import androidx.annotation.StyleRes
 import androidx.appcompat.app.AlertDialog
 import androidx.core.text.HtmlCompat
-import androidx.core.view.setMargins
 import androidx.core.view.updateMargins
 import androidx.fragment.app.Fragment
 import network.loki.messenger.R
@@ -83,7 +82,9 @@ class SessionDialogBuilder(val context: Context) {
         }.let(topView::addView)
     }
 
-    fun htmlText(@StringRes id: Int, @StyleRes style: Int = 0, modify: TextView.() -> Unit = {}) { text(context.resources.getText(id)) }
+    fun htmlText(@StringRes id: Int, @StyleRes style: Int = 0, modify: TextView.() -> Unit = {}) {
+        text(HtmlCompat.fromHtml(context.resources.getString(id), 0))
+    }
 
     fun view(view: View) = contentView.addView(view)
 
