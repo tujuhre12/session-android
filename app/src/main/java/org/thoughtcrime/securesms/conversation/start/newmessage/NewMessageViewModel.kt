@@ -100,6 +100,7 @@ internal class NewMessageViewModel @Inject constructor(
 
     private fun Exception.toMessage() = when (this) {
         is SnodeAPI.Error.Generic -> application.getString(R.string.onsErrorNotRecognized)
+        is TimeoutCancellationException -> application.getString(R.string.onsErrorUnableToSearch)
         else -> localizedMessage ?: application.getString(R.string.fragment_enter_public_key_error_message)
     }
 }
