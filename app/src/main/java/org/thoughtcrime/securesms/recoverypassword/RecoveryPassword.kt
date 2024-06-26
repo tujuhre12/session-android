@@ -23,6 +23,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.dp
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.CellWithPaddingAndMargin
 import org.thoughtcrime.securesms.ui.LocalDimensions
@@ -100,6 +101,7 @@ private fun RecoveryPasswordCell(
                     modifier = Modifier
                         .padding(vertical = LocalDimensions.current.smallMargin)
                         .contentDescription(R.string.AccessibilityId_qr_code),
+                    contentPadding = 10.dp,
                     icon = R.drawable.session_shield
                 )
             }

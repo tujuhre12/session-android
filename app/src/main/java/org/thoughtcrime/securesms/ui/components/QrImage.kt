@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -39,6 +40,7 @@ import org.thoughtcrime.securesms.util.QRCodeUtilities
 fun QrImage(
     string: String?,
     modifier: Modifier = Modifier,
+    contentPadding: Dp = LocalDimensions.current.smallItemSpacing,
     icon: Int = R.drawable.session_shield
 ) {
     var bitmap: Bitmap? by remember {
@@ -58,7 +60,7 @@ fun QrImage(
         backgroundColor = LocalColors.current.qrCodeBackground,
         elevation = 0.dp,
         modifier = modifier
-    ) { Content(bitmap, icon, backgroundColor = LocalColors.current.qrCodeBackground) }
+    ) { Content(bitmap, icon, Modifier.padding(contentPadding), backgroundColor = LocalColors.current.qrCodeBackground) }
 }
 
 @Composable
@@ -71,7 +73,6 @@ private fun Content(
 ) {
     Box(
         modifier = modifier
-            .padding(LocalDimensions.current.xxxsItemSpacing)
             .fillMaxWidth()
             .aspectRatio(1f)
     ) {

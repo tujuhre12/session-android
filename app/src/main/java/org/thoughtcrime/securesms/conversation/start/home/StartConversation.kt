@@ -83,7 +83,11 @@ internal fun StartConversationScreen(
                         style = small
                     )
                     Spacer(modifier = Modifier.height(LocalDimensions.current.smallItemSpacing))
-                    QrImage(string = accountId, Modifier.contentDescription(R.string.AccessibilityId_qr_code))
+                    QrImage(
+                        string = accountId,
+                        Modifier.contentDescription(R.string.AccessibilityId_qr_code),
+                        icon = R.drawable.session
+                    )
                 }
             }
         }
