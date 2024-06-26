@@ -76,6 +76,8 @@ import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.ItemButton
 import org.thoughtcrime.securesms.ui.ItemButtonWithDrawable
+import org.thoughtcrime.securesms.ui.LargeItemButton
+import org.thoughtcrime.securesms.ui.LargeItemButtonWithDrawable
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.color.destructiveButtonColors
 import org.thoughtcrime.securesms.ui.components.OutlineButton
@@ -414,27 +416,27 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
 
             Cell {
                 Column {
-                    ItemButtonWithDrawable(R.string.activity_path_title, if (hasPaths) R.drawable.ic_status else R.drawable.ic_path_yellow) { show<PathActivity>() }
+                    LargeItemButtonWithDrawable(R.string.activity_path_title, if (hasPaths) R.drawable.ic_status else R.drawable.ic_path_yellow) { show<PathActivity>() }
                     Divider()
-                    ItemButton(R.string.activity_settings_privacy_button_title, R.drawable.ic_privacy_icon) { show<PrivacySettingsActivity>() }
+                    LargeItemButton(R.string.activity_settings_privacy_button_title, R.drawable.ic_privacy_icon) { show<PrivacySettingsActivity>() }
                     Divider()
-                    ItemButton(R.string.activity_settings_notifications_button_title, R.drawable.ic_speaker, Modifier.contentDescription(R.string.AccessibilityId_notifications)) { show<NotificationSettingsActivity>() }
+                    LargeItemButton(R.string.activity_settings_notifications_button_title, R.drawable.ic_speaker, Modifier.contentDescription(R.string.AccessibilityId_notifications)) { show<NotificationSettingsActivity>() }
                     Divider()
-                    ItemButton(R.string.activity_settings_conversations_button_title, R.drawable.ic_conversations, Modifier.contentDescription(R.string.AccessibilityId_conversations)) { show<ChatSettingsActivity>() }
+                    LargeItemButton(R.string.activity_settings_conversations_button_title, R.drawable.ic_conversations, Modifier.contentDescription(R.string.AccessibilityId_conversations)) { show<ChatSettingsActivity>() }
                     Divider()
-                    ItemButton(R.string.activity_settings_message_requests_button_title, R.drawable.ic_message_requests, Modifier.contentDescription(R.string.AccessibilityId_message_requests)) { show<MessageRequestsActivity>() }
+                    LargeItemButton(R.string.activity_settings_message_requests_button_title, R.drawable.ic_message_requests, Modifier.contentDescription(R.string.AccessibilityId_message_requests)) { show<MessageRequestsActivity>() }
                     Divider()
-                    ItemButton(R.string.activity_settings_message_appearance_button_title, R.drawable.ic_appearance, Modifier.contentDescription(R.string.AccessibilityId_appearance)) { show<AppearanceSettingsActivity>() }
+                    LargeItemButton(R.string.activity_settings_message_appearance_button_title, R.drawable.ic_appearance, Modifier.contentDescription(R.string.AccessibilityId_appearance)) { show<AppearanceSettingsActivity>() }
                     Divider()
-                    ItemButton(R.string.activity_settings_invite_button_title, R.drawable.ic_invite_friend, Modifier.contentDescription(R.string.AccessibilityId_invite_friend)) { sendInvitationToUseSession() }
+                    LargeItemButton(R.string.activity_settings_invite_button_title, R.drawable.ic_invite_friend, Modifier.contentDescription(R.string.AccessibilityId_invite_friend)) { sendInvitationToUseSession() }
                     Divider()
                     if (!prefs.getHidePassword()) {
-                        ItemButton(R.string.sessionRecoveryPassword, R.drawable.ic_recovery_phrase, Modifier.contentDescription(R.string.AccessibilityId_recovery_password_menu_item)) { show<RecoveryPasswordActivity>() }
+                        LargeItemButton(R.string.sessionRecoveryPassword, R.drawable.ic_recovery_phrase, Modifier.contentDescription(R.string.AccessibilityId_recovery_password_menu_item)) { show<RecoveryPasswordActivity>() }
                         Divider()
                     }
-                    ItemButton(R.string.activity_settings_help_button, R.drawable.ic_help, Modifier.contentDescription(R.string.AccessibilityId_help)) { show<HelpSettingsActivity>() }
+                    LargeItemButton(R.string.activity_settings_help_button, R.drawable.ic_help, Modifier.contentDescription(R.string.AccessibilityId_help)) { show<HelpSettingsActivity>() }
                     Divider()
-                    ItemButton(R.string.activity_settings_clear_all_data_button_title, R.drawable.ic_clear_data, Modifier.contentDescription(R.string.AccessibilityId_clear_data), destructiveButtonColors()) { ClearAllDataDialog().show(supportFragmentManager, "Clear All Data Dialog") }
+                    LargeItemButton(R.string.activity_settings_clear_all_data_button_title, R.drawable.ic_clear_data, Modifier.contentDescription(R.string.AccessibilityId_clear_data), destructiveButtonColors()) { ClearAllDataDialog().show(supportFragmentManager, "Clear All Data Dialog") }
                 }
             }
         }

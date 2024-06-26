@@ -63,6 +63,7 @@ import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.HorizontalPagerIndicator
 import org.thoughtcrime.securesms.ui.ItemButton
+import org.thoughtcrime.securesms.ui.LargeItemButton
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
@@ -217,7 +218,7 @@ fun CellButtons(
     Cell {
         Column {
             onReply?.let {
-                ItemButton(
+                LargeItemButton(
                     R.string.reply,
                     R.drawable.ic_message_details__reply,
                     onClick = it
@@ -225,14 +226,14 @@ fun CellButtons(
                 Divider()
             }
             onResend?.let {
-                ItemButton(
+                LargeItemButton(
                     R.string.resend,
                     R.drawable.ic_message_details__refresh,
                     onClick = it
                 )
                 Divider()
             }
-            ItemButton(
+            LargeItemButton(
                 R.string.delete,
                 R.drawable.ic_message_details__trash,
                 colors = destructiveButtonColors(),

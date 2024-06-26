@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -37,7 +36,6 @@ import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
@@ -110,7 +108,16 @@ fun <T> OptionsCard(card: OptionsCard<T>, callbacks: Callbacks<T>) {
     }
 }
 
-val LocalItemButtonMinHeight = staticCompositionLocalOf { 60.dp }
+@Composable
+fun LargeItemButtonWithDrawable(
+    @StringRes textId: Int,
+    @DrawableRes icon: Int,
+    modifier: Modifier = Modifier,
+    colors: ButtonColors = transparentButtonColors(),
+    onClick: () -> Unit
+) {
+    ItemButtonWithDrawable(textId, icon, modifier.heightIn(min = LocalDimensions.current.minLargeItemButtonHeight), colors, onClick)
+}
 
 @Composable
 fun ItemButtonWithDrawable(
@@ -135,6 +142,17 @@ fun ItemButtonWithDrawable(
         colors = colors,
         onClick = onClick
     )
+}
+
+@Composable
+fun LargeItemButton(
+    @StringRes textId: Int,
+    @DrawableRes icon: Int,
+    modifier: Modifier = Modifier,
+    colors: ButtonColors = transparentButtonColors(),
+    onClick: () -> Unit
+) {
+    ItemButton(textId, icon, modifier.heightIn(min = LocalDimensions.current.minLargeItemButtonHeight), colors, onClick)
 }
 
 /**
@@ -177,9 +195,7 @@ fun ItemButton(
     onClick: () -> Unit
 ) {
     TextButton(
-        modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = LocalItemButtonMinHeight.current),
+        modifier = modifier.fillMaxWidth(),
         colors = colors,
         onClick = onClick,
         shape = RectangleShape,
@@ -187,14 +203,15 @@ fun ItemButton(
         Box(
             modifier = Modifier
                 .width(80.dp)
-                .height(LocalItemButtonMinHeight.current)
+                .wrapContentHeight()
                 .align(Alignment.CenterVertically)
         ) {
             icon()
         }
         Text(
             text,
-            Modifier.fillMaxWidth()
+            Modifier
+                .fillMaxWidth()
                 .padding(vertical = LocalDimensions.current.xsItemSpacing)
                 .align(Alignment.CenterVertically),
             style = xl
