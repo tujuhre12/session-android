@@ -5,7 +5,15 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import org.session.libsession.utilities.AppTextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.crypto.MnemonicCodec
@@ -20,21 +28,26 @@ class RecoveryPasswordViewModel @Inject constructor(
 ): AndroidViewModel(application) {
     val prefs = AppTextSecurePreferences(application)
 
+    val seed = MutableStateFlow<String?>(null)
+    val mnemonic = seed.filterNotNull()
+        .map { MnemonicCodec { MnemonicUtilities.loadFileContents(application, it) }.encode(it, MnemonicCodec.Language.Configuration.english) }
+
     fun permanentlyHidePassword() {
         prefs.setHidePassword(true)
     }
 
     fun copySeed(context: Context) {
+        val seed = seed.value ?: return
         TextSecurePreferences.setHasViewedSeed(context, true)
         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         val clip = ClipData.newPlainText("Seed", seed)
         clipboard.setPrimaryClip(clip)
     }
 
-    val seed by lazy {
-        val hexEncodedSeed = IdentityKeyUtil.retrieve(application, IdentityKeyUtil.LOKI_SEED)
-            ?: IdentityKeyUtil.getIdentityKeyPair(application).hexEncodedPrivateKey // Legacy account
-        MnemonicCodec { MnemonicUtilities.loadFileContents(application, it) }
-            .encode(hexEncodedSeed, MnemonicCodec.Language.Configuration.english)
+    init {
+        viewModelScope.launch(Dispatchers.IO) {
+            seed.emit(IdentityKeyUtil.retrieve(application, IdentityKeyUtil.LOKI_SEED)
+                ?: IdentityKeyUtil.getIdentityKeyPair(application).hexEncodedPrivateKey) // Legacy account
+        }
     }
 }

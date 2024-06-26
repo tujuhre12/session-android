@@ -2,6 +2,8 @@ package org.thoughtcrime.securesms.recoverypassword
 
 import android.os.Bundle
 import androidx.activity.viewModels
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.showSessionDialog
@@ -16,10 +18,15 @@ class RecoveryPasswordActivity : BaseActionBarActivity() {
         supportActionBar!!.title = resources.getString(R.string.sessionRecoveryPassword)
 
         setComposeContent {
+            val mnemonic by viewModel.mnemonic.collectAsState("")
+            val seed by viewModel.seed.collectAsState(null)
+
             RecoveryPasswordScreen(
-                viewModel.seed,
-                { viewModel.copySeed(this) }
-            ) { onHide() }
+                mnemonic = mnemonic,
+                seed = seed,
+                copySeed = { viewModel.copySeed(this) },
+                onHide = ::onHide
+            )
         }
     }
 

@@ -24,11 +24,11 @@ import org.thoughtcrime.securesms.crypto.KeyPairUtilities
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 
 internal class PickDisplayNameViewModel(
-    pickNewName: Boolean,
+    private val loadFailed: Boolean,
     private val prefs: TextSecurePreferences,
     private val configFactory: ConfigFactory
 ): ViewModel() {
-    private val _states = MutableStateFlow(if (pickNewName) pickNewNameState() else State())
+    private val _states = MutableStateFlow(if (loadFailed) pickNewNameState() else State())
     val states = _states.asStateFlow()
 
     private val _events = MutableSharedFlow<Event>()
@@ -48,23 +48,25 @@ internal class PickDisplayNameViewModel(
             else -> {
                 prefs.setProfileName(displayName)
 
-                // This is here to resolve a case where the app restarts before a user completes onboarding
-                // which can result in an invalid database state
-                database.clearAllLastMessageHashes()
-                database.clearReceivedMessageHashValues()
+                if (!loadFailed) {
+                    // This is here to resolve a case where the app restarts before a user completes onboarding
+                    // which can result in an invalid database state
+                    database.clearAllLastMessageHashes()
+                    database.clearReceivedMessageHashValues()
 
-                val keyPairGenerationResult = KeyPairUtilities.generate()
-                val seed = keyPairGenerationResult.seed
-                val ed25519KeyPair = keyPairGenerationResult.ed25519KeyPair
-                val x25519KeyPair = keyPairGenerationResult.x25519KeyPair
+                    val keyPairGenerationResult = KeyPairUtilities.generate()
+                    val seed = keyPairGenerationResult.seed
+                    val ed25519KeyPair = keyPairGenerationResult.ed25519KeyPair
+                    val x25519KeyPair = keyPairGenerationResult.x25519KeyPair
 
-                KeyPairUtilities.store(context, seed, ed25519KeyPair, x25519KeyPair)
-                configFactory.keyPairChanged()
-                val userHexEncodedPublicKey = x25519KeyPair.hexEncodedPublicKey
-                val registrationID = KeyHelper.generateRegistrationId(false)
-                prefs.setLocalRegistrationId(registrationID)
-                prefs.setLocalNumber(userHexEncodedPublicKey)
-                prefs.setRestorationTime(0)
+                    KeyPairUtilities.store(context, seed, ed25519KeyPair, x25519KeyPair)
+                    configFactory.keyPairChanged()
+                    val userHexEncodedPublicKey = x25519KeyPair.hexEncodedPublicKey
+                    val registrationID = KeyHelper.generateRegistrationId(false)
+                    prefs.setLocalRegistrationId(registrationID)
+                    prefs.setLocalNumber(userHexEncodedPublicKey)
+                    prefs.setRestorationTime(0)
+                }
 
                 viewModelScope.launch { _events.emit(Event.DONE) }
             }
@@ -82,18 +84,18 @@ internal class PickDisplayNameViewModel(
 
     @dagger.assisted.AssistedFactory
     interface AssistedFactory {
-        fun create(pickNewName: Boolean): Factory
+        fun create(loadFailed: Boolean): Factory
     }
 
     @Suppress("UNCHECKED_CAST")
     class Factory @AssistedInject constructor(
-        @Assisted private val pickNewName: Boolean,
+        @Assisted private val loadFailed: Boolean,
         private val prefs: TextSecurePreferences,
         private val configFactory: ConfigFactory
     ) : ViewModelProvider.Factory {
 
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return PickDisplayNameViewModel(pickNewName, prefs, configFactory) as T
+            return PickDisplayNameViewModel(loadFailed, prefs, configFactory) as T
         }
     }
 }

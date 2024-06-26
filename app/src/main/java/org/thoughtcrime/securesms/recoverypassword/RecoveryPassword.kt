@@ -32,8 +32,6 @@ import org.thoughtcrime.securesms.ui.SessionShieldIcon
 import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.color.Colors
 import org.thoughtcrime.securesms.ui.color.LocalColors
-import org.thoughtcrime.securesms.ui.components.ButtonStyle
-import org.thoughtcrime.securesms.ui.components.OutlineCopyButton
 import org.thoughtcrime.securesms.ui.components.QrImage
 import org.thoughtcrime.securesms.ui.components.SlimOutlineButton
 import org.thoughtcrime.securesms.ui.components.SlimOutlineCopyButton
@@ -44,7 +42,8 @@ import org.thoughtcrime.securesms.ui.h8
 
 @Composable
 internal fun RecoveryPasswordScreen(
-    seed: String = "",
+    mnemonic: String,
+    seed: String? = null,
     copySeed:() -> Unit = {},
     onHide:() -> Unit = {}
 ) {
@@ -55,13 +54,17 @@ internal fun RecoveryPasswordScreen(
             .verticalScroll(rememberScrollState())
             .padding(bottom = LocalDimensions.current.xsMargin)
     ) {
-        RecoveryPasswordCell(seed, copySeed)
+        RecoveryPasswordCell(mnemonic, seed, copySeed)
         HideRecoveryPasswordCell(onHide)
     }
 }
 
 @Composable
-private fun RecoveryPasswordCell(seed: String, copySeed:() -> Unit = {}) {
+private fun RecoveryPasswordCell(
+    mnemonic: String,
+    seed: String?,
+    copySeed:() -> Unit = {}
+) {
     var showQr by remember {
         mutableStateOf(false)
     }
@@ -85,7 +88,7 @@ private fun RecoveryPasswordCell(seed: String, copySeed:() -> Unit = {}) {
             )
 
             AnimatedVisibility(!showQr) {
-                RecoveryPassword(seed)
+                RecoveryPassword(mnemonic)
             }
 
             AnimatedVisibility(
@@ -128,9 +131,9 @@ private fun RecoveryPasswordCell(seed: String, copySeed:() -> Unit = {}) {
 }
 
 @Composable
-private fun RecoveryPassword(seed: String) {
+private fun RecoveryPassword(mnemonic: String) {
     Text(
-        seed,
+        mnemonic,
         modifier = Modifier
             .contentDescription(R.string.AccessibilityId_recovery_password_container)
             .padding(vertical = LocalDimensions.current.smallMargin)
@@ -178,6 +181,6 @@ private fun PreviewRecoveryPasswordScreen(
     @PreviewParameter(SessionColorsParameterProvider::class) colors: Colors
 ) {
     PreviewTheme(colors) {
-        RecoveryPasswordScreen(seed = "Voyage  urban  toyed  maverick peculiar tuxedo penguin tree grass building listen speak withdraw terminal plane")
+        RecoveryPasswordScreen(mnemonic = "voyage  urban  toyed  maverick peculiar tuxedo penguin tree grass building listen speak withdraw terminal plane")
     }
 }

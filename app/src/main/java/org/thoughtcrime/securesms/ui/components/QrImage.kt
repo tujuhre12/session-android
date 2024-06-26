@@ -37,7 +37,7 @@ import org.thoughtcrime.securesms.util.QRCodeUtilities
 
 @Composable
 fun QrImage(
-    string: String,
+    string: String?,
     modifier: Modifier = Modifier,
     icon: Int = R.drawable.session_shield
 ) {
@@ -47,7 +47,7 @@ fun QrImage(
 
     val scope = rememberCoroutineScope()
     LaunchedEffect(string) {
-        scope.launch(Dispatchers.IO) {
+        if (string != null) scope.launch(Dispatchers.IO) {
             bitmap = (300..500 step 100).firstNotNullOf {
                 runCatching { QRCodeUtilities.encode(string, it) }.getOrNull()
             }
