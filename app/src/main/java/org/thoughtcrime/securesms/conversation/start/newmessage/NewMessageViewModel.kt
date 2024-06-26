@@ -20,6 +20,7 @@ import org.session.libsession.snode.SnodeAPI
 import org.session.libsignal.utilities.PublicKeyValidation
 import org.session.libsignal.utilities.timeout
 import org.thoughtcrime.securesms.ui.GetString
+import java.util.concurrent.TimeoutException
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.seconds
@@ -100,8 +101,8 @@ internal class NewMessageViewModel @Inject constructor(
 
     private fun Exception.toMessage() = when (this) {
         is SnodeAPI.Error.Generic -> application.getString(R.string.onsErrorNotRecognized)
-        is TimeoutCancellationException -> application.getString(R.string.onsErrorUnableToSearch)
-        else -> localizedMessage ?: application.getString(R.string.fragment_enter_public_key_error_message)
+        is TimeoutException -> application.getString(R.string.onsErrorUnableToSearch)
+        else -> application.getString(R.string.fragment_enter_public_key_error_message)
     }
 }
 
