@@ -129,6 +129,10 @@ fun Button(
     Button(text, onClick, ButtonType.Outline(LocalColors.current.primaryButtonFill), modifier, enabled)
 }
 
+@Composable fun PrimaryOutlineButton(onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, content: @Composable RowScope.() -> Unit) {
+    Button(onClick, ButtonType.Outline(LocalColors.current.primaryButtonFill), modifier, enabled, content = content)
+}
+
 @Composable fun SlimOutlineButton(onClick: () -> Unit, modifier: Modifier = Modifier, color: Color = LocalColors.current.text, enabled: Boolean = true, content: @Composable RowScope.() -> Unit) {
     Button(onClick, ButtonType.Outline(color), modifier, enabled, ButtonStyle.Slim, content = content)
 }
