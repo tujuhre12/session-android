@@ -5,7 +5,6 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
@@ -33,7 +32,6 @@ import org.thoughtcrime.securesms.ui.color.LocalColors
 import org.thoughtcrime.securesms.ui.components.AppBar
 import org.thoughtcrime.securesms.ui.components.BorderlessButtonWithIcon
 import org.thoughtcrime.securesms.ui.components.MaybeScanQrCode
-import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
@@ -79,13 +77,11 @@ private fun EnterAccountId(
             .verticalScroll(rememberScrollState())
             .imePadding()
     ) {
-
         Column(
             modifier = Modifier.padding(horizontal = LocalDimensions.current.xxsMargin, vertical = LocalDimensions.current.xsMargin),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.xsMargin)
         ) {
-
             SessionOutlinedTextField(
                 text = state.newMessageIdOrOns,
                 modifier = Modifier
@@ -111,8 +107,6 @@ private fun EnterAccountId(
             )
         }
 
-        Spacer(Modifier.weight(2f))
-
         AnimatedVisibility(state.isNextButtonVisible) {
             PrimaryOutlineButton(
                 modifier = Modifier
@@ -136,6 +130,6 @@ private fun PreviewNewMessage(
     @PreviewParameter(SessionColorsParameterProvider::class) colors: Colors
 ) {
     PreviewTheme(colors) {
-        NewMessage(State())
+        NewMessage(State("z"))
     }
 }
