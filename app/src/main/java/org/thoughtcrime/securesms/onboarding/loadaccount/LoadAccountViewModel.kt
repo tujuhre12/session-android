@@ -23,6 +23,7 @@ class LoadAccountEvent(val mnemonic: ByteArray)
 
 internal data class State(
     val recoveryPhrase: String = "",
+    val isTextErrorColor: Boolean = false,
     val error: String? = null
 )
 
@@ -63,7 +64,7 @@ internal class LinkDeviceViewModel @Inject constructor(
     }
 
     fun onChange(recoveryPhrase: String) {
-        state.value = State(recoveryPhrase)
+        state.update { it.copy(recoveryPhrase = recoveryPhrase, isTextErrorColor = false) }
     }
 
     private fun onSuccess(seed: ByteArray) {
@@ -73,6 +74,7 @@ internal class LinkDeviceViewModel @Inject constructor(
     private fun onFailure(error: Throwable) {
         state.update {
             it.copy(
+                isTextErrorColor = true,
                 error = when (error) {
                     is InvalidWord -> R.string.recoveryPasswordErrorMessageIncorrect
                     is InputTooShort -> R.string.recoveryPasswordErrorMessageShort

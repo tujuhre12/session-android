@@ -43,8 +43,8 @@ internal class PickDisplayNameViewModel(
         val displayName = _states.value.displayName
 
         when {
-            displayName.isEmpty() -> { _states.update { it.copy(error = R.string.displayNameErrorDescription) } }
-            displayName.length > NAME_PADDED_LENGTH -> { _states.update { it.copy(error = R.string.displayNameErrorDescriptionShorter) } }
+            displayName.isEmpty() -> { _states.update { it.copy(isTextErrorColor = true, error = R.string.displayNameErrorDescription) } }
+            displayName.length > NAME_PADDED_LENGTH -> { _states.update { it.copy(isTextErrorColor = true, error = R.string.displayNameErrorDescriptionShorter) } }
             else -> {
                 prefs.setProfileName(displayName)
 
@@ -77,7 +77,7 @@ internal class PickDisplayNameViewModel(
         _states.update { state ->
             state.copy(
                 displayName = value,
-                error = value.takeIf { it.length > NAME_PADDED_LENGTH }?.let { R.string.displayNameErrorDescriptionShorter }
+                isTextErrorColor = false
             )
         }
     }
@@ -103,6 +103,7 @@ internal class PickDisplayNameViewModel(
 data class State(
     @StringRes val title: Int = R.string.displayNamePick,
     @StringRes val description: Int = R.string.displayNameDescription,
+    val isTextErrorColor: Boolean = false,
     @StringRes val error: Int? = null,
     val displayName: String = ""
 )

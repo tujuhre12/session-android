@@ -57,7 +57,8 @@ internal fun DisplayName(state: State, onChange: (String) -> Unit = {}, onContin
                 placeholder = stringResource(R.string.displayNameEnter),
                 onChange = onChange,
                 onContinue = onContinue,
-                error = state.error?.let { stringResource(it) }
+                error = state.error?.let { stringResource(it) },
+                isTextErrorColor = state.isTextErrorColor
             )
         }
 

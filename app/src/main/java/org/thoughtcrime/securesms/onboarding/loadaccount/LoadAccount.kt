@@ -107,7 +107,8 @@ private fun RecoveryPassword(state: State, onChange: (String) -> Unit = {}, onCo
                 placeholder = stringResource(R.string.recoveryPasswordEnter),
                 onChange = onChange,
                 onContinue = onContinue,
-                error = state.error
+                error = state.error,
+                isTextErrorColor = state.isTextErrorColor
             )
         }
 

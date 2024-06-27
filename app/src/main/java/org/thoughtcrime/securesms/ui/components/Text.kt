@@ -55,12 +55,25 @@ fun PreviewSessionOutlinedTextField() {
             verticalArrangement = Arrangement.spacedBy(10.dp)) {
             SessionOutlinedTextField(
                 text = "text",
-                placeholder = "placeholder"
+                placeholder = "",
             )
 
             SessionOutlinedTextField(
                 text = "",
                 placeholder = "placeholder"
+            )
+
+            SessionOutlinedTextField(
+                text = "text",
+                placeholder = "",
+                error = "error"
+            )
+
+            SessionOutlinedTextField(
+                text = "text onChange after error",
+                placeholder = "",
+                error = "error",
+                isTextErrorColor = false
             )
         }
     }
@@ -75,7 +88,8 @@ fun SessionOutlinedTextField(
     textStyle: TextStyle = base,
     placeholder: String = "",
     onContinue: () -> Unit = {},
-    error: String? = null
+    error: String? = null,
+    isTextErrorColor: Boolean = error != null
 ) {
     Column(modifier = modifier.animateContentSize()) {
         Box(
@@ -93,7 +107,7 @@ fun SessionOutlinedTextField(
                 Text(
                     text = placeholder,
                     style = base,
-                    color = LocalColors.current.textSecondary(error != null),
+                    color = LocalColors.current.textSecondary(isTextErrorColor),
                     modifier = Modifier.wrapContentSize()
                         .align(Alignment.CenterStart)
                         .wrapContentSize()
@@ -104,7 +118,7 @@ fun SessionOutlinedTextField(
                 value = text,
                 onValueChange = onChange,
                 modifier = Modifier.wrapContentHeight().fillMaxWidth().contentDescription(contentDescription),
-                textStyle = textStyle.copy(color = LocalColors.current.text(error != null)),
+                textStyle = textStyle.copy(color = LocalColors.current.text(isTextErrorColor)),
                 cursorBrush = SolidColor(LocalColors.current.text(error != null)),
                 keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(

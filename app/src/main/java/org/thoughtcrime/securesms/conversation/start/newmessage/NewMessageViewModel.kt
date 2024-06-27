@@ -45,16 +45,16 @@ internal class NewMessageViewModel @Inject constructor(
         loadOnsJob?.cancel()
         loadOnsJob = null
 
-        _state.update { State(newMessageIdOrOns = value) }
+        _state.update { it.copy(newMessageIdOrOns = value, isTextErrorColor = false, loading = false) }
     }
 
     override fun onContinue() {
         val idOrONS = state.value.newMessageIdOrOns
 
         if (PublicKeyValidation.isValid(idOrONS, isPrefixRequired = false)) {
-            onUnvalidatedPublicKey(idOrONS)
+            onUnvalidatedPublicKey(publicKey = idOrONS)
         } else {
-            resolveONS(idOrONS)
+            resolveONS(ons = idOrONS)
         }
     }
 
@@ -70,7 +70,7 @@ internal class NewMessageViewModel @Inject constructor(
         if (loadOnsJob?.isActive == true) return
 
         // This could be an ONS name
-        _state.update { it.copy(error = null, loading = true) }
+        _state.update { it.copy(isTextErrorColor = false, error = null, loading = true) }
 
         loadOnsJob = viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -83,7 +83,7 @@ internal class NewMessageViewModel @Inject constructor(
     }
 
     private fun onError(e: Exception) {
-        _state.update { it.copy(loading = false, error = GetString(e) { it.toMessage() }) }
+        _state.update { it.copy(loading = false, isTextErrorColor = true, error = GetString(e) { it.toMessage() }) }
     }
 
     private fun onPublicKey(publicKey: String) {
@@ -95,7 +95,7 @@ internal class NewMessageViewModel @Inject constructor(
         if (PublicKeyValidation.hasValidPrefix(publicKey)) {
             onPublicKey(publicKey)
         } else {
-            _state.update { it.copy(error = GetString(R.string.accountIdErrorInvalid), loading = false) }
+            _state.update { it.copy(isTextErrorColor = true, error = GetString(R.string.accountIdErrorInvalid), loading = false) }
         }
     }
 
@@ -108,6 +108,7 @@ internal class NewMessageViewModel @Inject constructor(
 
 internal data class State(
     val newMessageIdOrOns: String = "",
+    val isTextErrorColor: Boolean = false,
     val error: GetString? = null,
     val loading: Boolean = false
 ) {

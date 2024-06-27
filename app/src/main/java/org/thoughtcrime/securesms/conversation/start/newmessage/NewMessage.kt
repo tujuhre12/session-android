@@ -95,6 +95,7 @@ private fun EnterAccountId(
                 onChange = callbacks::onChange,
                 onContinue = callbacks::onContinue,
                 error = state.error?.string(),
+                isTextErrorColor = state.isTextErrorColor
             )
 
             BorderlessButtonWithIcon(
