@@ -77,6 +77,20 @@ class MnemonicCodecTest {
     }
 
     @Test
+    fun `sanitizeAndDecodeAsByteArray with mnemonic with unnecessary spaces`() {
+        val result = codec.sanitizeAndDecodeAsByteArray("   fuming  nearby kennel husband dejected pepper  jaded because dads goggles tufts tomorrow dejected    ").let(Hex::toStringCondensed)
+
+        assertEquals("0f2ccde528622876b8f16e14db97dafc", result)
+    }
+
+    @Test
+    fun `sanitizeAndDecodeAsByteArray with mnemonic with special characters`() {
+        val result = codec.sanitizeAndDecodeAsByteArray("...fuming  nearby.kennel.husband . dejected pepper  jaded because dads goggles tufts tomorrow dejected@").let(Hex::toStringCondensed)
+
+        assertEquals("0f2ccde528622876b8f16e14db97dafc", result)
+    }
+
+    @Test
     fun `decodeMnemonicOrHexAsByteArray with hex`() {
         val result = codec.decodeMnemonicOrHexAsByteArray("0f2ccde528622876b8f16e14db97dafc").let(Hex::toStringCondensed)
 

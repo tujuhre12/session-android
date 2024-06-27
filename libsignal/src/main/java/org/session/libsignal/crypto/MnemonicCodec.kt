@@ -114,7 +114,14 @@ class MnemonicCodec(private val loadFileContents: (String) -> String) {
         }.joinToString(separator = "") { it }
     }
 
+    fun sanitizeAndDecodeAsByteArray(mnemonic: String): ByteArray = sanitizeRecoveryPhrase(mnemonic).let(::decode).let(Hex::fromStringCondensed)
     fun decodeAsByteArray(mnemonic: String): ByteArray = decode(mnemonic = mnemonic).let(Hex::fromStringCondensed)
+
+    private fun sanitizeRecoveryPhrase(rawMnemonic: String): String = rawMnemonic
+        .replace("[^\\w]+".toRegex(), " ") // replace any sequence of non-word characters with a space
+        .trim() // remove leading and trailing whitespace (which may have been from prior special chars)
+        .split("\\s+".toRegex()) // split on the now properly positioned spaces
+        .joinToString(" ") // reassemble
 
     fun decodeMnemonicOrHexAsByteArray(mnemonicOrHex: String): ByteArray = try {
         decode(mnemonic = mnemonicOrHex).let(Hex::fromStringCondensed)

@@ -46,7 +46,7 @@ internal class LinkDeviceViewModel @Inject constructor(
     fun onContinue() {
         viewModelScope.launch {
             try {
-                codec.decodeAsByteArray(state.value.recoveryPhrase).let(::onSuccess)
+                codec.sanitizeAndDecodeAsByteArray(state.value.recoveryPhrase).let(::onSuccess)
             } catch (e: Exception) {
                 onFailure(e)
             }
