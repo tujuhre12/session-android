@@ -119,7 +119,7 @@ fun SessionOutlinedTextField(
                 onValueChange = onChange,
                 modifier = Modifier.wrapContentHeight().fillMaxWidth().contentDescription(contentDescription),
                 textStyle = textStyle.copy(color = LocalColors.current.text(isTextErrorColor)),
-                cursorBrush = SolidColor(LocalColors.current.text(error != null)),
+                cursorBrush = SolidColor(LocalColors.current.text(isTextErrorColor)),
                 keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(
                     onDone = { onContinue() },
