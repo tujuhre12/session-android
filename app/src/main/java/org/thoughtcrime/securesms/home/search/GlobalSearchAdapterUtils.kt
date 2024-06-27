@@ -100,9 +100,7 @@ fun ContentView.bindModel(query: String?, model: GroupConversation) {
 
     val groupRecipients = model.groupRecord.members.map { Recipient.from(binding.root.context, it, false) }
 
-    val membersString = groupRecipients.joinToString {
-        it.name ?: truncateIdForDisplay(it.address.serialize())
-    }
+    val membersString = groupRecipients.joinToString(transform = Recipient::getSearchName)
     if (model.groupRecord.isClosedGroup) {
         binding.searchResultSubtitle.text = getHighlight(query, membersString)
     }
