@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.conversation.start.newmessage
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -111,17 +112,18 @@ private fun EnterAccountId(
 
         Spacer(Modifier.weight(2f))
 
-        PrimaryOutlineButton(
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .padding(horizontal = LocalDimensions.current.largeMargin)
-                .fillMaxWidth()
-                .contentDescription(R.string.next),
-            enabled = state.isNextButtonEnabled,
-            onClick = callbacks::onContinue
-        ) {
-            LoadingArcOr(state.loading) {
-                Text(stringResource(R.string.next))
+        AnimatedVisibility(state.isNextButtonVisible) {
+            PrimaryOutlineButton(
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .padding(horizontal = LocalDimensions.current.largeMargin)
+                    .fillMaxWidth()
+                    .contentDescription(R.string.next),
+                onClick = callbacks::onContinue
+            ) {
+                LoadingArcOr(state.loading) {
+                    Text(stringResource(R.string.next))
+                }
             }
         }
     }

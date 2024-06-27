@@ -111,7 +111,7 @@ internal data class State(
     val error: GetString? = null,
     val loading: Boolean = false
 ) {
-    val isNextButtonEnabled: Boolean get() = newMessageIdOrOns.isNotBlank()
+    val isNextButtonVisible: Boolean get() = newMessageIdOrOns.isNotBlank()
 }
 
 internal data class Success(val publicKey: String)
