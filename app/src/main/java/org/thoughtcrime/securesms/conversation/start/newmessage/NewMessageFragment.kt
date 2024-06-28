@@ -16,7 +16,7 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.conversation.start.StartConversationDelegate
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
-import org.thoughtcrime.securesms.showOpenUrlDialog
+import org.thoughtcrime.securesms.openUrl
 import org.thoughtcrime.securesms.ui.createThemedComposeView
 
 class NewMessageFragment : Fragment() {
@@ -45,7 +45,7 @@ class NewMessageFragment : Fragment() {
             viewModel,
             onClose = { delegate.onDialogClosePressed() },
             onBack = { delegate.onDialogBackPressed() },
-            onHelp = { requireContext().showOpenUrlDialog("https://sessionapp.zendesk.com/hc/en-us/articles/4439132747033-How-do-Session-ID-usernames-work") }
+            onHelp = { requireContext().openUrl("https://sessionapp.zendesk.com/hc/en-us/articles/4439132747033-How-do-Session-ID-usernames-work") }
         )
     }
 
