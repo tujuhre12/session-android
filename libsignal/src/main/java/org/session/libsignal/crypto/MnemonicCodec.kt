@@ -83,8 +83,8 @@ class MnemonicCodec(private val loadFileContents: (String) -> String) {
         val prefixLength = languageConfiguration.prefixLength
         val n = truncatedWordSet.size.toLong()
 
-        if (mnemonic.isEmpty()) throw IllegalArgumentException()
-        if (words.isEmpty()) throw IllegalArgumentException()
+        if (mnemonic.isEmpty()) throw DecodingError.InputTooShort
+        if (words.isEmpty()) throw DecodingError.InputTooShort
 
         fun String.prefix() = substring(0 until prefixLength)
 
