@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,6 +40,13 @@ import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.startWith
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.BuildConfig
@@ -408,11 +416,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacing))
 
-            var hasPaths by remember {
-                mutableStateOf(false)
-            }
-
-            CheckPaths { hasPaths = it }
+            val hasPaths by hasPaths().collectAsState(initial = false)
 
             Cell {
                 Column {
@@ -441,31 +445,16 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
             }
         }
     }
+}
 
-    @Composable
-    fun CheckPaths(setHasPaths: (Boolean) -> Unit) {
-        val context = LocalContext.current
-        val manager = LocalBroadcastManager.getInstance(context)
-
-        fun update() {
-            lifecycleScope.launch {
-                val paths = withContext(Dispatchers.IO) { OnionRequestAPI.paths }
-                setHasPaths(paths.isNotEmpty())
-            }
-        }
-
-        fun addReceiver(action: String): BroadcastReceiver = createReceiver { update() }.also { manager.registerReceiver(it, IntentFilter(action)) }
-
-        val receivers = listOf("buildingPaths", "pathsBuilt").map(::addReceiver)
-
-        DisposableEffect(Unit) {
-            onDispose {
-                receivers.forEach(manager::unregisterReceiver)
-            }
-        }
+private fun Context.hasPaths(): Flow<Boolean> = LocalBroadcastManager.getInstance(this).hasPaths()
+private fun LocalBroadcastManager.hasPaths(): Flow<Boolean> = callbackFlow {
+    val receiver: BroadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) { trySend(Unit) }
     }
-}
 
-fun createReceiver(update: () -> Unit) = object : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) { update() }
-}
+    registerReceiver(receiver, IntentFilter("buildingPaths"))
+    registerReceiver(receiver, IntentFilter("pathsBuilt"))
+
+    awaitClose { unregisterReceiver(receiver) }
+}.onStart { emit(Unit) }.map { OnionRequestAPI.paths.isNotEmpty() }
