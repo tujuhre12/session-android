@@ -44,8 +44,10 @@ internal class PickDisplayNameViewModel(
 
         when {
             displayName.isEmpty() -> { _states.update { it.copy(isTextErrorColor = true, error = R.string.displayNameErrorDescription) } }
-            displayName.length > NAME_PADDED_LENGTH -> { _states.update { it.copy(isTextErrorColor = true, error = R.string.displayNameErrorDescriptionShorter) } }
+            displayName.toByteArray().size > NAME_PADDED_LENGTH -> { _states.update { it.copy(isTextErrorColor = true, error = R.string.displayNameErrorDescriptionShorter) } }
             else -> {
+                _states.update { it.copy(isTextErrorColor = false, error = null) }
+
                 prefs.setProfileName(displayName)
 
                 if (!loadFailed) {
