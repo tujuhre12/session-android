@@ -1,6 +1,7 @@
 package org.session.libsignal.crypto
 
 import org.session.libsignal.utilities.Hex
+import org.session.libsignal.utilities.isHex
 import java.util.zip.CRC32
 
 /**
@@ -126,6 +127,7 @@ class MnemonicCodec(private val loadFileContents: (String) -> String) {
     fun decodeMnemonicOrHexAsByteArray(mnemonicOrHex: String): ByteArray = try {
         decode(mnemonic = mnemonicOrHex).let(Hex::fromStringCondensed)
     } catch (decodeException: Exception) {
+        if (mnemonicOrHex.isHex()) throw decodeException
         try {
             Hex.fromStringCondensed(mnemonicOrHex)
         } catch (_: Exception) {
