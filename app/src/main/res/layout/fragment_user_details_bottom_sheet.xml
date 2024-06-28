@@ -91,7 +91,6 @@
                 android:textAlignment="center"
                 android:paddingVertical="12dp"
                 android:inputType="text"
-                android:maxLength="@integer/max_user_nickname_length_chars"
                 android:maxLines="1"
                 android:imeOptions="actionDone"
                 android:textColorHint="?android:textColorSecondary"
