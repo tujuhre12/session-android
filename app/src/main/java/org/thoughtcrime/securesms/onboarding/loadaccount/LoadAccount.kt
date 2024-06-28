@@ -30,7 +30,6 @@ import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.components.MaybeScanQrCode
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
-import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.h4
 
 private val TITLES = listOf(R.string.sessionRecoveryPassword, R.string.qrScan)
@@ -83,7 +82,6 @@ private fun RecoveryPassword(state: State, onChange: (String) -> Unit = {}, onCo
         ) {
             Row {
                 Text(
-                    modifier = Modifier.weight(1f),
                     text = stringResource(R.string.sessionRecoveryPassword),
                     style = h4
                 )
