@@ -7,7 +7,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.LocalDimensions
-import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.contentDescription
 
@@ -21,17 +20,5 @@ fun ContinuePrimaryOutlineButton(modifier: Modifier, onContinue: () -> Unit) {
             .padding(horizontal = LocalDimensions.current.largeMargin)
             .padding(bottom = LocalDimensions.current.xxsMargin),
         onClick = onContinue,
-    )
-}
-
-@Composable
-fun OnboardingButton(text: String, modifier: Modifier, onClick: () -> Unit) {
-    OutlineButton(
-        text,
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = LocalDimensions.current.largeMargin)
-            .padding(bottom = LocalDimensions.current.xxsMargin),
-        onClick = onClick,
     )
 }
