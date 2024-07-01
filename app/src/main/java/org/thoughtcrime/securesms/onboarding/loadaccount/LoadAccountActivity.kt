@@ -26,7 +26,7 @@ class LoadAccountActivity : BaseActionBarActivity() {
     @Inject
     internal lateinit var loadingManager: LoadingManager
 
-    private val viewModel: LinkDeviceViewModel by viewModels()
+    private val viewModel: LoadAccountViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

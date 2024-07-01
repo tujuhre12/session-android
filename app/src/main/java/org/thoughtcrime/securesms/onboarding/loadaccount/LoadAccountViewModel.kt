@@ -28,7 +28,7 @@ internal data class State(
 )
 
 @HiltViewModel
-internal class LinkDeviceViewModel @Inject constructor(
+internal class LoadAccountViewModel @Inject constructor(
     private val application: Application
 ): AndroidViewModel(application) {
     private val state = MutableStateFlow(State())
