@@ -1140,4 +1140,7 @@
     <string name="AccessibilityId_copy_button">Copy button</string>
     <string name="AccessibilityId_view_qr_code">View QR code</string>
     <string name="AccessibilityId_qr_code">QR code</string>
+    <string name="warning">Warning</string>
+    <string name="you_cannot_go_back_further_in_order_to_stop_loading_your_account_session_needs_to_quit">You cannot go back further. In order to stop loading your account, Session needs to quit.</string>
+    <string name="quit">Quit</string>
 </resources>

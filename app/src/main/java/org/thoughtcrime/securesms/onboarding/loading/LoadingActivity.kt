@@ -28,11 +28,6 @@ class LoadingActivity: BaseActionBarActivity() {
 
     private val viewModel: LoadingViewModel by viewModels()
 
-    @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
-        return
-    }
-
     private fun register(loadFailed: Boolean) {
         prefs.setLastConfigurationSyncTime(System.currentTimeMillis())
 
@@ -47,14 +42,14 @@ class LoadingActivity: BaseActionBarActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        setUpActionBarSessionLogo()
+
         ApplicationContext.getInstance(this).newAccount = false
 
         setComposeContent {
             val state by viewModel.states.collectAsState()
             LoadingScreen(state)
         }
-
-        setUpActionBarSessionLogo(true)
 
         lifecycleScope.launch {
             viewModel.events.collect {

@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.onboarding.loading
+package org.thoughtcrime.securesms.onboarding.manager
 
 import android.content.Context
 import kotlinx.coroutines.CoroutineScope

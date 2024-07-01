@@ -18,6 +18,7 @@ import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -25,14 +26,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
@@ -44,11 +40,8 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.startWith
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivitySettingsBinding
@@ -420,7 +413,9 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
 
             Cell {
                 Column {
-                    LargeItemButtonWithDrawable(R.string.activity_path_title, if (hasPaths) R.drawable.ic_status else R.drawable.ic_path_yellow) { show<PathActivity>() }
+                    Crossfade(if (hasPaths) R.drawable.ic_status else R.drawable.ic_path_yellow, label = "path") {
+                        LargeItemButtonWithDrawable(R.string.activity_path_title, it) { show<PathActivity>() }
+                    }
                     Divider()
                     LargeItemButton(R.string.activity_settings_privacy_button_title, R.drawable.ic_privacy_icon) { show<PrivacySettingsActivity>() }
                     Divider()

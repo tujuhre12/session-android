@@ -13,10 +13,9 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.home.startHomeActivity
-import org.thoughtcrime.securesms.onboarding.messagenotifications.MessageNotificationsActivity
+import org.thoughtcrime.securesms.onboarding.messagenotifications.startMessageNotificationsActivity
 import org.thoughtcrime.securesms.ui.setComposeContent
 import org.thoughtcrime.securesms.util.setUpActionBarSessionLogo
-import org.thoughtcrime.securesms.util.start
 import javax.inject.Inject
 
 private const val EXTRA_LOAD_FAILED = "extra_load_failed"
@@ -41,11 +40,12 @@ class PickDisplayNameActivity : BaseActionBarActivity() {
 
         setComposeContent { DisplayNameScreen(viewModel) }
 
-        if (!loadFailed) prefs.setHasViewedSeed(false)
-
         lifecycleScope.launch {
             viewModel.events.collect {
-                if (loadFailed) startHomeActivity() else start<MessageNotificationsActivity>()
+                when (it) {
+                    is Event.CreateAccount -> startMessageNotificationsActivity(it.profileName)
+                    Event.LoadAccountComplete -> startHomeActivity()
+                }
             }
         }
     }

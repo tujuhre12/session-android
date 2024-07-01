@@ -18,6 +18,7 @@ package org.thoughtcrime.securesms;
 import static nl.komponents.kovenant.android.KovenantAndroid.startKovenant;
 import static nl.komponents.kovenant.android.KovenantAndroid.stopKovenant;
 
+import android.annotation.SuppressLint;
 import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
@@ -137,7 +138,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     public MessageNotifier messageNotifier = null;
     public Poller poller = null;
     public Broadcaster broadcaster = null;
-    private Job firebaseInstanceIdJob;
     private WindowDebouncer conversationListDebouncer;
     private HandlerThread conversationListHandlerThread;
     private Handler conversationListHandler;
@@ -504,17 +504,9 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         });
     }
 
-    public void clearAllData(boolean isMigratingToV2KeyPair) {
-        if (firebaseInstanceIdJob != null && firebaseInstanceIdJob.isActive()) {
-            firebaseInstanceIdJob.cancel(null);
-        }
-        String displayName = TextSecurePreferences.getProfileName(this);
-        boolean isUsingFCM = TextSecurePreferences.isPushEnabled(this);
+    @SuppressLint("ApplySharedPref")
+    public void clearAllData() {
         TextSecurePreferences.clearAll(this);
-        if (isMigratingToV2KeyPair) {
-            TextSecurePreferences.setPushEnabled(this, isUsingFCM);
-            TextSecurePreferences.setProfileName(this, displayName);
-        }
         getSharedPreferences(PREFERENCES_NAME, 0).edit().clear().commit();
         if (!deleteDatabase(SQLCipherOpenHelper.DATABASE_NAME)) {
             Log.d("Loki", "Failed to delete database.");

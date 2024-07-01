@@ -16,7 +16,9 @@ import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import network.loki.messenger.R
@@ -25,7 +27,9 @@ import org.thoughtcrime.securesms.ui.color.LocalColors
 class DialogButtonModel(
     val text: GetString,
     val contentDescription: GetString = text,
-    val onClick: () -> Unit
+    val color: Color = Color.Unspecified,
+    val dismissOnClick: Boolean = true,
+    val onClick: () -> Unit = {},
 )
 
 @Composable
@@ -33,6 +37,7 @@ fun AlertDialog(
     onDismissRequest: () -> Unit,
     title: String? = null,
     text: String? = null,
+    content: @Composable () -> Unit = {},
     buttons: List<DialogButtonModel>? = null
 ) {
     androidx.compose.material.AlertDialog(
@@ -76,6 +81,7 @@ fun AlertDialog(
                                 modifier = Modifier.padding(bottom = LocalDimensions.current.xxsItemSpacing)
                             )
                         }
+                        content()
                     }
                     buttons?.takeIf { it.isNotEmpty() }?.let {
                         Row(Modifier.height(IntrinsicSize.Min)) {
@@ -85,10 +91,11 @@ fun AlertDialog(
                                     modifier = Modifier
                                         .fillMaxHeight()
                                         .contentDescription(it.contentDescription())
-                                        .weight(1f)
+                                        .weight(1f),
+                                    color = it.color
                                 ) {
                                     it.onClick()
-                                    onDismissRequest()
+                                    if (it.dismissOnClick) onDismissRequest()
                                 }
                             }
                         }
@@ -100,7 +107,7 @@ fun AlertDialog(
 }
 
 @Composable
-fun DialogButton(text: String, modifier: Modifier, onClick: () -> Unit) {
+fun DialogButton(text: String, modifier: Modifier, color: Color = Color.Unspecified, onClick: () -> Unit) {
     TextButton(
         modifier = modifier,
         shape = RectangleShape,
@@ -108,7 +115,7 @@ fun DialogButton(text: String, modifier: Modifier, onClick: () -> Unit) {
     ) {
         Text(
             text,
-            color = LocalColors.current.text,
+            color = color.takeOrElse { LocalColors.current.text },
             style = largeBold,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(

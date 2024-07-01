@@ -82,13 +82,13 @@ internal fun LandingScreen(
             text = stringResource(R.string.urlOpenBrowser),
             buttons = listOf(
                 DialogButtonModel(
-                    GetString(R.string.activity_landing_terms_of_service),
-                    GetString(R.string.AccessibilityId_terms_of_service_button),
+                    text = GetString(R.string.activity_landing_terms_of_service),
+                    contentDescription = GetString(R.string.AccessibilityId_terms_of_service_button),
                     onClick = openTerms
                 ),
                 DialogButtonModel(
-                    GetString(R.string.activity_landing_privacy_policy),
-                    GetString(R.string.AccessibilityId_privacy_policy_button),
+                    text = GetString(R.string.activity_landing_privacy_policy),
+                    contentDescription = GetString(R.string.AccessibilityId_privacy_policy_button),
                     onClick = openPrivacyPolicy
                 )
             )

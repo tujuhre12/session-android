@@ -49,6 +49,7 @@ internal class PickDisplayNameViewModel(
                 _states.update { it.copy(isTextErrorColor = false, error = null) }
 
                 prefs.setProfileName(displayName)
+                configFactory.user?.setName(displayName)
 
                 if (!loadFailed) {
                     // This is here to resolve a case where the app restarts before a user completes onboarding
@@ -70,7 +71,13 @@ internal class PickDisplayNameViewModel(
                     prefs.setRestorationTime(0)
                 }
 
-                viewModelScope.launch { _events.emit(Event.DONE) }
+                viewModelScope.launch {
+                    if (loadFailed) {
+                        _events.emit(Event.LoadAccountComplete)
+                    } else {
+                        _events.emit(Event.CreateAccount(displayName))
+                    }
+                }
             }
         }
     }
@@ -116,5 +123,6 @@ fun pickNewNameState() = State(
 )
 
 sealed interface Event {
-    object DONE: Event
+    class CreateAccount(val profileName: String): Event
+    object LoadAccountComplete: Event
 }

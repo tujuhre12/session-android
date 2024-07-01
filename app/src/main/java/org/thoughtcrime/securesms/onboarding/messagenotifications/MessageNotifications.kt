@@ -31,7 +31,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import network.loki.messenger.R
+import org.thoughtcrime.securesms.onboarding.messagenotifications.MessageNotificationsViewModel.UiState
 import org.thoughtcrime.securesms.onboarding.ui.ContinuePrimaryOutlineButton
+import org.thoughtcrime.securesms.ui.AlertDialog
+import org.thoughtcrime.securesms.ui.DialogButtonModel
+import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
@@ -39,6 +43,7 @@ import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.color.Colors
 import org.thoughtcrime.securesms.ui.color.LocalColors
 import org.thoughtcrime.securesms.ui.color.transparentButtonColors
+import org.thoughtcrime.securesms.ui.components.CircularProgressIndicator
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.h4
 import org.thoughtcrime.securesms.ui.h8
@@ -47,10 +52,39 @@ import org.thoughtcrime.securesms.ui.small
 
 @Composable
 internal fun MessageNotificationsScreen(
-    state: MessageNotificationsState = MessageNotificationsState(),
+    state: UiState = UiState(),
     setEnabled: (Boolean) -> Unit = {},
-    onContinue: () -> Unit = {}
+    onContinue: () -> Unit = {},
+    quit: () -> Unit = {},
+    dismissDialog: () -> Unit = {}
 ) {
+    if (state.clearData) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(LocalColors.current.primary)
+        }
+
+        return
+    }
+
+    if (state.showDialog) AlertDialog(
+        onDismissRequest = dismissDialog,
+        title = stringResource(R.string.warning),
+        text = stringResource(R.string.you_cannot_go_back_further_in_order_to_stop_loading_your_account_session_needs_to_quit),
+        buttons = listOf(
+            DialogButtonModel(
+                GetString(stringResource(R.string.quit)),
+                color = LocalColors.current.danger,
+                onClick = quit
+            ),
+            DialogButtonModel(
+                GetString(stringResource(R.string.cancel))
+            )
+        )
+    )
+
     Column {
         Spacer(Modifier.weight(1f))
 
@@ -105,9 +139,15 @@ private fun NotificationRadioButton(
         Box(
             modifier = Modifier
                 .weight(1f)
-                .border(LocalDimensions.current.borderStroke, LocalColors.current.borders, RoundedCornerShape(8.dp)),
+                .border(
+                    LocalDimensions.current.borderStroke,
+                    LocalColors.current.borders,
+                    RoundedCornerShape(8.dp)
+                ),
         ) {
-            Column(modifier = Modifier.padding(horizontal = 15.dp).padding(top = 10.dp, bottom = 11.dp)) {
+            Column(modifier = Modifier
+                .padding(horizontal = 15.dp)
+                .padding(top = 10.dp, bottom = 11.dp)) {
                 Text(stringResource(title), style = h8)
 
                 Text(stringResource(explanation), style = small, modifier = Modifier.padding(top = 7.dp))
@@ -139,7 +179,9 @@ private fun RadioButtonIndicator(
     Box(modifier = modifier) {
         AnimatedVisibility(
             selected,
-            modifier = Modifier.padding(2.5.dp).clip(CircleShape),
+            modifier = Modifier
+                .padding(2.5.dp)
+                .clip(CircleShape),
             enter = scaleIn(),
             exit = scaleOut()
         ) {

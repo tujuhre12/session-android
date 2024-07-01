@@ -26,7 +26,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.ButtonColors
 import androidx.compose.material.Card
-import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Icon
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
@@ -69,6 +68,7 @@ import org.thoughtcrime.securesms.ui.color.LocalColors
 import org.thoughtcrime.securesms.ui.color.divider
 import org.thoughtcrime.securesms.ui.color.radioButtonColors
 import org.thoughtcrime.securesms.ui.color.transparentButtonColors
+import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import kotlin.math.min
 import kotlin.math.roundToInt
 
@@ -453,11 +453,7 @@ fun LaunchedEffectAsync(block: suspend CoroutineScope.() -> Unit) {
 @Composable
 fun LoadingArcOr(loading: Boolean, content: @Composable () -> Unit) {
     AnimatedVisibility(loading) {
-        CircularProgressIndicator(
-            modifier = Modifier.size(20.dp),
-            color = LocalContentColor.current,
-            strokeWidth = 2.dp
-        )
+        SmallCircularProgressIndicator(color = LocalContentColor.current)
     }
     AnimatedVisibility(!loading) {
         content()

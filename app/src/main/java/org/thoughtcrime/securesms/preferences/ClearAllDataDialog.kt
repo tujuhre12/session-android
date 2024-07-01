@@ -110,7 +110,7 @@ class ClearAllDataDialog : DialogFragment() {
                 } catch (e: Exception) {
                     Log.e("Loki", "Failed to force sync", e)
                 }
-                ApplicationContext.getInstance(context).clearAllData(false)
+                ApplicationContext.getInstance(context).clearAllData()
                 withContext(Dispatchers.Main) {
                     dismiss()
                 }
@@ -133,7 +133,7 @@ class ClearAllDataDialog : DialogFragment() {
                     }
                 } else if (result.values.all { it }) {
                     // don't force sync because all the messages are deleted?
-                    ApplicationContext.getInstance(context).clearAllData(false)
+                    ApplicationContext.getInstance(context).clearAllData()
                     withContext(Dispatchers.Main) {
                         dismiss()
                     }
