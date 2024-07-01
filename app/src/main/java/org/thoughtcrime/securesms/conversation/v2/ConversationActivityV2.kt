@@ -333,11 +333,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                     onDeselect(message, position, it)
                 }
             },
-            onAttachmentNeedsDownload = { attachmentId, mmsId ->
-                lifecycleScope.launch(Dispatchers.IO) {
-                    JobQueue.shared.add(AttachmentDownloadJob(attachmentId, mmsId))
-                }
-            },
+            onAttachmentNeedsDownload = viewModel::onAttachmentDownloadRequest,
             glide = glide,
             lifecycleCoroutineScope = lifecycleScope
         )
