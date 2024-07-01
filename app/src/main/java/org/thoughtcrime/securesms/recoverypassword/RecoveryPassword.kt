@@ -45,7 +45,7 @@ import org.thoughtcrime.securesms.ui.h8
 internal fun RecoveryPasswordScreen(
     mnemonic: String,
     seed: String? = null,
-    copySeed:() -> Unit = {},
+    copyMnemonic:() -> Unit = {},
     onHide:() -> Unit = {}
 ) {
     Column(
@@ -55,7 +55,7 @@ internal fun RecoveryPasswordScreen(
             .verticalScroll(rememberScrollState())
             .padding(bottom = LocalDimensions.current.xsMargin)
     ) {
-        RecoveryPasswordCell(mnemonic, seed, copySeed)
+        RecoveryPasswordCell(mnemonic, seed, copyMnemonic)
         HideRecoveryPasswordCell(onHide)
     }
 }
@@ -64,7 +64,7 @@ internal fun RecoveryPasswordScreen(
 private fun RecoveryPasswordCell(
     mnemonic: String,
     seed: String?,
-    copySeed:() -> Unit = {}
+    copyMnemonic:() -> Unit = {}
 ) {
     var showQr by remember {
         mutableStateOf(false)
@@ -113,7 +113,7 @@ private fun RecoveryPasswordCell(
                 ) {
                     SlimOutlineCopyButton(
                         Modifier.weight(1f),
-                        onClick = copySeed
+                        onClick = copyMnemonic
                     )
                     SlimOutlineButton(
                         stringResource(R.string.qrView),

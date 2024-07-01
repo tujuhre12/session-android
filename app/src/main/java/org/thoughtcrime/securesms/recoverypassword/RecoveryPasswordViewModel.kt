@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
@@ -31,17 +32,16 @@ class RecoveryPasswordViewModel @Inject constructor(
     val seed = MutableStateFlow<String?>(null)
     val mnemonic = seed.filterNotNull()
         .map { MnemonicCodec { MnemonicUtilities.loadFileContents(application, it) }.encode(it, MnemonicCodec.Language.Configuration.english) }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, "")
 
     fun permanentlyHidePassword() {
         prefs.setHidePassword(true)
     }
 
-    fun copySeed(context: Context) {
-        val seed = seed.value ?: return
-        TextSecurePreferences.setHasViewedSeed(context, true)
-        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        val clip = ClipData.newPlainText("Seed", seed)
-        clipboard.setPrimaryClip(clip)
+    fun copyMnemonic() {
+        prefs.setHasViewedSeed(true)
+        ClipData.newPlainText("Seed", mnemonic.value)
+            .let(application.clipboard::setPrimaryClip)
     }
 
     init {
@@ -51,3 +51,5 @@ class RecoveryPasswordViewModel @Inject constructor(
         }
     }
 }
+
+private val Context.clipboard get() = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager

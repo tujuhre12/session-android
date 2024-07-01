@@ -24,7 +24,7 @@ class RecoveryPasswordActivity : BaseActionBarActivity() {
             RecoveryPasswordScreen(
                 mnemonic = mnemonic,
                 seed = seed,
-                copySeed = { viewModel.copySeed(this) },
+                copyMnemonic = viewModel::copyMnemonic,
                 onHide = ::onHide
             )
         }
