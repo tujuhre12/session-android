@@ -3,13 +3,16 @@ package org.thoughtcrime.securesms.onboarding.pickname
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.SSKEnvironment.ProfileManagerProtocol.Companion.NAME_PADDED_LENGTH
 import org.session.libsession.utilities.TextSecurePreferences
@@ -39,14 +42,13 @@ internal class PickDisplayNameViewModel(
                 // next screen.
                 _states.update { it.copy(isTextErrorColor = false, error = null) }
 
-                when {
-                    loadFailed -> {
+                viewModelScope.launch(Dispatchers.IO) {
+                    if (loadFailed) {
                         prefs.setProfileName(displayName)
                         configFactory.user?.setName(displayName)
 
-                        _events.tryEmit(Event.LoadAccountComplete)
-                    }
-                    else -> _events.tryEmit(Event.CreateAccount(displayName))
+                        _events.emit(Event.LoadAccountComplete)
+                    } else _events.emit(Event.CreateAccount(displayName))
                 }
             }
         }

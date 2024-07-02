@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.ApplicationContext
@@ -40,7 +41,7 @@ class PickDisplayNameActivity : BaseActionBarActivity() {
 
         setComposeContent { DisplayNameScreen(viewModel) }
 
-        lifecycleScope.launch {
+        lifecycleScope.launch(Dispatchers.Main) {
             viewModel.events.collect {
                 when (it) {
                     is Event.CreateAccount -> startMessageNotificationsActivity(it.profileName)
