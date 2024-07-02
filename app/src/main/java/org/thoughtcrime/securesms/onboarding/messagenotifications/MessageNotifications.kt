@@ -1,31 +1,19 @@
 package org.thoughtcrime.securesms.onboarding.messagenotifications
 
 import androidx.annotation.StringRes
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Text
-import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -42,8 +30,8 @@ import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.color.Colors
 import org.thoughtcrime.securesms.ui.color.LocalColors
-import org.thoughtcrime.securesms.ui.color.transparentButtonColors
 import org.thoughtcrime.securesms.ui.components.CircularProgressIndicator
+import org.thoughtcrime.securesms.ui.components.RadioButton
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.h4
 import org.thoughtcrime.securesms.ui.h8
@@ -100,7 +88,7 @@ internal fun MessageNotificationsScreen(
             R.string.activity_pn_mode_fast_mode_explanation,
             modifier = Modifier.contentDescription(R.string.AccessibilityId_fast_mode_notifications_button),
             tag = R.string.activity_pn_mode_recommended_option_tag,
-            selected = state.pushEnabled,
+            checked = state.pushEnabled,
             onClick = { setEnabled(true) }
         )
 
@@ -110,7 +98,7 @@ internal fun MessageNotificationsScreen(
             R.string.activity_pn_mode_slow_mode,
             R.string.activity_pn_mode_slow_mode_explanation,
             modifier = Modifier.contentDescription(R.string.AccessibilityId_slow_mode_notifications_button),
-            selected = state.pushDisabled,
+            checked = state.pushDisabled,
             onClick = { setEnabled(false) }
         )
 
@@ -126,14 +114,13 @@ private fun NotificationRadioButton(
     @StringRes explanation: Int,
     modifier: Modifier = Modifier,
     @StringRes tag: Int? = null,
-    selected: Boolean = false,
+    checked: Boolean = false,
     onClick: () -> Unit = {}
 ) {
-    TextButton(
-        modifier = modifier.fillMaxWidth(),
-        colors = transparentButtonColors(),
+    RadioButton(
         onClick = onClick,
-        shape = RectangleShape,
+        modifier = modifier,
+        checked = checked,
         contentPadding = PaddingValues(horizontal = LocalDimensions.current.margin, vertical = 7.dp)
     ) {
         Box(
@@ -161,48 +148,6 @@ private fun NotificationRadioButton(
                 }
             }
         }
-        Spacer(modifier = Modifier.width(20.dp))
-        RadioButtonIndicator(
-            selected = selected,
-            modifier = Modifier
-                .size(22.dp)
-                .align(Alignment.CenterVertically)
-        )
-    }
-}
-
-@Composable
-private fun RadioButtonIndicator(
-    selected: Boolean,
-    modifier: Modifier
-) {
-    Box(modifier = modifier) {
-        AnimatedVisibility(
-            selected,
-            modifier = Modifier
-                .padding(2.5.dp)
-                .clip(CircleShape),
-            enter = scaleIn(),
-            exit = scaleOut()
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        color = LocalColors.current.primary,
-                        shape = CircleShape
-                    )
-            )
-        }
-        Box(
-            modifier = Modifier
-                .aspectRatio(1f)
-                .border(
-                    width = LocalDimensions.current.borderStroke,
-                    color = LocalColors.current.text,
-                    shape = CircleShape
-                )
-        ) {}
     }
 }
 
