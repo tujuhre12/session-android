@@ -8,21 +8,48 @@ import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.ApplicationContext
+import org.thoughtcrime.securesms.notifications.PushRegistry
+import org.thoughtcrime.securesms.onboarding.manager.CreateAccountManager
 
 internal class MessageNotificationsViewModel(
     private val state: State,
-    private val application: Application
+    private val application: Application,
+    private val prefs: TextSecurePreferences,
+    private val pushRegistry: PushRegistry,
+    private val createAccountManager: CreateAccountManager
 ): AndroidViewModel(application) {
     private val _uiStates = MutableStateFlow(UiState())
     val uiStates = _uiStates.asStateFlow()
 
+    private val _events = MutableSharedFlow<Event>()
+    val events = _events.asSharedFlow()
+
     fun setEnabled(enabled: Boolean) {
         _uiStates.update { UiState(pushEnabled = enabled) }
+    }
+
+    fun onContinue() {
+        viewModelScope.launch(Dispatchers.IO) {
+            if (state is State.CreateAccount) createAccountManager.createAccount(state.displayName)
+
+            prefs.setPushEnabled(uiStates.value.pushEnabled)
+            pushRegistry.refresh(true)
+
+            _events.emit(
+                when (state) {
+                    is State.CreateAccount -> Event.OnboardingComplete
+                    else -> Event.Loading
+                }
+            )
+        }
     }
 
     /**
@@ -70,14 +97,24 @@ internal class MessageNotificationsViewModel(
     @Suppress("UNCHECKED_CAST")
     class Factory @AssistedInject constructor(
         @Assisted private val profileName: String?,
-        private val application: Application
+        private val application: Application,
+        private val prefs: TextSecurePreferences,
+        private val pushRegistry: PushRegistry,
+        private val createAccountManager: CreateAccountManager,
     ) : ViewModelProvider.Factory {
 
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             return MessageNotificationsViewModel(
                 state = profileName?.let(State::CreateAccount) ?: State.LoadAccount,
-                application = application
+                application = application,
+                prefs = prefs,
+                pushRegistry = pushRegistry,
+                createAccountManager = createAccountManager
             ) as T
         }
     }
+}
+
+enum class Event {
+    OnboardingComplete, Loading
 }

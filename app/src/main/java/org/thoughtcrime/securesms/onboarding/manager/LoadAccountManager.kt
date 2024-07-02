@@ -16,7 +16,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class LoadingManager @Inject constructor(
+class LoadAccountManager @Inject constructor(
     @dagger.hilt.android.qualifiers.ApplicationContext private val context: Context,
     private val configFactory: ConfigFactory,
     private val prefs: TextSecurePreferences

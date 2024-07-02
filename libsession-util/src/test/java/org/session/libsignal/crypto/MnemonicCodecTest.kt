@@ -28,7 +28,7 @@ class MnemonicCodecTest {
 
     @Test
     fun `decode empty`() {
-        assertThrows(IllegalArgumentException::class.java) {
+        assertThrows(InputTooShort::class.java) {
             codec.decode("")
         }
     }

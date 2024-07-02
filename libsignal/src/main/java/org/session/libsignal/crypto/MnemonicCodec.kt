@@ -116,7 +116,6 @@ class MnemonicCodec(private val loadFileContents: (String) -> String) {
     }
 
     fun sanitizeAndDecodeAsByteArray(mnemonic: String): ByteArray = sanitizeRecoveryPhrase(mnemonic).let(::decode).let(Hex::fromStringCondensed)
-    fun decodeAsByteArray(mnemonic: String): ByteArray = decode(mnemonic = mnemonic).let(Hex::fromStringCondensed)
 
     private fun sanitizeRecoveryPhrase(rawMnemonic: String): String = rawMnemonic
         .replace("[^\\w]+".toRegex(), " ") // replace any sequence of non-word characters with a space
@@ -125,27 +124,30 @@ class MnemonicCodec(private val loadFileContents: (String) -> String) {
         .joinToString(" ") // reassemble
 
     fun decodeMnemonicOrHexAsByteArray(mnemonicOrHex: String): ByteArray = try {
+        // Try to use decode mnemonicOrHex as a mnemonic
         decode(mnemonic = mnemonicOrHex).let(Hex::fromStringCondensed)
     } catch (decodeException: Exception) {
-        if (mnemonicOrHex.isHex()) throw decodeException
+        // It's not a valid mnemonic, if it's pure-hexadecimal then we'll interpret it as a
+        // hexadecimal-byte encoded mnemonic.
+        if (!mnemonicOrHex.isHex()) throw decodeException
         try {
             Hex.fromStringCondensed(mnemonicOrHex)
         } catch (_: Exception) {
             throw decodeException
         }
     }
+}
 
-    private fun swap(x: String): String {
-        val p1 = x.substring(6 until 8)
-        val p2 = x.substring(4 until 6)
-        val p3 = x.substring(2 until 4)
-        val p4 = x.substring(0 until 2)
-        return p1 + p2 + p3 + p4
-    }
+private fun swap(x: String): String {
+    val p1 = x.substring(6 until 8)
+    val p2 = x.substring(4 until 6)
+    val p3 = x.substring(2 until 4)
+    val p4 = x.substring(0 until 2)
+    return p1 + p2 + p3 + p4
+}
 
-    private fun determineChecksumIndex(x: List<String>, prefixLength: Int): Int {
-        val bytes = x.joinToString("") { it.substring(0 until prefixLength) }.toByteArray()
-        val checksum = CRC32().apply { update(bytes) }.value
-        return (checksum % x.size.toLong()).toInt()
-    }
+private fun determineChecksumIndex(x: List<String>, prefixLength: Int): Int {
+    val bytes = x.joinToString("") { it.substring(0 until prefixLength) }.toByteArray()
+    val checksum = CRC32().apply { update(bytes) }.value
+    return (checksum % x.size.toLong()).toInt()
 }

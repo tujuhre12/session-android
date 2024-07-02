@@ -53,7 +53,7 @@ class PickDisplayNameActivity : BaseActionBarActivity() {
     @Composable
     private fun DisplayNameScreen(viewModel: PickDisplayNameViewModel) {
         val state = viewModel.states.collectAsState()
-        DisplayName(state.value, viewModel::onChange) { viewModel.onContinue(this) }
+        DisplayName(state.value, viewModel::onChange) { viewModel.onContinue() }
     }
 }
 

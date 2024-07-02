@@ -10,7 +10,7 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.BaseActionBarActivity
-import org.thoughtcrime.securesms.onboarding.manager.LoadingManager
+import org.thoughtcrime.securesms.onboarding.manager.LoadAccountManager
 import org.thoughtcrime.securesms.onboarding.messagenotifications.MessageNotificationsActivity
 import org.thoughtcrime.securesms.ui.setComposeContent
 import org.thoughtcrime.securesms.util.start
@@ -22,7 +22,7 @@ class LoadAccountActivity : BaseActionBarActivity() {
     @Inject
     internal lateinit var prefs: TextSecurePreferences
     @Inject
-    internal lateinit var loadingManager: LoadingManager
+    internal lateinit var loadAccountManager: LoadAccountManager
 
     private val viewModel: LoadAccountViewModel by viewModels()
 
@@ -35,7 +35,7 @@ class LoadAccountActivity : BaseActionBarActivity() {
 
         lifecycleScope.launch {
             viewModel.events.collect {
-                loadingManager.load(it.mnemonic)
+                loadAccountManager.load(it.mnemonic)
                 start<MessageNotificationsActivity>()
             }
         }

@@ -6,14 +6,14 @@ import androidx.activity.viewModels
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import org.session.libsession.utilities.TextSecurePreferences
-import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.home.startHomeActivity
-import org.thoughtcrime.securesms.notifications.PushRegistry
 import org.thoughtcrime.securesms.onboarding.loading.LoadingActivity
-import org.thoughtcrime.securesms.onboarding.manager.LoadingManager
+import org.thoughtcrime.securesms.onboarding.manager.LoadAccountManager
 import org.thoughtcrime.securesms.onboarding.messagenotifications.MessageNotificationsActivity.Companion.EXTRA_PROFILE_NAME
 import org.thoughtcrime.securesms.ui.setComposeContent
 import org.thoughtcrime.securesms.util.setUpActionBarSessionLogo
@@ -30,9 +30,8 @@ class MessageNotificationsActivity : BaseActionBarActivity() {
     @Inject
     internal lateinit var viewModelFactory: MessageNotificationsViewModel.AssistedFactory
 
-    @Inject lateinit var pushRegistry: PushRegistry
     @Inject lateinit var prefs: TextSecurePreferences
-    @Inject lateinit var loadingManager: LoadingManager
+    @Inject lateinit var loadAccountManager: LoadAccountManager
 
     val profileName by lazy { intent.getStringExtra(EXTRA_PROFILE_NAME) }
 
@@ -46,6 +45,15 @@ class MessageNotificationsActivity : BaseActionBarActivity() {
         prefs.setHasSeenWelcomeScreen(true)
 
         setComposeContent { MessageNotificationsScreen() }
+
+        lifecycleScope.launch {
+            viewModel.events.collect {
+                when (it) {
+                    Event.Loading -> start<LoadingActivity>()
+                    Event.OnboardingComplete -> startHomeActivity()
+                }
+            }
+        }
     }
 
     @Deprecated("Deprecated in Java")
@@ -62,21 +70,10 @@ class MessageNotificationsActivity : BaseActionBarActivity() {
         MessageNotificationsScreen(
             uiState,
             setEnabled = viewModel::setEnabled,
-            onContinue = ::register,
+            onContinue = viewModel::onContinue,
             quit = viewModel::quit,
             dismissDialog = viewModel::dismissDialog
         )
-    }
-
-    private fun register() {
-        prefs.setPushEnabled(viewModel.uiStates.value.pushEnabled)
-        ApplicationContext.getInstance(this).startPollingIfNeeded()
-        pushRegistry.refresh(true)
-
-        when {
-            prefs.getHasViewedSeed() && !prefs.getConfigurationMessageSynced() -> start<LoadingActivity>()
-            else -> startHomeActivity()
-        }
     }
 }
 
