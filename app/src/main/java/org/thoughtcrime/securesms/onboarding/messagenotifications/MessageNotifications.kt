@@ -19,6 +19,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import network.loki.messenger.R
+import org.thoughtcrime.securesms.onboarding.OnboardingBackPressAlertDialog
 import org.thoughtcrime.securesms.onboarding.messagenotifications.MessageNotificationsViewModel.UiState
 import org.thoughtcrime.securesms.onboarding.ui.ContinuePrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.AlertDialog
@@ -57,21 +58,7 @@ internal fun MessageNotificationsScreen(
         return
     }
 
-    if (state.showDialog) AlertDialog(
-        onDismissRequest = dismissDialog,
-        title = stringResource(R.string.warning),
-        text = stringResource(R.string.you_cannot_go_back_further_in_order_to_stop_loading_your_account_session_needs_to_quit),
-        buttons = listOf(
-            DialogButtonModel(
-                GetString(stringResource(R.string.quit)),
-                color = LocalColors.current.danger,
-                onClick = quit
-            ),
-            DialogButtonModel(
-                GetString(stringResource(R.string.cancel))
-            )
-        )
-    )
+    if (state.showDialog) OnboardingBackPressAlertDialog(dismissDialog, quit)
 
     Column {
         Spacer(Modifier.weight(1f))

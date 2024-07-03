@@ -16,13 +16,17 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.SSKEnvironment.ProfileManagerProtocol.Companion.NAME_PADDED_LENGTH
 import org.session.libsession.utilities.TextSecurePreferences
+import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.onboarding.messagenotifications.MessageNotificationsViewModel
 
 internal class PickDisplayNameViewModel(
     private val loadFailed: Boolean,
     private val prefs: TextSecurePreferences,
     private val configFactory: ConfigFactory
 ): ViewModel() {
+    private val isCreateAccount = !loadFailed
+
     private val _states = MutableStateFlow(if (loadFailed) pickNewNameState() else State())
     val states = _states.asStateFlow()
 
@@ -63,6 +67,17 @@ internal class PickDisplayNameViewModel(
         }
     }
 
+    /**
+     * @return [true] if the back press was handled.
+     */
+    fun onBackPressed(): Boolean = isCreateAccount.also {
+        if (it) _states.update { it.copy(showDialog = true) }
+    }
+
+    fun dismissDialog() {
+        _states.update { it.copy(showDialog = false) }
+    }
+
     @dagger.assisted.AssistedFactory
     interface AssistedFactory {
         fun create(loadFailed: Boolean): Factory
@@ -84,6 +99,7 @@ internal class PickDisplayNameViewModel(
 data class State(
     @StringRes val title: Int = R.string.displayNamePick,
     @StringRes val description: Int = R.string.displayNameDescription,
+    val showDialog: Boolean = false,
     val isTextErrorColor: Boolean = false,
     @StringRes val error: Int? = null,
     val displayName: String = ""

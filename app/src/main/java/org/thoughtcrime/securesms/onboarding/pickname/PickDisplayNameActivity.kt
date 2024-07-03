@@ -53,8 +53,19 @@ class PickDisplayNameActivity : BaseActionBarActivity() {
 
     @Composable
     private fun DisplayNameScreen(viewModel: PickDisplayNameViewModel) {
-        val state = viewModel.states.collectAsState()
-        DisplayName(state.value, viewModel::onChange) { viewModel.onContinue() }
+        PickDisplayName(
+            viewModel.states.collectAsState().value,
+            viewModel::onChange,
+            viewModel::onContinue,
+            viewModel::dismissDialog
+        ) { viewModel.dismissDialog(); finish() }
+    }
+
+    override fun onBackPressed() {
+        if (viewModel.onBackPressed()) return
+
+        @Suppress("DEPRECATION")
+        super.onBackPressed()
     }
 }
 

@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import network.loki.messenger.R
+import org.thoughtcrime.securesms.onboarding.OnboardingBackPressAlertDialog
 import org.thoughtcrime.securesms.onboarding.ui.ContinuePrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
@@ -24,14 +25,23 @@ import org.thoughtcrime.securesms.ui.h4
 
 @Preview
 @Composable
-private fun PreviewDisplayName() {
+private fun PreviewPickDisplayName() {
     PreviewTheme {
-        DisplayName(State())
+        PickDisplayName(State())
     }
 }
 
 @Composable
-internal fun DisplayName(state: State, onChange: (String) -> Unit = {}, onContinue: () -> Unit = {}) {
+internal fun PickDisplayName(
+    state: State,
+    onChange: (String) -> Unit = {},
+    onContinue: () -> Unit = {},
+    dismissDialog: () -> Unit = {},
+    quit: () -> Unit = {}
+) {
+
+    if (state.showDialog) OnboardingBackPressAlertDialog(dismissDialog, quit)
+
     Column(
         modifier = Modifier
             .fillMaxSize()
