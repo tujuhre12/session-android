@@ -291,7 +291,10 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                     if (result.query.isEmpty()) {
                         class NamedValue<T>(val name: String?, val value: T)
 
-                        val unknown = resources.getString(R.string.unknown)
+                        // Unknown is temporarily to be grouped together with numbers title.
+                        // https://optf.atlassian.net/browse/SES-2287
+                        val numbersTitle = "#"
+                        val unknownTitle = numbersTitle
 
                         listOf(
                             GlobalSearchAdapter.Model.Header(R.string.contacts),
@@ -305,12 +308,12 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                                 .let { name -> NamedValue(name?.uppercase(), it) } }
                             // Digits are all grouped under a #, the rest are grouped by their first character.uppercased()
                             // If there is no name, they go under Unknown
-                            .groupBy { it.name?.run { first().takeUnless(Char::isDigit)?.toString() ?: "#" } ?: unknown }
+                            .groupBy { it.name?.run { first().takeUnless(Char::isDigit)?.toString() ?: numbersTitle } ?: unknownTitle }
                             // place the # at the end, after all the names starting with alphabetic chars
                             .toSortedMap(compareBy {
                                 when (it) {
-                                    unknown -> Char.MAX_VALUE
-                                    "#" -> Char.MAX_VALUE - 1
+                                    unknownTitle -> Char.MAX_VALUE
+                                    numbersTitle -> Char.MAX_VALUE - 1
                                     else -> it.first()
                                 }
                             })
