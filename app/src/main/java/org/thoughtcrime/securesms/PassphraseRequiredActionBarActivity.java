@@ -125,7 +125,9 @@ public abstract class PassphraseRequiredActionBarActivity extends BaseActionBarA
   }
 
   private int getApplicationState(boolean locked) {
-    if (locked) {
+    if (TextSecurePreferences.getLocalNumber(this) == null) {
+      return STATE_WELCOME_SCREEN;
+    } else if (locked) {
       return STATE_PROMPT_PASSPHRASE;
     } else if (DatabaseUpgradeActivity.isUpdate(this)) {
       return STATE_UPGRADE_DATABASE;
