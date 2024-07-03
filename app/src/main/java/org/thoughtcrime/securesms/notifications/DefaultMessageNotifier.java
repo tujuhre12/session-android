@@ -271,7 +271,7 @@ public class DefaultMessageNotifier implements MessageNotifier {
     try {
       telcoCursor = DatabaseComponent.get(context).mmsSmsDatabase().getUnread(); // TODO: add a notification specific lighter query here
 
-      if ((telcoCursor == null || telcoCursor.isAfterLast()) || !TextSecurePreferences.hasSeenWelcomeScreen(context))
+      if ((telcoCursor == null || telcoCursor.isAfterLast()) || TextSecurePreferences.getLocalNumber(context) == null)
       {
         updateBadge(context, 0);
         cancelActiveNotifications(context);

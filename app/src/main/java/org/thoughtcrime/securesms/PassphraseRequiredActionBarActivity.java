@@ -131,8 +131,6 @@ public abstract class PassphraseRequiredActionBarActivity extends BaseActionBarA
       return STATE_PROMPT_PASSPHRASE;
     } else if (DatabaseUpgradeActivity.isUpdate(this)) {
       return STATE_UPGRADE_DATABASE;
-    } else if (!TextSecurePreferences.hasSeenWelcomeScreen(this)) {
-      return STATE_WELCOME_SCREEN;
     } else {
       return STATE_NORMAL;
     }

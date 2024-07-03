@@ -118,8 +118,6 @@ interface TextSecurePreferences {
     fun isPassphraseTimeoutEnabled(): Boolean
     fun getPassphraseTimeoutInterval(): Int
     fun getLanguage(): String?
-    fun hasSeenWelcomeScreen(): Boolean
-    fun setHasSeenWelcomeScreen(value: Boolean)
     fun isNotificationsEnabled(): Boolean
     fun getNotificationRingtone(): Uri
     fun removeNotificationRingtone()
@@ -216,7 +214,6 @@ interface TextSecurePreferences {
         const val THREAD_TRIM_ENABLED = "pref_trim_threads"
         const val LOCAL_NUMBER_PREF = "pref_local_number"
         const val REGISTERED_GCM_PREF = "pref_gcm_registered"
-        const val SEEN_WELCOME_SCREEN_PREF = "pref_seen_welcome_screen"
         const val UPDATE_APK_REFRESH_TIME_PREF = "pref_update_apk_refresh_time"
         const val UPDATE_APK_DOWNLOAD_ID = "pref_update_apk_download_id"
         const val UPDATE_APK_DIGEST = "pref_update_apk_digest"
@@ -705,15 +702,6 @@ interface TextSecurePreferences {
         @JvmStatic
         fun getLanguage(context: Context): String? {
             return getStringPreference(context, LANGUAGE_PREF, "zz")
-        }
-
-        @JvmStatic
-        fun hasSeenWelcomeScreen(context: Context): Boolean {
-            return getBooleanPreference(context, SEEN_WELCOME_SCREEN_PREF, false)
-        }
-
-        fun setHasSeenWelcomeScreen(context: Context, value: Boolean) {
-            setBooleanPreference(context, SEEN_WELCOME_SCREEN_PREF, value)
         }
 
         @JvmStatic
@@ -1339,14 +1327,6 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun getLanguage(): String? {
         return getStringPreference(TextSecurePreferences.LANGUAGE_PREF, "zz")
-    }
-
-    override fun hasSeenWelcomeScreen(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.SEEN_WELCOME_SCREEN_PREF, false)
-    }
-
-    override fun setHasSeenWelcomeScreen(value: Boolean) {
-        setBooleanPreference(TextSecurePreferences.SEEN_WELCOME_SCREEN_PREF, value)
     }
 
     override fun isNotificationsEnabled(): Boolean {

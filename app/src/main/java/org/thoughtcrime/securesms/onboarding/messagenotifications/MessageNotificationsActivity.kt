@@ -42,7 +42,6 @@ class MessageNotificationsActivity : BaseActionBarActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setUpActionBarSessionLogo()
-        prefs.setHasSeenWelcomeScreen(true)
 
         setComposeContent { MessageNotificationsScreen() }
 
