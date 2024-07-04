@@ -57,10 +57,12 @@ class PickDisplayNameActivity : BaseActionBarActivity() {
             viewModel.states.collectAsState().value,
             viewModel::onChange,
             viewModel::onContinue,
-            viewModel::dismissDialog
-        ) { viewModel.dismissDialog(); finish() }
+            viewModel::dismissDialog,
+            quit = { viewModel.dismissDialog(); finish() }
+        )
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
         if (viewModel.onBackPressed()) return
 

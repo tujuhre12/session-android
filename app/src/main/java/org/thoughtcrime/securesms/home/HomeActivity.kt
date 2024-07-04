@@ -8,30 +8,9 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.provider.Telephony.Mms.Addr
 import android.widget.Toast
 import androidx.activity.viewModels
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredWidth
-import androidx.compose.foundation.layout.width
-import androidx.compose.material.Icon
-import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.unit.dp
 import androidx.core.os.bundleOf
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
@@ -56,11 +35,9 @@ import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.AppTextSecurePreferences
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.ProfilePictureModifiedEvent
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.groupByNotNull
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.ThreadUtils
@@ -87,25 +64,12 @@ import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
 import org.thoughtcrime.securesms.mms.GlideApp
 import org.thoughtcrime.securesms.mms.GlideRequests
 import org.thoughtcrime.securesms.notifications.PushRegistry
-import org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.SettingsActivity
+import org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity
 import org.thoughtcrime.securesms.showMuteDialog
 import org.thoughtcrime.securesms.showSessionDialog
-import org.thoughtcrime.securesms.ui.Divider
-import org.thoughtcrime.securesms.ui.LocalDimensions
-import org.thoughtcrime.securesms.ui.color.LocalColors
-import org.thoughtcrime.securesms.ui.color.Colors
-import org.thoughtcrime.securesms.ui.PreviewTheme
-import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
-import org.thoughtcrime.securesms.ui.SessionShieldIcon
-import org.thoughtcrime.securesms.ui.base
-import org.thoughtcrime.securesms.ui.components.SlimOutlineButton
-import org.thoughtcrime.securesms.ui.contentDescription
-import org.thoughtcrime.securesms.ui.h4
-import org.thoughtcrime.securesms.ui.h8
 import org.thoughtcrime.securesms.ui.setThemedContent
-import org.thoughtcrime.securesms.ui.small
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 import org.thoughtcrime.securesms.util.IP2Country
 import org.thoughtcrime.securesms.util.disableClipping
@@ -147,41 +111,27 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
 
     private val globalSearchAdapter = GlobalSearchAdapter { model ->
         when (model) {
-            is GlobalSearchAdapter.Model.Message -> {
-                val threadId = model.messageResult.threadId
-                val timestamp = model.messageResult.sentTimestampMs
-                val author = model.messageResult.messageRecipient.address
-
-                val intent = Intent(this, ConversationActivityV2::class.java)
-                intent.putExtra(ConversationActivityV2.THREAD_ID, threadId)
-                intent.putExtra(ConversationActivityV2.SCROLL_MESSAGE_ID, timestamp)
-                intent.putExtra(ConversationActivityV2.SCROLL_MESSAGE_AUTHOR, author)
-                push(intent)
-            }
-            is GlobalSearchAdapter.Model.SavedMessages -> {
-                val intent = Intent(this, ConversationActivityV2::class.java)
-                intent.putExtra(ConversationActivityV2.ADDRESS, Address.fromSerialized(model.currentUserPublicKey))
-                push(intent)
-            }
-            is GlobalSearchAdapter.Model.Contact -> {
-                val address = model.contact.accountID
-
-                val intent = Intent(this, ConversationActivityV2::class.java)
-                intent.putExtra(ConversationActivityV2.ADDRESS, Address.fromSerialized(address))
-                push(intent)
-            }
-            is GlobalSearchAdapter.Model.GroupConversation -> {
-                val groupAddress = Address.fromSerialized(model.groupRecord.encodedId)
-                val threadId = threadDb.getThreadIdIfExistsFor(Recipient.from(this, groupAddress, false))
-                if (threadId >= 0) {
-                    val intent = Intent(this, ConversationActivityV2::class.java)
-                    intent.putExtra(ConversationActivityV2.THREAD_ID, threadId)
-                    push(intent)
+            is GlobalSearchAdapter.Model.Message -> push<ConversationActivityV2> {
+                model.messageResult.run {
+                    putExtra(ConversationActivityV2.THREAD_ID, threadId)
+                    putExtra(ConversationActivityV2.SCROLL_MESSAGE_ID, sentTimestampMs)
+                    putExtra(ConversationActivityV2.SCROLL_MESSAGE_AUTHOR, messageRecipient.address)
                 }
             }
-            else -> {
-                Log.d("Loki", "callback with model: $model")
+            is GlobalSearchAdapter.Model.SavedMessages -> push<ConversationActivityV2> {
+                putExtra(ConversationActivityV2.ADDRESS, Address.fromSerialized(model.currentUserPublicKey))
             }
+            is GlobalSearchAdapter.Model.Contact -> push<ConversationActivityV2> {
+                putExtra(ConversationActivityV2.ADDRESS, model.contact.accountID.let(Address::fromSerialized))
+            }
+            is GlobalSearchAdapter.Model.GroupConversation -> model.groupRecord.encodedId
+                .let { Recipient.from(this, Address.fromSerialized(it), false) }
+                .let(threadDb::getThreadIdIfExistsFor)
+                .takeIf { it >= 0 }
+                ?.let {
+                    push<ConversationActivityV2> { putExtra(ConversationActivityV2.THREAD_ID, it) }
+                }
+            else -> Log.d("Loki", "callback with model: $model")
         }
     }
 
@@ -321,23 +271,13 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                             .flatMap { (key, contacts) ->
                                 listOf(
                                     GlobalSearchAdapter.Model.SubHeader(key)
-                                ) + contacts.sortedBy { it.name ?: it.value.accountID }.map { it.value }.map(GlobalSearchAdapter.Model::Contact)
+                                ) + contacts.sortedBy { it.name ?: it.value.accountID }.map { it.value }.map { GlobalSearchAdapter.Model.Contact(it, it.accountID == publicKey) }
                             }
                     } else {
-                        val currentUserPublicKey = publicKey
-                        val contactAndGroupList = result.contacts.map(GlobalSearchAdapter.Model::Contact) +
+                        val contactAndGroupList = result.contacts.map { GlobalSearchAdapter.Model.Contact(it, it.accountID == publicKey) } +
                             result.threads.map(GlobalSearchAdapter.Model::GroupConversation)
 
                         val contactResults = contactAndGroupList.toMutableList()
-
-                        if (contactResults.isEmpty()) {
-                            contactResults.add(GlobalSearchAdapter.Model.SavedMessages(currentUserPublicKey))
-                        }
-
-                        val userIndex = contactResults.indexOfFirst { it is GlobalSearchAdapter.Model.Contact && it.contact.accountID == currentUserPublicKey }
-                        if (userIndex >= 0) {
-                            contactResults[userIndex] = GlobalSearchAdapter.Model.SavedMessages(currentUserPublicKey)
-                        }
 
                         if (contactResults.isNotEmpty()) {
                             contactResults.add(0, GlobalSearchAdapter.Model.Header(R.string.conversations))
@@ -348,7 +288,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                             .associateWith { mmsSmsDatabase.getUnreadCount(it) }
 
                         val messageResults: MutableList<GlobalSearchAdapter.Model> = result.messages
-                            .map { GlobalSearchAdapter.Model.Message(it, unreadThreadMap[it.threadId] ?: 0) }
+                            .map { GlobalSearchAdapter.Model.Message(it, unreadThreadMap[it.threadId] ?: 0, it.conversationRecipient.isLocalNumber) }
                             .toMutableList()
 
                         if (messageResults.isNotEmpty()) {

@@ -17,7 +17,7 @@ import org.thoughtcrime.securesms.ui.GetString
 import java.security.InvalidParameterException
 import org.session.libsession.messaging.contacts.Contact as ContactModel
 
-class GlobalSearchAdapter (private val modelCallback: (Model)->Unit): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+class GlobalSearchAdapter(private val modelCallback: (Model)->Unit): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     companion object {
         const val HEADER_VIEW_TYPE = 0
@@ -122,14 +122,7 @@ class GlobalSearchAdapter (private val modelCallback: (Model)->Unit): RecyclerVi
             }
             binding.root.setOnClickListener { modelCallback(model) }
         }
-
     }
-
-    data class MessageModel(
-            val threadRecipient: Recipient,
-            val messageRecipient: Recipient,
-            val messageSnippet: String
-    )
 
     sealed class Model {
         data class Header(val title: GetString): Model() {
@@ -141,8 +134,8 @@ class GlobalSearchAdapter (private val modelCallback: (Model)->Unit): RecyclerVi
             constructor(title: String): this(GetString(title))
         }
         data class SavedMessages(val currentUserPublicKey: String): Model()
-        data class Contact(val contact: ContactModel): Model()
+        data class Contact(val contact: ContactModel, val isSelf: Boolean): Model()
         data class GroupConversation(val groupRecord: GroupRecord): Model()
-        data class Message(val messageResult: MessageResult, val unread: Int): Model()
+        data class Message(val messageResult: MessageResult, val unread: Int, val isSelf: Boolean): Model()
     }
 }
