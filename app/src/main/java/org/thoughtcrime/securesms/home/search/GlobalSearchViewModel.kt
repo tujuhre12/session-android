@@ -51,7 +51,9 @@ class GlobalSearchViewModel @Inject constructor(
     }
 
     fun refresh() {
-        refreshes.tryEmit(Unit)
+        viewModelScope.launch {
+            refreshes.emit(Unit)
+        }
     }
 
     init {
