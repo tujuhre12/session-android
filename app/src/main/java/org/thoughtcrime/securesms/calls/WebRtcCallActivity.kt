@@ -5,11 +5,15 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
 import android.media.AudioManager
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.view.MenuItem
-import android.view.OrientationEventListener
 import android.view.WindowManager
 import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
@@ -21,7 +25,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
-import android.provider.Settings
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityWebrtcBinding
@@ -43,11 +46,13 @@ import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_OUTGOING
 import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_PRE_INIT
 import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_RECONNECTING
 import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_RINGING
+import org.thoughtcrime.securesms.webrtc.Orientation
 import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager.AudioDevice.EARPIECE
 import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager.AudioDevice.SPEAKER_PHONE
+import kotlin.math.asin
 
 @AndroidEntryPoint
-class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
+class WebRtcCallActivity : PassphraseRequiredActionBarActivity(), SensorEventListener {
 
     companion object {
         const val ACTION_PRE_OFFER = "pre-offer"
@@ -71,16 +76,9 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
         }
     private var hangupReceiver: BroadcastReceiver? = null
 
-    private val rotationListener by lazy {
-        object : OrientationEventListener(this) {
-            override fun onOrientationChanged(orientation: Int) {
-                if ((orientation + 15) % 90 < 30) {
-                    viewModel.deviceRotation = orientation
-//                    updateControlsRotation(orientation.quadrantRotation() * -1)
-                }
-            }
-        }
-    }
+    private lateinit var sensorManager: SensorManager
+    private var rotationVectorSensor: Sensor? = null
+    private var lastOrientation = Orientation.UNKNOWN
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == android.R.id.home) {
@@ -104,9 +102,11 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
 
         // Only enable auto-rotate if system auto-rotate is enabled
         if (isAutoRotateOn()) {
-            rotationListener.enable()
-        } else {
-            rotationListener.disable()
+            // Initialize the SensorManager
+            sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
+
+            // Initialize the sensors
+            rotationVectorSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
         }
 
         binding = ActivityWebrtcBinding.inflate(layoutInflater)
@@ -138,7 +138,7 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
 
         binding.floatingRendererContainer.setOnClickListener {
             val swapVideoViewIntent =
-                WebRtcCallService.swapVideoViews(this, viewModel.videoViewSwapped)
+                WebRtcCallService.swapVideoViews(this, viewModel.toggleVideoSwap())
             startService(swapVideoViewIntent)
         }
 
@@ -207,12 +207,54 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
         ) == 1
     }
 
+    override fun onResume() {
+        super.onResume()
+        rotationVectorSensor?.also { sensor ->
+            sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_UI)
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        sensorManager.unregisterListener(this)
+    }
+
+    override fun onSensorChanged(event: SensorEvent) {
+        if (event.sensor.type == Sensor.TYPE_ROTATION_VECTOR) {
+            // Get the quaternion from the rotation vector sensor
+            val quaternion = FloatArray(4)
+            SensorManager.getQuaternionFromVector(quaternion, event.values)
+
+            // Calculate Euler angles from the quaternion
+            val pitch = asin(2.0 * (quaternion[0] * quaternion[2] - quaternion[3] * quaternion[1]))
+
+            // Convert radians to degrees
+            val pitchDegrees = Math.toDegrees(pitch).toFloat()
+
+            // Determine the device's orientation based on the pitch and roll values
+            val currentOrientation = when {
+                pitchDegrees > 45  -> Orientation.LANDSCAPE
+                pitchDegrees < -45 -> Orientation.REVERSED_LANDSCAPE
+                else -> Orientation.PORTRAIT
+            }
+
+            if (currentOrientation != lastOrientation) {
+                lastOrientation = currentOrientation
+                Log.d("", "*********** orientation: $currentOrientation")
+                viewModel.deviceOrientation = currentOrientation
+            }
+        }
+    }
+
+    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+
     override fun onDestroy() {
         super.onDestroy()
         hangupReceiver?.let { receiver ->
             LocalBroadcastManager.getInstance(this).unregisterReceiver(receiver)
         }
-        rotationListener.disable()
+
+        rotationVectorSensor = null
     }
 
     private fun answerCall() {
@@ -354,62 +396,31 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
 
             launch {
                 viewModel.localVideoEnabledState.collect { isEnabled ->
-                    binding.localFloatingRenderer.removeAllViews()
-                    binding.localRenderer.removeAllViews()
+                    binding.floatingRenderer.removeAllViews()
                     if (isEnabled) {
-                        viewModel.localRenderer?.let { surfaceView ->
+                        viewModel.floatingRenderer?.let { surfaceView ->
                             surfaceView.setZOrderOnTop(true)
-
-                            // Mirror the video preview of the person making the call to prevent disorienting them
-                            surfaceView.setMirror(true)
-
-                            binding.localRenderer.addView(surfaceView)
-                        }
-                        viewModel.localFloatingRenderer?.let { surfaceView ->
-                            surfaceView.setZOrderOnTop(true)
-                            binding.localFloatingRenderer.addView(surfaceView)
-
+                            binding.floatingRenderer.addView(surfaceView)
                         }
                     }
-                    binding.localFloatingRenderer.isVisible = isEnabled && !viewModel.videoViewSwapped
-                    binding.localRenderer.isVisible = isEnabled && viewModel.videoViewSwapped
+
+                    binding.floatingRenderer.isVisible = isEnabled
                     binding.enableCameraButton.isSelected = isEnabled
-                    binding.floatingRendererContainer.isVisible = binding.localFloatingRenderer.isVisible
-                    binding.videocamOffIcon.isVisible = !binding.localFloatingRenderer.isVisible
-                    binding.remoteRecipient.isVisible = !(binding.remoteRenderer.isVisible || binding.localRenderer.isVisible)
-                    binding.swapViewIcon.bringToFront()
+                    //binding.swapViewIcon.bringToFront()
                 }
             }
 
             launch {
                 viewModel.remoteVideoEnabledState.collect { isEnabled ->
-                    binding.remoteRenderer.removeAllViews()
-                    binding.remoteFloatingRenderer.removeAllViews()
+                    binding.fullscreenRenderer.removeAllViews()
                     if (isEnabled) {
-                        viewModel.remoteRenderer?.let { surfaceView ->
-                            binding.remoteRenderer.addView(surfaceView)
-                        }
-                        viewModel.remoteFloatingRenderer?.let { surfaceView ->
-                            surfaceView.setZOrderOnTop(true)
-                            binding.remoteFloatingRenderer.addView(surfaceView)
+                        viewModel.fullscreenRenderer?.let { surfaceView ->
+                            binding.fullscreenRenderer.addView(surfaceView)
                         }
                     }
-                    binding.remoteRenderer.isVisible = isEnabled && !viewModel.videoViewSwapped
-                    binding.remoteFloatingRenderer.isVisible = isEnabled && viewModel.videoViewSwapped
-                    binding.videocamOffIcon.isVisible = !binding.remoteFloatingRenderer.isVisible
-                    binding.floatingRendererContainer.isVisible = binding.remoteFloatingRenderer.isVisible
-                    binding.remoteRecipient.isVisible = !(binding.remoteRenderer.isVisible || binding.localRenderer.isVisible)
-                    binding.swapViewIcon.bringToFront()
-                }
-            }
-
-            launch {
-                viewModel.videoViewSwappedState.collect{ isSwapped ->
-                    binding.remoteRenderer.isVisible = !isSwapped && viewModel.remoteVideoEnabled
-                    binding.remoteFloatingRenderer.isVisible = isSwapped && viewModel.remoteVideoEnabled
-                    binding.localFloatingRenderer.isVisible = !isSwapped && viewModel.videoEnabled
-                    binding.localRenderer.isVisible = isSwapped && viewModel.videoEnabled
-                    binding.floatingRendererContainer.isVisible = binding.localFloatingRenderer.isVisible || binding.remoteFloatingRenderer.isVisible
+                    binding.fullscreenRenderer.isVisible = isEnabled
+                    binding.remoteRecipient.isVisible = !isEnabled
+                    //binding.swapViewIcon.bringToFront()
                 }
             }
         }
@@ -424,8 +435,7 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
     override fun onStop() {
         super.onStop()
         uiJob?.cancel()
-        binding.remoteFloatingRenderer.removeAllViews()
-        binding.remoteRenderer.removeAllViews()
-        binding.localRenderer.removeAllViews()
+        binding.fullscreenRenderer.removeAllViews()
+        binding.floatingRenderer.removeAllViews()
     }
 }

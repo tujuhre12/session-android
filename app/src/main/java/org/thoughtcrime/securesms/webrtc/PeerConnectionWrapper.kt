@@ -103,7 +103,7 @@ class PeerConnectionWrapper(private val context: Context,
                 context,
                 rotationVideoSink
             )
-            rotationVideoSink.mirrored = newCamera.activeDirection == CameraState.Direction.FRONT
+
             rotationVideoSink.setSink(localRenderer)
             newVideoTrack.setEnabled(false)
             mediaStream.addTrack(newVideoTrack)
