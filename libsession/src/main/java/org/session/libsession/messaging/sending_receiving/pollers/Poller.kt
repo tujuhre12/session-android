@@ -34,6 +34,8 @@ import java.util.Timer
 import java.util.TimerTask
 import kotlin.time.Duration.Companion.days
 
+private const val TAG = "Poller"
+
 private class PromiseCanceledException : Exception("Promise canceled.")
 
 class Poller(private val configFactory: ConfigFactoryProtocol, debounceTimer: Timer) {
@@ -52,19 +54,19 @@ class Poller(private val configFactory: ConfigFactoryProtocol, debounceTimer: Ti
     // region Public API
     fun startIfNeeded() {
         if (hasStarted) { return }
-        Log.d("Loki", "Started polling.")
+        Log.d(TAG, "Started polling.")
         hasStarted = true
         setUpPolling(retryInterval)
     }
 
     fun stopIfNeeded() {
-        Log.d("Loki", "Stopped polling.")
+        Log.d(TAG, "Stopped polling.")
         hasStarted = false
         usedSnodes.clear()
     }
 
     fun retrieveUserProfile() {
-        Log.d("Loki", "Retrieving user profile.")
+        Log.d(TAG, "Retrieving user profile.")
         SnodeAPI.getSwarm(userPublicKey).bind {
             usedSnodes.clear()
             deferred<Unit, Exception>().also {
@@ -107,12 +109,12 @@ class Poller(private val configFactory: ConfigFactoryProtocol, debounceTimer: Ti
             val index = SecureRandom().nextInt(unusedSnodes.size)
             val nextSnode = unusedSnodes.elementAt(index)
             usedSnodes.add(nextSnode)
-            Log.d("Loki", "Polling $nextSnode.")
+            Log.d(TAG, "Polling $nextSnode.")
             poll(userProfileOnly, nextSnode, deferred).fail { exception ->
                 if (exception is PromiseCanceledException) {
-                    Log.d("Loki", "Polling $nextSnode canceled.")
+                    Log.d(TAG, "Polling $nextSnode canceled.")
                 } else {
-                    Log.d("Loki", "Polling $nextSnode failed; dropping it and switching to next snode.")
+                    Log.d(TAG, "Polling $nextSnode failed; dropping it and switching to next snode.")
                     SnodeAPI.dropSnodeFromSwarmIfNeeded(nextSnode, userPublicKey)
                     pollNextSnode(userProfileOnly, deferred)
                 }
@@ -158,7 +160,7 @@ class Poller(private val configFactory: ConfigFactoryProtocol, debounceTimer: Ti
                 forConfigObject.merge(hash to body)
                 latestMessageTimestamp = if (timestamp > (latestMessageTimestamp ?: 0L)) { timestamp } else { latestMessageTimestamp }
             } catch (e: Exception) {
-                Log.e("Loki", e)
+                Log.e(TAG, e)
             }
         }
         // process new results
@@ -208,11 +210,11 @@ class Poller(private val configFactory: ConfigFactoryProtocol, debounceTimer: Ti
                         val responseList = (rawResponses["results"] as List<RawResponse>)
                         responseList.getOrNull(0)?.let { rawResponse ->
                             if (rawResponse["code"] as? Int != 200) {
-                                Log.e("Loki", "Batch sub-request had non-200 response code, returned code ${(rawResponse["code"] as? Int) ?: "[unknown]"}")
+                                Log.e(TAG, "Batch sub-request had non-200 response code, returned code ${(rawResponse["code"] as? Int) ?: "[unknown]"}")
                             } else {
                                 val body = rawResponse["body"] as? RawResponse
                                 if (body == null) {
-                                    Log.e("Loki", "Batch sub-request didn't contain a body")
+                                    Log.e(TAG, "Batch sub-request didn't contain a body")
                                 } else {
                                     processConfig(snode, body, configFactory.user!!.configNamespace(), configFactory.user)
                                 }
@@ -221,7 +223,7 @@ class Poller(private val configFactory: ConfigFactoryProtocol, debounceTimer: Ti
                     }
                     Promise.ofSuccess(Unit)
                 }.fail {
-                    Log.e("Loki", "Failed to get raw batch response", it)
+                    Log.e(TAG, "Failed to get raw batch response", it)
                 }
             }
         }
@@ -284,12 +286,12 @@ class Poller(private val configFactory: ConfigFactoryProtocol, debounceTimer: Ti
                             }.filter { (_, i) -> i >= 0 }.forEach { (key, requestIndex) ->
                                 responseList.getOrNull(requestIndex)?.let { rawResponse ->
                                     if (rawResponse["code"] as? Int != 200) {
-                                        Log.e("Loki", "Batch sub-request had non-200 response code, returned code ${(rawResponse["code"] as? Int) ?: "[unknown]"}")
+                                        Log.e(TAG, "Batch sub-request had non-200 response code, returned code ${(rawResponse["code"] as? Int) ?: "[unknown]"}")
                                         return@forEach
                                     }
                                     val body = rawResponse["body"] as? RawResponse
                                     if (body == null) {
-                                        Log.e("Loki", "Batch sub-request didn't contain a body")
+                                        Log.e(TAG, "Batch sub-request didn't contain a body")
                                         return@forEach
                                     }
                                     if (key == Namespace.DEFAULT) {
@@ -310,7 +312,7 @@ class Poller(private val configFactory: ConfigFactoryProtocol, debounceTimer: Ti
                             if (personalResponseIndex >= 0) {
                                 responseList.getOrNull(personalResponseIndex)?.let { rawResponse ->
                                     if (rawResponse["code"] as? Int != 200) {
-                                        Log.e("Loki", "Batch sub-request for personal messages had non-200 response code, returned code ${(rawResponse["code"] as? Int) ?: "[unknown]"}")
+                                        Log.e(TAG, "Batch sub-request for personal messages had non-200 response code, returned code ${(rawResponse["code"] as? Int) ?: "[unknown]"}")
                                         // If we got a non-success response then the snode might be bad so we should try rotate
                                         // to a different one just in case
                                         pollNextSnode(deferred = deferred)
@@ -318,7 +320,7 @@ class Poller(private val configFactory: ConfigFactoryProtocol, debounceTimer: Ti
                                     } else {
                                         val body = rawResponse["body"] as? RawResponse
                                         if (body == null) {
-                                            Log.e("Loki", "Batch sub-request for personal messages didn't contain a body")
+                                            Log.e(TAG, "Batch sub-request for personal messages didn't contain a body")
                                         } else {
                                             processPersonalMessages(snode, body)
                                         }
@@ -329,7 +331,7 @@ class Poller(private val configFactory: ConfigFactoryProtocol, debounceTimer: Ti
                             poll(snode, deferred)
                         }
                     }.fail {
-                        Log.e("Loki", "Failed to get raw batch response", it)
+                        Log.e(TAG, "Failed to get raw batch response", it)
                         poll(snode, deferred)
                     }
                 }
