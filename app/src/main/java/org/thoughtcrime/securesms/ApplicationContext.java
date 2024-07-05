@@ -453,6 +453,13 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         ClosedGroupPollerV2.getShared().start();
     }
 
+    public void retrieveUserProfile() {
+        setUpPollingIfNeeded();
+        if (poller != null) {
+            poller.retrieveUserProfile();
+        }
+    }
+
     private void resubmitProfilePictureIfNeeded() {
         // Files expire on the file server after a while, so we simply re-upload the user's profile picture
         // at a certain interval to ensure it's always available.

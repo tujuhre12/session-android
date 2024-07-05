@@ -52,7 +52,7 @@ class LoadAccountManager @Inject constructor(
                 setHasViewedSeed(true)
             }
 
-            ApplicationContext.getInstance(context).apply { startPollingIfNeeded() }
+            ApplicationContext.getInstance(context).retrieveUserProfile()
         }
     }
 }
