@@ -6,6 +6,7 @@ import android.telephony.TelephonyManager
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -51,6 +52,7 @@ import org.webrtc.MediaStream
 import org.webrtc.PeerConnection
 import org.webrtc.PeerConnection.IceConnectionState
 import org.webrtc.PeerConnectionFactory
+import org.webrtc.RendererCommon
 import org.webrtc.RtpReceiver
 import org.webrtc.SessionDescription
 import org.webrtc.SurfaceViewRenderer
@@ -67,7 +69,6 @@ class CallManager(
     SignalAudioManager.EventListener, CameraEventListener, DataChannel.Observer {
 
     sealed class StateEvent {
-        data class VideoSwapped(val isSwapped: Boolean): StateEvent()
         data class AudioEnabled(val isEnabled: Boolean): StateEvent()
         data class VideoEnabled(val isEnabled: Boolean): StateEvent()
         data class CallStateUpdate(val state: CallState): StateEvent()
@@ -106,10 +107,15 @@ class CallManager(
 
     private val _audioEvents = MutableStateFlow(AudioEnabled(false))
     val audioEvents = _audioEvents.asSharedFlow()
-    private val _videoEvents = MutableStateFlow(VideoEnabled(false))
-    val videoEvents = _videoEvents.asSharedFlow()
-    private val _remoteVideoEvents = MutableStateFlow(VideoEnabled(false))
-    val remoteVideoEvents = _remoteVideoEvents.asSharedFlow()
+
+    private val _videoState: MutableStateFlow<VideoState> = MutableStateFlow(
+        VideoState(
+            swapped = false,
+            userVideoEnabled = false,
+            remoteVideoEnabled = false
+        )
+    )
+    val videoState = _videoState
 
     private val stateProcessor = StateProcessor(CallState.Idle)
 
@@ -221,8 +227,10 @@ class CallManager(
             val base = EglBase.create()
             eglBase = base
             floatingRenderer = SurfaceViewRenderer(context)
+            floatingRenderer?.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT)
 
             fullscreenRenderer = SurfaceViewRenderer(context)
+            fullscreenRenderer?.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT)
 
             remoteRotationSink = RemoteRotationVideoProxySink()
 
@@ -363,7 +371,8 @@ class CallManager(
             val byteArray = ByteArray(buffer.data.remaining()) { buffer.data[it] }
             val json = Json.parseToJsonElement(byteArray.decodeToString()) as JsonObject
             if (json.containsKey("video")) {
-                _remoteVideoEvents.value = VideoEnabled((json["video"] as JsonPrimitive).boolean)
+                _videoState.value = _videoState.value.copy(remoteVideoEnabled = (json["video"] as JsonPrimitive).boolean)
+                handleMirroring()
             } else if (json.containsKey("hangup")) {
                 peerConnectionObservers.forEach(WebRtcListener::onHangup)
             }
@@ -399,8 +408,11 @@ class CallManager(
             pendingOffer = null
             callStartTime = -1
             _audioEvents.value = AudioEnabled(false)
-            _videoEvents.value = VideoEnabled(false)
-            _remoteVideoEvents.value = VideoEnabled(false)
+            _videoState.value = VideoState(
+                swapped = false,
+                userVideoEnabled = false,
+                remoteVideoEnabled = false
+            )
             pendingOutgoingIceUpdates.clear()
             pendingIncomingIceUpdates.clear()
         }
@@ -411,7 +423,7 @@ class CallManager(
 
         // If the camera we've switched to is the front one then mirror it to match what someone
         // would see when looking in the mirror rather than the left<-->right flipped version.
-       handleUserMirroring()
+       handleMirroring()
     }
 
     fun onPreOffer(callId: UUID, recipient: Recipient, onSuccess: () -> Unit) {
@@ -609,10 +621,19 @@ class CallManager(
         }
     }
 
-    fun handleSwapVideoView(swapped: Boolean) {
-        videoSwapped = swapped
+    fun swapVideos() {
+        videoSwapped = !videoSwapped
 
-        if (!swapped) {
+        // update the state
+        _videoState.value = _videoState.value.copy(swapped = videoSwapped)
+        handleMirroring()
+
+//todo TOM received rotated video shouldn't be full scale
+        //todo TOM make sure the swap icon is visible
+        //todo TOM Should we show the 'no video' inset straight away?
+        //todo TOM ios rotates the controls in landscape ( just the buttons though, not the whole ui??)
+
+        if (!videoSwapped) {
             peerConnection?.rotationVideoSink?.apply {
                 setSink(floatingRenderer)
             }
@@ -634,17 +655,30 @@ class CallManager(
     private fun getUserRenderer() = if(videoSwapped) fullscreenRenderer else floatingRenderer
 
     /**
+     * Returns the renderer currently showing the contact's video, not the user's
+     */
+    private fun getRemoteRenderer() = if(videoSwapped) floatingRenderer else fullscreenRenderer
+
+    /**
      * Makes sure the user's renderer applies mirroring if necessary
      */
-    private fun handleUserMirroring() = getUserRenderer()?.setMirror(isCameraFrontFacing())
+    private fun handleMirroring() {
+        val videoState = _videoState.value
+
+        // if we have user video and the camera is front facing, make sure to mirror stream
+        if(videoState.userVideoEnabled) {
+            getUserRenderer()?.setMirror(isCameraFrontFacing())
+        }
+
+        // the remote video is never mirrored
+        if(videoState.remoteVideoEnabled){
+            getRemoteRenderer()?.setMirror(false)
+        }
+    }
 
     fun handleSetMuteVideo(muted: Boolean, lockManager: LockManager) {
-        _videoEvents.value = VideoEnabled(!muted)
-
-        // if we have video and the camera is not front facing, make sure to mirror stream
-        if(!muted){
-            handleUserMirroring()
-        }
+        _videoState.value = _videoState.value.copy(userVideoEnabled = !muted)
+        handleMirroring()
 
         val connection = peerConnection ?: return
         connection.setVideoEnabled(!muted)
@@ -761,7 +795,7 @@ class CallManager(
         connection.setCommunicationMode()
         setAudioEnabled(true)
         dataChannel?.let { channel ->
-            val toSend = if (!_videoEvents.value.isEnabled) VIDEO_DISABLED_JSON else VIDEO_ENABLED_JSON
+            val toSend = if (!_videoState.value.userVideoEnabled) VIDEO_DISABLED_JSON else VIDEO_ENABLED_JSON
             val buffer = DataChannel.Buffer(ByteBuffer.wrap(toSend.toString().encodeToByteArray()), false)
             channel.send(buffer)
         }
@@ -790,7 +824,7 @@ class CallManager(
 
     fun isInitiator(): Boolean = peerConnection?.isInitiator() == true
 
-    fun isCameraFrontFacing() = localCameraState.activeDirection == CameraState.Direction.FRONT
+    fun isCameraFrontFacing() = localCameraState.activeDirection != CameraState.Direction.BACK
 
     interface WebRtcListener: PeerConnection.Observer {
         fun onHangup()

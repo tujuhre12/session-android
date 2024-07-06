@@ -2,6 +2,8 @@ package org.thoughtcrime.securesms.webrtc
 
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager
@@ -35,15 +37,6 @@ class CallViewModel @Inject constructor(private val callManager: CallManager): V
     val fullscreenRenderer: SurfaceViewRenderer?
     get() = callManager.fullscreenRenderer
 
-    private var _videoEnabled: Boolean = false
-
-    val videoEnabled: Boolean
-        get() = _videoEnabled
-
-    private var _remoteVideoEnabled: Boolean = false
-
-    private var _videoViewSwapped: Boolean = false
-
     private var _microphoneEnabled: Boolean = true
 
     val microphoneEnabled: Boolean
@@ -63,15 +56,8 @@ class CallViewModel @Inject constructor(private val callManager: CallManager): V
         get() = callManager.audioEvents.map { it.isEnabled }
             .onEach { _microphoneEnabled = it }
 
-    val localVideoEnabledState
-        get() = callManager.videoEvents
-                .map { it.isEnabled }
-                .onEach { _videoEnabled = it }
-
-    val remoteVideoEnabledState
-        get() = callManager.remoteVideoEvents
-                .map { it.isEnabled }
-                .onEach { _remoteVideoEnabled = it }
+    val videoState: StateFlow<VideoState>
+        get() = callManager.videoState
 
     var deviceOrientation: Orientation = Orientation.UNKNOWN
         set(value) {
@@ -91,11 +77,7 @@ class CallViewModel @Inject constructor(private val callManager: CallManager): V
     val callStartTime: Long
         get() = callManager.callStartTime
 
-    /**
-     * Toggles the video swapped state, and return the value post toggle
-     */
-    fun toggleVideoSwap(): Boolean {
-        _videoViewSwapped = !_videoViewSwapped
-        return _videoViewSwapped
+    fun swapVideos() {
+       callManager.swapVideos()
     }
 }

@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.Outline
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -14,7 +15,11 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.MenuItem
+import android.view.View
+import android.view.ViewGroup
+import android.view.ViewOutlineProvider
 import android.view.WindowManager
+import android.widget.FrameLayout
 import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
@@ -49,6 +54,7 @@ import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_RINGING
 import org.thoughtcrime.securesms.webrtc.Orientation
 import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager.AudioDevice.EARPIECE
 import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager.AudioDevice.SPEAKER_PHONE
+import org.webrtc.RendererCommon
 import kotlin.math.asin
 
 @AndroidEntryPoint
@@ -137,9 +143,7 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity(), SensorEventLis
         }
 
         binding.floatingRendererContainer.setOnClickListener {
-            val swapVideoViewIntent =
-                WebRtcCallService.swapVideoViews(this, viewModel.toggleVideoSwap())
-            startService(swapVideoViewIntent)
+            viewModel.swapVideos()
         }
 
         binding.microphoneButton.setOnClickListener {
@@ -180,7 +184,7 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity(), SensorEventLis
             Permissions.with(this)
                 .request(Manifest.permission.CAMERA)
                 .onAllGranted {
-                    val intent = WebRtcCallService.cameraEnabled(this, !viewModel.videoEnabled)
+                    val intent = WebRtcCallService.cameraEnabled(this, !viewModel.videoState.value.userVideoEnabled)
                     startService(intent)
                 }
                 .execute()
@@ -197,6 +201,26 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity(), SensorEventLis
             onBackPressed()
         }
 
+        clipFloatingInsets()
+    }
+
+    /**
+     * Makes sure the floating video inset has clipped rounded corners, included with the video stream itself
+     */
+    private fun clipFloatingInsets() {
+        // clip the video inset with rounded corners
+        val videoInsetProvider = object : ViewOutlineProvider() {
+            override fun getOutline(view: View, outline: Outline) {
+                // all corners
+                outline.setRoundRect(
+                    0, 0, view.width, view.height,
+                    resources.getDimensionPixelSize(R.dimen.video_inset_radius).toFloat()
+                )
+            }
+        }
+
+        binding.floatingRendererContainer.outlineProvider = videoInsetProvider
+        binding.floatingRendererContainer.clipToOutline = true
     }
 
     //Function to check if Android System Auto-rotate is on or off
@@ -216,7 +240,11 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity(), SensorEventLis
 
     override fun onPause() {
         super.onPause()
-        sensorManager.unregisterListener(this)
+        try {
+            sensorManager.unregisterListener(this)
+        } catch (e: Exception) {
+            // the unregister can throw if the activity dies too quickly and the sensorManager is not initialised yet
+        }
     }
 
     override fun onSensorChanged(event: SensorEvent) {
@@ -394,33 +422,37 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity(), SensorEventLis
                 }
             }
 
+            // handle video windows
             launch {
-                viewModel.localVideoEnabledState.collect { isEnabled ->
+                viewModel.videoState.collect { state ->
                     binding.floatingRenderer.removeAllViews()
-                    if (isEnabled) {
-                        viewModel.floatingRenderer?.let { surfaceView ->
-                            surfaceView.setZOrderOnTop(true)
-                            binding.floatingRenderer.addView(surfaceView)
-                        }
-                    }
-
-                    binding.floatingRenderer.isVisible = isEnabled
-                    binding.enableCameraButton.isSelected = isEnabled
-                    //binding.swapViewIcon.bringToFront()
-                }
-            }
-
-            launch {
-                viewModel.remoteVideoEnabledState.collect { isEnabled ->
                     binding.fullscreenRenderer.removeAllViews()
-                    if (isEnabled) {
+
+                    // handle fullscreen video window
+                    if(state.showFullscreenVideo()){
                         viewModel.fullscreenRenderer?.let { surfaceView ->
                             binding.fullscreenRenderer.addView(surfaceView)
+                            binding.fullscreenRenderer.isVisible = true
+                            binding.remoteRecipient.isVisible = false
                         }
+                    } else {
+                        binding.fullscreenRenderer.isVisible = false
+                        binding.remoteRecipient.isVisible = true
                     }
-                    binding.fullscreenRenderer.isVisible = isEnabled
-                    binding.remoteRecipient.isVisible = !isEnabled
-                    //binding.swapViewIcon.bringToFront()
+
+                    // handle floating video window
+                    if(state.showFloatingVideo()){
+                        viewModel.floatingRenderer?.let { surfaceView ->
+                            binding.floatingRenderer.addView(surfaceView)
+                            binding.floatingRenderer.isVisible = true
+                            binding.swapViewIcon.bringToFront()
+                        }
+                    } else {
+                        binding.floatingRenderer.isVisible = false
+                    }
+
+                    // handle buttons
+                    binding.enableCameraButton.isSelected = state.userVideoEnabled
                 }
             }
         }
