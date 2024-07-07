@@ -628,9 +628,7 @@ class CallManager(
         _videoState.value = _videoState.value.copy(swapped = videoSwapped)
         handleMirroring()
 
-//todo TOM received rotated video shouldn't be full scale
-        //todo TOM make sure the swap icon is visible
-        //todo TOM Should we show the 'no video' inset straight away?
+        //todo TOM floating inset loses its rounded corners when the second surfaceview is added
         //todo TOM ios rotates the controls in landscape ( just the buttons though, not the whole ui??)
 
         if (!videoSwapped) {

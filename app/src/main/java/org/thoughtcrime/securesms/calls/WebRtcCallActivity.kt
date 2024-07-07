@@ -247,6 +247,12 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity(), SensorEventLis
         }
     }
 
+    /**
+     * We need to track the device's orientation so we can calculate whether or not to rotate the video streams
+     * This works a lot better than using `OrientationEventListener > onOrientationChanged'
+     * which gives us a rotation angle that doesn't take into account pitch vs roll, so tipping the device from front to back would
+     * trigger the video rotation logic, while we really only want it when the device is in portrait or landscape.
+     */
     override fun onSensorChanged(event: SensorEvent) {
         if (event.sensor.type == Sensor.TYPE_ROTATION_VECTOR) {
             // Get the quaternion from the rotation vector sensor
@@ -268,7 +274,6 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity(), SensorEventLis
 
             if (currentOrientation != lastOrientation) {
                 lastOrientation = currentOrientation
-                Log.d("", "*********** orientation: $currentOrientation")
                 viewModel.deviceOrientation = currentOrientation
             }
         }
@@ -422,11 +427,21 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity(), SensorEventLis
                 }
             }
 
-            // handle video windows
+            // handle video state
             launch {
                 viewModel.videoState.collect { state ->
                     binding.floatingRenderer.removeAllViews()
                     binding.fullscreenRenderer.removeAllViews()
+
+                    // the floating video inset (empty or not) should be shown
+                    // the moment we have either of the video streams
+                    if(!state.userVideoEnabled && !state.remoteVideoEnabled){
+                        binding.floatingRendererContainer.isVisible = false
+                        binding.swapViewIcon.isVisible = false
+                    } else {
+                        binding.floatingRendererContainer.isVisible = true
+                        binding.swapViewIcon.isVisible = true
+                    }
 
                     // handle fullscreen video window
                     if(state.showFullscreenVideo()){
