@@ -275,6 +275,7 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity(), SensorEventLis
             if (currentOrientation != lastOrientation) {
                 lastOrientation = currentOrientation
                 viewModel.deviceOrientation = currentOrientation
+                updateControlsRotation()
             }
         }
     }
@@ -295,15 +296,31 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity(), SensorEventLis
         ContextCompat.startForegroundService(this, answerIntent)
     }
 
-    private fun updateControlsRotation(newRotation: Int) {
+    private fun updateControlsRotation() {
         with (binding) {
-            val rotation = newRotation.toFloat()
-            remoteRecipient.rotation = rotation
-            speakerPhoneButton.rotation = rotation
-            microphoneButton.rotation = rotation
-            enableCameraButton.rotation = rotation
-            switchCameraButton.rotation = rotation
-            endCallButton.rotation = rotation
+            val rotation = when(viewModel.deviceOrientation){
+                Orientation.LANDSCAPE -> -90f
+                Orientation.REVERSED_LANDSCAPE -> 90f
+                else -> 0f
+            }
+
+            remoteRecipient.animate().cancel()
+            remoteRecipient.animate().rotation(rotation).start()
+
+            speakerPhoneButton.animate().cancel()
+            speakerPhoneButton.animate().rotation(rotation).start()
+
+            microphoneButton.animate().cancel()
+            microphoneButton.animate().rotation(rotation).start()
+
+            enableCameraButton.animate().cancel()
+            enableCameraButton.animate().rotation(rotation).start()
+
+            switchCameraButton.animate().cancel()
+            switchCameraButton.animate().rotation(rotation).start()
+
+            endCallButton.animate().cancel()
+            endCallButton.animate().rotation(rotation).start()
         }
     }
 
