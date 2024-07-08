@@ -628,9 +628,6 @@ class CallManager(
         _videoState.value = _videoState.value.copy(swapped = videoSwapped)
         handleMirroring()
 
-        //todo TOM floating inset loses its rounded corners when the second surfaceview is added
-        //todo TOM ios rotates the controls in landscape ( just the buttons though, not the whole ui??)
-
         if (!videoSwapped) {
             peerConnection?.rotationVideoSink?.apply {
                 setSink(floatingRenderer)
