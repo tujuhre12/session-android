@@ -66,6 +66,7 @@ import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.ProfileKeyUtil
 import org.session.libsession.utilities.SSKEnvironment
+import org.session.libsession.utilities.SSKEnvironment.ProfileManagerProtocol.Companion.NAME_PADDED_LENGTH
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.Recipient.DisappearingState
@@ -475,9 +476,11 @@ open class Storage(
         val name = userProfile.getName() ?: return
         val userPic = userProfile.getPic()
         val profileManager = SSKEnvironment.shared.profileManager
-        if (name.isNotEmpty()) {
-            TextSecurePreferences.setProfileName(context, name)
-            profileManager.setName(context, recipient, name)
+
+        name.takeUnless { it.isEmpty() }?.truncate(NAME_PADDED_LENGTH)?.let {
+            TextSecurePreferences.setProfileName(context, it)
+            profileManager.setName(context, recipient, it)
+            if (it != name) userProfile.setName(it)
         }
 
         // update pfp
@@ -1799,3 +1802,11 @@ open class Storage(
         }
     }
 }
+
+/**
+ * Truncate a string to a specified number of bytes
+ *
+ * This could split multi-byte characters/emojis.
+ */
+private fun String.truncate(sizeInBytes: Int): String =
+    toByteArray().takeIf { it.size > sizeInBytes }?.take(sizeInBytes)?.toByteArray()?.let(::String) ?: this
