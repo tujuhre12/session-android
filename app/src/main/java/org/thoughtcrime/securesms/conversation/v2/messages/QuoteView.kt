@@ -72,7 +72,7 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
         // Author
         val author = contactDb.getContactWithSessionID(authorPublicKey)
         val localNumber = TextSecurePreferences.getLocalNumber(context)
-        val quoteIsLocalUser = localNumber != null && authorPublicKey == localNumber
+        val quoteIsLocalUser = localNumber != null && localNumber == author?.sessionID
 
         val authorDisplayName =
             if (quoteIsLocalUser) context.getString(R.string.QuoteView_you)
@@ -80,15 +80,7 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
         binding.quoteViewAuthorTextView.text = authorDisplayName
         binding.quoteViewAuthorTextView.setTextColor(getTextColor(isOutgoingMessage))
         // Body
-        binding.quoteViewBodyTextView.text = if (isOpenGroupInvitation)
-            resources.getString(R.string.open_group_invitation_view__open_group_invitation)
-        else MentionUtilities.highlightMentions(
-            text = (body ?: "").toSpannable(),
-            isOutgoingMessage = isOutgoingMessage,
-            isQuote = true,
-            threadID = threadID,
-            context = context
-        )
+        binding.quoteViewBodyTextView.text = if (isOpenGroupInvitation) resources.getString(R.string.open_group_invitation_view__open_group_invitation) else MentionUtilities.highlightMentions((body ?: "").toSpannable(), threadID, context)
         binding.quoteViewBodyTextView.setTextColor(getTextColor(isOutgoingMessage))
         // Accent line / attachment preview
         val hasAttachments = (attachments != null && attachments.asAttachments().isNotEmpty()) && !isOriginalMissing
@@ -116,9 +108,8 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
                 attachments.thumbnailSlide != null -> {
                     val slide = attachments.thumbnailSlide!!
                     // This internally fetches the thumbnail
-                    binding.quoteViewAttachmentThumbnailImageView
-                        .root.setRoundedCorners(toPx(4, resources))
-                    binding.quoteViewAttachmentThumbnailImageView.root.setImageResource(glide, slide, false)
+                    binding.quoteViewAttachmentThumbnailImageView.root.radius = toPx(4, resources)
+                    binding.quoteViewAttachmentThumbnailImageView.root.setImageResource(glide, slide, false, null)
                     binding.quoteViewAttachmentThumbnailImageView.root.isVisible = true
                     binding.quoteViewBodyTextView.text = if (MediaUtil.isVideo(slide.asAttachment())) resources.getString(R.string.Slide_video) else resources.getString(R.string.Slide_image)
                 }

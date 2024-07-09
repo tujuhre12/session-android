@@ -66,7 +66,7 @@ class VisibleMessageContentView : ConstraintLayout {
         thread: Recipient,
         searchQuery: String? = null,
         contactIsTrusted: Boolean = true,
-        onAttachmentNeedsDownload: (DatabaseAttachment) -> Unit,
+        onAttachmentNeedsDownload: (Long, Long) -> Unit,
         suppressThumbnails: Boolean = false
     ) {
         // Background
@@ -135,11 +135,19 @@ class VisibleMessageContentView : ConstraintLayout {
         if (message is MmsMessageRecord) {
             message.slideDeck.asAttachments().forEach { attach ->
                 val dbAttachment = attach as? DatabaseAttachment ?: return@forEach
-                onAttachmentNeedsDownload(dbAttachment)
+                val attachmentId = dbAttachment.attachmentId.rowId
+                if (attach.transferState == AttachmentTransferProgress.TRANSFER_PROGRESS_PENDING
+                    && MessagingModuleConfiguration.shared.storage.getAttachmentUploadJob(attachmentId) == null) {
+                    onAttachmentNeedsDownload(attachmentId, dbAttachment.mmsId)
+                }
             }
             message.linkPreviews.forEach { preview ->
                 val previewThumbnail = preview.getThumbnail().orNull() as? DatabaseAttachment ?: return@forEach
-                onAttachmentNeedsDownload(previewThumbnail)
+                val attachmentId = previewThumbnail.attachmentId.rowId
+                if (previewThumbnail.transferState == AttachmentTransferProgress.TRANSFER_PROGRESS_PENDING
+                    && MessagingModuleConfiguration.shared.storage.getAttachmentUploadJob(attachmentId) == null) {
+                    onAttachmentNeedsDownload(attachmentId, previewThumbnail.mmsId)
+                }
             }
         }
 
@@ -274,12 +282,7 @@ class VisibleMessageContentView : ConstraintLayout {
         fun getBodySpans(context: Context, message: MessageRecord, searchQuery: String?): Spannable {
             var body = message.body.toSpannable()
 
-            body = MentionUtilities.highlightMentions(
-                text = body,
-                isOutgoingMessage = message.isOutgoing,
-                threadID = message.threadId,
-                context = context
-            )
+            body = MentionUtilities.highlightMentions(body, message.isOutgoing, message.threadId, context)
             body = SearchUtil.getHighlightedSpan(Locale.getDefault(),
                 { BackgroundColorSpan(Color.WHITE) }, body, searchQuery)
             body = SearchUtil.getHighlightedSpan(Locale.getDefault(),

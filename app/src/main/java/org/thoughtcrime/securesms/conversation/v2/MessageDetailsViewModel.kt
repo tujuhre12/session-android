@@ -124,7 +124,7 @@ class MessageDetailsViewModel @Inject constructor(
         if (slide.transferState == AttachmentTransferProgress.TRANSFER_PROGRESS_FAILED) {
             // Restart download here (on IO thread)
             (slide.asAttachment() as? DatabaseAttachment)?.let { attachment ->
-                onAttachmentNeedsDownload(attachment)
+                onAttachmentNeedsDownload(attachment.attachmentId.rowId, state.mmsRecord.getId())
             }
         }
 
@@ -137,9 +137,9 @@ class MessageDetailsViewModel @Inject constructor(
         }
     }
 
-    fun onAttachmentNeedsDownload(attachment: DatabaseAttachment) {
+    fun onAttachmentNeedsDownload(attachmentId: Long, mmsId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
-            JobQueue.shared.add(AttachmentDownloadJob(attachment.attachmentId.rowId, attachment.mmsId))
+            JobQueue.shared.add(AttachmentDownloadJob(attachmentId, mmsId))
         }
     }
 }
