@@ -11,10 +11,8 @@ import android.os.Looper
 import android.util.AttributeSet
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
-import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
-import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import androidx.annotation.ColorInt
@@ -28,18 +26,17 @@ import androidx.core.view.isVisible
 import androidx.core.view.marginBottom
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
-import network.loki.messenger.databinding.ViewEmojiReactionsBinding
 import network.loki.messenger.databinding.ViewVisibleMessageBinding
-import network.loki.messenger.databinding.ViewstubVisibleMessageMarkerContainerBinding
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.contacts.Contact.ContactContext
 import org.session.libsession.messaging.open_groups.OpenGroupApi
-import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.ViewUtil
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.modifyLayoutParams
 import org.session.libsignal.utilities.IdPrefix
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.database.LastSentTimestampCache
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
@@ -68,7 +65,7 @@ import kotlin.math.sqrt
 private const val TAG = "VisibleMessageView"
 
 @AndroidEntryPoint
-class VisibleMessageView : FrameLayout {
+class VisibleMessageView : LinearLayout {
     private var replyDisabled: Boolean = false
     @Inject lateinit var threadDb: ThreadDatabase
     @Inject lateinit var lokiThreadDb: LokiThreadDatabase
@@ -78,16 +75,7 @@ class VisibleMessageView : FrameLayout {
     @Inject lateinit var mmsDb: MmsDatabase
     @Inject lateinit var lastSentTimestampCache: LastSentTimestampCache
 
-    private val binding = ViewVisibleMessageBinding.inflate(LayoutInflater.from(context), this, true)
-
-    private val markerContainerBinding = lazy(LazyThreadSafetyMode.NONE) {
-        ViewstubVisibleMessageMarkerContainerBinding.bind(binding.unreadMarkerContainerStub.inflate())
-    }
-
-    private val emojiReactionsBinding = lazy(LazyThreadSafetyMode.NONE) {
-        ViewEmojiReactionsBinding.bind(binding.emojiReactionsView.inflate())
-    }
-
+    private val binding by lazy { ViewVisibleMessageBinding.bind(this) }
     private val swipeToReplyIcon = ContextCompat.getDrawable(context, R.drawable.ic_baseline_reply_24)!!.mutate()
     private val swipeToReplyIconRect = Rect()
     private var dx = 0.0f
@@ -106,7 +94,7 @@ class VisibleMessageView : FrameLayout {
     var onPress: ((event: MotionEvent) -> Unit)? = null
     var onSwipeToReply: (() -> Unit)? = null
     var onLongPress: (() -> Unit)? = null
-    val messageContentView: VisibleMessageContentView get() = binding.messageContentView.root
+    val messageContentView: VisibleMessageContentView by lazy { binding.messageContentView.root }
 
     companion object {
         const val swipeToReplyThreshold = 64.0f // dp
@@ -120,7 +108,12 @@ class VisibleMessageView : FrameLayout {
     constructor(context: Context, attrs: AttributeSet) : super(context, attrs)
     constructor(context: Context, attrs: AttributeSet, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
-    init {
+    override fun onFinishInflate() {
+        super.onFinishInflate()
+        initialize()
+    }
+
+    private fun initialize() {
         isHapticFeedbackEnabled = true
         setWillNotDraw(false)
         binding.root.disableClipping()
@@ -128,11 +121,7 @@ class VisibleMessageView : FrameLayout {
         binding.messageInnerContainer.disableClipping()
         binding.messageInnerLayout.disableClipping()
         binding.messageContentView.root.disableClipping()
-
-        // Default layout params
-        layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
     }
-
     // endregion
 
     // region Updating
@@ -146,7 +135,7 @@ class VisibleMessageView : FrameLayout {
         senderSessionID: String,
         lastSeen: Long,
         delegate: VisibleMessageViewDelegate? = null,
-        onAttachmentNeedsDownload: (DatabaseAttachment) -> Unit,
+        onAttachmentNeedsDownload: (Long, Long) -> Unit,
         lastSentMessageId: Long
     ) {
         replyDisabled = message.isOpenGroupInvitation
@@ -214,13 +203,7 @@ class VisibleMessageView : FrameLayout {
         binding.senderNameTextView.text = contact?.displayName(contactContext) ?: senderSessionID
 
         // Unread marker
-        val shouldShowUnreadMarker = lastSeen != -1L && message.timestamp > lastSeen && (previous == null || previous.timestamp <= lastSeen) && !message.isOutgoing
-        if (shouldShowUnreadMarker) {
-            markerContainerBinding.value.root.isVisible = true
-        } else if (markerContainerBinding.isInitialized()) {
-            // Only need to hide the binding when the binding is inflated. (default is gone)
-            markerContainerBinding.value.root.isVisible = false
-        }
+        binding.unreadMarkerContainer.isVisible = lastSeen != -1L && message.timestamp > lastSeen && (previous == null || previous.timestamp <= lastSeen) && !message.isOutgoing
 
         // Date break
         val showDateBreak = isStartOfMessageCluster || snIsSelected
@@ -231,22 +214,21 @@ class VisibleMessageView : FrameLayout {
         showStatusMessage(message)
 
         // Emoji Reactions
+        val emojiLayoutParams = binding.emojiReactionsView.root.layoutParams as ConstraintLayout.LayoutParams
+        emojiLayoutParams.horizontalBias = if (message.isOutgoing) 1f else 0f
+        binding.emojiReactionsView.root.layoutParams = emojiLayoutParams
+
         if (message.reactions.isNotEmpty()) {
             val capabilities = lokiThreadDb.getOpenGroupChat(threadID)?.server?.let { lokiApiDb.getServerCapabilities(it) }
             if (capabilities.isNullOrEmpty() || capabilities.contains(OpenGroupApi.Capability.REACTIONS.name.lowercase())) {
-                emojiReactionsBinding.value.root.let { root ->
-                    root.setReactions(message.id, message.reactions, message.isOutgoing, delegate)
-                    root.isVisible = true
-                    (root.layoutParams as ConstraintLayout.LayoutParams).apply {
-                        horizontalBias = if (message.isOutgoing) 1f else 0f
-                    }
-                }
-            } else if (emojiReactionsBinding.isInitialized()) {
-                emojiReactionsBinding.value.root.isVisible = false
+                binding.emojiReactionsView.root.setReactions(message.id, message.reactions, message.isOutgoing, delegate)
+                binding.emojiReactionsView.root.isVisible = true
+            } else {
+                binding.emojiReactionsView.root.isVisible = false
             }
         }
-        else if (emojiReactionsBinding.isInitialized()) {
-            emojiReactionsBinding.value.root.isVisible = false
+        else {
+            binding.emojiReactionsView.root.isVisible = false
         }
 
         // Populate content view

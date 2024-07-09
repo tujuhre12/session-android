@@ -21,7 +21,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
-import android.provider.Settings
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityWebrtcBinding
@@ -101,14 +100,7 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
         super.onCreate(savedInstanceState, ready)
-
-        // Only enable auto-rotate if system auto-rotate is enabled
-        if (isAutoRotateOn()) {
-            rotationListener.enable()
-        } else {
-            rotationListener.disable()
-        }
-
+        rotationListener.enable()
         binding = ActivityWebrtcBinding.inflate(layoutInflater)
         setContentView(binding.root)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
@@ -191,14 +183,6 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
             onBackPressed()
         }
 
-    }
-
-    //Function to check if Android System Auto-rotate is on or off
-    private fun isAutoRotateOn(): Boolean {
-        return Settings.System.getInt(
-            contentResolver,
-            Settings.System.ACCELEROMETER_ROTATION, 0
-        ) == 1
     }
 
     override fun onDestroy() {

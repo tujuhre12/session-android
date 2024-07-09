@@ -9,13 +9,15 @@
     <include layout="@layout/thumbnail_view"
         android:id="@+id/album_cell_1"
         android:layout_width="@dimen/album_3_cell_width_big"
-        android:layout_height="@dimen/album_3_total_height"/>
+        android:layout_height="@dimen/album_3_total_height"
+        app:thumbnail_radius="0dp"/>
 
     <include layout="@layout/thumbnail_view"
         android:id="@+id/album_cell_2"
         android:layout_width="@dimen/album_3_cell_size_small"
         android:layout_height="@dimen/album_3_cell_size_small"
-        android:layout_gravity="end|top"/>
+        android:layout_gravity="end|top"
+        app:thumbnail_radius="0dp"/>
 
 
     <FrameLayout
@@ -27,7 +29,8 @@
             android:id="@+id/album_cell_3"
             android:layout_height="match_parent"
             android:layout_width="match_parent"
-            android:layout_gravity="center_horizontal|bottom"/>
+            android:layout_gravity="center_horizontal|bottom"
+            app:thumbnail_radius="0dp"/>
 
         <TextView
             tools:visibility="visible"

@@ -203,10 +203,12 @@ private fun handleConfigurationMessage(message: ConfigurationMessage) {
 
     TextSecurePreferences.setConfigurationMessageSynced(context, true)
     TextSecurePreferences.setLastProfileUpdateTime(context, message.sentTimestamp!!)
-
-    TextSecurePreferences.setHasLegacyConfig(context, true)
-    if (!firstTimeSync) return
-
+    val isForceSync = TextSecurePreferences.hasForcedNewConfig(context)
+    val currentTime = SnodeAPI.nowWithOffset
+    if (ConfigBase.isNewConfigEnabled(isForceSync, currentTime)) {
+        TextSecurePreferences.setHasLegacyConfig(context, true)
+        if (!firstTimeSync) return
+    }
     val allClosedGroupPublicKeys = storage.getAllClosedGroupPublicKeys()
     for (closedGroup in message.closedGroups) {
         if (allClosedGroupPublicKeys.contains(closedGroup.publicKey)) {
@@ -258,7 +260,7 @@ fun MessageReceiver.handleUnsendRequest(message: UnsendRequest): Long? {
         SnodeAPI.deleteMessage(author, listOf(serverHash))
     }
     val deletedMessageId = messageDataProvider.updateMessageAsDeleted(timestamp, author)
-    if (!messageDataProvider.isOutgoingMessage(timestamp)) {
+    if (!messageDataProvider.isOutgoingMessage(messageIdToDelete)) {
         SSKEnvironment.shared.notificationManager.updateNotification(context)
     }
 
