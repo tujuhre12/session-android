@@ -56,10 +56,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.ui.LocalDimensions
-import org.thoughtcrime.securesms.ui.base
-import org.thoughtcrime.securesms.ui.LocalColors
-import org.thoughtcrime.securesms.ui.xl
+import org.thoughtcrime.securesms.ui.theme.LocalDimensions
+import org.thoughtcrime.securesms.ui.theme.base
+import org.thoughtcrime.securesms.ui.theme.LocalColors
+import org.thoughtcrime.securesms.ui.theme.xl
 import java.util.concurrent.Executors
 
 private const val TAG = "NewMessageFragment"

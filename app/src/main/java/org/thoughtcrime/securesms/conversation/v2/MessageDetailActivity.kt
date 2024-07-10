@@ -64,17 +64,17 @@ import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.HorizontalPagerIndicator
 import org.thoughtcrime.securesms.ui.LargeItemButton
-import org.thoughtcrime.securesms.ui.LocalDimensions
-import org.thoughtcrime.securesms.ui.PreviewTheme
-import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
+import org.thoughtcrime.securesms.ui.theme.LocalDimensions
+import org.thoughtcrime.securesms.ui.theme.PreviewTheme
+import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.TitledText
-import org.thoughtcrime.securesms.ui.base
-import org.thoughtcrime.securesms.ui.baseBold
-import org.thoughtcrime.securesms.ui.baseMonospace
-import org.thoughtcrime.securesms.ui.ThemeColors
-import org.thoughtcrime.securesms.ui.LocalColors
-import org.thoughtcrime.securesms.ui.blackAlpha40
-import org.thoughtcrime.securesms.ui.destructiveButtonColors
+import org.thoughtcrime.securesms.ui.theme.base
+import org.thoughtcrime.securesms.ui.theme.baseBold
+import org.thoughtcrime.securesms.ui.theme.baseMonospace
+import org.thoughtcrime.securesms.ui.theme.ThemeColors
+import org.thoughtcrime.securesms.ui.theme.LocalColors
+import org.thoughtcrime.securesms.ui.theme.blackAlpha40
+import org.thoughtcrime.securesms.ui.theme.destructiveButtonColors
 import org.thoughtcrime.securesms.ui.setComposeContent
 import javax.inject.Inject
 

@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.ui
+package org.thoughtcrime.securesms.ui.theme
 
 import android.content.Context
 import androidx.compose.foundation.background
@@ -79,6 +79,7 @@ fun PreviewTheme(
     }
 }
 
+// used for previews
 class SessionColorsParameterProvider : PreviewParameterProvider<ThemeColors> {
     override val values = sequenceOf(ClassicDark(), ClassicLight(), OceanDark(), OceanLight())
 }

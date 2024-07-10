@@ -13,8 +13,15 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.PINK_ACC
 import org.session.libsession.utilities.TextSecurePreferences.Companion.PURPLE_ACCENT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.RED_ACCENT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.YELLOW_ACCENT
-import org.thoughtcrime.securesms.ui.ThemeColors
-import org.thoughtcrime.securesms.ui.LightDarkColors
+import org.thoughtcrime.securesms.ui.theme.ThemeColors
+import org.thoughtcrime.securesms.ui.theme.LightDarkColors
+import org.thoughtcrime.securesms.ui.theme.primaryBlue
+import org.thoughtcrime.securesms.ui.theme.primaryGreen
+import org.thoughtcrime.securesms.ui.theme.primaryOrange
+import org.thoughtcrime.securesms.ui.theme.primaryPink
+import org.thoughtcrime.securesms.ui.theme.primaryPurple
+import org.thoughtcrime.securesms.ui.theme.primaryRed
+import org.thoughtcrime.securesms.ui.theme.primaryYellow
 
 /**
  * Retrieve the current [ThemeColors] from [TextSecurePreferences] and current system settings.
@@ -25,12 +32,12 @@ private fun TextSecurePreferences.lightDarkColors() = LightDarkColors(isClassic(
 private fun TextSecurePreferences.isLight(): Boolean = getThemeStyle() in setOf(CLASSIC_LIGHT, OCEAN_LIGHT)
 private fun TextSecurePreferences.isClassic(): Boolean = getThemeStyle() in setOf(CLASSIC_DARK, CLASSIC_LIGHT)
 private fun TextSecurePreferences.primaryColor(): Color = when(getSelectedAccentColor()) {
-    GREEN_ACCENT -> org.thoughtcrime.securesms.ui.primaryGreen
-    BLUE_ACCENT -> org.thoughtcrime.securesms.ui.primaryBlue
-    PURPLE_ACCENT -> org.thoughtcrime.securesms.ui.primaryPurple
-    PINK_ACCENT -> org.thoughtcrime.securesms.ui.primaryPink
-    RED_ACCENT -> org.thoughtcrime.securesms.ui.primaryRed
-    ORANGE_ACCENT -> org.thoughtcrime.securesms.ui.primaryOrange
-    YELLOW_ACCENT -> org.thoughtcrime.securesms.ui.primaryYellow
+    GREEN_ACCENT -> primaryGreen
+    BLUE_ACCENT -> primaryBlue
+    PURPLE_ACCENT -> primaryPurple
+    PINK_ACCENT -> primaryPink
+    RED_ACCENT -> primaryRed
+    ORANGE_ACCENT -> primaryOrange
+    YELLOW_ACCENT -> primaryYellow
     else -> Color.Unspecified
 }

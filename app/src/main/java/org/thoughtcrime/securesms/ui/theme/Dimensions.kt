@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.ui
+package org.thoughtcrime.securesms.ui.theme
 
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.unit.Dp

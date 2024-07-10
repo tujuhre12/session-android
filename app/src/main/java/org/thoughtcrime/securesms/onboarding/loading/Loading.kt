@@ -13,11 +13,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import network.loki.messenger.R
-import org.thoughtcrime.securesms.ui.LocalDimensions
+import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.ProgressArc
-import org.thoughtcrime.securesms.ui.base
+import org.thoughtcrime.securesms.ui.theme.base
 import org.thoughtcrime.securesms.ui.contentDescription
-import org.thoughtcrime.securesms.ui.h7
+import org.thoughtcrime.securesms.ui.theme.h7
 
 @Composable
 internal fun LoadingScreen(state: State) {
