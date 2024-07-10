@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.ui.color
+package org.thoughtcrime.securesms.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -13,19 +13,14 @@ import androidx.compose.material.Text
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.primarySurface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import org.thoughtcrime.securesms.ui.PreviewTheme
-import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
-import org.thoughtcrime.securesms.ui.base
 
-val LocalColors = staticCompositionLocalOf<Colors> { ClassicDark() }
-
-interface Colors {
+interface ThemeColors {
+    // properties to override for each theme
     val isLight: Boolean
     val primary: Color
     val danger: Color
@@ -38,23 +33,57 @@ interface Colors {
     val textBubbleSent: Color
     val backgroundBubbleReceived: Color
     val textBubbleReceived: Color
-    val backgroundBubbleSent: Color get() = primary
     val qrCodeContent: Color
     val qrCodeBackground: Color
     val primaryButtonFill: Color
     val primaryButtonFillText: Color
 }
 
-fun Colors.text(isError: Boolean): Color = if (isError) danger else text
-fun Colors.textSecondary(isError: Boolean): Color = if (isError) danger else textSecondary
-fun Colors.borders(isError: Boolean): Color = if (isError) danger else borders
-
-val Colors.textSelectionColors get() = TextSelectionColors(
+// extra functions and properties that work for all themes
+val ThemeColors.textSelectionColors get() = TextSelectionColors(
     handleColor = primary,
     backgroundColor = primary.copy(alpha = 0.5f)
 )
 
-data class ClassicDark(override val primary: Color = primaryGreen): Colors {
+val ThemeColors.divider get() = text.copy(alpha = TabRowDefaults.DividerOpacity)
+
+fun ThemeColors.text(isError: Boolean): Color = if (isError) danger else text
+fun ThemeColors.textSecondary(isError: Boolean): Color = if (isError) danger else textSecondary
+fun ThemeColors.borders(isError: Boolean): Color = if (isError) danger else borders
+
+fun ThemeColors.toMaterialColors() = androidx.compose.material.Colors(
+    primary = background,
+    primaryVariant = backgroundSecondary,
+    secondary = background,
+    secondaryVariant = background,
+    background = background,
+    surface = background,
+    error = danger,
+    onPrimary = text,
+    onSecondary = text,
+    onBackground = text,
+    onSurface = text,
+    onError = text,
+    isLight = isLight
+)
+
+
+@Composable
+fun ThemeColors.radioButtonColors() = RadioButtonDefaults.colors(
+    selectedColor = primary,
+    unselectedColor = text,
+    disabledColor = disabled
+)
+
+@Composable
+fun transparentButtonColors() = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent)
+
+@Composable
+fun destructiveButtonColors() = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent, contentColor = LocalColors.current.danger)
+
+
+// Our themes
+data class ClassicDark(override val primary: Color = primaryGreen): ThemeColors {
     override val isLight = false
     override val danger = dangerDark
     override val disabled = disabledDark
@@ -72,7 +101,7 @@ data class ClassicDark(override val primary: Color = primaryGreen): Colors {
     override val primaryButtonFillText = Color.Black
 }
 
-data class ClassicLight(override val primary: Color = primaryGreen): Colors {
+data class ClassicLight(override val primary: Color = primaryGreen): ThemeColors {
     override val isLight = true
     override val danger = dangerLight
     override val disabled = disabledLight
@@ -90,7 +119,7 @@ data class ClassicLight(override val primary: Color = primaryGreen): Colors {
     override val primaryButtonFillText = Color.White
 }
 
-data class OceanDark(override val primary: Color = primaryBlue): Colors {
+data class OceanDark(override val primary: Color = primaryBlue): ThemeColors {
     override val isLight = false
     override val danger = dangerDark
     override val disabled = disabledDark
@@ -108,7 +137,7 @@ data class OceanDark(override val primary: Color = primaryBlue): Colors {
     override val primaryButtonFillText = Color.Black
 }
 
-data class OceanLight(override val primary: Color = primaryBlue): Colors {
+data class OceanLight(override val primary: Color = primaryBlue): ThemeColors {
     override val isLight = true
     override val danger = dangerLight
     override val disabled = disabledLight
@@ -126,21 +155,10 @@ data class OceanLight(override val primary: Color = primaryBlue): Colors {
     override val primaryButtonFillText = Color.White
 }
 
-@Composable
-fun Colors(name: String, colors: List<Color>) {
-    Column {
-        colors.forEachIndexed { i, it ->
-            Box(Modifier.background(it)) {
-                Text("$name: $i")
-            }
-        }
-    }
-}
-
 @Preview
 @Composable
 fun PreviewThemeColors(
-    @PreviewParameter(SessionColorsParameterProvider::class) colors: Colors
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
 ) {
     PreviewTheme(colors) { ThemeColors() }
 }
@@ -175,42 +193,16 @@ private fun ThemeColors() {
     }
 }
 
-@Composable
-fun Colors.outlinedTextFieldColors(
-    isError: Boolean
-) = TextFieldDefaults.outlinedTextFieldColors(
-    textColor = if (isError) danger else text,
-    cursorColor = if (isError) danger else text,
-    focusedBorderColor = borders,
-    unfocusedBorderColor = borders,
-    placeholderColor = if (isError) danger else textSecondary
-)
-
-val Colors.divider get() = text.copy(alpha = TabRowDefaults.DividerOpacity)
-
-@Composable
-fun Colors.radioButtonColors() = RadioButtonDefaults.colors(
-    selectedColor = primary,
-    unselectedColor = text,
-    disabledColor = disabled
-)
-
-@Composable
-fun transparentButtonColors() = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent)
-
-@Composable
-fun destructiveButtonColors() = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent, contentColor = LocalColors.current.danger)
-
 
 /**
- * This class holds two instances of [Colors], [light] representing the [Colors] to use when the system is in a
- * light theme, and [dark] representing the [Colors] to use when the system is in a dark theme.
+ * This class holds two instances of [ThemeColors], [light] representing the [ThemeColors] to use when the system is in a
+ * light theme, and [dark] representing the [ThemeColors] to use when the system is in a dark theme.
  *
  * If the user has [followSystemSettings] turned on then [light] should be equal to [dark].
  */
 data class LightDarkColors(
-    val light: Colors,
-    val dark: Colors
+    val light: ThemeColors,
+    val dark: ThemeColors
 ) {
     @Composable
     fun colors() = if (light == dark || isSystemInDarkTheme()) dark else light

@@ -13,22 +13,24 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.PINK_ACC
 import org.session.libsession.utilities.TextSecurePreferences.Companion.PURPLE_ACCENT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.RED_ACCENT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.YELLOW_ACCENT
+import org.thoughtcrime.securesms.ui.ThemeColors
+import org.thoughtcrime.securesms.ui.LightDarkColors
 
 /**
- * Retrieve the current [Colors] from [TextSecurePreferences] and current system settings.
+ * Retrieve the current [ThemeColors] from [TextSecurePreferences] and current system settings.
  */
 @Composable
-fun TextSecurePreferences.colors(): Colors = lightDarkColors().colors()
+fun TextSecurePreferences.colors(): ThemeColors = lightDarkColors().colors()
 private fun TextSecurePreferences.lightDarkColors() = LightDarkColors(isClassic(), isLight(), getFollowSystemSettings(), primaryColor())
 private fun TextSecurePreferences.isLight(): Boolean = getThemeStyle() in setOf(CLASSIC_LIGHT, OCEAN_LIGHT)
 private fun TextSecurePreferences.isClassic(): Boolean = getThemeStyle() in setOf(CLASSIC_DARK, CLASSIC_LIGHT)
 private fun TextSecurePreferences.primaryColor(): Color = when(getSelectedAccentColor()) {
-    GREEN_ACCENT -> primaryGreen
-    BLUE_ACCENT -> primaryBlue
-    PURPLE_ACCENT -> primaryPurple
-    PINK_ACCENT -> primaryPink
-    RED_ACCENT -> primaryRed
-    ORANGE_ACCENT -> primaryOrange
-    YELLOW_ACCENT -> primaryYellow
+    GREEN_ACCENT -> org.thoughtcrime.securesms.ui.primaryGreen
+    BLUE_ACCENT -> org.thoughtcrime.securesms.ui.primaryBlue
+    PURPLE_ACCENT -> org.thoughtcrime.securesms.ui.primaryPurple
+    PINK_ACCENT -> org.thoughtcrime.securesms.ui.primaryPink
+    RED_ACCENT -> org.thoughtcrime.securesms.ui.primaryRed
+    ORANGE_ACCENT -> org.thoughtcrime.securesms.ui.primaryOrange
+    YELLOW_ACCENT -> org.thoughtcrime.securesms.ui.primaryYellow
     else -> Color.Unspecified
 }

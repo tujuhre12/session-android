@@ -41,8 +41,8 @@ import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.baseBold
 import org.thoughtcrime.securesms.ui.buttonShape
-import org.thoughtcrime.securesms.ui.color.Colors
-import org.thoughtcrime.securesms.ui.color.LocalColors
+import org.thoughtcrime.securesms.ui.ThemeColors
+import org.thoughtcrime.securesms.ui.LocalColors
 import org.thoughtcrime.securesms.ui.contentDescription
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -292,7 +292,7 @@ val MutableInteractionSource.releases
 @Preview
 @Composable
 private fun VariousButtons(
-    @PreviewParameter(SessionColorsParameterProvider::class) colors: Colors
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
 ) {
     PreviewTheme(colors) {
         FlowRow(

@@ -22,7 +22,6 @@ import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import network.loki.messenger.R
-import org.thoughtcrime.securesms.ui.color.LocalColors
 
 class DialogButtonModel(
     val text: GetString,

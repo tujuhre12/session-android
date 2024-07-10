@@ -41,10 +41,10 @@ import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.base
 import org.thoughtcrime.securesms.ui.baseBold
-import org.thoughtcrime.securesms.ui.color.LocalColors
-import org.thoughtcrime.securesms.ui.color.borders
-import org.thoughtcrime.securesms.ui.color.text
-import org.thoughtcrime.securesms.ui.color.textSecondary
+import org.thoughtcrime.securesms.ui.LocalColors
+import org.thoughtcrime.securesms.ui.borders
+import org.thoughtcrime.securesms.ui.text
+import org.thoughtcrime.securesms.ui.textSecondary
 import org.thoughtcrime.securesms.ui.contentDescription
 
 @Preview

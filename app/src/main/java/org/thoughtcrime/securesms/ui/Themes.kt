@@ -10,19 +10,16 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Shapes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import org.session.libsession.utilities.AppTextSecurePreferences
-import org.thoughtcrime.securesms.ui.color.ClassicDark
-import org.thoughtcrime.securesms.ui.color.ClassicLight
-import org.thoughtcrime.securesms.ui.color.Colors
-import org.thoughtcrime.securesms.ui.color.LocalColors
-import org.thoughtcrime.securesms.ui.color.OceanDark
-import org.thoughtcrime.securesms.ui.color.OceanLight
 import org.thoughtcrime.securesms.ui.color.colors
-import org.thoughtcrime.securesms.ui.color.textSelectionColors
+
+// Globally accessible composition local objects
+val LocalColors = staticCompositionLocalOf<ThemeColors> { ClassicDark() }
 
 /**
  * Apply a Material2 compose theme based on user selections in SharedPreferences.
@@ -35,11 +32,11 @@ fun SessionMaterialTheme(
 }
 
 /**
- * Apply a given [Colors], and our typography and shapes as a Material 2 Compose Theme.
+ * Apply a given [ThemeColors], and our typography and shapes as a Material 2 Compose Theme.
  **/
 @Composable
 fun SessionMaterialTheme(
-    colors: Colors,
+    colors: ThemeColors,
     content: @Composable () -> Unit
 ) {
     MaterialTheme(
@@ -57,22 +54,6 @@ fun SessionMaterialTheme(
     }
 }
 
-private fun Colors.toMaterialColors() = androidx.compose.material.Colors(
-    primary = background,
-    primaryVariant = backgroundSecondary,
-    secondary = background,
-    secondaryVariant = background,
-    background = background,
-    surface = background,
-    error = danger,
-    onPrimary = text,
-    onSecondary = text,
-    onBackground = text,
-    onSurface = text,
-    onError = text,
-    isLight = isLight
-)
-
 @Composable private fun Context.colors() = AppTextSecurePreferences(this).colors()
 
 val pillShape = RoundedCornerShape(percent = 50)
@@ -88,7 +69,7 @@ val sessionShapes = Shapes(
  */
 @Composable
 fun PreviewTheme(
-    colors: Colors = LocalColors.current,
+    colors: ThemeColors = LocalColors.current,
     content: @Composable () -> Unit
 ) {
     SessionMaterialTheme(colors) {
@@ -98,6 +79,6 @@ fun PreviewTheme(
     }
 }
 
-class SessionColorsParameterProvider : PreviewParameterProvider<Colors> {
+class SessionColorsParameterProvider : PreviewParameterProvider<ThemeColors> {
     override val values = sequenceOf(ClassicDark(), ClassicLight(), OceanDark(), OceanLight())
 }

@@ -64,10 +64,6 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.runIf
 import org.thoughtcrime.securesms.components.ProfilePictureView
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.OptionsCard
-import org.thoughtcrime.securesms.ui.color.LocalColors
-import org.thoughtcrime.securesms.ui.color.divider
-import org.thoughtcrime.securesms.ui.color.radioButtonColors
-import org.thoughtcrime.securesms.ui.color.transparentButtonColors
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import kotlin.math.min
 import kotlin.math.roundToInt

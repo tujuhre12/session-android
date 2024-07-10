@@ -18,13 +18,13 @@ import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.LocalDimensions
 import org.thoughtcrime.securesms.ui.PreviewTheme
 import org.thoughtcrime.securesms.ui.SessionColorsParameterProvider
-import org.thoughtcrime.securesms.ui.color.Colors
+import org.thoughtcrime.securesms.ui.ThemeColors
 import org.thoughtcrime.securesms.ui.h4
 
 @Preview
 @Composable
 fun AppBarPreview(
-    @PreviewParameter(SessionColorsParameterProvider::class) colors: Colors
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
 ) {
     PreviewTheme(colors) {
         AppBar(title = "Title", {}, {})
