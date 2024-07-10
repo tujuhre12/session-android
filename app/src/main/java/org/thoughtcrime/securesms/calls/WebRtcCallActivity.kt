@@ -8,7 +8,6 @@ import android.content.IntentFilter
 import android.graphics.Outline
 import android.hardware.Sensor
 import android.hardware.SensorEvent
-import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.media.AudioManager
 import android.os.Build
@@ -16,10 +15,8 @@ import android.os.Bundle
 import android.provider.Settings
 import android.view.MenuItem
 import android.view.View
-import android.view.ViewGroup
 import android.view.ViewOutlineProvider
 import android.view.WindowManager
-import android.widget.FrameLayout
 import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
@@ -57,7 +54,7 @@ import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager.AudioDevice.SP
 import kotlin.math.asin
 
 @AndroidEntryPoint
-class WebRtcCallActivity : PassphraseRequiredActionBarActivity(), SensorEventListener {
+class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
 
     companion object {
         const val ACTION_PRE_OFFER = "pre-offer"
@@ -81,9 +78,13 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity(), SensorEventLis
         }
     private var hangupReceiver: BroadcastReceiver? = null
 
-    private var sensorManager: SensorManager? = null
-    private var rotationVectorSensor: Sensor? = null
-    private var lastOrientation = Orientation.UNKNOWN
+    /**
+     * We need to track the device's orientation so we can calculate whether or not to rotate the video streams
+     * This works a lot better than using `OrientationEventListener > onOrientationChanged'
+     * which gives us a rotation angle that doesn't take into account pitch vs roll, so tipping the device from front to back would
+     * trigger the video rotation logic, while we really only want it when the device is in portrait or landscape.
+     */
+    private var orientationManager = OrientationManager(this)
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == android.R.id.home) {
@@ -104,15 +105,6 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity(), SensorEventLis
 
     override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
         super.onCreate(savedInstanceState, ready)
-
-        // Only enable auto-rotate if system auto-rotate is enabled
-        if (isAutoRotateOn()) {
-            // Initialize the SensorManager
-            sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
-
-            // Initialize the sensors
-            rotationVectorSensor = sensorManager!!.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
-        }
 
         binding = ActivityWebrtcBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -200,6 +192,13 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity(), SensorEventLis
             onBackPressed()
         }
 
+        lifecycleScope.launch {
+            orientationManager.orientation.collect { orientation ->
+                viewModel.deviceOrientation = orientation
+                updateControlsRotation()
+            }
+        }
+
         clipFloatingInsets()
     }
 
@@ -222,60 +221,16 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity(), SensorEventLis
         binding.floatingRendererContainer.clipToOutline = true
     }
 
-    //Function to check if Android System Auto-rotate is on or off
-    private fun isAutoRotateOn(): Boolean {
-        return Settings.System.getInt(
-            contentResolver,
-            Settings.System.ACCELEROMETER_ROTATION, 0
-        ) == 1
-    }
-
     override fun onResume() {
         super.onResume()
-        rotationVectorSensor?.also { sensor ->
-            sensorManager?.registerListener(this, sensor, SensorManager.SENSOR_DELAY_UI)
-        }
+        orientationManager.startOrientationListener()
+
     }
 
     override fun onPause() {
         super.onPause()
-        sensorManager?.unregisterListener(this)
+        orientationManager.stopOrientationListener()
     }
-
-    /**
-     * We need to track the device's orientation so we can calculate whether or not to rotate the video streams
-     * This works a lot better than using `OrientationEventListener > onOrientationChanged'
-     * which gives us a rotation angle that doesn't take into account pitch vs roll, so tipping the device from front to back would
-     * trigger the video rotation logic, while we really only want it when the device is in portrait or landscape.
-     */
-    override fun onSensorChanged(event: SensorEvent) {
-        if (event.sensor.type == Sensor.TYPE_ROTATION_VECTOR) {
-            // Get the quaternion from the rotation vector sensor
-            val quaternion = FloatArray(4)
-            SensorManager.getQuaternionFromVector(quaternion, event.values)
-
-            // Calculate Euler angles from the quaternion
-            val pitch = asin(2.0 * (quaternion[0] * quaternion[2] - quaternion[3] * quaternion[1]))
-
-            // Convert radians to degrees
-            val pitchDegrees = Math.toDegrees(pitch).toFloat()
-
-            // Determine the device's orientation based on the pitch and roll values
-            val currentOrientation = when {
-                pitchDegrees > 45  -> Orientation.LANDSCAPE
-                pitchDegrees < -45 -> Orientation.REVERSED_LANDSCAPE
-                else -> Orientation.PORTRAIT
-            }
-
-            if (currentOrientation != lastOrientation) {
-                lastOrientation = currentOrientation
-                viewModel.deviceOrientation = currentOrientation
-                updateControlsRotation()
-            }
-        }
-    }
-
-    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
 
     override fun onDestroy() {
         super.onDestroy()
@@ -283,7 +238,7 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity(), SensorEventLis
             LocalBroadcastManager.getInstance(this).unregisterReceiver(receiver)
         }
 
-        rotationVectorSensor = null
+        orientationManager.destroy()
     }
 
     private fun answerCall() {
