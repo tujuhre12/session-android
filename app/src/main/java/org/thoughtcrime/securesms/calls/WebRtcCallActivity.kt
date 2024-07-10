@@ -81,7 +81,7 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity(), SensorEventLis
         }
     private var hangupReceiver: BroadcastReceiver? = null
 
-    private lateinit var sensorManager: SensorManager
+    private var sensorManager: SensorManager? = null
     private var rotationVectorSensor: Sensor? = null
     private var lastOrientation = Orientation.UNKNOWN
 
@@ -111,7 +111,7 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity(), SensorEventLis
             sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
 
             // Initialize the sensors
-            rotationVectorSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
+            rotationVectorSensor = sensorManager!!.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
         }
 
         binding = ActivityWebrtcBinding.inflate(layoutInflater)
@@ -233,17 +233,13 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity(), SensorEventLis
     override fun onResume() {
         super.onResume()
         rotationVectorSensor?.also { sensor ->
-            sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_UI)
+            sensorManager?.registerListener(this, sensor, SensorManager.SENSOR_DELAY_UI)
         }
     }
 
     override fun onPause() {
         super.onPause()
-        try {
-            sensorManager.unregisterListener(this)
-        } catch (e: Exception) {
-            // the unregister can throw if the activity dies too quickly and the sensorManager is not initialised yet
-        }
+        sensorManager?.unregisterListener(this)
     }
 
     /**

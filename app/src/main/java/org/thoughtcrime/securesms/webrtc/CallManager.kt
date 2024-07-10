@@ -7,11 +7,13 @@ import androidx.core.content.ContextCompat
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.functional.bind
@@ -371,7 +373,7 @@ class CallManager(
             val byteArray = ByteArray(buffer.data.remaining()) { buffer.data[it] }
             val json = Json.parseToJsonElement(byteArray.decodeToString()) as JsonObject
             if (json.containsKey("video")) {
-                _videoState.value = _videoState.value.copy(remoteVideoEnabled = (json["video"] as JsonPrimitive).boolean)
+                _videoState.update { it.copy(remoteVideoEnabled = json["video"]?.jsonPrimitive?.boolean ?: false) }
                 handleMirroring()
             } else if (json.containsKey("hangup")) {
                 peerConnectionObservers.forEach(WebRtcListener::onHangup)
@@ -625,17 +627,17 @@ class CallManager(
         videoSwapped = !videoSwapped
 
         // update the state
-        _videoState.value = _videoState.value.copy(swapped = videoSwapped)
+        _videoState.update { it.copy(swapped = videoSwapped) }
         handleMirroring()
 
-        if (!videoSwapped) {
+        if (videoSwapped) {
+            peerConnection?.rotationVideoSink?.setSink(fullscreenRenderer)
+            floatingRenderer?.let{remoteRotationSink?.setSink(it) }
+        } else {
             peerConnection?.rotationVideoSink?.apply {
                 setSink(floatingRenderer)
             }
             fullscreenRenderer?.let{ remoteRotationSink?.setSink(it) }
-        } else {
-            peerConnection?.rotationVideoSink?.setSink(fullscreenRenderer)
-            floatingRenderer?.let{remoteRotationSink?.setSink(it) }
         }
     }
 
@@ -672,7 +674,7 @@ class CallManager(
     }
 
     fun handleSetMuteVideo(muted: Boolean, lockManager: LockManager) {
-        _videoState.value = _videoState.value.copy(userVideoEnabled = !muted)
+        _videoState.update { it.copy(userVideoEnabled = !muted) }
         handleMirroring()
 
         val connection = peerConnection ?: return
@@ -712,11 +714,10 @@ class CallManager(
 
     fun setDeviceOrientation(orientation: Orientation) {
         // set rotation to the video based on the device's orientation and the camera facing direction
-        val rotation = when{
-            orientation == Orientation.PORTRAIT -> 0
-            orientation == Orientation.LANDSCAPE && isCameraFrontFacing() -> 90
-            orientation == Orientation.LANDSCAPE && !isCameraFrontFacing() -> -90
-            orientation == Orientation.REVERSED_LANDSCAPE -> 270
+        val rotation = when (orientation) {
+            Orientation.PORTRAIT -> 0
+            Orientation.LANDSCAPE -> if (isCameraFrontFacing()) 90 else -90
+            Orientation.REVERSED_LANDSCAPE -> 270
             else -> 0
         }
 
