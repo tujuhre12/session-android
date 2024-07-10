@@ -165,9 +165,6 @@ class CallManager(
     var fullscreenRenderer: SurfaceViewRenderer? = null
     private var peerConnectionFactory: PeerConnectionFactory? = null
 
-    // false when the user's video is in the floating render and true when it's in fullscreen
-    private var videoSwapped: Boolean = false
-
     fun clearPendingIceUpdates() {
         pendingOutgoingIceUpdates.clear()
         pendingIncomingIceUpdates.clear()
@@ -624,13 +621,11 @@ class CallManager(
     }
 
     fun swapVideos() {
-        videoSwapped = !videoSwapped
-
         // update the state
-        _videoState.update { it.copy(swapped = videoSwapped) }
+        _videoState.update { it.copy(swapped = !it.swapped) }
         handleMirroring()
 
-        if (videoSwapped) {
+        if (_videoState.value.swapped) {
             peerConnection?.rotationVideoSink?.setSink(fullscreenRenderer)
             floatingRenderer?.let{remoteRotationSink?.setSink(it) }
         } else {
@@ -649,12 +644,12 @@ class CallManager(
     /**
      * Returns the renderer currently showing the user's video, not the contact's
      */
-    private fun getUserRenderer() = if(videoSwapped) fullscreenRenderer else floatingRenderer
+    private fun getUserRenderer() = if(_videoState.value.swapped) fullscreenRenderer else floatingRenderer
 
     /**
      * Returns the renderer currently showing the contact's video, not the user's
      */
-    private fun getRemoteRenderer() = if(videoSwapped) floatingRenderer else fullscreenRenderer
+    private fun getRemoteRenderer() = if(_videoState.value.swapped) floatingRenderer else fullscreenRenderer
 
     /**
      * Makes sure the user's renderer applies mirroring if necessary
@@ -791,7 +786,7 @@ class CallManager(
         connection.setCommunicationMode()
         setAudioEnabled(true)
         dataChannel?.let { channel ->
-            val toSend = if (!_videoState.value.userVideoEnabled) VIDEO_DISABLED_JSON else VIDEO_ENABLED_JSON
+            val toSend = if (_videoState.value.userVideoEnabled) VIDEO_ENABLED_JSON else VIDEO_DISABLED_JSON
             val buffer = DataChannel.Buffer(ByteBuffer.wrap(toSend.toString().encodeToByteArray()), false)
             channel.send(buffer)
         }

@@ -402,13 +402,9 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
 
                     // the floating video inset (empty or not) should be shown
                     // the moment we have either of the video streams
-                    if(!state.userVideoEnabled && !state.remoteVideoEnabled){
-                        binding.floatingRendererContainer.isVisible = false
-                        binding.swapViewIcon.isVisible = false
-                    } else {
-                        binding.floatingRendererContainer.isVisible = true
-                        binding.swapViewIcon.isVisible = true
-                    }
+                    val showFloatingContainer = state.userVideoEnabled || state.remoteVideoEnabled
+                    binding.floatingRendererContainer.isVisible = showFloatingContainer
+                    binding.swapViewIcon.isVisible = showFloatingContainer
 
                     // handle fullscreen video window
                     if(state.showFullscreenVideo()){
