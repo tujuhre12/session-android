@@ -74,7 +74,7 @@ import org.thoughtcrime.securesms.ui.theme.baseMonospace
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.blackAlpha40
-import org.thoughtcrime.securesms.ui.theme.destructiveButtonColors
+import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
 import org.thoughtcrime.securesms.ui.setComposeContent
 import javax.inject.Inject
 
@@ -236,7 +236,7 @@ fun CellButtons(
             LargeItemButton(
                 R.string.delete,
                 R.drawable.ic_message_details__trash,
-                colors = destructiveButtonColors(),
+                colors = dangerButtonColors(),
                 onClick = onDelete
             )
         }

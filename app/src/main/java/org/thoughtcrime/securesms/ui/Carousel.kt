@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.theme.LocalColors
+import org.thoughtcrime.securesms.ui.theme.blackAlpha40
 import org.thoughtcrime.securesms.ui.theme.pillShape
 import kotlin.math.absoluteValue
 import kotlin.math.sign
@@ -47,7 +48,7 @@ import kotlin.math.sign
 fun BoxScope.HorizontalPagerIndicator(pagerState: PagerState) {
     if (pagerState.pageCount >= 2) Card(
         shape = pillShape,
-        backgroundColor = Color.Black.copy(alpha = 0.4f),
+        backgroundColor = blackAlpha40,
         modifier = Modifier
             .align(Alignment.BottomCenter)
             .padding(8.dp)
