@@ -138,6 +138,9 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
     // region Lifecycle
     override fun onCreate(savedInstanceState: Bundle?, isReady: Boolean) {
         super.onCreate(savedInstanceState, isReady)
+
+        if (!isTaskRoot) { finish(); return }
+
         // Set content view
         binding = ActivityHomeBinding.inflate(layoutInflater)
         setContentView(binding.root)
