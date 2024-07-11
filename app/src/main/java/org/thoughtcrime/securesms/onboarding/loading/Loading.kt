@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.onboarding.loading
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.TweenSpec
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -27,7 +28,10 @@ internal fun LoadingScreen(state: State) {
         animatable.stop()
         animatable.animateTo(
             targetValue = 1f,
-            animationSpec = TweenSpec(durationMillis = state.duration.inWholeMilliseconds.toInt())
+            animationSpec = TweenSpec(
+                durationMillis = state.duration.inWholeMilliseconds.toInt(),
+                easing = LinearEasing
+            )
         )
     }
 
