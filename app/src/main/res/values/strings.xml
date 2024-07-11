@@ -49,7 +49,7 @@
     <string name="AccessibilityId_new_conversation_button">New conversation button</string>
     <string name="AccessibilityId_new_direct_message">New direct message</string>
     <string name="AccessibilityId_create_group">Create group</string>
-    <string name="AccessibilityId_join_community">Join community button</string>
+    <string name="AccessibilityId_join_community">Join community</string>
     <!-- Join community pop up -->
     <string name="AccessibilityId_community_input_box">Community input</string>
     <string name="AccessibilityId_join_community_button">Join community button</string>
