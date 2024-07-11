@@ -194,7 +194,7 @@ private fun MessageText(text: String, isOutgoing: Boolean, modifier: Modifier) {
     Box(modifier = modifier then Modifier.fillMaxWidth()) {
         MessageText(
             text,
-            color = if (isOutgoing) LocalColors.current.backgroundBubbleSent else LocalColors.current.backgroundBubbleReceived,
+            color = if (isOutgoing) LocalColors.current.primary else LocalColors.current.backgroundBubbleReceived,
             textColor = if (isOutgoing) LocalColors.current.textBubbleSent else LocalColors.current.textBubbleReceived,
             modifier = Modifier.align(if (isOutgoing) Alignment.TopEnd else Alignment.TopStart)
         )

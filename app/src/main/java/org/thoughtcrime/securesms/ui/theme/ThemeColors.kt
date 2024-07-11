@@ -191,34 +191,3 @@ private fun ThemeColors() {
         }
     }
 }
-
-
-/**
- * This class holds two instances of [ThemeColors], [light] representing the [ThemeColors] to use when the system is in a
- * light theme, and [dark] representing the [ThemeColors] to use when the system is in a dark theme.
- *
- * If the user has [followSystemSettings] turned on then [light] should be equal to [dark].
- */
-data class LightDarkColors(
-    val light: ThemeColors,
-    val dark: ThemeColors
-) {
-    @Composable
-    fun colors() = if (light == dark || isSystemInDarkTheme()) dark else light
-}
-
-/**
- * Courtesy constructor that sets [light] and [dark] based on properties.
- */
-fun LightDarkColors(isClassic: Boolean, isLight: Boolean, followSystemSettings: Boolean, primaryOrUnspecified: Color): LightDarkColors {
-    val primary = primaryOrUnspecified.takeOrElse { if (isClassic) primaryGreen else primaryBlue }
-    val light = when {
-        isLight || followSystemSettings -> if (isClassic) ClassicLight(primary) else OceanLight(primary)
-        else -> if (isClassic) ClassicDark(primary) else OceanDark(primary)
-    }
-    val dark = when {
-        isLight && !followSystemSettings -> if (isClassic) ClassicLight(primary) else OceanLight(primary)
-        else -> if (isClassic) ClassicDark(primary) else OceanDark(primary)
-    }
-    return LightDarkColors(light, dark)
-}

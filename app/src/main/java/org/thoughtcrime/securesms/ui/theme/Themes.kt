@@ -1,7 +1,7 @@
 package org.thoughtcrime.securesms.ui.theme
 
-import android.content.Context
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
@@ -10,16 +10,18 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Shapes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import org.session.libsession.utilities.AppTextSecurePreferences
-import org.thoughtcrime.securesms.ui.color.colors
 
 // Globally accessible composition local objects
-val LocalColors = staticCompositionLocalOf<ThemeColors> { ClassicDark() }
+val LocalColors = compositionLocalOf <ThemeColors> { ClassicDark() }
+var selectedTheme: ThemeColors? = null
 
 /**
  * Apply a Material2 compose theme based on user selections in SharedPreferences.
@@ -28,7 +30,15 @@ val LocalColors = staticCompositionLocalOf<ThemeColors> { ClassicDark() }
 fun SessionMaterialTheme(
     content: @Composable () -> Unit
 ) {
-    SessionMaterialTheme(LocalContext.current.colors()) { content() }
+    // set the theme data if it hasn't been done yet
+    if(selectedTheme == null) {
+        // Some values can be set from the preferences, and if not should fallback to a default value
+        val context = LocalContext.current
+        val preferences = AppTextSecurePreferences(context)
+        selectedTheme = preferences.getComposeTheme()
+    }
+
+    SessionMaterialTheme(colors = selectedTheme ?: ClassicDark()) { content() }
 }
 
 /**
@@ -53,8 +63,6 @@ fun SessionMaterialTheme(
         }
     }
 }
-
-@Composable private fun Context.colors() = AppTextSecurePreferences(this).colors()
 
 val pillShape = RoundedCornerShape(percent = 50)
 val buttonShape = pillShape
