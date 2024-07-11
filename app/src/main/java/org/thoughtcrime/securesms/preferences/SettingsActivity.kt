@@ -293,6 +293,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
             val userConfig = configFactory.user
             AvatarHelper.setAvatar(this, Address.fromSerialized(TextSecurePreferences.getLocalNumber(this)!!), profilePicture)
             prefs.setProfileAvatarId(profilePicture?.let { SecureRandom().nextInt() } ?: 0 )
+
             ProfileKeyUtil.setEncodedProfileKey(this, encodedProfileKey)
             // new config
             val url = TextSecurePreferences.getProfilePictureURL(this)
