@@ -79,6 +79,7 @@ internal fun LandingScreen(
             onDismissRequest = { isUrlDialogVisible = false },
             title = stringResource(R.string.urlOpen),
             text = stringResource(R.string.urlOpenBrowser),
+            showCloseButton = true, // display the 'x' button
             buttons = listOf(
                 DialogButtonModel(
                     text = GetString(R.string.activity_landing_terms_of_service),

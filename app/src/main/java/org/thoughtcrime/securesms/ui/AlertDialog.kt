@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -20,13 +21,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
+import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.h7
 import org.thoughtcrime.securesms.ui.theme.large
 import org.thoughtcrime.securesms.ui.theme.largeBold
+
 
 class DialogButtonModel(
     val text: GetString,
@@ -41,8 +47,9 @@ fun AlertDialog(
     onDismissRequest: () -> Unit,
     title: String? = null,
     text: String? = null,
-    content: @Composable () -> Unit = {},
-    buttons: List<DialogButtonModel>? = null
+    buttons: List<DialogButtonModel>? = null,
+    showCloseButton: Boolean = false,
+    content: @Composable () -> Unit = {}
 ) {
     androidx.compose.material.AlertDialog(
         onDismissRequest,
@@ -50,15 +57,18 @@ fun AlertDialog(
         backgroundColor = LocalColors.current.backgroundSecondary,
         buttons = {
             Box {
-                IconButton(
-                    onClick = onDismissRequest,
-                    modifier = Modifier.align(Alignment.TopEnd)
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_dialog_x),
-                        tint = LocalColors.current.text,
-                        contentDescription = "back"
-                    )
+                // only show the 'x' button is required
+                if(showCloseButton) {
+                    IconButton(
+                        onClick = onDismissRequest,
+                        modifier = Modifier.align(Alignment.TopEnd)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_dialog_x),
+                            tint = LocalColors.current.text,
+                            contentDescription = "back"
+                        )
+                    }
                 }
 
                 Column(modifier = Modifier.fillMaxWidth()) {
@@ -126,6 +136,53 @@ fun DialogButton(text: String, modifier: Modifier, color: Color = Color.Unspecif
                 top = LocalDimensions.current.smallItemSpacing,
                 bottom = LocalDimensions.current.itemSpacing
             )
+        )
+    }
+}
+
+@Preview
+@Composable
+fun PreviewSimpleDialog(){
+    PreviewTheme {
+        AlertDialog(
+            onDismissRequest = {},
+            title = stringResource(R.string.warning),
+            text = stringResource(R.string.you_cannot_go_back_further_in_order_to_stop_loading_your_account_session_needs_to_quit),
+            buttons = listOf(
+                DialogButtonModel(
+                    GetString(stringResource(R.string.quit)),
+                    color = LocalColors.current.danger,
+                    onClick = {}
+                ),
+                DialogButtonModel(
+                    GetString(stringResource(R.string.cancel))
+                )
+            )
+        )
+    }
+}
+
+@Preview
+@Composable
+fun PreviewXCloseDialog(){
+    PreviewTheme {
+        AlertDialog(
+            title = stringResource(R.string.urlOpen),
+            text = stringResource(R.string.urlOpenBrowser),
+            showCloseButton = true, // display the 'x' button
+            buttons = listOf(
+                DialogButtonModel(
+                    text = GetString(R.string.activity_landing_terms_of_service),
+                    contentDescription = GetString(R.string.AccessibilityId_terms_of_service_button),
+                    onClick = {}
+                ),
+                DialogButtonModel(
+                    text = GetString(R.string.activity_landing_privacy_policy),
+                    contentDescription = GetString(R.string.AccessibilityId_privacy_policy_button),
+                    onClick = {}
+                )
+            ),
+            onDismissRequest = {}
         )
     }
 }
