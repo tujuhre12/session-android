@@ -8,7 +8,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.provider.Telephony.Mms.Addr
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.core.os.bundleOf
