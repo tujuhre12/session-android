@@ -16,10 +16,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
+import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
-import org.thoughtcrime.securesms.ui.theme.h4
 
 @Preview
 @Composable
@@ -42,7 +42,7 @@ fun AppBar(title: String, onClose: () -> Unit = {}, onBack: (() -> Unit)? = null
             }
         }
         Spacer(modifier = Modifier.weight(1f))
-        Text(text = title, style = h4)
+        Text(text = title, style = LocalType.current.h4)
         Spacer(modifier = Modifier.weight(1f))
         Box(contentAlignment = Alignment.Center, modifier = Modifier.size(LocalDimensions.current.appBarHeight)) {
             IconButton(onClick = onClose) {

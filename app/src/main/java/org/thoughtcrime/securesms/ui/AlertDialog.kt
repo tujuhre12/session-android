@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -24,14 +23,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
+import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
-import org.thoughtcrime.securesms.ui.theme.h7
-import org.thoughtcrime.securesms.ui.theme.large
-import org.thoughtcrime.securesms.ui.theme.largeBold
+import org.thoughtcrime.securesms.ui.theme.bold
 
 
 class DialogButtonModel(
@@ -83,7 +80,7 @@ fun AlertDialog(
                             Text(
                                 it,
                                 textAlign = TextAlign.Center,
-                                style = h7,
+                                style = LocalType.current.h7,
                                 modifier = Modifier.padding(bottom = LocalDimensions.current.xxsItemSpacing)
                             )
                         }
@@ -91,7 +88,7 @@ fun AlertDialog(
                             Text(
                                 it,
                                 textAlign = TextAlign.Center,
-                                style = large,
+                                style = LocalType.current.large,
                                 modifier = Modifier.padding(bottom = LocalDimensions.current.xxsItemSpacing)
                             )
                         }
@@ -130,7 +127,7 @@ fun DialogButton(text: String, modifier: Modifier, color: Color = Color.Unspecif
         Text(
             text,
             color = color.takeOrElse { LocalColors.current.text },
-            style = largeBold,
+            style = LocalType.current.large.bold(),
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(
                 top = LocalDimensions.current.smallItemSpacing,

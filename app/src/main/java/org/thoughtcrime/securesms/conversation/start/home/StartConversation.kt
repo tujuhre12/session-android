@@ -29,8 +29,7 @@ import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.components.AppBar
 import org.thoughtcrime.securesms.ui.components.QrImage
 import org.thoughtcrime.securesms.ui.contentDescription
-import org.thoughtcrime.securesms.ui.theme.small
-import org.thoughtcrime.securesms.ui.theme.xl
+import org.thoughtcrime.securesms.ui.theme.LocalType
 
 @Composable
 internal fun StartConversationScreen(
@@ -78,12 +77,12 @@ internal fun StartConversationScreen(
                         .padding(top = LocalDimensions.current.itemSpacing)
                         .padding(bottom = LocalDimensions.current.margin)
                 ) {
-                    Text(stringResource(R.string.accountIdYours), style = xl)
+                    Text(stringResource(R.string.accountIdYours), style = LocalType.current.xl)
                     Spacer(modifier = Modifier.height(LocalDimensions.current.xxxsItemSpacing))
                     Text(
                         text = stringResource(R.string.qrYoursDescription),
                         color = LocalColors.current.textSecondary,
-                        style = small
+                        style = LocalType.current.small
                     )
                     Spacer(modifier = Modifier.height(LocalDimensions.current.smallItemSpacing))
                     QrImage(

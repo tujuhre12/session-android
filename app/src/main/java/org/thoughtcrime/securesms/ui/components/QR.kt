@@ -57,9 +57,8 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
-import org.thoughtcrime.securesms.ui.theme.base
 import org.thoughtcrime.securesms.ui.theme.LocalColors
-import org.thoughtcrime.securesms.ui.theme.xl
+import org.thoughtcrime.securesms.ui.theme.LocalType
 import java.util.concurrent.Executors
 
 private const val TAG = "NewMessageFragment"
@@ -94,7 +93,7 @@ fun MaybeScanQrCode(
             ) {
                 Text(
                     stringResource(R.string.activity_link_camera_permission_permanently_denied_configure_in_settings),
-                    style = base,
+                    style = LocalType.current.base,
                     textAlign = TextAlign.Center
                 )
                 Spacer(modifier = Modifier.size(LocalDimensions.current.itemSpacing))
@@ -113,7 +112,8 @@ fun MaybeScanQrCode(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Spacer(modifier = Modifier.weight(1f))
-                Text(stringResource(R.string.fragment_scan_qr_code_camera_access_explanation), style = xl, textAlign = TextAlign.Center)
+                Text(stringResource(R.string.fragment_scan_qr_code_camera_access_explanation),
+                    style = LocalType.current.xl, textAlign = TextAlign.Center)
                 Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacing))
                 PrimaryOutlineButton(
                     stringResource(R.string.cameraGrantAccess),

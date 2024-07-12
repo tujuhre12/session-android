@@ -26,8 +26,7 @@ import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.components.SlimPrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.contentDescription
-import org.thoughtcrime.securesms.ui.theme.h8
-import org.thoughtcrime.securesms.ui.theme.small
+import org.thoughtcrime.securesms.ui.theme.LocalType
 
 @Composable
 internal fun SeedReminder(startRecoveryPasswordActivity: () -> Unit) {
@@ -51,14 +50,14 @@ internal fun SeedReminder(startRecoveryPasswordActivity: () -> Unit) {
                 Row {
                     Text(
                         stringResource(R.string.save_your_recovery_password),
-                        style = h8
+                        style = LocalType.current.h8
                     )
                     Spacer(Modifier.requiredWidth(LocalDimensions.current.xxsItemSpacing))
                     SessionShieldIcon()
                 }
                 Text(
                     stringResource(R.string.save_your_recovery_password_to_make_sure_you_don_t_lose_access_to_your_account),
-                    style = small
+                    style = LocalType.current.small
                 )
             }
             Spacer(Modifier.width(LocalDimensions.current.xxsMargin))

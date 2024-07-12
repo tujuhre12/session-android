@@ -30,7 +30,6 @@ import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.SessionShieldIcon
-import org.thoughtcrime.securesms.ui.theme.base
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.components.QrImage
@@ -38,8 +37,8 @@ import org.thoughtcrime.securesms.ui.components.SlimOutlineButton
 import org.thoughtcrime.securesms.ui.components.SlimOutlineCopyButton
 import org.thoughtcrime.securesms.ui.components.border
 import org.thoughtcrime.securesms.ui.contentDescription
-import org.thoughtcrime.securesms.ui.theme.extraSmallMonospace
-import org.thoughtcrime.securesms.ui.theme.h8
+import org.thoughtcrime.securesms.ui.theme.LocalType
+import org.thoughtcrime.securesms.ui.theme.monospace
 
 @Composable
 internal fun RecoveryPasswordScreen(
@@ -75,7 +74,7 @@ private fun RecoveryPasswordCell(
             Row {
                 Text(
                     stringResource(R.string.sessionRecoveryPassword),
-                    style = h8
+                    style = LocalType.current.h8
                 )
                 Spacer(Modifier.width(LocalDimensions.current.xxsItemSpacing))
                 SessionShieldIcon()
@@ -85,7 +84,7 @@ private fun RecoveryPasswordCell(
 
             Text(
                 stringResource(R.string.recoveryPasswordDescription),
-                style = base
+                style = LocalType.current.base
             )
 
             AnimatedVisibility(!showQr) {
@@ -142,7 +141,7 @@ private fun RecoveryPassword(mnemonic: String) {
             .border()
             .padding(LocalDimensions.current.smallMargin),
         textAlign = TextAlign.Center,
-        style = extraSmallMonospace,
+        style = LocalType.current.extraSmall.monospace(),
         color = LocalColors.current.run { if (isLight) text else primary },
     )
 }
@@ -156,11 +155,11 @@ private fun HideRecoveryPasswordCell(onHide: () -> Unit = {}) {
             ) {
                 Text(
                     stringResource(R.string.recoveryPasswordHideRecoveryPassword),
-                    style = h8
+                    style = LocalType.current.h8
                 )
                 Text(
                     stringResource(R.string.recoveryPasswordHideRecoveryPasswordDescription),
-                    style = base
+                    style = LocalType.current.base
                 )
             }
             Spacer(modifier = Modifier.width(LocalDimensions.current.xxsMargin))

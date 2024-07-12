@@ -25,16 +25,12 @@ import org.thoughtcrime.securesms.onboarding.ui.ContinuePrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
-import org.thoughtcrime.securesms.ui.theme.base
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.components.CircularProgressIndicator
 import org.thoughtcrime.securesms.ui.components.RadioButton
 import org.thoughtcrime.securesms.ui.contentDescription
-import org.thoughtcrime.securesms.ui.theme.h4
-import org.thoughtcrime.securesms.ui.theme.h8
-import org.thoughtcrime.securesms.ui.theme.h9
-import org.thoughtcrime.securesms.ui.theme.small
+import org.thoughtcrime.securesms.ui.theme.LocalType
 
 @Composable
 internal fun MessageNotificationsScreen(
@@ -61,9 +57,9 @@ internal fun MessageNotificationsScreen(
         Spacer(Modifier.weight(1f))
 
         Column(modifier = Modifier.padding(horizontal = LocalDimensions.current.onboardingMargin)) {
-            Text(stringResource(R.string.notificationsMessage), style = h4)
+            Text(stringResource(R.string.notificationsMessage), style = LocalType.current.h4)
             Spacer(Modifier.height(LocalDimensions.current.xsMargin))
-            Text(stringResource(R.string.onboardingMessageNotificationExplaination), style = base)
+            Text(stringResource(R.string.onboardingMessageNotificationExplaination), style = LocalType.current.base)
             Spacer(Modifier.height(LocalDimensions.current.itemSpacing))
         }
 
@@ -119,15 +115,15 @@ private fun NotificationRadioButton(
             Column(modifier = Modifier
                 .padding(horizontal = 15.dp)
                 .padding(top = 10.dp, bottom = 11.dp)) {
-                Text(stringResource(title), style = h8)
+                Text(stringResource(title), style = LocalType.current.h8)
 
-                Text(stringResource(explanation), style = small, modifier = Modifier.padding(top = 7.dp))
+                Text(stringResource(explanation), style = LocalType.current.small, modifier = Modifier.padding(top = 7.dp))
                 tag?.let {
                     Text(
                         stringResource(it),
                         modifier = Modifier.padding(top = 6.dp),
                         color = LocalColors.current.primary,
-                        style = h9
+                        style = LocalType.current.h9
                     )
                 }
             }

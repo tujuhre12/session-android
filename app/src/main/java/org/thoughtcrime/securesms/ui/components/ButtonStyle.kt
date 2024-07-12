@@ -10,9 +10,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import org.thoughtcrime.securesms.ui.theme.baseBold
-import org.thoughtcrime.securesms.ui.theme.extraSmall
-import org.thoughtcrime.securesms.ui.theme.extraSmallBold
+import org.thoughtcrime.securesms.ui.theme.LocalType
+import org.thoughtcrime.securesms.ui.theme.bold
 
 interface ButtonStyle {
     @OptIn(ExperimentalMaterialApi::class)
@@ -27,26 +26,34 @@ interface ButtonStyle {
     @SuppressLint("ComposableNaming")
     @Composable fun applyTextConstraints(content: @Composable () -> Unit) {
         CompositionLocalProvider(
-            LocalTextStyle provides textStyle,
+            LocalTextStyle provides textStyle(),
             content = content
         )
     }
 
-    val textStyle: TextStyle
+    @Composable
+    fun textStyle() : TextStyle
+
     val minHeight: Dp
 
     object Large: ButtonStyle {
-        override val textStyle = baseBold.copy(textAlign = TextAlign.Center)
+        @Composable
+        override fun textStyle() = LocalType.current.base.bold()
+            .copy(textAlign = TextAlign.Center)
         override val minHeight = 41.dp
     }
 
     object Slim: ButtonStyle {
-        override val textStyle = extraSmallBold.copy(textAlign = TextAlign.Center)
+        @Composable
+        override fun textStyle() = LocalType.current.extraSmall.bold()
+            .copy(textAlign = TextAlign.Center)
         override val minHeight = 29.dp
     }
 
     object Borderless: ButtonStyle {
-        override val textStyle = extraSmall.copy(textAlign = TextAlign.Center)
+        @Composable
+        override fun textStyle() = LocalType.current.extraSmall
+            .copy(textAlign = TextAlign.Center)
         override val minHeight = 37.dp
     }
 }

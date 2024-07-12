@@ -19,12 +19,9 @@ import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
-import org.thoughtcrime.securesms.ui.theme.base
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.LocalColors
-import org.thoughtcrime.securesms.ui.theme.h4
-import org.thoughtcrime.securesms.ui.theme.h8
-import org.thoughtcrime.securesms.ui.theme.small
+import org.thoughtcrime.securesms.ui.theme.LocalType
 
 @Composable
 internal fun EmptyView(newAccount: Boolean) {
@@ -42,12 +39,12 @@ internal fun EmptyView(newAccount: Boolean) {
         if (newAccount) {
             Text(
                 stringResource(R.string.onboardingAccountCreated),
-                style = h4,
+                style = LocalType.current.h4,
                 textAlign = TextAlign.Center
             )
             Text(
                 stringResource(R.string.welcome_to_session),
-                style = base,
+                style = LocalType.current.base,
                 color = LocalColors.current.primary,
                 textAlign = TextAlign.Center
             )
@@ -57,12 +54,12 @@ internal fun EmptyView(newAccount: Boolean) {
 
         Text(
             stringResource(R.string.conversationsNone),
-            style = h8,
+            style = LocalType.current.h8,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(bottom = LocalDimensions.current.xsItemSpacing))
         Text(
             stringResource(R.string.onboardingHitThePlusButton),
-            style = small,
+            style = LocalType.current.small,
             textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.weight(2f))

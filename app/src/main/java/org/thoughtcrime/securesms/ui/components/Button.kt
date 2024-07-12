@@ -37,13 +37,14 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.LaunchedEffectAsync
+import org.thoughtcrime.securesms.ui.contentDescription
+import org.thoughtcrime.securesms.ui.theme.LocalColors
+import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
-import org.thoughtcrime.securesms.ui.theme.baseBold
-import org.thoughtcrime.securesms.ui.theme.buttonShape
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
-import org.thoughtcrime.securesms.ui.theme.LocalColors
-import org.thoughtcrime.securesms.ui.contentDescription
+import org.thoughtcrime.securesms.ui.theme.bold
+import org.thoughtcrime.securesms.ui.theme.buttonShape
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -257,7 +258,7 @@ fun BorderlessButtonWithIcon(
     text: String,
     @DrawableRes iconRes: Int,
     modifier: Modifier = Modifier,
-    style: TextStyle = baseBold,
+    style: TextStyle = LocalType.current.base.bold(),
     color: Color = LocalColors.current.text,
     onClick: () -> Unit
 ) {

@@ -25,8 +25,8 @@ import org.thoughtcrime.securesms.ui.RadioOption
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.components.SlimOutlineButton
 import org.thoughtcrime.securesms.ui.contentDescription
-import org.thoughtcrime.securesms.ui.theme.extraSmall
 import org.thoughtcrime.securesms.ui.fadingEdges
+import org.thoughtcrime.securesms.ui.theme.LocalType
 
 typealias ExpiryCallbacks = Callbacks<ExpiryMode>
 typealias ExpiryRadioOption = RadioOption<ExpiryMode>
@@ -54,7 +54,7 @@ fun DisappearingMessages(
 
                 if (state.showGroupFooter) Text(
                     text = stringResource(R.string.activity_disappearing_messages_group_footer),
-                    style = extraSmall,
+                    style = LocalType.current.extraSmall,
                     fontWeight = FontWeight(400),
                     color = LocalColors.current.textSecondary,
                     textAlign = TextAlign.Center,

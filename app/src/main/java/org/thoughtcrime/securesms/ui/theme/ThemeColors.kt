@@ -163,29 +163,26 @@ fun PreviewThemeColors(
 @Composable
 private fun ThemeColors() {
     Column {
-        Box(Modifier.background(MaterialTheme.colors.primary)) {
-            Text("primary", style = base)
+        Box(Modifier.background(LocalColors.current.primary)) {
+            Text("primary", style = LocalType.current.base)
         }
-        Box(Modifier.background(MaterialTheme.colors.primaryVariant)) {
-            Text("primaryVariant", style = base)
+        Box(Modifier.background(LocalColors.current.background)) {
+            Text("background", style = LocalType.current.base)
         }
-        Box(Modifier.background(MaterialTheme.colors.secondary)) {
-            Text("secondary", style = base)
+        Box(Modifier.background(LocalColors.current.backgroundSecondary)) {
+            Text("backgroundSecondary", style = LocalType.current.base)
         }
-        Box(Modifier.background(MaterialTheme.colors.secondaryVariant)) {
-            Text("secondaryVariant", style = base)
+        Box(Modifier.background(LocalColors.current.text)) {
+            Text("text", style = LocalType.current.base)
         }
-        Box(Modifier.background(MaterialTheme.colors.surface)) {
-            Text("surface", style = base)
+        Box(Modifier.background(LocalColors.current.textSecondary)) {
+            Text("textSecondary", style = LocalType.current.base)
         }
-        Box(Modifier.background(MaterialTheme.colors.primarySurface)) {
-            Text("primarySurface", style = base)
+        Box(Modifier.background(LocalColors.current.danger)) {
+            Text("danger", style = LocalType.current.base)
         }
-        Box(Modifier.background(MaterialTheme.colors.background)) {
-            Text("background", style = base)
-        }
-        Box(Modifier.background(MaterialTheme.colors.error)) {
-            Text("error", style = base)
+        Box(Modifier.background(LocalColors.current.borders)) {
+            Text("border", style = LocalType.current.base)
         }
     }
 }

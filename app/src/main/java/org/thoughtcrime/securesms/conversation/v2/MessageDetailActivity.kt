@@ -68,14 +68,14 @@ import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.TitledText
-import org.thoughtcrime.securesms.ui.theme.base
-import org.thoughtcrime.securesms.ui.theme.baseBold
-import org.thoughtcrime.securesms.ui.theme.baseMonospace
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.blackAlpha40
 import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
 import org.thoughtcrime.securesms.ui.setComposeContent
+import org.thoughtcrime.securesms.ui.theme.LocalType
+import org.thoughtcrime.securesms.ui.theme.bold
+import org.thoughtcrime.securesms.ui.theme.monospace
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -361,7 +361,7 @@ fun FileDetails(fileDetails: List<TitledText>) {
 fun TitledErrorText(titledText: TitledText?) {
     TitledText(
         titledText,
-        style = base,
+        style = LocalType.current.base,
         color = LocalColors.current.danger
     )
 }
@@ -370,7 +370,7 @@ fun TitledErrorText(titledText: TitledText?) {
 fun TitledMonospaceText(titledText: TitledText?) {
     TitledText(
         titledText,
-        style = baseMonospace
+        style = LocalType.current.base.monospace()
     )
 }
 
@@ -378,7 +378,7 @@ fun TitledMonospaceText(titledText: TitledText?) {
 fun TitledText(
     titledText: TitledText?,
     modifier: Modifier = Modifier,
-    style: TextStyle = base,
+    style: TextStyle = LocalType.current.base,
     color: Color = Color.Unspecified
 ) {
     titledText?.apply {
@@ -396,7 +396,7 @@ fun TitledText(
 @Composable
 fun TitledView(title: GetString, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsItemSpacing)) {
-        Text(title.string(), style = baseBold)
+        Text(title.string(), style = LocalType.current.base.bold())
         content()
     }
 }

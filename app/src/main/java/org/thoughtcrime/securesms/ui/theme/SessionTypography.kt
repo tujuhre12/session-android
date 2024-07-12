@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.ui.theme
 
 import androidx.compose.material.Typography
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontFamily.Companion.Monospace
@@ -8,52 +9,158 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 
-fun boldStyle(size: TextUnit) = TextStyle.Default.copy(
-    fontSize = size,
-    lineHeight = size * 1.2,
-    fontWeight = FontWeight.Bold,
+
+
+fun TextStyle.bold() = TextStyle.Default.copy(
+    fontWeight = FontWeight.Bold
 )
 
-fun defaultStyle(size: TextUnit, fontFamily: FontFamily? = TextStyle.Default.fontFamily) = TextStyle.Default.copy(
-    fontSize = size,
-    lineHeight = size * 1.2,
-    fontFamily = fontFamily
+fun TextStyle.monospace() = TextStyle.Default.copy(
+    fontFamily = FontFamily.Monospace
 )
 
-val xl = defaultStyle(18.sp)
+val sessionTypography = SessionTypography()
 
-val large = defaultStyle(16.sp)
-val largeBold = boldStyle(16.sp)
+data class SessionTypography(
+    // Body
+    val xl: TextStyle = TextStyle(
+        fontSize = 18.sp,
+        lineHeight = 21.6.sp,
+        fontWeight = FontWeight.Normal
+    ),
 
-val base = defaultStyle(14.sp)
-val baseBold = boldStyle(14.sp)
-val baseMonospace = defaultStyle(14.sp, fontFamily = Monospace)
+    val large: TextStyle = TextStyle(
+        fontSize = 16.sp,
+        lineHeight = 19.2.sp,
+        fontWeight = FontWeight.Normal
+    ),
 
-val small = defaultStyle(12.sp)
-val smallBold = boldStyle(12.sp)
-val smallMonospace = defaultStyle(12.sp, fontFamily = Monospace)
+    val base: TextStyle = TextStyle(
+        fontSize = 14.sp,
+        lineHeight = 16.8.sp,
+        fontWeight = FontWeight.Normal
+    ),
 
-val extraSmall = defaultStyle(11.sp)
-val extraSmallBold = boldStyle(11.sp)
-val extraSmallMonospace = defaultStyle(11.sp, fontFamily = Monospace)
+    val small: TextStyle = TextStyle(
+        fontSize = 12.sp,
+        lineHeight = 14.4.sp,
+        fontWeight = FontWeight.Normal
+    ),
 
-val fine = defaultStyle(9.sp)
+    val extraSmall: TextStyle = TextStyle(
+        fontSize = 11.sp,
+        lineHeight = 13.2.sp,
+        fontWeight = FontWeight.Normal
+    ),
 
-val h1 = boldStyle(36.sp)
-val h2 = boldStyle(32.sp)
-val h3 = boldStyle(29.sp)
-val h4 = boldStyle(26.sp)
-val h5 = boldStyle(23.sp)
-val h6 = boldStyle(20.sp)
-val h7 = boldStyle(18.sp)
-val h8 = boldStyle(16.sp)
-val h9 = boldStyle(14.sp)
+    val fine: TextStyle = TextStyle(
+        fontSize = 9.sp,
+        lineHeight = 10.8.sp,
+        fontWeight = FontWeight.Normal
+    ),
 
-val sessionTypography = Typography(
-    h1 = h1,
-    h2 = h2,
-    h3 = h3,
-    h4 = h4,
-    h5 = h5,
-    h6 = h6,
-)
+    // Headings
+    val h1: TextStyle = TextStyle(
+        fontSize = 36.sp,
+        lineHeight = 43.2.sp,
+        fontWeight = FontWeight.Bold
+    ),
+
+    val h2: TextStyle = TextStyle(
+        fontSize = 32.sp,
+        lineHeight = 38.4.sp,
+        fontWeight = FontWeight.Bold
+    ),
+
+    val h3: TextStyle = TextStyle(
+        fontSize = 29.sp,
+        lineHeight = 34.8.sp,
+        fontWeight = FontWeight.Bold
+    ),
+
+    val h4: TextStyle = TextStyle(
+        fontSize = 26.sp,
+        lineHeight = 31.2.sp,
+        fontWeight = FontWeight.Bold
+    ),
+
+    val h5: TextStyle = TextStyle(
+        fontSize = 23.sp,
+        lineHeight = 27.6.sp,
+        fontWeight = FontWeight.Bold
+    ),
+
+    val h6: TextStyle = TextStyle(
+        fontSize = 20.sp,
+        lineHeight = 24.sp,
+        fontWeight = FontWeight.Bold
+    ),
+
+    val h7: TextStyle = TextStyle(
+        fontSize = 18.sp,
+        lineHeight = 21.6.sp,
+        fontWeight = FontWeight.Bold
+    ),
+
+    val h8: TextStyle = TextStyle(
+        fontSize = 16.sp,
+        lineHeight = 19.2.sp,
+        fontWeight = FontWeight.Bold
+    ),
+
+    val h9: TextStyle = TextStyle(
+        fontSize = 14.sp,
+        lineHeight = 16.8.sp,
+        fontWeight = FontWeight.Bold
+    )
+) {
+    //todo ready to go when we switch to Material3
+
+    // An opinionated override of Material's defaults
+    /*@Composable
+    fun asMaterialTypography() = Typography(
+        // Display
+        displayLarge = h1,
+        displayMedium = h1,
+        displaySmall = h1,
+
+        // Headline
+        headlineLarge = h2,
+        headlineMedium = h3,
+        headlineSmall = h4,
+
+        // Title
+        titleLarge = h5,
+        titleMedium = h6,
+        titleSmall = h7,
+
+        // Body
+        bodyLarge = large,
+        bodyMedium = base,
+        bodySmall = small,
+
+        // Label
+        labelLarge = extraSmall,
+        labelMedium = fine,
+        labelSmall = fine
+    )*/
+
+    @Composable
+    fun asMaterialTypography() = Typography(
+        h1 = h1,
+        h2 = h2,
+        h3 = h3,
+        h4 = h4,
+        h5 = h5,
+        h6 = h6,
+        subtitle1 = h7,
+        subtitle2 = h8,
+        body1 = base,
+        body2 = small,
+        button = base,
+        caption = small,
+        overline = fine
+    )
+}
+
+

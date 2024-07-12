@@ -67,15 +67,10 @@ import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.OptionsCa
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
-import org.thoughtcrime.securesms.ui.theme.base
+import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.divider
-import org.thoughtcrime.securesms.ui.theme.extraSmall
-import org.thoughtcrime.securesms.ui.theme.h2
-import org.thoughtcrime.securesms.ui.theme.h8
-import org.thoughtcrime.securesms.ui.theme.large
 import org.thoughtcrime.securesms.ui.theme.radioButtonColors
 import org.thoughtcrime.securesms.ui.theme.transparentButtonColors
-import org.thoughtcrime.securesms.ui.theme.xl
 import kotlin.math.min
 import kotlin.math.roundToInt
 
@@ -102,7 +97,7 @@ data class RadioOption<T>(
 fun <T> OptionsCard(card: OptionsCard<T>, callbacks: Callbacks<T>) {
     Text(
         card.title(),
-        style = base
+        style = LocalType.current.base
     )
     CellNoMargin {
         LazyColumn(
@@ -124,7 +119,10 @@ fun LargeItemButtonWithDrawable(
     colors: ButtonColors = transparentButtonColors(),
     onClick: () -> Unit
 ) {
-    ItemButtonWithDrawable(textId, icon, modifier.heightIn(min = LocalDimensions.current.minLargeItemButtonHeight), h8, colors, onClick)
+    ItemButtonWithDrawable(
+        textId, icon, modifier.heightIn(min = LocalDimensions.current.minLargeItemButtonHeight),
+        LocalType.current.h8, colors, onClick
+    )
 }
 
 @Composable
@@ -132,7 +130,7 @@ fun ItemButtonWithDrawable(
     @StringRes textId: Int,
     @DrawableRes icon: Int,
     modifier: Modifier = Modifier,
-    textStyle: TextStyle = xl,
+    textStyle: TextStyle = LocalType.current.xl,
     colors: ButtonColors = transparentButtonColors(),
     onClick: () -> Unit
 ) {
@@ -162,7 +160,10 @@ fun LargeItemButton(
     colors: ButtonColors = transparentButtonColors(),
     onClick: () -> Unit
 ) {
-    ItemButton(textId, icon, modifier.heightIn(min = LocalDimensions.current.minLargeItemButtonHeight), h8, colors, onClick)
+    ItemButton(
+        textId, icon, modifier.heightIn(min = LocalDimensions.current.minLargeItemButtonHeight),
+        LocalType.current.h8, colors, onClick
+    )
 }
 
 /**
@@ -173,7 +174,7 @@ fun ItemButton(
     @StringRes textId: Int,
     @DrawableRes icon: Int,
     modifier: Modifier = Modifier,
-    textStyle: TextStyle = xl,
+    textStyle: TextStyle = LocalType.current.xl,
     colors: ButtonColors = transparentButtonColors(),
     onClick: () -> Unit
 ) {
@@ -203,7 +204,7 @@ fun ItemButton(
     text: String,
     icon: @Composable BoxScope.() -> Unit,
     modifier: Modifier = Modifier,
-    textStyle: TextStyle = xl,
+    textStyle: TextStyle = LocalType.current.xl,
     colors: ButtonColors = transparentButtonColors(),
     onClick: () -> Unit
 ) {
@@ -281,13 +282,13 @@ fun <T> TitledRadioButton(option: RadioOption<T>, onClick: () -> Unit) {
             Column {
                 Text(
                     text = option.title(),
-                    style = large,
+                    style = LocalType.current.large,
                     color = color
                 )
                 option.subtitle?.let {
                     Text(
                         text = it(),
-                        style = extraSmall,
+                        style = LocalType.current.extraSmall,
                         color = color
                     )
                 }
@@ -399,7 +400,7 @@ fun ProgressArc(progress: Float, modifier: Modifier = Modifier) {
             "${text}%",
             color = Color.White,
             modifier = Modifier.align(Alignment.Center),
-            style = h2
+            style = LocalType.current.h2
         )
     }
 }

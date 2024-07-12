@@ -48,8 +48,7 @@ import org.thoughtcrime.securesms.ui.components.BorderlessHtmlButton
 import org.thoughtcrime.securesms.ui.components.PrimaryFillButton
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.contentDescription
-import org.thoughtcrime.securesms.ui.theme.h4
-import org.thoughtcrime.securesms.ui.theme.large
+import org.thoughtcrime.securesms.ui.theme.LocalType
 import kotlin.time.Duration.Companion.milliseconds
 
 @Preview
@@ -113,7 +112,7 @@ internal fun LandingScreen(
             Text(
                 stringResource(R.string.onboardingBubblePrivacyInYourPocket),
                 modifier = Modifier.align(Alignment.CenterHorizontally),
-                style = h4,
+                style = LocalType.current.h4,
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacing))
@@ -217,7 +216,7 @@ private fun MessageText(
     ) {
         Text(
             text,
-            style = large,
+            style = LocalType.current.large,
             color = textColor,
             modifier = Modifier.padding(
                 horizontal = LocalDimensions.current.smallItemSpacing,

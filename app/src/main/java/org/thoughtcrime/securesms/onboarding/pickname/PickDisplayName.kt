@@ -19,9 +19,8 @@ import org.thoughtcrime.securesms.onboarding.OnboardingBackPressAlertDialog
 import org.thoughtcrime.securesms.onboarding.ui.ContinuePrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
-import org.thoughtcrime.securesms.ui.theme.base
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
-import org.thoughtcrime.securesms.ui.theme.h4
+import org.thoughtcrime.securesms.ui.theme.LocalType
 
 @Preview
 @Composable
@@ -57,11 +56,11 @@ internal fun PickDisplayName(
         Column(
             modifier = Modifier.padding(horizontal = LocalDimensions.current.largeMargin)
         ) {
-            Text(stringResource(state.title), style = h4)
+            Text(stringResource(state.title), style = LocalType.current.h4)
             Spacer(Modifier.height(LocalDimensions.current.smallItemSpacing))
             Text(
                 stringResource(state.description),
-                style = base,
+                style = LocalType.current.base,
                 modifier = Modifier.padding(bottom = LocalDimensions.current.xsItemSpacing))
             Spacer(Modifier.height(LocalDimensions.current.itemSpacing))
             SessionOutlinedTextField(

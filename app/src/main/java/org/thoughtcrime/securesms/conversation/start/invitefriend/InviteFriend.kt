@@ -17,14 +17,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
-import org.thoughtcrime.securesms.ui.theme.base
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.components.AppBar
 import org.thoughtcrime.securesms.ui.components.SlimOutlineButton
 import org.thoughtcrime.securesms.ui.components.SlimOutlineCopyButton
 import org.thoughtcrime.securesms.ui.components.border
 import org.thoughtcrime.securesms.ui.contentDescription
-import org.thoughtcrime.securesms.ui.theme.small
+import org.thoughtcrime.securesms.ui.theme.LocalType
 
 @Composable
 internal fun InviteFriend(
@@ -47,7 +46,7 @@ internal fun InviteFriend(
                     .border()
                     .padding(LocalDimensions.current.smallMargin),
                 textAlign = TextAlign.Center,
-                style = base
+                style = LocalType.current.base
             )
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.xsItemSpacing))
@@ -55,7 +54,7 @@ internal fun InviteFriend(
             Text(
                 stringResource(R.string.invite_your_friend_to_chat_with_you_on_session_by_sharing_your_account_id_with_them),
                 textAlign = TextAlign.Center,
-                style = small,
+                style = LocalType.current.small,
                 color = LocalColors.current.textSecondary,
                 modifier = Modifier.padding(horizontal = LocalDimensions.current.smallItemSpacing)
             )

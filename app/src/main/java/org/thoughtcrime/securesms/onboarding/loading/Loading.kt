@@ -11,9 +11,8 @@ import androidx.compose.ui.res.stringResource
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.ProgressArc
-import org.thoughtcrime.securesms.ui.theme.base
 import org.thoughtcrime.securesms.ui.contentDescription
-import org.thoughtcrime.securesms.ui.theme.h7
+import org.thoughtcrime.securesms.ui.theme.LocalType
 
 @Composable
 internal fun LoadingScreen(progress: Float) {
@@ -25,12 +24,12 @@ internal fun LoadingScreen(progress: Float) {
         )
         Text(
             stringResource(R.string.waitOneMoment),
-            style = h7
+            style = LocalType.current.h7
         )
         Spacer(modifier = Modifier.height(LocalDimensions.current.xxxsItemSpacing))
         Text(
             stringResource(R.string.loadAccountProgressMessage),
-            style = base
+            style = LocalType.current.base
         )
         Spacer(modifier = Modifier.weight(2f))
     }

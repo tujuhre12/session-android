@@ -36,7 +36,7 @@ import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
 import org.thoughtcrime.securesms.ui.contentDescription
-import org.thoughtcrime.securesms.ui.theme.small
+import org.thoughtcrime.securesms.ui.theme.LocalType
 
 private val TITLES = listOf(R.string.enter_account_id, R.string.qrScan)
 
@@ -100,7 +100,7 @@ private fun EnterAccountId(
                     .contentDescription(R.string.AccessibilityId_help_desk_link)
                     .padding(horizontal = LocalDimensions.current.margin)
                     .fillMaxWidth(),
-                style = small,
+                style = LocalType.current.small,
                 color = LocalColors.current.textSecondary,
                 iconRes = R.drawable.ic_circle_question_mark,
                 onClick = onHelp

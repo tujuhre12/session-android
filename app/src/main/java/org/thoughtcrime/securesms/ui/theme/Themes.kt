@@ -21,6 +21,8 @@ import org.session.libsession.utilities.AppTextSecurePreferences
 
 // Globally accessible composition local objects
 val LocalColors = compositionLocalOf <ThemeColors> { ClassicDark() }
+val LocalType = compositionLocalOf { sessionTypography }
+
 var selectedTheme: ThemeColors? = null
 
 /**
@@ -51,11 +53,12 @@ fun SessionMaterialTheme(
 ) {
     MaterialTheme(
         colors = colors.toMaterialColors(),
-        typography = sessionTypography,
+        typography = sessionTypography.asMaterialTypography(),
         shapes = sessionShapes,
     ) {
         CompositionLocalProvider(
             LocalColors provides colors,
+            LocalType provides sessionTypography,
             LocalContentColor provides colors.text,
             LocalTextSelectionColors provides colors.textSelectionColors,
         ) {
