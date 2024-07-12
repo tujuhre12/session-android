@@ -56,7 +56,7 @@ class GlobalSearchViewModel @Inject constructor(
                     GlobalSearchResult(query.toString())
                 }
             }
-        }.stateIn(scope, SharingStarted.Lazily, GlobalSearchResult.EMPTY)
+        }
 
     fun setQuery(charSequence: CharSequence) {
         _queryText.value = charSequence
