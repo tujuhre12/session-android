@@ -102,6 +102,7 @@ class InputBar @JvmOverloads constructor(
         // `microphoneButton.onUp` and tap the button then the logged output order is onUp and THEN onPress!
         microphoneButton.setOnTouchListener(object : OnTouchListener {
             override fun onTouch(v: View, event: MotionEvent): Boolean {
+                if (!microphoneButton.snIsEnabled) return true
 
                 // We only handle single finger touch events so just consume the event and bail if there are more
                 if (event.pointerCount > 1) return true
