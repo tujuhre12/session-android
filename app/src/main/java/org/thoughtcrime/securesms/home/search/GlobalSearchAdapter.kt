@@ -28,6 +28,8 @@ class GlobalSearchAdapter(private val modelCallback: (Model)->Unit): RecyclerVie
     private var data: List<Model> = listOf()
     private var query: String? = null
 
+    fun setNewData(data: Pair<String, List<Model>>) = setNewData(data.first, data.second)
+
     fun setNewData(query: String, newData: List<Model>) {
         val diffResult = DiffUtil.calculateDiff(GlobalSearchDiff(this.query, query, data, newData))
         this.query = query
