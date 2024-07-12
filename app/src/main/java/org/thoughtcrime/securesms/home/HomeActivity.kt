@@ -273,10 +273,10 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                             .flatMap { (key, contacts) ->
                                 listOf(
                                     GlobalSearchAdapter.Model.SubHeader(key)
-                                ) + contacts.sortedBy { it.name ?: it.value.accountID }.map { it.value }.map { GlobalSearchAdapter.Model.Contact(it, it.accountID == publicKey) }
+                                ) + contacts.sortedBy { it.name ?: it.value.accountID }.map { it.value }.map { GlobalSearchAdapter.Model.Contact(it, it.nickname ?: it.name, it.accountID == publicKey) }
                             }
                     } else {
-                        val contactAndGroupList = result.contacts.map { GlobalSearchAdapter.Model.Contact(it, it.accountID == publicKey) } +
+                        val contactAndGroupList = result.contacts.map { GlobalSearchAdapter.Model.Contact(it, it.nickname ?: it.name, it.accountID == publicKey) } +
                             result.threads.map(GlobalSearchAdapter.Model::GroupConversation)
 
                         val contactResults = contactAndGroupList.toMutableList()
