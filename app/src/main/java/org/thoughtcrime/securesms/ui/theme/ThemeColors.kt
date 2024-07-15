@@ -4,12 +4,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.text.selection.TextSelectionColors
-import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.RadioButtonDefaults
-import androidx.compose.material.TabRowDefaults
-import androidx.compose.material.Text
-import androidx.compose.material.primarySurface
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Text
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -37,55 +35,70 @@ interface ThemeColors {
 }
 
 // extra functions and properties that work for all themes
-val ThemeColors.textSelectionColors get() = TextSelectionColors(
-    handleColor = primary,
-    backgroundColor = primary.copy(alpha = 0.5f)
-)
-
-val ThemeColors.divider get() = text.copy(alpha = TabRowDefaults.DividerOpacity)
+val ThemeColors.textSelectionColors
+    get() = TextSelectionColors(
+        handleColor = primary,
+        backgroundColor = primary.copy(alpha = 0.5f)
+    )
 
 fun ThemeColors.text(isError: Boolean): Color = if (isError) danger else text
 fun ThemeColors.textSecondary(isError: Boolean): Color = if (isError) danger else textSecondary
 fun ThemeColors.textEnabled(enabled: Boolean) = if (enabled) text else disabled
 fun ThemeColors.borders(isError: Boolean): Color = if (isError) danger else borders
 
-fun ThemeColors.toMaterialColors() = androidx.compose.material.Colors(
-    primary = background,
-    primaryVariant = backgroundSecondary,
-    secondary = background,
-    secondaryVariant = background,
-    background = background,
-    surface = background,
-    error = danger,
-    onPrimary = text,
-    onSecondary = text,
-    onBackground = text,
-    onSurface = text,
-    onError = text,
-    isLight = isLight
-)
+fun ThemeColors.toMaterialColors() = if (isLight) {
+    lightColorScheme(
+        primary = background,
+        secondary = backgroundSecondary,
+        tertiary = backgroundSecondary,
+        onPrimary = text,
+        onSecondary = text,
+        onTertiary = text,
+        background = background,
+        surface = background,
+        surfaceVariant = background,
+        onBackground = text,
+        onSurface = text,
+        scrim = blackAlpha40,
+        outline = text,
+        outlineVariant = text
+    )
+} else {
+    darkColorScheme(
+        primary = background,
+        secondary = backgroundSecondary,
+        tertiary = backgroundSecondary,
+        onPrimary = text,
+        onSecondary = text,
+        onTertiary = text,
+        background = background,
+        surface = background,
+        surfaceVariant = background,
+        onBackground = text,
+        onSurface = text,
+        scrim = blackAlpha40,
+        outline = text,
+        outlineVariant = text
+    )
+}
 
-
-@Composable
-fun ThemeColors.radioButtonColors() = RadioButtonDefaults.colors(
-    selectedColor = primary,
-    unselectedColor = text,
-    disabledColor = disabled
-)
 
 @Composable
 fun transparentButtonColors() = ButtonDefaults.buttonColors(
-    backgroundColor = Color.Transparent,
-    disabledBackgroundColor = Color.Transparent,
+    containerColor = Color.Transparent,
+    disabledContainerColor = Color.Transparent,
     disabledContentColor = LocalColors.current.disabled
 )
 
 @Composable
-fun dangerButtonColors() = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent, contentColor = LocalColors.current.danger)
+fun dangerButtonColors() = ButtonDefaults.buttonColors(
+    containerColor = Color.Transparent,
+    contentColor = LocalColors.current.danger
+)
 
 
 // Our themes
-data class ClassicDark(override val primary: Color = primaryGreen): ThemeColors {
+data class ClassicDark(override val primary: Color = primaryGreen) : ThemeColors {
     override val isLight = false
     override val danger = dangerDark
     override val disabled = disabledDark
@@ -103,7 +116,7 @@ data class ClassicDark(override val primary: Color = primaryGreen): ThemeColors 
     override val primaryButtonFillText = Color.Black
 }
 
-data class ClassicLight(override val primary: Color = primaryGreen): ThemeColors {
+data class ClassicLight(override val primary: Color = primaryGreen) : ThemeColors {
     override val isLight = true
     override val danger = dangerLight
     override val disabled = disabledLight
@@ -121,7 +134,7 @@ data class ClassicLight(override val primary: Color = primaryGreen): ThemeColors
     override val primaryButtonFillText = Color.White
 }
 
-data class OceanDark(override val primary: Color = primaryBlue): ThemeColors {
+data class OceanDark(override val primary: Color = primaryBlue) : ThemeColors {
     override val isLight = false
     override val danger = dangerDark
     override val disabled = disabledDark
@@ -139,7 +152,7 @@ data class OceanDark(override val primary: Color = primaryBlue): ThemeColors {
     override val primaryButtonFillText = Color.Black
 }
 
-data class OceanLight(override val primary: Color = primaryBlue): ThemeColors {
+data class OceanLight(override val primary: Color = primaryBlue) : ThemeColors {
     override val isLight = true
     override val danger = dangerLight
     override val disabled = disabledLight

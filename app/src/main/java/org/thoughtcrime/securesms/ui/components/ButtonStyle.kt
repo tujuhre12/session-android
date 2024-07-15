@@ -1,9 +1,9 @@
 package org.thoughtcrime.securesms.ui.components
 
 import android.annotation.SuppressLint
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.LocalMinimumInteractiveComponentEnforcement
-import androidx.compose.material.LocalTextStyle
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LocalMinimumInteractiveComponentEnforcement
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.text.TextStyle
@@ -14,7 +14,7 @@ import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.bold
 
 interface ButtonStyle {
-    @OptIn(ExperimentalMaterialApi::class)
+    @OptIn(ExperimentalMaterial3Api::class)
     @SuppressLint("ComposableNaming")
     @Composable fun applyButtonConstraints(content: @Composable () -> Unit) {
         CompositionLocalProvider(

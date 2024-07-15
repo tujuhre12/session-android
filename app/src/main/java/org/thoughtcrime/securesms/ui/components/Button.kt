@@ -16,8 +16,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.ButtonColors
-import androidx.compose.material.Text
+import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -66,16 +66,16 @@ fun Button(
     content: @Composable RowScope.() -> Unit
 ) {
     style.applyButtonConstraints {
-        androidx.compose.material.Button(
-            onClick,
-            modifier.heightIn(min = style.minHeight),
-            enabled,
-            interactionSource,
+        androidx.compose.material3.Button(
+            onClick = onClick,
+            modifier = modifier.heightIn(min = style.minHeight),
+            enabled = enabled,
+            interactionSource = interactionSource,
             elevation = null,
-            shape,
-            border,
-            colors,
-            contentPadding
+            shape = shape,
+            border = border,
+            colors = colors,
+            contentPadding = contentPadding
         ) {
             // Button sets LocalTextStyle, so text style is applied inside to override that.
             style.applyTextConstraints {

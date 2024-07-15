@@ -7,6 +7,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.ColumnScope
@@ -22,13 +23,14 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material.ButtonColors
-import androidx.compose.material.Card
-import androidx.compose.material.Icon
-import androidx.compose.material.LocalContentColor
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
-import androidx.compose.material.TextButton
+import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.Card
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
@@ -67,7 +69,6 @@ import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
-import org.thoughtcrime.securesms.ui.theme.divider
 import org.thoughtcrime.securesms.ui.theme.transparentButtonColors
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -270,11 +271,10 @@ fun CellWithPaddingAndMargin(
     margin: Dp = LocalDimensions.current.spacing,
     content: @Composable () -> Unit
 ) {
-    Card(
-        backgroundColor = LocalColors.current.backgroundSecondary,
-        shape = MaterialTheme.shapes.medium,
-        elevation = 0.dp,
+    Box(
         modifier = Modifier
+            .background(color = LocalColors.current.backgroundSecondary,
+                shape = MaterialTheme.shapes.small)
             .wrapContentHeight()
             .fillMaxWidth()
             .padding(horizontal = margin),
@@ -342,10 +342,10 @@ fun Modifier.fadingEdges(
 
 @Composable
 fun Divider(modifier: Modifier = Modifier, startIndent: Dp = 0.dp) {
-    androidx.compose.material.Divider(
-        modifier = modifier.padding(horizontal = LocalDimensions.current.smallSpacing),
-        color = LocalColors.current.divider,
-        startIndent = startIndent
+    HorizontalDivider(
+        modifier = modifier.padding(horizontal = LocalDimensions.current.smallSpacing)
+            .padding(start = startIndent),
+        color = LocalColors.current.borders,
     )
 }
 

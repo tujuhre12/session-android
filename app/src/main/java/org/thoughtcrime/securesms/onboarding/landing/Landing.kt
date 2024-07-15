@@ -5,6 +5,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,9 +17,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.Card
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -39,16 +39,16 @@ import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.DialogButtonModel
 import org.thoughtcrime.securesms.ui.GetString
-import org.thoughtcrime.securesms.ui.theme.LocalDimensions
-import org.thoughtcrime.securesms.ui.theme.PreviewTheme
-import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
-import org.thoughtcrime.securesms.ui.theme.ThemeColors
-import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.components.BorderlessHtmlButton
 import org.thoughtcrime.securesms.ui.components.PrimaryFillButton
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.contentDescription
+import org.thoughtcrime.securesms.ui.theme.LocalColors
+import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
+import org.thoughtcrime.securesms.ui.theme.PreviewTheme
+import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
+import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import kotlin.time.Duration.Companion.milliseconds
 
 @Preview
@@ -208,11 +208,9 @@ private fun MessageText(
     modifier: Modifier = Modifier,
     textColor: Color = Color.Unspecified
 ) {
-    Card(
-        modifier = modifier.fillMaxWidth(0.666f),
-        shape = MaterialTheme.shapes.small,
-        backgroundColor = color,
-        elevation = 0.dp
+    Box(
+        modifier = modifier.fillMaxWidth(0.666f)
+            .background(color = color, shape = MaterialTheme.shapes.small)
     ) {
         Text(
             text,

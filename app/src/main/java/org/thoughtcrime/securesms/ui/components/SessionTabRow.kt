@@ -1,15 +1,15 @@
 package org.thoughtcrime.securesms.ui.components
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material.Tab
-import androidx.compose.material.TabRow
-import androidx.compose.material.TabRowDefaults
-import androidx.compose.material.TabRowDefaults.tabIndicatorOffset
-import androidx.compose.material.Text
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -25,7 +25,6 @@ import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
-import org.thoughtcrime.securesms.ui.theme.divider
 
 private val TITLES = listOf(R.string.sessionRecoveryPassword, R.string.qrScan)
 
@@ -33,31 +32,29 @@ private val TITLES = listOf(R.string.sessionRecoveryPassword, R.string.qrScan)
 @Composable
 fun SessionTabRow(pagerState: PagerState, titles: List<Int>) {
     TabRow(
-            backgroundColor = Color.Unspecified,
+            containerColor = Color.Unspecified,
             selectedTabIndex = pagerState.currentPage,
             contentColor = LocalColors.current.text,
             indicator = { tabPositions ->
-                TabRowDefaults.Indicator(
+                TabRowDefaults.SecondaryIndicator(
                     Modifier.tabIndicatorOffset(tabPositions[pagerState.currentPage]),
                     color = LocalColors.current.primary,
                     height = LocalDimensions.current.indicatorHeight
                 )
             },
-            divider = { TabRowDefaults.Divider(color = LocalColors.current.divider) },
-            modifier = Modifier
-                .height(48.dp)
-                .background(color = Color.Unspecified)
+            divider = { HorizontalDivider(color = LocalColors.current.borders) }
     ) {
         val animationScope = rememberCoroutineScope()
         titles.forEachIndexed { i, it ->
             Tab(
-                i == pagerState.currentPage,
+                modifier = Modifier.heightIn(min = 48.dp),
+                selected = i == pagerState.currentPage,
                 onClick = { animationScope.launch { pagerState.animateScrollToPage(i) } },
                 selectedContentColor = LocalColors.current.text,
                 unselectedContentColor = LocalColors.current.text,
             ) {
                 Text(
-                    stringResource(id = it),
+                    text = stringResource(id = it),
                     style = LocalType.current.h8
                 )
             }

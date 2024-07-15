@@ -16,12 +16,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.Card
-import androidx.compose.material.ContentAlpha
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
-import androidx.compose.material.LocalContentAlpha
-import androidx.compose.material.LocalContentColor
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -47,19 +43,17 @@ import kotlin.math.sign
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun BoxScope.HorizontalPagerIndicator(pagerState: PagerState) {
-    if (pagerState.pageCount >= 2) Card(
-        shape = pillShape,
-        backgroundColor = blackAlpha40,
+    if (pagerState.pageCount >= 2) Box(
         modifier = Modifier
+            .background(color = blackAlpha40, shape = pillShape)
             .align(Alignment.BottomCenter)
             .padding(LocalDimensions.current.xxsSpacing)
     ) {
         Box(modifier = Modifier.padding(LocalDimensions.current.xxsSpacing)) {
             ClickableHorizontalPagerIndicator(
                 pagerState = pagerState,
-                pageCount = pagerState.pageCount,
-                activeColor = Color.White,
-                inactiveColor = LocalColors.current.textSecondary)
+                pageCount = pagerState.pageCount
+            )
         }
     }
 }
@@ -76,8 +70,8 @@ fun ClickableHorizontalPagerIndicator(
     pageCount: Int,
     modifier: Modifier = Modifier,
     pageIndexMapping: (Int) -> Int = { it },
-    activeColor: Color = LocalContentColor.current.copy(alpha = LocalContentAlpha.current),
-    inactiveColor: Color = activeColor.copy(ContentAlpha.disabled),
+    activeColor: Color = Color.White,
+    inactiveColor: Color = LocalColors.current.disabled,
     indicatorWidth: Dp = LocalDimensions.current.xxsSpacing,
     indicatorHeight: Dp = indicatorWidth,
     spacing: Dp = indicatorWidth,
@@ -118,8 +112,8 @@ private fun HorizontalPagerIndicator(
     pageCount: Int,
     modifier: Modifier = Modifier,
     pageIndexMapping: (Int) -> Int = { it },
-    activeColor: Color = LocalContentColor.current.copy(alpha = LocalContentAlpha.current),
-    inactiveColor: Color = activeColor.copy(ContentAlpha.disabled),
+    activeColor: Color = Color.White,
+    inactiveColor: Color = LocalColors.current.disabled,
     indicatorWidth: Dp = LocalDimensions.current.xxsSpacing,
     indicatorHeight: Dp = indicatorWidth,
     spacing: Dp = indicatorWidth,

@@ -22,11 +22,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Scaffold
-import androidx.compose.material.Snackbar
-import androidx.compose.material.SnackbarHost
-import androidx.compose.material.Text
-import androidx.compose.material.rememberScaffoldState
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -56,8 +56,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalColors
+import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import java.util.concurrent.Executors
 
@@ -158,13 +158,12 @@ fun ScanQrCode(errors: Flow<String>, onScan: (String) -> Unit) {
         }
     }
 
-    val scaffoldState = rememberScaffoldState()
-
+    val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         errors.collect { error ->
-            scaffoldState.snackbarHostState
+            snackbarHostState
                 .takeIf { it.currentSnackbarData == null }
                 ?.run {
                     scope.launch {
@@ -175,17 +174,16 @@ fun ScanQrCode(errors: Flow<String>, onScan: (String) -> Unit) {
                         // Don't use debounce() because many QR scans can come through each second,
                         // and each scan could restart the timer which could mean no scan gets
                         // through until the user stops scanning; quite perplexing.
-                        showSnackbar(message = error)
+                        snackbarHostState.showSnackbar(message = error)
                     }
                 }
         }
     }
 
     Scaffold(
-        scaffoldState = scaffoldState,
         snackbarHost = {
             SnackbarHost(
-                hostState = scaffoldState.snackbarHostState,
+                hostState = snackbarHostState,
                 modifier = Modifier.padding(LocalDimensions.current.smallSpacing)
             ) { data ->
                 Snackbar(

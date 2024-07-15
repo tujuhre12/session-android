@@ -1,14 +1,11 @@
 package org.thoughtcrime.securesms.ui.theme
 
-import androidx.compose.material.Typography
+import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontFamily.Companion.Monospace
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
-
 
 
 fun TextStyle.bold() = TextStyle.Default.copy(
@@ -114,10 +111,9 @@ data class SessionTypography(
         fontWeight = FontWeight.Bold
     )
 ) {
-    //todo ready to go when we switch to Material3
 
     // An opinionated override of Material's defaults
-    /*@Composable
+    @Composable
     fun asMaterialTypography() = Typography(
         // Display
         displayLarge = h1,
@@ -143,23 +139,6 @@ data class SessionTypography(
         labelLarge = extraSmall,
         labelMedium = fine,
         labelSmall = fine
-    )*/
-
-    @Composable
-    fun asMaterialTypography() = Typography(
-        h1 = h1,
-        h2 = h2,
-        h3 = h3,
-        h4 = h4,
-        h5 = h5,
-        h6 = h6,
-        subtitle1 = h7,
-        subtitle2 = h8,
-        body1 = base,
-        body2 = small,
-        button = base,
-        caption = small,
-        overline = fine
     )
 }
 
