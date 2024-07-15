@@ -106,7 +106,7 @@ fun MaybeScanQrCode(
         } else {
             Column(
                 modifier = Modifier
-                    .background(color = LocalColors.current.backgroundSecondary)
+                    .background(color = LocalColors.current.background)
                     .fillMaxSize()
                     .padding(LocalDimensions.current.xlargeSpacing),
                 horizontalAlignment = Alignment.CenterHorizontally

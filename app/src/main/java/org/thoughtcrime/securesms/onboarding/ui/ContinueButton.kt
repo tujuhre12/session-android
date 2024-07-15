@@ -18,7 +18,7 @@ fun ContinuePrimaryOutlineButton(modifier: Modifier, onContinue: () -> Unit) {
             .contentDescription(R.string.AccessibilityId_continue)
             .fillMaxWidth()
             .padding(horizontal = LocalDimensions.current.xlargeSpacing)
-            .padding(bottom = LocalDimensions.current.xsSpacing),
+            .padding(bottom = LocalDimensions.current.smallSpacing),
         onClick = onContinue,
     )
 }

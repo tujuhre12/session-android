@@ -3,10 +3,11 @@ package org.thoughtcrime.securesms.conversation.start.newmessage
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
@@ -24,6 +25,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import network.loki.messenger.R
+import org.thoughtcrime.securesms.onboarding.ui.ContinuePrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.LoadingArcOr
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
@@ -74,7 +76,6 @@ private fun EnterAccountId(
     callbacks: Callbacks,
     onHelp: () -> Unit = {}
 ) {
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -84,7 +85,6 @@ private fun EnterAccountId(
         Column(
             modifier = Modifier.padding(vertical = LocalDimensions.current.spacing),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
         ) {
             SessionOutlinedTextField(
                 text = state.newMessageIdOrOns,
@@ -97,6 +97,8 @@ private fun EnterAccountId(
                 error = state.error?.string(),
                 isTextErrorColor = state.isTextErrorColor
             )
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.xxxsSpacing))
 
             BorderlessButtonWithIcon(
                 text = stringResource(R.string.messageNewDescription),
@@ -111,18 +113,21 @@ private fun EnterAccountId(
             )
         }
 
-        AnimatedVisibility(state.isNextButtonVisible) {
-            PrimaryOutlineButton(
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .padding(horizontal = LocalDimensions.current.xlargeSpacing)
-                    .fillMaxWidth()
-                    .contentDescription(R.string.next),
-                onClick = callbacks::onContinue
-            ) {
-                LoadingArcOr(state.loading) {
-                    Text(stringResource(R.string.next))
-                }
+        Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
+        Spacer(Modifier.weight(2f))
+
+        PrimaryOutlineButton(
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .padding(horizontal = LocalDimensions.current.xlargeSpacing)
+                .padding(bottom = LocalDimensions.current.smallSpacing)
+                .fillMaxWidth()
+                .contentDescription(R.string.next),
+            enabled = state.isNextButtonEnabled,
+            onClick = callbacks::onContinue
+        ) {
+            LoadingArcOr(state.loading) {
+                Text(stringResource(R.string.next))
             }
         }
     }

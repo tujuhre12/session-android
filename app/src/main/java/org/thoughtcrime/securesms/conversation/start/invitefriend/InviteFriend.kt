@@ -40,7 +40,8 @@ internal fun InviteFriend(
     )) {
         AppBar(stringResource(R.string.invite_a_friend), onBack = onBack, onClose = onClose)
         Column(
-            modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing),
+            modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing)
+                .padding(top = LocalDimensions.current.spacing),
         ) {
             Text(
                 accountId,
