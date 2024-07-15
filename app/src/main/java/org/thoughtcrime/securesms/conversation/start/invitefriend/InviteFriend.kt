@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -33,7 +34,10 @@ internal fun InviteFriend(
     copyPublicKey: () -> Unit = {},
     sendInvitation: () -> Unit = {},
 ) {
-    Column(modifier = Modifier.background(LocalColors.current.backgroundSecondary)) {
+    Column(modifier = Modifier.background(
+        LocalColors.current.backgroundSecondary,
+        shape = MaterialTheme.shapes.small
+    )) {
         AppBar(stringResource(R.string.invite_a_friend), onBack = onBack, onClose = onClose)
         Column(
             modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing),
