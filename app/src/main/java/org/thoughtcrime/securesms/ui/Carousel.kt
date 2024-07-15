@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.theme.LocalColors
+import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.blackAlpha40
 import org.thoughtcrime.securesms.ui.theme.pillShape
 import kotlin.math.absoluteValue
@@ -51,9 +52,9 @@ fun BoxScope.HorizontalPagerIndicator(pagerState: PagerState) {
         backgroundColor = blackAlpha40,
         modifier = Modifier
             .align(Alignment.BottomCenter)
-            .padding(8.dp)
+            .padding(LocalDimensions.current.xxsSpacing)
     ) {
-        Box(modifier = Modifier.padding(8.dp)) {
+        Box(modifier = Modifier.padding(LocalDimensions.current.xxsSpacing)) {
             ClickableHorizontalPagerIndicator(
                 pagerState = pagerState,
                 pageCount = pagerState.pageCount,
@@ -77,7 +78,7 @@ fun ClickableHorizontalPagerIndicator(
     pageIndexMapping: (Int) -> Int = { it },
     activeColor: Color = LocalContentColor.current.copy(alpha = LocalContentAlpha.current),
     inactiveColor: Color = activeColor.copy(ContentAlpha.disabled),
-    indicatorWidth: Dp = 8.dp,
+    indicatorWidth: Dp = LocalDimensions.current.xxsSpacing,
     indicatorHeight: Dp = indicatorWidth,
     spacing: Dp = indicatorWidth,
     indicatorShape: Shape = CircleShape,
@@ -119,7 +120,7 @@ private fun HorizontalPagerIndicator(
     pageIndexMapping: (Int) -> Int = { it },
     activeColor: Color = LocalContentColor.current.copy(alpha = LocalContentAlpha.current),
     inactiveColor: Color = activeColor.copy(ContentAlpha.disabled),
-    indicatorWidth: Dp = 8.dp,
+    indicatorWidth: Dp = LocalDimensions.current.xxsSpacing,
     indicatorHeight: Dp = indicatorWidth,
     spacing: Dp = indicatorWidth,
     indicatorShape: Shape = CircleShape,

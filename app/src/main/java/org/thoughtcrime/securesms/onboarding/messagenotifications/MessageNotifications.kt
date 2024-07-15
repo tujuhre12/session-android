@@ -113,15 +113,16 @@ private fun NotificationRadioButton(
                 ),
         ) {
             Column(modifier = Modifier
-                .padding(horizontal = 15.dp)
-                .padding(top = 10.dp, bottom = 11.dp)) {
+                .padding(horizontal = LocalDimensions.current.smallSpacing,
+                    vertical = LocalDimensions.current.xsSpacing)
+                ) {
                 Text(stringResource(title), style = LocalType.current.h8)
 
-                Text(stringResource(explanation), style = LocalType.current.small, modifier = Modifier.padding(top = 7.dp))
+                Text(stringResource(explanation), style = LocalType.current.small, modifier = Modifier.padding(top = LocalDimensions.current.xxsSpacing))
                 tag?.let {
                     Text(
                         stringResource(it),
-                        modifier = Modifier.padding(top = 6.dp),
+                        modifier = Modifier.padding(top = LocalDimensions.current.xxsSpacing),
                         color = LocalColors.current.primary,
                         style = LocalType.current.h9
                     )
