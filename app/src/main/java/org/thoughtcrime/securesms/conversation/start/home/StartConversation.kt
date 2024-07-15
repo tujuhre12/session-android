@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -36,7 +37,10 @@ internal fun StartConversationScreen(
     accountId: String,
     delegate: StartConversationDelegate
 ) {
-    Column(modifier = Modifier.background(LocalColors.current.backgroundSecondary)) {
+    Column(modifier = Modifier.background(
+        LocalColors.current.backgroundSecondary,
+        shape = MaterialTheme.shapes.small
+    )) {
         AppBar(stringResource(R.string.dialog_start_conversation_title), onClose = delegate::onDialogClosePressed)
         Surface(
             modifier = Modifier.nestedScroll(rememberNestedScrollInteropConnection()),
@@ -78,7 +82,7 @@ internal fun StartConversationScreen(
                         .padding(bottom = LocalDimensions.current.spacing)
                 ) {
                     Text(stringResource(R.string.accountIdYours), style = LocalType.current.xl)
-                    Spacer(modifier = Modifier.height(LocalDimensions.current.xxxsSpacing))
+                    Spacer(modifier = Modifier.height(LocalDimensions.current.xxsSpacing))
                     Text(
                         text = stringResource(R.string.qrYoursDescription),
                         color = LocalColors.current.textSecondary,
