@@ -331,11 +331,11 @@ public class Recipient implements RecipientModifiedListener {
     } else if (isOpenGroupInboxRecipient()){
       String inboxID = GroupUtil.getDecodedOpenGroupInboxAccountId(accountID);
       Contact contact = storage.getContactWithAccountID(inboxID);
-      if (contact == null) { return accountID; }
+      if (contact == null) return accountID;
       return contact.displayName(Contact.ContactContext.REGULAR);
     } else {
       Contact contact = storage.getContactWithAccountID(accountID);
-      if (contact == null) { return null; }
+      if (contact == null) return null;
       return contact.displayName(Contact.ContactContext.REGULAR);
     }
   }
