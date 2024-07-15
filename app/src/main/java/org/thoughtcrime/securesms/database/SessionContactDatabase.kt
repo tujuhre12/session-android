@@ -15,7 +15,7 @@ class SessionContactDatabase(context: Context, helper: SQLCipherOpenHelper) : Da
 
     companion object {
         private const val sessionContactTable = "session_contact_database"
-        const val accountID = "account_id"
+        const val accountID = "session_id"
         const val name = "name"
         const val nickname = "nickname"
         const val profilePictureURL = "profile_picture_url"
