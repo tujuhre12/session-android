@@ -40,7 +40,7 @@ import org.thoughtcrime.securesms.util.QRCodeUtilities
 fun QrImage(
     string: String?,
     modifier: Modifier = Modifier,
-    contentPadding: Dp = LocalDimensions.current.smallItemSpacing,
+    contentPadding: Dp = LocalDimensions.current.smallSpacing,
     icon: Int = R.drawable.session_shield
 ) {
     var bitmap: Bitmap? by remember {

@@ -56,7 +56,7 @@ internal fun EmptyView(newAccount: Boolean) {
             stringResource(R.string.conversationsNone),
             style = LocalType.current.h8,
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(bottom = LocalDimensions.current.xsItemSpacing))
+            modifier = Modifier.padding(bottom = LocalDimensions.current.xsSpacing))
         Text(
             stringResource(R.string.onboardingHitThePlusButton),
             style = LocalType.current.small,

@@ -130,7 +130,7 @@ fun SessionOutlinedTextField(
             )
         }
         error?.let {
-            Spacer(modifier = Modifier.height(LocalDimensions.current.xsItemSpacing))
+            Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
             Text(
                 it,
                 modifier = Modifier.fillMaxWidth()

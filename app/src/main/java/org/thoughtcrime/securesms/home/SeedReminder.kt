@@ -52,7 +52,7 @@ internal fun SeedReminder(startRecoveryPasswordActivity: () -> Unit) {
                         stringResource(R.string.save_your_recovery_password),
                         style = LocalType.current.h8
                     )
-                    Spacer(Modifier.requiredWidth(LocalDimensions.current.xxsItemSpacing))
+                    Spacer(Modifier.requiredWidth(LocalDimensions.current.xxsSpacing))
                     SessionShieldIcon()
                 }
                 Text(

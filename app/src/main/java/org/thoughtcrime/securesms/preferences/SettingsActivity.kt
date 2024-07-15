@@ -431,7 +431,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
                 modifier = Modifier
                     .padding(horizontal = LocalDimensions.current.smallMargin)
                     .padding(top = LocalDimensions.current.xxxsMargin),
-                horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallItemSpacing),
+                horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing),
             ) {
                 PrimaryOutlineButton(
                     stringResource(R.string.share),
@@ -445,7 +445,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
                 )
             }
 
-            Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacing))
+            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             val hasPaths by hasPaths().collectAsState(initial = false)
 

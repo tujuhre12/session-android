@@ -76,7 +76,7 @@ private fun RecoveryPasswordCell(
                     stringResource(R.string.sessionRecoveryPassword),
                     style = LocalType.current.h8
                 )
-                Spacer(Modifier.width(LocalDimensions.current.xxsItemSpacing))
+                Spacer(Modifier.width(LocalDimensions.current.xxsSpacing))
                 SessionShieldIcon()
             }
 
@@ -107,7 +107,7 @@ private fun RecoveryPasswordCell(
 
             AnimatedVisibility(!showQr) {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallItemSpacing),
+                    horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     SlimOutlineCopyButton(

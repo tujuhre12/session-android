@@ -226,7 +226,7 @@ fun ItemButton(
             text,
             Modifier
                 .fillMaxWidth()
-                .padding(vertical = LocalDimensions.current.xsItemSpacing)
+                .padding(vertical = LocalDimensions.current.xsSpacing)
                 .align(Alignment.CenterVertically),
             style = textStyle
         )
@@ -269,7 +269,7 @@ fun CellWithPaddingAndMargin(
 fun <T> TitledRadioButton(option: RadioOption<T>, onClick: () -> Unit) {
     val color = if (option.enabled) LocalColors.current.text else LocalColors.current.disabled
     Row(
-        horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallItemSpacing),
+        horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing),
         modifier = Modifier
             .runIf(option.enabled) { clickable { if (!option.selected) onClick() } }
             .heightIn(min = 60.dp)

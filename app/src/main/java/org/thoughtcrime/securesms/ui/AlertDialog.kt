@@ -73,15 +73,15 @@ fun AlertDialog(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = LocalDimensions.current.smallItemSpacing)
-                            .padding(horizontal = LocalDimensions.current.smallItemSpacing)
+                            .padding(top = LocalDimensions.current.smallSpacing)
+                            .padding(horizontal = LocalDimensions.current.smallSpacing)
                     ) {
                         title?.let {
                             Text(
                                 it,
                                 textAlign = TextAlign.Center,
                                 style = LocalType.current.h7,
-                                modifier = Modifier.padding(bottom = LocalDimensions.current.xxsItemSpacing)
+                                modifier = Modifier.padding(bottom = LocalDimensions.current.xxsSpacing)
                             )
                         }
                         text?.let {
@@ -89,7 +89,7 @@ fun AlertDialog(
                                 it,
                                 textAlign = TextAlign.Center,
                                 style = LocalType.current.large,
-                                modifier = Modifier.padding(bottom = LocalDimensions.current.xxsItemSpacing)
+                                modifier = Modifier.padding(bottom = LocalDimensions.current.xxsSpacing)
                             )
                         }
                         content()
@@ -130,8 +130,8 @@ fun DialogButton(text: String, modifier: Modifier, color: Color = Color.Unspecif
             style = LocalType.current.large.bold(),
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(
-                top = LocalDimensions.current.smallItemSpacing,
-                bottom = LocalDimensions.current.itemSpacing
+                top = LocalDimensions.current.smallSpacing,
+                bottom = LocalDimensions.current.spacing
             )
         )
     }

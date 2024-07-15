@@ -36,7 +36,7 @@ internal fun InviteFriend(
     Column(modifier = Modifier.background(LocalColors.current.backgroundSecondary)) {
         AppBar(stringResource(R.string.invite_a_friend), onBack = onBack, onClose = onClose)
         Column(
-            modifier = Modifier.padding(horizontal = LocalDimensions.current.itemSpacing),
+            modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing),
         ) {
             Text(
                 accountId,
@@ -49,19 +49,19 @@ internal fun InviteFriend(
                 style = LocalType.current.base
             )
 
-            Spacer(modifier = Modifier.height(LocalDimensions.current.xsItemSpacing))
+            Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
 
             Text(
                 stringResource(R.string.invite_your_friend_to_chat_with_you_on_session_by_sharing_your_account_id_with_them),
                 textAlign = TextAlign.Center,
                 style = LocalType.current.small,
                 color = LocalColors.current.textSecondary,
-                modifier = Modifier.padding(horizontal = LocalDimensions.current.smallItemSpacing)
+                modifier = Modifier.padding(horizontal = LocalDimensions.current.smallSpacing)
             )
 
-            Spacer(modifier = Modifier.height(LocalDimensions.current.smallItemSpacing))
+            Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
-            Row(horizontalArrangement = spacedBy(LocalDimensions.current.smallItemSpacing)) {
+            Row(horizontalArrangement = spacedBy(LocalDimensions.current.smallSpacing)) {
                 SlimOutlineButton(
                     stringResource(R.string.share),
                     modifier = Modifier

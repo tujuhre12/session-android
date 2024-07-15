@@ -74,17 +74,17 @@ internal fun StartConversationScreen(
                 Column(
                     modifier = Modifier
                         .padding(horizontal = LocalDimensions.current.margin)
-                        .padding(top = LocalDimensions.current.itemSpacing)
+                        .padding(top = LocalDimensions.current.spacing)
                         .padding(bottom = LocalDimensions.current.margin)
                 ) {
                     Text(stringResource(R.string.accountIdYours), style = LocalType.current.xl)
-                    Spacer(modifier = Modifier.height(LocalDimensions.current.xxxsItemSpacing))
+                    Spacer(modifier = Modifier.height(LocalDimensions.current.xxxsSpacing))
                     Text(
                         text = stringResource(R.string.qrYoursDescription),
                         color = LocalColors.current.textSecondary,
                         style = LocalType.current.small
                     )
-                    Spacer(modifier = Modifier.height(LocalDimensions.current.smallItemSpacing))
+                    Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
                     QrImage(
                         string = accountId,
                         Modifier.contentDescription(R.string.AccessibilityId_qr_code),

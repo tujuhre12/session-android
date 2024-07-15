@@ -115,7 +115,7 @@ internal fun LandingScreen(
                 style = LocalType.current.h4,
                 textAlign = TextAlign.Center
             )
-            Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacing))
+            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             LazyColumn(
                 state = listState,
@@ -123,7 +123,7 @@ internal fun LandingScreen(
                     .heightIn(min = LocalDimensions.current.minScrollableViewHeight)
                     .fillMaxWidth()
                     .weight(3f),
-                verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallItemSpacing)
+                verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
             ) {
                 items(
                     MESSAGES.take(count),
@@ -148,7 +148,7 @@ internal fun LandingScreen(
                     .contentDescription(R.string.AccessibilityId_create_account_button),
                 onClick = createAccount
             )
-            Spacer(modifier = Modifier.height(LocalDimensions.current.smallItemSpacing))
+            Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
             PrimaryOutlineButton(
                 stringResource(R.string.onboardingAccountExists),
                 modifier = Modifier
@@ -165,7 +165,7 @@ internal fun LandingScreen(
                     .contentDescription(R.string.AccessibilityId_open_url),
                 onClick = { isUrlDialogVisible = true }
             )
-            Spacer(modifier = Modifier.height(LocalDimensions.current.xxsItemSpacing))
+            Spacer(modifier = Modifier.height(LocalDimensions.current.xxsSpacing))
         }
     }
 }
@@ -219,8 +219,8 @@ private fun MessageText(
             style = LocalType.current.large,
             color = textColor,
             modifier = Modifier.padding(
-                horizontal = LocalDimensions.current.smallItemSpacing,
-                vertical = LocalDimensions.current.xsItemSpacing
+                horizontal = LocalDimensions.current.smallSpacing,
+                vertical = LocalDimensions.current.xsSpacing
             )
         )
     }

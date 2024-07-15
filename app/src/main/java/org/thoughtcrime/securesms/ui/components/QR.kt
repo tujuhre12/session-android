@@ -96,7 +96,7 @@ fun MaybeScanQrCode(
                     style = LocalType.current.base,
                     textAlign = TextAlign.Center
                 )
-                Spacer(modifier = Modifier.size(LocalDimensions.current.itemSpacing))
+                Spacer(modifier = Modifier.size(LocalDimensions.current.spacing))
                 OutlineButton(
                     stringResource(R.string.sessionSettings),
                     modifier = Modifier.align(Alignment.CenterHorizontally),
@@ -114,7 +114,7 @@ fun MaybeScanQrCode(
                 Spacer(modifier = Modifier.weight(1f))
                 Text(stringResource(R.string.fragment_scan_qr_code_camera_access_explanation),
                     style = LocalType.current.xl, textAlign = TextAlign.Center)
-                Spacer(modifier = Modifier.height(LocalDimensions.current.itemSpacing))
+                Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
                 PrimaryOutlineButton(
                     stringResource(R.string.cameraGrantAccess),
                     modifier = Modifier.fillMaxWidth(),
@@ -186,11 +186,11 @@ fun ScanQrCode(errors: Flow<String>, onScan: (String) -> Unit) {
         snackbarHost = {
             SnackbarHost(
                 hostState = scaffoldState.snackbarHostState,
-                modifier = Modifier.padding(LocalDimensions.current.smallItemSpacing)
+                modifier = Modifier.padding(LocalDimensions.current.smallSpacing)
             ) { data ->
                 Snackbar(
                     snackbarData = data,
-                    modifier = Modifier.padding(LocalDimensions.current.smallItemSpacing)
+                    modifier = Modifier.padding(LocalDimensions.current.smallSpacing)
                 )
             }
         }
@@ -204,7 +204,7 @@ fun ScanQrCode(errors: Flow<String>, onScan: (String) -> Unit) {
             Box(
                 Modifier
                     .aspectRatio(1f)
-                    .padding(LocalDimensions.current.itemSpacing)
+                    .padding(LocalDimensions.current.spacing)
                     .clip(shape = RoundedCornerShape(26.dp))
                     .background(Color(0x33ffffff))
                     .align(Alignment.Center)

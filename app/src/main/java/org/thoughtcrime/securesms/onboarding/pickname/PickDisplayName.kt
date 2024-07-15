@@ -51,18 +51,18 @@ internal fun PickDisplayName(
             .verticalScroll(rememberScrollState())
     ) {
         Spacer(Modifier.weight(1f))
-        Spacer(modifier = Modifier.height(LocalDimensions.current.smallItemSpacing))
+        Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
         Column(
             modifier = Modifier.padding(horizontal = LocalDimensions.current.largeMargin)
         ) {
             Text(stringResource(state.title), style = LocalType.current.h4)
-            Spacer(Modifier.height(LocalDimensions.current.smallItemSpacing))
+            Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
             Text(
                 stringResource(state.description),
                 style = LocalType.current.base,
-                modifier = Modifier.padding(bottom = LocalDimensions.current.xsItemSpacing))
-            Spacer(Modifier.height(LocalDimensions.current.itemSpacing))
+                modifier = Modifier.padding(bottom = LocalDimensions.current.xsSpacing))
+            Spacer(Modifier.height(LocalDimensions.current.spacing))
             SessionOutlinedTextField(
                 text = state.displayName,
                 modifier = Modifier.fillMaxWidth(),
@@ -75,7 +75,7 @@ internal fun PickDisplayName(
             )
         }
 
-        Spacer(modifier = Modifier.height(LocalDimensions.current.smallItemSpacing))
+        Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
         Spacer(Modifier.weight(2f))
 
         ContinuePrimaryOutlineButton(modifier = Modifier.align(Alignment.CenterHorizontally), onContinue)

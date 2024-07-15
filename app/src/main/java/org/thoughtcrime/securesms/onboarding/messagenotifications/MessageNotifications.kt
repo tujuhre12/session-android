@@ -60,7 +60,7 @@ internal fun MessageNotificationsScreen(
             Text(stringResource(R.string.notificationsMessage), style = LocalType.current.h4)
             Spacer(Modifier.height(LocalDimensions.current.xsMargin))
             Text(stringResource(R.string.onboardingMessageNotificationExplaination), style = LocalType.current.base)
-            Spacer(Modifier.height(LocalDimensions.current.itemSpacing))
+            Spacer(Modifier.height(LocalDimensions.current.spacing))
         }
 
         NotificationRadioButton(

@@ -151,8 +151,8 @@ fun MessageDetails(
     Column(
         modifier = Modifier
             .verticalScroll(rememberScrollState())
-            .padding(vertical = LocalDimensions.current.smallItemSpacing),
-        verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallItemSpacing)
+            .padding(vertical = LocalDimensions.current.smallSpacing),
+        verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
     ) {
         state.record?.let { message ->
             AndroidView(
@@ -192,7 +192,7 @@ fun CellMetadata(
     state.apply {
         if (listOfNotNull(sent, received, error, senderInfo).isEmpty()) return
         CellWithPaddingAndMargin {
-            Column(verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallItemSpacing)) {
+            Column(verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)) {
                 TitledText(sent)
                 TitledText(received)
                 TitledErrorText(error)
@@ -250,7 +250,7 @@ fun Carousel(attachments: List<Attachment>, onClick: (Int) -> Unit) {
 
     val pagerState = rememberPagerState { attachments.size }
 
-    Column(verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallItemSpacing)) {
+    Column(verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)) {
         Row {
             CarouselPrevButton(pagerState)
             Box(modifier = Modifier.weight(1f)) {
@@ -259,7 +259,7 @@ fun Carousel(attachments: List<Attachment>, onClick: (Int) -> Unit) {
                 ExpandButton(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
-                        .padding(LocalDimensions.current.xxsItemSpacing)
+                        .padding(LocalDimensions.current.xxsSpacing)
                 ) { onClick(pagerState.currentPage) }
             }
             CarouselNextButton(pagerState)
@@ -339,8 +339,8 @@ fun FileDetails(fileDetails: List<TitledText>) {
 
     Cell {
         FlowRow(
-            modifier = Modifier.padding(horizontal = LocalDimensions.current.xsItemSpacing, vertical = LocalDimensions.current.itemSpacing),
-            verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallItemSpacing)
+            modifier = Modifier.padding(horizontal = LocalDimensions.current.xsSpacing, vertical = LocalDimensions.current.spacing),
+            verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
         ) {
             fileDetails.forEach {
                 BoxWithConstraints {
@@ -348,7 +348,7 @@ fun FileDetails(fileDetails: List<TitledText>) {
                         it,
                         modifier = Modifier
                             .widthIn(min = maxWidth.div(2))
-                            .padding(horizontal = LocalDimensions.current.xsItemSpacing)
+                            .padding(horizontal = LocalDimensions.current.xsSpacing)
                             .width(IntrinsicSize.Max)
                     )
                 }
@@ -395,7 +395,7 @@ fun TitledText(
 
 @Composable
 fun TitledView(title: GetString, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsItemSpacing)) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)) {
         Text(title.string(), style = LocalType.current.base.bold())
         content()
     }

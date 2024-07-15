@@ -46,7 +46,7 @@ fun DisappearingMessages(
                     .padding(bottom = 20.dp)
                     .verticalScroll(scrollState)
                     .fadingEdges(scrollState),
-                verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallItemSpacing)
+                verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
             ) {
                 state.cards.forEach {
                     OptionsCard(it, callbacks)
