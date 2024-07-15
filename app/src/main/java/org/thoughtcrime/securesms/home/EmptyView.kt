@@ -14,6 +14,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.dp
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -28,7 +29,7 @@ internal fun EmptyView(newAccount: Boolean) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-            .padding(horizontal = LocalDimensions.current.homeEmptyViewMargin)
+            .padding(horizontal = 50.dp)
     ) {
         Spacer(modifier = Modifier.weight(1f))
         Icon(
@@ -50,7 +51,7 @@ internal fun EmptyView(newAccount: Boolean) {
             )
         }
 
-        Divider(modifier = Modifier.padding(vertical = LocalDimensions.current.xsMargin))
+        Divider(modifier = Modifier.padding(vertical = LocalDimensions.current.smallSpacing))
 
         Text(
             stringResource(R.string.conversationsNone),

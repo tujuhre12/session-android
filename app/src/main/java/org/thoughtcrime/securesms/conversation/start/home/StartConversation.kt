@@ -73,9 +73,9 @@ internal fun StartConversationScreen(
                 )
                 Column(
                     modifier = Modifier
-                        .padding(horizontal = LocalDimensions.current.margin)
+                        .padding(horizontal = LocalDimensions.current.spacing)
                         .padding(top = LocalDimensions.current.spacing)
-                        .padding(bottom = LocalDimensions.current.margin)
+                        .padding(bottom = LocalDimensions.current.spacing)
                 ) {
                     Text(stringResource(R.string.accountIdYours), style = LocalType.current.xl)
                     Spacer(modifier = Modifier.height(LocalDimensions.current.xxxsSpacing))

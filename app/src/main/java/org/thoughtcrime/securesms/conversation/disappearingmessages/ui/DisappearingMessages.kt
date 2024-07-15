@@ -39,7 +39,7 @@ fun DisappearingMessages(
 ) {
     val scrollState = rememberScrollState()
 
-    Column(modifier = modifier.padding(horizontal = LocalDimensions.current.margin)) {
+    Column(modifier = modifier.padding(horizontal = LocalDimensions.current.spacing)) {
         Box(modifier = Modifier.weight(1f)) {
             Column(
                 modifier = Modifier

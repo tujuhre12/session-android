@@ -106,7 +106,7 @@ internal fun LandingScreen(
     Column {
         Column(modifier = Modifier
             .weight(1f)
-            .padding(horizontal = LocalDimensions.current.onboardingMargin)
+            .padding(horizontal = LocalDimensions.current.mediumSpacing)
         ) {
             Spacer(modifier = Modifier.weight(1f))
             Text(
@@ -120,7 +120,7 @@ internal fun LandingScreen(
             LazyColumn(
                 state = listState,
                 modifier = Modifier
-                    .heightIn(min = LocalDimensions.current.minScrollableViewHeight)
+                    .heightIn(min = 200.dp)
                     .fillMaxWidth()
                     .weight(3f),
                 verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
@@ -139,7 +139,7 @@ internal fun LandingScreen(
             Spacer(modifier = Modifier.weight(1f))
         }
 
-        Column(modifier = Modifier.padding(horizontal = LocalDimensions.current.largeMargin)) {
+        Column(modifier = Modifier.padding(horizontal = LocalDimensions.current.xlargeSpacing)) {
             PrimaryFillButton(
                 text = stringResource(R.string.onboardingAccountCreate),
                 modifier = Modifier

@@ -14,12 +14,14 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
@@ -52,6 +54,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -68,6 +71,7 @@ import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
+import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.divider
 import org.thoughtcrime.securesms.ui.theme.radioButtonColors
 import org.thoughtcrime.securesms.ui.theme.transparentButtonColors
@@ -216,12 +220,15 @@ fun ItemButton(
     ) {
         Box(
             modifier = Modifier
-                .width(80.dp)
+                .width(50.dp)
                 .wrapContentHeight()
                 .align(Alignment.CenterVertically)
         ) {
             icon()
         }
+
+        Spacer(modifier = Modifier.width(LocalDimensions.current.smallSpacing))
+
         Text(
             text,
             Modifier
@@ -233,10 +240,22 @@ fun ItemButton(
     }
 }
 
+@Preview
+@Composable
+fun PrewviewItemButton() {
+    PreviewTheme {
+        ItemButton(
+            textId = R.string.activity_create_group_title,
+            icon = R.drawable.ic_group,
+            onClick = {}
+        )
+    }
+}
+
 @Composable
 fun Cell(
     padding: Dp = 0.dp,
-    margin: Dp = LocalDimensions.current.margin,
+    margin: Dp = LocalDimensions.current.spacing,
     content: @Composable () -> Unit
 ) {
     CellWithPaddingAndMargin(padding, margin) { content() }
@@ -248,8 +267,8 @@ fun CellNoMargin(content: @Composable () -> Unit) {
 
 @Composable
 fun CellWithPaddingAndMargin(
-    padding: Dp = LocalDimensions.current.smallMargin,
-    margin: Dp = LocalDimensions.current.margin,
+    padding: Dp = LocalDimensions.current.spacing,
+    margin: Dp = LocalDimensions.current.spacing,
     content: @Composable () -> Unit
 ) {
     Card(
@@ -273,7 +292,7 @@ fun <T> TitledRadioButton(option: RadioOption<T>, onClick: () -> Unit) {
         modifier = Modifier
             .runIf(option.enabled) { clickable { if (!option.selected) onClick() } }
             .heightIn(min = 60.dp)
-            .padding(horizontal = LocalDimensions.current.margin)
+            .padding(horizontal = LocalDimensions.current.spacing)
             .contentDescription(option.contentDescription)
     ) {
         Column(modifier = Modifier
@@ -366,7 +385,7 @@ fun Modifier.fadingEdges(
 @Composable
 fun Divider(modifier: Modifier = Modifier, startIndent: Dp = 0.dp) {
     androidx.compose.material.Divider(
-        modifier = modifier.padding(horizontal = LocalDimensions.current.xsMargin),
+        modifier = modifier.padding(horizontal = LocalDimensions.current.smallSpacing),
         color = LocalColors.current.divider,
         startIndent = startIndent
     )

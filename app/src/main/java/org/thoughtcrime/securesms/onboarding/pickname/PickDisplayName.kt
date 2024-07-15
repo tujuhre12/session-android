@@ -54,7 +54,7 @@ internal fun PickDisplayName(
         Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
         Column(
-            modifier = Modifier.padding(horizontal = LocalDimensions.current.largeMargin)
+            modifier = Modifier.padding(horizontal = LocalDimensions.current.xlargeSpacing)
         ) {
             Text(stringResource(state.title), style = LocalType.current.h4)
             Spacer(Modifier.height(LocalDimensions.current.smallSpacing))

@@ -93,14 +93,14 @@ private fun Tabs(sessionId: String, errors: Flow<String>, onScan: (String) -> Un
 fun QrPage(string: String) {
     Column(
         modifier = Modifier
-            .background(LocalColors.current.backgroundSecondary)
-            .padding(horizontal = LocalDimensions.current.margin)
+            .background(LocalColors.current.background)
+            .padding(horizontal = LocalDimensions.current.mediumSpacing)
             .fillMaxSize()
     ) {
         QrImage(
             string = string,
             modifier = Modifier
-                .padding(top = LocalDimensions.current.margin, bottom = LocalDimensions.current.xxsMargin)
+                .padding(top = LocalDimensions.current.mediumSpacing, bottom = LocalDimensions.current.xsSpacing)
                 .contentDescription(R.string.AccessibilityId_qr_code),
             icon = R.drawable.session
         )

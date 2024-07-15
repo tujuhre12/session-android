@@ -42,8 +42,8 @@ internal fun SeedReminder(startRecoveryPasswordActivity: () -> Unit) {
             Modifier
                 .background(LocalColors.current.backgroundSecondary)
                 .padding(
-                    horizontal = LocalDimensions.current.smallMargin,
-                    vertical = LocalDimensions.current.xsMargin
+                    horizontal = LocalDimensions.current.spacing,
+                    vertical = LocalDimensions.current.smallSpacing
                 )
         ) {
             Column(Modifier.weight(1f)) {
@@ -60,7 +60,7 @@ internal fun SeedReminder(startRecoveryPasswordActivity: () -> Unit) {
                     style = LocalType.current.small
                 )
             }
-            Spacer(Modifier.width(LocalDimensions.current.xxsMargin))
+            Spacer(Modifier.width(LocalDimensions.current.xsSpacing))
             SlimPrimaryOutlineButton(
                 text = stringResource(R.string.continue_2),
                 modifier = Modifier

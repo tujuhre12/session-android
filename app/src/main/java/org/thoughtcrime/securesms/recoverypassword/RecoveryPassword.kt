@@ -48,11 +48,11 @@ internal fun RecoveryPasswordScreen(
     onHide:() -> Unit = {}
 ) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.xsMargin),
+        verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing),
         modifier = Modifier
             .contentDescription(R.string.AccessibilityId_recovery_password)
             .verticalScroll(rememberScrollState())
-            .padding(bottom = LocalDimensions.current.xsMargin)
+            .padding(bottom = LocalDimensions.current.smallSpacing)
     ) {
         RecoveryPasswordCell(mnemonic, seed, copyMnemonic)
         HideRecoveryPasswordCell(onHide)
@@ -80,7 +80,7 @@ private fun RecoveryPasswordCell(
                 SessionShieldIcon()
             }
 
-            Spacer(modifier = Modifier.height(LocalDimensions.current.xxxsMargin))
+            Spacer(modifier = Modifier.height(LocalDimensions.current.xxsSpacing))
 
             Text(
                 stringResource(R.string.recoveryPasswordDescription),
@@ -98,7 +98,7 @@ private fun RecoveryPasswordCell(
                 QrImage(
                     seed,
                     modifier = Modifier
-                        .padding(vertical = LocalDimensions.current.smallMargin)
+                        .padding(vertical = LocalDimensions.current.spacing)
                         .contentDescription(R.string.AccessibilityId_qr_code),
                     contentPadding = 10.dp,
                     icon = R.drawable.session_shield
@@ -137,9 +137,9 @@ private fun RecoveryPassword(mnemonic: String) {
         mnemonic,
         modifier = Modifier
             .contentDescription(R.string.AccessibilityId_recovery_password_container)
-            .padding(vertical = LocalDimensions.current.smallMargin)
+            .padding(vertical = LocalDimensions.current.spacing)
             .border()
-            .padding(LocalDimensions.current.smallMargin),
+            .padding(LocalDimensions.current.spacing),
         textAlign = TextAlign.Center,
         style = LocalType.current.extraSmall.monospace(),
         color = LocalColors.current.run { if (isLight) text else primary },
@@ -162,7 +162,7 @@ private fun HideRecoveryPasswordCell(onHide: () -> Unit = {}) {
                     style = LocalType.current.base
                 )
             }
-            Spacer(modifier = Modifier.width(LocalDimensions.current.xxsMargin))
+            Spacer(modifier = Modifier.width(LocalDimensions.current.xsSpacing))
             SlimOutlineButton(
                 text = stringResource(R.string.hide),
                 modifier = Modifier

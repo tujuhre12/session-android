@@ -108,7 +108,7 @@ fun MaybeScanQrCode(
                 modifier = Modifier
                     .background(color = LocalColors.current.backgroundSecondary)
                     .fillMaxSize()
-                    .padding(LocalDimensions.current.largeMargin),
+                    .padding(LocalDimensions.current.xlargeSpacing),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Spacer(modifier = Modifier.weight(1f))

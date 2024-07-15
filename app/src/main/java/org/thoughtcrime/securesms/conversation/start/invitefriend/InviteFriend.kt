@@ -44,7 +44,7 @@ internal fun InviteFriend(
                     .contentDescription(R.string.AccessibilityId_account_id)
                     .fillMaxWidth()
                     .border()
-                    .padding(LocalDimensions.current.smallMargin),
+                    .padding(LocalDimensions.current.spacing),
                 textAlign = TextAlign.Center,
                 style = LocalType.current.base
             )

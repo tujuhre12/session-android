@@ -156,7 +156,7 @@ fun MessageDetails(
     ) {
         state.record?.let { message ->
             AndroidView(
-                modifier = Modifier.padding(horizontal = LocalDimensions.current.margin),
+                modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing),
                 factory = {
                     ViewVisibleMessageContentBinding.inflate(LayoutInflater.from(it)).mainContainerConstraint.apply {
                         bind(

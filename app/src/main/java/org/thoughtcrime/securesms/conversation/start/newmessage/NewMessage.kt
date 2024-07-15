@@ -78,14 +78,14 @@ private fun EnterAccountId(
             .imePadding()
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = LocalDimensions.current.xxsMargin, vertical = LocalDimensions.current.xsMargin),
+            modifier = Modifier.padding(horizontal = LocalDimensions.current.xsSpacing, vertical = LocalDimensions.current.smallSpacing),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.xsMargin)
+            verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
         ) {
             SessionOutlinedTextField(
                 text = state.newMessageIdOrOns,
                 modifier = Modifier
-                    .padding(horizontal = LocalDimensions.current.smallMargin)
+                    .padding(horizontal = LocalDimensions.current.spacing)
                     .contentDescription("Session id input box"),
                 placeholder = stringResource(R.string.accountIdOrOnsEnter),
                 onChange = callbacks::onChange,
@@ -98,7 +98,7 @@ private fun EnterAccountId(
                 text = stringResource(R.string.messageNewDescription),
                 modifier = Modifier
                     .contentDescription(R.string.AccessibilityId_help_desk_link)
-                    .padding(horizontal = LocalDimensions.current.margin)
+                    .padding(horizontal = LocalDimensions.current.mediumSpacing)
                     .fillMaxWidth(),
                 style = LocalType.current.small,
                 color = LocalColors.current.textSecondary,
@@ -111,7 +111,7 @@ private fun EnterAccountId(
             PrimaryOutlineButton(
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
-                    .padding(horizontal = LocalDimensions.current.largeMargin)
+                    .padding(horizontal = LocalDimensions.current.xlargeSpacing)
                     .fillMaxWidth()
                     .contentDescription(R.string.next),
                 onClick = callbacks::onContinue

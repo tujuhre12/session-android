@@ -429,8 +429,8 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
         Column {
             Row(
                 modifier = Modifier
-                    .padding(horizontal = LocalDimensions.current.smallMargin)
-                    .padding(top = LocalDimensions.current.xxxsMargin),
+                    .padding(horizontal = LocalDimensions.current.spacing)
+                    .padding(top = LocalDimensions.current.xxsSpacing),
                 horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing),
             ) {
                 PrimaryOutlineButton(

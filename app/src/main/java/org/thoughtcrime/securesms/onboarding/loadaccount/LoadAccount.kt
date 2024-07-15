@@ -77,7 +77,7 @@ private fun RecoveryPassword(state: State, onChange: (String) -> Unit = {}, onCo
         Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
         Column(
-            modifier = Modifier.padding(horizontal = LocalDimensions.current.largeMargin)
+            modifier = Modifier.padding(horizontal = LocalDimensions.current.xlargeSpacing)
         ) {
             Row {
                 Text(

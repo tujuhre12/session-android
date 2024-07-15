@@ -56,9 +56,9 @@ internal fun MessageNotificationsScreen(
     Column {
         Spacer(Modifier.weight(1f))
 
-        Column(modifier = Modifier.padding(horizontal = LocalDimensions.current.onboardingMargin)) {
+        Column(modifier = Modifier.padding(horizontal = LocalDimensions.current.mediumSpacing)) {
             Text(stringResource(R.string.notificationsMessage), style = LocalType.current.h4)
-            Spacer(Modifier.height(LocalDimensions.current.xsMargin))
+            Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
             Text(stringResource(R.string.onboardingMessageNotificationExplaination), style = LocalType.current.base)
             Spacer(Modifier.height(LocalDimensions.current.spacing))
         }
@@ -101,7 +101,7 @@ private fun NotificationRadioButton(
         onClick = onClick,
         modifier = modifier,
         checked = checked,
-        contentPadding = PaddingValues(horizontal = LocalDimensions.current.margin, vertical = 7.dp)
+        contentPadding = PaddingValues(horizontal = LocalDimensions.current.mediumSpacing, vertical = 7.dp)
     ) {
         Box(
             modifier = Modifier
