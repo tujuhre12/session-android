@@ -7,12 +7,9 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,7 +18,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
@@ -31,7 +27,6 @@ import androidx.compose.material.Card
 import androidx.compose.material.Icon
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.RadioButton
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
@@ -64,16 +59,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsession.utilities.runIf
 import org.thoughtcrime.securesms.components.ProfilePictureView
-import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.OptionsCard
+import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.OptionsCardData
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
+import org.thoughtcrime.securesms.ui.components.TitledRadioButton
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.divider
-import org.thoughtcrime.securesms.ui.theme.radioButtonColors
 import org.thoughtcrime.securesms.ui.theme.transparentButtonColors
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -98,18 +92,23 @@ data class RadioOption<T>(
 )
 
 @Composable
-fun <T> OptionsCard(card: OptionsCard<T>, callbacks: Callbacks<T>) {
+fun <T> ColumnScope.OptionsCard(card: OptionsCardData<T>, callbacks: Callbacks<T>) {
     Text(
-        card.title(),
-        style = LocalType.current.base
+        modifier = Modifier.padding(start = LocalDimensions.current.smallSpacing),
+        text = card.title(),
+        style = LocalType.current.base,
+        color = LocalColors.current.textSecondary
     )
+
+    Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
+
     CellNoMargin {
         LazyColumn(
             modifier = Modifier.heightIn(max = 5000.dp)
         ) {
             itemsIndexed(card.options) { i, it ->
                 if (i != 0) Divider()
-                TitledRadioButton(it) { callbacks.setValue(it.value) }
+                TitledRadioButton(option = it) { callbacks.setValue(it.value) }
             }
         }
     }
@@ -281,47 +280,6 @@ fun CellWithPaddingAndMargin(
             .padding(horizontal = margin),
     ) {
         Box(Modifier.padding(padding)) { content() }
-    }
-}
-
-@Composable
-fun <T> TitledRadioButton(option: RadioOption<T>, onClick: () -> Unit) {
-    val color = if (option.enabled) LocalColors.current.text else LocalColors.current.disabled
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing),
-        modifier = Modifier
-            .runIf(option.enabled) { clickable { if (!option.selected) onClick() } }
-            .heightIn(min = 60.dp)
-            .padding(horizontal = LocalDimensions.current.spacing)
-            .contentDescription(option.contentDescription)
-    ) {
-        Column(modifier = Modifier
-            .weight(1f)
-            .align(Alignment.CenterVertically)) {
-            Column {
-                Text(
-                    text = option.title(),
-                    style = LocalType.current.large,
-                    color = color
-                )
-                option.subtitle?.let {
-                    Text(
-                        text = it(),
-                        style = LocalType.current.extraSmall,
-                        color = color
-                    )
-                }
-            }
-        }
-        RadioButton(
-            selected = option.selected,
-            onClick = null,
-            modifier = Modifier
-                .height(26.dp)
-                .align(Alignment.CenterVertically),
-            enabled = option.enabled,
-            colors = LocalColors.current.radioButtonColors()
-        )
     }
 }
 

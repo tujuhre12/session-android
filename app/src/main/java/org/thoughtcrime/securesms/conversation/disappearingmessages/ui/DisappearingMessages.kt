@@ -3,7 +3,9 @@ package org.thoughtcrime.securesms.conversation.disappearingmessages.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -43,13 +45,17 @@ fun DisappearingMessages(
         Box(modifier = Modifier.weight(1f)) {
             Column(
                 modifier = Modifier
-                    .padding(bottom = 20.dp)
+                    .padding(vertical = LocalDimensions.current.spacing)
                     .verticalScroll(scrollState)
                     .fadingEdges(scrollState),
-                verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
             ) {
-                state.cards.forEach {
-                    OptionsCard(it, callbacks)
+                state.cards.forEachIndexed { index, option ->
+                    OptionsCard(option, callbacks)
+
+                    // add spacing if not the last item
+                    if(index != state.cards.lastIndex){
+                        Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+                    }
                 }
 
                 if (state.showGroupFooter) Text(
@@ -58,7 +64,9 @@ fun DisappearingMessages(
                     fontWeight = FontWeight(400),
                     color = LocalColors.current.textSecondary,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = LocalDimensions.current.xsSpacing)
                 )
             }
         }
@@ -68,7 +76,7 @@ fun DisappearingMessages(
             modifier = Modifier
                 .contentDescription(R.string.AccessibilityId_set_button)
                 .align(Alignment.CenterHorizontally)
-                .padding(bottom = 20.dp),
+                .padding(bottom = LocalDimensions.current.spacing),
             onClick = callbacks::onSetClick
         )
     }

@@ -46,6 +46,7 @@ val ThemeColors.divider get() = text.copy(alpha = TabRowDefaults.DividerOpacity)
 
 fun ThemeColors.text(isError: Boolean): Color = if (isError) danger else text
 fun ThemeColors.textSecondary(isError: Boolean): Color = if (isError) danger else textSecondary
+fun ThemeColors.textEnabled(enabled: Boolean) = if (enabled) text else disabled
 fun ThemeColors.borders(isError: Boolean): Color = if (isError) danger else borders
 
 fun ThemeColors.toMaterialColors() = androidx.compose.material.Colors(
@@ -73,7 +74,11 @@ fun ThemeColors.radioButtonColors() = RadioButtonDefaults.colors(
 )
 
 @Composable
-fun transparentButtonColors() = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent)
+fun transparentButtonColors() = ButtonDefaults.buttonColors(
+    backgroundColor = Color.Transparent,
+    disabledBackgroundColor = Color.Transparent,
+    disabledContentColor = LocalColors.current.disabled
+)
 
 @Composable
 fun dangerButtonColors() = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent, contentColor = LocalColors.current.danger)

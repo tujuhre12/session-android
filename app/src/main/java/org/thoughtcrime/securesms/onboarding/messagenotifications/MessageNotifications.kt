@@ -100,7 +100,7 @@ private fun NotificationRadioButton(
     RadioButton(
         onClick = onClick,
         modifier = modifier,
-        checked = checked,
+        selected = checked,
         contentPadding = PaddingValues(horizontal = LocalDimensions.current.mediumSpacing, vertical = 7.dp)
     ) {
         Box(
