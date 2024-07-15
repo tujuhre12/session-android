@@ -142,7 +142,7 @@ class ConversationView : LinearLayout {
     private fun ThreadRecord.getSnippet(): CharSequence = listOfNotNull(
         getSnippetPrefix(),
         getDisplayBody(context)
-    ).joinToString { ": " }
+    ).joinToString(": ")
 
     private fun ThreadRecord.getSnippetPrefix(): CharSequence? = when {
         recipient.isLocalNumber || lastMessage?.isControlMessage == true -> null
