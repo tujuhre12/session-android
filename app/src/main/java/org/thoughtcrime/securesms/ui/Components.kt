@@ -273,11 +273,11 @@ fun CellWithPaddingAndMargin(
 ) {
     Box(
         modifier = Modifier
+            .padding(horizontal = margin)
             .background(color = LocalColors.current.backgroundSecondary,
                 shape = MaterialTheme.shapes.small)
             .wrapContentHeight()
-            .fillMaxWidth()
-            .padding(horizontal = margin),
+            .fillMaxWidth(),
     ) {
         Box(Modifier.padding(padding)) { content() }
     }

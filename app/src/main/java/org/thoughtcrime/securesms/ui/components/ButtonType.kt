@@ -35,7 +35,7 @@ interface ButtonType {
         @Composable
         override fun buttonColors() = ButtonDefaults.buttonColors(
             contentColor = contentColor,
-            containerColor = Color.Unspecified,
+            containerColor = Color.Transparent,
             disabledContentColor = LocalColors.current.disabled,
             disabledContainerColor = Color.Transparent
         )

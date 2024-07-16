@@ -77,7 +77,6 @@ fun MaybeScanQrCode(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(LocalColors.current.background)
     ) {
         LocalSoftwareKeyboardController.current?.hide()
 
@@ -106,7 +105,6 @@ fun MaybeScanQrCode(
         } else {
             Column(
                 modifier = Modifier
-                    .background(color = LocalColors.current.background)
                     .fillMaxSize()
                     .padding(LocalDimensions.current.xlargeSpacing),
                 horizontalAlignment = Alignment.CenterHorizontally
