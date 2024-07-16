@@ -18,6 +18,7 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.AppTextSecurePreferences
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.mms.GlideApp
 import org.thoughtcrime.securesms.mms.GlideRequests
@@ -25,6 +26,8 @@ import org.thoughtcrime.securesms.mms.GlideRequests
 class ProfilePictureView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null
 ) : RelativeLayout(context, attrs) {
+    private val TAG = "ProfilePictureView"
+
     private val binding = ViewProfilePictureBinding.inflate(LayoutInflater.from(context), this)
     private val glide: GlideRequests = GlideApp.with(this)
     private val prefs = AppTextSecurePreferences(context)
@@ -91,7 +94,7 @@ class ProfilePictureView @JvmOverloads constructor(
     }
 
     fun update() {
-        val publicKey = publicKey ?: return
+        val publicKey = publicKey ?: return Log.w(TAG, "Could not find public key to update profile picture")
         val additionalPublicKey = additionalPublicKey
         if (additionalPublicKey != null) {
             setProfilePictureIfNeeded(binding.doubleModeImageView1, publicKey, displayName)
