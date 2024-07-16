@@ -10,6 +10,7 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -93,23 +94,25 @@ data class RadioOption<T>(
 )
 
 @Composable
-fun <T> ColumnScope.OptionsCard(card: OptionsCardData<T>, callbacks: Callbacks<T>) {
-    Text(
-        modifier = Modifier.padding(start = LocalDimensions.current.smallSpacing),
-        text = card.title(),
-        style = LocalType.current.base,
-        color = LocalColors.current.textSecondary
-    )
+fun <T> OptionsCard(card: OptionsCardData<T>, callbacks: Callbacks<T>) {
+    Column {
+        Text(
+            modifier = Modifier.padding(start = LocalDimensions.current.smallSpacing),
+            text = card.title(),
+            style = LocalType.current.base,
+            color = LocalColors.current.textSecondary
+        )
 
-    Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
+        Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
 
-    CellNoMargin {
-        LazyColumn(
-            modifier = Modifier.heightIn(max = 5000.dp)
-        ) {
-            itemsIndexed(card.options) { i, it ->
-                if (i != 0) Divider()
-                TitledRadioButton(option = it) { callbacks.setValue(it.value) }
+        CellNoMargin {
+            LazyColumn(
+                modifier = Modifier.heightIn(max = 5000.dp)
+            ) {
+                itemsIndexed(card.options) { i, it ->
+                    if (i != 0) Divider()
+                    TitledRadioButton(option = it) { callbacks.setValue(it.value) }
+                }
             }
         }
     }
