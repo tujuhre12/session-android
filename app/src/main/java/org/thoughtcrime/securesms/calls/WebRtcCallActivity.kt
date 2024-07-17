@@ -433,14 +433,9 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
      * Shows the avatar image.
      * If @showUserAvatar is true, the user's avatar is shown, otherwise the contact's avatar is shown.
      */
-    private fun showAvatar(showUserAvatar: Boolean){
-        if(showUserAvatar){
-            binding.userAvatar.isVisible = true
-            binding.contactAvatar.isVisible = false
-        } else {
-            binding.userAvatar.isVisible = false
-            binding.contactAvatar.isVisible = true
-        }
+    private fun showAvatar(showUserAvatar: Boolean) {
+        binding.userAvatar.isVisible = showUserAvatar
+        binding.contactAvatar.isVisible = !showUserAvatar
     }
 
     private fun hideAvatar(){
