@@ -111,12 +111,14 @@ class PathActivity : PassphraseRequiredActionBarActivity() {
             for (row in rows) {
                 binding.pathRowsContainer.addView(row)
             }
+            binding.pathAttribution.visibility = View.VISIBLE
             if (isAnimated) {
                 binding.spinner.fadeOut()
             } else {
                 binding.spinner.alpha = 0.0f
             }
         } else {
+            binding.pathAttribution.visibility = View.INVISIBLE
             if (isAnimated) {
                 binding.spinner.fadeIn()
             } else {
