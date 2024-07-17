@@ -438,7 +438,7 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
         binding.contactAvatar.isVisible = !showUserAvatar
     }
 
-    private fun hideAvatar(){
+    private fun hideAvatar() {
         binding.userAvatar.isVisible = false
         binding.contactAvatar.isVisible = false
     }
