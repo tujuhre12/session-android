@@ -118,6 +118,7 @@ class PathActivity : PassphraseRequiredActionBarActivity() {
                 binding.spinner.alpha = 0.0f
             }
         } else {
+            binding.pathAttribution.visibility = View.INVISIBLE
             if (isAnimated) {
                 binding.spinner.fadeIn()
             } else {
