@@ -389,11 +389,11 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
                         viewModel.fullscreenRenderer?.let { surfaceView ->
                             binding.fullscreenRenderer.addView(surfaceView)
                             binding.fullscreenRenderer.isVisible = true
-                            binding.contactAvatar.isVisible = false
+                            hideAvatar()
                         }
                     } else {
                         binding.fullscreenRenderer.isVisible = false
-                        binding.contactAvatar.isVisible = true
+                        showAvatar(state.swapped)
                     }
 
                     // handle floating video window
@@ -412,6 +412,21 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
                 }
             }
         }
+    }
+
+    private fun showAvatar(swapped: Boolean){
+        if(swapped){
+            binding.userAvatar.isVisible = true
+            binding.contactAvatar.isVisible = false
+        } else {
+            binding.userAvatar.isVisible = false
+            binding.contactAvatar.isVisible = true
+        }
+    }
+
+    private fun hideAvatar(){
+        binding.userAvatar.isVisible = false
+        binding.contactAvatar.isVisible = false
     }
 
     private fun getUserDisplayName(publicKey: String): String {
