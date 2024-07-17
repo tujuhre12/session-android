@@ -420,7 +420,7 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
                     binding.swapViewIcon.isVisible = showFloatingContainer
 
                     // make sure to default to the contact's avatar if the floating container is not visible
-                    if(!showFloatingContainer) showAvatar(false)
+                    if (!showFloatingContainer) showAvatar(false)
 
                     // handle buttons
                     binding.enableCameraButton.isSelected = state.userVideoEnabled
