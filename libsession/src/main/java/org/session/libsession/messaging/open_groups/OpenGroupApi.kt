@@ -198,7 +198,7 @@ object OpenGroupApi {
     @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy::class)
     data class Message(
         val id : Long = 0,
-        val accountId: String = "",
+        val sessionId: String = "",
         val posted: Double = 0.0,
         val edited: Long = 0,
         val seqno: Long = 0,
