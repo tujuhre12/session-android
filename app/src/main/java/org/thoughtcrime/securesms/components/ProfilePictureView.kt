@@ -30,7 +30,6 @@ class ProfilePictureView @JvmOverloads constructor(
     var displayName: String? = null
     var additionalPublicKey: String? = null
     var additionalDisplayName: String? = null
-    var isLarge = false
 
     private val profilePicturesCache = mutableMapOf<View, Recipient>()
     private val unknownRecipientDrawable by lazy { ResourceContactPhoto(R.drawable.ic_profile_default)
@@ -87,29 +86,25 @@ class ProfilePictureView @JvmOverloads constructor(
     fun update() {
         val publicKey = publicKey ?: return
         val additionalPublicKey = additionalPublicKey
+        // if we have a multi avatar setup
         if (additionalPublicKey != null) {
             setProfilePictureIfNeeded(binding.doubleModeImageView1, publicKey, displayName)
             setProfilePictureIfNeeded(binding.doubleModeImageView2, additionalPublicKey, additionalDisplayName)
             binding.doubleModeImageViewContainer.visibility = View.VISIBLE
-        } else {
+
+            // clear single image
+            glide.clear(binding.singleModeImageView)
+            binding.singleModeImageView.visibility = View.INVISIBLE
+        } else { // single image mode
+            setProfilePictureIfNeeded(binding.singleModeImageView, publicKey, displayName)
+            binding.singleModeImageView.visibility = View.VISIBLE
+
+            // clear multi image
             glide.clear(binding.doubleModeImageView1)
             glide.clear(binding.doubleModeImageView2)
             binding.doubleModeImageViewContainer.visibility = View.INVISIBLE
         }
-        if (additionalPublicKey == null && !isLarge) {
-            setProfilePictureIfNeeded(binding.singleModeImageView, publicKey, displayName)
-            binding.singleModeImageView.visibility = View.VISIBLE
-        } else {
-            glide.clear(binding.singleModeImageView)
-            binding.singleModeImageView.visibility = View.INVISIBLE
-        }
-        if (additionalPublicKey == null && isLarge) {
-            setProfilePictureIfNeeded(binding.largeSingleModeImageView, publicKey, displayName)
-            binding.largeSingleModeImageView.visibility = View.VISIBLE
-        } else {
-            glide.clear(binding.largeSingleModeImageView)
-            binding.largeSingleModeImageView.visibility = View.INVISIBLE
-        }
+
     }
 
     private fun setProfilePictureIfNeeded(imageView: ImageView, publicKey: String, displayName: String?) {
