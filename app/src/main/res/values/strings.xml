@@ -1079,5 +1079,6 @@
 
     <string name="unread_marker">Unread Messages</string>
     <string name="auto_deletes_in">Auto-deletes in %1$s</string>
+    <string name="activity_path_attribution">Path location data provided by MaxMind</string>
 
 </resources>
