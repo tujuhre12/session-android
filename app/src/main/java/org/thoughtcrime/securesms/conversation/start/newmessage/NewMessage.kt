@@ -89,8 +89,8 @@ private fun EnterAccountId(
             SessionOutlinedTextField(
                 text = state.newMessageIdOrOns,
                 modifier = Modifier
-                    .padding(horizontal = LocalDimensions.current.spacing)
-                    .contentDescription("Session id input box"),
+                    .padding(horizontal = LocalDimensions.current.spacing),
+                contentDescription = "Session id input box",
                 placeholder = stringResource(R.string.accountIdOrOnsEnter),
                 onChange = callbacks::onChange,
                 onContinue = callbacks::onContinue,

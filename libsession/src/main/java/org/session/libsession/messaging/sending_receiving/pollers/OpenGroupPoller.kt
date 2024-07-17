@@ -222,7 +222,7 @@ class OpenGroupPoller(private val server: String, private val executorService: S
         handleNewMessages(server, roomToken, additions.map {
             OpenGroupMessage(
                 serverID = it.id,
-                sender = it.sessionId,
+                sender = it.accountId,
                 sentTimestamp = (it.posted * 1000).toLong(),
                 base64EncodedData = it.data,
                 base64EncodedSignature = it.signature,
@@ -272,7 +272,7 @@ class OpenGroupPoller(private val server: String, private val executorService: S
                         serverPublicKey,
                         true
                     )
-                    val syncTarget = mapping.sessionId ?: it.recipient
+                    val syncTarget = mapping.accountId ?: it.recipient
                     if (message is VisibleMessage) {
                         message.syncTarget = syncTarget
                     } else if (message is ExpirationTimerUpdate) {
