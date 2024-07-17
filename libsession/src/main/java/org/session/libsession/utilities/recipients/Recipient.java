@@ -511,11 +511,11 @@ public class Recipient implements RecipientModifiedListener {
   public synchronized String toShortString() {
     String name = getName();
     if (name != null) return name;
-    String sessionId = address.serialize();
-    if (sessionId.length() < 4) return sessionId; // so substrings don't throw out of bounds exceptions
+    String accountId = address.serialize();
+    if (accountId.length() < 4) return accountId; // so substrings don't throw out of bounds exceptions
     int takeAmount = 4;
-    String start = sessionId.substring(0, takeAmount);
-    String end = sessionId.substring(sessionId.length()-takeAmount);
+    String start = accountId.substring(0, takeAmount);
+    String end = accountId.substring(accountId.length()-takeAmount);
     return start+"..."+end;
   }
 

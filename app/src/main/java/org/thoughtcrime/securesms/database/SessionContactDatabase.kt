@@ -42,12 +42,12 @@ class SessionContactDatabase(context: Context, helper: SQLCipherOpenHelper) : Da
         }
     }
 
-    fun getContacts(sessionIDs: Collection<String>): List<Contact> {
+    fun getContacts(accountIDs: Collection<String>): List<Contact> {
         val database = databaseHelper.readableDatabase
         return database.getAll(
             sessionContactTable,
             "$accountID IN (SELECT value FROM json_each(?))",
-            arrayOf(JSONArray(sessionIDs).toString())
+            arrayOf(JSONArray(accountIDs).toString())
         ) { cursor -> contactFromCursor(cursor) }
     }
 
@@ -56,8 +56,7 @@ class SessionContactDatabase(context: Context, helper: SQLCipherOpenHelper) : Da
         return database.getAll(sessionContactTable, null, null) { cursor ->
             contactFromCursor(cursor)
         }.filter { contact ->
-            val sessionId = AccountId(contact.accountID)
-            sessionId.prefix == IdPrefix.STANDARD
+            contact.accountID.let(::AccountId).prefix == IdPrefix.STANDARD
         }.toSet()
     }
 

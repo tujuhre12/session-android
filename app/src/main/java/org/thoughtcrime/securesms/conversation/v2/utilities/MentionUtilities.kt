@@ -157,7 +157,7 @@ object MentionUtilities {
     }
 
     private fun isYou(mentionedPublicKey: String, userPublicKey: String, openGroup: OpenGroup?): Boolean {
-        val isUserBlindedPublicKey = openGroup?.let { SodiumUtilities.sessionId(userPublicKey, mentionedPublicKey, it.publicKey) } ?: false
+        val isUserBlindedPublicKey = openGroup?.let { SodiumUtilities.accountId(userPublicKey, mentionedPublicKey, it.publicKey) } ?: false
         return mentionedPublicKey.equals(userPublicKey, ignoreCase = true) || isUserBlindedPublicKey
     }
 }
