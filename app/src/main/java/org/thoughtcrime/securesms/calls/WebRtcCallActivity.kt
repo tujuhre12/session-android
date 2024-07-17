@@ -33,6 +33,8 @@ import network.loki.messenger.databinding.ActivityWebrtcBinding
 import org.apache.commons.lang3.time.DurationFormatUtils
 import org.session.libsession.avatars.ProfileContactPhoto
 import org.session.libsession.messaging.contacts.Contact
+import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
@@ -200,6 +202,16 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
         }
 
         clipFloatingInsets()
+
+        // set up the user avatar
+        TextSecurePreferences.getLocalNumber(this)?.let{
+            val username = TextSecurePreferences.getProfileName(this) ?: truncateIdForDisplay(it)
+            binding.userAvatar.apply {
+                publicKey = it
+                displayName = username
+                update()
+            }
+        }
     }
 
     /**
@@ -378,12 +390,6 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
                     binding.floatingRenderer.removeAllViews()
                     binding.fullscreenRenderer.removeAllViews()
 
-                    // the floating video inset (empty or not) should be shown
-                    // the moment we have either of the video streams
-                    val showFloatingContainer = state.userVideoEnabled || state.remoteVideoEnabled
-                    binding.floatingRendererContainer.isVisible = showFloatingContainer
-                    binding.swapViewIcon.isVisible = showFloatingContainer
-
                     // handle fullscreen video window
                     if(state.showFullscreenVideo()){
                         viewModel.fullscreenRenderer?.let { surfaceView ->
@@ -407,6 +413,15 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
                         binding.floatingRenderer.isVisible = false
                     }
 
+                    // the floating video inset (empty or not) should be shown
+                    // the moment we have either of the video streams
+                    val showFloatingContainer = state.userVideoEnabled || state.remoteVideoEnabled
+                    binding.floatingRendererContainer.isVisible = showFloatingContainer
+                    binding.swapViewIcon.isVisible = showFloatingContainer
+
+                    // make sure to default to the contact's avatar if the floating container is not visible
+                    if(!showFloatingContainer) showAvatar(false)
+
                     // handle buttons
                     binding.enableCameraButton.isSelected = state.userVideoEnabled
                 }
@@ -414,8 +429,12 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
         }
     }
 
-    private fun showAvatar(swapped: Boolean){
-        if(swapped){
+    /**
+     * Shows the avatar image.
+     * If @showUserAvatar is true, the user's avatar is shown, otherwise the contact's avatar is shown.
+     */
+    private fun showAvatar(showUserAvatar: Boolean){
+        if(showUserAvatar){
             binding.userAvatar.isVisible = true
             binding.contactAvatar.isVisible = false
         } else {
