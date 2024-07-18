@@ -145,7 +145,6 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
         view.apply {
             publicKey = hexEncodedPublicKey
             displayName = getDisplayName()
-            isLarge = true
             update()
         }
     }

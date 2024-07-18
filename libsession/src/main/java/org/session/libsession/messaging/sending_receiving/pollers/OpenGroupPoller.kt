@@ -222,7 +222,7 @@ class OpenGroupPoller(private val server: String, private val executorService: S
         handleNewMessages(server, roomToken, additions.map {
             OpenGroupMessage(
                 serverID = it.id,
-                sender = it.accountId,
+                sender = it.sessionId,
                 sentTimestamp = (it.posted * 1000).toLong(),
                 base64EncodedData = it.data,
                 base64EncodedSignature = it.signature,
