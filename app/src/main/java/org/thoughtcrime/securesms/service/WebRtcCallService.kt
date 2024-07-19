@@ -59,6 +59,7 @@ import org.webrtc.RtpReceiver
 import org.webrtc.SessionDescription
 import java.util.UUID
 import java.util.concurrent.ExecutionException
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
@@ -226,46 +227,11 @@ class WebRtcCallService : LifecycleService(), CallManager.WebRtcListener {
     private val serviceExecutor = Executors.newSingleThreadExecutor()
     private val timeoutExecutor = Executors.newScheduledThreadPool(1)
 
-    private val hangupOnCallAnswered by lazy {
-        HangUpRtcOnPstnCallAnsweredListener {
-            ContextCompat.startForegroundService(this, hangupIntent(this))
-        }
-    }
-
-    private interface TelephonyHandler {
-        fun register(telephonyManager: TelephonyManager)
-        fun unregister(telephonyManager: TelephonyManager)
-    }
-
-    @RequiresApi(Build.VERSION_CODES.S)
-    private inner class TelephonyHandlerV31: TelephonyHandler {
-        private val callback = HangUpRtcTelephonyCallback {
-            ContextCompat.startForegroundService(this@WebRtcCallService, hangupIntent(this@WebRtcCallService))
-        }
-
-        override fun register(telephonyManager: TelephonyManager) {
-            telephonyManager.registerTelephonyCallback(serviceExecutor, callback)
-        }
-
-        override fun unregister(telephonyManager: TelephonyManager) {
-            telephonyManager.unregisterTelephonyCallback(callback)
-        }
-    }
-
-    private inner class TelephonyHandlerV23: TelephonyHandler {
-        override fun register(telephonyManager: TelephonyManager) {
-            telephonyManager.listen(hangupOnCallAnswered, PhoneStateListener.LISTEN_CALL_STATE)
-        }
-
-        override fun unregister(telephonyManager: TelephonyManager) {
-            telephonyManager.listen(hangupOnCallAnswered, LISTEN_NONE)
-        }
-    }
-
-    private val telephonyHandler = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        TelephonyHandlerV31()
-    } else {
-        TelephonyHandlerV23()
+    private val telephonyHandler = TelephonyHandler(serviceExecutor) {
+        ContextCompat.startForegroundService(
+            this@WebRtcCallService,
+            hangupIntent(this@WebRtcCallService)
+        )
     }
 
     private var networkChangedReceiver: NetworkChangeReceiver? = null
