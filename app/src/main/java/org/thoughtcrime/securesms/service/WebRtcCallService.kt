@@ -290,35 +290,33 @@ class WebRtcCallService : LifecycleService(), CallManager.WebRtcListener {
             val action = intent.action
             val callId = ((intent.getSerializableExtra(EXTRA_CALL_ID) as? UUID)?.toString() ?: "No callId")
             Log.i("Loki", "Handling ${intent.action} for call: ${callId}")
-            when (action) {
-                ACTION_INCOMING_RING -> if (isSameCall(intent) && callManager.currentConnectionState == CallState.Reconnecting) {
-                    handleNewOffer(intent)
-                }
-                ACTION_PRE_OFFER -> if (isIdle()) handlePreOffer(intent)
-                ACTION_INCOMING_RING -> when {
-                    isBusy(intent) -> handleBusyCall(intent)
-                    isPreOffer() -> handleIncomingRing(intent)
-                }
-                ACTION_OUTGOING_CALL -> if (isIdle()) handleOutgoingCall(intent)
-                ACTION_ANSWER_CALL -> handleAnswerCall(intent)
-                ACTION_DENY_CALL -> handleDenyCall(intent)
-                ACTION_LOCAL_HANGUP -> handleLocalHangup(intent)
-                ACTION_REMOTE_HANGUP -> handleRemoteHangup(intent)
-                ACTION_SET_MUTE_AUDIO -> handleSetMuteAudio(intent)
-                ACTION_SET_MUTE_VIDEO -> handleSetMuteVideo(intent)
-                ACTION_FLIP_CAMERA -> handleSetCameraFlip(intent)
-                ACTION_WIRED_HEADSET_CHANGE -> handleWiredHeadsetChanged(intent)
-                ACTION_SCREEN_OFF -> handleScreenOffChange(intent)
-                ACTION_RESPONSE_MESSAGE -> if (isSameCall(intent) && callManager.currentConnectionState == CallState.Reconnecting) {
-                    handleResponseMessage(intent)
-                }
-                ACTION_RESPONSE_MESSAGE -> handleResponseMessage(intent)
-                ACTION_ICE_MESSAGE -> handleRemoteIceCandidate(intent)
-                ACTION_ICE_CONNECTED -> handleIceConnected(intent)
-                ACTION_CHECK_TIMEOUT -> handleCheckTimeout(intent)
-                ACTION_CHECK_RECONNECT -> handleCheckReconnect(intent)
-                ACTION_IS_IN_CALL_QUERY -> handleIsInCallQuery(intent)
-                ACTION_UPDATE_AUDIO -> handleUpdateAudio(intent)
+            when {
+                action == ACTION_INCOMING_RING && isSameCall(intent) && callManager.currentConnectionState == CallState.Reconnecting -> handleNewOffer(
+                    intent
+                )
+                action == ACTION_PRE_OFFER && isIdle() -> handlePreOffer(intent)
+                action == ACTION_INCOMING_RING && isBusy(intent) -> handleBusyCall(intent)
+                action == ACTION_INCOMING_RING && isPreOffer() -> handleIncomingRing(intent)
+                action == ACTION_OUTGOING_CALL && isIdle() -> handleOutgoingCall(intent)
+                action == ACTION_ANSWER_CALL -> handleAnswerCall(intent)
+                action == ACTION_DENY_CALL -> handleDenyCall(intent)
+                action == ACTION_LOCAL_HANGUP -> handleLocalHangup(intent)
+                action == ACTION_REMOTE_HANGUP -> handleRemoteHangup(intent)
+                action == ACTION_SET_MUTE_AUDIO -> handleSetMuteAudio(intent)
+                action == ACTION_SET_MUTE_VIDEO -> handleSetMuteVideo(intent)
+                action == ACTION_FLIP_CAMERA -> handleSetCameraFlip(intent)
+                action == ACTION_WIRED_HEADSET_CHANGE -> handleWiredHeadsetChanged(intent)
+                action == ACTION_SCREEN_OFF -> handleScreenOffChange(intent)
+                action == ACTION_RESPONSE_MESSAGE && isSameCall(intent) && callManager.currentConnectionState == CallState.Reconnecting -> handleResponseMessage(
+                    intent
+                )
+                action == ACTION_RESPONSE_MESSAGE -> handleResponseMessage(intent)
+                action == ACTION_ICE_MESSAGE -> handleRemoteIceCandidate(intent)
+                action == ACTION_ICE_CONNECTED -> handleIceConnected(intent)
+                action == ACTION_CHECK_TIMEOUT -> handleCheckTimeout(intent)
+                action == ACTION_CHECK_RECONNECT -> handleCheckReconnect(intent)
+                action == ACTION_IS_IN_CALL_QUERY -> handleIsInCallQuery(intent)
+                action == ACTION_UPDATE_AUDIO -> handleUpdateAudio(intent)
             }
         }
         return START_NOT_STICKY
