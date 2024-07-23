@@ -153,6 +153,8 @@ object SnodeAPI {
     internal fun getRandomSnode(): Promise<Snode, Exception> {
         val snodePool = this.snodePool
 
+        Log.d("", "***** Getting snode pool from database: ${snodePool.count()}")
+
         if (snodePool.count() < minimumSnodePoolCount) {
             val target = seedNodePool.random()
             val url = "$target/json_rpc"

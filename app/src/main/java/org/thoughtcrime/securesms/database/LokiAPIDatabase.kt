@@ -255,6 +255,11 @@ class LokiAPIDatabase(context: Context, helper: SQLCipherOpenHelper) : Database(
         return result
     }
 
+    override fun clearSnodePool() {
+        val database = databaseHelper.writableDatabase
+        database.delete(snodePoolTable, null, null)
+    }
+
     override fun clearOnionRequestPaths() {
         val database = databaseHelper.writableDatabase
         fun delete(indexPath: String) {
