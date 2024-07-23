@@ -50,8 +50,6 @@ object OnionRequestAPI {
         get() {
             val paths = _paths.get()
 
-            Log.d("", "***** Getting ONION from database: ${paths?.count()}")
-
             if (paths != null) { return paths }
 
             // Storing this in an atomic variable as it was causing a number of background
