@@ -166,6 +166,8 @@ class LokiAPIDatabase(context: Context, helper: SQLCipherOpenHelper) : Database(
 
         const val RESET_SEQ_NO = "UPDATE $lastMessageServerIDTable SET $lastMessageServerID = 0;"
 
+        const val EMPTY_VERSION = "0.0.0"
+
         // endregion
     }
 
@@ -179,7 +181,7 @@ class LokiAPIDatabase(context: Context, helper: SQLCipherOpenHelper) : Database(
                 val port = components.getOrNull(1)?.toIntOrNull() ?: return@mapNotNull null
                 val ed25519Key = components.getOrNull(2) ?: return@mapNotNull null
                 val x25519Key = components.getOrNull(3) ?: return@mapNotNull null
-                val version = components.getOrNull(4) ?: "0.0.0"
+                val version = components.getOrNull(4) ?: EMPTY_VERSION
                 Snode(address, port, Snode.KeySet(ed25519Key, x25519Key), version)
             }
         }?.toSet() ?: setOf()
@@ -235,7 +237,7 @@ class LokiAPIDatabase(context: Context, helper: SQLCipherOpenHelper) : Database(
                 val port = components.getOrNull(1)?.toIntOrNull()
                 val ed25519Key = components.getOrNull(2)
                 val x25519Key = components.getOrNull(3)
-                val version = components.getOrNull(4) ?: "0.0.0"
+                val version = components.getOrNull(4) ?: EMPTY_VERSION
                 if (port != null && ed25519Key != null && x25519Key != null) {
                     Snode(address, port, Snode.KeySet(ed25519Key, x25519Key), version)
                 } else {
@@ -280,7 +282,7 @@ class LokiAPIDatabase(context: Context, helper: SQLCipherOpenHelper) : Database(
                 val port = components.getOrNull(1)?.toIntOrNull() ?: return@mapNotNull null
                 val ed25519Key = components.getOrNull(2) ?: return@mapNotNull null
                 val x25519Key = components.getOrNull(3) ?: return@mapNotNull null
-                val version = components.getOrNull(4) ?: "0.0.0"
+                val version = components.getOrNull(4) ?: EMPTY_VERSION
                 Snode(address, port, Snode.KeySet(ed25519Key, x25519Key), version)
             }
         }?.toSet()

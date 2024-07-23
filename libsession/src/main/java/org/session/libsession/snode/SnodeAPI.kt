@@ -94,6 +94,8 @@ object SnodeAPI {
     const val KEY_ED25519 = "pubkey_ed25519"
     const val KEY_VERSION = "storage_server_version"
 
+    const val EMPTY_VERSION = "0.0.0"
+
     // Error
     internal sealed class Error(val description: String) : Exception(description) {
         object Generic : Error("An error occurred.")
@@ -744,7 +746,7 @@ object SnodeAPI {
                 val x25519Key = rawSnodeAsJSON?.get(KEY_X25519) as? String
 
                 if (address != null && port != null && ed25519Key != null && x25519Key != null && address != "0.0.0.0") {
-                    Snode("https://$address", port, Snode.KeySet(ed25519Key, x25519Key), "0.0.0")
+                    Snode("https://$address", port, Snode.KeySet(ed25519Key, x25519Key), EMPTY_VERSION)
                 } else {
                     Log.d("Loki", "Failed to parse snode from: ${rawSnode?.prettifiedDescription()}.")
                     null
