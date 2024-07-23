@@ -179,7 +179,8 @@ class LokiAPIDatabase(context: Context, helper: SQLCipherOpenHelper) : Database(
                 val port = components.getOrNull(1)?.toIntOrNull() ?: return@mapNotNull null
                 val ed25519Key = components.getOrNull(2) ?: return@mapNotNull null
                 val x25519Key = components.getOrNull(3) ?: return@mapNotNull null
-                Snode(address, port, Snode.KeySet(ed25519Key, x25519Key))
+                val version = components.getOrNull(4) ?: "0.0.0"
+                Snode(address, port, Snode.KeySet(ed25519Key, x25519Key), version)
             }
         }?.toSet() ?: setOf()
     }
@@ -192,6 +193,7 @@ class LokiAPIDatabase(context: Context, helper: SQLCipherOpenHelper) : Database(
             if (keySet != null) {
                 string += "-${keySet.ed25519Key}-${keySet.x25519Key}"
             }
+            string += "-${snode.version}"
             string
         }
         val row = wrap(mapOf( Companion.dummyKey to "dummy_key", snodePool to snodePoolAsString ))
@@ -207,6 +209,7 @@ class LokiAPIDatabase(context: Context, helper: SQLCipherOpenHelper) : Database(
             if (keySet != null) {
                 snodeAsString += "-${keySet.ed25519Key}-${keySet.x25519Key}"
             }
+            snodeAsString += "-${snode.version}"
             val row = wrap(mapOf( Companion.indexPath to indexPath, Companion.snode to snodeAsString ))
             database.insertOrUpdate(onionRequestPathTable, row, "${Companion.indexPath} = ?", wrap(indexPath))
         }
@@ -232,8 +235,9 @@ class LokiAPIDatabase(context: Context, helper: SQLCipherOpenHelper) : Database(
                 val port = components.getOrNull(1)?.toIntOrNull()
                 val ed25519Key = components.getOrNull(2)
                 val x25519Key = components.getOrNull(3)
+                val version = components.getOrNull(4) ?: "0.0.0"
                 if (port != null && ed25519Key != null && x25519Key != null) {
-                    Snode(address, port, Snode.KeySet(ed25519Key, x25519Key))
+                    Snode(address, port, Snode.KeySet(ed25519Key, x25519Key), version)
                 } else {
                     null
                 }
@@ -271,7 +275,8 @@ class LokiAPIDatabase(context: Context, helper: SQLCipherOpenHelper) : Database(
                 val port = components.getOrNull(1)?.toIntOrNull() ?: return@mapNotNull null
                 val ed25519Key = components.getOrNull(2) ?: return@mapNotNull null
                 val x25519Key = components.getOrNull(3) ?: return@mapNotNull null
-                Snode(address, port, Snode.KeySet(ed25519Key, x25519Key))
+                val version = components.getOrNull(4) ?: "0.0.0"
+                Snode(address, port, Snode.KeySet(ed25519Key, x25519Key), version)
             }
         }?.toSet()
     }

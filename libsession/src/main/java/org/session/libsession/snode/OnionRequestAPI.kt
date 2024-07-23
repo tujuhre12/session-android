@@ -10,6 +10,7 @@ import okhttp3.Request
 import org.session.libsession.messaging.file_server.FileServerApi
 import org.session.libsession.utilities.AESGCM
 import org.session.libsession.utilities.AESGCM.EncryptionResult
+import org.session.libsession.utilities.Util
 import org.session.libsession.utilities.getBodyForOnionRequest
 import org.session.libsession.utilities.getHeadersForOnionRequest
 import org.session.libsignal.crypto.getRandomElement
@@ -190,8 +191,19 @@ object OnionRequestAPI {
                 if (unusedSnodes.count() < pathSnodeCount) { throw InsufficientSnodesException() }
                 // Don't test path snodes as this would reveal the user's IP to them
                 guardSnodes.minus(reusableGuardSnodes).map { guardSnode ->
-                    val result = listOf( guardSnode ) + (0 until (pathSize - 1)).map {
-                        val pathSnode = unusedSnodes.getRandomElement()
+                    val result = listOf( guardSnode ) + (0 until (pathSize - 1)).mapIndexed() { index, _ ->
+                        var pathSnode = unusedSnodes.getRandomElement()
+
+                        // we want to make sure the last node in the path is above version 2.8.0
+                        // to help with an issue that will disappear once the nodes are all updated
+                        if(index == pathSize - 2) {
+                            // because we are now grabbing the whole node pool there should always
+                            // be a node that is above version 2.8.0
+                            while(Util.compareVersions(pathSnode.version, "2.8.0") < 0) {
+                                pathSnode = unusedSnodes.getRandomElement()
+                            }
+                        }
+
                         unusedSnodes = unusedSnodes.minus(pathSnode)
                         pathSnode
                     }
