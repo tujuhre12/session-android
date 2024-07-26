@@ -108,7 +108,7 @@ private fun EnterAccountId(
                 .verticalScroll(rememberScrollState())
 
             // There is a known issue with the ime padding on android versions below 30
-            // So we these older versions we need to resort to some manual padding based on the visible height
+             /// So on these older versions we need to resort to some manual padding based on the visible height
             // when the keyboard is up
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
                 val keyboardHeight by keyboardHeight()
