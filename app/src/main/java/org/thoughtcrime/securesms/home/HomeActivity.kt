@@ -253,7 +253,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                         }
                         else -> buildList {
                             result.contactAndGroupList.takeUnless { it.isEmpty() }?.let {
-                                add(GlobalSearchAdapter.Model.Header(R.string.contacts))
+                                add(GlobalSearchAdapter.Model.Header(R.string.conversations))
                                 addAll(it)
                             }
                             result.messageResults.takeUnless { it.isEmpty() }?.let {
