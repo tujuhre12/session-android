@@ -7,4 +7,6 @@ package org.thoughtcrime.securesms.ui.theme
 data class ThemeColorSet(
     val light: ThemeColors,
     val dark: ThemeColors
-)
+) {
+    fun get(isDark: Boolean): ThemeColors = if (isDark) dark else light
+}

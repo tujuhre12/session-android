@@ -17,38 +17,28 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.YELLOW_A
  * Some behaviour is hardcoded to cater for legacy usage of people with themes already set
  * But future themes will be picked and set directly from the "Appearance" screen
  */
-@Composable
-fun TextSecurePreferences.getComposeTheme(): ThemeColors {
+fun TextSecurePreferences.getColorSet(): ThemeColorSet {
     val selectedTheme = getThemeStyle()
 
     // get the chosen primary color from the preferences
     val selectedPrimary = primaryColor()
 
-    // create a theme set with the appropriate primary
-    val colorSet = when(selectedTheme){
-        TextSecurePreferences.OCEAN_DARK,
-        TextSecurePreferences.OCEAN_LIGHT -> ThemeColorSet(
-            light = OceanLight(selectedPrimary),
-            dark = OceanDark(selectedPrimary)
-        )
+    val createLight = if ("ocean" in selectedTheme) ::OceanLight else ::ClassicLight
+    val createDark = if ("ocean" in selectedTheme) ::OceanDark else ::ClassicDark
 
-        else -> ThemeColorSet(
-            light = ClassicLight(selectedPrimary),
-            dark = ClassicDark(selectedPrimary)
+    val followSystemSettings = getFollowSystemSettings()
+
+    return if (followSystemSettings) ThemeColorSet(
+        light = createLight(selectedPrimary),
+        dark = createDark(selectedPrimary)
+    ) else {
+        val both = if ("light" in selectedTheme) createLight(selectedPrimary) else createDark(selectedPrimary)
+
+        ThemeColorSet(
+            light = both,
+            dark = both
         )
     }
-
-    // deliver the right set from the light/dark mode chosen
-    val theme = when{
-        getFollowSystemSettings() -> if(isSystemInDarkTheme()) colorSet.dark else colorSet.light
-
-        selectedTheme == TextSecurePreferences.CLASSIC_LIGHT ||
-                selectedTheme == TextSecurePreferences.OCEAN_LIGHT -> colorSet.light
-
-        else -> colorSet.dark
-    }
-
-    return theme
 }
 
 fun TextSecurePreferences.primaryColor(): Color = when(getSelectedAccentColor()) {
