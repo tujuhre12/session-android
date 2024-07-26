@@ -5,8 +5,8 @@ package org.thoughtcrime.securesms.ui.theme
  * light theme, and [dark] representing the [ThemeColors] to use when the system is in a dark theme.
  */
 data class ThemeColorSet(
-    val light: ThemeColors,
-    val dark: ThemeColors
+    val colorsWhenSystemInLight: ThemeColors,
+    val colorsWhenSystemInDark: ThemeColors
 ) {
-    fun get(isDark: Boolean): ThemeColors = if (isDark) dark else light
+    fun get(isDark: Boolean): ThemeColors = if (isDark) colorsWhenSystemInDark else colorsWhenSystemInLight
 }

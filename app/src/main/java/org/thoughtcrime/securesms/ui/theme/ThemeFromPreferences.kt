@@ -29,14 +29,14 @@ fun TextSecurePreferences.getColorSet(): ThemeColorSet {
     val followSystemSettings = getFollowSystemSettings()
 
     return if (followSystemSettings) ThemeColorSet(
-        light = createLight(selectedPrimary),
-        dark = createDark(selectedPrimary)
+        colorsWhenSystemInLight = createLight(selectedPrimary),
+        colorsWhenSystemInDark = createDark(selectedPrimary)
     ) else {
         val both = if ("light" in selectedTheme) createLight(selectedPrimary) else createDark(selectedPrimary)
 
         ThemeColorSet(
-            light = both,
-            dark = both
+            colorsWhenSystemInLight = both,
+            colorsWhenSystemInDark = both
         )
     }
 }
