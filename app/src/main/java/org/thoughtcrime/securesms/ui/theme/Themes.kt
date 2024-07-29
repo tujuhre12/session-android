@@ -22,6 +22,11 @@ val LocalType = compositionLocalOf { sessionTypography }
 
 var cachedColorsProvider: ThemeColorsProvider? = null
 
+fun invalidateComposeThemeColors() {
+    // invalidate compose theme colors
+    cachedColorsProvider = null
+}
+
 /**
  * Apply a Material2 compose theme based on user selections in SharedPreferences.
  */
