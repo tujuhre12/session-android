@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.ui.theme
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
@@ -21,7 +20,7 @@ import org.session.libsession.utilities.AppTextSecurePreferences
 val LocalColors = compositionLocalOf <ThemeColors> { ClassicDark() }
 val LocalType = compositionLocalOf { sessionTypography }
 
-var cachedColors: (@Composable () -> ThemeColors)? = null
+var cachedColors: MaybeFollowSystemColors? = null
 
 /**
  * Apply a Material2 compose theme based on user selections in SharedPreferences.
@@ -33,10 +32,10 @@ fun SessionMaterialTheme(
     val context = LocalContext.current
     val preferences = AppTextSecurePreferences(context)
 
-    val cachedColors = cachedColors ?: preferences.colors.also { cachedColors = it }
+    val jjcachedColors = cachedColors ?: preferences.colors.also { cachedColors = it }
 
     SessionMaterialTheme(
-        colors = cachedColors(),
+        colors = cachedColors.get(),
         content = content
     )
 }
@@ -59,9 +58,8 @@ fun SessionMaterialTheme(
             LocalType provides sessionTypography,
             LocalContentColor provides colors.text,
             LocalTextSelectionColors provides colors.textSelectionColors,
-        ) {
-            content()
-        }
+            content = content
+        )
     }
 }
 

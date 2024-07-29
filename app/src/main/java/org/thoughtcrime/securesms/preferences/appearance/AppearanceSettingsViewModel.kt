@@ -17,13 +17,17 @@ class AppearanceSettingsViewModel @Inject constructor(private val prefs: TextSec
     private val _uiState = MutableStateFlow(prefs.themeState())
     val uiState: StateFlow<ThemeState> = _uiState
 
+    fun invalidateComposeThemeColors() {
+        // invalidate compose theme colors
+        cachedColors = null
+    }
+
     fun setNewAccent(@StyleRes newAccentColorStyle: Int) {
         prefs.setAccentColorStyle(newAccentColorStyle)
         // update UI state
         _uiState.value = prefs.themeState()
 
-        // invalidate compose theme colors
-        cachedColors = null
+        invalidateComposeThemeColors()
     }
 
     fun setNewStyle(newThemeStyle: String) {
@@ -31,15 +35,13 @@ class AppearanceSettingsViewModel @Inject constructor(private val prefs: TextSec
         // update UI state
         _uiState.value = prefs.themeState()
 
-        // invalidate compose theme colors
-        cachedColors = null
+        invalidateComposeThemeColors()
     }
 
     fun setNewFollowSystemSettings(followSystemSettings: Boolean) {
         prefs.setFollowSystemSettings(followSystemSettings)
         _uiState.value = prefs.themeState()
 
-        // invalidate compose theme colors
-        cachedColors = null
+        invalidateComposeThemeColors()
     }
 }
