@@ -16,13 +16,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import org.session.libsession.utilities.AppTextSecurePreferences
-import org.session.libsession.utilities.TextSecurePreferences
 
 // Globally accessible composition local objects
 val LocalColors = compositionLocalOf <ThemeColors> { ClassicDark() }
 val LocalType = compositionLocalOf { sessionTypography }
 
-var selectedColorSet: ThemeColorSet? = null
+var cachedColors: (@Composable () -> ThemeColors)? = null
 
 /**
  * Apply a Material2 compose theme based on user selections in SharedPreferences.
@@ -34,10 +33,10 @@ fun SessionMaterialTheme(
     val context = LocalContext.current
     val preferences = AppTextSecurePreferences(context)
 
-    val selectedColorSet = selectedColorSet ?: preferences.getColorSet().also { selectedColorSet = it }
+    val cachedColors = cachedColors ?: preferences.colors.also { cachedColors = it }
 
     SessionMaterialTheme(
-        colors = selectedColorSet.get(isSystemInDarkTheme()),
+        colors = cachedColors(),
         content = content
     )
 }

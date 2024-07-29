@@ -17,27 +17,27 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.YELLOW_A
  * Some behaviour is hardcoded to cater for legacy usage of people with themes already set
  * But future themes will be picked and set directly from the "Appearance" screen
  */
-fun TextSecurePreferences.getColorSet(): ThemeColorSet {
+val TextSecurePreferences.colors: @Composable () -> ThemeColors get() {
     val selectedTheme = getThemeStyle()
 
     // get the chosen primary color from the preferences
     val selectedPrimary = primaryColor()
 
-    val createLight = if ("ocean" in selectedTheme) ::OceanLight else ::ClassicLight
-    val createDark = if ("ocean" in selectedTheme) ::OceanDark else ::ClassicDark
+    val isOcean = "ocean" in selectedTheme
 
-    val followSystemSettings = getFollowSystemSettings()
+    val createLight = if (isOcean) ::OceanLight else ::ClassicLight
+    val createDark = if (isOcean) ::OceanDark else ::ClassicDark
 
-    return if (followSystemSettings) ThemeColorSet(
-        colorsWhenSystemInLight = createLight(selectedPrimary),
-        colorsWhenSystemInDark = createDark(selectedPrimary)
-    ) else {
-        val both = if ("light" in selectedTheme) createLight(selectedPrimary) else createDark(selectedPrimary)
+    // create the light and dark themes outside the lambda to avoid creating them every time
+    // [SessionMaterialTheme] is called. Creating both when we don't followSystemSettings is but a
+    // minor inefficiency that increases readability.
+    val light = createLight(selectedPrimary)
+    val dark = createDark(selectedPrimary)
 
-        ThemeColorSet(
-            colorsWhenSystemInLight = both,
-            colorsWhenSystemInDark = both
-        )
+    return when {
+        getFollowSystemSettings() -> { { if (isSystemInDarkTheme()) dark else light } }
+        "light" in selectedTheme -> { { light } }
+        else -> { { dark } }
     }
 }
 
