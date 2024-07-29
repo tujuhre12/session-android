@@ -32,7 +32,7 @@ fun SessionMaterialTheme(
     val context = LocalContext.current
     val preferences = AppTextSecurePreferences(context)
 
-    val jjcachedColors = cachedColors ?: preferences.colors.also { cachedColors = it }
+    val cachedColors = cachedColors ?: preferences.colors.also { cachedColors = it }
 
     SessionMaterialTheme(
         colors = cachedColors.get(),

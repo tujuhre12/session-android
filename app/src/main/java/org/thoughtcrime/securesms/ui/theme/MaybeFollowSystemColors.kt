@@ -8,6 +8,7 @@ fun interface MaybeFollowSystemColors {
     fun get(): ThemeColors
 }
 
+@Suppress("FunctionName")
 fun FollowSystemColors(light: ThemeColors, dark: ThemeColors) = MaybeFollowSystemColors {
     when {
         isSystemInDarkTheme() -> dark
@@ -15,4 +16,5 @@ fun FollowSystemColors(light: ThemeColors, dark: ThemeColors) = MaybeFollowSyste
     }
 }
 
+@Suppress("FunctionName")
 fun IgnoreSystemColors(colors: ThemeColors) = MaybeFollowSystemColors { colors }
