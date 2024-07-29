@@ -1,7 +1,5 @@
 package org.thoughtcrime.securesms.ui.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.BLUE_ACCENT
@@ -17,7 +15,7 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.YELLOW_A
  * Some behaviour is hardcoded to cater for legacy usage of people with themes already set
  * But future themes will be picked and set directly from the "Appearance" screen
  */
-val TextSecurePreferences.colors: MaybeFollowSystemColors get() {
+fun TextSecurePreferences.getColorsProvider(): ThemeColorsProvider {
     val selectedTheme = getThemeStyle()
 
     // get the chosen primary color from the preferences
@@ -29,12 +27,12 @@ val TextSecurePreferences.colors: MaybeFollowSystemColors get() {
     val createDark = if (isOcean) ::OceanDark else ::ClassicDark
 
     return when {
-        getFollowSystemSettings() -> FollowSystemColors(
+        getFollowSystemSettings() -> FollowSystemThemeColorsProvider(
             light = createLight(selectedPrimary),
             dark = createDark(selectedPrimary)
         )
-        "light" in selectedTheme -> IgnoreSystemColors(createLight(selectedPrimary))
-        else -> IgnoreSystemColors(createDark(selectedPrimary))
+        "light" in selectedTheme -> ThemeColorsProvider(createLight(selectedPrimary))
+        else -> ThemeColorsProvider(createDark(selectedPrimary))
     }
 }
 

@@ -20,7 +20,7 @@ import org.session.libsession.utilities.AppTextSecurePreferences
 val LocalColors = compositionLocalOf <ThemeColors> { ClassicDark() }
 val LocalType = compositionLocalOf { sessionTypography }
 
-var cachedColors: MaybeFollowSystemColors? = null
+var cachedColorsProvider: ThemeColorsProvider? = null
 
 /**
  * Apply a Material2 compose theme based on user selections in SharedPreferences.
@@ -32,7 +32,7 @@ fun SessionMaterialTheme(
     val context = LocalContext.current
     val preferences = AppTextSecurePreferences(context)
 
-    val cachedColors = cachedColors ?: preferences.colors.also { cachedColors = it }
+    val cachedColors = cachedColorsProvider ?: preferences.getColorsProvider().also { cachedColorsProvider = it }
 
     SessionMaterialTheme(
         colors = cachedColors.get(),

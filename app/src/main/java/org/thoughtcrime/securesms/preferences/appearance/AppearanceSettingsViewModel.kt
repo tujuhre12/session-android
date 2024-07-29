@@ -6,7 +6,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.session.libsession.utilities.TextSecurePreferences
-import org.thoughtcrime.securesms.ui.theme.cachedColors
+import org.thoughtcrime.securesms.ui.theme.cachedColorsProvider
 import org.thoughtcrime.securesms.util.ThemeState
 import org.thoughtcrime.securesms.util.themeState
 import javax.inject.Inject
@@ -19,7 +19,7 @@ class AppearanceSettingsViewModel @Inject constructor(private val prefs: TextSec
 
     fun invalidateComposeThemeColors() {
         // invalidate compose theme colors
-        cachedColors = null
+        cachedColorsProvider = null
     }
 
     fun setNewAccent(@StyleRes newAccentColorStyle: Int) {
