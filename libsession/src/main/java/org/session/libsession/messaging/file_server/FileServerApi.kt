@@ -151,11 +151,12 @@ object FileServerApi {
         val result = send(request).await()
 
         // map out the result
-        val json = JsonUtil.fromJson(result, Map::class.java)
-        val statusCode = json.getOrDefault("status_code", 0) as Int
-        val version = json.getOrDefault("result", "") as String
-        val updated = json.getOrDefault("updated", 0.0) as Double
-
-        return VersionData(statusCode, version, updated)
+        return JsonUtil.fromJson(result, Map::class.java).let {
+            VersionData(
+                statusCode = it["status_code"] as? Int ?: 0,
+                version = it["result"] as? String ?: "",
+                updated = it["updated"] as? Double ?: 0.0
+            )
+        }
     }
 }
