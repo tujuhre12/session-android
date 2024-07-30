@@ -7,7 +7,7 @@ import kotlin.coroutines.suspendCoroutine
 
 suspend fun <T, E: Throwable> Promise<T, E>.await(): T {
     return suspendCoroutine { cont ->
-        success { cont.resume(it) }
-        fail { cont.resumeWithException(it) }
+        success(cont::resume)
+        fail(cont::resumeWithException)
     }
 }
