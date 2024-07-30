@@ -8,11 +8,13 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.session.libsession.messaging.file_server.FileServerApi
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsignal.utilities.Log
 import java.util.concurrent.TimeUnit
 
 class VersionUtil(
     private val prefs: TextSecurePreferences
 ) {
+    private val TAG: String = VersionUtil::class.java.simpleName
     private val FOUR_HOURS: Long = TimeUnit.HOURS.toMillis(4)
 
     private val handler = Handler(Looper.getMainLooper())
@@ -55,9 +57,11 @@ class VersionUtil(
             try {
                 // perform the version check
                 val clientVersion = FileServerApi.getClientVersion()
+                Log.i(TAG, "Fetched version data: $clientVersion")
                 prefs.setLastVersionCheck()
             } catch (e: Exception) {
                 // we can silently ignore the error
+                Log.e(TAG, "Error fetching version data: $e")
             }
         }
     }
