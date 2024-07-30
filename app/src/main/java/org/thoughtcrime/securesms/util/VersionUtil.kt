@@ -50,7 +50,7 @@ class VersionUtil(
     private fun fetchVersionData() {
         // only perform this if at least 4h has elapsed since th last successful check
         val lastCheck = System.currentTimeMillis() - prefs.getLastVersionCheck()
-        if(lastCheck < FOUR_HOURS) return
+        if (lastCheck < FOUR_HOURS) return
 
         job?.cancel()
         job = scope.launch {
