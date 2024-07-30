@@ -1,20 +1,19 @@
 package org.thoughtcrime.securesms.util
 
-import android.content.Context
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.session.libsession.messaging.file_server.FileServerApi
 import org.session.libsession.utilities.TextSecurePreferences
+import java.util.concurrent.TimeUnit
 
 class VersionUtil(
-    private val context: Context,
     private val prefs: TextSecurePreferences
 ) {
+    private val FOUR_HOURS: Long = TimeUnit.HOURS.toMillis(4)
 
     private val handler = Handler(Looper.getMainLooper())
     private val runnable: Runnable
@@ -24,12 +23,8 @@ class VersionUtil(
 
     init {
         runnable = Runnable {
-            // Task to be executed every 4 hours
-            fetchVersionData()
+            fetchAndScheduleNextVersionCheck()
         }
-
-        // Re-schedule the task
-        handler.postDelayed(runnable, FOUR_HOURS)
     }
 
     fun startTimedVersionCheck() {
@@ -45,26 +40,25 @@ class VersionUtil(
         stopTimedVersionCheck()
     }
 
-    fun fetchVersionData() {
-        Log.d("", "***** Trying to fetch version. Last check: ${prefs.getLastVersionCheck()}")
-        // only perform this if at least 4h has elapsed since th last successful check
-        if(prefs.getLastVersionCheck() < FOUR_HOURS) return
+    private fun fetchAndScheduleNextVersionCheck() {
+        fetchVersionData()
+        handler.postDelayed(runnable, FOUR_HOURS)
+    }
 
+    private fun fetchVersionData() {
+        // only perform this if at least 4h has elapsed since th last successful check
+        val lastCheck = System.currentTimeMillis() - prefs.getLastVersionCheck()
+        if(lastCheck < FOUR_HOURS) return
+
+        job?.cancel()
         job = scope.launch {
             try {
                 // perform the version check
-                Log.d("", "***** Fetching last version")
                 val clientVersion = FileServerApi.getClientVersion()
-                Log.d("", "***** Got version: $clientVersion")
                 prefs.setLastVersionCheck()
             } catch (e: Exception) {
                 // we can silently ignore the error
-                Log.e("", "***** Error fetching version", e)
             }
         }
-    }
-
-    companion object {
-        private const val FOUR_HOURS = 4 * 60 * 60 * 1000L // 4 hours in milliseconds
     }
 }

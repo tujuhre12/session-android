@@ -250,7 +250,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         resubmitProfilePictureIfNeeded();
         loadEmojiSearchIndexIfNeeded();
         EmojiSource.refresh();
-        versionUtil = new VersionUtil(this, textSecurePreferences);
+        versionUtil = new VersionUtil(textSecurePreferences);
 
         NetworkConstraint networkConstraint = new NetworkConstraint.Factory(this).create();
         HTTP.INSTANCE.setConnectedToNetwork(networkConstraint::isMet);
@@ -278,8 +278,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
             OpenGroupManager.INSTANCE.startPolling();
         });
 
-        // try to fetch  last version now and start the version polling
-        versionUtil.fetchVersionData();
+        // fetch last version data
         versionUtil.startTimedVersionCheck();
     }
 
