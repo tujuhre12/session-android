@@ -86,6 +86,7 @@ import org.thoughtcrime.securesms.sskenvironment.ProfileManager;
 import org.thoughtcrime.securesms.sskenvironment.ReadReceiptManager;
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository;
 import org.thoughtcrime.securesms.util.Broadcaster;
+import org.thoughtcrime.securesms.util.VersionUtil;
 import org.thoughtcrime.securesms.util.dynamiclanguage.LocaleParseHelper;
 import org.thoughtcrime.securesms.webrtc.CallMessageProcessor;
 import org.webrtc.PeerConnectionFactory;
@@ -142,6 +143,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     private HandlerThread conversationListHandlerThread;
     private Handler conversationListHandler;
     private PersistentLogger persistentLogger;
+    private VersionUtil versionUtil;
 
     @Inject LokiAPIDatabase lokiAPIDatabase;
     @Inject public Storage storage;
@@ -248,6 +250,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         resubmitProfilePictureIfNeeded();
         loadEmojiSearchIndexIfNeeded();
         EmojiSource.refresh();
+        versionUtil = new VersionUtil(this, textSecurePreferences);
 
         NetworkConstraint networkConstraint = new NetworkConstraint.Factory(this).create();
         HTTP.INSTANCE.setConnectedToNetwork(networkConstraint::isMet);
@@ -274,6 +277,10 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
 
             OpenGroupManager.INSTANCE.startPolling();
         });
+
+        // try to fetch  last version now and start the version polling
+        versionUtil.fetchVersionData();
+        versionUtil.startTimedVersionCheck();
     }
 
     @Override
@@ -286,12 +293,14 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
             poller.stopIfNeeded();
         }
         ClosedGroupPollerV2.getShared().stopAll();
+        versionUtil.stopTimedVersionCheck();
     }
 
     @Override
     public void onTerminate() {
         stopKovenant(); // Loki
         OpenGroupManager.INSTANCE.stopPolling();
+        versionUtil.clear();
         super.onTerminate();
     }
 
