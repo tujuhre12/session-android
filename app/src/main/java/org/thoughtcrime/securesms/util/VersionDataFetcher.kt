@@ -40,12 +40,16 @@ class VersionDataFetcher @Inject constructor(
 
     private val scope = CoroutineScope(Dispatchers.Default)
 
+    /**
+     * Schedules fetching version data [delayMillis] milliseconds from now.
+     *
+     * This method will fetch immediately if 4 hours or more has elapsed since the last successful
+     * check.
+     */
     fun startTimedVersionCheck(
         delayMillis: Long = REFRESH_TIME_MS + prefs.getLastVersionCheck() - System.currentTimeMillis()
     ) {
         stopTimedVersionCheck()
-
-        // Call immediately if 4h or more has elapsed since the last successful check else schedule.
         handler.postDelayed(fetchVersionData, delayMillis)
     }
 
