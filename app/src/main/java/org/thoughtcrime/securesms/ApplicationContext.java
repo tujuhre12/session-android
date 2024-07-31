@@ -297,7 +297,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     public void onTerminate() {
         stopKovenant(); // Loki
         OpenGroupManager.INSTANCE.stopPolling();
-        versionDataFetcher.clear();
+        versionDataFetcher.stopTimedVersionCheck();
         super.onTerminate();
     }
 

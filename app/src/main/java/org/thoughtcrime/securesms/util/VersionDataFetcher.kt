@@ -20,43 +20,36 @@ class VersionDataFetcher @Inject constructor(
     private val prefs: TextSecurePreferences
 ) {
     private val handler = Handler(Looper.getMainLooper())
-    private val runnable = Runnable {
-        fetchVersionData()
-    }
-
-    private val scope = CoroutineScope(Dispatchers.Default)
-
-    fun startTimedVersionCheck() {
-        stopTimedVersionCheck()
-
-        // Call immediately if 4h or more has elapsed since the last successful check else schedule.
-        handler.postDelayed(
-            runnable,
-            REFRESH_TIME_MS + prefs.getLastVersionCheck() - System.currentTimeMillis()
-        )
-    }
-
-    fun stopTimedVersionCheck() {
-        handler.removeCallbacks(runnable)
-    }
-
-    fun clear() {
-        stopTimedVersionCheck()
-    }
-
-    private fun fetchVersionData() {
+    private val fetchVersionData = Runnable {
         scope.launch {
             try {
                 // Perform the version check
                 val clientVersion = FileServerApi.getClientVersion()
                 Log.i(TAG, "Fetched version data: $clientVersion")
+                prefs.setLastVersionCheck()
+                startTimedVersionCheck()
             } catch (e: Exception) {
                 // We can silently ignore the error
                 Log.e(TAG, "Error fetching version data", e)
+                // Schedule the next check for 4 hours from now, but do not setLastVersionCheck
+                // so the app will retry when the app is next foregrounded.
+                startTimedVersionCheck(REFRESH_TIME_MS)
             }
-
-            prefs.setLastVersionCheck()
-            startTimedVersionCheck()
         }
+    }
+
+    private val scope = CoroutineScope(Dispatchers.Default)
+
+    fun startTimedVersionCheck(
+        delayMillis: Long = REFRESH_TIME_MS + prefs.getLastVersionCheck() - System.currentTimeMillis()
+    ) {
+        stopTimedVersionCheck()
+
+        // Call immediately if 4h or more has elapsed since the last successful check else schedule.
+        handler.postDelayed(fetchVersionData, delayMillis)
+    }
+
+    fun stopTimedVersionCheck() {
+        handler.removeCallbacks(fetchVersionData)
     }
 }
