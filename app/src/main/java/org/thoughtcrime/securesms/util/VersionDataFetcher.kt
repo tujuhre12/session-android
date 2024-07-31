@@ -46,6 +46,7 @@ class VersionDataFetcher @Inject constructor(
      * This method will fetch immediately if 4 hours or more has elapsed since the last successful
      * check.
      */
+    @JvmOverloads
     fun startTimedVersionCheck(
         delayMillis: Long = REFRESH_TIME_MS + prefs.getLastVersionCheck() - System.currentTimeMillis()
     ) {
