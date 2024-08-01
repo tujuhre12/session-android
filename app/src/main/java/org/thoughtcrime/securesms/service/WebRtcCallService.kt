@@ -730,11 +730,7 @@ class WebRtcCallService : LifecycleService(), CallManager.WebRtcListener {
                 this,
                 CallNotificationBuilder.WEBRTC_NOTIFICATION,
                 CallNotificationBuilder.getCallInProgressNotification(this, type, recipient),
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
-                } else {
-                    0
-                }
+                if (Build.VERSION.SDK_INT >= 30) ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE else 0
             )
         } catch (e: IllegalStateException) {
             Log.e(TAG, "Failed to setCallInProgressNotification as a foreground service for type: ${type}, trying to update instead", e)
