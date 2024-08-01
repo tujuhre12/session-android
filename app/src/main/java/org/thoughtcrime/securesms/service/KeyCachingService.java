@@ -260,11 +260,11 @@ public class KeyCachingService extends Service {
     }
 
     ServiceCompat.startForeground(
-            this,
-            SERVICE_RUNNING_ID,
-            builder.build(),
-            type
-        );
+        this,
+        SERVICE_RUNNING_ID,
+        builder.build(),
+        type
+    );
   }
 
   private PendingIntent buildLockIntent() {
