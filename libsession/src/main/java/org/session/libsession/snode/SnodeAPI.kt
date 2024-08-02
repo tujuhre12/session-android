@@ -18,6 +18,7 @@ import nl.komponents.kovenant.task
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.utilities.MessageWrapper
 import org.session.libsession.messaging.utilities.SodiumUtilities.sodium
+import org.session.libsession.utilities.toByteArray
 import org.session.libsignal.crypto.getRandomElement
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.protos.SignalServiceProtos
@@ -93,8 +94,6 @@ object SnodeAPI {
     const val KEY_X25519 = "pubkey_x25519"
     const val KEY_ED25519 = "pubkey_ed25519"
     const val KEY_VERSION = "storage_server_version"
-
-    const val EMPTY_VERSION = "0.0.0"
 
     // Error
     sealed class Error(val description: String) : Exception(description) {
@@ -191,7 +190,7 @@ object SnodeAPI {
                             val x25519Key = rawSnodeAsJSON?.get(KEY_X25519) as? String
                             val version = (rawSnodeAsJSON?.get(KEY_VERSION) as? ArrayList<*>)
                                 ?.filterIsInstance<Int>() // get the array as Integers
-                                ?.joinToString(separator = ".") // turn it int a version string
+                                ?.let(Snode::Version) // turn it int a version
 
                             if (address != null && port != null && ed25519Key != null && x25519Key != null
                                 && address != "0.0.0.0" && version != null) {
@@ -696,7 +695,7 @@ object SnodeAPI {
             getSingleTargetSnode(publicKey).bind { snode ->
                 retryIfNeeded(maxRetryCount) {
                     val signature = ByteArray(Sign.BYTES)
-                    val verificationData = (Snode.Method.DeleteMessage.rawValue + serverHashes.fold("") { a, v -> a + v }).toByteArray()
+                    val verificationData = sequenceOf(Snode.Method.DeleteMessage.rawValue).plus(serverHashes).toByteArray()
                     sodium.cryptoSignDetached(signature, verificationData, verificationData.size.toLong(), userED25519KeyPair.secretKey.asBytes)
                     val deleteMessageParams = mapOf(
                         "pubkey" to userPublicKey,
@@ -719,7 +718,7 @@ object SnodeAPI {
                                 val signature = json["signature"] as String
                                 val snodePublicKey = Key.fromHexString(hexSnodePublicKey)
                                 // The signature looks like ( PUBKEY_HEX || RMSG[0] || ... || RMSG[N] || DMSG[0] || ... || DMSG[M] )
-                                val message = (userPublicKey + serverHashes.fold("") { a, v -> a + v } + hashes.fold("") { a, v -> a + v }).toByteArray()
+                                val message = sequenceOf(userPublicKey).plus(serverHashes).plus(hashes).toByteArray()
                                 sodium.cryptoSignVerifyDetached(Base64.decode(signature), message, message.size, snodePublicKey.asBytes)
                             }
                         }
@@ -733,11 +732,10 @@ object SnodeAPI {
     }
 
     // Parsing
-    private fun parseSnodes(rawResponse: Any): List<Snode> {
-        val json = rawResponse as? Map<*, *>
-        val rawSnodes = json?.get("snodes") as? List<*>
-        if (rawSnodes != null) {
-            return rawSnodes.mapNotNull { rawSnode ->
+    private fun parseSnodes(rawResponse: Any): List<Snode> =
+        (rawResponse as? Map<*, *>)
+            ?.run { get("snodes") as? List<*> }
+            ?.mapNotNull { rawSnode ->
                 val rawSnodeAsJSON = rawSnode as? Map<*, *>
                 val address = rawSnodeAsJSON?.get("ip") as? String
                 val portAsString = rawSnodeAsJSON?.get("port") as? String
@@ -746,17 +744,12 @@ object SnodeAPI {
                 val x25519Key = rawSnodeAsJSON?.get(KEY_X25519) as? String
 
                 if (address != null && port != null && ed25519Key != null && x25519Key != null && address != "0.0.0.0") {
-                    Snode("https://$address", port, Snode.KeySet(ed25519Key, x25519Key), EMPTY_VERSION)
+                    Snode("https://$address", port, Snode.KeySet(ed25519Key, x25519Key), Snode.Version.ZERO)
                 } else {
                     Log.d("Loki", "Failed to parse snode from: ${rawSnode?.prettifiedDescription()}.")
                     null
                 }
-            }
-        } else {
-            Log.d("Loki", "Failed to parse snodes from: ${rawResponse.prettifiedDescription()}.")
-            return listOf()
-        }
-    }
+            } ?: listOf<Snode>().also { Log.d("Loki", "Failed to parse snodes from: ${rawResponse.prettifiedDescription()}.") }
 
     fun deleteAllMessages(): Promise<Map<String,Boolean>, Exception> {
         return retryIfNeeded(maxRetryCount) {
@@ -796,8 +789,7 @@ object SnodeAPI {
             getSingleTargetSnode(userPublicKey).bind { snode ->
                 retryIfNeeded(maxRetryCount) {
                     // "expire" || expiry || messages[0] || ... || messages[N]
-                    val verificationData =
-                        (Snode.Method.Expire.rawValue + updatedExpiryMsWithNetworkOffset + serverHashes.fold("") { a, v -> a + v }).toByteArray()
+                    val verificationData = sequenceOf(Snode.Method.Expire.rawValue, "$updatedExpiryMsWithNetworkOffset").plus(serverHashes).toByteArray()
                     val signature = ByteArray(Sign.BYTES)
                     sodium.cryptoSignDetached(
                         signature,
@@ -828,7 +820,7 @@ object SnodeAPI {
                                 val signature = json["signature"] as String
                                 val snodePublicKey = Key.fromHexString(hexSnodePublicKey)
                                 // The signature looks like ( PUBKEY_HEX || RMSG[0] || ... || RMSG[N] || DMSG[0] || ... || DMSG[M] )
-                                val message = (userPublicKey + serverHashes.fold("") { a, v -> a + v } + hashes.fold("") { a, v -> a + v }).toByteArray()
+                                val message = sequenceOf(userPublicKey).plus(serverHashes).plus(hashes).toByteArray()
                                 if (sodium.cryptoSignVerifyDetached(Base64.decode(signature), message, message.size, snodePublicKey.asBytes)) {
                                     hashes to expiryApplied
                                 } else listOf<String>() to 0L
@@ -922,7 +914,7 @@ object SnodeAPI {
                 val signature = json["signature"] as String
                 val snodePublicKey = Key.fromHexString(hexSnodePublicKey)
                 // The signature looks like ( PUBKEY_HEX || TIMESTAMP || DELETEDHASH[0] || ... || DELETEDHASH[N] )
-                val message = (userPublicKey + timestamp.toString() + hashes.joinToString(separator = "")).toByteArray()
+                val message = sequenceOf(userPublicKey, "$timestamp").plus(hashes).toByteArray()
                 sodium.cryptoSignVerifyDetached(Base64.decode(signature), message, message.size, snodePublicKey.asBytes)
             }
         }
