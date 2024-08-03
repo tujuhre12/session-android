@@ -402,6 +402,12 @@ fun <E, K: Any, V: Any> Iterable<E>.associateByNotNull(
     for(e in this) { it[keySelector(e) ?: continue] = valueTransform(e) ?: continue }
 }
 
+fun <K: Any, V: Any, W : Any> Map<K, V>.mapValuesNotNull(
+    valueTransform: (Map.Entry<K, V>) -> W?
+): Map<K, W> = mutableMapOf<K, W>().also {
+    for(e in this) { it[e.key] = valueTransform(e) ?: continue }
+}
+
 /**
  * Groups elements of the original collection by the key returned by the given [keySelector] function
  * applied to each element and returns a map where each group key is associated with a list of
@@ -412,6 +418,21 @@ fun <E, K: Any, V: Any> Iterable<E>.associateByNotNull(
 inline fun <E, K> Iterable<E>.groupByNotNull(keySelector: (E) -> K?): Map<K, List<E>> = LinkedHashMap<K, MutableList<E>>().also {
     forEach { e -> keySelector(e)?.let { k -> it.getOrPut(k) { mutableListOf() } += e } }
 }
+
+/**
+ * Analogous to [buildMap], this function creates a [MutableMap] and populates it using the given [action].
+ */
+inline fun <K, V> buildMutableMap(action: MutableMap<K, V>.() -> Unit): MutableMap<K, V> =
+    mutableMapOf<K, V>().apply(action)
+
+/**
+ * Converts a list of Pairs into a Map, filtering out any Pairs where the value is null.
+ *
+ * @param pairs The list of Pairs to convert.
+ * @return A Map with non-null values.
+ */
+fun <K : Any, V : Any> Iterable<Pair<K, V?>>.toMapNotNull(): Map<K, V> =
+    associateByNotNull(Pair<K, V?>::first, Pair<K, V?>::second)
 
 fun Sequence<String>.toByteArray(): ByteArray = ByteArrayOutputStream().use { output ->
     forEach { it.byteInputStream().use { input -> input.copyTo(output) } }
