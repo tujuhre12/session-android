@@ -287,6 +287,10 @@ object SnodeAPI {
         sodium.cryptoSignDetached(it, data, data.size.toLong(), userED25519KeyPair.secretKey.asBytes)
     }
 
+    private fun getUserED25519KeyPairCatchingOrNull() = runCatching { MessagingModuleConfiguration.shared.getUserED25519KeyPair() }.getOrNull()
+    private fun getUserED25519KeyPair(): KeyPair? = MessagingModuleConfiguration.shared.getUserED25519KeyPair()
+    private fun getUserPublicKey() = MessagingModuleConfiguration.shared.storage.getUserPublicKey()
+
     fun getRawMessages(snode: Snode, publicKey: String, requiresAuth: Boolean = true, namespace: Int = 0): RawResponsePromise {
         // Get last message hash
         val lastHashValue = database.getLastMessageHashValue(snode, publicKey, namespace) ?: ""
@@ -300,8 +304,7 @@ object SnodeAPI {
         // Construct signature
         if (requiresAuth) {
             val userED25519KeyPair = try {
-                MessagingModuleConfiguration.shared.getUserED25519KeyPair()
-                    ?: return Promise.ofFail(Error.NoKeyPair)
+                getUserED25519KeyPair() ?: return Promise.ofFail(Error.NoKeyPair)
             } catch (e: Exception) {
                 Log.e("Loki", "Error getting KeyPair", e)
                 return Promise.ofFail(Error.NoKeyPair)
@@ -327,7 +330,7 @@ object SnodeAPI {
         // used for sig generation since it is also the value used in timestamp parameter
         val messageTimestamp = message.timestamp
 
-        val userED25519KeyPair = runCatching { MessagingModuleConfiguration.shared.getUserED25519KeyPair() }.getOrNull() ?: return null
+        val userED25519KeyPair = getUserED25519KeyPairCatchingOrNull() ?: return null
 
         val verificationData = "store$namespace$messageTimestamp".toByteArray()
         val signature = signAndEncodeCatching(verificationData, userED25519KeyPair).run {
@@ -362,11 +365,7 @@ object SnodeAPI {
      * @param required indicates that *at least one* message in the list is deleted from the server, otherwise it will return 404
      */
     fun buildAuthenticatedDeleteBatchInfo(publicKey: String, messageHashes: List<String>, required: Boolean = false): SnodeBatchRequestInfo? {
-        val userEd25519KeyPair = try {
-            MessagingModuleConfiguration.shared.getUserED25519KeyPair() ?: return null
-        } catch (e: Exception) {
-            return null
-        }
+        val userEd25519KeyPair = getUserED25519KeyPairCatchingOrNull() ?: return null
         val ed25519PublicKey = userEd25519KeyPair.publicKey.asHexString
         val verificationData = sequenceOf("delete").plus(messageHashes).toByteArray()
         val signature = try {
@@ -391,7 +390,7 @@ object SnodeAPI {
 
     fun buildAuthenticatedRetrieveBatchRequest(snode: Snode, publicKey: String, namespace: Int = 0, maxSize: Int? = null): SnodeBatchRequestInfo? {
         val lastHashValue = database.getLastMessageHashValue(snode, publicKey, namespace) ?: ""
-        val userEd25519KeyPair = runCatching { MessagingModuleConfiguration.shared.getUserED25519KeyPair() }.getOrNull() ?: return null
+        val userEd25519KeyPair = getUserED25519KeyPairCatchingOrNull() ?: return null
         val ed25519PublicKey = userEd25519KeyPair.publicKey.asHexString
         val timestamp = System.currentTimeMillis() + clockOffset
         val verificationData = if (namespace == 0) "retrieve$timestamp".toByteArray()
@@ -451,7 +450,7 @@ object SnodeAPI {
     }
 
     fun getExpiries(messageHashes: List<String>, publicKey: String) : RawResponsePromise {
-        val userEd25519KeyPair = MessagingModuleConfiguration.shared.getUserED25519KeyPair() ?: return Promise.ofFail(NullPointerException("No user key pair"))
+        val userEd25519KeyPair = getUserED25519KeyPairCatchingOrNull() ?: return Promise.ofFail(NullPointerException("No user key pair"))
         val hashes = messageHashes.takeIf { it.size != 1 } ?: (messageHashes + "///////////////////////////////////////////") // TODO remove this when bug is fixed on nodes.
         return retryIfNeeded(maxRetryCount) {
             val timestamp = System.currentTimeMillis() + clockOffset
@@ -495,7 +494,7 @@ object SnodeAPI {
         extend: Boolean = false,
         shorten: Boolean = false
     ): Map<String, Any>? {
-        val userEd25519KeyPair = MessagingModuleConfiguration.shared.getUserED25519KeyPair() ?: return null
+        val userEd25519KeyPair = getUserED25519KeyPairCatchingOrNull() ?: return null
 
         val shortenOrExtend = if (extend) "extend" else if (shorten) "shorten" else ""
 
@@ -535,8 +534,7 @@ object SnodeAPI {
 
     fun sendMessage(message: SnodeMessage, requiresAuth: Boolean = false, namespace: Int = 0): RawResponsePromise =
         retryIfNeeded(maxRetryCount) {
-            val module = MessagingModuleConfiguration.shared
-            val userED25519KeyPair = module.getUserED25519KeyPair() ?: return@retryIfNeeded Promise.ofFail(Error.NoKeyPair)
+            val userED25519KeyPair = getUserED25519KeyPair() ?: return@retryIfNeeded Promise.ofFail(Error.NoKeyPair)
             val parameters = message.toJSON().toMutableMap<String, Any>()
             // Construct signature
             if (requiresAuth) {
@@ -566,9 +564,8 @@ object SnodeAPI {
 
     fun deleteMessage(publicKey: String, serverHashes: List<String>): Promise<Map<String, Boolean>, Exception> =
         retryIfNeeded(maxRetryCount) {
-            val module = MessagingModuleConfiguration.shared
-            val userED25519KeyPair = module.getUserED25519KeyPair() ?: return@retryIfNeeded Promise.ofFail(Error.NoKeyPair)
-            val userPublicKey = module.storage.getUserPublicKey() ?: return@retryIfNeeded Promise.ofFail(Error.NoKeyPair)
+            val userED25519KeyPair = getUserED25519KeyPair() ?: return@retryIfNeeded Promise.ofFail(Error.NoKeyPair)
+            val userPublicKey = getUserPublicKey() ?: return@retryIfNeeded Promise.ofFail(Error.NoKeyPair)
             getSingleTargetSnode(publicKey).bind { snode ->
                 retryIfNeeded(maxRetryCount) {
                     val verificationData = sequenceOf(Snode.Method.DeleteMessage.rawValue).plus(serverHashes).toByteArray()
@@ -627,9 +624,8 @@ object SnodeAPI {
 
     fun deleteAllMessages(): Promise<Map<String,Boolean>, Exception> =
         retryIfNeeded(maxRetryCount) {
-            val module = MessagingModuleConfiguration.shared
-            val userED25519KeyPair = module.getUserED25519KeyPair() ?: return@retryIfNeeded Promise.ofFail(Error.NoKeyPair)
-            val userPublicKey = module.storage.getUserPublicKey() ?: return@retryIfNeeded Promise.ofFail(Error.NoKeyPair)
+            val userED25519KeyPair = getUserED25519KeyPair() ?: return@retryIfNeeded Promise.ofFail(Error.NoKeyPair)
+            val userPublicKey = getUserPublicKey() ?: return@retryIfNeeded Promise.ofFail(Error.NoKeyPair)
             getSingleTargetSnode(userPublicKey).bind { snode ->
                 retryIfNeeded(maxRetryCount) {
                     getNetworkTime(snode).bind { (_, timestamp) ->
