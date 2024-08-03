@@ -64,7 +64,7 @@ class Snode(val address: String, val port: Int, val publicKeySet: KeySet?, val v
             private const val MASK = 0xFFFFUL
 
             private fun Sequence<ULong>.foldToVersionAsULong() = take(4).foldIndexed(0UL) { i, acc, it ->
-                it and MASK shl (3 - i) * MASK_BITS or acc
+                it.coerceAtMost(MASK) shl (3 - i) * MASK_BITS or acc
             }
         }
 

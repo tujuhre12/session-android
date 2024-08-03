@@ -29,11 +29,10 @@ class SnodeVersionTest(
             // Snode.Version only considers the first 4 integers, so these are equal
             arrayOf("1.0.0.0", "1.0.0.0.1", true, false),
             arrayOf("1.0.0.1", "1.0.0.1", true, false),
-            arrayOf("12345.12345.12345.12345", "12345.12345.12345.12345", true, false),
-            arrayOf("11111.11111.11111.11111", "11111.11111.11111.99999", false, true),
-            arrayOf("11111.11111.11111.11111", "11111.11111.99999.99999", false, true),
-            arrayOf("11111.11111.11111.11111", "11111.99999.99999.99999", false, true),
-            arrayOf("11111.11111.11111.11111", "99999.99999.99999.99999", false, true),
+            // parts can be up to 16 bits, around 65,535
+            arrayOf("65535.65535.65535.65535", "65535.65535.65535.65535", true, false),
+            // values higher than this are coerced to 65535 (:
+            arrayOf("65535.65535.65535.65535", "65535.65535.65535.99999", true, false),
         )
     }
 
