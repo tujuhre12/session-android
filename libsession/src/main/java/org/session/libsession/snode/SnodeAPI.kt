@@ -736,10 +736,7 @@ object SnodeAPI {
                 else json?.let(::parseSnodes)
                     ?.takeIf { it.isNotEmpty() }
                     ?.let { database.setSwarm(publicKey, it.toSet()) }
-                    ?: run {
-                        Log.d("Loki", "Invalidating swarm for: $publicKey.")
-                        dropSnodeFromSwarmIfNeeded(snode, publicKey)
-                    }
+                    ?: dropSnodeFromSwarmIfNeeded(snode, publicKey).also { Log.d("Loki", "Invalidating swarm for: $publicKey.") }
             }
             404 -> {
                 Log.d("Loki", "404, probably no file found")

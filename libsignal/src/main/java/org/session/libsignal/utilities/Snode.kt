@@ -2,6 +2,9 @@ package org.session.libsignal.utilities
 
 import android.annotation.SuppressLint
 
+/**
+ * Create a Snode from a "-" delimited String if valid, null otherwise.
+ */
 fun Snode(string: String): Snode? {
     val components = string.split("-")
     val address = components[0]
@@ -31,25 +34,16 @@ class Snode(val address: String, val port: Int, val publicKeySet: KeySet?, val v
 
     data class KeySet(val ed25519Key: String, val x25519Key: String)
 
-    override fun equals(other: Any?): Boolean {
-        return if (other is Snode) {
-            address == other.address && port == other.port
-        } else {
-            false
-        }
-    }
-
-    override fun hashCode(): Int {
-        return address.hashCode() xor port.hashCode()
-    }
-
-    override fun toString(): String { return "$address:$port" }
+    override fun equals(other: Any?) = other is Snode && address == other.address && port == other.port
+    override fun hashCode(): Int = address.hashCode() xor port.hashCode()
+    override fun toString(): String = "$address:$port"
 
     companion object {
         private val CACHE = mutableMapOf<String, Version>()
 
         @SuppressLint("NotConstructor")
         fun Version(value: String) = CACHE.getOrElse(value) {
+            // internal constructor takes precedence
             Snode.Version(value)
         }
 
@@ -62,22 +56,15 @@ class Snode(val address: String, val port: Int, val publicKeySet: KeySet?, val v
             val ZERO = Version(0UL)
             private const val MASK_BITS = 16
             private const val MASK = 0xFFFFUL
-
-            private fun Sequence<ULong>.foldToVersionAsULong() = take(4).foldIndexed(0UL) { i, acc, it ->
-                it.coerceAtMost(MASK) shl (3 - i) * MASK_BITS or acc
-            }
         }
-
-        internal constructor(parts: List<Int>): this(
-            parts.asSequence()
-                .map { it.toByte().toULong() }
-                .foldToVersionAsULong()
-        )
 
         internal constructor(value: String): this(
             value.splitToSequence(".")
+                .take(4)
                 .map { it.toULongOrNull() ?: 0UL }
-                .foldToVersionAsULong()
+                .foldIndexed(0UL) { i, acc, it ->
+                    it.coerceAtMost(MASK) shl (3 - i) * MASK_BITS or acc
+                }
         )
 
         operator fun compareTo(other: Version): Int = value.compareTo(other.value)
