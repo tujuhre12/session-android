@@ -455,7 +455,7 @@ object SnodeAPI {
         val hashes = messageHashes.takeIf { it.size != 1 } ?: (messageHashes + "///////////////////////////////////////////") // TODO remove this when bug is fixed on nodes.
         return retryIfNeeded(maxRetryCount) {
             val timestamp = System.currentTimeMillis() + clockOffset
-            val signData = "${Snode.Method.GetExpiries.rawValue}$timestamp${hashes.joinToString(separator = "")}".toByteArray()
+            val signData = sequenceOf(Snode.Method.GetExpiries.rawValue).plus(timestamp.toString()).plus(hashes).toByteArray()
 
             val ed25519PublicKey = userEd25519KeyPair.publicKey.asHexString
             val signature = try {
@@ -499,7 +499,7 @@ object SnodeAPI {
 
         val shortenOrExtend = if (extend) "extend" else if (shorten) "shorten" else ""
 
-        val signData = "${Snode.Method.Expire.rawValue}$shortenOrExtend$newExpiry${messageHashes.joinToString(separator = "")}".toByteArray()
+        val signData = sequenceOf(Snode.Method.Expire.rawValue).plus(shortenOrExtend).plus(newExpiry.toString()).plus(messageHashes).toByteArray()
 
         val signature = try {
             signAndEncode(signData, userEd25519KeyPair)
@@ -633,7 +633,7 @@ object SnodeAPI {
             getSingleTargetSnode(userPublicKey).bind { snode ->
                 retryIfNeeded(maxRetryCount) {
                     getNetworkTime(snode).bind { (_, timestamp) ->
-                        val verificationData = (Snode.Method.DeleteAll.rawValue + Namespace.ALL + timestamp.toString()).toByteArray()
+                        val verificationData = sequenceOf(Snode.Method.DeleteAll.rawValue, Namespace.ALL, timestamp.toString()).toByteArray()
                         val deleteMessageParams = buildMap {
                             this["pubkey"] = userPublicKey
                             this["pubkey_ed25519"] = userED25519KeyPair.publicKey.asHexString
@@ -722,9 +722,8 @@ object SnodeAPI {
             if (newFailureCount >= snodeFailureThreshold) {
                 Log.d("Loki", "Failure threshold reached for: $snode; dropping it.")
                 publicKey?.let { dropSnodeFromSwarmIfNeeded(snode, it) }
-                snodePool -= snode
-                Log.d("Loki", "Snode pool count: ${snodePool.count()}.")
-                snodeFailureCount.remove(snode)
+                snodePool = (snodePool - snode).also { Log.d("Loki", "Snode pool count: ${it.count()}.") }
+                snodeFailureCount -= snode
             }
         }
         when (statusCode) {

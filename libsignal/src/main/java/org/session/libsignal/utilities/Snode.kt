@@ -52,6 +52,8 @@ class Snode(val address: String, val port: Int, val publicKeySet: KeySet?, val v
         fun Version(value: String) = CACHE.getOrElse(value) {
             Snode.Version(value)
         }
+
+        fun Version(parts: List<Int>) = Version(parts.joinToString("."))
     }
 
     @JvmInline
@@ -66,13 +68,11 @@ class Snode(val address: String, val port: Int, val publicKeySet: KeySet?, val v
             }
         }
 
-        constructor(parts: List<Int>): this(
+        internal constructor(parts: List<Int>): this(
             parts.asSequence()
                 .map { it.toByte().toULong() }
                 .foldToVersionAsULong()
         )
-
-        constructor(value: Int): this(value.toULong())
 
         internal constructor(value: String): this(
             value.splitToSequence(".")
