@@ -164,7 +164,6 @@ import org.thoughtcrime.securesms.mms.VideoSlide
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.reactions.ReactionsDialogFragment
 import org.thoughtcrime.securesms.reactions.any.ReactWithAnyEmojiDialogFragment
-import org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.util.ActivityDispatcher
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
@@ -177,7 +176,6 @@ import org.thoughtcrime.securesms.util.isScrolledToBottom
 import org.thoughtcrime.securesms.util.isScrolledToWithin30dpOfBottom
 import org.thoughtcrime.securesms.util.push
 import org.thoughtcrime.securesms.util.show
-import org.thoughtcrime.securesms.util.start
 import org.thoughtcrime.securesms.util.toPx
 import java.lang.ref.WeakReference
 import java.util.Locale
@@ -1589,8 +1587,15 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         val text = getMessageBody()
         val userPublicKey = textSecurePreferences.getLocalNumber()
         val isNoteToSelf = (recipient.isContactRecipient && recipient.address.toString() == userPublicKey)
-        if (text.contains(seed) && !isNoteToSelf && !hasPermissionToSendSeed) {
-            start<RecoveryPasswordActivity>()
+        if (seed in text && !isNoteToSelf && !hasPermissionToSendSeed) {
+            showSessionDialog {
+                title(R.string.dialog_send_seed_title)
+                text(R.string.dialog_send_seed_explanation)
+                button(R.string.dialog_send_seed_send_button_title) { sendTextOnlyMessage(true) }
+                cancelButton()
+            }
+
+            return null
         }
         // Create the message
         val message = VisibleMessage().applyExpiryMode(viewModel.threadId)
