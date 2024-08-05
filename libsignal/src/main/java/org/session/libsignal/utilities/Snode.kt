@@ -42,10 +42,7 @@ class Snode(val address: String, val port: Int, val publicKeySet: KeySet?, val v
         private val CACHE = mutableMapOf<String, Version>()
 
         @SuppressLint("NotConstructor")
-        fun Version(value: String) = CACHE.getOrElse(value) {
-            // internal constructor takes precedence
-            Snode.Version(value)
-        }
+        fun Version(value: String) = CACHE[value] ?: Snode.Version(value).also { CACHE[value] = it }
 
         fun Version(parts: List<Int>) = Version(parts.joinToString("."))
     }
