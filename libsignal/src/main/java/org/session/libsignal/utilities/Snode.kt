@@ -1,6 +1,7 @@
 package org.session.libsignal.utilities
 
 import android.annotation.SuppressLint
+import android.util.LruCache
 
 /**
  * Create a Snode from a "-" delimited String if valid, null otherwise.
@@ -39,10 +40,11 @@ class Snode(val address: String, val port: Int, val publicKeySet: KeySet?, val v
     override fun toString(): String = "$address:$port"
 
     companion object {
-        private val CACHE = mutableMapOf<String, Version>()
+        private val CACHE = LruCache<String, Version>(100)
 
         @SuppressLint("NotConstructor")
-        fun Version(value: String) = CACHE[value] ?: Snode.Version(value).also { CACHE[value] = it }
+        @Synchronized
+        fun Version(value: String) = CACHE[value] ?: Snode.Version(value).also { CACHE.put(value, it) }
 
         fun Version(parts: List<Int>) = Version(parts.joinToString("."))
     }
