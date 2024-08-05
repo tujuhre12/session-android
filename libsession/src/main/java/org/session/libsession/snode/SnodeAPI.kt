@@ -660,29 +660,33 @@ object SnodeAPI {
         }
     }
 
-    fun removeDuplicates(publicKey: String, rawMessages: List<*>, namespace: Int, updateStoredHashes: Boolean): List<*> {
-        val originalMessageHashValues = database.getReceivedMessageHashValues(publicKey, namespace) ?: emptySet()
-        val receivedMessageHashValues = originalMessageHashValues.toMutableSet()
-        return rawMessages.filter { rawMessage ->
-            (rawMessage as? Map<*, *>)
-                ?.let { it["hash"] as? String }
-                ?.let { receivedMessageHashValues.add(it) }
-                ?: false.also { Log.d("Loki", "Missing hash value for message: ${rawMessage?.prettifiedDescription()}.") }
+    /**
+     *
+     *
+     * TODO Use a db transaction, synchronizing is sufficient for now because
+     * database#setReceivedMessageHashValues is only called here.
+     */
+    @Synchronized
+    fun removeDuplicates(publicKey: String, rawMessages: List<*>, namespace: Int, updateStoredHashes: Boolean): List<Map<*, *>> {
+        val hashValues = database.getReceivedMessageHashValues(publicKey, namespace)?.toMutableSet() ?: mutableSetOf()
+        return rawMessages.filterIsInstance<Map<*, *>>().filter { rawMessage ->
+            val hash = rawMessage["hash"] as? String
+            hash ?: Log.d("Loki", "Missing hash value for message: ${rawMessage.prettifiedDescription()}.")
+            hash?.let(hashValues::add) == true
         }.also {
-            if (updateStoredHashes && originalMessageHashValues.containsAll(receivedMessageHashValues)) {
-                database.setReceivedMessageHashValues(publicKey, receivedMessageHashValues, namespace)
+            if (updateStoredHashes && it.isNotEmpty()) {
+                database.setReceivedMessageHashValues(publicKey, hashValues, namespace)
             }
         }
     }
 
-    private fun parseEnvelopes(rawMessages: List<*>): List<Pair<SignalServiceProtos.Envelope, String?>> = rawMessages.mapNotNull { rawMessage ->
-        val rawMessageAsJSON = rawMessage as? Map<*, *>
-        val base64EncodedData = rawMessageAsJSON?.get("data") as? String
-        val data = base64EncodedData?.let { Base64.decode(it) }
+    private fun parseEnvelopes(rawMessages: List<Map<*, *>>): List<Pair<SignalServiceProtos.Envelope, String?>> = rawMessages.mapNotNull { rawMessage ->
+        val base64EncodedData = rawMessage["data"] as? String
+        val data = base64EncodedData?.let(Base64::decode)
 
-        data ?: Log.d("Loki", "Failed to decode data for message: ${rawMessage?.prettifiedDescription()}.")
+        data ?: Log.d("Loki", "Failed to decode data for message: ${rawMessage.prettifiedDescription()}.")
 
-        data?.runCatching { MessageWrapper.unwrap(this) to rawMessageAsJSON["hash"] as? String }
+        data?.runCatching { MessageWrapper.unwrap(this) to rawMessage["hash"] as? String }
             ?.onFailure { Log.d("Loki", "Failed to unwrap data for message: ${rawMessage.prettifiedDescription()}.") }
             ?.getOrNull()
     }

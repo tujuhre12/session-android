@@ -142,8 +142,7 @@ class Poller(private val configFactory: ConfigFactoryProtocol, debounceTimer: Ti
         val messages = rawMessages["messages"] as? List<*>
         val processed = if (!messages.isNullOrEmpty()) {
             SnodeAPI.updateLastMessageHashValueIfPossible(snode, userPublicKey, messages, namespace)
-            SnodeAPI.removeDuplicates(userPublicKey, messages, namespace, true).mapNotNull { messageBody ->
-                val rawMessageAsJSON = messageBody as? Map<*, *> ?: return@mapNotNull null
+            SnodeAPI.removeDuplicates(userPublicKey, messages, namespace, true).mapNotNull { rawMessageAsJSON ->
                 val hashValue = rawMessageAsJSON["hash"] as? String ?: return@mapNotNull null
                 val b64EncodedBody = rawMessageAsJSON["data"] as? String ?: return@mapNotNull null
                 val timestamp = rawMessageAsJSON["t"] as? Long ?: SnodeAPI.nowWithOffset
