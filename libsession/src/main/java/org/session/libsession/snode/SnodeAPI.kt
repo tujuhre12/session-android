@@ -15,6 +15,7 @@ import nl.komponents.kovenant.all
 import nl.komponents.kovenant.functional.bind
 import nl.komponents.kovenant.functional.map
 import nl.komponents.kovenant.task
+import nl.komponents.kovenant.unwrap
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.utilities.MessageWrapper
 import org.session.libsession.messaging.utilities.SodiumUtilities.sodium
@@ -202,7 +203,7 @@ object SnodeAPI {
     }
 
     // Public API
-    fun getAccountID(onsName: String): Promise<String, Exception> {
+    fun getAccountID(onsName: String): Promise<String, Exception> = task {
         val validationCount = 3
         val accountIDByteCount = 33
         // Hash the ONS name using BLAKE2b
@@ -228,7 +229,7 @@ object SnodeAPI {
                 }
             }
         }
-        return all(promises).map { results ->
+        all(promises).map { results ->
             results.map { json ->
                 val intermediate = json["result"] as? Map<*, *> ?: throw Error.Generic
                 val hexEncodedCiphertext = intermediate["encrypted_value"] as? String ?: throw Error.Generic
@@ -264,7 +265,7 @@ object SnodeAPI {
             }.takeIf { it.size == validationCount && it.toSet().size == 1 }?.first()
                 ?: throw Error.ValidationFailed
         }
-    }
+    }.unwrap()
 
     fun getSwarm(publicKey: String): Promise<Set<Snode>, Exception> =
         database.getSwarm(publicKey)?.takeIf { it.size >= minimumSwarmSnodeCount }?.let(Promise.Companion::of)
