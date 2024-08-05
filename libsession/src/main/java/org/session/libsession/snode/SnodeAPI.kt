@@ -21,7 +21,8 @@ import org.session.libsession.messaging.utilities.SodiumUtilities.sodium
 import org.session.libsession.utilities.buildMutableMap
 import org.session.libsession.utilities.mapValuesNotNull
 import org.session.libsession.utilities.toByteArray
-import org.session.libsignal.crypto.getRandomElement
+import org.session.libsignal.crypto.secureRandom
+import org.session.libsignal.crypto.shuffledRandom
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.Base64
@@ -34,7 +35,6 @@ import org.session.libsignal.utilities.Namespace
 import org.session.libsignal.utilities.Snode
 import org.session.libsignal.utilities.prettifiedDescription
 import org.session.libsignal.utilities.retryIfNeeded
-import java.security.SecureRandom
 import java.util.Locale
 import kotlin.collections.component1
 import kotlin.collections.component2
@@ -153,7 +153,7 @@ object SnodeAPI {
     }
 
     internal fun getRandomSnode(): Promise<Snode, Exception> =
-        snodePool.takeIf { it.size >= minimumSnodePoolCount }?.getRandomElement()?.let { Promise.of(it) } ?: task {
+        snodePool.takeIf { it.size >= minimumSnodePoolCount }?.secureRandom()?.let { Promise.of(it) } ?: task {
             val target = seedNodePool.random()
             Log.d("Loki", "Populating snode pool using: $target.")
             val url = "$target/json_rpc"
@@ -178,10 +178,7 @@ object SnodeAPI {
             }.toSet().also {
                 Log.d("Loki", "Persisting snode pool to database.")
                 snodePool = it
-            }.runCatching { getRandomElement() }.onFailure {
-                Log.d("Loki", "Got an empty snode pool from: $target.")
-                throw SnodeAPI.Error.Generic
-            }.getOrThrow()
+            }.takeUnless { it.isEmpty() }?.secureRandom() ?: throw SnodeAPI.Error.Generic
         }
 
     private fun createSnode(address: String?, port: Int?, ed25519Key: String?, x25519Key: String?, version: Snode.Version? = Snode.Version.ZERO): Snode? {
@@ -200,8 +197,8 @@ object SnodeAPI {
     }
 
     internal fun getSingleTargetSnode(publicKey: String): Promise<Snode, Exception> {
-        // SecureRandom() should be cryptographically secure
-        return getSwarm(publicKey).map { it.shuffled(SecureRandom()).random() }
+        // SecureRandom should be cryptographically secure
+        return getSwarm(publicKey).map { it.shuffledRandom().random() }
     }
 
     // Public API

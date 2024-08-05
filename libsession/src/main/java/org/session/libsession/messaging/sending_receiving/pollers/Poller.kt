@@ -19,8 +19,6 @@ import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.jobs.MessageReceiveParameters
-import org.session.libsession.messaging.messages.control.SharedConfigurationMessage
-import org.session.libsession.messaging.sending_receiving.MessageReceiver
 import org.session.libsession.snode.RawResponse
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeModule
@@ -29,7 +27,7 @@ import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Namespace
 import org.session.libsignal.utilities.Snode
-import java.security.SecureRandom
+import org.session.libsignal.utilities.Util.SECURE_RANDOM
 import java.util.Timer
 import java.util.TimerTask
 import kotlin.time.Duration.Companion.days
@@ -106,7 +104,7 @@ class Poller(private val configFactory: ConfigFactoryProtocol, debounceTimer: Ti
         val swarm = SnodeModule.shared.storage.getSwarm(userPublicKey) ?: setOf()
         val unusedSnodes = swarm.subtract(usedSnodes)
         if (unusedSnodes.isNotEmpty()) {
-            val index = SecureRandom().nextInt(unusedSnodes.size)
+            val index = SECURE_RANDOM.nextInt(unusedSnodes.size)
             val nextSnode = unusedSnodes.elementAt(index)
             usedSnodes.add(nextSnode)
             Log.d(TAG, "Polling $nextSnode.")
