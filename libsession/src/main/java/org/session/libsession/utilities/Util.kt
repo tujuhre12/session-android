@@ -13,6 +13,7 @@ import android.text.TextUtils
 import android.text.style.StyleSpan
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Base64
+import org.session.libsignal.utilities.Util.SECURE_RANDOM
 import java.io.*
 import java.nio.charset.StandardCharsets
 import java.security.SecureRandom
@@ -292,13 +293,8 @@ object Util {
     @JvmStatic
     fun getSecretBytes(size: Int): ByteArray {
         val secret = ByteArray(size)
-        getSecureRandom().nextBytes(secret)
+        SECURE_RANDOM.nextBytes(secret)
         return secret
-    }
-
-    @JvmStatic
-    fun getSecureRandom(): SecureRandom {
-        return SecureRandom()
     }
 
     @JvmStatic
@@ -317,18 +313,14 @@ object Util {
     }
 
     @JvmStatic
-    fun <T> getRandomElement(elements: Array<T>): T {
-        return elements[SecureRandom().nextInt(elements.size)]
-    }
+    fun <T> getRandomElement(elements: Array<T>): T = elements[SECURE_RANDOM.nextInt(elements.size)]
 
     @JvmStatic
     fun getBoldedString(value: String?): CharSequence {
         if (value.isNullOrEmpty()) { return "" }
-        val spanned = SpannableString(value)
-        spanned.setSpan(StyleSpan(Typeface.BOLD), 0,
-                spanned.length,
-                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-        return spanned
+        return SpannableString(value).also {
+            it.setSpan(StyleSpan(Typeface.BOLD), 0, it.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+        }
     }
 
     @JvmStatic
@@ -365,6 +357,34 @@ object Util {
         val units = arrayOf("B", "kB", "MB", "GB", "TB")
         val digitGroups = (Math.log10(sizeBytes.toDouble()) / Math.log10(1024.0)).toInt()
         return DecimalFormat("#,##0.#").format(sizeBytes / Math.pow(1024.0, digitGroups.toDouble())) + " " + units[digitGroups]
+    }
+
+    /**
+     * Compares two version strings (for example "1.8.0")
+     *
+     * @param version1 the first version string to compare.
+     * @param version2 the second version string to compare.
+     * @return an integer indicating the result of the comparison:
+     *         - 0 if the versions are equal
+     *         - a positive number if version1 is greater than version2
+     *         - a negative number if version1 is less than version2
+     */
+    @JvmStatic
+    fun compareVersions(version1: String, version2: String): Int {
+        val parts1 = version1.split(".").map { it.toIntOrNull() ?: 0 }
+        val parts2 = version2.split(".").map { it.toIntOrNull() ?: 0 }
+
+        val maxLength = maxOf(parts1.size, parts2.size)
+        val paddedParts1 = parts1 + List(maxLength - parts1.size) { 0 }
+        val paddedParts2 = parts2 + List(maxLength - parts2.size) { 0 }
+
+        for (i in 0 until maxLength) {
+            val compare = paddedParts1[i].compareTo(paddedParts2[i])
+            if (compare != 0) {
+                return compare
+            }
+        }
+        return 0
     }
 }
 

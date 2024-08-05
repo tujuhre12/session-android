@@ -215,6 +215,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         DatabaseModule.init(this);
         MessagingModuleConfiguration.configure(this);
         super.onCreate();
+
         messagingModuleConfiguration = new MessagingModuleConfiguration(
                 this,
                 storage,

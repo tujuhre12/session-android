@@ -18,7 +18,8 @@ import nl.komponents.kovenant.task
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.utilities.MessageWrapper
 import org.session.libsession.messaging.utilities.SodiumUtilities.sodium
-import org.session.libsignal.crypto.getRandomElement
+import org.session.libsignal.crypto.secureRandom
+import org.session.libsignal.crypto.shuffledRandom
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.Base64
@@ -30,6 +31,7 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Namespace
 import org.session.libsignal.utilities.Snode
 import org.session.libsignal.utilities.ThreadUtils
+import org.session.libsignal.utilities.Util.SECURE_RANDOM
 import org.session.libsignal.utilities.prettifiedDescription
 import org.session.libsignal.utilities.retryIfNeeded
 import java.security.SecureRandom
@@ -87,6 +89,14 @@ object SnodeAPI {
     private const val useOnionRequests = true
 
     const val useTestnet = false
+
+    const val KEY_IP = "public_ip"
+    const val KEY_PORT = "storage_port"
+    const val KEY_X25519 = "pubkey_x25519"
+    const val KEY_ED25519 = "pubkey_ed25519"
+    const val KEY_VERSION = "storage_server_version"
+
+    const val EMPTY_VERSION = "0.0.0"
 
     // Error
     sealed class Error(val description: String) : Exception(description) {
@@ -146,6 +156,7 @@ object SnodeAPI {
 
     internal fun getRandomSnode(): Promise<Snode, Exception> {
         val snodePool = this.snodePool
+
         if (snodePool.count() < minimumSnodePoolCount) {
             val target = seedNodePool.random()
             val url = "$target/json_rpc"
@@ -154,8 +165,11 @@ object SnodeAPI {
                 "method" to "get_n_service_nodes",
                 "params" to mapOf(
                     "active_only" to true,
-                    "limit" to 256,
-                    "fields" to mapOf("public_ip" to true, "storage_port" to true, "pubkey_x25519" to true, "pubkey_ed25519" to true)
+                    "fields" to mapOf(
+                        KEY_IP to true, KEY_PORT to true,
+                        KEY_X25519 to true, KEY_ED25519 to true,
+                        KEY_VERSION to true
+                    )
                 )
             )
             val deferred = deferred<Snode, Exception>()
@@ -173,12 +187,22 @@ object SnodeAPI {
                     if (rawSnodes != null) {
                         val snodePool = rawSnodes.mapNotNull { rawSnode ->
                             val rawSnodeAsJSON = rawSnode as? Map<*, *>
-                            val address = rawSnodeAsJSON?.get("public_ip") as? String
-                            val port = rawSnodeAsJSON?.get("storage_port") as? Int
-                            val ed25519Key = rawSnodeAsJSON?.get("pubkey_ed25519") as? String
-                            val x25519Key = rawSnodeAsJSON?.get("pubkey_x25519") as? String
-                            if (address != null && port != null && ed25519Key != null && x25519Key != null && address != "0.0.0.0") {
-                                Snode("https://$address", port, Snode.KeySet(ed25519Key, x25519Key))
+                            val address = rawSnodeAsJSON?.get(KEY_IP) as? String
+                            val port = rawSnodeAsJSON?.get(KEY_PORT) as? Int
+                            val ed25519Key = rawSnodeAsJSON?.get(KEY_ED25519) as? String
+                            val x25519Key = rawSnodeAsJSON?.get(KEY_X25519) as? String
+                            val version = (rawSnodeAsJSON?.get(KEY_VERSION) as? ArrayList<*>)
+                                ?.filterIsInstance<Int>() // get the array as Integers
+                                ?.joinToString(separator = ".") // turn it int a version string
+
+                            if (address != null && port != null && ed25519Key != null && x25519Key != null
+                                && address != "0.0.0.0" && version != null) {
+                                Snode(
+                                    address = "https://$address",
+                                    port = port,
+                                    publicKeySet = Snode.KeySet(ed25519Key, x25519Key),
+                                    version = version
+                                )
                             } else {
                                 Log.d("Loki", "Failed to parse: ${rawSnode?.prettifiedDescription()}.")
                                 null
@@ -187,7 +211,7 @@ object SnodeAPI {
                         Log.d("Loki", "Persisting snode pool to database.")
                         this.snodePool = snodePool
                         try {
-                            deferred.resolve(snodePool.getRandomElement())
+                            deferred.resolve(snodePool.secureRandom())
                         } catch (exception: Exception) {
                             Log.d("Loki", "Got an empty snode pool from: $target.")
                             deferred.reject(SnodeAPI.Error.Generic)
@@ -202,8 +226,12 @@ object SnodeAPI {
             }
             return deferred.promise
         } else {
-            return Promise.of(snodePool.getRandomElement())
+            return Promise.of(snodePool.secureRandom())
         }
+    }
+
+    private fun extractVersionString(jsonVersion: String): String{
+        return jsonVersion.removeSurrounding("[", "]").split(", ").joinToString(separator = ".")
     }
 
     internal fun dropSnodeFromSwarmIfNeeded(snode: Snode, publicKey: String) {
@@ -215,8 +243,8 @@ object SnodeAPI {
     }
 
     internal fun getSingleTargetSnode(publicKey: String): Promise<Snode, Exception> {
-        // SecureRandom() should be cryptographically secure
-        return getSwarm(publicKey).map { it.shuffled(SecureRandom()).random() }
+        // SecureRandom should be cryptographically secure
+        return getSwarm(publicKey).map { it.shuffledRandom().random() }
     }
 
     // Public API
@@ -716,10 +744,11 @@ object SnodeAPI {
                 val address = rawSnodeAsJSON?.get("ip") as? String
                 val portAsString = rawSnodeAsJSON?.get("port") as? String
                 val port = portAsString?.toInt()
-                val ed25519Key = rawSnodeAsJSON?.get("pubkey_ed25519") as? String
-                val x25519Key = rawSnodeAsJSON?.get("pubkey_x25519") as? String
+                val ed25519Key = rawSnodeAsJSON?.get(KEY_ED25519) as? String
+                val x25519Key = rawSnodeAsJSON?.get(KEY_X25519) as? String
+
                 if (address != null && port != null && ed25519Key != null && x25519Key != null && address != "0.0.0.0") {
-                    Snode("https://$address", port, Snode.KeySet(ed25519Key, x25519Key))
+                    Snode("https://$address", port, Snode.KeySet(ed25519Key, x25519Key), EMPTY_VERSION)
                 } else {
                     Log.d("Loki", "Failed to parse snode from: ${rawSnode?.prettifiedDescription()}.")
                     null
