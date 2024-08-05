@@ -18,7 +18,8 @@ import nl.komponents.kovenant.task
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.utilities.MessageWrapper
 import org.session.libsession.messaging.utilities.SodiumUtilities.sodium
-import org.session.libsignal.crypto.getRandomElement
+import org.session.libsignal.crypto.secureRandom
+import org.session.libsignal.crypto.shuffledRandom
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.Base64
@@ -30,6 +31,7 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Namespace
 import org.session.libsignal.utilities.Snode
 import org.session.libsignal.utilities.ThreadUtils
+import org.session.libsignal.utilities.Util.SECURE_RANDOM
 import org.session.libsignal.utilities.prettifiedDescription
 import org.session.libsignal.utilities.retryIfNeeded
 import java.security.SecureRandom
@@ -209,7 +211,7 @@ object SnodeAPI {
                         Log.d("Loki", "Persisting snode pool to database.")
                         this.snodePool = snodePool
                         try {
-                            deferred.resolve(snodePool.getRandomElement())
+                            deferred.resolve(snodePool.secureRandom())
                         } catch (exception: Exception) {
                             Log.d("Loki", "Got an empty snode pool from: $target.")
                             deferred.reject(SnodeAPI.Error.Generic)
@@ -224,7 +226,7 @@ object SnodeAPI {
             }
             return deferred.promise
         } else {
-            return Promise.of(snodePool.getRandomElement())
+            return Promise.of(snodePool.secureRandom())
         }
     }
 
@@ -241,8 +243,8 @@ object SnodeAPI {
     }
 
     internal fun getSingleTargetSnode(publicKey: String): Promise<Snode, Exception> {
-        // SecureRandom() should be cryptographically secure
-        return getSwarm(publicKey).map { it.shuffled(SecureRandom()).random() }
+        // SecureRandom should be cryptographically secure
+        return getSwarm(publicKey).map { it.shuffledRandom().random() }
     }
 
     // Public API
