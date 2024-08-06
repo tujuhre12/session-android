@@ -43,6 +43,7 @@ class CreateAccountManager @Inject constructor(
         prefs.setLocalNumber(userHexEncodedPublicKey)
         prefs.setRestorationTime(0)
 
+        // we'll rely on the config syncing in the homeActivity resume
         configFactory.keyPairChanged()
         configFactory.user?.setName(displayName)
 
