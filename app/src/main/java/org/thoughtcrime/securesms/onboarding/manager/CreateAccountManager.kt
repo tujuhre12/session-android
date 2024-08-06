@@ -45,7 +45,6 @@ class CreateAccountManager @Inject constructor(
 
         configFactory.keyPairChanged()
         configFactory.user?.setName(displayName)
-        ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(application)
 
         versionDataFetcher.startTimedVersionCheck()
     }
