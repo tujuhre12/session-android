@@ -34,6 +34,8 @@ import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.canhub.cropper.CropImage
+import com.canhub.cropper.CropImageContract
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
@@ -108,6 +110,36 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
     private var tempFile: File? = null
 
     private val hexEncodedPublicKey: String get() = TextSecurePreferences.getLocalNumber(this)!!
+
+    private val onAvatarCropped = registerForActivityResult(CropImageContract()) { result ->
+        when {
+            result.isSuccessful -> {
+                Log.i(TAG, result.getUriFilePath(this).toString())
+
+                lifecycleScope.launch(Dispatchers.IO) {
+                    try {
+                        val profilePictureToBeUploaded =
+                            BitmapUtil.createScaledBytes(
+                                this@SettingsActivity,
+                                result.getUriFilePath(this@SettingsActivity).toString(),
+                                ProfileMediaConstraints()
+                            ).bitmap
+                        launch(Dispatchers.Main) {
+                            updateProfilePicture(profilePictureToBeUploaded)
+                        }
+                    } catch (e: BitmapDecodingException) {
+                        Log.e(TAG, e)
+                    }
+                }
+            }
+            result is CropImage.CancelledResult -> {
+                Log.i(TAG, "Cropping image was cancelled by the user")
+            }
+            else -> {
+                Log.e(TAG, "Cropping image failed")
+            }
+        }
+    }
 
     companion object {
         private const val SCROLL_STATE = "SCROLL_STATE"
@@ -186,22 +218,16 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
         super.onActivityResult(requestCode, resultCode, data)
         if (resultCode != Activity.RESULT_OK) return
         when (requestCode) {
-            AvatarSelection.REQUEST_CODE_AVATAR -> {
+            AvatarSelection.REQUEST_CODE_IMAGE_PICK -> {
                 val outputFile = Uri.fromFile(File(cacheDir, "cropped"))
                 val inputFile: Uri? = data?.data ?: tempFile?.let(Uri::fromFile)
-                AvatarSelection.circularCropImage(this, inputFile, outputFile, R.string.CropImageActivity_profile_avatar)
-            }
-            AvatarSelection.REQUEST_CODE_CROP_IMAGE -> {
-                lifecycleScope.launch(Dispatchers.IO) {
-                    try {
-                        val profilePictureToBeUploaded = BitmapUtil.createScaledBytes(this@SettingsActivity, AvatarSelection.getResultUri(data), ProfileMediaConstraints()).bitmap
-                        launch(Dispatchers.Main) {
-                            updateProfilePicture(profilePictureToBeUploaded)
-                        }
-                    } catch (e: BitmapDecodingException) {
-                        Log.e(TAG, e)
-                    }
-                }
+                AvatarSelection.circularCropImage(
+                    activity = this,
+                    launcher = onAvatarCropped,
+                    inputFile = inputFile,
+                    outputFile = outputFile,
+                    title = R.string.CropImageActivity_profile_avatar
+                )
             }
         }
     }

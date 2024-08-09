@@ -8,10 +8,14 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
+import androidx.activity.result.ActivityResultLauncher
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
-import com.theartofdev.edmodo.cropper.CropImage
-import com.theartofdev.edmodo.cropper.CropImageView
+import com.canhub.cropper.CropImage
+import com.canhub.cropper.CropImageContract
+import com.canhub.cropper.CropImageContractOptions
+import com.canhub.cropper.CropImageView
+import com.canhub.cropper.options
 import network.loki.messenger.R
 import org.session.libsignal.utilities.ExternalStorageUtil.getImageDir
 import org.session.libsignal.utilities.Log
@@ -25,32 +29,30 @@ import java.util.LinkedList
 object AvatarSelection {
     private val TAG: String = AvatarSelection::class.java.simpleName
 
-    const val REQUEST_CODE_CROP_IMAGE: Int = CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE
-    const val REQUEST_CODE_AVATAR: Int = REQUEST_CODE_CROP_IMAGE + 1
+    const val REQUEST_CODE_IMAGE_PICK: Int = 888
 
     /**
      * Returns result on [.REQUEST_CODE_CROP_IMAGE]
      */
     fun circularCropImage(
         activity: Activity,
+        launcher: ActivityResultLauncher<CropImageContractOptions>,
         inputFile: Uri?,
         outputFile: Uri?,
         @StringRes title: Int
     ) {
-        CropImage.activity(inputFile)
-            .setGuidelines(CropImageView.Guidelines.ON)
-            .setAspectRatio(1, 1)
-            .setCropShape(if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) CropImageView.CropShape.RECTANGLE else CropImageView.CropShape.OVAL)
-            .setOutputUri(outputFile)
-            .setAllowRotation(true)
-            .setAllowFlipping(true)
-            .setBackgroundColor(ContextCompat.getColor(activity, R.color.avatar_background))
-            .setActivityTitle(activity.getString(title))
-            .start(activity)
-    }
-
-    fun getResultUri(data: Intent?): Uri {
-        return CropImage.getActivityResult(data).uri
+        launcher.launch(
+            options(inputFile) {
+                setGuidelines(CropImageView.Guidelines.ON)
+                setAspectRatio(1, 1)
+                setCropShape(if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) CropImageView.CropShape.RECTANGLE else CropImageView.CropShape.OVAL)
+                setOutputUri(outputFile)
+                setAllowRotation(true)
+                setAllowFlipping(true)
+                setBackgroundColor(ContextCompat.getColor(activity, R.color.avatar_background))
+                setActivityTitle(activity.getString(title))
+            }
+        )
     }
 
     /**
@@ -80,7 +82,7 @@ object AvatarSelection {
         }
 
         val chooserIntent = createAvatarSelectionIntent(activity, captureFile, includeClear)
-        activity.startActivityForResult(chooserIntent, REQUEST_CODE_AVATAR)
+        activity.startActivityForResult(chooserIntent, REQUEST_CODE_IMAGE_PICK)
         return captureFile
     }
 
