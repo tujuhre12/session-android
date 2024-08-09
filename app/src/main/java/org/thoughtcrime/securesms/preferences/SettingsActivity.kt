@@ -61,6 +61,7 @@ import org.session.libsession.utilities.ProfileKeyUtil
 import org.session.libsession.utilities.ProfilePictureUtilities
 import org.session.libsession.utilities.SSKEnvironment.ProfileManagerProtocol
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.utilities.Log
@@ -110,6 +111,8 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
     private var tempFile: File? = null
 
     private val hexEncodedPublicKey: String get() = TextSecurePreferences.getLocalNumber(this)!!
+
+    private val bgColor by lazy { getColorFromAttr(android.R.attr.colorPrimary) }
 
     private val onAvatarCropped = registerForActivityResult(CropImageContract()) { result ->
         when {
@@ -226,7 +229,8 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
                     launcher = onAvatarCropped,
                     inputFile = inputFile,
                     outputFile = outputFile,
-                    title = R.string.CropImageActivity_profile_avatar
+                    title = R.string.CropImageActivity_profile_avatar,
+                    bgColor = bgColor
                 )
             }
         }

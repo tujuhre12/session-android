@@ -39,17 +39,20 @@ object AvatarSelection {
         launcher: ActivityResultLauncher<CropImageContractOptions>,
         inputFile: Uri?,
         outputFile: Uri?,
-        @StringRes title: Int
+        @StringRes title: Int,
+        bgColor: Int
     ) {
         launcher.launch(
             options(inputFile) {
                 setGuidelines(CropImageView.Guidelines.ON)
                 setAspectRatio(1, 1)
-                setCropShape(if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) CropImageView.CropShape.RECTANGLE else CropImageView.CropShape.OVAL)
+                setCropShape(CropImageView.CropShape.OVAL)
                 setOutputUri(outputFile)
                 setAllowRotation(true)
                 setAllowFlipping(true)
                 setBackgroundColor(ContextCompat.getColor(activity, R.color.avatar_background))
+                setToolbarColor(bgColor)
+                setActivityBackgroundColor(bgColor)
                 setActivityTitle(activity.getString(title))
             }
         )
