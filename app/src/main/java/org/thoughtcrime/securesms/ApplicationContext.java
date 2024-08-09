@@ -18,6 +18,7 @@ package org.thoughtcrime.securesms;
 import static nl.komponents.kovenant.android.KovenantAndroid.startKovenant;
 import static nl.komponents.kovenant.android.KovenantAndroid.stopKovenant;
 
+import android.annotation.SuppressLint;
 import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
@@ -85,6 +86,7 @@ import org.thoughtcrime.securesms.sskenvironment.ProfileManager;
 import org.thoughtcrime.securesms.sskenvironment.ReadReceiptManager;
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository;
 import org.thoughtcrime.securesms.util.Broadcaster;
+import org.thoughtcrime.securesms.util.VersionDataFetcher;
 import org.thoughtcrime.securesms.util.dynamiclanguage.LocaleParseHelper;
 import org.thoughtcrime.securesms.webrtc.CallMessageProcessor;
 import org.webrtc.PeerConnectionFactory;
@@ -109,7 +111,6 @@ import javax.inject.Inject;
 import dagger.hilt.EntryPoints;
 import dagger.hilt.android.HiltAndroidApp;
 import kotlin.Unit;
-import kotlinx.coroutines.Job;
 import network.loki.messenger.BuildConfig;
 import network.loki.messenger.libsession_util.ConfigBase;
 import network.loki.messenger.libsession_util.UserProfile;
@@ -137,7 +138,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     public MessageNotifier messageNotifier = null;
     public Poller poller = null;
     public Broadcaster broadcaster = null;
-    private Job firebaseInstanceIdJob;
     private WindowDebouncer conversationListDebouncer;
     private HandlerThread conversationListHandlerThread;
     private Handler conversationListHandler;
@@ -151,6 +151,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     @Inject PushRegistry pushRegistry;
     @Inject ConfigFactory configFactory;
     @Inject LastSentTimestampCache lastSentTimestampCache;
+    @Inject VersionDataFetcher versionDataFetcher;
     CallMessageProcessor callMessageProcessor;
     MessagingModuleConfiguration messagingModuleConfiguration;
 
@@ -215,16 +216,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         MessagingModuleConfiguration.configure(this);
         super.onCreate();
 
-        // we need to clear the snode and onionrequest databases once on first launch
-        // in order to apply a patch that adds a version number to the Snode objects.
-        if(!TextSecurePreferences.hasAppliedPatchSnodeVersion(this)) {
-            ThreadUtils.queue(() -> {
-                lokiAPIDatabase.clearSnodePool();
-                lokiAPIDatabase.clearOnionRequestPaths();
-                TextSecurePreferences.setHasAppliedPatchSnodeVersion(this, true);
-            });
-        }
-
         messagingModuleConfiguration = new MessagingModuleConfiguration(
                 this,
                 storage,
@@ -272,7 +263,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
 
         // If the user account hasn't been created or onboarding wasn't finished then don't start
         // the pollers
-        if (TextSecurePreferences.getLocalNumber(this) == null || !TextSecurePreferences.hasSeenWelcomeScreen(this)) {
+        if (textSecurePreferences.getLocalNumber() == null) {
             return;
         }
 
@@ -285,6 +276,9 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
 
             OpenGroupManager.INSTANCE.startPolling();
         });
+
+        // fetch last version data
+        versionDataFetcher.startTimedVersionCheck();
     }
 
     @Override
@@ -297,12 +291,14 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
             poller.stopIfNeeded();
         }
         ClosedGroupPollerV2.getShared().stopAll();
+        versionDataFetcher.stopTimedVersionCheck();
     }
 
     @Override
     public void onTerminate() {
         stopKovenant(); // Loki
         OpenGroupManager.INSTANCE.stopPolling();
+        versionDataFetcher.stopTimedVersionCheck();
         super.onTerminate();
     }
 
@@ -462,6 +458,13 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         ClosedGroupPollerV2.getShared().start();
     }
 
+    public void retrieveUserProfile() {
+        setUpPollingIfNeeded();
+        if (poller != null) {
+            poller.retrieveUserProfile();
+        }
+    }
+
     private void resubmitProfilePictureIfNeeded() {
         // Files expire on the file server after a while, so we simply re-upload the user's profile picture
         // at a certain interval to ensure it's always available.
@@ -512,23 +515,23 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         });
     }
 
-    public void clearAllData(boolean isMigratingToV2KeyPair) {
-        if (firebaseInstanceIdJob != null && firebaseInstanceIdJob.isActive()) {
-            firebaseInstanceIdJob.cancel(null);
-        }
-        String displayName = TextSecurePreferences.getProfileName(this);
-        boolean isUsingFCM = TextSecurePreferences.isPushEnabled(this);
+    // Method to clear the local data - returns true on success otherwise false
+
+    /**
+     * Clear all local profile data and message history then restart the app after a brief delay.
+     * @return true on success, false otherwise.
+     */
+    @SuppressLint("ApplySharedPref")
+    public boolean clearAllData() {
         TextSecurePreferences.clearAll(this);
-        if (isMigratingToV2KeyPair) {
-            TextSecurePreferences.setPushEnabled(this, isUsingFCM);
-            TextSecurePreferences.setProfileName(this, displayName);
-        }
         getSharedPreferences(PREFERENCES_NAME, 0).edit().clear().commit();
         if (!deleteDatabase(SQLCipherOpenHelper.DATABASE_NAME)) {
             Log.d("Loki", "Failed to delete database.");
+            return false;
         }
         configFactory.keyPairChanged();
         Util.runOnMain(() -> new Handler().postDelayed(ApplicationContext.this::restartApplication, 200));
+        return true;
     }
 
     public void restartApplication() {

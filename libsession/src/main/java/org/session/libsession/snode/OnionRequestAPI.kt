@@ -26,7 +26,6 @@ import org.session.libsignal.utilities.Snode
 import org.session.libsignal.utilities.ThreadUtils
 import org.session.libsignal.utilities.recover
 import org.session.libsignal.utilities.toHexString
-import java.util.Date
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.collections.set
 
@@ -193,17 +192,6 @@ object OnionRequestAPI {
                 guardSnodes.minus(reusableGuardSnodes).map { guardSnode ->
                     val result = listOf( guardSnode ) + (0 until (pathSize - 1)).mapIndexed() { index, _ ->
                         var pathSnode = unusedSnodes.getRandomElement()
-
-                        // For the last node: We need to make sure the version is >= 2.8.0
-                        // to help with an issue that will disappear once the nodes are all updated
-                        if(index == pathSize - 2) {
-                            val suitableSnodes = unusedSnodes.filter { Util.compareVersions(it.version, "2.8.0") >= 0 }
-                            pathSnode = if (suitableSnodes.isNotEmpty()) {
-                                suitableSnodes.random()
-                            } else {
-                                throw InsufficientSnodesException()
-                            }
-                        }
 
                         // remove the snode from the unused list and return it
                         unusedSnodes = unusedSnodes.minus(pathSnode)
@@ -482,9 +470,9 @@ object OnionRequestAPI {
         x25519PublicKey: String,
         version: Version = Version.V4
     ): Promise<OnionResponse, Exception> {
-        val url = request.url()
+        val url = request.url
         val payload = generatePayload(request, server, version)
-        val destination = Destination.Server(url.host(), version.value, x25519PublicKey, url.scheme(), url.port())
+        val destination = Destination.Server(url.host, version.value, x25519PublicKey, url.scheme, url.port)
         return sendOnionRequest(destination, payload, version).recover { exception ->
             Log.d("Loki", "Couldn't reach server: $url due to error: $exception.")
             throw exception
@@ -493,7 +481,7 @@ object OnionRequestAPI {
 
     private fun generatePayload(request: Request, server: String, version: Version): ByteArray {
         val headers = request.getHeadersForOnionRequest().toMutableMap()
-        val url = request.url()
+        val url = request.url
         val urlAsString = url.toString()
         val body = request.getBodyForOnionRequest() ?: "null"
         val endpoint = when {
@@ -501,19 +489,19 @@ object OnionRequestAPI {
             else -> ""
         }
         return if (version == Version.V4) {
-            if (request.body() != null &&
+            if (request.body != null &&
                 headers.keys.find { it.equals("Content-Type", true) } == null) {
                 headers["Content-Type"] = "application/json"
             }
             val requestPayload = mapOf(
                 "endpoint" to endpoint,
-                "method" to request.method(),
+                "method" to request.method,
                 "headers" to headers
             )
             val requestData = JsonUtil.toJson(requestPayload).toByteArray()
             val prefixData = "l${requestData.size}:".toByteArray(Charsets.US_ASCII)
             val suffixData = "e".toByteArray(Charsets.US_ASCII)
-            if (request.body() != null) {
+            if (request.body != null) {
                 val bodyData = if (body is ByteArray) body else body.toString().toByteArray()
                 val bodyLengthData = "${bodyData.size}:".toByteArray(Charsets.US_ASCII)
                 prefixData + requestData + bodyLengthData + bodyData + suffixData
@@ -524,7 +512,7 @@ object OnionRequestAPI {
             val payload = mapOf(
                 "body" to body,
                 "endpoint" to endpoint.removePrefix("/"),
-                "method" to request.method(),
+                "method" to request.method,
                 "headers" to headers
             )
             JsonUtil.toJson(payload).toByteArray()
