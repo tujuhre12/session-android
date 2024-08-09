@@ -6,13 +6,14 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
 import android.provider.MediaStore
-import androidx.annotation.StringRes
+import androidx.activity.result.ActivityResultLauncher
 import androidx.core.content.ContextCompat
-import com.theartofdev.edmodo.cropper.CropImage
-import com.theartofdev.edmodo.cropper.CropImageView
+import com.canhub.cropper.CropImageContractOptions
+import com.canhub.cropper.CropImageOptions
+import com.canhub.cropper.CropImageView
 import network.loki.messenger.R
+import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsignal.utilities.ExternalStorageUtil.getImageDir
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.NoExternalStorageException
@@ -22,35 +23,49 @@ import java.io.File
 import java.io.IOException
 import java.util.LinkedList
 
-object AvatarSelection {
+class AvatarSelection(
+    private val activity: Activity,
+    private val onAvatarCropped: ActivityResultLauncher<CropImageContractOptions>,
+    private val onPickImage: ActivityResultLauncher<Intent>
+) {
     private val TAG: String = AvatarSelection::class.java.simpleName
 
-    const val REQUEST_CODE_CROP_IMAGE: Int = CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE
-    const val REQUEST_CODE_AVATAR: Int = REQUEST_CODE_CROP_IMAGE + 1
+    private val bgColor by lazy { activity.getColorFromAttr(android.R.attr.colorPrimary) }
+    private val txtColor by lazy { activity.getColorFromAttr(android.R.attr.textColorPrimary) }
+    private val imageScrim by lazy { ContextCompat.getColor(activity, R.color.avatar_background) }
+    private val activityTitle by lazy { activity.getString(R.string.CropImageActivity_profile_avatar) }
 
     /**
      * Returns result on [.REQUEST_CODE_CROP_IMAGE]
      */
     fun circularCropImage(
-        activity: Activity,
         inputFile: Uri?,
-        outputFile: Uri?,
-        @StringRes title: Int
+        outputFile: Uri?
     ) {
-        CropImage.activity(inputFile)
-            .setGuidelines(CropImageView.Guidelines.ON)
-            .setAspectRatio(1, 1)
-            .setCropShape(if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) CropImageView.CropShape.RECTANGLE else CropImageView.CropShape.OVAL)
-            .setOutputUri(outputFile)
-            .setAllowRotation(true)
-            .setAllowFlipping(true)
-            .setBackgroundColor(ContextCompat.getColor(activity, R.color.avatar_background))
-            .setActivityTitle(activity.getString(title))
-            .start(activity)
-    }
-
-    fun getResultUri(data: Intent?): Uri {
-        return CropImage.getActivityResult(data).uri
+        onAvatarCropped.launch(
+            CropImageContractOptions(
+                uri = inputFile,
+                cropImageOptions = CropImageOptions(
+                    guidelines = CropImageView.Guidelines.ON,
+                    aspectRatioX = 1,
+                    aspectRatioY = 1,
+                    fixAspectRatio = true,
+                    cropShape = CropImageView.CropShape.OVAL,
+                    customOutputUri = outputFile,
+                    allowRotation = true,
+                    allowFlipping = true,
+                    backgroundColor = imageScrim,
+                    toolbarColor = bgColor,
+                    activityBackgroundColor = bgColor,
+                    toolbarTintColor = txtColor,
+                    toolbarBackButtonColor = txtColor,
+                    toolbarTitleColor = txtColor,
+                    activityMenuIconColor = txtColor,
+                    activityMenuTextColor = txtColor,
+                    activityTitle = activityTitle
+                )
+            )
+        )
     }
 
     /**
@@ -59,7 +74,6 @@ object AvatarSelection {
      * @return Temporary capture file if created.
      */
     fun startAvatarSelection(
-        activity: Activity,
         includeClear: Boolean,
         attemptToIncludeCamera: Boolean
     ): File? {
@@ -80,7 +94,7 @@ object AvatarSelection {
         }
 
         val chooserIntent = createAvatarSelectionIntent(activity, captureFile, includeClear)
-        activity.startActivityForResult(chooserIntent, REQUEST_CODE_AVATAR)
+        onPickImage.launch(chooserIntent)
         return captureFile
     }
 
