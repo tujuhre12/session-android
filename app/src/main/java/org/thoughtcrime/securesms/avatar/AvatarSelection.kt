@@ -10,8 +10,8 @@ import android.provider.MediaStore
 import androidx.activity.result.ActivityResultLauncher
 import androidx.core.content.ContextCompat
 import com.canhub.cropper.CropImageContractOptions
+import com.canhub.cropper.CropImageOptions
 import com.canhub.cropper.CropImageView
-import com.canhub.cropper.options
 import network.loki.messenger.R
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsignal.utilities.ExternalStorageUtil.getImageDir
@@ -43,19 +43,28 @@ class AvatarSelection(
         outputFile: Uri?
     ) {
         onAvatarCropped.launch(
-            options(inputFile) {
-                setGuidelines(CropImageView.Guidelines.ON)
-                setAspectRatio(1, 1)
-                setCropShape(CropImageView.CropShape.OVAL)
-                setOutputUri(outputFile)
-                setAllowRotation(true)
-                setAllowFlipping(true)
-                setBackgroundColor(imageScrim)
-                setToolbarColor(bgColor)
-                setActivityBackgroundColor(bgColor)
-                setToolbarTintColor(txtColor)
-                setActivityTitle(activityTitle)
-            }
+            CropImageContractOptions(
+                uri = inputFile,
+                cropImageOptions = CropImageOptions(
+                    guidelines = CropImageView.Guidelines.ON,
+                    aspectRatioX = 1,
+                    aspectRatioY = 1,
+                    fixAspectRatio = true,
+                    cropShape = CropImageView.CropShape.OVAL,
+                    customOutputUri = outputFile,
+                    allowRotation = true,
+                    allowFlipping = true,
+                    backgroundColor = imageScrim,
+                    toolbarColor = bgColor,
+                    activityBackgroundColor = bgColor,
+                    toolbarTintColor = txtColor,
+                    toolbarBackButtonColor = txtColor,
+                    toolbarTitleColor = txtColor,
+                    activityMenuIconColor = txtColor,
+                    activityMenuTextColor = txtColor,
+                    activityTitle = activityTitle
+                )
+            )
         )
     }
 
