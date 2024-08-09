@@ -113,6 +113,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
     private val hexEncodedPublicKey: String get() = TextSecurePreferences.getLocalNumber(this)!!
 
     private val bgColor by lazy { getColorFromAttr(android.R.attr.colorPrimary) }
+    private val txtColor by lazy { getColorFromAttr(android.R.attr.textColorPrimary) }
 
     private val onAvatarCropped = registerForActivityResult(CropImageContract()) { result ->
         when {
@@ -230,7 +231,8 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
                     inputFile = inputFile,
                     outputFile = outputFile,
                     title = R.string.CropImageActivity_profile_avatar,
-                    bgColor = bgColor
+                    bgColor = bgColor,
+                    txtColor = txtColor
                 )
             }
         }

@@ -40,7 +40,8 @@ object AvatarSelection {
         inputFile: Uri?,
         outputFile: Uri?,
         @StringRes title: Int,
-        bgColor: Int
+        bgColor: Int,
+        txtColor: Int
     ) {
         launcher.launch(
             options(inputFile) {
@@ -53,6 +54,7 @@ object AvatarSelection {
                 setBackgroundColor(ContextCompat.getColor(activity, R.color.avatar_background))
                 setToolbarColor(bgColor)
                 setActivityBackgroundColor(bgColor)
+                setToolbarTintColor(txtColor)
                 setActivityTitle(activity.getString(title))
             }
         )
