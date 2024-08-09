@@ -18,6 +18,7 @@ import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -61,7 +62,6 @@ import org.session.libsession.utilities.ProfileKeyUtil
 import org.session.libsession.utilities.ProfilePictureUtilities
 import org.session.libsession.utilities.SSKEnvironment.ProfileManagerProtocol
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.utilities.Log
@@ -81,12 +81,12 @@ import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.LargeItemButton
 import org.thoughtcrime.securesms.ui.LargeItemButtonWithDrawable
-import org.thoughtcrime.securesms.ui.theme.LocalDimensions
-import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineCopyButton
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.setThemedContent
+import org.thoughtcrime.securesms.ui.theme.LocalDimensions
+import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
 import org.thoughtcrime.securesms.util.BitmapDecodingException
 import org.thoughtcrime.securesms.util.BitmapUtil
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
@@ -111,9 +111,6 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
     private var tempFile: File? = null
 
     private val hexEncodedPublicKey: String get() = TextSecurePreferences.getLocalNumber(this)!!
-
-    private val bgColor by lazy { getColorFromAttr(android.R.attr.colorPrimary) }
-    private val txtColor by lazy { getColorFromAttr(android.R.attr.textColorPrimary) }
 
     private val onAvatarCropped = registerForActivityResult(CropImageContract()) { result ->
         when {
@@ -144,6 +141,18 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
             }
         }
     }
+
+    private val onPickImage = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ){ result ->
+        if (result.resultCode != Activity.RESULT_OK) return@registerForActivityResult
+
+        val outputFile = Uri.fromFile(File(cacheDir, "cropped"))
+        val inputFile: Uri? = result.data?.data ?: tempFile?.let(Uri::fromFile)
+        cropImage(inputFile, outputFile)
+    }
+
+    private val avatarSelection = AvatarSelection(this, onAvatarCropped, onPickImage)
 
     companion object {
         private const val SCROLL_STATE = "SCROLL_STATE"
@@ -214,27 +223,6 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
                 true
             }
             else -> super.onOptionsItemSelected(item)
-        }
-    }
-
-    @Deprecated("Deprecated in Java")
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (resultCode != Activity.RESULT_OK) return
-        when (requestCode) {
-            AvatarSelection.REQUEST_CODE_IMAGE_PICK -> {
-                val outputFile = Uri.fromFile(File(cacheDir, "cropped"))
-                val inputFile: Uri? = data?.data ?: tempFile?.let(Uri::fromFile)
-                AvatarSelection.circularCropImage(
-                    activity = this,
-                    launcher = onAvatarCropped,
-                    inputFile = inputFile,
-                    outputFile = outputFile,
-                    title = R.string.CropImageActivity_profile_avatar,
-                    bgColor = bgColor,
-                    txtColor = txtColor
-                )
-            }
         }
     }
 
@@ -439,9 +427,16 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
         Permissions.with(this)
             .request(Manifest.permission.CAMERA)
             .onAnyResult {
-                tempFile = AvatarSelection.startAvatarSelection(this, false, true)
+                tempFile = avatarSelection.startAvatarSelection( false, true)
             }
             .execute()
+    }
+
+    private fun cropImage(inputFile: Uri?, outputFile: Uri?){
+        avatarSelection.circularCropImage(
+            inputFile = inputFile,
+            outputFile = outputFile,
+        )
     }
     // endregion
 

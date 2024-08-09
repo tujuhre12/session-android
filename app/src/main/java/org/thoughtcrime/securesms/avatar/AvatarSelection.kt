@@ -6,17 +6,14 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
 import android.provider.MediaStore
 import androidx.activity.result.ActivityResultLauncher
-import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
-import com.canhub.cropper.CropImage
-import com.canhub.cropper.CropImageContract
 import com.canhub.cropper.CropImageContractOptions
 import com.canhub.cropper.CropImageView
 import com.canhub.cropper.options
 import network.loki.messenger.R
+import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsignal.utilities.ExternalStorageUtil.getImageDir
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.NoExternalStorageException
@@ -26,24 +23,26 @@ import java.io.File
 import java.io.IOException
 import java.util.LinkedList
 
-object AvatarSelection {
+class AvatarSelection(
+    private val activity: Activity,
+    private val onAvatarCropped: ActivityResultLauncher<CropImageContractOptions>,
+    private val onPickImage: ActivityResultLauncher<Intent>
+) {
     private val TAG: String = AvatarSelection::class.java.simpleName
 
-    const val REQUEST_CODE_IMAGE_PICK: Int = 888
+    private val bgColor by lazy { activity.getColorFromAttr(android.R.attr.colorPrimary) }
+    private val txtColor by lazy { activity.getColorFromAttr(android.R.attr.textColorPrimary) }
+    private val imageScrim by lazy { ContextCompat.getColor(activity, R.color.avatar_background) }
+    private val activityTitle by lazy { activity.getString(R.string.CropImageActivity_profile_avatar) }
 
     /**
      * Returns result on [.REQUEST_CODE_CROP_IMAGE]
      */
     fun circularCropImage(
-        activity: Activity,
-        launcher: ActivityResultLauncher<CropImageContractOptions>,
         inputFile: Uri?,
-        outputFile: Uri?,
-        @StringRes title: Int,
-        bgColor: Int,
-        txtColor: Int
+        outputFile: Uri?
     ) {
-        launcher.launch(
+        onAvatarCropped.launch(
             options(inputFile) {
                 setGuidelines(CropImageView.Guidelines.ON)
                 setAspectRatio(1, 1)
@@ -51,11 +50,11 @@ object AvatarSelection {
                 setOutputUri(outputFile)
                 setAllowRotation(true)
                 setAllowFlipping(true)
-                setBackgroundColor(ContextCompat.getColor(activity, R.color.avatar_background))
+                setBackgroundColor(imageScrim)
                 setToolbarColor(bgColor)
                 setActivityBackgroundColor(bgColor)
                 setToolbarTintColor(txtColor)
-                setActivityTitle(activity.getString(title))
+                setActivityTitle(activityTitle)
             }
         )
     }
@@ -66,7 +65,6 @@ object AvatarSelection {
      * @return Temporary capture file if created.
      */
     fun startAvatarSelection(
-        activity: Activity,
         includeClear: Boolean,
         attemptToIncludeCamera: Boolean
     ): File? {
@@ -87,7 +85,7 @@ object AvatarSelection {
         }
 
         val chooserIntent = createAvatarSelectionIntent(activity, captureFile, includeClear)
-        activity.startActivityForResult(chooserIntent, REQUEST_CODE_IMAGE_PICK)
+        onPickImage.launch(chooserIntent)
         return captureFile
     }
 
