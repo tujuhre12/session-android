@@ -29,12 +29,14 @@ import android.widget.VideoView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.google.android.exoplayer2.ExoPlayer;
-import com.google.android.exoplayer2.MediaItem;
-import com.google.android.exoplayer2.Player;
-import com.google.android.exoplayer2.audio.AudioAttributes;
-import com.google.android.exoplayer2.ui.PlayerControlView;
-import com.google.android.exoplayer2.ui.PlayerView;
+import androidx.media3.common.MediaItem;
+import androidx.media3.common.Player;
+import androidx.media3.common.AudioAttributes;
+import androidx.media3.common.util.UnstableApi;
+import androidx.media3.exoplayer.ExoPlayer;
+import androidx.media3.ui.LegacyPlayerControlView;
+import androidx.media3.ui.PlayerView;
+
 
 import org.session.libsession.utilities.ViewUtil;
 import org.session.libsignal.utilities.Log;
@@ -46,15 +48,16 @@ import java.io.IOException;
 
 import network.loki.messenger.R;
 
+@UnstableApi
 public class VideoPlayer extends FrameLayout {
 
   private static final String TAG = VideoPlayer.class.getSimpleName();
 
   @Nullable private final VideoView           videoView;
-  @Nullable private final PlayerView          exoView;
+  @Nullable private final PlayerView exoView;
 
-  @Nullable private       ExoPlayer     exoPlayer;
-  @Nullable private       PlayerControlView   exoControls;
+  @Nullable private ExoPlayer exoPlayer;
+  @Nullable private LegacyPlayerControlView exoControls;
   @Nullable private       AttachmentServer    attachmentServer;
   @Nullable private       Window              window;
 
@@ -73,7 +76,7 @@ public class VideoPlayer extends FrameLayout {
 
     this.exoView   = ViewUtil.findById(this, R.id.video_view);
     this.videoView = null;
-    this.exoControls = new PlayerControlView(getContext());
+    this.exoControls = new LegacyPlayerControlView(getContext());
     this.exoControls.setShowTimeoutMs(-1);
   }
 

@@ -16,13 +16,13 @@ import android.util.Pair;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.google.android.exoplayer2.C;
-import com.google.android.exoplayer2.ExoPlayer;
-import com.google.android.exoplayer2.MediaItem;
-import com.google.android.exoplayer2.PlaybackException;
-import com.google.android.exoplayer2.PlaybackParameters;
-import com.google.android.exoplayer2.Player;
-import com.google.android.exoplayer2.audio.AudioAttributes;
+import androidx.media3.common.C;
+import androidx.media3.common.MediaItem;
+import androidx.media3.common.PlaybackException;
+import androidx.media3.common.PlaybackParameters;
+import androidx.media3.common.Player;
+import androidx.media3.common.AudioAttributes;
+import androidx.media3.exoplayer.ExoPlayer;
 
 import org.jetbrains.annotations.NotNull;
 import org.session.libsession.utilities.ServiceUtil;
@@ -356,7 +356,7 @@ public class AudioSlidePlayer implements SensorEventListener {
                mediaPlayer.getAudioAttributes().contentType != streamType &&
                System.currentTimeMillis() - startTime > 500)
     {
-      if (wakeLock != null) wakeLock.release();
+      if (wakeLock != null && wakeLock.isHeld()) wakeLock.release();
       stop();
       notifyOnStop();
     }

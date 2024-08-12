@@ -4,17 +4,19 @@ package org.thoughtcrime.securesms.video.exo;
 import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.media3.common.util.UnstableApi;
+import androidx.media3.datasource.DataSource;
+import androidx.media3.datasource.DefaultDataSourceFactory;
+import androidx.media3.datasource.TransferListener;
 
-import com.google.android.exoplayer2.upstream.DataSource;
-import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
-import com.google.android.exoplayer2.upstream.TransferListener;
 
+@UnstableApi
 public class AttachmentDataSourceFactory implements DataSource.Factory {
 
   private final Context context;
 
   private final DefaultDataSourceFactory defaultDataSourceFactory;
-  private final TransferListener         listener;
+  private final TransferListener listener;
 
   public AttachmentDataSourceFactory(@NonNull Context context,
                                      @NonNull DefaultDataSourceFactory defaultDataSourceFactory,

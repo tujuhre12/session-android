@@ -3,10 +3,12 @@ package org.thoughtcrime.securesms.video.exo;
 
 import android.net.Uri;
 
-import com.google.android.exoplayer2.upstream.DataSource;
-import com.google.android.exoplayer2.upstream.DataSpec;
-import com.google.android.exoplayer2.upstream.DefaultDataSource;
-import com.google.android.exoplayer2.upstream.TransferListener;
+
+import androidx.media3.common.util.UnstableApi;
+import androidx.media3.datasource.DataSource;
+import androidx.media3.datasource.DataSpec;
+import androidx.media3.datasource.DefaultDataSource;
+import androidx.media3.datasource.TransferListener;
 
 import org.thoughtcrime.securesms.mms.PartAuthority;
 
@@ -15,6 +17,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+@UnstableApi
 public class AttachmentDataSource implements DataSource {
 
   private final DefaultDataSource defaultDataSource;
