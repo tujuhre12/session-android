@@ -126,25 +126,19 @@ public class AttachmentTypeSelector extends PopupWindow {
       public void onGlobalLayout() {
         getContentView().getViewTreeObserver().removeGlobalOnLayoutListener(this);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-          animateWindowInCircular(anchor, getContentView());
-        } else {
-          animateWindowInTranslate(getContentView());
-        }
+        animateWindowInCircular(anchor, getContentView());
       }
     });
 
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-      animateButtonIn(imageButton, ANIMATION_DURATION / 2);
-      animateButtonIn(cameraButton, ANIMATION_DURATION / 2);
+    animateButtonIn(imageButton, ANIMATION_DURATION / 2);
+    animateButtonIn(cameraButton, ANIMATION_DURATION / 2);
 
-      animateButtonIn(audioButton, ANIMATION_DURATION / 3);
-      animateButtonIn(locationButton, ANIMATION_DURATION / 3);
-      animateButtonIn(documentButton, ANIMATION_DURATION / 4);
-      animateButtonIn(gifButton, ANIMATION_DURATION / 4);
-      animateButtonIn(contactButton, 0);
-      animateButtonIn(closeButton, 0);
-    }
+    animateButtonIn(audioButton, ANIMATION_DURATION / 3);
+    animateButtonIn(locationButton, ANIMATION_DURATION / 3);
+    animateButtonIn(documentButton, ANIMATION_DURATION / 4);
+    animateButtonIn(gifButton, ANIMATION_DURATION / 4);
+    animateButtonIn(contactButton, 0);
+    animateButtonIn(closeButton, 0);
   }
 
   private void updateHeight() {
@@ -159,11 +153,7 @@ public class AttachmentTypeSelector extends PopupWindow {
 
   @Override
   public void dismiss() {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-      animateWindowOutCircular(currentAnchor, getContentView());
-    } else {
-      animateWindowOutTranslate(getContentView());
-    }
+    animateWindowOutCircular(currentAnchor, getContentView());
   }
 
   public void setListener(@Nullable AttachmentClickedListener listener) {
