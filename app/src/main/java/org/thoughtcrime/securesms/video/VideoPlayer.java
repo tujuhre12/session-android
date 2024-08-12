@@ -83,8 +83,7 @@ public class VideoPlayer extends FrameLayout {
   public void setVideoSource(@NonNull VideoSlide videoSource, boolean autoplay)
       throws IOException
   {
-    if (Build.VERSION.SDK_INT >= 16) setExoViewSource(videoSource, autoplay);
-    else                             setVideoViewSource(videoSource, autoplay);
+    setExoViewSource(videoSource, autoplay);
   }
 
   public void pause() {
