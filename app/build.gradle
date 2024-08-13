@@ -32,7 +32,7 @@ configurations.all {
 }
 
 def canonicalVersionCode = 379
-def canonicalVersionName = "1.19.0"
+def canonicalVersionName = "1.19.1"
 
 def postFixSize = 10
 def abiPostFix = ['armeabi-v7a' : 1,
