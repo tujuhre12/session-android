@@ -65,6 +65,7 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.utilities.Log
+import org.session.libsignal.utilities.Util.SECURE_RANDOM
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.avatar.AvatarSelection
 import org.thoughtcrime.securesms.components.ProfilePictureView
@@ -93,7 +94,6 @@ import org.thoughtcrime.securesms.util.NetworkUtils
 import org.thoughtcrime.securesms.util.push
 import org.thoughtcrime.securesms.util.show
 import java.io.File
-import java.security.SecureRandom
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -314,7 +314,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
 
             val userConfig = configFactory.user
             AvatarHelper.setAvatar(this, Address.fromSerialized(TextSecurePreferences.getLocalNumber(this)!!), profilePicture)
-            prefs.setProfileAvatarId(SecureRandom().nextInt() )
+            prefs.setProfileAvatarId(SECURE_RANDOM.nextInt() )
             ProfileKeyUtil.setEncodedProfileKey(this, encodedProfileKey)
 
             // Attempt to grab the details we require to update the profile picture
