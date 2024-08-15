@@ -149,8 +149,6 @@
     <attr name="conversation_tint_non_main" format="color|reference"/>
     <attr name="conversation_shadow_non_main" format="color|reference"/>
     <attr name="conversation_shadow_main" format="color|reference"/>
-    <attr name="default_background_start" format="color|reference"/>
-    <attr name="default_background_end" format="color|reference"/>
     <attr name="colorCellBackground" format="color|reference" />
     <attr name="colorDividerBackground" format="color|reference" />
     <attr name="outlineButtonBorder" format="color|reference" />
