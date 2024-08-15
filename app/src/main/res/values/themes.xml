@@ -169,7 +169,6 @@
         <item name="device_link_item_card_background">@color/device_link_item_background_dark</item>
 
         <item name="fab_color">?colorAccent</item>
-        <item name="lower_right_divet">@drawable/divet_lower_right_light</item>
 
         <item name="conversation_background">@color/loki_darkest_gray</item>
         <item name="conversation_editor_background">#22ffffff</item>
@@ -182,7 +181,6 @@
         <item name="conversation_attach_image">@drawable/ic_image_dark</item>
         <item name="conversation_attach_video">@drawable/ic_movie_creation_dark</item>
         <item name="conversation_attach_sound">@drawable/ic_volume_up_dark</item>
-        <item name="conversation_attach_contact_info">@drawable/ic_account_box_dark</item>
         <item name="conversation_attach">@drawable/ic_attach_white_24dp</item>
         <item name="conversation_number_picker_text_color_normal">@color/gray13</item>
         <item name="conversation_number_picker_text_color_selected">@color/white</item>
