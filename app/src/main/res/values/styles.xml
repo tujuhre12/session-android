@@ -94,11 +94,6 @@
         <item name="android:textColor">@color/prominent_button_color</item>
     </style>
 
-    <style name="Widget.Session.Button.Common.UnimportantOutline">
-        <item name="android:background">@drawable/unimportant_outline_button_medium_background</item>
-        <item name="android:textColor">?android:textColorPrimary</item>
-    </style>
-
     <style name="Widget.Session.Button.Common.Borderless">
         <item name="android:background">@drawable/borderless_button_medium_background</item>
         <item name="android:textColor">?android:textColorPrimary</item>
