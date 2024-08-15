@@ -2,15 +2,10 @@ package org.thoughtcrime.securesms.components;
 
 import android.Manifest;
 import android.animation.Animator;
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
-import android.os.Build;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.loader.app.LoaderManager;
 import android.util.Pair;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -26,8 +21,12 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 
-import org.thoughtcrime.securesms.permissions.Permissions;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.loader.app.LoaderManager;
+
 import org.session.libsession.utilities.ViewUtil;
+import org.thoughtcrime.securesms.permissions.Permissions;
 
 import network.loki.messenger.R;
 
@@ -172,7 +171,6 @@ public class AttachmentTypeSelector extends PopupWindow {
     button.startAnimation(animation);
   }
 
-  @TargetApi(Build.VERSION_CODES.LOLLIPOP)
   private void animateWindowInCircular(@Nullable View anchor, @NonNull View contentView) {
     Pair<Integer, Integer> coordinates = getClickOrigin(anchor, contentView);
     Animator animator = ViewAnimationUtils.createCircularReveal(contentView,
@@ -191,7 +189,6 @@ public class AttachmentTypeSelector extends PopupWindow {
     getContentView().startAnimation(animation);
   }
 
-  @TargetApi(Build.VERSION_CODES.LOLLIPOP)
   private void animateWindowOutCircular(@Nullable View anchor, @NonNull View contentView) {
     Pair<Integer, Integer> coordinates = getClickOrigin(anchor, contentView);
     Animator               animator    = ViewAnimationUtils.createCircularReveal(getContentView(),

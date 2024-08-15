@@ -8,7 +8,6 @@ import android.media.AudioDeviceInfo;
 import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.media.SoundPool;
-import android.os.Build;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
@@ -116,14 +115,9 @@ public abstract class AudioManagerCompat {
     abstract public void abandonCallAudioFocus();
 
     public static AudioManagerCompat create(@NonNull Context context) {
-        if (Build.VERSION.SDK_INT >= 26) {
-            return new Api26AudioManagerCompat(context);
-        } else {
-            return new Api21AudioManagerCompat(context);
-        }
+        return new Api26AudioManagerCompat(context);
     }
 
-    @RequiresApi(26)
     private static class Api26AudioManagerCompat extends AudioManagerCompat {
 
         private static AudioAttributes AUDIO_ATTRIBUTES = new AudioAttributes.Builder()
