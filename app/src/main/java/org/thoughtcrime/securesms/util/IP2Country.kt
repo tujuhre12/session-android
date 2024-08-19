@@ -17,9 +17,26 @@ class IP2Country private constructor(private val context: Context) {
     private val pathsBuiltEventReceiver: BroadcastReceiver
     val countryNamesCache = mutableMapOf<String, String>()
 
-    private fun Ipv4Int(ip:String) = ip.takeWhile { it != '/' }.split('.').foldIndexed(0L) { i, acc, s ->
-        val asInt = s.toLong()
-        acc + (asInt shl (8 * (3-i)))
+    private fun Ipv4Int(ip: String): Long {
+        var result = 0L
+        var currentValue = 0L
+        var octetIndex = 0
+
+        for (char in ip) {
+            if (char == '.' || char == '/') {
+                result = (result shl 8) or currentValue
+                currentValue = 0
+                octetIndex++
+                if (char == '/') break
+            } else {
+                currentValue = currentValue * 10 + (char - '0')
+            }
+        }
+
+        // Handle the last octet
+        result = (result shl 8) or currentValue
+
+        return result
     }
 
     private val ipv4ToCountry by lazy {
