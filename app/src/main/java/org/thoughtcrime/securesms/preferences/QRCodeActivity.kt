@@ -54,7 +54,7 @@ class QRCodeActivity : PassphraseRequiredActionBarActivity() {
         }
     }
 
-    fun onScan(string: String) {
+    private fun onScan(string: String) {
         if (!PublicKeyValidation.isValid(string)) {
             errors.tryEmit(getString(R.string.this_qr_code_does_not_contain_an_account_id))
         } else if (!isFinishing) {
