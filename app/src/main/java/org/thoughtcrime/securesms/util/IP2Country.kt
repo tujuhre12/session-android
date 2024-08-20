@@ -19,7 +19,7 @@ class IP2Country private constructor(private val context: Context) {
     private val pathsBuiltEventReceiver: BroadcastReceiver
     val countryNamesCache = mutableMapOf<String, String>()
 
-    private fun Ipv4Int(ip: String): Long {
+    private fun Ipv4Int(ip: String): Int {
         var result = 0L
         var currentValue = 0L
         var octetIndex = 0
@@ -38,39 +38,31 @@ class IP2Country private constructor(private val context: Context) {
         // Handle the last octet
         result = result or (currentValue shl (8 * (3 - octetIndex)))
 
-        return result
+        return result.toInt()
     }
 
-    private val ipv4ToCountry: TreeMap<Long, Int?> by lazy {
+    private val ipv4ToCountry: TreeMap<Int, Int?> by lazy {
         val file = loadFile("geolite2_country_blocks_ipv4.csv")
-        val csv = CSVReader(FileReader(file.absoluteFile)).apply {
-            skip(1)
+        CSVReader(FileReader(file.absoluteFile)).use { csv ->
+            csv.skip(1)
+
+            csv.asSequence().associateTo(TreeMap()) { cols ->
+                Ipv4Int(cols[0]).toInt() to cols[1].toIntOrNull()
+            }
         }
-
-        val ipCountries = csv.asSequence().associateTo(TreeMap()) { cols ->
-            Ipv4Int(cols[0]) to cols[1].toIntOrNull()
-        }
-
-        csv.close()
-
-        ipCountries
     }
 
     private val countryToNames: Map<Int, String> by lazy {
         val file = loadFile("geolite2_country_locations_english.csv")
-        val csv = CSVReader(FileReader(file.absoluteFile)).apply {
-            skip(1)
+        CSVReader(FileReader(file.absoluteFile)).use { csv ->
+            csv.skip(1)
+
+            csv.asSequence()
+                .filter { cols -> !cols[0].isNullOrEmpty() && !cols[1].isNullOrEmpty() }
+                .associate { cols ->
+                    cols[0].toInt() to cols[5]
+                }
         }
-
-        val names = csv.asSequence()
-            .filter { cols -> !cols[0].isNullOrEmpty() && !cols[1].isNullOrEmpty() }
-            .associate { cols ->
-                cols[0].toInt() to cols[5]
-            }
-
-        csv.close()
-
-        names
     }
 
     // region Initialization
