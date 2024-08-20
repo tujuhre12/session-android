@@ -286,6 +286,9 @@ fun MessageReceiver.handleVisibleMessage(
     runThreadUpdate: Boolean,
     runProfileUpdate: Boolean
 ): Long? {
+
+     Is this where emoji reacts come in? If so we need to spawn a notification here!
+
     val storage = MessagingModuleConfiguration.shared.storage
     val context = MessagingModuleConfiguration.shared.context
     message.takeIf { it.isSenderSelf }?.sentTimestamp?.let { MessagingModuleConfiguration.shared.lastSentTimestampCache.submitTimestamp(threadId, it) }

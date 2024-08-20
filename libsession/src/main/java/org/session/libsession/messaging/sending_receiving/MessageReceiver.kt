@@ -132,8 +132,10 @@ object MessageReceiver {
         if (isBlocked(sender!!)) {
             throw Error.SenderBlocked
         }
+
         // Parse the proto
         val proto = SignalServiceProtos.Content.parseFrom(PushTransportDetails.getStrippedPaddingMessageBody(plaintext))
+
         // Parse the message
         val message: Message = ReadReceipt.fromProto(proto) ?:
             TypingIndicator.fromProto(proto) ?:
@@ -155,10 +157,12 @@ object MessageReceiver {
             if (!message.isSelfSendValid) throw Error.SelfSend
             message.isSenderSelf = true
         }
+
         // Guard against control messages in open groups
         if (isOpenGroupMessage && message !is VisibleMessage) {
             throw Error.InvalidMessage
         }
+
         // Finish parsing
         message.sender = sender
         message.recipient = userPublicKey
@@ -166,18 +170,21 @@ object MessageReceiver {
         message.receivedTimestamp = if (envelope.hasServerTimestamp()) envelope.serverTimestamp else SnodeAPI.nowWithOffset
         message.groupPublicKey = groupPublicKey
         message.openGroupServerMessageID = openGroupServerID
+
         // Validate
         var isValid = message.isValid()
         if (message is VisibleMessage && !isValid && proto.dataMessage.attachmentsCount != 0) { isValid = true }
         if (!isValid) {
             throw Error.InvalidMessage
         }
+
         // If the message failed to process the first time around we retry it later (if the error is retryable). In this case the timestamp
         // will already be in the database but we don't want to treat the message as a duplicate. The isRetry flag is a simple workaround
         // for this issue.
         if (groupPublicKey != null && groupPublicKey !in (currentClosedGroups ?: emptySet())) {
             throw Error.NoGroupThread
         }
+
         if ((message is ClosedGroupControlMessage && message.kind is ClosedGroupControlMessage.Kind.New) || message is SharedConfigurationMessage) {
             // Allow duplicates in this case to avoid the following situation:
             // • The app performed a background poll or received a push notification
@@ -189,6 +196,7 @@ object MessageReceiver {
             if (storage.isDuplicateMessage(envelope.timestamp)) { throw Error.DuplicateMessage }
             storage.addReceivedMessageTimestamp(envelope.timestamp)
         }
+
         // Return
         return Pair(message, proto)
     }

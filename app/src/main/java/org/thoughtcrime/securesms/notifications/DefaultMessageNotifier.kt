@@ -456,6 +456,7 @@ class DefaultMessageNotifier : MessageNotifier {
         Log.i(TAG, "Posted notification. $notification")
     }
 
+    // Note: The only use of this method is from `updateNotification`, above.
     private fun constructNotificationState(context: Context, cursor: Cursor): NotificationState {
         val notificationState = NotificationState()
         val reader = get(context).mmsSmsDatabase().readerFor(cursor)
@@ -510,19 +511,19 @@ class DefaultMessageNotifier : MessageNotifier {
                 val contact = (record as MmsMessageRecord).sharedContacts[0]
                 body = ContactUtil.getStringSummary(context, contact)
 
-                // If this is a notification about a multimedia message which contains no text but DOES contain a slide deck with at least one slide..
+            // If this is a notification about a multimedia message which contains no text but DOES contain a slide deck with at least one slide..
             } else if (record.isMms && TextUtils.isEmpty(body) && !(record as MmsMessageRecord).slideDeck.slides.isEmpty()) {
                 slideDeck = (record as MediaMmsMessageRecord).slideDeck
                 body = SpanUtil.italic(slideDeck.body)
 
-                // If this is a notification about a multimedia message, but it's not ITSELF a multimedia notification AND it contains a slide deck with at least one slide..
+            // If this is a notification about a multimedia message, but it's not ITSELF a multimedia notification AND it contains a slide deck with at least one slide..
             } else if (record.isMms && !record.isMmsNotification && !(record as MmsMessageRecord).slideDeck.slides.isEmpty()) {
                 slideDeck = (record as MediaMmsMessageRecord).slideDeck
                 val message = slideDeck.body + ": " + record.body
                 val italicLength = message.length - body.length
                 body = SpanUtil.italic(message, italicLength)
 
-                // If this is a notification about an invitation to a community..
+            // If this is a notification about an invitation to a community..
             } else if (record.isOpenGroupInvitation) {
                 body = SpanUtil.italic(context.getString(R.string.communityInvitation))
             }
@@ -533,7 +534,11 @@ class DefaultMessageNotifier : MessageNotifier {
                 blindedPublicKey = generateBlindedId(threadId, context)
                 cache[threadId] = blindedPublicKey
             }
+
+            // Only proceed with notifications if the thread is not muted
             if (threadRecipients == null || !threadRecipients.isMuted) {
+
+                // If this notification is regarding a mention..
                 if (threadRecipients != null && threadRecipients.notifyType == RecipientDatabase.NOTIFY_TYPE_MENTIONS) {
                     // check if mentioned here
                     var isQuoteMentioned = false
@@ -547,9 +552,14 @@ class DefaultMessageNotifier : MessageNotifier {
                     if (body.toString().contains("@$userPublicKey") || body.toString().contains("@$blindedPublicKey") || isQuoteMentioned) {
                         notificationState.addNotification(NotificationItem(id, mms, recipient, conversationRecipient, threadRecipients, threadId, body, timestamp, slideDeck))
                     }
+                // ..if this notification is regarding a thread..
                 } else if (threadRecipients != null && threadRecipients.notifyType == RecipientDatabase.NOTIFY_TYPE_NONE) {
+                    Log.w("ACL", "Hit the notify type NONE block.")
                     // do nothing, no notifications
                 } else {
+                    // If this notification is not a mention or thread notification then it must be RecipientDatabase.NOTIFY_TYPE_ALL because those are the only three enums.
+                    // Note: This is the block that hits for 1-on-1 message notifications
+                    Log.w("ACL", "Hit the notify type ALL block")
                     notificationState.addNotification(NotificationItem(id, mms, recipient, conversationRecipient, threadRecipients, threadId, body, timestamp, slideDeck))
                 }
 

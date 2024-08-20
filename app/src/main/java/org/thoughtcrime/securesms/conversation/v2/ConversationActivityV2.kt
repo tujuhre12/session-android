@@ -1355,8 +1355,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     // Method to add an emoji to a queue and remove it a short while later - this is used as a
     // rate-limiting mechanism and is called from the `sendEmojiReaction` method, below.
-
-    fun canPerformEmojiReaction(timestamp: Long): Boolean {
+    private fun canPerformEmojiReaction(timestamp: Long): Boolean {
         // If the emoji reaction queue is full..
         if (emojiRateLimiterQueue.size >= EMOJI_REACTIONS_ALLOWED_PER_MINUTE) {
             // ..grab the timestamp of the oldest emoji reaction.
@@ -1421,15 +1420,24 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
             // Send it
             reactionMessage.reaction = Reaction.from(originalMessage.timestamp, originalAuthor.serialize(), emoji, true)
-            if (recipient.isCommunityRecipient) {
 
+            // If this is a community then we need to send it to the server
+            if (recipient.isCommunityRecipient) {
                 val messageServerId = lokiMessageDb.getServerID(originalMessage.id, !originalMessage.isMms) ?:
                     return Log.w(TAG, "Failed to find message server ID when adding emoji reaction")
 
-                viewModel.openGroup?.let {
-                    OpenGroupApi.addReaction(it.room, it.server, messageServerId, emoji)
-                }
+                viewModel.openGroup?.let { OpenGroupApi.addReaction(it.room, it.server, messageServerId, emoji) }
             } else {
+
+                // Send a notification regarding the emoji reaction, but ONLY if this is a contact (i.e., a 1-on-1 conversation), we
+                // do NOT send notifications for emoji reactions to closed groups or communities!
+                if (recipient.isContactRecipient) {
+                    Log.w("ACL", "Sending notification for emoji reaction")
+                    //ApplicationContext.getInstance(this@ConversationActivityV2).messageNotifier.updateNotification(this@ConversationActivityV2, messageRecord.threadId, true)
+                    ApplicationContext.getInstance(this@ConversationActivityV2).messageNotifier.updateNotification(this@ConversationActivityV2, true, 0)
+                }
+
+                Log.w("ACL", "reactionMessage is: " + reactionMessage.text)
                 MessageSender.send(reactionMessage, recipient.address)
             }
 
