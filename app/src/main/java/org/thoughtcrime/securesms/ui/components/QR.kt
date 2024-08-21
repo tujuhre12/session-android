@@ -239,8 +239,8 @@ class QRCodeAnalyzer(
         try {
             val result: Result = qrCodeReader.decode(binaryBitmap)
             val resultTxt = result.text
-            // No need to close the image here - it'll always make it to the end, and calling
-            // `onBarcodeScanned` with a valid recovery code will stop calling this `analyze` method.
+            // No need to close the image here - it'll always make it to the end, and calling `onBarcodeScanned`
+            // with a valid contact / recovery phrase / community code will stop calling this `analyze` method.
             onBarcodeScanned(resultTxt)
         }
         catch (nfe: NotFoundException) { /* Hits if there is no QR code in the image           */ }
