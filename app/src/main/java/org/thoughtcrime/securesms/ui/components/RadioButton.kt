@@ -35,6 +35,7 @@ import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ExpiryType
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.RadioOption
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -122,7 +123,7 @@ fun <T> TitledRadioButton(
     RadioButton(
         modifier = modifier
             .heightIn(min = 60.dp)
-            .testTag(option.contentDescription.string()),
+            .qaTag(option.contentDescription.string()),
         onClick = onClick,
         selected = option.selected,
         enabled = option.enabled,
