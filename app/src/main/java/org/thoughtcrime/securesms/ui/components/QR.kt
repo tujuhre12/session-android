@@ -243,9 +243,9 @@ class QRCodeAnalyzer(
             // `onBarcodeScanned` with a valid recovery code will stop calling this `analyze` method.
             onBarcodeScanned(resultTxt)
         }
-        catch (nfe: NotFoundException) {  /* Hits if there is no QR code in the image           */ }
-        catch (fe: FormatException)    {  /* Hits if we found a QR code but failed to decode it */ }
-        catch (ce: ChecksumException)  { /* Hits if we found a QR code which is corrupted      */  }
+        catch (nfe: NotFoundException) { /* Hits if there is no QR code in the image           */ }
+        catch (fe: FormatException)    { /* Hits if we found a QR code but failed to decode it */ }
+        catch (ce: ChecksumException)  { /* Hits if we found a QR code which is corrupted      */ }
         catch (e: Exception) {
             // Hits if there's a genuine problem
             Log.e("QR", "error", e)
