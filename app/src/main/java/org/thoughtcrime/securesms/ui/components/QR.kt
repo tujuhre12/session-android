@@ -67,7 +67,7 @@ private const val TAG = "NewMessageFragment"
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun MaybeScanQrCode(
+fun QRScannerScreen(
         errors: Flow<String>,
         onClickSettings: () -> Unit = LocalContext.current.run { {
             Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {

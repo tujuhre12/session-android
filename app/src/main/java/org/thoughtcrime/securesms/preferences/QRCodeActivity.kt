@@ -27,7 +27,7 @@ import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.database.threadDatabase
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalColors
-import org.thoughtcrime.securesms.ui.components.MaybeScanQrCode
+import org.thoughtcrime.securesms.ui.components.QRScannerScreen
 import org.thoughtcrime.securesms.ui.components.QrImage
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
 import org.thoughtcrime.securesms.ui.contentDescription
@@ -83,7 +83,7 @@ private fun Tabs(accountId: String, errors: Flow<String>, onScan: (String) -> Un
         ) { page ->
             when (TITLES[page]) {
                 R.string.view -> QrPage(accountId)
-                R.string.scan -> MaybeScanQrCode(errors, onScan = onScan)
+                R.string.scan -> QRScannerScreen(errors, onScan = onScan)
             }
         }
     }
