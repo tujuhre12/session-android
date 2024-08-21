@@ -118,6 +118,24 @@ fun <T> OptionsCard(card: OptionsCardData<T>, callbacks: Callbacks<T>) {
     }
 }
 
+@Preview
+@Composable
+fun PreviewOptionsCard() {
+    PreviewTheme {
+        OptionsCard(
+            card = OptionsCardData(
+                title = GetString.FromString("My Options"),
+                options = listOf(
+                    RadioOption<Int>(1, GetString("Option 1")),
+                    RadioOption<Int>(2, GetString("Option 2")),
+                    RadioOption<Int>(3, GetString("Option 3")),
+                )
+            ),
+            callbacks = NoOpCallbacks
+        )
+    }
+}
+
 @Composable
 fun LargeItemButtonWithDrawable(
     @StringRes textId: Int,

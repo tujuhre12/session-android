@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -34,7 +35,6 @@ import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ExpiryType
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.RadioOption
-import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -44,8 +44,8 @@ import kotlin.time.Duration.Companion.days
 
 @Composable
 fun RadioButton(
-    onClick: () -> Unit = {},
     modifier: Modifier = Modifier,
+    onClick: () -> Unit = {},
     selected: Boolean = false,
     enabled: Boolean = true,
     contentPadding: PaddingValues = PaddingValues(),
@@ -120,8 +120,9 @@ fun <T> TitledRadioButton(
     onClick: () -> Unit
 ) {
     RadioButton(
-        modifier = modifier.heightIn(min = 60.dp)
-            .contentDescription(option.contentDescription),
+        modifier = modifier
+            .heightIn(min = 60.dp)
+            .testTag(option.contentDescription.string()),
         onClick = onClick,
         selected = option.selected,
         enabled = option.enabled,
