@@ -518,7 +518,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
                     }
                     LargeItemButton(R.string.activity_settings_help_button, R.drawable.ic_help, Modifier.contentDescription(R.string.AccessibilityId_help)) { show<HelpSettingsActivity>() }
                     Divider()
-                    LargeItemButton(R.string.activity_settings_clear_all_data_button_title, R.drawable.ic_message_details__trash, Modifier.contentDescription(R.string.AccessibilityId_clear_data), dangerButtonColors()) { ClearAllDataDialog().show(supportFragmentManager, "Clear All Data Dialog") }
+                    LargeItemButton(R.string.activity_settings_clear_all_data_button_title, R.drawable.ic_delete, Modifier.contentDescription(R.string.AccessibilityId_clear_data), dangerButtonColors()) { ClearAllDataDialog().show(supportFragmentManager, "Clear All Data Dialog") }
                 }
             }
         }
