@@ -281,6 +281,8 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
                 Log.w(TAG, "Cannot update display name - missing user details from configFactory.")
             } else {
                 user.setName(displayName)
+                // sync remote config
+                ConfigurationMessageUtilities.syncConfigurationIfNeeded(this)
                 binding.btnGroupNameDisplay.text = displayName
                 updateWasSuccessful = true
             }
