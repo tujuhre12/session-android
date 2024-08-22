@@ -473,10 +473,12 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
 
     @Composable
     fun Buttons() {
-        Column {
+        Column(
+            modifier = Modifier
+                .padding(horizontal = LocalDimensions.current.spacing)
+        ) {
             Row(
                 modifier = Modifier
-                    .padding(horizontal = LocalDimensions.current.spacing)
                     .padding(top = LocalDimensions.current.xxsSpacing),
                 horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing),
             ) {

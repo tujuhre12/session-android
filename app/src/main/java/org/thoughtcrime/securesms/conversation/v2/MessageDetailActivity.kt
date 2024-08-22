@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.conversation.v2
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.MotionEvent.ACTION_UP
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -58,23 +60,21 @@ import org.thoughtcrime.securesms.ui.Avatar
 import org.thoughtcrime.securesms.ui.CarouselNextButton
 import org.thoughtcrime.securesms.ui.CarouselPrevButton
 import org.thoughtcrime.securesms.ui.Cell
-import org.thoughtcrime.securesms.ui.CellNoMargin
-import org.thoughtcrime.securesms.ui.CellWithPaddingAndMargin
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.HorizontalPagerIndicator
 import org.thoughtcrime.securesms.ui.LargeItemButton
+import org.thoughtcrime.securesms.ui.TitledText
+import org.thoughtcrime.securesms.ui.setComposeContent
+import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
+import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
-import org.thoughtcrime.securesms.ui.TitledText
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
-import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.blackAlpha40
-import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
-import org.thoughtcrime.securesms.ui.setComposeContent
-import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.bold
+import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
 import org.thoughtcrime.securesms.ui.theme.monospace
 import javax.inject.Inject
 
@@ -191,7 +191,10 @@ fun CellMetadata(
 ) {
     state.apply {
         if (listOfNotNull(sent, received, error, senderInfo).isEmpty()) return
-        CellWithPaddingAndMargin {
+        Cell(
+            margin = PaddingValues(horizontal = LocalDimensions.current.spacing),
+            padding = PaddingValues(all = LocalDimensions.current.spacing)
+        ) {
             Column(verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)) {
                 TitledText(sent)
                 TitledText(received)
@@ -215,7 +218,7 @@ fun CellButtons(
     onResend: (() -> Unit)? = null,
     onDelete: () -> Unit = {},
 ) {
-    Cell {
+    Cell(margin = PaddingValues(horizontal = LocalDimensions.current.spacing)) {
         Column {
             onReply?.let {
                 LargeItemButton(
@@ -254,8 +257,11 @@ fun Carousel(attachments: List<Attachment>, onClick: (Int) -> Unit) {
         Row {
             CarouselPrevButton(pagerState)
             Box(modifier = Modifier.weight(1f)) {
-                CellCarousel(pagerState, attachments, onClick)
-                HorizontalPagerIndicator(pagerState)
+                CarouselPager(pagerState, attachments, onClick)
+                HorizontalPagerIndicator(
+                    pagerState = pagerState,
+                    modifier = Modifier.padding(bottom = LocalDimensions.current.xxsSpacing)
+                )
                 ExpandButton(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
@@ -273,12 +279,12 @@ fun Carousel(attachments: List<Attachment>, onClick: (Int) -> Unit) {
     ExperimentalGlideComposeApi::class
 )
 @Composable
-private fun CellCarousel(
+private fun CarouselPager(
     pagerState: PagerState,
     attachments: List<Attachment>,
     onClick: (Int) -> Unit
 ) {
-    CellNoMargin {
+    Cell {
         HorizontalPager(state = pagerState) { i ->
             GlideImage(
                 contentScale = ContentScale.Crop,
@@ -317,6 +323,33 @@ fun PreviewMessageDetails(
     PreviewTheme(colors) {
         MessageDetails(
             state = MessageDetailsState(
+                imageAttachments = listOf(
+                    Attachment(
+                        fileDetails = listOf(
+                            TitledText(R.string.message_details_header__file_id, "Screen Shot 2023-07-06 at 11.35.50 am.png")
+                        ),
+                        fileName = "Screen Shot 2023-07-06 at 11.35.50 am.png",
+                        uri = Uri.parse(""),
+                        hasImage = true
+                    ),
+                    Attachment(
+                        fileDetails = listOf(
+                            TitledText(R.string.message_details_header__file_id, "Screen Shot 2023-07-06 at 11.35.50 am.png")
+                        ),
+                        fileName = "Screen Shot 2023-07-06 at 11.35.50 am.png",
+                        uri = Uri.parse(""),
+                        hasImage = true
+                    ),
+                    Attachment(
+                        fileDetails = listOf(
+                            TitledText(R.string.message_details_header__file_id, "Screen Shot 2023-07-06 at 11.35.50 am.png")
+                        ),
+                        fileName = "Screen Shot 2023-07-06 at 11.35.50 am.png",
+                        uri = Uri.parse(""),
+                        hasImage = true
+                    )
+
+                ),
                 nonImageAttachmentFileDetails = listOf(
                     TitledText(R.string.message_details_header__file_id, "Screen Shot 2023-07-06 at 11.35.50 am.png"),
                     TitledText(R.string.message_details_header__file_type, "image/png"),
@@ -337,7 +370,7 @@ fun PreviewMessageDetails(
 fun FileDetails(fileDetails: List<TitledText>) {
     if (fileDetails.isEmpty()) return
 
-    Cell {
+    Cell(margin = PaddingValues(horizontal = LocalDimensions.current.spacing)) {
         FlowRow(
             modifier = Modifier.padding(horizontal = LocalDimensions.current.xsSpacing, vertical = LocalDimensions.current.spacing),
             verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)

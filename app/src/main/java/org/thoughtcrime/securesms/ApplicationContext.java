@@ -248,6 +248,25 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
 
         NetworkConstraint networkConstraint = new NetworkConstraint.Factory(this).create();
         HTTP.INSTANCE.setConnectedToNetwork(networkConstraint::isMet);
+
+        // add our shortcut debug menu if we are not in a release build
+        if (BuildConfig.BUILD_TYPE != "release") {
+            // add the config settings shortcut
+           /* Intent intent = new Intent(this, ConfigSettingsActivity::class.java);
+            intent.action = Intent.ACTION_VIEW
+
+            val shortcut = ShortcutInfoCompat.Builder(this, "shortcut_config_settings")
+                    .setShortLabel("Config Settings")
+                    .setLongLabel("Configuration Settings")
+                    .setIcon(IconCompat.createWithResource(this, R.drawable.ic_experience_stop))
+                    .setIntent(intent)
+                    .build()
+
+            ShortcutManagerCompat.pushDynamicShortcut(this, shortcut)
+
+            // Instant apps do not allow this functionality - only the full app
+            configurationSettingsManager.allowDisplayOfDebugMenu(true)*/
+        }
     }
 
     @Override
