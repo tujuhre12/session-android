@@ -193,11 +193,11 @@ fun CellMetadata(
 ) {
     state.apply {
         if (listOfNotNull(sent, received, error, senderInfo).isEmpty()) return
-        Cell(
-            margin = PaddingValues(horizontal = LocalDimensions.current.spacing),
-            padding = PaddingValues(all = LocalDimensions.current.spacing)
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)) {
+        Cell(modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing)) {
+            Column(
+                modifier = Modifier.padding(LocalDimensions.current.spacing),
+                verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
+            ) {
                 TitledText(sent)
                 TitledText(received)
                 TitledErrorText(error)
@@ -220,7 +220,7 @@ fun CellButtons(
     onResend: (() -> Unit)? = null,
     onDelete: () -> Unit = {},
 ) {
-    Cell(margin = PaddingValues(horizontal = LocalDimensions.current.spacing)) {
+    Cell(modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing)) {
         Column {
             onReply?.let {
                 LargeItemButton(
@@ -375,7 +375,7 @@ fun PreviewMessageDetails(
 fun FileDetails(fileDetails: List<TitledText>) {
     if (fileDetails.isEmpty()) return
 
-    Cell(margin = PaddingValues(horizontal = LocalDimensions.current.spacing)) {
+    Cell(modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing)) {
         FlowRow(
             modifier = Modifier.padding(horizontal = LocalDimensions.current.xsSpacing, vertical = LocalDimensions.current.spacing),
             verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)

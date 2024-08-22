@@ -71,10 +71,10 @@ private fun RecoveryPasswordCell(
         mutableStateOf(false)
     }
 
-    Cell(
-        padding = PaddingValues(all = LocalDimensions.current.smallSpacing)
-    ){
-        Column {
+    Cell {
+        Column(
+            modifier = Modifier.padding(LocalDimensions.current.smallSpacing)
+        ) {
             Row {
                 Text(
                     stringResource(R.string.sessionRecoveryPassword),
@@ -152,10 +152,10 @@ private fun RecoveryPassword(mnemonic: String) {
 
 @Composable
 private fun HideRecoveryPasswordCell(onHide: () -> Unit = {}) {
-    Cell(
-        padding = PaddingValues(all = LocalDimensions.current.smallSpacing)
-    ) {
-        Row {
+    Cell {
+        Row(
+            modifier = Modifier.padding(LocalDimensions.current.smallSpacing)
+        ) {
             Column(
                 Modifier.weight(1f)
             ) {

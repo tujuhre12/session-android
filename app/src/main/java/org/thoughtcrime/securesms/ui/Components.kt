@@ -259,19 +259,15 @@ fun PrewviewItemButton() {
 @Composable
 fun Cell(
     modifier: Modifier = Modifier,
-    padding: PaddingValues = PaddingValues(all = 0.dp),
-    margin: PaddingValues = PaddingValues(all = 0.dp),
     content: @Composable () -> Unit
 ) {
     Box(
         modifier = modifier
-            .padding(margin)
             .background(
                 color = LocalColors.current.backgroundSecondary,
                 shape = MaterialTheme.shapes.small
             )
             .wrapContentHeight()
-            .padding(padding)
             .fillMaxWidth(),
     ) {
         content()
