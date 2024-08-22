@@ -37,7 +37,7 @@
             android:paddingBottom="2dp"
             android:gravity="center"
             android:background="@drawable/media_count_number_background"
-            android:textColor="?colorAccent"
+            android:textColor="?colorPrimary"
             android:textSize="18sp"
             tools:text="3" />
 
@@ -60,7 +60,7 @@
         android:layout_gravity="bottom|start"
         android:padding="12dp"
         android:src="@drawable/ic_camera_filled_24"
-        app:tint="@color/core_grey_60"
+        app:tint="?android:textColorPrimary"
         android:background="@drawable/media_camera_button_background"
         android:elevation="4dp"
         android:visibility="gone"
