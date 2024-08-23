@@ -68,6 +68,7 @@ import org.session.libsignal.utilities.Util.SECURE_RANDOM
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.avatar.AvatarSelection
 import org.thoughtcrime.securesms.components.ProfilePictureView
+import org.thoughtcrime.securesms.debugmenu.DebugActivity
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.home.PathActivity
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
@@ -91,7 +92,6 @@ import org.thoughtcrime.securesms.util.BitmapUtil
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 import org.thoughtcrime.securesms.util.NetworkUtils
 import org.thoughtcrime.securesms.util.push
-import org.thoughtcrime.securesms.util.show
 import java.io.File
 import javax.inject.Inject
 
@@ -508,6 +508,12 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
 
             Cell {
                 Column {
+                    // add the debug menu in non release builds
+                    if (BuildConfig.BUILD_TYPE != "release") {
+                        LargeItemButton(R.string.activity_settings_debug_button_title, R.drawable.ic_settings) { push<DebugActivity>() }
+                        Divider()
+                    }
+
                     Crossfade(if (hasPaths) R.drawable.ic_status else R.drawable.ic_path_yellow, label = "path") {
                         LargeItemButtonWithDrawable(R.string.activity_path_title, it) { push<PathActivity>() }
                     }

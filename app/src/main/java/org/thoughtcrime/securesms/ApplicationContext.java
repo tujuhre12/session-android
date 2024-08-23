@@ -27,6 +27,9 @@ import android.os.Handler;
 import android.os.HandlerThread;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.pm.ShortcutInfoCompat;
+import androidx.core.content.pm.ShortcutManagerCompat;
+import androidx.core.graphics.drawable.IconCompat;
 import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ProcessLifecycleOwner;
@@ -62,6 +65,7 @@ import org.thoughtcrime.securesms.database.LokiAPIDatabase;
 import org.thoughtcrime.securesms.database.Storage;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
 import org.thoughtcrime.securesms.database.model.EmojiSearchData;
+import org.thoughtcrime.securesms.debugmenu.DebugActivity;
 import org.thoughtcrime.securesms.dependencies.AppComponent;
 import org.thoughtcrime.securesms.dependencies.ConfigFactory;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
@@ -107,6 +111,7 @@ import dagger.hilt.EntryPoints;
 import dagger.hilt.android.HiltAndroidApp;
 import kotlin.Unit;
 import network.loki.messenger.BuildConfig;
+import network.loki.messenger.R;
 import network.loki.messenger.libsession_util.ConfigBase;
 import network.loki.messenger.libsession_util.UserProfile;
 
@@ -252,20 +257,17 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         // add our shortcut debug menu if we are not in a release build
         if (BuildConfig.BUILD_TYPE != "release") {
             // add the config settings shortcut
-           /* Intent intent = new Intent(this, ConfigSettingsActivity::class.java);
-            intent.action = Intent.ACTION_VIEW
+            Intent intent = new Intent(this, DebugActivity.class);
+            intent.setAction(Intent.ACTION_VIEW);
 
-            val shortcut = ShortcutInfoCompat.Builder(this, "shortcut_config_settings")
-                    .setShortLabel("Config Settings")
-                    .setLongLabel("Configuration Settings")
-                    .setIcon(IconCompat.createWithResource(this, R.drawable.ic_experience_stop))
+            ShortcutInfoCompat shortcut = new ShortcutInfoCompat.Builder(this, "shortcut_debug_menu")
+                    .setShortLabel("Debug Menu")
+                    .setLongLabel("Debug Menu")
+                    .setIcon(IconCompat.createWithResource(this, R.drawable.ic_settings))
                     .setIntent(intent)
-                    .build()
+                    .build();
 
-            ShortcutManagerCompat.pushDynamicShortcut(this, shortcut)
-
-            // Instant apps do not allow this functionality - only the full app
-            configurationSettingsManager.allowDisplayOfDebugMenu(true)*/
+            ShortcutManagerCompat.pushDynamicShortcut(this, shortcut);
         }
     }
 
