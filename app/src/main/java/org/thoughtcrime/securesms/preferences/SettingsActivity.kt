@@ -162,6 +162,9 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
         super.onCreate(savedInstanceState, isReady)
         binding = ActivitySettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // set the toolbar icon to a close icon
+        supportActionBar?.setHomeAsUpIndicator(R.drawable.ic_baseline_close_24)
     }
 
     override fun onStart() {
@@ -180,6 +183,11 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
         binding.composeView.setThemedContent {
             Buttons()
         }
+    }
+
+    override fun finish() {
+        super.finish()
+        overridePendingTransition(R.anim.fade_scale_in, R.anim.slide_to_bottom)
     }
 
     private fun getDisplayName(): String =
@@ -501,26 +509,26 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
             Cell {
                 Column {
                     Crossfade(if (hasPaths) R.drawable.ic_status else R.drawable.ic_path_yellow, label = "path") {
-                        LargeItemButtonWithDrawable(R.string.activity_path_title, it) { show<PathActivity>() }
+                        LargeItemButtonWithDrawable(R.string.activity_path_title, it) { push<PathActivity>() }
                     }
                     Divider()
-                    LargeItemButton(R.string.activity_settings_privacy_button_title, R.drawable.ic_privacy_icon) { show<PrivacySettingsActivity>() }
+                    LargeItemButton(R.string.activity_settings_privacy_button_title, R.drawable.ic_privacy_icon) { push<PrivacySettingsActivity>() }
                     Divider()
-                    LargeItemButton(R.string.activity_settings_notifications_button_title, R.drawable.ic_speaker, Modifier.contentDescription(R.string.AccessibilityId_notifications)) { show<NotificationSettingsActivity>() }
+                    LargeItemButton(R.string.activity_settings_notifications_button_title, R.drawable.ic_speaker, Modifier.contentDescription(R.string.AccessibilityId_notifications)) { push<NotificationSettingsActivity>() }
                     Divider()
-                    LargeItemButton(R.string.activity_settings_conversations_button_title, R.drawable.ic_conversations, Modifier.contentDescription(R.string.AccessibilityId_conversations)) { show<ChatSettingsActivity>() }
+                    LargeItemButton(R.string.activity_settings_conversations_button_title, R.drawable.ic_conversations, Modifier.contentDescription(R.string.AccessibilityId_conversations)) { push<ChatSettingsActivity>() }
                     Divider()
-                    LargeItemButton(R.string.activity_settings_message_requests_button_title, R.drawable.ic_message_requests, Modifier.contentDescription(R.string.AccessibilityId_message_requests)) { show<MessageRequestsActivity>() }
+                    LargeItemButton(R.string.activity_settings_message_requests_button_title, R.drawable.ic_message_requests, Modifier.contentDescription(R.string.AccessibilityId_message_requests)) { push<MessageRequestsActivity>() }
                     Divider()
-                    LargeItemButton(R.string.activity_settings_message_appearance_button_title, R.drawable.ic_appearance, Modifier.contentDescription(R.string.AccessibilityId_appearance)) { show<AppearanceSettingsActivity>() }
+                    LargeItemButton(R.string.activity_settings_message_appearance_button_title, R.drawable.ic_appearance, Modifier.contentDescription(R.string.AccessibilityId_appearance)) { push<AppearanceSettingsActivity>() }
                     Divider()
                     LargeItemButton(R.string.activity_settings_invite_button_title, R.drawable.ic_invite_friend, Modifier.contentDescription(R.string.AccessibilityId_invite_friend)) { sendInvitationToUseSession() }
                     Divider()
                     if (!prefs.getHidePassword()) {
-                        LargeItemButton(R.string.sessionRecoveryPassword, R.drawable.ic_shield_outline, Modifier.contentDescription(R.string.AccessibilityId_recovery_password_menu_item)) { show<RecoveryPasswordActivity>() }
+                        LargeItemButton(R.string.sessionRecoveryPassword, R.drawable.ic_shield_outline, Modifier.contentDescription(R.string.AccessibilityId_recovery_password_menu_item)) { push<RecoveryPasswordActivity>() }
                         Divider()
                     }
-                    LargeItemButton(R.string.activity_settings_help_button, R.drawable.ic_help, Modifier.contentDescription(R.string.AccessibilityId_help)) { show<HelpSettingsActivity>() }
+                    LargeItemButton(R.string.activity_settings_help_button, R.drawable.ic_help, Modifier.contentDescription(R.string.AccessibilityId_help)) { push<HelpSettingsActivity>() }
                     Divider()
                     LargeItemButton(R.string.activity_settings_clear_all_data_button_title, R.drawable.ic_delete, Modifier.contentDescription(R.string.AccessibilityId_clear_data), dangerButtonColors()) { ClearAllDataDialog().show(supportFragmentManager, "Clear All Data Dialog") }
                 }
