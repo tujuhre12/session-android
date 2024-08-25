@@ -292,10 +292,6 @@
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
             android:theme="@style/Theme.Session.ForceDark" />
         <activity
-            android:name="com.theartofdev.edmodo.cropper.CropImageActivity"
-            android:screenOrientation="portrait"
-            android:theme="@style/Theme.AppCompat" />
-        <activity
             android:name="org.thoughtcrime.securesms.ShortcutLauncherActivity"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
             android:exported="true"
@@ -310,6 +306,8 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="org.thoughtcrime.securesms.home.HomeActivity" />
         </activity>
+        <activity android:name="org.thoughtcrime.securesms.media.MediaOverviewActivity" />
+
         <service android:enabled="true" android:name="org.thoughtcrime.securesms.service.WebRtcCallService"
             android:foregroundServiceType="microphone"
             android:exported="false" />
@@ -328,7 +326,6 @@
                 <action android:name="android.service.chooser.ChooserTargetService" />
             </intent-filter>
         </service>
-        <service android:name="org.thoughtcrime.securesms.service.GenericForegroundService" />
         <receiver
             android:name="org.thoughtcrime.securesms.notifications.MarkReadReceiver"
             android:enabled="true"
@@ -440,9 +437,7 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
-        <service
-            android:name="org.thoughtcrime.securesms.jobmanager.KeepAliveService"
-            android:enabled="@bool/enable_alarm_manager" />
+
         <uses-library
             android:name="com.sec.android.app.multiwindow"
             android:required="false" />

@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.os.Parcelable
 import android.util.SparseArray
@@ -65,6 +64,7 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.utilities.Log
+import org.session.libsignal.utilities.Util.SECURE_RANDOM
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.avatar.AvatarSelection
 import org.thoughtcrime.securesms.components.ProfilePictureView
@@ -93,7 +93,6 @@ import org.thoughtcrime.securesms.util.NetworkUtils
 import org.thoughtcrime.securesms.util.push
 import org.thoughtcrime.securesms.util.show
 import java.io.File
-import java.security.SecureRandom
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -210,7 +209,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.settings_general, menu)
-        if (BuildConfig.DEBUG && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (BuildConfig.DEBUG) {
             menu.findItem(R.id.action_qr_code)?.contentDescription = resources.getString(R.string.AccessibilityId_view_qr_code)
         }
         return true
@@ -314,7 +313,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
 
             val userConfig = configFactory.user
             AvatarHelper.setAvatar(this, Address.fromSerialized(TextSecurePreferences.getLocalNumber(this)!!), profilePicture)
-            prefs.setProfileAvatarId(SecureRandom().nextInt() )
+            prefs.setProfileAvatarId(SECURE_RANDOM.nextInt() )
             ProfileKeyUtil.setEncodedProfileKey(this, encodedProfileKey)
 
             // Attempt to grab the details we require to update the profile picture
