@@ -69,6 +69,7 @@ class DebugMenuViewModel @Inject constructor(
 
         // show a loading state
         _uiState.value = _uiState.value.copy(
+            currentEnvironment = env.label,
             showEnvironmentWarningDialog = false,
             showEnvironmentLoadingDialog = true
         )
