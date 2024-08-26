@@ -45,6 +45,7 @@ import org.session.libsession.snode.SnodeModule;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.ConfigFactoryUpdateListener;
 import org.session.libsession.utilities.Device;
+import org.session.libsession.utilities.Environment;
 import org.session.libsession.utilities.ProfilePictureUtilities;
 import org.session.libsession.utilities.SSKEnvironment;
 import org.session.libsession.utilities.TextSecurePreferences;
@@ -237,7 +238,8 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         messageNotifier = new OptimizedMessageNotifier(new DefaultMessageNotifier());
         broadcaster = new Broadcaster(this);
         LokiAPIDatabase apiDB = getDatabaseComponent().lokiAPIDatabase();
-        SnodeModule.Companion.configure(apiDB, broadcaster);
+        boolean useTestNet = textSecurePreferences.getEnvironment() == Environment.TEST_NET;
+        SnodeModule.Companion.configure(apiDB, broadcaster, useTestNet);
         initializeExpiringMessageManager();
         initializeTypingStatusRepository();
         initializeTypingStatusSender();
@@ -507,7 +509,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     // Method to clear the local data - returns true on success otherwise false
 
     /**
-     * Clear all local profile data and message history then restart the app after a brief delay.
+     * Clear all local profile data and message history.
      * @return true on success, false otherwise.
      */
     @SuppressLint("ApplySharedPref")
@@ -519,6 +521,16 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
             return false;
         }
         configFactory.keyPairChanged();
+        return true;
+    }
+
+    /**
+     * Clear all local profile data and message history then restart the app after a brief delay.
+     * @return true on success, false otherwise.
+     */
+    @SuppressLint("ApplySharedPref")
+    public boolean clearAllDataAndRestart() {
+        clearAllData();
         Util.runOnMain(() -> new Handler().postDelayed(ApplicationContext.this::restartApplication, 200));
         return true;
     }
