@@ -67,7 +67,7 @@ fun DebugMenu(
                 onDismissRequest = { sendCommand(HideEnvironmentWarningDialog) },
                 title = "Are you sure you want to switch environments?",
                 text = "Changing this setting will result in all conversations and Snode data being cleared...",
-                showCloseButton = false, // display the 'x' button
+                showCloseButton = false, // don't display the 'x' button
                 buttons = listOf(
                     DialogButtonModel(
                         text = GetString(R.string.cancel),
