@@ -101,7 +101,7 @@ public final class ReactionsDialogFragment extends BottomSheetDialogFragment imp
       ViewCompat.setOnApplyWindowInsetsListener(container, (v, insets) -> insets.consumeSystemWindowInsets());
 
       TabLayoutMediator mediator = new TabLayoutMediator(emojiTabs, recipientPagerView, (tab, position) -> {
-        tab.setCustomView(R.layout.reactions_pill);
+        tab.setCustomView(R.layout.reactions_pill_large);
 
         View           customView = Objects.requireNonNull(tab.getCustomView());
         EmojiImageView emoji      = customView.findViewById(R.id.reactions_pill_emoji);
