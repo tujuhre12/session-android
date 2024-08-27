@@ -84,7 +84,9 @@ class EmojiReactionsView : ConstraintLayout, OnTouchListener {
         if (v.tag == null) return false
         val reaction = v.tag as Reaction
         val action = event.action
-        if (action == MotionEvent.ACTION_DOWN) onDown(MessageId(reaction.messageId, reaction.isMms)) else if (action == MotionEvent.ACTION_CANCEL) removeLongPressCallback() else if (action == MotionEvent.ACTION_UP) onUp(reaction)
+        if (action == MotionEvent.ACTION_DOWN) onDown(MessageId(reaction.messageId, reaction.isMms), reaction.emoji)
+        else if (action == MotionEvent.ACTION_CANCEL) removeLongPressCallback()
+        else if (action == MotionEvent.ACTION_UP) onUp(reaction)
         return true
     }
 
@@ -216,12 +218,12 @@ class EmojiReactionsView : ConstraintLayout, OnTouchListener {
         }
     }
 
-    private fun onDown(messageId: MessageId) {
+    private fun onDown(messageId: MessageId, emoji: String?) {
         removeLongPressCallback()
         val newLongPressCallback = Runnable {
             performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
             if (delegate != null) {
-                delegate!!.onReactionLongClicked(messageId)
+                delegate!!.onReactionLongClicked(messageId, emoji)
             }
         }
         longPressCallback = newLongPressCallback
