@@ -8,7 +8,7 @@
         android:layout_gravity="top"
         android:alpha="0.3"
         android:layout_marginHorizontal="@dimen/small_spacing"
-        android:background="?android:textColorTertiary"
+        android:background="?colorDividerBackground"
         android:layout_width="match_parent"
         android:layout_height="1dp"/>
     <LinearLayout android:layout_height="wrap_content"

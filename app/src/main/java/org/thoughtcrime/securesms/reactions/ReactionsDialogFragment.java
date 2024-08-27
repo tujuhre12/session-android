@@ -68,7 +68,6 @@ public final class ReactionsDialogFragment extends BottomSheetDialogFragment imp
 
   @Override
   public void onCreate(@Nullable Bundle savedInstanceState) {
-//    setStyle(DialogFragment.STYLE_NORMAL, R.style.Theme_Session_BottomSheet);
     super.onCreate(savedInstanceState);
   }
 
