@@ -46,11 +46,14 @@ object DateUtils : android.text.format.DateUtils() {
     // We set them as invalid on startup (range is 0..8 and 0..2 respectively) so we only have to
     // retrieve the preference once rather than every time we wish to format a date or time.
     // See: TextSecurePreferences.DATE_FORMAT_PREF and TextSecurePreferences for further details.
+    // Note: For testing you can just set these values to something which isn't -1 and it will
+    // bypass the retrieve-from-pref operation and use the associated format.
     private var userPreferredTimeFormat: Int = -1
-    private var userPreferredDateFormat: Int = -1
+    private var userPreferredDateFormat: Int = 7
 
     // String for the actual date format pattern that `userPreferredDataFormat` equates to - we'll
-    // start it off as a sane default.
+    // start it off as a sane default, and update it to either follow the system or a specific
+    // format as the user desires.
     private var userPreferredDateFormatPattern = "dd/MM/YYYY"
 
     private fun isWithin(millis: Long, span: Long, unit: TimeUnit): Boolean {
@@ -92,9 +95,12 @@ object DateUtils : android.text.format.DateUtils() {
     }
 
     // THIS IS THE METHOD THAT ACTUALLY GETS USED TO GET THE DATE TIME
-    fun getFormattedDateTime(time: Long, template: String, locale: Locale): String {
+    fun getFormattedDateTime(timestamp: Long, template: String, locale: Locale): String {
+
+        Log.w("ACL", "Getting formatted datetime - template is: " + template)
         val localizedPattern = getLocalizedPattern(template, locale)
-        return SimpleDateFormat(localizedPattern, locale).format(Date(time))
+        Log.w("ACL", "Which turns into localizedPattern: " + localizedPattern)
+        return SimpleDateFormat(template, locale).format(Date(timestamp))
     }
 
     // Method to get the user's preferred time format, whether that's 12-hour or 24-hour
@@ -126,8 +132,53 @@ object DateUtils : android.text.format.DateUtils() {
         return if (userPreferredTimeFormat == 1) "hh:mm a" else "HH:mm"
     }
 
+    // Method to take the SimpleDateFormat.getPattern() string and set the user's preferred date format appropriately
+    private fun updateDateFormatSettingsFromPattern(dateFormatPattern: String) {
+        when (dateFormatPattern) {
+            "M/d/yy"     -> { userPreferredDateFormat = 1; userPreferredDateFormatPattern = dateFormatPattern }
+            "d/M/yy"     -> { userPreferredDateFormat = 2; userPreferredDateFormatPattern = dateFormatPattern }
+            "dd/MM/yyyy" -> { userPreferredDateFormat = 3; userPreferredDateFormatPattern = dateFormatPattern }
+            "dd.MM.yyyy" -> { userPreferredDateFormat = 4; userPreferredDateFormatPattern = dateFormatPattern }
+            "dd-MM-yyyy" -> { userPreferredDateFormat = 5; userPreferredDateFormatPattern = dateFormatPattern }
+            "yyyy/M/d"   -> { userPreferredDateFormat = 6; userPreferredDateFormatPattern = dateFormatPattern }
+            "yyyy.M.d"   -> { userPreferredDateFormat = 7; userPreferredDateFormatPattern = dateFormatPattern }
+            "yyyy-M-d"   -> { userPreferredDateFormat = 8; userPreferredDateFormatPattern = dateFormatPattern }
+            else         -> {
+                // Sane fallback for unrecognised date format patten
+                userPreferredDateFormat = 3; userPreferredDateFormatPattern = "dd/MM/yyyy"
+            }
+        }
+    }
+
+    // Method to take an int from the user's dateFormatPref and update our date format pattern accordingly
+    private fun updateDateFormatSettingsFromInt(dateFormatPrefInt: Int) {
+        var mutableDateFormatPrefInt = dateFormatPrefInt
+        // There's probably a more elegant way to do this - but we can't use `.also { }` because
+        // the else block
+        when (mutableDateFormatPrefInt) {
+            1 -> { userPreferredDateFormatPattern = "M/d/yy"     }
+            2 -> { userPreferredDateFormatPattern = "d/M/yy"     }
+            3 -> { userPreferredDateFormatPattern = "dd/MM/yyyy" }
+            4 -> { userPreferredDateFormatPattern = "dd.MM.yyyy" }
+            5 -> { userPreferredDateFormatPattern = "dd-MM-yyyy" }
+            6 -> { userPreferredDateFormatPattern = "yyyy/M/d"   }
+            7 -> { userPreferredDateFormatPattern = "yyyy.M.d"   }
+            8 -> { userPreferredDateFormatPattern = "yyyy-M-d"   }
+            else -> {
+                // Sane fallback for unrecognised date format pattern ("dd/MM/yyyy")
+                Log.w("DateUtils", "Bad dateFormatPrefInt - falling back to dd/MM/yyyy")
+                mutableDateFormatPrefInt = 3 // Because we 'also' update our setting from this!
+                userPreferredDateFormatPattern = "dd/MM/yyyy"
+            }
+        }.also {
+            // Typically we pass in `userPreferredDataFormat` TO this method - but because we perform
+            // sanitisation in the case of a bad value we'll also write a cleaned version back to the var.
+            userPreferredDateFormat = mutableDateFormatPrefInt
+        }
+    }
+
     fun getDisplayFormattedTimeSpanString(c: Context, locale: Locale, timestamp: Long): String {
-        // Note: Date-formats are in TR-35 format.
+        // Note: Date patterns are in TR-35 format.
         // See: https://www.unicode.org/reports/tr35/tr35-dates.html#Date_Format_Patterns
         val t = if (isToday(timestamp)) {
             Log.w("ACL", "Within today")
@@ -149,55 +200,55 @@ object DateUtils : android.text.format.DateUtils() {
             Log.w("ACL", "More than 1 year")
             // If the date is more than a year ago then we get "19 July 2023, 16:19" type format
 
-            // If this is the first run..
+            // If the app has just started..
             if (userPreferredDateFormat == -1) {
                 // ..update our preferred date format (will return -1 if no saved pref).
                 userPreferredDateFormat = TextSecurePreferences.getDateFormatPref(c)
 
-                // If no saved value was written we'll write 0 for "Follow system setting" - this will only run on first install
+                // If we don't have a saved date format pref we'll write 0 for "Follow system setting".
+                // Note: This will only execute on first install & run where the pref doesn't exist.
                 if (userPreferredDateFormat == -1) {
                     userPreferredDateFormat = 0
                     TextSecurePreferences.setDateFormatPref(c, userPreferredDateFormat)
                 }
-
-                // If the preferred date format is "Follow system setting" then we need to find out what the system setting is!
-                if (userPreferredDateFormat == 0) {
-                    val dateFormat = DateFormat.getDateFormat(c)
-
-                    // Check if the DateFormat instance is a SimpleDateFormat
-                    if (dateFormat is SimpleDateFormat) {
-                        val dateFormatPattern = dateFormat.toLocalizedPattern()
-                        Log.w("ACL", "Date pattern: " + dateFormat.toPattern())
-
-                        when (dateFormatPattern) {
-                            "M/d/yy"     -> { userPreferredDateFormat = 1; userPreferredDateFormatPattern = dateFormatPattern }
-                            "d/M/yy"     -> { userPreferredDateFormat = 2; userPreferredDateFormatPattern = dateFormatPattern }
-                            "dd/MM/yyyy" -> { userPreferredDateFormat = 3; userPreferredDateFormatPattern = dateFormatPattern }
-                            "dd.MM.yyyy" -> { userPreferredDateFormat = 4; userPreferredDateFormatPattern = dateFormatPattern }
-                            "dd-MM-yyyy" -> { userPreferredDateFormat = 5; userPreferredDateFormatPattern = dateFormatPattern }
-                            "yyyy/M/d"   -> { userPreferredDateFormat = 6; userPreferredDateFormatPattern = dateFormatPattern }
-                            "yyyy.M.d"   -> { userPreferredDateFormat = 7; userPreferredDateFormatPattern = dateFormatPattern }
-                            "yyyy-M-d"   -> { userPreferredDateFormat = 8; userPreferredDateFormatPattern = dateFormatPattern }
-                            else         -> {
-                                userPreferredDateFormat = 3; userPreferredDateFormatPattern = "dd/MM/yyyy" // Sane fallback
-                            }
-                        }
-                    } else {
-                        // If the dateFormat isn't a SimpleDateFormat from which we can extract a pattern then the best
-                        // we can do is pick a sensible default like dd/MM/YYYY - which equates to option 3 out of our
-                        // available options (see TextSecurePreferences.DATE_FORMAT_PREF for further details).
-                        userPreferredDateFormat = 3
-                        // IMPORTANT: We don't WRITE this to the pref so that "Follow system setting" remains - we just use it while the app is running!
-                    }
-
-                    // Set the time format we'll use to either 24 or 12 hours.
-                    // IMPORTANT: We don't WRITE this to the pref - we just use it while the app is running!
-                    // Note: See TextSecurePreferences.TIME_FORMAT_PREF for further details of available formats.
-                    //userPreferredTimeFormat = if (is24HourFormat) 2 else 1
-                }
             }
 
-            getFormattedDateTime(timestamp, "MMM d " + getHourFormat(c) + ", yyyy", locale)
+            // --- At this point we will always have _some_ preferred date format ---
+
+            // If the preferred date format is "Follow system setting" then we need to find out what the system setting is!
+            if (userPreferredDateFormat == 0) {
+                val dateFormat = DateFormat.getDateFormat(c)
+
+                // Check if the DateFormat instance is a SimpleDateFormat
+                if (dateFormat is SimpleDateFormat) {
+                    val dateFormatPattern = dateFormat.toLocalizedPattern()
+                    Log.w("ACL", "Date pattern: " + dateFormat.toPattern())
+
+                    // System setting has a date format pattern? Cool - let's use it, whatever it might be
+                    userPreferredDateFormatPattern = dateFormatPattern
+
+                    // Update our userPreferredDateFormat & pattern from the system setting
+                    //updateDateFormatSettingsFromPattern(dateFormatPattern)
+                } else {
+                    // If the dateFormat ISN'T a SimpleDateFormat from which we can extract a pattern then the best
+                    // we can do is pick a sensible default like dd/MM/YYYY - which equates to option 3 out of our
+                    // available options (see TextSecurePreferences.DATE_FORMAT_PREF for further details).
+                    userPreferredDateFormat = 3
+                    userPreferredDateFormatPattern = "dd/MM/yyyy"
+                }
+
+                // IMPORTANT: We neverdon't WRITE this to the pref so that "Follow system setting" remains
+                // - we just use it while the app is running!
+
+            } else {
+                // If the user has asked for a specific date format that isn't "Follow system setting"
+                // then update our date formatting settings from that preference.
+                updateDateFormatSettingsFromInt(userPreferredDateFormat)
+            }
+
+            //userPreferredDateFormatPattern
+            getFormattedDateTime(timestamp, userPreferredDateFormatPattern, locale)
+            //getFormattedDateTime(timestamp, "MMM d " + getHourFormat(c) + ", yyyy", locale)
         }
 
         Log.w("ACL", "t is: $t")
