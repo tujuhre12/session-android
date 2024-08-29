@@ -46,9 +46,12 @@ object DateUtils : android.text.format.DateUtils() {
     // We set them as invalid on startup (range is 0..8 and 0..2 respectively) so we only have to
     // retrieve the preference once rather than every time we wish to format a date or time.
     // See: TextSecurePreferences.DATE_FORMAT_PREF and TextSecurePreferences for further details.
+    private var userPreferredTimeFormat: Int = -1
     private var userPreferredDateFormat: Int = -1
-    private var userPreferredTimeFormat: Int = 2//-1
 
+    // String for the actual date format pattern that `userPreferredDataFormat` equates to - we'll
+    // start it off as a sane default.
+    private var userPreferredDateFormatPattern = "dd/MM/YYYY"
 
     private fun isWithin(millis: Long, span: Long, unit: TimeUnit): Boolean {
         return System.currentTimeMillis() - millis <= unit.toMillis(span)
@@ -141,8 +144,7 @@ object DateUtils : android.text.format.DateUtils() {
             getFormattedDateTime(timestamp, "MMM d " + getHourFormat(c), locale)
         } else {
             // NOTE: The `userPreferredDateFormat` is ONLY ever used on dates which exceed one year!
-            // See the Figma linked in SES-360 for details.
-
+            // See the Figma linked in ticket SES-360 for details.
 
             Log.w("ACL", "More than 1 year")
             // If the date is more than a year ago then we get "19 July 2023, 16:19" type format
@@ -155,7 +157,7 @@ object DateUtils : android.text.format.DateUtils() {
                 // If no saved value was written we'll write 0 for "Follow system setting" - this will only run on first install
                 if (userPreferredDateFormat == -1) {
                     userPreferredDateFormat = 0
-                    //TextSecurePreferences.setDateFormatPref(c, userPreferredDateFormat) ACL PUT THIS BACK!!!!!!!!!!!!!!!!!!!!!
+                    TextSecurePreferences.setDateFormatPref(c, userPreferredDateFormat)
                 }
 
                 // If the preferred date format is "Follow system setting" then we need to find out what the system setting is!
@@ -164,19 +166,28 @@ object DateUtils : android.text.format.DateUtils() {
 
                     // Check if the DateFormat instance is a SimpleDateFormat
                     if (dateFormat is SimpleDateFormat) {
+                        val dateFormatPattern = dateFormat.toLocalizedPattern()
                         Log.w("ACL", "Date pattern: " + dateFormat.toPattern())
 
-                        when (dateFormat) {
-                            "M/d/yy" -> FFS
+                        when (dateFormatPattern) {
+                            "M/d/yy"     -> { userPreferredDateFormat = 1; userPreferredDateFormatPattern = dateFormatPattern }
+                            "d/M/yy"     -> { userPreferredDateFormat = 2; userPreferredDateFormatPattern = dateFormatPattern }
+                            "dd/MM/yyyy" -> { userPreferredDateFormat = 3; userPreferredDateFormatPattern = dateFormatPattern }
+                            "dd.MM.yyyy" -> { userPreferredDateFormat = 4; userPreferredDateFormatPattern = dateFormatPattern }
+                            "dd-MM-yyyy" -> { userPreferredDateFormat = 5; userPreferredDateFormatPattern = dateFormatPattern }
+                            "yyyy/M/d"   -> { userPreferredDateFormat = 6; userPreferredDateFormatPattern = dateFormatPattern }
+                            "yyyy.M.d"   -> { userPreferredDateFormat = 7; userPreferredDateFormatPattern = dateFormatPattern }
+                            "yyyy-M-d"   -> { userPreferredDateFormat = 8; userPreferredDateFormatPattern = dateFormatPattern }
+                            else         -> {
+                                userPreferredDateFormat = 3; userPreferredDateFormatPattern = "dd/MM/yyyy" // Sane fallback
+                            }
                         }
-
-
                     } else {
                         // If the dateFormat isn't a SimpleDateFormat from which we can extract a pattern then the best
-                        // we can do is pick a sensible default like DD/MM/YYYY - which equates to option 3 out of our
+                        // we can do is pick a sensible default like dd/MM/YYYY - which equates to option 3 out of our
                         // available options (see TextSecurePreferences.DATE_FORMAT_PREF for further details).
                         userPreferredDateFormat = 3
-                        // IMPORTANT: We don't WRITE this to the pref - we just use it while the app is running!
+                        // IMPORTANT: We don't WRITE this to the pref so that "Follow system setting" remains - we just use it while the app is running!
                     }
 
                     // Set the time format we'll use to either 24 or 12 hours.
