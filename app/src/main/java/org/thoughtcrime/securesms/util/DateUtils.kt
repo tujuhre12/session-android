@@ -176,6 +176,9 @@ object DateUtils : android.text.format.DateUtils() {
             userPreferredDateFormat = mutableDateFormatPrefInt
         }
     }
+    
+    private fun isWithinOneWeek(timestamp: Long) = System.currentTimeMillis() - timestamp <= TimeUnit.DAYS.toMillis(7)
+    private fun isWithinOneYear(timestamp: Long) = System.currentTimeMillis() - timestamp <= TimeUnit.DAYS.toMillis(365)
 
     fun getDisplayFormattedTimeSpanString(c: Context, locale: Locale, timestamp: Long): String {
         // Note: Date patterns are in TR-35 format.
@@ -184,11 +187,11 @@ object DateUtils : android.text.format.DateUtils() {
             Log.w("ACL", "Within today")
             // If it's within the last 24 hours we just give the time in 24-hour format, such as "13:27" for 1:27pm
             getFormattedDateTime(timestamp, getHourFormat(c), locale)
-        } else if (isWithin(timestamp, 6, TimeUnit.DAYS)) {
+        } else if (isWithinOneWeek(timestamp)) {
             Log.w("ACL", "Within week")
             // If it's within the last week we give the day as 3 letters then the time in 24-hour format, such as "Fri 13:27" for Friday 1:27pm
             getFormattedDateTime(timestamp, "EEE " + getHourFormat(c), locale)
-        } else if (isWithin(timestamp, 365, TimeUnit.DAYS)) {
+        } else if (isWithinOneYear(timestamp)) {
             Log.w("ACL", "Within year")
             // If it's within the last year we give the month as 3 letters then the time in 24-hour format, such as "Mar 13:27" for March 1:27pm
             // CAREFUL: "MMM d + getHourFormat(c)" actually turns out to be "8 July, 17:14" etc. - it is DAY-NUMBER and then MONTH (which can go up to 4 chars) - and THEN the time. Wild.
@@ -237,9 +240,9 @@ object DateUtils : android.text.format.DateUtils() {
                     userPreferredDateFormatPattern = "dd/MM/yyyy"
                 }
 
-                // IMPORTANT: We neverdon't WRITE this to the pref so that "Follow system setting" remains
-                // - we just use it while the app is running!
-
+                // IMPORTANT: As we've updated the `userPreferredDataFormat` from "follow system setting" to
+                // "whatever that system setting is" we DO NOT write that back to the pref - we leave the
+                // saved value as is so that it always uses that system settings, whatever that may be.
             } else {
                 // If the user has asked for a specific date format that isn't "Follow system setting"
                 // then update our date formatting settings from that preference.
@@ -278,7 +281,7 @@ object DateUtils : android.text.format.DateUtils() {
         } else if (isYesterday(timestamp)) {
             getLocalisedRelativeDayString(RelativeDay.YESTERDAY)
         } else {
-            getFormattedDateTime(timestamp, "EEE, MMM d, yyyy", locale)
+            getFormattedDateTime(timestamp, userPreferredDateFormatPattern, locale)
         }
     }
 
