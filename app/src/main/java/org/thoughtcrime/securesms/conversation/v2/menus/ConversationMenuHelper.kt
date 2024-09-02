@@ -1,9 +1,11 @@
 package org.thoughtcrime.securesms.conversation.v2.menus
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.AsyncTask
 import android.view.Menu
 import android.view.MenuInflater
@@ -22,9 +24,11 @@ import network.loki.messenger.R
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.leave
 import org.session.libsession.utilities.GroupUtil.doubleDecodeGroupID
+import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
 import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.media.MediaOverviewActivity
@@ -36,6 +40,7 @@ import org.thoughtcrime.securesms.conversation.v2.utilities.NotificationUtils
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.groups.EditClosedGroupActivity
 import org.thoughtcrime.securesms.groups.EditClosedGroupActivity.Companion.groupIDKey
+import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.PrivacySettingsActivity
 import org.thoughtcrime.securesms.service.WebRtcCallService
 import org.thoughtcrime.securesms.showMuteDialog
@@ -162,12 +167,32 @@ object ConversationMenuHelper {
 
     private fun call(context: Context, thread: Recipient) {
 
+        // if the user has not enabled voice/video calls
         if (!TextSecurePreferences.isCallNotificationsEnabled(context)) {
             context.showSessionDialog {
                 title(R.string.callsPermissionsRequired)
                 text(R.string.callsPermissionsRequiredDescription)
                 button(R.string.sessionSettings, R.string.AccessibilityId_sessionSettings) {
                     Intent(context, PrivacySettingsActivity::class.java).let(context::startActivity)
+                }
+                cancelButton()
+            }
+            return
+        }
+        // or if the user has not granted audio/microphone permissions
+        else if (!Permissions.hasAll(context, Manifest.permission.RECORD_AUDIO)) {
+            Log.d("Loki", "Attempted to make a call without audio permissions")
+            context.showSessionDialog {
+                title(R.string.permissionsMicrophone)
+                text(Phrase.from(context, R.string.permissionsMicrophoneAccessRequired)
+                    .put(APP_NAME_KEY, context.getString(R.string.app_name))
+                    .format().toString())
+                button(R.string.sessionSettings, R.string.AccessibilityId_sessionSettings) {
+                    val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    val uri = Uri.fromParts("package", context.packageName, null)
+                    intent.setData(uri)
+                    context.startActivity(intent)
                 }
                 cancelButton()
             }

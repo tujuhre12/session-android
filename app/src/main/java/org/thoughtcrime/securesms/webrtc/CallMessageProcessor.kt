@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.webrtc
 
+import android.Manifest
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
@@ -24,6 +25,7 @@ import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.OFFER
 import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.PRE_OFFER
 import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.PROVISIONAL_ANSWER
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.service.WebRtcCallService
 import org.thoughtcrime.securesms.util.CallNotificationBuilder
 import org.webrtc.IceCandidate
@@ -59,6 +61,7 @@ class CallMessageProcessor(private val context: Context, private val textSecureP
                 Log.i("Loki", "Contact is approved?: $approvedContact")
                 if (!approvedContact && storage.getUserPublicKey() != sender) continue
 
+                // if the user has not enabled voice/video calls
                 if (!textSecurePreferences.isCallNotificationsEnabled()) {
                     Log.d("Loki","Dropping call message if call notifications disabled")
                     if (nextMessage.type != PRE_OFFER) continue
@@ -71,6 +74,12 @@ class CallMessageProcessor(private val context: Context, private val textSecureP
                     } else {
                         insertMissedCall(sender, sentTimestamp)
                     }
+                    continue
+                }
+                // or if the user has not granted audio/microphone permissions
+                else if (!Permissions.hasAll(context, Manifest.permission.RECORD_AUDIO)) {
+                    Log.d("Loki", "Attempted to receive a call without audio permissions")
+                    //TODO display something to let the user know they missed a call due to missing permission
                     continue
                 }
 
