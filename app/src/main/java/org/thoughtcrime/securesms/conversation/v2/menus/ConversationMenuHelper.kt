@@ -31,6 +31,7 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
 import org.session.libsignal.utilities.toHexString
+import org.thoughtcrime.securesms.MissingMicrophonePermissionDialog
 import org.thoughtcrime.securesms.media.MediaOverviewActivity
 import org.thoughtcrime.securesms.ShortcutLauncherActivity
 import org.thoughtcrime.securesms.calls.WebRtcCallActivity
@@ -182,20 +183,7 @@ object ConversationMenuHelper {
         // or if the user has not granted audio/microphone permissions
         else if (!Permissions.hasAll(context, Manifest.permission.RECORD_AUDIO)) {
             Log.d("Loki", "Attempted to make a call without audio permissions")
-            context.showSessionDialog {
-                title(R.string.permissionsMicrophone)
-                text(Phrase.from(context, R.string.permissionsMicrophoneAccessRequired)
-                    .put(APP_NAME_KEY, context.getString(R.string.app_name))
-                    .format().toString())
-                button(R.string.sessionSettings, R.string.AccessibilityId_sessionSettings) {
-                    val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    val uri = Uri.fromParts("package", context.packageName, null)
-                    intent.setData(uri)
-                    context.startActivity(intent)
-                }
-                cancelButton()
-            }
+            MissingMicrophonePermissionDialog.show(context)
             return
         }
 

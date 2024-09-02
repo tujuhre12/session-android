@@ -78,8 +78,10 @@ class CallMessageProcessor(private val context: Context, private val textSecureP
                 }
                 // or if the user has not granted audio/microphone permissions
                 else if (!Permissions.hasAll(context, Manifest.permission.RECORD_AUDIO)) {
+                    if (nextMessage.type != PRE_OFFER) continue
+                    val sentTimestamp = nextMessage.sentTimestamp ?: continue
                     Log.d("Loki", "Attempted to receive a call without audio permissions")
-                    //TODO display something to let the user know they missed a call due to missing permission
+                    insertMissedPermissionCall(sender, sentTimestamp)
                     continue
                 }
 
@@ -109,6 +111,12 @@ class CallMessageProcessor(private val context: Context, private val textSecureP
         } else {
             storage.insertCallMessage(sender, CallMessageType.CALL_MISSED, sentTimestamp)
         }
+    }
+
+    private fun insertMissedPermissionCall(sender: String, sentTimestamp: Long) {
+        val currentUserPublicKey = storage.getUserPublicKey()
+        if (sender == currentUserPublicKey) return // don't insert a "missed" due to call notifications disabled if it's our own sender
+        storage.insertCallMessage(sender, CallMessageType.CALL_MISSED_PERMISSION, sentTimestamp)
     }
 
     private fun incomingHangup(callMessage: CallMessage) {

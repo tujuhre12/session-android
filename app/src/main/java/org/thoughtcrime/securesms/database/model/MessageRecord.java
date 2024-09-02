@@ -134,6 +134,8 @@ public abstract class MessageRecord extends DisplayRecord {
         callType = CallMessageType.CALL_OUTGOING;
       } else if (isMissedCall()) {
         callType = CallMessageType.CALL_MISSED;
+      } else if (isMissedPermissionCall()) {
+        callType = CallMessageType.CALL_MISSED_PERMISSION;
       } else {
         callType = CallMessageType.CALL_FIRST_MISSED;
       }

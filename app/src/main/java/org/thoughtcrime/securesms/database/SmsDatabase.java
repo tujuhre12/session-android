@@ -501,6 +501,8 @@ public class SmsDatabase extends MessagingDatabase {
         return Types.MISSED_CALL_TYPE;
       case CALL_FIRST_MISSED:
         return Types.FIRST_MISSED_CALL_TYPE;
+      case CALL_MISSED_PERMISSION:
+        return Types.MISSED_PERMISSION_CALL_TYPE;
       default:
         return 0;
     }

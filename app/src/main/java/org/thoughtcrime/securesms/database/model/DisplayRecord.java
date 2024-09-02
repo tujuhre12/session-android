@@ -142,6 +142,9 @@ public abstract class DisplayRecord {
   public boolean isFirstMissedCall() {
     return SmsDatabase.Types.isFirstMissedCall(type);
   }
+  public boolean isMissedPermissionCall() {
+    return SmsDatabase.Types.isMissedPermissionCall(type);
+  }
   public boolean isDeleted() { return  MmsSmsColumns.Types.isDeletedMessage(type); }
   public boolean isMessageRequestResponse() { return  MmsSmsColumns.Types.isMessageRequestResponse(type); }
 

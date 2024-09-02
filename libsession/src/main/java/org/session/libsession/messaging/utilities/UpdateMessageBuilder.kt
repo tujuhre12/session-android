@@ -1,7 +1,6 @@
 package org.session.libsession.messaging.utilities
 
 import android.content.Context
-import android.text.SpannableString
 import com.squareup.phrase.Phrase
 import org.session.libsession.R
 import org.session.libsession.messaging.MessagingModuleConfiguration
@@ -9,6 +8,7 @@ import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.messaging.calls.CallMessageType.CALL_FIRST_MISSED
 import org.session.libsession.messaging.calls.CallMessageType.CALL_INCOMING
 import org.session.libsession.messaging.calls.CallMessageType.CALL_MISSED
+import org.session.libsession.messaging.calls.CallMessageType.CALL_MISSED_PERMISSION
 import org.session.libsession.messaging.calls.CallMessageType.CALL_OUTGOING
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage
@@ -24,7 +24,6 @@ import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_K
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.OTHER_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
-import org.session.libsession.utilities.Util
 
 object UpdateMessageBuilder {
     const val TAG = "libsession"
@@ -267,6 +266,7 @@ object UpdateMessageBuilder {
             CALL_INCOMING -> Phrase.from(context, R.string.callsCalledYou).put(NAME_KEY, senderName).format().toString()
             CALL_OUTGOING -> Phrase.from(context, R.string.callsYouCalled).put(NAME_KEY, senderName).format().toString()
             CALL_MISSED, CALL_FIRST_MISSED -> Phrase.from(context, R.string.callsMissedCallFrom).put(NAME_KEY, senderName).format().toString()
+            CALL_MISSED_PERMISSION -> Phrase.from(context, R.string.callsMissedCallFrom).put(NAME_KEY, senderName).format().toString() + "\n" + context.getString(R.string.permissionsMicrophoneDescription)
         }
     }
 }
