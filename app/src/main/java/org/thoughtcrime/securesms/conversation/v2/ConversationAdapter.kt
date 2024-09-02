@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.conversation.v2
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.database.Cursor
@@ -33,7 +34,9 @@ import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import com.bumptech.glide.RequestManager
 import com.squareup.phrase.Phrase
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
+import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.MissingMicrophonePermissionDialog
+import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.PrivacySettingsActivity
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.ui.getSubbedCharSequence
@@ -172,43 +175,6 @@ class ConversationAdapter(
 
             is ControlMessageViewHolder -> {
                 viewHolder.view.bind(message, messageBefore)
-                when {
-                    // Click behaviour for first missed call control message
-                    //todo this behaviour is different than iOS where the control message is always clickable when the call toggle is disabled in the privacy page
-                    message.isCallLog && message.isFirstMissedCall -> {
-                        viewHolder.view.setOnClickListener {
-                            context.showSessionDialog {
-                                val titleTxt = context.getSubbedString(
-                                    R.string.callsMissedCallFrom,
-                                    NAME_KEY to message.individualRecipient.name!!
-                                )
-                                title(titleTxt)
-
-                                val bodyTxt = context.getSubbedCharSequence(
-                                    R.string.callsYouMissedCallPermissions,
-                                    NAME_KEY to message.individualRecipient.name!!
-                                )
-                                text(bodyTxt)
-
-                                button(R.string.sessionSettings) {
-                                    Intent(context, PrivacySettingsActivity::class.java)
-                                        .let(context::startActivity)
-                                }
-                                cancelButton()
-                            }
-                        }
-                    }
-
-                    // Click behaviour for missed calls due to missing permission
-                    message.isCallLog && message.isMissedPermissionCall -> {
-                        viewHolder.view.setOnClickListener {
-                            MissingMicrophonePermissionDialog.show(context)
-                        }
-                    }
-
-                    // non clickable in other cases
-                    else -> viewHolder.view.setOnClickListener(null)
-                }
             }
         }
     }

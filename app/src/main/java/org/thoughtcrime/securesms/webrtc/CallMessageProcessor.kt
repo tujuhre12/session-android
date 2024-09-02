@@ -62,26 +62,15 @@ class CallMessageProcessor(private val context: Context, private val textSecureP
                 if (!approvedContact && storage.getUserPublicKey() != sender) continue
 
                 // if the user has not enabled voice/video calls
-                if (!textSecurePreferences.isCallNotificationsEnabled()) {
+                // or if the user has not granted audio/microphone permissions
+                if (
+                    !textSecurePreferences.isCallNotificationsEnabled() ||
+                        !Permissions.hasAll(context, Manifest.permission.RECORD_AUDIO)
+                    ) {
                     Log.d("Loki","Dropping call message if call notifications disabled")
                     if (nextMessage.type != PRE_OFFER) continue
                     val sentTimestamp = nextMessage.sentTimestamp ?: continue
-                    if (textSecurePreferences.setShownCallNotification()) {
-                        // first time call notification encountered
-                        val notification = CallNotificationBuilder.getFirstCallNotification(context, sender)
-                        context.getSystemService(NotificationManager::class.java).notify(CallNotificationBuilder.WEBRTC_NOTIFICATION, notification)
-                        insertMissedCall(sender, sentTimestamp, isFirstCall = true)
-                    } else {
-                        insertMissedCall(sender, sentTimestamp)
-                    }
-                    continue
-                }
-                // or if the user has not granted audio/microphone permissions
-                else if (!Permissions.hasAll(context, Manifest.permission.RECORD_AUDIO)) {
-                    if (nextMessage.type != PRE_OFFER) continue
-                    val sentTimestamp = nextMessage.sentTimestamp ?: continue
-                    Log.d("Loki", "Attempted to receive a call without audio permissions")
-                    insertMissedPermissionCall(sender, sentTimestamp)
+                    insertMissedCall(sender, sentTimestamp)
                     continue
                 }
 
@@ -103,20 +92,10 @@ class CallMessageProcessor(private val context: Context, private val textSecureP
         }
     }
 
-    private fun insertMissedCall(sender: String, sentTimestamp: Long, isFirstCall: Boolean = false) {
+    private fun insertMissedCall(sender: String, sentTimestamp: Long) {
         val currentUserPublicKey = storage.getUserPublicKey()
         if (sender == currentUserPublicKey) return // don't insert a "missed" due to call notifications disabled if it's our own sender
-        if (isFirstCall) {
-            storage.insertCallMessage(sender, CallMessageType.CALL_FIRST_MISSED, sentTimestamp)
-        } else {
-            storage.insertCallMessage(sender, CallMessageType.CALL_MISSED, sentTimestamp)
-        }
-    }
-
-    private fun insertMissedPermissionCall(sender: String, sentTimestamp: Long) {
-        val currentUserPublicKey = storage.getUserPublicKey()
-        if (sender == currentUserPublicKey) return // don't insert a "missed" due to call notifications disabled if it's our own sender
-        storage.insertCallMessage(sender, CallMessageType.CALL_MISSED_PERMISSION, sentTimestamp)
+        storage.insertCallMessage(sender, CallMessageType.CALL_MISSED, sentTimestamp)
     }
 
     private fun incomingHangup(callMessage: CallMessage) {
