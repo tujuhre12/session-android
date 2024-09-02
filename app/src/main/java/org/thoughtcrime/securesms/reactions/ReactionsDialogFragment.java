@@ -103,7 +103,9 @@ public final class ReactionsDialogFragment extends BottomSheetDialogFragment imp
 
       ViewCompat.setOnApplyWindowInsetsListener(container, (v, insets) -> insets.consumeSystemWindowInsets());
 
-      TabLayoutMediator mediator = new TabLayoutMediator(emojiTabs, recipientPagerView, (tab, position) -> {
+      TabLayoutMediator mediator = new TabLayoutMediator(
+              emojiTabs, recipientPagerView, true, false,
+              (tab, position) -> {
         tab.setCustomView(R.layout.reactions_pill_large);
 
         View           customView = Objects.requireNonNull(tab.getCustomView());
@@ -141,21 +143,6 @@ public final class ReactionsDialogFragment extends BottomSheetDialogFragment imp
 
   private void setUpRecipientsRecyclerView() {
     recipientsAdapter = new ReactionViewPagerAdapter(this);
-
-    recipientPagerView.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
-      @Override
-      public void onPageSelected(int position) {
-        recipientPagerView.post(() -> recipientsAdapter.enableNestedScrollingForPosition(position));
-      }
-
-      @Override
-      public void onPageScrollStateChanged(int state) {
-        if (state == ViewPager2.SCROLL_STATE_IDLE) {
-          recipientPagerView.requestLayout();
-        }
-      }
-    });
-
     recipientPagerView.setAdapter(recipientsAdapter);
   }
 
