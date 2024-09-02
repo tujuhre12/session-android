@@ -386,7 +386,6 @@
         <item name="mention_candidates_view_background">@color/classic_dark_2</item>
         <item name="scroll_to_bottom_button_background">@color/classic_dark_1</item>
         <item name="scroll_to_bottom_button_border">@color/classic_dark_3</item>
-        <item name="conversation_unread_count_indicator_background">@color/classic_dark_4</item>
         <item name="message_selected">@color/classic_dark_2</item>
     </style>
 
@@ -476,7 +475,6 @@
         <item name="mention_candidates_view_background">?colorCellBackground</item>
         <item name="scroll_to_bottom_button_background">@color/classic_light_4</item>
         <item name="scroll_to_bottom_button_border">@color/classic_light_2</item>
-        <item name="conversation_unread_count_indicator_background">@color/classic_dark_4</item>
         <item name="message_selected">@color/classic_light_4</item>
 
     </style>
@@ -562,7 +560,6 @@
         <item name="mention_candidates_view_background">@color/ocean_dark_2</item>
         <item name="scroll_to_bottom_button_background">@color/ocean_dark_4</item>
         <item name="scroll_to_bottom_button_border">?colorPrimary</item>
-        <item name="conversation_unread_count_indicator_background">@color/ocean_dark_4</item>
         <item name="message_selected">@color/ocean_dark_1</item>
 
     </style>
@@ -649,7 +646,6 @@
         <item name="mention_candidates_view_background">?colorCellBackground</item>
         <item name="scroll_to_bottom_button_background">?input_bar_button_background_opaque</item>
         <item name="scroll_to_bottom_button_border">?input_bar_button_background_opaque_border</item>
-        <item name="conversation_unread_count_indicator_background">?colorAccent</item>
         <item name="conversation_pinned_background_color">?colorCellBackground</item>
         <item name="conversation_unread_background_color">@color/ocean_light_5</item>
         <item name="conversation_pinned_icon_color">?android:textColorSecondary</item>
@@ -732,7 +728,6 @@
         <item name="mention_candidates_view_background">@color/classic_dark_2</item>
         <item name="scroll_to_bottom_button_background">@color/classic_dark_1</item>
         <item name="scroll_to_bottom_button_border">@color/classic_dark_3</item>
-        <item name="conversation_unread_count_indicator_background">@color/classic_dark_4</item>
         <item name="message_selected">@color/classic_dark_2</item>
     </style>
 
