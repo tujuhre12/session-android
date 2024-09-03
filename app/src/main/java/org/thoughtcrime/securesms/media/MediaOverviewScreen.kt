@@ -290,5 +290,5 @@ private fun ActionProgressDialog(
 private val MediaOverviewTab.titleResId: Int
     get() = when (this) {
         MediaOverviewTab.Media -> R.string.media
-        MediaOverviewTab.Documents -> R.string.document
+        MediaOverviewTab.Documents -> R.string.files
     }
