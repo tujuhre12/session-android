@@ -78,9 +78,7 @@ class ControlMessageView : LinearLayout {
             }
             message.isMessageRequestResponse -> {
                 binding.textView.text =  context.getString(R.string.messageRequestsAccepted)
-                binding.root.contentDescription = Phrase.from(context, R.string.messageRequestYouHaveAccepted)
-                    .put(NAME_KEY, message.individualRecipient.name)
-                    .format()
+                binding.root.contentDescription = context.getString(R.string.AccessibilityId_message_request_config_message)
             }
             message.isCallLog -> {
                 val drawable = when {

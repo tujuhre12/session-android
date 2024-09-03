@@ -106,7 +106,7 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
                 attachments.audioSlide != null -> {
                     binding.quoteViewAttachmentPreviewImageView.setImageResource(R.drawable.ic_microphone)
                     binding.quoteViewAttachmentPreviewImageView.isVisible = true
-                    binding.quoteViewBodyTextView.text = resources.getString(R.string.audio)
+                    binding.quoteViewBodyTextView.text = resources.getString(R.string.messageVoice)
                 }
                 attachments.documentSlide != null -> {
                     binding.quoteViewAttachmentPreviewImageView.setImageResource(R.drawable.ic_document_large_light)
