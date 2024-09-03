@@ -95,6 +95,7 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
         const val ON_REPLY = 1
         const val ON_RESEND = 2
         const val ON_DELETE = 3
+        const val ON_COPY = 4
     }
 
     override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
@@ -126,6 +127,7 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
             onReply = if (state.canReply) { { setResultAndFinish(ON_REPLY) } } else null,
             onResend = state.error?.let { { setResultAndFinish(ON_RESEND) } },
             onDelete = { setResultAndFinish(ON_DELETE) },
+            onCopy = { setResultAndFinish(ON_COPY) },
             onClickImage = { viewModel.onClickImage(it) },
             onAttachmentNeedsDownload = viewModel::onAttachmentNeedsDownload,
         )
@@ -147,6 +149,7 @@ fun MessageDetails(
     onReply: (() -> Unit)? = null,
     onResend: (() -> Unit)? = null,
     onDelete: () -> Unit = {},
+    onCopy: () -> Unit = {},
     onClickImage: (Int) -> Unit = {},
     onAttachmentNeedsDownload: (DatabaseAttachment) -> Unit = { _ -> }
 ) {
@@ -183,6 +186,7 @@ fun MessageDetails(
             onReply,
             onResend,
             onDelete,
+            onCopy
         )
     }
 }
@@ -218,7 +222,8 @@ fun CellMetadata(
 fun CellButtons(
     onReply: (() -> Unit)? = null,
     onResend: (() -> Unit)? = null,
-    onDelete: () -> Unit = {},
+    onDelete: () -> Unit,
+    onCopy: () -> Unit
 ) {
     Cell(modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing)) {
         Column {
@@ -230,6 +235,14 @@ fun CellButtons(
                 )
                 Divider()
             }
+
+            LargeItemButton(
+                R.string.copy,
+                R.drawable.ic_copy,
+                onClick = onCopy
+            )
+            Divider()
+
             onResend?.let {
                 LargeItemButton(
                     R.string.resend,
@@ -238,6 +251,7 @@ fun CellButtons(
                 )
                 Divider()
             }
+
             LargeItemButton(
                 R.string.delete,
                 R.drawable.ic_delete,
@@ -319,6 +333,20 @@ fun ExpandButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
     }
 }
 
+@Preview
+@Composable
+fun PreviewMessageDetailsButtons(
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
+) {
+    PreviewTheme(colors) {
+        CellButtons(
+            onReply = {},
+            onResend = {},
+            onDelete = {},
+            onCopy = {}
+        )
+    }
+}
 
 @Preview
 @Composable

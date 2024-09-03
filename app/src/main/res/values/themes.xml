@@ -42,7 +42,7 @@
        <item name="menu_save_icon">@drawable/ic_baseline_save_24</item>
        <item name="menu_photo_library_icon">@drawable/ic_baseline_photo_library_24</item>
        <item name="menu_delete_icon">@drawable/ic_baseline_delete_24</item>
-       <item name="menu_copy_icon">@drawable/ic_baseline_file_copy_24</item>
+       <item name="menu_copy_icon">@drawable/ic_copy</item>
        <item name="menu_reply_icon">@drawable/ic_baseline_reply_24</item>
        <item name="menu_select_icon">@drawable/ic_baseline_check_circle_outline_24</item>
        <item name="menu_selectall_icon">@drawable/ic_baseline_select_all_24</item>
