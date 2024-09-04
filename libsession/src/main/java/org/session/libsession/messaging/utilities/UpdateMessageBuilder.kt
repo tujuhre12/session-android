@@ -74,14 +74,14 @@ object UpdateMessageBuilder {
                             .format()
                     }
                     2 -> {
-                        Phrase.from(context, R.string.groupMemberTwoNew)
+                        Phrase.from(context, R.string.groupMemberNewTwo)
                             .put(NAME_KEY, getSenderName(updateData.updatedMembers.elementAt(0)))
                             .put(OTHER_NAME_KEY, getSenderName(updateData.updatedMembers.elementAt(1)))
                             .format()
                     }
                     else -> {
                         val newMemberCountMinusOne = newMemberCount - 1
-                        Phrase.from(context, R.string.groupMemberMoreNew)
+                        Phrase.from(context, R.string.groupMemberNewMultiple)
                             .put(NAME_KEY, getSenderName(updateData.updatedMembers.elementAt(0)))
                             .put(COUNT_KEY, newMemberCountMinusOne)
                             .format()

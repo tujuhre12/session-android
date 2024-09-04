@@ -404,7 +404,7 @@ class VisibleMessageView : FrameLayout {
                 MessageStatusInfo(
                     R.drawable.ic_delivery_status_sending,
                     context.getColorFromAttr(R.attr.message_status_color),
-                    R.string.messageStatusUploading
+                    R.string.uploading
                 )
             }
         message.isSyncing || message.isResyncing ->

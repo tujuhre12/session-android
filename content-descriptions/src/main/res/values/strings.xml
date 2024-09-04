@@ -156,8 +156,4 @@
     <string name="AccessibilityId_expand">Expand</string>
     <string name="AccessibilityId_mediaMessage">Media message</string>
 
-    <!-- LEGACY DISAPPEARING MESSAGES WILL BE NO MORE & THIS CAN BE REMOVED AFTER ONBOARDING GOES OUT! -ACL -->
-    <!-- Also, this is associated with the string: expiration_type_disappear_legacy                         -->
-    <string name="AccessibilityId_disappearingMessagesLegacy">Original version of disappearing messages.</string>
-
 </resources>

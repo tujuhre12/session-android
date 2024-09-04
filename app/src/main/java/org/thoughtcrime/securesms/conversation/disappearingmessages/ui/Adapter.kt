@@ -23,7 +23,6 @@ fun State.toUiState() = UiState(
 private fun State.typeOptions(): List<ExpiryRadioOption>? = if (typeOptionsHidden) null else {
     buildList {
         add(offTypeOption())
-        if (!isNewConfigEnabled) add(legacyTypeOption())
         if (!isGroup) add(afterReadTypeOption())
         add(afterSendTypeOption())
     }
@@ -33,7 +32,7 @@ private fun State.timeOptions(): List<ExpiryRadioOption>? {
     // Don't show times card if we have a types card, and type is off.
     if (!typeOptionsHidden && expiryType == ExpiryType.NONE) return null
 
-    return nextType.let { type ->
+    return expiryType.let { type ->
         when (type) {
             ExpiryType.AFTER_READ -> afterReadTimes
             else -> afterSendTimes
@@ -48,7 +47,6 @@ private fun State.timeOptions(): List<ExpiryRadioOption>? {
 }
 
 private fun State.offTypeOption() = typeOption(ExpiryType.NONE)
-private fun State.legacyTypeOption() = typeOption(ExpiryType.LEGACY)
 private fun State.afterReadTypeOption() = newTypeOption(ExpiryType.AFTER_READ)
 private fun State.afterSendTypeOption() = newTypeOption(ExpiryType.AFTER_SEND)
 private fun State.newTypeOption(type: ExpiryType) = typeOption(type, isNewConfigEnabled && isSelfAdmin)
@@ -71,7 +69,7 @@ private fun debugModes(isDebug: Boolean, type: ExpiryType) =
     debugTimes(isDebug).map { type.mode(it.inWholeSeconds) }
 
 private fun State.debugOptions(): List<ExpiryRadioOption> =
-    debugModes(showDebugOptions, nextType).map { timeOption(it, subtitle = GetString("for testing purposes")) }
+    debugModes(showDebugOptions, expiryType).map { timeOption(it, subtitle = GetString("for testing purposes")) }
 
 // Standard list of available disappearing message times
 private val afterSendTimes = listOf(12.hours, 1.days, 7.days, 14.days)
@@ -96,6 +94,6 @@ private fun State.timeOption(
     title = title,
     subtitle = subtitle,
     contentDescription = title,
-    selected = mode.duration == expiryMode?.duration,
+    selected = mode.duration == expiryMode.duration,
     enabled = isTimeOptionsEnabled
 )
