@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name" translatable="false">Session</string>
-    <string name="notificationsHeaderMute">Notifications - Muted</string>
     <string name="about">About</string>
     <string name="accept">Accept</string>
     <string name="accountIDCopy">Copy Account ID</string>
@@ -316,8 +315,10 @@
     <string name="disappearingMessagesDisappear">Disappear After {disappearing_messages_type} - {time}</string>
     <string name="disappearingMessagesDisappearAfterRead">Disappear After Read</string>
     <string name="disappearingMessagesDisappearAfterReadDescription">Messages delete after they have been read.</string>
+    <string name="disappearingMessagesDisappearAfterReadState">Disappear After Read - {time}</string>
     <string name="disappearingMessagesDisappearAfterSend">Disappear After Send</string>
     <string name="disappearingMessagesDisappearAfterSendDescription">Messages delete after they have been sent.</string>
+    <string name="disappearingMessagesDisappearAfterSendState">Disappear After Send - {time}</string>
     <string name="disappearingMessagesFollowSetting">Follow Setting</string>
     <string name="disappearingMessagesFollowSettingOff">Messages you send will no longer disappear. Are you sure you want to turn <b>off</b> disappearing messages?</string>
     <string name="disappearingMessagesFollowSettingOn">Set your messages to disappear <b>{time}</b> after they have been <b>{disappearing_messages_type}</b>?</string>
@@ -413,7 +414,7 @@
     <string name="groupInviteYouAndOtherNew"><b>You</b> and <b>{other_name}</b> were invited to join the group.</string>
     <string name="groupLeave">Leave Group</string>
     <string name="groupLeaveDescription">Are you sure you want to leave {group_name}?</string>
-    <string name="groupLeaveDescriptionAdmin">Are you sure you want to leave {group_name}? This will deactivate the group for all members.</string>
+    <string name="groupLeaveDescriptionAdmin">Are you sure you want to leave <b>{group_name}</b>?\n\nThis will remove all members and delete all group content.</string>
     <string name="groupLeaveErrorFailed">Failed to leave {group_name}</string>
     <string name="groupLegacyBanner">Groups have been upgraded, create a new group to upgrade. Old group functionality will be degraded from {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> left the group.</string>
@@ -582,9 +583,9 @@
     <string name="messages">Messages</string>
     <string name="minimize">Minimize</string>
     <string name="next">Next</string>
-    <string name="nicknameDescription">Choose a nickname for {name}. This will appear to you in your one-to-one and group conversations.</string>
+    <string name="nicknameDescription">Choose a nickname for <b>{name}</b>. This will appear to you in your one-to-one and group conversations.</string>
     <string name="nicknameEnter">Enter nickname</string>
-    <string name="nicknameRemove">Remove nickname</string>
+    <string name="nicknameRemove">Remove Nickname</string>
     <string name="nicknameSet">Set Nickname</string>
     <string name="no">No</string>
     <string name="noSuggestions">No Suggestions</string>
@@ -606,6 +607,7 @@
     <string name="notificationsGoToDevice">Go to device notification settings</string>
     <string name="notificationsHeaderAllMessages">Notifications - All</string>
     <string name="notificationsHeaderMentionsOnly">Notifications - Mentions Only</string>
+    <string name="notificationsHeaderMute">Notifications - Muted</string>
     <string name="notificationsIosGroup">{name} to {conversation_name}</string>
     <string name="notificationsIosRestart">You may have received messages while your {device} was restarting.</string>
     <string name="notificationsLedColor">LED color</string>
@@ -682,7 +684,7 @@
     <string name="permissionsKeepInSystemTrayDescription">{app_name} continues running in the background when you close the window</string>
     <string name="permissionsLibrary">{app_name} needs photo library access to continue. You can enable access in the iOS settings.</string>
     <string name="permissionsMicrophone">Microphone</string>
-    <string name="permissionsMicrophoneAccessRequired">{app_name} needs microphone access to send audio messages, but it has been permanently denied. Please continue to app settings, select \"Permissions\", and enable \"Microphone\".</string>
+    <string name="permissionsMicrophoneAccessRequired">{app_name} needs microphone access to send audio messages, but it has been permanently denied. Tap settings -&gt; Permissions, and turn \"Microphone\" on.</string>
     <string name="permissionsMicrophoneAccessRequiredDesktop">You can enable microphone access in {app_name}\'s privacy settings</string>
     <string name="permissionsMicrophoneAccessRequiredIos">{app_name} needs microphone access to make calls and record audio messages.</string>
     <string name="permissionsMicrophoneDescription">Allow access to microphone.</string>

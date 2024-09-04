@@ -275,11 +275,11 @@ object ConversationMenuHelper {
         val message = if (isCurrentUserAdmin) {
             Phrase.from(context, R.string.groupLeaveDescriptionAdmin)
                 .put(GROUP_NAME_KEY, group.title)
-                .format().toString()
+                .format()
         } else {
             Phrase.from(context, R.string.groupLeaveDescription)
                 .put(GROUP_NAME_KEY, group.title)
-                .format().toString()
+                .format()
         }
 
         fun onLeaveFailed() {
