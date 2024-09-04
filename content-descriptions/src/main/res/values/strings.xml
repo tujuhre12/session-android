@@ -66,6 +66,8 @@
     <string name="AccessibilityId_blockConfirm">Confirm block</string>
     <string name="AccessibilityId_unblockConfirm">Confirm unblock</string>
     <string name="AccessibilityId_delete">Delete</string>
+    <string name="AccessibilityId_leave">Leave</string>
+    <string name="AccessibilityId_clear">Clear</string>
     <string name="AccessibilityId_disappearingMessages">Disappearing messages</string>
     <string name="AccessibilityId_enable">Enable</string>
     <string name="AccessibilityId_notificationsMute">Mute notifications</string>
@@ -73,7 +75,7 @@
     <string name="AccessibilityId_search">Search</string>
     <!--  Conversation options for closed group-->
     <string name="AccessibilityId_groupNameNew">Accept name change</string>
-    <string name="AccessibilityId_membersInvite">Add members</string>
+    <string name="AccessibilityId_membersInvite">Invite Contacts</string>
     <string name="AccessibilityId_set">Apply changes</string>
     <string name="AccessibilityId_groupNameChangeCancel">Cancel name change</string>
     <string name="AccessibilityId_contactMentions">Contact mentions</string>

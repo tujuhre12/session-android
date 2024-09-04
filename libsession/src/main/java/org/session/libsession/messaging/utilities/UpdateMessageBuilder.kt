@@ -196,11 +196,19 @@ object UpdateMessageBuilder {
         if (duration <= 0) {
             // ..by you..
             return if (isOutgoing) {
-                context.getText(R.string.disappearingMessagesTurnedOffYou)
+                // in a group
+                if(isGroup) context.getText(R.string.disappearingMessagesTurnedOffYouGroup)
+                // 1on1
+                else context.getText(R.string.disappearingMessagesTurnedOffYou)
             }
             else // ..or by someone else.
             {
-                Phrase.from(context, R.string.disappearingMessagesTurnedOff)
+                Phrase.from(context,
+                    // in a group
+                    if(isGroup) R.string.disappearingMessagesTurnedOffGroup
+                    // 1on1
+                    else R.string.disappearingMessagesTurnedOff
+                )
                     .put(NAME_KEY, senderName)
                     .format()
             }
