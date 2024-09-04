@@ -523,7 +523,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
                 Column {
                     // add the debug menu in non release builds
                     if (BuildConfig.BUILD_TYPE != "release") {
-                        LargeItemButton(DEBUG_MENU, R.drawable.ic_settings) { push<DebugActivity>() }
+                        LargeItemButton("Debug Menu", R.drawable.ic_settings) { push<DebugActivity>() }
                         Divider()
                     }
 
