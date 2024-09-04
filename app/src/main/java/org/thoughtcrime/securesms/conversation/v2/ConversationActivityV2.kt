@@ -118,6 +118,7 @@ import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companio
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_REPLY
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_RESEND
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_COPY
+import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_SAVE
 import org.thoughtcrime.securesms.conversation.v2.dialogs.BlockedDialog
 import org.thoughtcrime.securesms.conversation.v2.dialogs.LinkPreviewDialog
 import org.thoughtcrime.securesms.conversation.v2.input_bar.InputBarButton
@@ -2206,6 +2207,9 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             ON_RESEND -> resendMessage(set)
             ON_DELETE -> deleteMessages(set)
             ON_COPY -> copyMessages(set)
+            ON_SAVE -> {
+                if(message is MmsMessageRecord) saveAttachments(message)
+            }
         }
     }
 

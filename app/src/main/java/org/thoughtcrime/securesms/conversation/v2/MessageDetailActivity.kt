@@ -96,6 +96,7 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
         const val ON_RESEND = 2
         const val ON_DELETE = 3
         const val ON_COPY = 4
+        const val ON_SAVE = 5
     }
 
     override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
@@ -126,6 +127,7 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
             state = state,
             onReply = if (state.canReply) { { setResultAndFinish(ON_REPLY) } } else null,
             onResend = state.error?.let { { setResultAndFinish(ON_RESEND) } },
+            onSave = if(state.mmsRecord != null) { { setResultAndFinish(ON_SAVE) } } else null,
             onDelete = { setResultAndFinish(ON_DELETE) },
             onCopy = { setResultAndFinish(ON_COPY) },
             onClickImage = { viewModel.onClickImage(it) },
@@ -148,6 +150,7 @@ fun MessageDetails(
     state: MessageDetailsState,
     onReply: (() -> Unit)? = null,
     onResend: (() -> Unit)? = null,
+    onSave: (() -> Unit)? = null,
     onDelete: () -> Unit = {},
     onCopy: () -> Unit = {},
     onClickImage: (Int) -> Unit = {},
@@ -183,10 +186,11 @@ fun MessageDetails(
         state.nonImageAttachmentFileDetails?.let { FileDetails(it) }
         CellMetadata(state)
         CellButtons(
-            onReply,
-            onResend,
-            onDelete,
-            onCopy
+            onReply = onReply,
+            onResend = onResend,
+            onSave = onSave,
+            onDelete = onDelete,
+            onCopy = onCopy
         )
     }
 }
@@ -222,6 +226,7 @@ fun CellMetadata(
 fun CellButtons(
     onReply: (() -> Unit)? = null,
     onResend: (() -> Unit)? = null,
+    onSave: (() -> Unit)? = null,
     onDelete: () -> Unit,
     onCopy: () -> Unit
 ) {
@@ -242,6 +247,15 @@ fun CellButtons(
                 onClick = onCopy
             )
             Divider()
+
+            onSave?.let {
+                LargeItemButton(
+                    R.string.save,
+                    R.drawable.ic_baseline_save_24,
+                    onClick = it
+                )
+                Divider()
+            }
 
             onResend?.let {
                 LargeItemButton(
@@ -342,6 +356,7 @@ fun PreviewMessageDetailsButtons(
         CellButtons(
             onReply = {},
             onResend = {},
+            onSave = {},
             onDelete = {},
             onCopy = {}
         )
