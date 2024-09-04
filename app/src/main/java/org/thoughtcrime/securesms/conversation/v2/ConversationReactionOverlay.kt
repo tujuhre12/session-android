@@ -213,7 +213,7 @@ class ConversationReactionOverlay : FrameLayout {
                         endY = backgroundView.height + menuPadding + reactionBarTopPadding
                     }
                 } else {
-                    endY = overlayHeight - contextMenu.getMaxHeight() - menuPadding - conversationItemSnapshot.height
+                    endY = overlayHeight - contextMenu.getMaxHeight() - 2*menuPadding - conversationItemSnapshot.height
                     reactionBarBackgroundY = endY - reactionBarHeight - menuPadding
                 }
                 endApparentTop = endY
