@@ -32,7 +32,7 @@ private fun State.timeOptions(): List<ExpiryRadioOption>? {
     // Don't show times card if we have a types card, and type is off.
     if (!typeOptionsHidden && expiryType == ExpiryType.NONE) return null
 
-    return expiryType.let { type ->
+    return nextType.let { type ->
         when (type) {
             ExpiryType.AFTER_READ -> afterReadTimes
             else -> afterSendTimes
@@ -69,7 +69,7 @@ private fun debugModes(isDebug: Boolean, type: ExpiryType) =
     debugTimes(isDebug).map { type.mode(it.inWholeSeconds) }
 
 private fun State.debugOptions(): List<ExpiryRadioOption> =
-    debugModes(showDebugOptions, expiryType).map { timeOption(it, subtitle = GetString("for testing purposes")) }
+    debugModes(showDebugOptions, nextType).map { timeOption(it, subtitle = GetString("for testing purposes")) }
 
 // Standard list of available disappearing message times
 private val afterSendTimes = listOf(12.hours, 1.days, 7.days, 14.days)
@@ -94,6 +94,6 @@ private fun State.timeOption(
     title = title,
     subtitle = subtitle,
     contentDescription = title,
-    selected = mode.duration == expiryMode.duration,
+    selected = mode.duration == expiryMode?.duration,
     enabled = isTimeOptionsEnabled
 )

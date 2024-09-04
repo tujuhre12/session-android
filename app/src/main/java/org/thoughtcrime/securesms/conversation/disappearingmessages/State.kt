@@ -18,7 +18,7 @@ data class State(
     val isSelfAdmin: Boolean = true,
     val address: Address? = null,
     val isNoteToSelf: Boolean = false,
-    val expiryMode: ExpiryMode = ExpiryMode.NONE,
+    val expiryMode: ExpiryMode? = null,
     val isNewConfigEnabled: Boolean = true,
     val persistedMode: ExpiryMode? = null,
     val showDebugOptions: Boolean = false
@@ -30,8 +30,13 @@ data class State(
 
     val typeOptionsHidden get() = isNoteToSelf || (isGroup && isNewConfigEnabled)
 
-    val duration get() = expiryMode.duration
-    val expiryType get() = expiryMode.type
+    val nextType get() = when {
+        expiryType == ExpiryType.AFTER_READ -> ExpiryType.AFTER_READ
+        else -> ExpiryType.AFTER_SEND
+    }
+
+    val duration get() = expiryMode?.duration
+    val expiryType get() = expiryMode?.type
 
     val isTimeOptionsEnabled = isNoteToSelf || isSelfAdmin && isNewConfigEnabled
 }
