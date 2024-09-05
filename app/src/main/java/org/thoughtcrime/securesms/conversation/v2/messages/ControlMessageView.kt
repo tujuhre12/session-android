@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.conversation.v2.messages
 
 import android.content.Context
 import android.util.AttributeSet
+import android.util.Log
 import android.view.LayoutInflater
 import android.widget.LinearLayout
 import androidx.core.content.res.ResourcesCompat
@@ -17,10 +18,12 @@ import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
+import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessages
 import org.thoughtcrime.securesms.conversation.disappearingmessages.expiryMode
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
+import org.thoughtcrime.securesms.ui.getSubbedCharSequence
 
 @AndroidEntryPoint
 class ControlMessageView : LinearLayout {
@@ -77,7 +80,18 @@ class ControlMessageView : LinearLayout {
                 }
             }
             message.isMessageRequestResponse -> {
-                binding.textView.text =  context.getString(R.string.messageRequestsAccepted)
+                val msgRecipient = message.recipient.address.serialize()
+                val me = TextSecurePreferences.getLocalNumber(context)
+                binding.textView.text =  if(me == msgRecipient) { // you accepted the user's request
+                    val threadRecipient = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(message.threadId)
+                    context.getSubbedCharSequence(
+                        R.string.messageRequestYouHaveAccepted,
+                        NAME_KEY to (threadRecipient?.name ?: "")
+                    )
+                } else { // they accepted your request
+                    context.getString(R.string.messageRequestsAccepted)
+                }
+
                 binding.root.contentDescription = context.getString(R.string.AccessibilityId_message_request_config_message)
             }
             message.isCallLog -> {
