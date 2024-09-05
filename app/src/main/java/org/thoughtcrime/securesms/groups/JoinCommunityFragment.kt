@@ -37,6 +37,8 @@ class JoinCommunityFragment : Fragment() {
 
     lateinit var delegate: StartConversationDelegate
 
+    var lastUrl: String? = null
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -66,45 +68,71 @@ class JoinCommunityFragment : Fragment() {
         }
 
         fun joinCommunityIfPossible(url: String) {
-            val openGroup = try {
-                OpenGroupUrlParser.parseUrl(url)
-            } catch (e: OpenGroupUrlParser.Error) {
-                when (e) {
-                    is OpenGroupUrlParser.Error.MalformedURL, OpenGroupUrlParser.Error.NoRoom -> {
-                        return Toast.makeText(activity, context?.resources?.getString(R.string.communityJoinError), Toast.LENGTH_SHORT).show()
-                    }
-                    is OpenGroupUrlParser.Error.InvalidPublicKey, OpenGroupUrlParser.Error.NoPublicKey -> {
-                        return Toast.makeText(activity, R.string.communityEnterUrlErrorInvalidDescription, Toast.LENGTH_SHORT).show()
+            if(lastUrl == url) return
+            lastUrl = url
+
+            lifecycleScope.launch(Dispatchers.Main) {
+                val openGroup = try {
+                    OpenGroupUrlParser.parseUrl(url)
+                } catch (e: OpenGroupUrlParser.Error) {
+                    when (e) {
+                        is OpenGroupUrlParser.Error.MalformedURL, OpenGroupUrlParser.Error.NoRoom -> {
+                            return@launch Toast.makeText(
+                                activity,
+                                context?.resources?.getString(R.string.communityJoinError),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+
+                        is OpenGroupUrlParser.Error.InvalidPublicKey, OpenGroupUrlParser.Error.NoPublicKey -> {
+                            return@launch Toast.makeText(
+                                activity,
+                                R.string.communityEnterUrlErrorInvalidDescription,
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
                     }
                 }
-            }
 
-            showLoader()
+                showLoader()
 
-            lifecycleScope.launch(Dispatchers.IO) {
-                try {
-                    val sanitizedServer = openGroup.server.removeSuffix("/")
-                    val openGroupID = "$sanitizedServer.${openGroup.room}"
-                    OpenGroupManager.add(sanitizedServer, openGroup.room, openGroup.serverPublicKey, requireContext())
-                    val storage = MessagingModuleConfiguration.shared.storage
-                    storage.onOpenGroupAdded(sanitizedServer, openGroup.room)
-                    val threadID = GroupManager.getOpenGroupThreadID(openGroupID, requireContext())
-                    val groupID = GroupUtil.getEncodedOpenGroupID(openGroupID.toByteArray())
+                withContext(Dispatchers.IO) {
+                    try {
+                        val sanitizedServer = openGroup.server.removeSuffix("/")
+                        val openGroupID = "$sanitizedServer.${openGroup.room}"
+                        OpenGroupManager.add(
+                            sanitizedServer,
+                            openGroup.room,
+                            openGroup.serverPublicKey,
+                            requireContext()
+                        )
+                        val storage = MessagingModuleConfiguration.shared.storage
+                        storage.onOpenGroupAdded(sanitizedServer, openGroup.room)
+                        val threadID =
+                            GroupManager.getOpenGroupThreadID(openGroupID, requireContext())
+                        val groupID = GroupUtil.getEncodedOpenGroupID(openGroupID.toByteArray())
 
-                    ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(requireContext())
-                    withContext(Dispatchers.Main) {
-                        val recipient = Recipient.from(requireContext(), Address.fromSerialized(groupID), false)
-                        openConversationActivity(requireContext(), threadID, recipient)
-                        delegate.onDialogClosePressed()
+                        ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(
+                            requireContext()
+                        )
+                        withContext(Dispatchers.Main) {
+                            val recipient = Recipient.from(
+                                requireContext(),
+                                Address.fromSerialized(groupID),
+                                false
+                            )
+                            openConversationActivity(requireContext(), threadID, recipient)
+                            delegate.onDialogClosePressed()
+                        }
+                    } catch (e: Exception) {
+                        Log.e("Loki", "Couldn't join community.", e)
+                        withContext(Dispatchers.Main) {
+                            hideLoader()
+                            val txt = Phrase.from(context, R.string.groupErrorJoin)
+                                .put(GROUP_NAME_KEY, url).format().toString()
+                            Toast.makeText(activity, txt, Toast.LENGTH_SHORT).show()
+                        }
                     }
-                } catch (e: Exception) {
-                    Log.e("Loki", "Couldn't join community.", e)
-                    withContext(Dispatchers.Main) {
-                        hideLoader()
-                        val txt = Phrase.from(context, R.string.groupErrorJoin).put(GROUP_NAME_KEY, url).format().toString()
-                        Toast.makeText(activity, txt, Toast.LENGTH_SHORT).show()
-                    }
-                    return@launch
                 }
             }
         }
