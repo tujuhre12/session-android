@@ -18,6 +18,7 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.AUTOPLAY
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOTIFICATIONS_ENABLED
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CLASSIC_DARK
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CLASSIC_LIGHT
+import org.session.libsession.utilities.TextSecurePreferences.Companion.ENVIRONMENT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FOLLOW_SYSTEM_SETTINGS
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HIDE_PASSWORD
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_VACUUM_TIME
@@ -190,6 +191,8 @@ interface TextSecurePreferences {
     fun setHidePassword(value: Boolean)
     fun getLastVersionCheck(): Long
     fun setLastVersionCheck()
+    fun getEnvironment(): Environment
+    fun setEnvironment(value: Environment)
 
     companion object {
         val TAG = TextSecurePreferences::class.simpleName
@@ -277,6 +280,7 @@ interface TextSecurePreferences {
         const val FINGERPRINT_KEY_GENERATED = "fingerprint_key_generated"
         const val SELECTED_ACCENT_COLOR = "selected_accent_color"
         const val LAST_VERSION_CHECK = "pref_last_version_check"
+        const val ENVIRONMENT = "debug_environment"
 
         const val HAS_RECEIVED_LEGACY_CONFIG = "has_received_legacy_config"
         const val HAS_FORCED_NEW_CONFIG = "has_forced_new_config"
@@ -300,6 +304,11 @@ interface TextSecurePreferences {
         const val OCEAN_LIGHT = "ocean.light"
 
         const val ALLOW_MESSAGE_REQUESTS = "libsession.ALLOW_MESSAGE_REQUESTS"
+
+        // Key name for if we've warned the user that saving attachments will allow other apps to access them.
+        // Note: We only ever display this once - and when the user has accepted the warning we never show it again
+        // for the lifetime of the Session installation.
+        const val HAVE_WARNED_USER_ABOUT_SAVING_ATTACHMENTS = "libsession.HAVE_WARNED_USER_ABOUT_SAVING_ATTACHMENTS"
 
         @JvmStatic
         fun getLastConfigurationSyncTime(context: Context): Long {
@@ -981,6 +990,19 @@ interface TextSecurePreferences {
             setBooleanPreference(context, FINGERPRINT_KEY_GENERATED, true)
         }
 
+
+        // ----- Get / set methods for if we have already warned the user that saving attachments will allow other apps to access them -----
+        @JvmStatic
+        fun getHaveWarnedUserAboutSavingAttachments(context: Context): Boolean {
+            return getBooleanPreference(context, HAVE_WARNED_USER_ABOUT_SAVING_ATTACHMENTS, false)
+        }
+
+        @JvmStatic
+        fun setHaveWarnedUserAboutSavingAttachments(context: Context) {
+            setBooleanPreference(context, HAVE_WARNED_USER_ABOUT_SAVING_ATTACHMENTS, true)
+        }
+        // ---------------------------------------------------------------------------------------------------------------------------------
+
         @JvmStatic
         fun clearAll(context: Context) {
             getDefaultSharedPreferences(context).edit().clear().commit()
@@ -1552,6 +1574,17 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setLastVersionCheck() {
         setLongPreference(LAST_VERSION_CHECK, System.currentTimeMillis())
+    }
+
+    override fun getEnvironment(): Environment {
+        val environment = getStringPreference(ENVIRONMENT, null)
+        return if (environment != null) {
+            Environment.valueOf(environment)
+        } else Environment.MAIN_NET
+    }
+
+    override fun setEnvironment(value: Environment) {
+        setStringPreference(ENVIRONMENT, value.name)
     }
 
     override fun setShownCallNotification(): Boolean {

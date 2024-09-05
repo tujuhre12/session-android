@@ -63,7 +63,6 @@ class ClearAllDataDialog : DialogFragment() {
         binding.recyclerView.apply {
             itemAnimator = null
             adapter = optionAdapter
-            addItemDecoration(DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL))
             setHasFixedSize(true)
         }
         optionAdapter.submitList(listOf(device, network))
@@ -93,10 +92,10 @@ class ClearAllDataDialog : DialogFragment() {
 
             when (step) {
                 Steps.INFO_PROMPT -> {
-                    binding.dialogDescriptionText.setText(R.string.dialog_clear_all_data_message)
+                    binding.dialogDescriptionText.setText(R.string.clearDataAllDescription)
                 }
                 Steps.NETWORK_PROMPT -> {
-                    binding.dialogDescriptionText.setText(R.string.dialog_clear_all_data_clear_device_and_network_confirmation)
+                    binding.dialogDescriptionText.text = getString(R.string.clearDeviceAndNetworkConfirm)
                 }
                 Steps.DELETING -> { /* do nothing intentionally */ }
                 Steps.RETRY_LOCAL_DELETE_ONLY_PROMPT -> {
@@ -125,7 +124,7 @@ class ClearAllDataDialog : DialogFragment() {
             }
             return
         }
-        ApplicationContext.getInstance(context).clearAllData().let { success ->
+        ApplicationContext.getInstance(context).clearAllDataAndRestart().let { success ->
             withContext(Main) {
                 if (success) {
                     dismiss()
@@ -162,7 +161,7 @@ class ClearAllDataDialog : DialogFragment() {
                     }
                     else if (deletionResultMap.values.all { it }) {
                         // ..otherwise if the network data deletion was successful proceed to delete the local data as well.
-                        ApplicationContext.getInstance(context).clearAllData()
+                        ApplicationContext.getInstance(context).clearAllDataAndRestart()
                         withContext(Main) { dismiss() }
                     }
                 }
