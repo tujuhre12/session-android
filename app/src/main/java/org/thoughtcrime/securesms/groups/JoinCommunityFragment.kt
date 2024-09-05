@@ -68,6 +68,9 @@ class JoinCommunityFragment : Fragment() {
         }
 
         fun joinCommunityIfPossible(url: String) {
+            // Currently this won't try again on a failed URL but once we rework the whole
+            // fragment into Compose with a ViewModel this won't be an issue anymore as the error
+            // and state will come from Flows.
             if(lastUrl == url) return
             lastUrl = url
 
