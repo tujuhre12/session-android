@@ -163,6 +163,7 @@
     <string name="cameraErrorUnavailable">Camera unavailable.</string>
     <string name="cameraGrantAccess">Grant Camera Access</string>
     <string name="cameraGrantAccessDenied">{app_name} needs camera access to take photos and videos, but it has been permanently denied. Please continue to app settings, select \"Permissions\", and enable \"Camera\".</string>
+    <string name="permissionsCameraDenied">{app_name} needs camera access to take photos and videos, but it has been permanently denied. Tap Settings -> Permissions and turn \"Camera\" on.</string>
     <string name="cameraGrantAccessDescription">{app_name} needs camera access to take photos and videos, or scan QR codes.</string>
     <string name="cameraGrantAccessQr">{app_name} needs camera access to scan QR codes</string>
     <string name="cancel">Cancel</string>

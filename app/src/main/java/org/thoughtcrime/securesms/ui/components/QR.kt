@@ -137,7 +137,7 @@ fun QRScannerScreen(
             AlertDialog(
                 onDismissRequest = { showCameraPermissionDialog = false },
                 title = stringResource(R.string.permissionsRequired),
-                text = stringResource(R.string.cameraGrantAccessDenied), //todo UPDATE TO PROPER STRING !!!!!!!!!!!!!!!!!!!!!!!
+                text = stringResource(R.string.permissionsCameraDenied),
                 buttons = listOf(
                     DialogButtonModel(
                         text = GetString(stringResource(id = R.string.sessionSettings)),

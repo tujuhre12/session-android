@@ -43,7 +43,7 @@ object UpdateMessageBuilder {
             // --- Group created or joined ---
             is UpdateMessageData.Kind.GroupCreation -> {
                 if (!isOutgoing) {
-                    context.getText(R.string.groupInviteYou)
+                    context.getText(R.string.legacyGroupMemberYouNew)
                 } else {
                     "" // We no longer add a string like `disappearingMessagesNewGroup` ("You created a new group") and leave the group with its default empty state
                 }
@@ -69,19 +69,19 @@ object UpdateMessageBuilder {
                         return ""
                     }
                     1 -> {
-                        Phrase.from(context, R.string.groupMemberNew)
+                        Phrase.from(context, R.string.legacyGroupMemberNew)
                             .put(NAME_KEY, getSenderName(updateData.updatedMembers.elementAt(0)))
                             .format()
                     }
                     2 -> {
-                        Phrase.from(context, R.string.groupMemberNewTwo)
+                        Phrase.from(context, R.string.legacyGroupMemberTwoNew)
                             .put(NAME_KEY, getSenderName(updateData.updatedMembers.elementAt(0)))
                             .put(OTHER_NAME_KEY, getSenderName(updateData.updatedMembers.elementAt(1)))
                             .format()
                     }
                     else -> {
                         val newMemberCountMinusOne = newMemberCount - 1
-                        Phrase.from(context, R.string.groupMemberNewMultiple)
+                        Phrase.from(context, R.string.legacyGroupMemberNewMultiple)
                             .put(NAME_KEY, getSenderName(updateData.updatedMembers.elementAt(0)))
                             .put(COUNT_KEY, newMemberCountMinusOne)
                             .format()

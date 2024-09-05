@@ -69,7 +69,7 @@ fun MediaOverviewScreen(
             } else {
                 Toast.makeText(
                     context,
-                    R.string.cameraGrantAccessDenied,
+                    R.string.permissionsCameraDenied,
                     Toast.LENGTH_LONG
                 ).show()
             }

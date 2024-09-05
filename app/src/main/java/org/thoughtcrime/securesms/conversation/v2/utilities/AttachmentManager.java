@@ -313,7 +313,7 @@ public class AttachmentManager {
 
   public void capturePhoto(Activity activity, int requestCode, Recipient recipient) {
 
-    String cameraPermissionDeniedTxt = Phrase.from(context, R.string.cameraGrantAccessDenied)
+    String cameraPermissionDeniedTxt = Phrase.from(context, R.string.permissionsCameraDenied)
             .put(APP_NAME_KEY, context.getString(R.string.app_name))
             .format().toString();
 
@@ -324,7 +324,6 @@ public class AttachmentManager {
     Permissions.with(activity)
         .request(Manifest.permission.CAMERA)
         .withPermanentDenialDialog(cameraPermissionDeniedTxt)
-        .withRationaleDialog(requireCameraPermissionTxt, R.drawable.ic_baseline_photo_camera_24)
         .onAllGranted(() -> {
           Intent captureIntent = MediaSendActivity.buildCameraIntent(activity, recipient);
           if (captureIntent.resolveActivity(activity.getPackageManager()) != null) {
