@@ -65,6 +65,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.components.ProfilePictureView
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.OptionsCardData
@@ -399,22 +400,31 @@ fun Divider(modifier: Modifier = Modifier, startIndent: Dp = 0.dp) {
     )
 }
 
+//TODO This component should be fully rebuilt in Compose at some point ~~
 @Composable
-fun RowScope.Avatar(recipient: Recipient) {
-    Box(
-        modifier = Modifier
-            .width(60.dp)
-            .align(Alignment.CenterVertically)
-    ) {
-        AndroidView(
-            factory = {
-                ProfilePictureView(it).apply { update(recipient) }
-            },
-            modifier = Modifier
-                .width(46.dp)
-                .height(46.dp)
-        )
-    }
+fun Avatar(
+    recipient: Recipient,
+    modifier: Modifier = Modifier
+) {
+    AndroidView(
+        factory = {
+            ProfilePictureView(it).apply { update(recipient) }
+        },
+        modifier = modifier
+    )
+}
+
+@Composable
+fun Avatar(
+    userAddress: Address,
+    modifier: Modifier = Modifier
+) {
+    AndroidView(
+        factory = {
+            ProfilePictureView(it).apply { update(userAddress) }
+        },
+        modifier = modifier
+    )
 }
 
 @Composable

@@ -572,7 +572,7 @@ class ConversationReactionOverlay : FrameLayout {
                 items += ActionItem(R.attr.menu_save_icon,
                             R.string.save,
                             { handleActionItemClicked(Action.DOWNLOAD) },
-                            R.string.AccessibilityId_save
+                            R.string.AccessibilityId_saveAttachment
                 )
             }
         }

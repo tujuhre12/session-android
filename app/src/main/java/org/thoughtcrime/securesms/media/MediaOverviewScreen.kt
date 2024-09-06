@@ -34,7 +34,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
@@ -232,7 +231,7 @@ private fun SaveAttachmentWarningDialog(
         title = context.getString(R.string.warning),
         text = context.resources.getString(R.string.attachmentsWarning),
         buttons = listOf(
-            DialogButtonModel(GetString(R.string.save), GetString(R.string.AccessibilityId_save), color = LocalColors.current.danger, onClick = onAccepted),
+            DialogButtonModel(GetString(R.string.save), GetString(R.string.AccessibilityId_saveAttachment), color = LocalColors.current.danger, onClick = onAccepted),
             DialogButtonModel(GetString(android.R.string.cancel), GetString(R.string.AccessibilityId_cancel), dismissOnClick = true)
         )
     )

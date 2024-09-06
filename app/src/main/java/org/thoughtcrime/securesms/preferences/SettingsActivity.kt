@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.os.Parcelable
@@ -13,38 +14,52 @@ import android.util.SparseArray
 import android.view.ActionMode
 import android.view.Menu
 import android.view.MenuItem
-import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.compose.animation.Crossfade
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
-import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import com.canhub.cropper.CropImage
 import com.canhub.cropper.CropImageContract
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.launch
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivitySettingsBinding
@@ -53,7 +68,6 @@ import nl.komponents.kovenant.ui.alwaysUi
 import nl.komponents.kovenant.ui.failUi
 import nl.komponents.kovenant.ui.successUi
 import org.session.libsession.avatars.AvatarHelper
-import org.session.libsession.avatars.ProfileContactPhoto
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.SnodeAPI
@@ -63,34 +77,36 @@ import org.session.libsession.utilities.ProfilePictureUtilities
 import org.session.libsession.utilities.SSKEnvironment.ProfileManagerProtocol
 import org.session.libsession.utilities.StringSubstitutionConstants.VERSION_KEY
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Util.SECURE_RANDOM
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.avatar.AvatarSelection
-import org.thoughtcrime.securesms.components.ProfilePictureView
 import org.thoughtcrime.securesms.debugmenu.DebugActivity
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.home.PathActivity
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
 import org.thoughtcrime.securesms.permissions.Permissions
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.*
 import org.thoughtcrime.securesms.preferences.appearance.AppearanceSettingsActivity
-import org.thoughtcrime.securesms.profiles.ProfileMediaConstraints
 import org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity
-import org.thoughtcrime.securesms.showSessionDialog
+import org.thoughtcrime.securesms.ui.AlertDialog
+import org.thoughtcrime.securesms.ui.Avatar
 import org.thoughtcrime.securesms.ui.Cell
+import org.thoughtcrime.securesms.ui.DialogButtonModel
 import org.thoughtcrime.securesms.ui.Divider
+import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LargeItemButton
 import org.thoughtcrime.securesms.ui.LargeItemButtonWithDrawable
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineCopyButton
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.setThemedContent
+import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
+import org.thoughtcrime.securesms.ui.theme.PreviewTheme
+import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
+import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
-import org.thoughtcrime.securesms.util.BitmapDecodingException
-import org.thoughtcrime.securesms.util.BitmapUtil
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 import org.thoughtcrime.securesms.util.NetworkUtils
 import org.thoughtcrime.securesms.util.push
@@ -106,41 +122,14 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
     @Inject
     lateinit var prefs: TextSecurePreferences
 
+    private val viewModel: SettingsViewModel by viewModels()
+
     private lateinit var binding: ActivitySettingsBinding
     private var displayNameEditActionMode: ActionMode? = null
         set(value) { field = value; handleDisplayNameEditActionModeChanged() }
-    private var tempFile: File? = null
-
-    private val hexEncodedPublicKey: String get() = TextSecurePreferences.getLocalNumber(this)!!
 
     private val onAvatarCropped = registerForActivityResult(CropImageContract()) { result ->
-        when {
-            result.isSuccessful -> {
-                Log.i(TAG, result.getUriFilePath(this).toString())
-
-                lifecycleScope.launch(Dispatchers.IO) {
-                    try {
-                        val profilePictureToBeUploaded =
-                            BitmapUtil.createScaledBytes(
-                                this@SettingsActivity,
-                                result.getUriFilePath(this@SettingsActivity).toString(),
-                                ProfileMediaConstraints()
-                            ).bitmap
-                        launch(Dispatchers.Main) {
-                            updateProfilePicture(profilePictureToBeUploaded)
-                        }
-                    } catch (e: BitmapDecodingException) {
-                        Log.e(TAG, e)
-                    }
-                }
-            }
-            result is CropImage.CancelledResult -> {
-                Log.i(TAG, "Cropping image was cancelled by the user")
-            }
-            else -> {
-                Log.e(TAG, "Cropping image failed")
-            }
-        }
+        viewModel.onAvatarPicked(result)
     }
 
     private val onPickImage = registerForActivityResult(
@@ -149,11 +138,13 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
         if (result.resultCode != Activity.RESULT_OK) return@registerForActivityResult
 
         val outputFile = Uri.fromFile(File(cacheDir, "cropped"))
-        val inputFile: Uri? = result.data?.data ?: tempFile?.let(Uri::fromFile)
+        val inputFile: Uri? = result.data?.data ?: viewModel.getTempFile()?.let(Uri::fromFile)
         cropImage(inputFile, outputFile)
     }
 
     private val avatarSelection = AvatarSelection(this, onAvatarCropped, onPickImage)
+
+    private var showAvatarDialog: Boolean by mutableStateOf(false)
 
     companion object {
         private const val SCROLL_STATE = "SCROLL_STATE"
@@ -167,17 +158,37 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
 
         // set the toolbar icon to a close icon
         supportActionBar?.setHomeAsUpIndicator(R.drawable.ic_baseline_close_24)
+
+        // set the compose dialog content
+        binding.avatarDialog.setThemedContent {
+            if(showAvatarDialog){
+                AvatarDialogContainer(
+                    saveAvatar = {
+                        //todo TEMPORARY !!!!!!!!!!!!!!!!!!!!
+                        (viewModel.avatarDialogState.value as? TempAvatar)?.let{ updateProfilePicture(it.data) }
+                    },
+                    removeAvatar = ::removeProfilePicture,
+                    startAvatarSelection = ::startAvatarSelection
+                )
+            }
+        }
     }
 
     override fun onStart() {
         super.onStart()
 
         binding.run {
-            setupProfilePictureView(profilePictureView)
-            profilePictureView.setOnClickListener { showEditProfilePictureUI() }
+            profilePictureView.apply {
+                publicKey = viewModel.hexEncodedPublicKey
+                displayName = viewModel.getDisplayName()
+                update()
+            }
+            profilePictureView.setOnClickListener {
+                showAvatarDialog = true
+            }
             ctnGroupNameSection.setOnClickListener { startActionMode(DisplayNameEditActionModeCallback()) }
-            btnGroupNameDisplay.text = getDisplayName()
-            publicKeyTextView.text = hexEncodedPublicKey
+            btnGroupNameDisplay.text = viewModel.getDisplayName()
+            publicKeyTextView.text = viewModel.hexEncodedPublicKey
             val gitCommitFirstSixChars = BuildConfig.GIT_HASH.take(6)
             val environment: String = if(BuildConfig.BUILD_TYPE == "release") "" else " - ${prefs.getEnvironment().label}"
             val versionDetails = " ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE} - $gitCommitFirstSixChars) $environment"
@@ -193,17 +204,6 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
     override fun finish() {
         super.finish()
         overridePendingTransition(R.anim.fade_scale_in, R.anim.slide_to_bottom)
-    }
-
-    private fun getDisplayName(): String =
-        TextSecurePreferences.getProfileName(this) ?: truncateIdForDisplay(hexEncodedPublicKey)
-
-    private fun setupProfilePictureView(view: ProfilePictureView) {
-        view.apply {
-            publicKey = hexEncodedPublicKey
-            displayName = getDisplayName()
-            update()
-        }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -310,6 +310,29 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
         return updateWasSuccessful
     }
 
+//    private fun createAvatarDialog(){
+//        if (avatarDialog != null) return
+//
+//        avatarDialog = SettingsAvatarDialog(
+//            userKey = viewModel.hexEncodedPublicKey,
+//            userName = viewModel.getDisplayName(),
+//            startAvatarSelection = ::startAvatarSelection,
+//            saveAvatar = {
+//                viewModel.temporaryAvatar.value?.let{ updateProfilePicture(it) }
+//            },
+//            removeAvatar = ::removeProfilePicture
+//        )
+//
+//        updateAvatarDialogImage(viewModel.temporaryAvatar.value)
+//    }
+
+//    private fun updateAvatarDialogImage(temporaryAvatar: ByteArray?){
+//        avatarDialog?.update(
+//            temporaryAvatar = temporaryAvatar,
+//            hasUserAvatar = viewModel.hasAvatar()
+//        )
+//    }
+
     // Helper method used by updateProfilePicture and removeProfilePicture to sync it online
     private fun syncProfilePicture(profilePicture: ByteArray, onFail: () -> Unit) {
         binding.loader.isVisible = true
@@ -415,39 +438,16 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
         return updateDisplayName(displayName)
     }
 
-    private fun showEditProfilePictureUI() {
-        showSessionDialog {
-            title(R.string.profileDisplayPictureSet)
-            view(R.layout.dialog_change_avatar)
-
-            // Note: This is the only instance in a dialog where the "Save" button is not a `dangerButton`
-            button(R.string.save) { startAvatarSelection() }
-
-            if (prefs.getProfileAvatarId() != 0) {
-                button(R.string.remove) { removeProfilePicture() }
-            }
-            cancelButton()
-        }.apply {
-            val profilePic = findViewById<ProfilePictureView>(R.id.profile_picture_view)
-                ?.also(::setupProfilePictureView)
-
-            val pictureIcon = findViewById<View>(R.id.ic_pictures)
-
-            val recipient = Recipient.from(context, Address.fromSerialized(hexEncodedPublicKey), false)
-
-            val photoSet = (recipient.contactPhoto as ProfileContactPhoto).avatarObject !in setOf("0", "")
-
-            profilePic?.isVisible = photoSet
-            pictureIcon?.isVisible = !photoSet
-        }
-    }
-
     private fun startAvatarSelection() {
         // Ask for an optional camera permission.
         Permissions.with(this)
             .request(Manifest.permission.CAMERA)
             .onAnyResult {
-                tempFile = avatarSelection.startAvatarSelection( false, true)
+                avatarSelection.startAvatarSelection(
+                    includeClear = false,
+                    attemptToIncludeCamera = true,
+                    createTempFile = viewModel::createTempFile
+                )
             }
             .execute()
     }
@@ -572,6 +572,124 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
                     ) { ClearAllDataDialog().show(supportFragmentManager, "Clear All Data Dialog") }
                 }
             }
+        }
+    }
+
+    @Composable
+    fun AvatarDialogContainer(
+        startAvatarSelection: ()->Unit,
+        saveAvatar: ()->Unit,
+        removeAvatar: ()->Unit
+    ){
+        val state by viewModel.avatarDialogState.collectAsState()
+
+        AvatarDialog(
+            state = state,
+            startAvatarSelection = startAvatarSelection,
+            saveAvatar = saveAvatar,
+            removeAvatar = removeAvatar
+        )
+    }
+
+    @Composable
+    fun AvatarDialog(
+        state: SettingsViewModel.AvatarDialogState,
+        startAvatarSelection: ()->Unit,
+        saveAvatar: ()->Unit,
+        removeAvatar: ()->Unit
+    ){
+        AlertDialog(
+            onDismissRequest = {
+                viewModel.onAvatarDialogDismissed()
+                showAvatarDialog = false
+            },
+            title = stringResource(R.string.profileDisplayPictureSet),
+            content = {
+                Box(
+                    modifier = Modifier
+                        .padding(top = LocalDimensions.current.smallSpacing)
+
+                        .size(dimensionResource(id = R.dimen.large_profile_picture_size))
+                        .clickable {
+                            startAvatarSelection()
+                        }
+                        .background(
+                            shape = CircleShape,
+                            color = LocalColors.current.backgroundBubbleReceived,
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    when(val s = state){
+                        // user avatar
+                        is UserAvatar -> {
+                            Avatar(userAddress = s.address)
+                        }
+
+                        // temporary image
+                        is TempAvatar -> {
+                            Image(
+                                modifier = Modifier.size(dimensionResource(id = R.dimen.large_profile_picture_size))
+                                    .clip(shape = CircleShape,),
+                                bitmap = BitmapFactory.decodeByteArray(s.data, 0, s.data.size).asImageBitmap(),
+                                contentDescription = null
+                            )
+                        }
+
+                        // empty state
+                        else -> {
+                            Image(
+                                modifier = Modifier.align(Alignment.Center),
+                                painter = painterResource(id = R.drawable.ic_pictures),
+                                contentDescription = null,
+                                colorFilter = ColorFilter.tint(LocalColors.current.textSecondary)
+                            )
+                        }
+                    }
+
+                    Image(
+                        modifier = Modifier
+                            .size(LocalDimensions.current.spacing)
+                            .background(
+                                shape = CircleShape,
+                                color = LocalColors.current.primary
+                            )
+                            .padding(LocalDimensions.current.xxxsSpacing)
+                            .align(Alignment.BottomEnd)
+                        ,
+                        painter = painterResource(id = R.drawable.ic_plus),
+                        contentDescription = null,
+                        colorFilter = ColorFilter.tint(Color.Black)
+                    )
+                }
+            },
+            showCloseButton = true, // display the 'x' button
+            buttons = listOf(
+                DialogButtonModel(
+                    text = GetString(R.string.save),
+                    contentDescription = GetString(R.string.AccessibilityId_save),
+                    onClick = saveAvatar
+                ),
+                DialogButtonModel(
+                    text = GetString(R.string.remove),
+                    contentDescription = GetString(R.string.AccessibilityId_remove),
+                    onClick = removeAvatar
+                )
+            )
+        )
+    }
+
+    @Preview
+    @Composable
+    fun PreviewAvatarDialog(
+        @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
+    ){
+        PreviewTheme(colors) {
+            AvatarDialog(
+                state = NoAvatar,
+                startAvatarSelection = {},
+                saveAvatar = {},
+                removeAvatar = {}
+            )
         }
     }
 }

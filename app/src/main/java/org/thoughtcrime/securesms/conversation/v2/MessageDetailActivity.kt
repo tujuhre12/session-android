@@ -18,9 +18,11 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.pager.HorizontalPager
@@ -46,6 +48,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
@@ -212,7 +215,15 @@ fun CellMetadata(
                 senderInfo?.let {
                     TitledView(state.fromTitle) {
                         Row {
-                            sender?.let { Avatar(it) }
+                            sender?.let {
+                                Avatar(
+                                    recipient = it,
+                                    modifier = Modifier
+                                        .align(Alignment.CenterVertically)
+                                        .size(46.dp)
+                                )
+                                Spacer(modifier = Modifier.width(LocalDimensions.current.smallSpacing))
+                            }
                             TitledMonospaceText(it)
                         }
                     }
