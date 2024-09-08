@@ -32,10 +32,14 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.squareup.phrase.Phrase;
 import org.session.libsession.utilities.ExpirationUtil;
+import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.database.MmsSmsColumns;
 import org.thoughtcrime.securesms.database.SmsDatabase;
+import org.thoughtcrime.securesms.ui.UtilKt;
+
+import kotlin.Pair;
 import network.loki.messenger.R;
 
 /**
@@ -113,7 +117,7 @@ public class ThreadRecord extends DisplayRecord {
     }
 
     @Override
-    public SpannableString getDisplayBody(@NonNull Context context) {
+    public CharSequence getDisplayBody(@NonNull Context context) {
         if (isGroupUpdateMessage()) {
             return emphasisAdded(context.getString(R.string.groupUpdated));
         } else if (isOpenGroupInvitation()) {
@@ -173,6 +177,15 @@ public class ThreadRecord extends DisplayRecord {
             return emphasisAdded(txt);
 
         } else if (MmsSmsColumns.Types.isMessageRequestResponse(type)) {
+            if (lastMessage.getRecipient().getAddress().serialize().equals(
+                    TextSecurePreferences.getLocalNumber(context))) {
+                return UtilKt.getSubbedCharSequence(
+                        context,
+                        R.string.messageRequestYouHaveAccepted,
+                        new Pair<>(NAME_KEY, getName())
+                );
+            }
+
             return emphasisAdded(context.getString(R.string.messageRequestsAccepted));
         } else if (getCount() == 0) {
             return new SpannableString(context.getString(R.string.messageEmpty));
