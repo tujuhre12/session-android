@@ -23,12 +23,12 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -37,6 +37,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,6 +45,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -51,38 +53,30 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
+import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.canhub.cropper.CropImageContract
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.launch
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivitySettingsBinding
-import network.loki.messenger.libsession_util.util.UserPic
-import nl.komponents.kovenant.ui.alwaysUi
-import nl.komponents.kovenant.ui.failUi
-import nl.komponents.kovenant.ui.successUi
-import org.session.libsession.avatars.AvatarHelper
-import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.snode.OnionRequestAPI
-import org.session.libsession.snode.SnodeAPI
-import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.ProfileKeyUtil
-import org.session.libsession.utilities.ProfilePictureUtilities
 import org.session.libsession.utilities.SSKEnvironment.ProfileManagerProtocol
 import org.session.libsession.utilities.StringSubstitutionConstants.VERSION_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.Util.SECURE_RANDOM
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.avatar.AvatarSelection
 import org.thoughtcrime.securesms.debugmenu.DebugActivity
-import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.home.PathActivity
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
 import org.thoughtcrime.securesms.permissions.Permissions
@@ -97,6 +91,7 @@ import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LargeItemButton
 import org.thoughtcrime.securesms.ui.LargeItemButtonWithDrawable
+import org.thoughtcrime.securesms.ui.components.CircularProgressIndicator
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineCopyButton
 import org.thoughtcrime.securesms.ui.contentDescription
@@ -117,8 +112,6 @@ import javax.inject.Inject
 class SettingsActivity : PassphraseRequiredActionBarActivity() {
     private val TAG = "SettingsActivity"
 
-    @Inject
-    lateinit var configFactory: ConfigFactory
     @Inject
     lateinit var prefs: TextSecurePreferences
 
@@ -163,19 +156,12 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
         binding.avatarDialog.setThemedContent {
             if(showAvatarDialog){
                 AvatarDialogContainer(
-                    saveAvatar = {
-                        //todo TEMPORARY !!!!!!!!!!!!!!!!!!!!
-                        (viewModel.avatarDialogState.value as? TempAvatar)?.let{ updateProfilePicture(it.data) }
-                    },
-                    removeAvatar = ::removeProfilePicture,
+                    saveAvatar = viewModel::saveAvatar,
+                    removeAvatar = viewModel::removeAvatar,
                     startAvatarSelection = ::startAvatarSelection
                 )
             }
         }
-    }
-
-    override fun onStart() {
-        super.onStart()
 
         binding.run {
             profilePictureView.apply {
@@ -184,6 +170,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
                 update()
             }
             profilePictureView.setOnClickListener {
+                binding.avatarDialog.isVisible = true
                 showAvatarDialog = true
             }
             ctnGroupNameSection.setOnClickListener { startActionMode(DisplayNameEditActionModeCallback()) }
@@ -199,6 +186,25 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
         binding.composeView.setThemedContent {
             Buttons()
         }
+
+        lifecycleScope.launch {
+            viewModel.showLoader.collect {
+                binding.loader.isVisible = it
+            }
+        }
+
+        lifecycleScope.launch {
+            viewModel.refreshAvatar.collect {
+                binding.profilePictureView.recycle()
+                binding.profilePictureView.update()
+            }
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+
+        binding.profilePictureView.update()
     }
 
     override fun finish() {
@@ -289,7 +295,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
         } else {
             // if we have a network connection then attempt to update the display name
             TextSecurePreferences.setProfileName(this, displayName)
-            val user = configFactory.user
+            val user = viewModel.getUser()
             if (user == null) {
                 Log.w(TAG, "Cannot update display name - missing user details from configFactory.")
             } else {
@@ -308,112 +314,6 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
 
         binding.loader.isVisible = false
         return updateWasSuccessful
-    }
-
-//    private fun createAvatarDialog(){
-//        if (avatarDialog != null) return
-//
-//        avatarDialog = SettingsAvatarDialog(
-//            userKey = viewModel.hexEncodedPublicKey,
-//            userName = viewModel.getDisplayName(),
-//            startAvatarSelection = ::startAvatarSelection,
-//            saveAvatar = {
-//                viewModel.temporaryAvatar.value?.let{ updateProfilePicture(it) }
-//            },
-//            removeAvatar = ::removeProfilePicture
-//        )
-//
-//        updateAvatarDialogImage(viewModel.temporaryAvatar.value)
-//    }
-
-//    private fun updateAvatarDialogImage(temporaryAvatar: ByteArray?){
-//        avatarDialog?.update(
-//            temporaryAvatar = temporaryAvatar,
-//            hasUserAvatar = viewModel.hasAvatar()
-//        )
-//    }
-
-    // Helper method used by updateProfilePicture and removeProfilePicture to sync it online
-    private fun syncProfilePicture(profilePicture: ByteArray, onFail: () -> Unit) {
-        binding.loader.isVisible = true
-
-        // Grab the profile key and kick of the promise to update the profile picture
-        val encodedProfileKey = ProfileKeyUtil.generateEncodedProfileKey(this)
-        val updateProfilePicturePromise = ProfilePictureUtilities.upload(profilePicture, encodedProfileKey, this)
-
-        // If the online portion of the update succeeded then update the local state
-        updateProfilePicturePromise.successUi {
-
-            // When removing the profile picture the supplied ByteArray is empty so we'll clear the local data
-            if (profilePicture.isEmpty()) {
-                MessagingModuleConfiguration.shared.storage.clearUserPic()
-            }
-
-            val userConfig = configFactory.user
-            AvatarHelper.setAvatar(this, Address.fromSerialized(TextSecurePreferences.getLocalNumber(this)!!), profilePicture)
-            prefs.setProfileAvatarId(SECURE_RANDOM.nextInt() )
-            ProfileKeyUtil.setEncodedProfileKey(this, encodedProfileKey)
-
-            // Attempt to grab the details we require to update the profile picture
-            val url = prefs.getProfilePictureURL()
-            val profileKey = ProfileKeyUtil.getProfileKey(this)
-
-            // If we have a URL and a profile key then set the user's profile picture
-            if (!url.isNullOrEmpty() && profileKey.isNotEmpty()) {
-                userConfig?.setPic(UserPic(url, profileKey))
-            }
-
-            if (userConfig != null && userConfig.needsDump()) {
-                configFactory.persist(userConfig, SnodeAPI.nowWithOffset)
-            }
-
-            ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(this@SettingsActivity)
-
-            // Update our visuals
-            binding.profilePictureView.recycle()
-            binding.profilePictureView.update()
-        }
-
-        // If the sync failed then inform the user
-        updateProfilePicturePromise.failUi { onFail() }
-
-        // Finally, remove the loader animation after we've waited for the attempt to succeed or fail
-        updateProfilePicturePromise.alwaysUi { binding.loader.isVisible = false }
-    }
-
-    private fun updateProfilePicture(profilePicture: ByteArray) {
-
-        val haveNetworkConnection = NetworkUtils.haveValidNetworkConnection(this@SettingsActivity);
-        if (!haveNetworkConnection) {
-            Log.w(TAG, "Cannot update profile picture - no network connection.")
-            Toast.makeText(this@SettingsActivity, R.string.profileErrorUpdate, Toast.LENGTH_LONG).show()
-            return
-        }
-
-        val onFail: () -> Unit = {
-            Log.e(TAG, "Sync failed when uploading profile picture.")
-            Toast.makeText(this@SettingsActivity, R.string.profileErrorUpdate, Toast.LENGTH_LONG).show()
-        }
-
-        syncProfilePicture(profilePicture, onFail)
-    }
-
-    private fun removeProfilePicture() {
-
-        val haveNetworkConnection = NetworkUtils.haveValidNetworkConnection(this@SettingsActivity);
-        if (!haveNetworkConnection) {
-            Log.w(TAG, "Cannot remove profile picture - no network connection.")
-            Toast.makeText(this@SettingsActivity, R.string.profileDisplayPictureRemoveError, Toast.LENGTH_LONG).show()
-            return
-        }
-
-        val onFail: () -> Unit = {
-            Log.e(TAG, "Sync failed when removing profile picture.")
-            Toast.makeText(this@SettingsActivity, R.string.profileDisplayPictureRemoveError, Toast.LENGTH_LONG).show()
-        }
-
-        val emptyProfilePicture = ByteArray(0)
-        syncProfilePicture(emptyProfilePicture, onFail)
     }
     // endregion
 
@@ -605,20 +505,27 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
             },
             title = stringResource(R.string.profileDisplayPictureSet),
             content = {
+                // custom content that has the displayed images
+
+                // main container that control the overall size and adds the rounded bg
                 Box(
                     modifier = Modifier
                         .padding(top = LocalDimensions.current.smallSpacing)
-
                         .size(dimensionResource(id = R.dimen.large_profile_picture_size))
-                        .clickable {
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null // the ripple doesn't look nice as a square with the plus icon on top too
+                        ) {
                             startAvatarSelection()
                         }
+                        .testTag(stringResource(R.string.AccessibilityId_avatarPicker))
                         .background(
                             shape = CircleShape,
                             color = LocalColors.current.backgroundBubbleReceived,
                         ),
                     contentAlignment = Alignment.Center
                 ) {
+                    // the image content will depend on state type
                     when(val s = state){
                         // user avatar
                         is UserAvatar -> {
@@ -646,6 +553,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
                         }
                     }
 
+                    // '+' button that sits atop the custom content
                     Image(
                         modifier = Modifier
                             .size(LocalDimensions.current.spacing)
@@ -667,11 +575,14 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
                 DialogButtonModel(
                     text = GetString(R.string.save),
                     contentDescription = GetString(R.string.AccessibilityId_save),
+                    enabled = state is TempAvatar,
                     onClick = saveAvatar
                 ),
                 DialogButtonModel(
                     text = GetString(R.string.remove),
                     contentDescription = GetString(R.string.AccessibilityId_remove),
+                    enabled = state is UserAvatar || // can remove is the user has an avatar set
+                            (state is TempAvatar && state.hasAvatar),
                     onClick = removeAvatar
                 )
             )

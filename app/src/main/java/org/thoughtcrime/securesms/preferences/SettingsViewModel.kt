@@ -2,9 +2,7 @@ package org.thoughtcrime.securesms.preferences
 
 import android.content.Context
 import android.widget.Toast
-import androidx.core.view.isVisible
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
 import com.canhub.cropper.CropImage
 import com.canhub.cropper.CropImageView
@@ -13,13 +11,13 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.UserPic
-import nl.komponents.kovenant.ui.alwaysUi
-import nl.komponents.kovenant.ui.failUi
-import nl.komponents.kovenant.ui.successUi
 import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.snode.SnodeAPI
@@ -32,6 +30,8 @@ import org.session.libsignal.utilities.ExternalStorageUtil.getImageDir
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.NoExternalStorageException
 import org.session.libsignal.utilities.Util.SECURE_RANDOM
+import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.TempAvatar
 import org.thoughtcrime.securesms.profiles.ProfileMediaConstraints
 import org.thoughtcrime.securesms.util.BitmapDecodingException
 import org.thoughtcrime.securesms.util.BitmapUtil
@@ -44,7 +44,8 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
-    val prefs: TextSecurePreferences
+    private val prefs: TextSecurePreferences,
+    private val configFactory: ConfigFactory
 ) : ViewModel() {
     private val TAG = "SettingsViewModel"
 
@@ -52,11 +53,24 @@ class SettingsViewModel @Inject constructor(
 
     val hexEncodedPublicKey: String get() = prefs.getLocalNumber() ?: ""
 
+    private val userAddress = Address.fromSerialized(hexEncodedPublicKey)
+
     private val _avatarDialogState: MutableStateFlow<AvatarDialogState> = MutableStateFlow(
         getDefaultAvatarDialogState()
     )
     val avatarDialogState: StateFlow<AvatarDialogState>
         get() = _avatarDialogState
+
+    private val _showLoader: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val showLoader: StateFlow<Boolean>
+        get() = _showLoader
+
+    /**
+     * Refreshes the avatar on the main settings page
+     */
+    private val _refreshAvatar: MutableSharedFlow<Unit> = MutableSharedFlow()
+    val refreshAvatar: SharedFlow<Unit>
+        get() = _refreshAvatar.asSharedFlow()
 
     fun getDisplayName(): String =
         prefs.getProfileName() ?: truncateIdForDisplay(hexEncodedPublicKey)
@@ -77,6 +91,8 @@ class SettingsViewModel @Inject constructor(
 
     fun getTempFile() = tempFile
 
+    fun getUser() = configFactory.user
+
     fun onAvatarPicked(result: CropImageView.CropResult) {
         when {
             result.isSuccessful -> {
@@ -93,7 +109,7 @@ class SettingsViewModel @Inject constructor(
 
                         // update dialog with temporary avatar (has not been saved/uploaded yet)
                         _avatarDialogState.value =
-                            AvatarDialogState.TempAvatar(profilePictureToBeUploaded)
+                            AvatarDialogState.TempAvatar(profilePictureToBeUploaded, hasAvatar())
                     } catch (e: BitmapDecodingException) {
                         Log.e(TAG, e)
                     }
@@ -111,105 +127,115 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun onAvatarDialogDismissed() {
-        _avatarDialogState.value =getDefaultAvatarDialogState()
+        _avatarDialogState.value = getDefaultAvatarDialogState()
     }
 
-    fun getDefaultAvatarDialogState() = if (hasAvatar()) AvatarDialogState.UserAvatar(Address.fromSerialized(hexEncodedPublicKey))
+    fun getDefaultAvatarDialogState() = if (hasAvatar()) AvatarDialogState.UserAvatar(userAddress)
     else AvatarDialogState.NoAvatar
 
-    //todo properly close dialog when done and make sure the state is the right one post change
-    //todo make ripple effect round in dialog avatar picker
-    //todo link other states, like making sure we show the actual avatar if there's already one
-    //todo move upload and remove to VM
-    //todo make buttons in dialog disabled
-    //todo clean up the classes I made which aren't used now...
+    fun saveAvatar() {
+        val tempAvatar = (avatarDialogState.value as? TempAvatar)?.data
+            ?: return Toast.makeText(context, R.string.profileErrorUpdate, Toast.LENGTH_LONG).show()
 
-    sealed class AvatarDialogState() {
-        object NoAvatar : AvatarDialogState()
-        data class UserAvatar(val address: Address) : AvatarDialogState()
-        data class TempAvatar(val data: ByteArray) : AvatarDialogState()
-    }
-
-    // Helper method used by updateProfilePicture and removeProfilePicture to sync it online
-    /*private fun syncProfilePicture(profilePicture: ByteArray, onFail: () -> Unit) {
-        binding.loader.isVisible = true
-
-        // Grab the profile key and kick of the promise to update the profile picture
-        val encodedProfileKey = ProfileKeyUtil.generateEncodedProfileKey(this)
-        val updateProfilePicturePromise = ProfilePictureUtilities.upload(profilePicture, encodedProfileKey, this)
-
-        // If the online portion of the update succeeded then update the local state
-        updateProfilePicturePromise.successUi {
-
-            // When removing the profile picture the supplied ByteArray is empty so we'll clear the local data
-            if (profilePicture.isEmpty()) {
-                MessagingModuleConfiguration.shared.storage.clearUserPic()
-            }
-
-            val userConfig = configFactory.user
-            AvatarHelper.setAvatar(this, Address.fromSerialized(TextSecurePreferences.getLocalNumber(this)!!), profilePicture)
-            prefs.setProfileAvatarId(SECURE_RANDOM.nextInt() )
-            ProfileKeyUtil.setEncodedProfileKey(this, encodedProfileKey)
-
-            // Attempt to grab the details we require to update the profile picture
-            val url = prefs.getProfilePictureURL()
-            val profileKey = ProfileKeyUtil.getProfileKey(this)
-
-            // If we have a URL and a profile key then set the user's profile picture
-            if (!url.isNullOrEmpty() && profileKey.isNotEmpty()) {
-                userConfig?.setPic(UserPic(url, profileKey))
-            }
-
-            if (userConfig != null && userConfig.needsDump()) {
-                configFactory.persist(userConfig, SnodeAPI.nowWithOffset)
-            }
-
-            ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(this@SettingsActivity)
-
-            // Update our visuals
-            binding.profilePictureView.recycle()
-            binding.profilePictureView.update()
-        }
-
-        // If the sync failed then inform the user
-        updateProfilePicturePromise.failUi { onFail() }
-
-        // Finally, remove the loader animation after we've waited for the attempt to succeed or fail
-        updateProfilePicturePromise.alwaysUi { binding.loader.isVisible = false }
-    }
-
-    private fun updateProfilePicture(profilePicture: ByteArray) {
-
-        val haveNetworkConnection = NetworkUtils.haveValidNetworkConnection(this@SettingsActivity);
+        val haveNetworkConnection = NetworkUtils.haveValidNetworkConnection(context);
         if (!haveNetworkConnection) {
             Log.w(TAG, "Cannot update profile picture - no network connection.")
-            Toast.makeText(this@SettingsActivity, R.string.profileErrorUpdate, Toast.LENGTH_LONG).show()
+            Toast.makeText(context, R.string.profileErrorUpdate, Toast.LENGTH_LONG).show()
             return
         }
 
         val onFail: () -> Unit = {
             Log.e(TAG, "Sync failed when uploading profile picture.")
-            Toast.makeText(this@SettingsActivity, R.string.profileErrorUpdate, Toast.LENGTH_LONG).show()
+            Toast.makeText(context, R.string.profileErrorUpdate, Toast.LENGTH_LONG).show()
         }
 
-        syncProfilePicture(profilePicture, onFail)
+        syncProfilePicture(tempAvatar, onFail)
     }
 
-    private fun removeProfilePicture() {
 
-        val haveNetworkConnection = NetworkUtils.haveValidNetworkConnection(this@SettingsActivity);
+    fun removeAvatar() {
+        val haveNetworkConnection = NetworkUtils.haveValidNetworkConnection(context);
         if (!haveNetworkConnection) {
             Log.w(TAG, "Cannot remove profile picture - no network connection.")
-            Toast.makeText(this@SettingsActivity, R.string.profileDisplayPictureRemoveError, Toast.LENGTH_LONG).show()
+            Toast.makeText(context, R.string.profileDisplayPictureRemoveError, Toast.LENGTH_LONG).show()
             return
         }
 
         val onFail: () -> Unit = {
             Log.e(TAG, "Sync failed when removing profile picture.")
-            Toast.makeText(this@SettingsActivity, R.string.profileDisplayPictureRemoveError, Toast.LENGTH_LONG).show()
+            Toast.makeText(context, R.string.profileDisplayPictureRemoveError, Toast.LENGTH_LONG).show()
         }
 
         val emptyProfilePicture = ByteArray(0)
         syncProfilePicture(emptyProfilePicture, onFail)
-    }*/
+    }
+
+    // Helper method used by updateProfilePicture and removeProfilePicture to sync it online
+    private fun syncProfilePicture(profilePicture: ByteArray, onFail: () -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            _showLoader.value = true
+
+            try {
+                // Grab the profile key and kick of the promise to update the profile picture
+                val encodedProfileKey = ProfileKeyUtil.generateEncodedProfileKey(context)
+                ProfilePictureUtilities.upload(profilePicture, encodedProfileKey, context)
+
+                // If the online portion of the update succeeded then update the local state
+                val userConfig = configFactory.user
+                AvatarHelper.setAvatar(
+                    context,
+                    Address.fromSerialized(TextSecurePreferences.getLocalNumber(context)!!),
+                    profilePicture
+                )
+
+                // When removing the profile picture the supplied ByteArray is empty so we'll clear the local data
+                if (profilePicture.isEmpty()) {
+                    MessagingModuleConfiguration.shared.storage.clearUserPic()
+
+                    // update dialog state
+                    _avatarDialogState.value = AvatarDialogState.NoAvatar
+                } else {
+                    prefs.setProfileAvatarId(SECURE_RANDOM.nextInt())
+                    ProfileKeyUtil.setEncodedProfileKey(context, encodedProfileKey)
+
+                    // Attempt to grab the details we require to update the profile picture
+                    val url = prefs.getProfilePictureURL()
+                    val profileKey = ProfileKeyUtil.getProfileKey(context)
+
+                    // If we have a URL and a profile key then set the user's profile picture
+                    if (!url.isNullOrEmpty() && profileKey.isNotEmpty()) {
+                        userConfig?.setPic(UserPic(url, profileKey))
+                    }
+
+                    // update dialog state
+                    _avatarDialogState.value = AvatarDialogState.UserAvatar(userAddress)
+                }
+
+                if (userConfig != null && userConfig.needsDump()) {
+                    configFactory.persist(userConfig, SnodeAPI.nowWithOffset)
+                }
+
+                ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(context)
+            } catch (e: Exception){ // If the sync failed then inform the user
+                Log.d(TAG, "Error syncing avatar: $e")
+                withContext(Dispatchers.Main) {
+                    onFail()
+                }
+            }
+
+            // Finally update the main avatar
+            _refreshAvatar.emit(Unit)
+            // And remove the loader animation after we've waited for the attempt to succeed or fail
+            _showLoader.value = false
+        }
+    }
+
+    sealed class AvatarDialogState() {
+        object NoAvatar : AvatarDialogState()
+        data class UserAvatar(val address: Address) : AvatarDialogState()
+        data class TempAvatar(
+            val data: ByteArray,
+            val hasAvatar: Boolean // true if the user has an avatar set already but is in this temp state because they are trying out a new avatar
+        ) : AvatarDialogState()
+    }
 }
