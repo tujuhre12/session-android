@@ -2257,8 +2257,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         // that we've warned the user just _once_ that any attachments they save can be accessed by other apps.
         val haveWarned = TextSecurePreferences.getHaveWarnedUserAboutSavingAttachments(this)
         if (haveWarned) {
-            // On Android versions below 30 we require the WRITE_EXTERNAL_STORAGE permission to save attachments.
-            if (Build.VERSION.SDK_INT < 30) {
+            // On Android versions below 29 we require the WRITE_EXTERNAL_STORAGE permission to save attachments.
+            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
                 // Save the attachment(s) then bail if we already have permission to do so
                 if (hasPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
                     saveAttachments(message)
