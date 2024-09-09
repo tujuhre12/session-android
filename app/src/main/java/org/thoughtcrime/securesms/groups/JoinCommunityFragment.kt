@@ -28,6 +28,7 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.conversation.start.StartConversationDelegate
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
+import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 
 @AndroidEntryPoint
@@ -131,8 +132,8 @@ class JoinCommunityFragment : Fragment() {
                         Log.e("Loki", "Couldn't join community.", e)
                         withContext(Dispatchers.Main) {
                             hideLoader()
-                            val txt = Phrase.from(context, R.string.groupErrorJoin)
-                                .put(GROUP_NAME_KEY, url).format().toString()
+                            val txt = context?.getSubbedString(R.string.groupErrorJoin,
+                                GROUP_NAME_KEY to url)
                             Toast.makeText(activity, txt, Toast.LENGTH_SHORT).show()
                         }
                     }
