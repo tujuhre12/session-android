@@ -2,7 +2,9 @@ package org.thoughtcrime.securesms.ui.components
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.Settings
 import androidx.camera.core.CameraSelector
@@ -20,7 +22,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
@@ -46,10 +47,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.isGranted
-import com.google.accompanist.permissions.rememberPermissionState
-import com.google.accompanist.permissions.shouldShowRationale
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.google.zxing.BinaryBitmap
 import com.google.zxing.ChecksumException
 import com.google.zxing.FormatException
@@ -59,24 +58,24 @@ import com.google.zxing.Result
 import com.google.zxing.common.HybridBinarizer
 import com.google.zxing.qrcode.QRCodeReader
 import com.squareup.phrase.Phrase
-import java.util.concurrent.Executors
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.mediasend.MediaSendActivity
+import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.DialogButtonModel
 import org.thoughtcrime.securesms.ui.GetString
+import org.thoughtcrime.securesms.ui.findActivity
 import org.thoughtcrime.securesms.ui.getSubbedString
-import org.thoughtcrime.securesms.ui.isPermanentlyDenied
-import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
+import java.util.concurrent.Executors
 
 private const val TAG = "NewMessageFragment"
 
-@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun QRScannerScreen(
         errors: Flow<String>,
@@ -93,11 +92,13 @@ fun QRScannerScreen(
     ) {
         LocalSoftwareKeyboardController.current?.hide()
 
-        val cameraPermissionState = rememberPermissionState(Manifest.permission.CAMERA)
+        val context = LocalContext.current
+        val permission = Manifest.permission.CAMERA
 
         var showCameraPermissionDialog by remember { mutableStateOf(false) }
 
-        if (cameraPermissionState.status.isGranted) {
+        if (ContextCompat.checkSelfPermission(context, permission)
+            == PackageManager.PERMISSION_GRANTED) {
             ScanQrCode(errors, onScan)
         } else {
             Column(
@@ -120,14 +121,12 @@ fun QRScannerScreen(
                     stringResource(R.string.cameraGrantAccess),
                     modifier = Modifier.fillMaxWidth(),
                     onClick = {
-                        // if the permission has been denied permanently, ask the user to go to the settings
-                        if (cameraPermissionState.isPermanentlyDenied()){
-                            showCameraPermissionDialog = true
-                        }
-                        // otherwise ask for permission
-                        else {
-                            cameraPermissionState.run { launchPermissionRequest() }
-                        }
+                        Permissions.with(context.findActivity())
+                            .request(permission)
+                            .withPermanentDenialDialog(
+                                context.getSubbedString(R.string.permissionsCameraDenied,
+                                    APP_NAME_KEY to context.getString(R.string.app_name))
+                            ).execute()
                     }
                 )
                 Spacer(modifier = Modifier.weight(1f))
@@ -136,8 +135,6 @@ fun QRScannerScreen(
 
         // camera permission denied permanently dialog
         if(showCameraPermissionDialog){
-            val context = LocalContext.current
-
             AlertDialog(
                 onDismissRequest = { showCameraPermissionDialog = false },
                 title = stringResource(R.string.permissionsRequired),
