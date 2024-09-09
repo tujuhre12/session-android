@@ -317,10 +317,6 @@ public class AttachmentManager {
             .put(APP_NAME_KEY, context.getString(R.string.app_name))
             .format().toString();
 
-    String requireCameraPermissionTxt = Phrase.from(context, R.string.cameraGrantAccessDescription)
-            .put(APP_NAME_KEY, context.getString(R.string.app_name))
-            .format().toString();
-
     Permissions.with(activity)
         .request(Manifest.permission.CAMERA)
         .withPermanentDenialDialog(cameraPermissionDeniedTxt)

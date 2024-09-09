@@ -5,6 +5,10 @@ import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.PermissionState
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.shouldShowRationale
 import com.squareup.phrase.Phrase
 import org.thoughtcrime.securesms.ui.theme.SessionMaterialTheme
 
@@ -38,4 +42,9 @@ fun ComposeView.setThemedContent(content: @Composable () -> Unit) = setContent {
     SessionMaterialTheme {
         content()
     }
+}
+
+@ExperimentalPermissionsApi
+fun PermissionState.isPermanentlyDenied(): Boolean {
+    return !status.shouldShowRationale && !status.isGranted
 }

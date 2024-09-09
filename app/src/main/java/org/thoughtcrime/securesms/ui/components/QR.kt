@@ -68,6 +68,8 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.DialogButtonModel
 import org.thoughtcrime.securesms.ui.GetString
+import org.thoughtcrime.securesms.ui.getSubbedString
+import org.thoughtcrime.securesms.ui.isPermanentlyDenied
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -119,7 +121,7 @@ fun QRScannerScreen(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = {
                         // if the permission has been denied permanently, ask the user to go to the settings
-                        if (cameraPermissionState.status.shouldShowRationale){
+                        if (cameraPermissionState.isPermanentlyDenied()){
                             showCameraPermissionDialog = true
                         }
                         // otherwise ask for permission
@@ -134,10 +136,13 @@ fun QRScannerScreen(
 
         // camera permission denied permanently dialog
         if(showCameraPermissionDialog){
+            val context = LocalContext.current
+
             AlertDialog(
                 onDismissRequest = { showCameraPermissionDialog = false },
                 title = stringResource(R.string.permissionsRequired),
-                text = stringResource(R.string.permissionsCameraDenied),
+                text = context.getSubbedString(R.string.permissionsCameraDenied,
+                    APP_NAME_KEY to context.getString(R.string.app_name)),
                 buttons = listOf(
                     DialogButtonModel(
                         text = GetString(stringResource(id = R.string.sessionSettings)),
