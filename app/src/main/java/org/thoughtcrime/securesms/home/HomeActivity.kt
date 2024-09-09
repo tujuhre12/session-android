@@ -595,8 +595,6 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                 message = Phrase.from(this.applicationContext, R.string.groupDeleteDescription)
                     .put(GROUP_NAME_KEY, group.title)
                     .format()
-                positiveButtonId = R.string.leave
-                negativeButtonId = R.string.cancel
             } else {
                 // Otherwise this is either a community, or it's a group you're not an admin of
                 title = if (recipient.isCommunityRecipient) getString(R.string.communityLeave) else getString(R.string.groupLeave)
@@ -604,6 +602,9 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                     .put(GROUP_NAME_KEY, group.title)
                     .format()
             }
+
+            positiveButtonId = R.string.leave
+            negativeButtonId = R.string.cancel
         } else {
             // If this is a 1-on-1 conversation
             if (recipient.name != null) {

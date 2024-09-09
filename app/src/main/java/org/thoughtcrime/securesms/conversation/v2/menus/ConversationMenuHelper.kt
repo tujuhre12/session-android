@@ -286,7 +286,7 @@ object ConversationMenuHelper {
         val accountID = TextSecurePreferences.getLocalNumber(context)
         val isCurrentUserAdmin = admins.any { it.toString() == accountID }
         val message = if (isCurrentUserAdmin) {
-            Phrase.from(context, R.string.groupLeaveDescriptionAdmin)
+            Phrase.from(context, R.string.groupDeleteDescription)
                 .put(GROUP_NAME_KEY, group.title)
                 .format()
         } else {
@@ -305,7 +305,7 @@ object ConversationMenuHelper {
         context.showSessionDialog {
             title(R.string.groupLeave)
             text(message)
-            button(R.string.yes) {
+            dangerButton(R.string.leave) {
                 try {
                     val groupPublicKey = doubleDecodeGroupID(thread.address.toString()).toHexString()
                     val isClosedGroup = DatabaseComponent.get(context).lokiAPIDatabase().isClosedGroup(groupPublicKey)
@@ -316,7 +316,7 @@ object ConversationMenuHelper {
                     onLeaveFailed()
                 }
             }
-            button(R.string.no)
+            button(R.string.cancel)
         }
     }
 
