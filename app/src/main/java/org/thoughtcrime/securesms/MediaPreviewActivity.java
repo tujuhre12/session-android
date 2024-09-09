@@ -412,14 +412,9 @@ public class MediaPreviewActivity extends PassphraseRequiredActionBarActivity im
       Permissions.with(this)
               .request(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
               .maxSdkVersion(Build.VERSION_CODES.P)
-              .withPermanentDenialDialog(Phrase.from(getApplicationContext(), R.string.permissionsStorageSaveDenied)
-                      .put(APP_NAME_KEY, getString(R.string.app_name))
-                      .format().toString())
+              .withPermanentDenialDialog(getPermanentlyDeniedStorageText())
               .onAnyDenied(() -> {
-                String txt = Phrase.from(getApplicationContext(), R.string.permissionsStorageSaveDenied)
-                        .put(APP_NAME_KEY, getString(R.string.app_name))
-                        .format().toString();
-                Toast.makeText(this, txt, Toast.LENGTH_LONG).show();
+                Toast.makeText(this, getPermanentlyDeniedStorageText(), Toast.LENGTH_LONG).show();
               })
               .onAllGranted(() -> {
                 SaveAttachmentTask saveTask = new SaveAttachmentTask(MediaPreviewActivity.this);
@@ -434,6 +429,12 @@ public class MediaPreviewActivity extends PassphraseRequiredActionBarActivity im
               .execute();
       return Unit.INSTANCE;
     });
+  }
+
+  private String getPermanentlyDeniedStorageText(){
+      return Phrase.from(getApplicationContext(), R.string.permissionsStorageDeniedLegacy)
+              .put(APP_NAME_KEY, getString(R.string.app_name))
+              .format().toString();
   }
 
   private void sendMediaSavedNotificationIfNeeded() {

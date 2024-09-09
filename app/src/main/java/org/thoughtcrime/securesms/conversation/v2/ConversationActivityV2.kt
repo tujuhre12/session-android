@@ -2279,7 +2279,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             Permissions.with(this)
                 .request(Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 .maxSdkVersion(Build.VERSION_CODES.P) // P is 28
-                .withPermanentDenialDialog(Phrase.from(applicationContext, R.string.permissionsStorageSaveDenied)
+                .withPermanentDenialDialog(Phrase.from(applicationContext, R.string.permissionsStorageDeniedLegacy)
                     .put(APP_NAME_KEY, getString(R.string.app_name))
                     .format().toString())
                 .onAnyDenied {
@@ -2289,7 +2289,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                     showSessionDialog {
                         title(R.string.permissionsRequired)
 
-                        val txt = Phrase.from(applicationContext, R.string.permissionsStorageSaveDenied)
+                        val txt = Phrase.from(applicationContext, R.string.permissionsStorageDeniedLegacy)
                             .put(APP_NAME_KEY, getString(R.string.app_name))
                             .format().toString()
                         text(txt)
