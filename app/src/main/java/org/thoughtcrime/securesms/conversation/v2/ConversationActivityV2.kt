@@ -104,7 +104,6 @@ import org.session.libsignal.utilities.guava.Optional
 import org.session.libsignal.utilities.hexEncodedPrivateKey
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
-import org.thoughtcrime.securesms.SessionDialogBuilder
 import org.thoughtcrime.securesms.attachments.ScreenshotObserver
 import org.thoughtcrime.securesms.audio.AudioRecorder
 import org.thoughtcrime.securesms.components.emoji.RecentEmojiPageModel
@@ -117,6 +116,8 @@ import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companio
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_DELETE
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_REPLY
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_RESEND
+import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_COPY
+import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_SAVE
 import org.thoughtcrime.securesms.conversation.v2.dialogs.BlockedDialog
 import org.thoughtcrime.securesms.conversation.v2.dialogs.LinkPreviewDialog
 import org.thoughtcrime.securesms.conversation.v2.input_bar.InputBarButton
@@ -1935,7 +1936,6 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         } else {
             Permissions.with(this)
                 .request(Manifest.permission.RECORD_AUDIO)
-                .withRationaleDialog(getString(R.string.permissionsMicrophoneAccessRequired), R.drawable.ic_baseline_mic_48)
                 .withPermanentDenialDialog(Phrase.from(applicationContext, R.string.permissionsMicrophoneAccessRequired)
                     .put(APP_NAME_KEY, getString(R.string.app_name))
                     .format().toString())
@@ -2204,6 +2204,10 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             ON_REPLY -> reply(set)
             ON_RESEND -> resendMessage(set)
             ON_DELETE -> deleteMessages(set)
+            ON_COPY -> copyMessages(set)
+            ON_SAVE -> {
+                if(message is MmsMessageRecord) saveAttachmentsIfPossible(setOf(message))
+            }
         }
     }
 
@@ -2238,7 +2242,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         return result == PackageManager.PERMISSION_GRANTED
     }
 
-    override fun saveAttachment(messages: Set<MessageRecord>) {
+    override fun saveAttachmentsIfPossible(messages: Set<MessageRecord>) {
         val message = messages.first() as MmsMessageRecord
 
         // Note: The save option is only added to the menu in ConversationReactionOverlay.getMenuActionItems
@@ -2425,7 +2429,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                 ConversationReactionOverlay.Action.REPLY -> reply(selectedItems)
                 ConversationReactionOverlay.Action.RESYNC -> resyncMessage(selectedItems)
                 ConversationReactionOverlay.Action.RESEND -> resendMessage(selectedItems)
-                ConversationReactionOverlay.Action.DOWNLOAD -> saveAttachment(selectedItems)
+                ConversationReactionOverlay.Action.DOWNLOAD -> saveAttachmentsIfPossible(selectedItems)
                 ConversationReactionOverlay.Action.COPY_MESSAGE -> copyMessages(selectedItems)
                 ConversationReactionOverlay.Action.VIEW_INFO -> showMessageDetail(selectedItems)
                 ConversationReactionOverlay.Action.SELECT -> selectMessages(selectedItems)

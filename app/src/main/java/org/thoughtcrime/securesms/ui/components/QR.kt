@@ -30,8 +30,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -62,6 +65,12 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.ui.AlertDialog
+import org.thoughtcrime.securesms.ui.DialogButtonModel
+import org.thoughtcrime.securesms.ui.GetString
+import org.thoughtcrime.securesms.ui.getSubbedString
+import org.thoughtcrime.securesms.ui.isPermanentlyDenied
+import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 
@@ -86,29 +95,10 @@ fun QRScannerScreen(
 
         val cameraPermissionState = rememberPermissionState(Manifest.permission.CAMERA)
 
+        var showCameraPermissionDialog by remember { mutableStateOf(false) }
+
         if (cameraPermissionState.status.isGranted) {
             ScanQrCode(errors, onScan)
-        } else if (cameraPermissionState.status.shouldShowRationale) {
-            Column(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .padding(horizontal = 60.dp)
-            ) {
-                Text(
-                    stringResource(R.string.cameraGrantAccessDenied).let { txt ->
-                        val c = LocalContext.current
-                        Phrase.from(txt).put(APP_NAME_KEY, c.getString(R.string.app_name)).format().toString()
-                    },
-                    style = LocalType.current.base,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.size(LocalDimensions.current.spacing))
-                OutlineButton(
-                    stringResource(R.string.sessionSettings),
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                    onClick = onClickSettings
-                )
-            }
         } else {
             Column(
                 modifier = Modifier
@@ -129,10 +119,40 @@ fun QRScannerScreen(
                 PrimaryOutlineButton(
                     stringResource(R.string.cameraGrantAccess),
                     modifier = Modifier.fillMaxWidth(),
-                    onClick = { cameraPermissionState.run { launchPermissionRequest() } }
+                    onClick = {
+                        // if the permission has been denied permanently, ask the user to go to the settings
+                        if (cameraPermissionState.isPermanentlyDenied()){
+                            showCameraPermissionDialog = true
+                        }
+                        // otherwise ask for permission
+                        else {
+                            cameraPermissionState.run { launchPermissionRequest() }
+                        }
+                    }
                 )
                 Spacer(modifier = Modifier.weight(1f))
             }
+        }
+
+        // camera permission denied permanently dialog
+        if(showCameraPermissionDialog){
+            val context = LocalContext.current
+
+            AlertDialog(
+                onDismissRequest = { showCameraPermissionDialog = false },
+                title = stringResource(R.string.permissionsRequired),
+                text = context.getSubbedString(R.string.permissionsCameraDenied,
+                    APP_NAME_KEY to context.getString(R.string.app_name)),
+                buttons = listOf(
+                    DialogButtonModel(
+                        text = GetString(stringResource(id = R.string.sessionSettings)),
+                        onClick = onClickSettings
+                    ),
+                    DialogButtonModel(
+                        GetString(stringResource(R.string.cancel))
+                    )
+                )
+            )
         }
     }
 }

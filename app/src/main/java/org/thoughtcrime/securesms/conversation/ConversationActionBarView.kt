@@ -102,14 +102,13 @@ class ConversationActionBarView @JvmOverloads constructor(
         if (config?.isEnabled == true) {
             // Get the type of disappearing message and the abbreviated duration..
             val dmTypeString = when (config.expiryMode) {
-                is AfterRead -> context.getString(R.string.read)
-                else -> context.getString(R.string.send)
+                is AfterRead -> R.string.disappearingMessagesDisappearAfterReadState
+                else -> R.string.disappearingMessagesDisappearAfterSendState
             }
             val durationAbbreviated = ExpirationUtil.getExpirationAbbreviatedDisplayValue(config.expiryMode.expirySeconds)
 
             // ..then substitute into the string..
-            val subtitleTxt = context.getSubbedString(R.string.disappearingMessagesDisappear,
-                DISAPPEARING_MESSAGES_TYPE_KEY to dmTypeString,
+            val subtitleTxt = context.getSubbedString(dmTypeString,
                 TIME_KEY to durationAbbreviated
                 )
 
