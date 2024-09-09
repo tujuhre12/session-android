@@ -104,7 +104,6 @@ import org.session.libsignal.utilities.guava.Optional
 import org.session.libsignal.utilities.hexEncodedPrivateKey
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
-import org.thoughtcrime.securesms.SessionDialogBuilder
 import org.thoughtcrime.securesms.attachments.ScreenshotObserver
 import org.thoughtcrime.securesms.audio.AudioRecorder
 import org.thoughtcrime.securesms.components.emoji.RecentEmojiPageModel
@@ -2208,7 +2207,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             ON_DELETE -> deleteMessages(set)
             ON_COPY -> copyMessages(set)
             ON_SAVE -> {
-                if(message is MmsMessageRecord) saveAttachments(message)
+                if(message is MmsMessageRecord) saveAttachmentsIfPossible(setOf(message))
             }
         }
     }
@@ -2244,7 +2243,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         return result == PackageManager.PERMISSION_GRANTED
     }
 
-    override fun saveAttachment(messages: Set<MessageRecord>) {
+    override fun saveAttachmentsIfPossible(messages: Set<MessageRecord>) {
         val message = messages.first() as MmsMessageRecord
 
         // Note: The save option is only added to the menu in ConversationReactionOverlay.getMenuActionItems
@@ -2431,7 +2430,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                 ConversationReactionOverlay.Action.REPLY -> reply(selectedItems)
                 ConversationReactionOverlay.Action.RESYNC -> resyncMessage(selectedItems)
                 ConversationReactionOverlay.Action.RESEND -> resendMessage(selectedItems)
-                ConversationReactionOverlay.Action.DOWNLOAD -> saveAttachment(selectedItems)
+                ConversationReactionOverlay.Action.DOWNLOAD -> saveAttachmentsIfPossible(selectedItems)
                 ConversationReactionOverlay.Action.COPY_MESSAGE -> copyMessages(selectedItems)
                 ConversationReactionOverlay.Action.VIEW_INFO -> showMessageDetail(selectedItems)
                 ConversationReactionOverlay.Action.SELECT -> selectMessages(selectedItems)

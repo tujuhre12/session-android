@@ -61,6 +61,7 @@ import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAt
 import org.thoughtcrime.securesms.MediaPreviewActivity.getPreviewIntent
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.database.Storage
+import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
 import org.thoughtcrime.securesms.ui.Avatar
 import org.thoughtcrime.securesms.ui.CarouselNextButton
 import org.thoughtcrime.securesms.ui.CarouselPrevButton
@@ -126,11 +127,16 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
     @Composable
     private fun MessageDetailsScreen() {
         val state by viewModel.stateFlow.collectAsState()
+
+        // can only save if the there is a media attachment which has finished downloading.
+        val canSave = state.mmsRecord?.containsMediaSlide() == true
+                && state.mmsRecord?.isMediaPending == false
+
         MessageDetails(
             state = state,
             onReply = if (state.canReply) { { setResultAndFinish(ON_REPLY) } } else null,
             onResend = state.error?.let { { setResultAndFinish(ON_RESEND) } },
-            onSave = if(state.mmsRecord != null) { { setResultAndFinish(ON_SAVE) } } else null,
+            onSave = if(canSave) { { setResultAndFinish(ON_SAVE) } } else null,
             onDelete = { setResultAndFinish(ON_DELETE) },
             onCopy = { setResultAndFinish(ON_COPY) },
             onClickImage = { viewModel.onClickImage(it) },
