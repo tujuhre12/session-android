@@ -26,14 +26,7 @@ fun showMuteDialog(
             context.getSubbedString(entry.stringRes, TIME_LARGE_KEY to largeTimeUnitString)
         }
     }.toTypedArray()) {
-        // Note: We add the current timestamp to the mute duration to get the un-mute timestamp
-        // that gets stored in the database via ConversationMenuHelper.mute().
-        // Also: This is a kludge, but we ADD one second to the mute duration because otherwise by
-        // the time the view for how long the conversation is muted for gets set then it's actually
-        // less than the entire duration - so 1 hour becomes 59 minutes, 1 day becomes 23 hours etc.
-        // As we really want to see the actual set time (1 hour / 1 day etc.) then we'll bump it by
-        // 1 second which is neither here nor there in the grand scheme of things.
-        onMuteDuration(Option.entries[it].getTime() + System.currentTimeMillis() + 1.seconds.inWholeMilliseconds)
+        onMuteDuration(Option.entries[it].getTime())
     }
 }
 
@@ -44,5 +37,12 @@ private enum class Option(@StringRes val stringRes: Int, val getTime: () -> Long
     SEVEN_DAYS(R.string.notificationsMuteFor, duration = TimeUnit.DAYS.toMillis(7)),
     FOREVER(R.string.notificationsMute, getTime = { Long.MAX_VALUE } );
 
-    constructor(@StringRes stringRes: Int, duration: Long): this(stringRes, { duration } )
+    // Note: We add the current timestamp to the mute duration to get the un-mute timestamp
+    // that gets stored in the database via ConversationMenuHelper.mute().
+    // Also: This is a kludge, but we ADD one second to the mute duration because otherwise by
+    // the time the view for how long the conversation is muted for gets set then it's actually
+    // less than the entire duration - so 1 hour becomes 59 minutes, 1 day becomes 23 hours etc.
+    // As we really want to see the actual set time (1 hour / 1 day etc.) then we'll bump it by
+    // 1 second which is neither here nor there in the grand scheme of things.
+    constructor(@StringRes stringRes: Int, duration: Long): this(stringRes, { duration + System.currentTimeMillis() + 1.seconds.inWholeMilliseconds } )
 }
