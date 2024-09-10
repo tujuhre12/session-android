@@ -63,7 +63,6 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.mediasend.MediaSendActivity
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.DialogButtonModel
