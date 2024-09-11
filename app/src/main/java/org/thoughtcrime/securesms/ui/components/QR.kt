@@ -120,6 +120,12 @@ fun QRScannerScreen(
                     stringResource(R.string.cameraGrantAccess),
                     modifier = Modifier.fillMaxWidth(),
                     onClick = {
+                        // NOTE: We used to use the Accompanist's way to handle permissions in compose
+                        // but it doesn't seem to offer a solution when a user manually changes a permission
+                        // to 'Ask every time' form the app's settings.
+                        // So we are using our custom implementation. ONE IMPORTANT THING with this approach
+                        // is that we need to make sure every activity where this composable is used NEED to
+                        // implement `onRequestPermissionsResult` (see LoadAccountActivity.kt for an example)
                         Permissions.with(context.findActivity())
                             .request(permission)
                             .withPermanentDenialDialog(

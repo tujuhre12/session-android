@@ -388,6 +388,11 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         super.onDestroy()
         EventBus.getDefault().unregister(this)
     }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        Permissions.onRequestPermissionsResult(this, requestCode, permissions, grantResults)
+    }
     // endregion
 
     // region Updating
