@@ -11,8 +11,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -45,6 +49,7 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -60,6 +65,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.components.ProfilePictureView
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.OptionsCardData
@@ -126,7 +132,7 @@ fun LargeItemButtonWithDrawable(
     onClick: () -> Unit
 ) {
     ItemButtonWithDrawable(
-        textId, icon, modifier.heightIn(min = LocalDimensions.current.minLargeItemButtonHeight),
+        textId, icon, modifier,
         LocalType.current.h8, colors, onClick
     )
 }
@@ -167,8 +173,13 @@ fun LargeItemButton(
     onClick: () -> Unit
 ) {
     ItemButton(
-        textId, icon, modifier.heightIn(min = LocalDimensions.current.minLargeItemButtonHeight),
-        LocalType.current.h8, colors, onClick
+        textId = textId,
+        icon = icon,
+        modifier = modifier,
+        minHeight = LocalDimensions.current.minLargeItemButtonHeight,
+        textStyle = LocalType.current.h8,
+        colors = colors,
+        onClick = onClick
     )
 }
 
@@ -181,8 +192,13 @@ fun LargeItemButton(
     onClick: () -> Unit
 ) {
     ItemButton(
-        text, icon, modifier.heightIn(min = LocalDimensions.current.minLargeItemButtonHeight),
-        LocalType.current.h8, colors, onClick
+        text = text,
+        icon = icon,
+        modifier = modifier,
+        minHeight = LocalDimensions.current.minLargeItemButtonHeight,
+        textStyle = LocalType.current.h8,
+        colors = colors,
+        onClick = onClick
     )
 }
 
@@ -191,6 +207,7 @@ fun ItemButton(
     text: String,
     icon: Int,
     modifier: Modifier,
+    minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
     textStyle: TextStyle = LocalType.current.xl,
     colors: ButtonColors = transparentButtonColors(),
     onClick: () -> Unit
@@ -205,6 +222,7 @@ fun ItemButton(
                 modifier = Modifier.align(Alignment.Center)
             )
         },
+        minHeight = minHeight,
         textStyle = textStyle,
         colors = colors,
         onClick = onClick
@@ -219,6 +237,7 @@ fun ItemButton(
     @StringRes textId: Int,
     @DrawableRes icon: Int,
     modifier: Modifier = Modifier,
+    minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
     textStyle: TextStyle = LocalType.current.xl,
     colors: ButtonColors = transparentButtonColors(),
     onClick: () -> Unit
@@ -233,6 +252,7 @@ fun ItemButton(
                 modifier = Modifier.align(Alignment.Center)
             )
         },
+        minHeight = minHeight,
         textStyle = textStyle,
         colors = colors,
         onClick = onClick
@@ -249,20 +269,23 @@ fun ItemButton(
     text: String,
     icon: @Composable BoxScope.() -> Unit,
     modifier: Modifier = Modifier,
+    minHeight: Dp = LocalDimensions.current.minLargeItemButtonHeight,
     textStyle: TextStyle = LocalType.current.xl,
     colors: ButtonColors = transparentButtonColors(),
     onClick: () -> Unit
 ) {
     TextButton(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth()
+            .height(IntrinsicSize.Min)
+            .heightIn(min = minHeight)
+            .padding(horizontal = LocalDimensions.current.xsSpacing),
         colors = colors,
         onClick = onClick,
         shape = RectangleShape,
     ) {
         Box(
-            modifier = Modifier
-                .width(50.dp)
-                .wrapContentHeight()
+            modifier = Modifier.fillMaxHeight()
+                .aspectRatio(1f)
                 .align(Alignment.CenterVertically)
         ) {
             icon()
@@ -274,7 +297,6 @@ fun ItemButton(
             text,
             Modifier
                 .fillMaxWidth()
-                .padding(vertical = LocalDimensions.current.xsSpacing)
                 .align(Alignment.CenterVertically),
             style = textStyle
         )
@@ -371,28 +393,38 @@ fun Modifier.fadingEdges(
 @Composable
 fun Divider(modifier: Modifier = Modifier, startIndent: Dp = 0.dp) {
     HorizontalDivider(
-        modifier = modifier.padding(horizontal = LocalDimensions.current.smallSpacing)
+        modifier = modifier
+            .padding(horizontal = LocalDimensions.current.smallSpacing)
             .padding(start = startIndent),
         color = LocalColors.current.borders,
     )
 }
 
+//TODO This component should be fully rebuilt in Compose at some point ~~
 @Composable
-fun RowScope.Avatar(recipient: Recipient) {
-    Box(
-        modifier = Modifier
-            .width(60.dp)
-            .align(Alignment.CenterVertically)
-    ) {
-        AndroidView(
-            factory = {
-                ProfilePictureView(it).apply { update(recipient) }
-            },
-            modifier = Modifier
-                .width(46.dp)
-                .height(46.dp)
-        )
-    }
+fun Avatar(
+    recipient: Recipient,
+    modifier: Modifier = Modifier
+) {
+    AndroidView(
+        factory = {
+            ProfilePictureView(it).apply { update(recipient) }
+        },
+        modifier = modifier
+    )
+}
+
+@Composable
+fun Avatar(
+    userAddress: Address,
+    modifier: Modifier = Modifier
+) {
+    AndroidView(
+        factory = {
+            ProfilePictureView(it).apply { update(userAddress) }
+        },
+        modifier = modifier
+    )
 }
 
 @Composable

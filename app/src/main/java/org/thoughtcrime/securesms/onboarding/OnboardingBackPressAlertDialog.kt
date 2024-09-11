@@ -17,11 +17,10 @@ import org.thoughtcrime.securesms.ui.theme.LocalColors
 @Composable
 fun OnboardingBackPressAlertDialog(
     dismissDialog: () -> Unit,
-    @StringRes textId: Int = R.string.onboardingBackAccountCreation,
+    @StringRes textId: Int,
     quit: () -> Unit
 ) {
     val c = LocalContext.current
-    val quitButtonText = c.getSubbedString(R.string.quit, APP_NAME_KEY to APP_NAME)
 
     AlertDialog(
         onDismissRequest = dismissDialog,
@@ -31,7 +30,7 @@ fun OnboardingBackPressAlertDialog(
         },
         buttons = listOf(
             DialogButtonModel(
-                text = GetString(quitButtonText),
+                text = GetString(stringResource(id = R.string.quitButton)),
                 color = LocalColors.current.danger,
                 onClick = quit
             ),

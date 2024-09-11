@@ -1,7 +1,6 @@
 package org.session.libsession.messaging.sending_receiving
 
 import android.text.TextUtils
-import network.loki.messenger.libsession_util.ConfigBase
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.messaging.MessagingModuleConfiguration
@@ -266,7 +265,7 @@ fun MessageReceiver.handleUnsendRequest(message: UnsendRequest): Long? {
 }
 
 fun handleMessageRequestResponse(message: MessageRequestResponse) {
-    MessagingModuleConfiguration.shared.storage.insertMessageRequestResponse(message)
+    MessagingModuleConfiguration.shared.storage.insertMessageRequestResponseFromContact(message)
 }
 //endregion
 
