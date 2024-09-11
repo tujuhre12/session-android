@@ -2122,16 +2122,16 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         showSessionDialog {
             title(R.string.banUser)
             text(R.string.communityBanDescription)
-            button(R.string.banUser) { viewModel.banUser(messages.first().individualRecipient); endActionMode() }
+            dangerButton(R.string.theContinue) { viewModel.banUser(messages.first().individualRecipient); endActionMode() }
             cancelButton(::endActionMode)
         }
     }
 
     override fun banAndDeleteAll(messages: Set<MessageRecord>) {
         showSessionDialog {
-            title(R.string.banUser)
+            title(R.string.banDeleteAll)
             text(R.string.communityBanDeleteDescription)
-            button(R.string.banUser) { viewModel.banAndDeleteAll(messages.first()); endActionMode() }
+            dangerButton(R.string.theContinue) { viewModel.banAndDeleteAll(messages.first()); endActionMode() }
             cancelButton(::endActionMode)
         }
     }
