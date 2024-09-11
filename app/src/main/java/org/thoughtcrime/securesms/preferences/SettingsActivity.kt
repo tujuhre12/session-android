@@ -581,6 +581,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
                 DialogButtonModel(
                     text = GetString(R.string.remove),
                     contentDescription = GetString(R.string.AccessibilityId_remove),
+                    color = LocalColors.current.danger,
                     enabled = state is UserAvatar || // can remove is the user has an avatar set
                             (state is TempAvatar && state.hasAvatar),
                     onClick = removeAvatar
