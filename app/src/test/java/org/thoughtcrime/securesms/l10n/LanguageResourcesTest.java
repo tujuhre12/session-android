@@ -59,12 +59,6 @@ public final class LanguageResourcesTest {
     return set;
   }
 
-  private static Set<String> buildConfigResources() {
-    Set<String> set = new HashSet<>();
-    Collections.addAll(set, BuildConfig.LANGUAGES);
-    assertEquals("List contains duplicates", BuildConfig.LANGUAGES.length, set.size());
-    return set;
-  }
 
   /**
    * Fails if "a" is not a subset of "b", lists the additional values found in "a"

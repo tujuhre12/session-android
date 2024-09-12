@@ -2084,7 +2084,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             showSessionDialog {
                 title(resources.getQuantityString(R.plurals.deleteMessage, messages.count(), messages.count()))
                 text(resources.getString(R.string.deleteMessageDescriptionEveryone))
-                button(R.string.delete) { messages.forEach(viewModel::deleteForEveryone); endActionMode() }
+                dangerButton(R.string.delete) { messages.forEach(viewModel::deleteForEveryone); endActionMode() }
                 cancelButton { endActionMode() }
             }
         // Otherwise if this is a 1-on-1 conversation we may decided to delete just for ourselves or delete for everyone
