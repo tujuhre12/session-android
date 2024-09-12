@@ -130,7 +130,7 @@ class MediaOverviewViewModel(
             .groupBy { record ->
                 val time =
                     ZonedDateTime.ofInstant(Instant.ofEpochMilli(record.date), ZoneId.of("UTC"))
-                timeBuckets.getBucketText(time)?.let(application::getString)
+                timeBuckets.getBucketText(application, time)
                     ?: time.toLocalDate().withDayOfMonth(1)
             }
             .map { (bucket, records) ->

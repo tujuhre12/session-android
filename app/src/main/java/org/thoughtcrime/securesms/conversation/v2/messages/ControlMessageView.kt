@@ -18,10 +18,10 @@ import network.loki.messenger.databinding.ViewControlMessageBinding
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.messages.ExpirationConfiguration
+import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getColorFromAttr
-import org.thoughtcrime.securesms.MissingMicrophonePermissionDialog
 import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessages
 import org.thoughtcrime.securesms.conversation.disappearingmessages.expiryMode
 import org.thoughtcrime.securesms.database.model.MessageRecord
@@ -29,6 +29,7 @@ import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.PrivacySettingsActivity
 import org.thoughtcrime.securesms.showSessionDialog
+import org.thoughtcrime.securesms.ui.findActivity
 import org.thoughtcrime.securesms.ui.getSubbedCharSequence
 import org.thoughtcrime.securesms.ui.getSubbedString
 import javax.inject.Inject
@@ -138,7 +139,13 @@ class ControlMessageView : LinearLayout {
                         !Permissions.hasAll(context, Manifest.permission.RECORD_AUDIO) -> {
                             showInfo()
                             setOnClickListener {
-                                MissingMicrophonePermissionDialog.show(context)
+                                Permissions.with(context.findActivity())
+                                    .request(Manifest.permission.RECORD_AUDIO)
+                                    .withPermanentDenialDialog(
+                                        context.getSubbedString(R.string.permissionsMicrophoneAccessRequired,
+                                            APP_NAME_KEY to context.getString(R.string.app_name))
+                                    )
+                                    .execute()
                             }
                         }
 
