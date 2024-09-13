@@ -134,21 +134,6 @@ class ControlMessageView : LinearLayout {
                 // handle click behaviour depending on criteria
                 if (message.isMissedCall || message.isFirstMissedCall) {
                     when {
-                        // if we're currently missing the audio/microphone permission,
-                        // show a dedicated permission dialog
-                        !Permissions.hasAll(context, Manifest.permission.RECORD_AUDIO) -> {
-                            showInfo()
-                            setOnClickListener {
-                                Permissions.with(context.findActivity())
-                                    .request(Manifest.permission.RECORD_AUDIO)
-                                    .withPermanentDenialDialog(
-                                        context.getSubbedString(R.string.permissionsMicrophoneAccessRequired,
-                                            APP_NAME_KEY to context.getString(R.string.app_name))
-                                    )
-                                    .execute()
-                            }
-                        }
-
                         // when the call toggle is disabled in the privacy screen,
                         // show a dedicated privacy dialog
                         !TextSecurePreferences.isCallNotificationsEnabled(context) -> {
@@ -170,6 +155,38 @@ class ControlMessageView : LinearLayout {
                                     button(R.string.sessionSettings) {
                                         Intent(context, PrivacySettingsActivity::class.java)
                                             .let(context::startActivity)
+                                    }
+                                    cancelButton()
+                                }
+                            }
+                        }
+
+                        // if we're currently missing the audio/microphone permission,
+                        // show a dedicated permission dialog
+                        !Permissions.hasAll(context, Manifest.permission.RECORD_AUDIO) -> {
+                            showInfo()
+                            setOnClickListener {
+                                context.showSessionDialog {
+                                    val titleTxt = context.getSubbedString(
+                                        R.string.callsMissedCallFrom,
+                                        NAME_KEY to message.individualRecipient.name!!
+                                    )
+                                    title(titleTxt)
+
+                                    val bodyTxt = context.getSubbedCharSequence(
+                                        R.string.callsMicrophonePermissionsRequired,
+                                        NAME_KEY to message.individualRecipient.name!!
+                                    )
+                                    text(bodyTxt)
+
+                                    button(R.string.theContinue) {
+                                        Permissions.with(context.findActivity())
+                                            .request(Manifest.permission.RECORD_AUDIO)
+                                            .withPermanentDenialDialog(
+                                                context.getSubbedString(R.string.permissionsMicrophoneAccessRequired,
+                                                    APP_NAME_KEY to context.getString(R.string.app_name))
+                                            )
+                                            .execute()
                                     }
                                     cancelButton()
                                 }
