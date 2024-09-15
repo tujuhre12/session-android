@@ -295,7 +295,7 @@ class ConversationViewModel(
      * - We are dealing with a contact from a community (blinded recipient) that does not allow
      *   requests form community members
      */
-    private fun shouldHideInputBar(): Boolean = openGroup?.canWrite == false ||
+    fun shouldHideInputBar(): Boolean = openGroup?.canWrite == false ||
             blindedRecipient?.blocksCommunityMessageRequests == true
 
     fun legacyBannerRecipient(context: Context): Recipient? = recipient?.run {
