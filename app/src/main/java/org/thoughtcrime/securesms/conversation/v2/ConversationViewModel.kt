@@ -117,15 +117,19 @@ class ConversationViewModel(
         communityWriteAccessJob?.cancel()
         communityWriteAccessJob = viewModelScope.launch {
             OpenGroupManager.getCommunitiesWriteAccessFlow()
-                .map { it[openGroup?.server] }
+                .map {
+                    if(openGroup?.groupId != null)
+                        it[openGroup?.groupId]
+                    else null
+                }
                 .filterNotNull()
                 .collect{
                     // update our community object
                     _openGroup.updateTo(openGroup?.copy(canWrite = it))
                     // when we get an update on the write access of a community
                     // we need to update the input text accordingly
-                    _uiState.update {
-                        it.copy(hideInputBar = shouldHideInputBar())
+                    _uiState.update { state ->
+                        state.copy(hideInputBar = shouldHideInputBar())
                     }
                 }
         }

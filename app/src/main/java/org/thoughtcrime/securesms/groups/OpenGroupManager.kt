@@ -172,13 +172,12 @@ object OpenGroupManager {
 
     fun updateOpenGroup(openGroup: OpenGroup, context: Context) {
         val threadDB = DatabaseComponent.get(context).lokiThreadDatabase()
-        val openGroupID = "${openGroup.server}.${openGroup.room}"
-        val threadID = GroupManager.getOpenGroupThreadID(openGroupID, context)
+        val threadID = GroupManager.getOpenGroupThreadID(openGroup.groupId, context)
         threadDB.setOpenGroupChat(openGroup, threadID)
 
         // update write access for this community
         val writeAccesses = _communityWriteAccess.value.toMutableMap()
-        writeAccesses[openGroup.server] = openGroup.canWrite
+        writeAccesses[openGroup.groupId] = openGroup.canWrite
         _communityWriteAccess.value = writeAccesses
     }
 
