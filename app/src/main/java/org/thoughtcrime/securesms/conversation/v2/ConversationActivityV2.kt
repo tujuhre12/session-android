@@ -853,7 +853,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                     // Conversation should be deleted now, just go back
                     finish()
                 }
-                
+
                 binding.inputBar.isGone = uiState.hideInputBar
             }
         }
