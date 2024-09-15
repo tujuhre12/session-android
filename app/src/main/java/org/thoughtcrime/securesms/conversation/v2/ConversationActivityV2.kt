@@ -949,11 +949,20 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             block(deleteThread = true)
         }
         binding.declineMessageRequestButton.setOnClickListener {
-            viewModel.declineMessageRequest()
-            lifecycleScope.launch(Dispatchers.IO) {
-                ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(this@ConversationActivityV2)
+            fun doDecline() {
+                viewModel.declineMessageRequest()
+                lifecycleScope.launch(Dispatchers.IO) {
+                    ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(this@ConversationActivityV2)
+                }
+                finish()
             }
-            finish()
+
+            showSessionDialog {
+                title(R.string.delete)
+                text(resources.getString(R.string.messageRequestsDelete))
+                dangerButton(R.string.delete) { doDecline() }
+                button(R.string.cancel)
+            }
         }
     }
 
