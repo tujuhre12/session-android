@@ -710,7 +710,6 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     // called from onCreate
     private fun setUpInputBar() {
-        binding.inputBar.isGone = viewModel.hidesInputBar()
         binding.inputBar.delegate = this
         binding.inputBarRecordingView.delegate = this
         // GIF button
@@ -854,6 +853,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                     // Conversation should be deleted now, just go back
                     finish()
                 }
+                
+                binding.inputBar.isGone = uiState.hideInputBar
             }
         }
     }
