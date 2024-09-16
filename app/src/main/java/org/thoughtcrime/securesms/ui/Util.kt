@@ -3,6 +3,8 @@ package org.thoughtcrime.securesms.ui
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
+import android.view.View
+import android.view.ViewTreeObserver
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
@@ -57,4 +59,15 @@ fun Context.findActivity(): Activity {
         context = context.baseContext
     }
     throw IllegalStateException("Permissions should be called in the context of an Activity")
+}
+
+inline fun <T : View> T.afterMeasured(crossinline block: T.() -> Unit) {
+    viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+        override fun onGlobalLayout() {
+            if (measuredWidth > 0 && measuredHeight > 0) {
+                viewTreeObserver.removeOnGlobalLayoutListener(this)
+                block()
+            }
+        }
+    })
 }
