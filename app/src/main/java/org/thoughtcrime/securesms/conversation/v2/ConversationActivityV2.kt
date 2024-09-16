@@ -1785,10 +1785,21 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         attachmentManager.clear()
         // Reset attachments button if needed
         if (isShowingAttachmentOptions) { toggleAttachmentOptions() }
-        // Put the message in the database
-        message.id = mmsDb.insertMessageOutbox(outgoingTextMessage, viewModel.threadId, false, null, runThreadUpdate = true)
-        // Send it
-        MessageSender.send(message, recipient.address, attachments, quote, linkPreview)
+
+        // do the heavy work in the bg
+        lifecycleScope.launch(Dispatchers.IO) {
+            // Put the message in the database
+            message.id = mmsDb.insertMessageOutbox(
+                outgoingTextMessage,
+                viewModel.threadId,
+                false,
+                null,
+                runThreadUpdate = true
+            )
+            // Send it
+            MessageSender.send(message, recipient.address, attachments, quote, linkPreview)
+        }
+
         // Send a typing stopped message
         ApplicationContext.getInstance(this).typingStatusSender.onTypingStopped(viewModel.threadId)
         return Pair(recipient.address, sentTimestamp)
