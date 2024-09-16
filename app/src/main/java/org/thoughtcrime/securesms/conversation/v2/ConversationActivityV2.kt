@@ -710,7 +710,6 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     // called from onCreate
     private fun setUpInputBar() {
-        binding.inputBar.isGone = viewModel.hidesInputBar()
         binding.inputBar.delegate = this
         binding.inputBarRecordingView.delegate = this
         // GIF button
@@ -854,6 +853,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                     // Conversation should be deleted now, just go back
                     finish()
                 }
+
+                binding.inputBar.isGone = uiState.hideInputBar
             }
         }
     }
@@ -948,11 +949,20 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             block(deleteThread = true)
         }
         binding.declineMessageRequestButton.setOnClickListener {
-            viewModel.declineMessageRequest()
-            lifecycleScope.launch(Dispatchers.IO) {
-                ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(this@ConversationActivityV2)
+            fun doDecline() {
+                viewModel.declineMessageRequest()
+                lifecycleScope.launch(Dispatchers.IO) {
+                    ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(this@ConversationActivityV2)
+                }
+                finish()
             }
-            finish()
+
+            showSessionDialog {
+                title(R.string.delete)
+                text(resources.getString(R.string.messageRequestsDelete))
+                dangerButton(R.string.delete) { doDecline() }
+                button(R.string.cancel)
+            }
         }
     }
 
