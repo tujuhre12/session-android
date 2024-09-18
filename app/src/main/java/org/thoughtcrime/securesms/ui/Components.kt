@@ -277,21 +277,19 @@ fun ItemButton(
     TextButton(
         modifier = modifier.fillMaxWidth()
             .height(IntrinsicSize.Min)
-            .heightIn(min = minHeight)
-            .padding(horizontal = LocalDimensions.current.xsSpacing),
+            .heightIn(min = minHeight),
         colors = colors,
         onClick = onClick,
+        contentPadding = PaddingValues(),
         shape = RectangleShape,
     ) {
         Box(
             modifier = Modifier.fillMaxHeight()
-                .aspectRatio(1f)
                 .align(Alignment.CenterVertically)
-        ) {
-            icon()
-        }
-
-        Spacer(modifier = Modifier.width(LocalDimensions.current.smallSpacing))
+                .padding(horizontal = LocalDimensions.current.xxsSpacing)
+                .aspectRatio(1f),
+            content = icon
+        )
 
         Text(
             text,
