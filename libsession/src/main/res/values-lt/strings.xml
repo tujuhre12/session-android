@@ -532,7 +532,7 @@
     <plurals name="members">
         <item quantity="one">%1$d narys</item>
         <item quantity="few">%1$d nariai</item>
-        <item quantity="many">%1$d nariai</item>
+        <item quantity="many">%1$d narių</item>
         <item quantity="other">%1$d nariai</item>
     </plurals>
     <plurals name="membersActive">

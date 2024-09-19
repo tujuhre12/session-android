@@ -12,10 +12,10 @@
     <string name="accountIdShare">Hej, używam aplikacji {app_name} do czatów. Daje ona pełną prywatność i jest kompletnie bezpieczna. Dołącz do mnie! Mój identyfikator konta to\n\n{account_id}\n\nPobierz aplikację pod adresem {session_download_url}</string>
     <string name="accountIdYours">Twój identyfikator konta</string>
     <string name="accountIdYoursDescription">To jest twój identyfikator konta. Inni użytkownicy mogą go zeskanować, aby rozpocząć z tobą rozmowę.</string>
-    <string name="actualSize">Domyślny rozmiar</string>
+    <string name="actualSize">Rzeczywisty rozmiar</string>
     <string name="add">Dodaj</string>
     <string name="adminCannotBeRemoved">Admini nie mogą być usunięci.</string>
-    <string name="adminMorePromotedToAdmin"><b>{name}</b> i <b>{count} innych</b> zostali administratorami.</string>
+    <string name="adminMorePromotedToAdmin"><b>{name}</b> i <b>{count} innych</b> zostali awansowani na administratów.</string>
     <string name="adminPromote">Usuń Administratorów</string>
     <string name="adminPromoteDescription">Czy na pewno chcesz awansować <b>{name}</b> na administratora? Administratorzy nie mogą być usunięci.</string>
     <string name="adminPromoteMoreDescription">Czy na pewno chcesz awansować <b>{name}</b> i <b>{count} innych</b> na administratora? Administratorzy nie mogą być usunięci.</string>
@@ -33,12 +33,12 @@
     <string name="adminRemoveFailed">Nie udało się usunąć {name} jako Administratora.</string>
     <string name="adminRemoveFailedMultiple">Nie udało się usunąć użytkownika <b>{name}</b> oraz <b>{count} innych użytkowników</b> z roli administratora.</string>
     <string name="adminRemoveFailedOther">Nie udało się usunąć użytkowników <b>{name}</b> i <b>{other_name}</b> z roli administatora.</string>
-    <string name="adminRemovedUser"><b>{name}</b> został(a) usunięty(-a) z roli administratora.</string>
+    <string name="adminRemovedUser">\"Usunięto z roli administratora: <b>{name}</b></string>
     <string name="adminRemovedUserMultiple"><b>{name}</b> i <b>{count} innych użytkowników</b> nie są już administratorami.</string>
     <string name="adminRemovedUserOther">Użytkownicy <b>{name}</b> i <b>{other_name}</b> nie są już administratorami.</string>
     <string name="adminSendingPromotion">Wysyłanie awansu administratora</string>
     <string name="adminSettings">Ustawienia admina</string>
-    <string name="adminTwoPromotedToAdmin"><b>{name}</b> i <b>{other_name}</b> zostali administratorami.</string>
+    <string name="adminTwoPromotedToAdmin">Użytkownicy <b>{name}</b> i <b>{other_name}</b> zostali administratorami.</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">Anonimowy</string>
     <string name="appearanceAutoDarkMode">Automatyczny tryb ciemny</string>
@@ -91,7 +91,7 @@
     <string name="attachmentsLoadingNewerFiles">Wczytywanie nowszych plików...</string>
     <string name="attachmentsLoadingOlder">Ładowanie starszych mediów...</string>
     <string name="attachmentsLoadingOlderFiles">Wczytywanie starszych plików...</string>
-    <string name="attachmentsMedia">{name} on {date_time}</string>
+    <string name="attachmentsMedia">{name} w dniu {date_time}</string>
     <string name="attachmentsMediaEmpty">Nie masz żadnych mediów w tej konwersacji.</string>
     <string name="attachmentsMediaSaved">Media zapisane przez {name}</string>
     <string name="attachmentsMoveAndScale">Przesuń i zmień wielkość</string>
@@ -161,9 +161,9 @@
     <string name="cameraErrorNotFound">Nie znaleziono kamery</string>
     <string name="cameraErrorUnavailable">Aparat jest niedostępny.</string>
     <string name="cameraGrantAccess">Udziel dostępu do kamery</string>
-    <string name="cameraGrantAccessDenied">{app_name} potrzebuje dostępu do aparatu, aby robić zdjęcia i nagrywać filmy, ale został on trwale zablokowany. Przejdź do ustawień aplikacji, wybierz \"Uprawnienia\" i włącz \"Aparat\".</string>
-    <string name="cameraGrantAccessDescription">{app_name} wymaga dostępu do kamery w celu robienia zdjęć i nagrywania filmów lub skanowania kodów QR.</string>
-    <string name="cameraGrantAccessQr">{app_name} wymaga dostępu do kamery, aby skanować kody QR</string>
+    <string name="cameraGrantAccessDenied">Aby robić zdjęcia i nagrywać filmy, aplikacja {app_name} potrzebuje dostępu do aparatu, jednak na stałe go odmówiono. Przejdź do ustawień aplikacji, wybierz „Uprawnienia” i włącz „Aparat”.</string>
+    <string name="cameraGrantAccessDescription">Aby robić zdjęcia, nagrywać filmy i skanować kody QR, aplikacja {app_name} potrzebuje dostępu do aparatu</string>
+    <string name="cameraGrantAccessQr">Aby skanować kody QR, aplikacja {app_name} wymaga dostępu do aparatu</string>
     <string name="cancel">Anuluj</string>
     <string name="changePasswordFail">Nie udało się zmienić hasła</string>
     <string name="clear">Wyczyść</string>
@@ -172,10 +172,10 @@
     <string name="clearDataAllDescription">Spowoduje to trwałe usunięcie wiadomości i kontaktów. Czy chcesz wyczyścić tylko to urządzenie, czy również usunąć dane z sieci?</string>
     <string name="clearDataError">Dane nie zostały usunięte</string>
     <plurals name="clearDataErrorDescription">
-        <item quantity="one">Dane nie zostały usunięte przez %1$d Service Node. Identyfikator(e/y) Service Node: %2$s.</item>
-        <item quantity="few">Dane nie zostały usunięte przez %1$d Service Nodes. Identyfikator(e/y) Service Node: %2$s.</item>
-        <item quantity="many">Dane nie zostały usunięte przez %1$d Service Nodes. Identyfikator(e/y) Service Node: %2$s.</item>
-        <item quantity="other">Dane nie zostały usunięte przez %1$d Service Nodes. Identyfikator(e/y) Service Node: %2$s.</item>
+        <item quantity="one">Dane nie zostały usunięte przez %1$d węzeł usługi. Identyfikator węzła usługi: %2$s.</item>
+        <item quantity="few">Dane nie zostały usunięte przez %1$d węzły usługi. Identyfikatory węzłów usługi: %2$s.</item>
+        <item quantity="many">Dane nie zostały usunięte przez %1$d węzłów usługi. Identyfikatory węzłów usługi: %2$s.</item>
+        <item quantity="other">Dane nie zostały usunięte przez %1$d węzłów usługi. Identyfikatory węzłów usługi: %2$s.</item>
     </plurals>
     <string name="clearDataErrorDescriptionGeneric">Wystąpił nieznany błąd i twoje dane nie zostały usunięte. Czy chcesz usunąć dane tylko z tego urządzenia?</string>
     <string name="clearDevice">Wyczyść dane z urządzenia</string>
@@ -257,7 +257,7 @@
     <string name="copy">Kopiuj</string>
     <string name="create">Utwórz</string>
     <string name="cut">Wytnij</string>
-    <string name="databaseErrorGeneric">Wystąpił błąd bazy danych.\n\nWyeksportuj dzienniki aplikacji, aby udostępnić je do analizy problemu. Jeśli to się nie powiedzie, zainstaluj ponownie {app_name} i przywróć swoje konto.\n\nOstrzeżenie: Spowoduje to utratę wszystkich wiadomości, załączników i danych konta starszych niż dwa tygodnie.</string>
+    <string name="databaseErrorGeneric">Wystąpił błąd bazy danych.\n\nWyeksportuj dzienniki aplikacji, aby udostępnić je w celu rozwiązania problemu. Jeśli to się nie powiedzie, zainstaluj ponownie aplikację {app_name} i przywróć swoje konto.\n\nOstrzeżenie: spowoduje to utratę wszystkich wiadomości, załączników i danych konta starszych niż dwa tygodnie.</string>
     <string name="databaseErrorTimeout">Zauważyliśmy, że uruchamianie {app_name} zajmuje bardzo dużo czasu.\n\nMożesz poczekać, wyeksportować dzienniki urządzenia do udostępnienia w celu rozwiązywania problemów lub spróbować ponownie uruchomić Session.</string>
     <string name="databaseErrorUpdate">Twoja baza danych aplikacji jest niekompatybilna z tą wersją {app_name}. Zainstaluj ponownie aplikację i przywróć swoje konto, aby wygenerować nową bazę danych i kontynuować korzystanie z {app_name}.\n\nOstrzeżenie: Spowoduje to utratę wszystkich wiadomości i załączników starszych niż dwa tygodnie.</string>
     <string name="databaseOptimizing">Optymalizacja bazy danych</string>
@@ -281,7 +281,7 @@
     <string name="deleteAfterMessageDeletionStandardisationMessageDeletionForbidden">Nie masz uprawnień do usuwania wiadomości innych osób</string>
     <plurals name="deleteMessage">
         <item quantity="one">Usuń wiadomość</item>
-        <item quantity="few">Usuń wiadomośc</item>
+        <item quantity="few">Usuń wiadomości</item>
         <item quantity="many">Usuń wiadomości</item>
         <item quantity="other">Usuń wiadomości</item>
     </plurals>
@@ -330,20 +330,20 @@
     <string name="disappearingMessagesFollowSetting">Ustawienie obserwacji</string>
     <string name="disappearingMessagesFollowSettingOff">Wiadomości, które wysyłasz, przestaną znikać. Czy na pewno chcesz wyłączyć <b>znikające wiadomości</b>?</string>
     <string name="disappearingMessagesFollowSettingOn">Czy ustawić twoje wiadomości do znikania po <b>{time}?</b> Po tym jak były <b>{disappearing_messages_type}</b>?</string>
-    <string name="disappearingMessagesLegacy">{name} używa przestarzałego klienta. Wiadomości nie mogą działać zgodnie z oczekiwaniami.</string>
+    <string name="disappearingMessagesLegacy">{name} używa nieaktualnego klienta. Znikające wiadomości mogą nie działać zgodnie z oczekiwaniami.</string>
     <string name="disappearingMessagesOnlyAdmins">Tylko administratorzy grup mogą zmienić to ustawienie.</string>
     <string name="disappearingMessagesSent">Wysłano</string>
     <string name="disappearingMessagesSet"><b>{name}</b> ustawił(a) znikające wiadomości na {time} po tym, jak były {disappearing_messages_type}.</string>
-    <string name="disappearingMessagesSetYou"><b>Ty</b> ustawiłeś(-aś) znikające wiadomości na {time} po tym, jak były {disappearing_messages_type}.</string>
+    <string name="disappearingMessagesSetYou"><b>Ustawiono</b> znikanie wiadomości na {time} po tym, jak były {disappearing_messages_type}.</string>
     <string name="disappearingMessagesTimer">Minutnik</string>
-    <string name="disappearingMessagesTurnedOff"><b>{name}</b> wyłączył(a) znikające wiadomości. Wiadomości, które wysyłają, nie będą już znikać.</string>
+    <string name="disappearingMessagesTurnedOff"><b>{name}</b> wyłączył(a) znikające wiadomości. Wysłane wiadomości nie będą już znikały.</string>
     <string name="disappearingMessagesTurnedOffGroup"><b>{name}</b> <b>wyłącza</b> znikające wiadomości.</string>
     <string name="disappearingMessagesTurnedOffYou"><b>Ty</b> <b>wyłączyłeś(-aś)</b> znikające wiadomości. Wysłane wiadomości nie będą już znikały.</string>
     <string name="disappearingMessagesTurnedOffYouGroup"><b>Wyłączono</b> znikające wiadomości.</string>
     <string name="disappearingMessagesTypeRead">przeczytano</string>
     <string name="disappearingMessagesTypeSent">wysłano</string>
     <string name="disappearingMessagesUpdated"><b>{admin_name}</b> zaktualizował(a) ustawienia znikających wiadomości.</string>
-    <string name="disappearingMessagesUpdatedYou"><b>Ty</b> zaktualizowałeś(-aś) ustawienia znikających wiadomości.</string>
+    <string name="disappearingMessagesUpdatedYou"><b>Zaktualizowano</b> ustawienia znikających wiadomości. Wysłane wiadomości nie będą już znikały.</string>
     <string name="dismiss">Odrzuć</string>
     <string name="displayNameDescription">Może to być Twoje prawdziwe imię, alias lub cokolwiek innego, co Ci się podoba — i możesz je zmienić w dowolnym momencie.</string>
     <string name="displayNameEnter">Wpisz swoją nazwę wyświetlaną</string>
@@ -372,14 +372,14 @@
     <string name="emojiReactsClearAll">Czy na pewno chcesz wyczyścić wszystkie {emoji}?</string>
     <string name="emojiReactsCoolDown">Zwolnij! Wysłałeś zbyt wiele reakcji emoji. Spróbuj ponownie wkrótce</string>
     <plurals name="emojiReactsCountOthers">
-        <item quantity="one">A %1$d inne zareagowało %2$s na tę wiadomość.</item>
-        <item quantity="few">A %1$d innych zareagowało %2$s na tę wiadomość.</item>
-        <item quantity="many">A %1$d innych zareagowało %2$s na tę wiadomość.</item>
-        <item quantity="other">A %1$d innych zareagowało %2$s na tę wiadomość.</item>
+        <item quantity="one">I %1$d innych zareagowało %2$s na tą wiadomość.</item>
+        <item quantity="few">I %1$d inne osoby zareagowały %2$s na tę wiadomość.</item>
+        <item quantity="many">I %1$d innych osób zareagowało %2$s na tę wiadomość.</item>
+        <item quantity="other">I %1$d innych osób zareagowało %2$s na tę wiadomość.</item>
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name}: zareagowano za pomocą: {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">Użytkownicy {name} oraz {other_name} zareagowali za pomocą: {emoji_name}</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} i <span>{count} inni</span> zareagowali z {emoji_name}</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} i <span>{count} innych użytkowników</span> zareagowali za pomocą: {emoji_name}</string>
     <string name="emojiReactsHoverYouNameDesktop">Zareagowałeś na {emoji_name}</string>
     <string name="emojiReactsHoverYouNameMultipleDesktop">Ty i <span> {count} innych użytkowników</span> zareagowaliście za pomocą: {emoji_name}</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">Ty i użytkownik {name} zareagowaliście za pomocą: {emoji_name}</string>
@@ -397,7 +397,7 @@
     <string name="fullScreenToggle">Pełny ekran</string>
     <string name="gif">GIF</string>
     <string name="giphyWarning">Giphy</string>
-    <string name="giphyWarningDescription">{app_name} połączy się z Giphy, aby zapewnić wyniki wyszukiwania. Nie będziesz mieć pełnej ochrony metadanych podczas wysyłania GIF-ów.</string>
+    <string name="giphyWarningDescription">Aby dostarczać wyniki wyszukiwania, aplikacja {app_name} połączy się z platformą Giphy. Podczas wysyłania GIF-ów nie będziesz mieć pełnej ochrony metadanych.</string>
     <string name="groupAddMemberMaximum">Grupy mają maksymalnie 100 członków</string>
     <string name="groupCreate">Utwórz grupę</string>
     <string name="groupCreateErrorNoMembers">Please pick at least one other group member.</string>
@@ -419,7 +419,7 @@
     <string name="groupInviteSent">Zaproszenie zostało wysłane</string>
     <string name="groupInviteSuccessful">Zaproszenie do grupy zakończone sukcesem</string>
     <string name="groupInviteVersion">Użytkownicy muszą mieć najnowszą wersję, aby otrzymywać zaproszenia</string>
-    <string name="groupInviteYou"><b>Ty</b> zostałeś zaproszony(-a) do grupy.</string>
+    <string name="groupInviteYou"><b>Zaproszono</b> Cię do grupy.</string>
     <string name="groupInviteYouAndMoreNew"><b>Ty</b> i <b>{count} innych użytkowników</b> zostaliście zaproszeni do grupy.</string>
     <string name="groupInviteYouAndOtherNew"><b>Ty</b> oraz użytkownik <b>{other_name}</b> zostaliście zaproszeni do grupy.</string>
     <string name="groupLeave">Opuść grupę</string>
@@ -428,9 +428,9 @@
     <string name="groupLeaveErrorFailed">Nie udało się opuścić {group_name}</string>
     <string name="groupLegacyBanner">Grupy zostały zaktualizowane, utwórz nową grupę, aby zaktualizować. Stara funkcjonalność grupy będzie zdegradowana od {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> opuścił(a) grupę.</string>
-    <string name="groupMemberLeftMultiple"><b>{name}</b> i <b>{count} innych</b> opuścili grupę.</string>
-    <string name="groupMemberLeftTwo"><b>{name}</b> i <b>{other_name}</b> opuścili grupę.</string>
-    <string name="groupMemberNew"><b>{name}</b> dołączył(a) do grupy.</string>
+    <string name="groupMemberLeftMultiple"><b>{name}</b> i <b>{count} innych użytkowników</b> opuścili grupę.</string>
+    <string name="groupMemberLeftTwo">Użytkownicy <b>{name}</b> i <b>{other_name}</b> opuścili grupę.</string>
+    <string name="groupMemberNew">Zaproszono do grupy: <b>{name}</b>.</string>
     <string name="groupMemberNewHistory">Do grupy zaproszono użytkownika <b>{name}</b>. Udostępniono historię czatu.</string>
     <string name="groupMemberNewHistoryMultiple">Do grupy zaproszono użytkownika <b>{name}</b> i <b>{count} innych użytkowników</b>. Udostępniono historię czatu.</string>
     <string name="groupMemberNewHistoryTwo">Użytkownicy <b>{name}</b> oraz <b>{other_name}</b> zostali zaproszeni do dołączenia do grupy. Udostępniono historię czatu.</string>
@@ -438,7 +438,7 @@
     <string name="groupMemberNewTwo">Użytkownicy <b>{name}</b> oraz <b>{other_name}</b> zostali zaproszeni do grupy.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Ty</b> i <b>{count} innych użytkowników</b> zostaliście zaproszeni do grupy. Udostępniono historię czatu.</string>
     <string name="groupMemberNewYouHistoryTwo"><b>Ty</b> oraz użytkownik <b>{name}</b> zostaliście zaproszeni do grupy. Udostępniono historię czatu.</string>
-    <string name="groupMemberYouLeft"><b>Ty</b> opuściłeś/opusciliście grupę.</string>
+    <string name="groupMemberYouLeft"><b>Opuszczasz</b> grupę.</string>
     <string name="groupMembers">Członkowie grupy</string>
     <string name="groupMembersNone">Brak innych członków w tej grupie.</string>
     <string name="groupName">Nazwa grupy</string>
@@ -449,7 +449,7 @@
     <string name="groupNameUpdated">Zaktualizowano nazwę grupy.</string>
     <string name="groupNoMessages">Nie masz wiadomości od <b>{group_name}</b>. Wyślij wiadomość, aby rozpocząć rozmowę!</string>
     <string name="groupOnlyAdmin">Jesteś jedynym administratorem w <b>{group_name}</b>.\n\nCzłonkowie grupy i ustawienia nie mogą być zmieniane bez administratora.</string>
-    <string name="groupPromotedYou"><b>Ty</b> zostałeś(-aś) administratorem.</string>
+    <string name="groupPromotedYou"><b>Zostajesz</b> administratorem.</string>
     <string name="groupPromotedYouMultiple"><b>Ty</b> i <b>{count} innych użytkowników</b> zostaliście administratorami.</string>
     <string name="groupPromotedYouTwo"><b>Ty</b> oraz użytkownik <b>{name}</b> zostaliście administratorami.</string>
     <string name="groupRemoveDescription">Czy chcesz usunąć <b>{name}</b> z <b>{group_name}</b>?</string>
@@ -468,8 +468,8 @@
         <item quantity="other">Usuń użytkowników</item>
     </plurals>
     <string name="groupRemoved"><b>{name}</b> został(a) usunięty(-a) z grupy.</string>
-    <string name="groupRemovedMultiple"><b>{name}</b> i <b>{count} innych</b> zostali usunięci z grupy.</string>
-    <string name="groupRemovedTwo"><b>{name}</b> i <b>{other_name}</b> zostali usunięci z grupy.</string>
+    <string name="groupRemovedMultiple"><b>{name}</b> i <b>{count} innych użytkowników</b> zostali usunięci z grupy.</string>
+    <string name="groupRemovedTwo">Użytkownicy <b>{name}</b> i <b>{other_name}</b> zostali usunięci z grupy.</string>
     <string name="groupRemovedYou">Usunięto cię z <b>{group_name}</b>.</string>
     <string name="groupRemovedYouMultiple"><b>Ty</b> i <b>{count} innych użytkowników</b> zostaliście usunięci z grupy.</string>
     <string name="groupRemovedYouTwo"><b>Ty</b> oraz <b>użytkownik {other_name}</b> zostaliście usunięci z grupy.</string>
@@ -500,7 +500,7 @@
     <string name="leave">Opuść</string>
     <string name="leaving">Opuszczanie...</string>
     <string name="legacyGroupMemberNew">Do grupy dołącza <b>{name}</b>.</string>
-    <string name="legacyGroupMemberNewMultiple"><b>{name}</b> i <b>{count} innych</b> dołączyli do grupy.</string>
+    <string name="legacyGroupMemberNewMultiple"><b>{name}</b> i <b>{count} innych użytkowników</b> dołączyli do grupy.</string>
     <string name="legacyGroupMemberNewYouMultiple"><b>Ty</b> i <b>{count} innych użytkowników</b> dołączyliście do grupy.</string>
     <string name="legacyGroupMemberNewYouOther"><b>Ty</b> oraz użytkownik <b>{other_name}</b> dołączyliście do grupy.</string>
     <string name="legacyGroupMemberTwoNew"><b>{name}</b> i <b>{other_name}</b> dołączyli do grupy.</string>
@@ -514,7 +514,7 @@
     <string name="linkPreviewsSend">Wyślij podglądy linków</string>
     <string name="linkPreviewsSendModalDescription">Pełna ochrona metadanych nie będzie dostępna podczas wysyłania podglądu linków.</string>
     <string name="linkPreviewsTurnedOff">Podglądy linków wyłączone</string>
-    <string name="linkPreviewsTurnedOffDescription">{app_name} musi połączyć się z powiązanymi stronami, aby generować podgląd linków, które wysyłasz i otrzymujesz. \n\nMożesz je włączyć w ustawieniach {app_name}.</string>
+    <string name="linkPreviewsTurnedOffDescription">Aby generować podgląd wysłanych i odbieranych linków, aplikacja {app_name} musi połączyć się z powiązanymi stronami.\n\nMożesz włączyć tę funkcję w ustawieniach aplikacji {app_name}.</string>
     <string name="loadAccount">Ładowanie konta</string>
     <string name="loadAccountProgressMessage">Ładowanie konta</string>
     <string name="loading">Ładowanie...</string>
@@ -522,7 +522,7 @@
     <string name="lockAppDescription">Wymagaj odcisku palca, kodu PIN, wzoru lub hasła, aby odblokować {app_name}.</string>
     <string name="lockAppDescriptionIos">Wymagaj Touch ID, Face ID lub kodu dostępu, aby odblokować {app_name}.</string>
     <string name="lockAppEnablePasscode">Musisz włączyć kod dostępu w ustawieniach systemu iOS, aby korzystać z blokady ekranu.</string>
-    <string name="lockAppLocked">{app_name} jest zablokowany</string>
+    <string name="lockAppLocked">Aplikacja {app_name} jest zablokowana</string>
     <string name="lockAppQuickResponse">Szybka odpowiedź jest niedostępna kiedy {app_name} jest zablokowany!</string>
     <string name="lockAppStatus">Status blokady</string>
     <string name="lockAppUnlock">Dotknij by odblokować</string>
@@ -537,11 +537,11 @@
     </plurals>
     <plurals name="membersActive">
         <item quantity="one">%1$d aktywny członek</item>
-        <item quantity="few">%1$d aktywnych użytkowników</item>
-        <item quantity="many">%1$d aktywnych użytkowników</item>
-        <item quantity="other">%1$d aktywnych użytkowników</item>
+        <item quantity="few">%1$d aktywnych członków</item>
+        <item quantity="many">%1$d aktywnych członków</item>
+        <item quantity="other">%1$d aktywnych członków</item>
     </plurals>
-    <string name="membersAddAccountIdOrOns">Dodaj Account ID lub ONS</string>
+    <string name="membersAddAccountIdOrOns">Dodaj ID konta lub ONS</string>
     <string name="membersInvite">Zaproś znajomych</string>
     <plurals name="membersInviteSend">
         <item quantity="one">Wyślij zaproszenie</item>
@@ -574,12 +574,12 @@
     <string name="messageNewDescriptionMobile">Rozpocznij nową rozmowę, wprowadzając identyfikator konta swojego znajomego, ONS lub skanując jego kod QR.</string>
     <plurals name="messageNewYouveGot">
         <item quantity="one">Masz nową wiadomość.</item>
-        <item quantity="few">Masz %1$d nowych wiadomości.</item>
+        <item quantity="few">Masz %1$d nowe wiadomości.</item>
         <item quantity="many">Masz %1$d nowych wiadomości.</item>
         <item quantity="other">Masz %1$d nowych wiadomości.</item>
     </plurals>
     <string name="messageReplyingTo">Odpowiadanie do</string>
-    <string name="messageRequestGroupInvite"><b>{name}</b> zaprosił Cię do <b>{group_name}</b>.</string>
+    <string name="messageRequestGroupInvite"><b>{name}</b> zaprasza Cię do grupy<b>{group_name}</b>.</string>
     <string name="messageRequestGroupInviteDescription">Wysłanie wiadomości do tej grupy automatycznie zaakceptuje zaproszenie do grupy.</string>
     <string name="messageRequestPending">Twoje żądanie wiadomości czeka na akceptację.</string>
     <string name="messageRequestPendingDescription">Będziesz mógł wysyłać wiadomości głosowe i załączniki po zatwierdzeniu przez odbiorcę tego żądania wiadomości.</string>
@@ -592,7 +592,7 @@
     <string name="messageRequestsDelete">Czy na pewno chcesz usunąć to żądanie wiadomości?</string>
     <string name="messageRequestsNew">Masz nowe żądanie wiadomości</string>
     <string name="messageRequestsNonePending">Brak oczekujących żądań wiadomości</string>
-    <string name="messageRequestsTurnedOff"><b>{name}</b> ma wyłączone żądania wiadomości z rozmów społeczności, więc nie możesz wysłać im wiadomości.</string>
+    <string name="messageRequestsTurnedOff"><b>{name}</b> ma wyłączone prośby o wiadomość, więc nie możesz wysłać temu użytkownikowi wiadomości.</string>
     <string name="messageSelect">Wybierz wiadomość</string>
     <string name="messageSnippetGroup">{author}: {message_snippet}</string>
     <string name="messageStatusFailedToSend">Nie udało się wysłać</string>
@@ -632,7 +632,7 @@
     <string name="notificationsHeaderAllMessages">Powiadomienia – wszystkie</string>
     <string name="notificationsHeaderMentionsOnly">Powiadomienia – tylko wzmianki</string>
     <string name="notificationsHeaderMute">Powiadomienia – wyciszone</string>
-    <string name="notificationsIosGroup">{name} do {conversation_name}</string>
+    <string name="notificationsIosGroup">{name} w konwersacji {conversation_name}</string>
     <string name="notificationsIosRestart">Możliwe, że otrzymałeś wiadomości podczas restartowania {device}.</string>
     <string name="notificationsLedColor">Kolor LED</string>
     <string name="notificationsMentionsOnly">Tylko wzmianki</string>
@@ -643,13 +643,13 @@
     <string name="notificationsMuteUnmute">Wyłącz wyciszenie</string>
     <string name="notificationsMuted">Wyciszono</string>
     <string name="notificationsSlowMode">Tryb wolny</string>
-    <string name="notificationsSlowModeDescription">{app_name} będzie od czasu do czasu sprawdzać nowe wiadomości w tle.</string>
+    <string name="notificationsSlowModeDescription">Aplikacja {app_name} będzie od czasu do czasu sprawdzać nowe wiadomości w tle.</string>
     <string name="notificationsSound">Dźwięk</string>
     <string name="notificationsSoundDescription">Dźwięk, gdy aplikacja jest otwarta</string>
     <string name="notificationsSoundDesktop">Powiadomienia dźwiękowe</string>
     <string name="notificationsStrategy">Strategia powiadomień</string>
     <string name="notificationsStyle">Styl powiadomień</string>
-    <string name="notificationsSystem">{message_count} nowych wiadomości w {conversation_count} rozmowach</string>
+    <string name="notificationsSystem">{message_count} nowych wiadomości w {conversation_count} konwersacjach</string>
     <string name="notificationsVibrate">Wibracje</string>
     <string name="off">Wyłączone</string>
     <string name="okay">Okej</string>
@@ -662,7 +662,7 @@
     <string name="onboardingBubbleCreatingAnAccountIsEasy">Tworzenie konta jest natychmiastowe, darmowe i anonimowe {emoji}</string>
     <string name="onboardingBubbleNoPhoneNumber">Nawet nie potrzebujesz numeru telefonu, aby się zarejestrować.</string>
     <string name="onboardingBubblePrivacyInYourPocket">Prywatność w Twojej kieszeni.</string>
-    <string name="onboardingBubbleSessionIsEngineered">{app_name} jest zaprojektowany, aby chronić Twoją prywatność.</string>
+    <string name="onboardingBubbleSessionIsEngineered">Zaprojektowaliśmy aplikację {app_name} z myślą o ochronie Twojej prywatności.</string>
     <string name="onboardingBubbleWelcomeToSession">Witaj w aplikacji {app_name} {emoji}</string>
     <string name="onboardingHitThePlusButton">Naciśnij przycisk plus, aby rozpocząć czat, utwórz grupę lub dołącz do oficjalnej społeczności!</string>
     <string name="onboardingMessageNotificationExplanation">Istnieją dwa sposoby powiadamiania o nowych wiadomościach przez {app_name}.</string>
@@ -670,7 +670,7 @@
     <string name="onboardingTos">Warunki usługi</string>
     <string name="onboardingTosPrivacy">Korzystając z tej usługi, zgadzasz się na nasze <b>Warunki świadczenia usług</b> i <b>Politykę prywatności</b></string>
     <string name="onionRoutingPath">Ścieżka</string>
-    <string name="onionRoutingPathDescription">{app_name} ukrywa Twój adres IP, przekierowując wiadomości przez kilka węzłów usług w zdecentralizowanej sieci {app_name}. Oto Twoja obecna ścieżka:</string>
+    <string name="onionRoutingPathDescription">Aplikacja {app_name} ukrywa Twój adres IP, kierując wiadomości przez wiele węzłów usług w zdecentralizowanej sieci aplikacji {app_name}. Obecna ścieżka</string>
     <string name="onionRoutingPathDestination">Miejsce docelowe</string>
     <string name="onionRoutingPathEntryNode">Węzeł wejścia</string>
     <string name="onionRoutingPathServiceNode">Service Node</string>
@@ -701,26 +701,26 @@
     <string name="passwordSetDescription">Hasło zostało ustawione. Proszę trzymaj je bezpieczne.</string>
     <string name="paste">Wklej</string>
     <string name="permissionMusicAudioDenied">Aby wysyłać pliki, muzykę i dźwięk, aplikacja {app_name} potrzebuje dostępu do muzyki i dźwięku, jednak na stałe go odmówiono. Naciśnij „Ustawienia” → „Uprawnienia” i włącz „Muzyka i dźwięk”.</string>
-    <string name="permissionsAppleMusic">{app_name} potrzebuje używać Apple Music do odtwarzania załączników multimedialnych.</string>
+    <string name="permissionsAppleMusic">Do odtwarzania załączników multimedialnych aplikacja {app_name} potrzebuje używać aplikacji Apple Music.</string>
     <string name="permissionsAutoUpdate">Automatyczna aktualizacja</string>
     <string name="permissionsAutoUpdateDescription">Automatycznie sprawdzaj dostępność aktualizacji podczas uruchamiania</string>
     <string name="permissionsCameraDenied">Aby robić zdjęcia i nagrywać wideo, aplikacja {app_name} potrzebuje dostępu do aparatu, jednak na stałe go odmówiono. Naciśnij „Ustawienia” → „Uprawnienia” i włącz „Aparat”.</string>
     <string name="permissionsFaceId">Funkcja blokady ekranu na {app_name} używa Face ID.</string>
     <string name="permissionsKeepInSystemTray">Trzymaj w zasobniku systemowym</string>
-    <string name="permissionsKeepInSystemTrayDescription">{app_name} nadal działa w tle po zamknięciu okna</string>
-    <string name="permissionsLibrary">{app_name} potrzebuje dostępu do biblioteki zdjęć, aby kontynuować. Możesz włączyć dostęp w ustawieniach iOS.</string>
+    <string name="permissionsKeepInSystemTrayDescription">Aplikacja {app_name} nadal działa w tle po zamknięciu okna</string>
+    <string name="permissionsLibrary">Aby kontynuować, aplikacja {app_name} potrzebuje dostępu do biblioteki zdjęć. Dostęp można włączyć w ustawieniach systemu iOS.</string>
     <string name="permissionsMicrophone">Mikrofon</string>
     <string name="permissionsMicrophoneAccessRequired">Aby wykonywać połączenia i wysyłać wiadomości audio, aplikacja {app_name} potrzebuje dostępu do mikrofonu, jednak na stałe go odmówiono. Naciśnij „Ustawienia” → „Uprawnienia” i włącz „Mikrofon”.</string>
     <string name="permissionsMicrophoneAccessRequiredDesktop">Możesz włączyć dostęp do mikrofonu w ustawieniach prywatności {app_name}</string>
-    <string name="permissionsMicrophoneAccessRequiredIos">{app_name} wymaga dostępu do mikrofonu, aby wykonywać połączenia i nagrywać wiadomości dźwiękowe.</string>
+    <string name="permissionsMicrophoneAccessRequiredIos">Aby wykonywać połączenia i nagrywać wiadomości audio, aplikacja {app_name} potrzebuje dostępu do mikrofonu.</string>
     <string name="permissionsMicrophoneDescription">Zezwól na dostęp do mikrofonu.</string>
     <string name="permissionsMusicAudio">Aby wysyłać pliki, muzykę i dźwięk, aplikacja {app_name} potrzebuje dostępu do muzyki i dźwięku.</string>
     <string name="permissionsRequired">Wymagane uprawnienia</string>
     <string name="permissionsStorageDenied">Aby wysyłać zdjęcia i wideo, aplikacja {app_name} potrzebuje dostępu do galerii, jednak na stałe go odmówiono. Naciśnij „Ustawienia” → „Uprawnienia” i włącz „Zdjęcia i wideo”.</string>
     <string name="permissionsStorageDeniedLegacy">Aby wysyłać i zapisywać załączniki, aplikacja {app_name} potrzebuje dostępu do pamięci. Naciśnij „Ustawienia” → „Uprawnienia” i włącz „Pamięć”.</string>
-    <string name="permissionsStorageSave">{app_name} potrzebuje dostępu do pamięci, aby zapisywać załączniki i multimedia.</string>
-    <string name="permissionsStorageSaveDenied">{app_name} potrzebuje dostępu do pamięci masowej, aby zapisywać zdjęcia i filmy, ale został on trwale zablokowany. Przejdź do ustawień aplikacji, wybierz \"Uprawnienia\" i włącz \"Pamięć\".</string>
-    <string name="permissionsStorageSend">{app_name} potrzebuje dostępu do pamięci, aby wysyłać zdjęcia i filmy.</string>
+    <string name="permissionsStorageSave">Aby zapisywać załączniki i multimedia, aplikacja {app_name} potrzebuje dostępu do pamięci.</string>
+    <string name="permissionsStorageSaveDenied">Aby zapisywać zdjęcia i filmy, aplikacja {app_name} potrzebuje dostępu do pamięci, jednak na stałe go odmówiono. Przejdź do ustawień aplikacji, wybierz „Uprawnienia” i włącz „Pamięć”.</string>
+    <string name="permissionsStorageSend">Aby wysyłać zdjęcia i filmy, aplikacja {app_name} potrzebuje dostępu do pamięci.</string>
     <string name="pin">Przypnij</string>
     <string name="pinConversation">Przypnij konwersację</string>
     <string name="pinUnpin">Odepnij</string>
@@ -838,10 +838,10 @@
     <string name="updateDownloading">Pobieranie aktualizacji: {percent_loader}%</string>
     <string name="updateError">Nie można zaktualizować</string>
     <string name="updateErrorDescription">Nie udało się zaktualizować aplikacji {app_name}. Przejdź do adresu {session_download_url} i zainstaluj nową wersję ręcznie, a następnie skontaktuj się z naszym centrum pomocy, aby poinformować nas o tym problemie.</string>
-    <string name="updateNewVersion">Dostępna jest nowa wersja {app_name}, stuknij, aby zaktualizować</string>
-    <string name="updateNewVersionDescription">Dostępna jest nowa wersja {app_name}.</string>
+    <string name="updateNewVersion">Dostępna jest nowa wersja aplikacji {app_name}. Stuknij, aby zaktualizować</string>
+    <string name="updateNewVersionDescription">Dostępna jest nowa wersja aplikacji {app_name}.</string>
     <string name="updateReleaseNotes">Przejdź do informacji o wersji</string>
-    <string name="updateSession">Aktualizacja {app_name}</string>
+    <string name="updateSession">Aktualizacja aplikacji {app_name}</string>
     <string name="updateVersion">Wersja {version}</string>
     <string name="uploading">Przesyłanie</string>
     <string name="urlCopy">Skopiuj URL</string>

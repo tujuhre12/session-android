@@ -520,7 +520,7 @@
         <item quantity="other">%1$d члена</item>
     </plurals>
     <plurals name="membersActive">
-        <item quantity="one">%1$d активен член</item>
+        <item quantity="one">%1$d активни участници</item>
         <item quantity="other">%1$d активни члена</item>
     </plurals>
     <string name="membersAddAccountIdOrOns">Добавяне на Account ID или ONS</string>
