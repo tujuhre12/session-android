@@ -254,7 +254,7 @@ public class AttachmentManager {
                        .request(Manifest.permission.READ_MEDIA_IMAGES)
                        .request(Manifest.permission.READ_MEDIA_AUDIO)
                        .withRationaleDialog(
-                               Phrase.from(c, R.string.permissionsStorageSend)
+                               Phrase.from(c, R.string.permissionsMusicAudio)
                                        .put(APP_NAME_KEY, c.getString(R.string.app_name)).format().toString()
                        )
                        .withPermanentDenialDialog(
