@@ -275,19 +275,17 @@ fun ItemButton(
     onClick: () -> Unit
 ) {
     TextButton(
-        modifier = modifier.fillMaxWidth()
-            .height(IntrinsicSize.Min)
-            .heightIn(min = minHeight),
+        modifier = modifier.fillMaxWidth(),
         colors = colors,
         onClick = onClick,
         contentPadding = PaddingValues(),
         shape = RectangleShape,
     ) {
         Box(
-            modifier = Modifier.fillMaxHeight()
-                .align(Alignment.CenterVertically)
+            modifier = Modifier
                 .padding(horizontal = LocalDimensions.current.xxsSpacing)
-                .aspectRatio(1f),
+                .size(minHeight)
+                .align(Alignment.CenterVertically),
             content = icon
         )
 
@@ -306,6 +304,18 @@ fun ItemButton(
 fun PreviewItemButton() {
     PreviewTheme {
         ItemButton(
+            textId = R.string.groupCreate,
+            icon = R.drawable.ic_group,
+            onClick = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+fun PreviewLargeItemButton() {
+    PreviewTheme {
+        LargeItemButton(
             textId = R.string.groupCreate,
             icon = R.drawable.ic_group,
             onClick = {}
