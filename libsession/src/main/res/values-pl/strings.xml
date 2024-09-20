@@ -14,7 +14,7 @@
     <string name="accountIdYoursDescription">To jest twój identyfikator konta. Inni użytkownicy mogą go zeskanować, aby rozpocząć z tobą rozmowę.</string>
     <string name="actualSize">Rzeczywisty rozmiar</string>
     <string name="add">Dodaj</string>
-    <string name="adminCannotBeRemoved">Admini nie mogą być usunięci.</string>
+    <string name="adminCannotBeRemoved">Nie można usuwać administratorów.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> i <b>{count} innych</b> zostali awansowani na administratów.</string>
     <string name="adminPromote">Usuń Administratorów</string>
     <string name="adminPromoteDescription">Czy na pewno chcesz awansować <b>{name}</b> na administratora? Administratorzy nie mogą być usunięci.</string>
@@ -22,11 +22,11 @@
     <string name="adminPromoteToAdmin">Awansuj na Administratora</string>
     <string name="adminPromoteTwoDescription">Czy na pewno chcesz awansować <b>{name}</b> i <b>{other_name}</b> na administratora? Administratorzy nie mogą być usunięci.</string>
     <string name="adminPromotedToAdmin"><b>{name}</b> został(a) administratorem.</string>
-    <string name="adminPromotionFailed">Awansowanie admina nie powiodło się</string>
+    <string name="adminPromotionFailed">Awans na administratora się nie powiódł</string>
     <string name="adminPromotionFailedDescription">Nie udało się awansować {name} w {group_name}</string>
     <string name="adminPromotionFailedDescriptionMultiple">Nie udało się awansować {name} i {count} innych osób w {group_name}</string>
     <string name="adminPromotionFailedDescriptionTwo">Nie udało się awansować {name} i {other_name} w {group_name}</string>
-    <string name="adminPromotionSent">Wysłano awans admina</string>
+    <string name="adminPromotionSent">Wysłano awans na administratora</string>
     <string name="adminRemove">Usuń Administratorów</string>
     <string name="adminRemoveAsAdmin">Usuń jako Administratora</string>
     <string name="adminRemoveCommunityNone">W tej społeczności nie ma żadnych administratorów.</string>
@@ -37,10 +37,10 @@
     <string name="adminRemovedUserMultiple"><b>{name}</b> i <b>{count} innych użytkowników</b> nie są już administratorami.</string>
     <string name="adminRemovedUserOther">Użytkownicy <b>{name}</b> i <b>{other_name}</b> nie są już administratorami.</string>
     <string name="adminSendingPromotion">Wysyłanie awansu administratora</string>
-    <string name="adminSettings">Ustawienia admina</string>
+    <string name="adminSettings">Ustawienia administratora</string>
     <string name="adminTwoPromotedToAdmin">Użytkownicy <b>{name}</b> i <b>{other_name}</b> zostali administratorami.</string>
     <string name="andMore">+{count}</string>
-    <string name="anonymous">Anonimowy</string>
+    <string name="anonymous">Anonim</string>
     <string name="appearanceAutoDarkMode">Automatyczny tryb ciemny</string>
     <string name="appearanceHideMenuBar">Ukryj pasek menu</string>
     <string name="appearanceLanguage">Język</string>
@@ -126,7 +126,7 @@
     <string name="blockBlockedDescription">Odblokuj ten kontakt, aby wysłać wiadomość.</string>
     <string name="blockBlockedNone">Brak zablokowanych kontaktów</string>
     <string name="blockBlockedUser">Zablokowano {name}</string>
-    <string name="blockDescription">Czy na pewno chcesz zablokować <b>{name}?</b> Zablokowani użytkownicy nie mogą wysyłać próśb o wiadomości, zaproszeń do grupy ani dzwonić.</string>
+    <string name="blockDescription">Czy na pewno chcesz zablokować <b>{name}</b>? Zablokowani użytkownicy nie mogą wysyłać próśb o wiadomości, zaproszeń do grupy ani dzwonić.</string>
     <string name="blockUnblock">Odblokuj</string>
     <string name="blockUnblockName">Czy na pewno chcesz odblokować <b>{name}</b>?</string>
     <string name="blockUnblockNameMultiple">Czy na pewno chcesz odblokować <b>{name}</b> i <b>{count} innych</b>?</string>
@@ -177,7 +177,7 @@
         <item quantity="many">Dane nie zostały usunięte przez %1$d węzłów usługi. Identyfikatory węzłów usługi: %2$s.</item>
         <item quantity="other">Dane nie zostały usunięte przez %1$d węzłów usługi. Identyfikatory węzłów usługi: %2$s.</item>
     </plurals>
-    <string name="clearDataErrorDescriptionGeneric">Wystąpił nieznany błąd i twoje dane nie zostały usunięte. Czy chcesz usunąć dane tylko z tego urządzenia?</string>
+    <string name="clearDataErrorDescriptionGeneric">Wystąpił nieznany błąd i dane nie zostały usunięte. Czy chcesz usunąć dane tylko z tego urządzenia?</string>
     <string name="clearDevice">Wyczyść dane z urządzenia</string>
     <string name="clearDeviceAndNetwork">Wyczyść urządzenie i sieć</string>
     <string name="clearDeviceAndNetworkConfirm">Czy na pewno chcesz usunąć swoje dane z sieci? Jeśli kontynuujesz, nie będziesz w stanie przywrócić swoich wiadomości lub kontaktów.</string>
@@ -185,11 +185,11 @@
     <string name="clearDeviceOnly">Wyczyść tylko urządzenie</string>
     <string name="clearMessages">Wyczyść wszystkie wiadomości</string>
     <string name="clearMessagesChatDescription">Czy na pewno chcesz usunąć wszystkie wiadomości z konwersacji z <b>{name}</b> z twojego urządzenia?</string>
-    <string name="clearMessagesCommunity">Czy na pewno chcesz wyczyścić wszystkie wiadomości z <b>{community_name}</b> z tego urządzenia?</string>
+    <string name="clearMessagesCommunity">Czy na pewno chcesz wyczyścić z urządzenia wszystkie wiadomości ze społeczności <b>{community_name}</b>?</string>
     <string name="clearMessagesForEveryone">Wyczyść dla wszystkich</string>
     <string name="clearMessagesForMe">Wyczyść dla mnie</string>
-    <string name="clearMessagesGroupAdminDescription">Czy na pewno chcesz usunąć wszystkie wiadomości <b>{group_name}</b>?</string>
-    <string name="clearMessagesGroupDescription">Czy na pewno chcesz usunąć wszystkie wiadomości <b>{group_name}</b> z twojego urządzenia?</string>
+    <string name="clearMessagesGroupAdminDescription">Czy na pewno chcesz usunąć wszystkie wiadomości z grupy <b>{group_name}</b>?</string>
+    <string name="clearMessagesGroupDescription">Czy na pewno chcesz usunąć z urządzenia wszystkie wiadomości z grupy <b>{group_name}</b>?</string>
     <string name="clearMessagesNoteToSelfDescription">Czy na pewno chcesz usunąć wszystkie wiadomości Note to Self z twojego urządzenia?</string>
     <string name="close">Zamknij</string>
     <string name="closeWindow">Zamknij okno</string>
@@ -249,7 +249,7 @@
     <string name="conversationsNone">Nie masz jeszcze żadnych konwersacji</string>
     <string name="conversationsSendWithEnterKey">Wyślij za pomocą klawisza Enter</string>
     <string name="conversationsSendWithEnterKeyDescription">Dotknięcie klawisza Enter wyśle wiadomość zamiast rozpoczęcia nowej linii.</string>
-    <string name="conversationsSettingsAllMedia">Pliki</string>
+    <string name="conversationsSettingsAllMedia">Wszystkie media</string>
     <string name="conversationsSpellCheck">Sprawdzanie pisowni</string>
     <string name="conversationsSpellCheckDescription">Włącz sprawdzanie pisowni podczas pisania wiadomości.</string>
     <string name="conversationsStart">Rozpocznij rozmowę</string>
@@ -361,7 +361,7 @@
     <string name="edit">Edytuj</string>
     <string name="emojiAndSymbols">Emoji i symbole</string>
     <string name="emojiCategoryActivities">Aktywności</string>
-    <string name="emojiCategoryAnimals">Zwierzęta &amp;amp; Natura</string>
+    <string name="emojiCategoryAnimals">Zwierzęta i natura</string>
     <string name="emojiCategoryFlags">Flagi</string>
     <string name="emojiCategoryFood">Jedzenie &amp;amp; Napoje</string>
     <string name="emojiCategoryObjects">Obiekty</string>
@@ -588,7 +588,7 @@
     <string name="messageRequestsAccepted">Twoje żądanie wiadomości zostało zaakceptowane.</string>
     <string name="messageRequestsClearAllExplanation">Czy na pewno chcesz wyczyścić wszystkie prośby o wiadomość i zaproszenia do grupy?</string>
     <string name="messageRequestsCommunities">Prośby o Wiadomość Społeczności</string>
-    <string name="messageRequestsCommunitiesDescription">Zezwalaj na prośby o wiadomości z rozmów społecznościowych.</string>
+    <string name="messageRequestsCommunitiesDescription">Zezwalaj na prośby o wiadomość z rozmów społecznościowych.</string>
     <string name="messageRequestsDelete">Czy na pewno chcesz usunąć to żądanie wiadomości?</string>
     <string name="messageRequestsNew">Masz nowe żądanie wiadomości</string>
     <string name="messageRequestsNonePending">Brak oczekujących żądań wiadomości</string>
