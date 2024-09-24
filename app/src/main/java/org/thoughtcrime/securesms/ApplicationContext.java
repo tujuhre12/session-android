@@ -27,28 +27,28 @@ import android.os.Handler;
 import android.os.HandlerThread;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.pm.ShortcutInfoCompat;
+import androidx.core.content.pm.ShortcutManagerCompat;
+import androidx.core.graphics.drawable.IconCompat;
 import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ProcessLifecycleOwner;
 
 import org.conscrypt.Conscrypt;
-import org.session.libsession.avatars.AvatarHelper;
 import org.session.libsession.database.MessageDataProvider;
 import org.session.libsession.messaging.MessagingModuleConfiguration;
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier;
 import org.session.libsession.messaging.sending_receiving.pollers.ClosedGroupPollerV2;
 import org.session.libsession.messaging.sending_receiving.pollers.Poller;
 import org.session.libsession.snode.SnodeModule;
-import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.ConfigFactoryUpdateListener;
 import org.session.libsession.utilities.Device;
+import org.session.libsession.utilities.Environment;
 import org.session.libsession.utilities.ProfilePictureUtilities;
 import org.session.libsession.utilities.SSKEnvironment;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.Util;
 import org.session.libsession.utilities.WindowDebouncer;
-import org.session.libsession.utilities.dynamiclanguage.DynamicLanguageContextWrapper;
-import org.session.libsession.utilities.dynamiclanguage.LocaleParser;
 import org.session.libsignal.utilities.HTTP;
 import org.session.libsignal.utilities.JsonUtil;
 import org.session.libsignal.utilities.Log;
@@ -62,6 +62,7 @@ import org.thoughtcrime.securesms.database.LokiAPIDatabase;
 import org.thoughtcrime.securesms.database.Storage;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
 import org.thoughtcrime.securesms.database.model.EmojiSearchData;
+import org.thoughtcrime.securesms.debugmenu.DebugActivity;
 import org.thoughtcrime.securesms.dependencies.AppComponent;
 import org.thoughtcrime.securesms.dependencies.ConfigFactory;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
@@ -86,17 +87,14 @@ import org.thoughtcrime.securesms.sskenvironment.ReadReceiptManager;
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository;
 import org.thoughtcrime.securesms.util.Broadcaster;
 import org.thoughtcrime.securesms.util.VersionDataFetcher;
-import org.thoughtcrime.securesms.util.dynamiclanguage.LocaleParseHelper;
 import org.thoughtcrime.securesms.webrtc.CallMessageProcessor;
 import org.webrtc.PeerConnectionFactory;
 import org.webrtc.PeerConnectionFactory.InitializationOptions;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.Security;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 import java.util.Timer;
 import java.util.concurrent.Executors;
@@ -105,8 +103,8 @@ import javax.inject.Inject;
 
 import dagger.hilt.EntryPoints;
 import dagger.hilt.android.HiltAndroidApp;
-import kotlin.Unit;
 import network.loki.messenger.BuildConfig;
+import network.loki.messenger.R;
 import network.loki.messenger.libsession_util.ConfigBase;
 import network.loki.messenger.libsession_util.UserProfile;
 
@@ -232,7 +230,8 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         messageNotifier = new OptimizedMessageNotifier(new DefaultMessageNotifier());
         broadcaster = new Broadcaster(this);
         LokiAPIDatabase apiDB = getDatabaseComponent().lokiAPIDatabase();
-        SnodeModule.Companion.configure(apiDB, broadcaster);
+        boolean useTestNet = textSecurePreferences.getEnvironment() == Environment.TEST_NET;
+        SnodeModule.Companion.configure(apiDB, broadcaster, useTestNet);
         initializeExpiringMessageManager();
         initializeTypingStatusRepository();
         initializeTypingStatusSender();
@@ -248,6 +247,22 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
 
         NetworkConstraint networkConstraint = new NetworkConstraint.Factory(this).create();
         HTTP.INSTANCE.setConnectedToNetwork(networkConstraint::isMet);
+
+        // add our shortcut debug menu if we are not in a release build
+        if (BuildConfig.BUILD_TYPE != "release") {
+            // add the config settings shortcut
+            Intent intent = new Intent(this, DebugActivity.class);
+            intent.setAction(Intent.ACTION_VIEW);
+
+            ShortcutInfoCompat shortcut = new ShortcutInfoCompat.Builder(this, "shortcut_debug_menu")
+                    .setShortLabel("Debug Menu")
+                    .setLongLabel("Debug Menu")
+                    .setIcon(IconCompat.createWithResource(this, R.drawable.ic_settings))
+                    .setIntent(intent)
+                    .build();
+
+            ShortcutManagerCompat.pushDynamicShortcut(this, shortcut);
+        }
     }
 
     @Override
@@ -295,10 +310,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         OpenGroupManager.INSTANCE.stopPolling();
         versionDataFetcher.stopTimedVersionCheck();
         super.onTerminate();
-    }
-
-    public void initializeLocaleParser() {
-        LocaleParser.Companion.configure(new LocaleParseHelper());
     }
 
     public ExpiringMessageManager getExpiringMessageManager() {
@@ -401,12 +412,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         });
     }
 
-    @Override
-    protected void attachBaseContext(Context base) {
-        initializeLocaleParser();
-        super.attachBaseContext(DynamicLanguageContextWrapper.updateContext(base, TextSecurePreferences.getLanguage(base)));
-    }
-
     private static class ProviderInitializationException extends RuntimeException { }
     private void setUpPollingIfNeeded() {
         String userPublicKey = TextSecurePreferences.getLocalNumber(this);
@@ -434,39 +439,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     }
 
     private void resubmitProfilePictureIfNeeded() {
-        // Files expire on the file server after a while, so we simply re-upload the user's profile picture
-        // at a certain interval to ensure it's always available.
-        String userPublicKey = TextSecurePreferences.getLocalNumber(this);
-        if (userPublicKey == null) return;
-        long now = new Date().getTime();
-        long lastProfilePictureUpload = TextSecurePreferences.getLastProfilePictureUpload(this);
-        if (now - lastProfilePictureUpload <= 14 * 24 * 60 * 60 * 1000) return;
-        ThreadUtils.queue(() -> {
-            // Don't generate a new profile key here; we do that when the user changes their profile picture
-            Log.d("Loki-Avatar", "Uploading Avatar Started");
-            String encodedProfileKey = TextSecurePreferences.getProfileKey(ApplicationContext.this);
-            try {
-                // Read the file into a byte array
-                InputStream inputStream = AvatarHelper.getInputStreamFor(ApplicationContext.this, Address.fromSerialized(userPublicKey));
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                int count;
-                byte[] buffer = new byte[1024];
-                while ((count = inputStream.read(buffer, 0, buffer.length)) != -1) {
-                    baos.write(buffer, 0, count);
-                }
-                baos.flush();
-                byte[] profilePicture = baos.toByteArray();
-                // Re-upload it
-                ProfilePictureUtilities.INSTANCE.upload(profilePicture, encodedProfileKey, ApplicationContext.this).success(unit -> {
-                    // Update the last profile picture upload date
-                    TextSecurePreferences.setLastProfilePictureUpload(ApplicationContext.this, new Date().getTime());
-                    Log.d("Loki-Avatar", "Uploading Avatar Finished");
-                    return Unit.INSTANCE;
-                });
-            } catch (Exception e) {
-                Log.e("Loki-Avatar", "Uploading avatar failed.");
-            }
-        });
+        ProfilePictureUtilities.INSTANCE.resubmitProfilePictureIfNeeded(this);
     }
 
     private void loadEmojiSearchIndexIfNeeded() {
@@ -486,7 +459,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     // Method to clear the local data - returns true on success otherwise false
 
     /**
-     * Clear all local profile data and message history then restart the app after a brief delay.
+     * Clear all local profile data and message history.
      * @return true on success, false otherwise.
      */
     @SuppressLint("ApplySharedPref")
@@ -498,6 +471,16 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
             return false;
         }
         configFactory.keyPairChanged();
+        return true;
+    }
+
+    /**
+     * Clear all local profile data and message history then restart the app after a brief delay.
+     * @return true on success, false otherwise.
+     */
+    @SuppressLint("ApplySharedPref")
+    public boolean clearAllDataAndRestart() {
+        clearAllData();
         Util.runOnMain(() -> new Handler().postDelayed(ApplicationContext.this::restartApplication, 200));
         return true;
     }
