@@ -237,7 +237,7 @@
     <string name="conversationsDeleted">बातचीत हटाई गई</string>
     <string name="conversationsEmpty">{conversation_name} में कोई संदेश नहीं हैं।</string>
     <string name="conversationsEnter">कुंजी दर्ज करें</string>
-    <string name="conversationsEnterDescription">वार्तालाप में टाइप करते समय एंटर कुंजी का कार्य।</string>
+    <string name="conversationsEnterDescription">बातचीत में टाइप करते समय एंटर कुंजी का कार्य।</string>
     <string name="conversationsEnterNewLine">SHIFT + ENTER एक संदेश भेजता है, ENTER एक नई पंक्ति शुरू करता है</string>
     <string name="conversationsEnterSends">ENTER संदेश भेजता है, SHIFT + ENTER नई लाइन शुरू करता है</string>
     <string name="conversationsGroups">समूह</string>
@@ -356,7 +356,7 @@
     <string name="emojiCategoryActivities">क्रियाएँ</string>
     <string name="emojiCategoryAnimals">पशु और प्रकृति</string>
     <string name="emojiCategoryFlags">ध्वज</string>
-    <string name="emojiCategoryFood">Food &amp;amp; Drink</string>
+    <string name="emojiCategoryFood">खाद्य और पेय</string>
     <string name="emojiCategoryObjects">वस्तुएँ</string>
     <string name="emojiCategoryRecentlyUsed">हाल ही में प्रयुक्त</string>
     <string name="emojiCategorySmileys">स्माइली और लोग</string>
