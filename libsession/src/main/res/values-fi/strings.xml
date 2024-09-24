@@ -687,6 +687,7 @@
     <string name="permissionsKeepInSystemTrayDescription">{app_name} pysyy käynnissä taustalla, kun suljet ikkunan</string>
     <string name="permissionsLibrary">{app_name} tarvitsee pääsyn valokuvakirjastoon jatkaakseen. Voit sallia käyttöoikeuden iOS:n asetuksista.</string>
     <string name="permissionsMicrophone">Mikrofoni</string>
+    <string name="permissionsMicrophoneAccessRequired">{app_name} tarvitsee mikrofonin käyttöoikeuden puheluiden soittamiseen ja ääniviestien lähettämiseen, mutta käyttöoikeus on evätty pysyvästi. Napauta Asetukset → Käyttöoikeudet ja ota käyttöön \"Mikrofoni\".</string>
     <string name="permissionsMicrophoneAccessRequiredDesktop">Voit antaa mikrofonin käyttöoikeuden {app_name}:n yksityisyysasetuksista</string>
     <string name="permissionsMicrophoneAccessRequiredIos">{app_name} tarvitsee mikrofonin käyttöoikeuden puheluiden soittamiseen ja ääniviestien nauhoittamiseen.</string>
     <string name="permissionsMicrophoneDescription">Myönnä mikrofonin käyttöoikeus.</string>

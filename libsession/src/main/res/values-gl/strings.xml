@@ -398,6 +398,10 @@
     <string name="groupRemoveDescription">Querés eliminar a <b>{name}</b> de <b>{group_name}?</b></string>
     <string name="groupRemoveDescriptionMultiple">Querés eliminar a <b>{name}</b> e a <b>{count} máis</b> de <b>{group_name}?</b></string>
     <string name="groupRemoveDescriptionTwo">Querés eliminar a <b>{name}</b> e a <b>{other_name}</b> de <b>{group_name}?</b></string>
+    <plurals name="groupRemoveUserOnly">
+        <item quantity="one">Eliminar usuario</item>
+        <item quantity="other">Eliminar usuarios</item>
+    </plurals>
     <string name="groupRemoved"><b>{name}</b> foi eliminado do grupo.</string>
     <string name="groupRemovedMultiple"><b>{name}</b> e <b>{count} máis</b> foron eliminados do grupo.</string>
     <string name="groupRemovedTwo"><b>{name}</b> e <b>{other_name}</b> foron eliminados do grupo.</string>

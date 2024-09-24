@@ -277,6 +277,10 @@
     <string name="deleteAfterLegacyGroupsGroupCreation">कृपया समूह बनाउँदै गर्दा प्रतीक्षा गर्नुहोस्...</string>
     <string name="deleteAfterLegacyGroupsGroupUpdateErrorTitle">समूह अद्यावधिक गर्न असफल भयो</string>
     <string name="deleteAfterMessageDeletionStandardisationMessageDeletionForbidden">तपाईंलाई अरूसँग सन्देश मेट्नको अनुमति छैन।</string>
+    <plurals name="deleteMessage">
+        <item quantity="one">सन्देशहरू मेट्नुहोस्</item>
+        <item quantity="other">सन्देशहरू मेट्नुहोस्</item>
+    </plurals>
     <string name="deleteMessageConfirm">तपाईं यो सन्देश मेटाउन निश्चित हुनुहुन्छ?</string>
     <string name="deleteMessageDeletedGlobally">यो सन्देश मेटिएको थियो।</string>
     <string name="deleteMessageDeletedLocally">यो सन्देश यस उपकरणमा मेटिएको थियो।</string>
@@ -285,6 +289,10 @@
     <string name="deleteMessageDeviceOnly">यो उपकरणमा मात्र मेटाउनुहोस्</string>
     <string name="deleteMessageDevicesAll">मेरो सबै उपकरणमा मेटाउनुहोस्</string>
     <string name="deleteMessageEveryone">सर्वजनका लागि मेटाउनुहोस्</string>
+    <plurals name="deleteMessageFailed">
+        <item quantity="one">सन्देश मेट्न असफल भयो।</item>
+        <item quantity="other">सन्देशहरू मेट्न असफल भयो।</item>
+    </plurals>
     <string name="deleteMessagesConfirm">तपाईं यी सन्देशहरू मेटाउन निश्चित हुनुहुन्छ?</string>
     <string name="deleteMessagesDescriptionDevice">के तपाई पक्का हुनुहुन्छ कि तपाई यी सन्देशहरू यो उपकरणबाट मात्र मेटाउन चाहनुहुन्छ?</string>
     <string name="deleteMessagesDescriptionEveryone">के तपाई पक्का हुनुहुन्छ कि तपाई यी सन्देशहरू सबैको लागि मेटाउन चाहनुहुन्छ?</string>
@@ -433,6 +441,14 @@
     <string name="groupRemoveDescription">तपाईं हटाउन चाहनुहुन्छ <b>{name}</b> देखि <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">तपाईं हटाउन चाहनुहुन्छ <b>{name}</b> र <b>{count} अन्यहरू</b> देखि <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">तपाईं हटाउन चाहनुहुन्छ <b>{name}</b> र <b>{other_name}</b> देखि <b>{group_name}</b>?</string>
+    <plurals name="groupRemoveMessages">
+        <item quantity="one">प्रयोगकर्ता र उनीहरूको सन्देशहरू हटाउनुहोस्</item>
+        <item quantity="other">प्रयोगकर्ताहरू र उनीहरूको सन्देशहरू हटाउनुहोस्</item>
+    </plurals>
+    <plurals name="groupRemoveUserOnly">
+        <item quantity="one">प्रयोगकर्ता हटाउनुहोस्</item>
+        <item quantity="other">प्रयोगकर्ताहरूलाई हटाउनुहोस्</item>
+    </plurals>
     <string name="groupRemoved"><b>{name}</b>लाई समूहबाट हटाइएको थियो।</string>
     <string name="groupRemovedMultiple"><b>{name}</b> र <b>{count} अन्य</b> समूहबाट हटाइएको थियो।</string>
     <string name="groupRemovedTwo"><b>{name}</b> र <b>{other_name}</b> समूहबाट हटाइएको थियो।</string>
@@ -505,6 +521,10 @@
     </plurals>
     <string name="membersAddAccountIdOrOns">Account ID वा ONS थप्नुहोस्</string>
     <string name="membersInvite">सम्पर्कहरूलाई निमन्त्रणा गर्नुहोस्</string>
+    <plurals name="membersInviteSend">
+        <item quantity="one">निमन्त्रणा पठाउनुहोस्</item>
+        <item quantity="other">निमन्त्रणाहरू पठाउनुहोस्</item>
+    </plurals>
     <string name="membersInviteShareDescription">तपाईं साझेदारी गर्न चाहनुहुन्छ समूह सन्देश इतिहासको साथ <b>{name}</b>?</string>
     <string name="membersInviteShareDescriptionMultiple">तपाईं साझेदारी गर्न चाहनुहुन्छ समूह सन्देश इतिहासको साथ <b>{name}</b> र <b>{count} अन्यहरू</b>?</string>
     <string name="membersInviteShareDescriptionTwo">तपाईं साझेदारी गर्न चाहनुहुन्छ समूह सन्देश इतिहासको साथ <b>{name}</b> र <b>{other_name}</b>?</string>
