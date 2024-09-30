@@ -813,7 +813,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         if (shouldShowLegacy) {
 
             val txt = Phrase.from(applicationContext, R.string.disappearingMessagesLegacy)
-                .put(NAME_KEY, legacyRecipient!!.name)
+                .put(NAME_KEY, legacyRecipient!!.toShortString())
                 .format()
             binding?.outdatedBannerTextView?.text = txt
         }
@@ -1191,14 +1191,14 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             title(R.string.block)
             text(
                 Phrase.from(context, R.string.blockDescription)
-                .put(NAME_KEY, recipient.name)
+                .put(NAME_KEY, recipient.toShortString())
                 .format()
             )
             dangerButton(R.string.block, R.string.AccessibilityId_blockConfirm) {
                 viewModel.block()
 
                 // Block confirmation toast added as per SS-64
-                val txt = Phrase.from(context, R.string.blockBlockedUser).put(NAME_KEY, recipient.name).format().toString()
+                val txt = Phrase.from(context, R.string.blockBlockedUser).put(NAME_KEY, recipient.toShortString()).format().toString()
                 Toast.makeText(context, txt, Toast.LENGTH_LONG).show()
 
                 if (deleteThread) {
@@ -1249,7 +1249,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             title(R.string.blockUnblock)
             text(
                 Phrase.from(context, R.string.blockUnblockName)
-                    .put(NAME_KEY, recipient.name)
+                    .put(NAME_KEY, recipient.toShortString())
                     .format()
             )
             dangerButton(R.string.blockUnblock, R.string.AccessibilityId_unblockConfirm) { viewModel.unblock() }
