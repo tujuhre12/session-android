@@ -58,6 +58,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
@@ -1737,10 +1738,19 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         binding.inputBar.text = ""
         binding.inputBar.cancelQuoteDraft()
         binding.inputBar.cancelLinkPreviewDraft()
-        // Put the message in the database
-        message.id = smsDb.insertMessageOutbox(viewModel.threadId, outgoingTextMessage, false, message.sentTimestamp!!, null, true)
-        // Send it
-        MessageSender.send(message, recipient.address)
+        lifecycleScope.launch(Dispatchers.Default) {
+            // Put the message in the database
+            message.id = smsDb.insertMessageOutbox(
+                viewModel.threadId,
+                outgoingTextMessage,
+                false,
+                message.sentTimestamp!!,
+                null,
+                true
+            )
+            // Send it
+            MessageSender.send(message, recipient.address)
+        }
         // Send a typing stopped message
         ApplicationContext.getInstance(this).typingStatusSender.onTypingStopped(viewModel.threadId)
         return Pair(recipient.address, sentTimestamp)
