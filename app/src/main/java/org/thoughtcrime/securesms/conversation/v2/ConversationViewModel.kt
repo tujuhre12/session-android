@@ -241,7 +241,7 @@ class ConversationViewModel(
             // hashes are required if wanting to delete messages from the 'storage server'
             // They are not required for communities OR if all messages are outgoing
             // also we can only delete deleted messages (marked as deleted) locally
-            val canDeleteForEveryone = messages.all{ !it.isDeleted } && (
+            val canDeleteForEveryone = messages.all{ !it.isDeleted && !it.isControlMessage } && (
                     messages.all { it.isOutgoing } ||
                     conversationType == MessageType.COMMUNITY ||
                             messages.all { lokiMessageDb.getMessageServerHash(it.id, it.isMms) != null
@@ -312,8 +312,8 @@ class ConversationViewModel(
             .mapNotNull { it.slideDeck.audioSlide }
             .forEach(::stopMessageAudio)
 
-        // if the message was already marked as deleted, remove it from the db instead
-        if(messages.all { it.isDeleted }){
+        // if the message was already marked as deleted or control messages, remove it from the db instead
+        if(messages.all { it.isDeleted || it.isControlMessage }){
             // Remove the message locally (leave nothing behind)
             repository.deleteMessages(messages = messages, threadId = threadId)
         } else {
