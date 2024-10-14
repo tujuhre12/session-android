@@ -37,7 +37,10 @@ import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.audio.AudioSlidePlayer
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
+import org.thoughtcrime.securesms.database.ReactionDatabase
 import org.thoughtcrime.securesms.database.Storage
+import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.groups.OpenGroupManager
@@ -52,6 +55,8 @@ class ConversationViewModel(
     private val repository: ConversationRepository,
     private val storage: Storage,
     private val messageDataProvider: MessageDataProvider,
+    private val threadDb: ThreadDatabase,
+    private val reactionDb: ReactionDatabase,
     private val lokiMessageDb: LokiMessageDatabase,
     private val textSecurePreferences: TextSecurePreferences
 ) : ViewModel() {
@@ -720,6 +725,12 @@ class ConversationViewModel(
                 }
             }
 
+            is Commands.HideClearEmoji -> {
+                _dialogsState.update {
+                    it.copy(clearAllEmoji = null)
+                }
+            }
+
             is Commands.HideDeleteAllDevicesDialog -> {
                 _dialogsState.update {
                     it.copy(deleteAllDevices = null)
@@ -737,6 +748,35 @@ class ConversationViewModel(
             is Commands.MarkAsDeletedForEveryone -> {
                 markAsDeletedForEveryone(command.data)
             }
+
+
+            is Commands.ClearEmoji -> {
+                clearEmoji(command.emoji, command.messageId)
+            }
+        }
+    }
+
+    private fun clearEmoji(emoji: String, messageId: MessageId){
+        viewModelScope.launch(Dispatchers.Default) {
+            reactionDb.deleteEmojiReactions(emoji, messageId)
+            openGroup?.let { openGroup ->
+                lokiMessageDb.getServerID(messageId.id, !messageId.mms)?.let { serverId ->
+                    OpenGroupApi.deleteAllReactions(
+                        openGroup.room,
+                        openGroup.server,
+                        serverId,
+                        emoji
+                    )
+                }
+            }
+            threadDb.notifyThreadUpdated(threadId)
+        }
+    }
+
+    fun onEmojiClear(emoji: String, messageId: MessageId) {
+        // show a confirmation dialog
+        _dialogsState.update {
+            it.copy(clearAllEmoji = ClearAllEmoji(emoji, messageId))
         }
     }
 
@@ -753,6 +793,8 @@ class ConversationViewModel(
         private val repository: ConversationRepository,
         private val storage: Storage,
         private val messageDataProvider: MessageDataProvider,
+        private val threadDb: ThreadDatabase,
+        private val reactionDb: ReactionDatabase,
         private val lokiMessageDb: LokiMessageDatabase,
         private val textSecurePreferences: TextSecurePreferences
     ) : ViewModelProvider.Factory {
@@ -765,6 +807,8 @@ class ConversationViewModel(
                 repository = repository,
                 storage = storage,
                 messageDataProvider = messageDataProvider,
+                threadDb = threadDb,
+                reactionDb = reactionDb,
                 lokiMessageDb = lokiMessageDb,
                 textSecurePreferences = textSecurePreferences
             ) as T
@@ -773,6 +817,7 @@ class ConversationViewModel(
 
     data class DialogsState(
         val openLinkDialogUrl: String? = null,
+        val clearAllEmoji: ClearAllEmoji? = null,
         val deleteEveryone: DeleteForEveryoneDialogData? = null,
         val deleteAllDevices: DeleteForEveryoneDialogData? = null,
     )
@@ -785,10 +830,19 @@ class ConversationViewModel(
         val warning: String? = null
     )
 
+    data class ClearAllEmoji(
+        val emoji: String,
+        val messageId: MessageId
+    )
+
     sealed class Commands {
         data class ShowOpenUrlDialog(val url: String?) : Commands()
+
+        data class ClearEmoji(val emoji:String, val messageId: MessageId) : Commands()
+
         data object HideDeleteEveryoneDialog : Commands()
         data object HideDeleteAllDevicesDialog : Commands()
+        data object HideClearEmoji : Commands()
 
         data class MarkAsDeletedLocally(val messages: Set<MessageRecord>): Commands()
         data class MarkAsDeletedForEveryone(val data: DeleteForEveryoneDialogData): Commands()
