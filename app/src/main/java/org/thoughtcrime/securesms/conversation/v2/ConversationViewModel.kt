@@ -312,8 +312,8 @@ class ConversationViewModel(
             .mapNotNull { it.slideDeck.audioSlide }
             .forEach(::stopMessageAudio)
 
-        // if the message was already marked as deleted, remove it from the db instead
-        if(messages.all { it.isDeleted }){
+        // if the message was already marked as deleted or control messages, remove it from the db instead
+        if(messages.all { it.isDeleted || it.isControlMessage }){
             // Remove the message locally (leave nothing behind)
             repository.deleteMessages(messages = messages, threadId = threadId)
         } else {
