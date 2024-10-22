@@ -1123,8 +1123,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         val openGroup = viewModel.openGroup
 
         // Get the correct placeholder text for this type of empty conversation
-        val isNoteToSelf = recipient.isLocalNumber
         val txtCS: CharSequence = when {
+            // note to self
             recipient.isLocalNumber -> getString(R.string.noteToSelfEmpty)
 
             // If this is a community which we cannot write to
@@ -1141,8 +1141,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                     .format()
             }
 
-            recipient.isGroupRecipient -> {
-                // If this is a group or community that we CAN send messages to
+            // 10n1 and groups
+            recipient.is1on1 || recipient.isGroupRecipient -> {
                 Phrase.from(applicationContext, R.string.groupNoMessages)
                     .put(GROUP_NAME_KEY, recipient.toShortString())
                     .format()

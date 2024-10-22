@@ -287,7 +287,7 @@ open class Storage(
 
     override fun updateThread(threadId: Long, unarchive: Boolean) {
         val threadDb = DatabaseComponent.get(context).threadDatabase()
-        threadDb.update(threadId, unarchive, false)
+        threadDb.update(threadId, unarchive)
     }
 
     override fun persist(message: VisibleMessage,
