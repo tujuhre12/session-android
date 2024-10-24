@@ -42,7 +42,6 @@ interface StorageProtocol {
     fun getUserPublicKey(): String?
     fun getUserX25519KeyPair(): ECKeyPair
     fun getUserProfile(): Profile
-    fun setProfileAvatar(recipient: Recipient, profileAvatar: String?)
     fun setProfilePicture(recipient: Recipient, newProfilePicture: String?, newProfileKey: ByteArray?)
     fun setBlocksCommunityMessageRequests(recipient: Recipient, blocksMessageRequests: Boolean)
     fun setUserProfilePicture(newProfilePicture: String?, newProfileKey: ByteArray?)
