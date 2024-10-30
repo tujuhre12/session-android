@@ -29,8 +29,8 @@ Want to help us translate Session into your language? You can do so at https://c
 **Step 1:**
 
 ```
-wget https://raw.githubusercontent.com/oxen-io/oxen-core/master/utils/gpg_keys/KeeJef.asc
-gpg --import KeeJef.asc
+wget https://github.com/jagerman.gpg
+gpg --import jagerman.gpg
 ```
 
 **Step 2:**
