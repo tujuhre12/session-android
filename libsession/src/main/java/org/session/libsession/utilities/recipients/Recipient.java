@@ -62,7 +62,7 @@ import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.ExecutionException;
 
-public class Recipient implements RecipientModifiedListener {
+public class Recipient implements RecipientModifiedListener, Cloneable {
 
   private static final String            TAG      = Recipient.class.getSimpleName();
   private static final RecipientProvider provider = new RecipientProvider();
@@ -1125,5 +1125,9 @@ public class Recipient implements RecipientModifiedListener {
 
   }
 
-
+  @NonNull
+  @Override
+  public Recipient clone() throws CloneNotSupportedException {
+    return (Recipient) super.clone();
+  }
 }

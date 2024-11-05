@@ -372,6 +372,11 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             binding.seedReminderView.isVisible = false
         }
 
+        // refresh search on resume, in case we a conversation was deleted
+        if (binding.globalSearchRecycler.isVisible){
+            globalSearchViewModel.refresh()
+        }
+
         updateLegacyConfigView()
 
         // Sync config changes if there are any
@@ -553,7 +558,6 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         } else {
             showMuteDialog(this) { until ->
                 lifecycleScope.launch(Dispatchers.IO) {
-                    Log.d("", "**** until: $until")
                     recipientDatabase.setMuted(thread.recipient, until)
                     withContext(Dispatchers.Main) {
                         binding.recyclerView.adapter!!.notifyDataSetChanged()

@@ -13,8 +13,8 @@ configurations.forEach {
     it.exclude module: "commons-logging"
 }
 
-def canonicalVersionCode = 384
-def canonicalVersionName = "1.20.2"
+def canonicalVersionCode = 385
+def canonicalVersionName = "1.20.3"
 
 def postFixSize = 10
 def abiPostFix = ['armeabi-v7a' : 1,
@@ -105,6 +105,13 @@ android {
         String sharedTestDir = 'src/sharedTest/java'
         test.java.srcDirs += sharedTestDir
         androidTest.java.srcDirs += sharedTestDir
+        main {
+            assets.srcDirs += "$buildDir/generated/binary"
+        }
+        test {
+            resources.srcDirs += "$buildDir/generated/binary"
+            resources.srcDirs += "$projectDir/src/main/assets"
+        }
     }
 
     buildTypes {
@@ -163,7 +170,7 @@ android {
 
         website {
             dimension "distribution"
-            ext.websiteUpdateUrl = "https://github.com/oxen-io/session-android/releases"
+            ext.websiteUpdateUrl = "https://github.com/session-foundation/session-android/releases"
             buildConfigField "boolean", "PLAY_STORE_DISABLED", "true"
             buildConfigField "org.session.libsession.utilities.Device", "DEVICE", "org.session.libsession.utilities.Device.ANDROID"
             buildConfigField "String", "NOPLAY_UPDATE_URL", "\"$ext.websiteUpdateUrl\""
@@ -242,6 +249,12 @@ android {
     }
 }
 
+apply {
+    from("ipToCode.gradle.kts")
+}
+
+preBuild.dependsOn ipToCode
+
 dependencies {
     implementation project(':content-descriptions')
 
@@ -268,9 +281,9 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-viewmodel-compose:$lifecycleVersion"
     implementation "androidx.lifecycle:lifecycle-extensions:2.2.0"
     implementation "androidx.paging:paging-runtime-ktx:$pagingVersion"
-    implementation 'androidx.activity:activity-ktx:1.5.1'
-    implementation 'androidx.activity:activity-compose:1.5.1'
-    implementation 'androidx.fragment:fragment-ktx:1.5.3'
+    implementation 'androidx.activity:activity-ktx:1.9.2'
+    implementation 'androidx.activity:activity-compose:1.9.2'
+    implementation 'androidx.fragment:fragment-ktx:1.8.4'
     implementation "androidx.core:core-ktx:$coreVersion"
     implementation "androidx.work:work-runtime-ktx:2.7.1"
 
@@ -319,7 +332,7 @@ dependencies {
     implementation project(":libsession")
     implementation project(":libsession-util")
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxJsonVersion"
-    implementation "com.github.oxen-io.session-android-curve-25519:curve25519-java:$curve25519Version"
+    implementation "com.github.session-foundation.session-android-curve-25519:curve25519-java:$curve25519Version"
     implementation project(":liblazysodium")
     implementation "net.java.dev.jna:jna:5.12.1@aar"
     implementation "com.google.protobuf:protobuf-java:$protobufVersion"
