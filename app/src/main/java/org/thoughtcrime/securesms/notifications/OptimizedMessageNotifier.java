@@ -63,7 +63,7 @@ public class OptimizedMessageNotifier implements MessageNotifier {
   }
 
   @Override
-  public void updateNotification(@NonNull Context context, long threadId) {
+  public void updateNotificationRegardingSpecificThread(@NonNull Context context, long threadId) {
     Poller lokiPoller = ApplicationContext.getInstance(context).poller;
     boolean isCaughtUp = true;
     if (lokiPoller != null) {
@@ -73,14 +73,14 @@ public class OptimizedMessageNotifier implements MessageNotifier {
     isCaughtUp = isCaughtUp && OpenGroupManager.INSTANCE.isAllCaughtUp();
     
     if (isCaughtUp) {
-      performOnBackgroundThreadIfNeeded(() -> wrapped.updateNotification(context, threadId));
+      performOnBackgroundThreadIfNeeded(() -> wrapped.updateNotificationRegardingSpecificThread(context, threadId));
     } else {
-      debouncer.publish(() -> performOnBackgroundThreadIfNeeded(() -> wrapped.updateNotification(context, threadId)));
+      debouncer.publish(() -> performOnBackgroundThreadIfNeeded(() -> wrapped.updateNotificationRegardingSpecificThread(context, threadId)));
     }
   }
 
   @Override
-  public void updateNotification(@NonNull Context context, long threadId, boolean signal) {
+  public void updateNotificationRegardingSpecificThreadWithOptionalAudio(@NonNull Context context, long threadId, boolean signalTheUser) {
     Poller lokiPoller = ApplicationContext.getInstance(context).poller;
     boolean isCaughtUp = true;
     if (lokiPoller != null) {
@@ -90,14 +90,14 @@ public class OptimizedMessageNotifier implements MessageNotifier {
     isCaughtUp = isCaughtUp && OpenGroupManager.INSTANCE.isAllCaughtUp();
 
     if (isCaughtUp) {
-      performOnBackgroundThreadIfNeeded(() -> wrapped.updateNotification(context, threadId, signal));
+      performOnBackgroundThreadIfNeeded(() -> wrapped.updateNotificationRegardingSpecificThreadWithOptionalAudio(context, threadId, signalTheUser));
     } else {
-      debouncer.publish(() -> performOnBackgroundThreadIfNeeded(() -> wrapped.updateNotification(context, threadId, signal)));
+      debouncer.publish(() -> performOnBackgroundThreadIfNeeded(() -> wrapped.updateNotificationRegardingSpecificThreadWithOptionalAudio(context, threadId, signalTheUser)));
     }
   }
 
   @Override
-  public void updateNotification(@androidx.annotation.NonNull Context context, boolean signal, int reminderCount) {
+  public void updateNotificationWithReminderCountAndOptionalAudio(@androidx.annotation.NonNull Context context, boolean signalTheUser, int reminderCount) {
     Poller lokiPoller = ApplicationContext.getInstance(context).poller;
     boolean isCaughtUp = true;
     if (lokiPoller != null) {
@@ -107,9 +107,9 @@ public class OptimizedMessageNotifier implements MessageNotifier {
     isCaughtUp = isCaughtUp && OpenGroupManager.INSTANCE.isAllCaughtUp();
 
     if (isCaughtUp) {
-      performOnBackgroundThreadIfNeeded(() -> wrapped.updateNotification(context, signal, reminderCount));
+      performOnBackgroundThreadIfNeeded(() -> wrapped.updateNotificationWithReminderCountAndOptionalAudio(context, signalTheUser, reminderCount));
     } else {
-      debouncer.publish(() -> performOnBackgroundThreadIfNeeded(() -> wrapped.updateNotification(context, signal, reminderCount)));
+      debouncer.publish(() -> performOnBackgroundThreadIfNeeded(() -> wrapped.updateNotificationWithReminderCountAndOptionalAudio(context, signalTheUser, reminderCount)));
     }
   }
 

@@ -10,8 +10,8 @@ interface MessageNotifier {
     fun notifyMessageDeliveryFailed(context: Context?, recipient: Recipient?, threadId: Long)
     fun cancelDelayedNotifications()
     fun updateNotification(context: Context)
-    fun updateNotification(context: Context, threadId: Long)
-    fun updateNotification(context: Context, threadId: Long, signal: Boolean)
-    fun updateNotification(context: Context, signal: Boolean, reminderCount: Int)
+    fun updateNotificationRegardingSpecificThread(context: Context, threadId: Long)
+    fun updateNotificationRegardingSpecificThreadWithOptionalAudio(context: Context, threadId: Long, playNotificationAudio: Boolean)
+    fun updateNotificationWithReminderCountAndOptionalAudio(context: Context, playNotificationAudio: Boolean, reminderCount: Int)
     fun clearReminder(context: Context)
 }

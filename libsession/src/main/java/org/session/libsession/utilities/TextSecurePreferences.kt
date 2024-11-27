@@ -13,7 +13,6 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import org.session.libsession.R
-import org.session.libsession.utilities.TextSecurePreferences.Companion
 import org.session.libsession.utilities.TextSecurePreferences.Companion.AUTOPLAY_AUDIO_MESSAGES
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOTIFICATIONS_ENABLED
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CLASSIC_DARK
@@ -269,7 +268,7 @@ interface TextSecurePreferences {
         const val CONFIGURATION_SYNCED = "pref_configuration_synced"
         const val LAST_PROFILE_UPDATE_TIME = "pref_last_profile_update_time"
         const val LAST_OPEN_DATE = "pref_last_open_date"
-        const val HAS_HIDDEN_MESSAGE_REQUESTS = "pref_message_requests_hidden"
+        const val MESSAGE_REQUESTS_DISABLED = "pref_message_requests_hidden"
         const val CALL_NOTIFICATIONS_ENABLED = "pref_call_notifications_enabled"
         const val SHOWN_CALL_WARNING = "pref_shown_call_warning" // call warning is user-facing warning of enabling calls
         const val SHOWN_CALL_NOTIFICATION = "pref_shown_call_notification" // call notification is a prompt to check privacy settings
@@ -938,13 +937,18 @@ interface TextSecurePreferences {
         }
 
         @JvmStatic
-        fun hasHiddenMessageRequests(context: Context): Boolean {
-            return getBooleanPreference(context, HAS_HIDDEN_MESSAGE_REQUESTS, false)
+        fun areMessageRequestsDisabled(context: Context): Boolean {
+            return getBooleanPreference(context, MESSAGE_REQUESTS_DISABLED, false)
         }
 
         @JvmStatic
-        fun removeHasHiddenMessageRequests(context: Context) {
-            removePreference(context, HAS_HIDDEN_MESSAGE_REQUESTS)
+        fun areMessageRequestsEnabled(context: Context): Boolean {
+            return !areMessageRequestsDisabled(context)
+        }
+
+        @JvmStatic
+        fun removeHasDisabledMessageRequests(context: Context) {
+            removePreference(context, MESSAGE_REQUESTS_DISABLED)
         }
 
         @JvmStatic
@@ -1600,11 +1604,11 @@ class AppTextSecurePreferences @Inject constructor(
     }
 
     override fun hasHiddenMessageRequests(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.HAS_HIDDEN_MESSAGE_REQUESTS, false)
+        return getBooleanPreference(TextSecurePreferences.MESSAGE_REQUESTS_DISABLED, false)
     }
 
     override fun setHasHiddenMessageRequests() {
-        setBooleanPreference(TextSecurePreferences.HAS_HIDDEN_MESSAGE_REQUESTS, true)
+        setBooleanPreference(TextSecurePreferences.MESSAGE_REQUESTS_DISABLED, true)
     }
 
     override fun getFingerprintKeyGenerated(): Boolean {

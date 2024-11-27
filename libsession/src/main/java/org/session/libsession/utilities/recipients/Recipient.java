@@ -452,13 +452,14 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
     notifyListeners();
   }
 
-  public boolean isGroupRecipient() {
-    return address.isGroup();
-  }
+  public boolean isGroupRecipient() { return address.isGroup(); }
+
+  public boolean isIndividualRecipient() { return !address.isGroup(); }
 
   public boolean isContactRecipient() {
     return address.isContact();
   }
+
   public boolean is1on1() { return address.isContact() && !isLocalNumber; }
 
   public boolean isCommunityRecipient() {
@@ -596,9 +597,9 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
     notifyListeners();
   }
 
-  public synchronized boolean isMuted() {
-    return System.currentTimeMillis() <= mutedUntil;
-  }
+  public synchronized boolean isMuted() { return System.currentTimeMillis() <= mutedUntil; }
+
+  public synchronized boolean isNotMuted() { return !isMuted(); }
 
   public void setMuted(long mutedUntil) {
     synchronized (this) {
@@ -628,9 +629,9 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
     notifyListeners();
   }
 
-  public synchronized boolean isApproved() {
-    return approved;
-  }
+  public synchronized boolean isApproved() { return approved; }
+
+  public synchronized boolean isNotApproved() { return !approved; }
 
   public void setApproved(boolean approved) {
     synchronized (this) {

@@ -243,7 +243,7 @@ class BatchMessageReceiveJob(
                         storage.markConversationAsRead(threadId, newLastSeen, force = true)
                     }
                     storage.updateThread(threadId, true)
-                    SSKEnvironment.shared.notificationManager.updateNotification(context, threadId)
+                    SSKEnvironment.shared.notificationManager.updateNotificationRegardingSpecificThread(context, threadId)
                 }
 
                 val withoutDefault = threadMap.entries.filter { it.key != NO_THREAD_MAPPING }
