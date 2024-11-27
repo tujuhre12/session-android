@@ -11,15 +11,18 @@ import androidx.preference.PreferenceManager.getDefaultSharedPreferences
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import org.session.libsession.R
-import org.session.libsession.utilities.TextSecurePreferences.Companion
 import org.session.libsession.utilities.TextSecurePreferences.Companion.AUTOPLAY_AUDIO_MESSAGES
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOTIFICATIONS_ENABLED
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CLASSIC_DARK
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CLASSIC_LIGHT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.ENVIRONMENT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FOLLOW_SYSTEM_SETTINGS
+import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_HIDDEN_MESSAGE_REQUESTS
+import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_HIDDEN_NOTE_TO_SELF
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HIDE_PASSWORD
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_VACUUM_TIME
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_VERSION_CHECK
@@ -30,6 +33,7 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.SELECTED
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SELECTED_STYLE
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOWN_CALL_NOTIFICATION
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOWN_CALL_WARNING
+import org.session.libsession.utilities.TextSecurePreferences.Companion._events
 import org.session.libsignal.utilities.Log
 import java.io.IOException
 import java.util.Arrays
@@ -39,16 +43,12 @@ import javax.inject.Singleton
 
 interface TextSecurePreferences {
 
-    fun getLastConfigurationSyncTime(): Long
-    fun setLastConfigurationSyncTime(value: Long)
     fun getConfigurationMessageSynced(): Boolean
     fun setConfigurationMessageSynced(value: Boolean)
-    fun isPushEnabled(): Boolean
+
     fun setPushEnabled(value: Boolean)
-    fun getPushToken(): String?
-    fun setPushToken(value: String)
-    fun getPushRegisterTime(): Long
-    fun setPushRegisterTime(value: Long)
+    val pushEnabled: StateFlow<Boolean>
+
     fun isScreenLockEnabled(): Boolean
     fun setScreenLockEnabled(value: Boolean)
     fun getScreenLockTimeout(): Long
@@ -108,6 +108,7 @@ interface TextSecurePreferences {
     fun setUpdateApkDigest(value: String?)
     fun getUpdateApkDigest(): String?
     fun getLocalNumber(): String?
+    fun watchLocalNumber(): StateFlow<String?>
     fun getHasLegacyConfig(): Boolean
     fun setHasLegacyConfig(newValue: Boolean)
     fun setLocalNumber(localNumber: String)
@@ -167,7 +168,9 @@ interface TextSecurePreferences {
     fun hasSeenLinkPreviewSuggestionDialog(): Boolean
     fun setHasSeenLinkPreviewSuggestionDialog()
     fun hasHiddenMessageRequests(): Boolean
-    fun setHasHiddenMessageRequests()
+    fun setHasHiddenMessageRequests(hidden: Boolean)
+    fun hasHiddenNoteToSelf(): Boolean
+    fun setHasHiddenNoteToSelf(hidden: Boolean)
     fun setShownCallWarning(): Boolean
     fun setShownCallNotification(): Boolean
     fun isCallNotificationsEnabled(): Boolean
@@ -202,6 +205,10 @@ interface TextSecurePreferences {
         @JvmStatic
         var pushSuffix = ""
 
+
+        // This is a stop-gap solution for static access to shared preference.
+        internal lateinit var preferenceInstance: TextSecurePreferences
+
         const val DISABLE_PASSPHRASE_PREF = "pref_disable_passphrase"
         const val LANGUAGE_PREF = "pref_language"
         const val THREAD_TRIM_NOW = "pref_trim_now"
@@ -217,7 +224,7 @@ interface TextSecurePreferences {
         const val PASSPHRASE_TIMEOUT_PREF = "pref_timeout_passphrase"
         const val ENTER_SENDS_PREF = "pref_enter_sends"
         const val THREAD_TRIM_ENABLED = "pref_trim_threads"
-        const val LOCAL_NUMBER_PREF = "pref_local_number"
+        internal const val LOCAL_NUMBER_PREF = "pref_local_number"
         const val REGISTERED_GCM_PREF = "pref_gcm_registered"
         const val UPDATE_APK_REFRESH_TIME_PREF = "pref_update_apk_refresh_time"
         const val UPDATE_APK_DOWNLOAD_ID = "pref_update_apk_download_id"
@@ -263,13 +270,11 @@ interface TextSecurePreferences {
         const val GIF_METADATA_WARNING = "has_seen_gif_metadata_warning"
         const val GIF_GRID_LAYOUT = "pref_gif_grid_layout"
         val IS_PUSH_ENABLED get() = "pref_is_using_fcm$pushSuffix"
-        val PUSH_TOKEN get() = "pref_fcm_token_2$pushSuffix"
-        val PUSH_REGISTER_TIME get() = "pref_last_fcm_token_upload_time_2$pushSuffix"
-        const val LAST_CONFIGURATION_SYNC_TIME = "pref_last_configuration_sync_time"
         const val CONFIGURATION_SYNCED = "pref_configuration_synced"
         const val LAST_PROFILE_UPDATE_TIME = "pref_last_profile_update_time"
         const val LAST_OPEN_DATE = "pref_last_open_date"
         const val HAS_HIDDEN_MESSAGE_REQUESTS = "pref_message_requests_hidden"
+        const val HAS_HIDDEN_NOTE_TO_SELF = "pref_note_to_self_hidden"
         const val CALL_NOTIFICATIONS_ENABLED = "pref_call_notifications_enabled"
         const val SHOWN_CALL_WARNING = "pref_shown_call_warning" // call warning is user-facing warning of enabling calls
         const val SHOWN_CALL_NOTIFICATION = "pref_shown_call_notification" // call notification is a prompt to check privacy settings
@@ -309,16 +314,6 @@ interface TextSecurePreferences {
         const val HAVE_WARNED_USER_ABOUT_SAVING_ATTACHMENTS = "libsession.HAVE_WARNED_USER_ABOUT_SAVING_ATTACHMENTS"
 
         @JvmStatic
-        fun getLastConfigurationSyncTime(context: Context): Long {
-            return getLongPreference(context, LAST_CONFIGURATION_SYNC_TIME, 0)
-        }
-
-        @JvmStatic
-        fun setLastConfigurationSyncTime(context: Context, value: Long) {
-            setLongPreference(context, LAST_CONFIGURATION_SYNC_TIME, value)
-        }
-
-        @JvmStatic
         fun getConfigurationMessageSynced(context: Context): Boolean {
             return getBooleanPreference(context, CONFIGURATION_SYNCED, false)
         }
@@ -337,24 +332,6 @@ interface TextSecurePreferences {
         @JvmStatic
         fun setPushEnabled(context: Context, value: Boolean) {
             setBooleanPreference(context, IS_PUSH_ENABLED, value)
-        }
-
-        @JvmStatic
-        fun getPushToken(context: Context): String? {
-            return getStringPreference(context, PUSH_TOKEN, "")
-        }
-
-        @JvmStatic
-        fun setPushToken(context: Context, value: String?) {
-            setStringPreference(context, PUSH_TOKEN, value)
-        }
-
-        fun getPushRegisterTime(context: Context): Long {
-            return getLongPreference(context, PUSH_REGISTER_TIME, 0)
-        }
-
-        fun setPushRegisterTime(context: Context, value: Long) {
-            setLongPreference(context, PUSH_REGISTER_TIME, value)
         }
 
         // endregion
@@ -647,9 +624,13 @@ interface TextSecurePreferences {
             return getStringPreference(context, UPDATE_APK_DIGEST, null)
         }
 
+        @Deprecated(
+            "Use the dependency-injected TextSecurePreference instance instead",
+            ReplaceWith("TextSecurePreferences.getLocalNumber()")
+        )
         @JvmStatic
         fun getLocalNumber(context: Context): String? {
-            return getStringPreference(context, LOCAL_NUMBER_PREF, null)
+            return preferenceInstance.getLocalNumber()
         }
 
         @JvmStatic
@@ -663,13 +644,6 @@ interface TextSecurePreferences {
             _events.tryEmit(HAS_RECEIVED_LEGACY_CONFIG)
         }
 
-        fun setLocalNumber(context: Context, localNumber: String) {
-            setStringPreference(context, LOCAL_NUMBER_PREF, localNumber.toLowerCase())
-        }
-
-        fun removeLocalNumber(context: Context) {
-            removePreference(context, LOCAL_NUMBER_PREF)
-        }
 
         @JvmStatic
         fun isEnterSendsEnabled(context: Context): Boolean {
@@ -945,6 +919,7 @@ interface TextSecurePreferences {
         @JvmStatic
         fun removeHasHiddenMessageRequests(context: Context) {
             removePreference(context, HAS_HIDDEN_MESSAGE_REQUESTS)
+            _events.tryEmit(HAS_HIDDEN_MESSAGE_REQUESTS)
         }
 
         @JvmStatic
@@ -1007,14 +982,12 @@ interface TextSecurePreferences {
 class AppTextSecurePreferences @Inject constructor(
     @ApplicationContext private val context: Context
 ): TextSecurePreferences {
-
-    override fun getLastConfigurationSyncTime(): Long {
-        return getLongPreference(TextSecurePreferences.LAST_CONFIGURATION_SYNC_TIME, 0)
+    init {
+        // Should remove once all static access to the companion objects is removed
+        TextSecurePreferences.preferenceInstance = this
     }
 
-    override fun setLastConfigurationSyncTime(value: Long) {
-        setLongPreference(TextSecurePreferences.LAST_CONFIGURATION_SYNC_TIME, value)
-    }
+    private val localNumberState = MutableStateFlow(getStringPreference(TextSecurePreferences.LOCAL_NUMBER_PREF, null))
 
     override fun getConfigurationMessageSynced(): Boolean {
         return getBooleanPreference(TextSecurePreferences.CONFIGURATION_SYNCED, false)
@@ -1022,31 +995,16 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setConfigurationMessageSynced(value: Boolean) {
         setBooleanPreference(TextSecurePreferences.CONFIGURATION_SYNCED, value)
-        TextSecurePreferences._events.tryEmit(TextSecurePreferences.CONFIGURATION_SYNCED)
+        _events.tryEmit(TextSecurePreferences.CONFIGURATION_SYNCED)
     }
 
-    override fun isPushEnabled(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.IS_PUSH_ENABLED, false)
-    }
+    override val pushEnabled: MutableStateFlow<Boolean> = MutableStateFlow(
+        getBooleanPreference(TextSecurePreferences.IS_PUSH_ENABLED, false)
+    )
 
     override fun setPushEnabled(value: Boolean) {
         setBooleanPreference(TextSecurePreferences.IS_PUSH_ENABLED, value)
-    }
-
-    override fun getPushToken(): String? {
-        return getStringPreference(TextSecurePreferences.PUSH_TOKEN, "")
-    }
-
-    override fun setPushToken(value: String) {
-        setStringPreference(TextSecurePreferences.PUSH_TOKEN, value)
-    }
-
-    override fun getPushRegisterTime(): Long {
-        return getLongPreference(TextSecurePreferences.PUSH_REGISTER_TIME, 0)
-    }
-
-    override fun setPushRegisterTime(value: Long) {
-        setLongPreference(TextSecurePreferences.PUSH_REGISTER_TIME, value)
+        pushEnabled.value = value
     }
 
     override fun isScreenLockEnabled(): Boolean {
@@ -1195,7 +1153,7 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setProfileName(name: String?) {
         setStringPreference(TextSecurePreferences.PROFILE_NAME_PREF, name)
-        TextSecurePreferences._events.tryEmit(TextSecurePreferences.PROFILE_NAME_PREF)
+        _events.tryEmit(TextSecurePreferences.PROFILE_NAME_PREF)
     }
 
     override fun getProfileName(): String? {
@@ -1290,7 +1248,11 @@ class AppTextSecurePreferences @Inject constructor(
     }
 
     override fun getLocalNumber(): String? {
-        return getStringPreference(TextSecurePreferences.LOCAL_NUMBER_PREF, null)
+        return localNumberState.value
+    }
+
+    override fun watchLocalNumber(): StateFlow<String?> {
+        return localNumberState
     }
 
     override fun getHasLegacyConfig(): Boolean {
@@ -1303,10 +1265,13 @@ class AppTextSecurePreferences @Inject constructor(
     }
 
     override fun setLocalNumber(localNumber: String) {
-        setStringPreference(TextSecurePreferences.LOCAL_NUMBER_PREF, localNumber.toLowerCase())
+        val normalised = localNumber.lowercase()
+        setStringPreference(TextSecurePreferences.LOCAL_NUMBER_PREF, normalised)
+        localNumberState.value = normalised
     }
 
     override fun removeLocalNumber() {
+        localNumberState.value = null
         removePreference(TextSecurePreferences.LOCAL_NUMBER_PREF)
     }
 
@@ -1600,11 +1565,21 @@ class AppTextSecurePreferences @Inject constructor(
     }
 
     override fun hasHiddenMessageRequests(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.HAS_HIDDEN_MESSAGE_REQUESTS, false)
+        return getBooleanPreference(HAS_HIDDEN_MESSAGE_REQUESTS, false)
     }
 
-    override fun setHasHiddenMessageRequests() {
-        setBooleanPreference(TextSecurePreferences.HAS_HIDDEN_MESSAGE_REQUESTS, true)
+    override fun setHasHiddenMessageRequests(hidden: Boolean) {
+        setBooleanPreference(HAS_HIDDEN_MESSAGE_REQUESTS, hidden)
+        _events.tryEmit(HAS_HIDDEN_MESSAGE_REQUESTS)
+    }
+
+    override fun hasHiddenNoteToSelf(): Boolean {
+        return getBooleanPreference(HAS_HIDDEN_NOTE_TO_SELF, false)
+    }
+
+    override fun setHasHiddenNoteToSelf(hidden: Boolean) {
+        setBooleanPreference(HAS_HIDDEN_NOTE_TO_SELF, hidden)
+        _events.tryEmit(HAS_HIDDEN_NOTE_TO_SELF)
     }
 
     override fun getFingerprintKeyGenerated(): Boolean {
