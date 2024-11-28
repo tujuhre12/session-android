@@ -24,6 +24,7 @@ import network.loki.messenger.libsession_util.ReadableUserProfile
 import network.loki.messenger.libsession_util.util.ConfigPush
 import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsession.snode.SwarmAuth
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Namespace
 
@@ -100,6 +101,12 @@ enum class UserConfigType(val namespace: Int) {
 fun ConfigFactoryProtocol.getGroup(groupId: AccountId): GroupInfo.ClosedGroupInfo? {
     return withUserConfigs { it.userGroups.getClosedGroup(groupId.hexString) }
 }
+
+/**
+ * Shortcut to check if the current user was kicked from a given group V2 (as a Recipient)
+ */
+fun ConfigFactoryProtocol.wasKickedFromGroupV2(group: Recipient) =
+    group.isGroupV2Recipient && getGroup(AccountId(group.address.serialize()))?.kicked == true
 
 /**
  * Wait until all user configs are pushed to the server.

@@ -35,6 +35,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.wasKickedFromGroupV2
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
@@ -102,6 +103,12 @@ object ConversationMenuHelper {
                 inflater.inflate(R.menu.menu_conversation_groups_v2_admin, menu)
             } else {
                 inflater.inflate(R.menu.menu_conversation_groups_v2, menu)
+            }
+
+            // If the current user was kicked from the group
+            // the menu should say 'Delete' instead of 'Leave'
+            if (configFactory.wasKickedFromGroupV2(thread)) {
+                menu.findItem(R.id.menu_leave_group).title = context.getString(R.string.groupDelete)
             }
         }
 
@@ -365,6 +372,7 @@ object ConversationMenuHelper {
                     context = context,
                     groupName = group.title,
                     isAdmin = isCurrentUserAdmin,
+                    isKicked = configFactory.wasKickedFromGroupV2(thread),
                     threadID = threadID,
                     storage = storage,
                     doLeave = {
@@ -396,6 +404,7 @@ object ConversationMenuHelper {
                     context = context,
                     groupName = name,
                     isAdmin = group.hasAdminKey(),
+                    isKicked = configFactory.wasKickedFromGroupV2(thread),
                     threadID = threadID,
                     storage = storage,
                     doLeave = {
@@ -421,16 +430,29 @@ object ConversationMenuHelper {
         context: Context,
         groupName: String,
         isAdmin: Boolean,
+        isKicked: Boolean,
         threadID: Long,
         storage: StorageProtocol,
         doLeave: suspend () -> Unit,
     ) {
-        val message = if (isAdmin) {
-            Phrase.from(context, R.string.groupLeaveDescriptionAdmin)
+        var title = R.string.groupLeave
+        var message: CharSequence = ""
+        var positiveButton = R.string.leave
+
+        if(isKicked){
+            //todo GROUPSV2 we will need a new string for this (that says delete instead of leave)
+            message = Phrase.from(context, R.string.groupLeaveDescription)
+                .put(GROUP_NAME_KEY, groupName)
+                .format()
+
+            title = R.string.groupDelete
+            positiveButton = R.string.delete
+        } else if (isAdmin) {
+            message = Phrase.from(context, R.string.groupLeaveDescriptionAdmin)
                 .put(GROUP_NAME_KEY, groupName)
                 .format()
         } else {
-            Phrase.from(context, R.string.groupLeaveDescription)
+            message = Phrase.from(context, R.string.groupLeaveDescription)
                 .put(GROUP_NAME_KEY, groupName)
                 .format()
         }
@@ -443,9 +465,9 @@ object ConversationMenuHelper {
         }
 
         context.showSessionDialog {
-            title(R.string.groupLeave)
+            title(title)
             text(message)
-            dangerButton(R.string.leave) {
+            dangerButton(positiveButton) {
                 GlobalScope.launch(Dispatchers.Default) {
                     try {
                         // Cancel any outstanding jobs
