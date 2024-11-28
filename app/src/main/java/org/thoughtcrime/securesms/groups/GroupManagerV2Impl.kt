@@ -1012,15 +1012,18 @@ class GroupManagerV2Impl @Inject constructor(
             }
         }
 
+        // Delete from swarm if we are admin
         val adminKey = configFactory.getGroup(groupId)?.adminKey
-        if (!senderIsVerifiedAdmin && adminKey != null && hashes.isNotEmpty()) {
-            // If the deletion request comes from a non-admin, and we as an admin, will also delete
-            // the content from the swarm, provided that the messages are actually sent by that user
-            if (storage.ensureMessageHashesAreSender(
-                    hashes.toSet(),
-                    sender.hexString,
-                    groupId.hexString
-                )
+        if (adminKey != null) {
+
+            // If hashes are given, these are the messages to delete. To be able to delete these
+            // messages from the swarm, the deletion request must be sent by an admin, or the messages
+            // belong to the requester.
+            if (hashes.isNotEmpty() && (
+                        senderIsVerifiedAdmin || storage.ensureMessageHashesAreSender(
+                            hashes = hashes.toSet(),
+                            sender = sender.hexString,
+                            closedGroupId = groupId.hexString))
             ) {
                 SnodeAPI.deleteMessage(
                     groupId.hexString,
@@ -1029,8 +1032,21 @@ class GroupManagerV2Impl @Inject constructor(
                 )
             }
 
-            // The non-admin user shouldn't be able to delete other user's messages so we will
-            // ignore the memberIds in the message
+            // If memberIds are given, all messages belong to these members will be deleted on the
+            // swarm. These requests must be sent by an admin.
+            if (memberIds.isNotEmpty() && senderIsVerifiedAdmin) {
+                val userMessageHashes = memberIds.flatMap { memberId ->
+                    messageDataProvider.getUserMessageHashes(threadId, memberId)
+                }
+
+                if (userMessageHashes.isNotEmpty()) {
+                    SnodeAPI.deleteMessage(
+                        groupId.hexString,
+                        OwnedSwarmAuth.ofClosedGroup(groupId, adminKey),
+                        userMessageHashes
+                    )
+                }
+            }
         }
     }
 
