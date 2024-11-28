@@ -630,7 +630,7 @@ class DefaultMessageNotifier : MessageNotifier {
                         val reaction = lastReact.get()
                         val reactor = Recipient.from(context, fromSerialized(reaction.author), false)
                         val emoji = Phrase.from(context, R.string.emojiReactsNotification).put(EMOJI_KEY, reaction.emoji).format().toString()
-                        notificationState.addNotification(NotificationItem(id, mms, reactor, reactor, threadRecipients, threadId, emoji, reaction.dateSent, slideDeck))
+                        notificationState.addNotification(NotificationItem(id, mms, reactor, reactor, sender, threadId, emoji, reaction.dateSent, slideDeck))
                     }
                 }
             }
