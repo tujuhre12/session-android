@@ -292,11 +292,6 @@ class ConversationViewModel(
                     recipient.is1on1 ||
                             recipient.isGroupV2Recipient -> application.getString(R.string.block)
                     else -> null
-                },
-                declineButtonText = if (recipient.isGroupV2Recipient) {
-                    R.string.delete
-                } else {
-                    R.string.decline
                 }
             )
         }
@@ -1059,8 +1054,7 @@ sealed interface MessageRequestUiState {
     data class Visible(
         @StringRes val acceptButtonText: Int,
         // If null, the block button shall not be shown
-        val blockButtonText: String? = null,
-        @StringRes val declineButtonText: Int,
+        val blockButtonText: String? = null
     ) : MessageRequestUiState
 }
 

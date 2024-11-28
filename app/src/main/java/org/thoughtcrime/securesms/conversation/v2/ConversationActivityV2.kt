@@ -1046,7 +1046,6 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                             binding.sendAcceptsTextView.setText(state.acceptButtonText)
                             binding.messageRequestBlock.isVisible = state.blockButtonText != null
                             binding.messageRequestBlock.text = state.blockButtonText
-                            binding.declineMessageRequestButton.setText(state.declineButtonText)
                         }
                     }
             }
