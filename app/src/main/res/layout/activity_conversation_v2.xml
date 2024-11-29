@@ -355,7 +355,7 @@
             <Button
                 android:id="@+id/declineMessageRequestButton"
                 style="@style/Widget.Session.Button.Common.DangerOutline"
-                android:contentDescription="@string/AccessibilityId_decline"
+                android:contentDescription="@string/AccessibilityId_deleteRequest"
                 android:layout_width="0dp"
                 android:layout_height="@dimen/medium_button_height"
                 android:layout_marginStart="@dimen/medium_spacing"

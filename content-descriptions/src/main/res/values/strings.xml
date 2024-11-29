@@ -96,7 +96,7 @@
     <string name="AccessibilityId_messageRequestsBlock">Block message request</string>
     <string name="AccessibilityId_call">Call button</string>
     <string name="AccessibilityId_confirm">Confirm</string>
-    <string name="AccessibilityId_decline">Decline message request</string>
+    <string name="AccessibilityId_deleteRequest">Delete message request</string>
     <string name="AccessibilityId_sessionSettings">Settings</string>
     <!-- Configuration messages -->
     <string name="AccessibilityId_blockedBanner">Blocked banner</string>

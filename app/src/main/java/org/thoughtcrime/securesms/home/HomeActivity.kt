@@ -44,6 +44,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_K
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.wasKickedFromGroupV2
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
@@ -582,7 +583,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         val threadID = thread.threadId
         val recipient = thread.recipient
 
-        if (recipient.isGroupRecipient) {
+        if (recipient.isGroupV2Recipient) {
             val statusChannel = ConversationMenuHelper.leaveGroup(
                 context = this,
                 thread = recipient,
@@ -651,8 +652,9 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             }
         }
 
-        if (recipient.isGroupOrCommunityRecipient) {
+        if (recipient.isLegacyGroupRecipient || recipient.isCommunityRecipient) {
             val group = groupDatabase.getGroup(recipient.address.toString()).orNull()
+            positiveButtonId = R.string.leave
 
             // If you are an admin of this group you can delete it
             if (group != null && group.admins.map { it.toString() }.contains(textSecurePreferences.getLocalNumber())) {
@@ -667,8 +669,6 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                     .put(GROUP_NAME_KEY, group.title)
                     .format()
             }
-
-            positiveButtonId = R.string.leave
         } else {
             // If this is a 1-on-1 conversation
             if (recipient.name != null) {

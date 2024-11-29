@@ -12,6 +12,9 @@ import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.FragmentConversationBottomSheetBinding
 import org.session.libsession.utilities.GroupRecord
+import org.session.libsession.utilities.getGroup
+import org.session.libsession.utilities.wasKickedFromGroupV2
+import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.util.getConversationUnread
@@ -67,7 +70,6 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
         super.onViewCreated(view, savedInstanceState)
         if (!this::thread.isInitialized) { return dismiss() }
         val recipient = thread.recipient
-        val isCurrentUserInGroup = group?.members?.map { it.toString() }?.contains(publicKey) ?: false
         if (!recipient.isGroupOrCommunityRecipient && !recipient.isLocalNumber) {
             binding.detailsTextView.visibility = View.VISIBLE
             binding.unblockTextView.visibility = if (recipient.isBlocked) View.VISIBLE else View.GONE
@@ -99,9 +101,17 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
             when {
                 // groups and communities
                 recipient.isGroupOrCommunityRecipient -> {
-                    text = context.getString(R.string.leave)
-                    contentDescription = context.getString(R.string.AccessibilityId_leave)
-                    drawableStartRes = R.drawable.ic_log_out
+                    // if you are in a group V2 and have been kicked of that group,
+                    // the button should read 'Delete' instead of 'Leave'
+                    if (configFactory.wasKickedFromGroupV2(recipient)) {
+                        text = context.getString(R.string.delete)
+                        contentDescription = context.getString(R.string.AccessibilityId_delete)
+                        drawableStartRes = R.drawable.ic_delete_24
+                    } else {
+                        text = context.getString(R.string.leave)
+                        contentDescription = context.getString(R.string.AccessibilityId_leave)
+                        drawableStartRes = R.drawable.ic_log_out
+                    }
                 }
 
                 // note to self
