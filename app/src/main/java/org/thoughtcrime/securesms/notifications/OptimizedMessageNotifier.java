@@ -46,7 +46,7 @@ public class OptimizedMessageNotifier implements MessageNotifier {
   public void cancelDelayedNotifications() { wrapped.cancelDelayedNotifications(); }
 
   @Override
-  public void updateNotification(@NonNull Context context) {
+  public void resetAllNotificationsSilently(@NonNull Context context) {
     Poller poller = ApplicationContext.getInstance(context).poller;
     boolean isCaughtUp = true;
     if (poller != null) {
@@ -56,14 +56,14 @@ public class OptimizedMessageNotifier implements MessageNotifier {
     isCaughtUp = isCaughtUp && OpenGroupManager.INSTANCE.isAllCaughtUp();
 
     if (isCaughtUp) {
-      performOnBackgroundThreadIfNeeded(() -> wrapped.updateNotification(context));
+      performOnBackgroundThreadIfNeeded(() -> wrapped.resetAllNotificationsSilently(context));
     } else {
-      debouncer.publish(() -> performOnBackgroundThreadIfNeeded(() -> wrapped.updateNotification(context)));
+      debouncer.publish(() -> performOnBackgroundThreadIfNeeded(() -> wrapped.resetAllNotificationsSilently(context)));
     }
   }
 
   @Override
-  public void updateNotificationRegardingSpecificThread(@NonNull Context context, long threadId) {
+  public void updateNotificationForSpecificThread(@NonNull Context context, long threadId) {
     Poller lokiPoller = ApplicationContext.getInstance(context).poller;
     boolean isCaughtUp = true;
     if (lokiPoller != null) {
@@ -73,14 +73,14 @@ public class OptimizedMessageNotifier implements MessageNotifier {
     isCaughtUp = isCaughtUp && OpenGroupManager.INSTANCE.isAllCaughtUp();
     
     if (isCaughtUp) {
-      performOnBackgroundThreadIfNeeded(() -> wrapped.updateNotificationRegardingSpecificThread(context, threadId));
+      performOnBackgroundThreadIfNeeded(() -> wrapped.updateNotificationForSpecificThread(context, threadId));
     } else {
-      debouncer.publish(() -> performOnBackgroundThreadIfNeeded(() -> wrapped.updateNotificationRegardingSpecificThread(context, threadId)));
+      debouncer.publish(() -> performOnBackgroundThreadIfNeeded(() -> wrapped.updateNotificationForSpecificThread(context, threadId)));
     }
   }
 
   @Override
-  public void updateNotificationRegardingSpecificThreadWithOptionalAudio(@NonNull Context context, long threadId, boolean signalTheUser) {
+  public void updateNotificationForSpecificThreadWithOptionalAudio(@NonNull Context context, long threadId, boolean signalTheUser) {
     Poller lokiPoller = ApplicationContext.getInstance(context).poller;
     boolean isCaughtUp = true;
     if (lokiPoller != null) {
@@ -90,14 +90,14 @@ public class OptimizedMessageNotifier implements MessageNotifier {
     isCaughtUp = isCaughtUp && OpenGroupManager.INSTANCE.isAllCaughtUp();
 
     if (isCaughtUp) {
-      performOnBackgroundThreadIfNeeded(() -> wrapped.updateNotificationRegardingSpecificThreadWithOptionalAudio(context, threadId, signalTheUser));
+      performOnBackgroundThreadIfNeeded(() -> wrapped.updateNotificationForSpecificThreadWithOptionalAudio(context, threadId, signalTheUser));
     } else {
-      debouncer.publish(() -> performOnBackgroundThreadIfNeeded(() -> wrapped.updateNotificationRegardingSpecificThreadWithOptionalAudio(context, threadId, signalTheUser)));
+      debouncer.publish(() -> performOnBackgroundThreadIfNeeded(() -> wrapped.updateNotificationForSpecificThreadWithOptionalAudio(context, threadId, signalTheUser)));
     }
   }
 
   @Override
-  public void updateNotificationWithReminderCountAndOptionalAudio(@androidx.annotation.NonNull Context context, boolean signalTheUser, int reminderCount) {
+  public void updateNotificationWithReminderCountAndOptionalAudio(@androidx.annotation.NonNull Context context, int reminderCount, boolean playNotificationAudio) {
     Poller lokiPoller = ApplicationContext.getInstance(context).poller;
     boolean isCaughtUp = true;
     if (lokiPoller != null) {
@@ -107,9 +107,9 @@ public class OptimizedMessageNotifier implements MessageNotifier {
     isCaughtUp = isCaughtUp && OpenGroupManager.INSTANCE.isAllCaughtUp();
 
     if (isCaughtUp) {
-      performOnBackgroundThreadIfNeeded(() -> wrapped.updateNotificationWithReminderCountAndOptionalAudio(context, signalTheUser, reminderCount));
+      performOnBackgroundThreadIfNeeded(() -> wrapped.updateNotificationWithReminderCountAndOptionalAudio(context, reminderCount, playNotificationAudio));
     } else {
-      debouncer.publish(() -> performOnBackgroundThreadIfNeeded(() -> wrapped.updateNotificationWithReminderCountAndOptionalAudio(context, signalTheUser, reminderCount)));
+      debouncer.publish(() -> performOnBackgroundThreadIfNeeded(() -> wrapped.updateNotificationWithReminderCountAndOptionalAudio(context, reminderCount, playNotificationAudio)));
     }
   }
 

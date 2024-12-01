@@ -51,7 +51,8 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.getNotif
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getRepeatAlertsCount
 import org.session.libsession.utilities.TextSecurePreferences.Companion.areMessageRequestsDisabled
 import org.session.libsession.utilities.TextSecurePreferences.Companion.areMessageRequestsEnabled
-import org.session.libsession.utilities.TextSecurePreferences.Companion.isNotificationsEnabled
+import org.session.libsession.utilities.TextSecurePreferences.Companion.areNotificationsDisabled
+import org.session.libsession.utilities.TextSecurePreferences.Companion.areNotificationsEnabled
 import org.session.libsession.utilities.TextSecurePreferences.Companion.removeHasDisabledMessageRequests
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.IdPrefix
@@ -62,6 +63,7 @@ import org.thoughtcrime.securesms.contacts.ContactUtil
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities.highlightMentions
 import org.thoughtcrime.securesms.crypto.KeyPairUtilities.getUserED25519KeyPair
 import org.thoughtcrime.securesms.database.RecipientDatabase
+import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
@@ -92,7 +94,8 @@ class DefaultMessageNotifier : MessageNotifier {
     }
 
     override fun notifyMessageDeliveryFailed(context: Context?, recipient: Recipient?, threadId: Long) {
-        // We do not provide notifications for message delivery failure.
+        // We do not provide notifications for message delivery failure - but we still need this method in the
+        // interface because messages that fail to send to trigger a "Failed" state which is displayed in a conversation.
     }
 
     override fun cancelDelayedNotifications() {
@@ -145,28 +148,25 @@ class DefaultMessageNotifier : MessageNotifier {
         }
     }
 
-    override fun updateNotification(context: Context) {
-        Log.i(TAG, "Hit updateNotification(Context)")
+    override fun resetAllNotificationsSilently(context: Context) {
+        Log.i(TAG, "Hit resetAllNotificationsSilently")
 
         // Just bail if notifications are disabled..
-        if (!isNotificationsEnabled(context)) return
-
-        // TODO: ACL WHY THE **** WOULD WE OPT NOT TO PLAY AUDIO AND CLEAR THE REMINDER COUNT HERE?!
-        updateNotificationWithReminderCountAndOptionalAudio(context, playNotificationAudio = false, reminderCount = 0)
+        if (areNotificationsDisabled(context)) return else updateNotificationWithReminderCountAndOptionalAudio(context, playNotificationAudio = false, reminderCount = 0)
     }
 
-    override fun updateNotificationRegardingSpecificThread(context: Context, threadId: Long) {
-        Log.i("ACL", "Hit updateNotificationRegardingSpecificThread. Thread ID: $threadId")
+    override fun updateNotificationForSpecificThread(context: Context, threadId: Long) {
+        Log.i("ACL", "Hit updateNotificationForSpecificThread. Thread ID: $threadId")
 
         if (System.currentTimeMillis() - lastDesktopActivityTimestamp < DESKTOP_ACTIVITY_PERIOD) {
             Log.i(TAG, "Scheduling delayed notification...")
             executor.execute(DelayedNotification(context, threadId))
         } else {
-            updateNotificationRegardingSpecificThreadWithOptionalAudio(context, threadId, true)
+            updateNotificationForSpecificThreadWithOptionalAudio(context, threadId, true)
         }
     }
 
-    override fun updateNotificationRegardingSpecificThreadWithOptionalAudio(
+    override fun updateNotificationForSpecificThreadWithOptionalAudio(
         context: Context,
         threadId: Long,
         playNotificationAudio: Boolean
@@ -183,14 +183,14 @@ class DefaultMessageNotifier : MessageNotifier {
             removeHasDisabledMessageRequests(context)
         }
 
-        if (!isNotificationsEnabled(context) ||
+        if (!areNotificationsEnabled(context) ||
             (recipient != null && recipient.isMuted)
         ) {
             return
         }
 
         if ((!isVisible && !homeScreenVisible) || hasExistingNotifications(context)) {
-            updateNotificationWithReminderCountAndOptionalAudio(context, playNotificationAudio, 0)
+            updateNotificationWithReminderCountAndOptionalAudio(context, 0, playNotificationAudio)
         }
     }
 
@@ -208,21 +208,24 @@ class DefaultMessageNotifier : MessageNotifier {
 
     override fun updateNotificationWithReminderCountAndOptionalAudio(
         context: Context,
-        playNotificationAudio: Boolean,
-        reminderCount: Int
+        reminderCount: Int,
+        playNotificationAudio: Boolean
     ) {
         Log.i(TAG, "Hit updateNotificationWithReminderCountAndOptionalAudio. Audio: $playNotificationAudio, reminder count: $reminderCount")
 
         var telcoCursor: Cursor? = null
-        val pushCursor: Cursor? = null
 
         try {
             telcoCursor = get(context).mmsSmsDatabase().unread // TODO: add a notification specific lighter query here
 
-            if ((telcoCursor == null || telcoCursor.isAfterLast) || getLocalNumber(context) == null) {
-                updateBadge(context, 0)
-                cancelActiveNotifications(context)
-                clearReminder(context)
+            val cannotAttemptNotification = telcoCursor == null || telcoCursor.isAfterLast || getLocalNumber(context) == null
+            if (cannotAttemptNotification) {
+                Log.w(TAG, "We lack the required details to attempt a notification - bailing.")
+
+                // ACL - do not mess with any existing notifications!!!!
+//                updateBadge(context, 0)
+//                cancelActiveNotifications(context)
+//                clearReminder(context)
                 return
             }
 
@@ -230,10 +233,10 @@ class DefaultMessageNotifier : MessageNotifier {
                 val notificationState = constructNotificationState(context, telcoCursor)
 
                 // If we were asked to play audio with the notification but we have recently done so then we'll not play any audio
-                // then we'll flip our matable flag to false..
+                // and then we'll flip our matable flag to false..
                 val timeSinceLastNotificationAudioMS = System.currentTimeMillis() - lastAudibleNotification
                 var shouldPlayNotificationAudio = if (playNotificationAudio &&
-                                                         (timeSinceLastNotificationAudioMS < MIN_TIME_BETWEEN_NOTIFICATION_AUDIO_MS))
+                    (timeSinceLastNotificationAudioMS < MIN_TIME_BETWEEN_NOTIFICATION_AUDIO_MS))
                 {
                     false
                 } else if (playNotificationAudio) {
@@ -260,12 +263,6 @@ class DefaultMessageNotifier : MessageNotifier {
                         signalTheUser = shouldPlayNotificationAudio,
                         bundled = false)
                 }
-
-                // NOT cancelling active notifications - jfc....
-//                else {
-//                    Log.i("ACL", "Cancelling active notifications - but why?!?")
-//                    cancelActiveNotifications(context)
-//                }
 
                 cancelOrphanedNotifications(context, notificationState)
                 updateBadge(context, notificationState.messageCount)
@@ -404,11 +401,10 @@ class DefaultMessageNotifier : MessageNotifier {
         Log.i(TAG, "Posted notification. $notification")
     }
 
-    // Note: The `signal` parameter means "play an audio signal for the notification".
     private fun sendMultipleThreadNotification(
         context: Context,
         notificationState: NotificationState,
-        signalTheUser: Boolean
+        signalTheUser: Boolean // i.e., play audio
     ) {
         Log.i(TAG, "sendMultiThreadNotification()  signal: $signalTheUser")
 
@@ -488,157 +484,401 @@ class DefaultMessageNotifier : MessageNotifier {
         Log.i(TAG, "Posted notification. $notification")
     }
 
+//    private fun constructNotificationState(context: Context, cursor: Cursor): NotificationState {
+//        Log.i(TAG, "Hit constructNotificationState")
+//
+//        val notificationState = NotificationState()
+//        val reader = get(context).mmsSmsDatabase().readerFor(cursor)
+//        if (reader == null) {
+//            Log.e(TAG, "No reader for cursor - aborting constructNotificationState")
+//            return NotificationState()
+//        }
+//
+//        val threadDatabase = get(context).threadDatabase()
+//        val cache: MutableMap<Long, String?> = HashMap()
+//
+//        // CAREFUL: Do not put this loop back as `while ((reader.next.also { record = it }) != null) {`
+//        // because it breaks with a Null Pointer Exception!
+//        var record: MessageRecord? = null
+//        do {
+//            record = reader.next
+//            if (record == null) break // Bail if there are no more MessageRecords
+//
+//            val id = record.getId()
+//            val mms = record.isMms || record.isMmsNotification
+//            val recipient = record.individualRecipient
+//            val conversationRecipient = record.recipient
+//            val threadId = record.threadId
+//            var body: CharSequence = record.getDisplayBody(context)
+//            var sender: Recipient? = null
+//            var slideDeck: SlideDeck? = null
+//            val timestamp = record.timestamp
+//            var notificationIsAMessageRequest = false
+//
+//            if (threadId != -1L) {
+//                sender = threadDatabase.getRecipientForThreadId(threadId)
+//
+//                if (sender == null) {
+//                    Log.w(TAG, "Got a null sender for threadId: $threadId in constructNotificationState - skipping this message.")
+//                    continue
+//                }
+//
+//                Log.w("ACL", "Thread recipient is: ${sender.address}")
+//
+//                val lastSeenAndHasSent = threadDatabase.getLastSeenAndHasSent(threadId)
+//                val lastSeen = lastSeenAndHasSent.first()
+//                val hasSent = lastSeenAndHasSent.second()
+//                Log.i("ACL", "Last seen is: $lastSeen, has sent is: $hasSent")
+//
+//                // We'll say that this notification is a message request if:
+//                notificationIsAMessageRequest = sender.isIndividualRecipient && // It's from an individual (not a group)        AND
+//                                                sender.isNotApproved         && // We haven't approved already approved them    AND
+//                                                !threadDatabase.getLastSeenAndHasSent(threadId).second() // Has sent us a msg previously?
+//
+//                Log.i("ACL", "We think this is a message request?: $notificationIsAMessageRequest")
+//
+//                // If we already have more than one message or
+//                val moreThanOneMsgOrMessageRequestsEnabled = threadDatabase.getMessageCount(threadId) > 0 || areMessageRequestsDisabled(context)
+//                if (notificationIsAMessageRequest && moreThanOneMsgOrMessageRequestsEnabled)
+//                {
+//                    Log.i("ACL", "We There's more than one message in the thread or message requests are disabled so skipping...")
+//                    continue
+//                }
+//            }
+//
+//            // If this is a message request from an unknown user..
+//            if (notificationIsAMessageRequest) {
+//                Log.i("ACL", "This is a message request from an unknown user")
+//                body = SpanUtil.italic(context.getString(R.string.messageRequestsNew))
+//
+//            // If we received some manner of notification but Session is locked..
+//            } else if (KeyCachingService.isLocked(context)) {
+//                Log.i("ACL", "We'll do a notification because Session is locked")
+//
+//                // Note: We provide 1 because `messageNewYouveGot` is now a plurals string and we don't have a count yet, so just
+//                // giving it 1 will result in "You got a new message".
+//                body = SpanUtil.italic(context.resources.getQuantityString(R.plurals.messageNewYouveGot, 1, 1))
+//
+//            // ----- Note: All further cases assume we know the contact and that Session isn't locked -----
+//
+//            // If this is a notification about a multimedia message from a contact we know about..
+//            } else if (record.isMms && !(record as MmsMessageRecord).sharedContacts.isEmpty()) {
+//                val contact = (record as MmsMessageRecord).sharedContacts[0]
+//                body = ContactUtil.getStringSummary(context, contact)
+//
+//            // If this is a notification about a multimedia message which contains no text but DOES contain a slide deck with at least one slide..
+//            } else if (record.isMms && TextUtils.isEmpty(body) && !(record as MmsMessageRecord).slideDeck.slides.isEmpty()) {
+//                slideDeck = (record as MediaMmsMessageRecord).slideDeck
+//                body = SpanUtil.italic(slideDeck.body)
+//
+//            // If this is a notification about a multimedia message, but it's not ITSELF a multimedia notification AND it contains a slide deck with at least one slide..
+//            } else if (record.isMms && !record.isMmsNotification && !(record as MmsMessageRecord).slideDeck.slides.isEmpty()) {
+//                slideDeck = (record as MediaMmsMessageRecord).slideDeck
+//                val message = slideDeck.body + ": " + record.body
+//                val italicLength = message.length - body.length
+//                body = SpanUtil.italic(message, italicLength)
+//
+//            // If this is a notification about an invitation to a community..
+//            } else if (record.isOpenGroupInvitation) {
+//                body = SpanUtil.italic(context.getString(R.string.communityInvitation))
+//            }
+//            else {
+//                Log.i("ACL", "We have absolutely no idea what this notification is about")
+//            }
+//
+//            val userPublicKey = getLocalNumber(context)
+//            var blindedPublicKey = cache[threadId]
+//            if (blindedPublicKey == null) {
+//                blindedPublicKey = generateBlindedId(threadId, context)
+//                cache[threadId] = blindedPublicKey
+//            }
+//
+//            if (sender == null) continue
+//
+//            if (sender.isNotMuted) {
+//
+//                if (sender.notifyType == RecipientDatabase.NOTIFY_TYPE_MENTIONS) {
+//                    // check if mentioned here
+//                    var isQuoteMentioned = false
+//                    if (record is MmsMessageRecord) {
+//                        val quote = (record as MmsMessageRecord).quote
+//                        val quoteAddress = quote?.author
+//                        val serializedAddress = quoteAddress?.serialize()
+//                        isQuoteMentioned = (serializedAddress != null && userPublicKey == serializedAddress) ||
+//                                (blindedPublicKey != null && userPublicKey == blindedPublicKey)
+//                    }
+//                    if (body.toString().contains("@$userPublicKey") || body.toString().contains("@$blindedPublicKey") || isQuoteMentioned) {
+//                        notificationState.addNotification(NotificationItem(id, mms, recipient, conversationRecipient, sender, threadId, body, timestamp, slideDeck))
+//                    }
+//                } else if (sender.notifyType == RecipientDatabase.NOTIFY_TYPE_NONE) {
+//                    // do nothing, no notifications
+//                } else {
+//                    notificationState.addNotification(NotificationItem(id, mms, recipient, conversationRecipient, sender, threadId, body, timestamp, slideDeck))
+//                }
+//
+//                val userBlindedPublicKey = blindedPublicKey
+//                val lastReact = Stream.of(record.reactions)
+//                    .filter { r: ReactionRecord -> !(r.author == userPublicKey || r.author == userBlindedPublicKey) }
+//                    .findLast()
+//
+//                if (lastReact.isPresent) {
+//                    if (sender.isIndividualRecipient) {
+//                        val reaction = lastReact.get()
+//                        val reactor = Recipient.from(context, fromSerialized(reaction.author), false)
+//                        val emoji = Phrase.from(context, R.string.emojiReactsNotification).put(EMOJI_KEY, reaction.emoji).format().toString()
+//                        notificationState.addNotification(NotificationItem(id, mms, reactor, reactor, sender, threadId, emoji, reaction.dateSent, slideDeck))
+//                    }
+//                }
+//            }
+//        } while (record != null) // This will never hit because we break early if we get a null record at the start of the do..while loop
+//
+//        reader.close()
+//        return notificationState
+//    }
+
     private fun constructNotificationState(context: Context, cursor: Cursor): NotificationState {
         Log.i(TAG, "Hit constructNotificationState")
-
 
         val notificationState = NotificationState()
         val reader = get(context).mmsSmsDatabase().readerFor(cursor)
         if (reader == null) {
             Log.e(TAG, "No reader for cursor - aborting constructNotificationState")
-            return NotificationState()
+            return notificationState
         }
 
         val threadDatabase = get(context).threadDatabase()
-        val cache: MutableMap<Long, String?> = HashMap()
 
-        // CAREFUL: Do not put this loop back as `while ((reader.next.also { record = it }) != null) {` because it breaks with a Null Pointer Exception!
-        var record: MessageRecord? = null
-        do {
-            record = reader.next
-            if (record == null) break // Bail if there are no more MessageRecords
+        // We put into this or get from it ad we process records
+        val blindedPublicKeyCache = mutableMapOf<Long, String?>()
 
-            val id = record.getId()
-            val mms = record.isMms || record.isMmsNotification
-            val recipient = record.individualRecipient
-            val conversationRecipient = record.recipient
-            val threadId = record.threadId
-            var body: CharSequence = record.getDisplayBody(context)
-            var sender: Recipient? = null
-            var slideDeck: SlideDeck? = null
-            val timestamp = record.timestamp
-            var notificationIsAMessageRequest = false
-
-            if (threadId != -1L) {
-                sender = threadDatabase.getRecipientForThreadId(threadId)
-
-                if (sender == null) {
-                    Log.w(TAG, "Got a null sender for threadId: $threadId in constructNotificationState - skipping this message.")
-                    continue
-                }
-
-                Log.w("ACL", "Thread recipient is: ${sender?.address}")
-
-                val lastSeenAndHasSent = threadDatabase.getLastSeenAndHasSent(threadId)
-                val lastSeen = lastSeenAndHasSent.first()
-                val hasSent = lastSeenAndHasSent.second()
-                Log.i("ACL", "Last seen is: $lastSeen, has sent is: $hasSent")
-
-                // We'll say that this notification is a message request if:
-                notificationIsAMessageRequest = sender.isIndividualRecipient && // It's from an individual (not a group)        AND
-                                                sender.isNotApproved         && // We haven't approved already approved them    AND
-                                                !threadDatabase.getLastSeenAndHasSent(threadId).second() // Has sent us a msg previously?
-
-                Log.i("ACL", "We think this is a message request?: $notificationIsAMessageRequest")
-
-                // If we already have more than one message or
-                val moreThanOneMsgOrMessageRequestsEnabled = threadDatabase.getMessageCount(threadId) > 0 || areMessageRequestsDisabled(context)
-                if (notificationIsAMessageRequest && moreThanOneMsgOrMessageRequestsEnabled)
-                {
-                    Log.i("ACL", "We There's more than one message in the thread or message requests are disabled so skipping...")
-                    continue
-                }
+        while (true) {
+            val record = reader.next ?: break
+            val notificationItem = processRecord(context, record, threadDatabase, blindedPublicKeyCache)
+            if (notificationItem != null) {
+                Log.i("ACL", "Adding notification at: ${notificationItem.timestamp}")
+                Log.i("ACL", "Individual recipient is: ${notificationItem.individualRecipient.address}")
+                Log.i("ACL", "Recipient is: ${notificationItem.recipient.address}")
+                notificationState.addNotification(notificationItem)
             }
-
-            // If this is a message request from an unknown user..
-            if (notificationIsAMessageRequest) {
-                Log.i("ACL", "This is a message request from an unknown user")
-                body = SpanUtil.italic(context.getString(R.string.messageRequestsNew))
-
-            // If we received some manner of notification but Session is locked..
-            } else if (KeyCachingService.isLocked(context)) {
-                Log.i("ACL", "We'll do a notification because Session is locked")
-
-                // Note: We provide 1 because `messageNewYouveGot` is now a plurals string and we don't have a count yet, so just
-                // giving it 1 will result in "You got a new message".
-                body = SpanUtil.italic(context.resources.getQuantityString(R.plurals.messageNewYouveGot, 1, 1))
-
-            // ----- Note: All further cases assume we know the contact and that Session isn't locked -----
-
-            // If this is a notification about a multimedia message from a contact we know about..
-            } else if (record.isMms && !(record as MmsMessageRecord).sharedContacts.isEmpty()) {
-                val contact = (record as MmsMessageRecord).sharedContacts[0]
-                body = ContactUtil.getStringSummary(context, contact)
-
-            // If this is a notification about a multimedia message which contains no text but DOES contain a slide deck with at least one slide..
-            } else if (record.isMms && TextUtils.isEmpty(body) && !(record as MmsMessageRecord).slideDeck.slides.isEmpty()) {
-                slideDeck = (record as MediaMmsMessageRecord).slideDeck
-                body = SpanUtil.italic(slideDeck.body)
-
-            // If this is a notification about a multimedia message, but it's not ITSELF a multimedia notification AND it contains a slide deck with at least one slide..
-            } else if (record.isMms && !record.isMmsNotification && !(record as MmsMessageRecord).slideDeck.slides.isEmpty()) {
-                slideDeck = (record as MediaMmsMessageRecord).slideDeck
-                val message = slideDeck.body + ": " + record.body
-                val italicLength = message.length - body.length
-                body = SpanUtil.italic(message, italicLength)
-
-            // If this is a notification about an invitation to a community..
-            } else if (record.isOpenGroupInvitation) {
-                body = SpanUtil.italic(context.getString(R.string.communityInvitation))
-            }
-            else {
-                Log.i("ACL", "We have absolutely no idea what this notification is about")
-            }
-
-            val userPublicKey = getLocalNumber(context)
-            var blindedPublicKey = cache[threadId]
-            if (blindedPublicKey == null) {
-                blindedPublicKey = generateBlindedId(threadId, context)
-                cache[threadId] = blindedPublicKey
-            }
-
-            if (sender == null) continue
-
-            if (sender.isNotMuted) {
-
-                if (sender.notifyType == RecipientDatabase.NOTIFY_TYPE_MENTIONS) {
-                    // check if mentioned here
-                    var isQuoteMentioned = false
-                    if (record is MmsMessageRecord) {
-                        val quote = (record as MmsMessageRecord).quote
-                        val quoteAddress = quote?.author
-                        val serializedAddress = quoteAddress?.serialize()
-                        isQuoteMentioned = (serializedAddress != null && userPublicKey == serializedAddress) ||
-                                (blindedPublicKey != null && userPublicKey == blindedPublicKey)
-                    }
-                    if (body.toString().contains("@$userPublicKey") || body.toString().contains("@$blindedPublicKey") || isQuoteMentioned) {
-                        notificationState.addNotification(NotificationItem(id, mms, recipient, conversationRecipient, sender, threadId, body, timestamp, slideDeck))
-                    }
-                } else if (sender.notifyType == RecipientDatabase.NOTIFY_TYPE_NONE) {
-                    // do nothing, no notifications
-                } else {
-                    notificationState.addNotification(NotificationItem(id, mms, recipient, conversationRecipient, sender, threadId, body, timestamp, slideDeck))
-                }
-
-                val userBlindedPublicKey = blindedPublicKey
-                val lastReact = Stream.of(record.reactions)
-                    .filter { r: ReactionRecord -> !(r.author == userPublicKey || r.author == userBlindedPublicKey) }
-                    .findLast()
-
-                if (lastReact.isPresent) {
-                    if (sender.isIndividualRecipient) {
-                        val reaction = lastReact.get()
-                        val reactor = Recipient.from(context, fromSerialized(reaction.author), false)
-                        val emoji = Phrase.from(context, R.string.emojiReactsNotification).put(EMOJI_KEY, reaction.emoji).format().toString()
-                        notificationState.addNotification(NotificationItem(id, mms, reactor, reactor, threadRecipients, threadId, emoji, reaction.dateSent, slideDeck))
-                    }
-                }
-            }
-        } while (record != null) // This will never hit because we break early if we get a null record at the start of the do..while loop
+        }
 
         reader.close()
         return notificationState
     }
+
+    private fun processRecord(
+        context: Context,
+        record: MessageRecord,
+        threadDatabase: ThreadDatabase,
+        blindedPublicKeyCache: MutableMap<Long, String?>
+    ): NotificationItem? {
+        val messageId = record.getId()
+        val mms = record.isMms || record.isMmsNotification
+        val recipient = record.individualRecipient
+        val conversationRecipient = record.recipient
+        val threadId = record.threadId
+        var body = record.getDisplayBody(context)
+        val timestamp = record.timestamp
+        var slideDeck: SlideDeck? = null
+
+        // Couldn't get sender? Bail
+        val sender = getSender(threadDatabase, threadId)
+        if (sender == null) {
+            Log.w(TAG, "Could not get sender for threadId: $threadId - cannot process for notification.")
+            return null
+        }
+
+        // Sender is muted? Bail
+        if (sender.isMuted) {
+            Log.i(TAG, "Skipping notification because sender is muted")
+            return null
+        }
+
+        // If this is a message request, and message requests have been disabled by the user then bail
+        val notificationIsAMessageRequest = isMessageRequest(sender, threadDatabase, threadId)
+        val messageRequestsAreDisabled    = areMessageRequestsDisabled(context)
+        if (notificationIsAMessageRequest && messageRequestsAreDisabled) {
+            Log.i(TAG, "Skipping notification because message requests are disabled")
+            return null
+        }
+
+        val messagesCountFromSender = threadDatabase.getMessageCount(threadId)
+        Log.i("ACL", "The number of messages we have from this sender is: $messagesCountFromSender")
+        if (messagesCountFromSender > 0) {
+            Log.i("ACL", "We already have a message from this sender - skipping notification") // The debouncing is broken - so we'll hit this when we return here even for a single notification!
+            return null
+        }
+
+        body = prepareNotificationBody(context, record, body, notificationIsAMessageRequest)
+        slideDeck = getSlideDeck(record)
+
+        val userPublicKey = getLocalNumber(context)!!
+        val blindedPublicKey = blindedPublicKeyCache.getOrPut(threadId) { generateBlindedId(threadId, context) }
+
+        // If the notification type is NOTIFY_TYPE_ALL or NOTIFY_TYPE_MENTIONS and specifically mentions the user then send the notification
+        if (shouldNotify(sender, record, userPublicKey, blindedPublicKey, body)) {
+            return NotificationItem(
+                messageId, mms, recipient, conversationRecipient, sender,
+                threadId, body, timestamp, slideDeck
+            )
+        } else {
+            // If the notification type is NOTIFY_TYPE_NONE then check if it's a notification regarding a reaction to a message, such as
+            // someone giving a "Thumbs up" to something you've posted to them.
+            val reactionNotification = getReactionNotification(
+                context, record, sender, messageId, mms, recipient,
+                conversationRecipient, threadId, slideDeck
+            )
+            if (reactionNotification != null) {
+                return reactionNotification
+            }
+        }
+        // If we've exhausted our should we / shouldn't we criteria we don't provide a notification
+        Log.w("ACL", "Exhausted our to-notify-or-not-notify criteria (shouldn't happen?) - not notifying.")
+        return null
+    }
+
+    private fun getSender(
+        threadDatabase: ThreadDatabase,
+        threadId: Long
+    ): Recipient? {
+        if (threadId == -1L) return null
+        val sender = threadDatabase.getRecipientForThreadId(threadId)
+        if (sender == null) {
+            Log.w(TAG, "Got a null sender for threadId: $threadId - skipping this message.")
+        }
+        return sender
+    }
+
+    private fun isMessageRequest(
+        sender: Recipient,
+        threadDatabase: ThreadDatabase,
+        threadId: Long
+    ): Boolean {
+        val lastSeenAndHasSent = threadDatabase.getLastSeenAndHasSent(threadId)
+        val lastSeen = lastSeenAndHasSent.first()
+        val hasSent = lastSeenAndHasSent.second()
+        val isMessageRequest = sender.isIndividualRecipient &&
+                sender.isNotApproved &&
+                !hasSent
+        Log.i(TAG, "In isMessageRequest - lastSeen is: $lastSeen, hasSent is: $hasSent, message request status: $isMessageRequest")
+        return isMessageRequest
+    }
+
+    private fun prepareNotificationBody(
+        context: Context,
+        record: MessageRecord,
+        body: CharSequence,
+        notificationIsAMessageRequest: Boolean
+    ): CharSequence {
+        return when {
+            notificationIsAMessageRequest -> {
+                Log.i(TAG, "Preparing message request body.")
+                SpanUtil.italic(context.getString(R.string.messageRequestsNew))
+            }
+            KeyCachingService.isLocked(context) -> {
+                Log.i(TAG, "Session is locked; preparing locked session body.")
+                SpanUtil.italic(context.resources.getQuantityString(R.plurals.messageNewYouveGot, 1, 1))
+            }
+            record is MmsMessageRecord && record.sharedContacts.isNotEmpty() -> {
+                val contact = record.sharedContacts[0]
+                ContactUtil.getStringSummary(context, contact)
+            }
+            record is MmsMessageRecord && body.isEmpty() && record.slideDeck.slides.isNotEmpty() -> {
+                val slideDeck = record.slideDeck
+                SpanUtil.italic(slideDeck.body)
+            }
+            record is MmsMessageRecord && !record.isMmsNotification && record.slideDeck.slides.isNotEmpty() -> {
+                val slideDeck = record.slideDeck
+                val message = "${slideDeck.body}: ${record.body}"
+                val italicLength = message.length - body.length
+                SpanUtil.italic(message, italicLength)
+            }
+            record.isOpenGroupInvitation -> {
+                SpanUtil.italic(context.getString(R.string.communityInvitation))
+            }
+            else -> {
+                Log.i(TAG, "Default notification body used.")
+                body
+            }
+        }
+    }
+
+    private fun getSlideDeck(record: MessageRecord): SlideDeck? {
+        return if (record is MediaMmsMessageRecord && record.slideDeck.slides.isNotEmpty()) {
+            record.slideDeck
+        } else {
+            null
+        }
+    }
+
+    private fun shouldNotify(
+        sender: Recipient,
+        record: MessageRecord,
+        userPublicKey: String,
+        blindedPublicKey: String?,
+        bodyText: CharSequence
+    ): Boolean {
+        return when (sender.notifyType) {
+            RecipientDatabase.NOTIFY_TYPE_MENTIONS -> {
+                isUserMentioned(record, userPublicKey, blindedPublicKey, bodyText)
+            }
+            RecipientDatabase.NOTIFY_TYPE_NONE -> {
+                false
+            }
+            else -> {
+                true // For NOTIFY_TYPE_ALL, which is the only remaining notification type
+            }
+        }
+    }
+
+    private fun isUserMentioned(
+        record: MessageRecord,
+        userPublicKey: String,
+        blindedPublicKey: String?,
+        bodyText: CharSequence
+    ): Boolean {
+        val isMentionedInBody = bodyText.contains("@$userPublicKey") ||
+                (blindedPublicKey != null && bodyText.contains("@$blindedPublicKey"))
+
+        val isMentionedInQuote = if (record is MmsMessageRecord) {
+            val quoteAuthor = record.quote?.author?.serialize()
+            quoteAuthor == userPublicKey || quoteAuthor == blindedPublicKey
+        } else {
+            false
+        }
+
+        return isMentionedInBody || isMentionedInQuote
+    }
+
+    private fun getReactionNotification(
+        context: Context,
+        record: MessageRecord,
+        sender: Recipient,
+        id: Long,
+        mms: Boolean,
+        recipient: Recipient,
+        conversationRecipient: Recipient,
+        threadId: Long,
+        slideDeck: SlideDeck?
+    ): NotificationItem? {
+        val userPublicKey = getLocalNumber(context)
+        val reactions = record.reactions.filterNot { it.author == userPublicKey }
+        val lastReaction = reactions.lastOrNull() ?: return null
+
+        if (sender.isIndividualRecipient) {
+            val reactor = Recipient.from(context, fromSerialized(lastReaction.author), false)
+            val emoji = Phrase.from(context, R.string.emojiReactsNotification)
+                .put(EMOJI_KEY, lastReaction.emoji)
+                .format()
+                .toString()
+            return NotificationItem(
+                id, mms, reactor, reactor, sender,
+                threadId, emoji, lastReaction.dateSent, slideDeck
+            )
+        }
+        return null
+    }
+
 
     private fun generateBlindedId(threadId: Long, context: Context): String? {
         val lokiThreadDatabase = get(context).lokiThreadDatabase()
@@ -694,10 +934,7 @@ class DefaultMessageNotifier : MessageNotifier {
                 override fun doInBackground(vararg params: Void?): Void? {
                     val reminderCount = intent.getIntExtra("reminder_count", 0)
                     val appContext = ApplicationContext.getInstance(context)
-                    appContext.messageNotifier.updateNotificationWithReminderCountAndOptionalAudio(
-                        context,
-                        true,
-                        reminderCount + 1)
+                    appContext.messageNotifier.updateNotificationWithReminderCountAndOptionalAudio(context, reminderCount + 1, true)
                     return null
                 }
 
@@ -730,7 +967,7 @@ class DefaultMessageNotifier : MessageNotifier {
             if (!canceled.get()) {
                 Log.i(TAG, "Not canceled, notifying...")
                 val appContext = ApplicationContext.getInstance(context)
-                appContext.messageNotifier.updateNotificationRegardingSpecificThreadWithOptionalAudio(context, threadId, true)
+                appContext.messageNotifier.updateNotificationForSpecificThreadWithOptionalAudio(context, threadId, playNotificationAudio = true)
                 appContext.messageNotifier.cancelDelayedNotifications()
             } else {
                 Log.w(TAG, "Canceled, not notifying...")

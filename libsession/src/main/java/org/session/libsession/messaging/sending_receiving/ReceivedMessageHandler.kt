@@ -306,7 +306,7 @@ fun MessageReceiver.handleUnsendRequest(message: UnsendRequest): Long? {
 
     // update notification
     if (!messageDataProvider.isOutgoingMessage(timestamp)) {
-        SSKEnvironment.shared.notificationManager.updateNotification(context)
+        SSKEnvironment.shared.notificationManager.resetAllNotificationsSilently(context)
     }
 
     return messageIdToDelete

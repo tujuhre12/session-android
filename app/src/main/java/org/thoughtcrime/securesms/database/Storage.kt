@@ -245,7 +245,7 @@ open class Storage(
         getRecipientForThread(threadId)?.let { recipient ->
             val currentLastRead = threadDb.getLastSeenAndHasSent(threadId).first()
             // don't set the last read in the volatile if we didn't set it in the DB
-            if (!threadDb.markAllAsRead(threadId, recipient.isGroupRecipient, lastSeenTime, force) && !force) return
+            if (!threadDb.markAllAsRead(threadId, lastSeenTime, force) && !force) return
 
             // don't process configs for inbox recipients
             if (recipient.isOpenGroupInboxRecipient) return

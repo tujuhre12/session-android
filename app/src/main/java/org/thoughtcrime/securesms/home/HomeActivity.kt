@@ -8,11 +8,8 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.text.format.DateUtils
 import android.widget.Toast
 import androidx.activity.viewModels
-import androidx.annotation.PluralsRes
-import androidx.annotation.StringRes
 import androidx.core.os.bundleOf
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
@@ -46,7 +43,6 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.ThreadUtils
 import org.session.libsignal.utilities.toHexString
-import org.session.libsession.utilities.StringSubstitutionConstants.COUNT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.thoughtcrime.securesms.ApplicationContext
@@ -71,7 +67,6 @@ import org.thoughtcrime.securesms.home.search.GlobalSearchViewModel
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
-import org.session.libsession.utilities.truncateIdForDisplay
 import org.thoughtcrime.securesms.notifications.PushRegistry
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.SettingsActivity
@@ -80,21 +75,12 @@ import org.thoughtcrime.securesms.showMuteDialog
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.ui.setThemedContent
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
-import org.thoughtcrime.securesms.util.IP2Country
-import org.thoughtcrime.securesms.util.RelativeDay
 import org.thoughtcrime.securesms.util.disableClipping
 import org.thoughtcrime.securesms.util.push
 import org.thoughtcrime.securesms.util.show
 import org.thoughtcrime.securesms.util.start
 import java.io.IOException
-import java.util.Calendar
-import java.util.Locale
 import javax.inject.Inject
-import kotlin.math.abs
-import kotlin.time.Duration.Companion.days
-import kotlin.time.Duration.Companion.hours
-import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
 
 // Intent extra keys so we know where we came from
 private const val NEW_ACCOUNT = "HomeActivity_NEW_ACCOUNT"
@@ -659,7 +645,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                         }
                     }
                     // Update the badge count
-                    ApplicationContext.getInstance(context).messageNotifier.updateNotification(context)
+                    ApplicationContext.getInstance(context).messageNotifier.resetAllNotificationsSilently(context)
 
                     // Notify the user
                     val toastMessage = if (recipient.isGroupRecipient) R.string.groupMemberYouLeft else R.string.conversationsDeleted

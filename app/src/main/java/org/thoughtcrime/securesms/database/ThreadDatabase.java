@@ -786,16 +786,16 @@ public class ThreadDatabase extends Database {
 
   /**
    * @param threadId
-   * @param isGroupRecipient
+   * @param lastSeenTime
    * @param lastSeenTime
    * @return true if we have set the last seen for the thread, false if there were no messages in the thread
    */
-  public boolean markAllAsRead(long threadId, boolean isGroupRecipient, long lastSeenTime, boolean force) {
+  public boolean markAllAsRead(long threadId, long lastSeenTime, boolean force) {
     MmsSmsDatabase mmsSmsDatabase = DatabaseComponent.get(context).mmsSmsDatabase();
     if (mmsSmsDatabase.getConversationCount(threadId) <= 0 && !force) return false;
     List<MarkedMessageInfo> messages = setRead(threadId, lastSeenTime);
     MarkReadReceiver.process(context, messages);
-    ApplicationContext.getInstance(context).messageNotifier.updateNotificationRegardingSpecificThread(context, threadId);
+    ApplicationContext.getInstance(context).messageNotifier.updateNotificationForSpecificThread(context, threadId);
     return setLastSeen(threadId, lastSeenTime);
   }
 

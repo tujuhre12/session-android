@@ -179,7 +179,7 @@ class NotificationsPreferenceFragment : CorrectedPreferenceFragment() {
             // update notification
             object : AsyncTask<Void?, Void?, Void?>() {
                 override fun doInBackground(vararg params: Void?): Void? {
-                    ApplicationContext.getInstance(activity).messageNotifier.updateNotification(
+                    ApplicationContext.getInstance(activity).messageNotifier.resetAllNotificationsSilently(
                         activity!!
                     )
                     return null

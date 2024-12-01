@@ -9,9 +9,9 @@ interface MessageNotifier {
     fun setLastDesktopActivityTimestamp(timestamp: Long)
     fun notifyMessageDeliveryFailed(context: Context?, recipient: Recipient?, threadId: Long)
     fun cancelDelayedNotifications()
-    fun updateNotification(context: Context)
-    fun updateNotificationRegardingSpecificThread(context: Context, threadId: Long)
-    fun updateNotificationRegardingSpecificThreadWithOptionalAudio(context: Context, threadId: Long, playNotificationAudio: Boolean)
-    fun updateNotificationWithReminderCountAndOptionalAudio(context: Context, playNotificationAudio: Boolean, reminderCount: Int)
+    fun resetAllNotificationsSilently(context: Context)
+    fun updateNotificationForSpecificThread(context: Context, threadId: Long)
+    fun updateNotificationForSpecificThreadWithOptionalAudio(context: Context, threadId: Long, playNotificationAudio: Boolean)
+    fun updateNotificationWithReminderCountAndOptionalAudio(context: Context,  reminderCount: Int, playNotificationAudio: Boolean)
     fun clearReminder(context: Context)
 }
