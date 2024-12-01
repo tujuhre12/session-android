@@ -660,8 +660,98 @@ class DefaultMessageNotifier : MessageNotifier {
                 Log.i("ACL", "Recipient is: ${notificationItem.recipient.address}")
                 notificationState.addNotification(notificationItem)
             }
+//<<<<<<< HEAD
         }
+/*        
+=======
 
+            // If this is a message request from an unknown user..
+            if (notificationIsAMessageRequest) {
+                Log.i("ACL", "This is a message request from an unknown user")
+                body = SpanUtil.italic(context.getString(R.string.messageRequestsNew))
+
+            // If we received some manner of notification but Session is locked..
+            } else if (KeyCachingService.isLocked(context)) {
+                Log.i("ACL", "We'll do a notification because Session is locked")
+
+                // Note: We provide 1 because `messageNewYouveGot` is now a plurals string and we don't have a count yet, so just
+                // giving it 1 will result in "You got a new message".
+                body = SpanUtil.italic(context.resources.getQuantityString(R.plurals.messageNewYouveGot, 1, 1))
+
+            // ----- Note: All further cases assume we know the contact and that Session isn't locked -----
+
+            // If this is a notification about a multimedia message from a contact we know about..
+            } else if (record.isMms && !(record as MmsMessageRecord).sharedContacts.isEmpty()) {
+                val contact = (record as MmsMessageRecord).sharedContacts[0]
+                body = ContactUtil.getStringSummary(context, contact)
+
+            // If this is a notification about a multimedia message which contains no text but DOES contain a slide deck with at least one slide..
+            } else if (record.isMms && TextUtils.isEmpty(body) && !(record as MmsMessageRecord).slideDeck.slides.isEmpty()) {
+                slideDeck = (record as MediaMmsMessageRecord).slideDeck
+                body = SpanUtil.italic(slideDeck.body)
+
+            // If this is a notification about a multimedia message, but it's not ITSELF a multimedia notification AND it contains a slide deck with at least one slide..
+            } else if (record.isMms && !record.isMmsNotification && !(record as MmsMessageRecord).slideDeck.slides.isEmpty()) {
+                slideDeck = (record as MediaMmsMessageRecord).slideDeck
+                val message = slideDeck.body + ": " + record.body
+                val italicLength = message.length - body.length
+                body = SpanUtil.italic(message, italicLength)
+
+            // If this is a notification about an invitation to a community..
+            } else if (record.isOpenGroupInvitation) {
+                body = SpanUtil.italic(context.getString(R.string.communityInvitation))
+            }
+            else {
+                Log.i("ACL", "We have absolutely no idea what this notification is about")
+            }
+
+            val userPublicKey = getLocalNumber(context)
+            var blindedPublicKey = cache[threadId]
+            if (blindedPublicKey == null) {
+                blindedPublicKey = generateBlindedId(threadId, context)
+                cache[threadId] = blindedPublicKey
+            }
+
+            if (sender == null) continue
+
+            if (sender.isNotMuted) {
+
+                if (sender.notifyType == RecipientDatabase.NOTIFY_TYPE_MENTIONS) {
+                    // check if mentioned here
+                    var isQuoteMentioned = false
+                    if (record is MmsMessageRecord) {
+                        val quote = (record as MmsMessageRecord).quote
+                        val quoteAddress = quote?.author
+                        val serializedAddress = quoteAddress?.serialize()
+                        isQuoteMentioned = (serializedAddress != null && userPublicKey == serializedAddress) ||
+                                (blindedPublicKey != null && userPublicKey == blindedPublicKey)
+                    }
+                    if (body.toString().contains("@$userPublicKey") || body.toString().contains("@$blindedPublicKey") || isQuoteMentioned) {
+                        notificationState.addNotification(NotificationItem(id, mms, recipient, conversationRecipient, sender, threadId, body, timestamp, slideDeck))
+                    }
+                } else if (sender.notifyType == RecipientDatabase.NOTIFY_TYPE_NONE) {
+                    // do nothing, no notifications
+                } else {
+                    notificationState.addNotification(NotificationItem(id, mms, recipient, conversationRecipient, sender, threadId, body, timestamp, slideDeck))
+                }
+
+                val userBlindedPublicKey = blindedPublicKey
+                val lastReact = Stream.of(record.reactions)
+                    .filter { r: ReactionRecord -> !(r.author == userPublicKey || r.author == userBlindedPublicKey) }
+                    .findLast()
+
+                if (lastReact.isPresent) {
+                    if (sender.isIndividualRecipient) {
+                        val reaction = lastReact.get()
+                        val reactor = Recipient.from(context, fromSerialized(reaction.author), false)
+                        val emoji = Phrase.from(context, R.string.emojiReactsNotification).put(EMOJI_KEY, reaction.emoji).format().toString()
+                        notificationState.addNotification(NotificationItem(id, mms, reactor, reactor, sender, threadId, emoji, reaction.dateSent, slideDeck))
+                    }
+                }
+            }
+        } while (record != null) // This will never hit because we break early if we get a null record at the start of the do..while loop
+>>>>>>> 7404318ca537eb2c8415f6b611bd7412979a4fe1
+*/
         reader.close()
         return notificationState
     }
