@@ -155,6 +155,7 @@ private fun ThumbnailRow(
                     } else {
                         // The resource given by the placeholder needs tinting according to our theme.
                         // But the missing thumbnail picture does not.
+                        //todo ICONS replace with  /!\ and simplify logic
                         var (placeholder, shouldTint) = if (item.hasPlaceholder) {
                             item.placeholder(LocalContext.current) to true
                         } else {
