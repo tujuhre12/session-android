@@ -952,7 +952,7 @@ interface TextSecurePreferences {
         }
 
         @JvmStatic
-        fun removeHasDisabledMessageRequests(context: Context) {
+        fun removeMessageRequestsDisabledPreference(context: Context) {
             removePreference(context, MESSAGE_REQUESTS_DISABLED)
         }
 
@@ -972,6 +972,7 @@ interface TextSecurePreferences {
             return previousValue != setValue
         }
 
+        // Honestly WTF...
         @JvmStatic
         fun getLastVacuumTime(context: Context): Long {
             return getLongPreference(context, LAST_VACUUM_TIME, 0)

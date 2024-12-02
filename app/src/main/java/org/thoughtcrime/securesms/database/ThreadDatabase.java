@@ -95,15 +95,15 @@ public class ThreadDatabase extends Database {
   public  static final String DELIVERY_RECEIPT_COUNT = "delivery_receipt_count";
   public  static final String READ_RECEIPT_COUNT     = "read_receipt_count";
   public  static final String EXPIRES_IN             = "expires_in";
-  public  static final String LAST_SEEN              = "last_seen";
-  public static final String HAS_SENT                = "has_sent";
+  public  static final String LAST_SEEN              = "last_seen"; // This is: The timestamp of the last message seen by the user in a given thread
+  public  static final String HAS_SENT               = "has_sent";  // This is: Whether the user has sent a message or replied to a message in a given thread. In a 1-on-1 conversation replying implies accepting the message request.
   public  static final String IS_PINNED              = "is_pinned";
 
   public static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME + " ("                    +
     ID + " INTEGER PRIMARY KEY, " + THREAD_CREATION_DATE + " INTEGER DEFAULT 0, "                  +
     MESSAGE_COUNT + " INTEGER DEFAULT 0, " + ADDRESS + " TEXT, " + SNIPPET + " TEXT, "             +
     SNIPPET_CHARSET + " INTEGER DEFAULT 0, " + READ + " INTEGER DEFAULT 1, "                       +
-          DISTRIBUTION_TYPE + " INTEGER DEFAULT 0, " + ERROR + " INTEGER DEFAULT 0, "                    +
+          DISTRIBUTION_TYPE + " INTEGER DEFAULT 0, " + ERROR + " INTEGER DEFAULT 0, "              +
     SNIPPET_TYPE + " INTEGER DEFAULT 0, " + SNIPPET_URI + " TEXT DEFAULT NULL, "                   +
     ARCHIVED + " INTEGER DEFAULT 0, " + STATUS + " INTEGER DEFAULT 0, "                            +
     DELIVERY_RECEIPT_COUNT + " INTEGER DEFAULT 0, " + EXPIRES_IN + " INTEGER DEFAULT 0, "          +
@@ -578,6 +578,9 @@ public class ThreadDatabase extends Database {
     return setLastSeen(threadId, -1);
   }
 
+  // The "last seen" timestamp is the timestamp of the last message we have seen in a given thread.
+  // The "has sent" flag is whether we have replied or posted a message in a given thread. This is used to
+  // automatically allow conversations when you reply to a message request.
   public Pair<Long, Boolean> getLastSeenAndHasSent(long threadId) {
     SQLiteDatabase db     = databaseHelper.getReadableDatabase();
     Cursor         cursor = db.query(TABLE_NAME, new String[]{LAST_SEEN, HAS_SENT}, ID_WHERE, new String[]{String.valueOf(threadId)}, null, null, null);

@@ -57,6 +57,9 @@ object MessageReceiver {
         openGroupPublicKey: String? = null,
         currentClosedGroups: Set<String>?
     ): Pair<Message, SignalServiceProtos.Content> {
+        Log.i("ACL", "Hit MessageReceiver.parse")
+
+
         val storage = MessagingModuleConfiguration.shared.storage
         val userPublicKey = storage.getUserPublicKey()
         val isOpenGroupMessage = (openGroupServerID != null)
@@ -128,12 +131,15 @@ object MessageReceiver {
                 }
             }
         }
+
         // Don't process the envelope any further if the sender is blocked
         if (isBlocked(sender!!)) {
             throw Error.SenderBlocked
         }
+
         // Parse the proto
         val proto = SignalServiceProtos.Content.parseFrom(PushTransportDetails.getStrippedPaddingMessageBody(plaintext))
+
         // Parse the message
         val message: Message = ReadReceipt.fromProto(proto) ?:
             TypingIndicator.fromProto(proto) ?:
@@ -155,10 +161,12 @@ object MessageReceiver {
             if (!message.isSelfSendValid) throw Error.SelfSend
             message.isSenderSelf = true
         }
+
         // Guard against control messages in open groups
         if (isOpenGroupMessage && message !is VisibleMessage) {
             throw Error.InvalidMessage
         }
+
         // Finish parsing
         message.sender = sender
         message.recipient = userPublicKey
@@ -166,6 +174,7 @@ object MessageReceiver {
         message.receivedTimestamp = if (envelope.hasServerTimestamp()) envelope.serverTimestamp else SnodeAPI.nowWithOffset
         message.groupPublicKey = groupPublicKey
         message.openGroupServerMessageID = openGroupServerID
+
         // Validate
         var isValid = message.isValid()
         if (message is VisibleMessage && !isValid && proto.dataMessage.attachmentsCount != 0) { isValid = true }

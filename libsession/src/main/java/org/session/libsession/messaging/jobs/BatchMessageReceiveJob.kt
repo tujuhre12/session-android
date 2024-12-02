@@ -135,6 +135,8 @@ class BatchMessageReceiveJob(
                     message.serverHash = serverHash
                     val parsedParams = ParsedMessage(messageParameters, message, proto)
 
+                    Log.i("ACL", "Received a msg: " + message.toString())
+
                     if(isHidden(message)) return@forEach
 
                     val threadID = Message.getThreadId(message, openGroupID, storage, shouldCreateThread(parsedParams)) ?: NO_THREAD_MAPPING
@@ -150,7 +152,7 @@ class BatchMessageReceiveJob(
                         }
                         is MessageReceiver.Error -> {
                             if (!e.isRetryable) {
-                                Log.e(TAG, "Couldn't receive message, failed permanently (id: $id)", e)
+                                Log.e(TAG, "Couldn't receive message, failed permanently (id: $id) [User may be blocked]", e)
                             }
                             else {
                                 Log.e(TAG, "Couldn't receive message, failed (id: $id)", e)
@@ -243,6 +245,8 @@ class BatchMessageReceiveJob(
                         storage.markConversationAsRead(threadId, newLastSeen, force = true)
                     }
                     storage.updateThread(threadId, true)
+
+                    // ACL HERE
                     SSKEnvironment.shared.notificationManager.updateNotificationForSpecificThread(context, threadId)
                 }
 

@@ -34,8 +34,7 @@ public class OptimizedMessageNotifier implements MessageNotifier {
     wrapped.setHomeScreenVisible(isVisible);
   }
 
-  @Override
-  public void setLastDesktopActivityTimestamp(long timestamp) { wrapped.setLastDesktopActivityTimestamp(timestamp);}
+  @Override public void setLastDesktopActivityTimestamp(long timestamp) { wrapped.setLastDesktopActivityTimestamp(timestamp);}
 
   @Override
   public void notifyMessageDeliveryFailed(Context context, Recipient recipient, long threadId) {
