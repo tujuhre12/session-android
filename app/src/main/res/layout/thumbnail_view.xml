@@ -15,7 +15,6 @@
         android:clickable="false"
         android:longClickable="false"
         android:scaleType="fitCenter"
-        app:tint="?attr/colorControlNormal"
         android:contentDescription="@string/AccessibilityId_mediaMessage" />
 
     <org.thoughtcrime.securesms.conversation.v2.utilities.ThumbnailProgressBar
