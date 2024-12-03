@@ -145,7 +145,7 @@
             app:tint="@color/white"
             android:scaleType="centerInside"
             android:layout_centerInParent="true"
-            android:src="@drawable/ic_microphone" />
+            android:src="@drawable/ic_mic" />
 
     </RelativeLayout>
 

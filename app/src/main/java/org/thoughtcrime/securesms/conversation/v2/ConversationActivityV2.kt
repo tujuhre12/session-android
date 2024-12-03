@@ -385,10 +385,10 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     private val glide by lazy { Glide.with(this) }
     private val lockViewHitMargin by lazy { toPx(40, resources) }
-    private val gifButton by lazy { InputBarButton(this, R.drawable.ic_gif_white_24dp, hasOpaqueBackground = true, isGIFButton = true) }
-    private val documentButton by lazy { InputBarButton(this, R.drawable.ic_document_small_dark, hasOpaqueBackground = true) }
-    private val libraryButton by lazy { InputBarButton(this, R.drawable.ic_baseline_photo_library_24, hasOpaqueBackground = true) }
-    private val cameraButton by lazy { InputBarButton(this, R.drawable.ic_baseline_photo_camera_24, hasOpaqueBackground = true) }
+    private val gifButton by lazy { InputBarButton(this, R.drawable.ic_gif, hasOpaqueBackground = true) }
+    private val documentButton by lazy { InputBarButton(this, R.drawable.ic_file, hasOpaqueBackground = true) }
+    private val libraryButton by lazy { InputBarButton(this, R.drawable.ic_images, hasOpaqueBackground = true) }
+    private val cameraButton by lazy { InputBarButton(this, R.drawable.ic_camera, hasOpaqueBackground = true) }
     private val messageToScrollTimestamp = AtomicLong(-1)
     private val messageToScrollAuthor = AtomicReference<Address?>(null)
     private val firstLoad = AtomicBoolean(true)
