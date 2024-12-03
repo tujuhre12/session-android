@@ -41,7 +41,7 @@ fun MediaOverviewTopAppBar(
 
             IconButton(onClick = onDeleteClicked) {
                 Icon(
-                    painterResource(R.drawable.ic_baseline_delete_24),
+                    painterResource(R.drawable.ic_trash_2),
                     contentDescription = stringResource(R.string.delete),
                     tint = LocalColors.current.text,
                 )

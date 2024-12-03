@@ -484,7 +484,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
                     Divider()
 
                     LargeItemButton(R.string.sessionClearData,
-                        R.drawable.ic_delete,
+                        R.drawable.ic_trash_2,
                         Modifier.contentDescription(R.string.AccessibilityId_sessionClearData),
                         dangerButtonColors()
                     ) { ClearAllDataDialog().show(supportFragmentManager, "Clear All Data Dialog") }

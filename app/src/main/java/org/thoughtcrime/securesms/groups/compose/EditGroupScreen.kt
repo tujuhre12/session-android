@@ -378,7 +378,7 @@ private fun MemberActionSheet(
             if (member.canRemove) {
                 this += ActionSheetItemData(
                     title = context.resources.getQuantityString(R.plurals.groupRemoveUserOnly, 1),
-                    iconRes = R.drawable.ic_delete_24,
+                    iconRes = R.drawable.ic_trash_2,
                     onClick = onRemove,
                     qaTag = R.string.AccessibilityId_removeContact
                 )

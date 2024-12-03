@@ -24,7 +24,7 @@
 
     <item
         android:id="@+id/delete"
-        android:icon="?menu_delete_icon"
+        android:icon="@drawable/ic_trash_2"
         android:iconTint="?android:textColorPrimary"
         android:title="@string/delete"
         app:showAsAction="ifRoom" />
