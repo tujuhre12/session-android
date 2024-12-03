@@ -212,7 +212,8 @@ private fun ThumbnailRow(
                                     .fillMaxSize()
                                     .background(Color.Black.copy(alpha = 0.4f)),
                                 contentScale = ContentScale.Inside,
-                                painter = painterResource(R.drawable.ic_check_white_48dp),
+                                painter = painterResource(R.drawable.ic_check),
+                                colorFilter = ColorFilter.tint(Color.White),
                                 contentDescription = stringResource(R.string.AccessibilityId_select),
                             )
                         }

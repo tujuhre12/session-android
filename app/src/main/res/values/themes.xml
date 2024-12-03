@@ -41,7 +41,7 @@
        <item name="menu_save_icon">@drawable/ic_arrow_down_to_line</item>=
        <item name="menu_copy_icon">@drawable/ic_copy</item>
        <item name="menu_reply_icon">@drawable/ic_reply</item>
-       <item name="menu_select_icon">@drawable/ic_baseline_check_circle_outline_24</item>
+       <item name="menu_select_icon">@drawable/ic_circle_check</item>
        <item name="menu_selectall_icon">@drawable/ic_baseline_select_all_24</item>
        <item name="menu_split_icon">@drawable/ic_baseline_call_split_24</item>
        <item name="menu_info_icon">@drawable/ic_info_outline_white_24dp</item>

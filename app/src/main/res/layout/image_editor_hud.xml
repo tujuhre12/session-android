@@ -88,8 +88,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="?attr/selectableItemBackgroundBorderless"
+                android:layout_gravity="center_vertical"
+                app:tint="@color/white"
                 android:padding="8dp"
-                android:src="@drawable/ic_check_circle_32" />
+                android:src="@drawable/ic_circle_check" />
 
         </LinearLayout>
 

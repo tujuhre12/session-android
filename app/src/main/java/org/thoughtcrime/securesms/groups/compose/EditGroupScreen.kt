@@ -195,7 +195,7 @@ fun EditGroup(
                             modifier = Modifier.size(LocalDimensions.current.spacing),
                             onClick = onEditNameConfirmed) {
                             Icon(
-                                painter = painterResource(R.drawable.check),
+                                painter = painterResource(R.drawable.ic_check),
                                 contentDescription = stringResource(R.string.AccessibilityId_confirm),
                                 tint = LocalColors.current.text,
                             )

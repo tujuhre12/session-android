@@ -157,7 +157,7 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
                          @Nullable PendingIntent wearableReplyIntent,
                          @NonNull ReplyMethod replyMethod)
   {
-    Action markAsReadAction = new Action(R.drawable.check,
+    Action markAsReadAction = new Action(R.drawable.ic_check,
                                          context.getString(R.string.messageMarkRead),
                                          markReadIntent);
 
