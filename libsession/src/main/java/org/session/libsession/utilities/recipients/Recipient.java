@@ -459,6 +459,11 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
     return address.isGroupOrCommunity();
   }
 
+  // An individual recipient is simply a contact that is not a group or a community - the recipient is for a 1-on-1 conversation
+  public boolean isIndividualRecipient() {
+    return !address.isGroupOrCommunity();
+  }
+
   public boolean isContactRecipient() {
     return address.isContact();
   }
@@ -652,9 +657,9 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
     notifyListeners();
   }
 
-  public synchronized boolean isApproved() {
-    return approved;
-  }
+  public synchronized boolean isApproved() { return approved; }
+
+  public synchronized boolean isNotApproved() { return !approved; }
 
   public void setApproved(boolean approved) {
     synchronized (this) {

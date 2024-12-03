@@ -689,8 +689,13 @@ interface TextSecurePreferences {
         }
 
         @JvmStatic
-        fun isNotificationsEnabled(context: Context): Boolean {
+        fun areNotificationsEnabled(context: Context): Boolean {
             return getBooleanPreference(context, NOTIFICATION_PREF, true)
+        }
+
+        @JvmStatic
+        fun areNotificationsDisabled(context: Context): Boolean {
+            return !areNotificationsEnabled(context)
         }
 
         @JvmStatic
@@ -919,8 +924,11 @@ interface TextSecurePreferences {
             return getBooleanPreference(context, HAS_HIDDEN_MESSAGE_REQUESTS, false)
         }
 
+        // The side-effect of removing the "Hide Message Requests" preference is that the next time we
+        // ask for it then it's not there so will return the default value of false (that is, in effect
+        // this re-enables showing the message requests section).
         @JvmStatic
-        fun removeHasHiddenMessageRequests(context: Context) {
+        fun removeHasHiddenMessageRequestsPreference(context: Context) {
             removePreference(context, HAS_HIDDEN_MESSAGE_REQUESTS)
             _events.tryEmit(HAS_HIDDEN_MESSAGE_REQUESTS)
         }

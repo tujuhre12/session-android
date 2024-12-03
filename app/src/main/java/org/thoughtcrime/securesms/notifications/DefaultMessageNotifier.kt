@@ -45,12 +45,13 @@ import org.session.libsession.messaging.utilities.SodiumUtilities.blindedKeyPair
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ServiceUtil
 import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
+import org.session.libsession.utilities.TextSecurePreferences.Companion.areNotificationsDisabled
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocalNumber
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getNotificationPrivacy
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getRepeatAlertsCount
 import org.session.libsession.utilities.TextSecurePreferences.Companion.hasHiddenMessageRequests
-import org.session.libsession.utilities.TextSecurePreferences.Companion.isNotificationsEnabled
-import org.session.libsession.utilities.TextSecurePreferences.Companion.removeHasHiddenMessageRequests
+import org.session.libsession.utilities.TextSecurePreferences.Companion.areNotificationsEnabled
+import org.session.libsession.utilities.TextSecurePreferences.Companion.removeHasHiddenMessageRequestsPreference
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
@@ -78,6 +79,9 @@ import org.thoughtcrime.securesms.util.SpanUtil
  * @author Moxie Marlinspike
  */
 class DefaultMessageNotifier : MessageNotifier {
+
+    //private var notificationState: NotificationState = NotificationState()
+
     override fun setVisibleThread(threadId: Long) {
         visibleThread = threadId
     }
@@ -134,6 +138,7 @@ class DefaultMessageNotifier : MessageNotifier {
                     }
 
                     if (!validNotification) {
+                        Log.i(TAG, "Cancelling notification with id: {notification.id} as orphaned.")
                         notifications.cancel(notification.id)
                     }
                 }
@@ -145,14 +150,16 @@ class DefaultMessageNotifier : MessageNotifier {
     }
 
     override fun updateNotification(context: Context) {
-        if (!isNotificationsEnabled(context)) {
-            return
-        }
+        Log.w("ACL", "-1? Hit updateNotification(context)")
+        if (areNotificationsDisabled(context)) return
 
-        updateNotification(context, false, 0)
+        updateNotification(context, signal = false, reminderCount = 0)
     }
 
     override fun updateNotification(context: Context, threadId: Long) {
+        Log.i("ACL", "1 - Hit updateNotification(context, threadId) - printing stack trace")
+        Exception().printStackTrace()
+
         if (System.currentTimeMillis() - lastDesktopActivityTimestamp < DESKTOP_ACTIVITY_PERIOD) {
             Log.i(TAG, "Scheduling delayed notification...")
             executor.execute(DelayedNotification(context, threadId))
@@ -162,26 +169,66 @@ class DefaultMessageNotifier : MessageNotifier {
     }
 
     override fun updateNotification(context: Context, threadId: Long, signal: Boolean) {
-        val isVisible = visibleThread == threadId
+        Log.i("ACL", "2 - Hit updateNotification(context, threadId, signal)")
+
 
         val threads = get(context).threadDatabase()
         val recipient = threads.getRecipientForThreadId(threadId)
 
-        if (recipient != null && !recipient.isGroupOrCommunityRecipient && threads.getMessageCount(threadId) == 1 &&
-            !(recipient.isApproved || threads.getLastSeenAndHasSent(threadId).second())
-        ) {
-            removeHasHiddenMessageRequests(context)
-        }
-
-        if (!isNotificationsEnabled(context) ||
-            (recipient != null && recipient.isMuted)
-        ) {
+        if (recipient == null) {
+            Log.e(TAG, "Could not get recipient for threadId: $threadId - bailing.")
             return
         }
 
-        if ((!isVisible && !homeScreenVisible) || hasExistingNotifications(context)) {
-            updateNotification(context, signal, 0)
+        if (areNotificationsDisabled(context)) {
+            Log.i(TAG, "Notifications are disabled - aborting notification.")
+            return
         }
+
+        if (recipient.isMuted) {
+            Log.i(TAG, "Recipient is muted - aborting notification.")
+            return
+        }
+
+
+
+
+
+
+
+
+        val lastSeenAndHasSent = threads.getLastSeenAndHasSent(threadId)
+        val lastSeenMessageTimestamp: Long             = lastSeenAndHasSent.first()
+        val weHaveNotSentAMessageInThisThread: Boolean = !lastSeenAndHasSent.second() // CAREFUL: We invert the value of "hasSent" here!
+
+        // Figure out whether we should display a notification from an unapproved individual recipient or not
+        val now = System.currentTimeMillis()
+
+        val notificationIsRegardingMessageRequest = recipient.isIndividualRecipient && recipient.isNotApproved && weHaveNotSentAMessageInThisThread
+
+        if (notificationIsRegardingMessageRequest) {
+            Log.i("ACL", "We think this notification is regarding a message request")
+
+            // Whenever we receive a message request we adjust the app to display Message Requests UI element (which the user may have previously hidden)
+            removeHasHiddenMessageRequestsPreference(context)
+
+            // If the user is looking at the thread or the home active then there is no need to provide a notification as they can see that there is a new message
+            val notificationThreadIsVisible = visibleThread == threadId
+            val noNeedForNotificationAboutThisMessageRequest = notificationThreadIsVisible || homeScreenVisible
+
+            if (noNeedForNotificationAboutThisMessageRequest) {
+                Log.i(TAG, "Notification thread or home screen visible - skipping notification.")
+                return
+            } else {
+
+                // We proceed through to call `updateNotification(context, signal, reminderCount, threadId) *PASSING* it a threadId which isn't -1L and then jump out before we hit the bottom call to the same
+                updateNotification(context, signal, 0, threadId)
+                return
+            }
+        }
+
+        Log.i("ACL", "Got to end of updateNotification threadId / signal - moving on to updateNotification (and this isn't a message request)")
+        updateNotification(context, signal, 0)
     }
 
     private fun hasExistingNotifications(context: Context): Boolean {
@@ -190,19 +237,39 @@ class DefaultMessageNotifier : MessageNotifier {
             val activeNotifications = notifications.activeNotifications
             return activeNotifications.isNotEmpty()
         } catch (e: Exception) {
+            Log.e(TAG, "Could not get active notifications", e)
             return false
         }
     }
 
-    override fun updateNotification(context: Context, signal: Boolean, reminderCount: Int) {
+    private fun haveExistingNotificationsRegardingThread(notificationState: NotificationState, threadId: Long): Boolean {
+
+        Log.w("ACL", "Size of notificationState.notifications is: " + notificationState.notifications.size + ", threadId is: " + threadId)
+
+        for (notificationItem in notificationState.notifications) {
+            if (threadId == notificationItem.threadId) {
+                Log.w("ACL", "Found a match with a notification regarding this threadId: $threadId")
+                return true
+            }
+        }
+        return false
+    }
+
+
+
+    override fun updateNotification(context: Context, signal: Boolean, reminderCount: Int, threadId: Long) {
+        Log.i("ACL", "3 Hit updateNotification(context, signal, reminderCount, threadId)")
+
         var playNotificationAudio = signal // Local copy of the argument so we can modify it
-        var telcoCursor: Cursor? = null
-        val pushCursor: Cursor? = null
+        var unreadMessagesCursor: Cursor? = null
 
         try {
-            telcoCursor = get(context).mmsSmsDatabase().unread // TODO: add a notification specific lighter query here
+            unreadMessagesCursor = get(context).mmsSmsDatabase().unread // TODO: add a notification specific lighter query here
 
-            if ((telcoCursor == null || telcoCursor.isAfterLast) || getLocalNumber(context) == null) {
+            // If we somehow couldn't get the unread messages cursor, or if we're in a bad state where the cursor is after the last
+            // message, or if we couldn't get our own number then we clean-up the notification state and bail.
+            if ((unreadMessagesCursor == null || unreadMessagesCursor.isAfterLast) || getLocalNumber(context) == null) {
+                Log.w(TAG, "Unread messages cursor is corrupt or we couldn't find our own number - cleaning up and bailing.")
                 updateBadge(context, 0)
                 cancelActiveNotifications(context)
                 clearReminder(context)
@@ -210,28 +277,80 @@ class DefaultMessageNotifier : MessageNotifier {
             }
 
             try {
-                val notificationState = constructNotificationState(context, telcoCursor)
+                val notificationState = constructNotificationState(context, unreadMessagesCursor)
 
-                if (playNotificationAudio && (System.currentTimeMillis() - lastAudibleNotification) < MIN_AUDIBLE_PERIOD_MILLIS) {
-                    playNotificationAudio = false
-                } else if (playNotificationAudio) {
-                    lastAudibleNotification = System.currentTimeMillis()
+                // If the threadId argument is not -1L then this notification is regarding a message request - so we'll (potentially) adjust whether we
+                if (threadId != -1L) {
+                    // Do we already have a notification about this thread?
+                    val alreadyHaveANotificationAboutThisThread = haveExistingNotificationsRegardingThread(notificationState, threadId)
+                    Log.w("ACL", "Already have notification about thread?: $alreadyHaveANotificationAboutThisThread")
+
+                    // If not, then we'll want to notify and use sound..
+                    if (alreadyHaveANotificationAboutThisThread == false) {
+                        Log.i("ACL", "Notif. from NA indiv, we have not sent anything and there is no existing notification - notifying WITH sound")
+                        playNotificationAudio = true
+                    } else {
+                        // ..otherwise, if we already have a notification about this thread (i.e., this user has previously sent us a message request
+                        // and it's still in the notification state) then we DO NOT notify at all - otherwise we'll end up with several notifications
+                        // from the same user saying "You have a message request".
+                        Log.i("ACL", "Notif. from NA indiv, we have not sent anything but there IS a notification already - NOT NOTIFYING!!!! BAILING!")
+
+                        // NOTE: The only downside of not showing a notification here is that the timestamp of the first notification is the only one
+                        // shown - that is, if you message request, then wait 10 minutes and message them again, only the original (10 minutes ago)
+                        // notification exists. Which I don't think is terrible, tbh. If we JUST set `playNotificationAudio = false` here rather than
+                        // returning we get a second notification regarding the same thread, there's no audio played, but if we now look at the
+                        // notification then we can see it's TWO notifications, shown as two-lines of "You have a message request". To match the
+                        // acceptance criteria I'll opt to return here.
+                        //playNotificationAudio = false
+
+                        // ALSO: Clearing the Android notification will still land-us here. We have to actively go to "Message Requests -> Clear All"
+                        return
+                    }
+                }
+
+
+
+
+                val now = System.currentTimeMillis()
+                // If we were asked to play audio with a notification..
+                if (playNotificationAudio) {
+
+                    // .. but it's been less than 5 seconds since the last time we did so then we DO NOT play audio with the notification.
+                    if (now - lastAudibleNotificationTimestamp < MIN_AUDIBLE_PERIOD_MILLIS) {
+                        Log.i(TAG, "Too many audible notifications - skipping audio on this notification.")
+                        playNotificationAudio = false
+                    } else {
+                        // However if it's been more than 5 seconds since we last did so then we WILL play the audio, and we'll update our timestamp accordingly.
+                        lastAudibleNotificationTimestamp = now
+                    }
                 }
 
                 if (notificationState.hasMultipleThreads()) {
+                    Log.w("ACL", "Notification state has multiple threads")
+
+                    // Update all threads in the notification state via SINGLE-THREAD notifications where we DO NOT signal the user and we DO bundle the notifications..
                     for (threadId in notificationState.threads) {
-                        sendSingleThreadNotification(context, NotificationState(notificationState.getNotificationsForThread(threadId)), false, true)
+                        sendSingleThreadNotification(context, NotificationState(notificationState.getNotificationsForThread(threadId)), signal = false, bundled = true)
                     }
+
+                    // .. then send a MULTIPLE THREAD notification
                     sendMultipleThreadNotification(context, notificationState, playNotificationAudio)
-                } else if (notificationState.messageCount > 0) {
-                    sendSingleThreadNotification(context, notificationState, playNotificationAudio, false)
-                } else {
-                    cancelActiveNotifications(context)
+
+                } else if (notificationState.notificationCount > 0) {
+                    Log.w("ACL", "Notification state has a single thread")
+                    sendSingleThreadNotification(context, notificationState, signal = playNotificationAudio, bundled = false)
                 }
+//            else {
+//
+//                    // ACL remove this else block
+//                    Log.w("ACL", "Would previously cancel active notifications - NOT doing that")
+//                    //cancelActiveNotifications(context)
+//                }
 
                 cancelOrphanedNotifications(context, notificationState)
-                updateBadge(context, notificationState.messageCount)
+                updateBadge(context, notificationState.notificationCount)
 
+                // THIS MAKES ABSOLUTELY NO SENSE - WHY WOULD WE SCHEDULE A REMINDER FOR A NOTIFICATION?!
                 if (playNotificationAudio) {
                     scheduleReminder(context, reminderCount)
                 }
@@ -241,7 +360,7 @@ class DefaultMessageNotifier : MessageNotifier {
             }
 
         } finally {
-            telcoCursor?.close()
+            unreadMessagesCursor?.close()
         }
     }
 
@@ -252,13 +371,14 @@ class DefaultMessageNotifier : MessageNotifier {
         signal: Boolean,
         bundled: Boolean
     ) {
-        Log.i(TAG, "sendSingleThreadNotification()  signal: $signal  bundled: $bundled")
+        Log.i(TAG, "Hit sendSingleThreadNotification()  signal: $signal  bundled: $bundled")
 
-        if (notificationState.notifications.isEmpty()) {
-            if (!bundled) cancelActiveNotifications(context)
-            Log.i(TAG, "Empty notification state. Skipping.")
-            return
-        }
+        // SO WE CANT DISPLAY A NOTIFICATION IF THERE ARE NO NOTIFICATIONS - we're in the process of adding one FFS!
+//        if (notificationState.notifications.isEmpty()) {
+//            if (!bundled) cancelActiveNotifications(context)
+//            Log.i(TAG, "Empty notification state. Skipping.")
+//            return
+//        }
 
         val builder = SingleRecipientNotificationBuilder(context, getNotificationPrivacy(context))
         val notifications = notificationState.notifications
@@ -283,7 +403,7 @@ class DefaultMessageNotifier : MessageNotifier {
         val text = notifications[0].text
 
         builder.setThread(notifications[0].recipient)
-        builder.setMessageCount(notificationState.messageCount)
+        builder.setMessageCount(notificationState.notificationCount)
 
         val builderCS = text ?: ""
         val ss = highlightMentions(
@@ -378,7 +498,7 @@ class DefaultMessageNotifier : MessageNotifier {
         val builder = MultipleRecipientNotificationBuilder(context, getNotificationPrivacy(context))
         val notifications = notificationState.notifications
 
-        builder.setMessageCount(notificationState.messageCount, notificationState.threadCount)
+        builder.setMessageCount(notificationState.notificationCount, notificationState.threadCount)
         builder.setMostRecentSender(notifications[0].individualRecipient, notifications[0].recipient)
         builder.setGroup(NOTIFICATION_GROUP)
         builder.setDeleteIntent(notificationState.getDeleteIntent(context))
@@ -452,6 +572,9 @@ class DefaultMessageNotifier : MessageNotifier {
     }
 
     private fun constructNotificationState(context: Context, cursor: Cursor): NotificationState {
+
+        Log.i("ACL", "Hit construct notification state")
+
         val notificationState = NotificationState()
         val reader = get(context).mmsSmsDatabase().readerFor(cursor)
         if (reader == null) {
@@ -477,25 +600,32 @@ class DefaultMessageNotifier : MessageNotifier {
             var threadRecipients: Recipient? = null
             var slideDeck: SlideDeck? = null
             val timestamp = record.timestamp
-            var messageRequest = false
+            var notificationIsMessageRequest = false
 
-            if (threadId != -1L) {
-                threadRecipients = threadDatabase.getRecipientForThreadId(threadId)
-                messageRequest = threadRecipients != null && !threadRecipients.isGroupOrCommunityRecipient &&
-                        !threadRecipients.isApproved && !threadDatabase.getLastSeenAndHasSent(threadId).second()
-                if (messageRequest && (threadDatabase.getMessageCount(threadId) > 1 || !hasHiddenMessageRequests(context))) {
-                    continue
-                }
+            if (threadId == -1L) {
+                Log.w(TAG, "Received a threadId of -1L in constructNotificationState - skipping invalid thread.")
+                continue
             }
 
+            val lastSentAndLastSeen = threadDatabase.getLastSeenAndHasSent(threadId)
+            val lastSeen = lastSentAndLastSeen.first()
+            val haveNotSentMessageToThisRecipient = !lastSentAndLastSeen.second() // CAREFUL: We negate this! If we HAVE sent a message to them it means we have implicitly accepted their message request
+
+            threadRecipients = threadDatabase.getRecipientForThreadId(threadId)
+            notificationIsMessageRequest = threadRecipients != null               &&
+                                           threadRecipients.isIndividualRecipient &&
+                                           threadRecipients.isNotApproved         &&
+                                           haveNotSentMessageToThisRecipient
+
             // If this is a message request from an unknown user..
-            if (messageRequest) {
+            if (notificationIsMessageRequest) {
+                Log.i(TAG, "Detected incoming message request.")
                 body = SpanUtil.italic(context.getString(R.string.messageRequestsNew))
 
             // If we received some manner of notification but Session is locked..
             } else if (KeyCachingService.isLocked(context)) {
-                // Note: We provide 1 because `messageNewYouveGot` is now a plurals string and we don't have a count yet, so just
-                // giving it 1 will result in "You got a new message".
+                // Note: We provide 1 because `messageNewYouveGot` is now a plurals string and we don't have a count yet, so just giving
+                // it 1 will result in "You got a new message" - which is the type of vague message we want went the device is locked.
                 body = SpanUtil.italic(context.resources.getQuantityString(R.plurals.messageNewYouveGot, 1, 1))
 
             // ----- Note: All further cases assume we know the contact and that Session isn't locked -----
@@ -505,19 +635,19 @@ class DefaultMessageNotifier : MessageNotifier {
                 val contact = (record as MmsMessageRecord).sharedContacts[0]
                 body = ContactUtil.getStringSummary(context, contact)
 
-                // If this is a notification about a multimedia message which contains no text but DOES contain a slide deck with at least one slide..
+            // If this is a notification about a multimedia message which contains no text but DOES contain a slide deck with at least one slide..
             } else if (record.isMms && TextUtils.isEmpty(body) && !(record as MmsMessageRecord).slideDeck.slides.isEmpty()) {
                 slideDeck = (record as MediaMmsMessageRecord).slideDeck
                 body = SpanUtil.italic(slideDeck.body)
 
-                // If this is a notification about a multimedia message, but it's not ITSELF a multimedia notification AND it contains a slide deck with at least one slide..
+            // If this is a notification about a multimedia message, but it's not ITSELF a multimedia notification AND it contains a slide deck with at least one slide..
             } else if (record.isMms && !record.isMmsNotification && !(record as MmsMessageRecord).slideDeck.slides.isEmpty()) {
                 slideDeck = (record as MediaMmsMessageRecord).slideDeck
                 val message = slideDeck.body + ": " + record.body
                 val italicLength = message.length - body.length
                 body = SpanUtil.italic(message, italicLength)
 
-                // If this is a notification about an invitation to a community..
+            // If this is a notification about an invitation to a community..
             } else if (record.isOpenGroupInvitation) {
                 body = SpanUtil.italic(context.getString(R.string.communityInvitation))
             }
@@ -528,6 +658,7 @@ class DefaultMessageNotifier : MessageNotifier {
                 blindedPublicKey = generateBlindedId(threadId, context)
                 cache[threadId] = blindedPublicKey
             }
+
             if (threadRecipients == null || !threadRecipients.isMuted) {
                 if (threadRecipients != null && threadRecipients.notifyType == RecipientDatabase.NOTIFY_TYPE_MENTIONS) {
                     // check if mentioned here
@@ -545,6 +676,10 @@ class DefaultMessageNotifier : MessageNotifier {
                 } else if (threadRecipients != null && threadRecipients.notifyType == RecipientDatabase.NOTIFY_TYPE_NONE) {
                     // do nothing, no notifications
                 } else {
+                    Log.i("ACL", "Adding to notification state!")
+
+
+
                     notificationState.addNotification(NotificationItem(id, mms, recipient, conversationRecipient, threadRecipients, threadId, body, timestamp, slideDeck))
                 }
 
@@ -714,7 +849,7 @@ class DefaultMessageNotifier : MessageNotifier {
         private var lastDesktopActivityTimestamp: Long = -1
 
         @Volatile
-        private var lastAudibleNotification: Long = -1
+        private var lastAudibleNotificationTimestamp: Long = -1
         private val executor = CancelableExecutor()
     }
 }

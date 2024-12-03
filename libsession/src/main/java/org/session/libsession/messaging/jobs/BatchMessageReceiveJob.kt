@@ -178,11 +178,17 @@ class BatchMessageReceiveJob(
 
         // iterate over threads and persist them (persistence is the longest constant in the batch process operation)
         fun processMessages(threadId: Long, messages: List<ParsedMessage>) {
+            Log.i("ACL", "0 - Hit processMessages for threadId: $threadId at timestamp: " + System.currentTimeMillis() + " - printing stack trace")
+            Exception().printStackTrace()
+
             // The LinkedHashMap should preserve insertion order
             val messageIds = linkedMapOf<Long, Pair<Boolean, Boolean>>()
             val myLastSeen = storage.getLastSeen(threadId)
             var newLastSeen = myLastSeen.takeUnless { it == -1L } ?: 0
             messages.forEach { (parameters, message, proto) ->
+
+                Log.i("ACL", "Inside messages loop for message ID: ${message.id}")
+
                 try {
                     when (message) {
                         is VisibleMessage -> {

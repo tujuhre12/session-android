@@ -45,7 +45,17 @@ class PushReceiver @Inject constructor(
      * As long as it is properly formatted
      */
     fun onPushDataReceived(dataMap: Map<String, String>?) {
-        addMessageReceiveJob(dataMap?.asPushData())
+
+        // Only proceed if we could decrypt the PushData - otherwise we end up with notifications we cannot decrypt
+        // if we "Clear Device and Network" then create a new account and then someone sends us a message which
+        // triggers a notification.
+        // TODO: Really, this should never occur - once we "Clear Device and Network" how are we still receiving messages to our OLD account ID? Is this to do with "Pushing user configs"? Ask Fanchao
+        val pushData = dataMap?.asPushData()
+        if (pushData == null || pushData.data == null || pushData.metadata == null) {
+            Log.w(TAG, "Push data was malformed - ignoring.")
+        } else {
+            addMessageReceiveJob(dataMap.asPushData())
+        }
     }
 
     /**

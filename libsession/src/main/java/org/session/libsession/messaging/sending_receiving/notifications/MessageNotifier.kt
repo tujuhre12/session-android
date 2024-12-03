@@ -12,6 +12,6 @@ interface MessageNotifier {
     fun updateNotification(context: Context)
     fun updateNotification(context: Context, threadId: Long)
     fun updateNotification(context: Context, threadId: Long, signal: Boolean)
-    fun updateNotification(context: Context, signal: Boolean, reminderCount: Int)
+    fun updateNotification(context: Context, signal: Boolean, reminderCount: Int, threadId: Long = -1L)
     fun clearReminder(context: Context)
 }

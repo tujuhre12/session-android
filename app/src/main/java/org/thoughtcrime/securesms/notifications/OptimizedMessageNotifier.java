@@ -99,7 +99,7 @@ public class OptimizedMessageNotifier implements MessageNotifier {
   }
 
   @Override
-  public void updateNotification(@androidx.annotation.NonNull Context context, boolean signal, int reminderCount) {
+  public void updateNotification(@androidx.annotation.NonNull Context context, boolean signal, int reminderCount, long threadId) {
     Poller lokiPoller = ApplicationContext.getInstance(context).poller;
     boolean isCaughtUp = true;
     if (lokiPoller != null) {
@@ -109,9 +109,9 @@ public class OptimizedMessageNotifier implements MessageNotifier {
     isCaughtUp = isCaughtUp && OpenGroupManager.INSTANCE.isAllCaughtUp();
 
     if (isCaughtUp) {
-      performOnBackgroundThreadIfNeeded(() -> wrapped.updateNotification(context, signal, reminderCount));
+      performOnBackgroundThreadIfNeeded(() -> wrapped.updateNotification(context, signal, reminderCount, -1L));
     } else {
-      debouncer.publish(() -> performOnBackgroundThreadIfNeeded(() -> wrapped.updateNotification(context, signal, reminderCount)));
+      debouncer.publish(() -> performOnBackgroundThreadIfNeeded(() -> wrapped.updateNotification(context, signal, reminderCount, -1L)));
     }
   }
 
