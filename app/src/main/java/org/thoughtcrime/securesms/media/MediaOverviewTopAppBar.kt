@@ -33,7 +33,7 @@ fun MediaOverviewTopAppBar(
         actionModeActions = {
             IconButton(onClick = onSaveClicked) {
                 Icon(
-                    painterResource(R.drawable.ic_baseline_save_24),
+                    painterResource(R.drawable.ic_arrow_down_to_line),
                     contentDescription = stringResource(R.string.save),
                     tint = LocalColors.current.text,
                 )

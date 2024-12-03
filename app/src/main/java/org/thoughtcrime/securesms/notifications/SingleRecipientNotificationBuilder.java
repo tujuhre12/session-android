@@ -169,9 +169,9 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
       String actionName = context.getString(R.string.reply);
       String label = context.getString(replyMethodLongDescription(replyMethod));
 
-      Action replyAction = new Action(R.drawable.ic_reply_white_36dp, actionName, quickReplyIntent);
+      Action replyAction = new Action(R.drawable.ic_reply, actionName, quickReplyIntent);
 
-      replyAction = new Action.Builder(R.drawable.ic_reply_white_36dp,
+      replyAction = new Action.Builder(R.drawable.ic_reply,
               actionName,
               wearableReplyIntent)
               .addRemoteInput(new RemoteInput.Builder(DefaultMessageNotifier.EXTRA_REMOTE_REPLY).setLabel(label).build())

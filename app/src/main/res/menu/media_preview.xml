@@ -10,7 +10,7 @@
 
     <item
         android:id="@+id/save"
-        android:icon="?menu_save_icon"
+        android:icon="@drawable/ic_arrow_down_to_line"
         android:iconTint="?android:textColorPrimary"
         android:title="@string/save"
         app:showAsAction="always" />
