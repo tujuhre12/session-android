@@ -73,7 +73,7 @@ class InputBarButton : RelativeLayout {
 
     private val imageView by lazy {
         val result = ImageView(context)
-        val size = if (isGIFButton) toPx(24, resources) else toPx(16, resources)
+        val size = toPx(24, resources) //if (isGIFButton || isSendButton) toPx(24, resources) else toPx(16, resources)
         result.layoutParams = LayoutParams(size, size)
         result.scaleType = ImageView.ScaleType.CENTER_INSIDE
         result.setImageResource(iconID)
