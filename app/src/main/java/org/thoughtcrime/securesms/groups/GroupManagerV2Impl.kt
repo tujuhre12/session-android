@@ -875,18 +875,6 @@ class GroupManagerV2Impl @Inject constructor(
         lokiAPIDatabase.clearReceivedMessageHashValues(groupId.hexString)
         SessionMetaProtocol.clearReceivedMessages()
 
-        // Insert a message to indicate we were kicked
-        storage.insertIncomingInfoMessage(
-            context = application,
-            senderPublicKey = userId,
-            groupID = groupId.hexString,
-            type = SignalServiceGroup.Type.KICKED,
-            name = groupName,
-            members = emptyList(),
-            admins = emptyList(),
-            sentTimestamp = clock.currentTimeMills(),
-        )
-
         configFactory.deleteGroupConfigs(groupId)
     }
 
