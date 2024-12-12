@@ -604,6 +604,15 @@ class GroupManagerV2Impl @Inject constructor(
             } else {
                 configFactory.withMutableUserConfigs { it.userGroups.eraseClosedGroup(groupId.hexString) }
                 storage.deleteConversation(threadId)
+
+                if (groupInviteMessageHash != null) {
+                    val auth = requireNotNull(storage.userAuth)
+                    SnodeAPI.deleteMessage(
+                        publicKey = auth.accountId.hexString,
+                        swarmAuth = auth,
+                        serverHashes = listOf(groupInviteMessageHash)
+                    )
+                }
             }
         }
 
