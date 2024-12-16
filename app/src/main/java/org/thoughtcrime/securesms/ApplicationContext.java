@@ -37,32 +37,13 @@ import androidx.core.graphics.drawable.IconCompat;
 import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ProcessLifecycleOwner;
-import dagger.hilt.EntryPoints;
-import dagger.hilt.android.HiltAndroidApp;
-import java.io.IOException;
-import java.io.InputStream;
-import java.security.Security;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Timer;
-import java.util.concurrent.Executors;
-import javax.inject.Inject;
-import network.loki.messenger.BuildConfig;
-import network.loki.messenger.R;
-import network.loki.messenger.libsession_util.ConfigBase;
-import network.loki.messenger.libsession_util.UserProfile;
 
 import com.squareup.phrase.Phrase;
 
 import org.conscrypt.Conscrypt;
 import org.session.libsession.database.MessageDataProvider;
 import org.session.libsession.messaging.MessagingModuleConfiguration;
-import org.thoughtcrime.securesms.configs.ConfigToDatabaseSync;
-import org.thoughtcrime.securesms.configs.ConfigUploader;
 import org.session.libsession.messaging.groups.GroupManagerV2;
-import org.thoughtcrime.securesms.groups.handler.AdminStateSync;
-import org.thoughtcrime.securesms.groups.handler.DestroyedGroupSync;
-import org.thoughtcrime.securesms.groups.handler.RemoveGroupMemberHandler;
 import org.session.libsession.messaging.notifications.TokenFetcher;
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier;
 import org.session.libsession.messaging.sending_receiving.pollers.LegacyClosedGroupPollerV2;
@@ -84,6 +65,7 @@ import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.ThreadUtils;
 import org.signal.aesgcmprovider.AesGcmProvider;
 import org.thoughtcrime.securesms.components.TypingStatusSender;
+import org.thoughtcrime.securesms.configs.ConfigUploader;
 import org.thoughtcrime.securesms.database.EmojiSearchDatabase;
 import org.thoughtcrime.securesms.database.LastSentTimestampCache;
 import org.thoughtcrime.securesms.database.LokiAPIDatabase;
@@ -98,14 +80,17 @@ import org.thoughtcrime.securesms.dependencies.DatabaseModule;
 import org.thoughtcrime.securesms.dependencies.PollerFactory;
 import org.thoughtcrime.securesms.emoji.EmojiSource;
 import org.thoughtcrime.securesms.groups.OpenGroupManager;
+import org.thoughtcrime.securesms.groups.handler.AdminStateSync;
+import org.thoughtcrime.securesms.groups.handler.DestroyedGroupSync;
+import org.thoughtcrime.securesms.groups.handler.RemoveGroupMemberHandler;
 import org.thoughtcrime.securesms.home.HomeActivity;
 import org.thoughtcrime.securesms.jobmanager.impl.NetworkConstraint;
 import org.thoughtcrime.securesms.logging.AndroidLogger;
 import org.thoughtcrime.securesms.logging.PersistentLogger;
 import org.thoughtcrime.securesms.logging.UncaughtExceptionLogger;
 import org.thoughtcrime.securesms.notifications.BackgroundPollWorker;
-import org.thoughtcrime.securesms.notifications.PushRegistrationHandler;
 import org.thoughtcrime.securesms.notifications.NotificationChannels;
+import org.thoughtcrime.securesms.notifications.PushRegistrationHandler;
 import org.thoughtcrime.securesms.providers.BlobProvider;
 import org.thoughtcrime.securesms.service.ExpiringMessageManager;
 import org.thoughtcrime.securesms.service.KeyCachingService;
@@ -114,8 +99,27 @@ import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository;
 import org.thoughtcrime.securesms.util.Broadcaster;
 import org.thoughtcrime.securesms.util.VersionDataFetcher;
 import org.thoughtcrime.securesms.webrtc.CallMessageProcessor;
-import org.webrtc.PeerConnectionFactory.InitializationOptions;
 import org.webrtc.PeerConnectionFactory;
+import org.webrtc.PeerConnectionFactory.InitializationOptions;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.Security;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Timer;
+import java.util.concurrent.Executors;
+
+import javax.inject.Inject;
+
+import dagger.Lazy;
+import dagger.hilt.EntryPoints;
+import dagger.hilt.android.HiltAndroidApp;
+import kotlin.Deprecated;
+import kotlin.Unit;
+import network.loki.messenger.BuildConfig;
+import network.loki.messenger.R;
 
 /**
  * Will be called once when the TextSecure process is created.
