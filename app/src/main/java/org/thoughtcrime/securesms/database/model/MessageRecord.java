@@ -21,8 +21,9 @@ import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.RelativeSizeSpan;
 import android.text.style.StyleSpan;
-
 import androidx.annotation.NonNull;
+import java.util.List;
+import java.util.Objects;
 import androidx.annotation.Nullable;
 
 import org.session.libsession.messaging.MessagingModuleConfiguration;
@@ -34,9 +35,6 @@ import org.session.libsession.utilities.IdentityKeyMismatch;
 import org.session.libsession.utilities.NetworkFailure;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
-
-import java.util.List;
-import java.util.Objects;
 
 /**
  * The base class for message record models that are displayed in
