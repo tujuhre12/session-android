@@ -22,7 +22,7 @@ Build instructions can be found in [BUILDING.md](BUILDING.md).
 
 ## Translations
 
-Want to help us translate Session into your language? You can do so at https://crowdin.com/project/session-android!
+Want to help us translate Session into your language? You can do so [here](https://crowdin.com/project/session-crossplatform-strings)!
 
 ## Verifying signatures
 
@@ -70,6 +70,11 @@ Copyright 2013-2017 Open Whisper Systems
 Copyright 2019-2021 The Oxen Project
 
 Licensed under the GPLv3: http://www.gnu.org/licenses/gpl-3.0.html
+
+## Attributions
+
+This project uses [Lucide Icon Font](https://lucide.dev/), which is licensed under the
+[ISC License](third_party_licenses/LucideLicense.txt).
 
 ## Socials
 <a href="https://twitter.com/session_app">

@@ -24,6 +24,9 @@ import android.text.style.StyleSpan;
 import androidx.annotation.NonNull;
 import java.util.List;
 import java.util.Objects;
+import androidx.annotation.Nullable;
+
+import org.session.libsession.messaging.MessagingModuleConfiguration;
 import org.session.libsession.messaging.calls.CallMessageType;
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage;
 import org.session.libsession.messaging.utilities.UpdateMessageBuilder;
@@ -51,6 +54,9 @@ public abstract class MessageRecord extends DisplayRecord {
   public  final long                      id;
   private final List<ReactionRecord>      reactions;
   private final boolean                   hasMention;
+
+  @Nullable
+  private UpdateMessageData               groupUpdateMessage;
 
   public final boolean isNotDisappearAfterRead() {
     return expireStarted == getTimestamp();
@@ -111,14 +117,37 @@ public abstract class MessageRecord extends DisplayRecord {
     return isExpirationTimerUpdate() || isCallLog() || isDataExtractionNotification();
   }
 
+  /**
+   * @return Decoded group update message. Only valid if the message is a group update message.
+   */
+  @Nullable
+  public UpdateMessageData getGroupUpdateMessage() {
+    if (isGroupUpdateMessage()) {
+      groupUpdateMessage = UpdateMessageData.Companion.fromJSON(getBody());
+    }
+
+    return groupUpdateMessage;
+  }
+
   @Override
   public CharSequence getDisplayBody(@NonNull Context context) {
     if (isGroupUpdateMessage()) {
-      UpdateMessageData updateMessageData = UpdateMessageData.Companion.fromJSON(getBody());
-      return new SpannableString(UpdateMessageBuilder.INSTANCE.buildGroupUpdateMessage(context, updateMessageData, getIndividualRecipient().getAddress().serialize(), isOutgoing()));
+      UpdateMessageData updateMessageData = getGroupUpdateMessage();
+      if (updateMessageData == null) {
+        return "";
+      }
+
+      return new SpannableString(UpdateMessageBuilder.buildGroupUpdateMessage(
+              context,
+              updateMessageData,
+              MessagingModuleConfiguration.getShared().getConfigFactory(),
+              isOutgoing(),
+              getTimestamp(),
+              getExpireStarted())
+      );
     } else if (isExpirationTimerUpdate()) {
       int seconds = (int) (getExpiresIn() / 1000);
-      boolean isGroup = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(getThreadId()).isGroupRecipient();
+      boolean isGroup = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(getThreadId()).isGroupOrCommunityRecipient();
       return new SpannableString(UpdateMessageBuilder.INSTANCE.buildExpirationTimerMessage(context, seconds, isGroup, getIndividualRecipient().getAddress().serialize(), isOutgoing(), getTimestamp(), expireStarted));
     } else if (isDataExtractionNotification()) {
       if (isScreenshotNotification()) return new SpannableString((UpdateMessageBuilder.INSTANCE.buildDataExtractionMessage(context, DataExtractionNotificationInfoMessage.Kind.SCREENSHOT, getIndividualRecipient().getAddress().serialize())));
@@ -138,6 +167,15 @@ public abstract class MessageRecord extends DisplayRecord {
     }
 
     return new SpannableString(getBody());
+  }
+
+  public boolean isGroupExpirationTimerUpdate() {
+    if (!isGroupUpdateMessage()) {
+      return false;
+    }
+
+    UpdateMessageData updateMessageData = UpdateMessageData.Companion.fromJSON(getBody());
+    return updateMessageData != null && updateMessageData.getKind() instanceof UpdateMessageData.Kind.GroupExpirationUpdated;
   }
 
   protected SpannableString emphasisAdded(String sequence) {

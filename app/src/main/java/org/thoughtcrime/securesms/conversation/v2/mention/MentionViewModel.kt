@@ -27,6 +27,8 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 import org.session.libsession.messaging.contacts.Contact
+import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.DatabaseContentProviders.Conversation
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.GroupMemberDatabase
@@ -34,6 +36,7 @@ import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.SessionContactDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.util.observeChanges
 
 /**
@@ -52,6 +55,7 @@ class MentionViewModel(
     contactDatabase: SessionContactDatabase,
     memberDatabase: GroupMemberDatabase,
     storage: Storage,
+    configFactory: ConfigFactoryProtocol,
     dispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : ViewModel() {
     private val editable = MentionEditable()
@@ -85,9 +89,12 @@ class MentionViewModel(
                 }
 
                 val memberIDs = when {
-                    recipient.isClosedGroupRecipient -> {
+                    recipient.isLegacyGroupRecipient -> {
                         groupDatabase.getGroupMemberAddresses(recipient.address.toGroupString(), false)
                             .map { it.serialize() }
+                    }
+                    recipient.isGroupV2Recipient -> {
+                        storage.getMembers(recipient.address.serialize()).map { it.accountIdString() }
                     }
 
                     recipient.isCommunityRecipient -> mmsDatabase.getRecentChatMemberIDs(threadID, 20)
@@ -104,6 +111,10 @@ class MentionViewModel(
                             .mapNotNullTo(hashSetOf()) { (memberId, roles) ->
                                 memberId.takeIf { roles.any { it.isModerator } }
                             }
+                    }
+                } else if (recipient.isGroupV2Recipient) {
+                    configFactory.withGroupConfigs(AccountId(recipient.address.serialize())) {
+                        it.groupMembers.all().filterTo(hashSetOf()) { it.isAdminOrBeingPromoted }
                     }
                 } else {
                     emptySet()
@@ -260,6 +271,7 @@ class MentionViewModel(
         private val contactDatabase: SessionContactDatabase,
         private val storage: Storage,
         private val memberDatabase: GroupMemberDatabase,
+        private val configFactory: ConfigFactoryProtocol,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -272,6 +284,7 @@ class MentionViewModel(
                 contactDatabase = contactDatabase,
                 memberDatabase = memberDatabase,
                 storage = storage,
+                configFactory = configFactory,
             ) as T
         }
     }
