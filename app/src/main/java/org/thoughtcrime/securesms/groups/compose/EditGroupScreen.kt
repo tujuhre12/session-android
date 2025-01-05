@@ -221,7 +221,7 @@ fun EditGroup(
                                     onClick = onEditNameClicked
                                 ) {
                                     Icon(
-                                        painterResource(R.drawable.ic_baseline_edit_24),
+                                        painterResource(R.drawable.ic_pencil),
                                         contentDescription = stringResource(R.string.edit),
                                         tint = LocalColors.current.text,
                                     )
