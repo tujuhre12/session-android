@@ -5,12 +5,14 @@ import com.google.protobuf.ByteString
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
@@ -45,7 +47,6 @@ import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.waitUntilGroupConfigsPushed
-import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateDeleteMemberContentMessage
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateInfoChangeMessage
@@ -56,11 +57,14 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Namespace
+import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.PollerFactory
+import org.thoughtcrime.securesms.util.SessionMetaProtocol
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -78,6 +82,7 @@ class GroupManagerV2Impl @Inject constructor(
     @ApplicationContext val application: Context,
     private val clock: SnodeClock,
     private val messageDataProvider: MessageDataProvider,
+    private val lokiAPIDatabase: LokiAPIDatabase,
 ) : GroupManagerV2 {
     private val dispatcher = Dispatchers.Default
 
@@ -108,7 +113,7 @@ class GroupManagerV2Impl @Inject constructor(
         // Create a group in the user groups config
         val group = configFactory.withMutableUserConfigs { configs ->
             configs.userGroups.createGroup()
-                .copy(name = groupName)
+                .copy(name = groupName, joinedAtSecs = TimeUnit.MILLISECONDS.toSeconds(groupCreationTimestamp))
                 .also(configs.userGroups::set)
         }
 
@@ -471,6 +476,8 @@ class GroupManagerV2Impl @Inject constructor(
             storage.getThreadId(Address.fromSerialized(groupId.hexString))
                 ?.let(storage::deleteConversation)
             configFactory.removeGroup(groupId)
+            lokiAPIDatabase.clearLastMessageHashes(groupId.hexString)
+            lokiAPIDatabase.clearReceivedMessageHashValues(groupId.hexString)
         }
     }
 
@@ -494,7 +501,7 @@ class GroupManagerV2Impl @Inject constructor(
             GroupUpdateMessage.newBuilder()
                 .setPromoteMessage(
                     DataMessage.GroupUpdatePromoteMessage.newBuilder()
-                        .setGroupIdentitySeed(ByteString.copyFrom(adminKey))
+                        .setGroupIdentitySeed(ByteString.copyFrom(adminKey).substring(0, 32))
                         .setName(groupName)
                 )
                 .build()
@@ -588,19 +595,33 @@ class GroupManagerV2Impl @Inject constructor(
                     "No thread has been created for the group"
                 }
 
+            val groupInviteMessageHash = lokiDatabase.groupInviteMessageHash(threadId)
+
             // Whether approved or not, delete the invite
             lokiDatabase.deleteGroupInviteReferrer(threadId)
 
+            storage.clearMessages(threadId)
+
             if (approved) {
-                approveGroupInvite(group)
+                approveGroupInvite(group, groupInviteMessageHash)
             } else {
                 configFactory.withMutableUserConfigs { it.userGroups.eraseClosedGroup(groupId.hexString) }
                 storage.deleteConversation(threadId)
+
+                if (groupInviteMessageHash != null) {
+                    val auth = requireNotNull(storage.userAuth)
+                    SnodeAPI.deleteMessage(
+                        publicKey = auth.accountId.hexString,
+                        swarmAuth = auth,
+                        serverHashes = listOf(groupInviteMessageHash)
+                    )
+                }
             }
         }
 
     private suspend fun approveGroupInvite(
         group: GroupInfo.ClosedGroupInfo,
+        inviteMessageHash: String?
     ) {
         val key = requireNotNull(storage.getUserPublicKey()) {
             "Our account ID is not available"
@@ -608,7 +629,10 @@ class GroupManagerV2Impl @Inject constructor(
 
         // Clear the invited flag of the group in the config
         configFactory.withMutableUserConfigs { configs ->
-            configs.userGroups.set(group.copy(invited = false))
+            configs.userGroups.set(group.copy(
+                invited = false,
+                joinedAtSecs = TimeUnit.MILLISECONDS.toSeconds(clock.currentTimeMills())
+            ))
         }
 
         val poller = checkNotNull(pollerFactory.pollerFor(group.groupAccountId)) { "Unable to start a poller for groups " }
@@ -645,6 +669,16 @@ class GroupManagerV2Impl @Inject constructor(
                 Unit
             }
         }
+
+        // Delete the invite once we have approved
+        if (inviteMessageHash != null) {
+            val auth = requireNotNull(storage.userAuth)
+            SnodeAPI.deleteMessage(
+                publicKey = auth.accountId.hexString,
+                swarmAuth = auth,
+                serverHashes = listOf(inviteMessageHash)
+            )
+        }
     }
 
     override suspend fun handleInvitation(
@@ -659,16 +693,13 @@ class GroupManagerV2Impl @Inject constructor(
         handleInvitation(
             groupId = groupId,
             groupName = groupName,
-            authDataOrAdminKey = authData,
+            authDataOrAdminSeed = authData,
             fromPromotion = false,
             inviter = inviter,
             inviterName = inviterName,
             inviteMessageTimestamp = inviteMessageTimestamp,
+            inviteMessageHash = inviteMessageHash,
         )
-
-        // Once we are done, delete the invite message remotely
-        val auth = requireNotNull(storage.userAuth) { "No current user available" }
-        SnodeAPI.deleteMessage(groupId.hexString, auth, listOf(inviteMessageHash))
     }
 
     override suspend fun handlePromotion(
@@ -690,11 +721,12 @@ class GroupManagerV2Impl @Inject constructor(
             handleInvitation(
                 groupId = groupId,
                 groupName = groupName,
-                authDataOrAdminKey = adminKey,
+                authDataOrAdminSeed = adminKey,
                 fromPromotion = true,
                 inviter = promoter,
                 inviterName = promoterName,
                 inviteMessageTimestamp = promoteMessageTimestamp,
+                inviteMessageHash = promoteMessageHash
             )
         } else {
             // If we have the group in the config, we can just update the admin key
@@ -727,7 +759,7 @@ class GroupManagerV2Impl @Inject constructor(
      *
      * @param groupId the group ID
      * @param groupName the group name
-     * @param authDataOrAdminKey the auth data or admin key. If this is an invitation, this is the auth data, if this is a promotion, this is the admin key.
+     * @param authDataOrAdminSeed the auth data or admin key. If this is an invitation, this is the auth data, if this is a promotion, this is the admin key.
      * @param fromPromotion true if this is a promotion, false if this is an invitation
      * @param inviter the invite message sender
      * @return The newly created group info if the invitation is processed, null otherwise.
@@ -735,17 +767,13 @@ class GroupManagerV2Impl @Inject constructor(
     private suspend fun handleInvitation(
         groupId: AccountId,
         groupName: String,
-        authDataOrAdminKey: ByteArray,
+        authDataOrAdminSeed: ByteArray,
         fromPromotion: Boolean,
         inviter: AccountId,
         inviterName: String?,
-        inviteMessageTimestamp: Long
+        inviteMessageTimestamp: Long,
+        inviteMessageHash: String,
     ) {
-        // If we have already received an invitation in the past, we should not process this one
-        if (configFactory.getGroup(groupId)?.invited == true) {
-            return
-        }
-
         val recipient =
             Recipient.from(application, Address.fromSerialized(groupId.hexString), false)
 
@@ -753,12 +781,14 @@ class GroupManagerV2Impl @Inject constructor(
             storage.getRecipientApproved(Address.fromSerialized(inviter.hexString))
         val closedGroupInfo = GroupInfo.ClosedGroupInfo(
             groupAccountId = groupId,
-            adminKey = authDataOrAdminKey.takeIf { fromPromotion },
-            authData = authDataOrAdminKey.takeIf { !fromPromotion },
+            adminKey = authDataOrAdminSeed.takeIf { fromPromotion }?.let { GroupInfo.ClosedGroupInfo.adminKeyFromSeed(it) },
+            authData = authDataOrAdminSeed.takeIf { !fromPromotion },
             priority = PRIORITY_VISIBLE,
             invited = !shouldAutoApprove,
             name = groupName,
             destroyed = false,
+            joinedAtSecs = 0L,
+            kicked = false,
         )
 
         configFactory.withMutableUserConfigs {
@@ -771,9 +801,13 @@ class GroupManagerV2Impl @Inject constructor(
         storage.setRecipientApproved(recipient, shouldAutoApprove)
 
         if (shouldAutoApprove) {
-            approveGroupInvite(closedGroupInfo)
+            approveGroupInvite(closedGroupInfo, inviteMessageHash)
         } else {
-            lokiDatabase.addGroupInviteReferrer(groupThreadId, inviter.hexString)
+            lokiDatabase.addGroupInviteReferrer(groupThreadId, inviter.hexString, inviteMessageHash)
+            // Clear existing message in the thread whenever we receive an invitation that we can't
+            // auto approve
+            storage.clearMessages(groupThreadId)
+
             // In most cases, when we receive invitation, the thread has just been created,
             // and "has_sent" is set to false. But there are cases that we could be "re-invited"
             // to a group, where we need to go through approval process again.
@@ -836,24 +870,24 @@ class GroupManagerV2Impl @Inject constructor(
         configFactory.withMutableUserConfigs {
             it.userGroups.set(
                 group.copy(
-                    authData = null,
-                    adminKey = null,
+                    kicked = true,
                     name = groupName
                 )
             )
         }
 
-        // Insert a message to indicate we were kicked
-        storage.insertIncomingInfoMessage(
-            context = application,
-            senderPublicKey = userId,
-            groupID = groupId.hexString,
-            type = SignalServiceGroup.Type.KICKED,
-            name = groupName,
-            members = emptyList(),
-            admins = emptyList(),
-            sentTimestamp = clock.currentTimeMills(),
-        )
+        // Clear all messages in the group
+        val threadId = storage.getThreadId(Address.fromSerialized(groupId.hexString))
+        if (threadId != null) {
+            storage.clearMessages(threadId)
+        }
+
+        // Clear all polling states
+        lokiAPIDatabase.clearLastMessageHashes(groupId.hexString)
+        lokiAPIDatabase.clearReceivedMessageHashValues(groupId.hexString)
+        SessionMetaProtocol.clearReceivedMessages()
+
+        configFactory.deleteGroupConfigs(groupId)
     }
 
     override suspend fun setName(groupId: AccountId, newName: String): Unit =
@@ -1047,6 +1081,15 @@ class GroupManagerV2Impl @Inject constructor(
                     )
                 }
             }
+        }
+    }
+
+    override fun onBlocked(groupAccountId: AccountId) {
+        GlobalScope.launch(dispatcher) {
+            respondToInvitation(groupAccountId, false)
+
+            // Remove this group from config regardless
+            configFactory.removeGroup(groupAccountId)
         }
     }
 

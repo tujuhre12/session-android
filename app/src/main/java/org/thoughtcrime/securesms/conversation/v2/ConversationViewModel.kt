@@ -55,6 +55,7 @@ import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.ReactionDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.model.GroupThreadStatus
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
@@ -152,6 +153,20 @@ class ConversationViewModel(
             if (!recipient.isGroupV2Recipient) return null
 
             return repository.getInvitingAdmin(threadId)
+        }
+
+    val groupV2ThreadState: GroupThreadStatus
+        get() {
+            val recipient = recipient ?: return GroupThreadStatus.None
+            if (!recipient.isGroupV2Recipient) return GroupThreadStatus.None
+
+            return configFactory.getGroup(AccountId(recipient.address.serialize())).let { group ->
+                when {
+                    group?.destroyed == true -> GroupThreadStatus.Destroyed
+                    group?.kicked == true -> GroupThreadStatus.Kicked
+                    else -> GroupThreadStatus.None
+                }
+            }
         }
 
     private val _openGroup: MutableStateFlow<OpenGroup?> by lazy {
@@ -327,10 +342,14 @@ class ConversationViewModel(
     }
 
     fun block() {
-        // inviting admin will be true if this request is a closed group message request
+        // inviting admin will be non-null if this request is a closed group message request
         val recipient = invitingAdmin ?: recipient ?: return Log.w("Loki", "Recipient was null for block action")
         if (recipient.isContactRecipient || recipient.isGroupV2Recipient) {
             repository.setBlocked(threadId, recipient, true)
+        }
+
+        if (this.recipient?.isGroupV2Recipient == true) {
+            groupManagerV2.onBlocked(AccountId(this.recipient!!.address.serialize()))
         }
     }
 

@@ -5,6 +5,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_PINNED
 import network.loki.messenger.libsession_util.ReadableGroupInfoConfig
@@ -35,16 +36,19 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.crypto.ecc.DjbECPrivateKey
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
-import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.MmsDatabase
+import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.dependencies.PollerFactory
 import org.thoughtcrime.securesms.groups.ClosedGroupManager
 import org.thoughtcrime.securesms.groups.OpenGroupManager
+import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.sskenvironment.ProfileManager
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 private const val TAG = "ConfigToDatabaseSync"
@@ -65,6 +69,8 @@ class ConfigToDatabaseSync @Inject constructor(
     private val clock: SnodeClock,
     private val profileManager: ProfileManager,
     private val preferences: TextSecurePreferences,
+    private val conversationRepository: ConversationRepository,
+    private val mmsSmsDatabase: MmsSmsDatabase,
 ) {
     init {
         if (!preferences.migratedToGroupV2Config) {
@@ -146,7 +152,7 @@ class ConfigToDatabaseSync @Inject constructor(
             // create note to self thread if needed (?)
             val address = recipient.address
             val ourThread = storage.getThreadId(address) ?: storage.getOrCreateThreadIdFor(address).also {
-                storage.setThreadDate(it, 0)
+                storage.setThreadCreationDate(it, 0)
             }
             threadDatabase.setHasSent(ourThread, true)
             storage.setPinned(ourThread, userProfile.ntsPriority > 0)
@@ -187,20 +193,27 @@ class ConfigToDatabaseSync @Inject constructor(
         profileManager.setName(context, recipient, groupInfoConfig.name.orEmpty())
 
         if (groupInfoConfig.destroyed) {
-            handleDestroyedGroup(
-                threadId = threadId,
-                groupId = groupInfoConfig.id.hexString,
-                groupName = groupInfoConfig.name.orEmpty()
-            )
+            handleDestroyedGroup(threadId = threadId)
         } else {
             groupInfoConfig.deleteBefore?.let { removeBefore ->
-                storage.trimThreadBefore(threadId, removeBefore)
+                val messages = mmsSmsDatabase.getAllMessageRecordsBefore(threadId, TimeUnit.SECONDS.toMillis(removeBefore))
+                val (controlMessages, visibleMessages) = messages.partition { it.isControlMessage }
+
+                // Mark visible messages as deleted, and control messages actually deleted.
+                conversationRepository.markAsDeletedLocally(visibleMessages.toSet(), context.getString(R.string.deleteMessageDeletedGlobally))
+                conversationRepository.deleteMessages(controlMessages.toSet(), threadId)
             }
             groupInfoConfig.deleteAttachmentsBefore?.let { removeAttachmentsBefore ->
-                mmsDatabase.deleteMessagesInThreadBeforeDate(threadId, removeAttachmentsBefore, onlyMedia = true)
+                val messagesWithAttachment = mmsSmsDatabase.getAllMessageRecordsBefore(threadId, TimeUnit.SECONDS.toMillis(removeAttachmentsBefore))
+                    .filterTo(mutableSetOf()) { it is MmsMessageRecord && it.containsAttachment }
+
+                conversationRepository.markAsDeletedLocally(messagesWithAttachment,  context.getString(R.string.deleteMessageDeletedGlobally))
             }
         }
     }
+
+    private val MmsMessageRecord.containsAttachment: Boolean
+        get() = this.slideDeck.slides.isNotEmpty() && this.slideDeck.audioSlide == null
 
     private data class UpdateContacts(val contacts: List<Contact>)
 
@@ -290,32 +303,24 @@ class ConfigToDatabaseSync @Inject constructor(
             storage.setRecipientApproved(recipient, !closedGroup.invited)
             profileManager.setName(context, recipient, closedGroup.name)
             val threadId = storage.getOrCreateThreadIdFor(recipient.address)
+
+            // If we don't already have a date and the config has a date, use it
+            if (closedGroup.joinedAtSecs > 0L && threadDatabase.getLastUpdated(threadId) <= 0L) {
+                threadDatabase.setCreationDate(
+                    threadId,
+                    TimeUnit.SECONDS.toMillis(closedGroup.joinedAtSecs)
+                )
+            }
+
             groupThreadsToKeep[closedGroup.groupAccountId] = threadId
 
             storage.setPinned(threadId, closedGroup.priority == PRIORITY_PINNED)
-            if (!closedGroup.invited) {
+            if (!closedGroup.invited && !closedGroup.kicked) {
                 pollerFactory.pollerFor(closedGroup.groupAccountId)?.start()
             }
 
             if (closedGroup.destroyed) {
-                handleDestroyedGroup(
-                    threadId = threadId,
-                    groupId = closedGroup.groupAccountId.hexString,
-                    groupName = closedGroup.name
-                )
-            } else if (closedGroup.kicked && storage.getMessageCount(threadId) == 0L) {
-                // If we don't have any messages in a "kicked" group, we will need to add a control
-                // message showing we were kicked
-                storage.insertIncomingInfoMessage(
-                    context = context,
-                    senderPublicKey = localUserPublicKey,
-                    groupID = closedGroup.groupAccountId.hexString,
-                    type = SignalServiceGroup.Type.KICKED,
-                    name = closedGroup.name,
-                    members = emptyList(),
-                    admins = emptyList(),
-                    sentTimestamp = clock.currentTimeMills(),
-                )
+                handleDestroyedGroup(threadId = threadId)
             }
         }
 
@@ -344,7 +349,7 @@ class ConfigToDatabaseSync @Inject constructor(
                 val members = group.members.keys.map { fromSerialized(it) }
                 val admins = group.members.filter { it.value /*admin = true*/ }.keys.map { fromSerialized(it) }
                 val title = group.name
-                val formationTimestamp = (group.joinedAt * 1000L)
+                val formationTimestamp = (group.joinedAtSecs * 1000L)
                 storage.createGroup(groupId, title, admins + members, null, null, admins, formationTimestamp)
                 storage.setProfileSharing(fromSerialized(groupId), true)
                 // Add the group to the user's set of public keys to poll for
@@ -356,7 +361,7 @@ class ConfigToDatabaseSync @Inject constructor(
                 PushRegistryV1.subscribeGroup(group.accountId, publicKey = localUserPublicKey)
                 // Notify the user
                 val threadID = storage.getOrCreateThreadIdFor(fromSerialized(groupId))
-                threadDatabase.setDate(threadID, formationTimestamp)
+                threadDatabase.setCreationDate(threadID, formationTimestamp)
 
                 // Note: Commenting out this line prevents the timestamp of room creation being added to a new closed group,
                 // which in turn allows us to show the `groupNoMessages` control message text.
@@ -380,25 +385,8 @@ class ConfigToDatabaseSync @Inject constructor(
 
     private fun handleDestroyedGroup(
         threadId: Long,
-        groupId: String,
-        groupName: String,
     ) {
         storage.clearMessages(threadId)
-        val localUserPublicKey = storage.getUserPublicKey() ?: return Log.w(
-            TAG,
-            "No user public key when trying to handle destroyed group"
-        )
-        
-        storage.insertIncomingInfoMessage(
-            context = context,
-            senderPublicKey = localUserPublicKey,
-            groupID = groupId,
-            type = SignalServiceGroup.Type.DESTROYED,
-            name = groupName,
-            members = emptyList(),
-            admins = emptyList(),
-            sentTimestamp = clock.currentTimeMills(),
-        )
     }
 
     private data class UpdateConvoVolatile(val convos: List<Conversation?>)

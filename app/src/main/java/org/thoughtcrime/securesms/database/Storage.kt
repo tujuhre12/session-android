@@ -861,7 +861,7 @@ open class Storage @Inject constructor(
                 encPubKey = (encryptionKeyPair.publicKey as DjbECPublicKey).publicKey,  // 'serialize()' inserts an extra byte
                 encSecKey = encryptionKeyPair.privateKey.serialize(),
                 disappearingTimer = expirationTimer.toLong(),
-                joinedAt = (formationTimestamp / 1000L)
+                joinedAtSecs = (formationTimestamp / 1000L)
             )
             // shouldn't exist, don't use getOrConstruct + copy
             userGroups.set(groupInfo)
@@ -894,7 +894,7 @@ open class Storage @Inject constructor(
                 encSecKey = latestKeyPair.privateKey.serialize(),
                 priority = if (isPinned(threadID)) PRIORITY_PINNED else PRIORITY_VISIBLE,
                 disappearingTimer = getExpirationConfiguration(threadID)?.expiryMode?.expirySeconds ?: 0L,
-                joinedAt = (existingGroup.formationTimestamp / 1000L)
+                joinedAtSecs = (existingGroup.formationTimestamp / 1000L)
             )
             userGroups.set(groupInfo)
         }
@@ -1281,7 +1281,7 @@ open class Storage @Inject constructor(
             } else {
                 (
                     getThreadId(address) ?: getOrCreateThreadIdFor(address).also {
-                        setThreadDate(it, 0)
+                        setThreadCreationDate(it, 0)
                     }
                 ).also { setPinned(it, contact.priority == PRIORITY_PINNED) }
             }
@@ -1435,9 +1435,9 @@ open class Storage @Inject constructor(
         return threadDB.isPinned(threadID)
     }
 
-    override fun setThreadDate(threadId: Long, newDate: Long) {
+    override fun setThreadCreationDate(threadId: Long, newDate: Long) {
         val threadDb = threadDatabase
-        threadDb.setDate(threadId, newDate)
+        threadDb.setCreationDate(threadId, newDate)
     }
 
     override fun getLastLegacyRecipient(threadRecipient: String): String? =
@@ -1842,11 +1842,15 @@ open class Storage @Inject constructor(
     override fun setBlocked(recipients: Iterable<Recipient>, isBlocked: Boolean, fromConfigUpdate: Boolean) {
         val recipientDb = recipientDatabase
         recipientDb.setBlocked(recipients, isBlocked)
-        configFactory.withMutableUserConfigs { configs ->
-            recipients.filter { it.isContactRecipient && !it.isLocalNumber }.forEach { recipient ->
-                configs.contacts.upsertContact(recipient.address.serialize()) {
-                    this.blocked = isBlocked
-                }
+
+        if (!fromConfigUpdate) {
+            configFactory.withMutableUserConfigs { configs ->
+                recipients.filter { it.isContactRecipient && !it.isLocalNumber }
+                    .forEach { recipient ->
+                        configs.contacts.upsertContact(recipient.address.serialize()) {
+                            this.blocked = isBlocked
+                        }
+                    }
             }
         }
     }

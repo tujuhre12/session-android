@@ -3,8 +3,11 @@ package org.thoughtcrime.securesms.dependencies
 import android.content.Context
 import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.launch
 import network.loki.messenger.libsession_util.ConfigBase
 import network.loki.messenger.libsession_util.Contacts
 import network.loki.messenger.libsession_util.ConversationVolatileConfig
@@ -87,10 +90,9 @@ class ConfigFactory @Inject constructor(
     private val userConfigs = HashMap<AccountId, Pair<ReentrantReadWriteLock, UserConfigsImpl>>()
     private val groupConfigs = HashMap<AccountId, Pair<ReentrantReadWriteLock, GroupConfigsImpl>>()
 
-    private val _configUpdateNotifications = MutableSharedFlow<ConfigUpdateNotification>(
-        extraBufferCapacity = 100, // The notifications are normally important so we can afford to buffer a few
-        onBufferOverflow = BufferOverflow.SUSPEND
-    )
+    private val coroutineScope: CoroutineScope = GlobalScope
+
+    private val _configUpdateNotifications = MutableSharedFlow<ConfigUpdateNotification>()
     override val configUpdateNotifications get() = _configUpdateNotifications
 
     private fun requiresCurrentUserAccountId(): AccountId =
@@ -152,9 +154,11 @@ class ConfigFactory @Inject constructor(
         }
 
         if (changed.isNotEmpty()) {
-            for (notification in changed) {
-                if (!_configUpdateNotifications.tryEmit(notification)) {
-                    Log.e("ConfigFactory", "Unable to deliver config update notification")
+            coroutineScope.launch {
+                for (notification in changed) {
+                    // Config change notifications are important so we must use suspend version of
+                    // emit (not tryEmit)
+                    _configUpdateNotifications.emit(notification)
                 }
             }
         }
@@ -247,8 +251,10 @@ class ConfigFactory @Inject constructor(
         }
 
         if (changed) {
-            if (!_configUpdateNotifications.tryEmit(ConfigUpdateNotification.GroupConfigsUpdated(groupId))) {
-                Log.e("ConfigFactory", "Unable to deliver group update notification")
+            coroutineScope.launch {
+                // Config change notifications are important so we must use suspend version of
+                // emit (not tryEmit)
+                _configUpdateNotifications.emit(ConfigUpdateNotification.GroupConfigsUpdated(groupId))
             }
         }
 
@@ -271,7 +277,15 @@ class ConfigFactory @Inject constructor(
             it.convoInfoVolatile.eraseClosedGroup(groupId.hexString)
         }
 
+        deleteGroupConfigs(groupId)
+    }
+
+    override fun deleteGroupConfigs(groupId: AccountId) {
         configDatabase.deleteGroupConfigs(groupId)
+
+        synchronized(groupConfigs) {
+            groupConfigs.remove(groupId)
+        }
     }
 
     override fun decryptForUser(
@@ -534,7 +548,7 @@ private fun MutableUserGroupsConfig.initFrom(storage: StorageProtocol) {
                 encPubKey = (encryptionKeyPair.publicKey as DjbECPublicKey).publicKey,  // 'serialize()' inserts an extra byte
                 encSecKey = encryptionKeyPair.privateKey.serialize(),
                 disappearingTimer = recipient.expireMessages.toLong(),
-                joinedAt = (group.formationTimestamp / 1000L)
+                joinedAtSecs = (group.formationTimestamp / 1000L)
             )
         }
         .forEach(this::set)
