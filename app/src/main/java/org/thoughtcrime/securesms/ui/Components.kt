@@ -627,7 +627,7 @@ fun SearchBar(
                     .background(backgroundColor, RoundedCornerShape(100))
             ) {
                 Image(
-                    painterResource(id = R.drawable.ic_search_24),
+                    painterResource(id = R.drawable.ic_search),
                     contentDescription = null,
                     colorFilter = ColorFilter.tint(
                         LocalColors.current.textSecondary
