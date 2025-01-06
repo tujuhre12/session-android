@@ -275,7 +275,7 @@ fun CellButtons(
             onResend?.let {
                 LargeItemButton(
                     R.string.resend,
-                    R.drawable.ic_message_details__refresh,
+                    R.drawable.ic_refresh_cw,
                     onClick = it
                 )
                 Divider()
