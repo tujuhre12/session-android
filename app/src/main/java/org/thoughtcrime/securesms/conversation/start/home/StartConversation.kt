@@ -63,7 +63,7 @@ internal fun StartConversationScreen(
                 val newMessageTitleTxt:String = context.resources.getQuantityString(R.plurals.messageNew, 1, 1)
                 ItemButton(
                     text = newMessageTitleTxt,
-                    icon = R.drawable.ic_message,
+                    icon = R.drawable.ic_message_square,
                     modifier = Modifier.contentDescription(R.string.AccessibilityId_messageNew),
                     onClick = delegate::onNewMessageSelected)
                 Divider(startIndent = LocalDimensions.current.minItemButtonHeight)
