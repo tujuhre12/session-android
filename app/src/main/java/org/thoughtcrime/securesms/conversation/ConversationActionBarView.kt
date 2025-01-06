@@ -116,7 +116,7 @@ class ConversationActionBarView @JvmOverloads constructor(
             settings += ConversationSetting(
                 subtitleTxt,
                 ConversationSettingType.EXPIRATION,
-                R.drawable.ic_timer,
+                R.drawable.ic_clock_11,
                 resources.getString(R.string.AccessibilityId_disappearingMessagesDisappear)
             )
         }
