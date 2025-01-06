@@ -96,7 +96,7 @@ class ConversationView : LinearLayout {
         val recipient = thread.recipient
         binding.muteIndicatorImageView.isVisible = recipient.isMuted || recipient.notifyType != NOTIFY_TYPE_ALL
         val drawableRes = if (recipient.isMuted || recipient.notifyType == NOTIFY_TYPE_NONE) {
-            R.drawable.ic_outline_notifications_off_24
+            R.drawable.ic_volume_off
         } else {
             R.drawable.ic_notifications_mentions
         }

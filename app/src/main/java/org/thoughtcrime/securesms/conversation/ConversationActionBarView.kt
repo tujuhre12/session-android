@@ -129,7 +129,7 @@ class ConversationActionBarView @JvmOverloads constructor(
                     }
                     ?: context.getString(R.string.notificationsMuted),
                 ConversationSettingType.NOTIFICATION,
-                R.drawable.ic_outline_notifications_off_24
+                R.drawable.ic_volume_off
             )
         }
 

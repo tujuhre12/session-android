@@ -233,7 +233,7 @@
         android:background="@drawable/circle_tintable"
         android:backgroundTint="@color/state_list_call_action_background"
         app:tint="@color/state_list_call_action_foreground"
-        android:src="@drawable/ic_baseline_volume_up_24"
+        android:src="@drawable/ic_volume_2"
         android:padding="@dimen/medium_spacing"
         android:layout_width="@dimen/large_button_height"
         android:layout_height="@dimen/large_button_height"
