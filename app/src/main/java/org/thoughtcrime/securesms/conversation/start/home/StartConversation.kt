@@ -69,7 +69,7 @@ internal fun StartConversationScreen(
                 Divider(startIndent = LocalDimensions.current.minItemButtonHeight)
                 ItemButton(
                     textId = R.string.groupCreate,
-                    icon = R.drawable.ic_group,
+                    icon = R.drawable.ic_users_group_custom,
                     modifier = Modifier.contentDescription(R.string.AccessibilityId_groupCreate),
                     onClick = delegate::onCreateGroupSelected
                 )
@@ -83,7 +83,7 @@ internal fun StartConversationScreen(
                 Divider(startIndent = LocalDimensions.current.minItemButtonHeight)
                 ItemButton(
                     textId = R.string.sessionInviteAFriend,
-                    icon = R.drawable.ic_invite_friend,
+                    icon = R.drawable.ic_user_round_plus,
                     Modifier.contentDescription(R.string.AccessibilityId_sessionInviteAFriendButton),
                     onClick = delegate::onInviteFriend
                 )

@@ -309,7 +309,7 @@ fun PreviewItemButton() {
     PreviewTheme {
         ItemButton(
             textId = R.string.groupCreate,
-            icon = R.drawable.ic_group,
+            icon = R.drawable.ic_users_group_custom,
             onClick = {}
         )
     }
@@ -321,7 +321,7 @@ fun PreviewLargeItemButton() {
     PreviewTheme {
         LargeItemButton(
             textId = R.string.groupCreate,
-            icon = R.drawable.ic_group,
+            icon = R.drawable.ic_users_group_custom,
             onClick = {}
         )
     }

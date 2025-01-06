@@ -462,7 +462,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
 
                     LargeItemButton(
                         R.string.sessionInviteAFriend,
-                        R.drawable.ic_invite_friend,
+                        R.drawable.ic_user_round_plus,
                         Modifier.contentDescription(R.string.AccessibilityId_sessionInviteAFriend)
                     ) { sendInvitationToUseSession() }
                     Divider()
