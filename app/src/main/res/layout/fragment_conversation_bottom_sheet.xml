@@ -58,7 +58,7 @@
         android:contentDescription="@string/AccessibilityId_block"
         android:text="@string/block"
         android:visibility="gone"
-        app:drawableStartCompat="@drawable/ic_baseline_block_24"
+        app:drawableStartCompat="@drawable/ic_ban"
         app:drawableTint="?attr/colorControlNormal"
         tools:visibility="visible" />
 
