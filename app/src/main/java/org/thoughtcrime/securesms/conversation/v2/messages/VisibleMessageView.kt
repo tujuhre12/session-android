@@ -429,7 +429,7 @@ class VisibleMessageView : FrameLayout {
             )
         message.isRead || message.isIncoming ->
             MessageStatusInfo(
-                R.drawable.ic_delivery_status_read,
+                R.drawable.ic_eye,
                 context.getColorFromAttr(R.attr.message_status_color),
                 R.string.read
             )
