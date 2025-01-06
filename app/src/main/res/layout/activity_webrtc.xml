@@ -219,7 +219,7 @@
         android:layout_width="@dimen/large_button_height"
         android:layout_height="@dimen/large_button_height"
         android:padding="@dimen/medium_spacing"
-        android:src="@drawable/ic_baseline_mic_off_24"
+        android:src="@drawable/ic_mic_off"
         android:layout_marginBottom="@dimen/large_spacing"
         app:layout_constraintBottom_toTopOf="@+id/endCallButton"
         android:background="@drawable/circle_tintable"
