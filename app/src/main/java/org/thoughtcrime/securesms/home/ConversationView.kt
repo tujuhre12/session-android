@@ -129,7 +129,7 @@ class ConversationView : LinearLayout {
                 drawable?.setTint(ThemeUtil.getThemedColor(context, R.attr.danger))
                 binding.statusIndicatorImageView.setImageDrawable(drawable)
             }
-            thread.isPending -> binding.statusIndicatorImageView.setImageResource(R.drawable.ic_circle_dot_dot_dot)
+            thread.isPending -> binding.statusIndicatorImageView.setImageResource(R.drawable.ic_circle_dots_custom)
             thread.isRead -> binding.statusIndicatorImageView.setImageResource(R.drawable.ic_circle_check)
             else -> binding.statusIndicatorImageView.setImageResource(R.drawable.ic_circle_check)
         }

@@ -35,6 +35,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
@@ -65,6 +66,8 @@ import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
+import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
+import org.thoughtcrime.securesms.ui.theme.ThemeColors
 
 @Composable
 fun EditGroupScreen(
@@ -439,7 +442,8 @@ fun EditMemberItem(
     ){
         if (member.canEdit) {
             Icon(
-                painter = painterResource(R.drawable.ic_circle_dot_dot_dot),
+                painter = painterResource(R.drawable.ic_circle_dots_custom),
+                tint = LocalColors.current.text,
                 contentDescription = stringResource(R.string.AccessibilityId_sessionSettings)
             )
         }
@@ -596,8 +600,10 @@ private fun EditGroupPreview() {
 
 @Preview
 @Composable
-private fun EditGroupEditNamePreview() {
-    PreviewTheme {
+private fun EditGroupEditNamePreview(
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
+) {
+    PreviewTheme(colors) {
         val oneMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234"),
             name = "Test User",
