@@ -182,7 +182,7 @@ private fun HorizontalPagerIndicator(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun RowScope.CarouselPrevButton(pagerState: PagerState) {
-    CarouselButton(pagerState, pagerState.canScrollBackward, R.drawable.ic_prev, -1)
+    CarouselButton(pagerState, pagerState.canScrollBackward, R.drawable.ic_chevron_left, -1)
 }
 
 @OptIn(ExperimentalFoundationApi::class)

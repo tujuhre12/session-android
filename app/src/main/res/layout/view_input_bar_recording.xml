@@ -63,7 +63,7 @@
                 android:id="@+id/inputBarChevronImageView"
                 android:layout_width="12dp"
                 android:layout_height="12dp"
-                android:src="@drawable/ic_arrow_left"
+                android:src="@drawable/ic_chevron_left"
                 android:layout_marginTop="1dp"
                 app:tint="?android:textColorPrimary"
                 android:alpha="0.6" />
