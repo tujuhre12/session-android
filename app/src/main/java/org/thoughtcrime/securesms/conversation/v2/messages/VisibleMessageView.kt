@@ -408,14 +408,14 @@ class VisibleMessageView : FrameLayout {
             // Non-mms messages (or quote messages, which happen to be mms for some reason) display 'Sending'..
             if (!message.isMms || (message as? MmsMessageRecord)?.quote != null) {
                 MessageStatusInfo(
-                    R.drawable.ic_delivery_status_sending,
+                    R.drawable.ic_circle_dots_custom,
                     context.getColorFromAttr(R.attr.message_status_color),
                     R.string.sending
                 )
             } else {
                 // ..and Mms messages display 'Uploading'.
                 MessageStatusInfo(
-                    R.drawable.ic_delivery_status_sending,
+                    R.drawable.ic_circle_dots_custom,
                     context.getColorFromAttr(R.attr.message_status_color),
                     R.string.uploading
                 )
@@ -423,19 +423,19 @@ class VisibleMessageView : FrameLayout {
         }
         message.isResyncing ->
             MessageStatusInfo(
-                R.drawable.ic_delivery_status_sending,
+                R.drawable.ic_circle_dots_custom,
                 context.getColorFromAttr(R.attr.message_status_color),
                 R.string.messageStatusSyncing
             )
         message.isRead || message.isIncoming ->
             MessageStatusInfo(
-                R.drawable.ic_delivery_status_read,
+                R.drawable.ic_eye,
                 context.getColorFromAttr(R.attr.message_status_color),
                 R.string.read
             )
         message.isSyncing || message.isSent -> // syncing should happen silently in the bg so we can mark it as sent
             MessageStatusInfo(
-                R.drawable.ic_delivery_status_sent,
+                R.drawable.ic_circle_check,
                 context.getColorFromAttr(R.attr.message_status_color),
                 R.string.disappearingMessagesSent
             )

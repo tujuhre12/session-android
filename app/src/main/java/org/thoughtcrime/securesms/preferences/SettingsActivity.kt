@@ -445,24 +445,24 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
                     }
                     Divider()
 
-                    LargeItemButton(R.string.sessionPrivacy, R.drawable.ic_privacy_icon) { push<PrivacySettingsActivity>() }
+                    LargeItemButton(R.string.sessionPrivacy, R.drawable.ic_lock_keyhole) { push<PrivacySettingsActivity>() }
                     Divider()
 
-                    LargeItemButton(R.string.sessionNotifications, R.drawable.ic_speaker, Modifier.contentDescription(R.string.AccessibilityId_notifications)) { push<NotificationSettingsActivity>() }
+                    LargeItemButton(R.string.sessionNotifications, R.drawable.ic_volume_2, Modifier.contentDescription(R.string.AccessibilityId_notifications)) { push<NotificationSettingsActivity>() }
                     Divider()
 
-                    LargeItemButton(R.string.sessionConversations, R.drawable.ic_conversations, Modifier.contentDescription(R.string.AccessibilityId_sessionConversations)) { push<ChatSettingsActivity>() }
+                    LargeItemButton(R.string.sessionConversations, R.drawable.ic_message_square, Modifier.contentDescription(R.string.AccessibilityId_sessionConversations)) { push<ChatSettingsActivity>() }
                     Divider()
 
-                    LargeItemButton(R.string.sessionMessageRequests, R.drawable.ic_message_requests, Modifier.contentDescription(R.string.AccessibilityId_sessionMessageRequests)) { push<MessageRequestsActivity>() }
+                    LargeItemButton(R.string.sessionMessageRequests, R.drawable.ic_message_square_warning, Modifier.contentDescription(R.string.AccessibilityId_sessionMessageRequests)) { push<MessageRequestsActivity>() }
                     Divider()
 
-                    LargeItemButton(R.string.sessionAppearance, R.drawable.ic_appearance, Modifier.contentDescription(R.string.AccessibilityId_sessionAppearance)) { push<AppearanceSettingsActivity>() }
+                    LargeItemButton(R.string.sessionAppearance, R.drawable.ic_paintbrush_vertical, Modifier.contentDescription(R.string.AccessibilityId_sessionAppearance)) { push<AppearanceSettingsActivity>() }
                     Divider()
 
                     LargeItemButton(
                         R.string.sessionInviteAFriend,
-                        R.drawable.ic_invite_friend,
+                        R.drawable.ic_user_round_plus,
                         Modifier.contentDescription(R.string.AccessibilityId_sessionInviteAFriend)
                     ) { sendInvitationToUseSession() }
                     Divider()
@@ -471,7 +471,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
                     if (!recoveryHidden) {
                         LargeItemButton(
                             R.string.sessionRecoveryPassword,
-                            R.drawable.ic_shield_outline,
+                            R.drawable.ic_recovery_password_custom,
                             Modifier.contentDescription(R.string.AccessibilityId_sessionRecoveryPasswordMenuItem)
                         ) {
                             hideRecoveryLauncher.launch(Intent(baseContext, RecoveryPasswordActivity::class.java))
@@ -480,7 +480,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
                         Divider()
                     }
 
-                    LargeItemButton(R.string.sessionHelp, R.drawable.ic_help, Modifier.contentDescription(R.string.AccessibilityId_help)) { push<HelpSettingsActivity>() }
+                    LargeItemButton(R.string.sessionHelp, R.drawable.ic_question_custom, Modifier.contentDescription(R.string.AccessibilityId_help)) { push<HelpSettingsActivity>() }
                     Divider()
 
                     LargeItemButton(R.string.sessionClearData,

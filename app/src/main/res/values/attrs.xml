@@ -45,7 +45,6 @@
     <attr name="conversation_sticker_toggle" format="reference"/>
     <attr name="conversation_keyboard_toggle" format="reference"/>
     <attr name="conversation_attach_video" format="reference"/>
-    <attr name="conversation_attach_sound" format="reference"/>
     <attr name="conversation_number_picker_text_color_normal" format="reference|color"/>
     <attr name="conversation_number_picker_text_color_selected" format="reference|color"/>
     <attr name="conversation_sticker_footer_text_color" format="reference|color"/>
@@ -107,7 +106,6 @@
     <attr name="theme_preview_background" format="reference|color"/>
     <attr name="theme_preview_border" format="reference|color"/>
 
-    <attr name="conversation_icon_attach_audio" format="reference"/>
     <attr name="conversation_icon_attach_video" format="reference" />
 
     <attr name="device_link_item_card_background" format="reference|color" />
