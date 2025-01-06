@@ -580,10 +580,11 @@ fun Arc(
 @Composable
 fun RowScope.SessionShieldIcon() {
     Icon(
-        painter = painterResource(R.drawable.session_shield),
+        painter = painterResource(R.drawable.ic_recovery_password_custom),
         contentDescription = null,
         modifier = Modifier
             .align(Alignment.CenterVertically)
+            .size(16.dp)
             .wrapContentSize(unbounded = true)
     )
 }

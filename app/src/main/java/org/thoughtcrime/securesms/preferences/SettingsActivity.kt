@@ -457,7 +457,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
                     LargeItemButton(R.string.sessionMessageRequests, R.drawable.ic_message_square_warning, Modifier.contentDescription(R.string.AccessibilityId_sessionMessageRequests)) { push<MessageRequestsActivity>() }
                     Divider()
 
-                    LargeItemButton(R.string.sessionAppearance, R.drawable.ic_appearance, Modifier.contentDescription(R.string.AccessibilityId_sessionAppearance)) { push<AppearanceSettingsActivity>() }
+                    LargeItemButton(R.string.sessionAppearance, R.drawable.ic_paintbrush_vertical, Modifier.contentDescription(R.string.AccessibilityId_sessionAppearance)) { push<AppearanceSettingsActivity>() }
                     Divider()
 
                     LargeItemButton(
@@ -471,7 +471,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
                     if (!recoveryHidden) {
                         LargeItemButton(
                             R.string.sessionRecoveryPassword,
-                            R.drawable.ic_shield_outline,
+                            R.drawable.ic_recovery_password_custom,
                             Modifier.contentDescription(R.string.AccessibilityId_sessionRecoveryPasswordMenuItem)
                         ) {
                             hideRecoveryLauncher.launch(Intent(baseContext, RecoveryPasswordActivity::class.java))
