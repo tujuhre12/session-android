@@ -19,7 +19,10 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
+import android.text.Spannable
+import android.text.SpannableString
 import android.text.TextUtils
+import android.text.style.ImageSpan
 import android.util.Pair
 import android.util.TypedValue
 import android.view.ActionMode
@@ -37,7 +40,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.content.ContextCompat
-import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.Lifecycle
@@ -58,6 +60,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -65,7 +72,8 @@ import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityConversationV2Binding
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import nl.komponents.kovenant.ui.successUi
-import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.database.StorageProtocol
+import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.applyExpiryMode
 import org.session.libsession.messaging.messages.control.DataExtractionNotification
@@ -78,7 +86,6 @@ import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
-import org.session.libsession.messaging.utilities.AccountId
 import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
@@ -87,17 +94,22 @@ import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.MediaTypes
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.CONVERSATION_NAME_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.DATE_TIME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.URL_KEY
 import org.session.libsession.utilities.Stub
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.concurrent.SimpleTask
+import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientModifiedListener
 import org.session.libsignal.crypto.MnemonicCodec
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.ListenableFuture
 import org.session.libsignal.utilities.Log
+import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.guava.Optional
 import org.session.libsignal.utilities.hexEncodedPrivateKey
 import org.thoughtcrime.securesms.ApplicationContext
@@ -148,16 +160,16 @@ import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.ReactionDatabase
 import org.thoughtcrime.securesms.database.SessionContactDatabase
 import org.thoughtcrime.securesms.database.SmsDatabase
-import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.model.GroupThreadStatus
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.database.model.ReactionRecord
+import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.giph.ui.GiphyActivity
 import org.thoughtcrime.securesms.groups.OpenGroupManager
-import org.thoughtcrime.securesms.home.HomeActivity
-import org.thoughtcrime.securesms.home.startHomeActivity
+import org.thoughtcrime.securesms.home.search.getSearchName
 import org.thoughtcrime.securesms.linkpreview.LinkPreviewRepository
 import org.thoughtcrime.securesms.linkpreview.LinkPreviewUtil
 import org.thoughtcrime.securesms.linkpreview.LinkPreviewViewModel
@@ -171,15 +183,16 @@ import org.thoughtcrime.securesms.mms.MediaConstraints
 import org.thoughtcrime.securesms.mms.Slide
 import org.thoughtcrime.securesms.mms.SlideDeck
 import org.thoughtcrime.securesms.mms.VideoSlide
+import org.thoughtcrime.securesms.openUrl
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.reactions.ReactionsDialogFragment
 import org.thoughtcrime.securesms.reactions.any.ReactWithAnyEmojiDialogFragment
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.util.ActivityDispatcher
-import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.MediaUtil
 import org.thoughtcrime.securesms.util.NetworkUtils
+import org.thoughtcrime.securesms.util.PaddedImageSpan
 import org.thoughtcrime.securesms.util.SaveAttachmentTask
 import org.thoughtcrime.securesms.util.drawToBitmap
 import org.thoughtcrime.securesms.util.isScrolledToBottom
@@ -226,10 +239,12 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     @Inject lateinit var smsDb: SmsDatabase
     @Inject lateinit var mmsDb: MmsDatabase
     @Inject lateinit var lokiMessageDb: LokiMessageDatabase
-    @Inject lateinit var storage: Storage
+    @Inject lateinit var storage: StorageProtocol
     @Inject lateinit var reactionDb: ReactionDatabase
     @Inject lateinit var viewModelFactory: ConversationViewModel.AssistedFactory
     @Inject lateinit var mentionViewModelFactory: MentionViewModel.AssistedFactory
+    @Inject lateinit var configFactory: ConfigFactory
+    @Inject lateinit var groupManagerV2: GroupManagerV2
 
     private val screenshotObserver by lazy {
         ScreenshotObserver(this, Handler(Looper.getMainLooper())) {
@@ -269,7 +284,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     }
 
     private val viewModel: ConversationViewModel by viewModels {
-        viewModelFactory.create(threadId, MessagingModuleConfiguration.shared.getUserED25519KeyPair())
+        viewModelFactory.create(threadId, storage.getUserED25519KeyPair())
     }
     private var actionMode: ActionMode? = null
     private var unreadCount = Int.MAX_VALUE
@@ -404,6 +419,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         const val PICK_GIF = 10
         const val PICK_FROM_LIBRARY = 12
         const val INVITE_CONTACTS = 124
+        const val CONVERSATION_SETTINGS = 125 // used to open conversation search on result
     }
     // endregion
 
@@ -474,10 +490,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         setUpBlockedBanner()
         binding.searchBottomBar.setEventListener(this)
         updateSendAfterApprovalText()
-        setUpMessageRequestsBar()
-
-        // Note: Do not `showOrHideInputIfNeeded` here - we'll never start this activity w/ the
-        // keyboard visible and have no need to immediately display it.
+        setUpMessageRequests()
 
         val weakActivity = WeakReference(this)
 
@@ -501,6 +514,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                 setUpSearchResultObserver()
                 scrollToFirstUnreadMessageIfNeeded()
                 setUpOutdatedClientBanner()
+                setUpLegacyGroupBanner()
 
                 if (author != null && messageTimestamp >= 0 && targetPosition >= 0) {
                     binding.conversationRecyclerView.scrollToPosition(targetPosition)
@@ -798,7 +812,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     // called from onCreate
     private fun setUpBlockedBanner() {
-        val recipient = viewModel.recipient?.takeUnless { it.isGroupRecipient } ?: return
+        val recipient = viewModel.recipient?.takeUnless { it.isGroupOrCommunityRecipient } ?: return
         binding.blockedBannerTextView.text = applicationContext.getString(R.string.blockBlockedDescription)
         binding.blockedBanner.isVisible = recipient.isBlocked
         binding.blockedBanner.setOnClickListener { viewModel.unblock() }
@@ -810,13 +824,52 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         val shouldShowLegacy = ExpirationConfiguration.isNewConfigEnabled &&
                 legacyRecipient != null
 
-        binding.outdatedBanner.isVisible = shouldShowLegacy
+        binding.outdatedDisappearingBanner.isVisible = shouldShowLegacy
         if (shouldShowLegacy) {
 
-            val txt = Phrase.from(applicationContext, R.string.disappearingMessagesLegacy)
+            val txt = Phrase.from(this, R.string.disappearingMessagesLegacy)
                 .put(NAME_KEY, legacyRecipient!!.toShortString())
                 .format()
-            binding?.outdatedBannerTextView?.text = txt
+            binding.outdatedDisappearingBannerTextView.text = txt
+        }
+    }
+
+    private fun setUpLegacyGroupBanner() {
+        val shouldDisplayBanner = viewModel.recipient?.isLegacyGroupRecipient ?: return
+
+        binding.outdatedGroupBanner.isVisible = shouldDisplayBanner
+        if (!shouldDisplayBanner) return
+
+        val url = "https://getsession.org/blog/session-groups-v2"
+
+        with(binding) {
+            // Create a SpannableString with text
+            val text = SpannableString(
+                Phrase.from(this@ConversationActivityV2, R.string.groupLegacyBanner)
+                //TODO groupsv2, date
+                .put(DATE_KEY, "")
+                .format()
+            )
+
+            // we need to add the inline icon
+            val drawable = ContextCompat.getDrawable(this@ConversationActivityV2, R.drawable.ic_external)
+            val imageSize = toPx(10, resources)
+            val imagePaddingTop = toPx(4, resources)
+            drawable?.setBounds(0, 0, imageSize, imageSize)
+            drawable?.setTint(getColorFromAttr(R.attr.message_sent_text_color))
+
+            // Create an ImageSpan with the drawable
+            val imageSpan = PaddedImageSpan(drawable!!, ImageSpan.ALIGN_BASELINE, imagePaddingTop)
+
+            // Append the image to the text
+            val spannable = SpannableString(text)
+            spannable.setSpan(imageSpan, text.length - 1, text.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+
+            outdatedGroupBanner.text = spannable
+
+            outdatedGroupBanner.setOnClickListener {
+                showOpenUrlDialog(url)
+            }
         }
     }
 
@@ -841,25 +894,48 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     }
 
     private fun setUpUiStateObserver() {
-        lifecycleScope.launchWhenStarted {
-            viewModel.uiState.collect { uiState ->
-                uiState.uiMessages.firstOrNull()?.let {
-                    Toast.makeText(this@ConversationActivityV2, it.message, Toast.LENGTH_LONG).show()
-                    viewModel.messageShown(it.id)
-                }
-                if (uiState.isMessageRequestAccepted == true) {
-                    binding.messageRequestBar.visibility = View.GONE
-                }
-                if (!uiState.conversationExists && !isFinishing) {
-                    // Conversation should be deleted now
+        // Observe toast messages
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState
+                    .mapNotNull { it.uiMessages.firstOrNull() }
+                    .distinctUntilChanged()
+                    .collect { msg ->
+                        Toast.makeText(this@ConversationActivityV2, msg.message, Toast.LENGTH_LONG).show()
+                        viewModel.messageShown(msg.id)
+                    }
+            }
+        }
+
+        // When we see "shouldExit", we finish the activity once for all.
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                // Wait for `shouldExit == true` then finish the activity
+                viewModel.uiState
+                    .filter { it.shouldExit }
+                    .first()
+
+                if (!isFinishing) {
                     finish()
                 }
+            }
+        }
 
-                // show or hide the text input
-                binding.inputBar.isGone = uiState.hideInputBar
+        // Observe the rest misc "simple" state change. They are bundled in one big
+        // state observing as these changes are relatively cheap to perform even redundantly.
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.collect { state ->
+                    binding.inputBar.run {
+                        isVisible = state.showInput
+                        showMediaControls = state.enableInputMediaControls
+                    }
 
-                // show or hide loading indicator
-                binding.loader.isVisible = uiState.showLoader
+                    // show or hide loading indicator
+                    binding.loader.isVisible = state.showLoader
+
+                    updatePlaceholder()
+                }
             }
         }
     }
@@ -892,10 +968,11 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         val recipient = viewModel.recipient ?: return false
         if (!viewModel.isMessageRequestThread) {
             ConversationMenuHelper.onPrepareOptionsMenu(
-                menu,
-                menuInflater,
-                recipient,
-                this
+                menu = menu,
+                inflater = menuInflater,
+                thread = recipient,
+                context = this,
+                configFactory = configFactory,
             )
         }
         maybeUpdateToolbar(recipient)
@@ -921,11 +998,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             if (threadRecipient.isContactRecipient) {
                 binding.blockedBanner.isVisible = threadRecipient.isBlocked
             }
-            setUpMessageRequestsBar()
             invalidateOptionsMenu()
             updateSendAfterApprovalText()
-            showOrHideInputIfNeeded()
-
             maybeUpdateToolbar(threadRecipient)
         }
     }
@@ -938,27 +1012,18 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         binding.textSendAfterApproval.isVisible = viewModel.showSendAfterApprovalText
     }
 
-    private fun showOrHideInputIfNeeded() {
-        binding.inputBar.showInput = viewModel.recipient?.takeIf { it.isClosedGroupRecipient }
-            ?.run { address.toGroupString().let(groupDb::getGroup).orNull()?.isActive == true }
-            ?: true
-    }
-
-    private fun setUpMessageRequestsBar() {
-        binding.inputBar.showMediaControls = !isOutgoingMessageRequestThread()
-        binding.messageRequestBar.isVisible = isIncomingMessageRequestThread()
+    private fun setUpMessageRequests() {
         binding.acceptMessageRequestButton.setOnClickListener {
-            acceptMessageRequest()
+            viewModel.acceptMessageRequest()
         }
+
         binding.messageRequestBlock.setOnClickListener {
             block(deleteThread = true)
         }
+
         binding.declineMessageRequestButton.setOnClickListener {
             fun doDecline() {
                 viewModel.declineMessageRequest()
-                lifecycleScope.launch(Dispatchers.IO) {
-                    ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(this@ConversationActivityV2)
-                }
                 finish()
             }
 
@@ -969,26 +1034,29 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                 button(R.string.cancel)
             }
         }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState
+                    .map { it.messageRequestState }
+                    .distinctUntilChanged()
+                    .collectLatest { state ->
+                        binding.messageRequestBar.isVisible = state is MessageRequestUiState.Visible
+
+                        if (state is MessageRequestUiState.Visible) {
+                            binding.sendAcceptsTextView.setText(state.acceptButtonText)
+                            binding.messageRequestBlock.isVisible = state.blockButtonText != null
+                            binding.messageRequestBlock.text = state.blockButtonText
+                        }
+                    }
+            }
+        }
     }
 
     private fun acceptMessageRequest() {
         binding.messageRequestBar.isVisible = false
         viewModel.acceptMessageRequest()
-
-        lifecycleScope.launch(Dispatchers.IO) {
-            ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(this@ConversationActivityV2)
-        }
     }
-
-    private fun isOutgoingMessageRequestThread(): Boolean = viewModel.recipient?.run {
-        !isGroupRecipient && !isLocalNumber &&
-        !(hasApprovedMe() || viewModel.hasReceived())
-    } ?: false
-
-    private fun isIncomingMessageRequestThread(): Boolean = viewModel.recipient?.run {
-        !isGroupRecipient && !isApproved && !isLocalNumber &&
-        !threadDb.getLastSeenAndHasSent(viewModel.threadId).second() && threadDb.getMessageCount(viewModel.threadId) > 0
-    } ?: false
 
     override fun inputBarEditTextContentChanged(newContent: CharSequence) {
         val inputBarText = binding.inputBar.text // TODO check if we should be referencing newContent here instead
@@ -1122,6 +1190,28 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         val blindedRecipient = viewModel.blindedRecipient
         val openGroup = viewModel.openGroup
 
+        val groupThreadStatus = viewModel.groupV2ThreadState
+
+        // Special state handling for kicked/destroyed groups
+        if (groupThreadStatus != GroupThreadStatus.None) {
+            binding.placeholderText.isVisible = true
+            binding.conversationRecyclerView.isVisible = false
+            binding.placeholderText.text = when (groupThreadStatus) {
+                GroupThreadStatus.Kicked -> Phrase.from(this, R.string.groupRemovedYou)
+                    .put(GROUP_NAME_KEY, recipient.toShortString())
+                    .format()
+                    .toString()
+
+                GroupThreadStatus.Destroyed -> Phrase.from(this, R.string.groupDeletedMemberDescription)
+                    .put(GROUP_NAME_KEY, recipient.toShortString())
+                    .format()
+                    .toString()
+
+                else -> ""
+            }
+            return
+        }
+
         // Get the correct placeholder text for this type of empty conversation
         val txtCS: CharSequence = when {
             // note to self
@@ -1142,7 +1232,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             }
 
             // 10n1 and groups
-            recipient.is1on1 || recipient.isGroupRecipient -> {
+            recipient.is1on1 || recipient.isGroupOrCommunityRecipient -> {
                 Phrase.from(applicationContext, R.string.groupNoMessages)
                     .put(GROUP_NAME_KEY, recipient.toShortString())
                     .format()
@@ -1154,8 +1244,9 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             }
         }
 
-        val showPlaceholder = adapter.itemCount == 0
+        val showPlaceholder = adapter.itemCount == 0 || isDestroyed
         binding.placeholderText.isVisible = showPlaceholder
+        binding.conversationRecyclerView.visibility = if (showPlaceholder) View.INVISIBLE else View.VISIBLE
         if (showPlaceholder) {
             binding.placeholderText.text = txtCS
         }
@@ -1185,25 +1276,32 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         if (item.itemId == android.R.id.home) {
             return false
         }
-        return viewModel.recipient?.let { recipient ->
-            ConversationMenuHelper.onOptionItemSelected(this, item, recipient)
-        } ?: false
+
+        return viewModel.onOptionItemSelected(this, item)
     }
 
     override fun block(deleteThread: Boolean) {
         val recipient = viewModel.recipient ?: return Log.w("Loki", "Recipient was null for block action")
+        val invitingAdmin = viewModel.invitingAdmin
+
+        val name = if (recipient.isGroupV2Recipient && invitingAdmin != null) {
+            invitingAdmin.getSearchName()
+        } else {
+            recipient.toShortString()
+        }
+
         showSessionDialog {
             title(R.string.block)
             text(
                 Phrase.from(context, R.string.blockDescription)
-                .put(NAME_KEY, recipient.toShortString())
+                .put(NAME_KEY, name)
                 .format()
             )
             dangerButton(R.string.block, R.string.AccessibilityId_blockConfirm) {
                 viewModel.block()
 
                 // Block confirmation toast added as per SS-64
-                val txt = Phrase.from(context, R.string.blockBlockedUser).put(NAME_KEY, recipient.toShortString()).format().toString()
+                val txt = Phrase.from(context, R.string.blockBlockedUser).put(NAME_KEY, name).format().toString()
                 Toast.makeText(context, txt, Toast.LENGTH_LONG).show()
 
                 if (deleteThread) {
@@ -1234,8 +1332,9 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         Toast.makeText(this, R.string.copied, Toast.LENGTH_SHORT).show()
     }
 
+    // TODO: don't need to allow new closed group check here, removed in new disappearing messages
     override fun showDisappearingMessages(thread: Recipient) {
-        if (thread.isClosedGroupRecipient) {
+        if (thread.isLegacyGroupRecipient) {
             groupDb.getGroup(thread.address.toGroupString()).orNull()?.run { if (!isActive) return }
         }
         Intent(this, DisappearingMessagesActivity::class.java)
@@ -1663,7 +1762,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     }
 
     override fun onReactionLongClicked(messageId: MessageId, emoji: String?) {
-        if (viewModel.recipient?.isGroupRecipient == true) {
+        if (viewModel.recipient?.isGroupOrCommunityRecipient == true) {
             val isUserModerator = viewModel.openGroup?.let { openGroup ->
                 val userPublicKey = textSecurePreferences.getLocalNumber() ?: return@let false
                 OpenGroupManager.isUserModerator(this, openGroup.id, userPublicKey, viewModel.blindedPublicKey)
@@ -1706,19 +1805,10 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         startActivityForResult(MediaSendActivity.buildEditorIntent(this, listOf( media ), recipient, getMessageBody()), PICK_FROM_LIBRARY)
     }
 
-    private fun processMessageRequestApproval() {
-        if (isIncomingMessageRequestThread()) {
-            acceptMessageRequest()
-        } else if (viewModel.recipient?.isApproved == false) {
-            // edge case for new outgoing thread on new recipient without sending approval messages
-            viewModel.setRecipientApproved()
-        }
-    }
-
     private fun sendTextOnlyMessage(hasPermissionToSendSeed: Boolean = false): Pair<Address, Long>? {
         val recipient = viewModel.recipient ?: return null
         val sentTimestamp = SnodeAPI.nowWithOffset
-        processMessageRequestApproval()
+        viewModel.beforeSendingTextOnlyMessage()
         val text = getMessageBody()
         val userPublicKey = textSecurePreferences.getLocalNumber()
         val isNoteToSelf = (recipient.isContactRecipient && recipient.address.toString() == userPublicKey)
@@ -1771,7 +1861,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     ): Pair<Address, Long>? {
         val recipient = viewModel.recipient ?: return null
         val sentTimestamp = SnodeAPI.nowWithOffset
-        processMessageRequestApproval()
+        viewModel.beforeSendingAttachments()
         // Create the message
         val message = VisibleMessage().applyExpiryMode(viewModel.threadId)
         message.sentTimestamp = sentTimestamp
@@ -2292,7 +2382,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     private fun sendScreenshotNotification() {
         val recipient = viewModel.recipient ?: return
-        if (recipient.isGroupRecipient) return
+        if (recipient.isGroupOrCommunityRecipient) return
         val kind = DataExtractionNotification.Kind.Screenshot()
         val message = DataExtractionNotification(kind)
         MessageSender.send(message, recipient.address)
@@ -2300,7 +2390,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     private fun sendMediaSavedNotification() {
         val recipient = viewModel.recipient ?: return
-        if (recipient.isGroupRecipient) { return }
+        if (recipient.isGroupOrCommunityRecipient) { return }
         val timestamp = SnodeAPI.nowWithOffset
         val kind = DataExtractionNotification.Kind.MediaSaved(timestamp)
         val message = DataExtractionNotification(kind)

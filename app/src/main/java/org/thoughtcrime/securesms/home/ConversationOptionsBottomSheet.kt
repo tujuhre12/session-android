@@ -6,10 +6,15 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.isVisible
+import androidx.core.widget.TextViewCompat
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.FragmentConversationBottomSheetBinding
+import org.session.libsession.utilities.GroupRecord
+import org.session.libsession.utilities.getGroup
+import org.session.libsession.utilities.wasKickedFromGroupV2
+import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.util.getConversationUnread
@@ -22,7 +27,9 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
     // is not the best idea. It doesn't survive configuration change.
     // We should be dealing with IDs and all sorts of serializable data instead
     // if we want to use dialog fragments properly.
+    lateinit var publicKey: String
     lateinit var thread: ThreadRecord
+    var group: GroupRecord? = null
 
     @Inject lateinit var configFactory: ConfigFactory
 
@@ -63,7 +70,7 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
         super.onViewCreated(view, savedInstanceState)
         if (!this::thread.isInitialized) { return dismiss() }
         val recipient = thread.recipient
-        if (!recipient.isGroupRecipient && !recipient.isLocalNumber) {
+        if (!recipient.isGroupOrCommunityRecipient && !recipient.isLocalNumber) {
             binding.detailsTextView.visibility = View.VISIBLE
             binding.unblockTextView.visibility = if (recipient.isBlocked) View.VISIBLE else View.GONE
             binding.blockTextView.visibility = if (recipient.isBlocked) View.GONE else View.VISIBLE
@@ -73,7 +80,7 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
         } else {
             binding.detailsTextView.visibility = View.GONE
         }
-        binding.copyConversationId.visibility = if (!recipient.isGroupRecipient && !recipient.isLocalNumber) View.VISIBLE else View.GONE
+        binding.copyConversationId.visibility = if (!recipient.isGroupOrCommunityRecipient && !recipient.isLocalNumber) View.VISIBLE else View.GONE
         binding.copyConversationId.setOnClickListener(this)
         binding.copyCommunityUrl.visibility = if (recipient.isCommunityRecipient) View.VISIBLE else View.GONE
         binding.copyCommunityUrl.setOnClickListener(this)
@@ -81,36 +88,52 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
         binding.muteNotificationsTextView.isVisible = !recipient.isMuted && !recipient.isLocalNumber
         binding.unMuteNotificationsTextView.setOnClickListener(this)
         binding.muteNotificationsTextView.setOnClickListener(this)
-        binding.notificationsTextView.isVisible = recipient.isGroupRecipient && !recipient.isMuted
+        binding.notificationsTextView.isVisible = recipient.isGroupOrCommunityRecipient && !recipient.isMuted
         binding.notificationsTextView.setOnClickListener(this)
 
         // delete
         binding.deleteTextView.apply {
             setOnClickListener(this@ConversationOptionsBottomSheet)
 
-            // the text and content description will change depending on the type
-            when{
+            val drawableStartRes: Int
+
+            // the text, content description and icon will change depending on the type
+            when {
                 // groups and communities
-                recipient.isGroupRecipient -> {
-                    text = context.getString(R.string.leave)
-                    contentDescription = context.getString(R.string.AccessibilityId_leave)
+                recipient.isGroupOrCommunityRecipient -> {
+                    // if you are in a group V2 and have been kicked of that group,
+                    // the button should read 'Delete' instead of 'Leave'
+                    if (configFactory.wasKickedFromGroupV2(recipient)) {
+                        text = context.getString(R.string.delete)
+                        contentDescription = context.getString(R.string.AccessibilityId_delete)
+                        drawableStartRes = R.drawable.ic_delete_24
+                    } else {
+                        text = context.getString(R.string.leave)
+                        contentDescription = context.getString(R.string.AccessibilityId_leave)
+                        drawableStartRes = R.drawable.ic_log_out
+                    }
                 }
 
                 // note to self
                 recipient.isLocalNumber -> {
-                    text = context.getString(R.string.clear)
+                    text = context.getString(R.string.hide)
                     contentDescription = context.getString(R.string.AccessibilityId_clear)
+                    drawableStartRes = R.drawable.ic_delete_24
                 }
 
                 // 1on1
                 else -> {
                     text = context.getString(R.string.delete)
                     contentDescription = context.getString(R.string.AccessibilityId_delete)
+                    drawableStartRes = R.drawable.ic_delete_24
                 }
             }
+
+            TextViewCompat.setCompoundDrawablesRelativeWithIntrinsicBounds(this, drawableStartRes, 0, 0, 0)
         }
 
-        binding.markAllAsReadTextView.isVisible = thread.unreadCount > 0 || configFactory.convoVolatile?.getConversationUnread(thread) == true
+        binding.markAllAsReadTextView.isVisible = thread.unreadCount > 0 ||
+                configFactory.withUserConfigs { it.convoInfoVolatile.getConversationUnread(thread) }
         binding.markAllAsReadTextView.setOnClickListener(this)
         binding.pinTextView.isVisible = !thread.isPinned
         binding.unpinTextView.isVisible = thread.isPinned
