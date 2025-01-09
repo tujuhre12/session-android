@@ -48,7 +48,7 @@ class ControlMessageView : LinearLayout {
     private val binding = ViewControlMessageBinding.inflate(LayoutInflater.from(context), this, true)
 
     private val infoDrawable by lazy {
-        val d = ResourcesCompat.getDrawable(resources, R.drawable.ic_info_outline_white_24dp, context.theme)
+        val d = ResourcesCompat.getDrawable(resources, R.drawable.ic_info, context.theme)
         d?.setTint(context.getColorFromAttr(R.attr.message_received_text_color))
         d
     }
