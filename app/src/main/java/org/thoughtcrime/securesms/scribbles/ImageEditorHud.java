@@ -96,7 +96,7 @@ public final class ImageEditorHud extends LinearLayout {
   }
 
   private void updateCropAspectLockImage(boolean cropAspectLocked) {
-    cropAspectLock.setImageDrawable(getResources().getDrawable(cropAspectLocked ? R.drawable.ic_crop_lock_32 : R.drawable.ic_crop_unlock_32));
+    cropAspectLock.setImageDrawable(getResources().getDrawable(cropAspectLocked ? R.drawable.ic_crop_lock_custom : R.drawable.ic_crop_unlock_32));
   }
 
   private void initializeVisibilityMap() {
