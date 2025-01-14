@@ -2106,6 +2106,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         val inputBar = binding.inputBar
         val voiceMessageDurationMS = inputBar.voiceMessageDurationMS
 
+        Log.i("ACL", "Voice message duration MS: " + voiceMessageDurationMS)
+
         // Now tear-down is complete we can move back into the idle state ready to record another voice message.
         // CAREFUL: This state must be set BEFORE we show any warning toast about short messages because it early
         // exits before transmitting the audio!

@@ -3,7 +3,7 @@ package org.thoughtcrime.securesms.conversation.v2.messages
 import android.content.Context
 import android.graphics.Canvas
 import android.util.AttributeSet
-import android.view.View
+import android.util.Log
 import android.widget.RelativeLayout
 import androidx.core.view.isVisible
 import dagger.hilt.android.AndroidEntryPoint
@@ -33,21 +33,36 @@ class VoiceMessageView : RelativeLayout, AudioSlidePlayer.Listener {
         renderIcon()
     }
     private var progress = 0.0
-    private var duration = 0L
+    private var durationMS = 0L
     private var player: AudioSlidePlayer? = null
     var delegate: VisibleMessageViewDelegate? = null
     var indexInAdapter = -1
+
+    private var onFinishVoiceMessageDuration: String? = null
 
     // region Lifecycle
     constructor(context: Context) : super(context)
     constructor(context: Context, attrs: AttributeSet) : super(context, attrs)
     constructor(context: Context, attrs: AttributeSet, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
+
+
     override fun onFinishInflate() {
         super.onFinishInflate()
-        binding.voiceMessageViewDurationTextView.text = String.format("%01d:%02d",
-            TimeUnit.MILLISECONDS.toMinutes(0),
-            TimeUnit.MILLISECONDS.toSeconds(0))
+
+        val formattedVoiceMessageDuration = String.format("%01d:%02d", TimeUnit.MILLISECONDS.toMinutes(0), TimeUnit.MILLISECONDS.toSeconds(0))
+        Log.i("ACL", "Hit VoiceMessageView.onFinishInflate with formatted duration: " + formattedVoiceMessageDuration)
+
+        Log.i("ACL", "In onFinishInflate, duration is: " + durationMS + " and progress is: " + progress)
+
+        Log.i("ACL", "Player is: " + player)
+        if (player != null) {
+            Log.i("ACL", "Player duration: " + player?.duration + ", player progress: " + player?.progress)
+        }
+
+        val goingWithDuration = onFinishVoiceMessageDuration ?: formattedVoiceMessageDuration
+
+        binding.voiceMessageViewDurationTextView.text = "fooo"
     }
 
     // endregion
@@ -74,11 +89,17 @@ class VoiceMessageView : RelativeLayout, AudioSlidePlayer.Listener {
         (audio.asAttachment() as? DatabaseAttachment)?.let { attachment ->
             attachmentDb.getAttachmentAudioExtras(attachment.attachmentId)?.let { audioExtras ->
                 if (audioExtras.durationMs > 0) {
-                    duration = audioExtras.durationMs
-                    binding.voiceMessageViewDurationTextView.visibility = View.VISIBLE
-                    binding.voiceMessageViewDurationTextView.text = String.format("%01d:%02d",
-                            TimeUnit.MILLISECONDS.toMinutes(audioExtras.durationMs),
-                            TimeUnit.MILLISECONDS.toSeconds(audioExtras.durationMs) % 60)
+                    durationMS = audioExtras.durationMs
+                    binding.voiceMessageViewDurationTextView.visibility = VISIBLE
+
+                    val anotherFormattedDuration = String.format("%01d:%02d", TimeUnit.MILLISECONDS.toMinutes(audioExtras.durationMs), TimeUnit.MILLISECONDS.toSeconds(audioExtras.durationMs) % 60)
+                    Log.i("ACL", "Another formatted duration is: " + anotherFormattedDuration)
+
+                    binding.voiceMessageViewDurationTextView.text = anotherFormattedDuration
+
+                    onFinishVoiceMessageDuration = anotherFormattedDuration
+                } else {
+                    Log.i("ACL", "For some reason audioExtras.durationMs was NOT greater than zero!")
                 }
             }
         }
@@ -101,8 +122,8 @@ class VoiceMessageView : RelativeLayout, AudioSlidePlayer.Listener {
     private fun handleProgressChanged(progress: Double) {
         this.progress = progress
         binding.voiceMessageViewDurationTextView.text = String.format("%01d:%02d",
-            TimeUnit.MILLISECONDS.toMinutes(duration - (progress * duration.toDouble()).roundToLong()),
-            TimeUnit.MILLISECONDS.toSeconds(duration - (progress * duration.toDouble()).roundToLong()) % 60)
+            TimeUnit.MILLISECONDS.toMinutes(durationMS - (progress * durationMS.toDouble()).roundToLong()),
+            TimeUnit.MILLISECONDS.toSeconds(durationMS - (progress * durationMS.toDouble()).roundToLong()) % 60)
         val layoutParams = binding.progressView.layoutParams as RelativeLayout.LayoutParams
         layoutParams.width = (width.toFloat() * progress.toFloat()).roundToInt()
         binding.progressView.layoutParams = layoutParams

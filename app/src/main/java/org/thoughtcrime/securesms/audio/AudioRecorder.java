@@ -41,7 +41,7 @@ public class AudioRecorder {
     Log.i(TAG, "startRecording()");
 
     executor.execute(() -> {
-      Log.i(TAG, "Running startRecording() + " + Thread.currentThread().getId());
+      Log.i(TAG, "Running startRecording() on thread with Id: " + Thread.currentThread().getId());
       try {
         if (audioCodec != null) {
           Log.e(TAG, "Trying to start recording while another recording is in progress, exiting...");

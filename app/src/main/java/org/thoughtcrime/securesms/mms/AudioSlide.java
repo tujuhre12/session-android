@@ -22,58 +22,54 @@ import android.net.Uri;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
 import network.loki.messenger.R;
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment;
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentTransferProgress;
 import org.session.libsession.messaging.sending_receiving.attachments.UriAttachment;
 import org.session.libsession.utilities.MediaTypes;
-import org.thoughtcrime.securesms.database.AttachmentDatabase;
-import org.thoughtcrime.securesms.util.ResUtil;
+import org.session.libsignal.utilities.Log;
 
 public class AudioSlide extends Slide {
 
   public AudioSlide(Context context, Uri uri, long dataSize, boolean voiceNote) {
     super(context, constructAttachmentFromUri(context, uri, MediaTypes.AUDIO_UNSPECIFIED, dataSize, 0, 0, false, null, null, voiceNote, false));
+    Log.i("ACL", "We hit the first AudioSlide constructor");
   }
 
   public AudioSlide(Context context, Uri uri, long dataSize, String contentType, boolean voiceNote) {
     super(context,  new UriAttachment(uri, null, contentType, AttachmentTransferProgress.TRANSFER_PROGRESS_STARTED, dataSize, 0, 0, null, null, voiceNote, false, null));
+    Log.i("ACL", "We hit the second AudioSlide constructor");
   }
 
   public AudioSlide(Context context, Attachment attachment) {
     super(context, attachment);
+
+    //new Exception().printStackTrace();
+
+//    val stackTrace = Thread.currentThread().stackTrace
+//    println("Printing stack trace:")
+//    stackTrace.forEach { println(it) }
+
+    Log.i("ACL", "We hit the third AudioSlide constructor");
   }
 
   @Override
   @Nullable
-  public Uri getThumbnailUri() {
-    return null;
-  }
+  public Uri getThumbnailUri() { return null; }
 
   @Override
-  public boolean hasPlaceholder() {
-    return true;
-  }
+  public boolean hasPlaceholder() { return true; }
 
   @Override
-  public boolean hasImage() {
-    return true;
-  }
+  public boolean hasImage() { return true; }
 
   @Override
-  public boolean hasAudio() {
-    return true;
-  }
+  public boolean hasAudio() { return true; }
 
   @NonNull
   @Override
-  public String getContentDescription() {
-    return context.getString(R.string.audio);
-  }
+  public String getContentDescription() { return context.getString(R.string.audio); }
 
   @Override
-  public @DrawableRes int getPlaceholderRes(Theme theme) {
-    return R.drawable.ic_volume_2;
-  }
+  public @DrawableRes int getPlaceholderRes(Theme theme) { return R.drawable.ic_volume_2; }
 }
