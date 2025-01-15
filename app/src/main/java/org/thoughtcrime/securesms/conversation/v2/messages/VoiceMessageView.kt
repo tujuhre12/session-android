@@ -157,8 +157,11 @@ class VoiceMessageView : RelativeLayout, AudioSlidePlayer.Listener {
     }
 
     fun handleDoubleTap() {
-        val player = this.player ?: return
-        player.playbackSpeed = if (player.playbackSpeed == 1.0f) 1.5f else 1.0f
+        if (this.player == null) {
+            Log.w("VisibleMessageView", "Could not get player to adjust voice message playback speed.")
+            return
+        }
+        this.player?.playbackSpeed = if (this.player?.playbackSpeed == 1f) 1.5f else 1f
     }
     // endregion
 }
