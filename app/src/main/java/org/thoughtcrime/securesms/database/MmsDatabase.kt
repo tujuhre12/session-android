@@ -723,6 +723,8 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
         serverTimestamp: Long = 0,
         runThreadUpdate: Boolean
     ): Long {
+        Log.i("ACL", "*** Hit insertMessageOutbox") // We do NOT hit this during voice message recording
+
         var type = MmsSmsColumns.Types.BASE_SENDING_TYPE
         if (message.isSecure) type =
             type or (MmsSmsColumns.Types.SECURE_MESSAGE_BIT or MmsSmsColumns.Types.PUSH_MESSAGE_BIT)
@@ -1285,7 +1287,11 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
         private val id = SECURE_RANDOM.nextLong()
         val current: MessageRecord
             get() {
+                val willQuote = message?.outgoingQuote != null
+                Log.i("ACL", "Hit MmsDatabase.current.get - will we quote?: " + willQuote)
+
                 val slideDeck = SlideDeck(context, message!!.attachments)
+
                 return MediaMmsMessageRecord(
                     id, message.recipient, message.recipient,
                     1, SnodeAPI.nowWithOffset, SnodeAPI.nowWithOffset,
@@ -1315,7 +1321,11 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
             get() = if (cursor == null || !cursor.moveToNext()) null else current
         val current: MessageRecord
             get() {
+
                 val mmsType = cursor!!.getLong(cursor.getColumnIndexOrThrow(MESSAGE_TYPE))
+
+                Log.i("ACL", "Mms type is: " + mmsType)
+
                 return if (mmsType == PduHeaders.MESSAGE_TYPE_NOTIFICATION_IND.toLong()) {
                     getNotificationMmsMessageRecord(cursor)
                 } else {
@@ -1349,6 +1359,8 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
         }
 
         private fun getMediaMmsMessageRecord(cursor: Cursor, getQuote: Boolean): MediaMmsMessageRecord {
+            Log.i("ACL", "Hit getMediaMmsMessageRecord -999")
+
             val id                   = cursor.getLong(cursor.getColumnIndexOrThrow(ID))
             val dateSent             = cursor.getLong(cursor.getColumnIndexOrThrow(NORMALIZED_DATE_SENT))
             val dateReceived         = cursor.getLong(cursor.getColumnIndexOrThrow(NORMALIZED_DATE_RECEIVED))
@@ -1368,15 +1380,12 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
             val unidentified         = cursor.getInt(cursor.getColumnIndexOrThrow(UNIDENTIFIED)) == 1
             val hasMention           = cursor.getInt(cursor.getColumnIndexOrThrow(HAS_MENTION)) == 1
 
-            if (!isReadReceiptsEnabled(context)) {
-                readReceiptCount = 0
-            }
+            if (!isReadReceiptsEnabled(context)) { readReceiptCount = 0 }
+
             val recipient = getRecipientFor(address)
             val mismatches = getMismatchedIdentities(mismatchDocument)
             val networkFailures = getFailures(networkDocument)
-            val attachments = get(context).attachmentDatabase().getAttachment(
-                cursor
-            )
+            val attachments = get(context).attachmentDatabase().getAttachment(cursor)
             val contacts: List<Contact?> = getSharedContacts(cursor, attachments)
             val contactAttachments: Set<Attachment?> =
                 contacts.mapNotNull { it?.avatarAttachment }.toSet()
@@ -1431,6 +1440,7 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
         }
 
         private fun getSlideDeck(attachments: List<DatabaseAttachment?>): SlideDeck? {
+            Log.i("ACL", "Hit getSlideDeck..........")
             val messageAttachments: List<Attachment?>? = Stream.of(attachments)
                 .filterNot { obj: DatabaseAttachment? -> obj!!.isQuote }
                 .toList()
@@ -1449,7 +1459,11 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
                 Stream.of(get(context).attachmentDatabase().getAttachment(cursor))
                     .filter { obj: DatabaseAttachment? -> obj!!.isQuote }
                     .toList()
-                    .let { SlideDeck(context, it) }
+                    .let {
+                        Log.i("ACL", "QuoteDeck is forcing SlideDeck creation.........")
+
+                        SlideDeck(context, it)
+                    }
             )
             return Quote(
                 quoteId,

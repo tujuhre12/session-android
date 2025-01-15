@@ -147,7 +147,7 @@ open class ThumbnailView @JvmOverloads constructor(
 
         this.slide = slide
 
-        binding.thumbnailLoadIndicator.isVisible = slide.isInProgress
+        binding.thumbnailLoadIndicator.isVisible = slide.isDownloadInProgress
         binding.thumbnailDownloadIcon.isVisible =
             slide.transferState == AttachmentTransferProgress.TRANSFER_PROGRESS_FAILED
 
@@ -182,7 +182,7 @@ open class ThumbnailView @JvmOverloads constructor(
         .overrideDimensions()
         .transition(DrawableTransitionOptions.withCrossFade())
         .transform(CenterCrop())
-        .missingThumbnailPicture(slide.isInProgress, errorDrawable)
+        .missingThumbnailPicture(slide.isDownloadInProgress, errorDrawable)
 
     private fun buildPlaceholderGlideRequest(
         glide: RequestManager,

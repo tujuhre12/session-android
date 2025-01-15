@@ -37,6 +37,8 @@ public class SlideDeck {
   private final List<Slide> slides = new LinkedList<>();
 
   public SlideDeck(@NonNull Context context, @NonNull List<? extends Attachment> attachments) {
+    Log.i("ACL", "Hit SlideDeck constructor 1");
+
     for (Attachment attachment : attachments) {
       Slide slide = MediaUtil.getSlideForAttachment(context, attachment);
       if (slide != null) slides.add(slide);
@@ -44,6 +46,9 @@ public class SlideDeck {
   }
 
   public SlideDeck(@NonNull Context context, @NonNull Attachment attachment) {
+    Log.i("ACL", "Hit SlideDeck constructor 2");
+
+
     Slide slide = MediaUtil.getSlideForAttachment(context, attachment);
     if (slide != null) slides.add(slide);
   }

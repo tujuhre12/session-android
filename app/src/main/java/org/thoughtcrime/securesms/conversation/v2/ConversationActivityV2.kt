@@ -145,6 +145,7 @@ import org.thoughtcrime.securesms.conversation.v2.menus.ConversationMenuHelper
 import org.thoughtcrime.securesms.conversation.v2.messages.ControlMessageView
 import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageView
 import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageViewDelegate
+import org.thoughtcrime.securesms.conversation.v2.messages.VoiceMessageView
 import org.thoughtcrime.securesms.conversation.v2.search.SearchBottomBar
 import org.thoughtcrime.securesms.conversation.v2.search.SearchViewModel
 import org.thoughtcrime.securesms.conversation.v2.utilities.AttachmentManager
@@ -2131,10 +2132,23 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         future.addListener(object : ListenableFuture.Listener<Pair<Uri, Long>> {
 
             override fun onSuccess(result: Pair<Uri, Long>) {
-                val audioSlide = AudioSlide(this@ConversationActivityV2, result.first, result.second, MediaTypes.AUDIO_AAC, true)
+                //val voiceMessageUri = result.first
+                //val voiceMessageDurationMS: Long = 12345L
+
+                // Construct a new voice message Uri adding the duration to it
+                val voiceMessageUri = result.first.buildUpon()
+                    .appendQueryParameter("voiceMessageDurationMS", voiceMessageDurationMS.toString())
+                    .build()
+
+                val dataSizeBytes = result.second
+
+                Log.i("ACL", "Doing VoiceMessage SEND!!")
+                VoiceMessageView.latestVoiceMessageDurationMS = voiceMessageDurationMS
+
+                val audioSlide = AudioSlide(this@ConversationActivityV2, voiceMessageUri, dataSizeBytes, MediaTypes.AUDIO_AAC, true)
                 val slideDeck = SlideDeck()
                 slideDeck.addSlide(audioSlide)
-                sendAttachments(slideDeck.asAttachments(), null)
+                sendAttachments(slideDeck.asAttachments(), body = null)
             }
 
             override fun onFailure(e: ExecutionException) {

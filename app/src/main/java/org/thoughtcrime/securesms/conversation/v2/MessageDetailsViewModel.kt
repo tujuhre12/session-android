@@ -128,7 +128,7 @@ class MessageDetailsViewModel @Inject constructor(
             }
         }
 
-        if (slide.isInProgress) return
+        if (slide.isDownloadInProgress) return
 
         viewModelScope.launch {
             MediaPreviewArgs(slide, state.mmsRecord, state.thread)

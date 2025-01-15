@@ -30,7 +30,6 @@ import org.session.libsession.utilities.Util.equals
 import org.session.libsession.utilities.Util.hashCode
 import org.session.libsignal.utilities.Util.SECURE_RANDOM
 import org.session.libsignal.utilities.guava.Optional
-import org.thoughtcrime.securesms.conversation.v2.Util
 import org.thoughtcrime.securesms.util.MediaUtil
 
 abstract class Slide(@JvmField protected val context: Context, protected val attachment: Attachment) {
@@ -104,8 +103,8 @@ abstract class Slide(@JvmField protected val context: Context, protected val att
 
     fun asAttachment(): Attachment { return attachment }
 
-    val isInProgress: Boolean
-        get() = attachment.isInProgress
+    val isDownloadInProgress: Boolean
+        get() = attachment.isDownloadInProgress
 
     val isPendingDownload: Boolean
         get() = transferState == AttachmentTransferProgress.TRANSFER_PROGRESS_FAILED ||

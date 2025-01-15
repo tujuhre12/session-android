@@ -9,7 +9,6 @@ import android.text.style.ForegroundColorSpan
 import android.text.style.URLSpan
 import android.text.util.Linkify
 import android.util.AttributeSet
-import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import androidx.annotation.ColorInt
@@ -72,7 +71,7 @@ class VisibleMessageContentView : ConstraintLayout {
         binding.contentParent.cornerRadius = resources.getDimension(R.dimen.message_corner_radius)
 
         val mediaDownloaded = message is MmsMessageRecord && message.slideDeck.asAttachments().all { it.transferState == AttachmentTransferProgress.TRANSFER_PROGRESS_DONE }
-        val mediaInProgress = message is MmsMessageRecord && message.slideDeck.asAttachments().any { it.isInProgress }
+        val mediaInProgress = message is MmsMessageRecord && message.slideDeck.asAttachments().any { it.isDownloadInProgress }
         val mediaThumbnailMessage = message is MmsMessageRecord && message.slideDeck.thumbnailSlide != null
 
         // reset visibilities / containers

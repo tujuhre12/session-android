@@ -28,6 +28,7 @@ import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.MediaPreviewActivity
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.MediaDatabase
@@ -126,6 +127,9 @@ class MediaOverviewViewModel(
         }
 
     private fun Sequence<MediaRecord>.groupRecordsByTimeBuckets(): List<Pair<BucketTitle, List<MediaOverviewItem>>> {
+        Log.i("ACL", "Hit groupRecordsByTimeBuckets")
+
+
         return this
             .groupBy { record ->
                 val time =
@@ -152,6 +156,8 @@ class MediaOverviewViewModel(
     }
 
     private fun Sequence<MediaRecord>.groupRecordsByRelativeTime(): List<Pair<BucketTitle, List<MediaOverviewItem>>> {
+        Log.i("ACL", "Hit groupRecordsByRelativeTime")
+
         return this
             .groupBy { record ->
                 DateUtils.getRelativeDate(application, Locale.getDefault(), record.date)

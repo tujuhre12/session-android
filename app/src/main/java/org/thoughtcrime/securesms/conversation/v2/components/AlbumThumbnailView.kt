@@ -68,7 +68,7 @@ class AlbumThumbnailView : RelativeLayout {
                         onAttachmentNeedsDownload(attachment)
                     }
                 }
-                if (slide.isInProgress) return@forEach
+                if (slide.isDownloadInProgress) return@forEach
 
                 ActivityDispatcher.get(context)?.dispatchIntent { context ->
                     MediaPreviewActivity.getPreviewIntent(context, slide, mms, threadRecipient)

@@ -178,13 +178,13 @@ public class ShareActivity extends PassphraseRequiredActionBarActivity
         final Context context = this;
         isPassingAlongMedia = false;
 
-        Uri streamExtra = getIntent().getParcelableExtra(Intent.EXTRA_STREAM);
+        Uri streamUri = getIntent().getParcelableExtra(Intent.EXTRA_STREAM);
         CharSequence charSequenceExtra = getIntent().getCharSequenceExtra(Intent.EXTRA_TEXT);
-        mimeType = getMimeType(streamExtra);
+        mimeType = MediaUtil.getMimeType(context, streamUri);
 
-        if (streamExtra != null && PartAuthority.isLocalUri(streamExtra)) {
+        if (streamUri != null && PartAuthority.isLocalUri(streamUri)) {
             isPassingAlongMedia = true;
-            resolvedExtra = streamExtra;
+            resolvedExtra = streamUri;
             handleResolvedMedia(getIntent(), false);
         } else if (charSequenceExtra != null && mimeType != null && mimeType.startsWith("text/")) {
             resolvedPlaintext = charSequenceExtra;
@@ -193,7 +193,7 @@ public class ShareActivity extends PassphraseRequiredActionBarActivity
             contactsFragment.getView().setVisibility(View.GONE);
             progressWheel.setVisibility(View.VISIBLE);
             resolveTask = new ResolveMediaTask(context);
-            resolveTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, streamExtra);
+            resolveTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, streamUri);
         }
     }
 
@@ -244,14 +244,6 @@ public class ShareActivity extends PassphraseRequiredActionBarActivity
         }
 
         return intent;
-    }
-
-    private String getMimeType(@Nullable Uri uri) {
-        if (uri != null) {
-            final String mimeType = MediaUtil.getMimeType(getApplicationContext(), uri);
-            if (mimeType != null) return mimeType;
-        }
-        return MediaUtil.getCorrectedMimeType(getIntent().getType());
     }
 
     @Override

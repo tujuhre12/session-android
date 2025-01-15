@@ -49,7 +49,7 @@ public abstract class MmsMessageRecord extends MessageRecord {
   @Override
   public boolean isMediaPending() {
     for (Slide slide : getSlideDeck().getSlides()) {
-      if (slide.isInProgress() || slide.isPendingDownload()) {
+      if (slide.isDownloadInProgress() || slide.isPendingDownload()) {
         return true;
       }
     }

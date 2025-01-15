@@ -23,6 +23,10 @@ import kotlin.math.roundToLong
 @AndroidEntryPoint
 class VoiceMessageView : RelativeLayout, AudioSlidePlayer.Listener {
 
+    companion object {
+        var latestVoiceMessageDurationMS = -1L
+    }
+
     @Inject lateinit var attachmentDb: AttachmentDatabase
 
     private val binding: ViewVoiceMessageBinding by lazy { ViewVoiceMessageBinding.bind(this) }
@@ -40,13 +44,16 @@ class VoiceMessageView : RelativeLayout, AudioSlidePlayer.Listener {
 
     private var onFinishVoiceMessageDuration: String? = null
 
+    private var startVoiceMessageTimestamp = 0L
+
+
     // region Lifecycle
     constructor(context: Context) : super(context)
     constructor(context: Context, attrs: AttributeSet) : super(context, attrs)
     constructor(context: Context, attrs: AttributeSet, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
 
-
+    // Note: onFinishInflate occurs before `bind`
     override fun onFinishInflate() {
         super.onFinishInflate()
 
@@ -62,15 +69,31 @@ class VoiceMessageView : RelativeLayout, AudioSlidePlayer.Listener {
 
         val goingWithDuration = onFinishVoiceMessageDuration ?: formattedVoiceMessageDuration
 
-        binding.voiceMessageViewDurationTextView.text = "fooo"
+        Log.i("ACL", "latestVoiceMessageDurationMS is: " + latestVoiceMessageDurationMS)
+
+//        binding.voiceMessageViewDurationTextView.text = String.format("%01d:%02d",
+//            TimeUnit.MILLISECONDS.toMinutes(durationMS - (progress * durationMS.toDouble()).roundToLong()),
+//            TimeUnit.MILLISECONDS.toSeconds(durationMS - (progress * durationMS.toDouble()).roundToLong()) % 60)
+
+        // Going with this solution
+
+
+        // Note: At this point we don't have the message with the audio data, so we can't extract the audio duration.
+        // Instead, we set a static duration from the ConversationActivity's `sendVoiceMessage` method, where we DO
+        // have that data, and we extract and use it here to display an accurate duration while the voice msg uploads.
+        val durationString = String.format("%01d:%02d", TimeUnit.MILLISECONDS.toMinutes(latestVoiceMessageDurationMS), TimeUnit.MILLISECONDS.toSeconds(latestVoiceMessageDurationMS) % 60)
+        binding.voiceMessageViewDurationTextView.text = durationString
     }
 
     // endregion
 
     // region Updating
     fun bind(message: MmsMessageRecord, isStartOfMessageCluster: Boolean, isEndOfMessageCluster: Boolean) {
+
+        Log.i("ACL", "Bind is being called!" + System.currentTimeMillis())
+
         val audio = message.slideDeck.audioSlide!!
-        binding.voiceMessageViewLoader.isVisible = audio.isInProgress
+        binding.voiceMessageViewLoader.isVisible = audio.isDownloadInProgress
         val cornerRadii = MessageBubbleUtilities.calculateRadii(context, isStartOfMessageCluster, isEndOfMessageCluster, message.isOutgoing)
         cornerMask.setTopLeftRadius(cornerRadii[0])
         cornerMask.setTopRightRadius(cornerRadii[1])
@@ -78,7 +101,7 @@ class VoiceMessageView : RelativeLayout, AudioSlidePlayer.Listener {
         cornerMask.setBottomLeftRadius(cornerRadii[3])
 
         // only process audio if downloaded
-        if (audio.isPendingDownload || audio.isInProgress) {
+        if (audio.isPendingDownload || audio.isDownloadInProgress) {
             this.player = null
             return
         }
@@ -88,18 +111,21 @@ class VoiceMessageView : RelativeLayout, AudioSlidePlayer.Listener {
 
         (audio.asAttachment() as? DatabaseAttachment)?.let { attachment ->
             attachmentDb.getAttachmentAudioExtras(attachment.attachmentId)?.let { audioExtras ->
+
+
+
                 if (audioExtras.durationMs > 0) {
                     durationMS = audioExtras.durationMs
                     binding.voiceMessageViewDurationTextView.visibility = VISIBLE
 
                     val anotherFormattedDuration = String.format("%01d:%02d", TimeUnit.MILLISECONDS.toMinutes(audioExtras.durationMs), TimeUnit.MILLISECONDS.toSeconds(audioExtras.durationMs) % 60)
-                    Log.i("ACL", "Another formatted duration is: " + anotherFormattedDuration)
+                    Log.i("ACL2", "Another formatted duration is: " + anotherFormattedDuration)
 
                     binding.voiceMessageViewDurationTextView.text = anotherFormattedDuration
 
                     onFinishVoiceMessageDuration = anotherFormattedDuration
                 } else {
-                    Log.i("ACL", "For some reason audioExtras.durationMs was NOT greater than zero!")
+                    Log.i("ACL2", "For some reason audioExtras.durationMs was NOT greater than zero!")
                 }
             }
         }
@@ -114,16 +140,22 @@ class VoiceMessageView : RelativeLayout, AudioSlidePlayer.Listener {
             togglePlayback()
             handleProgressChanged(0.0)
             delegate?.playVoiceMessageAtIndexIfPossible(indexInAdapter + 1)
+            Log.i("ACL", "Doing This111")
         } else {
             handleProgressChanged(progress)
+            Log.i("ACL", "Doing That111")
         }
     }
 
     private fun handleProgressChanged(progress: Double) {
+
+        Log.i("ACL", "Progress is now: " + progress)
+
         this.progress = progress
         binding.voiceMessageViewDurationTextView.text = String.format("%01d:%02d",
             TimeUnit.MILLISECONDS.toMinutes(durationMS - (progress * durationMS.toDouble()).roundToLong()),
             TimeUnit.MILLISECONDS.toSeconds(durationMS - (progress * durationMS.toDouble()).roundToLong()) % 60)
+
         val layoutParams = binding.progressView.layoutParams as RelativeLayout.LayoutParams
         layoutParams.width = (width.toFloat() * progress.toFloat()).roundToInt()
         binding.progressView.layoutParams = layoutParams
@@ -158,7 +190,7 @@ class VoiceMessageView : RelativeLayout, AudioSlidePlayer.Listener {
 
     fun handleDoubleTap() {
         if (this.player == null) {
-            Log.w("VisibleMessageView", "Could not get player to adjust voice message playback speed.")
+            Log.w("VoiceMessageView", "Could not get player to adjust voice message playback speed.")
             return
         }
         this.player?.playbackSpeed = if (this.player?.playbackSpeed == 1f) 1.5f else 1f

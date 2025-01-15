@@ -5,16 +5,19 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.provider.MediaStore;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.WorkerThread;
 import android.text.TextUtils;
 import android.util.Pair;
 import android.webkit.MimeTypeMap;
-
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.WorkerThread;
+import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.gif.GifDrawable;
-
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.concurrent.ExecutionException;
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment;
 import org.session.libsession.utilities.MediaTypes;
 import org.session.libsignal.utilities.Log;
@@ -22,7 +25,6 @@ import org.thoughtcrime.securesms.mms.AudioSlide;
 import org.thoughtcrime.securesms.mms.DecryptableStreamUriLoader.DecryptableUri;
 import org.thoughtcrime.securesms.mms.DocumentSlide;
 import org.thoughtcrime.securesms.mms.GifSlide;
-import com.bumptech.glide.Glide;
 import org.thoughtcrime.securesms.mms.ImageSlide;
 import org.thoughtcrime.securesms.mms.MmsSlide;
 import org.thoughtcrime.securesms.mms.PartAuthority;
@@ -30,16 +32,14 @@ import org.thoughtcrime.securesms.mms.Slide;
 import org.thoughtcrime.securesms.mms.TextSlide;
 import org.thoughtcrime.securesms.mms.VideoSlide;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.concurrent.ExecutionException;
-
 public class MediaUtil {
 
   private static final String TAG = MediaUtil.class.getSimpleName();
 
   public static Slide getSlideForAttachment(Context context, Attachment attachment) {
+
+    Log.i("ACL", "Hit getSlideForAttachment");
+
     Slide slide = null;
     if (isGif(attachment.getContentType())) {
       slide = new GifSlide(context, attachment);
@@ -67,27 +67,37 @@ public class MediaUtil {
       return PartAuthority.getAttachmentContentType(context, uri);
     }
 
-    String type = context.getContentResolver().getType(uri);
-    if (type == null) {
+    String mimeType = context.getContentResolver().getType(uri);
+    if (mimeType == null) {
       final String extension = MimeTypeMap.getFileExtensionFromUrl(uri.toString());
-      type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension.toLowerCase());
+      mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension.toLowerCase());
     }
 
-    return getCorrectedMimeType(type);
-  }
-
-  public static @Nullable String getCorrectedMimeType(@Nullable String mimeType) {
     if (mimeType == null) return null;
 
-    switch(mimeType) {
-    case "image/jpg":
-      return MimeTypeMap.getSingleton().hasMimeType(MediaTypes.IMAGE_JPEG)
-             ? MediaTypes.IMAGE_JPEG
-             : mimeType;
-    default:
-      return mimeType;
+    // If we have a mime type then ensure "image/jpg" gets classified correctly as IMAGE_JPEG
+    switch (mimeType) {
+      case "image/jpg":
+        return MimeTypeMap.getSingleton().hasMimeType(MediaTypes.IMAGE_JPEG)
+                ? MediaTypes.IMAGE_JPEG
+                : mimeType;
+      default:
+        return mimeType;
     }
   }
+
+//  public static @Nullable String getCorrectedMimeType(@Nullable String mimeType) {
+//    if (mimeType == null) return null;
+//
+//    switch(mimeType) {
+//    case "image/jpg":
+//      return MimeTypeMap.getSingleton().hasMimeType(MediaTypes.IMAGE_JPEG)
+//             ? MediaTypes.IMAGE_JPEG
+//             : mimeType;
+//    default:
+//      return mimeType;
+//    }
+//  }
 
   public static long getMediaSize(Context context, Uri uri) throws IOException {
     InputStream in = PartAuthority.getAttachmentStream(context, uri);
