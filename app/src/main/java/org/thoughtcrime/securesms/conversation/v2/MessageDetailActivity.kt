@@ -250,7 +250,7 @@ fun CellButtons(
             onReply?.let {
                 LargeItemButton(
                     R.string.reply,
-                    R.drawable.ic_message_details__reply,
+                    R.drawable.ic_reply,
                     onClick = it
                 )
                 Divider()
@@ -266,7 +266,7 @@ fun CellButtons(
             onSave?.let {
                 LargeItemButton(
                     R.string.save,
-                    R.drawable.ic_baseline_save_24,
+                    R.drawable.ic_arrow_down_to_line,
                     onClick = it
                 )
                 Divider()
@@ -275,7 +275,7 @@ fun CellButtons(
             onResend?.let {
                 LargeItemButton(
                     R.string.resend,
-                    R.drawable.ic_message_details__refresh,
+                    R.drawable.ic_refresh_cw,
                     onClick = it
                 )
                 Divider()
@@ -283,7 +283,7 @@ fun CellButtons(
 
             LargeItemButton(
                 R.string.delete,
-                R.drawable.ic_delete,
+                R.drawable.ic_trash_2,
                 colors = dangerButtonColors(),
                 onClick = onDelete
             )
@@ -351,13 +351,16 @@ fun ExpandButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
     Surface(
         shape = CircleShape,
         color = blackAlpha40,
-        modifier = modifier,
+        modifier = modifier
+            .clickable { onClick() },
         contentColor = Color.White,
     ) {
         Icon(
-            painter = painterResource(id = R.drawable.ic_expand),
+            painter = painterResource(id = R.drawable.ic_maximize_2),
             contentDescription = stringResource(id = R.string.AccessibilityId_expand),
-            modifier = Modifier.clickable { onClick() },
+            modifier = Modifier
+                .padding(LocalDimensions.current.xxsSpacing)
+                .size(LocalDimensions.current.xsSpacing),
         )
     }
 }

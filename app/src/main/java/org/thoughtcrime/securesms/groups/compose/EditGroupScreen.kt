@@ -36,6 +36,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
@@ -67,6 +68,8 @@ import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
+import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
+import org.thoughtcrime.securesms.ui.theme.ThemeColors
 
 @Composable
 fun EditGroupScreen(
@@ -197,17 +200,17 @@ fun EditGroup(
                                 )
                             )
 
-                            IconButton(
-                                modifier = Modifier.size(LocalDimensions.current.spacing),
-                                onClick = onEditNameConfirmed
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.check),
-                                    contentDescription = stringResource(R.string.AccessibilityId_confirm),
-                                    tint = LocalColors.current.text,
-                                )
-                            }
+                        IconButton(
+                            modifier = Modifier.size(LocalDimensions.current.spacing),
+                            onClick = onEditNameConfirmed
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_check),
+                                contentDescription = stringResource(R.string.AccessibilityId_confirm),
+                                tint = LocalColors.current.text,
+                            )
                         }
+                    }
 
 
                     } else {
@@ -222,23 +225,23 @@ fun EditGroup(
                                     .padding(vertical = LocalDimensions.current.smallSpacing),
                             )
 
-                            Box(modifier = Modifier.weight(1f)) {
-                                if (canEditName) {
-                                    IconButton(
-                                        modifier = Modifier.qaTag(stringResource(R.string.AccessibilityId_groupName)),
-                                        onClick = onEditNameClicked
-                                    ) {
-                                        Icon(
-                                            painterResource(R.drawable.ic_baseline_edit_24),
-                                            contentDescription = stringResource(R.string.edit),
-                                            tint = LocalColors.current.text,
-                                        )
-                                    }
+                        Box(modifier = Modifier.weight(1f)) {
+                            if (canEditName) {
+                                IconButton(
+                                    modifier = Modifier.qaTag(stringResource(R.string.AccessibilityId_groupName)),
+                                    onClick = onEditNameClicked
+                                ) {
+                                    Icon(
+                                        painterResource(R.drawable.ic_pencil),
+                                        contentDescription = stringResource(R.string.edit),
+                                        tint = LocalColors.current.text,
+                                    )
                                 }
                             }
                         }
                     }
                 }
+            }
 
                 // Header & Add member button
                 Row(
@@ -391,7 +394,7 @@ private fun MemberActionSheet(
             if (member.canRemove) {
                 this += ActionSheetItemData(
                     title = context.resources.getQuantityString(R.plurals.groupRemoveUserOnly, 1),
-                    iconRes = R.drawable.ic_delete_24,
+                    iconRes = R.drawable.ic_trash_2,
                     onClick = onRemove,
                     qaTag = R.string.AccessibilityId_removeContact
                 )
@@ -400,7 +403,7 @@ private fun MemberActionSheet(
             if (BuildConfig.DEBUG && member.canPromote) {
                 this += ActionSheetItemData(
                     title = context.getString(R.string.adminPromoteToAdmin),
-                    iconRes = R.drawable.ic_profile_default,
+                    iconRes = R.drawable.ic_user_filled_custom,
                     onClick = onPromote
                 )
             }
@@ -452,7 +455,8 @@ fun EditMemberItem(
     ){
         if (member.canEdit) {
             Icon(
-                painter = painterResource(R.drawable.ic_circle_dot_dot_dot),
+                painter = painterResource(R.drawable.ic_circle_dots_custom),
+                tint = LocalColors.current.text,
                 contentDescription = stringResource(R.string.AccessibilityId_sessionSettings)
             )
         }
@@ -611,8 +615,10 @@ private fun EditGroupPreview() {
 
 @Preview
 @Composable
-private fun EditGroupEditNamePreview() {
-    PreviewTheme {
+private fun EditGroupEditNamePreview(
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
+) {
+    PreviewTheme(colors) {
         val oneMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234"),
             name = "Test User",

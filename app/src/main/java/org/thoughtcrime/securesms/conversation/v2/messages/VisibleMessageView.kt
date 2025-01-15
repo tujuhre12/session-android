@@ -62,6 +62,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsignal.utilities.AccountId
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.util.DateUtils
@@ -93,7 +94,11 @@ class VisibleMessageView : FrameLayout {
         ViewEmojiReactionsBinding.bind(binding.emojiReactionsView.inflate())
     }
 
-    private val swipeToReplyIcon = ContextCompat.getDrawable(context, R.drawable.ic_baseline_reply_24)!!.mutate()
+    private val swipeToReplyIcon by lazy {
+        val d = ContextCompat.getDrawable(context, R.drawable.ic_reply)!!.mutate()
+        d.setTint(context.getColorFromAttr(R.attr.colorControlNormal))
+        d
+    }
     private val swipeToReplyIconRect = Rect()
     private var dx = 0.0f
     private var previousTranslationX = 0.0f
@@ -102,6 +107,8 @@ class VisibleMessageView : FrameLayout {
     private var longPressCallback: Runnable? = null
     private var onDownTimestamp = 0L
     private var onDoubleTap: (() -> Unit)? = null
+    private var isOutgoing: Boolean = false
+
     var indexInAdapter: Int = -1
     var snIsSelected = false
         set(value) {
@@ -154,6 +161,7 @@ class VisibleMessageView : FrameLayout {
         onAttachmentNeedsDownload: (DatabaseAttachment) -> Unit,
         lastSentMessageId: Long
     ) {
+        isOutgoing = message.isOutgoing
         replyDisabled = message.isOpenGroupInvitation
         val threadID = message.threadId
         val thread = threadDb.getRecipientForThreadId(threadID) ?: return
@@ -390,13 +398,13 @@ class VisibleMessageView : FrameLayout {
 
     private fun getMessageStatusInfo(message: MessageRecord): MessageStatusInfo? = when {
         message.isFailed ->
-            MessageStatusInfo(R.drawable.ic_delivery_status_failed,
+            MessageStatusInfo(R.drawable.ic_triangle_alert,
                 getThemedColor(context, R.attr.danger),
                 R.string.messageStatusFailedToSend
             )
         message.isSyncFailed ->
             MessageStatusInfo(
-                R.drawable.ic_delivery_status_failed,
+                R.drawable.ic_triangle_alert,
                 context.getColorFromAttr(R.attr.warning),
                 R.string.messageStatusFailedToSync
             )
@@ -404,14 +412,14 @@ class VisibleMessageView : FrameLayout {
             // Non-mms messages (or quote messages, which happen to be mms for some reason) display 'Sending'..
             if (!message.isMms || (message as? MmsMessageRecord)?.quote != null) {
                 MessageStatusInfo(
-                    R.drawable.ic_delivery_status_sending,
+                    R.drawable.ic_circle_dots_custom,
                     context.getColorFromAttr(R.attr.message_status_color),
                     R.string.sending
                 )
             } else {
                 // ..and Mms messages display 'Uploading'.
                 MessageStatusInfo(
-                    R.drawable.ic_delivery_status_sending,
+                    R.drawable.ic_circle_dots_custom,
                     context.getColorFromAttr(R.attr.message_status_color),
                     R.string.uploading
                 )
@@ -419,19 +427,19 @@ class VisibleMessageView : FrameLayout {
         }
         message.isResyncing ->
             MessageStatusInfo(
-                R.drawable.ic_delivery_status_sending,
+                R.drawable.ic_circle_dots_custom,
                 context.getColorFromAttr(R.attr.message_status_color),
                 R.string.messageStatusSyncing
             )
         message.isRead || message.isIncoming ->
             MessageStatusInfo(
-                R.drawable.ic_delivery_status_read,
+                R.drawable.ic_eye,
                 context.getColorFromAttr(R.attr.message_status_color),
                 R.string.read
             )
         message.isSyncing || message.isSent -> // syncing should happen silently in the bg so we can mark it as sent
             MessageStatusInfo(
-                R.drawable.ic_delivery_status_sent,
+                R.drawable.ic_circle_check,
                 context.getColorFromAttr(R.attr.message_status_color),
                 R.string.disappearingMessagesSent
             )
@@ -457,12 +465,14 @@ class VisibleMessageView : FrameLayout {
     }
 
     override fun onDraw(canvas: Canvas) {
-        val spacing = context.resources.getDimensionPixelSize(R.dimen.small_spacing)
+        val spacing = context.resources.getDimensionPixelSize(R.dimen.medium_spacing)
         val iconSize = toPx(24, context.resources)
-        val left = binding.messageInnerContainer.left + binding.messageContentView.root.right + spacing
-        val top = height - (binding.messageInnerContainer.height / 2) - binding.profilePictureView.marginBottom - (iconSize / 2)
+        val left =  if(isOutgoing) binding.messageInnerContainer.right + spacing
+            else binding.messageInnerContainer.left + binding.messageContentView.root.right + spacing
+        val top = (binding.messageInnerContainer.height / 2) + (iconSize / 2)
         val right = left + iconSize
         val bottom = top + iconSize
+
         swipeToReplyIconRect.left = left
         swipeToReplyIconRect.top = top
         swipeToReplyIconRect.right = right
