@@ -4,10 +4,13 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.launch
+import org.session.libsession.database.StorageProtocol
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.waitUntilGroupConfigsPushed
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.database.Storage
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -18,6 +21,7 @@ import javax.inject.Singleton
 @Singleton
 class DestroyedGroupSync @Inject constructor(
     private val configFactory: ConfigFactoryProtocol,
+    private val storage: StorageProtocol,
 ) {
     private var job: Job? = null
 
@@ -45,6 +49,11 @@ class DestroyedGroupSync @Inject constructor(
                             configs.userGroups.getClosedGroup(update.groupId.hexString)?.let { group ->
                                 configs.userGroups.set(group.copy(destroyed = true))
                             }
+                        }
+
+                        // Also clear all messages in the group
+                        storage.getThreadId(Address.fromSerialized(update.groupId.hexString))?.let { threadId ->
+                            storage.clearMessages(threadId)
                         }
                     }
                 }
