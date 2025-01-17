@@ -36,18 +36,14 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" tools:node="remove" />
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
+
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
+    <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
+
     <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT" />
     <uses-permission android:name="android.permission.INTERNET" />
-
-    <!-- Google may (potentially) insist we implement `ConnectionService` to request MANAGE_OWN_CALLS - see:
-           - https://developer.android.com/reference/android/Manifest.permission#MANAGE_OWN_CALLS
-           - https://developer.android.com/reference/android/telecom/ConnectionService
-    -->
-    <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
 
     <uses-permission android:name="android.app.role.DIALER" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />

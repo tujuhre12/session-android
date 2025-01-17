@@ -1,8 +1,11 @@
 package org.thoughtcrime.securesms.notifications
 
 import android.Manifest
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Debug
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -30,6 +33,8 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Namespace
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.home.HomeActivity
+import org.thoughtcrime.securesms.notifications.DefaultMessageNotifier.Companion
 import javax.inject.Inject
 
 private const val TAG = "PushHandler"
@@ -45,6 +50,7 @@ class PushReceiver @Inject constructor(
      * As long as it is properly formatted
      */
     fun onPushDataReceived(dataMap: Map<String, String>?) {
+        Log.w("", "*** PUSH RECEIVED: $dataMap")
         addMessageReceiveJob(dataMap?.asPushData())
     }
 
@@ -57,9 +63,10 @@ class PushReceiver @Inject constructor(
     }
 
     private fun addMessageReceiveJob(pushData: PushData?){
-        // send a generic notification if we have no data
+        // send a generic notification if we have no data and the `data too long` is false
         if (pushData?.data == null) {
-            sendGenericNotification()
+            Log.d(TAG, "*** Push data is null, sending generic notification")
+            if(pushData?.metadata?.data_too_long != true) sendGenericNotification() //todo PHONE is this right? https://discord.com/channels/408081923835953153/1328917602504015923
             return
         }
 
@@ -90,14 +97,14 @@ class PushReceiver @Inject constructor(
                 }
 
                 else -> {
-                    Log.w(TAG, "Received a push notification with an unknown namespace: ${pushData.metadata.namespace}")
+                    Log.w(TAG, "*** Received a push notification with an unknown namespace: ${pushData.metadata.namespace}")
                     return
                 }
             }
 
             JobQueue.shared.add(BatchMessageReceiveJob(listOf(params), null))
         } catch (e: Exception) {
-            Log.d(TAG, "Failed to unwrap data for message due to error.", e)
+            Log.d(TAG, "*** Failed to unwrap data for message due to error.", e)
         }
 
     }
@@ -116,8 +123,6 @@ class PushReceiver @Inject constructor(
     }
 
     private fun sendGenericNotification() {
-        Log.d(TAG, "Failed to decode data for message.")
-
         // no need to do anything if notification permissions are not granted
         if (ActivityCompat.checkSelfPermission(
                 context,
@@ -137,6 +142,7 @@ class PushReceiver @Inject constructor(
 
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
+            .setContentIntent(PendingIntent.getActivity(context, 0, Intent(context, HomeActivity::class.java), PendingIntent.FLAG_IMMUTABLE))
 
         NotificationManagerCompat.from(context).notify(11111, builder.build())
     }
@@ -148,7 +154,7 @@ class PushReceiver @Inject constructor(
                 try {
                     decrypt(Base64.decode(this["enc_payload"]))
                 } catch (e: Exception) {
-                    Log.e(TAG, "Invalid push notification", e)
+                    Log.e(TAG, "*** Invalid push notification", e)
                     PushData(null, null)
                 }
             }
@@ -171,7 +177,7 @@ class PushReceiver @Inject constructor(
         val expectedList = (bencoded.decode() as? BencodeList)?.values
             ?: error("Failed to decode bencoded list from payload")
 
-        val metadataJson = (expectedList[0] as? BencodeString)?.value ?: error("no metadata")
+        val metadataJson = (expectedList.getOrNull(0) as? BencodeString)?.value ?: error("no metadata")
         val metadata: PushNotificationMetadata = json.decodeFromString(String(metadataJson))
 
         return PushData(

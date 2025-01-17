@@ -275,6 +275,16 @@
         app:layout_constraintHorizontal_bias="0.25"
         android:id="@+id/declineCallButton"/>
 
+    <!-- TEMP ONLY! IF YOU SEE THIS IN A PR I FORGOT TO REMOVE IT -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:text="FROM FAILED SERVICE"
+        android:id="@+id/temphelper" />
+
     <androidx.constraintlayout.widget.Group
         android:id="@+id/controlGroup"
         android:layout_width="0dp"

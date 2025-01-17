@@ -40,7 +40,7 @@ class CallNotificationBuilder {
         @JvmStatic
         fun getCallInProgressNotification(context: Context, type: Int, recipient: Recipient?): Notification {
             val contentIntent = Intent(context, WebRtcCallActivity::class.java)
-                    .setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_HISTORY or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
 
             val pendingIntent = PendingIntent.getActivity(context, 0, contentIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
@@ -52,14 +52,15 @@ class CallNotificationBuilder {
 
             var recipName = "Unknown"
             recipient?.name?.let { name ->
-                builder.setContentTitle(name)
                 recipName = name
             }
+
+            builder.setContentTitle(recipName)
 
             when (type) {
                 TYPE_INCOMING_CONNECTING -> {
                     builder.setContentText(context.getString(R.string.callsConnecting))
-                            .setNotificationSilent()
+                            .setSilent(true)
                 }
                 TYPE_INCOMING_PRE_OFFER,
                 TYPE_INCOMING_RINGING -> {
@@ -82,6 +83,7 @@ class CallNotificationBuilder {
                     ))
                     builder.priority = NotificationCompat.PRIORITY_MAX
                 }
+
                 TYPE_OUTGOING_RINGING -> {
                     builder.setContentText(context.getString(R.string.callsConnecting))
                     builder.addAction(getServiceNotificationAction(
@@ -118,7 +120,7 @@ class CallNotificationBuilder {
             val intent = Intent(context, WebRtcCallActivity::class.java)
                 // When launching the call activity do NOT keep it in the history when finished, as it does not pass through CALL_DISCONNECTED
                 // if the call was denied outright, and without this the "dead" activity will sit around in the history when the device is unlocked.
-                .setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NO_HISTORY or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_HISTORY or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
                 .setAction(WebRtcCallActivity.ACTION_FULL_SCREEN_INTENT)
             return PendingIntent.getActivity(context, 1, intent, PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         }

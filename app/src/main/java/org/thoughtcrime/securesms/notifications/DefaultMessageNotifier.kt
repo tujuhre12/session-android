@@ -69,6 +69,7 @@ import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent.Companion.get
 import org.thoughtcrime.securesms.mms.SlideDeck
 import org.thoughtcrime.securesms.service.KeyCachingService
+import org.thoughtcrime.securesms.util.CallNotificationBuilder.Companion.WEBRTC_NOTIFICATION
 import org.thoughtcrime.securesms.util.SessionMetaProtocol.canUserReplyToNotification
 import org.thoughtcrime.securesms.util.SpanUtil
 
@@ -108,11 +109,12 @@ class DefaultMessageNotifier : MessageNotifier {
             val activeNotifications = notifications.activeNotifications
 
             for (activeNotification in activeNotifications) {
-                notifications.cancel(activeNotification.id)
+                //todo PHONE Is this ok? Without it the fullscreen notification from calls gets removed. Is the cancellation logic wrong or is it ok to check for the call notification id and ignore it here?
+                if(activeNotification.id != WEBRTC_NOTIFICATION) notifications.cancel(activeNotification.id) // <<
             }
         } catch (e: Throwable) {
             // XXX Appears to be a ROM bug, see #6043
-            Log.w(TAG, e)
+            Log.w(TAG, "cancel notification error: $e")
             notifications.cancelAll()
         }
         return hasNotifications
@@ -255,7 +257,9 @@ class DefaultMessageNotifier : MessageNotifier {
         Log.i(TAG, "sendSingleThreadNotification()  signal: $signal  bundled: $bundled")
 
         if (notificationState.notifications.isEmpty()) {
-            if (!bundled) cancelActiveNotifications(context)
+            if (!bundled) {
+                cancelActiveNotifications(context)
+            }
             Log.i(TAG, "Empty notification state. Skipping.")
             return
         }

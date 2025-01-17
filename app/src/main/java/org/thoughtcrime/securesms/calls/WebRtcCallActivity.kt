@@ -38,6 +38,7 @@ import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.service.WebRtcCallService
 import org.thoughtcrime.securesms.webrtc.AudioManagerCommand
+import org.thoughtcrime.securesms.webrtc.CallMessageProcessor
 import org.thoughtcrime.securesms.webrtc.CallViewModel
 import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_CONNECTED
 import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_INCOMING
@@ -103,6 +104,27 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
 
         binding = ActivityWebrtcBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        //todo PHONE - REMOVE THIS TEMP VIEW
+        binding.temphelper.visibility = View.GONE
+        Log.d("", "*** starting call activity. Incoming data?: ${CallMessageProcessor.incomingCallData}")
+
+        if(CallMessageProcessor.incomingCallData != null) {
+            binding.temphelper.visibility = View.VISIBLE
+            val callData = CallMessageProcessor.incomingCallData!!
+            ContextCompat.startForegroundService(
+                this,
+                WebRtcCallService.preOffer(
+                    this,
+                    address = callData.recipientAddress,
+                    callId = callData.callId,
+                    callTime = callData.callTime
+                )
+            )
+
+            CallMessageProcessor.incomingCallData = null
+        }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true)
             setTurnScreenOn(true)
@@ -159,6 +181,7 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
 
         hangupReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
+                Log.d("", "*** Received hangup broadcast in webrtc activity - finishing.")
                 finish()
             }
         }

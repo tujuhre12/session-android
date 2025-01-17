@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.service
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT
 import android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.IntentFilter
@@ -12,6 +13,7 @@ import android.media.AudioManager
 import android.os.Build
 import android.os.ResultReceiver
 import android.telephony.TelephonyManager
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
@@ -280,6 +282,7 @@ class WebRtcCallService : LifecycleService(), CallManager.WebRtcListener {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
+
         if (intent == null || intent.action == null) return START_NOT_STICKY
         serviceExecutor.execute {
             val action = intent.action
@@ -441,7 +444,7 @@ class WebRtcCallService : LifecycleService(), CallManager.WebRtcListener {
             if (wantsToAnswer) {
                 setCallInProgressNotification(TYPE_INCOMING_CONNECTING, recipient)
             } else {
-                setCallInProgressNotification(TYPE_INCOMING_RINGING, recipient)
+                //No need to do anything here as this case is already taken care of from the pre offer that came before
             }
             callManager.clearPendingIceUpdates()
             callManager.postViewModelState(CallViewModel.State.CALL_RINGING)
@@ -745,36 +748,27 @@ class WebRtcCallService : LifecycleService(), CallManager.WebRtcListener {
     // Over the course of setting up a phone call this method is called multiple times with `types`
     // of PRE_OFFER -> RING_INCOMING -> ICE_MESSAGE
     private fun setCallInProgressNotification(type: Int, recipient: Recipient?) {
-        // Wake the device if needed
-        (applicationContext as ApplicationContext).wakeUpDeviceAndDismissKeyguardIfRequired()
+        Log.d("", "*** setCallInProgressNotification: $type ")
 
-        // If notifications are enabled we'll try and start a foreground service to show the notification
-        var failedToStartForegroundService = false
-        if (CallNotificationBuilder.areNotificationsEnabled(this)) {
-            try {
-                ServiceCompat.startForeground(
-                    this,
-                    WEBRTC_NOTIFICATION,
-                    CallNotificationBuilder.getCallInProgressNotification(this, type, recipient),
-                    if (Build.VERSION.SDK_INT >= 30) ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL else 0
-                )
-                return
-            } catch (e: IllegalStateException) {
-                Log.e(TAG, "Failed to setCallInProgressNotification as a foreground service for type: ${type}, trying to update instead", e)
-                failedToStartForegroundService = true
-            }
-        } else {
-            // Notifications are NOT enabled! Skipped attempt at startForeground and going straight to fullscreen intent attempt!
+        try {
+            ServiceCompat.startForeground(
+                this,
+                WEBRTC_NOTIFICATION,
+                CallNotificationBuilder.getCallInProgressNotification(this, type, recipient),
+                if (Build.VERSION.SDK_INT >= 30) ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL else 0
+            )
+        } catch (e: IllegalStateException) {
+            Log.e(TAG, "Failed to setCallInProgressNotification as a foreground service for type: ${type}, trying to update instead", e)
         }
 
-        if ((type == TYPE_INCOMING_PRE_OFFER || type == TYPE_INCOMING_RINGING) && failedToStartForegroundService) {
+        //todo PHONE do we need to code below?
+        /*if (!CallNotificationBuilder.areNotificationsEnabled(this) && type == TYPE_INCOMING_PRE_OFFER) {
             // Start an intent for the fullscreen call activity
             val foregroundIntent = Intent(this, WebRtcCallActivity::class.java)
-                .setFlags(FLAG_ACTIVITY_NEW_TASK or FLAG_ACTIVITY_CLEAR_TOP)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_HISTORY or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
                 .setAction(WebRtcCallActivity.ACTION_FULL_SCREEN_INTENT)
             startActivity(foregroundIntent)
-            return
-        }
+        }*/
     }
 
     private fun getOptionalRemoteRecipient(intent: Intent): Recipient? =
