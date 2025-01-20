@@ -1327,8 +1327,10 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
                 Log.i("ACL", "Mms type is: " + mmsType)
 
                 return if (mmsType == PduHeaders.MESSAGE_TYPE_NOTIFICATION_IND.toLong()) {
+                    Log.w("ACL", "Doing getNotificationMmsMessageRecord1111111111111111111")
                     getNotificationMmsMessageRecord(cursor)
                 } else {
+                    Log.w("ACL", "Doing getMediaMmsMessageRecord2222222222222222222222222222")
                     getMediaMmsMessageRecord(cursor, getQuote)
                 }
             }

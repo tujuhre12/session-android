@@ -67,7 +67,7 @@ class SaveAttachmentTask @JvmOverloads constructor(context: Context, count: Int 
         }
 
         fun saveAttachment(context: Context, attachment: Attachment): String? {
-            val contentType = checkNotNull(MediaUtil.getCorrectedMimeType(attachment.contentType))
+            val contentType = checkNotNull(MediaUtil.getMimeType(context, attachment.uri))
             var fileName = attachment.fileName
 
             // Added for SES-2624 to prevent Android API 28 devices and lower from crashing because

@@ -728,6 +728,9 @@ public class MmsSmsDatabase extends Database {
     }
 
     public MessageRecord getCurrent() {
+
+      Log.w("ACL", "Hit messageRecord.getCurrent00000000000000000000000000000000000000000");
+
       String type = cursor.getString(cursor.getColumnIndexOrThrow(TRANSPORT));
 
       if      (MmsSmsDatabase.MMS_TRANSPORT.equals(type)) return getMmsReader().getCurrent();
