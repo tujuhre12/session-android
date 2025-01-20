@@ -95,10 +95,8 @@ import org.session.libsession.utilities.MediaTypes
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.CONVERSATION_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.DATE_TIME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.URL_KEY
 import org.session.libsession.utilities.Stub
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.concurrent.SimpleTask
@@ -113,7 +111,7 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.guava.Optional
 import org.session.libsignal.utilities.hexEncodedPrivateKey
 import org.thoughtcrime.securesms.ApplicationContext
-import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
+import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.attachments.ScreenshotObserver
 import org.thoughtcrime.securesms.audio.AudioRecorder
 import org.thoughtcrime.securesms.components.emoji.RecentEmojiPageModel
@@ -183,13 +181,13 @@ import org.thoughtcrime.securesms.mms.MediaConstraints
 import org.thoughtcrime.securesms.mms.Slide
 import org.thoughtcrime.securesms.mms.SlideDeck
 import org.thoughtcrime.securesms.mms.VideoSlide
-import org.thoughtcrime.securesms.openUrl
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.reactions.ReactionsDialogFragment
 import org.thoughtcrime.securesms.reactions.any.ReactWithAnyEmojiDialogFragment
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.util.ActivityDispatcher
 import org.thoughtcrime.securesms.util.DateUtils
+import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.MediaUtil
 import org.thoughtcrime.securesms.util.NetworkUtils
 import org.thoughtcrime.securesms.util.PaddedImageSpan
@@ -214,14 +212,13 @@ import kotlin.math.roundToInt
 import kotlin.math.sqrt
 import kotlin.time.Duration.Companion.minutes
 
-
 private const val TAG = "ConversationActivityV2"
 
 // Some things that seemingly belong to the input bar (e.g. the voice message recording UI) are actually
 // part of the conversation activity layout. This is just because it makes the layout a lot simpler. The
 // price we pay is a bit of back and forth between the input bar and the conversation activity.
 @AndroidEntryPoint
-class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDelegate,
+class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     InputBarRecordingViewDelegate, AttachmentManager.AttachmentListener, ActivityDispatcher,
     ConversationActionModeCallbackDelegate, VisibleMessageViewDelegate, RecipientModifiedListener,
     SearchBottomBar.EventListener, LoaderManager.LoaderCallbacks<Cursor>, ConversationActionBarDelegate,
@@ -749,9 +746,16 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         val mediaURI = intent.data
         val mediaType = AttachmentManager.MediaType.from(intent.type)
         val mimeType =  MediaUtil.getMimeType(this, mediaURI)
+
         if (mediaURI != null && mediaType != null) {
-            if (mimeType != null && (AttachmentManager.MediaType.IMAGE == mediaType || AttachmentManager.MediaType.GIF == mediaType || AttachmentManager.MediaType.VIDEO == mediaType)) {
-                val media = Media(mediaURI, mimeType, 0, 0, 0, 0, Optional.absent(), Optional.absent())
+            val filename = FilenameUtils.getFilenameFromUri(this, mediaURI)
+
+            if (mimeType != null &&
+                        (AttachmentManager.MediaType.IMAGE == mediaType ||
+                        AttachmentManager.MediaType.GIF    == mediaType ||
+                        AttachmentManager.MediaType.VIDEO  == mediaType)
+            ) {
+                val media = Media(mediaURI, filename, mimeType, 0, 0, 0, 0, Optional.absent(), Optional.absent())
                 startActivityForResult(MediaSendActivity.buildEditorIntent(this, listOf( media ), viewModel.recipient!!, ""), PICK_FROM_LIBRARY)
                 return
             } else {
@@ -985,6 +989,11 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             cancelVoiceMessage()
             tearDownRecipientObserver()
         }
+
+        // Delete any files we might have locally cached when sharing (which we need to do
+        // when passing through files when the app is locked).
+        cleanupCachedFiles()
+
         super.onDestroy()
     }
     // endregion
@@ -1315,7 +1324,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     override fun copyAccountID(accountId: String) {
         val clip = ClipData.newPlainText("Account ID", accountId)
-        val manager = getSystemService(PassphraseRequiredActionBarActivity.CLIPBOARD_SERVICE) as ClipboardManager
+        val manager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
         manager.setPrimaryClip(clip)
         Toast.makeText(this, R.string.copied, Toast.LENGTH_SHORT).show()
     }
@@ -1327,7 +1336,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         val openGroup = lokiThreadDb.getOpenGroupChat(threadId) ?: return
 
         val clip = ClipData.newPlainText("Community URL", openGroup.joinURL)
-        val manager = getSystemService(PassphraseRequiredActionBarActivity.CLIPBOARD_SERVICE) as ClipboardManager
+        val manager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
         manager.setPrimaryClip(clip)
         Toast.makeText(this, R.string.copied, Toast.LENGTH_SHORT).show()
     }
@@ -1476,7 +1485,6 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     // Method to add an emoji to a queue and remove it a short while later - this is used as a
     // rate-limiting mechanism and is called from the `sendEmojiReaction` method, below.
-
     fun canPerformEmojiReaction(timestamp: Long): Boolean {
         // If the emoji reaction queue is full..
         if (emojiRateLimiterQueue.size >= EMOJI_REACTIONS_ALLOWED_PER_MINUTE) {
@@ -1636,12 +1644,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         sendEmojiRemoval(emoji, message)
     }
 
-    /**
-     * Called when the user is attempting to clear all instance of a specific emoji.
-     */
-    override fun onClearAll(emoji: String, messageId: MessageId) {
-        viewModel.onEmojiClear(emoji, messageId)
-    }
+    // Called when the user is attempting to clear all instance of a specific emoji
+    override fun onClearAll(emoji: String, messageId: MessageId) { viewModel.onEmojiClear(emoji, messageId) }
 
     override fun onMicrophoneButtonMove(event: MotionEvent) {
         val rawX = event.rawX
@@ -1801,7 +1805,9 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     override fun commitInputContent(contentUri: Uri) {
         val recipient = viewModel.recipient ?: return
-        val media = Media(contentUri, MediaUtil.getMimeType(this, contentUri)!!, 0, 0, 0, 0, Optional.absent(), Optional.absent())
+        val mimeType = MediaUtil.getMimeType(this, contentUri)!!
+        val filename = FilenameUtils.getFilenameFromUri(this, contentUri, mimeType)
+        val media = Media(contentUri, filename, mimeType, 0, 0, 0, 0, Optional.absent(), Optional.absent())
         startActivityForResult(MediaSendActivity.buildEditorIntent(this, listOf( media ), recipient, getMessageBody()), PICK_FROM_LIBRARY)
     }
 
@@ -1822,6 +1828,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
             return null
         }
+
         // Create the message
         val message = VisibleMessage().applyExpiryMode(viewModel.threadId)
         message.sentTimestamp = sentTimestamp
@@ -1831,12 +1838,13 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             message.sentTimestamp
         } else 0
         val outgoingTextMessage = OutgoingTextMessage.from(message, recipient, expiresInMillis, expireStartedAt!!)
+
         // Clear the input bar
         binding.inputBar.text = ""
         binding.inputBar.cancelQuoteDraft()
         binding.inputBar.cancelLinkPreviewDraft()
         lifecycleScope.launch(Dispatchers.Default) {
-            // Put the message in the database
+            // Put the message in the database and send it
             message.id = smsDb.insertMessageOutbox(
                 viewModel.threadId,
                 outgoingTextMessage,
@@ -1845,7 +1853,6 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                 null,
                 true
             )
-            // Send it
             MessageSender.send(message, recipient.address)
         }
         // Send a typing stopped message
@@ -1862,6 +1869,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         val recipient = viewModel.recipient ?: return null
         val sentTimestamp = SnodeAPI.nowWithOffset
         viewModel.beforeSendingAttachments()
+
         // Create the message
         val message = VisibleMessage().applyExpiryMode(viewModel.threadId)
         message.sentTimestamp = sentTimestamp
@@ -1884,18 +1892,21 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             sentTimestamp
         } else 0
         val outgoingTextMessage = OutgoingMediaMessage.from(message, recipient, attachments, localQuote, linkPreview, expiresInMs, expireStartedAtMs)
+
         // Clear the input bar
         binding.inputBar.text = ""
         binding.inputBar.cancelQuoteDraft()
         binding.inputBar.cancelLinkPreviewDraft()
+
         // Reset the attachment manager
         attachmentManager.clear()
+
         // Reset attachments button if needed
         if (isShowingAttachmentOptions) { toggleAttachmentOptions() }
 
         // do the heavy work in the bg
         lifecycleScope.launch(Dispatchers.IO) {
-            // Put the message in the database
+            // Put the message in the database and send it
             message.id = mmsDb.insertMessageOutbox(
                 outgoingTextMessage,
                 viewModel.threadId,
@@ -1903,7 +1914,6 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                 null,
                 runThreadUpdate = true
             )
-            // Send it
             MessageSender.send(message, recipient.address, attachments, quote, linkPreview)
         }
 
@@ -1931,9 +1941,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     private fun selectGif() = AttachmentManager.selectGif(this, PICK_GIF)
 
-    private fun showDocumentPicker() {
-        AttachmentManager.selectDocument(this, PICK_DOCUMENT)
-    }
+    private fun showDocumentPicker() = AttachmentManager.selectDocument(this, PICK_DOCUMENT)
 
     private fun pickFromLibrary() {
         val recipient = viewModel.recipient ?: return
@@ -1942,13 +1950,9 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         }
     }
 
-    private fun showCamera() {
-        attachmentManager.capturePhoto(this, TAKE_PHOTO, viewModel.recipient);
-    }
+    private fun showCamera() { attachmentManager.capturePhoto(this, TAKE_PHOTO, viewModel.recipient) }
 
-    override fun onAttachmentChanged() {
-        // Do nothing
-    }
+    override fun onAttachmentChanged() { /* Do nothing */ }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
@@ -1984,16 +1988,21 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                 Toast.makeText(this@ConversationActivityV2, R.string.attachmentsErrorLoad, Toast.LENGTH_LONG).show()
             }
         }
+
+        // Note: In the case of documents or GIFs, filename provision is performed as part of the
+        // `prepMediaForSending` operations, while for images it occurs when Media is created in
+        // this class' `commitInputContent` method.
         when (requestCode) {
             PICK_DOCUMENT -> {
-                val uri = intent?.data ?: return
+                intent ?: return Log.w(TAG, "Failed to get document Intent")
+                val uri = intent.data ?: return Log.w(TAG, "Failed to get document Uri")
                 prepMediaForSending(uri, AttachmentManager.MediaType.DOCUMENT).addListener(mediaPreppedListener)
             }
             PICK_GIF -> {
-                intent ?: return
-                val uri = intent.data ?: return
-                val type = AttachmentManager.MediaType.GIF
-                val width = intent.getIntExtra(GiphyActivity.EXTRA_WIDTH, 0)
+                intent ?: return Log.w(TAG, "Failed to get GIF Intent")
+                val uri = intent.data ?: return Log.w(TAG, "Failed to get picked GIF Uri")
+                val type   = AttachmentManager.MediaType.GIF
+                val width  = intent.getIntExtra(GiphyActivity.EXTRA_WIDTH, 0)
                 val height = intent.getIntExtra(GiphyActivity.EXTRA_HEIGHT, 0)
                 prepMediaForSending(uri, type, width, height).addListener(mediaPreppedListener)
             }
@@ -2001,21 +2010,16 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             TAKE_PHOTO -> {
                 intent ?: return
                 val body = intent.getStringExtra(MediaSendActivity.EXTRA_MESSAGE)
-                val media = intent.getParcelableArrayListExtra<Media>(MediaSendActivity.EXTRA_MEDIA) ?: return
+                val mediaList = intent.getParcelableArrayListExtra<Media>(MediaSendActivity.EXTRA_MEDIA) ?: return
                 val slideDeck = SlideDeck()
-                for (item in media) {
+                for (media in mediaList) {
+                    val mediaFilename: String? = media.filename
                     when {
-                        MediaUtil.isVideoType(item.mimeType) -> {
-                            slideDeck.addSlide(VideoSlide(this, item.uri, 0, item.caption.orNull()))
-                        }
-                        MediaUtil.isGif(item.mimeType) -> {
-                            slideDeck.addSlide(GifSlide(this, item.uri, 0, item.width, item.height, item.caption.orNull()))
-                        }
-                        MediaUtil.isImageType(item.mimeType) -> {
-                            slideDeck.addSlide(ImageSlide(this, item.uri, 0, item.width, item.height, item.caption.orNull()))
-                        }
+                        MediaUtil.isVideoType(media.mimeType) -> { slideDeck.addSlide(VideoSlide(this, media.uri, mediaFilename, 0, media.caption.orNull()))                            }
+                        MediaUtil.isGif(media.mimeType)       -> { slideDeck.addSlide(GifSlide(this, media.uri, mediaFilename, 0, media.width, media.height, media.caption.orNull()))   }
+                        MediaUtil.isImageType(media.mimeType) -> { slideDeck.addSlide(ImageSlide(this, media.uri, mediaFilename, 0, media.width, media.height, media.caption.orNull())) }
                         else -> {
-                            Log.d("Loki", "Asked to send an unexpected media type: '" + item.mimeType + "'. Skipping.")
+                            Log.d(TAG, "Asked to send an unexpected media type: '" + media.mimeType + "'. Skipping.")
                         }
                     }
                 }
@@ -2034,9 +2038,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         }
     }
 
-    private fun prepMediaForSending(uri: Uri, type: AttachmentManager.MediaType): ListenableFuture<Boolean> {
-        return prepMediaForSending(uri, type, null, null)
-    }
+    private fun prepMediaForSending(uri: Uri, type: AttachmentManager.MediaType): ListenableFuture<Boolean>  =  prepMediaForSending(uri, type, null, null)
 
     private fun prepMediaForSending(uri: Uri, type: AttachmentManager.MediaType, width: Int?, height: Int?): ListenableFuture<Boolean> {
         return attachmentManager.setMedia(glide, uri, type, MediaConstraints.getPushMediaConstraints(), width ?: 0, height ?: 0)
@@ -2111,6 +2113,9 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         // exits before transmitting the audio!
         inputBar.voiceRecorderState = VoiceRecorderState.Idle
 
+        // Generate a filename from the current time such as: "VoiceMessage_2025-01-08-152733.aac"
+        val voiceMessageFilename = FilenameUtils.constructNewVoiceMessageFilename(applicationContext)
+
         // Voice message too short? Warn with toast instead of sending.
         // Note: The 0L check prevents the warning toast being shown when leaving the conversation activity.
         if (voiceMessageDurationMS != 0L && voiceMessageDurationMS < MINIMUM_VOICE_MESSAGE_DURATION_MS) {
@@ -2129,7 +2134,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         future.addListener(object : ListenableFuture.Listener<Pair<Uri, Long>> {
 
             override fun onSuccess(result: Pair<Uri, Long>) {
-                val audioSlide = AudioSlide(this@ConversationActivityV2, result.first, result.second, MediaTypes.AUDIO_AAC, true)
+                val audioSlide = AudioSlide(this@ConversationActivityV2, result.first, voiceMessageFilename, result.second, MediaTypes.AUDIO_AAC, true)
                 val slideDeck = SlideDeck()
                 slideDeck.addSlide(audioSlide)
                 sendAttachments(slideDeck.asAttachments(), null)
@@ -2279,7 +2284,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     private fun saveAttachments(message: MmsMessageRecord) {
         val attachments: List<SaveAttachmentTask.Attachment?> = Stream.of(message.slideDeck.slides)
             .filter { s: Slide -> s.uri != null && (s.hasImage() || s.hasVideo() || s.hasAudio() || s.hasDocument()) }
-            .map { s: Slide -> SaveAttachmentTask.Attachment(s.uri!!, s.contentType, message.dateReceived, s.fileName.orNull()) }
+            .map { s: Slide -> SaveAttachmentTask.Attachment(s.uri!!, s.contentType, message.dateReceived, s.filename) }
             .toList()
         if (attachments.isNotEmpty()) {
             val saveTask = SaveAttachmentTask(this)
