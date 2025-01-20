@@ -3,15 +3,19 @@ package org.thoughtcrime.securesms.mediasend;
 import android.app.Application;
 import android.content.Context;
 import android.net.Uri;
-
 import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
-
 import com.annimon.stream.Stream;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
+import org.session.libsession.utilities.FileUtils;
 import org.session.libsession.utilities.Util;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.guava.Optional;
@@ -19,12 +23,6 @@ import org.thoughtcrime.securesms.mms.MediaConstraints;
 import org.thoughtcrime.securesms.providers.BlobProvider;
 import org.thoughtcrime.securesms.util.MediaUtil;
 import org.thoughtcrime.securesms.util.SingleLiveEvent;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Manages the observable datasets available in {@link MediaSendActivity}.

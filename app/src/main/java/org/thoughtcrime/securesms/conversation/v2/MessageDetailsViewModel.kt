@@ -4,6 +4,9 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.util.Date
+import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -31,9 +34,6 @@ import org.thoughtcrime.securesms.mms.Slide
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.TitledText
-import java.util.Date
-import java.util.concurrent.TimeUnit
-import javax.inject.Inject
 
 @HiltViewModel
 class MessageDetailsViewModel @Inject constructor(
@@ -41,7 +41,7 @@ class MessageDetailsViewModel @Inject constructor(
     private val lokiMessageDatabase: LokiMessageDatabase,
     private val mmsSmsDatabase: MmsSmsDatabase,
     private val threadDb: ThreadDatabase,
-    private val repository: ConversationRepository,
+    private val repository: ConversationRepository
 ) : ViewModel() {
 
     private var job: Job? = null
@@ -90,7 +90,7 @@ class MessageDetailsViewModel @Inject constructor(
 
     private val Slide.details: List<TitledText>
         get() = listOfNotNull(
-            fileName.orNull()?.let { TitledText(R.string.attachmentsFileId, it) },
+            TitledText(R.string.attachmentsFileId, filename),
             TitledText(R.string.attachmentsFileType, asAttachment().contentType),
             TitledText(R.string.attachmentsFileSize, Util.getPrettyFileSize(fileSize)),
             takeIf { it is ImageSlide }
@@ -113,8 +113,7 @@ class MessageDetailsViewModel @Inject constructor(
                 )
             }
 
-    fun Attachment(slide: Slide): Attachment =
-        Attachment(slide.details, slide.fileName.orNull(), slide.uri, slide is ImageSlide)
+    fun Attachment(slide: Slide): Attachment = Attachment(slide.details, slide.filename, slide.uri, hasImage = (slide is ImageSlide))
 
     fun onClickImage(index: Int) {
         val state = state.value

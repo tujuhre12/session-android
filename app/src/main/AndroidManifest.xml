@@ -77,8 +77,7 @@
         </intent>
     </queries>
 
-    <!-- The allowBackup="false" below is important to guard against potential malicious backups -->
-
+    <!-- Note: The allowBackup="false" below is important to guard against potential malicious backups -->
     <application
         android:name="org.thoughtcrime.securesms.ApplicationContext"
         android:allowBackup="false"
@@ -91,7 +90,6 @@
         tools:replace="android:allowBackup,android:label" >
 
         <!-- Disable all analytics -->
-
         <meta-data
             android:name="firebase_analytics_collection_deactivated"
             android:value="true" />
@@ -268,9 +266,9 @@
             android:launchMode="singleTask"
             android:theme="@style/NoAnimation.Theme.AppCompat.Light.DarkActionBar" />
         <activity
-            android:name="org.thoughtcrime.securesms.PassphrasePromptActivity"
+            android:name="org.thoughtcrime.securesms.ScreenLockActivity"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
-            android:launchMode="singleTask"
+            android:launchMode="singleInstancePerTask"
             android:theme="@style/Theme.Session.DayNight.NoActionBar" />
         <activity
             android:name="org.thoughtcrime.securesms.giph.ui.GiphyActivity"

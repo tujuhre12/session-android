@@ -233,8 +233,7 @@ class MediaOverviewViewModel(
 
     fun onSaveClicked() {
         if (!inSelectionMode.value) {
-            // Not in selection mode, so we should not be able to save
-            return
+            return // Not in selection mode, so we should not be able to save
         }
 
         viewModelScope.launch {
@@ -250,7 +249,7 @@ class MediaOverviewViewModel(
                         uri = uri,
                         contentType = it.mediaRecord.contentType,
                         date = it.mediaRecord.date,
-                        fileName = it.mediaRecord.attachment.fileName,
+                        filename = it.mediaRecord.attachment.filename
                     )
                 }
 
@@ -420,8 +419,8 @@ data class MediaOverviewItem(
     val hasPlaceholder: Boolean
         get() = slide.hasPlaceholder()
 
-    val fileName: String?
-        get() = slide.fileName.orNull()
+    val filename: String
+        get() = slide.filename
 
     val fileSize: Long
         get() = slide.fileSize

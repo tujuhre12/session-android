@@ -18,7 +18,6 @@ import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.widget.ImageButton;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -28,9 +27,16 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.ViewPager;
-
 import com.bumptech.glide.Glide;
-
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import network.loki.messenger.R;
 import org.session.libsession.utilities.MediaTypes;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.Util;
@@ -50,17 +56,6 @@ import org.thoughtcrime.securesms.util.CharacterCalculator.CharacterState;
 import org.thoughtcrime.securesms.util.PushCharacterCalculator;
 import org.thoughtcrime.securesms.util.Stopwatch;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
-
-import network.loki.messenger.R;
-
 /**
  * Allows the user to edit and caption a set of media items before choosing to send them.
  */
@@ -69,10 +64,9 @@ public class MediaSendFragment extends Fragment implements ViewTreeObserver.OnGl
                                                            InputAwareLayout.OnKeyboardShownListener,
                                                            InputAwareLayout.OnKeyboardHiddenListener
 {
-
   private static final String TAG = MediaSendFragment.class.getSimpleName();
 
-  private static final String KEY_ADDRESS   = "address";
+  private static final String KEY_ADDRESS = "address";
 
   private InputAwareLayout  hud;
   private View              captionAndRail;
@@ -124,7 +118,6 @@ public class MediaSendFragment extends Fragment implements ViewTreeObserver.OnGl
   @Override
   public void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-
     initViewModel();
   }
 
@@ -358,8 +351,7 @@ public class MediaSendFragment extends Fragment implements ViewTreeObserver.OnGl
                                   .setCancelable(false)
                                   .create();
           dialog.show();
-          dialog.getWindow().setLayout(getResources().getDimensionPixelSize(R.dimen.mediasend_progress_dialog_size),
-                                       getResources().getDimensionPixelSize(R.dimen.mediasend_progress_dialog_size));
+          dialog.getWindow().setLayout(getResources().getDimensionPixelSize(R.dimen.mediasend_progress_dialog_size), getResources().getDimensionPixelSize(R.dimen.mediasend_progress_dialog_size));
         };
         Util.runOnMainDelayed(progressTimer, 250);
       }
@@ -381,7 +373,7 @@ public class MediaSendFragment extends Fragment implements ViewTreeObserver.OnGl
                                     .withMimeType(MediaTypes.IMAGE_JPEG)
                                     .createForSingleSessionOnDisk(context, e -> Log.w(TAG, "Failed to write to disk.", e));
 
-              Media updated = new Media(uri, MediaTypes.IMAGE_JPEG, media.getDate(), bitmap.getWidth(), bitmap.getHeight(), baos.size(), media.getBucketId(), media.getCaption());
+              Media updated = new Media(uri, media.getFilename(), MediaTypes.IMAGE_JPEG, media.getDate(), bitmap.getWidth(), bitmap.getHeight(), baos.size(), media.getBucketId(), media.getCaption());
 
               updatedMedia.add(updated);
               renderTimer.split("item");
