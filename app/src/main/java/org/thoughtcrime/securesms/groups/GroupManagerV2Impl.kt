@@ -757,6 +757,9 @@ class GroupManagerV2Impl @Inject constructor(
                     configs.groupMembers.set(member)
                 }
             }
+
+            // Remove lastHash so we can receive all the messages in the past
+            lokiAPIDatabase.clearLastMessageHashes(groupId.hexString)
         }
 
         // Delete the promotion message remotely
