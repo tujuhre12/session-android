@@ -192,10 +192,7 @@ class InputBar @JvmOverloads constructor(
 
     private fun toggleAttachmentOptions() { delegate?.toggleAttachmentOptions() }
 
-    private fun startRecordingVoiceMessage() {
-        Log.w("ACL2", "Hit startRecordingVoiceMessage!")
-        delegate?.startRecordingVoiceMessage()
-    }
+    private fun startRecordingVoiceMessage() { delegate?.startRecordingVoiceMessage() }
 
     fun draftQuote(thread: Recipient, message: MessageRecord, glide: RequestManager) {
         quoteView?.let(binding.inputBarAdditionalContentContainer::removeView)

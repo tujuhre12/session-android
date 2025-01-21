@@ -103,9 +103,6 @@ class VoiceMessageView : RelativeLayout, AudioSlidePlayer.Listener {
     override fun onPlayerStop(player: AudioSlidePlayer)  { isPlaying = false }
 
     override fun onPlayerProgress(player: AudioSlidePlayer, progress: Double, unused: Long) {
-
-        Log.i("ACL4", "Hit onPlayerProgress: " + progress)
-
         // If the voice message has reached the end then stop it and reset the progress back to the start..
         if (progress == 1.0) {
             togglePlayback()
@@ -130,13 +127,11 @@ class VoiceMessageView : RelativeLayout, AudioSlidePlayer.Listener {
     }
 
     override fun dispatchDraw(canvas: Canvas) {
-        Log.w("ACL4", "Hit dispatchDraw")
         super.dispatchDraw(canvas)
         cornerMask.mask(canvas)
     }
 
     private fun renderIcon() {
-        Log.w("ACL4", "Hit renderIcon")
         val iconID = if (isPlaying) R.drawable.exo_icon_pause else R.drawable.exo_icon_play
         binding.voiceMessagePlaybackImageView.setImageResource(iconID)
     }

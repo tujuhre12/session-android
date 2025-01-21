@@ -75,25 +75,17 @@ public abstract class CursorRecyclerViewAdapter<VH extends RecyclerView.ViewHold
   }
 
   public Cursor swapCursor(Cursor newCursor) {
-
-    Log.w("ACL", "Swaaaaap");
-
-    if (newCursor == cursor) {
-      return null;
-    }
+    if (newCursor == cursor) { return null; }
 
     final Cursor oldCursor = cursor;
-    if (oldCursor != null) {
-      oldCursor.unregisterDataSetObserver(observer);
-    }
+    if (oldCursor != null) { oldCursor.unregisterDataSetObserver(observer); }
 
     cursor = newCursor;
-    if (cursor != null) {
-      cursor.registerDataSetObserver(observer);
-    }
+    if (cursor != null) { cursor.registerDataSetObserver(observer);  }
 
     valid = cursor != null;
     notifyDataSetChanged();
+
     return oldCursor;
   }
 
@@ -157,7 +149,8 @@ public abstract class CursorRecyclerViewAdapter<VH extends RecyclerView.ViewHold
 
     // If we are recording a voice message then DO NOT touch the cursor because it sends us down a
     // rabbit-hole of refreshing everything and creating a new AudioDeck with a new AudioSlide every
-    // single frame!
+    // frame (however, when playing back a voice message we allow it because the View changes to
+    // indicate the audio progress).
     if (ConversationActivityV2.Companion.getVoiceMessageRecordingInProgress()) {
       return 0;
     } else {
@@ -185,15 +178,6 @@ public abstract class CursorRecyclerViewAdapter<VH extends RecyclerView.ViewHold
     if (!isActiveCursor()) {
       throw new IllegalStateException("this should only be called when the cursor is valid");
     }
-
-
-    // THIS IS ACTUALY DANGEROUR because `getCursorPosition` is one of OUR method that does bullshit
-    //if (cursor.getPosition() == position) {
-    //  Log.w("ACL", "Cursor is already at position: " + position);
-    //  return cursor;
-    //}
-
-
 
     if (!cursor.moveToPosition(getCursorPosition(position))) {
       throw new IllegalStateException("couldn't move cursor to position " + position + " (actual cursor position " + getCursorPosition(position) + ")");

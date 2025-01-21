@@ -127,9 +127,6 @@ class MediaOverviewViewModel(
         }
 
     private fun Sequence<MediaRecord>.groupRecordsByTimeBuckets(): List<Pair<BucketTitle, List<MediaOverviewItem>>> {
-        Log.i("ACL", "Hit groupRecordsByTimeBuckets")
-
-
         return this
             .groupBy { record ->
                 val time =
@@ -156,8 +153,6 @@ class MediaOverviewViewModel(
     }
 
     private fun Sequence<MediaRecord>.groupRecordsByRelativeTime(): List<Pair<BucketTitle, List<MediaOverviewItem>>> {
-        Log.i("ACL", "Hit groupRecordsByRelativeTime")
-
         return this
             .groupBy { record ->
                 DateUtils.getRelativeDate(application, Locale.getDefault(), record.date)

@@ -17,28 +17,21 @@
 package org.thoughtcrime.securesms.mms;
 
 import android.content.Context;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
 import com.annimon.stream.Stream;
-
-import org.session.libsession.messaging.sending_receiving.attachments.Attachment;
-import org.session.libsignal.utilities.Log;
-import org.session.libsignal.utilities.guava.Optional;
-import org.thoughtcrime.securesms.util.MediaUtil;
-
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import org.session.libsession.messaging.sending_receiving.attachments.Attachment;
+import org.session.libsignal.utilities.guava.Optional;
+import org.thoughtcrime.securesms.util.MediaUtil;
 
 public class SlideDeck {
 
   private final List<Slide> slides = new LinkedList<>();
 
   public SlideDeck(@NonNull Context context, @NonNull List<? extends Attachment> attachments) {
-    Log.i("ACL", "Hit SlideDeck constructor 1");
-
     for (Attachment attachment : attachments) {
       Slide slide = MediaUtil.getSlideForAttachment(context, attachment);
       if (slide != null) slides.add(slide);
@@ -46,9 +39,6 @@ public class SlideDeck {
   }
 
   public SlideDeck(@NonNull Context context, @NonNull Attachment attachment) {
-    Log.i("ACL", "Hit SlideDeck constructor 2");
-
-
     Slide slide = MediaUtil.getSlideForAttachment(context, attachment);
     if (slide != null) slides.add(slide);
   }

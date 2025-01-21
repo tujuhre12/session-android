@@ -56,9 +56,6 @@ public class MediaRailAdapter extends RecyclerView.Adapter<MediaRailAdapter.Medi
 
   @Override
   public void onBindViewHolder(@NonNull MediaRailViewHolder viewHolder, int i) {
-
-    Log.w("ACL", "Hit onBindViewHolder, i is: " + i);
-
     switch (getItemViewType(i)) {
       case TYPE_MEDIA:
         ((MediaViewHolder) viewHolder).bind(media.get(i), i == activePosition, glideRequests, listener, i - activePosition, editable);
@@ -92,9 +89,6 @@ public class MediaRailAdapter extends RecyclerView.Adapter<MediaRailAdapter.Medi
 
   @Override
   public long getItemId(int position) {
-
-    Log.w("ACL", "Hit getItemId--------------------"); // THIS DOES NOT FIRE REPEATEDLY
-
     switch (getItemViewType(position)) {
       case TYPE_MEDIA:
         return stableIdGenerator.getId(media.get(position));

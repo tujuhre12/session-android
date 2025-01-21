@@ -717,35 +717,20 @@ public class MmsSmsDatabase extends Database {
       if (mmsReader == null) {
         mmsReader = DatabaseComponent.get(context).mmsDatabase().readerFor(cursor, getQuote);
       }
-
       return mmsReader;
     }
 
     public MessageRecord getNext() {
-      Log.w("ACL", "Hit MessageRecord.getNext()"); // This does NOT trigger every frame
-      if (cursor == null || !cursor.moveToNext())
-        return null;
-
-      return getCurrent();
+      if (cursor == null || !cursor.moveToNext()) { return null; } else { return getCurrent(); }
     }
 
     public MessageRecord getCurrent() {
-
-      Log.w("ACL", "Hit messageRecord.getCurrent00000000000000000000000000000000000000000");
-
-      //new Exception().printStackTrace();
-
       String type = cursor.getString(cursor.getColumnIndexOrThrow(TRANSPORT));
-
       if      (MmsSmsDatabase.MMS_TRANSPORT.equals(type)) return getMmsReader().getCurrent();
       else if (MmsSmsDatabase.SMS_TRANSPORT.equals(type)) return getSmsReader().getCurrent();
       else                                                throw new AssertionError("Bad type: " + type);
     }
 
-    public void close() {
-      if (cursor != null) {
-        cursor.close();
-      }
-    }
+    public void close() { if (cursor != null) cursor.close(); }
   }
 }

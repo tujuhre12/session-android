@@ -89,9 +89,6 @@ class ConversationAdapter(
     class ControlMessageViewHolder(val view: ControlMessageView) : ViewHolder(view)
 
     override fun getItemViewType(cursor: Cursor): Int {
-        Log.w("ACL", "Hit ConversationAdapter.getItemViewType") /// THIS GETS CALLED every frame - and from this we call getMessage
-
-
         val message = getMessage(cursor)!!
         if (message.isControlMessage) { return ViewType.Control.rawValue }
         return ViewType.Visible.rawValue
@@ -108,10 +105,6 @@ class ConversationAdapter(
     }
 
     override fun onBindItemViewHolder(viewHolder: ViewHolder, cursor: Cursor) {
-
-        Log.w("ACL", "Hit ConversationAdapter.onBindItemViewHolder") // This DOES NOT get called repeatedly
-
-
         val message = getMessage(cursor)!!
         val position = viewHolder.adapterPosition
         val messageBefore = getMessageBefore(position, cursor)
@@ -194,15 +187,9 @@ class ConversationAdapter(
         super.onItemViewRecycled(viewHolder)
     }
 
-    private fun getMessage(cursor: Cursor): MessageRecord? {
-        Log.w("ACL", "Hit ConversationAdapter.getMessage") // THIS ONE gets called every frame!!!!!!!!
-
-        return messageDB.readerFor(cursor).current
-    }
+    private fun getMessage(cursor: Cursor): MessageRecord? { return messageDB.readerFor(cursor).current }
 
     private fun getMessageBefore(position: Int, cursor: Cursor): MessageRecord? {
-        Log.w("ACL", "Hit ConversationAdapter.getMessageBefore")  // This DOES NOT get called repeatedly
-
         // The message that's visually before the current one is actually after the current
         // one for the cursor because the layout is reversed
         if (isReversed &&  !cursor.moveToPosition(position + 1)) { return null }
@@ -212,8 +199,6 @@ class ConversationAdapter(
     }
 
     private fun getMessageAfter(position: Int, cursor: Cursor): MessageRecord? {
-        Log.w("ACL", "Hit ConversationAdapter.getMessageAfter") // This DOES NOT get called repeatedly
-
         // The message that's visually after the current one is actually before the current
         // one for the cursor because the layout is reversed
         if (isReversed &&  !cursor.moveToPosition(position - 1)) { return null }
@@ -223,9 +208,6 @@ class ConversationAdapter(
     }
 
     override fun changeCursor(cursor: Cursor?) {
-
-        Log.w("ACL", "Hit ConversationAdapter.changeCursor")
-
         super.changeCursor(cursor)
 
         val toRemove = mutableSetOf<MessageRecord>()
@@ -294,7 +276,6 @@ class ConversationAdapter(
     }
 
     fun getTimestampForItemAt(firstVisiblePosition: Int): Long? {
-        Log.w("ACL", "Hit ConversationAdapter.getTimestampForItemAt")
         val cursor = this.cursor ?: return null
         if (!cursor.moveToPosition(firstVisiblePosition)) return null
         val message = messageDB.readerFor(cursor).current ?: return null
