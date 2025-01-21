@@ -446,7 +446,6 @@ class DefaultConversationRepository @Inject constructor(
     }
 
     override fun hasReceived(threadId: Long): Boolean {
-        Log.w("ACL", "Hit hasReceived!") // This does NOT trigger relentlessly
         val cursor = mmsSmsDb.getConversation(threadId, true)
         mmsSmsDb.readerFor(cursor).use { reader ->
             while (reader.next != null) {
