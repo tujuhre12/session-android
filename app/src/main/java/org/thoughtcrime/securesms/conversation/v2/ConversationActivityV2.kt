@@ -418,6 +418,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         const val PICK_FROM_LIBRARY = 12
         const val INVITE_CONTACTS = 124
         const val CONVERSATION_SETTINGS = 125 // used to open conversation search on result
+
+        // Flag to prevent CursorRecyclerViewAdapter from triggering constant AudioSlide creation
+        // every frame when recording a voice message (however we allow it when playing back a
+        // voice message because the View changes per frame to indicate playback progress).
+        var voiceMessageRecordingInProgress = false
     }
     // endregion
 
@@ -2056,14 +2061,13 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             // recorder state is Idle! As such we'll only tick the recorder state over to Recording if
             // we were still in the SettingUpToRecord state when we got here (i.e., the record voice
             // message button is still held or is locked to keep recording audio without being held).
-            val callback: () -> Unit = {
+            val audioRecordingFinishedCallback: () -> Unit = {
                 if (binding.inputBar.voiceRecorderState == VoiceRecorderState.SettingUpToRecord) {
                     binding.inputBar.voiceRecorderState = VoiceRecorderState.Recording
                 }
             }
-            audioRecorder.startRecording(callback)
-
-            stopAudioHandler.postDelayed(stopVoiceMessageRecordingTask, 300000) // Limit voice messages to 5 minute each
+            audioRecorder.startRecording(audioRecordingFinishedCallback)
+            stopAudioHandler.postDelayed(stopVoiceMessageRecordingTask, 5.minutes.inWholeMilliseconds) // Limit voice messages to 5 minute each
         } else {
             Permissions.with(this)
                 .request(Manifest.permission.RECORD_AUDIO)
@@ -2116,7 +2120,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         // exits before transmitting the audio!
         inputBar.voiceRecorderState = VoiceRecorderState.Idle
 
-        // Generate a filename from the current time such as: "VoiceMessage_2025-01-08-152733.aac"
+        // Generate a filename from the current time such as: "Session-VoiceMessage_2025-01-08-152733.aac"
         val voiceMessageFilename = FilenameUtils.constructNewVoiceMessageFilename(applicationContext)
 
         // Voice message too short? Warn with toast instead of sending.
@@ -2134,7 +2138,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         // into the draft database and can be retried when we regain network connectivity and a working
         // node path.
 
-        // Attempt to send it the voice message
+        // Attempt to send the voice message
         future.addListener(object : ListenableFuture.Listener<Pair<Uri, Long>> {
 
             override fun onSuccess(result: Pair<Uri, Long>) {

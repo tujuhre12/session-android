@@ -28,6 +28,7 @@ import org.thoughtcrime.securesms.conversation.v2.messages.QuoteViewDelegate
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import com.bumptech.glide.RequestManager
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.util.addTextChangedListener
 import org.thoughtcrime.securesms.util.contains
 
@@ -191,7 +192,10 @@ class InputBar @JvmOverloads constructor(
 
     private fun toggleAttachmentOptions() { delegate?.toggleAttachmentOptions() }
 
-    private fun startRecordingVoiceMessage() { delegate?.startRecordingVoiceMessage() }
+    private fun startRecordingVoiceMessage() {
+        Log.w("ACL2", "Hit startRecordingVoiceMessage!")
+        delegate?.startRecordingVoiceMessage()
+    }
 
     fun draftQuote(thread: Recipient, message: MessageRecord, glide: RequestManager) {
         quoteView?.let(binding.inputBarAdditionalContentContainer::removeView)

@@ -2,23 +2,20 @@ package org.thoughtcrime.securesms.mediapreview;
 
 import static org.thoughtcrime.securesms.util.GeneralUtilitiesKt.toPx;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-
-import network.loki.messenger.R;
-
-
-import org.thoughtcrime.securesms.conversation.v2.utilities.ThumbnailView;
-import org.thoughtcrime.securesms.mediasend.Media;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.RequestManager;
-import org.thoughtcrime.securesms.util.StableIdGenerator;
-
 import java.util.ArrayList;
 import java.util.List;
+import network.loki.messenger.R;
+import org.session.libsignal.utilities.Log;
+import org.thoughtcrime.securesms.conversation.v2.utilities.ThumbnailView;
+import org.thoughtcrime.securesms.mediasend.Media;
+import org.thoughtcrime.securesms.util.StableIdGenerator;
 
 public class MediaRailAdapter extends RecyclerView.Adapter<MediaRailAdapter.MediaRailViewHolder> {
 
@@ -59,6 +56,9 @@ public class MediaRailAdapter extends RecyclerView.Adapter<MediaRailAdapter.Medi
 
   @Override
   public void onBindViewHolder(@NonNull MediaRailViewHolder viewHolder, int i) {
+
+    Log.w("ACL", "Hit onBindViewHolder, i is: " + i);
+
     switch (getItemViewType(i)) {
       case TYPE_MEDIA:
         ((MediaViewHolder) viewHolder).bind(media.get(i), i == activePosition, glideRequests, listener, i - activePosition, editable);
@@ -92,6 +92,9 @@ public class MediaRailAdapter extends RecyclerView.Adapter<MediaRailAdapter.Medi
 
   @Override
   public long getItemId(int position) {
+
+    Log.w("ACL", "Hit getItemId--------------------"); // THIS DOES NOT FIRE REPEATEDLY
+
     switch (getItemViewType(position)) {
       case TYPE_MEDIA:
         return stableIdGenerator.getId(media.get(position));

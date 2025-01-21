@@ -19,6 +19,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewInputBarRecordingBinding
+import org.thoughtcrime.securesms.conversation.v2.messages.VoiceMessageView
 import org.thoughtcrime.securesms.util.animateSizeChange
 import org.thoughtcrime.securesms.util.disableClipping
 import org.thoughtcrime.securesms.util.toPx
@@ -105,7 +106,11 @@ class InputBarRecordingView : RelativeLayout {
         timerJob = scope.launch {
             while (isActive) {
                 val duration = (Date().time - startTimestamp) / 1000L
-                binding.recordingViewDurationTextView.text = android.text.format.DateUtils.formatElapsedTime(duration)
+
+                // Update the voice message duration text and also store it in the VoiceMessageView so we can see the correct duration during upload
+                VoiceMessageView.formattedLatestVoiceMessageDuration = android.text.format.DateUtils.formatElapsedTime(duration)
+                binding.recordingViewDurationTextView.text = VoiceMessageView.formattedLatestVoiceMessageDuration
+
                 delay(500)
             }
         }

@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.Util;
 import org.session.libsignal.utilities.Log;
+import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2;
 import org.thoughtcrime.securesms.database.MessagingDatabase.SyncMessageId;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
 import org.thoughtcrime.securesms.database.model.MessageRecord;
@@ -721,6 +722,7 @@ public class MmsSmsDatabase extends Database {
     }
 
     public MessageRecord getNext() {
+      Log.w("ACL", "Hit MessageRecord.getNext()"); // This does NOT trigger every frame
       if (cursor == null || !cursor.moveToNext())
         return null;
 
@@ -730,6 +732,8 @@ public class MmsSmsDatabase extends Database {
     public MessageRecord getCurrent() {
 
       Log.w("ACL", "Hit messageRecord.getCurrent00000000000000000000000000000000000000000");
+
+      //new Exception().printStackTrace();
 
       String type = cursor.getString(cursor.getColumnIndexOrThrow(TRANSPORT));
 

@@ -27,6 +27,9 @@ import androidx.recyclerview.widget.RecyclerView.ViewHolder;
 import android.view.View;
 import android.view.ViewGroup;
 
+import org.session.libsignal.utilities.Log;
+import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2;
+
 /**
  * RecyclerView.Adapter that manages a Cursor, comparable to the CursorAdapter usable in ListView/GridView.
  */
@@ -45,9 +48,8 @@ public abstract class CursorRecyclerViewAdapter<VH extends RecyclerView.ViewHold
   private @Nullable View    footer;
 
   private static class HeaderFooterViewHolder extends RecyclerView.ViewHolder {
-    public HeaderFooterViewHolder(View itemView) {
-      super(itemView);
-    }
+
+    public HeaderFooterViewHolder(View itemView) { super(itemView); }
   }
 
   protected CursorRecyclerViewAdapter(Context context, Cursor cursor) {
@@ -59,42 +61,23 @@ public abstract class CursorRecyclerViewAdapter<VH extends RecyclerView.ViewHold
     }
   }
 
-  protected @NonNull Context getContext() {
-    return context;
-  }
-
-  public @Nullable Cursor getCursor() {
-    return cursor;
-  }
-
-  public void setHeaderView(@Nullable View header) {
-    this.header = header;
-  }
-
-  public View getHeaderView() {
-    return this.header;
-  }
-
-  public void setFooterView(@Nullable View footer) {
-    this.footer = footer;
-  }
-
-  public boolean hasHeaderView() {
-    return header != null;
-  }
-
-  public boolean hasFooterView() {
-    return footer != null;
-  }
+  protected @NonNull Context getContext()          { return context;        }
+  public @Nullable Cursor getCursor()              { return cursor;         }
+  public void setHeaderView(@Nullable View header) { this.header = header;  }
+  public View getHeaderView()                      { return this.header;    }
+  public void setFooterView(@Nullable View footer) { this.footer = footer;  }
+  public boolean hasHeaderView()                   { return header != null; }
+  public boolean hasFooterView()                   { return footer != null; }
 
   public void changeCursor(Cursor cursor) {
     Cursor old = swapCursor(cursor);
-    if (old != null) {
-      old.close();
-    }
+    if (old != null) { old.close(); }
   }
 
   public Cursor swapCursor(Cursor newCursor) {
+
+    Log.w("ACL", "Swaaaaap");
+
     if (newCursor == cursor) {
       return null;
     }
@@ -132,7 +115,7 @@ public abstract class CursorRecyclerViewAdapter<VH extends RecyclerView.ViewHold
   @Override
   public final void onViewRecycled(@NonNull ViewHolder holder) {
     if (!(holder instanceof HeaderFooterViewHolder)) {
-      onItemViewRecycled((VH)holder);
+      onItemViewRecycled( (VH)holder );
     }
   }
 
@@ -154,27 +137,35 @@ public abstract class CursorRecyclerViewAdapter<VH extends RecyclerView.ViewHold
   public final void onBindViewHolder(@NonNull RecyclerView.ViewHolder viewHolder, int position) {
     if (!isHeaderPosition(position) && !isFooterPosition(position)) {
       if (isFastAccessPosition(position)) onBindFastAccessItemViewHolder((VH)viewHolder, position);
-      else                                onBindItemViewHolder((VH)viewHolder, getCursorAtPositionOrThrow(position));
+      else {
+        //if (cursor.getPosition() == position) { return; } else {
+          onBindItemViewHolder((VH) viewHolder, getCursorAtPositionOrThrow(position)); // HERE2
+        //}
+      }
     }
   }
 
   public abstract void onBindItemViewHolder(VH viewHolder, @NonNull Cursor cursor);
 
-  protected void onBindFastAccessItemViewHolder(VH viewHolder, int position) {
-
-  }
+  protected void onBindFastAccessItemViewHolder(VH viewHolder, int position) { /* Nothing */ }
 
   @Override
   public final int getItemViewType(int position) {
-    if (isHeaderPosition(position))     return HEADER_TYPE;
-    if (isFooterPosition(position))     return FOOTER_TYPE;
+    if (isHeaderPosition(position)) return HEADER_TYPE;
+    if (isFooterPosition(position)) return FOOTER_TYPE;
     if (isFastAccessPosition(position)) return getFastAccessItemViewType(position);
-    return getItemViewType(getCursorAtPositionOrThrow(position));
+
+    // If we are recording a voice message then DO NOT touch the cursor because it sends us down a
+    // rabbit-hole of refreshing everything and creating a new AudioDeck with a new AudioSlide every
+    // single frame!
+    if (ConversationActivityV2.Companion.getVoiceMessageRecordingInProgress()) {
+      return 0;
+    } else {
+      return getItemViewType(getCursorAtPositionOrThrow(position));
+    }
   }
 
-  public int getItemViewType(@NonNull Cursor cursor) {
-    return 0;
-  }
+  public int getItemViewType(@NonNull Cursor cursor) { return 0; }
 
   @Override
   public final long getItemId(int position) {
@@ -194,15 +185,23 @@ public abstract class CursorRecyclerViewAdapter<VH extends RecyclerView.ViewHold
     if (!isActiveCursor()) {
       throw new IllegalStateException("this should only be called when the cursor is valid");
     }
+
+
+    // THIS IS ACTUALY DANGEROUR because `getCursorPosition` is one of OUR method that does bullshit
+    //if (cursor.getPosition() == position) {
+    //  Log.w("ACL", "Cursor is already at position: " + position);
+    //  return cursor;
+    //}
+
+
+
     if (!cursor.moveToPosition(getCursorPosition(position))) {
       throw new IllegalStateException("couldn't move cursor to position " + position + " (actual cursor position " + getCursorPosition(position) + ")");
     }
     return cursor;
   }
 
-  protected boolean isActiveCursor() {
-    return valid && cursor != null;
-  }
+  protected boolean isActiveCursor() { return valid && cursor != null; }
 
   protected boolean isFooterPosition(int position) {
     return hasFooterView() && position == getItemCount() - 1;
@@ -220,21 +219,10 @@ public abstract class CursorRecyclerViewAdapter<VH extends RecyclerView.ViewHold
     return position - getFastAccessSize();
   }
 
-  protected int getFastAccessItemViewType(int position) {
-    return 0;
-  }
-
-  protected boolean isFastAccessPosition(int position) {
-    return false;
-  }
-
-  protected long getFastAccessItemId(int position) {
-    return 0;
-  }
-
-  protected int getFastAccessSize() {
-    return 0;
-  }
+  protected int getFastAccessItemViewType(int position) { return 0;     }
+  protected boolean isFastAccessPosition(int position)  { return false; }
+  protected long getFastAccessItemId(int position)      { return 0;     }
+  protected int getFastAccessSize()                     { return 0;     }
 
   private class AdapterDataSetObserver extends DataSetObserver {
     @Override

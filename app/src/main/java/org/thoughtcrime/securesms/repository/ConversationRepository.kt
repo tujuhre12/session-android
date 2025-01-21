@@ -30,6 +30,7 @@ import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.DraftDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
@@ -445,6 +446,7 @@ class DefaultConversationRepository @Inject constructor(
     }
 
     override fun hasReceived(threadId: Long): Boolean {
+        Log.w("ACL", "Hit hasReceived!") // This does NOT trigger relentlessly
         val cursor = mmsSmsDb.getConversation(threadId, true)
         mmsSmsDb.readerFor(cursor).use { reader ->
             while (reader.next != null) {

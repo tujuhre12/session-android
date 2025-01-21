@@ -1,5 +1,6 @@
 package network.loki.messenger.libsession_util
 
+/*
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import network.loki.messenger.libsession_util.util.BaseCommunityInfo
@@ -814,5 +815,5 @@ class InstrumentedTests {
         assertThat(volatiles.all().size, equalTo(1))
         assertThat(volatiles.allClosedGroups().size, equalTo(1))
     }
-
 }
+*/

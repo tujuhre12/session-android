@@ -24,7 +24,11 @@ import kotlin.math.roundToLong
 class VoiceMessageView : RelativeLayout, AudioSlidePlayer.Listener {
 
     companion object {
+        // The duration in milliseconds of the latest voice message. This is set from ConversationActivityV2.sendVoiceMessage
+        // so that we can display the voice message duration while it uploads (we do not seem to have this information until
+        // upload completes otherwise).
         var latestVoiceMessageDurationMS = -1L
+        var formattedLatestVoiceMessageDuration = ""
     }
 
     @Inject lateinit var attachmentDb: AttachmentDatabase
@@ -42,45 +46,16 @@ class VoiceMessageView : RelativeLayout, AudioSlidePlayer.Listener {
     var delegate: VisibleMessageViewDelegate? = null
     var indexInAdapter = -1
 
-    private var onFinishVoiceMessageDuration: String? = null
-
-    private var startVoiceMessageTimestamp = 0L
-
+    private var finalFormattedVoiceMessageDuration: String? = null
 
     // region Lifecycle
     constructor(context: Context) : super(context)
     constructor(context: Context, attrs: AttributeSet) : super(context, attrs)
     constructor(context: Context, attrs: AttributeSet, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
-
     // Note: onFinishInflate occurs before `bind`
     override fun onFinishInflate() {
         super.onFinishInflate()
-
-        val formattedVoiceMessageDuration = String.format("%01d:%02d", TimeUnit.MILLISECONDS.toMinutes(0), TimeUnit.MILLISECONDS.toSeconds(0))
-        Log.i("ACL", "Hit VoiceMessageView.onFinishInflate with formatted duration: " + formattedVoiceMessageDuration)
-
-        Log.i("ACL", "In onFinishInflate, duration is: " + durationMS + " and progress is: " + progress)
-
-        Log.i("ACL", "Player is: " + player)
-        if (player != null) {
-            Log.i("ACL", "Player duration: " + player?.duration + ", player progress: " + player?.progress)
-        }
-
-        val goingWithDuration = onFinishVoiceMessageDuration ?: formattedVoiceMessageDuration
-
-        Log.i("ACL", "latestVoiceMessageDurationMS is: " + latestVoiceMessageDurationMS)
-
-//        binding.voiceMessageViewDurationTextView.text = String.format("%01d:%02d",
-//            TimeUnit.MILLISECONDS.toMinutes(durationMS - (progress * durationMS.toDouble()).roundToLong()),
-//            TimeUnit.MILLISECONDS.toSeconds(durationMS - (progress * durationMS.toDouble()).roundToLong()) % 60)
-
-        // Going with this solution
-
-
-        // Note: At this point we don't have the message with the audio data, so we can't extract the audio duration.
-        // Instead, we set a static duration from the ConversationActivity's `sendVoiceMessage` method, where we DO
-        // have that data, and we extract and use it here to display an accurate duration while the voice msg uploads.
         val durationString = String.format("%01d:%02d", TimeUnit.MILLISECONDS.toMinutes(latestVoiceMessageDurationMS), TimeUnit.MILLISECONDS.toSeconds(latestVoiceMessageDurationMS) % 60)
         binding.voiceMessageViewDurationTextView.text = durationString
     }
@@ -89,9 +64,6 @@ class VoiceMessageView : RelativeLayout, AudioSlidePlayer.Listener {
 
     // region Updating
     fun bind(message: MmsMessageRecord, isStartOfMessageCluster: Boolean, isEndOfMessageCluster: Boolean) {
-
-        Log.i("ACL", "Bind is being called!" + System.currentTimeMillis())
-
         val audio = message.slideDeck.audioSlide!!
         binding.voiceMessageViewLoader.isVisible = audio.isDownloadInProgress
         val cornerRadii = MessageBubbleUtilities.calculateRadii(context, isStartOfMessageCluster, isEndOfMessageCluster, message.isOutgoing)
@@ -100,7 +72,7 @@ class VoiceMessageView : RelativeLayout, AudioSlidePlayer.Listener {
         cornerMask.setBottomRightRadius(cornerRadii[2])
         cornerMask.setBottomLeftRadius(cornerRadii[3])
 
-        // only process audio if downloaded
+        // Only process audio if downloaded
         if (audio.isPendingDownload || audio.isDownloadInProgress) {
             this.player = null
             return
@@ -112,45 +84,41 @@ class VoiceMessageView : RelativeLayout, AudioSlidePlayer.Listener {
         (audio.asAttachment() as? DatabaseAttachment)?.let { attachment ->
             attachmentDb.getAttachmentAudioExtras(attachment.attachmentId)?.let { audioExtras ->
 
-
-
                 if (audioExtras.durationMs > 0) {
                     durationMS = audioExtras.durationMs
                     binding.voiceMessageViewDurationTextView.visibility = VISIBLE
 
-                    val anotherFormattedDuration = String.format("%01d:%02d", TimeUnit.MILLISECONDS.toMinutes(audioExtras.durationMs), TimeUnit.MILLISECONDS.toSeconds(audioExtras.durationMs) % 60)
-                    Log.i("ACL2", "Another formatted duration is: " + anotherFormattedDuration)
-
-                    binding.voiceMessageViewDurationTextView.text = anotherFormattedDuration
-
-                    onFinishVoiceMessageDuration = anotherFormattedDuration
+                    val formattedVoiceMessageDuration = String.format("%01d:%02d", TimeUnit.MILLISECONDS.toMinutes(audioExtras.durationMs), TimeUnit.MILLISECONDS.toSeconds(audioExtras.durationMs) % 60)
+                    binding.voiceMessageViewDurationTextView.text = formattedVoiceMessageDuration
+                    finalFormattedVoiceMessageDuration = formattedVoiceMessageDuration
                 } else {
-                    Log.i("ACL2", "For some reason audioExtras.durationMs was NOT greater than zero!")
+                    Log.w("AudioMessageView", "For some reason audioExtras.durationMs was NOT greater than zero!")
+                    binding.voiceMessageViewDurationTextView.text = context.getString(R.string.unknown)
                 }
             }
         }
     }
 
-    override fun onPlayerStart(player: AudioSlidePlayer) {
-        isPlaying = true
-    }
+    override fun onPlayerStart(player: AudioSlidePlayer) { isPlaying = true  }
+    override fun onPlayerStop(player: AudioSlidePlayer)  { isPlaying = false }
 
     override fun onPlayerProgress(player: AudioSlidePlayer, progress: Double, unused: Long) {
+
+        Log.i("ACL4", "Hit onPlayerProgress: " + progress)
+
+        // If the voice message has reached the end then stop it and reset the progress back to the start..
         if (progress == 1.0) {
             togglePlayback()
             handleProgressChanged(0.0)
             delegate?.playVoiceMessageAtIndexIfPossible(indexInAdapter + 1)
-            Log.i("ACL", "Doing This111")
+
         } else {
+            // ..otherwise continue playing the voice message.
             handleProgressChanged(progress)
-            Log.i("ACL", "Doing That111")
         }
     }
 
     private fun handleProgressChanged(progress: Double) {
-
-        Log.i("ACL", "Progress is now: " + progress)
-
         this.progress = progress
         binding.voiceMessageViewDurationTextView.text = String.format("%01d:%02d",
             TimeUnit.MILLISECONDS.toMinutes(durationMS - (progress * durationMS.toDouble()).roundToLong()),
@@ -161,16 +129,14 @@ class VoiceMessageView : RelativeLayout, AudioSlidePlayer.Listener {
         binding.progressView.layoutParams = layoutParams
     }
 
-    override fun onPlayerStop(player: AudioSlidePlayer) {
-        isPlaying = false
-    }
-
     override fun dispatchDraw(canvas: Canvas) {
+        Log.w("ACL4", "Hit dispatchDraw")
         super.dispatchDraw(canvas)
         cornerMask.mask(canvas)
     }
 
     private fun renderIcon() {
+        Log.w("ACL4", "Hit renderIcon")
         val iconID = if (isPlaying) R.drawable.exo_icon_pause else R.drawable.exo_icon_play
         binding.voiceMessagePlaybackImageView.setImageResource(iconID)
     }
