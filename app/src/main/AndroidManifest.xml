@@ -320,11 +320,6 @@
         <activity android:name="org.thoughtcrime.securesms.media.MediaOverviewActivity" />
 
         <service
-            android:enabled="true"
-            android:name="org.thoughtcrime.securesms.service.WebRtcCallService"
-            android:foregroundServiceType="phoneCall"
-            android:exported="false" />
-        <service
             android:name="org.thoughtcrime.securesms.service.KeyCachingService"
             android:enabled="true"
             android:exported="false" android:foregroundServiceType="specialUse">

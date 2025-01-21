@@ -533,6 +533,7 @@ class DefaultMessageNotifier : MessageNotifier {
                 cache[threadId] = blindedPublicKey
             }
             if (threadRecipients == null || !threadRecipients.isMuted) {
+                Log.d("", "*** Got a call message (default message notifier): incoming call? ${record.isIncomingCall} -- outgoing call? ${record.isOutgoingCall} -- missed call? ${record.isMissedCall} -- FIRST missed call? ${record.isFirstMissedCall}")
                 if (threadRecipients != null && threadRecipients.notifyType == RecipientDatabase.NOTIFY_TYPE_MENTIONS) {
                     // check if mentioned here
                     var isQuoteMentioned = false

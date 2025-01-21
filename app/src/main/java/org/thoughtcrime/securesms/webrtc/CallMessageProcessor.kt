@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.coroutineScope
 import kotlinx.coroutines.Dispatchers.IO
@@ -52,8 +53,8 @@ class CallMessageProcessor(private val context: Context, private val textSecureP
             Log.d("", "Safe start fs in callMessageProcessor: ${intent.action}")
 
             // Attempt to start the call service
-            try {
-                context.startForegroundService(intent)
+            /*try {
+                ContextCompat.startForegroundService(context, intent)
             } catch (e: Exception) {
                 // If the app was background or killed by the system, it won't be possible to start the service,
                 // as the system forbids services being started from the background
@@ -83,7 +84,7 @@ class CallMessageProcessor(private val context: Context, private val textSecureP
                         )
                     )
                 }
-            }
+            }*/
         }
     }
 
@@ -182,6 +183,9 @@ class CallMessageProcessor(private val context: Context, private val textSecureP
                 callId = callId,
                 callTime = callMessage.sentTimestamp!!
         )
+
+
+
         safeStartForegroundService(context, incomingIntent, IncomingCallMetadata(
             recipientAddress = Address.fromSerialized(recipientAddress),
             callId = callId,
