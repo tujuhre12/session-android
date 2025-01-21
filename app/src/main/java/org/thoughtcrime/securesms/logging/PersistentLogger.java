@@ -1,15 +1,8 @@
 package org.thoughtcrime.securesms.logging;
 
 import android.content.Context;
-
 import androidx.annotation.AnyThread;
 import androidx.annotation.WorkerThread;
-
-import org.session.libsignal.utilities.ListenableFuture;
-import org.session.libsignal.utilities.Log;
-import org.session.libsignal.utilities.NoExternalStorageException;
-import org.session.libsignal.utilities.SettableFuture;
-
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -22,6 +15,10 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import org.session.libsignal.utilities.ListenableFuture;
+import org.session.libsignal.utilities.Log;
+import org.session.libsignal.utilities.NoExternalStorageException;
+import org.session.libsignal.utilities.SettableFuture;
 
 public class PersistentLogger extends Log.Logger {
 

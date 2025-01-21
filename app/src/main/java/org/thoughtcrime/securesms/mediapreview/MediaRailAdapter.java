@@ -12,7 +12,6 @@ import com.bumptech.glide.RequestManager;
 import java.util.ArrayList;
 import java.util.List;
 import network.loki.messenger.R;
-import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.conversation.v2.utilities.ThumbnailView;
 import org.thoughtcrime.securesms.mediasend.Media;
 import org.thoughtcrime.securesms.util.StableIdGenerator;

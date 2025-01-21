@@ -19,15 +19,13 @@ package org.thoughtcrime.securesms.database;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.DataSetObserver;
+import android.view.View;
+import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
-import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.RecyclerView.ViewHolder;
-import android.view.View;
-import android.view.ViewGroup;
-
-import org.session.libsignal.utilities.Log;
+import androidx.recyclerview.widget.RecyclerView;
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2;
 
 /**
@@ -130,9 +128,7 @@ public abstract class CursorRecyclerViewAdapter<VH extends RecyclerView.ViewHold
     if (!isHeaderPosition(position) && !isFooterPosition(position)) {
       if (isFastAccessPosition(position)) onBindFastAccessItemViewHolder((VH)viewHolder, position);
       else {
-        //if (cursor.getPosition() == position) { return; } else {
-          onBindItemViewHolder((VH) viewHolder, getCursorAtPositionOrThrow(position)); // HERE2
-        //}
+          onBindItemViewHolder((VH) viewHolder, getCursorAtPositionOrThrow(position));
       }
     }
   }

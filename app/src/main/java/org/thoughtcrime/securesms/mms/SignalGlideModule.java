@@ -4,9 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.util.Log;
-
 import androidx.annotation.NonNull;
-
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.GlideBuilder;
 import com.bumptech.glide.Registry;
@@ -21,7 +19,8 @@ import com.bumptech.glide.load.resource.gif.ByteBufferGifDecoder;
 import com.bumptech.glide.load.resource.gif.GifDrawable;
 import com.bumptech.glide.load.resource.gif.StreamGifDecoder;
 import com.bumptech.glide.module.AppGlideModule;
-
+import java.io.File;
+import java.io.InputStream;
 import org.session.libsession.avatars.ContactPhoto;
 import org.session.libsession.avatars.PlaceholderAvatarPhoto;
 import org.thoughtcrime.securesms.crypto.AttachmentSecret;
@@ -38,9 +37,6 @@ import org.thoughtcrime.securesms.glide.cache.EncryptedGifCacheDecoder;
 import org.thoughtcrime.securesms.glide.cache.EncryptedGifDrawableResourceEncoder;
 import org.thoughtcrime.securesms.mms.AttachmentStreamUriLoader.AttachmentModel;
 import org.thoughtcrime.securesms.mms.DecryptableStreamUriLoader.DecryptableUri;
-
-import java.io.File;
-import java.io.InputStream;
 
 @GlideModule
 public class SignalGlideModule extends AppGlideModule {
