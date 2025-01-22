@@ -15,10 +15,6 @@ import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.calls.WebRtcCallActivity
 import org.thoughtcrime.securesms.notifications.NotificationChannels
-import org.thoughtcrime.securesms.preferences.SettingsActivity
-import org.thoughtcrime.securesms.service.WebRtcCallService
-import org.thoughtcrime.securesms.ui.getSubbedCharSequence
-import org.thoughtcrime.securesms.ui.getSubbedString
 
 class CallNotificationBuilder {
 
@@ -67,12 +63,14 @@ class CallNotificationBuilder {
                     val txt = Phrase.from(context, R.string.callsIncoming).put(NAME_KEY, recipName).format()
                     builder.setContentText(txt)
                             .setCategory(NotificationCompat.CATEGORY_CALL)
-                    builder.addAction(getServiceNotificationAction(
+                    builder.addAction(
+                        getActivityNotificationAction(
                             context,
-                            WebRtcCallService.ACTION_DENY_CALL,
+                            WebRtcCallActivity.ACTION_DENY_CALL,
                             R.drawable.ic_x,
                             R.string.decline
-                    ))
+                    )
+                    )
                     // If notifications aren't enabled, we will trigger the intent from WebRtcCallService
                     builder.setFullScreenIntent(getFullScreenPendingIntent(context), true)
                     builder.addAction(getActivityNotificationAction(
@@ -86,34 +84,29 @@ class CallNotificationBuilder {
 
                 TYPE_OUTGOING_RINGING -> {
                     builder.setContentText(context.getString(R.string.callsConnecting))
-                    builder.addAction(getServiceNotificationAction(
+                    builder.addAction(
+                        getActivityNotificationAction(
                             context,
-                            WebRtcCallService.ACTION_LOCAL_HANGUP,
+                            WebRtcCallActivity.ACTION_LOCAL_HANGUP,
                             R.drawable.ic_phone_fill_custom,
                             R.string.cancel
-                    ))
+                    )
+                    )
                 }
                 else -> {
                     builder.setContentText(context.getString(R.string.callsInProgress))
-                    builder.addAction(getServiceNotificationAction(
+                    builder.addAction(
+                        getActivityNotificationAction(
                             context,
-                            WebRtcCallService.ACTION_LOCAL_HANGUP,
+                            WebRtcCallActivity.ACTION_LOCAL_HANGUP,
                             R.drawable.ic_phone_fill_custom,
                             R.string.callsEnd
-                    )).setUsesChronometer(true)
+                    )
+                    ).setUsesChronometer(true)
                 }
             }
 
             return builder.build()
-        }
-
-        private fun getServiceNotificationAction(context: Context, action: String, iconResId: Int, titleResId: Int): NotificationCompat.Action {
-            val intent = Intent(context, WebRtcCallService::class.java)
-                    .setAction(action)
-
-            val pendingIntent = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-
-            return NotificationCompat.Action(iconResId, context.getString(titleResId), pendingIntent)
         }
 
         private fun getFullScreenPendingIntent(context: Context): PendingIntent {

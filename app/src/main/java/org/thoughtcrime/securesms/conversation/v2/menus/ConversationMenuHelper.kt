@@ -24,7 +24,6 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.IOException
 import network.loki.messenger.R
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
@@ -43,6 +42,7 @@ import org.session.libsignal.utilities.guava.Optional
 import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.ShortcutLauncherActivity
 import org.thoughtcrime.securesms.calls.WebRtcCallActivity
+import org.thoughtcrime.securesms.calls.WebRtcCallActivity.Companion.ACTION_ANSWER
 import org.thoughtcrime.securesms.contacts.SelectContactsActivity
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.utilities.NotificationUtils
@@ -55,12 +55,13 @@ import org.thoughtcrime.securesms.groups.GroupMembersActivity
 import org.thoughtcrime.securesms.media.MediaOverviewActivity
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.PrivacySettingsActivity
-import org.thoughtcrime.securesms.service.WebRtcCallService
+import org.thoughtcrime.securesms.service.WebRtcCallService.Companion.EXTRA_RECIPIENT_ADDRESS
 import org.thoughtcrime.securesms.showMuteDialog
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.ui.findActivity
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.BitmapUtil
+import java.io.IOException
 
 object ConversationMenuHelper {
 
@@ -246,11 +247,12 @@ object ConversationMenuHelper {
             return
         }
 
-        WebRtcCallService.createCall(context, thread)
-            .let(context::startService)
-
         Intent(context, WebRtcCallActivity::class.java)
-            .apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }
+            .apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                action = ACTION_ANSWER
+                putExtra(EXTRA_RECIPIENT_ADDRESS, thread.address)
+            }
             .let(context::startActivity)
     }
 

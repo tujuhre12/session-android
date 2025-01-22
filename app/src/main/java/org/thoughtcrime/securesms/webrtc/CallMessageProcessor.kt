@@ -2,11 +2,6 @@ package org.thoughtcrime.securesms.webrtc
 
 import android.Manifest
 import android.content.Context
-import android.content.Intent
-import android.content.pm.PackageManager
-import androidx.core.app.ActivityCompat
-import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.coroutineScope
 import kotlinx.coroutines.Dispatchers.IO
@@ -29,63 +24,20 @@ import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.PROVISI
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.service.WebRtcCallService
-import org.thoughtcrime.securesms.util.CallNotificationBuilder
-import org.thoughtcrime.securesms.util.CallNotificationBuilder.Companion.TYPE_INCOMING_PRE_OFFER
-import org.thoughtcrime.securesms.util.CallNotificationBuilder.Companion.WEBRTC_NOTIFICATION
 import org.webrtc.IceCandidate
 import java.util.UUID
 
-class CallMessageProcessor(private val context: Context, private val textSecurePreferences: TextSecurePreferences, lifecycle: Lifecycle, private val storage: StorageProtocol) {
+class CallMessageProcessor(
+    private val context: Context,
+    private val textSecurePreferences: TextSecurePreferences,
+    lifecycle: Lifecycle,
+    private val storage: StorageProtocol,
+    private val webRtcService: WebRtcCallService
+) {
 
     companion object {
         private const val TAG = "CallMessageProcessor"
         private const val VERY_EXPIRED_TIME = 15 * 60 * 1000L
-
-        /**
-         * This property is set to hold call data when the foreground service fails to start due to the app being in the the bg or killed
-         * The presence of this property indicates that the call process was started by an independent fullscreen notification
-         * as opposed to via the service itself (which, again, couldn't be started first due to the reason listed above).
-         * This property will allow us to start a fullscreen notification which in turn will start the service where the usual processes can continue
-         */
-        var incomingCallData: IncomingCallMetadata? = null
-
-        fun safeStartForegroundService(context: Context, intent: Intent, metadata: IncomingCallMetadata? = null) {
-            Log.d("", "Safe start fs in callMessageProcessor: ${intent.action}")
-
-            // Attempt to start the call service
-            /*try {
-                ContextCompat.startForegroundService(context, intent)
-            } catch (e: Exception) {
-                // If the app was background or killed by the system, it won't be possible to start the service,
-                // as the system forbids services being started from the background
-                // In order to still react to the incoming call we can instead manually construct the fullscreen notification
-                // which is presented in an activity, which in turn will start the service (on which it depends)
-
-                Log.d("", "*** Failed to start foreground service. Is there metadata to start the fullscreen webRTC activity?: $metadata")
-
-                // if we can send notification AND we have some set metadata
-                // then send a fullscreen one that will notify the user of the call
-                // We need the  metadata as it is the indicator that the specific reason for wanting to start the service above
-                // was due to an incoming call.
-                if (
-                    ActivityCompat.checkSelfPermission(
-                        context,
-                        Manifest.permission.POST_NOTIFICATIONS
-                    ) == PackageManager.PERMISSION_GRANTED &&
-                    metadata != null
-                ) {
-                    incomingCallData = metadata
-                    NotificationManagerCompat.from(context).notify(
-                        WEBRTC_NOTIFICATION,
-                        CallNotificationBuilder.getCallInProgressNotification(
-                            context,
-                            TYPE_INCOMING_PRE_OFFER,
-                            Recipient.from(context, metadata.recipientAddress, true)
-                        )
-                    )
-                }
-            }*/
-        }
     }
 
     init {
@@ -138,7 +90,7 @@ class CallMessageProcessor(private val context: Context, private val textSecureP
         Log.d("", "*** CallMessageProcessor: incomingHangup")
         val callId = callMessage.callId ?: return
         val hangupIntent = WebRtcCallService.remoteHangupIntent(context, callId)
-        safeStartForegroundService(context, hangupIntent)
+        webRtcService.onStartCommand(hangupIntent)
     }
 
     private fun incomingAnswer(callMessage: CallMessage) {
@@ -152,7 +104,7 @@ class CallMessageProcessor(private val context: Context, private val textSecureP
                 sdp = sdp,
                 callId = callId
         )
-        safeStartForegroundService(context, answerIntent)
+        webRtcService.onStartCommand(answerIntent)
     }
 
     private fun handleIceCandidates(callMessage: CallMessage) {
@@ -169,7 +121,7 @@ class CallMessageProcessor(private val context: Context, private val textSecureP
                 callId = callId,
                 address = Address.fromSerialized(sender)
         )
-        safeStartForegroundService(context, iceIntent)
+        webRtcService.onStartCommand(iceIntent)
     }
 
     private fun incomingPreOffer(callMessage: CallMessage) {
@@ -186,11 +138,7 @@ class CallMessageProcessor(private val context: Context, private val textSecureP
 
 
 
-        safeStartForegroundService(context, incomingIntent, IncomingCallMetadata(
-            recipientAddress = Address.fromSerialized(recipientAddress),
-            callId = callId,
-            callTime = callMessage.sentTimestamp!!
-        ))
+        webRtcService.onStartCommand(incomingIntent)
     }
 
     private fun incomingCall(callMessage: CallMessage) {
@@ -205,7 +153,7 @@ class CallMessageProcessor(private val context: Context, private val textSecureP
                 callId = callId,
                 callTime = callMessage.sentTimestamp!!
         )
-        safeStartForegroundService(context, incomingIntent)
+        webRtcService.onStartCommand(incomingIntent)
     }
 
     data class IncomingCallMetadata(

@@ -4,13 +4,12 @@ import android.Manifest
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.media.AudioManager
-import android.os.ResultReceiver
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.core.os.bundleOf
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.session.libsession.messaging.calls.CallMessageType
@@ -123,10 +122,10 @@ class WebRtcCallService @Inject constructor(
                 .setAction(ACTION_SET_MUTE_AUDIO)
                 .putExtra(EXTRA_MUTE, !enabled)
 
-        fun createCall(context: Context, recipient: Recipient) =
+        fun createCall(context: Context, address: Address) =
             Intent(context, WebRtcCallService::class.java)
                 .setAction(ACTION_OUTGOING_CALL)
-                .putExtra(EXTRA_RECIPIENT_ADDRESS, recipient.address)
+                .putExtra(EXTRA_RECIPIENT_ADDRESS, address)
 
         fun incomingCall(
             context: Context,
@@ -184,24 +183,14 @@ class WebRtcCallService @Inject constructor(
         fun hangupIntent(context: Context) =
             Intent(context, WebRtcCallService::class.java).setAction(ACTION_LOCAL_HANGUP)
 
-        fun sendAudioManagerCommand(context: Context, command: AudioManagerCommand) {
-            val intent = Intent(context, WebRtcCallService::class.java)
+        fun audioManagerCommandIntent(context: Context, command: AudioManagerCommand) =
+            Intent(context, WebRtcCallService::class.java)
                 .setAction(ACTION_UPDATE_AUDIO)
                 .putExtra(EXTRA_AUDIO_COMMAND, command)
-            context.startService(intent)
-        }
 
         fun broadcastWantsToAnswer(context: Context, wantsToAnswer: Boolean) {
             val intent = Intent(ACTION_WANTS_TO_ANSWER).putExtra(EXTRA_WANTS_TO_ANSWER, wantsToAnswer)
             LocalBroadcastManager.getInstance(context).sendBroadcast(intent)
-        }
-
-        @JvmStatic
-        fun isCallActive(context: Context, resultReceiver: ResultReceiver) {
-            val intent = Intent(context, WebRtcCallService::class.java)
-                .setAction(ACTION_IS_IN_CALL_QUERY)
-                .putExtra(EXTRA_RESULT_RECEIVER, resultReceiver)
-            context.startService(intent)
         }
     }
 
@@ -250,6 +239,7 @@ class WebRtcCallService @Inject constructor(
         scheduledReconnect?.cancel(false)
         scheduledTimeout = null
         scheduledReconnect = null
+        NotificationManagerCompat.from(context).cancel(WEBRTC_NOTIFICATION)
     }
 
     private fun isSameCall(intent: Intent): Boolean {
@@ -277,7 +267,6 @@ class WebRtcCallService @Inject constructor(
     }
 
     fun onStartCommand(intent: Intent?) {
-
         if (intent == null || intent.action == null) return
         serviceExecutor.execute {
             val action = intent.action
@@ -307,7 +296,6 @@ class WebRtcCallService @Inject constructor(
                 ACTION_ICE_CONNECTED -> handleIceConnected(intent)
                 ACTION_CHECK_TIMEOUT -> handleCheckTimeout(intent)
                 ACTION_CHECK_RECONNECT -> handleCheckReconnect(intent)
-                ACTION_IS_IN_CALL_QUERY -> handleIsInCallQuery(intent)
                 ACTION_UPDATE_AUDIO -> handleUpdateAudio(intent)
             }
         }
@@ -331,7 +319,7 @@ class WebRtcCallService @Inject constructor(
     }
 
     private fun registerWiredHeadsetStateReceiver() {
-        wiredHeadsetStateReceiver = WiredHeadsetStateReceiver()
+        wiredHeadsetStateReceiver = WiredHeadsetStateReceiver(::onStartCommand)
         context.registerReceiver(wiredHeadsetStateReceiver, IntentFilter(AudioManager.ACTION_HEADSET_PLUG))
     }
 
@@ -437,7 +425,7 @@ class WebRtcCallService @Inject constructor(
                 CallMessageType.CALL_OUTGOING
             )
             scheduledTimeout = timeoutExecutor.schedule(
-                TimeoutRunnable(callId, context),
+                TimeoutRunnable(callId, context, ::onStartCommand),
                 TIMEOUT_SECONDS,
                 TimeUnit.SECONDS
             )
@@ -501,7 +489,7 @@ class WebRtcCallService @Inject constructor(
             callManager.postViewModelState(CallViewModel.State.CALL_INCOMING)
 
             scheduledTimeout = timeoutExecutor.schedule(
-                TimeoutRunnable(callId, context),
+                TimeoutRunnable(callId, context, ::onStartCommand),
                 TIMEOUT_SECONDS,
                 TimeUnit.SECONDS
             )
@@ -631,20 +619,9 @@ class WebRtcCallService @Inject constructor(
         }
     }
 
-    private fun handleIsInCallQuery(intent: Intent) {
-        val listener = intent.getParcelableExtra<ResultReceiver>(EXTRA_RESULT_RECEIVER) ?: return
-        val currentState = callManager.currentConnectionState
-        val isInCall = if (currentState in arrayOf(
-                *CallState.PENDING_CONNECTION_STATES,
-                CallState.Connected
-            )
-        ) 1 else 0
-        listener.send(isInCall, bundleOf())
-    }
-
     private fun registerPowerButtonReceiver() {
         if (powerButtonReceiver == null) {
-            powerButtonReceiver = PowerButtonReceiver()
+            powerButtonReceiver = PowerButtonReceiver(::onStartCommand)
             context.registerReceiver(powerButtonReceiver, IntentFilter(Intent.ACTION_SCREEN_OFF))
         }
     }
@@ -657,7 +634,7 @@ class WebRtcCallService @Inject constructor(
             Log.i("Loki", "Trying to re-connect")
             callManager.networkReestablished()
             scheduledTimeout = timeoutExecutor.schedule(
-                TimeoutRunnable(callId, context),
+                TimeoutRunnable(callId, context, ::onStartCommand),
                 TIMEOUT_SECONDS,
                 TimeUnit.SECONDS
             )
@@ -667,7 +644,7 @@ class WebRtcCallService @Inject constructor(
                 "Network isn't available, timeouts == $numTimeouts out of $MAX_RECONNECTS"
             )
             scheduledReconnect = timeoutExecutor.schedule(
-                CheckReconnectedRunnable(callId, context),
+                CheckReconnectedRunnable(callId, context, ::onStartCommand),
                 RECONNECT_SECONDS,
                 TimeUnit.SECONDS
             )
@@ -696,8 +673,9 @@ class WebRtcCallService @Inject constructor(
     // Over the course of setting up a phone call this method is called multiple times with `types`
     // of PRE_OFFER -> RING_INCOMING -> ICE_MESSAGE
     private fun setCallInProgressNotification(type: Int, recipient: Recipient?) {
-        Log.d("", "*** setCallInProgressNotification: $type ")
+        //todo PHONE mske sure the notification is cleared in all conditions now that it isn't tied to the service anymore
 
+        // send appropriate notification if we have permission
         if (
             ActivityCompat.checkSelfPermission(
                 context,
@@ -708,6 +686,13 @@ class WebRtcCallService @Inject constructor(
                 WEBRTC_NOTIFICATION,
                 CallNotificationBuilder.getCallInProgressNotification(context, type, recipient)
             )
+        } // otherwise if we do not have permission and we have a pre offer, try to open the activity directly (this won't work if the app is backgrounded/killed)
+        else if(type == TYPE_INCOMING_PRE_OFFER) {
+            // Start an intent for the fullscreen call activity
+            val foregroundIntent = Intent(context, WebRtcCallActivity::class.java)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_HISTORY or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
+                .setAction(WebRtcCallActivity.ACTION_FULL_SCREEN_INTENT)
+            context.startActivity(foregroundIntent)
         }
 
         /*try {
@@ -721,14 +706,6 @@ class WebRtcCallService @Inject constructor(
             Log.e(TAG, "Failed to setCallInProgressNotification as a foreground service for type: ${type}, trying to update instead", e)
         }*/
 
-        //todo PHONE do we need to code below?
-        /*if (!CallNotificationBuilder.areNotificationsEnabled(this) && type == TYPE_INCOMING_PRE_OFFER) {
-            // Start an intent for the fullscreen call activity
-            val foregroundIntent = Intent(this, WebRtcCallActivity::class.java)
-                .setFlags(FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_HISTORY or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
-                .setAction(WebRtcCallActivity.ACTION_FULL_SCREEN_INTENT)
-            startActivity(foregroundIntent)
-        }*/
     }
 
     private fun getOptionalRemoteRecipient(intent: Intent): Recipient? =
@@ -786,21 +763,25 @@ class WebRtcCallService @Inject constructor(
         }
     }
 
-    private class CheckReconnectedRunnable(private val callId: UUID, private val context: Context) : Runnable {
+    private class CheckReconnectedRunnable(
+        private val callId: UUID, private val context: Context, val sendCommand: (Intent)->Unit
+    ) : Runnable {
         override fun run() {
             val intent = Intent(context, WebRtcCallService::class.java)
                 .setAction(ACTION_CHECK_RECONNECT)
                 .putExtra(EXTRA_CALL_ID, callId)
-            context.startService(intent)
+            sendCommand(intent)
         }
     }
 
-    private class TimeoutRunnable(private val callId: UUID, private val context: Context) : Runnable {
+    private class TimeoutRunnable(
+        private val callId: UUID, private val context: Context, val sendCommand: (Intent)->Unit
+    ) : Runnable {
         override fun run() {
             val intent = Intent(context, WebRtcCallService::class.java)
                 .setAction(ACTION_CHECK_TIMEOUT)
                 .putExtra(EXTRA_CALL_ID, callId)
-            context.startService(intent)
+            sendCommand(intent)
         }
     }
 
@@ -899,7 +880,7 @@ class WebRtcCallService @Inject constructor(
                         if (callManager.isInitiator()) {
                             Log.i("Loki", "Starting reconnect timer")
                             scheduledReconnect = timeoutExecutor.schedule(
-                                CheckReconnectedRunnable(callId, context),
+                                CheckReconnectedRunnable(callId, context, ::onStartCommand),
                                 RECONNECT_SECONDS,
                                 TimeUnit.SECONDS
                             )
@@ -907,7 +888,7 @@ class WebRtcCallService @Inject constructor(
                             Log.i("Loki", "Starting timeout, awaiting new reconnect")
                             callManager.postConnectionEvent(Event.PrepareForNewOffer) {
                                 scheduledTimeout = timeoutExecutor.schedule(
-                                    TimeoutRunnable(callId, context),
+                                    TimeoutRunnable(callId, context, ::onStartCommand),
                                     TIMEOUT_SECONDS,
                                     TimeUnit.SECONDS
                                 )
