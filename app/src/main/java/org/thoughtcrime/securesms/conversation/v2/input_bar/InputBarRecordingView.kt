@@ -40,6 +40,7 @@ class InputBarRecordingView : RelativeLayout {
     private var pulseAnimation: ValueAnimator? = null
     var delegate: InputBarRecordingViewDelegate? = null
     private var timerJob: Job? = null
+    private var voiceMessageDurationMS: Long = 0L
 
     val lockView: LinearLayout
         get() = binding.lockView
@@ -105,12 +106,9 @@ class InputBarRecordingView : RelativeLayout {
         timerJob?.cancel()
         timerJob = scope.launch {
             while (isActive) {
-                val duration = (Date().time - startTimestamp) / 1000L
-
-                // Update the voice message duration text and also store it in the VoiceMessageView so we can see the correct duration during upload
-                VoiceMessageView.formattedLatestVoiceMessageDuration = android.text.format.DateUtils.formatElapsedTime(duration)
-                binding.recordingViewDurationTextView.text = VoiceMessageView.formattedLatestVoiceMessageDuration
-
+                voiceMessageDurationMS = (Date().time - startTimestamp)
+                val durationInSeconds = voiceMessageDurationMS / 1000L
+                binding.recordingViewDurationTextView.text = android.text.format.DateUtils.formatElapsedTime(durationInSeconds)
                 delay(500)
             }
         }

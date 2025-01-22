@@ -25,9 +25,12 @@ import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentTransferProgress
 import org.session.libsession.messaging.sending_receiving.attachments.UriAttachment
 import org.session.libsession.utilities.MediaTypes
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.util.FilenameUtils
 
 class AudioSlide : Slide {
+
+    var durationMS: Long? = null
 
     override val contentDescription: String
         get() = context.getString(R.string.audio)
@@ -37,7 +40,27 @@ class AudioSlide : Slide {
 
     constructor(context: Context, uri: Uri, filename: String?, dataSize: Long, voiceNote: Boolean) : super(context, constructAttachmentFromUri(context, uri, MediaTypes.AUDIO_UNSPECIFIED, dataSize, 0, 0, false, filename, null, voiceNote, false))
 
-    constructor(context: Context, uri: Uri, filename: String?, dataSize: Long, contentType: String, voiceNote: Boolean) : super(context, UriAttachment(uri, null, contentType, AttachmentTransferProgress.TRANSFER_PROGRESS_STARTED, dataSize, 0, 0, filename, null, voiceNote, false, null))
+    // Note: This constructor is ONLY ever used when creating audio slides for voice messages
+    constructor(context: Context, uri: Uri, filename: String?, dataSize: Long, contentType: String, isVoiceNote: Boolean, durationMS: Long)
+        : super(
+            context,
+            UriAttachment(
+                uri,
+                null,
+                contentType,
+                AttachmentTransferProgress.TRANSFER_PROGRESS_STARTED,
+                dataSize,
+                0,
+                0,
+                filename,
+                null,
+                isVoiceNote,
+                false,
+                null
+            )
+    ) {
+        this.durationMS = durationMS
+    }
 
     constructor(context: Context, attachment: Attachment) : super(context, attachment)
 

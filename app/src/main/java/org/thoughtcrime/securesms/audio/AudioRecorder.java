@@ -40,7 +40,6 @@ public class AudioRecorder {
 
   public void startRecording(AudioMessageRecordingFinishedCallback callback) {
     Log.i(TAG, "startRecording()");
-    ConversationActivityV2.Companion.setVoiceMessageRecordingInProgress(true);
 
     executor.execute(() -> {
       Log.i(TAG, "Running startRecording() on thread with Id: " + Thread.currentThread().getId());
@@ -69,7 +68,6 @@ public class AudioRecorder {
 
   public @NonNull ListenableFuture<Pair<Uri, Long>> stopRecording() {
     Log.i(TAG, "stopRecording()");
-    ConversationActivityV2.Companion.setVoiceMessageRecordingInProgress(false);
 
     final SettableFuture<Pair<Uri, Long>> future = new SettableFuture<>();
 

@@ -173,6 +173,7 @@ import org.thoughtcrime.securesms.linkpreview.LinkPreviewRepository
 import org.thoughtcrime.securesms.linkpreview.LinkPreviewUtil
 import org.thoughtcrime.securesms.linkpreview.LinkPreviewViewModel
 import org.thoughtcrime.securesms.linkpreview.LinkPreviewViewModel.LinkPreviewState
+import org.thoughtcrime.securesms.media.MediaOverviewViewModel
 import org.thoughtcrime.securesms.mediasend.Media
 import org.thoughtcrime.securesms.mediasend.MediaSendActivity
 import org.thoughtcrime.securesms.mms.AudioSlide
@@ -241,6 +242,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     @Inject lateinit var reactionDb: ReactionDatabase
     @Inject lateinit var viewModelFactory: ConversationViewModel.AssistedFactory
     @Inject lateinit var mentionViewModelFactory: MentionViewModel.AssistedFactory
+    @Inject lateinit var mediaOverviewViewModelFactory: MediaOverviewViewModel.AssistedFactory
     @Inject lateinit var configFactory: ConfigFactory
     @Inject lateinit var groupManagerV2: GroupManagerV2
 
@@ -403,6 +405,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     // Lower limit for the length of voice messages - any lower and we inform the user rather than sending
     private val MINIMUM_VOICE_MESSAGE_DURATION_MS = 1000L
 
+    // Access to the MediaOverviewViewModel to used pause it's flow monitoring while recording a voice message
+    private val mediaOverviewViewModel: MediaOverviewViewModel by viewModels()
+    {
+        mediaOverviewViewModelFactory.create(viewModel.recipient?.address!!)
+    }
+
     // region Settings
     companion object {
         // Extras
@@ -418,11 +426,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         const val PICK_FROM_LIBRARY = 12
         const val INVITE_CONTACTS = 124
         const val CONVERSATION_SETTINGS = 125 // used to open conversation search on result
-
-        // Flag to prevent CursorRecyclerViewAdapter from triggering constant AudioSlide creation
-        // every frame when recording a voice message (however we allow it when playing back a
-        // voice message because the View changes per frame to indicate playback progress).
-        var voiceMessageRecordingInProgress = false
     }
     // endregion
 
@@ -2066,6 +2069,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     binding.inputBar.voiceRecorderState = VoiceRecorderState.Recording
                 }
             }
+
+            mediaOverviewViewModel.setPaused(true)
+
             audioRecorder.startRecording(audioRecordingFinishedCallback)
             stopAudioHandler.postDelayed(stopVoiceMessageRecordingTask, 5.minutes.inWholeMilliseconds) // Limit voice messages to 5 minute each
         } else {
@@ -2140,24 +2146,23 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         future.addListener(object : ListenableFuture.Listener<Pair<Uri, Long>> {
 
             override fun onSuccess(result: Pair<Uri, Long>) {
-                // Construct a new voice message Uri adding the duration to it
-                val voiceMessageUri = result.first.buildUpon()
-                    .appendQueryParameter("voiceMessageDurationMS", voiceMessageDurationMS.toString())
-                    .build()
 
-                val dataSizeBytes = result.second
-
+                // Set the interim voice message duration used to display while we process the attachment upload
                 VoiceMessageView.latestVoiceMessageDurationMS = voiceMessageDurationMS
 
-                val audioSlide = AudioSlide(this@ConversationActivityV2, voiceMessageUri, voiceMessageFilename, dataSizeBytes, MediaTypes.AUDIO_AAC, true)
+                val uri = result.first
+                val dataSizeBytes = result.second
+                val audioSlide = AudioSlide(this@ConversationActivityV2, uri, voiceMessageFilename, dataSizeBytes, MediaTypes.AUDIO_AAC, true, voiceMessageDurationMS)
 
                 val slideDeck = SlideDeck()
                 slideDeck.addSlide(audioSlide)
                 sendAttachments(slideDeck.asAttachments(), body = null)
+                mediaOverviewViewModel.setPaused(false)
             }
 
             override fun onFailure(e: ExecutionException) {
                 Toast.makeText(this@ConversationActivityV2, R.string.audioUnableToRecord, Toast.LENGTH_LONG).show()
+                mediaOverviewViewModel.setPaused(false)
             }
         })
     }
@@ -2169,6 +2174,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         audioRecorder.stopRecording()
         stopAudioHandler.removeCallbacks(stopVoiceMessageRecordingTask)
+        mediaOverviewViewModel.setPaused(false)
 
         // Note: The 0L check prevents the warning toast being shown when leaving the conversation activity
         val voiceMessageDuration = inputBar.voiceMessageDurationMS

@@ -16,6 +16,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNot
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.shareIn
@@ -56,23 +60,48 @@ class MediaOverviewViewModel(
     private val mediaDatabase: MediaDatabase
 ) : AndroidViewModel(application) {
     private val timeBuckets by lazy { FixedTimeBuckets() }
-    private val monthTimeBucketFormatter =
-        DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault())
+    private val monthTimeBucketFormatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault())
 
-    private val recipient: SharedFlow<Recipient> = application.contentResolver
-        .observeChanges(DatabaseContentProviders.Attachment.CONTENT_URI)
-        .onStart { emit(DatabaseContentProviders.Attachment.CONTENT_URI) }
-        .map { Recipient.from(application, address, false) }
-        .shareIn(viewModelScope, SharingStarted.Eagerly, replay = 1)
+    val isPaused = MutableStateFlow(false)
+
+    // We pause the event flow when recording a voice message to prevent constant SlideDeck & AudioSlide creation per frame
+    fun setPaused(paused: Boolean) { isPaused.value = paused }
+
+    private val recipient: SharedFlow<Recipient> =
+        application.contentResolver
+            .observeChanges(DatabaseContentProviders.Attachment.CONTENT_URI)
+            .onStart { emit(DatabaseContentProviders.Attachment.CONTENT_URI) }
+            .combine(isPaused) { uri, paused ->
+                uri to paused
+            }
+            // Only allow through if we are *not* paused
+            .filterNot { (_, paused) -> paused }
+            .map { (uri, _) ->
+                // If not paused, load the recipient as usual
+                Recipient.from(application, address, false)
+            }
+            .shareIn(viewModelScope, SharingStarted.Eagerly, replay = 1)
 
     val title: StateFlow<String> = recipient
         .map { it.toShortString() }
         .stateIn(viewModelScope, SharingStarted.Eagerly, "")
 
-    val mediaListState: StateFlow<MediaOverviewContent?> = recipient
-        .map { recipient ->
-            withContext(Dispatchers.Default) {
-                val threadId = threadDatabase.getOrCreateThreadIdFor(recipient)
+    val mediaListState: StateFlow<MediaOverviewContent?> = combine(
+        recipient,          // The flow that emits a Recipient whenever the DB changes
+        isPaused            // A Boolean flow that tells us whether we should pause updates
+    ) { recipient, paused ->
+        // Combine them into a single pair
+        recipient to paused
+    }.flatMapLatest { (recipient, paused) ->
+        if (paused) {
+            flow { /* If we're paused, do NOT emit new values */ }
+        } else {
+            // If not paused, run our DB queries and emit the result once
+            flow {
+                val threadId = withContext(Dispatchers.Default) {
+                    threadDatabase.getOrCreateThreadIdFor(recipient)
+                }
+
                 val mediaItems = mediaDatabase.getGalleryMediaForThread(threadId)
                     .use { cursor ->
                         cursor.asSequence()
@@ -87,13 +116,19 @@ class MediaOverviewViewModel(
                             .groupRecordsByRelativeTime()
                     }
 
-                MediaOverviewContent(
-                    mediaContent = mediaItems,
-                    documentContent = documentItems,
+                emit(
+                    MediaOverviewContent(
+                        mediaContent = mediaItems,
+                        documentContent = documentItems,
+                    )
                 )
             }
         }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+    }.stateIn(
+        viewModelScope,
+        SharingStarted.Eagerly,
+        initialValue = null
+    )
 
     private val mutableSelectedItemIDs = MutableStateFlow(emptySet<Long>())
     val selectedItemIDs: StateFlow<Set<Long>> get() = mutableSelectedItemIDs
@@ -218,13 +253,9 @@ class MediaOverviewViewModel(
         }
     }
 
-    fun onTabItemClicked(tab: MediaOverviewTab) {
-        mutableSelectedTab.value = tab
-    }
+    fun onTabItemClicked(tab: MediaOverviewTab) { mutableSelectedTab.value = tab }
 
-    fun onItemLongClicked(id: Long) {
-        mutableSelectedItemIDs.value = setOf(id)
-    }
+    fun onItemLongClicked(id: Long) { mutableSelectedItemIDs.value = setOf(id) }
 
     fun onSaveClicked() {
         if (!inSelectionMode.value) {
@@ -294,7 +325,6 @@ class MediaOverviewViewModel(
             mutableShowingActionProgress.value = null
             mutableSelectedItemIDs.value = emptySet()
         }
-
     }
 
     fun onDeleteClicked() {
@@ -378,7 +408,6 @@ class MediaOverviewViewModel(
     }
 }
 
-
 enum class MediaOverviewTab {
     Media,
     Documents,
@@ -424,4 +453,3 @@ data class MediaOverviewItem(
         return slide.getPlaceholderRes(context.theme)
     }
 }
-

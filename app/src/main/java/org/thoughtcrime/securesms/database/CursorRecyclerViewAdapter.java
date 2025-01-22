@@ -142,16 +142,7 @@ public abstract class CursorRecyclerViewAdapter<VH extends RecyclerView.ViewHold
     if (isHeaderPosition(position)) return HEADER_TYPE;
     if (isFooterPosition(position)) return FOOTER_TYPE;
     if (isFastAccessPosition(position)) return getFastAccessItemViewType(position);
-
-    // If we are recording a voice message then DO NOT touch the cursor because it sends us down a
-    // rabbit-hole of refreshing everything and creating a new AudioDeck with a new AudioSlide every
-    // frame (however, when playing back a voice message we allow it because the View changes to
-    // indicate the audio progress).
-    if (ConversationActivityV2.Companion.getVoiceMessageRecordingInProgress()) {
-      return 0;
-    } else {
-      return getItemViewType(getCursorAtPositionOrThrow(position));
-    }
+    return getItemViewType(getCursorAtPositionOrThrow(position));
   }
 
   public int getItemViewType(@NonNull Cursor cursor) { return 0; }

@@ -6,6 +6,10 @@ import android.util.AttributeSet
 import android.widget.RelativeLayout
 import androidx.core.view.isVisible
 import dagger.hilt.android.AndroidEntryPoint
+import java.util.concurrent.TimeUnit
+import javax.inject.Inject
+import kotlin.math.roundToInt
+import kotlin.math.roundToLong
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewVoiceMessageBinding
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
@@ -15,10 +19,6 @@ import org.thoughtcrime.securesms.components.CornerMask
 import org.thoughtcrime.securesms.conversation.v2.utilities.MessageBubbleUtilities
 import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
-import java.util.concurrent.TimeUnit
-import javax.inject.Inject
-import kotlin.math.roundToInt
-import kotlin.math.roundToLong
 
 @AndroidEntryPoint
 class VoiceMessageView : RelativeLayout, AudioSlidePlayer.Listener {
@@ -27,26 +27,25 @@ class VoiceMessageView : RelativeLayout, AudioSlidePlayer.Listener {
         // The duration in milliseconds of the latest voice message. This is set from ConversationActivityV2.sendVoiceMessage
         // so that we can display the voice message duration while it uploads (we do not seem to have this information until
         // upload completes otherwise).
-        var latestVoiceMessageDurationMS = -1L
-        var formattedLatestVoiceMessageDuration = ""
+        var latestVoiceMessageDurationMS = 0L
     }
 
     @Inject lateinit var attachmentDb: AttachmentDatabase
 
     private val binding: ViewVoiceMessageBinding by lazy { ViewVoiceMessageBinding.bind(this) }
     private val cornerMask by lazy { CornerMask(this) }
+
     private var isPlaying = false
-    set(value) {
-        field = value
-        renderIcon()
-    }
+        set(value) {
+            field = value
+            renderIcon()
+        }
+
     private var progress = 0.0
     private var durationMS = 0L
     private var player: AudioSlidePlayer? = null
     var delegate: VisibleMessageViewDelegate? = null
     var indexInAdapter = -1
-
-    private var finalFormattedVoiceMessageDuration: String? = null
 
     // region Lifecycle
     constructor(context: Context) : super(context)
@@ -56,16 +55,17 @@ class VoiceMessageView : RelativeLayout, AudioSlidePlayer.Listener {
     // Note: onFinishInflate occurs before `bind`
     override fun onFinishInflate() {
         super.onFinishInflate()
-        val durationString = String.format("%01d:%02d", TimeUnit.MILLISECONDS.toMinutes(latestVoiceMessageDurationMS), TimeUnit.MILLISECONDS.toSeconds(latestVoiceMessageDurationMS) % 60)
-        binding.voiceMessageViewDurationTextView.text = durationString
+        val formattedVoiceMessageDuration = String.format("%01d:%02d", TimeUnit.MILLISECONDS.toMinutes(latestVoiceMessageDurationMS), TimeUnit.MILLISECONDS.toSeconds(latestVoiceMessageDurationMS) % 60)
+        binding.voiceMessageViewDurationTextView.text = formattedVoiceMessageDuration
     }
 
     // endregion
 
     // region Updating
     fun bind(message: MmsMessageRecord, isStartOfMessageCluster: Boolean, isEndOfMessageCluster: Boolean) {
-        val audio = message.slideDeck.audioSlide!!
-        binding.voiceMessageViewLoader.isVisible = audio.isDownloadInProgress
+        val audioSlide = message.slideDeck.audioSlide!!
+
+        binding.voiceMessageViewLoader.isVisible = audioSlide.isDownloadInProgress
         val cornerRadii = MessageBubbleUtilities.calculateRadii(context, isStartOfMessageCluster, isEndOfMessageCluster, message.isOutgoing)
         cornerMask.setTopLeftRadius(cornerRadii[0])
         cornerMask.setTopRightRadius(cornerRadii[1])
@@ -73,28 +73,29 @@ class VoiceMessageView : RelativeLayout, AudioSlidePlayer.Listener {
         cornerMask.setBottomLeftRadius(cornerRadii[3])
 
         // Only process audio if downloaded
-        if (audio.isPendingDownload || audio.isDownloadInProgress) {
+        if (audioSlide.isPendingDownload || audioSlide.isDownloadInProgress) {
             this.player = null
             return
         }
 
-        val player = AudioSlidePlayer.createFor(context.applicationContext, audio, this)
+        val player = AudioSlidePlayer.createFor(context.applicationContext, audioSlide, this)
         this.player = player
 
-        (audio.asAttachment() as? DatabaseAttachment)?.let { attachment ->
+        // This sets the final duration of the uploaded voice message
+        (audioSlide.asAttachment() as? DatabaseAttachment)?.let { attachment ->
             attachmentDb.getAttachmentAudioExtras(attachment.attachmentId)?.let { audioExtras ->
 
+                // This section sets the final formatted voice message duration
                 if (audioExtras.durationMs > 0) {
                     durationMS = audioExtras.durationMs
-                    binding.voiceMessageViewDurationTextView.visibility = VISIBLE
-
-                    val formattedVoiceMessageDuration = String.format("%01d:%02d", TimeUnit.MILLISECONDS.toMinutes(audioExtras.durationMs), TimeUnit.MILLISECONDS.toSeconds(audioExtras.durationMs) % 60)
+                    val formattedVoiceMessageDuration = String.format("%01d:%02d", TimeUnit.MILLISECONDS.toMinutes(durationMS), TimeUnit.MILLISECONDS.toSeconds(durationMS) % 60)
                     binding.voiceMessageViewDurationTextView.text = formattedVoiceMessageDuration
-                    finalFormattedVoiceMessageDuration = formattedVoiceMessageDuration
                 } else {
                     Log.w("AudioMessageView", "For some reason audioExtras.durationMs was NOT greater than zero!")
                     binding.voiceMessageViewDurationTextView.text = context.getString(R.string.unknown)
                 }
+
+                binding.voiceMessageViewDurationTextView.visibility = VISIBLE
             }
         }
     }
