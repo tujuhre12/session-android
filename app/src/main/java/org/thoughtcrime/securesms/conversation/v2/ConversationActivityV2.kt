@@ -2064,7 +2064,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             // recorder state is Idle! As such we'll only tick the recorder state over to Recording if
             // we were still in the SettingUpToRecord state when we got here (i.e., the record voice
             // message button is still held or is locked to keep recording audio without being held).
-            val audioRecordingFinishedCallback: () -> Unit = {
+            val audioRecordingStartedCallback: () -> Unit = {
                 if (binding.inputBar.voiceRecorderState == VoiceRecorderState.SettingUpToRecord) {
                     binding.inputBar.voiceRecorderState = VoiceRecorderState.Recording
                 }
@@ -2072,7 +2072,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
             mediaOverviewViewModel.setPaused(true)
 
-            audioRecorder.startRecording(audioRecordingFinishedCallback)
+            audioRecorder.startRecording(audioRecordingStartedCallback)
             stopAudioHandler.postDelayed(stopVoiceMessageRecordingTask, 5.minutes.inWholeMilliseconds) // Limit voice messages to 5 minute each
         } else {
             Permissions.with(this)

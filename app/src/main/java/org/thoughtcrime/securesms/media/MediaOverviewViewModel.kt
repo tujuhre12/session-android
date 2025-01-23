@@ -32,7 +32,6 @@ import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.MediaPreviewActivity
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.MediaDatabase
@@ -71,9 +70,7 @@ class MediaOverviewViewModel(
         application.contentResolver
             .observeChanges(DatabaseContentProviders.Attachment.CONTENT_URI)
             .onStart { emit(DatabaseContentProviders.Attachment.CONTENT_URI) }
-            .combine(isPaused) { uri, paused ->
-                uri to paused
-            }
+            .combine(isPaused) { uri, paused -> uri to paused }
             // Only allow through if we are *not* paused
             .filterNot { (_, paused) -> paused }
             .map { (uri, _) ->
@@ -86,6 +83,7 @@ class MediaOverviewViewModel(
         .map { it.toShortString() }
         .stateIn(viewModelScope, SharingStarted.Eagerly, "")
 
+    // Note: We pause the emission of media list content when recording a voice message to prevent constant SlideDeck & AudioSlide creation per frame
     val mediaListState: StateFlow<MediaOverviewContent?> = combine(
         recipient,          // The flow that emits a Recipient whenever the DB changes
         isPaused            // A Boolean flow that tells us whether we should pause updates
@@ -94,7 +92,7 @@ class MediaOverviewViewModel(
         recipient to paused
     }.flatMapLatest { (recipient, paused) ->
         if (paused) {
-            flow { /* If we're paused, do NOT emit new values */ }
+            flow { /* Do NOT emit new values if we're paused */ }
         } else {
             // If not paused, run our DB queries and emit the result once
             flow {

@@ -25,7 +25,6 @@ import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentTransferProgress
 import org.session.libsession.messaging.sending_receiving.attachments.UriAttachment
 import org.session.libsession.utilities.MediaTypes
-import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.util.FilenameUtils
 
 class AudioSlide : Slide {
@@ -38,7 +37,22 @@ class AudioSlide : Slide {
     override val thumbnailUri: Uri?
         get() = null
 
-    constructor(context: Context, uri: Uri, filename: String?, dataSize: Long, voiceNote: Boolean) : super(context, constructAttachmentFromUri(context, uri, MediaTypes.AUDIO_UNSPECIFIED, dataSize, 0, 0, false, filename, null, voiceNote, false))
+    constructor(context: Context, uri: Uri, filename: String?, dataSize: Long, voiceNote: Boolean)
+        : super(context,
+                constructAttachmentFromUri(
+                    context,
+                    uri,
+                    MediaTypes.AUDIO_UNSPECIFIED,
+                    dataSize,
+                    0,         // width
+                    0,         // height
+                    false,     // hasThumbnail
+                    filename,
+                    null,      // caption
+                    voiceNote,
+                    false      // quote
+                )
+            )
 
     // Note: This constructor is ONLY ever used when creating audio slides for voice messages
     constructor(context: Context, uri: Uri, filename: String?, dataSize: Long, contentType: String, isVoiceNote: Boolean, durationMS: Long)
@@ -46,17 +60,17 @@ class AudioSlide : Slide {
             context,
             UriAttachment(
                 uri,
-                null,
+                null,        // thumbnailUri
                 contentType,
                 AttachmentTransferProgress.TRANSFER_PROGRESS_STARTED,
                 dataSize,
-                0,
-                0,
+                0,           // width
+                0,           // height
                 filename,
-                null,
+                null,        // fastPreflightId
                 isVoiceNote,
-                false,
-                null
+                false,       // quote
+                null         // caption
             )
     ) {
         this.durationMS = durationMS

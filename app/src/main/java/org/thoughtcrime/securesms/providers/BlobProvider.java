@@ -25,6 +25,7 @@ import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Allows for the creation and retrieval of blobs.
@@ -181,7 +182,7 @@ public class BlobProvider {
 
     SignalExecutors.UNBOUNDED.execute(() -> {
       try {
-        Util.copy(blobSpec.getData(), outputStream);
+        Util.copy(blobSpec.getData(), outputStream); // This is line 184
       } catch (IOException e) {
         if (errorListener != null) {
           errorListener.onError(e);
@@ -190,6 +191,58 @@ public class BlobProvider {
     });
 
     return buildUri(blobSpec);
+  }
+
+  @WorkerThread
+  public synchronized @NonNull CompletableFuture<Uri> writeBlobSpecToDiskWithFutureToDeleteFileLater(
+          @NonNull Context context,
+          @NonNull BlobSpec blobSpec,
+          @Nullable ErrorListener errorListener
+  ) throws IOException {
+
+    //Prepare the necessary objects synchronously
+    AttachmentSecret attachmentSecret = AttachmentSecretProvider.getInstance(context).getOrCreateAttachmentSecret();
+    String directory    = getDirectory(blobSpec.getStorageType());
+    File   outputFile   = new File(getOrCreateCacheDirectory(context, directory), buildFileName(blobSpec.id));
+
+    // This can throw IOException if the file can’t be created
+    OutputStream outputStream = ModernEncryptingPartOutputStream.createFor(attachmentSecret, outputFile, true).second;
+
+    // Build the Uri now; it's often just info derived from blobSpec
+    final Uri outputUri = buildUri(blobSpec);
+
+    // Create a future that we’ll complete once the async copy finishes
+    final CompletableFuture<Uri> future = new CompletableFuture<>();
+
+    // Perform the copy on a background executor
+    SignalExecutors.UNBOUNDED.execute(() -> {
+      try {
+        // If Util.copy(...) throws, we handle it below
+        Util.copy(blobSpec.getData(), outputStream);
+
+        // If success, complete the future with the final Uri
+        future.complete(outputUri);
+
+      } catch (IOException e) {
+        // If there's an error, notify the ErrorListener (if any)
+        if (errorListener != null) {
+          errorListener.onError(e);
+        }
+        // Complete the Future exceptionally
+        future.completeExceptionally(e);
+
+      } finally {
+        // Make sure the output stream is closed
+        try {
+          outputStream.close();
+        } catch (IOException ex) {
+          // ignoring close exception
+        }
+      }
+    });
+
+    // Return the future immediately (i.e., while the copy is still ongoing - it's up to the caller to delete the temp file in the returned future)
+    return future;
   }
 
   private synchronized @NonNull Uri writeBlobSpecToMemory(@NonNull BlobSpec blobSpec, @NonNull byte[] data) {
@@ -316,7 +369,7 @@ public class BlobProvider {
     void onError(IOException e);
   }
 
-  private static class BlobSpec {
+  public static class BlobSpec {
 
     private final InputStream data;
     private final String      id;
@@ -325,7 +378,7 @@ public class BlobProvider {
     private final String      fileName;
     private final long        fileSize;
 
-    private BlobSpec(@NonNull InputStream data,
+    public BlobSpec(@NonNull InputStream data,
                      @NonNull String id,
                      @NonNull StorageType storageType,
                      @NonNull String mimeType,
@@ -365,7 +418,7 @@ public class BlobProvider {
     }
   }
 
-  private enum StorageType {
+  public enum StorageType {
 
     SINGLE_USE_MEMORY("single-use-memory", true),
     SINGLE_SESSION_MEMORY("single-session-memory", true),

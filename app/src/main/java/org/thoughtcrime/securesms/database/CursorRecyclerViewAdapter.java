@@ -19,6 +19,7 @@ package org.thoughtcrime.securesms.database;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.DataSetObserver;
+import android.util.SparseIntArray;
 import android.view.View;
 import android.view.ViewGroup;
 import androidx.annotation.NonNull;
@@ -26,7 +27,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 import androidx.recyclerview.widget.RecyclerView.ViewHolder;
 import androidx.recyclerview.widget.RecyclerView;
-import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2;
+import org.session.libsignal.utilities.Log;
 
 /**
  * RecyclerView.Adapter that manages a Cursor, comparable to the CursorAdapter usable in ListView/GridView.
@@ -82,6 +83,10 @@ public abstract class CursorRecyclerViewAdapter<VH extends RecyclerView.ViewHold
     if (cursor != null) { cursor.registerDataSetObserver(observer);  }
 
     valid = cursor != null;
+
+    // Clear the view type cache before notifying the adapter
+    clearViewTypeCache();
+
     notifyDataSetChanged();
 
     return oldCursor;
@@ -97,9 +102,7 @@ public abstract class CursorRecyclerViewAdapter<VH extends RecyclerView.ViewHold
            + (hasFooterView() ? 1 : 0);
   }
 
-  public int getCursorCount() {
-    return cursor.getCount();
-  }
+  public int getCursorCount() { return cursor.getCount(); }
 
   @SuppressWarnings("unchecked")
   @Override
@@ -137,13 +140,31 @@ public abstract class CursorRecyclerViewAdapter<VH extends RecyclerView.ViewHold
 
   protected void onBindFastAccessItemViewHolder(VH viewHolder, int position) { /* Nothing */ }
 
+  // Sparse-array of item view types used to avoid changing the cursor, which will cause per-frame SlideDeck with AudioSlide creation
+  private final SparseIntArray viewTypeCache = new SparseIntArray();
+
   @Override
   public final int getItemViewType(int position) {
-    if (isHeaderPosition(position)) return HEADER_TYPE;
-    if (isFooterPosition(position)) return FOOTER_TYPE;
-    if (isFastAccessPosition(position)) return getFastAccessItemViewType(position);
-    return getItemViewType(getCursorAtPositionOrThrow(position));
+    // Check if we've already cached the view type for this position and return the cached value if so
+    int cachedViewType = viewTypeCache.get(position, Integer.MIN_VALUE);
+    if (cachedViewType != Integer.MIN_VALUE) { return cachedViewType;  }
+
+    int viewType;
+    if      (isHeaderPosition(position))     { viewType = HEADER_TYPE; }
+    else if (isFooterPosition(position))     { viewType = FOOTER_TYPE; }
+    else if (isFastAccessPosition(position)) { viewType = getFastAccessItemViewType(position); }
+    else {
+      // Expensive call, so cache the result
+      viewType = getItemViewType(getCursorAtPositionOrThrow(position));
+    }
+
+    // Cache the result & return it
+    viewTypeCache.put(position, viewType);
+    return viewType;
   }
+
+  // Clear the cache when data changes (called from `swapCursor`)
+  public void clearViewTypeCache() { viewTypeCache.clear(); }
 
   public int getItemViewType(@NonNull Cursor cursor) { return 0; }
 
