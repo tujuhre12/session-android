@@ -8,15 +8,6 @@ import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
-
-import org.thoughtcrime.securesms.crypto.AttachmentSecret;
-import org.thoughtcrime.securesms.crypto.AttachmentSecretProvider;
-import org.thoughtcrime.securesms.crypto.ModernDecryptingPartInputStream;
-import org.thoughtcrime.securesms.crypto.ModernEncryptingPartOutputStream;
-import org.session.libsignal.utilities.Log;
-import org.session.libsession.utilities.Util;
-import org.session.libsession.utilities.concurrent.SignalExecutors;
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -25,7 +16,13 @@ import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
+import org.session.libsession.utilities.Util;
+import org.session.libsession.utilities.concurrent.SignalExecutors;
+import org.session.libsignal.utilities.Log;
+import org.thoughtcrime.securesms.crypto.AttachmentSecret;
+import org.thoughtcrime.securesms.crypto.AttachmentSecretProvider;
+import org.thoughtcrime.securesms.crypto.ModernDecryptingPartInputStream;
+import org.thoughtcrime.securesms.crypto.ModernEncryptingPartOutputStream;
 
 /**
  * Allows for the creation and retrieval of blobs.
@@ -56,10 +53,7 @@ public class BlobProvider {
 
   private final Map<Uri, byte[]> memoryBlobs = new HashMap<>();
 
-
-  public static BlobProvider getInstance() {
-    return INSTANCE;
-  }
+  public static BlobProvider getInstance() { return INSTANCE; }
 
   /**
    * Begin building a blob for the provided data. Allows for the creation of in-memory blobs.
@@ -169,9 +163,7 @@ public class BlobProvider {
     return null;
   }
 
-  public static boolean isAuthority(@NonNull Uri uri) {
-    return URI_MATCHER.match(uri) == MATCH;
-  }
+  public static boolean isAuthority(@NonNull Uri uri) { return URI_MATCHER.match(uri) == MATCH; }
 
   @WorkerThread
   private synchronized @NonNull Uri writeBlobSpecToDisk(@NonNull Context context, @NonNull BlobSpec blobSpec, @Nullable ErrorListener errorListener) throws IOException {
@@ -182,7 +174,7 @@ public class BlobProvider {
 
     SignalExecutors.UNBOUNDED.execute(() -> {
       try {
-        Util.copy(blobSpec.getData(), outputStream); // This is line 184
+        Util.copy(blobSpec.getData(), outputStream);
       } catch (IOException e) {
         if (errorListener != null) {
           errorListener.onError(e);
@@ -191,58 +183,6 @@ public class BlobProvider {
     });
 
     return buildUri(blobSpec);
-  }
-
-  @WorkerThread
-  public synchronized @NonNull CompletableFuture<Uri> writeBlobSpecToDiskWithFutureToDeleteFileLater(
-          @NonNull Context context,
-          @NonNull BlobSpec blobSpec,
-          @Nullable ErrorListener errorListener
-  ) throws IOException {
-
-    //Prepare the necessary objects synchronously
-    AttachmentSecret attachmentSecret = AttachmentSecretProvider.getInstance(context).getOrCreateAttachmentSecret();
-    String directory    = getDirectory(blobSpec.getStorageType());
-    File   outputFile   = new File(getOrCreateCacheDirectory(context, directory), buildFileName(blobSpec.id));
-
-    // This can throw IOException if the file can’t be created
-    OutputStream outputStream = ModernEncryptingPartOutputStream.createFor(attachmentSecret, outputFile, true).second;
-
-    // Build the Uri now; it's often just info derived from blobSpec
-    final Uri outputUri = buildUri(blobSpec);
-
-    // Create a future that we’ll complete once the async copy finishes
-    final CompletableFuture<Uri> future = new CompletableFuture<>();
-
-    // Perform the copy on a background executor
-    SignalExecutors.UNBOUNDED.execute(() -> {
-      try {
-        // If Util.copy(...) throws, we handle it below
-        Util.copy(blobSpec.getData(), outputStream);
-
-        // If success, complete the future with the final Uri
-        future.complete(outputUri);
-
-      } catch (IOException e) {
-        // If there's an error, notify the ErrorListener (if any)
-        if (errorListener != null) {
-          errorListener.onError(e);
-        }
-        // Complete the Future exceptionally
-        future.completeExceptionally(e);
-
-      } finally {
-        // Make sure the output stream is closed
-        try {
-          outputStream.close();
-        } catch (IOException ex) {
-          // ignoring close exception
-        }
-      }
-    });
-
-    // Return the future immediately (i.e., while the copy is still ongoing - it's up to the caller to delete the temp file in the returned future)
-    return future;
   }
 
   private synchronized @NonNull Uri writeBlobSpecToMemory(@NonNull BlobSpec blobSpec, @NonNull byte[] data) {
@@ -261,12 +201,12 @@ public class BlobProvider {
 
   private static @NonNull Uri buildUri(@NonNull BlobSpec blobSpec) {
     return CONTENT_URI.buildUpon()
-                      .appendPath(blobSpec.getStorageType().encode())
-                      .appendPath(blobSpec.getMimeType())
-                      .appendPath(blobSpec.getFileName())
-                      .appendEncodedPath(String.valueOf(blobSpec.getFileSize()))
-                      .appendPath(blobSpec.getId())
-                      .build();
+            .appendPath(blobSpec.getStorageType().encode())
+            .appendPath(blobSpec.getMimeType())
+            .appendPath(blobSpec.getFileName())
+            .appendEncodedPath(String.valueOf(blobSpec.getFileSize()))
+            .appendPath(blobSpec.getId())
+            .build();
   }
 
   private static File getOrCreateCacheDirectory(@NonNull Context context, @NonNull String directory) {
@@ -274,7 +214,6 @@ public class BlobProvider {
     if (!file.exists()) {
       file.mkdir();
     }
-
     return file;
   }
 
@@ -369,7 +308,7 @@ public class BlobProvider {
     void onError(IOException e);
   }
 
-  public static class BlobSpec {
+  private static class BlobSpec {
 
     private final InputStream data;
     private final String      id;
@@ -378,7 +317,7 @@ public class BlobProvider {
     private final String      fileName;
     private final long        fileSize;
 
-    public BlobSpec(@NonNull InputStream data,
+    private BlobSpec(@NonNull InputStream data,
                      @NonNull String id,
                      @NonNull StorageType storageType,
                      @NonNull String mimeType,
@@ -393,32 +332,15 @@ public class BlobProvider {
       this.fileSize    = fileSize;
     }
 
-    private @NonNull InputStream getData() {
-      return data;
-    }
-
-    private @NonNull String getId() {
-      return id;
-    }
-
-    private @NonNull StorageType getStorageType() {
-      return storageType;
-    }
-
-    private @NonNull String getMimeType() {
-      return mimeType;
-    }
-
-    private @Nullable String getFileName() {
-      return fileName;
-    }
-
-    private long getFileSize() {
-      return fileSize;
-    }
+    private @NonNull InputStream getData()        { return data;        }
+    private @NonNull String getId()               { return id;          }
+    private @NonNull StorageType getStorageType() { return storageType; }
+    private @NonNull String getMimeType()         { return mimeType;    }
+    private @Nullable String getFileName()        { return fileName;    }
+    private long getFileSize()                    { return fileSize;    }
   }
 
-  public enum StorageType {
+  private enum StorageType {
 
     SINGLE_USE_MEMORY("single-use-memory", true),
     SINGLE_SESSION_MEMORY("single-session-memory", true),
@@ -433,13 +355,9 @@ public class BlobProvider {
       this.inMemory = inMemory;
     }
 
-    private String encode() {
-      return encoded;
-    }
+    private String encode() { return encoded; }
 
-    private boolean isMemory() {
-      return inMemory;
-    }
+    private boolean isMemory() { return inMemory; }
 
     private static StorageType decode(@NonNull String encoded) throws IOException {
       for (StorageType storageType : StorageType.values()) {
