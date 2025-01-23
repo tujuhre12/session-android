@@ -55,7 +55,6 @@ import javax.inject.Inject
 class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
 
     companion object {
-        const val ACTION_PRE_OFFER = "pre-offer"
         const val ACTION_FULL_SCREEN_INTENT = "fullscreen-intent"
         const val ACTION_ANSWER = "answer"
         const val ACTION_END = "end-call"
@@ -64,8 +63,6 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
         const val ACTION_LOCAL_HANGUP = "local-hangup"
 
         const val EXTRA_RECIPIENT_ADDRESS = "RECIPIENT_ID"
-
-        const val BUSY_SIGNAL_DELAY_FINISH = 5500L
 
         private const val CALL_DURATION_FORMAT = "HH:mm:ss"
     }
@@ -107,7 +104,7 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
     override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
         super.onCreate(savedInstanceState, ready)
 
-        Log.d("", "*** CALL ACTIVITY CREATE: $intent")
+        Log.d("", "*** CALL ACTIVITY CREATE: ${intent.action}")
 
         binding = ActivityWebrtcBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -125,8 +122,6 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
                     or WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON
         )
         volumeControlStream = AudioManager.STREAM_VOICE_CALL
-
-        handleIntent(intent)
 
         binding.floatingRendererContainer.setOnClickListener {
             viewModel.swapVideos()
@@ -147,10 +142,6 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
         }
 
         binding.acceptCallButton.setOnClickListener {
-            if (viewModel.currentCallState == CALL_PRE_INIT) {
-                wantsToAnswer = true
-                updateControls()
-            }
             answerCall()
         }
 
@@ -208,13 +199,14 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
             }
         }
 
+        handleIntent(intent)
+
         // Substitute "Session" into the "{app_name} Call" text
         val sessionCallTV = findViewById<TextView>(R.id.sessionCallText)
         sessionCallTV?.text = Phrase.from(this, R.string.callsSessionCall).put(APP_NAME_KEY, getString(R.string.app_name)).format()
     }
 
     private fun handleIntent(intent: Intent) {
-        Log.d("", "*** CALL ACTIVITY handle intent: $intent")
         if (intent.action == ACTION_START_CALL && intent.hasExtra(EXTRA_RECIPIENT_ADDRESS)) {
             webRtcService.onStartCommand(
                 WebRtcCallService.createCall(this,IntentCompat.getParcelableExtra(intent, EXTRA_RECIPIENT_ADDRESS, Address::class.java)!!)
@@ -223,10 +215,7 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
         if (intent.action == ACTION_ANSWER) {
             answerCall()
         }
-        if (intent.action == ACTION_PRE_OFFER) {
-            wantsToAnswer = true
-            answerCall() // this will do nothing, except update notification state
-        }
+
         if (intent.action == ACTION_FULL_SCREEN_INTENT) {
             supportActionBar?.setDisplayHomeAsUpEnabled(false)
         }
@@ -280,6 +269,11 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
     }
 
     private fun answerCall() {
+        if (viewModel.currentCallState == CALL_PRE_INIT) {
+            wantsToAnswer = true
+            updateControls()
+        }
+
         val answerIntent = WebRtcCallService.acceptCallIntent(this)
         answerIntent.flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
         webRtcService.onStartCommand(answerIntent)

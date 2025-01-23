@@ -43,6 +43,7 @@ import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.ShortcutLauncherActivity
 import org.thoughtcrime.securesms.calls.WebRtcCallActivity
 import org.thoughtcrime.securesms.calls.WebRtcCallActivity.Companion.ACTION_ANSWER
+import org.thoughtcrime.securesms.calls.WebRtcCallActivity.Companion.ACTION_START_CALL
 import org.thoughtcrime.securesms.contacts.SelectContactsActivity
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.utilities.NotificationUtils
@@ -250,7 +251,7 @@ object ConversationMenuHelper {
         Intent(context, WebRtcCallActivity::class.java)
             .apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                action = ACTION_ANSWER
+                action = ACTION_START_CALL
                 putExtra(EXTRA_RECIPIENT_ADDRESS, thread.address)
             }
             .let(context::startActivity)

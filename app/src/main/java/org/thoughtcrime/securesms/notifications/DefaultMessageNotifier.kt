@@ -109,8 +109,9 @@ class DefaultMessageNotifier : MessageNotifier {
             val activeNotifications = notifications.activeNotifications
 
             for (activeNotification in activeNotifications) {
-                //todo PHONE Is this ok? Without it the fullscreen notification from calls gets removed. Is the cancellation logic wrong or is it ok to check for the call notification id and ignore it here?
-                if(activeNotification.id != WEBRTC_NOTIFICATION) notifications.cancel(activeNotification.id) // <<
+                if(activeNotification.id != WEBRTC_NOTIFICATION) {
+                    notifications.cancel(activeNotification.id)
+                }
             }
         } catch (e: Throwable) {
             // XXX Appears to be a ROM bug, see #6043
@@ -137,7 +138,9 @@ class DefaultMessageNotifier : MessageNotifier {
                     }
 
                     if (!validNotification) {
-                        notifications.cancel(notification.id)
+                        if(notification.id != WEBRTC_NOTIFICATION) {
+                            notifications.cancel(notification.id)
+                        }
                     }
                 }
             }
@@ -269,15 +272,6 @@ class DefaultMessageNotifier : MessageNotifier {
         val messageOriginator = notifications[0].recipient
         val notificationId = (SUMMARY_NOTIFICATION_ID + (if (bundled) notifications[0].threadId else 0)).toInt()
         val messageIdTag = notifications[0].timestamp.toString()
-
-        val notificationManager = ServiceUtil.getNotificationManager(context)
-        for (notification in notificationManager.activeNotifications) {
-            if ((Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && notification.isAppGroup == bundled)
-                && (messageIdTag == notification.notification.extras.getString(LATEST_MESSAGE_ID_TAG))
-            ) {
-                return
-            }
-        }
 
         val timestamp = notifications[0].timestamp
         if (timestamp != 0L) builder.setWhen(timestamp)

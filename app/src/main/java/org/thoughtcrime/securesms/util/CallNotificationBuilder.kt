@@ -68,14 +68,13 @@ class CallNotificationBuilder {
                             context,
                             WebRtcCallActivity.ACTION_DENY_CALL,
                             R.drawable.ic_x,
-                            R.string.decline
-                    )
+                            R.string.decline)
                     )
                     // If notifications aren't enabled, we will trigger the intent from WebRtcCallService
                     builder.setFullScreenIntent(getFullScreenPendingIntent(context), true)
                     builder.addAction(getActivityNotificationAction(
                             context,
-                            if (type == TYPE_INCOMING_PRE_OFFER) WebRtcCallActivity.ACTION_PRE_OFFER else WebRtcCallActivity.ACTION_ANSWER,
+                            WebRtcCallActivity.ACTION_ANSWER,
                             R.drawable.ic_phone,
                             R.string.accept
                     ))
@@ -84,17 +83,19 @@ class CallNotificationBuilder {
 
                 TYPE_OUTGOING_RINGING -> {
                     builder.setContentText(context.getString(R.string.callsConnecting))
+                        .setSilent(true)
                     builder.addAction(
                         getActivityNotificationAction(
                             context,
                             WebRtcCallActivity.ACTION_LOCAL_HANGUP,
                             R.drawable.ic_phone_fill_custom,
                             R.string.cancel
-                    )
+                        )
                     )
                 }
                 else -> {
                     builder.setContentText(context.getString(R.string.callsInProgress))
+                        .setSilent(true)
                     builder.addAction(
                         getActivityNotificationAction(
                             context,

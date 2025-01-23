@@ -204,11 +204,6 @@ class WebRtcCallService @Inject constructor(
     private val serviceExecutor = Executors.newSingleThreadExecutor()
     private val timeoutExecutor = Executors.newScheduledThreadPool(1)
 
-    //todo PHONE delete this class if not needed
-/*    private val telephonyHandler = TelephonyHandler(serviceExecutor) {
-        ContextCompat.startForegroundService(this, hangupIntent(this))
-    }*/
-
     private var networkChangedReceiver: NetworkChangeReceiver? = null
     private var wantsToAnswerReceiver: BroadcastReceiver? = null
     private var wiredHeadsetStateReceiver: WiredHeadsetStateReceiver? = null
@@ -229,6 +224,7 @@ class WebRtcCallService @Inject constructor(
 
     @Synchronized
     private fun terminate() {
+        Log.d(TAG, "*** Terminating rtc service")
         LocalBroadcastManager.getInstance(context).sendBroadcast(Intent(WebRtcCallActivity.ACTION_END))
         lockManager.updatePhoneState(LockManager.PhoneState.IDLE)
         callManager.stop()
@@ -240,6 +236,14 @@ class WebRtcCallService @Inject constructor(
         scheduledTimeout = null
         scheduledReconnect = null
         NotificationManagerCompat.from(context).cancel(WEBRTC_NOTIFICATION)
+
+        //todo PHONE Figure out why the call notification disappears once we have an unseen missed call
+        //todo PHONE I got a 'missed call' notification after I declined a call. Is that right?
+        //todo PHONE [xxx Called you], which is a control message for a SUCCESSFUL call, should appear as unread, since you already know about the call - make it unread by default
+        //todo PHONE Add title and subtitle on call screen to details current call steps
+        //todo PHONE have a fallback way to get back to calls if the call activity is gone. Sticky notification? A banner in the app?
+        //todo PHONE investigate swipping off call notification before answering
+        //todo PHONE can we remove the android auto stuff?
     }
 
     private fun isSameCall(intent: Intent): Boolean {
@@ -510,7 +514,7 @@ class WebRtcCallService @Inject constructor(
                             callManager.callId
                         )
                     ) {
-                        Log.e(TAG, e)
+                        Log.e(TAG, "incoming call error: $e")
                         insertMissedCall(recipient, true)
                         callManager.postConnectionError()
                         terminate()
@@ -694,17 +698,6 @@ class WebRtcCallService @Inject constructor(
                 .setAction(WebRtcCallActivity.ACTION_FULL_SCREEN_INTENT)
             context.startActivity(foregroundIntent)
         }
-
-        /*try {
-            ServiceCompat.startForeground(
-                this,
-                WEBRTC_NOTIFICATION,
-                CallNotificationBuilder.getCallInProgressNotification(this, type, recipient),
-                if (Build.VERSION.SDK_INT >= 30) ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL else 0
-            )
-        } catch (e: IllegalStateException) {
-            Log.e(TAG, "Failed to setCallInProgressNotification as a foreground service for type: ${type}, trying to update instead", e)
-        }*/
 
     }
 
