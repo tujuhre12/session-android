@@ -2070,8 +2070,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 }
             }
 
-            mediaOverviewViewModel.setPaused(true)
-
             audioRecorder.startRecording(audioRecordingStartedCallback)
             stopAudioHandler.postDelayed(stopVoiceMessageRecordingTask, 5.minutes.inWholeMilliseconds) // Limit voice messages to 5 minute each
         } else {
@@ -2157,12 +2155,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 val slideDeck = SlideDeck()
                 slideDeck.addSlide(audioSlide)
                 sendAttachments(slideDeck.asAttachments(), body = null)
-                mediaOverviewViewModel.setPaused(false)
             }
 
             override fun onFailure(e: ExecutionException) {
                 Toast.makeText(this@ConversationActivityV2, R.string.audioUnableToRecord, Toast.LENGTH_LONG).show()
-                mediaOverviewViewModel.setPaused(false)
             }
         })
     }
@@ -2174,7 +2170,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         audioRecorder.stopRecording()
         stopAudioHandler.removeCallbacks(stopVoiceMessageRecordingTask)
-        mediaOverviewViewModel.setPaused(false)
 
         // Note: The 0L check prevents the warning toast being shown when leaving the conversation activity
         val voiceMessageDuration = inputBar.voiceMessageDurationMS
