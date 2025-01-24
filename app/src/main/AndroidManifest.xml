@@ -365,6 +365,9 @@
             </intent-filter>
         </receiver>
         <receiver android:name="org.thoughtcrime.securesms.service.ExpirationListener" />
+        <receiver android:name="org.thoughtcrime.securesms.webrtc.EndCallReceiver"
+            android:enabled="true"
+            android:exported="false" />
 
         <provider
             android:name="org.thoughtcrime.securesms.providers.PartProvider"

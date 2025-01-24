@@ -59,8 +59,6 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
         const val ACTION_ANSWER = "answer"
         const val ACTION_END = "end-call"
         const val ACTION_START_CALL = "start-call"
-        const val ACTION_DENY_CALL = "deny-call"
-        const val ACTION_LOCAL_HANGUP = "local-hangup"
 
         const val EXTRA_RECIPIENT_ADDRESS = "RECIPIENT_ID"
 
@@ -79,6 +77,15 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
 
     @Inject
     lateinit var webRtcService: WebRtcCallService
+
+    //todo PHONE TEMP STRINGS THAT WILL NEED TO BE REPLACED WITH CS STRINGS - putting them all here to easily discard them later
+    val TEMP_CREATING_CALL = "Creating Call"
+    val TEMP_SENDING_OFFER = "Sending Call Offer"
+    val TEMP_SENDING_CANDIDATES = "Sending Connection Candidates"
+    val TEMP_AWAITING_RECIPIENT_ANSWER = "Awaiting Recipient Answer..."
+    val TEMP_RECEIVED_ANSWER = "Received Answer"
+    val TEMP_HANDLING_CANDIDATES = "Handling Connection Candidates"
+    val TEMP_CALL_CONNECTED = "Call Connected"
 
     /**
      * We need to track the device's orientation so we can calculate whether or not to rotate the video streams
@@ -218,14 +225,6 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
 
         if (intent.action == ACTION_FULL_SCREEN_INTENT) {
             supportActionBar?.setDisplayHomeAsUpEnabled(false)
-        }
-
-        if(intent.action == ACTION_DENY_CALL) {
-            denyCall()
-        }
-
-        if(intent.action == ACTION_LOCAL_HANGUP) {
-            hangUp()
         }
     }
 

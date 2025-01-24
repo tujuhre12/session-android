@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.util
 
 import android.app.Notification
 import android.app.PendingIntent
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
@@ -15,6 +16,10 @@ import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.calls.WebRtcCallActivity
 import org.thoughtcrime.securesms.notifications.NotificationChannels
+import org.thoughtcrime.securesms.service.WebRtcCallService
+import org.thoughtcrime.securesms.service.WebRtcCallService.Companion.ACTION_DENY_CALL
+import org.thoughtcrime.securesms.service.WebRtcCallService.Companion.ACTION_LOCAL_HANGUP
+import org.thoughtcrime.securesms.webrtc.EndCallReceiver
 
 class CallNotificationBuilder {
 
@@ -64,9 +69,9 @@ class CallNotificationBuilder {
                     builder.setContentText(txt)
                             .setCategory(NotificationCompat.CATEGORY_CALL)
                     builder.addAction(
-                        getActivityNotificationAction(
+                        getCallEndedNotification(
                             context,
-                            WebRtcCallActivity.ACTION_DENY_CALL,
+                            ACTION_DENY_CALL,
                             R.drawable.ic_x,
                             R.string.decline)
                     )
@@ -85,9 +90,9 @@ class CallNotificationBuilder {
                     builder.setContentText(context.getString(R.string.callsConnecting))
                         .setSilent(true)
                     builder.addAction(
-                        getActivityNotificationAction(
+                        getCallEndedNotification(
                             context,
-                            WebRtcCallActivity.ACTION_LOCAL_HANGUP,
+                            ACTION_LOCAL_HANGUP,
                             R.drawable.ic_phone_fill_custom,
                             R.string.cancel
                         )
@@ -97,9 +102,9 @@ class CallNotificationBuilder {
                     builder.setContentText(context.getString(R.string.callsInProgress))
                         .setSilent(true)
                     builder.addAction(
-                        getActivityNotificationAction(
+                        getCallEndedNotification(
                             context,
-                            WebRtcCallActivity.ACTION_LOCAL_HANGUP,
+                            ACTION_LOCAL_HANGUP,
                             R.drawable.ic_phone_fill_custom,
                             R.string.callsEnd
                     )
@@ -117,6 +122,19 @@ class CallNotificationBuilder {
                 .setFlags(FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_HISTORY or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
                 .setAction(WebRtcCallActivity.ACTION_FULL_SCREEN_INTENT)
             return PendingIntent.getActivity(context, 1, intent, PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        }
+
+        private fun getCallEndedNotification(context: Context, action: String,
+                                             @DrawableRes iconResId: Int, @StringRes titleResId: Int): NotificationCompat.Action {
+
+            val actionIntent = Intent(context, EndCallReceiver::class.java).apply {
+                this.action = action
+                component = ComponentName(context, EndCallReceiver::class.java)
+            }
+
+            val pendingIntent = PendingIntent.getBroadcast(context, 0, actionIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+
+            return NotificationCompat.Action(iconResId, context.getString(titleResId), pendingIntent)
         }
 
         private fun getActivityNotificationAction(context: Context, action: String,

@@ -3,9 +3,11 @@ package org.thoughtcrime.securesms.webrtc
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import dagger.hilt.android.AndroidEntryPoint
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.service.WebRtcCallService
 import org.thoughtcrime.securesms.webrtc.locks.LockManager
+import javax.inject.Inject
 
 
 class PowerButtonReceiver(val sendCommand: (Intent)->Unit) : BroadcastReceiver() {
@@ -36,5 +38,24 @@ class WiredHeadsetStateReceiver(val sendCommand: (Intent)->Unit): BroadcastRecei
                 .putExtra(WebRtcCallService.EXTRA_AVAILABLE, state != 0)
 
         sendCommand(serviceIntent)
+    }
+}
+
+
+@AndroidEntryPoint
+class EndCallReceiver(): BroadcastReceiver() {
+    @Inject
+    lateinit var webRtcCallService: WebRtcCallService
+
+    override fun onReceive(context: Context, intent: Intent) {
+        val serviceIntent = when(intent.action) {
+            WebRtcCallService.ACTION_LOCAL_HANGUP -> {
+                WebRtcCallService.hangupIntent(context)
+            }
+
+            else -> WebRtcCallService.denyCallIntent(context)
+        }
+
+        webRtcCallService.onStartCommand(serviceIntent)
     }
 }

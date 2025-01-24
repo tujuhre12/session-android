@@ -10,6 +10,8 @@ import android.content.pm.PackageManager
 import android.media.AudioManager
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
+import androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.session.libsession.messaging.calls.CallMessageType
@@ -28,6 +30,7 @@ import org.thoughtcrime.securesms.util.CallNotificationBuilder.Companion.WEBRTC_
 import org.thoughtcrime.securesms.webrtc.AudioManagerCommand
 import org.thoughtcrime.securesms.webrtc.CallManager
 import org.thoughtcrime.securesms.webrtc.CallViewModel
+import org.thoughtcrime.securesms.webrtc.EndCallReceiver
 import org.thoughtcrime.securesms.webrtc.NetworkChangeReceiver
 import org.thoughtcrime.securesms.webrtc.PeerConnectionException
 import org.thoughtcrime.securesms.webrtc.PowerButtonReceiver
@@ -237,13 +240,17 @@ class WebRtcCallService @Inject constructor(
         scheduledReconnect = null
         NotificationManagerCompat.from(context).cancel(WEBRTC_NOTIFICATION)
 
-        //todo PHONE Figure out why the call notification disappears once we have an unseen missed call
+
         //todo PHONE I got a 'missed call' notification after I declined a call. Is that right?
+        //todo PHONE I got a 'missed call' notification after swiping off notification
+        //todo PHONE I got a 'missed call' notification when picking up the phone too...
         //todo PHONE [xxx Called you], which is a control message for a SUCCESSFUL call, should appear as unread, since you already know about the call - make it unread by default
         //todo PHONE Add title and subtitle on call screen to details current call steps
         //todo PHONE have a fallback way to get back to calls if the call activity is gone. Sticky notification? A banner in the app?
-        //todo PHONE investigate swipping off call notification before answering
         //todo PHONE can we remove the android auto stuff?
+        //todo PHONE make sure the notification is cleared in all conditions now that it isn't tied to the service anymore
+        //todo PHONE It seems we can't call if the phone has been in sleep for a while. The call (sending) doesn't seem to do anything (not receiving anything)
+        //todo PHONE test other receivers
     }
 
     private fun isSameCall(intent: Intent): Boolean {
@@ -287,7 +294,7 @@ class WebRtcCallService @Inject constructor(
                 }
                 ACTION_OUTGOING_CALL -> if (isIdle()) handleOutgoingCall(intent)
                 ACTION_ANSWER_CALL -> handleAnswerCall(intent)
-                ACTION_DENY_CALL -> handleDenyCall(intent)
+                ACTION_DENY_CALL -> handleDenyCall()
                 ACTION_LOCAL_HANGUP -> handleLocalHangup(intent)
                 ACTION_REMOTE_HANGUP -> handleRemoteHangup(intent)
                 ACTION_SET_MUTE_AUDIO -> handleSetMuteAudio(intent)
@@ -530,7 +537,7 @@ class WebRtcCallService @Inject constructor(
         }
     }
 
-    private fun handleDenyCall(intent: Intent) {
+    private fun handleDenyCall() {
         callManager.handleDenyCall()
         terminate()
     }
@@ -677,8 +684,6 @@ class WebRtcCallService @Inject constructor(
     // Over the course of setting up a phone call this method is called multiple times with `types`
     // of PRE_OFFER -> RING_INCOMING -> ICE_MESSAGE
     private fun setCallInProgressNotification(type: Int, recipient: Recipient?) {
-        //todo PHONE mske sure the notification is cleared in all conditions now that it isn't tied to the service anymore
-
         // send appropriate notification if we have permission
         if (
             ActivityCompat.checkSelfPermission(
@@ -742,6 +747,7 @@ class WebRtcCallService @Inject constructor(
         powerButtonReceiver = null
         wiredHeadsetStateReceiver = null
         networkChangedReceiver = null
+        wantsToAnswerReceiver = null
         uncaughtExceptionHandlerManager?.unregister()
         wantsToAnswer = false
         currentTimeouts = 0
