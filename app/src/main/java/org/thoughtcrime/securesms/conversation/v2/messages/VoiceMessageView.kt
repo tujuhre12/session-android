@@ -91,7 +91,7 @@ class VoiceMessageView @JvmOverloads constructor(
                     val formattedVoiceMessageDuration = String.format("%01d:%02d", TimeUnit.MILLISECONDS.toMinutes(durationMS), TimeUnit.MILLISECONDS.toSeconds(durationMS) % 60)
                     binding.voiceMessageViewDurationTextView.text = formattedVoiceMessageDuration
                 } else {
-                    Log.w("AudioMessageView", "For some reason audioExtras.durationMs was NOT greater than zero!")
+                    Log.w(TAG, "For some reason audioExtras.durationMs was NOT greater than zero!")
                     binding.voiceMessageViewDurationTextView.text = "--:--"
                 }
 

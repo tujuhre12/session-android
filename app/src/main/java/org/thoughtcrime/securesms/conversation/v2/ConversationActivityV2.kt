@@ -404,12 +404,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     // Lower limit for the length of voice messages - any lower and we inform the user rather than sending
     private val MINIMUM_VOICE_MESSAGE_DURATION_MS = 1000L
 
-    // Access to the MediaOverviewViewModel to used pause it's flow monitoring while recording a voice message
-    private val mediaOverviewViewModel: MediaOverviewViewModel by viewModels()
-    {
-        mediaOverviewViewModelFactory.create(viewModel.recipient?.address!!)
-    }
-
     // region Settings
     companion object {
         // Extras
@@ -2169,9 +2163,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     // Because VoiceMessageViews are shared between any uploaded audio and voice messages, we need to reset the last recorded
     // audio duration so that in the case of uploading an audio file (for which we will NOT know the duration until processing
-    // is complete)  then we show a placeholder duration rather than the duration of the last recorded voice message (which
-    // would be incorrect for the uploaded audio). This is the absolute best we can do until processing of the audio file
-    // has been completed, at which point the duration is set to the actual value.
+    // is complete) then we show a placeholder duration rather than the duration of the last recorded voice message, wwhich
+    // would be incorrect for the uploaded audio. This is the absolute best we can do until processing of the audio file
+    // is complete, at which point the duration is set to the actual determined value.
     fun resetLastRecordedVoiceMessageDurationString() {
         binding.inputBarRecordingView.recordingViewDurationTextView.text = "--:--"
     }
@@ -2195,8 +2189,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         // another voice message.
         inputBar.voiceRecorderState = VoiceRecorderState.Idle
     }
-
-
 
     override fun selectMessages(messages: Set<MessageRecord>) {
         selectMessage(messages.first(), 0) //TODO: begin selection mode

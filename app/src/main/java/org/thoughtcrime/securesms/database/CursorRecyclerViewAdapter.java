@@ -139,7 +139,8 @@ public abstract class CursorRecyclerViewAdapter<VH extends RecyclerView.ViewHold
 
   protected void onBindFastAccessItemViewHolder(VH viewHolder, int position) { /* Nothing */ }
 
-  // Sparse-array of item view types used to avoid changing the cursor, which will cause per-frame SlideDeck with AudioSlide creation
+  // Sparse-array of item view types used to avoid changing the cursor and as such avoid per-frame
+  // SlideDeck with AudioSlide creation.
   private final SparseIntArray viewTypeCache = new SparseIntArray();
 
   @Override

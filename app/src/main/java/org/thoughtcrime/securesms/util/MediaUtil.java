@@ -37,9 +37,6 @@ public class MediaUtil {
     private static final String TAG = MediaUtil.class.getSimpleName();
 
     public static Slide getSlideForAttachment(Context context, Attachment attachment) {
-
-
-
         Slide slide = null;
         if (isGif(attachment.getContentType())) {
             slide = new GifSlide(context, attachment);

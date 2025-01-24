@@ -163,9 +163,7 @@ class VisibleMessageContentView : ConstraintLayout {
                     // We have to use onContentClick (rather than a click listener directly on the voice
                     // message view) so as to not interfere with all the other gestures.
                     onContentClick.add { binding.voiceMessageView.root.togglePlayback() }
-                    onContentDoubleTap = {
-                        binding.voiceMessageView.root.handleDoubleTap()
-                    }
+                    onContentDoubleTap = { binding.voiceMessageView.root.handleDoubleTap() }
                 } else {
                     // If it's an audio message but we haven't downloaded it yet show it as pending
                     (message.slideDeck.audioSlide?.asAttachment() as? DatabaseAttachment)?.let { attachment ->
