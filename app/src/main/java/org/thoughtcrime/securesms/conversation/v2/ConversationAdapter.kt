@@ -20,7 +20,6 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
-import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.conversation.v2.messages.ControlMessageView
 import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageView
 import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageViewDelegate

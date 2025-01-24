@@ -29,8 +29,6 @@ import org.thoughtcrime.securesms.util.FilenameUtils
 
 class AudioSlide : Slide {
 
-    var durationMS: Long? = null
-
     override val contentDescription: String
         get() = context.getString(R.string.audio)
 
@@ -55,7 +53,7 @@ class AudioSlide : Slide {
             )
 
     // Note: This constructor is ONLY ever used when creating audio slides for voice messages
-    constructor(context: Context, uri: Uri, filename: String?, dataSize: Long, contentType: String, isVoiceNote: Boolean, durationMS: Long)
+    constructor(context: Context, uri: Uri, filename: String?, dataSize: Long, contentType: String, isVoiceNote: Boolean)
         : super(
             context,
             UriAttachment(
@@ -72,9 +70,7 @@ class AudioSlide : Slide {
                 false,       // quote
                 null         // caption
             )
-    ) {
-        this.durationMS = durationMS
-    }
+    )
 
     constructor(context: Context, attachment: Attachment) : super(context, attachment)
 

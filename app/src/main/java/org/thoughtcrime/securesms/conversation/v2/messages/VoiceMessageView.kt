@@ -16,18 +16,26 @@ import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAt
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.audio.AudioSlidePlayer
 import org.thoughtcrime.securesms.components.CornerMask
+import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.utilities.MessageBubbleUtilities
 import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 
 @AndroidEntryPoint
-class VoiceMessageView : RelativeLayout, AudioSlidePlayer.Listener {
+class VoiceMessageView @JvmOverloads constructor(
+    context: Context,
+    attrs: AttributeSet? = null,
+    defStyleAttr: Int = 0
+) : RelativeLayout(context, attrs, defStyleAttr), AudioSlidePlayer.Listener {
+    private val TAG = "VoiceMessageView"
 
-    companion object {
-        // The duration in milliseconds of the latest voice message. This is set from ConversationActivityV2.sendVoiceMessage
-        // so that we can display the voice message duration while it uploads (we do not seem to have this information until
-        // upload completes otherwise).
-        var latestVoiceMessageDurationMS = 0L
+    private val conversationActivityV2: ConversationActivityV2? =
+        (context as? ConversationActivityV2)
+
+    init {
+        if (conversationActivityV2 == null) {
+            Log.e(TAG, "VoiceMessageView must be used in ConversationActivityV2")
+        }
     }
 
     @Inject lateinit var attachmentDb: AttachmentDatabase
@@ -47,20 +55,6 @@ class VoiceMessageView : RelativeLayout, AudioSlidePlayer.Listener {
     var delegate: VisibleMessageViewDelegate? = null
     var indexInAdapter = -1
 
-    // region Lifecycle
-    constructor(context: Context) : super(context)
-    constructor(context: Context, attrs: AttributeSet) : super(context, attrs)
-    constructor(context: Context, attrs: AttributeSet, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
-
-    // Note: onFinishInflate occurs before `bind`
-    override fun onFinishInflate() {
-        super.onFinishInflate()
-        val formattedVoiceMessageDuration = String.format("%01d:%02d", TimeUnit.MILLISECONDS.toMinutes(latestVoiceMessageDurationMS), TimeUnit.MILLISECONDS.toSeconds(latestVoiceMessageDurationMS) % 60)
-        binding.voiceMessageViewDurationTextView.text = formattedVoiceMessageDuration
-    }
-
-    // endregion
-
     // region Updating
     fun bind(message: MmsMessageRecord, isStartOfMessageCluster: Boolean, isEndOfMessageCluster: Boolean) {
         val audioSlide = message.slideDeck.audioSlide!!
@@ -72,7 +66,13 @@ class VoiceMessageView : RelativeLayout, AudioSlidePlayer.Listener {
         cornerMask.setBottomRightRadius(cornerRadii[2])
         cornerMask.setBottomLeftRadius(cornerRadii[3])
 
-        // Only process audio if downloaded
+        // Obtain and set the last voice message duration (taken from the InputBarRecordingView) to use as an interim
+        // value while the file is being processed. Should this VoiceMessageView be an audio file rather than a voice
+        // message then the duration string will be "--:--" to indicate that we do not know the audio duration until
+        // processing completes and that information is available from the audio extras, below.
+        binding.voiceMessageViewDurationTextView.text = conversationActivityV2?.getLastRecordedVoiceMessageDurationString()
+
+        // On initial upload (and while processing audio) we will exit at this point and then return when processing is complete
         if (audioSlide.isPendingDownload || audioSlide.isDownloadInProgress) {
             this.player = null
             return
@@ -92,7 +92,7 @@ class VoiceMessageView : RelativeLayout, AudioSlidePlayer.Listener {
                     binding.voiceMessageViewDurationTextView.text = formattedVoiceMessageDuration
                 } else {
                     Log.w("AudioMessageView", "For some reason audioExtras.durationMs was NOT greater than zero!")
-                    binding.voiceMessageViewDurationTextView.text = context.getString(R.string.unknown)
+                    binding.voiceMessageViewDurationTextView.text = "--:--"
                 }
 
                 binding.voiceMessageViewDurationTextView.visibility = VISIBLE

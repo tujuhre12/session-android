@@ -45,9 +45,7 @@ public class SlideDeck {
 
   public SlideDeck() { }
 
-  public void clear() {
-    slides.clear();
-  }
+  public void clear() { slides.clear(); }
 
   @NonNull
   public String getBody() {
@@ -66,11 +64,7 @@ public class SlideDeck {
   @NonNull
   public List<Attachment> asAttachments() {
     List<Attachment> attachments = new LinkedList<>();
-
-    for (Slide slide : slides) {
-      attachments.add(slide.asAttachment());
-    }
-
+    for (Slide slide : slides) { attachments.add(slide.asAttachment()); }
     return attachments;
   }
 
@@ -144,7 +138,5 @@ public class SlideDeck {
   }
 
   @Override
-  public int hashCode() {
-    return Objects.hash(slides);
-  }
+  public int hashCode() { return Objects.hash(slides); }
 }

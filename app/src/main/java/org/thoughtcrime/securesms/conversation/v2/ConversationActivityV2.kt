@@ -143,7 +143,6 @@ import org.thoughtcrime.securesms.conversation.v2.menus.ConversationMenuHelper
 import org.thoughtcrime.securesms.conversation.v2.messages.ControlMessageView
 import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageView
 import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageViewDelegate
-import org.thoughtcrime.securesms.conversation.v2.messages.VoiceMessageView
 import org.thoughtcrime.securesms.conversation.v2.search.SearchBottomBar
 import org.thoughtcrime.securesms.conversation.v2.search.SearchViewModel
 import org.thoughtcrime.securesms.conversation.v2.utilities.AttachmentManager
@@ -1971,6 +1970,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
         super.onActivityResult(requestCode, resultCode, intent)
+
+        // If we are sending a media file then we'll reset the voice message duration string
+        // to an intermediate value for use during transmission because we will not have the
+        // final audio duration until the file has been entirely processed.
+        resetLastRecordedVoiceMessageDurationString()
+
         val mediaPreppedListener = object : ListenableFuture.Listener<Boolean> {
 
             override fun onSuccess(result: Boolean?) {
@@ -2144,13 +2149,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         future.addListener(object : ListenableFuture.Listener<Pair<Uri, Long>> {
 
             override fun onSuccess(result: Pair<Uri, Long>) {
-
-                // Set the interim voice message duration used to display while we process the attachment upload
-                VoiceMessageView.latestVoiceMessageDurationMS = voiceMessageDurationMS
-
                 val uri = result.first
                 val dataSizeBytes = result.second
-                val audioSlide = AudioSlide(this@ConversationActivityV2, uri, voiceMessageFilename, dataSizeBytes, MediaTypes.AUDIO_AAC, true, voiceMessageDurationMS)
+                val audioSlide = AudioSlide(this@ConversationActivityV2, uri, voiceMessageFilename, dataSizeBytes, MediaTypes.AUDIO_AAC, true)
 
                 val slideDeck = SlideDeck()
                 slideDeck.addSlide(audioSlide)
@@ -2161,6 +2162,18 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 Toast.makeText(this@ConversationActivityV2, R.string.audioUnableToRecord, Toast.LENGTH_LONG).show()
             }
         })
+    }
+
+    // During the interim phase while we upload a voice message we use the duration from the recording view
+    fun getLastRecordedVoiceMessageDurationString() = binding.inputBarRecordingView.recordingViewDurationTextView.text
+
+    // Because VoiceMessageViews are shared between any uploaded audio and voice messages, we need to reset the last recorded
+    // audio duration so that in the case of uploading an audio file (for which we will NOT know the duration until processing
+    // is complete)  then we show a placeholder duration rather than the duration of the last recorded voice message (which
+    // would be incorrect for the uploaded audio). This is the absolute best we can do until processing of the audio file
+    // has been completed, at which point the duration is set to the actual value.
+    fun resetLastRecordedVoiceMessageDurationString() {
+        binding.inputBarRecordingView.recordingViewDurationTextView.text = "--:--"
     }
 
     override fun cancelVoiceMessage() {
@@ -2182,6 +2195,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         // another voice message.
         inputBar.voiceRecorderState = VoiceRecorderState.Idle
     }
+
+
 
     override fun selectMessages(messages: Set<MessageRecord>) {
         selectMessage(messages.first(), 0) //TODO: begin selection mode
