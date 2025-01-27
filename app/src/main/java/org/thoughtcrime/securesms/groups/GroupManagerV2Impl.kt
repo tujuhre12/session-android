@@ -1108,7 +1108,10 @@ class GroupManagerV2Impl @Inject constructor(
     override fun handleGroupInfoChange(message: GroupUpdated, groupId: AccountId) {
         if (message.inner.hasInfoChangeMessage() && message.inner.infoChangeMessage.hasUpdatedExpiration()) {
             // If we receive a disappearing message update, we need to remove the existing timer control message
-            storage.deleteGroupInfoMessages(groupId, UpdateMessageData.Kind.GroupExpirationUpdated::class.java)
+            storage.deleteGroupInfoMessages(
+                groupId,
+                UpdateMessageData.Kind.GroupExpirationUpdated::class.java
+            )
         }
 
         storage.insertGroupInfoChange(message, groupId)
