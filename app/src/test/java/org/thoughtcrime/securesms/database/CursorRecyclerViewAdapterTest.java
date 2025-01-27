@@ -13,7 +13,6 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView.ViewHolder;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -37,6 +36,11 @@ public class CursorRecyclerViewAdapterTest {
 
       @Override
       public void onBindItemViewHolder(ViewHolder viewHolder, @NonNull Cursor cursor) {
+      }
+
+      @Override
+      public int getItemViewType(@NonNull Cursor cursor) {
+        return 0;
       }
     };
   }

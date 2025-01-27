@@ -143,9 +143,7 @@ class DefaultConversationRepository @Inject constructor(
         return drafts.find { it.type == DraftDatabase.Draft.TEXT }?.value
     }
 
-    override fun clearDrafts(threadId: Long) {
-        draftDb.clearDrafts(threadId)
-    }
+    override fun clearDrafts(threadId: Long) { draftDb.clearDrafts(threadId) }
 
     override fun inviteContacts(threadId: Long, contacts: List<Recipient>) {
         val openGroup = lokiThreadDb.getOpenGroupChat(threadId) ?: return
@@ -191,10 +189,7 @@ class DefaultConversationRepository @Inject constructor(
         }
     }
 
-    /**
-     * This will delete these messages from the db
-     * Not to be confused with 'marking messages as deleted'
-     */
+    // This will delete these messages from the db. Not to be confused with 'marking messages as deleted'.
     override fun deleteMessages(messages: Set<MessageRecord>, threadId: Long) {
         // split the messages into mms and sms
         val (mms, sms) = messages.partition { it.isMms }
@@ -208,11 +203,8 @@ class DefaultConversationRepository @Inject constructor(
         }
     }
 
-    /**
-     * This will mark the messages as deleted.
-     * They won't be removed from the db but instead will appear as a special type
-     * of message that says something like "This message was deleted"
-     */
+    // This will mark the messages as deleted. They won't be removed from the db but instead will
+    // appear as a special type of message that says something like "This message was deleted".
     override fun markAsDeletedLocally(messages: Set<MessageRecord>, displayedMessage: String) {
         // split the messages into mms and sms
         val (mms, sms) = messages.partition { it.isMms }
@@ -445,10 +437,13 @@ class DefaultConversationRepository @Inject constructor(
     }
 
     override fun hasReceived(threadId: Long): Boolean {
-        val cursor = mmsSmsDb.getConversation(threadId, true)
+        val cursor = mmsSmsDb.getConversation(threadId, /* reverse = */ true)
         mmsSmsDb.readerFor(cursor).use { reader ->
-            while (reader.next != null) {
-                if (!reader.current.isOutgoing) { return true }
+            while (true) {
+                val record = reader.getNext() ?: break
+                if (!record.isOutgoing) {
+                    return true
+                }
             }
         }
         return false

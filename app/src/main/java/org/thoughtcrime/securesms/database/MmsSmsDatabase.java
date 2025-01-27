@@ -23,6 +23,7 @@ import static org.thoughtcrime.securesms.database.MmsSmsColumns.Types.BASE_TYPE_
 
 import android.content.Context;
 import android.database.Cursor;
+import android.util.SparseArray;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -185,24 +186,6 @@ public class MmsSmsDatabase extends Database {
     return getMessageFor(timestamp, author.serialize());
   }
 
-  public long getPreviousPage(long threadId, long fromTime, int limit) {
-    String order = MmsSmsColumns.NORMALIZED_DATE_SENT+" ASC";
-    String selection = MmsSmsColumns.THREAD_ID+" = "+threadId
-            + " AND "+MmsSmsColumns.NORMALIZED_DATE_SENT+" > "+fromTime;
-    String limitStr = ""+limit;
-    long sent = -1;
-    Cursor cursor = queryTables(PROJECTION, selection, order, limitStr);
-    if (cursor == null) return sent;
-    Reader reader = readerFor(cursor);
-    if (!cursor.move(limit)) {
-      cursor.moveToLast();
-    }
-    MessageRecord record = reader.getCurrent();
-    sent = record.getDateSent();
-    reader.close();
-    return sent;
-  }
-
   public Cursor getConversationPage(long threadId, long fromTime, long toTime, int limit) {
     String order = MmsSmsColumns.NORMALIZED_DATE_SENT+" DESC";
     String selection = MmsSmsColumns.THREAD_ID + " = "+threadId
@@ -276,14 +259,18 @@ public class MmsSmsDatabase extends Database {
   }
 
   public List<MessageRecord> getUserMessages(long threadId, String sender) {
-
     List<MessageRecord> idList = new ArrayList<>();
 
-    try (Cursor cursor = getConversation(threadId, false)) {
-      Reader reader = readerFor(cursor);
-      while (reader.getNext() != null) {
-        MessageRecord record = reader.getCurrent();
-        if (record.getIndividualRecipient().getAddress().serialize().equals(sender)) {
+    try (Cursor cursor = getConversation(threadId, false);
+         Reader reader = readerFor(cursor)) {
+      MessageRecord record;
+      // reader.getNext() returns a MessageRecord or null once we've exhausted rows
+      while ((record = reader.getNext()) != null) {
+        if (record.getIndividualRecipient()
+                .getAddress()
+                .serialize()
+                .equals(sender))
+        {
           idList.add(record);
         }
       }
@@ -673,7 +660,7 @@ public class MmsSmsDatabase extends Database {
   }
 
   public Reader readerFor(@NonNull Cursor cursor, boolean getQuote) {
-    return new Reader(cursor, getQuote);
+    return new Reader(context, cursor, getQuote);
   }
 
   @NotNull
@@ -695,21 +682,80 @@ public class MmsSmsDatabase extends Database {
 
   public class Reader implements Closeable {
 
-    private final Cursor                 cursor;
-    private final boolean                getQuote;
-    private       SmsDatabase.Reader     smsReader;
-    private       MmsDatabase.Reader     mmsReader;
+    private final Context context;
+    private final Cursor cursor;
+    private final boolean getQuote;
 
-    public Reader(Cursor cursor, boolean getQuote) {
-      this.cursor = cursor;
+    // Underlying readers for SMS or MMS rows (they do the actual row parsing).
+    // But we won't let them cache at their own level; instead we cache at this top level.
+    private SmsDatabase.Reader smsReader;
+    private MmsDatabase.Reader mmsReader;
+
+    // A cache of MessageRecord objects, keyed by cursor position
+    private final SparseArray<MessageRecord> messageCache = new SparseArray<>();
+
+    public Reader(@NonNull Context context, @Nullable Cursor cursor, boolean getQuote) {
+      this.context  = context;
+      this.cursor   = cursor;
       this.getQuote = getQuote;
+    }
+
+    // Return the total number of rows in this Cursor, or 0 if it's null
+    public int getCount() { return (cursor == null) ? 0 : cursor.getCount(); }
+
+    // Return the parsed/cached MessageRecord at a given position. Subsequent calls with the same
+    // position will return the same cached object.
+    public @Nullable MessageRecord getMessageAt(int position) {
+      // Validate position
+      if (cursor == null || position < 0 || position >= getCount()) {
+        throw new IndexOutOfBoundsException("Invalid position: " + position);
+      }
+
+      // If we've already parsed this row, return it
+      MessageRecord cached = messageCache.get(position);
+      if (cached != null) { return cached; }
+
+      // Move the cursor to the desired row and parse it.
+      if (!cursor.moveToPosition(position)) {
+        return null; // Shouldn't happen, but just in case
+      }
+      MessageRecord record = parseCurrentRow();
+
+      // Cache the newly-parsed record & return it
+      messageCache.put(position, record);
+      return record;
+    }
+
+    // Forward-only iteration method
+    public @Nullable MessageRecord getNext() {
+      if (cursor == null || !cursor.moveToNext()) {
+        return null;
+      }
+      // We just moved to a new position, so let's parse & cache that row:
+      int position = cursor.getPosition();
+      MessageRecord record = parseCurrentRow();
+      messageCache.put(position, record);
+      return record;
+    }
+
+    // Parse whichever row the cursor is currently on, delegating to either MmsDatabase.Reader or
+    // SmsDatabase.Reader. This is called exactly once per row (the first time that row is requested).
+    private @Nullable MessageRecord parseCurrentRow() {
+      String transport = cursor.getString(cursor.getColumnIndexOrThrow(MmsSmsDatabase.TRANSPORT));
+
+      if      (MmsSmsDatabase.MMS_TRANSPORT.equals(transport)) {
+        return getMmsReader().getCurrent();
+      } else if (MmsSmsDatabase.SMS_TRANSPORT.equals(transport)) {
+        return getSmsReader().getCurrent();
+      } else {
+        throw new AssertionError("Unknown transport type: " + transport);
+      }
     }
 
     private SmsDatabase.Reader getSmsReader() {
       if (smsReader == null) {
         smsReader = DatabaseComponent.get(context).smsDatabase().readerFor(cursor);
       }
-
       return smsReader;
     }
 
@@ -720,17 +766,9 @@ public class MmsSmsDatabase extends Database {
       return mmsReader;
     }
 
-    public MessageRecord getNext() {
-      if (cursor == null || !cursor.moveToNext()) { return null; } else { return getCurrent(); }
+    @Override
+    public void close() {
+      if (cursor != null) { cursor.close(); }
     }
-
-    public MessageRecord getCurrent() {
-      String type = cursor.getString(cursor.getColumnIndexOrThrow(TRANSPORT));
-      if      (MmsSmsDatabase.MMS_TRANSPORT.equals(type)) return getMmsReader().getCurrent();
-      else if (MmsSmsDatabase.SMS_TRANSPORT.equals(type)) return getSmsReader().getCurrent();
-      else                                                throw new AssertionError("Bad type: " + type);
-    }
-
-    public void close() { if (cursor != null) cursor.close(); }
   }
 }

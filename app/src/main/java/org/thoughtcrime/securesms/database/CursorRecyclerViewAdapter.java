@@ -19,7 +19,6 @@ package org.thoughtcrime.securesms.database;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.DataSetObserver;
-import android.util.SparseIntArray;
 import android.view.View;
 import android.view.ViewGroup;
 import androidx.annotation.NonNull;
@@ -46,7 +45,6 @@ public abstract class CursorRecyclerViewAdapter<VH extends RecyclerView.ViewHold
   private @Nullable View    footer;
 
   private static class HeaderFooterViewHolder extends RecyclerView.ViewHolder {
-
     public HeaderFooterViewHolder(View itemView) { super(itemView); }
   }
 
@@ -82,9 +80,6 @@ public abstract class CursorRecyclerViewAdapter<VH extends RecyclerView.ViewHold
     if (cursor != null) { cursor.registerDataSetObserver(observer);  }
 
     valid = cursor != null;
-
-    // Clear the view type cache before notifying the adapter
-    clearViewTypeCache();
 
     notifyDataSetChanged();
 
@@ -139,34 +134,18 @@ public abstract class CursorRecyclerViewAdapter<VH extends RecyclerView.ViewHold
 
   protected void onBindFastAccessItemViewHolder(VH viewHolder, int position) { /* Nothing */ }
 
-  // Sparse-array of item view types used to avoid changing the cursor and as such avoid per-frame
-  // SlideDeck with AudioSlide creation.
-  private final SparseIntArray viewTypeCache = new SparseIntArray();
-
   @Override
   public final int getItemViewType(int position) {
-    // Check if we've already cached the view type for this position and return the cached value if so
-    int cachedViewType = viewTypeCache.get(position, Integer.MIN_VALUE);
-    if (cachedViewType != Integer.MIN_VALUE) { return cachedViewType;  }
-
-    int viewType;
-    if      (isHeaderPosition(position))     { viewType = HEADER_TYPE; }
-    else if (isFooterPosition(position))     { viewType = FOOTER_TYPE; }
-    else if (isFastAccessPosition(position)) { viewType = getFastAccessItemViewType(position); }
+    if      (isHeaderPosition(position))     { return HEADER_TYPE;                         }
+    else if (isFooterPosition(position))     { return FOOTER_TYPE;                         }
+    else if (isFastAccessPosition(position)) { return getFastAccessItemViewType(position); }
     else {
-      // Expensive call, so cache the result
-      viewType = getItemViewType(getCursorAtPositionOrThrow(position));
+      // Delegate to the abstract method that checks the cursor row
+      return getItemViewType(getCursorAtPositionOrThrow(position));
     }
-
-    // Cache the result & return it
-    viewTypeCache.put(position, viewType);
-    return viewType;
   }
 
-  // Clear the cache when data changes (called from `swapCursor`)
-  public void clearViewTypeCache() { viewTypeCache.clear(); }
-
-  public int getItemViewType(@NonNull Cursor cursor) { return 0; }
+  public abstract int getItemViewType(@NonNull Cursor cursor);
 
   @Override
   public final long getItemId(int position) {
@@ -199,15 +178,10 @@ public abstract class CursorRecyclerViewAdapter<VH extends RecyclerView.ViewHold
     return hasFooterView() && position == getItemCount() - 1;
   }
 
-  protected boolean isHeaderPosition(int position) {
-    return hasHeaderView() && position == 0;
-  }
+  protected boolean isHeaderPosition(int position) { return hasHeaderView() && position == 0; }
 
   private int getCursorPosition(int position) {
-    if (hasHeaderView()) {
-      position -= 1;
-    }
-
+    if (hasHeaderView()) { position -= 1; }
     return position - getFastAccessSize();
   }
 

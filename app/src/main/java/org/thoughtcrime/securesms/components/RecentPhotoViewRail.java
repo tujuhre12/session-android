@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.components;
 
-
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
@@ -129,6 +128,10 @@ public class RecentPhotoViewRail extends FrameLayout implements LoaderManager.Lo
       });
 
     }
+
+    // Photos are visible messages
+    @Override
+    public int getItemViewType(@NonNull Cursor cursor) { return VISIBLE; }
 
     @SuppressWarnings("SuspiciousNameCombination")
     private String getWidthColumn(int orientation) {
