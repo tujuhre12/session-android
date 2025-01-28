@@ -122,7 +122,7 @@ class CallManager(
 
     private val stateProcessor = StateProcessor(CallState.Idle)
 
-    private val _callStateEvents = MutableStateFlow(CallViewModel.State.CALL_PENDING)
+    private val _callStateEvents = MutableStateFlow(CallViewModel.State.CALL_INITIALIZING)
     val callStateEvents = _callStateEvents.asSharedFlow()
     private val _recipientEvents = MutableStateFlow(RecipientUpdate.UNKNOWN)
     val recipientEvents = _recipientEvents.asSharedFlow()
@@ -270,7 +270,6 @@ class CallManager(
     }
 
     override fun onIceConnectionChange(newState: IceConnectionState) {
-        Log.d("Loki", "New ice connection state = $newState")
         iceState = newState
         peerConnectionObservers.forEach { listener -> listener.onIceConnectionChange(newState) }
         if (newState == IceConnectionState.CONNECTED) {
@@ -298,6 +297,7 @@ class CallManager(
     }
 
     private fun queueOutgoingIce(expectedCallId: UUID, expectedRecipient: Recipient) {
+        postViewModelState(CallViewModel.State.CALL_SENDING_ICE)
         outgoingIceDebouncer.publish {
             val currentCallId = this.callId ?: return@publish
             val currentRecipient = this.recipient ?: return@publish
@@ -317,6 +317,7 @@ class CallManager(
                 )
                     .applyExpiryMode(thread)
                     .also { MessageSender.sendNonDurably(it, currentRecipient.address, isSyncMessage = currentRecipient.isLocalNumber) }
+
             }
         }
     }
@@ -560,6 +561,7 @@ class CallManager(
             ).applyExpiryMode(thread), recipient.address, isSyncMessage = recipient.isLocalNumber).bind {
                 Log.d("Loki", "Sent pre-offer")
                 Log.d("Loki", "Sending offer")
+                postViewModelState(CallViewModel.State.CALL_OFFER_OUTGOING)
                 MessageSender.sendNonDurably(CallMessage.offer(
                     offer.description,
                     callId
@@ -758,6 +760,10 @@ class CallManager(
         if (callId != this.callId) {
             Log.w(TAG, "Got remote ice candidates for a call that isn't active")
             return
+        }
+
+        if(_callStateEvents.value != CallViewModel.State.CALL_CONNECTED){
+            postViewModelState(CallViewModel.State.CALL_HANDLING_ICE)
         }
 
         val connection = peerConnection

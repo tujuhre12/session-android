@@ -40,12 +40,7 @@ import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.service.WebRtcCallService
 import org.thoughtcrime.securesms.webrtc.AudioManagerCommand
 import org.thoughtcrime.securesms.webrtc.CallViewModel
-import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_CONNECTED
-import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_INCOMING
-import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_OUTGOING
-import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_PRE_INIT
-import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_RECONNECTING
-import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_RINGING
+import org.thoughtcrime.securesms.webrtc.CallViewModel.State.*
 import org.thoughtcrime.securesms.webrtc.Orientation
 import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager.AudioDevice.EARPIECE
 import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager.AudioDevice.SPEAKER_PHONE
@@ -79,13 +74,13 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
     lateinit var webRtcService: WebRtcCallService
 
     //todo PHONE TEMP STRINGS THAT WILL NEED TO BE REPLACED WITH CS STRINGS - putting them all here to easily discard them later
-    val TEMP_CREATING_CALL = "Creating Call"
+    val TEMP_SEND_PRE_OFFER = "Creating Call"
+    val TEMP_RECEIVE_PRE_OFFER = "Receiving Pre Offer"
     val TEMP_SENDING_OFFER = "Sending Call Offer"
+    val TEMP_RECEIVING_OFFER = "Receiving Call Offer"
     val TEMP_SENDING_CANDIDATES = "Sending Connection Candidates"
-    val TEMP_AWAITING_RECIPIENT_ANSWER = "Awaiting Recipient Answer..."
     val TEMP_RECEIVED_ANSWER = "Received Answer"
     val TEMP_HANDLING_CANDIDATES = "Handling Connection Candidates"
-    val TEMP_CALL_CONNECTED = "Call Connected"
 
     /**
      * We need to track the device's orientation so we can calculate whether or not to rotate the video streams
@@ -268,7 +263,7 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
     }
 
     private fun answerCall() {
-        if (viewModel.currentCallState == CALL_PRE_INIT) {
+        if (viewModel.currentCallState == CALL_PRE_OFFER_INCOMING) {
             wantsToAnswer = true
             updateControls()
         }
@@ -322,20 +317,57 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
             if (state == null) {
                 if (wantsToAnswer) {
                     controlGroup.isVisible = true
-                    remoteLoadingView.isVisible = true
+
+                    callTitle.text = getString(R.string.callsRinging)
+                    callSubtitle.text = ""
+
                     incomingControlGroup.isVisible = false
                 }
             } else {
                 controlGroup.isVisible = state in listOf(
                     CALL_CONNECTED,
-                    CALL_OUTGOING,
-                    CALL_INCOMING
-                ) || (state == CALL_PRE_INIT && wantsToAnswer)
-                remoteLoadingView.isVisible =
-                    state !in listOf(CALL_CONNECTED, CALL_RINGING, CALL_PRE_INIT) || wantsToAnswer
+                    CALL_PRE_OFFER_OUTGOING,
+                    CALL_OFFER_OUTGOING,
+                    CALL_ANSWER_OUTGOING,
+                    CALL_ANSWER_INCOMING
+                ) || (state == CALL_PRE_OFFER_INCOMING && wantsToAnswer)
+
+                // set up title and subtitle
+                callTitle.text = when (state) {
+                    CALL_PRE_OFFER_OUTGOING, CALL_PRE_OFFER_INCOMING,
+                        -> getString(R.string.callsRinging)
+
+                    CALL_ANSWER_INCOMING,
+                    CALL_ANSWER_OUTGOING,
+                        -> getString(R.string.callsConnecting)
+
+                    CALL_CONNECTED -> ""
+
+                    CALL_RECONNECTING -> getString(R.string.callsReconnecting)
+                    CALL_DISCONNECTED -> getString(R.string.callsEnded)
+                    RECIPIENT_UNAVAILABLE, NETWORK_FAILURE -> getString(R.string.callsErrorStart)
+                    else -> callTitle.text
+                }
+
+                callSubtitle.text = when (state) {
+                    CALL_PRE_OFFER_OUTGOING -> TEMP_SEND_PRE_OFFER
+                    CALL_PRE_OFFER_INCOMING -> TEMP_RECEIVE_PRE_OFFER
+
+                    CALL_OFFER_OUTGOING -> TEMP_SENDING_OFFER
+                    CALL_OFFER_INCOMING -> TEMP_RECEIVING_OFFER
+
+                    CALL_ANSWER_OUTGOING, CALL_ANSWER_INCOMING -> TEMP_RECEIVED_ANSWER
+
+                    CALL_SENDING_ICE -> TEMP_SENDING_CANDIDATES
+                    CALL_HANDLING_ICE -> TEMP_HANDLING_CANDIDATES
+
+                    else -> ""
+                }
+
+
                 incomingControlGroup.isVisible =
-                    state in listOf(CALL_RINGING, CALL_PRE_INIT) && !wantsToAnswer
-                reconnectingText.isVisible = state == CALL_RECONNECTING
+                    state in listOf(CALL_OFFER_INCOMING, CALL_PRE_OFFER_INCOMING) && !wantsToAnswer
+
                 endCallButton.isVisible = endCallButton.isVisible || state == CALL_RECONNECTING
             }
         }
@@ -358,7 +390,7 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
                 viewModel.callState.collect { state ->
                     Log.d("Loki", "Consuming view model state $state")
                     when (state) {
-                        CALL_RINGING -> if (wantsToAnswer) {
+                        CALL_OFFER_INCOMING -> if (wantsToAnswer) {
                             answerCall()
                             wantsToAnswer = false
                         }

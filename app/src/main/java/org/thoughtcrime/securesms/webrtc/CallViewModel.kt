@@ -13,21 +13,23 @@ import javax.inject.Inject
 class CallViewModel @Inject constructor(private val callManager: CallManager): ViewModel() {
 
     enum class State {
-        CALL_PENDING,
+        CALL_INITIALIZING, // default starting state before any rtc state kicks in
 
-        CALL_PRE_INIT,
-        CALL_INCOMING,
-        CALL_OUTGOING,
+        CALL_PRE_OFFER_INCOMING,
+        CALL_PRE_OFFER_OUTGOING,
+        CALL_OFFER_INCOMING,
+        CALL_OFFER_OUTGOING,
+        CALL_ANSWER_INCOMING,
+        CALL_ANSWER_OUTGOING,
+        CALL_HANDLING_ICE,
+        CALL_SENDING_ICE,
+
         CALL_CONNECTED,
-        CALL_RINGING,
-        CALL_BUSY,
         CALL_DISCONNECTED,
         CALL_RECONNECTING,
 
         NETWORK_FAILURE,
         RECIPIENT_UNAVAILABLE,
-        NO_SUCH_USER,
-        UNTRUSTED_IDENTITY,
     }
 
     val floatingRenderer: SurfaceViewRenderer?

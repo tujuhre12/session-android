@@ -10,10 +10,10 @@ import android.content.pm.PackageManager
 import android.media.AudioManager
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.ContextCompat
-import androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.FutureTaskListener
@@ -30,7 +30,6 @@ import org.thoughtcrime.securesms.util.CallNotificationBuilder.Companion.WEBRTC_
 import org.thoughtcrime.securesms.webrtc.AudioManagerCommand
 import org.thoughtcrime.securesms.webrtc.CallManager
 import org.thoughtcrime.securesms.webrtc.CallViewModel
-import org.thoughtcrime.securesms.webrtc.EndCallReceiver
 import org.thoughtcrime.securesms.webrtc.NetworkChangeReceiver
 import org.thoughtcrime.securesms.webrtc.PeerConnectionException
 import org.thoughtcrime.securesms.webrtc.PowerButtonReceiver
@@ -55,8 +54,10 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import javax.inject.Singleton
 import org.thoughtcrime.securesms.webrtc.data.State as CallState
 
+@Singleton
 class WebRtcCallService @Inject constructor(
     @ApplicationContext val context: Context,
     val callManager: CallManager
@@ -84,7 +85,7 @@ class WebRtcCallService @Inject constructor(
         const val ACTION_WANTS_TO_ANSWER = "WANTS_TO_ANSWER"
 
         const val ACTION_PRE_OFFER = "PRE_OFFER"
-        const val ACTION_RESPONSE_MESSAGE = "RESPONSE_MESSAGE"
+        const val ACTION_ANSWER_INCOMING = "ANSWER_INCOMING"
         const val ACTION_ICE_MESSAGE = "ICE_MESSAGE"
         const val ACTION_REMOTE_HANGUP = "REMOTE_HANGUP"
         const val ACTION_ICE_CONNECTED = "ICE_CONNECTED"
@@ -146,7 +147,7 @@ class WebRtcCallService @Inject constructor(
 
         fun incomingAnswer(context: Context, address: Address, sdp: String, callId: UUID) =
             Intent(context, WebRtcCallService::class.java)
-                .setAction(ACTION_RESPONSE_MESSAGE)
+                .setAction(ACTION_ANSWER_INCOMING)
                 .putExtra(EXTRA_RECIPIENT_ADDRESS, address)
                 .putExtra(EXTRA_CALL_ID, callId)
                 .putExtra(EXTRA_REMOTE_DESCRIPTION, sdp)
@@ -228,6 +229,7 @@ class WebRtcCallService @Inject constructor(
     @Synchronized
     private fun terminate() {
         Log.d(TAG, "*** Terminating rtc service")
+        NotificationManagerCompat.from(context).cancel(WEBRTC_NOTIFICATION)
         LocalBroadcastManager.getInstance(context).sendBroadcast(Intent(WebRtcCallActivity.ACTION_END))
         lockManager.updatePhoneState(LockManager.PhoneState.IDLE)
         callManager.stop()
@@ -238,19 +240,23 @@ class WebRtcCallService @Inject constructor(
         scheduledReconnect?.cancel(false)
         scheduledTimeout = null
         scheduledReconnect = null
-        NotificationManagerCompat.from(context).cancel(WEBRTC_NOTIFICATION)
+        callManager.postViewModelState(CallViewModel.State.CALL_INITIALIZING) // reset to default state
 
 
         //todo PHONE I got a 'missed call' notification after I declined a call. Is that right?
         //todo PHONE I got a 'missed call' notification after swiping off notification
         //todo PHONE I got a 'missed call' notification when picking up the phone too...
         //todo PHONE [xxx Called you], which is a control message for a SUCCESSFUL call, should appear as unread, since you already know about the call - make it unread by default
-        //todo PHONE Add title and subtitle on call screen to details current call steps
-        //todo PHONE have a fallback way to get back to calls if the call activity is gone. Sticky notification? A banner in the app?
-        //todo PHONE can we remove the android auto stuff?
-        //todo PHONE make sure the notification is cleared in all conditions now that it isn't tied to the service anymore
+        //todo PHONE have a fallback way to get back to calls if the call activity is gone. Sticky notification? A banner in the app? - earlier version can't swipe the notification off while more recent can.. can this be changed?
         //todo PHONE It seems we can't call if the phone has been in sleep for a while. The call (sending) doesn't seem to do anything (not receiving anything)
-        //todo PHONE test other receivers
+        //todo PHONE test other receivers (proximity, headset, etc... )
+        //todo PHONE often get in a state where the phone gets stuck after accepting the call
+        //todo PHONE sometimes the notification doesn't immediately disappear when hitting 'accept' - probably the state hasn't yet updated, maybe we could enforce the behaviour upon tapping the button
+        //todo PHONE it seems the proximity stuff still goes on after a call
+        //todo PHONE ice candidate should happen separately from answer (before?)
+        //todo PHONE GETTING A LOT OF RECONNECTING causing missed call during a call
+        //todo PHONE hanging up from iOS: call is not terminated  on android side
+        //todo PHONE when ending a call with user A I get a notification regarding missing a call from user B that happened before (but message is unseen)
     }
 
     private fun isSameCall(intent: Intent): Boolean {
@@ -302,7 +308,7 @@ class WebRtcCallService @Inject constructor(
                 ACTION_FLIP_CAMERA -> handleSetCameraFlip(intent)
                 ACTION_WIRED_HEADSET_CHANGE -> handleWiredHeadsetChanged(intent)
                 ACTION_SCREEN_OFF -> handleScreenOffChange(intent)
-                ACTION_RESPONSE_MESSAGE -> handleResponseMessage(intent)
+                ACTION_ANSWER_INCOMING -> handleAnswerIncoming(intent)
                 ACTION_ICE_MESSAGE -> handleRemoteIceCandidate(intent)
                 ACTION_ICE_CONNECTED -> handleIceConnected(intent)
                 ACTION_CHECK_TIMEOUT -> handleCheckTimeout(intent)
@@ -336,7 +342,7 @@ class WebRtcCallService @Inject constructor(
 
     private fun handleBusyCall(intent: Intent) {
         val recipient = getRemoteRecipient(intent)
-
+Log.d("", "*** --- BUSY CALL - insert missed call")
         insertMissedCall(recipient, false)
     }
 
@@ -380,7 +386,7 @@ class WebRtcCallService @Inject constructor(
 
         callManager.onPreOffer(callId, recipient) {
             setCallInProgressNotification(TYPE_INCOMING_PRE_OFFER, recipient)
-            callManager.postViewModelState(CallViewModel.State.CALL_PRE_INIT)
+            callManager.postViewModelState(CallViewModel.State.CALL_PRE_OFFER_INCOMING)
             callManager.initializeAudioForCall()
             callManager.startIncomingRinger()
             callManager.setAudioEnabled(true)
@@ -412,7 +418,7 @@ class WebRtcCallService @Inject constructor(
                 //No need to do anything here as this case is already taken care of from the pre offer that came before
             }
             callManager.clearPendingIceUpdates()
-            callManager.postViewModelState(CallViewModel.State.CALL_RINGING)
+            callManager.postViewModelState(CallViewModel.State.CALL_OFFER_INCOMING)
             registerPowerButtonReceiver()
         }
     }
@@ -426,7 +432,7 @@ class WebRtcCallService @Inject constructor(
 
             callManager.initializeVideo(context)
 
-            callManager.postViewModelState(CallViewModel.State.CALL_OUTGOING)
+            callManager.postViewModelState(CallViewModel.State.CALL_PRE_OFFER_OUTGOING)
             lockManager.updatePhoneState(LockManager.PhoneState.IN_CALL)
             callManager.initializeAudioForCall()
             callManager.startOutgoingRinger(OutgoingRinger.Type.RINGING)
@@ -497,7 +503,8 @@ class WebRtcCallService @Inject constructor(
             setCallInProgressNotification(TYPE_INCOMING_CONNECTING, recipient)
 
             callManager.silenceIncomingRinger()
-            callManager.postViewModelState(CallViewModel.State.CALL_INCOMING)
+
+            callManager.postViewModelState(CallViewModel.State.CALL_ANSWER_INCOMING)
 
             scheduledTimeout = timeoutExecutor.schedule(
                 TimeoutRunnable(callId, context, ::onStartCommand),
@@ -579,13 +586,16 @@ class WebRtcCallService @Inject constructor(
         callManager.handleScreenOffChange()
     }
 
-    private fun handleResponseMessage(intent: Intent) {
+    private fun handleAnswerIncoming(intent: Intent) {
         try {
             val recipient = getRemoteRecipient(intent)
             if (callManager.isCurrentUser(recipient) && callManager.currentConnectionState in CallState.CAN_DECLINE_STATES) {
                 handleLocalHangup(intent)
                 return
             }
+
+            callManager.postViewModelState(CallViewModel.State.CALL_ANSWER_OUTGOING)
+
             val callId = getCallId(intent)
             val description = intent.getStringExtra(EXTRA_REMOTE_DESCRIPTION)
             callManager.handleResponseMessage(
@@ -613,7 +623,23 @@ class WebRtcCallService @Inject constructor(
      *               - EXTRA_ICE_SDP: An array of SDP candidate strings.
      */
     private fun handleRemoteIceCandidate(intent: Intent) {
+        val callId = getCallId(intent)
+        val sdpMids = intent.getStringArrayExtra(EXTRA_ICE_SDP_MID) ?: return
+        val sdpLineIndexes = intent.getIntArrayExtra(EXTRA_ICE_SDP_LINE_INDEX) ?: return
+        val sdps = intent.getStringArrayExtra(EXTRA_ICE_SDP) ?: return
+        if (sdpMids.size != sdpLineIndexes.size || sdpLineIndexes.size != sdps.size) {
+            Log.w(TAG, "sdp info not of equal length")
+            return
+        }
+        val iceCandidates = sdpMids.indices.map { index ->
+            IceCandidate(
+                sdpMids[index],
+                sdpLineIndexes[index],
+                sdps[index]
+            )
+        }
 
+        callManager.handleRemoteIceCandidate(iceCandidates, callId)
     }
 
     private fun handleIceConnected(intent: Intent) {

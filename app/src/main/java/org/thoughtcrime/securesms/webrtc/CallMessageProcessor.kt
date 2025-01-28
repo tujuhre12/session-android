@@ -87,14 +87,14 @@ class CallMessageProcessor(
     }
 
     private fun incomingHangup(callMessage: CallMessage) {
-        Log.d("", "*** CallMessageProcessor: incomingHangup")
+        Log.d("", "CallMessageProcessor: incomingHangup")
         val callId = callMessage.callId ?: return
         val hangupIntent = WebRtcCallService.remoteHangupIntent(context, callId)
         webRtcService.onStartCommand(hangupIntent)
     }
 
     private fun incomingAnswer(callMessage: CallMessage) {
-        Log.d("", "*** CallMessageProcessor: incomingAnswer")
+        Log.d("", "CallMessageProcessor: incomingAnswer")
         val recipientAddress = callMessage.sender ?: return Log.w(TAG, "Cannot answer incoming call without sender")
         val callId = callMessage.callId ?: return Log.w(TAG, "Cannot answer incoming call without callId" )
         val sdp = callMessage.sdps.firstOrNull() ?: return Log.w(TAG, "Cannot answer incoming call without sdp")
@@ -108,7 +108,7 @@ class CallMessageProcessor(
     }
 
     private fun handleIceCandidates(callMessage: CallMessage) {
-        Log.d("", "*** CallMessageProcessor: handleIceCandidates")
+        Log.d("", "CallMessageProcessor: handleIceCandidates")
         val callId = callMessage.callId ?: return
         val sender = callMessage.sender ?: return
 
@@ -126,7 +126,7 @@ class CallMessageProcessor(
 
     private fun incomingPreOffer(callMessage: CallMessage) {
         // handle notification state
-        Log.d("", "*** CallMessageProcessor: incomingPreOffer")
+        Log.d("", "CallMessageProcessor: incomingPreOffer")
         val recipientAddress = callMessage.sender ?: return
         val callId = callMessage.callId ?: return
         val incomingIntent = WebRtcCallService.preOffer(
@@ -142,7 +142,8 @@ class CallMessageProcessor(
     }
 
     private fun incomingCall(callMessage: CallMessage) {
-        Log.d("", "*** CallMessageProcessor: incomingCall")
+        Log.d("", "CallMessageProcessor: incomingCall")
+
         val recipientAddress = callMessage.sender ?: return
         val callId = callMessage.callId ?: return
         val sdp = callMessage.sdps.firstOrNull() ?: return
