@@ -57,6 +57,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import org.thoughtcrime.securesms.webrtc.data.State as CallState
 
+//todo PHONE We want to eventually remove this bridging class and move the logic here to a better place, probably in the callManager
 @Singleton
 class WebRtcCallService @Inject constructor(
     @ApplicationContext val context: Context,
@@ -246,17 +247,20 @@ class WebRtcCallService @Inject constructor(
         //todo PHONE I got a 'missed call' notification after I declined a call. Is that right?
         //todo PHONE I got a 'missed call' notification after swiping off notification
         //todo PHONE I got a 'missed call' notification when picking up the phone too...
+        //todo PHONE GETTING missed call during a call from older notifications as they are still unseen
+        //todo PHONE GETTING A LOT OF RECONNECTING causing missed call during a call
+
         //todo PHONE [xxx Called you], which is a control message for a SUCCESSFUL call, should appear as unread, since you already know about the call - make it unread by default
         //todo PHONE have a fallback way to get back to calls if the call activity is gone. Sticky notification? A banner in the app? - earlier version can't swipe the notification off while more recent can.. can this be changed?
-        //todo PHONE It seems we can't call if the phone has been in sleep for a while. The call (sending) doesn't seem to do anything (not receiving anything)
+        //todo PHONE It seems we can't call if the phone has been in sleep for a while. The call (sending) doesn't seem to do anything (not receiving anything) - stuck on "Creating call"
         //todo PHONE test other receivers (proximity, headset, etc... )
         //todo PHONE often get in a state where the phone gets stuck after accepting the call
         //todo PHONE sometimes the notification doesn't immediately disappear when hitting 'accept' - probably the state hasn't yet updated, maybe we could enforce the behaviour upon tapping the button
         //todo PHONE it seems the proximity stuff still goes on after a call
         //todo PHONE ice candidate should happen separately from answer (before?)
-        //todo PHONE GETTING A LOT OF RECONNECTING causing missed call during a call
         //todo PHONE hanging up from iOS: call is not terminated  on android side
         //todo PHONE when ending a call with user A I get a notification regarding missing a call from user B that happened before (but message is unseen)
+        //todo PHONE big avatar on calls looks weird with huge default icon for a split second
     }
 
     private fun isSameCall(intent: Intent): Boolean {
@@ -279,6 +283,7 @@ class WebRtcCallService @Inject constructor(
                     insertMissedCall(recipient, true)
                 }
             }
+            Log.d("", "*** ^^^ terminate in rtc service > onHangUp")
             terminate()
         }
     }
@@ -366,6 +371,7 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
         callManager.onNewOffer(offer, callId, recipient).fail {
             Log.e("Loki", "Error handling new offer", it)
             callManager.postConnectionError()
+            Log.d("", "*** ^^^ terminate in rtc service > handleNewOffer ")
             terminate()
         }
     }
@@ -380,6 +386,7 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
 
         if (isIncomingMessageExpired(intent)) {
             insertMissedCall(recipient, true)
+            Log.d("", "*** ^^^ terminate in rtc service > handlePreOffer")
             terminate()
             return
         }
@@ -464,12 +471,14 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
                         Log.e(TAG, e)
                         callManager.postViewModelState(CallViewModel.State.NETWORK_FAILURE)
                         callManager.postConnectionError()
+                        Log.d("", "*** ^^^ terminate in rtc service > handleOutgoingCall - offerFuture fail - Error: $e ")
                         terminate()
                     }
                 }
             } catch (e: Exception) {
                 Log.e(TAG, e)
                 callManager.postConnectionError()
+                Log.d("", "*** ^^^ terminate in rtc service > handleOutgoingCall - CATCH - Error: $e ")
                 terminate()
             }
         }
@@ -494,6 +503,7 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
         if (isIncomingMessageExpired(intent)) {
             val didHangup = callManager.postConnectionEvent(Event.TimeOut) {
                 insertMissedCall(recipient, true)
+                Log.d("", "*** ^^^ terminate from isIncomingMessageExpired in rtc service > handleAnswerCall ")
                 terminate()
             }
             if (didHangup) { return }
@@ -531,6 +541,7 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
                         Log.e(TAG, "incoming call error: $e")
                         insertMissedCall(recipient, true)
                         callManager.postConnectionError()
+                        Log.d("", "*** ^^^ terminate from answer future fail (callManager.onIncomingCall) in rtc service > handleAnswerCall Error: $e")
                         terminate()
                     }
                 }
@@ -539,6 +550,7 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
             } catch (e: Exception) {
                 Log.e(TAG, e)
                 callManager.postConnectionError()
+                Log.d("", "*** ^^^ terminate fromcatch in rtc service > handleAnswerCall Error: $e")
                 terminate()
             }
         }
@@ -546,12 +558,14 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
 
     private fun handleDenyCall() {
         callManager.handleDenyCall()
+        Log.d("", "*** ^^^ terminate in rtc service > handleDenyCall ")
         terminate()
     }
 
     private fun handleLocalHangup(intent: Intent) {
         val intentRecipient = getOptionalRemoteRecipient(intent)
         callManager.handleLocalHangup(intentRecipient)
+        Log.d("", "*** ^^^ terminate in rtc service > handleLocalHangup ")
         terminate()
     }
 
@@ -604,6 +618,7 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
                 SessionDescription(SessionDescription.Type.ANSWER, description)
             )
         } catch (e: PeerConnectionException) {
+            Log.d("", "*** ^^^ terminate from catch in rtc service > handleAnswerIncoming. Error:$e ")
             terminate()
         }
     }
@@ -644,6 +659,8 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
 
     private fun handleIceConnected(intent: Intent) {
         val recipient = callManager.recipient ?: return
+        if(callManager.currentCallState == CallViewModel.State.CALL_CONNECTED) return
+
         val connected = callManager.postConnectionEvent(Event.Connect) {
             callManager.postViewModelState(CallViewModel.State.CALL_CONNECTED)
             setCallInProgressNotification(TYPE_ESTABLISHED, recipient)
@@ -652,6 +669,7 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
         if (!connected) {
             Log.e("Loki", "Error handling ice connected state transition")
             callManager.postConnectionError()
+            Log.d("", "*** ^^^ terminate in rtc service > handleIceConnected ")
             terminate()
         }
     }

@@ -12,6 +12,7 @@ import javax.inject.Inject
 @HiltViewModel
 class CallViewModel @Inject constructor(private val callManager: CallManager): ViewModel() {
 
+    //todo PHONE Can we eventually remove this state and instead use the StateMachine.kt State?
     enum class State {
         CALL_INITIALIZING, // default starting state before any rtc state kicks in
 

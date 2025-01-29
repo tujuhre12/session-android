@@ -324,17 +324,10 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
                     incomingControlGroup.isVisible = false
                 }
             } else {
-                controlGroup.isVisible = state in listOf(
-                    CALL_CONNECTED,
-                    CALL_PRE_OFFER_OUTGOING,
-                    CALL_OFFER_OUTGOING,
-                    CALL_ANSWER_OUTGOING,
-                    CALL_ANSWER_INCOMING
-                ) || (state == CALL_PRE_OFFER_INCOMING && wantsToAnswer)
-
                 // set up title and subtitle
                 callTitle.text = when (state) {
                     CALL_PRE_OFFER_OUTGOING, CALL_PRE_OFFER_INCOMING,
+                    CALL_OFFER_OUTGOING, CALL_OFFER_INCOMING,
                         -> getString(R.string.callsRinging)
 
                     CALL_ANSWER_INCOMING,
@@ -364,11 +357,23 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
                     else -> ""
                 }
 
+                // buttons visibility
+
+                val showCallControls = state in listOf(
+                    CALL_CONNECTED,
+                    CALL_PRE_OFFER_OUTGOING,
+                    CALL_OFFER_OUTGOING,
+                    CALL_ANSWER_OUTGOING,
+                    CALL_ANSWER_INCOMING,
+                    CALL_HANDLING_ICE,
+                    CALL_SENDING_ICE
+                ) || (state in listOf(CALL_PRE_OFFER_INCOMING, CALL_OFFER_INCOMING) && wantsToAnswer)
+                controlGroup.isVisible = showCallControls
+
+                endCallButton.isVisible = showCallControls || state == CALL_RECONNECTING
 
                 incomingControlGroup.isVisible =
                     state in listOf(CALL_OFFER_INCOMING, CALL_PRE_OFFER_INCOMING) && !wantsToAnswer
-
-                endCallButton.isVisible = endCallButton.isVisible || state == CALL_RECONNECTING
             }
         }
     }
