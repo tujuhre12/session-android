@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import dagger.hilt.android.AndroidEntryPoint
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.service.WebRtcCallBridge
 import org.thoughtcrime.securesms.webrtc.locks.LockManager
 import javax.inject.Inject
 
@@ -13,7 +12,7 @@ import javax.inject.Inject
 class PowerButtonReceiver(val sendCommand: (Intent)->Unit) : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (Intent.ACTION_SCREEN_OFF == intent.action) {
-            val serviceIntent = Intent(context,WebRtcCallBridge::class.java)
+            val serviceIntent = Intent(context, WebRtcCallBridge::class.java)
                     .setAction(WebRtcCallBridge.ACTION_SCREEN_OFF)
             sendCommand(serviceIntent)
         }

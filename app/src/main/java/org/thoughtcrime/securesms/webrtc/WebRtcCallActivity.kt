@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.calls
+package org.thoughtcrime.securesms.webrtc
 
 import android.Manifest
 import android.content.BroadcastReceiver
@@ -37,11 +37,7 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.permissions.Permissions
-import org.thoughtcrime.securesms.service.WebRtcCallBridge
-import org.thoughtcrime.securesms.webrtc.AudioManagerCommand
-import org.thoughtcrime.securesms.webrtc.CallViewModel
 import org.thoughtcrime.securesms.webrtc.CallViewModel.State.*
-import org.thoughtcrime.securesms.webrtc.Orientation
 import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager.AudioDevice.EARPIECE
 import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager.AudioDevice.SPEAKER_PHONE
 import javax.inject.Inject

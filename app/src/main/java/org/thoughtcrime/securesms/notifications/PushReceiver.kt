@@ -66,7 +66,7 @@ class PushReceiver @Inject constructor(
         // send a generic notification if we have no data and the `data too long` is false
         if (pushData?.data == null) {
             Log.d(TAG, "*** Push data is null, sending generic notification")
-            if(pushData?.metadata?.data_too_long != true) sendGenericNotification() //todo PHONE is this right? https://discord.com/channels/408081923835953153/1328917602504015923
+            if(pushData?.metadata?.data_too_long != true) sendGenericNotification()
             return
         }
 

@@ -23,7 +23,6 @@ import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.PRE_OFF
 import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.PROVISIONAL_ANSWER
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.permissions.Permissions
-import org.thoughtcrime.securesms.service.WebRtcCallBridge
 import org.webrtc.IceCandidate
 import java.util.UUID
 

@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.util
+package org.thoughtcrime.securesms.webrtc
 
 import android.app.Notification
 import android.app.PendingIntent
@@ -14,11 +14,9 @@ import com.squareup.phrase.Phrase
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.recipients.Recipient
-import org.thoughtcrime.securesms.calls.WebRtcCallActivity
 import org.thoughtcrime.securesms.notifications.NotificationChannels
-import org.thoughtcrime.securesms.service.WebRtcCallBridge.Companion.ACTION_DENY_CALL
-import org.thoughtcrime.securesms.service.WebRtcCallBridge.Companion.ACTION_LOCAL_HANGUP
-import org.thoughtcrime.securesms.webrtc.EndCallReceiver
+import org.thoughtcrime.securesms.webrtc.WebRtcCallBridge.Companion.ACTION_DENY_CALL
+import org.thoughtcrime.securesms.webrtc.WebRtcCallBridge.Companion.ACTION_LOCAL_HANGUP
 
 class CallNotificationBuilder {
 
@@ -76,12 +74,14 @@ class CallNotificationBuilder {
                     )
                     // If notifications aren't enabled, we will trigger the intent from WebRtcCallBridge
                     builder.setFullScreenIntent(getFullScreenPendingIntent(context), true)
-                    builder.addAction(getActivityNotificationAction(
+                    builder.addAction(
+                        getActivityNotificationAction(
                             context,
                             WebRtcCallActivity.ACTION_ANSWER,
                             R.drawable.ic_phone,
                             R.string.accept
-                    ))
+                    )
+                    )
                     builder.priority = NotificationCompat.PRIORITY_MAX
                 }
 
