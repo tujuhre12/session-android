@@ -240,20 +240,16 @@ class WebRtcCallBridge @Inject constructor(
 
 
         //todo PHONE I got a 'missed call' notification after I declined a call. Is that right?
-        //todo PHONE I got a 'missed call' notification after swiping off notification
-        //todo PHONE I got a 'missed call' notification when picking up the phone too...
-        //todo PHONE GETTING missed call during a call from older notifications as they are still unseen
-        //todo PHONE GETTING A LOT OF RECONNECTING causing missed call during a call
-        //todo PHONE when ending a call with user A I get a notification regarding missing a call from user B that happened before (but message is unseen)
+        //todo PHONE GETTING missed call notifications during all parts of a call: when picking up, hanging up, sometimes while swipping off a notificaiton ( from older notifications as they are still unseen ? )
 
         //todo PHONE [xxx Called you], which is a control message for a SUCCESSFUL call, should appear as unread, since you already know about the call - make it unread by default
         //todo PHONE have a fallback way to get back to calls if the call activity is gone. Sticky notification? A banner in the app? - earlier version can't swipe the notification off while more recent can.. can this be changed?
-        //todo PHONE It seems we can't call if the phone has been in sleep for a while. The call (sending) doesn't seem to do anything (not receiving anything) - stuck on "Creating call"
+        //todo PHONE It seems we can't call if the phone has been in sleep for a while. The call (sending) doesn't seem to do anything (not receiving anything) - stuck on "Creating call" - also same when receiving a call, it starts ok but gets stuck
         //todo PHONE test other receivers (proximity, headset, etc... )
-        //todo PHONE often get in a state where the phone gets stuck after accepting the call
-        //todo PHONE ice candidate should happen separately from answer (before?)
+        //todo PHONE should we refactor ice candidates to be
+        //todo PHONE if I kill the activity the video freezes and when I tap on the notification to get back in the activity is broken - also hanging up form the other phone at that point doesn't seem to stop the call as the notification remains
+        //todo PHONE I sometimes get stuck in a state where I accepted the call, it brings up the activity, but then it doesn't actually accept the call and I need to accept a second time
 
-        //todo PHONE sometimes the notification doesn't immediately disappear when hitting 'accept' - probably the state hasn't yet updated, maybe we could enforce the behaviour upon tapping the button
 
     }
 
