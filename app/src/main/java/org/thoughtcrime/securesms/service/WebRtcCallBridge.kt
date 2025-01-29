@@ -87,7 +87,6 @@ class WebRtcCallBridge @Inject constructor(
         const val ACTION_CHECK_RECONNECT = "CHECK_RECONNECT"
         const val ACTION_CHECK_RECONNECT_TIMEOUT = "CHECK_RECONNECT_TIMEOUT"
         const val ACTION_IS_IN_CALL_QUERY = "IS_IN_CALL"
-        const val ACTION_WANTS_TO_ANSWER = "WANTS_TO_ANSWER"
 
         const val ACTION_PRE_OFFER = "PRE_OFFER"
         const val ACTION_ANSWER_INCOMING = "ANSWER_INCOMING"
@@ -108,7 +107,6 @@ class WebRtcCallBridge @Inject constructor(
         const val EXTRA_ICE_SDP_MID = "ice_sdp_mid"
         const val EXTRA_ICE_SDP_LINE_INDEX = "ice_sdp_line_index"
         const val EXTRA_RESULT_RECEIVER = "result_receiver"
-        const val EXTRA_WANTS_TO_ANSWER = "wants_to_answer"
 
         const val INVALID_NOTIFICATION_ID = -1
         private const val TIMEOUT_SECONDS = 30L
@@ -196,11 +194,6 @@ class WebRtcCallBridge @Inject constructor(
             Intent(context, WebRtcCallBridge::class.java)
                 .setAction(ACTION_UPDATE_AUDIO)
                 .putExtra(EXTRA_AUDIO_COMMAND, command)
-
-        fun broadcastWantsToAnswer(context: Context, wantsToAnswer: Boolean) {
-            val intent = Intent(ACTION_WANTS_TO_ANSWER).putExtra(EXTRA_WANTS_TO_ANSWER, wantsToAnswer)
-            LocalBroadcastManager.getInstance(context).sendBroadcast(intent)
-        }
     }
 
     private var wantsToAnswer = false
@@ -214,7 +207,6 @@ class WebRtcCallBridge @Inject constructor(
     private val timeoutExecutor = Executors.newScheduledThreadPool(1)
 
     private var networkChangedReceiver: NetworkChangeReceiver? = null
-    private var wantsToAnswerReceiver: BroadcastReceiver? = null
     private var wiredHeadsetStateReceiver: WiredHeadsetStateReceiver? = null
     private var uncaughtExceptionHandlerManager: UncaughtExceptionHandlerManager? = null
     private var powerButtonReceiver: PowerButtonReceiver? = null
@@ -224,7 +216,6 @@ class WebRtcCallBridge @Inject constructor(
         wantsToAnswer = false
         isNetworkAvailable = true
         registerWiredHeadsetStateReceiver()
-        registerWantsToAnswerReceiver()
         registerUncaughtExceptionHandler()
         networkChangedReceiver = NetworkChangeReceiver(::networkChange)
         networkChangedReceiver!!.register(context)
@@ -260,9 +251,9 @@ class WebRtcCallBridge @Inject constructor(
         //todo PHONE It seems we can't call if the phone has been in sleep for a while. The call (sending) doesn't seem to do anything (not receiving anything) - stuck on "Creating call"
         //todo PHONE test other receivers (proximity, headset, etc... )
         //todo PHONE often get in a state where the phone gets stuck after accepting the call
-        //todo PHONE sometimes the notification doesn't immediately disappear when hitting 'accept' - probably the state hasn't yet updated, maybe we could enforce the behaviour upon tapping the button
         //todo PHONE ice candidate should happen separately from answer (before?)
-        //todo PHONE hanging up from iOS: call is not terminated  on android side
+
+        //todo PHONE sometimes the notification doesn't immediately disappear when hitting 'accept' - probably the state hasn't yet updated, maybe we could enforce the behaviour upon tapping the button
 
     }
 
@@ -304,7 +295,7 @@ class WebRtcCallBridge @Inject constructor(
                         handleNewOffer(intent)
                     }
                     isBusy(intent) -> handleBusyCall(intent)
-                    isPreOffer() -> handleIncomingRing(intent)
+                    isPreOffer() -> handleIncomingPreOffer(intent)
                 }
                 ACTION_OUTGOING_CALL -> if (isIdle()) handleOutgoingCall(intent)
                 ACTION_ANSWER_CALL -> handleAnswerCall(intent)
@@ -330,17 +321,6 @@ class WebRtcCallBridge @Inject constructor(
         uncaughtExceptionHandlerManager = UncaughtExceptionHandlerManager().apply {
             registerHandler(ProximityLockRelease(lockManager))
         }
-    }
-
-    private fun registerWantsToAnswerReceiver() {
-        val receiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-                wantsToAnswer = intent?.getBooleanExtra(EXTRA_WANTS_TO_ANSWER, false) ?: false
-            }
-        }
-        wantsToAnswerReceiver = receiver
-        LocalBroadcastManager.getInstance(context)
-            .registerReceiver(receiver, IntentFilter(ACTION_WANTS_TO_ANSWER))
     }
 
     private fun registerWiredHeadsetStateReceiver() {
@@ -408,7 +388,7 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
         }
     }
 
-    private fun handleIncomingRing(intent: Intent) {
+    private fun handleIncomingPreOffer(intent: Intent) {
         val callId = getCallId(intent)
         val recipient = getRemoteRecipient(intent)
         val preOffer = callManager.preOfferCallData
@@ -511,6 +491,8 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
             }
             if (didHangup) { return }
         }
+
+        wantsToAnswer = true
 
         callManager.postConnectionEvent(Event.SendAnswer) {
             setCallInProgressNotification(TYPE_INCOMING_CONNECTING, recipient)
@@ -787,14 +769,10 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
         wiredHeadsetStateReceiver?.let(context::unregisterReceiver)
         powerButtonReceiver?.let(context::unregisterReceiver)
         networkChangedReceiver?.unregister(context)
-        wantsToAnswerReceiver?.let { receiver ->
-            LocalBroadcastManager.getInstance(context).unregisterReceiver(receiver)
-        }
         callManager.shutDownAudioManager()
         powerButtonReceiver = null
         wiredHeadsetStateReceiver = null
         networkChangedReceiver = null
-        wantsToAnswerReceiver = null
         uncaughtExceptionHandlerManager?.unregister()
         wantsToAnswer = false
         currentTimeouts = 0
@@ -949,6 +927,8 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
             Log.i("Loki", "onIceConnectionChange: $newState")
         }
     }
+
+    fun getWantsToAnswer() = wantsToAnswer
 
     override fun onIceConnectionReceivingChange(p0: Boolean) {}
 

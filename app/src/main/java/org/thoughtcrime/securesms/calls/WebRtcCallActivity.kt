@@ -63,15 +63,10 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
     private val viewModel by viewModels<CallViewModel>()
     private lateinit var binding: ActivityWebrtcBinding
     private var uiJob: Job? = null
-    private var wantsToAnswer = false
-        set(value) {
-            field = value
-            WebRtcCallBridge.broadcastWantsToAnswer(this, value)
-        }
     private var hangupReceiver: BroadcastReceiver? = null
 
     @Inject
-    lateinit var webRtcService: WebRtcCallBridge
+    lateinit var webRtcBridge: WebRtcCallBridge
 
     //todo PHONE TEMP STRINGS THAT WILL NEED TO BE REPLACED WITH CS STRINGS - putting them all here to easily discard them later
     val TEMP_SEND_PRE_OFFER = "Creating Call"
@@ -132,13 +127,13 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
         binding.microphoneButton.setOnClickListener {
             val audioEnabledIntent =
                 WebRtcCallBridge.microphoneIntent(this, !viewModel.microphoneEnabled)
-            webRtcService.sendCommand(audioEnabledIntent)
+            webRtcBridge.sendCommand(audioEnabledIntent)
         }
 
         binding.speakerPhoneButton.setOnClickListener {
             val command =
                 AudioManagerCommand.SetUserDevice(if (viewModel.isSpeaker) EARPIECE else SPEAKER_PHONE)
-            webRtcService.sendCommand(
+            webRtcBridge.sendCommand(
                 WebRtcCallBridge.audioManagerCommandIntent(this, command)
             )
         }
@@ -166,13 +161,13 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
                 .request(Manifest.permission.CAMERA)
                 .onAllGranted {
                     val intent = WebRtcCallBridge.cameraEnabled(this, !viewModel.videoState.value.userVideoEnabled)
-                    webRtcService.sendCommand(intent)
+                    webRtcBridge.sendCommand(intent)
                 }
                 .execute()
         }
 
         binding.switchCameraButton.setOnClickListener {
-            webRtcService.sendCommand(WebRtcCallBridge.flipCamera(this))
+            webRtcBridge.sendCommand(WebRtcCallBridge.flipCamera(this))
         }
 
         binding.endCallButton.setOnClickListener {
@@ -210,7 +205,7 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
 
     private fun handleIntent(intent: Intent) {
         if (intent.action == ACTION_START_CALL && intent.hasExtra(EXTRA_RECIPIENT_ADDRESS)) {
-            webRtcService.sendCommand(
+            webRtcBridge.sendCommand(
                 WebRtcCallBridge.createCall(this,IntentCompat.getParcelableExtra(intent, EXTRA_RECIPIENT_ADDRESS, Address::class.java)!!)
             )
         }
@@ -263,23 +258,18 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
     }
 
     private fun answerCall() {
-        if (viewModel.currentCallState == CALL_PRE_OFFER_INCOMING) {
-            wantsToAnswer = true
-            updateControls()
-        }
-
         val answerIntent = WebRtcCallBridge.acceptCallIntent(this)
         answerIntent.flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
-        webRtcService.sendCommand(answerIntent)
+        webRtcBridge.sendCommand(answerIntent)
     }
 
     private fun denyCall(){
         val declineIntent = WebRtcCallBridge.denyCallIntent(this)
-        webRtcService.sendCommand(declineIntent)
+        webRtcBridge.sendCommand(declineIntent)
     }
 
     private fun hangUp(){
-        webRtcService.sendCommand(WebRtcCallBridge.hangupIntent(this))
+        webRtcBridge.sendCommand(WebRtcCallBridge.hangupIntent(this))
     }
 
     private fun updateControlsRotation() {
@@ -312,69 +302,66 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
         }
     }
 
-    private fun updateControls(state: CallViewModel.State? = null) {
+    private fun updateControls(state: CallViewModel.State) {
         with(binding) {
-            if (state == null) {
-                if (wantsToAnswer) {
-                    controlGroup.isVisible = true
+            // set up title and subtitle
+            callTitle.text = when (state) {
+                CALL_PRE_OFFER_OUTGOING, CALL_PRE_OFFER_INCOMING,
+                CALL_OFFER_OUTGOING, CALL_OFFER_INCOMING,
+                    -> getString(R.string.callsRinging)
 
-                    callTitle.text = getString(R.string.callsRinging)
-                    callSubtitle.text = ""
+                CALL_ANSWER_INCOMING,
+                CALL_ANSWER_OUTGOING,
+                    -> getString(R.string.callsConnecting)
 
-                    incomingControlGroup.isVisible = false
-                }
-            } else {
-                // set up title and subtitle
-                callTitle.text = when (state) {
-                    CALL_PRE_OFFER_OUTGOING, CALL_PRE_OFFER_INCOMING,
-                    CALL_OFFER_OUTGOING, CALL_OFFER_INCOMING,
-                        -> getString(R.string.callsRinging)
+                CALL_CONNECTED -> ""
 
-                    CALL_ANSWER_INCOMING,
-                    CALL_ANSWER_OUTGOING,
-                        -> getString(R.string.callsConnecting)
+                CALL_RECONNECTING -> getString(R.string.callsReconnecting)
+                CALL_DISCONNECTED -> getString(R.string.callsEnded)
+                RECIPIENT_UNAVAILABLE, NETWORK_FAILURE -> getString(R.string.callsErrorStart)
+                else -> callTitle.text
+            }
 
-                    CALL_CONNECTED -> ""
+            callSubtitle.text = when (state) {
+                CALL_PRE_OFFER_OUTGOING -> TEMP_SEND_PRE_OFFER
+                CALL_PRE_OFFER_INCOMING -> TEMP_RECEIVE_PRE_OFFER
 
-                    CALL_RECONNECTING -> getString(R.string.callsReconnecting)
-                    CALL_DISCONNECTED -> getString(R.string.callsEnded)
-                    RECIPIENT_UNAVAILABLE, NETWORK_FAILURE -> getString(R.string.callsErrorStart)
-                    else -> callTitle.text
-                }
+                CALL_OFFER_OUTGOING -> TEMP_SENDING_OFFER
+                CALL_OFFER_INCOMING -> TEMP_RECEIVING_OFFER
 
-                callSubtitle.text = when (state) {
-                    CALL_PRE_OFFER_OUTGOING -> TEMP_SEND_PRE_OFFER
-                    CALL_PRE_OFFER_INCOMING -> TEMP_RECEIVE_PRE_OFFER
+                CALL_ANSWER_OUTGOING, CALL_ANSWER_INCOMING -> TEMP_RECEIVED_ANSWER
 
-                    CALL_OFFER_OUTGOING -> TEMP_SENDING_OFFER
-                    CALL_OFFER_INCOMING -> TEMP_RECEIVING_OFFER
+                CALL_SENDING_ICE -> TEMP_SENDING_CANDIDATES
+                CALL_HANDLING_ICE -> TEMP_HANDLING_CANDIDATES
 
-                    CALL_ANSWER_OUTGOING, CALL_ANSWER_INCOMING -> TEMP_RECEIVED_ANSWER
+                else -> ""
+            }
 
-                    CALL_SENDING_ICE -> TEMP_SENDING_CANDIDATES
-                    CALL_HANDLING_ICE -> TEMP_HANDLING_CANDIDATES
+            // buttons visibility
+Log.d("", "*** ^^^ STATE: $state")
+            val showCallControls = state in listOf(
+                CALL_CONNECTED,
+                CALL_PRE_OFFER_OUTGOING,
+                CALL_OFFER_OUTGOING,
+                CALL_ANSWER_OUTGOING,
+                CALL_ANSWER_INCOMING,
+            ) || (state in listOf(
+                CALL_PRE_OFFER_INCOMING,
+                CALL_OFFER_INCOMING,
+                CALL_HANDLING_ICE,
+                CALL_SENDING_ICE
+            ) && webRtcBridge.getWantsToAnswer())
+            controlGroup.isVisible = showCallControls
 
-                    else -> ""
-                }
+            endCallButton.isVisible = showCallControls || state == CALL_RECONNECTING
 
-                // buttons visibility
-
-                val showCallControls = state in listOf(
-                    CALL_CONNECTED,
-                    CALL_PRE_OFFER_OUTGOING,
-                    CALL_OFFER_OUTGOING,
-                    CALL_ANSWER_OUTGOING,
-                    CALL_ANSWER_INCOMING,
+            incomingControlGroup.isVisible =
+                state in listOf(
+                    CALL_PRE_OFFER_INCOMING,
+                    CALL_OFFER_INCOMING,
                     CALL_HANDLING_ICE,
                     CALL_SENDING_ICE
-                ) || (state in listOf(CALL_PRE_OFFER_INCOMING, CALL_OFFER_INCOMING) && wantsToAnswer)
-                controlGroup.isVisible = showCallControls
-
-                endCallButton.isVisible = showCallControls || state == CALL_RECONNECTING
-
-                incomingControlGroup.isVisible =
-                    state in listOf(CALL_OFFER_INCOMING, CALL_PRE_OFFER_INCOMING) && !wantsToAnswer
-            }
+                ) && !webRtcBridge.getWantsToAnswer()
         }
     }
 
@@ -393,15 +380,6 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
 
             launch {
                 viewModel.callState.collect { state ->
-                    Log.d("Loki", "Consuming view model state $state")
-                    when (state) {
-                        CALL_OFFER_INCOMING -> if (wantsToAnswer) {
-                            answerCall()
-                            wantsToAnswer = false
-                        }
-                        CALL_CONNECTED -> wantsToAnswer = false
-                        else -> {}
-                    }
                     updateControls(state)
                 }
             }
