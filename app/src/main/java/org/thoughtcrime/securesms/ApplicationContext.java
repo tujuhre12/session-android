@@ -91,7 +91,7 @@ import org.thoughtcrime.securesms.notifications.PushRegistrationHandler;
 import org.thoughtcrime.securesms.providers.BlobProvider;
 import org.thoughtcrime.securesms.service.ExpiringMessageManager;
 import org.thoughtcrime.securesms.service.KeyCachingService;
-import org.thoughtcrime.securesms.service.WebRtcCallService;
+import org.thoughtcrime.securesms.service.WebRtcCallBridge;
 import org.thoughtcrime.securesms.sskenvironment.ReadReceiptManager;
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository;
 import org.thoughtcrime.securesms.util.Broadcaster;
@@ -168,7 +168,8 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     @Inject Lazy<MessageNotifier> messageNotifierLazy;
     @Inject LokiAPIDatabase apiDB;
     @Inject EmojiSearchDatabase emojiSearchDb;
-    @Inject WebRtcCallService webRtcCallService;
+    @Inject
+    WebRtcCallBridge webRtcCallBridge;
 
     public volatile boolean isAppVisible;
 
@@ -252,7 +253,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
                 textSecurePreferences
                 );
         callMessageProcessor = new CallMessageProcessor(this, textSecurePreferences,
-                ProcessLifecycleOwner.get().getLifecycle(), storage, webRtcCallService);
+                ProcessLifecycleOwner.get().getLifecycle(), storage, webRtcCallBridge);
         Log.i(TAG, "onCreate()");
         startKovenant();
         initializeSecurityProvider();

@@ -12,8 +12,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.FutureTaskListener
@@ -58,15 +56,21 @@ import javax.inject.Singleton
 import org.thoughtcrime.securesms.webrtc.data.State as CallState
 
 //todo PHONE We want to eventually remove this bridging class and move the logic here to a better place, probably in the callManager
+/**
+ * A class that used to be an Android system in the old codebase and was replaced by a temporary bridging class ro simplify the transition away from
+ * system services that handle the call logic. We had to avoid system services in order to circumvent the restrictions around starting a service when
+ * the app is in the background or killed.
+ * The idea is to eventually remove this class entirely and move its code in a better place (likely directly in the CallManager)
+ */
 @Singleton
-class WebRtcCallService @Inject constructor(
+class WebRtcCallBridge @Inject constructor(
     @ApplicationContext val context: Context,
     val callManager: CallManager
 ): CallManager.WebRtcListener  {
 
     companion object {
 
-        private val TAG = Log.tag(WebRtcCallService::class.java)
+        private val TAG = Log.tag(WebRtcCallBridge::class.java)
 
         const val ACTION_INCOMING_RING = "RING_INCOMING"
         const val ACTION_OUTGOING_CALL = "CALL_OUTGOING"
@@ -112,23 +116,23 @@ class WebRtcCallService @Inject constructor(
         private const val MAX_RECONNECTS = 5
 
         fun cameraEnabled(context: Context, enabled: Boolean) =
-            Intent(context, WebRtcCallService::class.java)
+            Intent(context, WebRtcCallBridge::class.java)
                 .setAction(ACTION_SET_MUTE_VIDEO)
                 .putExtra(EXTRA_MUTE, !enabled)
 
-        fun flipCamera(context: Context) = Intent(context, WebRtcCallService::class.java)
+        fun flipCamera(context: Context) = Intent(context, WebRtcCallBridge::class.java)
             .setAction(ACTION_FLIP_CAMERA)
 
-        fun acceptCallIntent(context: Context) = Intent(context, WebRtcCallService::class.java)
+        fun acceptCallIntent(context: Context) = Intent(context, WebRtcCallBridge::class.java)
             .setAction(ACTION_ANSWER_CALL)
 
         fun microphoneIntent(context: Context, enabled: Boolean) =
-            Intent(context, WebRtcCallService::class.java)
+            Intent(context, WebRtcCallBridge::class.java)
                 .setAction(ACTION_SET_MUTE_AUDIO)
                 .putExtra(EXTRA_MUTE, !enabled)
 
         fun createCall(context: Context, address: Address) =
-            Intent(context, WebRtcCallService::class.java)
+            Intent(context, WebRtcCallBridge::class.java)
                 .setAction(ACTION_OUTGOING_CALL)
                 .putExtra(EXTRA_RECIPIENT_ADDRESS, address)
 
@@ -139,7 +143,7 @@ class WebRtcCallService @Inject constructor(
             callId: UUID,
             callTime: Long
         ) =
-            Intent(context, WebRtcCallService::class.java)
+            Intent(context, WebRtcCallBridge::class.java)
                 .setAction(ACTION_INCOMING_RING)
                 .putExtra(EXTRA_RECIPIENT_ADDRESS, address)
                 .putExtra(EXTRA_CALL_ID, callId)
@@ -147,14 +151,14 @@ class WebRtcCallService @Inject constructor(
                 .putExtra(EXTRA_TIMESTAMP, callTime)
 
         fun incomingAnswer(context: Context, address: Address, sdp: String, callId: UUID) =
-            Intent(context, WebRtcCallService::class.java)
+            Intent(context, WebRtcCallBridge::class.java)
                 .setAction(ACTION_ANSWER_INCOMING)
                 .putExtra(EXTRA_RECIPIENT_ADDRESS, address)
                 .putExtra(EXTRA_CALL_ID, callId)
                 .putExtra(EXTRA_REMOTE_DESCRIPTION, sdp)
 
         fun preOffer(context: Context, address: Address, callId: UUID, callTime: Long) =
-            Intent(context, WebRtcCallService::class.java)
+            Intent(context, WebRtcCallBridge::class.java)
                 .setAction(ACTION_PRE_OFFER)
                 .putExtra(EXTRA_RECIPIENT_ADDRESS, address)
                 .putExtra(EXTRA_CALL_ID, callId)
@@ -166,7 +170,7 @@ class WebRtcCallService @Inject constructor(
             iceCandidates: List<IceCandidate>,
             callId: UUID
         ) =
-            Intent(context, WebRtcCallService::class.java)
+            Intent(context, WebRtcCallBridge::class.java)
                 .setAction(ACTION_ICE_MESSAGE)
                 .putExtra(EXTRA_CALL_ID, callId)
                 .putExtra(EXTRA_ICE_SDP, iceCandidates.map(IceCandidate::sdp).toTypedArray())
@@ -178,18 +182,18 @@ class WebRtcCallService @Inject constructor(
                 .putExtra(EXTRA_RECIPIENT_ADDRESS, address)
 
         fun denyCallIntent(context: Context) =
-            Intent(context, WebRtcCallService::class.java).setAction(ACTION_DENY_CALL)
+            Intent(context, WebRtcCallBridge::class.java).setAction(ACTION_DENY_CALL)
 
         fun remoteHangupIntent(context: Context, callId: UUID) =
-            Intent(context, WebRtcCallService::class.java)
+            Intent(context, WebRtcCallBridge::class.java)
                 .setAction(ACTION_REMOTE_HANGUP)
                 .putExtra(EXTRA_CALL_ID, callId)
 
         fun hangupIntent(context: Context) =
-            Intent(context, WebRtcCallService::class.java).setAction(ACTION_LOCAL_HANGUP)
+            Intent(context, WebRtcCallBridge::class.java).setAction(ACTION_LOCAL_HANGUP)
 
         fun audioManagerCommandIntent(context: Context, command: AudioManagerCommand) =
-            Intent(context, WebRtcCallService::class.java)
+            Intent(context, WebRtcCallBridge::class.java)
                 .setAction(ACTION_UPDATE_AUDIO)
                 .putExtra(EXTRA_AUDIO_COMMAND, command)
 
@@ -249,6 +253,7 @@ class WebRtcCallService @Inject constructor(
         //todo PHONE I got a 'missed call' notification when picking up the phone too...
         //todo PHONE GETTING missed call during a call from older notifications as they are still unseen
         //todo PHONE GETTING A LOT OF RECONNECTING causing missed call during a call
+        //todo PHONE when ending a call with user A I get a notification regarding missing a call from user B that happened before (but message is unseen)
 
         //todo PHONE [xxx Called you], which is a control message for a SUCCESSFUL call, should appear as unread, since you already know about the call - make it unread by default
         //todo PHONE have a fallback way to get back to calls if the call activity is gone. Sticky notification? A banner in the app? - earlier version can't swipe the notification off while more recent can.. can this be changed?
@@ -256,11 +261,9 @@ class WebRtcCallService @Inject constructor(
         //todo PHONE test other receivers (proximity, headset, etc... )
         //todo PHONE often get in a state where the phone gets stuck after accepting the call
         //todo PHONE sometimes the notification doesn't immediately disappear when hitting 'accept' - probably the state hasn't yet updated, maybe we could enforce the behaviour upon tapping the button
-        //todo PHONE it seems the proximity stuff still goes on after a call
         //todo PHONE ice candidate should happen separately from answer (before?)
         //todo PHONE hanging up from iOS: call is not terminated  on android side
-        //todo PHONE when ending a call with user A I get a notification regarding missing a call from user B that happened before (but message is unseen)
-        //todo PHONE big avatar on calls looks weird with huge default icon for a split second
+
     }
 
     private fun isSameCall(intent: Intent): Boolean {
@@ -288,7 +291,7 @@ class WebRtcCallService @Inject constructor(
         }
     }
 
-    fun onStartCommand(intent: Intent?) {
+    fun sendCommand(intent: Intent?) {
         if (intent == null || intent.action == null) return
         serviceExecutor.execute {
             val action = intent.action
@@ -341,7 +344,7 @@ class WebRtcCallService @Inject constructor(
     }
 
     private fun registerWiredHeadsetStateReceiver() {
-        wiredHeadsetStateReceiver = WiredHeadsetStateReceiver(::onStartCommand)
+        wiredHeadsetStateReceiver = WiredHeadsetStateReceiver(::sendCommand)
         context.registerReceiver(wiredHeadsetStateReceiver, IntentFilter(AudioManager.ACTION_HEADSET_PLUG))
     }
 
@@ -449,7 +452,7 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
                 CallMessageType.CALL_OUTGOING
             )
             scheduledTimeout = timeoutExecutor.schedule(
-                TimeoutRunnable(callId, context, ::onStartCommand),
+                TimeoutRunnable(callId, context, ::sendCommand),
                 TIMEOUT_SECONDS,
                 TimeUnit.SECONDS
             )
@@ -517,7 +520,7 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
             callManager.postViewModelState(CallViewModel.State.CALL_ANSWER_INCOMING)
 
             scheduledTimeout = timeoutExecutor.schedule(
-                TimeoutRunnable(callId, context, ::onStartCommand),
+                TimeoutRunnable(callId, context, ::sendCommand),
                 TIMEOUT_SECONDS,
                 TimeUnit.SECONDS
             )
@@ -676,7 +679,7 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
 
     private fun registerPowerButtonReceiver() {
         if (powerButtonReceiver == null) {
-            powerButtonReceiver = PowerButtonReceiver(::onStartCommand)
+            powerButtonReceiver = PowerButtonReceiver(::sendCommand)
             context.registerReceiver(powerButtonReceiver, IntentFilter(Intent.ACTION_SCREEN_OFF))
         }
     }
@@ -689,7 +692,7 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
             Log.i("Loki", "Trying to re-connect")
             callManager.networkReestablished()
             scheduledTimeout = timeoutExecutor.schedule(
-                TimeoutRunnable(callId, context, ::onStartCommand),
+                TimeoutRunnable(callId, context, ::sendCommand),
                 TIMEOUT_SECONDS,
                 TimeUnit.SECONDS
             )
@@ -699,7 +702,7 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
                 "Network isn't available, timeouts == $numTimeouts out of $MAX_RECONNECTS"
             )
             scheduledReconnect = timeoutExecutor.schedule(
-                CheckReconnectedRunnable(callId, context, ::onStartCommand),
+                CheckReconnectedRunnable(callId, context, ::sendCommand),
                 RECONNECT_SECONDS,
                 TimeUnit.SECONDS
             )
@@ -810,7 +813,7 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
         private val callId: UUID, private val context: Context, val sendCommand: (Intent)->Unit
     ) : Runnable {
         override fun run() {
-            val intent = Intent(context, WebRtcCallService::class.java)
+            val intent = Intent(context, WebRtcCallBridge::class.java)
                 .setAction(ACTION_CHECK_RECONNECT)
                 .putExtra(EXTRA_CALL_ID, callId)
             sendCommand(intent)
@@ -821,7 +824,7 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
         private val callId: UUID, private val context: Context, val sendCommand: (Intent)->Unit
     ) : Runnable {
         override fun run() {
-            val intent = Intent(context, WebRtcCallService::class.java)
+            val intent = Intent(context, WebRtcCallBridge::class.java)
                 .setAction(ACTION_CHECK_TIMEOUT)
                 .putExtra(EXTRA_CALL_ID, callId)
             sendCommand(intent)
@@ -909,9 +912,9 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
                 scheduledTimeout = null
                 scheduledReconnect = null
 
-                val intent = Intent(context, WebRtcCallService::class.java)
+                val intent = Intent(context, WebRtcCallBridge::class.java)
                     .setAction(ACTION_ICE_CONNECTED)
-                onStartCommand(intent)
+                sendCommand(intent)
             } else if (newState in arrayOf(
                     FAILED,
                     DISCONNECTED
@@ -923,7 +926,7 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
                         if (callManager.isInitiator()) {
                             Log.i("Loki", "Starting reconnect timer")
                             scheduledReconnect = timeoutExecutor.schedule(
-                                CheckReconnectedRunnable(callId, context, ::onStartCommand),
+                                CheckReconnectedRunnable(callId, context, ::sendCommand),
                                 RECONNECT_SECONDS,
                                 TimeUnit.SECONDS
                             )
@@ -931,7 +934,7 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
                             Log.i("Loki", "Starting timeout, awaiting new reconnect")
                             callManager.postConnectionEvent(Event.PrepareForNewOffer) {
                                 scheduledTimeout = timeoutExecutor.schedule(
-                                    TimeoutRunnable(callId, context, ::onStartCommand),
+                                    TimeoutRunnable(callId, context, ::sendCommand),
                                     TIMEOUT_SECONDS,
                                     TimeUnit.SECONDS
                                 )
@@ -940,7 +943,7 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
                     }
                 } ?: run {
                     val intent = hangupIntent(context)
-                    onStartCommand(intent)
+                    sendCommand(intent)
                 }
             }
             Log.i("Loki", "onIceConnectionChange: $newState")

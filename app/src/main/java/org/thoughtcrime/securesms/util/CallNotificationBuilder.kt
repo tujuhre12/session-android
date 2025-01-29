@@ -16,9 +16,8 @@ import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.calls.WebRtcCallActivity
 import org.thoughtcrime.securesms.notifications.NotificationChannels
-import org.thoughtcrime.securesms.service.WebRtcCallService
-import org.thoughtcrime.securesms.service.WebRtcCallService.Companion.ACTION_DENY_CALL
-import org.thoughtcrime.securesms.service.WebRtcCallService.Companion.ACTION_LOCAL_HANGUP
+import org.thoughtcrime.securesms.service.WebRtcCallBridge.Companion.ACTION_DENY_CALL
+import org.thoughtcrime.securesms.service.WebRtcCallBridge.Companion.ACTION_LOCAL_HANGUP
 import org.thoughtcrime.securesms.webrtc.EndCallReceiver
 
 class CallNotificationBuilder {
@@ -75,7 +74,7 @@ class CallNotificationBuilder {
                             R.drawable.ic_x,
                             R.string.decline)
                     )
-                    // If notifications aren't enabled, we will trigger the intent from WebRtcCallService
+                    // If notifications aren't enabled, we will trigger the intent from WebRtcCallBridge
                     builder.setFullScreenIntent(getFullScreenPendingIntent(context), true)
                     builder.addAction(getActivityNotificationAction(
                             context,

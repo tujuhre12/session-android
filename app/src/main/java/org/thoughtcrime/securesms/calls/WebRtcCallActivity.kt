@@ -37,7 +37,7 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.permissions.Permissions
-import org.thoughtcrime.securesms.service.WebRtcCallService
+import org.thoughtcrime.securesms.service.WebRtcCallBridge
 import org.thoughtcrime.securesms.webrtc.AudioManagerCommand
 import org.thoughtcrime.securesms.webrtc.CallViewModel
 import org.thoughtcrime.securesms.webrtc.CallViewModel.State.*
@@ -66,12 +66,12 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
     private var wantsToAnswer = false
         set(value) {
             field = value
-            WebRtcCallService.broadcastWantsToAnswer(this, value)
+            WebRtcCallBridge.broadcastWantsToAnswer(this, value)
         }
     private var hangupReceiver: BroadcastReceiver? = null
 
     @Inject
-    lateinit var webRtcService: WebRtcCallService
+    lateinit var webRtcService: WebRtcCallBridge
 
     //todo PHONE TEMP STRINGS THAT WILL NEED TO BE REPLACED WITH CS STRINGS - putting them all here to easily discard them later
     val TEMP_SEND_PRE_OFFER = "Creating Call"
@@ -131,15 +131,15 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
 
         binding.microphoneButton.setOnClickListener {
             val audioEnabledIntent =
-                WebRtcCallService.microphoneIntent(this, !viewModel.microphoneEnabled)
-            webRtcService.onStartCommand(audioEnabledIntent)
+                WebRtcCallBridge.microphoneIntent(this, !viewModel.microphoneEnabled)
+            webRtcService.sendCommand(audioEnabledIntent)
         }
 
         binding.speakerPhoneButton.setOnClickListener {
             val command =
                 AudioManagerCommand.SetUserDevice(if (viewModel.isSpeaker) EARPIECE else SPEAKER_PHONE)
-            webRtcService.onStartCommand(
-                WebRtcCallService.audioManagerCommandIntent(this, command)
+            webRtcService.sendCommand(
+                WebRtcCallBridge.audioManagerCommandIntent(this, command)
             )
         }
 
@@ -165,14 +165,14 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
             Permissions.with(this)
                 .request(Manifest.permission.CAMERA)
                 .onAllGranted {
-                    val intent = WebRtcCallService.cameraEnabled(this, !viewModel.videoState.value.userVideoEnabled)
-                    webRtcService.onStartCommand(intent)
+                    val intent = WebRtcCallBridge.cameraEnabled(this, !viewModel.videoState.value.userVideoEnabled)
+                    webRtcService.sendCommand(intent)
                 }
                 .execute()
         }
 
         binding.switchCameraButton.setOnClickListener {
-            webRtcService.onStartCommand(WebRtcCallService.flipCamera(this))
+            webRtcService.sendCommand(WebRtcCallBridge.flipCamera(this))
         }
 
         binding.endCallButton.setOnClickListener {
@@ -210,8 +210,8 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
 
     private fun handleIntent(intent: Intent) {
         if (intent.action == ACTION_START_CALL && intent.hasExtra(EXTRA_RECIPIENT_ADDRESS)) {
-            webRtcService.onStartCommand(
-                WebRtcCallService.createCall(this,IntentCompat.getParcelableExtra(intent, EXTRA_RECIPIENT_ADDRESS, Address::class.java)!!)
+            webRtcService.sendCommand(
+                WebRtcCallBridge.createCall(this,IntentCompat.getParcelableExtra(intent, EXTRA_RECIPIENT_ADDRESS, Address::class.java)!!)
             )
         }
         if (intent.action == ACTION_ANSWER) {
@@ -268,18 +268,18 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
             updateControls()
         }
 
-        val answerIntent = WebRtcCallService.acceptCallIntent(this)
+        val answerIntent = WebRtcCallBridge.acceptCallIntent(this)
         answerIntent.flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
-        webRtcService.onStartCommand(answerIntent)
+        webRtcService.sendCommand(answerIntent)
     }
 
     private fun denyCall(){
-        val declineIntent = WebRtcCallService.denyCallIntent(this)
-        webRtcService.onStartCommand(declineIntent)
+        val declineIntent = WebRtcCallBridge.denyCallIntent(this)
+        webRtcService.sendCommand(declineIntent)
     }
 
     private fun hangUp(){
-        webRtcService.onStartCommand(WebRtcCallService.hangupIntent(this))
+        webRtcService.sendCommand(WebRtcCallBridge.hangupIntent(this))
     }
 
     private fun updateControlsRotation() {

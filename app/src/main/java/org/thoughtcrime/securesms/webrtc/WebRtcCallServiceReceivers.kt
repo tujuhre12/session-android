@@ -5,7 +5,7 @@ import android.content.Context
 import android.content.Intent
 import dagger.hilt.android.AndroidEntryPoint
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.service.WebRtcCallService
+import org.thoughtcrime.securesms.service.WebRtcCallBridge
 import org.thoughtcrime.securesms.webrtc.locks.LockManager
 import javax.inject.Inject
 
@@ -13,8 +13,8 @@ import javax.inject.Inject
 class PowerButtonReceiver(val sendCommand: (Intent)->Unit) : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (Intent.ACTION_SCREEN_OFF == intent.action) {
-            val serviceIntent = Intent(context,WebRtcCallService::class.java)
-                    .setAction(WebRtcCallService.ACTION_SCREEN_OFF)
+            val serviceIntent = Intent(context,WebRtcCallBridge::class.java)
+                    .setAction(WebRtcCallBridge.ACTION_SCREEN_OFF)
             sendCommand(serviceIntent)
         }
     }
@@ -33,9 +33,9 @@ class ProximityLockRelease(private val lockManager: LockManager): Thread.Uncaugh
 class WiredHeadsetStateReceiver(val sendCommand: (Intent)->Unit): BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val state = intent.getIntExtra("state", -1)
-        val serviceIntent = Intent(context, WebRtcCallService::class.java)
-                .setAction(WebRtcCallService.ACTION_WIRED_HEADSET_CHANGE)
-                .putExtra(WebRtcCallService.EXTRA_AVAILABLE, state != 0)
+        val serviceIntent = Intent(context, WebRtcCallBridge::class.java)
+                .setAction(WebRtcCallBridge.ACTION_WIRED_HEADSET_CHANGE)
+                .putExtra(WebRtcCallBridge.EXTRA_AVAILABLE, state != 0)
 
         sendCommand(serviceIntent)
     }
@@ -45,17 +45,17 @@ class WiredHeadsetStateReceiver(val sendCommand: (Intent)->Unit): BroadcastRecei
 @AndroidEntryPoint
 class EndCallReceiver(): BroadcastReceiver() {
     @Inject
-    lateinit var webRtcCallService: WebRtcCallService
+    lateinit var webRtcCallBridge: WebRtcCallBridge
 
     override fun onReceive(context: Context, intent: Intent) {
         val serviceIntent = when(intent.action) {
-            WebRtcCallService.ACTION_LOCAL_HANGUP -> {
-                WebRtcCallService.hangupIntent(context)
+            WebRtcCallBridge.ACTION_LOCAL_HANGUP -> {
+                WebRtcCallBridge.hangupIntent(context)
             }
 
-            else -> WebRtcCallService.denyCallIntent(context)
+            else -> WebRtcCallBridge.denyCallIntent(context)
         }
 
-        webRtcCallService.onStartCommand(serviceIntent)
+        webRtcCallBridge.sendCommand(serviceIntent)
     }
 }

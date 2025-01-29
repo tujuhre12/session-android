@@ -23,7 +23,7 @@ import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.PRE_OFF
 import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.PROVISIONAL_ANSWER
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.permissions.Permissions
-import org.thoughtcrime.securesms.service.WebRtcCallService
+import org.thoughtcrime.securesms.service.WebRtcCallBridge
 import org.webrtc.IceCandidate
 import java.util.UUID
 
@@ -32,7 +32,7 @@ class CallMessageProcessor(
     private val textSecurePreferences: TextSecurePreferences,
     lifecycle: Lifecycle,
     private val storage: StorageProtocol,
-    private val webRtcService: WebRtcCallService
+    private val webRtcService: WebRtcCallBridge
 ) {
 
     companion object {
@@ -89,8 +89,8 @@ class CallMessageProcessor(
     private fun incomingHangup(callMessage: CallMessage) {
         Log.d("", "CallMessageProcessor: incomingHangup")
         val callId = callMessage.callId ?: return
-        val hangupIntent = WebRtcCallService.remoteHangupIntent(context, callId)
-        webRtcService.onStartCommand(hangupIntent)
+        val hangupIntent = WebRtcCallBridge.remoteHangupIntent(context, callId)
+        webRtcService.sendCommand(hangupIntent)
     }
 
     private fun incomingAnswer(callMessage: CallMessage) {
@@ -98,13 +98,13 @@ class CallMessageProcessor(
         val recipientAddress = callMessage.sender ?: return Log.w(TAG, "Cannot answer incoming call without sender")
         val callId = callMessage.callId ?: return Log.w(TAG, "Cannot answer incoming call without callId" )
         val sdp = callMessage.sdps.firstOrNull() ?: return Log.w(TAG, "Cannot answer incoming call without sdp")
-        val answerIntent = WebRtcCallService.incomingAnswer(
+        val answerIntent = WebRtcCallBridge.incomingAnswer(
                 context = context,
                 address = Address.fromSerialized(recipientAddress),
                 sdp = sdp,
                 callId = callId
         )
-        webRtcService.onStartCommand(answerIntent)
+        webRtcService.sendCommand(answerIntent)
     }
 
     private fun handleIceCandidates(callMessage: CallMessage) {
@@ -115,13 +115,13 @@ class CallMessageProcessor(
         val iceCandidates = callMessage.iceCandidates()
         if (iceCandidates.isEmpty()) return
 
-        val iceIntent = WebRtcCallService.iceCandidates(
+        val iceIntent = WebRtcCallBridge.iceCandidates(
                 context = context,
                 iceCandidates = iceCandidates,
                 callId = callId,
                 address = Address.fromSerialized(sender)
         )
-        webRtcService.onStartCommand(iceIntent)
+        webRtcService.sendCommand(iceIntent)
     }
 
     private fun incomingPreOffer(callMessage: CallMessage) {
@@ -129,7 +129,7 @@ class CallMessageProcessor(
         Log.d("", "CallMessageProcessor: incomingPreOffer")
         val recipientAddress = callMessage.sender ?: return
         val callId = callMessage.callId ?: return
-        val incomingIntent = WebRtcCallService.preOffer(
+        val incomingIntent = WebRtcCallBridge.preOffer(
                 context = context,
                 address = Address.fromSerialized(recipientAddress),
                 callId = callId,
@@ -138,7 +138,7 @@ class CallMessageProcessor(
 
 
 
-        webRtcService.onStartCommand(incomingIntent)
+        webRtcService.sendCommand(incomingIntent)
     }
 
     private fun incomingCall(callMessage: CallMessage) {
@@ -147,14 +147,14 @@ class CallMessageProcessor(
         val recipientAddress = callMessage.sender ?: return
         val callId = callMessage.callId ?: return
         val sdp = callMessage.sdps.firstOrNull() ?: return
-        val incomingIntent = WebRtcCallService.incomingCall(
+        val incomingIntent = WebRtcCallBridge.incomingCall(
                 context = context,
                 address = Address.fromSerialized(recipientAddress),
                 sdp = sdp,
                 callId = callId,
                 callTime = callMessage.sentTimestamp!!
         )
-        webRtcService.onStartCommand(incomingIntent)
+        webRtcService.sendCommand(incomingIntent)
     }
 
     data class IncomingCallMetadata(
