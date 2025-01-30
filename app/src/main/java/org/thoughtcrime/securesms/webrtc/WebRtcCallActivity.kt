@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.IntentFilter
 import android.graphics.Outline
 import android.media.AudioManager
@@ -54,6 +55,11 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
         const val EXTRA_RECIPIENT_ADDRESS = "RECIPIENT_ID"
 
         private const val CALL_DURATION_FORMAT = "HH:mm:ss"
+
+        fun getCallActivityIntent(context: Context): Intent{
+            return Intent(context, WebRtcCallActivity::class.java)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_HISTORY or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
+        }
     }
 
     private val viewModel by viewModels<CallViewModel>()
@@ -313,8 +319,11 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
                 CALL_CONNECTED -> ""
 
                 CALL_RECONNECTING -> getString(R.string.callsReconnecting)
+                RECIPIENT_UNAVAILABLE,
                 CALL_DISCONNECTED -> getString(R.string.callsEnded)
-                RECIPIENT_UNAVAILABLE, NETWORK_FAILURE -> getString(R.string.callsErrorStart)
+
+                NETWORK_FAILURE -> getString(R.string.callsErrorStart)
+
                 else -> callTitle.text
             }
 

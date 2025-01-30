@@ -37,6 +37,8 @@ import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
 import org.thoughtcrime.securesms.util.observeChanges
+import org.thoughtcrime.securesms.webrtc.CallManager
+import org.thoughtcrime.securesms.webrtc.data.State
 import javax.inject.Inject
 import dagger.hilt.android.qualifiers.ApplicationContext as ApplicationContextQualifier
 
@@ -47,7 +49,8 @@ class HomeViewModel @Inject constructor(
     private val prefs: TextSecurePreferences,
     @ApplicationContextQualifier private val context: Context,
     private val typingStatusRepository: TypingStatusRepository,
-    private val configFactory: ConfigFactory
+    private val configFactory: ConfigFactory,
+    private val callManager: CallManager
 ) : ViewModel() {
     // SharedFlow that emits whenever the user asks us to reload  the conversation
     private val manualReloadTrigger = MutableSharedFlow<Unit>(
@@ -56,6 +59,10 @@ class HomeViewModel @Inject constructor(
     )
 
     private val overrideMessageSnippets = MutableStateFlow(emptyMap<Long, MessageSnippetOverride>())
+
+    val callInProgress: StateFlow<Boolean> = callManager.currentConnectionStateFlow.map {
+        it !is State.Idle && it !is State.Disconnected // a call is in progress if it isn't idle nor disconnected
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
 
     /**
      * A [StateFlow] that emits the list of threads and the typing status of each thread.

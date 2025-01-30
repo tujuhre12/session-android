@@ -37,8 +37,7 @@ class CallNotificationBuilder {
 
         @JvmStatic
         fun getCallInProgressNotification(context: Context, type: Int, recipient: Recipient?): Notification {
-            val contentIntent = Intent(context, WebRtcCallActivity::class.java)
-                .setFlags(FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_HISTORY or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
+            val contentIntent = WebRtcCallActivity.getCallActivityIntent(context)
 
             val pendingIntent = PendingIntent.getActivity(context, 0, contentIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
@@ -115,10 +114,7 @@ class CallNotificationBuilder {
         }
 
         private fun getFullScreenPendingIntent(context: Context): PendingIntent {
-            val intent = Intent(context, WebRtcCallActivity::class.java)
-                // When launching the call activity do NOT keep it in the history when finished, as it does not pass through CALL_DISCONNECTED
-                // if the call was denied outright, and without this the "dead" activity will sit around in the history when the device is unlocked.
-                .setFlags(FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_HISTORY or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
+            val intent = WebRtcCallActivity.getCallActivityIntent(context)
                 .setAction(WebRtcCallActivity.ACTION_FULL_SCREEN_INTENT)
             return PendingIntent.getActivity(context, 1, intent, PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         }
@@ -138,7 +134,7 @@ class CallNotificationBuilder {
 
         private fun getActivityNotificationAction(context: Context, action: String,
                                                   @DrawableRes iconResId: Int, @StringRes titleResId: Int): NotificationCompat.Action {
-            val intent = Intent(context, WebRtcCallActivity::class.java)
+            val intent = WebRtcCallActivity.getCallActivityIntent(context)
                     .setAction(action)
 
             val pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE)

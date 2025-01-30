@@ -200,6 +200,7 @@ import org.thoughtcrime.securesms.util.isScrolledToWithin30dpOfBottom
 import org.thoughtcrime.securesms.util.push
 import org.thoughtcrime.securesms.util.show
 import org.thoughtcrime.securesms.util.toPx
+import org.thoughtcrime.securesms.webrtc.WebRtcCallActivity
 import java.lang.ref.WeakReference
 import java.util.LinkedList
 import java.util.Locale
@@ -483,6 +484,11 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                     binding.conversationRecyclerView.smoothScrollToPosition(targetPosition)
                 }
             }
+        }
+
+        // in case a phone call is in progress, this banner is visible and should bring the user back to the call
+        binding.callInProgress.setOnClickListener {
+            startActivity(WebRtcCallActivity.getCallActivityIntent(this))
         }
 
         updateUnreadCountIndicator()
@@ -935,6 +941,17 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                     binding.loader.isVisible = state.showLoader
 
                     updatePlaceholder()
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.callInProgress.collect { callInProgress ->
+                    when (callInProgress) {
+                        true -> binding.callInProgress.isVisible = true
+                        false -> binding.callInProgress.isVisible = false
+                    }
                 }
             }
         }

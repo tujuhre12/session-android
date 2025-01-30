@@ -711,8 +711,7 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
         } // otherwise if we do not have permission and we have a pre offer, try to open the activity directly (this won't work if the app is backgrounded/killed)
         else if(type == TYPE_INCOMING_PRE_OFFER) {
             // Start an intent for the fullscreen call activity
-            val foregroundIntent = Intent(context, WebRtcCallActivity::class.java)
-                .setFlags(FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_HISTORY or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
+            val foregroundIntent = WebRtcCallActivity.getCallActivityIntent(context)
                 .setAction(WebRtcCallActivity.ACTION_FULL_SCREEN_INTENT)
             context.startActivity(foregroundIntent)
         }

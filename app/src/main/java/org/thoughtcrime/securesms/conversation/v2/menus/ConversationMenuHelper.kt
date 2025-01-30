@@ -247,9 +247,8 @@ object ConversationMenuHelper {
             return
         }
 
-        Intent(context, WebRtcCallActivity::class.java)
+        WebRtcCallActivity.getCallActivityIntent(context)
             .apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK
                 action = ACTION_START_CALL
                 putExtra(EXTRA_RECIPIENT_ADDRESS, thread.address)
             }

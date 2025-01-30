@@ -77,6 +77,7 @@ import org.thoughtcrime.securesms.util.disableClipping
 import org.thoughtcrime.securesms.util.push
 import org.thoughtcrime.securesms.util.show
 import org.thoughtcrime.securesms.util.start
+import org.thoughtcrime.securesms.webrtc.WebRtcCallActivity
 import javax.inject.Inject
 
 // Intent extra keys so we know where we came from
@@ -184,6 +185,11 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             updateLegacyConfigView()
         }
 
+        // in case a phone call is in progress, this banner is visible and should bring the user back to the call
+        binding.callInProgress.setOnClickListener {
+            startActivity(WebRtcCallActivity.getCallActivityIntent(this))
+        }
+
         // Set up empty state view
         binding.emptyStateContainer.setThemedContent {
             EmptyView(isNewAccount)
@@ -281,6 +287,17 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             configFactory.withMutableUserConfigs {
                 if (!it.userProfile.isBlockCommunityMessageRequestsSet()) {
                     it.userProfile.setCommunityMessageRequests(false)
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                homeViewModel.callInProgress.collect { callInProgress ->
+                    when (callInProgress) {
+                        true -> binding.callInProgress.isVisible = true
+                        false -> binding.callInProgress.isVisible = false
+                    }
                 }
             }
         }

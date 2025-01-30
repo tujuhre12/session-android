@@ -131,6 +131,8 @@ class CallManager(
     private val _audioDeviceEvents = MutableStateFlow(AudioDeviceUpdate(AudioDevice.NONE, setOf()))
     val audioDeviceEvents = _audioDeviceEvents.asSharedFlow()
 
+    val currentConnectionStateFlow = stateProcessor.currentStateFlow
+
     val currentConnectionState
         get() = stateProcessor.currentState
 
