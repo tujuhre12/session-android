@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.database.StorageProtocol
+import org.session.libsession.messaging.groups.GroupInviteException
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsignal.utilities.AccountId
@@ -78,7 +79,13 @@ class EditGroupViewModel @AssistedInject constructor(
         get() = groupInfo.value?.second?.mapTo(hashSetOf()) { it.accountId }.orEmpty()
 
     fun onContactSelected(contacts: Set<AccountId>) {
-        performGroupOperation {
+        performGroupOperation(errorMessage = { err ->
+            if (err is GroupInviteException) {
+                err.format(context, storage).toString()
+            } else {
+                null
+            }
+        }) {
             groupManager.inviteMembers(
                 groupId,
                 contacts.toList(),
@@ -163,7 +170,7 @@ class EditGroupViewModel @AssistedInject constructor(
      * This is a helper function that encapsulates the common error handling and progress tracking.
      */
     private fun performGroupOperation(
-        genericErrorMessage: (() -> String?)? = null,
+        errorMessage: ((Throwable) -> String?)? = null,
         operation: suspend () -> Unit) {
         viewModelScope.launch {
             mutableInProgress.value = true
@@ -178,7 +185,7 @@ class EditGroupViewModel @AssistedInject constructor(
             try {
                 task.await()
             } catch (e: Exception) {
-                mutableError.value = genericErrorMessage?.invoke()
+                mutableError.value = errorMessage?.invoke(e)
                     ?: context.getString(R.string.errorUnknown)
             } finally {
                 mutableInProgress.value = false
