@@ -195,6 +195,8 @@ import org.thoughtcrime.securesms.util.NetworkUtils
 import org.thoughtcrime.securesms.util.PaddedImageSpan
 import org.thoughtcrime.securesms.util.SaveAttachmentTask
 import org.thoughtcrime.securesms.util.drawToBitmap
+import org.thoughtcrime.securesms.util.fadeIn
+import org.thoughtcrime.securesms.util.fadeOut
 import org.thoughtcrime.securesms.util.isScrolledToBottom
 import org.thoughtcrime.securesms.util.isScrolledToWithin30dpOfBottom
 import org.thoughtcrime.securesms.util.push
@@ -949,8 +951,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.callInProgress.collect { callInProgress ->
                     when (callInProgress) {
-                        true -> binding.callInProgress.isVisible = true
-                        false -> binding.callInProgress.isVisible = false
+                        true -> binding.callInProgress.fadeIn()
+                        false -> binding.callInProgress.fadeOut()
                     }
                 }
             }

@@ -235,7 +235,6 @@ class WebRtcCallBridge @Inject constructor(
         //todo PHONE GETTING missed call notifications during all parts of a call: when picking up, hanging up, sometimes while swipping off a notificaiton ( from older notifications as they are still unseen ? )
 
         //todo PHONE [xxx Called you], which is a control message for a SUCCESSFUL call, should appear as unread, since you already know about the call - make it unread by default
-        //todo PHONE have a fallback way to get back to calls if the call activity is gone. Sticky notification? A banner in the app? - earlier version can't swipe the notification off while more recent can.. can this be changed?
         //todo PHONE It seems we can't call if the phone has been in sleep for a while. The call (sending) doesn't seem to do anything (not receiving anything) - stuck on "Creating call" - also same when receiving a call, it starts ok but gets stuck
         //todo PHONE test other receivers (proximity, headset, etc... )
         //todo PHONE should we refactor ice candidates to be

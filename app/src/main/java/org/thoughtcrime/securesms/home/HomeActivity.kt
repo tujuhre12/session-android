@@ -74,6 +74,8 @@ import org.thoughtcrime.securesms.showMuteDialog
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.ui.setThemedContent
 import org.thoughtcrime.securesms.util.disableClipping
+import org.thoughtcrime.securesms.util.fadeIn
+import org.thoughtcrime.securesms.util.fadeOut
 import org.thoughtcrime.securesms.util.push
 import org.thoughtcrime.securesms.util.show
 import org.thoughtcrime.securesms.util.start
@@ -295,8 +297,8 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 homeViewModel.callInProgress.collect { callInProgress ->
                     when (callInProgress) {
-                        true -> binding.callInProgress.isVisible = true
-                        false -> binding.callInProgress.isVisible = false
+                        true -> binding.callInProgress.fadeIn()
+                        false -> binding.callInProgress.fadeOut()
                     }
                 }
             }
