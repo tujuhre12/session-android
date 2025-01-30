@@ -52,6 +52,10 @@ class EndCallReceiver(): BroadcastReceiver() {
                 WebRtcCallBridge.hangupIntent(context)
             }
 
+            WebRtcCallBridge.ACTION_IGNORE_CALL -> {
+                WebRtcCallBridge.ignoreCallIntent(context)
+            }
+
             else -> WebRtcCallBridge.denyCallIntent(context)
         }
 

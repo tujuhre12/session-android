@@ -85,7 +85,8 @@ sealed class Event(vararg val expectedStates: State, val outputState: State) {
             State.Reconnecting,
             outputState = State.Disconnected
         )
-    
+
+    object IgnoreCall : Event(*State.ALL_STATES, outputState = State.Disconnected)
     object Error : Event(*State.ALL_STATES, outputState = State.Disconnected)
     object DeclineCall : Event(*CAN_DECLINE_STATES, outputState = State.Disconnected)
     object Hangup : Event(*CAN_HANGUP_STATES, outputState = State.Disconnected)

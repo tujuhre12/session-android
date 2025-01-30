@@ -588,6 +588,10 @@ class CallManager(
         }
     }
 
+    fun handleIgnoreCall(){
+        stateProcessor.processEvent(Event.IgnoreCall)
+    }
+
     fun handleLocalHangup(intentRecipient: Recipient?) {
         val recipient = recipient ?: return
         val callId = callId ?: return

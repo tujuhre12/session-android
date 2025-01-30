@@ -63,6 +63,7 @@ class WebRtcCallBridge @Inject constructor(
         const val ACTION_INCOMING_RING = "RING_INCOMING"
         const val ACTION_OUTGOING_CALL = "CALL_OUTGOING"
         const val ACTION_ANSWER_CALL = "ANSWER_CALL"
+        const val ACTION_IGNORE_CALL = "IGNORE_CALL" // like when swiping off a notification. Ends the call without notifying the caller
         const val ACTION_DENY_CALL = "DENY_CALL"
         const val ACTION_LOCAL_HANGUP = "LOCAL_HANGUP"
         const val ACTION_SET_MUTE_AUDIO = "SET_MUTE_AUDIO"
@@ -169,6 +170,9 @@ class WebRtcCallBridge @Inject constructor(
 
         fun denyCallIntent(context: Context) =
             Intent(context, WebRtcCallBridge::class.java).setAction(ACTION_DENY_CALL)
+
+        fun ignoreCallIntent(context: Context) =
+            Intent(context, WebRtcCallBridge::class.java).setAction(ACTION_IGNORE_CALL)
 
         fun remoteHangupIntent(context: Context, callId: UUID) =
             Intent(context, WebRtcCallBridge::class.java)
@@ -284,6 +288,7 @@ class WebRtcCallBridge @Inject constructor(
                 ACTION_OUTGOING_CALL -> if (isIdle()) handleOutgoingCall(intent)
                 ACTION_ANSWER_CALL -> handleAnswerCall(intent)
                 ACTION_DENY_CALL -> handleDenyCall()
+                ACTION_IGNORE_CALL -> handleIgnoreCall()
                 ACTION_LOCAL_HANGUP -> handleLocalHangup(intent)
                 ACTION_REMOTE_HANGUP -> handleRemoteHangup(intent)
                 ACTION_SET_MUTE_AUDIO -> handleSetMuteAudio(intent)
@@ -528,6 +533,11 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
     private fun handleDenyCall() {
         callManager.handleDenyCall()
         Log.d("", "*** ^^^ terminate in rtc service > handleDenyCall ")
+        terminate()
+    }
+
+    private fun handleIgnoreCall(){
+        callManager.handleIgnoreCall()
         terminate()
     }
 

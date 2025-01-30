@@ -16,6 +16,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.notifications.NotificationChannels
 import org.thoughtcrime.securesms.webrtc.WebRtcCallBridge.Companion.ACTION_DENY_CALL
+import org.thoughtcrime.securesms.webrtc.WebRtcCallBridge.Companion.ACTION_IGNORE_CALL
 import org.thoughtcrime.securesms.webrtc.WebRtcCallBridge.Companion.ACTION_LOCAL_HANGUP
 
 class CallNotificationBuilder {
@@ -65,7 +66,7 @@ class CallNotificationBuilder {
                     builder.setContentText(txt)
                             .setCategory(NotificationCompat.CATEGORY_CALL)
                     builder.addAction(
-                        getCallEndedNotification(
+                        getEndCallNotification(
                             context,
                             ACTION_DENY_CALL,
                             R.drawable.ic_x,
@@ -82,13 +83,15 @@ class CallNotificationBuilder {
                     )
                     )
                     builder.priority = NotificationCompat.PRIORITY_MAX
+                    // catch the case where this notification is swiped off, to ignore the call
+                    builder.setDeleteIntent(getEndCallPendingIntent(context, ACTION_IGNORE_CALL))
                 }
 
                 TYPE_OUTGOING_RINGING -> {
                     builder.setContentText(context.getString(R.string.callsConnecting))
                         .setSilent(true)
                     builder.addAction(
-                        getCallEndedNotification(
+                        getEndCallNotification(
                             context,
                             ACTION_LOCAL_HANGUP,
                             R.drawable.ic_phone_fill_custom,
@@ -100,7 +103,7 @@ class CallNotificationBuilder {
                     builder.setContentText(context.getString(R.string.callsInProgress))
                         .setSilent(true)
                     builder.addAction(
-                        getCallEndedNotification(
+                        getEndCallNotification(
                             context,
                             ACTION_LOCAL_HANGUP,
                             R.drawable.ic_phone_fill_custom,
@@ -119,17 +122,21 @@ class CallNotificationBuilder {
             return PendingIntent.getActivity(context, 1, intent, PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         }
 
-        private fun getCallEndedNotification(context: Context, action: String,
+        private fun getEndCallNotification(context: Context, action: String,
                                              @DrawableRes iconResId: Int, @StringRes titleResId: Int): NotificationCompat.Action {
+            return NotificationCompat.Action(
+                iconResId, context.getString(titleResId),
+                getEndCallPendingIntent(context, action)
+            )
+        }
 
+        private fun getEndCallPendingIntent(context: Context, action: String): PendingIntent{
             val actionIntent = Intent(context, EndCallReceiver::class.java).apply {
                 this.action = action
                 component = ComponentName(context, EndCallReceiver::class.java)
             }
 
-            val pendingIntent = PendingIntent.getBroadcast(context, 0, actionIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-
-            return NotificationCompat.Action(iconResId, context.getString(titleResId), pendingIntent)
+            return PendingIntent.getBroadcast(context, 0, actionIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         }
 
         private fun getActivityNotificationAction(context: Context, action: String,
