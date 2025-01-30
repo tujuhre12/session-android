@@ -190,7 +190,7 @@ class GroupManagerV2Impl @Inject constructor(
             )
 
             // Also send a group update message
-            sendGroupUpdateForAddingMembers(groupId, adminKey, members, insertLocally = false)
+            sendGroupUpdateForAddingMembers(groupId, adminKey, members)
 
             recipient
         } catch (e: Exception) {
@@ -301,7 +301,7 @@ class GroupManagerV2Impl @Inject constructor(
         )
 
         // Send a group update message to the group telling members someone has been invited
-        sendGroupUpdateForAddingMembers(group, adminKey, newMembers, insertLocally = true)
+        sendGroupUpdateForAddingMembers(group, adminKey, newMembers)
     }
 
     /**
@@ -311,7 +311,6 @@ class GroupManagerV2Impl @Inject constructor(
         group: AccountId,
         adminKey: ByteArray,
         newMembers: Collection<AccountId>,
-        insertLocally: Boolean
     ) {
         val timestamp = clock.currentTimeMills()
         val signature = SodiumUtilities.sign(
@@ -331,9 +330,7 @@ class GroupManagerV2Impl @Inject constructor(
         ).apply { this.sentTimestamp = timestamp }
         MessageSender.send(updatedMessage, Destination.ClosedGroup(group.hexString), false)
 
-        if (insertLocally) {
-            storage.insertGroupInfoChange(updatedMessage, group)
-        }
+        storage.insertGroupInfoChange(updatedMessage, group)
     }
 
     override suspend fun removeMembers(
