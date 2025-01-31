@@ -1,14 +1,16 @@
 package org.thoughtcrime.securesms.webrtc
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.media.AudioManager
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
+import androidx.core.content.IntentCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.session.libsession.messaging.calls.CallMessageType
@@ -17,6 +19,7 @@ import org.session.libsession.utilities.FutureTaskListener
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.notifications.BackgroundPollWorker
+import org.thoughtcrime.securesms.service.CallForegroundService
 import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.TYPE_ESTABLISHED
 import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.TYPE_INCOMING_CONNECTING
 import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.TYPE_INCOMING_PRE_OFFER
@@ -217,6 +220,7 @@ class WebRtcCallBridge @Inject constructor(
     @Synchronized
     private fun terminate() {
         Log.d(TAG, "*** Terminating rtc service")
+        context.stopService(Intent(context, CallForegroundService::class.java))
         NotificationManagerCompat.from(context).cancel(WEBRTC_NOTIFICATION)
         LocalBroadcastManager.getInstance(context).sendBroadcast(Intent(WebRtcCallActivity.ACTION_END))
         lockManager.updatePhoneState(LockManager.PhoneState.IDLE)
@@ -336,6 +340,7 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
     }
 
     private fun handleNewOffer(intent: Intent) {
+        Log.d(TAG, "*** ^^^ Handle new offer")
         val offer = intent.getStringExtra(EXTRA_REMOTE_DESCRIPTION) ?: return
         val callId = getCallId(intent)
         val recipient = getRemoteRecipient(intent)
@@ -348,10 +353,12 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
     }
 
     private fun handlePreOffer(intent: Intent) {
+        Log.d(TAG, "*** ^^^ Handle pre offer pt1")
         if (!callManager.isIdle()) {
             Log.w(TAG, "Handling pre-offer from non-idle state")
             return
         }
+        Log.d(TAG, "*** ^^^ Handle pre offer pt2")
         val callId = getCallId(intent)
         val recipient = getRemoteRecipient(intent)
 
@@ -363,7 +370,7 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
         }
 
         callManager.onPreOffer(callId, recipient) {
-            setCallInProgressNotification(TYPE_INCOMING_PRE_OFFER, recipient)
+            setCallNotification(TYPE_INCOMING_PRE_OFFER, recipient)
             callManager.postViewModelState(CallViewModel.State.CALL_PRE_OFFER_INCOMING)
             callManager.initializeAudioForCall()
             callManager.startIncomingRinger()
@@ -380,7 +387,7 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
         val callId = getCallId(intent)
         val recipient = getRemoteRecipient(intent)
         val preOffer = callManager.preOfferCallData
-
+        Log.d(TAG, "*** ^^^ Handle inc pre offer")
         if (callManager.isPreOffer() && (preOffer == null || preOffer.callId != callId || preOffer.recipient != recipient)) {
             Log.d(TAG, "Incoming ring from non-matching pre-offer")
             return
@@ -391,7 +398,7 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
 
         callManager.onIncomingRing(offer, callId, recipient, timestamp) {
             if (wantsToAnswer) {
-                setCallInProgressNotification(TYPE_INCOMING_CONNECTING, recipient)
+                setCallNotification(TYPE_INCOMING_CONNECTING, recipient)
             } else {
                 //No need to do anything here as this case is already taken care of from the pre offer that came before
             }
@@ -414,7 +421,7 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
             lockManager.updatePhoneState(LockManager.PhoneState.IN_CALL)
             callManager.initializeAudioForCall()
             callManager.startOutgoingRinger(OutgoingRinger.Type.RINGING)
-            setCallInProgressNotification(TYPE_OUTGOING_RINGING, callManager.recipient)
+            setCallNotification(TYPE_OUTGOING_RINGING, callManager.recipient)
             callManager.insertCallMessage(
                 recipient.address.serialize(),
                 CallMessageType.CALL_OUTGOING
@@ -456,10 +463,15 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
     }
 
     private fun handleAnswerCall(intent: Intent) {
-        val recipient = callManager.recipient    ?: return Log.e(TAG, "No recipient to answer in handleAnswerCall")
-        val pending   = callManager.pendingOffer ?: return Log.e(TAG, "No pending offer in handleAnswerCall")
-        val callId    = callManager.callId       ?: return Log.e(TAG, "No callId in handleAnswerCall")
+        Log.d(TAG, "*** ^^^ Handle answer call")
+        val recipient = callManager.recipient    ?: return Log.e(TAG, "*** No recipient to answer in handleAnswerCall")
+        setCallNotification(TYPE_INCOMING_CONNECTING, recipient)
+
+        val pending   = callManager.pendingOffer ?: return Log.e(TAG, "*** No pending offer in handleAnswerCall")
+        val callId    = callManager.callId       ?: return Log.e(TAG, "*** No callId in handleAnswerCall")
         val timestamp = callManager.pendingOfferTime
+
+        Log.d(TAG, "*** ^^^ Handle answer call pt2")
 
         if (callManager.currentConnectionState != CallState.RemoteRing) {
             Log.e(TAG, "Can only answer from ringing!")
@@ -483,8 +495,6 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
         wantsToAnswer = true
 
         callManager.postConnectionEvent(Event.SendAnswer) {
-            setCallInProgressNotification(TYPE_INCOMING_CONNECTING, recipient)
-
             callManager.silenceIncomingRinger()
 
             callManager.postViewModelState(CallViewModel.State.CALL_ANSWER_INCOMING)
@@ -616,6 +626,7 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
      *               - EXTRA_ICE_SDP: An array of SDP candidate strings.
      */
     private fun handleRemoteIceCandidate(intent: Intent) {
+        Log.d(TAG, "*** ^^^ Handle remote ice")
         val callId = getCallId(intent)
         val sdpMids = intent.getStringArrayExtra(EXTRA_ICE_SDP_MID) ?: return
         val sdpLineIndexes = intent.getIntArrayExtra(EXTRA_ICE_SDP_LINE_INDEX) ?: return
@@ -638,10 +649,11 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
     private fun handleIceConnected(intent: Intent) {
         val recipient = callManager.recipient ?: return
         if(callManager.currentCallState == CallViewModel.State.CALL_CONNECTED) return
+        Log.d(TAG, "*** ^^^ Handle ice connected")
 
         val connected = callManager.postConnectionEvent(Event.Connect) {
             callManager.postViewModelState(CallViewModel.State.CALL_CONNECTED)
-            setCallInProgressNotification(TYPE_ESTABLISHED, recipient)
+            setCallNotification(TYPE_ESTABLISHED, recipient)
             callManager.startCommunication(lockManager)
         }
         if (!connected) {
@@ -701,11 +713,13 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
         }
     }
 
-
-
-    // Over the course of setting up a phone call this method is called multiple times with `types`
-    // of PRE_OFFER -> RING_INCOMING -> ICE_MESSAGE
-    private fun setCallInProgressNotification(type: Int, recipient: Recipient?) {
+    /**
+     * This method handles displaying notifications relating to the various call states.
+     * Those notifications can be shown in two ways:
+     * - Directly sent by the notification manager
+     * - Displayed as part of a foreground Service
+     */
+    private fun setCallNotification(type: Int, recipient: Recipient?) {
         // send appropriate notification if we have permission
         if (
             ActivityCompat.checkSelfPermission(
@@ -713,10 +727,17 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
                 Manifest.permission.POST_NOTIFICATIONS
             ) == PackageManager.PERMISSION_GRANTED
         ) {
-            NotificationManagerCompat.from(context).notify(
-                WEBRTC_NOTIFICATION,
-                CallNotificationBuilder.getCallInProgressNotification(context, type, recipient)
-            )
+            when (type) {
+                // show a notification directly for this case
+                TYPE_INCOMING_PRE_OFFER -> {
+                    sendNotification(type, recipient)
+                }
+                // attempt to show the notification via a service
+                else -> {
+                    startServiceOrShowNotification(type, recipient)
+                }
+            }
+
         } // otherwise if we do not have permission and we have a pre offer, try to open the activity directly (this won't work if the app is backgrounded/killed)
         else if(type == TYPE_INCOMING_PRE_OFFER) {
             // Start an intent for the fullscreen call activity
@@ -727,11 +748,32 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
 
     }
 
+    @SuppressLint("MissingPermission")
+    private fun sendNotification(type: Int, recipient: Recipient?){
+        NotificationManagerCompat.from(context).notify(
+            WEBRTC_NOTIFICATION,
+            CallNotificationBuilder.getCallInProgressNotification(context, type, recipient)
+        )
+    }
+
+    /**
+     * This will attempt to start a service with an attached notification,
+     * if the service fails to start a manual notification will be sent
+     */
+    private fun startServiceOrShowNotification(type: Int, recipient: Recipient?){
+        try {
+            ContextCompat.startForegroundService(context, CallForegroundService.startIntent(context, type, recipient))
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to start Call Service intent: $e")
+            sendNotification(type, recipient)
+        }
+    }
+
     private fun getOptionalRemoteRecipient(intent: Intent): Recipient? =
         intent.takeIf { it.hasExtra(EXTRA_RECIPIENT_ADDRESS) }?.let(::getRemoteRecipient)
 
     private fun getRemoteRecipient(intent: Intent): Recipient {
-        val remoteAddress = intent.getParcelableExtra<Address>(EXTRA_RECIPIENT_ADDRESS)
+        val remoteAddress = IntentCompat.getParcelableExtra(intent, EXTRA_RECIPIENT_ADDRESS, Address::class.java)
             ?: throw AssertionError("No recipient in intent!")
 
         return Recipient.from(context, remoteAddress, true)

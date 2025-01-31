@@ -525,7 +525,6 @@ class DefaultMessageNotifier : MessageNotifier {
                 cache[threadId] = blindedPublicKey
             }
             if (threadRecipients == null || !threadRecipients.isMuted) {
-                Log.d("", "*** Got a call message (default message notifier): incoming call? ${record.isIncomingCall} -- outgoing call? ${record.isOutgoingCall} -- missed call? ${record.isMissedCall} -- FIRST missed call? ${record.isFirstMissedCall}")
                 if(record.isIncomingCall || record.isOutgoingCall){
                     // do nothing here as we do not want to display a notification for incoming and outgoing calls,
                     // they will instead be handled independently by the pre offer

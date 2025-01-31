@@ -39,6 +39,7 @@ import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.webrtc.CallViewModel.State.*
+import org.thoughtcrime.securesms.webrtc.WebRtcCallBridge.Companion
 import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager.AudioDevice.EARPIECE
 import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager.AudioDevice.SPEAKER_PHONE
 import javax.inject.Inject
@@ -206,12 +207,14 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
     }
 
     private fun handleIntent(intent: Intent) {
+        Log.d("", "*** ^^^ Activity handle intent ${intent.action}")
         if (intent.action == ACTION_START_CALL && intent.hasExtra(EXTRA_RECIPIENT_ADDRESS)) {
             webRtcBridge.sendCommand(
                 WebRtcCallBridge.createCall(this,IntentCompat.getParcelableExtra(intent, EXTRA_RECIPIENT_ADDRESS, Address::class.java)!!)
             )
         }
         if (intent.action == ACTION_ANSWER) {
+            Log.d("", "*** ^^^ Activity handle intent >> ANSWER~")
             answerCall()
         }
 

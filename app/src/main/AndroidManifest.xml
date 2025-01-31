@@ -334,6 +334,11 @@
                 <action android:name="android.service.chooser.ChooserTargetService" />
             </intent-filter>
         </service>
+        <service
+            android:name="org.thoughtcrime.securesms.service.CallForegroundService"
+            android:foregroundServiceType="phoneCall"
+            android:exported="false" />
+
         <receiver
             android:name="org.thoughtcrime.securesms.notifications.MarkReadReceiver"
             android:enabled="true"

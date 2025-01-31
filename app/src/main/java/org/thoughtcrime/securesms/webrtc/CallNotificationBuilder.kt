@@ -24,7 +24,6 @@ class CallNotificationBuilder {
     companion object {
         const val WEBRTC_NOTIFICATION = 313388
 
-        const val TYPE_INCOMING_RINGING    = 1
         const val TYPE_OUTGOING_RINGING    = 2
         const val TYPE_ESTABLISHED         = 3
         const val TYPE_INCOMING_CONNECTING = 4
@@ -56,15 +55,10 @@ class CallNotificationBuilder {
             builder.setContentTitle(recipName)
 
             when (type) {
-                TYPE_INCOMING_CONNECTING -> {
-                    builder.setContentText(context.getString(R.string.callsConnecting))
-                            .setSilent(true)
-                }
-                TYPE_INCOMING_PRE_OFFER,
-                TYPE_INCOMING_RINGING -> {
+                TYPE_INCOMING_PRE_OFFER -> {
                     val txt = Phrase.from(context, R.string.callsIncoming).put(NAME_KEY, recipName).format()
                     builder.setContentText(txt)
-                            .setCategory(NotificationCompat.CATEGORY_CALL)
+                        .setCategory(NotificationCompat.CATEGORY_CALL)
                     builder.addAction(
                         getEndCallNotification(
                             context,
@@ -80,11 +74,16 @@ class CallNotificationBuilder {
                             WebRtcCallActivity.ACTION_ANSWER,
                             R.drawable.ic_phone,
                             R.string.accept
-                    )
+                        )
                     )
                     builder.priority = NotificationCompat.PRIORITY_MAX
                     // catch the case where this notification is swiped off, to ignore the call
                     builder.setDeleteIntent(getEndCallPendingIntent(context, ACTION_IGNORE_CALL))
+                }
+
+                TYPE_INCOMING_CONNECTING -> {
+                    builder.setContentText(context.getString(R.string.callsConnecting))
+                            .setSilent(true)
                 }
 
                 TYPE_OUTGOING_RINGING -> {
