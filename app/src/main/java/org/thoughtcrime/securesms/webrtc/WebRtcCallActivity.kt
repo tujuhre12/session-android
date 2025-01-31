@@ -68,9 +68,6 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
     private var uiJob: Job? = null
     private var hangupReceiver: BroadcastReceiver? = null
 
-    @Inject
-    lateinit var webRtcBridge: WebRtcCallBridge
-
     //todo PHONE TEMP STRINGS THAT WILL NEED TO BE REPLACED WITH CS STRINGS - putting them all here to easily discard them later
     val TEMP_SEND_PRE_OFFER = "Creating Call"
     val TEMP_RECEIVE_PRE_OFFER = "Receiving Pre Offer"
@@ -130,13 +127,13 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
         binding.microphoneButton.setOnClickListener {
             val audioEnabledIntent =
                 WebRtcCallBridge.microphoneIntent(this, !viewModel.microphoneEnabled)
-            webRtcBridge.sendCommand(audioEnabledIntent)
+            viewModel.sendCommand(audioEnabledIntent)
         }
 
         binding.speakerPhoneButton.setOnClickListener {
             val command =
                 AudioManagerCommand.SetUserDevice(if (viewModel.isSpeaker) EARPIECE else SPEAKER_PHONE)
-            webRtcBridge.sendCommand(
+            viewModel.sendCommand(
                 WebRtcCallBridge.audioManagerCommandIntent(this, command)
             )
         }
@@ -164,13 +161,13 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
                 .request(Manifest.permission.CAMERA)
                 .onAllGranted {
                     val intent = WebRtcCallBridge.cameraEnabled(this, !viewModel.videoState.value.userVideoEnabled)
-                    webRtcBridge.sendCommand(intent)
+                    viewModel.sendCommand(intent)
                 }
                 .execute()
         }
 
         binding.switchCameraButton.setOnClickListener {
-            webRtcBridge.sendCommand(WebRtcCallBridge.flipCamera(this))
+            viewModel.sendCommand(WebRtcCallBridge.flipCamera(this))
         }
 
         binding.endCallButton.setOnClickListener {
@@ -205,7 +202,7 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
     private fun handleIntent(intent: Intent) {
         Log.d("", "*** ^^^ Activity handle intent ${intent.action}")
         if (intent.action == ACTION_START_CALL && intent.hasExtra(EXTRA_RECIPIENT_ADDRESS)) {
-            webRtcBridge.sendCommand(
+            viewModel.sendCommand(
                 WebRtcCallBridge.createCall(this,IntentCompat.getParcelableExtra(intent, EXTRA_RECIPIENT_ADDRESS, Address::class.java)!!)
             )
         }
@@ -261,16 +258,16 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
     private fun answerCall() {
         val answerIntent = WebRtcCallBridge.acceptCallIntent(this)
         answerIntent.flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
-        webRtcBridge.sendCommand(answerIntent)
+        viewModel.sendCommand(answerIntent)
     }
 
     private fun denyCall(){
         val declineIntent = WebRtcCallBridge.denyCallIntent(this)
-        webRtcBridge.sendCommand(declineIntent)
+        viewModel.sendCommand(declineIntent)
     }
 
     private fun hangUp(){
-        webRtcBridge.sendCommand(WebRtcCallBridge.hangupIntent(this))
+        viewModel.sendCommand(WebRtcCallBridge.hangupIntent(this))
     }
 
     private fun updateControlsRotation() {
@@ -303,7 +300,7 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
         }
     }
 
-    private fun updateControls(state: CallViewModel.State) {
+    private fun updateControls(state: CallViewModel.State, hasAcceptedCall: Boolean) {
         with(binding) {
             // set up title and subtitle
             callTitle.text = when (state) {
@@ -355,7 +352,7 @@ Log.d("", "*** ^^^ STATE: $state")
                 CALL_OFFER_INCOMING,
                 CALL_HANDLING_ICE,
                 CALL_SENDING_ICE
-            ) && webRtcBridge.hasAcceptedCall())
+            ) && hasAcceptedCall)
             controlGroup.isVisible = showCallControls
 
             endCallButton.isVisible = showCallControls || state == CALL_RECONNECTING
@@ -366,7 +363,7 @@ Log.d("", "*** ^^^ STATE: $state")
                     CALL_OFFER_INCOMING,
                     CALL_HANDLING_ICE,
                     CALL_SENDING_ICE
-                ) && !webRtcBridge.hasAcceptedCall()
+                ) && !hasAcceptedCall
         }
     }
 
@@ -384,8 +381,8 @@ Log.d("", "*** ^^^ STATE: $state")
             }
 
             launch {
-                viewModel.callState.collect { state ->
-                    updateControls(state)
+                viewModel.callState.collect { data ->
+                    updateControls(data.first, data.second)
                 }
             }
 

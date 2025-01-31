@@ -1,16 +1,25 @@
 package org.thoughtcrime.securesms.webrtc
 
+import android.content.Intent
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
 import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager
 import org.webrtc.SurfaceViewRenderer
 import javax.inject.Inject
 
 @HiltViewModel
-class CallViewModel @Inject constructor(private val callManager: CallManager): ViewModel() {
+class CallViewModel @Inject constructor(
+    private val callManager: CallManager,
+    private val rtcCallBridge: WebRtcCallBridge
+): ViewModel() {
 
     //todo PHONE Can we eventually remove this state and instead use the StateMachine.kt State?
     enum class State {
@@ -64,11 +73,18 @@ class CallViewModel @Inject constructor(private val callManager: CallManager): V
         }
 
     val currentCallState get() = callManager.currentCallState
-    val callState get() = callManager.callStateEvents
+    val callState: StateFlow<Pair<State, Boolean>> = callManager.callStateEvents.combine(rtcCallBridge.hasAcceptedCall){
+        state, accepted -> Pair(state, accepted)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), Pair(State.CALL_INITIALIZING, false))
+
     val recipient get() = callManager.recipientEvents
     val callStartTime: Long get() = callManager.callStartTime
 
     fun swapVideos() {
        callManager.swapVideos()
+    }
+
+    fun sendCommand(intent: Intent){
+        rtcCallBridge.sendCommand(intent)
     }
 }

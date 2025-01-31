@@ -13,6 +13,8 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.FutureTaskListener
@@ -191,7 +193,9 @@ class WebRtcCallBridge @Inject constructor(
                 .putExtra(EXTRA_AUDIO_COMMAND, command)
     }
 
-    private var hasAcceptedCall = false // always true for outgoing call and true once the user accepts the call for incoming calls
+    private var _hasAcceptedCall: MutableStateFlow<Boolean> = MutableStateFlow(false) // always true for outgoing call and true once the user accepts the call for incoming calls
+    val hasAcceptedCall: StateFlow<Boolean> = _hasAcceptedCall
+
     private var currentTimeouts = 0
     private var isNetworkAvailable = true
     private var scheduledTimeout: ScheduledFuture<*>? = null
@@ -208,7 +212,7 @@ class WebRtcCallBridge @Inject constructor(
 
     init {
         callManager.registerListener(this)
-        hasAcceptedCall = false
+        _hasAcceptedCall.value = false
         isNetworkAvailable = true
         registerWiredHeadsetStateReceiver()
         registerUncaughtExceptionHandler()
@@ -225,7 +229,7 @@ class WebRtcCallBridge @Inject constructor(
         LocalBroadcastManager.getInstance(context).sendBroadcast(Intent(WebRtcCallActivity.ACTION_END))
         lockManager.updatePhoneState(LockManager.PhoneState.IDLE)
         callManager.stop()
-        hasAcceptedCall = false
+        _hasAcceptedCall.value = false
         currentTimeouts = 0
         isNetworkAvailable = true
         scheduledTimeout?.cancel(false)
@@ -244,6 +248,7 @@ class WebRtcCallBridge @Inject constructor(
         //todo PHONE should we refactor ice candidates to be
         //todo PHONE if I kill the activity the video freezes and when I tap on the notification to get back in the activity is broken - also hanging up form the other phone at that point doesn't seem to stop the call as the notification remains
         //todo PHONE I sometimes get stuck in a state where I accepted the call, it brings up the activity, but then it doesn't actually accept the call and I need to accept a second time
+        //todo PHONE getting stuck when accepting a call too quickly, especially from killed app. stuck on 'sending connection candidates'
 
 
     }
@@ -397,7 +402,7 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
         val timestamp = intent.getLongExtra(EXTRA_TIMESTAMP, -1)
 
         callManager.onIncomingRing(offer, callId, recipient, timestamp) {
-            if (hasAcceptedCall) {
+            if (_hasAcceptedCall.value) {
                 setCallNotification(TYPE_INCOMING_CONNECTING, recipient)
             } else {
                 //No need to do anything here as this case is already taken care of from the pre offer that came before
@@ -410,12 +415,12 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
             // (they would have tried to answer when they first accepted
             // but it would have silently failed due to the pre offer having not been set yet
             Log.d(TAG, "*** ^^^ Handle inc pre offer pt2: wants to answer? $$hasAcceptedCall")
-            if(hasAcceptedCall) handleAnswerCall(acceptCallIntent(context))
+            if(_hasAcceptedCall.value) handleAnswerCall(acceptCallIntent(context))
         }
     }
 
     private fun handleOutgoingCall(intent: Intent) {
-        hasAcceptedCall = true // outgoing calls are automatically set to 'accepted'
+        _hasAcceptedCall.value = true // outgoing calls are automatically set to 'accepted'
         callManager.postConnectionEvent(Event.SendPreOffer) {
             val recipient = getRemoteRecipient(intent)
             callManager.recipient = recipient
@@ -471,7 +476,7 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
 
     private fun handleAnswerCall(intent: Intent) {
         Log.d(TAG, "*** ^^^ Handle answer call")
-        hasAcceptedCall = true
+        _hasAcceptedCall.value = true
 
         val recipient = callManager.recipient    ?: return Log.e(TAG, "*** No recipient to answer in handleAnswerCall")
         setCallNotification(TYPE_INCOMING_CONNECTING, recipient)
@@ -816,7 +821,7 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
         wiredHeadsetStateReceiver = null
         networkChangedReceiver = null
         uncaughtExceptionHandlerManager?.unregister()
-        hasAcceptedCall = false
+        _hasAcceptedCall.value = false
         currentTimeouts = 0
         isNetworkAvailable = false
     }
@@ -969,8 +974,6 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
             Log.i("Loki", "onIceConnectionChange: $newState")
         }
     }
-
-    fun hasAcceptedCall() = hasAcceptedCall
 
     override fun onIceConnectionReceivingChange(p0: Boolean) {}
 
