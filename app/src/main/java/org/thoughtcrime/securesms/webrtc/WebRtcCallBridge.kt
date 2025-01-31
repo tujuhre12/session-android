@@ -191,7 +191,7 @@ class WebRtcCallBridge @Inject constructor(
                 .putExtra(EXTRA_AUDIO_COMMAND, command)
     }
 
-    private var wantsToAnswer = false
+    private var hasAcceptedCall = false // always true for outgoing call and true once the user accepts the call for incoming calls
     private var currentTimeouts = 0
     private var isNetworkAvailable = true
     private var scheduledTimeout: ScheduledFuture<*>? = null
@@ -208,7 +208,7 @@ class WebRtcCallBridge @Inject constructor(
 
     init {
         callManager.registerListener(this)
-        wantsToAnswer = false
+        hasAcceptedCall = false
         isNetworkAvailable = true
         registerWiredHeadsetStateReceiver()
         registerUncaughtExceptionHandler()
@@ -225,7 +225,7 @@ class WebRtcCallBridge @Inject constructor(
         LocalBroadcastManager.getInstance(context).sendBroadcast(Intent(WebRtcCallActivity.ACTION_END))
         lockManager.updatePhoneState(LockManager.PhoneState.IDLE)
         callManager.stop()
-        wantsToAnswer = false
+        hasAcceptedCall = false
         currentTimeouts = 0
         isNetworkAvailable = true
         scheduledTimeout?.cancel(false)
@@ -397,7 +397,7 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
         val timestamp = intent.getLongExtra(EXTRA_TIMESTAMP, -1)
 
         callManager.onIncomingRing(offer, callId, recipient, timestamp) {
-            if (wantsToAnswer) {
+            if (hasAcceptedCall) {
                 setCallNotification(TYPE_INCOMING_CONNECTING, recipient)
             } else {
                 //No need to do anything here as this case is already taken care of from the pre offer that came before
@@ -405,10 +405,17 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
             callManager.clearPendingIceUpdates()
             callManager.postViewModelState(CallViewModel.State.CALL_OFFER_INCOMING)
             registerPowerButtonReceiver()
+
+            // if the user has already accepted the incoming call, try to answer again
+            // (they would have tried to answer when they first accepted
+            // but it would have silently failed due to the pre offer having not been set yet
+            Log.d(TAG, "*** ^^^ Handle inc pre offer pt2: wants to answer? $$hasAcceptedCall")
+            if(hasAcceptedCall) handleAnswerCall(acceptCallIntent(context))
         }
     }
 
     private fun handleOutgoingCall(intent: Intent) {
+        hasAcceptedCall = true // outgoing calls are automatically set to 'accepted'
         callManager.postConnectionEvent(Event.SendPreOffer) {
             val recipient = getRemoteRecipient(intent)
             callManager.recipient = recipient
@@ -464,11 +471,14 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
 
     private fun handleAnswerCall(intent: Intent) {
         Log.d(TAG, "*** ^^^ Handle answer call")
+        hasAcceptedCall = true
+
         val recipient = callManager.recipient    ?: return Log.e(TAG, "*** No recipient to answer in handleAnswerCall")
         setCallNotification(TYPE_INCOMING_CONNECTING, recipient)
 
         val pending   = callManager.pendingOffer ?: return Log.e(TAG, "*** No pending offer in handleAnswerCall")
         val callId    = callManager.callId       ?: return Log.e(TAG, "*** No callId in handleAnswerCall")
+
         val timestamp = callManager.pendingOfferTime
 
         Log.d(TAG, "*** ^^^ Handle answer call pt2")
@@ -491,8 +501,6 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
             }
             if (didHangup) { return }
         }
-
-        wantsToAnswer = true
 
         callManager.postConnectionEvent(Event.SendAnswer) {
             callManager.silenceIncomingRinger()
@@ -808,7 +816,7 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
         wiredHeadsetStateReceiver = null
         networkChangedReceiver = null
         uncaughtExceptionHandlerManager?.unregister()
-        wantsToAnswer = false
+        hasAcceptedCall = false
         currentTimeouts = 0
         isNetworkAvailable = false
     }
@@ -962,7 +970,7 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
         }
     }
 
-    fun getWantsToAnswer() = wantsToAnswer
+    fun hasAcceptedCall() = hasAcceptedCall
 
     override fun onIceConnectionReceivingChange(p0: Boolean) {}
 

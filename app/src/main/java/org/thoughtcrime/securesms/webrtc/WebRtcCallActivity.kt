@@ -200,10 +200,6 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
         }
 
         handleIntent(intent)
-
-        // Substitute "Session" into the "{app_name} Call" text
-        val sessionCallTV = findViewById<TextView>(R.id.sessionCallText)
-        sessionCallTV?.text = Phrase.from(this, R.string.callsSessionCall).put(APP_NAME_KEY, getString(R.string.app_name)).format()
     }
 
     private fun handleIntent(intent: Intent) {
@@ -344,6 +340,7 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
 
                 else -> ""
             }
+            callSubtitle.isVisible = callSubtitle.text.isNotEmpty()
 
             // buttons visibility
 Log.d("", "*** ^^^ STATE: $state")
@@ -358,7 +355,7 @@ Log.d("", "*** ^^^ STATE: $state")
                 CALL_OFFER_INCOMING,
                 CALL_HANDLING_ICE,
                 CALL_SENDING_ICE
-            ) && webRtcBridge.getWantsToAnswer())
+            ) && webRtcBridge.hasAcceptedCall())
             controlGroup.isVisible = showCallControls
 
             endCallButton.isVisible = showCallControls || state == CALL_RECONNECTING
@@ -369,7 +366,7 @@ Log.d("", "*** ^^^ STATE: $state")
                     CALL_OFFER_INCOMING,
                     CALL_HANDLING_ICE,
                     CALL_SENDING_ICE
-                ) && !webRtcBridge.getWantsToAnswer()
+                ) && !webRtcBridge.hasAcceptedCall()
         }
     }
 
@@ -415,14 +412,13 @@ Log.d("", "*** ^^^ STATE: $state")
             launch {
                 while (isActive) {
                     val startTime = viewModel.callStartTime
-                    if (startTime == -1L) {
-                        binding.callTime.isVisible = false
-                    } else {
-                        binding.callTime.isVisible = true
-                        binding.callTime.text = DurationFormatUtils.formatDuration(
-                            System.currentTimeMillis() - startTime,
-                            CALL_DURATION_FORMAT
-                        )
+                    if (startTime != -1L) {
+                        if(viewModel.currentCallState == CALL_CONNECTED) {
+                            binding.callTitle.text = DurationFormatUtils.formatDuration(
+                                System.currentTimeMillis() - startTime,
+                                CALL_DURATION_FORMAT
+                            )
+                        }
                     }
 
                     delay(1_000)
