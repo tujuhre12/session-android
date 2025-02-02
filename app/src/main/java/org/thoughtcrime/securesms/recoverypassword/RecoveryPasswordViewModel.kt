@@ -31,7 +31,7 @@ class RecoveryPasswordViewModel @Inject constructor(
     // The regex matches are:
     //   - "\r"      - carriage return,
     //   - "\n"      - newline,
-    //   - "\u20228" - unicode line separator,
+    //   - "\u2028" - unicode line separator,
     //   - "\u2029"  - unicode paragraph separator,
     //   - "|\s{2,}" - two or more consecutive spaces.
     val linebreakRemovalRegex = Regex("""[\r\n\u2028\u2029]+|\s{2,}""")
