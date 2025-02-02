@@ -239,17 +239,11 @@ class WebRtcCallBridge @Inject constructor(
         callManager.postViewModelState(CallViewModel.State.CALL_INITIALIZING) // reset to default state
 
 
-        //todo PHONE I got a 'missed call' notification after I declined a call. Is that right?
-        //todo PHONE GETTING missed call notifications during all parts of a call: when picking up, hanging up, sometimes while swipping off a notificaiton ( from older notifications as they are still unseen ? )
+        //todo PHONE GETTING missed call notifications during all parts of a call: when picking up, hanging up, sometimes while swiping off a notification ( from older notifications as they are still unseen ? )
 
-        //todo PHONE [xxx Called you], which is a control message for a SUCCESSFUL call, should appear as unread, since you already know about the call - make it unread by default
         //todo PHONE It seems we can't call if the phone has been in sleep for a while. The call (sending) doesn't seem to do anything (not receiving anything) - stuck on "Creating call" - also same when receiving a call, it starts ok but gets stuck
         //todo PHONE test other receivers (proximity, headset, etc... )
-        //todo PHONE should we refactor ice candidates to be
-        //todo PHONE if I kill the activity the video freezes and when I tap on the notification to get back in the activity is broken - also hanging up form the other phone at that point doesn't seem to stop the call as the notification remains
-        //todo PHONE I sometimes get stuck in a state where I accepted the call, it brings up the activity, but then it doesn't actually accept the call and I need to accept a second time
-        //todo PHONE getting stuck when accepting a call too quickly, especially from killed app. stuck on 'sending connection candidates'
-
+        //todo PHONE should we refactor ice candidates to be sent prior to answering the call?
 
     }
 
@@ -268,12 +262,14 @@ class WebRtcCallBridge @Inject constructor(
         serviceExecutor.execute {
             callManager.handleRemoteHangup()
 
+            Log.d("", "*** ^^^ terminate in rtc service > onHangUp ${callManager.currentConnectionState} -- ${callManager.recipient}")
             if (callManager.currentConnectionState in CallState.CAN_DECLINE_STATES) {
                 callManager.recipient?.let { recipient ->
+                    Log.d("", "*** ^^^ terminate in rtc service > onHangUp - inserting missed call ")
                     insertMissedCall(recipient, true)
                 }
             }
-            Log.d("", "*** ^^^ terminate in rtc service > onHangUp")
+
             terminate()
         }
     }
@@ -500,7 +496,7 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
 
         if (isIncomingMessageExpired(intent)) {
             val didHangup = callManager.postConnectionEvent(Event.TimeOut) {
-                insertMissedCall(recipient, true)
+                insertMissedCall(recipient, true) //todo PHONE do we want a missed call in this case? Or just [xxx] called you ?
                 Log.d("", "*** ^^^ terminate from isIncomingMessageExpired in rtc service > handleAnswerCall ")
                 terminate()
             }
@@ -535,7 +531,7 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
                         )
                     ) {
                         Log.e(TAG, "incoming call error: $e")
-                        insertMissedCall(recipient, true)
+                        insertMissedCall(recipient, true) //todo PHONE do we want a missed call in this case? Or just [xxx] called you ?
                         callManager.postConnectionError()
                         Log.d("", "*** ^^^ terminate from answer future fail (callManager.onIncomingCall) in rtc service > handleAnswerCall Error: $e")
                         terminate()

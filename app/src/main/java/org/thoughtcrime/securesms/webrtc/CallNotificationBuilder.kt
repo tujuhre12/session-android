@@ -79,6 +79,8 @@ class CallNotificationBuilder {
                     builder.priority = NotificationCompat.PRIORITY_MAX
                     // catch the case where this notification is swiped off, to ignore the call
                     builder.setDeleteIntent(getEndCallPendingIntent(context, ACTION_IGNORE_CALL))
+                    // remove notification if tapped on
+                    builder.setAutoCancel(true)
                 }
 
                 TYPE_INCOMING_CONNECTING -> {

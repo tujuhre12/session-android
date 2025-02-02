@@ -584,7 +584,7 @@ class CallManager(
             val thread = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(recipient)
             MessageSender.sendNonDurably(CallMessage.endCall(callId).applyExpiryMode(thread), Address.fromSerialized(userAddress), isSyncMessage = true)
             MessageSender.sendNonDurably(CallMessage.endCall(callId).applyExpiryMode(thread), recipient.address, isSyncMessage = recipient.isLocalNumber)
-            insertCallMessage(recipient.address.serialize(), CallMessageType.CALL_MISSED)
+            insertCallMessage(recipient.address.serialize(), CallMessageType.CALL_INCOMING)
         }
     }
 
