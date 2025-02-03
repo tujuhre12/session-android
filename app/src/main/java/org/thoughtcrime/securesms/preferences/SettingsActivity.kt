@@ -103,7 +103,7 @@ import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
-import org.thoughtcrime.securesms.util.NetworkUtils
+import org.thoughtcrime.securesms.util.InternetConnectivity
 import org.thoughtcrime.securesms.util.push
 import java.io.File
 import javax.inject.Inject
@@ -307,7 +307,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
         // We'll assume we fail & flip the flag on success
         var updateWasSuccessful = false
 
-        val haveNetworkConnection = NetworkUtils.haveValidNetworkConnection(this@SettingsActivity);
+        val haveNetworkConnection = viewModel.hasNetworkConnection()
         if (!haveNetworkConnection) {
             Log.w(TAG, "Cannot update display name - no network connection.")
         } else {
