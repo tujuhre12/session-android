@@ -62,6 +62,13 @@ import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.home.UserDetailsBottomSheet
+import com.bumptech.glide.Glide
+import com.bumptech.glide.RequestManager
+import network.loki.messenger.libsession_util.getOrNull
+import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsignal.utilities.AccountId
+import org.thoughtcrime.securesms.database.model.MmsMessageRecord
+import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.disableClipping
 import org.thoughtcrime.securesms.util.toDp
@@ -217,7 +224,7 @@ class VisibleMessageView : FrameLayout {
                     binding.moderatorIconImageView.isVisible = isModerator
                 } else if (thread.isGroupV2Recipient) {
                     val isAdmin = configFactory.withGroupConfigs(AccountId(thread.address.serialize())) {
-                        it.groupMembers.get(senderAccountID)?.admin == true
+                        it.groupMembers.getOrNull(senderAccountID)?.admin == true
                     }
 
                     binding.moderatorIconImageView.isVisible = isAdmin
