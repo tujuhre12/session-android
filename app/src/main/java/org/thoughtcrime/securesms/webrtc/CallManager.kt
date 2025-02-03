@@ -263,7 +263,7 @@ class CallManager(
     fun setAudioEnabled(isEnabled: Boolean) {
         currentConnectionState.withState(*CallState.CAN_HANGUP_STATES) {
             peerConnection?.setAudioEnabled(isEnabled)
-            _audioEvents.value = AudioEnabled(true)
+            _audioEvents.value = AudioEnabled(isEnabled)
         }
     }
 
@@ -642,9 +642,9 @@ class CallManager(
         }
     }
 
-    fun handleSetMuteAudio(muted: Boolean) {
-        _audioEvents.value = AudioEnabled(!muted)
-        peerConnection?.setAudioEnabled(!muted)
+    fun toggleMuteAudio() {
+        val muted = !_audioEvents.value.isEnabled
+        setAudioEnabled(muted)
     }
 
     /**
@@ -794,7 +794,6 @@ class CallManager(
         if (connection.isVideoEnabled()) lockManager.updatePhoneState(LockManager.PhoneState.IN_VIDEO)
         else lockManager.updatePhoneState(LockManager.PhoneState.IN_CALL)
         connection.setCommunicationMode()
-        setAudioEnabled(true)
         dataChannel?.let { channel ->
             val toSend = if (_videoState.value.userVideoEnabled) VIDEO_ENABLED_JSON else VIDEO_DISABLED_JSON
             val buffer = DataChannel.Buffer(ByteBuffer.wrap(toSend.toString().encodeToByteArray()), false)

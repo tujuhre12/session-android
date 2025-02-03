@@ -48,9 +48,6 @@ class CallViewModel @Inject constructor(
     val fullscreenRenderer: SurfaceViewRenderer?
         get() = callManager.fullscreenRenderer
 
-    var microphoneEnabled: Boolean = true
-        private set
-
     var isSpeaker: Boolean = false
         private set
 
@@ -61,7 +58,6 @@ class CallViewModel @Inject constructor(
 
     val localAudioEnabledState
         get() = callManager.audioEvents.map { it.isEnabled }
-            .onEach { microphoneEnabled = it }
 
     val videoState: StateFlow<VideoState>
         get() = callManager.videoState
@@ -86,5 +82,9 @@ class CallViewModel @Inject constructor(
 
     fun sendCommand(intent: Intent){
         rtcCallBridge.sendCommand(intent)
+    }
+
+    fun toggleMute(){
+        callManager.toggleMuteAudio()
     }
 }

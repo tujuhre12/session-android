@@ -76,7 +76,6 @@ class WebRtcCallBridge @Inject constructor(
         const val ACTION_IGNORE_CALL = "IGNORE_CALL" // like when swiping off a notification. Ends the call without notifying the caller
         const val ACTION_DENY_CALL = "DENY_CALL"
         const val ACTION_LOCAL_HANGUP = "LOCAL_HANGUP"
-        const val ACTION_SET_MUTE_AUDIO = "SET_MUTE_AUDIO"
         const val ACTION_SET_MUTE_VIDEO = "SET_MUTE_VIDEO"
         const val ACTION_FLIP_CAMERA = "FLIP_CAMERA"
         const val ACTION_UPDATE_AUDIO = "UPDATE_AUDIO"
@@ -122,11 +121,6 @@ class WebRtcCallBridge @Inject constructor(
 
         fun acceptCallIntent(context: Context) = Intent(context, WebRtcCallBridge::class.java)
             .setAction(ACTION_ANSWER_CALL)
-
-        fun microphoneIntent(context: Context, enabled: Boolean) =
-            Intent(context, WebRtcCallBridge::class.java)
-                .setAction(ACTION_SET_MUTE_AUDIO)
-                .putExtra(EXTRA_MUTE, !enabled)
 
         fun createCall(context: Context, address: Address) =
             Intent(context, WebRtcCallBridge::class.java)
@@ -298,7 +292,6 @@ class WebRtcCallBridge @Inject constructor(
                 ACTION_IGNORE_CALL -> handleIgnoreCall()
                 ACTION_LOCAL_HANGUP -> handleLocalHangup(intent)
                 ACTION_REMOTE_HANGUP -> handleRemoteHangup(intent)
-                ACTION_SET_MUTE_AUDIO -> handleSetMuteAudio(intent)
                 ACTION_SET_MUTE_VIDEO -> handleSetMuteVideo(intent)
                 ACTION_FLIP_CAMERA -> handleSetCameraFlip(intent)
                 ACTION_WIRED_HEADSET_CHANGE -> handleWiredHeadsetChanged(intent)
@@ -530,7 +523,6 @@ class WebRtcCallBridge @Inject constructor(
                     }
                 }
                 lockManager.updatePhoneState(LockManager.PhoneState.PROCESSING)
-                callManager.setAudioEnabled(true)
             } catch (e: Exception) {
                 Log.e(TAG, e)
                 callManager.postConnectionError()
@@ -562,11 +554,6 @@ class WebRtcCallBridge @Inject constructor(
         }
 
         onHangup()
-    }
-
-    private fun handleSetMuteAudio(intent: Intent) {
-        val muted = intent.getBooleanExtra(EXTRA_MUTE, false)
-        callManager.handleSetMuteAudio(muted)
     }
 
     private fun handleSetMuteVideo(intent: Intent) {

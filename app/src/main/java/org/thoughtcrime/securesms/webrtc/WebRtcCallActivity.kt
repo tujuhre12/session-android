@@ -123,9 +123,7 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
         }
 
         binding.microphoneButton.setOnClickListener {
-            val audioEnabledIntent =
-                WebRtcCallBridge.microphoneIntent(this, !viewModel.microphoneEnabled)
-            viewModel.sendCommand(audioEnabledIntent)
+            viewModel.toggleMute()
         }
 
         binding.speakerPhoneButton.setOnClickListener {
