@@ -12,6 +12,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager
+import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager.AudioDevice.EARPIECE
+import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager.AudioDevice.SPEAKER_PHONE
 import org.webrtc.SurfaceViewRenderer
 import javax.inject.Inject
 
@@ -48,13 +50,8 @@ class CallViewModel @Inject constructor(
     val fullscreenRenderer: SurfaceViewRenderer?
         get() = callManager.fullscreenRenderer
 
-    var isSpeaker: Boolean = false
-        private set
-
     val audioDeviceState
-        get() = callManager.audioDeviceEvents.onEach {
-            isSpeaker = it.selectedDevice == SignalAudioManager.AudioDevice.SPEAKER_PHONE
-        }
+        get() = callManager.audioDeviceEvents
 
     val localAudioEnabledState
         get() = callManager.audioEvents.map { it.isEnabled }
@@ -86,5 +83,9 @@ class CallViewModel @Inject constructor(
 
     fun toggleMute(){
         callManager.toggleMuteAudio()
+    }
+
+    fun toggleSpeakerphone(){
+        callManager.toggleSpeakerphone()
     }
 }

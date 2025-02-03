@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -33,11 +32,12 @@ import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.webrtc.CallManager.StateEvent.AudioDeviceUpdate
 import org.thoughtcrime.securesms.webrtc.CallManager.StateEvent.AudioEnabled
 import org.thoughtcrime.securesms.webrtc.CallManager.StateEvent.RecipientUpdate
-import org.thoughtcrime.securesms.webrtc.CallManager.StateEvent.VideoEnabled
 import org.thoughtcrime.securesms.webrtc.audio.AudioManagerCompat
 import org.thoughtcrime.securesms.webrtc.audio.OutgoingRinger
 import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager
 import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager.AudioDevice
+import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager.AudioDevice.EARPIECE
+import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager.AudioDevice.SPEAKER_PHONE
 import org.thoughtcrime.securesms.webrtc.data.Event
 import org.thoughtcrime.securesms.webrtc.data.StateProcessor
 import org.thoughtcrime.securesms.webrtc.locks.LockManager
@@ -646,6 +646,24 @@ class CallManager(
         val muted = !_audioEvents.value.isEnabled
         setAudioEnabled(muted)
     }
+
+    fun toggleSpeakerphone(){
+        if (currentConnectionState !in arrayOf(
+                CallState.Connected,
+                *CallState.PENDING_CONNECTION_STATES
+            )
+        ) {
+            Log.w(TAG, "handling audio command not in call")
+            return
+        }
+
+        // we default to EARPIECE if not SPEAKER but the audio manager will know to actually use a headset if any is connected
+        val command =
+            AudioManagerCommand.SetUserDevice(if (isOnSpeakerphone()) EARPIECE else SPEAKER_PHONE)
+        handleAudioCommand(command)
+    }
+
+    private fun isOnSpeakerphone() = _audioDeviceEvents.value.selectedDevice == SPEAKER_PHONE
 
     /**
      * Returns the renderer currently showing the user's video, not the contact's

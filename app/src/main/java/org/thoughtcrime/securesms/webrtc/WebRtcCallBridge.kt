@@ -78,13 +78,10 @@ class WebRtcCallBridge @Inject constructor(
         const val ACTION_LOCAL_HANGUP = "LOCAL_HANGUP"
         const val ACTION_SET_MUTE_VIDEO = "SET_MUTE_VIDEO"
         const val ACTION_FLIP_CAMERA = "FLIP_CAMERA"
-        const val ACTION_UPDATE_AUDIO = "UPDATE_AUDIO"
         const val ACTION_WIRED_HEADSET_CHANGE = "WIRED_HEADSET_CHANGE"
         const val ACTION_SCREEN_OFF = "SCREEN_OFF"
         const val ACTION_CHECK_TIMEOUT = "CHECK_TIMEOUT"
         const val ACTION_CHECK_RECONNECT = "CHECK_RECONNECT"
-        const val ACTION_CHECK_RECONNECT_TIMEOUT = "CHECK_RECONNECT_TIMEOUT"
-        const val ACTION_IS_IN_CALL_QUERY = "IS_IN_CALL"
 
         const val ACTION_PRE_OFFER = "PRE_OFFER"
         const val ACTION_ANSWER_INCOMING = "ANSWER_INCOMING"
@@ -93,9 +90,6 @@ class WebRtcCallBridge @Inject constructor(
         const val ACTION_ICE_CONNECTED = "ICE_CONNECTED"
 
         const val EXTRA_RECIPIENT_ADDRESS = "RECIPIENT_ID"
-        const val EXTRA_ENABLED = "ENABLED"
-        const val EXTRA_AUDIO_COMMAND = "AUDIO_COMMAND"
-        const val EXTRA_SWAPPED = "is_video_swapped"
         const val EXTRA_MUTE = "mute_value"
         const val EXTRA_AVAILABLE = "enabled_value"
         const val EXTRA_REMOTE_DESCRIPTION = "remote_description"
@@ -104,9 +98,7 @@ class WebRtcCallBridge @Inject constructor(
         const val EXTRA_ICE_SDP = "ice_sdp"
         const val EXTRA_ICE_SDP_MID = "ice_sdp_mid"
         const val EXTRA_ICE_SDP_LINE_INDEX = "ice_sdp_line_index"
-        const val EXTRA_RESULT_RECEIVER = "result_receiver"
 
-        const val INVALID_NOTIFICATION_ID = -1
         private const val TIMEOUT_SECONDS = 30L
         private const val RECONNECT_SECONDS = 5L
         private const val MAX_RECONNECTS = 5
@@ -185,11 +177,6 @@ class WebRtcCallBridge @Inject constructor(
 
         fun hangupIntent(context: Context) =
             Intent(context, WebRtcCallBridge::class.java).setAction(ACTION_LOCAL_HANGUP)
-
-        fun audioManagerCommandIntent(context: Context, command: AudioManagerCommand) =
-            Intent(context, WebRtcCallBridge::class.java)
-                .setAction(ACTION_UPDATE_AUDIO)
-                .putExtra(EXTRA_AUDIO_COMMAND, command)
     }
 
     private var _hasAcceptedCall: MutableStateFlow<Boolean> = MutableStateFlow(false) // always true for outgoing call and true once the user accepts the call for incoming calls
@@ -301,7 +288,6 @@ class WebRtcCallBridge @Inject constructor(
                 ACTION_ICE_CONNECTED -> handleIceConnected(intent)
                 ACTION_CHECK_TIMEOUT -> handleCheckTimeout(intent)
                 ACTION_CHECK_RECONNECT -> handleCheckReconnect(intent)
-                ACTION_UPDATE_AUDIO -> handleUpdateAudio(intent)
             }
         }
     }
@@ -320,19 +306,6 @@ class WebRtcCallBridge @Inject constructor(
     private fun handleBusyCall(intent: Intent) {
         val recipient = getRemoteRecipient(intent)
         insertMissedCall(recipient, false)
-    }
-
-    private fun handleUpdateAudio(intent: Intent) {
-        val audioCommand = intent.getParcelableExtra<AudioManagerCommand>(EXTRA_AUDIO_COMMAND)!!
-        if (callManager.currentConnectionState !in arrayOf(
-                CallState.Connected,
-                *CallState.PENDING_CONNECTION_STATES
-            )
-        ) {
-            Log.w(TAG, "handling audio command not in call")
-            return
-        }
-        callManager.handleAudioCommand(audioCommand)
     }
 
     private fun handleNewOffer(intent: Intent) {

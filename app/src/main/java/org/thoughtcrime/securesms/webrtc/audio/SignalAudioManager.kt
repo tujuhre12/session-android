@@ -240,7 +240,6 @@ class SignalAudioManager(private val context: Context,
             autoSwitchToBluetooth = true
         }
 
-        Log.i("SignalBluetoothManager", "******** update manager state: $state needBluetoothAudioStart: $needBluetoothAudioStart needBluetoothAudioStop: $needBluetoothAudioStop")
         if (!needBluetoothAudioStop && needBluetoothAudioStart) {
             if (!signalBluetoothManager.startScoAudio()) {
                 Log.e(TAG,"Failed to start sco audio")
