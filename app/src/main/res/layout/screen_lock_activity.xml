@@ -7,7 +7,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="org.thoughtcrime.securesms.PassphrasePromptActivity">
+    tools:context="org.thoughtcrime.securesms.ScreenLockActivity">
 
     <View android:id="@+id/shim"
           android:layout_width="match_parent"
@@ -70,11 +70,5 @@
             android:layout_marginBottom="32dp"
             tools:visibility="visible"/>
 
-        <Button
-            style="@style/Widget.Session.Button.Common.ProminentOutline"
-            android:id="@+id/lock_screen_auth_container"
-            android:layout_width="196dp"
-            android:layout_height="@dimen/medium_button_height"
-            android:text="@string/lockAppUnlock"/>
     </LinearLayout>
 </RelativeLayout>

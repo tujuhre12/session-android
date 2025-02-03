@@ -95,10 +95,8 @@ import org.session.libsession.utilities.MediaTypes
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.CONVERSATION_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.DATE_TIME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.URL_KEY
 import org.session.libsession.utilities.Stub
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.concurrent.SimpleTask
@@ -113,7 +111,7 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.guava.Optional
 import org.session.libsignal.utilities.hexEncodedPrivateKey
 import org.thoughtcrime.securesms.ApplicationContext
-import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
+import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.attachments.ScreenshotObserver
 import org.thoughtcrime.securesms.audio.AudioRecorder
 import org.thoughtcrime.securesms.components.emoji.RecentEmojiPageModel
@@ -183,15 +181,14 @@ import org.thoughtcrime.securesms.mms.MediaConstraints
 import org.thoughtcrime.securesms.mms.Slide
 import org.thoughtcrime.securesms.mms.SlideDeck
 import org.thoughtcrime.securesms.mms.VideoSlide
-import org.thoughtcrime.securesms.openUrl
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.reactions.ReactionsDialogFragment
 import org.thoughtcrime.securesms.reactions.any.ReactWithAnyEmojiDialogFragment
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.util.ActivityDispatcher
 import org.thoughtcrime.securesms.util.DateUtils
+import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.MediaUtil
-import org.thoughtcrime.securesms.util.NetworkUtils
 import org.thoughtcrime.securesms.util.PaddedImageSpan
 import org.thoughtcrime.securesms.util.SaveAttachmentTask
 import org.thoughtcrime.securesms.util.drawToBitmap
@@ -217,14 +214,13 @@ import kotlin.math.roundToInt
 import kotlin.math.sqrt
 import kotlin.time.Duration.Companion.minutes
 
-
 private const val TAG = "ConversationActivityV2"
 
 // Some things that seemingly belong to the input bar (e.g. the voice message recording UI) are actually
 // part of the conversation activity layout. This is just because it makes the layout a lot simpler. The
 // price we pay is a bit of back and forth between the input bar and the conversation activity.
 @AndroidEntryPoint
-class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDelegate,
+class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     InputBarRecordingViewDelegate, AttachmentManager.AttachmentListener, ActivityDispatcher,
     ConversationActionModeCallbackDelegate, VisibleMessageViewDelegate, RecipientModifiedListener,
     SearchBottomBar.EventListener, LoaderManager.LoaderCallbacks<Cursor>, ConversationActionBarDelegate,
@@ -292,6 +288,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     private var actionMode: ActionMode? = null
     private var unreadCount = Int.MAX_VALUE
     // Attachments
+    private var voiceMessageStartTimestamp: Long = 0L
     private val audioRecorder = AudioRecorder(this)
     private val stopAudioHandler = Handler(Looper.getMainLooper())
     private val stopVoiceMessageRecordingTask = Runnable { sendVoiceMessage() }
@@ -404,9 +401,6 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     private var previousLastVisibleRecyclerViewIndex: Int = RecyclerView.NO_POSITION
     private var currentLastVisibleRecyclerViewIndex:  Int = RecyclerView.NO_POSITION
     private var recyclerScrollState: Int = RecyclerView.SCROLL_STATE_IDLE
-
-    // Lower limit for the length of voice messages - any lower and we inform the user rather than sending
-    private val MINIMUM_VOICE_MESSAGE_DURATION_MS = 1000L
 
     // region Settings
     companion object {
@@ -757,9 +751,16 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         val mediaURI = intent.data
         val mediaType = AttachmentManager.MediaType.from(intent.type)
         val mimeType =  MediaUtil.getMimeType(this, mediaURI)
+
         if (mediaURI != null && mediaType != null) {
-            if (mimeType != null && (AttachmentManager.MediaType.IMAGE == mediaType || AttachmentManager.MediaType.GIF == mediaType || AttachmentManager.MediaType.VIDEO == mediaType)) {
-                val media = Media(mediaURI, mimeType, 0, 0, 0, 0, Optional.absent(), Optional.absent())
+            val filename = FilenameUtils.getFilenameFromUri(this, mediaURI)
+
+            if (mimeType != null &&
+                        (AttachmentManager.MediaType.IMAGE == mediaType ||
+                        AttachmentManager.MediaType.GIF    == mediaType ||
+                        AttachmentManager.MediaType.VIDEO  == mediaType)
+            ) {
+                val media = Media(mediaURI, filename, mimeType, 0, 0, 0, 0, Optional.absent(), Optional.absent())
                 startActivityForResult(MediaSendActivity.buildEditorIntent(this, listOf( media ), viewModel.recipient!!, ""), PICK_FROM_LIBRARY)
                 return
             } else {
@@ -1004,6 +1005,11 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             cancelVoiceMessage()
             tearDownRecipientObserver()
         }
+
+        // Delete any files we might have locally cached when sharing (which we need to do
+        // when passing through files when the app is locked).
+        cleanupCachedFiles()
+
         super.onDestroy()
     }
     // endregion
@@ -1334,7 +1340,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     override fun copyAccountID(accountId: String) {
         val clip = ClipData.newPlainText("Account ID", accountId)
-        val manager = getSystemService(PassphraseRequiredActionBarActivity.CLIPBOARD_SERVICE) as ClipboardManager
+        val manager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
         manager.setPrimaryClip(clip)
         Toast.makeText(this, R.string.copied, Toast.LENGTH_SHORT).show()
     }
@@ -1346,7 +1352,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         val openGroup = lokiThreadDb.getOpenGroupChat(threadId) ?: return
 
         val clip = ClipData.newPlainText("Community URL", openGroup.joinURL)
-        val manager = getSystemService(PassphraseRequiredActionBarActivity.CLIPBOARD_SERVICE) as ClipboardManager
+        val manager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
         manager.setPrimaryClip(clip)
         Toast.makeText(this, R.string.copied, Toast.LENGTH_SHORT).show()
     }
@@ -1495,7 +1501,6 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     // Method to add an emoji to a queue and remove it a short while later - this is used as a
     // rate-limiting mechanism and is called from the `sendEmojiReaction` method, below.
-
     fun canPerformEmojiReaction(timestamp: Long): Boolean {
         // If the emoji reaction queue is full..
         if (emojiRateLimiterQueue.size >= EMOJI_REACTIONS_ALLOWED_PER_MINUTE) {
@@ -1655,12 +1660,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         sendEmojiRemoval(emoji, message)
     }
 
-    /**
-     * Called when the user is attempting to clear all instance of a specific emoji.
-     */
-    override fun onClearAll(emoji: String, messageId: MessageId) {
-        viewModel.onEmojiClear(emoji, messageId)
-    }
+    // Called when the user is attempting to clear all instance of a specific emoji
+    override fun onClearAll(emoji: String, messageId: MessageId) { viewModel.onEmojiClear(emoji, messageId) }
 
     override fun onMicrophoneButtonMove(event: MotionEvent) {
         val rawX = event.rawX
@@ -1699,35 +1700,22 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     override fun onMicrophoneButtonUp(event: MotionEvent) {
         val x = event.rawX.roundToInt()
         val y = event.rawY.roundToInt()
-        val inputBar = binding.inputBar
 
-        // Lock voice recording on if the button is released over the lock area AND the
+        // Lock voice recording on if the button is released over the lock area. AND the
         // voice recording has currently lasted for at least the time it takes to animate
         // the lock area into position. Without this time check we can accidentally lock
         // to recording audio on a quick tap as the lock area animates out from the record
         // audio message button and the pointer-up event catches it mid-animation.
-        //
-        // Further, by limiting this to AnimateLockDurationMS rather than our minimum voice
-        // message length we get a fast, responsive UI that can lock 'straight away' - BUT
-        // we then have to artificially bump the voice message duration because if you press
-        // and slide to lock then release in one quick motion the pointer up event may be
-        // less than our minimum voice message duration - so we'll bump our recorded duration
-        // slightly to make sure we don't see the "Tap and hold to record..." toast when we
-        // finish recording the message.
-        if (isValidLockViewLocation(x, y) &&  inputBar.voiceMessageDurationMS >= ANIMATE_LOCK_DURATION_MS) {
+        val currentVoiceMessageDurationMS = System.currentTimeMillis() - voiceMessageStartTimestamp
+        if (isValidLockViewLocation(x, y) && currentVoiceMessageDurationMS >= ANIMATE_LOCK_DURATION_MS) {
             binding.inputBarRecordingView.lock()
-
-            // Artificially bump message duration on lock if required
-            if (inputBar.voiceMessageDurationMS < MINIMUM_VOICE_MESSAGE_DURATION_MS) {
-                inputBar.voiceMessageDurationMS = MINIMUM_VOICE_MESSAGE_DURATION_MS
-            }
 
             // If the user put the record audio button into the lock state then we are still recording audio
             binding.inputBar.voiceRecorderState = VoiceRecorderState.Recording
         }
-        else // If the user didn't attempt to lock voice recording on..
+        else
         {
-            // Regardless of where the button up event occurred we're now shutting down the recording (whether we send it or not)
+            // If the user didn't lock voice recording on then we're stopping voice recording
             binding.inputBar.voiceRecorderState = VoiceRecorderState.ShuttingDownAfterRecord
 
             val rba = binding.inputBarRecordingView?.recordButtonOverlay
@@ -1820,7 +1808,9 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     override fun commitInputContent(contentUri: Uri) {
         val recipient = viewModel.recipient ?: return
-        val media = Media(contentUri, MediaUtil.getMimeType(this, contentUri)!!, 0, 0, 0, 0, Optional.absent(), Optional.absent())
+        val mimeType = MediaUtil.getMimeType(this, contentUri)!!
+        val filename = FilenameUtils.getFilenameFromUri(this, contentUri, mimeType)
+        val media = Media(contentUri, filename, mimeType, 0, 0, 0, 0, Optional.absent(), Optional.absent())
         startActivityForResult(MediaSendActivity.buildEditorIntent(this, listOf( media ), recipient, getMessageBody()), PICK_FROM_LIBRARY)
     }
 
@@ -1841,6 +1831,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
             return null
         }
+
         // Create the message
         val message = VisibleMessage().applyExpiryMode(viewModel.threadId)
         message.sentTimestamp = sentTimestamp
@@ -1850,12 +1841,13 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             message.sentTimestamp
         } else 0
         val outgoingTextMessage = OutgoingTextMessage.from(message, recipient, expiresInMillis, expireStartedAt!!)
+
         // Clear the input bar
         binding.inputBar.text = ""
         binding.inputBar.cancelQuoteDraft()
         binding.inputBar.cancelLinkPreviewDraft()
         lifecycleScope.launch(Dispatchers.Default) {
-            // Put the message in the database
+            // Put the message in the database and send it
             message.id = smsDb.insertMessageOutbox(
                 viewModel.threadId,
                 outgoingTextMessage,
@@ -1864,7 +1856,6 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                 null,
                 true
             )
-            // Send it
             MessageSender.send(message, recipient.address)
         }
         // Send a typing stopped message
@@ -1881,6 +1872,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         val recipient = viewModel.recipient ?: return null
         val sentTimestamp = SnodeAPI.nowWithOffset
         viewModel.beforeSendingAttachments()
+
         // Create the message
         val message = VisibleMessage().applyExpiryMode(viewModel.threadId)
         message.sentTimestamp = sentTimestamp
@@ -1903,18 +1895,21 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             sentTimestamp
         } else 0
         val outgoingTextMessage = OutgoingMediaMessage.from(message, recipient, attachments, localQuote, linkPreview, expiresInMs, expireStartedAtMs)
+
         // Clear the input bar
         binding.inputBar.text = ""
         binding.inputBar.cancelQuoteDraft()
         binding.inputBar.cancelLinkPreviewDraft()
+
         // Reset the attachment manager
         attachmentManager.clear()
+
         // Reset attachments button if needed
         if (isShowingAttachmentOptions) { toggleAttachmentOptions() }
 
         // do the heavy work in the bg
         lifecycleScope.launch(Dispatchers.IO) {
-            // Put the message in the database
+            // Put the message in the database and send it
             message.id = mmsDb.insertMessageOutbox(
                 outgoingTextMessage,
                 viewModel.threadId,
@@ -1922,7 +1917,6 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                 null,
                 runThreadUpdate = true
             )
-            // Send it
             MessageSender.send(message, recipient.address, attachments, quote, linkPreview)
         }
 
@@ -1950,9 +1944,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     private fun selectGif() = AttachmentManager.selectGif(this, PICK_GIF)
 
-    private fun showDocumentPicker() {
-        AttachmentManager.selectDocument(this, PICK_DOCUMENT)
-    }
+    private fun showDocumentPicker() = AttachmentManager.selectDocument(this, PICK_DOCUMENT)
 
     private fun pickFromLibrary() {
         val recipient = viewModel.recipient ?: return
@@ -1961,13 +1953,9 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         }
     }
 
-    private fun showCamera() {
-        attachmentManager.capturePhoto(this, TAKE_PHOTO, viewModel.recipient);
-    }
+    private fun showCamera() { attachmentManager.capturePhoto(this, TAKE_PHOTO, viewModel.recipient) }
 
-    override fun onAttachmentChanged() {
-        // Do nothing
-    }
+    override fun onAttachmentChanged() { /* Do nothing */ }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
@@ -1977,6 +1965,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
         super.onActivityResult(requestCode, resultCode, intent)
+
         val mediaPreppedListener = object : ListenableFuture.Listener<Boolean> {
 
             override fun onSuccess(result: Boolean?) {
@@ -2003,16 +1992,21 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                 Toast.makeText(this@ConversationActivityV2, R.string.attachmentsErrorLoad, Toast.LENGTH_LONG).show()
             }
         }
+
+        // Note: In the case of documents or GIFs, filename provision is performed as part of the
+        // `prepMediaForSending` operations, while for images it occurs when Media is created in
+        // this class' `commitInputContent` method.
         when (requestCode) {
             PICK_DOCUMENT -> {
-                val uri = intent?.data ?: return
+                intent ?: return Log.w(TAG, "Failed to get document Intent")
+                val uri = intent.data ?: return Log.w(TAG, "Failed to get document Uri")
                 prepMediaForSending(uri, AttachmentManager.MediaType.DOCUMENT).addListener(mediaPreppedListener)
             }
             PICK_GIF -> {
-                intent ?: return
-                val uri = intent.data ?: return
-                val type = AttachmentManager.MediaType.GIF
-                val width = intent.getIntExtra(GiphyActivity.EXTRA_WIDTH, 0)
+                intent ?: return Log.w(TAG, "Failed to get GIF Intent")
+                val uri = intent.data ?: return Log.w(TAG, "Failed to get picked GIF Uri")
+                val type   = AttachmentManager.MediaType.GIF
+                val width  = intent.getIntExtra(GiphyActivity.EXTRA_WIDTH, 0)
                 val height = intent.getIntExtra(GiphyActivity.EXTRA_HEIGHT, 0)
                 prepMediaForSending(uri, type, width, height).addListener(mediaPreppedListener)
             }
@@ -2020,21 +2014,16 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             TAKE_PHOTO -> {
                 intent ?: return
                 val body = intent.getStringExtra(MediaSendActivity.EXTRA_MESSAGE)
-                val media = intent.getParcelableArrayListExtra<Media>(MediaSendActivity.EXTRA_MEDIA) ?: return
+                val mediaList = intent.getParcelableArrayListExtra<Media>(MediaSendActivity.EXTRA_MEDIA) ?: return
                 val slideDeck = SlideDeck()
-                for (item in media) {
+                for (media in mediaList) {
+                    val mediaFilename: String? = media.filename
                     when {
-                        MediaUtil.isVideoType(item.mimeType) -> {
-                            slideDeck.addSlide(VideoSlide(this, item.uri, 0, item.caption.orNull()))
-                        }
-                        MediaUtil.isGif(item.mimeType) -> {
-                            slideDeck.addSlide(GifSlide(this, item.uri, 0, item.width, item.height, item.caption.orNull()))
-                        }
-                        MediaUtil.isImageType(item.mimeType) -> {
-                            slideDeck.addSlide(ImageSlide(this, item.uri, 0, item.width, item.height, item.caption.orNull()))
-                        }
+                        MediaUtil.isVideoType(media.mimeType) -> { slideDeck.addSlide(VideoSlide(this, media.uri, mediaFilename, 0, media.caption.orNull()))                            }
+                        MediaUtil.isGif(media.mimeType)       -> { slideDeck.addSlide(GifSlide(this, media.uri, mediaFilename, 0, media.width, media.height, media.caption.orNull()))   }
+                        MediaUtil.isImageType(media.mimeType) -> { slideDeck.addSlide(ImageSlide(this, media.uri, mediaFilename, 0, media.width, media.height, media.caption.orNull())) }
                         else -> {
-                            Log.d("Loki", "Asked to send an unexpected media type: '" + item.mimeType + "'. Skipping.")
+                            Log.d(TAG, "Asked to send an unexpected media type: '" + media.mimeType + "'. Skipping.")
                         }
                     }
                 }
@@ -2053,15 +2042,15 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         }
     }
 
-    private fun prepMediaForSending(uri: Uri, type: AttachmentManager.MediaType): ListenableFuture<Boolean> {
-        return prepMediaForSending(uri, type, null, null)
-    }
+    private fun prepMediaForSending(uri: Uri, type: AttachmentManager.MediaType): ListenableFuture<Boolean>  =  prepMediaForSending(uri, type, null, null)
 
     private fun prepMediaForSending(uri: Uri, type: AttachmentManager.MediaType, width: Int?, height: Int?): ListenableFuture<Boolean> {
         return attachmentManager.setMedia(glide, uri, type, MediaConstraints.getPushMediaConstraints(), width ?: 0, height ?: 0)
     }
 
     override fun startRecordingVoiceMessage() {
+        Log.i(TAG, "Starting voice message recording at: ${System.currentTimeMillis()}")
+
         if (Permissions.hasAll(this, Manifest.permission.RECORD_AUDIO)) {
             showVoiceMessageUI()
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -2077,9 +2066,13 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                     binding.inputBar.voiceRecorderState = VoiceRecorderState.Recording
                 }
             }
+
+            binding.inputBar.voiceRecorderState = VoiceRecorderState.SettingUpToRecord
+            voiceMessageStartTimestamp = System.currentTimeMillis()
             audioRecorder.startRecording(callback)
 
-            stopAudioHandler.postDelayed(stopVoiceMessageRecordingTask, 300000) // Limit voice messages to 5 minute each
+            // Limit voice messages to 5 minute each
+            stopAudioHandler.postDelayed(stopVoiceMessageRecordingTask, 5.minutes.inWholeMilliseconds)
         } else {
             Permissions.with(this)
                 .request(Manifest.permission.RECORD_AUDIO)
@@ -2090,55 +2083,36 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         }
     }
 
-    private fun informUserIfNetworkOrSessionNodePathIsInvalid() {
-
-        // Check that we have a valid network network connection & inform the user if not
-        val connectedToInternet = NetworkUtils.haveValidNetworkConnection(applicationContext)
-        if (!connectedToInternet)
-        {
-            // TODO: Adjust to display error to user with official localised string when SES-2319 is addressed
-            Log.e(TAG, "Cannot sent voice message - no network connection.")
-        }
-
-        // Check that we have a suite of Session Nodes to route through.
-        // Note: We can have the entry node plus the 2 Session Nodes and the data _still_ might not
-        // send due to any node flakiness - but without doing some manner of test-ping through
-        // there's no way to test our client -> destination connectivity (unless we abuse the typing
-        // indicators?)
-        val paths = OnionRequestAPI.paths
-        if (paths.isNullOrEmpty() || paths.count() != 2) {
-            // TODO: Adjust to display error to user with official localised string when SES-2319 is addressed
-            Log.e(TAG, "Cannot send voice message - bad Session Node path.")
-        }
-    }
 
     override fun sendVoiceMessage() {
+        Log.i(TAG, "Sending voice message at: ${System.currentTimeMillis()}")
+
         // When the record voice message button is released we always need to reset the UI and cancel
-        // any further recording operation..
+        // any further recording operation.
         hideVoiceMessageUI()
         window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        val future = audioRecorder.stopRecording()
+
+        // How long was the voice message? Because the pointer up event could have been a regular
+        // hold-and-release or a release over the lock icon followed by a final tap to send so we
+        // update the voice message duration based on the current time here.
+        val voiceMessageDurationMS = System.currentTimeMillis() - voiceMessageStartTimestamp
+
+        val voiceMessageDurationValid = MediaUtil.voiceMessageMeetsMinimumDuration(voiceMessageDurationMS)
+        val future = audioRecorder.stopRecording(voiceMessageDurationValid)
         stopAudioHandler.removeCallbacks(stopVoiceMessageRecordingTask)
+        binding.inputBar.voiceRecorderState = VoiceRecorderState.Idle
 
-        // ..but we'll bail without sending the voice message & inform the user that they need to press and HOLD
-        // the record voice message button if their message was less than 1 second long.
-        val inputBar = binding.inputBar
-        val voiceMessageDurationMS = inputBar.voiceMessageDurationMS
-
-        // Now tear-down is complete we can move back into the idle state ready to record another voice message.
-        // CAREFUL: This state must be set BEFORE we show any warning toast about short messages because it early
-        // exits before transmitting the audio!
-        inputBar.voiceRecorderState = VoiceRecorderState.Idle
+        // Generate a filename from the current time such as: "Session-VoiceMessage_2025-01-08-152733.aac"
+        val voiceMessageFilename = FilenameUtils.constructNewVoiceMessageFilename(applicationContext)
 
         // Voice message too short? Warn with toast instead of sending.
         // Note: The 0L check prevents the warning toast being shown when leaving the conversation activity.
-        if (voiceMessageDurationMS != 0L && voiceMessageDurationMS < MINIMUM_VOICE_MESSAGE_DURATION_MS) {
+        val voiceMessageBelowMinimumDuration = !MediaUtil.voiceMessageMeetsMinimumDuration(voiceMessageDurationMS)
+        if (voiceMessageDurationMS != 0L && voiceMessageBelowMinimumDuration) {
             Toast.makeText(this@ConversationActivityV2, R.string.messageVoiceErrorShort, Toast.LENGTH_SHORT).show()
-            inputBar.voiceMessageDurationMS = 0L
             return
         }
 
-        informUserIfNetworkOrSessionNodePathIsInvalid()
         // Note: We could return here if there was a network or node path issue, but instead we'll try
         // our best to send the voice message even if it might fail - because in that case it'll get put
         // into the draft database and can be retried when we regain network connectivity and a working
@@ -2148,10 +2122,17 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         future.addListener(object : ListenableFuture.Listener<Pair<Uri, Long>> {
 
             override fun onSuccess(result: Pair<Uri, Long>) {
-                val audioSlide = AudioSlide(this@ConversationActivityV2, result.first, result.second, MediaTypes.AUDIO_AAC, true)
-                val slideDeck = SlideDeck()
-                slideDeck.addSlide(audioSlide)
-                sendAttachments(slideDeck.asAttachments(), null)
+                val uri = result.first
+                val dataSizeBytes = result.second
+
+                // Only proceed with sending the voice message if it's long enough
+                if (!voiceMessageBelowMinimumDuration) {
+                    val formattedAudioDuration = MediaUtil.getFormattedVoiceMessageDuration(voiceMessageDurationMS)
+                    val audioSlide = AudioSlide(this@ConversationActivityV2, uri, voiceMessageFilename, dataSizeBytes, MediaTypes.AUDIO_AAC, true, formattedAudioDuration)
+                    val slideDeck = SlideDeck()
+                    slideDeck.addSlide(audioSlide)
+                    sendAttachments(slideDeck.asAttachments(), body = null)
+                }
             }
 
             override fun onFailure(e: ExecutionException) {
@@ -2160,24 +2141,22 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         })
     }
 
+    // Cancel voice message is called when the user is press-and-hold recording a voice message and then
+    // slides the microphone icon left, or when they lock voice recording on but then later click Cancel.
     override fun cancelVoiceMessage() {
-        val inputBar = binding.inputBar
+        val voiceMessageDurationMS = System.currentTimeMillis() - voiceMessageStartTimestamp
 
         hideVoiceMessageUI()
         window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        audioRecorder.stopRecording()
+        val voiceMessageMeetsMinimumDuration = MediaUtil.voiceMessageMeetsMinimumDuration(voiceMessageDurationMS)
+        audioRecorder.stopRecording(voiceMessageMeetsMinimumDuration)
         stopAudioHandler.removeCallbacks(stopVoiceMessageRecordingTask)
+        binding.inputBar.voiceRecorderState = VoiceRecorderState.Idle
 
         // Note: The 0L check prevents the warning toast being shown when leaving the conversation activity
-        val voiceMessageDuration = inputBar.voiceMessageDurationMS
-        if (voiceMessageDuration != 0L && voiceMessageDuration < MINIMUM_VOICE_MESSAGE_DURATION_MS) {
+        if (voiceMessageDurationMS != 0L && !voiceMessageMeetsMinimumDuration) {
             Toast.makeText(applicationContext, applicationContext.getString(R.string.messageVoiceErrorShort), Toast.LENGTH_SHORT).show()
-            inputBar.voiceMessageDurationMS = 0L
         }
-
-        // When tear-down is complete (via cancelling) we can move back into the idle state ready to record
-        // another voice message.
-        inputBar.voiceRecorderState = VoiceRecorderState.Idle
     }
 
     override fun selectMessages(messages: Set<MessageRecord>) {
@@ -2298,7 +2277,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     private fun saveAttachments(message: MmsMessageRecord) {
         val attachments: List<SaveAttachmentTask.Attachment?> = Stream.of(message.slideDeck.slides)
             .filter { s: Slide -> s.uri != null && (s.hasImage() || s.hasVideo() || s.hasAudio() || s.hasDocument()) }
-            .map { s: Slide -> SaveAttachmentTask.Attachment(s.uri!!, s.contentType, message.dateReceived, s.fileName.orNull()) }
+            .map { s: Slide -> SaveAttachmentTask.Attachment(s.uri!!, s.contentType, message.dateReceived, s.filename) }
             .toList()
         if (attachments.isNotEmpty()) {
             val saveTask = SaveAttachmentTask(this)

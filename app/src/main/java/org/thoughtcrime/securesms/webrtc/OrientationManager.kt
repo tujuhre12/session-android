@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.webrtc
 
 import android.content.Context
+import android.content.Context.SENSOR_SERVICE
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -8,7 +9,6 @@ import android.hardware.SensorManager
 import android.provider.Settings
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity.SENSOR_SERVICE
 import kotlin.math.asin
 
 class OrientationManager(private val context: Context): SensorEventListener {

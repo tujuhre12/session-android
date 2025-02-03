@@ -5,13 +5,17 @@ import android.net.Uri
 import com.goterl.lazysodium.utils.KeyPair
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.security.MessageDigest
+import javax.inject.Inject
+import javax.inject.Singleton
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_PINNED
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.util.BaseCommunityInfo
+import network.loki.messenger.libsession_util.util.Contact as LibSessionContact
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupDisplayInfo
 import network.loki.messenger.libsession_util.util.GroupInfo
+import network.loki.messenger.libsession_util.util.GroupMember as LibSessionGroupMember
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.database.MessageDataProvider
@@ -63,20 +67,20 @@ import org.session.libsession.utilities.ProfileKeyUtil
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getGroup
+import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.Recipient.DisappearingState
-import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.getType
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceAttachmentPointer
 import org.session.libsignal.messages.SignalServiceGroup
+import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.KeyHelper
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.guava.Optional
 import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.crypto.KeyPairUtilities
@@ -88,11 +92,8 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.groups.GroupManager
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.mms.PartAuthority
+import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
-import javax.inject.Inject
-import javax.inject.Singleton
-import network.loki.messenger.libsession_util.util.Contact as LibSessionContact
-import network.loki.messenger.libsession_util.util.GroupMember as LibSessionGroupMember
 
 private const val TAG = "Storage"
 
@@ -219,17 +220,11 @@ open class Storage @Inject constructor(
         }
     }
 
-    override fun getUserPublicKey(): String? {
-        return preferences.getLocalNumber()
-    }
+    override fun getUserPublicKey(): String? { return preferences.getLocalNumber() }
 
-    override fun getUserX25519KeyPair(): ECKeyPair {
-        return lokiAPIDatabase.getUserX25519KeyPair()
-    }
+    override fun getUserX25519KeyPair(): ECKeyPair { return lokiAPIDatabase.getUserX25519KeyPair() }
 
-    override fun getUserED25519KeyPair(): KeyPair? {
-        return KeyPairUtilities.getUserED25519KeyPair(context)
-    }
+    override fun getUserED25519KeyPair(): KeyPair? { return KeyPairUtilities.getUserED25519KeyPair(context) }
 
     override fun getUserProfile(): Profile {
         val displayName = TextSecurePreferences.getProfileName(context)
@@ -295,11 +290,7 @@ open class Storage @Inject constructor(
 
         val info = lokiMessageDatabase.getSendersForHashes(threadId, hashes)
 
-        if (senderIsMe) {
-            return info.all { it.isOutgoing }
-        } else {
-            return info.all { it.sender == sender }
-        }
+        return if (senderIsMe) info.all { it.isOutgoing } else info.all { it.sender == sender }
     }
 
     override fun deleteMessagesByHash(threadId: Long, hashes: List<String>) {
@@ -391,9 +382,7 @@ open class Storage @Inject constructor(
             }
             else -> Optional.absent()
         }
-        val pointers = attachments.mapNotNull {
-            it.toSignalAttachment()
-        }
+
         val targetAddress = if ((isUserSender || isUserBlindedSender) && !message.syncTarget.isNullOrEmpty()) {
             fromSerialized(message.syncTarget!!)
         } else if (group.isPresent) {
@@ -423,10 +412,27 @@ open class Storage @Inject constructor(
         val expiryMode = message.expiryMode
         val expiresInMillis = expiryMode.expiryMillis
         val expireStartedAt = if (expiryMode is ExpiryMode.AfterSend) message.sentTimestamp!! else 0
+
+
         if (message.isMediaMessage() || attachments.isNotEmpty()) {
+
+            // Sanitise attachments with missing names
+            for (attachment in attachments.filter { it.filename.isNullOrEmpty() }) {
+
+                // Unfortunately we have multiple Attachment classes, but only `SignalAttachment` has the `isVoiceNote` property which we can
+                // use to differentiate between an audio-file with no filename and a voice-message with no file-name, so we convert to that
+                // and pass it through.
+                val signalAttachment = attachment.toSignalAttachment()
+                attachment.filename = FilenameUtils.getFilenameFromUri(context, Uri.parse(attachment.url), attachment.contentType, signalAttachment)
+            }
+
             val quote: Optional<QuoteModel> = if (quotes != null) Optional.of(quotes) else Optional.absent()
             val linkPreviews: Optional<List<LinkPreview>> = if (linkPreview.isEmpty()) Optional.absent() else Optional.of(linkPreview.mapNotNull { it!! })
             val insertResult = if (isUserSender || isUserBlindedSender) {
+                val pointers = attachments.mapNotNull {
+                    it.toSignalAttachment()
+                }
+
                 val mediaMessage = OutgoingMediaMessage.from(
                     message,
                     targetRecipient,
@@ -467,7 +473,11 @@ open class Storage @Inject constructor(
         }
         message.serverHash?.let { serverHash ->
             messageID?.let { id ->
-                lokiMessageDatabase.setMessageServerHash(id, message.isMediaMessage(), serverHash)
+                // When a message with attachment is received, we don't immediately have
+                // attachments attached in the messages, but it's a mms from the db's perspective
+                // nonetheless.
+                val isMms = message.isMediaMessage() || attachments.isNotEmpty()
+                lokiMessageDatabase.setMessageServerHash(id, isMms, serverHash)
             }
         }
         return messageID
@@ -1052,10 +1062,24 @@ open class Storage @Inject constructor(
         return insertUpdateControlMessage(updateData, sentTimestamp, senderPublicKey, closedGroup)
     }
 
+    override fun insertGroupInfoErrorQuit(closedGroup: AccountId): Long? {
+        val sentTimestamp = clock.currentTimeMills()
+        val senderPublicKey = getUserPublicKey() ?: return null
+        val groupName = configFactory.withGroupConfigs(closedGroup) { it.groupInfo.getName() }
+            ?: configFactory.getGroup(closedGroup)?.name
+        val updateData = UpdateMessageData.buildGroupLeaveUpdate(UpdateMessageData.Kind.GroupErrorQuit(groupName.orEmpty()))
+
+        return insertUpdateControlMessage(updateData, sentTimestamp, senderPublicKey, closedGroup)
+    }
+
     override fun updateGroupInfoChange(messageId: Long, newType: UpdateMessageData.Kind) {
         val mmsDB = mmsDatabase
         val newMessage = UpdateMessageData.buildGroupLeaveUpdate(newType)
         mmsDB.updateInfoMessage(messageId, newMessage.toJSON())
+    }
+
+    override fun deleteGroupInfoMessages(groupId: AccountId, kind: Class<out UpdateMessageData.Kind>) {
+        mmsSmsDatabase.deleteGroupInfoMessage(groupId, kind)
     }
 
     override fun insertGroupInviteControlMessage(sentTimestamp: Long, senderPublicKey: String, senderName: String?, closedGroup: AccountId, groupName: String): Long? {
@@ -1491,6 +1515,9 @@ open class Storage @Inject constructor(
             mmsDatabase.deleteMessagesFrom(threadID, fromUser.serialize())
             threadDb.update(threadID, false)
         }
+
+        threadDb.setRead(threadID, true)
+
         return true
     }
 

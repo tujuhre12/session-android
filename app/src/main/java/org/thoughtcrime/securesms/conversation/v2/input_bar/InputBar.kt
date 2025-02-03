@@ -5,7 +5,6 @@ import android.content.Context
 import android.graphics.PointF
 import android.net.Uri
 import android.text.Editable
-import android.text.InputType
 import android.util.AttributeSet
 import android.view.KeyEvent
 import android.view.LayoutInflater
@@ -30,6 +29,9 @@ import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import com.bumptech.glide.RequestManager
 import org.thoughtcrime.securesms.util.addTextChangedListener
 import org.thoughtcrime.securesms.util.contains
+
+// TODO: A lot of the logic regarding voice messages is currently performed in the ConversationActivity
+// TODO: and here - it would likely be best to move this into the CA's ViewModel.
 
 // Enums to keep track of the state of our voice recording mechanism as the user can
 // manipulate the UI faster than we can setup & teardown.
@@ -78,10 +80,6 @@ class InputBar @JvmOverloads constructor(
         get() = binding.inputBarEditText.text?.toString() ?: ""
         set(value) { binding.inputBarEditText.setText(value) }
 
-    // Keep track of when the user pressed the record voice message button, the duration that
-    // they held record, and the current audio recording mechanism state.
-    private var voiceMessageStartMS = 0L
-    var voiceMessageDurationMS = 0L
     var voiceRecorderState = VoiceRecorderState.Idle
 
     private val attachmentsButton = InputBarButton(context, R.drawable.ic_plus).apply { contentDescription = context.getString(R.string.AccessibilityId_attachmentsButton)}
@@ -116,25 +114,12 @@ class InputBar @JvmOverloads constructor(
                     MotionEvent.ACTION_DOWN -> {
                         // Only start spinning up the voice recorder if we're not already recording, setting up, or tearing down
                         if (voiceRecorderState == VoiceRecorderState.Idle) {
-                            // Take note of when we start recording so we can figure out how long the record button was held for
-                            voiceMessageStartMS = System.currentTimeMillis()
-
-                            // We are now setting up to record, and when we actually start recording then
-                            // AudioRecorder.startRecording will move us into the Recording state.
-                            voiceRecorderState = VoiceRecorderState.SettingUpToRecord
                             startRecordingVoiceMessage()
                         }
                     }
                     MotionEvent.ACTION_UP -> {
-                        // Work out how long the record audio button was held for
-                        voiceMessageDurationMS = System.currentTimeMillis() - voiceMessageStartMS;
-
-                        // Regardless of our current recording state we'll always call the onMicrophoneButtonUp method
-                        // and let the logic in that take the appropriate action as we cannot guarantee that letting
-                        // go of the record button should always stop recording audio because the user may have moved
-                        // the button into the 'locked' state so they don't have to keep it held down to record a voice
-                        // message.
-                        // Also: We need to tear down the voice recorder if it has been recording and is now stopping.
+                        // Handle the pointer up event appropriately, whether that's to keep recording if recording was locked
+                        // on, or finishing recording if just hold-to-record.
                         delegate?.onMicrophoneButtonUp(event)
                     }
                 }
@@ -158,12 +143,8 @@ class InputBar @JvmOverloads constructor(
         binding.inputBarEditText.setOnEditorActionListener(this)
         if (TextSecurePreferences.isEnterSendsEnabled(context)) {
             binding.inputBarEditText.imeOptions = EditorInfo.IME_ACTION_SEND
-            binding.inputBarEditText.inputType = InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
         } else {
             binding.inputBarEditText.imeOptions = EditorInfo.IME_ACTION_NONE
-            binding.inputBarEditText.inputType =
-                binding.inputBarEditText.inputType
-                        InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
         }
         val incognitoFlag = if (TextSecurePreferences.isIncognitoKeyboardEnabled(context)) 16777216 else 0
         binding.inputBarEditText.imeOptions = binding.inputBarEditText.imeOptions or incognitoFlag // Always use incognito keyboard if setting enabled
