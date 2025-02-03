@@ -13,8 +13,11 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.FutureTaskListener
@@ -22,6 +25,7 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.notifications.BackgroundPollWorker
 import org.thoughtcrime.securesms.service.CallForegroundService
+import org.thoughtcrime.securesms.util.InternetConnectivity
 import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.TYPE_ESTABLISHED
 import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.TYPE_INCOMING_CONNECTING
 import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.TYPE_INCOMING_PRE_OFFER
@@ -57,8 +61,9 @@ import org.thoughtcrime.securesms.webrtc.data.State as CallState
  */
 @Singleton
 class WebRtcCallBridge @Inject constructor(
-    @ApplicationContext val context: Context,
-    val callManager: CallManager
+    @ApplicationContext private val context: Context,
+    private val callManager: CallManager,
+    private val internetConnectivity: InternetConnectivity
 ): CallManager.WebRtcListener  {
 
     companion object {
@@ -205,7 +210,6 @@ class WebRtcCallBridge @Inject constructor(
     private val serviceExecutor = Executors.newSingleThreadExecutor()
     private val timeoutExecutor = Executors.newScheduledThreadPool(1)
 
-    private var networkChangedReceiver: NetworkChangeReceiver? = null
     private var wiredHeadsetStateReceiver: WiredHeadsetStateReceiver? = null
     private var uncaughtExceptionHandlerManager: UncaughtExceptionHandlerManager? = null
     private var powerButtonReceiver: PowerButtonReceiver? = null
@@ -216,8 +220,10 @@ class WebRtcCallBridge @Inject constructor(
         isNetworkAvailable = true
         registerWiredHeadsetStateReceiver()
         registerUncaughtExceptionHandler()
-        networkChangedReceiver = NetworkChangeReceiver(::networkChange)
-        networkChangedReceiver!!.register(context)
+
+        GlobalScope.launch {
+            internetConnectivity.networkAvailable.collectLatest(::networkChange)
+        }
     }
 
 
@@ -811,11 +817,9 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
         callManager.unregisterListener(this)
         wiredHeadsetStateReceiver?.let(context::unregisterReceiver)
         powerButtonReceiver?.let(context::unregisterReceiver)
-        networkChangedReceiver?.unregister(context)
         callManager.shutDownAudioManager()
         powerButtonReceiver = null
         wiredHeadsetStateReceiver = null
-        networkChangedReceiver = null
         uncaughtExceptionHandlerManager?.unregister()
         _hasAcceptedCall.value = false
         currentTimeouts = 0
