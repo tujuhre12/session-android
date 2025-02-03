@@ -62,12 +62,7 @@ import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.home.UserDetailsBottomSheet
-import com.bumptech.glide.Glide
-import com.bumptech.glide.RequestManager
 import network.loki.messenger.libsession_util.getOrNull
-import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsignal.utilities.AccountId
-import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.disableClipping
