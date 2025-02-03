@@ -58,7 +58,7 @@ class CallForegroundService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
 
-        Log.d("", "*** ^^^^^^^ CallForegroundService onStartCommand: ${intent}")
+        Log.d("", "CallForegroundService onStartCommand: ${intent}")
 
         // check if the intent has the appropriate data to start this service, otherwise stop
         if(intent?.hasExtra(EXTRA_TYPE) == true){

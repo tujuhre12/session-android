@@ -229,7 +229,7 @@ class WebRtcCallBridge @Inject constructor(
 
     @Synchronized
     private fun terminate() {
-        Log.d(TAG, "*** Terminating rtc service")
+        Log.d(TAG, "Terminating rtc service")
         context.stopService(Intent(context, CallForegroundService::class.java))
         NotificationManagerCompat.from(context).cancel(WEBRTC_NOTIFICATION)
         LocalBroadcastManager.getInstance(context).sendBroadcast(Intent(WebRtcCallActivity.ACTION_END))
@@ -248,7 +248,6 @@ class WebRtcCallBridge @Inject constructor(
         //todo PHONE GETTING missed call notifications during all parts of a call: when picking up, hanging up, sometimes while swiping off a notification ( from older notifications as they are still unseen ? )
 
         //todo PHONE It seems we can't call if the phone has been in sleep for a while. The call (sending) doesn't seem to do anything (not receiving anything) - stuck on "Creating call" - also same when receiving a call, it starts ok but gets stuck
-        //todo PHONE test other receivers (proximity, headset, etc... )
         //todo PHONE should we refactor ice candidates to be sent prior to answering the call?
 
     }
@@ -268,10 +267,8 @@ class WebRtcCallBridge @Inject constructor(
         serviceExecutor.execute {
             callManager.handleRemoteHangup()
 
-            Log.d("", "*** ^^^ terminate in rtc service > onHangUp ${callManager.currentConnectionState} -- ${callManager.recipient}")
             if (callManager.currentConnectionState in CallState.CAN_DECLINE_STATES) {
                 callManager.recipient?.let { recipient ->
-                    Log.d("", "*** ^^^ terminate in rtc service > onHangUp - inserting missed call ")
                     insertMissedCall(recipient, true)
                 }
             }
@@ -329,7 +326,6 @@ class WebRtcCallBridge @Inject constructor(
 
     private fun handleBusyCall(intent: Intent) {
         val recipient = getRemoteRecipient(intent)
-Log.d("", "*** --- BUSY CALL - insert missed call")
         insertMissedCall(recipient, false)
     }
 
@@ -347,31 +343,29 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
     }
 
     private fun handleNewOffer(intent: Intent) {
-        Log.d(TAG, "*** ^^^ Handle new offer")
+        Log.d(TAG, "Handle new offer")
         val offer = intent.getStringExtra(EXTRA_REMOTE_DESCRIPTION) ?: return
         val callId = getCallId(intent)
         val recipient = getRemoteRecipient(intent)
         callManager.onNewOffer(offer, callId, recipient).fail {
             Log.e("Loki", "Error handling new offer", it)
             callManager.postConnectionError()
-            Log.d("", "*** ^^^ terminate in rtc service > handleNewOffer ")
             terminate()
         }
     }
 
     private fun handlePreOffer(intent: Intent) {
-        Log.d(TAG, "*** ^^^ Handle pre offer pt1")
+        Log.d(TAG, "Handle pre offer")
         if (!callManager.isIdle()) {
             Log.w(TAG, "Handling pre-offer from non-idle state")
             return
         }
-        Log.d(TAG, "*** ^^^ Handle pre offer pt2")
+
         val callId = getCallId(intent)
         val recipient = getRemoteRecipient(intent)
 
         if (isIncomingMessageExpired(intent)) {
             insertMissedCall(recipient, true)
-            Log.d("", "*** ^^^ terminate in rtc service > handlePreOffer")
             terminate()
             return
         }
@@ -394,7 +388,6 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
         val callId = getCallId(intent)
         val recipient = getRemoteRecipient(intent)
         val preOffer = callManager.preOfferCallData
-        Log.d(TAG, "*** ^^^ Handle inc pre offer")
         if (callManager.isPreOffer() && (preOffer == null || preOffer.callId != callId || preOffer.recipient != recipient)) {
             Log.d(TAG, "Incoming ring from non-matching pre-offer")
             return
@@ -416,7 +409,6 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
             // if the user has already accepted the incoming call, try to answer again
             // (they would have tried to answer when they first accepted
             // but it would have silently failed due to the pre offer having not been set yet
-            Log.d(TAG, "*** ^^^ Handle inc pre offer pt2: wants to answer? $$hasAcceptedCall")
             if(_hasAcceptedCall.value) handleAnswerCall(acceptCallIntent(context))
         }
     }
@@ -463,32 +455,28 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
                         Log.e(TAG, e)
                         callManager.postViewModelState(CallViewModel.State.NETWORK_FAILURE)
                         callManager.postConnectionError()
-                        Log.d("", "*** ^^^ terminate in rtc service > handleOutgoingCall - offerFuture fail - Error: $e ")
                         terminate()
                     }
                 }
             } catch (e: Exception) {
                 Log.e(TAG, e)
                 callManager.postConnectionError()
-                Log.d("", "*** ^^^ terminate in rtc service > handleOutgoingCall - CATCH - Error: $e ")
                 terminate()
             }
         }
     }
 
     private fun handleAnswerCall(intent: Intent) {
-        Log.d(TAG, "*** ^^^ Handle answer call")
+        Log.d(TAG, "Handle answer call")
         _hasAcceptedCall.value = true
 
-        val recipient = callManager.recipient    ?: return Log.e(TAG, "*** No recipient to answer in handleAnswerCall")
+        val recipient = callManager.recipient    ?: return Log.e(TAG, "No recipient to answer in handleAnswerCall")
         setCallNotification(TYPE_INCOMING_CONNECTING, recipient)
 
-        val pending   = callManager.pendingOffer ?: return Log.e(TAG, "*** No pending offer in handleAnswerCall")
-        val callId    = callManager.callId       ?: return Log.e(TAG, "*** No callId in handleAnswerCall")
+        val pending   = callManager.pendingOffer ?: return Log.e(TAG, "No pending offer in handleAnswerCall")
+        val callId    = callManager.callId       ?: return Log.e(TAG, "No callId in handleAnswerCall")
 
         val timestamp = callManager.pendingOfferTime
-
-        Log.d(TAG, "*** ^^^ Handle answer call pt2")
 
         if (callManager.currentConnectionState != CallState.RemoteRing) {
             Log.e(TAG, "Can only answer from ringing!")
@@ -503,7 +491,6 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
         if (isIncomingMessageExpired(intent)) {
             val didHangup = callManager.postConnectionEvent(Event.TimeOut) {
                 insertMissedCall(recipient, true) //todo PHONE do we want a missed call in this case? Or just [xxx] called you ?
-                Log.d("", "*** ^^^ terminate from isIncomingMessageExpired in rtc service > handleAnswerCall ")
                 terminate()
             }
             if (didHangup) { return }
@@ -539,7 +526,6 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
                         Log.e(TAG, "incoming call error: $e")
                         insertMissedCall(recipient, true) //todo PHONE do we want a missed call in this case? Or just [xxx] called you ?
                         callManager.postConnectionError()
-                        Log.d("", "*** ^^^ terminate from answer future fail (callManager.onIncomingCall) in rtc service > handleAnswerCall Error: $e")
                         terminate()
                     }
                 }
@@ -548,7 +534,6 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
             } catch (e: Exception) {
                 Log.e(TAG, e)
                 callManager.postConnectionError()
-                Log.d("", "*** ^^^ terminate fromcatch in rtc service > handleAnswerCall Error: $e")
                 terminate()
             }
         }
@@ -556,7 +541,6 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
 
     private fun handleDenyCall() {
         callManager.handleDenyCall()
-        Log.d("", "*** ^^^ terminate in rtc service > handleDenyCall ")
         terminate()
     }
 
@@ -568,7 +552,6 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
     private fun handleLocalHangup(intent: Intent) {
         val intentRecipient = getOptionalRemoteRecipient(intent)
         callManager.handleLocalHangup(intentRecipient)
-        Log.d("", "*** ^^^ terminate in rtc service > handleLocalHangup ")
         terminate()
     }
 
@@ -621,7 +604,6 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
                 SessionDescription(SessionDescription.Type.ANSWER, description)
             )
         } catch (e: PeerConnectionException) {
-            Log.d("", "*** ^^^ terminate from catch in rtc service > handleAnswerIncoming. Error:$e ")
             terminate()
         }
     }
@@ -641,7 +623,7 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
      *               - EXTRA_ICE_SDP: An array of SDP candidate strings.
      */
     private fun handleRemoteIceCandidate(intent: Intent) {
-        Log.d(TAG, "*** ^^^ Handle remote ice")
+        Log.d(TAG, "Handle remote ice")
         val callId = getCallId(intent)
         val sdpMids = intent.getStringArrayExtra(EXTRA_ICE_SDP_MID) ?: return
         val sdpLineIndexes = intent.getIntArrayExtra(EXTRA_ICE_SDP_LINE_INDEX) ?: return
@@ -664,7 +646,7 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
     private fun handleIceConnected(intent: Intent) {
         val recipient = callManager.recipient ?: return
         if(callManager.currentCallState == CallViewModel.State.CALL_CONNECTED) return
-        Log.d(TAG, "*** ^^^ Handle ice connected")
+        Log.d(TAG, "Handle ice connected")
 
         val connected = callManager.postConnectionEvent(Event.Connect) {
             callManager.postViewModelState(CallViewModel.State.CALL_CONNECTED)
@@ -674,7 +656,6 @@ Log.d("", "*** --- BUSY CALL - insert missed call")
         if (!connected) {
             Log.e("Loki", "Error handling ice connected state transition")
             callManager.postConnectionError()
-            Log.d("", "*** ^^^ terminate in rtc service > handleIceConnected ")
             terminate()
         }
     }

@@ -65,7 +65,7 @@ class PushReceiver @Inject constructor(
     private fun addMessageReceiveJob(pushData: PushData?){
         // send a generic notification if we have no data and the `data too long` is false
         if (pushData?.data == null) {
-            Log.d(TAG, "*** Push data is null, sending generic notification")
+            Log.d(TAG, "Push data is null, sending generic notification")
             if(pushData?.metadata?.data_too_long != true) sendGenericNotification()
             return
         }
@@ -97,14 +97,14 @@ class PushReceiver @Inject constructor(
                 }
 
                 else -> {
-                    Log.w(TAG, "*** Received a push notification with an unknown namespace: ${pushData.metadata.namespace}")
+                    Log.w(TAG, "Received a push notification with an unknown namespace: ${pushData.metadata.namespace}")
                     return
                 }
             }
 
             JobQueue.shared.add(BatchMessageReceiveJob(listOf(params), null))
         } catch (e: Exception) {
-            Log.d(TAG, "*** Failed to unwrap data for message due to error.", e)
+            Log.d(TAG, "Failed to unwrap data for message due to error.", e)
         }
 
     }
@@ -154,7 +154,7 @@ class PushReceiver @Inject constructor(
                 try {
                     decrypt(Base64.decode(this["enc_payload"]))
                 } catch (e: Exception) {
-                    Log.e(TAG, "*** Invalid push notification", e)
+                    Log.e(TAG, "Invalid push notification", e)
                     PushData(null, null)
                 }
             }
