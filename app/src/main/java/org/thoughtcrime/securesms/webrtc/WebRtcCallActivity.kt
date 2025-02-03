@@ -131,6 +131,7 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
         }
 
         binding.speakerPhoneButton.setOnClickListener {
+            // we default to EARPIECE if not SPEAKER but the audio manager will know to actually use a headset if any is connected
             val command =
                 AudioManagerCommand.SetUserDevice(if (viewModel.isSpeaker) EARPIECE else SPEAKER_PHONE)
             viewModel.sendCommand(
