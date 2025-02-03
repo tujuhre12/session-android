@@ -50,7 +50,6 @@ import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.groups.EditGroupViewModel
 import org.thoughtcrime.securesms.groups.GroupMemberState
-import org.thoughtcrime.securesms.groups.getLabel
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.DialogButtonModel
 import org.thoughtcrime.securesms.ui.GetString
@@ -442,7 +441,7 @@ fun EditMemberItem(
     MemberItem(
         accountId = member.accountId,
         title = member.name,
-        subtitle = member.getLabel(LocalContext.current),
+        subtitle = member.statusLabel,
         subtitleColor = if (member.highlightStatus) {
             LocalColors.current.danger
         } else {
@@ -476,7 +475,8 @@ private fun EditGroupPreview3() {
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = false,
-            clickable = true
+            clickable = true,
+            statusLabel = "Invited"
         )
         val twoMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1235"),
@@ -488,7 +488,8 @@ private fun EditGroupPreview3() {
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = true,
-            clickable = true
+            clickable = true,
+            statusLabel = "Promotion failed"
         )
         val threeMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1236"),
@@ -500,7 +501,8 @@ private fun EditGroupPreview3() {
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = false,
-            clickable = true
+            clickable = true,
+            statusLabel = ""
         )
 
         val (editingName, setEditingName) = remember { mutableStateOf<String?>(null) }
@@ -551,7 +553,8 @@ private fun EditGroupPreview() {
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = false,
-            clickable = true
+            clickable = true,
+            statusLabel = "Invited"
         )
         val twoMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1235"),
@@ -563,7 +566,8 @@ private fun EditGroupPreview() {
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = true,
-            clickable = true
+            clickable = true,
+            statusLabel = "Promotion failed"
         )
         val threeMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1236"),
@@ -575,7 +579,8 @@ private fun EditGroupPreview() {
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = false,
-            clickable = true
+            clickable = true,
+            statusLabel = ""
         )
 
         val (editingName, setEditingName) = remember { mutableStateOf<String?>(null) }
@@ -628,7 +633,8 @@ private fun EditGroupEditNamePreview(
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = false,
-            clickable = true
+            clickable = true,
+            statusLabel = "Invited"
         )
         val twoMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1235"),
@@ -640,7 +646,8 @@ private fun EditGroupEditNamePreview(
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = true,
-            clickable = true
+            clickable = true,
+            statusLabel = "Promotion failed"
         )
         val threeMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1236"),
@@ -652,7 +659,8 @@ private fun EditGroupEditNamePreview(
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = false,
-            clickable = true
+            clickable = true,
+            statusLabel = ""
         )
 
         EditGroup(

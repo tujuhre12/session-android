@@ -3,11 +3,9 @@ package org.thoughtcrime.securesms.groups
 import android.content.Context
 import com.google.protobuf.ByteString
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
@@ -19,7 +17,6 @@ import network.loki.messenger.libsession_util.util.Conversation
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import network.loki.messenger.libsession_util.util.GroupMember
-import network.loki.messenger.libsession_util.util.Sodium
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
@@ -269,8 +266,8 @@ class GroupManagerV2Impl @Inject constructor(
             subAccountTokens = subAccountTokens
         )
 
-        // Before we send the invitation, we need to make sure the configs are pushed
-        configFactory.waitUntilGroupConfigsPushed(group)
+        // Send a group update message to the group telling members someone has been invited
+        sendGroupUpdateForAddingMembers(group, adminKey, newMembers)
 
         // Call the API
         try {
@@ -307,9 +304,6 @@ class GroupManagerV2Impl @Inject constructor(
                 newMembers.map { it.hexString }.toTypedArray()
             )
         )
-
-        // Send a group update message to the group telling members someone has been invited
-        sendGroupUpdateForAddingMembers(group, adminKey, newMembers)
     }
 
     /**
@@ -336,7 +330,8 @@ class GroupManagerV2Impl @Inject constructor(
                 )
                 .build()
         ).apply { this.sentTimestamp = timestamp }
-        MessageSender.send(updatedMessage, Destination.ClosedGroup(group.hexString), false)
+
+        MessageSender.send(updatedMessage, Address.fromSerialized(group.hexString))
 
         storage.insertGroupInfoChange(updatedMessage, group)
     }
@@ -377,7 +372,7 @@ class GroupManagerV2Impl @Inject constructor(
             updateMessage
         ).apply { sentTimestamp = timestamp }
 
-        MessageSender.send(message, Destination.ClosedGroup(groupAccountId.hexString), false).await()
+        MessageSender.send(message, Address.fromSerialized(groupAccountId.hexString))
         storage.insertGroupInfoChange(message, groupAccountId)
     }
 
@@ -444,37 +439,27 @@ class GroupManagerV2Impl @Inject constructor(
                         }
 
                         if (group != null && !group.kicked && !weAreTheOnlyAdmin) {
-                            val destination = Destination.ClosedGroup(groupId.hexString)
-                            val sendMessageTasks = mutableListOf<Deferred<*>>()
+                            val address = Address.fromSerialized(groupId.hexString)
 
                             // Always send a "XXX left" message to the group if we can
-                            sendMessageTasks += async {
-                                MessageSender.send(
-                                    GroupUpdated(
-                                        GroupUpdateMessage.newBuilder()
-                                            .setMemberLeftNotificationMessage(DataMessage.GroupUpdateMemberLeftNotificationMessage.getDefaultInstance())
-                                            .build()
-                                    ),
-                                    destination,
-                                    isSyncMessage = false
-                                ).await()
-                            }
-
+                            MessageSender.send(
+                                GroupUpdated(
+                                    GroupUpdateMessage.newBuilder()
+                                        .setMemberLeftNotificationMessage(DataMessage.GroupUpdateMemberLeftNotificationMessage.getDefaultInstance())
+                                        .build()
+                                ),
+                                address
+                            )
 
                             // If we are not the only admin, send a left message for other admin to handle the member removal
-                            sendMessageTasks += async {
-                                MessageSender.send(
-                                    GroupUpdated(
-                                        GroupUpdateMessage.newBuilder()
-                                            .setMemberLeftMessage(DataMessage.GroupUpdateMemberLeftMessage.getDefaultInstance())
-                                            .build()
-                                    ),
-                                    destination,
-                                    isSyncMessage = false
-                                ).await()
-                            }
-
-                            sendMessageTasks.awaitAll()
+                            MessageSender.send(
+                                GroupUpdated(
+                                    GroupUpdateMessage.newBuilder()
+                                        .setMemberLeftMessage(DataMessage.GroupUpdateMemberLeftMessage.getDefaultInstance())
+                                        .build()
+                                ),
+                                address,
+                            )
                         }
 
                         // If we are the only admin, leaving this group will destroy the group
@@ -537,11 +522,10 @@ class GroupManagerV2Impl @Inject constructor(
 
             val promotionDeferred = members.associateWith { member ->
                 async {
-                    MessageSender.sendNonDurably(
+                    MessageSender.sendAndAwait(
                         message = promoteMessage,
                         address = Address.fromSerialized(member.hexString),
-                        isSyncMessage = false
-                    ).await()
+                    )
                 }
             }
 
@@ -585,7 +569,7 @@ class GroupManagerV2Impl @Inject constructor(
                 sentTimestamp = timestamp
             }
 
-            MessageSender.send(message, Destination.ClosedGroup(group.hexString), false).await()
+            MessageSender.sendAndAwait(message, Address.fromSerialized(group.hexString))
             storage.insertGroupInfoChange(message, group)
         }
     }
@@ -683,7 +667,7 @@ class GroupManagerV2Impl @Inject constructor(
                 .setInviteResponse(inviteResponse)
             val responseMessage = GroupUpdated(responseData.build(), profile = storage.getUserProfile())
             // this will fail the first couple of times :)
-            MessageSender.send(
+            MessageSender.sendNonDurably(
                 responseMessage,
                 Destination.ClosedGroup(group.groupAccountId.hexString),
                 isSyncMessage = false
@@ -962,7 +946,7 @@ class GroupManagerV2Impl @Inject constructor(
                 sentTimestamp = timestamp
             }
 
-            MessageSender.send(message, Address.fromSerialized(groupId.hexString))
+            MessageSender.sendAndAwait(message, Address.fromSerialized(groupId.hexString))
             storage.insertGroupInfoChange(message, groupId)
         }
 
@@ -1034,7 +1018,7 @@ class GroupManagerV2Impl @Inject constructor(
             sentTimestamp = timestamp
         }
 
-        MessageSender.send(message, Destination.ClosedGroup(groupId.hexString), false).await()
+        MessageSender.sendAndAwait(message, Address.fromSerialized(groupId.hexString))
     }
 
     override suspend fun handleDeleteMemberContent(
