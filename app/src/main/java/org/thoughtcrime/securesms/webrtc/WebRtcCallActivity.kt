@@ -101,8 +101,6 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
     override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
         super.onCreate(savedInstanceState, ready)
 
-        Log.d("", "*** CALL ACTIVITY CREATE: ${intent.action}")
-
         binding = ActivityWebrtcBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -149,7 +147,7 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
 
         hangupReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
-                Log.d("", "*** Received hangup broadcast in webrtc activity - finishing.")
+                Log.d("", "Received hangup broadcast in webrtc activity - finishing.")
                 finish()
             }
         }
@@ -201,14 +199,13 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
     }
 
     private fun handleIntent(intent: Intent) {
-        Log.d("", "*** ^^^ Activity handle intent ${intent.action}")
+        Log.d("", "Web RTC activity handle intent ${intent.action}")
         if (intent.action == ACTION_START_CALL && intent.hasExtra(EXTRA_RECIPIENT_ADDRESS)) {
             viewModel.sendCommand(
                 WebRtcCallBridge.createCall(this,IntentCompat.getParcelableExtra(intent, EXTRA_RECIPIENT_ADDRESS, Address::class.java)!!)
             )
         }
         if (intent.action == ACTION_ANSWER) {
-            Log.d("", "*** ^^^ Activity handle intent >> ANSWER~")
             answerCall()
         }
 
@@ -341,7 +338,6 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
             callSubtitle.isVisible = callSubtitle.text.isNotEmpty()
 
             // buttons visibility
-Log.d("", "*** ^^^ STATE: $state")
             val showCallControls = state in listOf(
                 CALL_CONNECTED,
                 CALL_PRE_OFFER_OUTGOING,
