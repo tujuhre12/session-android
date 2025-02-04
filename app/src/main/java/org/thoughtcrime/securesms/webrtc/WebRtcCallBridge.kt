@@ -33,7 +33,6 @@ import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.TYPE_
 import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.WEBRTC_NOTIFICATION
 import org.thoughtcrime.securesms.webrtc.audio.OutgoingRinger
 import org.thoughtcrime.securesms.webrtc.data.Event
-import org.thoughtcrime.securesms.webrtc.locks.LockManager
 import org.webrtc.DataChannel
 import org.webrtc.IceCandidate
 import org.webrtc.MediaStream
@@ -76,7 +75,6 @@ class WebRtcCallBridge @Inject constructor(
         const val ACTION_IGNORE_CALL = "IGNORE_CALL" // like when swiping off a notification. Ends the call without notifying the caller
         const val ACTION_DENY_CALL = "DENY_CALL"
         const val ACTION_LOCAL_HANGUP = "LOCAL_HANGUP"
-        const val ACTION_SET_MUTE_VIDEO = "SET_MUTE_VIDEO"
         const val ACTION_FLIP_CAMERA = "FLIP_CAMERA"
         const val ACTION_WIRED_HEADSET_CHANGE = "WIRED_HEADSET_CHANGE"
         const val ACTION_SCREEN_OFF = "SCREEN_OFF"
@@ -90,7 +88,6 @@ class WebRtcCallBridge @Inject constructor(
         const val ACTION_ICE_CONNECTED = "ICE_CONNECTED"
 
         const val EXTRA_RECIPIENT_ADDRESS = "RECIPIENT_ID"
-        const val EXTRA_MUTE = "mute_value"
         const val EXTRA_AVAILABLE = "enabled_value"
         const val EXTRA_REMOTE_DESCRIPTION = "remote_description"
         const val EXTRA_TIMESTAMP = "timestamp"
@@ -102,11 +99,6 @@ class WebRtcCallBridge @Inject constructor(
         private const val TIMEOUT_SECONDS = 30L
         private const val RECONNECT_SECONDS = 5L
         private const val MAX_RECONNECTS = 5
-
-        fun cameraEnabled(context: Context, enabled: Boolean) =
-            Intent(context, WebRtcCallBridge::class.java)
-                .setAction(ACTION_SET_MUTE_VIDEO)
-                .putExtra(EXTRA_MUTE, !enabled)
 
         fun flipCamera(context: Context) = Intent(context, WebRtcCallBridge::class.java)
             .setAction(ACTION_FLIP_CAMERA)
@@ -187,12 +179,10 @@ class WebRtcCallBridge @Inject constructor(
     private var scheduledTimeout: ScheduledFuture<*>? = null
     private var scheduledReconnect: ScheduledFuture<*>? = null
 
-    private val lockManager by lazy { LockManager(context) }
     private val serviceExecutor = Executors.newSingleThreadExecutor()
     private val timeoutExecutor = Executors.newScheduledThreadPool(1)
 
     private var wiredHeadsetStateReceiver: WiredHeadsetStateReceiver? = null
-    private var uncaughtExceptionHandlerManager: UncaughtExceptionHandlerManager? = null
     private var powerButtonReceiver: PowerButtonReceiver? = null
 
     init {
@@ -200,7 +190,6 @@ class WebRtcCallBridge @Inject constructor(
         _hasAcceptedCall.value = false
         isNetworkAvailable = true
         registerWiredHeadsetStateReceiver()
-        registerUncaughtExceptionHandler()
 
         GlobalScope.launch {
             internetConnectivity.networkAvailable.collectLatest(::networkChange)
@@ -214,7 +203,6 @@ class WebRtcCallBridge @Inject constructor(
         context.stopService(Intent(context, CallForegroundService::class.java))
         NotificationManagerCompat.from(context).cancel(WEBRTC_NOTIFICATION)
         LocalBroadcastManager.getInstance(context).sendBroadcast(Intent(WebRtcCallActivity.ACTION_END))
-        lockManager.updatePhoneState(LockManager.PhoneState.IDLE)
         callManager.stop()
         _hasAcceptedCall.value = false
         currentTimeouts = 0
@@ -279,7 +267,6 @@ class WebRtcCallBridge @Inject constructor(
                 ACTION_IGNORE_CALL -> handleIgnoreCall()
                 ACTION_LOCAL_HANGUP -> handleLocalHangup(intent)
                 ACTION_REMOTE_HANGUP -> handleRemoteHangup(intent)
-                ACTION_SET_MUTE_VIDEO -> handleSetMuteVideo(intent)
                 ACTION_FLIP_CAMERA -> handleSetCameraFlip(intent)
                 ACTION_WIRED_HEADSET_CHANGE -> handleWiredHeadsetChanged(intent)
                 ACTION_SCREEN_OFF -> handleScreenOffChange(intent)
@@ -289,12 +276,6 @@ class WebRtcCallBridge @Inject constructor(
                 ACTION_CHECK_TIMEOUT -> handleCheckTimeout(intent)
                 ACTION_CHECK_RECONNECT -> handleCheckReconnect(intent)
             }
-        }
-    }
-
-    private fun registerUncaughtExceptionHandler() {
-        uncaughtExceptionHandlerManager = UncaughtExceptionHandlerManager().apply {
-            registerHandler(ProximityLockRelease(lockManager))
         }
     }
 
@@ -390,7 +371,6 @@ class WebRtcCallBridge @Inject constructor(
             callManager.initializeVideo(context)
 
             callManager.postViewModelState(CallViewModel.State.CALL_PRE_OFFER_OUTGOING)
-            lockManager.updatePhoneState(LockManager.PhoneState.IN_CALL)
             callManager.initializeAudioForCall()
             callManager.startOutgoingRinger(OutgoingRinger.Type.RINGING)
             setCallNotification(TYPE_OUTGOING_RINGING, callManager.recipient)
@@ -495,7 +475,6 @@ class WebRtcCallBridge @Inject constructor(
                         terminate()
                     }
                 }
-                lockManager.updatePhoneState(LockManager.PhoneState.PROCESSING)
             } catch (e: Exception) {
                 Log.e(TAG, e)
                 callManager.postConnectionError()
@@ -527,11 +506,6 @@ class WebRtcCallBridge @Inject constructor(
         }
 
         onHangup()
-    }
-
-    private fun handleSetMuteVideo(intent: Intent) {
-        val muted = intent.getBooleanExtra(EXTRA_MUTE, false)
-        callManager.handleSetMuteVideo(muted, lockManager)
     }
 
     private fun handleSetCameraFlip(intent: Intent) {
@@ -611,7 +585,7 @@ class WebRtcCallBridge @Inject constructor(
         val connected = callManager.postConnectionEvent(Event.Connect) {
             callManager.postViewModelState(CallViewModel.State.CALL_CONNECTED)
             setCallNotification(TYPE_ESTABLISHED, recipient)
-            callManager.startCommunication(lockManager)
+            callManager.startCommunication()
         }
         if (!connected) {
             Log.e("Loki", "Error handling ice connected state transition")
@@ -761,7 +735,6 @@ class WebRtcCallBridge @Inject constructor(
         callManager.shutDownAudioManager()
         powerButtonReceiver = null
         wiredHeadsetStateReceiver = null
-        uncaughtExceptionHandlerManager?.unregister()
         _hasAcceptedCall.value = false
         currentTimeouts = 0
         isNetworkAvailable = false

@@ -88,4 +88,8 @@ class CallViewModel @Inject constructor(
     fun toggleSpeakerphone(){
         callManager.toggleSpeakerphone()
     }
+
+    fun toggleVideo(){
+        callManager.toggleVideo()
+    }
 }

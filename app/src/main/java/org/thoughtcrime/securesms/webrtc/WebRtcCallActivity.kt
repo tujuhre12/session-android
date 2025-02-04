@@ -152,8 +152,7 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
             Permissions.with(this)
                 .request(Manifest.permission.CAMERA)
                 .onAllGranted {
-                    val intent = WebRtcCallBridge.cameraEnabled(this, !viewModel.videoState.value.userVideoEnabled)
-                    viewModel.sendCommand(intent)
+                    viewModel.toggleVideo()
                 }
                 .execute()
         }

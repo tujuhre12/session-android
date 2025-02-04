@@ -167,6 +167,19 @@ class CallManager(
     var fullscreenRenderer: SurfaceViewRenderer? = null
     private var peerConnectionFactory: PeerConnectionFactory? = null
 
+    private val lockManager by lazy { LockManager(context) }
+    private var uncaughtExceptionHandlerManager: UncaughtExceptionHandlerManager? = null
+
+    init {
+        registerUncaughtExceptionHandler()
+    }
+
+    private fun registerUncaughtExceptionHandler() {
+        uncaughtExceptionHandlerManager = UncaughtExceptionHandlerManager().apply {
+            registerHandler(ProximityLockRelease(lockManager))
+        }
+    }
+
     fun clearPendingIceUpdates() {
         pendingOutgoingIceUpdates.clear()
         pendingIncomingIceUpdates.clear()
@@ -390,6 +403,8 @@ class CallManager(
     fun stop() {
         val isOutgoing = currentConnectionState in CallState.OUTGOING_STATES
         stateProcessor.processEvent(Event.Cleanup) {
+            lockManager.updatePhoneState(LockManager.PhoneState.IDLE)
+
             signalAudioManager.handleCommand(AudioManagerCommand.Stop(isOutgoing))
             peerConnection?.dispose()
             peerConnection = null
@@ -479,12 +494,15 @@ class CallManager(
     }
 
     fun onIncomingCall(context: Context, isAlwaysTurn: Boolean = false): Promise<Unit, Exception> {
+        lockManager.updatePhoneState(LockManager.PhoneState.PROCESSING)
+
         val callId = callId ?: return Promise.ofFail(NullPointerException("callId is null"))
         val recipient = recipient ?: return Promise.ofFail(NullPointerException("recipient is null"))
         val offer = pendingOffer ?: return Promise.ofFail(NullPointerException("pendingOffer is null"))
         val factory = peerConnectionFactory ?: return Promise.ofFail(NullPointerException("peerConnectionFactory is null"))
         val local = floatingRenderer ?: return Promise.ofFail(NullPointerException("localRenderer is null"))
         val base = eglBase ?: return Promise.ofFail(NullPointerException("eglBase is null"))
+
         val connection = PeerConnectionWrapper(
                 context,
                 factory,
@@ -524,6 +542,8 @@ class CallManager(
     }
 
     fun onOutgoingCall(context: Context, isAlwaysTurn: Boolean = false): Promise<Unit, Exception> {
+        lockManager.updatePhoneState(LockManager.PhoneState.IN_CALL)
+
         val callId = callId ?: return Promise.ofFail(NullPointerException("callId is null"))
         val recipient = recipient
                 ?: return Promise.ofFail(NullPointerException("recipient is null"))
@@ -642,6 +662,10 @@ class CallManager(
         }
     }
 
+    fun toggleVideo(){
+        handleSetMuteVideo(_videoState.value.userVideoEnabled)
+    }
+
     fun toggleMuteAudio() {
         val muted = !_audioEvents.value.isEnabled
         setAudioEnabled(muted)
@@ -692,7 +716,7 @@ class CallManager(
         }
     }
 
-    fun handleSetMuteVideo(muted: Boolean, lockManager: LockManager) {
+    private fun handleSetMuteVideo(muted: Boolean) {
         _videoState.update { it.copy(userVideoEnabled = !muted) }
         handleMirroring()
 
@@ -806,7 +830,7 @@ class CallManager(
         signalAudioManager.handleCommand(AudioManagerCommand.StartIncomingRinger(true))
     }
 
-    fun startCommunication(lockManager: LockManager) {
+    fun startCommunication() {
         signalAudioManager.handleCommand(AudioManagerCommand.Start)
         val connection = peerConnection ?: return
         if (connection.isVideoEnabled()) lockManager.updatePhoneState(LockManager.PhoneState.IN_VIDEO)
