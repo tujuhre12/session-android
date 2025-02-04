@@ -20,7 +20,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import network.loki.messenger.BuildConfig
-import network.loki.messenger.R
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.FutureTaskListener
@@ -81,7 +80,6 @@ class WebRtcCallBridge @Inject constructor(
         const val ACTION_CHECK_TIMEOUT = "CHECK_TIMEOUT"
         const val ACTION_CHECK_RECONNECT = "CHECK_RECONNECT"
 
-        const val ACTION_PRE_OFFER = "PRE_OFFER"
         const val ACTION_ANSWER_INCOMING = "ANSWER_INCOMING"
         const val ACTION_ICE_MESSAGE = "ICE_MESSAGE"
         const val ACTION_REMOTE_HANGUP = "REMOTE_HANGUP"
@@ -121,13 +119,6 @@ class WebRtcCallBridge @Inject constructor(
                 .putExtra(EXTRA_CALL_ID, callId)
                 .putExtra(EXTRA_REMOTE_DESCRIPTION, sdp)
 
-        fun preOffer(context: Context, address: Address, callId: UUID, callTime: Long) =
-            Intent(context, WebRtcCallBridge::class.java)
-                .setAction(ACTION_PRE_OFFER)
-                .putExtra(EXTRA_RECIPIENT_ADDRESS, address)
-                .putExtra(EXTRA_CALL_ID, callId)
-                .putExtra(EXTRA_TIMESTAMP, callTime)
-
         fun iceCandidates(
             context: Context,
             address: Address,
@@ -145,19 +136,10 @@ class WebRtcCallBridge @Inject constructor(
                 .putExtra(EXTRA_ICE_SDP_MID, iceCandidates.map(IceCandidate::sdpMid).toTypedArray())
                 .putExtra(EXTRA_RECIPIENT_ADDRESS, address)
 
-        fun denyCallIntent(context: Context) =
-            Intent(context, WebRtcCallBridge::class.java).setAction(ACTION_DENY_CALL)
-
-        fun ignoreCallIntent(context: Context) =
-            Intent(context, WebRtcCallBridge::class.java).setAction(ACTION_IGNORE_CALL)
-
         fun remoteHangupIntent(context: Context, callId: UUID) =
             Intent(context, WebRtcCallBridge::class.java)
                 .setAction(ACTION_REMOTE_HANGUP)
                 .putExtra(EXTRA_CALL_ID, callId)
-
-        fun hangupIntent(context: Context) =
-            Intent(context, WebRtcCallBridge::class.java).setAction(ACTION_LOCAL_HANGUP)
     }
 
     private var _hasAcceptedCall: MutableStateFlow<Boolean> = MutableStateFlow(false) // always true for outgoing call and true once the user accepts the call for incoming calls
@@ -219,8 +201,6 @@ class WebRtcCallBridge @Inject constructor(
 
     private fun isBusy(intent: Intent) = callManager.isBusy(context, getCallId(intent))
 
-    private fun isIdle() = callManager.isIdle()
-
     override fun onHangup() {
         serviceExecutor.execute {
             callManager.handleRemoteHangup()
@@ -242,7 +222,6 @@ class WebRtcCallBridge @Inject constructor(
             val callId = ((intent.getSerializableExtra(EXTRA_CALL_ID) as? UUID)?.toString() ?: "No callId")
             Log.i("Loki", "Handling ${intent.action} for call: ${callId}")
             when (action) {
-                ACTION_PRE_OFFER -> if (isIdle()) handlePreOffer(intent)
                 ACTION_INCOMING_RING -> when {
                     isSameCall(intent) && callManager.currentConnectionState == CallState.Reconnecting -> {
                         handleNewOffer(intent)
@@ -250,9 +229,6 @@ class WebRtcCallBridge @Inject constructor(
                     isBusy(intent) -> handleBusyCall(intent)
                     isPreOffer() -> handleIncomingPreOffer(intent)
                 }
-                ACTION_DENY_CALL -> handleDenyCall()
-                ACTION_IGNORE_CALL -> handleIgnoreCall()
-                ACTION_LOCAL_HANGUP -> handleLocalHangup(intent)
                 ACTION_REMOTE_HANGUP -> handleRemoteHangup(intent)
                 ACTION_WIRED_HEADSET_CHANGE -> handleWiredHeadsetChanged(intent)
                 ACTION_SCREEN_OFF -> handleScreenOffChange(intent)
@@ -287,18 +263,17 @@ class WebRtcCallBridge @Inject constructor(
         }
     }
 
-    private fun handlePreOffer(intent: Intent) {
+    fun handlePreOffer(address: Address, callId: UUID, callTime: Long) {
         Log.d(TAG, "Handle pre offer")
         if (!callManager.isIdle()) {
             Log.w(TAG, "Handling pre-offer from non-idle state")
             return
         }
 
-        val callId = getCallId(intent)
-        val recipient = getRemoteRecipient(intent)
+        val recipient = getRecipientFromAddress(address)
 
-        if (isIncomingMessageExpired(intent.getLongExtra(EXTRA_TIMESTAMP, -1))) {
-            debugToast("Pre offer expired - message timestamp was deemed expired: ${System.currentTimeMillis() - intent.getLongExtra(EXTRA_TIMESTAMP, -1)}s")
+        if (isIncomingMessageExpired(callTime)) {
+            debugToast("Pre offer expired - message timestamp was deemed expired: ${System.currentTimeMillis() - callTime}s")
             insertMissedCall(recipient, true)
             terminate()
             return
@@ -354,7 +329,7 @@ class WebRtcCallBridge @Inject constructor(
     }
 
     fun handleOutgoingCall(recipient: Recipient) {
-        if (!isIdle())  return
+        if (!callManager.isIdle())  return
 
         _hasAcceptedCall.value = true // outgoing calls are automatically set to 'accepted'
         callManager.postConnectionEvent(Event.SendPreOffer) {
@@ -481,14 +456,13 @@ class WebRtcCallBridge @Inject constructor(
         terminate()
     }
 
-    private fun handleIgnoreCall(){
+    fun handleIgnoreCall(){
         callManager.handleIgnoreCall()
         terminate()
     }
 
-    private fun handleLocalHangup(intent: Intent) {
-        val intentRecipient = getOptionalRemoteRecipient(intent)
-        callManager.handleLocalHangup(intentRecipient)
+    fun handleLocalHangup(recipient: Recipient?) {
+        callManager.handleLocalHangup(recipient)
         terminate()
     }
 
@@ -513,7 +487,7 @@ class WebRtcCallBridge @Inject constructor(
         try {
             val recipient = getRemoteRecipient(intent)
             if (callManager.isCurrentUser(recipient) && callManager.currentConnectionState in CallState.CAN_DECLINE_STATES) {
-                handleLocalHangup(intent)
+                handleLocalHangup(recipient)
                 return
             }
 
@@ -614,7 +588,7 @@ class WebRtcCallBridge @Inject constructor(
             )
         } else {
             Log.i("Loki", "Network isn't available, timing out")
-            handleLocalHangup(intent)
+            handleLocalHangup(getOptionalRemoteRecipient(intent))
         }
     }
 
@@ -628,7 +602,7 @@ class WebRtcCallBridge @Inject constructor(
             ))
         ) {
             Log.w(TAG, "Timing out call: $callId")
-            handleLocalHangup(intent)
+            handleLocalHangup(getOptionalRemoteRecipient(intent))
         }
     }
 
@@ -697,6 +671,8 @@ class WebRtcCallBridge @Inject constructor(
 
         return Recipient.from(context, remoteAddress, true)
     }
+
+    private fun getRecipientFromAddress(address: Address): Recipient = Recipient.from(context, address, true)
 
     private fun getCallId(intent: Intent): UUID =
         intent.getSerializableExtra(EXTRA_CALL_ID) as? UUID
@@ -867,8 +843,7 @@ class WebRtcCallBridge @Inject constructor(
                         }
                     }
                 } ?: run {
-                    val intent = hangupIntent(context)
-                    sendCommand(intent)
+                    handleLocalHangup(null)
                 }
             }
             Log.i("Loki", "onIceConnectionChange: $newState")

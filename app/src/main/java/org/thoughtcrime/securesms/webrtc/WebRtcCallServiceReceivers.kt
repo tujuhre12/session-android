@@ -47,18 +47,16 @@ class EndCallReceiver(): BroadcastReceiver() {
     lateinit var webRtcCallBridge: WebRtcCallBridge
 
     override fun onReceive(context: Context, intent: Intent) {
-        val serviceIntent = when(intent.action) {
+        when(intent.action) {
             WebRtcCallBridge.ACTION_LOCAL_HANGUP -> {
-                WebRtcCallBridge.hangupIntent(context)
+                webRtcCallBridge.handleLocalHangup(null)
             }
 
             WebRtcCallBridge.ACTION_IGNORE_CALL -> {
-                WebRtcCallBridge.ignoreCallIntent(context)
+                webRtcCallBridge.handleIgnoreCall()
             }
 
-            else -> WebRtcCallBridge.denyCallIntent(context)
+            else -> webRtcCallBridge.handleDenyCall()
         }
-
-        webRtcCallBridge.sendCommand(serviceIntent)
     }
 }

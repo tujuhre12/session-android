@@ -616,8 +616,7 @@ class CallManager(
         val recipient = recipient ?: return
         val callId = callId ?: return
 
-        val currentUserPublicKey  = storage.getUserPublicKey()
-        val sendHangup = intentRecipient == null || (intentRecipient == recipient && recipient.address.serialize() != currentUserPublicKey)
+        val sendHangup = intentRecipient == null || (intentRecipient == recipient && !isCurrentUser(recipient))
 
         postViewModelState(CallViewModel.State.CALL_DISCONNECTED)
         stateProcessor.processEvent(Event.Hangup)

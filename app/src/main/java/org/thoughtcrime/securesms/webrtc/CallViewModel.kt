@@ -106,6 +106,6 @@ class CallViewModel @Inject constructor(
     }
 
     fun hangUp(){
-        rtcCallBridge.sendCommand(WebRtcCallBridge.hangupIntent(context))
+        rtcCallBridge.handleLocalHangup(null)
     }
 }

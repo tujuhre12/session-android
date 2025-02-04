@@ -128,16 +128,12 @@ class CallMessageProcessor(
         Log.d("", "CallMessageProcessor: incomingPreOffer")
         val recipientAddress = callMessage.sender ?: return
         val callId = callMessage.callId ?: return
-        val incomingIntent = WebRtcCallBridge.preOffer(
-                context = context,
-                address = Address.fromSerialized(recipientAddress),
-                callId = callId,
-                callTime = callMessage.sentTimestamp!!
+
+        webRtcService.handlePreOffer(
+            address = Address.fromSerialized(recipientAddress),
+            callId = callId,
+            callTime = callMessage.sentTimestamp!!
         )
-
-
-
-        webRtcService.sendCommand(incomingIntent)
     }
 
     private fun incomingCall(callMessage: CallMessage) {
