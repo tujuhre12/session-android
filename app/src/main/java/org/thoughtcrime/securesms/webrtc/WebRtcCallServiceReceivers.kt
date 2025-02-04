@@ -9,12 +9,10 @@ import org.thoughtcrime.securesms.webrtc.locks.LockManager
 import javax.inject.Inject
 
 
-class PowerButtonReceiver(val sendCommand: (Intent)->Unit) : BroadcastReceiver() {
+class PowerButtonReceiver(val onScreenOffChange: ()->Unit) : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (Intent.ACTION_SCREEN_OFF == intent.action) {
-            val serviceIntent = Intent(context, WebRtcCallBridge::class.java)
-                    .setAction(WebRtcCallBridge.ACTION_SCREEN_OFF)
-            sendCommand(serviceIntent)
+            onScreenOffChange()
         }
     }
 }
@@ -29,14 +27,10 @@ class ProximityLockRelease(private val lockManager: LockManager): Thread.Uncaugh
     }
 }
 
-class WiredHeadsetStateReceiver(val sendCommand: (Intent)->Unit): BroadcastReceiver() {
+class WiredHeadsetStateReceiver(val onWiredHeadsetChanged: (Boolean)->Unit): BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val state = intent.getIntExtra("state", -1)
-        val serviceIntent = Intent(context, WebRtcCallBridge::class.java)
-                .setAction(WebRtcCallBridge.ACTION_WIRED_HEADSET_CHANGE)
-                .putExtra(WebRtcCallBridge.EXTRA_AVAILABLE, state != 0)
-
-        sendCommand(serviceIntent)
+        onWiredHeadsetChanged(state != 0)
     }
 }
 
