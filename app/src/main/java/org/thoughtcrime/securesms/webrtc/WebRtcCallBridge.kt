@@ -194,7 +194,7 @@ class WebRtcCallBridge @Inject constructor(
             }
 
             val recipient = getRecipientFromAddress(address)
-
+            
             if (isIncomingMessageExpired(callTime)) {
                 debugToast("Pre offer expired - message timestamp was deemed expired: ${System.currentTimeMillis() - callTime}s")
                 insertMissedCall(recipient, true)
@@ -219,7 +219,9 @@ class WebRtcCallBridge @Inject constructor(
 
     fun debugToast(message: String) {
         if (BuildConfig.BUILD_TYPE != "release") {
-            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+            ContextCompat.getMainExecutor(context).execute {
+                Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+            }
         }
     }
 
