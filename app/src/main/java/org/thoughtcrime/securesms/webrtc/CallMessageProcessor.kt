@@ -31,7 +31,7 @@ class CallMessageProcessor(
     private val textSecurePreferences: TextSecurePreferences,
     lifecycle: Lifecycle,
     private val storage: StorageProtocol,
-    private val webRtcService: WebRtcCallBridge
+    private val webRtcBridge: WebRtcCallBridge
 ) {
 
     companion object {
@@ -88,7 +88,7 @@ class CallMessageProcessor(
     private fun incomingHangup(callMessage: CallMessage) {
         Log.d("", "CallMessageProcessor: incomingHangup")
         val callId = callMessage.callId ?: return
-        webRtcService.handleRemoteHangup(callId)
+        webRtcBridge.handleRemoteHangup(callId)
     }
 
     private fun incomingAnswer(callMessage: CallMessage) {
@@ -96,13 +96,12 @@ class CallMessageProcessor(
         val recipientAddress = callMessage.sender ?: return Log.w(TAG, "Cannot answer incoming call without sender")
         val callId = callMessage.callId ?: return Log.w(TAG, "Cannot answer incoming call without callId" )
         val sdp = callMessage.sdps.firstOrNull() ?: return Log.w(TAG, "Cannot answer incoming call without sdp")
-        val answerIntent = WebRtcCallBridge.incomingAnswer(
-                context = context,
-                address = Address.fromSerialized(recipientAddress),
-                sdp = sdp,
-                callId = callId
+
+        webRtcBridge.handleAnswerIncoming(
+            address = Address.fromSerialized(recipientAddress),
+            sdp = sdp,
+            callId = callId
         )
-        webRtcService.sendCommand(answerIntent)
     }
 
     private fun handleIceCandidates(callMessage: CallMessage) {
@@ -113,13 +112,10 @@ class CallMessageProcessor(
         val iceCandidates = callMessage.iceCandidates()
         if (iceCandidates.isEmpty()) return
 
-        val iceIntent = WebRtcCallBridge.iceCandidates(
-                context = context,
+        webRtcBridge.handleRemoteIceCandidate(
                 iceCandidates = iceCandidates,
-                callId = callId,
-                address = Address.fromSerialized(sender)
+                callId = callId
         )
-        webRtcService.sendCommand(iceIntent)
     }
 
     private fun incomingPreOffer(callMessage: CallMessage) {
@@ -128,7 +124,7 @@ class CallMessageProcessor(
         val recipientAddress = callMessage.sender ?: return
         val callId = callMessage.callId ?: return
 
-        webRtcService.handlePreOffer(
+        webRtcBridge.handlePreOffer(
             address = Address.fromSerialized(recipientAddress),
             callId = callId,
             callTime = callMessage.sentTimestamp!!
@@ -142,19 +138,13 @@ class CallMessageProcessor(
         val callId = callMessage.callId ?: return
         val sdp = callMessage.sdps.firstOrNull() ?: return
 
-        webRtcService.onIncomingCall(
+        webRtcBridge.onIncomingCall(
             address = Address.fromSerialized(recipientAddress),
             sdp = sdp,
             callId = callId,
             callTime = callMessage.sentTimestamp!!
         )
     }
-
-    data class IncomingCallMetadata(
-        val recipientAddress: Address,
-        val callId: UUID,
-        val callTime: Long
-    )
 
     private fun CallMessage.iceCandidates(): List<IceCandidate> {
         if (sdpMids.size != sdpMLineIndexes.size || sdpMLineIndexes.size != sdps.size) {

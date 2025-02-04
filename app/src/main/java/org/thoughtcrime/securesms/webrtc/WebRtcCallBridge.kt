@@ -79,10 +79,6 @@ class WebRtcCallBridge @Inject constructor(
         const val ACTION_CHECK_TIMEOUT = "CHECK_TIMEOUT"
         const val ACTION_CHECK_RECONNECT = "CHECK_RECONNECT"
 
-        const val ACTION_ANSWER_INCOMING = "ANSWER_INCOMING"
-        const val ACTION_ICE_MESSAGE = "ICE_MESSAGE"
-        const val ACTION_ICE_CONNECTED = "ICE_CONNECTED"
-
         const val EXTRA_RECIPIENT_ADDRESS = "RECIPIENT_ID"
         const val EXTRA_AVAILABLE = "enabled_value"
         const val EXTRA_REMOTE_DESCRIPTION = "remote_description"
@@ -96,29 +92,6 @@ class WebRtcCallBridge @Inject constructor(
         private const val RECONNECT_SECONDS = 5L
         private const val MAX_RECONNECTS = 5
 
-        fun incomingAnswer(context: Context, address: Address, sdp: String, callId: UUID) =
-            Intent(context, WebRtcCallBridge::class.java)
-                .setAction(ACTION_ANSWER_INCOMING)
-                .putExtra(EXTRA_RECIPIENT_ADDRESS, address)
-                .putExtra(EXTRA_CALL_ID, callId)
-                .putExtra(EXTRA_REMOTE_DESCRIPTION, sdp)
-
-        fun iceCandidates(
-            context: Context,
-            address: Address,
-            iceCandidates: List<IceCandidate>,
-            callId: UUID
-        ) =
-            Intent(context, WebRtcCallBridge::class.java)
-                .setAction(ACTION_ICE_MESSAGE)
-                .putExtra(EXTRA_CALL_ID, callId)
-                .putExtra(EXTRA_ICE_SDP, iceCandidates.map(IceCandidate::sdp).toTypedArray())
-                .putExtra(
-                    EXTRA_ICE_SDP_LINE_INDEX,
-                    iceCandidates.map(IceCandidate::sdpMLineIndex).toIntArray()
-                )
-                .putExtra(EXTRA_ICE_SDP_MID, iceCandidates.map(IceCandidate::sdpMid).toTypedArray())
-                .putExtra(EXTRA_RECIPIENT_ADDRESS, address)
     }
 
     private var _hasAcceptedCall: MutableStateFlow<Boolean> = MutableStateFlow(false) // always true for outgoing call and true once the user accepts the call for incoming calls
@@ -186,7 +159,7 @@ class WebRtcCallBridge @Inject constructor(
         }
     }
 
-    fun sendCommand(intent: Intent?) {
+    fun receiveCommand(intent: Intent?) {
         if (intent == null || intent.action == null) return
         serviceExecutor.execute {
             val action = intent.action
@@ -195,9 +168,6 @@ class WebRtcCallBridge @Inject constructor(
             when (action) {
                 ACTION_WIRED_HEADSET_CHANGE -> handleWiredHeadsetChanged(intent)
                 ACTION_SCREEN_OFF -> handleScreenOffChange(intent)
-                ACTION_ANSWER_INCOMING -> handleAnswerIncoming(intent)
-                ACTION_ICE_MESSAGE -> handleRemoteIceCandidate(intent)
-                ACTION_ICE_CONNECTED -> handleIceConnected(intent)
                 ACTION_CHECK_TIMEOUT -> handleCheckTimeout(intent)
                 ACTION_CHECK_RECONNECT -> handleCheckReconnect(intent)
             }
@@ -205,7 +175,7 @@ class WebRtcCallBridge @Inject constructor(
     }
 
     private fun registerWiredHeadsetStateReceiver() {
-        wiredHeadsetStateReceiver = WiredHeadsetStateReceiver(::sendCommand)
+        wiredHeadsetStateReceiver = WiredHeadsetStateReceiver(::receiveCommand)
         context.registerReceiver(wiredHeadsetStateReceiver, IntentFilter(AudioManager.ACTION_HEADSET_PLUG))
     }
 
@@ -319,7 +289,7 @@ class WebRtcCallBridge @Inject constructor(
                 CallMessageType.CALL_OUTGOING
             )
             scheduledTimeout = timeoutExecutor.schedule(
-                TimeoutRunnable(callId, context, ::sendCommand),
+                TimeoutRunnable(callId, context, ::receiveCommand),
                 TIMEOUT_SECONDS,
                 TimeUnit.SECONDS
             )
@@ -387,7 +357,7 @@ class WebRtcCallBridge @Inject constructor(
             callManager.postViewModelState(CallViewModel.State.CALL_ANSWER_INCOMING)
 
             scheduledTimeout = timeoutExecutor.schedule(
-                TimeoutRunnable(callId, context, ::sendCommand),
+                TimeoutRunnable(callId, context, ::receiveCommand),
                 TIMEOUT_SECONDS,
                 TimeUnit.SECONDS
             )
@@ -454,9 +424,9 @@ class WebRtcCallBridge @Inject constructor(
         callManager.handleScreenOffChange()
     }
 
-    private fun handleAnswerIncoming(intent: Intent) {
+    fun handleAnswerIncoming(address: Address, sdp: String, callId: UUID) {
         try {
-            val recipient = getRemoteRecipient(intent)
+            val recipient = getRecipientFromAddress(address)
             if (callManager.isCurrentUser(recipient) && callManager.currentConnectionState in CallState.CAN_DECLINE_STATES) {
                 handleLocalHangup(recipient)
                 return
@@ -464,54 +434,22 @@ class WebRtcCallBridge @Inject constructor(
 
             callManager.postViewModelState(CallViewModel.State.CALL_ANSWER_OUTGOING)
 
-            val callId = getCallId(intent)
-            val description = intent.getStringExtra(EXTRA_REMOTE_DESCRIPTION)
             callManager.handleResponseMessage(
                 recipient,
                 callId,
-                SessionDescription(SessionDescription.Type.ANSWER, description)
+                SessionDescription(SessionDescription.Type.ANSWER, sdp)
             )
         } catch (e: PeerConnectionException) {
             terminate()
         }
     }
 
-    /**
-     * Handles remote ICE candidates received from a signaling server.
-     *
-     * This function is called when a new ICE candidate is received for a specific call.
-     * It extracts the candidate information from the intent, creates IceCandidate objects,
-     * and passes them to the CallManager to be added to the PeerConnection.
-     *
-     * @param intent The intent containing the remote ICE candidate information.
-     *               The intent should contain the following extras:
-     *               - EXTRA_CALL_ID: The ID of the call.
-     *               - EXTRA_ICE_SDP_MID: An array of SDP media stream identification strings.
-     *               - EXTRA_ICE_SDP_LINE_INDEX: An array of SDP media line indexes.
-     *               - EXTRA_ICE_SDP: An array of SDP candidate strings.
-     */
-    private fun handleRemoteIceCandidate(intent: Intent) {
+    fun handleRemoteIceCandidate(iceCandidates: List<IceCandidate>, callId: UUID) {
         Log.d(TAG, "Handle remote ice")
-        val callId = getCallId(intent)
-        val sdpMids = intent.getStringArrayExtra(EXTRA_ICE_SDP_MID) ?: return
-        val sdpLineIndexes = intent.getIntArrayExtra(EXTRA_ICE_SDP_LINE_INDEX) ?: return
-        val sdps = intent.getStringArrayExtra(EXTRA_ICE_SDP) ?: return
-        if (sdpMids.size != sdpLineIndexes.size || sdpLineIndexes.size != sdps.size) {
-            Log.w(TAG, "sdp info not of equal length")
-            return
-        }
-        val iceCandidates = sdpMids.indices.map { index ->
-            IceCandidate(
-                sdpMids[index],
-                sdpLineIndexes[index],
-                sdps[index]
-            )
-        }
-
         callManager.handleRemoteIceCandidate(iceCandidates, callId)
     }
 
-    private fun handleIceConnected(intent: Intent) {
+    private fun handleIceConnected() {
         val recipient = callManager.recipient ?: return
         if(callManager.currentCallState == CallViewModel.State.CALL_CONNECTED) return
         Log.d(TAG, "Handle ice connected")
@@ -530,7 +468,7 @@ class WebRtcCallBridge @Inject constructor(
 
     private fun registerPowerButtonReceiver() {
         if (powerButtonReceiver == null) {
-            powerButtonReceiver = PowerButtonReceiver(::sendCommand)
+            powerButtonReceiver = PowerButtonReceiver(::receiveCommand)
             context.registerReceiver(powerButtonReceiver, IntentFilter(Intent.ACTION_SCREEN_OFF))
         }
     }
@@ -543,7 +481,7 @@ class WebRtcCallBridge @Inject constructor(
             Log.i("Loki", "Trying to re-connect")
             callManager.networkReestablished()
             scheduledTimeout = timeoutExecutor.schedule(
-                TimeoutRunnable(callId, context, ::sendCommand),
+                TimeoutRunnable(callId, context, ::receiveCommand),
                 TIMEOUT_SECONDS,
                 TimeUnit.SECONDS
             )
@@ -553,7 +491,7 @@ class WebRtcCallBridge @Inject constructor(
                 "Network isn't available, timeouts == $numTimeouts out of $MAX_RECONNECTS"
             )
             scheduledReconnect = timeoutExecutor.schedule(
-                CheckReconnectedRunnable(callId, context, ::sendCommand),
+                CheckReconnectedRunnable(callId, context, ::receiveCommand),
                 RECONNECT_SECONDS,
                 TimeUnit.SECONDS
             )
@@ -693,13 +631,13 @@ class WebRtcCallBridge @Inject constructor(
     }
 
     private class TimeoutRunnable(
-        private val callId: UUID, private val context: Context, val sendCommand: (Intent)->Unit
+        private val callId: UUID, private val context: Context, val receiveCommand: (Intent)->Unit
     ) : Runnable {
         override fun run() {
             val intent = Intent(context, WebRtcCallBridge::class.java)
                 .setAction(ACTION_CHECK_TIMEOUT)
                 .putExtra(EXTRA_CALL_ID, callId)
-            sendCommand(intent)
+            receiveCommand(intent)
         }
     }
 
@@ -784,9 +722,7 @@ class WebRtcCallBridge @Inject constructor(
                 scheduledTimeout = null
                 scheduledReconnect = null
 
-                val intent = Intent(context, WebRtcCallBridge::class.java)
-                    .setAction(ACTION_ICE_CONNECTED)
-                sendCommand(intent)
+                handleIceConnected()
             } else if (newState in arrayOf(
                     FAILED,
                     DISCONNECTED
@@ -798,7 +734,7 @@ class WebRtcCallBridge @Inject constructor(
                         if (callManager.isInitiator()) {
                             Log.i("Loki", "Starting reconnect timer")
                             scheduledReconnect = timeoutExecutor.schedule(
-                                CheckReconnectedRunnable(callId, context, ::sendCommand),
+                                CheckReconnectedRunnable(callId, context, ::receiveCommand),
                                 RECONNECT_SECONDS,
                                 TimeUnit.SECONDS
                             )
@@ -806,7 +742,7 @@ class WebRtcCallBridge @Inject constructor(
                             Log.i("Loki", "Starting timeout, awaiting new reconnect")
                             callManager.postConnectionEvent(Event.PrepareForNewOffer) {
                                 scheduledTimeout = timeoutExecutor.schedule(
-                                    TimeoutRunnable(callId, context, ::sendCommand),
+                                    TimeoutRunnable(callId, context, ::receiveCommand),
                                     TIMEOUT_SECONDS,
                                     TimeUnit.SECONDS
                                 )
