@@ -14,13 +14,11 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewOutlineProvider
 import android.view.WindowManager
-import android.widget.TextView
 import androidx.activity.viewModels
 import androidx.core.content.IntentCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -31,18 +29,26 @@ import network.loki.messenger.databinding.ActivityWebrtcBinding
 import org.apache.commons.lang3.time.DurationFormatUtils
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.permissions.Permissions
-import org.thoughtcrime.securesms.webrtc.CallViewModel.State.*
-import org.thoughtcrime.securesms.webrtc.WebRtcCallBridge.Companion
-import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager.AudioDevice.EARPIECE
+import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_ANSWER_INCOMING
+import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_ANSWER_OUTGOING
+import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_CONNECTED
+import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_DISCONNECTED
+import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_HANDLING_ICE
+import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_OFFER_INCOMING
+import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_OFFER_OUTGOING
+import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_PRE_OFFER_INCOMING
+import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_PRE_OFFER_OUTGOING
+import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_RECONNECTING
+import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_SENDING_ICE
+import org.thoughtcrime.securesms.webrtc.CallViewModel.State.NETWORK_FAILURE
+import org.thoughtcrime.securesms.webrtc.CallViewModel.State.RECIPIENT_UNAVAILABLE
 import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager.AudioDevice.SPEAKER_PHONE
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class WebRtcCallActivity : ScreenLockActionBarActivity() {
@@ -193,9 +199,7 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
     private fun handleIntent(intent: Intent) {
         Log.d("", "Web RTC activity handle intent ${intent.action}")
         if (intent.action == ACTION_START_CALL && intent.hasExtra(EXTRA_RECIPIENT_ADDRESS)) {
-            viewModel.sendCommand(
-                WebRtcCallBridge.createCall(this,IntentCompat.getParcelableExtra(intent, EXTRA_RECIPIENT_ADDRESS, Address::class.java)!!)
-            )
+            viewModel.createCall(IntentCompat.getParcelableExtra(intent, EXTRA_RECIPIENT_ADDRESS, Address::class.java)!!)
         }
         if (intent.action == ACTION_ANSWER) {
             answerCall()
@@ -250,12 +254,11 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
     }
 
     private fun denyCall(){
-        val declineIntent = WebRtcCallBridge.denyCallIntent(this)
-        viewModel.sendCommand(declineIntent)
+        viewModel.denyCall()
     }
 
     private fun hangUp(){
-        viewModel.sendCommand(WebRtcCallBridge.hangupIntent(this))
+        viewModel.hangUp()
     }
 
     private fun updateControlsRotation() {

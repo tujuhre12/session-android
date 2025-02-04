@@ -73,7 +73,6 @@ class WebRtcCallBridge @Inject constructor(
         private val TAG = Log.tag(WebRtcCallBridge::class.java)
 
         const val ACTION_INCOMING_RING = "RING_INCOMING"
-        const val ACTION_OUTGOING_CALL = "CALL_OUTGOING"
         const val ACTION_IGNORE_CALL = "IGNORE_CALL" // like when swiping off a notification. Ends the call without notifying the caller
         const val ACTION_DENY_CALL = "DENY_CALL"
         const val ACTION_LOCAL_HANGUP = "LOCAL_HANGUP"
@@ -100,11 +99,6 @@ class WebRtcCallBridge @Inject constructor(
         private const val TIMEOUT_SECONDS = 30L
         private const val RECONNECT_SECONDS = 5L
         private const val MAX_RECONNECTS = 5
-
-        fun createCall(context: Context, address: Address) =
-            Intent(context, WebRtcCallBridge::class.java)
-                .setAction(ACTION_OUTGOING_CALL)
-                .putExtra(EXTRA_RECIPIENT_ADDRESS, address)
 
         fun incomingCall(
             context: Context,
@@ -256,7 +250,6 @@ class WebRtcCallBridge @Inject constructor(
                     isBusy(intent) -> handleBusyCall(intent)
                     isPreOffer() -> handleIncomingPreOffer(intent)
                 }
-                ACTION_OUTGOING_CALL -> if (isIdle()) handleOutgoingCall(intent)
                 ACTION_DENY_CALL -> handleDenyCall()
                 ACTION_IGNORE_CALL -> handleIgnoreCall()
                 ACTION_LOCAL_HANGUP -> handleLocalHangup(intent)
@@ -356,17 +349,15 @@ class WebRtcCallBridge @Inject constructor(
             // if the user has already accepted the incoming call, try to answer again
             // (they would have tried to answer when they first accepted
             // but it would have silently failed due to the pre offer having not been set yet
-            if(_hasAcceptedCall.value){
-                Log.e("", "******** ALREADY ACCEPTED IN PRE OFFER")
-                handleAnswerCall()
-            }
+            if(_hasAcceptedCall.value) handleAnswerCall()
         }
     }
 
-    private fun handleOutgoingCall(intent: Intent) {
+    fun handleOutgoingCall(recipient: Recipient) {
+        if (!isIdle())  return
+
         _hasAcceptedCall.value = true // outgoing calls are automatically set to 'accepted'
         callManager.postConnectionEvent(Event.SendPreOffer) {
-            val recipient = getRemoteRecipient(intent)
             callManager.recipient = recipient
             val callId = UUID.randomUUID()
             callManager.callId = callId
@@ -423,10 +414,9 @@ class WebRtcCallBridge @Inject constructor(
         setCallNotification(TYPE_INCOMING_CONNECTING, recipient)
 
         if(callManager.pendingOffer == null) {
-            Log.e("", "******** ACCEPTED BUT TOO EARLY")
             return Log.e(TAG, "No pending offer in handleAnswerCall")
         }
-        Log.e("", "******** PROPERLY ACCEPTED")
+
         val callId = callManager.callId ?: return Log.e(TAG, "No callId in handleAnswerCall")
 
         val timestamp = callManager.pendingOfferTime
@@ -486,7 +476,7 @@ class WebRtcCallBridge @Inject constructor(
         }
     }
 
-    private fun handleDenyCall() {
+    fun handleDenyCall() {
         callManager.handleDenyCall()
         terminate()
     }

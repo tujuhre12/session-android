@@ -1,24 +1,24 @@
 package org.thoughtcrime.securesms.webrtc
 
+import android.content.Context
 import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
-import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager
-import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager.AudioDevice.EARPIECE
-import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager.AudioDevice.SPEAKER_PHONE
+import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.recipients.Recipient
 import org.webrtc.SurfaceViewRenderer
 import javax.inject.Inject
 
 @HiltViewModel
 class CallViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val callManager: CallManager,
     private val rtcCallBridge: WebRtcCallBridge
 ): ViewModel() {
@@ -77,10 +77,6 @@ class CallViewModel @Inject constructor(
        callManager.swapVideos()
     }
 
-    fun sendCommand(intent: Intent){
-        rtcCallBridge.sendCommand(intent)
-    }
-
     fun toggleMute(){
         callManager.toggleMuteAudio()
     }
@@ -99,5 +95,17 @@ class CallViewModel @Inject constructor(
 
     fun answerCall(){
         rtcCallBridge.handleAnswerCall()
+    }
+
+    fun denyCall(){
+        rtcCallBridge.handleDenyCall()
+    }
+
+    fun createCall(recipientAddress: Address) {
+        rtcCallBridge.handleOutgoingCall(Recipient.from(context, recipientAddress, true))
+    }
+
+    fun hangUp(){
+        rtcCallBridge.sendCommand(WebRtcCallBridge.hangupIntent(context))
     }
 }
