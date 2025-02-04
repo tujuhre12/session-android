@@ -246,9 +246,7 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
     }
 
     private fun answerCall() {
-        val answerIntent = WebRtcCallBridge.acceptCallIntent(this)
-        answerIntent.flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
-        viewModel.sendCommand(answerIntent)
+        viewModel.answerCall()
     }
 
     private fun denyCall(){

@@ -96,4 +96,8 @@ class CallViewModel @Inject constructor(
     fun flipCamera(){
         callManager.flipCamera()
     }
+
+    fun answerCall(){
+        rtcCallBridge.handleAnswerCall()
+    }
 }

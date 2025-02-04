@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.media.AudioManager
+import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -18,6 +19,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import network.loki.messenger.BuildConfig
+import network.loki.messenger.R
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.FutureTaskListener
@@ -71,7 +74,6 @@ class WebRtcCallBridge @Inject constructor(
 
         const val ACTION_INCOMING_RING = "RING_INCOMING"
         const val ACTION_OUTGOING_CALL = "CALL_OUTGOING"
-        const val ACTION_ANSWER_CALL = "ANSWER_CALL"
         const val ACTION_IGNORE_CALL = "IGNORE_CALL" // like when swiping off a notification. Ends the call without notifying the caller
         const val ACTION_DENY_CALL = "DENY_CALL"
         const val ACTION_LOCAL_HANGUP = "LOCAL_HANGUP"
@@ -98,9 +100,6 @@ class WebRtcCallBridge @Inject constructor(
         private const val TIMEOUT_SECONDS = 30L
         private const val RECONNECT_SECONDS = 5L
         private const val MAX_RECONNECTS = 5
-
-        fun acceptCallIntent(context: Context) = Intent(context, WebRtcCallBridge::class.java)
-            .setAction(ACTION_ANSWER_CALL)
 
         fun createCall(context: Context, address: Address) =
             Intent(context, WebRtcCallBridge::class.java)
@@ -258,7 +257,6 @@ class WebRtcCallBridge @Inject constructor(
                     isPreOffer() -> handleIncomingPreOffer(intent)
                 }
                 ACTION_OUTGOING_CALL -> if (isIdle()) handleOutgoingCall(intent)
-                ACTION_ANSWER_CALL -> handleAnswerCall(intent)
                 ACTION_DENY_CALL -> handleDenyCall()
                 ACTION_IGNORE_CALL -> handleIgnoreCall()
                 ACTION_LOCAL_HANGUP -> handleLocalHangup(intent)
@@ -306,7 +304,8 @@ class WebRtcCallBridge @Inject constructor(
         val callId = getCallId(intent)
         val recipient = getRemoteRecipient(intent)
 
-        if (isIncomingMessageExpired(intent)) {
+        if (isIncomingMessageExpired(intent.getLongExtra(EXTRA_TIMESTAMP, -1))) {
+            debugToast("Pre offer expired - message timestamp was deemed expired: ${System.currentTimeMillis() - intent.getLongExtra(EXTRA_TIMESTAMP, -1)}s")
             insertMissedCall(recipient, true)
             terminate()
             return
@@ -323,6 +322,12 @@ class WebRtcCallBridge @Inject constructor(
                 context,
                 arrayOf(BackgroundPollWorker.Targets.DMS)
             )
+        }
+    }
+
+    fun debugToast(message: String) {
+        if (BuildConfig.BUILD_TYPE != "release") {
+            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
         }
     }
 
@@ -351,7 +356,10 @@ class WebRtcCallBridge @Inject constructor(
             // if the user has already accepted the incoming call, try to answer again
             // (they would have tried to answer when they first accepted
             // but it would have silently failed due to the pre offer having not been set yet
-            if(_hasAcceptedCall.value) handleAnswerCall(acceptCallIntent(context))
+            if(_hasAcceptedCall.value){
+                Log.e("", "******** ALREADY ACCEPTED IN PRE OFFER")
+                handleAnswerCall()
+            }
         }
     }
 
@@ -407,15 +415,19 @@ class WebRtcCallBridge @Inject constructor(
         }
     }
 
-    private fun handleAnswerCall(intent: Intent) {
+    fun handleAnswerCall() {
         Log.d(TAG, "Handle answer call")
         _hasAcceptedCall.value = true
 
-        val recipient = callManager.recipient    ?: return Log.e(TAG, "No recipient to answer in handleAnswerCall")
+        val recipient = callManager.recipient ?: return Log.e(TAG, "No recipient to answer in handleAnswerCall")
         setCallNotification(TYPE_INCOMING_CONNECTING, recipient)
 
-        val pending   = callManager.pendingOffer ?: return Log.e(TAG, "No pending offer in handleAnswerCall")
-        val callId    = callManager.callId       ?: return Log.e(TAG, "No callId in handleAnswerCall")
+        if(callManager.pendingOffer == null) {
+            Log.e("", "******** ACCEPTED BUT TOO EARLY")
+            return Log.e(TAG, "No pending offer in handleAnswerCall")
+        }
+        Log.e("", "******** PROPERLY ACCEPTED")
+        val callId = callManager.callId ?: return Log.e(TAG, "No callId in handleAnswerCall")
 
         val timestamp = callManager.pendingOfferTime
 
@@ -424,13 +436,9 @@ class WebRtcCallBridge @Inject constructor(
             return
         }
 
-        intent.putExtra(EXTRA_CALL_ID, callId)
-        intent.putExtra(EXTRA_RECIPIENT_ADDRESS, recipient.address)
-        intent.putExtra(EXTRA_REMOTE_DESCRIPTION, pending)
-        intent.putExtra(EXTRA_TIMESTAMP, timestamp)
-
-        if (isIncomingMessageExpired(intent)) {
+        if (isIncomingMessageExpired(timestamp)) {
             val didHangup = callManager.postConnectionEvent(Event.TimeOut) {
+                debugToast("Answer expired - message timestamp was deemed expired: ${System.currentTimeMillis() - timestamp}s")
                 insertMissedCall(recipient, true) //todo PHONE do we want a missed call in this case? Or just [xxx] called you ?
                 terminate()
             }
@@ -712,11 +720,8 @@ class WebRtcCallBridge @Inject constructor(
         )
     }
 
-    private fun isIncomingMessageExpired(intent: Intent) =
-        System.currentTimeMillis() - intent.getLongExtra(
-            EXTRA_TIMESTAMP,
-            -1
-        ) > TimeUnit.SECONDS.toMillis(TIMEOUT_SECONDS)
+    private fun isIncomingMessageExpired(timestamp: Long) =
+        (System.currentTimeMillis() - timestamp) > TimeUnit.SECONDS.toMillis(TIMEOUT_SECONDS)
 
     private fun onDestroy() {
         Log.d(TAG, "onDestroy()")
