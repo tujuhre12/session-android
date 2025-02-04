@@ -158,7 +158,7 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
         }
 
         binding.switchCameraButton.setOnClickListener {
-            viewModel.sendCommand(WebRtcCallBridge.flipCamera(this))
+            viewModel.flipCamera()
         }
 
         binding.endCallButton.setOnClickListener {

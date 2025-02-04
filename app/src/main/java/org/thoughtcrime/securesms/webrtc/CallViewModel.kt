@@ -92,4 +92,8 @@ class CallViewModel @Inject constructor(
     fun toggleVideo(){
         callManager.toggleVideo()
     }
+
+    fun flipCamera(){
+        callManager.flipCamera()
+    }
 }

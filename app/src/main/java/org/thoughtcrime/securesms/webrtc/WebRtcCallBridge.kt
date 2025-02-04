@@ -75,7 +75,6 @@ class WebRtcCallBridge @Inject constructor(
         const val ACTION_IGNORE_CALL = "IGNORE_CALL" // like when swiping off a notification. Ends the call without notifying the caller
         const val ACTION_DENY_CALL = "DENY_CALL"
         const val ACTION_LOCAL_HANGUP = "LOCAL_HANGUP"
-        const val ACTION_FLIP_CAMERA = "FLIP_CAMERA"
         const val ACTION_WIRED_HEADSET_CHANGE = "WIRED_HEADSET_CHANGE"
         const val ACTION_SCREEN_OFF = "SCREEN_OFF"
         const val ACTION_CHECK_TIMEOUT = "CHECK_TIMEOUT"
@@ -99,9 +98,6 @@ class WebRtcCallBridge @Inject constructor(
         private const val TIMEOUT_SECONDS = 30L
         private const val RECONNECT_SECONDS = 5L
         private const val MAX_RECONNECTS = 5
-
-        fun flipCamera(context: Context) = Intent(context, WebRtcCallBridge::class.java)
-            .setAction(ACTION_FLIP_CAMERA)
 
         fun acceptCallIntent(context: Context) = Intent(context, WebRtcCallBridge::class.java)
             .setAction(ACTION_ANSWER_CALL)
@@ -267,7 +263,6 @@ class WebRtcCallBridge @Inject constructor(
                 ACTION_IGNORE_CALL -> handleIgnoreCall()
                 ACTION_LOCAL_HANGUP -> handleLocalHangup(intent)
                 ACTION_REMOTE_HANGUP -> handleRemoteHangup(intent)
-                ACTION_FLIP_CAMERA -> handleSetCameraFlip(intent)
                 ACTION_WIRED_HEADSET_CHANGE -> handleWiredHeadsetChanged(intent)
                 ACTION_SCREEN_OFF -> handleScreenOffChange(intent)
                 ACTION_ANSWER_INCOMING -> handleAnswerIncoming(intent)
@@ -506,10 +501,6 @@ class WebRtcCallBridge @Inject constructor(
         }
 
         onHangup()
-    }
-
-    private fun handleSetCameraFlip(intent: Intent) {
-        callManager.handleSetCameraFlip()
     }
 
     private fun handleWiredHeadsetChanged(intent: Intent) {

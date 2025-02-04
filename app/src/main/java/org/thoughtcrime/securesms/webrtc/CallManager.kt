@@ -742,7 +742,7 @@ class CallManager(
         }
     }
 
-    fun handleSetCameraFlip() {
+    fun flipCamera() {
         if (!localCameraState.enabled) return
         peerConnection?.let { connection ->
             connection.flipCamera()
