@@ -71,7 +71,6 @@ class WebRtcCallBridge @Inject constructor(
 
         private val TAG = Log.tag(WebRtcCallBridge::class.java)
 
-        const val ACTION_INCOMING_RING = "RING_INCOMING"
         const val ACTION_IGNORE_CALL = "IGNORE_CALL" // like when swiping off a notification. Ends the call without notifying the caller
         const val ACTION_DENY_CALL = "DENY_CALL"
         const val ACTION_LOCAL_HANGUP = "LOCAL_HANGUP"
@@ -82,7 +81,6 @@ class WebRtcCallBridge @Inject constructor(
 
         const val ACTION_ANSWER_INCOMING = "ANSWER_INCOMING"
         const val ACTION_ICE_MESSAGE = "ICE_MESSAGE"
-        const val ACTION_REMOTE_HANGUP = "REMOTE_HANGUP"
         const val ACTION_ICE_CONNECTED = "ICE_CONNECTED"
 
         const val EXTRA_RECIPIENT_ADDRESS = "RECIPIENT_ID"
@@ -97,20 +95,6 @@ class WebRtcCallBridge @Inject constructor(
         private const val TIMEOUT_SECONDS = 30L
         private const val RECONNECT_SECONDS = 5L
         private const val MAX_RECONNECTS = 5
-
-        fun incomingCall(
-            context: Context,
-            address: Address,
-            sdp: String,
-            callId: UUID,
-            callTime: Long
-        ) =
-            Intent(context, WebRtcCallBridge::class.java)
-                .setAction(ACTION_INCOMING_RING)
-                .putExtra(EXTRA_RECIPIENT_ADDRESS, address)
-                .putExtra(EXTRA_CALL_ID, callId)
-                .putExtra(EXTRA_REMOTE_DESCRIPTION, sdp)
-                .putExtra(EXTRA_TIMESTAMP, callTime)
 
         fun incomingAnswer(context: Context, address: Address, sdp: String, callId: UUID) =
             Intent(context, WebRtcCallBridge::class.java)
@@ -135,11 +119,6 @@ class WebRtcCallBridge @Inject constructor(
                 )
                 .putExtra(EXTRA_ICE_SDP_MID, iceCandidates.map(IceCandidate::sdpMid).toTypedArray())
                 .putExtra(EXTRA_RECIPIENT_ADDRESS, address)
-
-        fun remoteHangupIntent(context: Context, callId: UUID) =
-            Intent(context, WebRtcCallBridge::class.java)
-                .setAction(ACTION_REMOTE_HANGUP)
-                .putExtra(EXTRA_CALL_ID, callId)
     }
 
     private var _hasAcceptedCall: MutableStateFlow<Boolean> = MutableStateFlow(false) // always true for outgoing call and true once the user accepts the call for incoming calls
@@ -186,20 +165,12 @@ class WebRtcCallBridge @Inject constructor(
 
 
         //todo PHONE GETTING missed call notifications during all parts of a call: when picking up, hanging up, sometimes while swiping off a notification ( from older notifications as they are still unseen ? )
+        //todo PHONE: do i get two missed call notification during a busy call? But only one control message?
 
         //todo PHONE It seems we can't call if the phone has been in sleep for a while. The call (sending) doesn't seem to do anything (not receiving anything) - stuck on "Creating call" - also same when receiving a call, it starts ok but gets stuck
         //todo PHONE should we refactor ice candidates to be sent prior to answering the call?
 
     }
-
-    private fun isSameCall(intent: Intent): Boolean {
-        val expectedCallId = getCallId(intent)
-        return callManager.callId == expectedCallId
-    }
-
-    private fun isPreOffer() = callManager.isPreOffer()
-
-    private fun isBusy(intent: Intent) = callManager.isBusy(context, getCallId(intent))
 
     override fun onHangup() {
         serviceExecutor.execute {
@@ -222,14 +193,6 @@ class WebRtcCallBridge @Inject constructor(
             val callId = ((intent.getSerializableExtra(EXTRA_CALL_ID) as? UUID)?.toString() ?: "No callId")
             Log.i("Loki", "Handling ${intent.action} for call: ${callId}")
             when (action) {
-                ACTION_INCOMING_RING -> when {
-                    isSameCall(intent) && callManager.currentConnectionState == CallState.Reconnecting -> {
-                        handleNewOffer(intent)
-                    }
-                    isBusy(intent) -> handleBusyCall(intent)
-                    isPreOffer() -> handleIncomingPreOffer(intent)
-                }
-                ACTION_REMOTE_HANGUP -> handleRemoteHangup(intent)
                 ACTION_WIRED_HEADSET_CHANGE -> handleWiredHeadsetChanged(intent)
                 ACTION_SCREEN_OFF -> handleScreenOffChange(intent)
                 ACTION_ANSWER_INCOMING -> handleAnswerIncoming(intent)
@@ -246,20 +209,32 @@ class WebRtcCallBridge @Inject constructor(
         context.registerReceiver(wiredHeadsetStateReceiver, IntentFilter(AudioManager.ACTION_HEADSET_PLUG))
     }
 
-    private fun handleBusyCall(intent: Intent) {
-        val recipient = getRemoteRecipient(intent)
+    private fun handleBusyCall(address: Address) {
+        val recipient = getRecipientFromAddress(address)
         insertMissedCall(recipient, false)
     }
 
-    private fun handleNewOffer(intent: Intent) {
+    private fun handleNewOffer(address: Address, sdp: String, callId: UUID) {
         Log.d(TAG, "Handle new offer")
-        val offer = intent.getStringExtra(EXTRA_REMOTE_DESCRIPTION) ?: return
-        val callId = getCallId(intent)
-        val recipient = getRemoteRecipient(intent)
-        callManager.onNewOffer(offer, callId, recipient).fail {
+        val recipient = getRecipientFromAddress(address)
+        callManager.onNewOffer(sdp, callId, recipient).fail {
             Log.e("Loki", "Error handling new offer", it)
             callManager.postConnectionError()
             terminate()
+        }
+    }
+
+    fun onIncomingCall(address: Address, sdp: String, callId: UUID, callTime: Long){
+        when {
+            // same call / new offer
+            callManager.callId == callId &&
+                    callManager.currentConnectionState == CallState.Reconnecting -> {
+                handleNewOffer(address, sdp, callId)
+            }
+            // busy call
+            callManager.isBusy(context,callId) -> handleBusyCall(address)
+            // in pre offer
+            callManager.isPreOffer() -> handleIncomingPreOffer(address, sdp, callId, callTime)
         }
     }
 
@@ -299,19 +274,15 @@ class WebRtcCallBridge @Inject constructor(
         }
     }
 
-    private fun handleIncomingPreOffer(intent: Intent) {
-        val callId = getCallId(intent)
-        val recipient = getRemoteRecipient(intent)
+    private fun handleIncomingPreOffer(address: Address, sdp: String, callId: UUID, callTime: Long) {
+        val recipient = getRecipientFromAddress(address)
         val preOffer = callManager.preOfferCallData
         if (callManager.isPreOffer() && (preOffer == null || preOffer.callId != callId || preOffer.recipient != recipient)) {
             Log.d(TAG, "Incoming ring from non-matching pre-offer")
             return
         }
 
-        val offer = intent.getStringExtra(EXTRA_REMOTE_DESCRIPTION) ?: return
-        val timestamp = intent.getLongExtra(EXTRA_TIMESTAMP, -1)
-
-        callManager.onIncomingRing(offer, callId, recipient, timestamp) {
+        callManager.onIncomingRing(sdp, callId, recipient, callTime) {
             if (_hasAcceptedCall.value) {
                 setCallNotification(TYPE_INCOMING_CONNECTING, recipient)
             } else {
@@ -466,8 +437,8 @@ class WebRtcCallBridge @Inject constructor(
         terminate()
     }
 
-    private fun handleRemoteHangup(intent: Intent) {
-        if (callManager.callId != getCallId(intent)) {
+    fun handleRemoteHangup(callId: UUID) {
+        if (callManager.callId != callId) {
             Log.e(TAG, "Hangup for non-active call...")
             return
         }

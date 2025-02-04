@@ -88,8 +88,7 @@ class CallMessageProcessor(
     private fun incomingHangup(callMessage: CallMessage) {
         Log.d("", "CallMessageProcessor: incomingHangup")
         val callId = callMessage.callId ?: return
-        val hangupIntent = WebRtcCallBridge.remoteHangupIntent(context, callId)
-        webRtcService.sendCommand(hangupIntent)
+        webRtcService.handleRemoteHangup(callId)
     }
 
     private fun incomingAnswer(callMessage: CallMessage) {
@@ -142,14 +141,13 @@ class CallMessageProcessor(
         val recipientAddress = callMessage.sender ?: return
         val callId = callMessage.callId ?: return
         val sdp = callMessage.sdps.firstOrNull() ?: return
-        val incomingIntent = WebRtcCallBridge.incomingCall(
-                context = context,
-                address = Address.fromSerialized(recipientAddress),
-                sdp = sdp,
-                callId = callId,
-                callTime = callMessage.sentTimestamp!!
+
+        webRtcService.onIncomingCall(
+            address = Address.fromSerialized(recipientAddress),
+            sdp = sdp,
+            callId = callId,
+            callTime = callMessage.sentTimestamp!!
         )
-        webRtcService.sendCommand(incomingIntent)
     }
 
     data class IncomingCallMetadata(
