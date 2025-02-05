@@ -36,7 +36,7 @@ class RecoveryPasswordViewModel @Inject constructor(
     //   - "\s*"    - collapse multiple matches into a single character,
     //   - "\s{2,}" - replace any remaining instances of two or more spaces with a single space.
     val linebreakCollapseAndReplaceRegex = Regex("""\s*[\r\n\u2028\u2029]+\s*""")
-    val linebreakFilterDoubleSpacesRegex = Regex(""""\s{2,}""")
+    val linebreakFilterDoubleSpacesRegex = Regex("""\s{2,}""")
 
     val seed = MutableStateFlow<String?>(null)
     val mnemonic = seed.filterNotNull()
