@@ -29,12 +29,14 @@ class RecoveryPasswordViewModel @Inject constructor(
 
     // Regex to remove any spurious characters from our recovery password mnemonic.
     // The regex matches are:
-    //   - "\r"      - carriage return,
-    //   - "\n"      - newline,
-    //   - "\u2028"  - unicode line separator,
-    //   - "\u2029"  - unicode paragraph separator,
-    //   - "|\s{2,}" - two or more consecutive spaces.
-    val linebreakRemovalRegex = Regex("""[\r\n\u2028\u2029]+|\s{2,}""")
+    //   - "\r"     - carriage return,
+    //   - "\n"     - newline,
+    //   - "\u2028" - unicode line separator,
+    //   - "\u2029" - unicode paragraph separator,
+    //   - "\s*"    - collapse multiple matches into a single character,
+    //   - "\s{2,}" - replace any remaining instances of two or more spaces with a single space.
+    val linebreakCollapseAndReplaceRegex = Regex("""\s*[\r\n\u2028\u2029]+\s*""")
+    val linebreakFilterDoubleSpacesRegex = Regex(""""\s{2,}""")
 
     val seed = MutableStateFlow<String?>(null)
     val mnemonic = seed.filterNotNull()
@@ -51,7 +53,9 @@ class RecoveryPasswordViewModel @Inject constructor(
         prefs.setHasViewedSeed(true)
 
         // Ensure that our mnemonic words are separated by single spaces only without any control characters
-        val normalisedMnemonic = mnemonic.value.replace(linebreakRemovalRegex, " ")
+        val normalisedMnemonic = mnemonic.value
+            .replace(linebreakCollapseAndReplaceRegex, " ")
+            .replace(linebreakFilterDoubleSpacesRegex, " ") // Note: Order is important - do this AFTER we've collapsed things via the regex above.
 
         ClipData.newPlainText("Seed", normalisedMnemonic)
             .let(application.clipboard::setPrimaryClip)
