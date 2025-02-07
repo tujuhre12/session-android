@@ -85,6 +85,10 @@ class UserView : LinearLayout {
         }
     }
 
+    fun handleAdminStatus(isAdmin: Boolean){
+        binding.adminIcon.visibility = if (isAdmin) View.VISIBLE else View.GONE
+    }
+
     fun unbind() { binding.profilePictureView.recycle() }
     // endregion
 }
