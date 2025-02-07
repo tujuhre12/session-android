@@ -66,6 +66,8 @@ class EditLegacyGroupActivity : PassphraseRequiredActionBarActivity() {
     private var isLoading = false
         set(newValue) { field = newValue; invalidateOptionsMenu() }
 
+    private val groupInfo by lazy { DatabaseComponent.get(this).groupDatabase().getGroup(groupID).get() }
+
     private lateinit var groupID: String
     private lateinit var originalName: String
     private lateinit var name: String
@@ -79,9 +81,9 @@ class EditLegacyGroupActivity : PassphraseRequiredActionBarActivity() {
 
     private val memberListAdapter by lazy {
         if (isSelfAdmin)
-            EditLegacyGroupMembersAdapter(this, Glide.with(this), isSelfAdmin, this::onMemberClick)
+            EditLegacyGroupMembersAdapter(this, Glide.with(this), isSelfAdmin, ::checkUserIsAdmin , this::onMemberClick)
         else
-            EditLegacyGroupMembersAdapter(this, Glide.with(this), isSelfAdmin)
+            EditLegacyGroupMembersAdapter(this, Glide.with(this), isSelfAdmin, ::checkUserIsAdmin)
     }
 
     private lateinit var mainContentContainer: LinearLayout
@@ -108,9 +110,9 @@ class EditLegacyGroupActivity : PassphraseRequiredActionBarActivity() {
                 ThemeUtil.getThemedDrawableResId(this, R.attr.actionModeCloseDrawable))
 
         groupID = intent.getStringExtra(groupIDKey)!!
-        val groupInfo = DatabaseComponent.get(this).groupDatabase().getGroup(groupID).get()
+
         originalName = groupInfo.title
-        isSelfAdmin = groupInfo.admins.any { it.serialize() == TextSecurePreferences.getLocalNumber(this) }
+        isSelfAdmin = checkUserIsAdmin(TextSecurePreferences.getLocalNumber(this))
 
         name = originalName
 
@@ -203,6 +205,10 @@ class EditLegacyGroupActivity : PassphraseRequiredActionBarActivity() {
                 updateMembers()
             }
         }
+    }
+
+    private fun checkUserIsAdmin(userId: String?): Boolean{
+        return groupInfo.admins.any { it.serialize() == userId }
     }
 
     private fun handleIsEditingNameChanged() {

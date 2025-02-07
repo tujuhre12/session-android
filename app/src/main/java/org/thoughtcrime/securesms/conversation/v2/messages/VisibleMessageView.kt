@@ -61,8 +61,10 @@ import org.thoughtcrime.securesms.home.UserDetailsBottomSheet
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
 import network.loki.messenger.libsession_util.getOrNull
+import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsignal.utilities.AccountId
+import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.util.DateUtils
@@ -77,6 +79,7 @@ class VisibleMessageView : FrameLayout {
     private var replyDisabled: Boolean = false
     @Inject lateinit var threadDb: ThreadDatabase
     @Inject lateinit var lokiThreadDb: LokiThreadDatabase
+    @Inject lateinit var groupDb: GroupDatabase // for legacy groups only
     @Inject lateinit var lokiApiDb: LokiAPIDatabase
     @Inject lateinit var mmsSmsDb: MmsSmsDatabase
     @Inject lateinit var smsDb: SmsDatabase
@@ -211,7 +214,14 @@ class VisibleMessageView : FrameLayout {
                     }
                     val isModerator = OpenGroupManager.isUserModerator(context, openGroup.groupId, standardPublicKey, blindedPublicKey)
                     binding.moderatorIconImageView.isVisible = isModerator
-                } else if (thread.isGroupV2Recipient) {
+                }
+                else if (thread.isLegacyGroupRecipient) { // legacy groups
+                    val groupRecord = groupDb.getGroup(thread.address.toGroupString()).orNull()
+                    val isAdmin: Boolean = groupRecord?.admins?.contains(fromSerialized(senderAccountID)) ?: false
+
+                    binding.moderatorIconImageView.isVisible = isAdmin
+                }
+                else if (thread.isGroupV2Recipient) { // groups v2
                     val isAdmin = configFactory.withGroupConfigs(AccountId(thread.address.serialize())) {
                         it.groupMembers.getOrNull(senderAccountID)?.admin == true
                     }
