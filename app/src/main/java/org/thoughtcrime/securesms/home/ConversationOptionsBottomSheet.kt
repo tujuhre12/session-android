@@ -11,6 +11,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.FragmentConversationBottomSheetBinding
+import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.wasKickedFromGroupV2
@@ -32,6 +33,7 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
     var group: GroupRecord? = null
 
     @Inject lateinit var configFactory: ConfigFactory
+    @Inject lateinit var deprecationManager: LegacyGroupDeprecationManager
 
     var onViewDetailsTapped: (() -> Unit?)? = null
     var onCopyConversationId: (() -> Unit?)? = null
@@ -80,15 +82,28 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
         } else {
             binding.detailsTextView.visibility = View.GONE
         }
-        binding.copyConversationId.visibility = if (!recipient.isGroupOrCommunityRecipient && !recipient.isLocalNumber) View.VISIBLE else View.GONE
+
+        val isDeprecatedLegacyGroup = recipient.isLegacyGroupRecipient &&
+                deprecationManager.deprecationState.value == LegacyGroupDeprecationManager.DeprecationState.DEPRECATED
+
+        binding.copyConversationId.isVisible = !recipient.isGroupOrCommunityRecipient
+                && !recipient.isLocalNumber
+                && !isDeprecatedLegacyGroup
+
         binding.copyConversationId.setOnClickListener(this)
-        binding.copyCommunityUrl.visibility = if (recipient.isCommunityRecipient) View.VISIBLE else View.GONE
+        binding.copyCommunityUrl.isVisible = recipient.isCommunityRecipient
         binding.copyCommunityUrl.setOnClickListener(this)
+
         binding.unMuteNotificationsTextView.isVisible = recipient.isMuted && !recipient.isLocalNumber
+                && !isDeprecatedLegacyGroup
         binding.muteNotificationsTextView.isVisible = !recipient.isMuted && !recipient.isLocalNumber
+                && !isDeprecatedLegacyGroup
+
         binding.unMuteNotificationsTextView.setOnClickListener(this)
         binding.muteNotificationsTextView.setOnClickListener(this)
         binding.notificationsTextView.isVisible = recipient.isGroupOrCommunityRecipient && !recipient.isMuted
+                && !isDeprecatedLegacyGroup
+
         binding.notificationsTextView.setOnClickListener(this)
 
         // delete
@@ -132,11 +147,12 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
             TextViewCompat.setCompoundDrawablesRelativeWithIntrinsicBounds(this, drawableStartRes, 0, 0, 0)
         }
 
-        binding.markAllAsReadTextView.isVisible = thread.unreadCount > 0 ||
-                configFactory.withUserConfigs { it.convoInfoVolatile.getConversationUnread(thread) }
+        binding.markAllAsReadTextView.isVisible = (thread.unreadCount > 0 ||
+                configFactory.withUserConfigs { it.convoInfoVolatile.getConversationUnread(thread) })
+                && !isDeprecatedLegacyGroup
         binding.markAllAsReadTextView.setOnClickListener(this)
-        binding.pinTextView.isVisible = !thread.isPinned
-        binding.unpinTextView.isVisible = thread.isPinned
+        binding.pinTextView.isVisible = !thread.isPinned && !isDeprecatedLegacyGroup
+        binding.unpinTextView.isVisible = thread.isPinned && !isDeprecatedLegacyGroup
         binding.pinTextView.setOnClickListener(this)
         binding.unpinTextView.setOnClickListener(this)
     }
