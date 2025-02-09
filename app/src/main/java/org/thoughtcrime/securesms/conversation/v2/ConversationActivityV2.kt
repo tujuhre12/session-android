@@ -509,7 +509,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                 setUpSearchResultObserver()
                 scrollToFirstUnreadMessageIfNeeded()
                 setUpOutdatedClientBanner()
-                setUpLegacyGroupBanner()
+                setUpLegacyGroupUI()
 
                 if (author != null && messageTimestamp >= 0 && targetPosition >= 0) {
                     binding.conversationRecyclerView.scrollToPosition(targetPosition)
@@ -543,6 +543,22 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         }
 
         setupMentionView()
+        setupUiEventsObserver()
+    }
+
+    private fun setupUiEventsObserver() {
+        lifecycleScope.launch {
+            viewModel.uiEvents.collect { event ->
+                when (event) {
+                    is ConversationUiEvent.NavigateToConversation -> {
+                        finish()
+                        startActivity(Intent(this@ConversationActivityV2, ConversationActivityV2::class.java)
+                            .putExtra(THREAD_ID, event.threadId)
+                        )
+                    }
+                }
+            }
+        }
     }
 
     private fun setupMentionView() {
@@ -829,7 +845,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         }
     }
 
-    private fun setUpLegacyGroupBanner() {
+    private fun setUpLegacyGroupUI() {
         lifecycleScope.launch {
             viewModel.legacyGroupBanner
                 .collectLatest { banner ->
@@ -843,12 +859,15 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                                 // we need to add the inline icon
                                 val drawable = ContextCompat.getDrawable(this@ConversationActivityV2, R.drawable.ic_external)!!
                                 val imageSize = toPx(10, resources)
-                                val imagePaddingTop = toPx(4, resources)
+                                val imagePadding = toPx(4, resources)
                                 drawable.setBounds(0, 0, imageSize, imageSize)
                                 drawable.setTint(getColorFromAttr(R.attr.message_sent_text_color))
 
                                 setSpan(
-                                    PaddedImageSpan(drawable, ImageSpan.ALIGN_BASELINE, imagePaddingTop),
+                                    PaddedImageSpan(drawable, ImageSpan.ALIGN_BASELINE,
+                                        paddingStart = imagePadding,
+                                        paddingTop = imagePadding
+                                    ),
                                     length - 1,
                                     length,
                                     Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
@@ -860,6 +879,17 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                         }
                     }
                 }
+        }
+
+        lifecycleScope.launch {
+            viewModel.showRecreateGroupButton
+                .collectLatest { show ->
+                    binding.recreateGroupButtonContainer.isVisible = show
+                }
+        }
+
+        binding.recreateGroupButton.setOnClickListener {
+            viewModel.onCommand(ConversationViewModel.Commands.RecreateGroup)
         }
     }
 
@@ -963,6 +993,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                 thread = recipient,
                 context = this,
                 configFactory = configFactory,
+                deprecationManager = viewModel.legacyGroupDeprecationManager
             )
         }
         maybeUpdateToolbar(recipient)
