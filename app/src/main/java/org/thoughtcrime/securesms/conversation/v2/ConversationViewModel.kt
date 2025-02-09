@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.conversation.v2
 
 import android.app.Application
 import android.content.Context
+import android.content.Intent
 import android.view.MenuItem
 import android.widget.Toast
 import androidx.annotation.StringRes
@@ -9,23 +10,22 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.goterl.lazysodium.utils.KeyPair
+import com.squareup.phrase.Phrase
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.consumeEach
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -33,6 +33,7 @@ import network.loki.messenger.R
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
+import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.open_groups.OpenGroupApi
@@ -40,7 +41,7 @@ import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAt
 import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
-import org.session.libsession.utilities.ConfigUpdateNotification
+import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.MessageType
@@ -63,9 +64,10 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.mms.AudioSlide
 import org.thoughtcrime.securesms.repository.ConversationRepository
+import org.thoughtcrime.securesms.util.DateUtils
+import java.time.ZoneId
 import java.util.UUID
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class ConversationViewModel(
     val threadId: Long,
     val edKeyPair: KeyPair?,
@@ -80,6 +82,7 @@ class ConversationViewModel(
     private val textSecurePreferences: TextSecurePreferences,
     private val configFactory: ConfigFactory,
     private val groupManagerV2: GroupManagerV2,
+    val legacyGroupDeprecationManager: LegacyGroupDeprecationManager,
 ) : ViewModel() {
 
     val showSendAfterApprovalText: Boolean
@@ -87,6 +90,9 @@ class ConversationViewModel(
 
     private val _uiState = MutableStateFlow(ConversationUiState())
     val uiState: StateFlow<ConversationUiState> get() = _uiState
+
+    private val _uiEvents = MutableSharedFlow<ConversationUiEvent>(extraBufferCapacity = 1)
+    val uiEvents: SharedFlow<ConversationUiEvent> get() = _uiEvents
 
     private val _dialogsState = MutableStateFlow(DialogsState())
     val dialogsState: StateFlow<DialogsState> = _dialogsState
@@ -195,6 +201,32 @@ class ConversationViewModel(
         // allow reactions if the open group is null (normal conversations) or the open group's capabilities include reactions
         get() = (openGroup == null || OpenGroupApi.Capability.REACTIONS.name.lowercase() in serverCapabilities)
 
+    val legacyGroupBanner: StateFlow<CharSequence?> = combine(
+        legacyGroupDeprecationManager.deprecationState,
+        legacyGroupDeprecationManager.deprecationTime,
+        isAdmin
+    ) { state, time, admin ->
+        when {
+            recipient?.isLegacyGroupRecipient != true -> null
+            state == LegacyGroupDeprecationManager.DeprecationState.DEPRECATED -> {
+                Phrase.from(application, if (admin) R.string.legacyGroupAfterDeprecationAdmin else R.string.legacyGroupAfterDeprecationMember)
+                    .format()
+            }
+            else -> Phrase.from(application, if (admin) R.string.legacyGroupBeforeDeprecationAdmin else R.string.legacyGroupBeforeDeprecationMember)
+                .put(DATE_KEY,
+                    time.withZoneSameInstant(ZoneId.systemDefault())
+                        .toLocalDate()
+                        .format(DateUtils.getShortDateFormatter())
+                )
+                .format()
+        }
+    }.stateIn(viewModelScope, SharingStarted.Lazily, null)
+
+    val showRecreateGroupButton: StateFlow<Boolean> = isAdmin
+        .map { admin ->
+            admin && recipient?.isLegacyGroupRecipient == true
+        }.stateIn(viewModelScope, SharingStarted.Lazily, false)
+
     private val attachmentDownloadHandler = AttachmentDownloadHandler(
         storage = storage,
         messageDataProvider = messageDataProvider,
@@ -206,17 +238,18 @@ class ConversationViewModel(
             combine(
                 repository.recipientUpdateFlow(threadId),
                 _openGroup,
-            ) { a, b -> a to b }
-                .collect { (recipient, community) ->
-                    _uiState.update {
-                        it.copy(
-                            shouldExit = recipient == null,
-                            showInput = shouldShowInput(recipient, community),
-                            enableInputMediaControls = shouldEnableInputMediaControls(recipient),
-                            messageRequestState = buildMessageRequestState(recipient),
-                        )
-                    }
+                legacyGroupDeprecationManager.deprecationState,
+                ::Triple
+            ).collect { (recipient, community, deprecationState) ->
+                _uiState.update {
+                    it.copy(
+                        shouldExit = recipient == null,
+                        showInput = shouldShowInput(recipient, community, deprecationState),
+                        enableInputMediaControls = shouldEnableInputMediaControls(recipient),
+                        messageRequestState = buildMessageRequestState(recipient),
+                    )
                 }
+            }
         }
 
         // Listen for changes in the open group's write access
@@ -260,13 +293,18 @@ class ConversationViewModel(
      * For these situations we hide the input bar:
      *  1. The user has been kicked from a group(v2), OR
      *  2. The legacy group is inactive, OR
-     *  3. The community chat is read only
+     *  3. The legacy group is deprecated, OR
+     *  4. The community chat is read only
      */
-    private fun shouldShowInput(recipient: Recipient?, community: OpenGroup?): Boolean {
+    private fun shouldShowInput(recipient: Recipient?,
+                                community: OpenGroup?,
+                                deprecationState: LegacyGroupDeprecationManager.DeprecationState
+    ): Boolean {
         return when {
             recipient?.isGroupV2Recipient == true -> !repository.isGroupReadOnly(recipient)
             recipient?.isLegacyGroupRecipient == true -> {
-                groupDb.getGroup(recipient.address.toGroupString()).orNull()?.isActive == true
+                groupDb.getGroup(recipient.address.toGroupString()).orNull()?.isActive == true &&
+                        deprecationState != LegacyGroupDeprecationManager.DeprecationState.DEPRECATED
             }
             community != null -> community.canWrite
             else -> true
@@ -919,6 +957,37 @@ class ConversationViewModel(
             is Commands.ClearEmoji -> {
                 clearEmoji(command.emoji, command.messageId)
             }
+
+            Commands.RecreateGroup -> {
+                _dialogsState.update {
+                    it.copy(recreateGroupConfirm = true)
+                }
+            }
+
+            Commands.HideRecreateGroupConfirm -> {
+                _dialogsState.update {
+                    it.copy(recreateGroupConfirm = false)
+                }
+            }
+
+            Commands.ConfirmRecreateGroup -> {
+                _dialogsState.update {
+                    it.copy(
+                        recreateGroupConfirm = false,
+                        recreateGroupData = recipient?.address?.serialize()?.let { addr -> RecreateGroupDialogData(legacyGroupId = addr) }
+                    )
+                }
+            }
+
+            Commands.HideRecreateGroup -> {
+                _dialogsState.update {
+                    it.copy(recreateGroupData = null)
+                }
+            }
+
+            is Commands.NavigateToConversation -> {
+                _uiEvents.tryEmit(ConversationUiEvent.NavigateToConversation(command.threadId))
+            }
         }
     }
 
@@ -1000,6 +1069,7 @@ class ConversationViewModel(
         private val textSecurePreferences: TextSecurePreferences,
         private val configFactory: ConfigFactory,
         private val groupManagerV2: GroupManagerV2,
+        private val legacyGroupDeprecationManager: LegacyGroupDeprecationManager,
     ) : ViewModelProvider.Factory {
 
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -1017,6 +1087,7 @@ class ConversationViewModel(
                 textSecurePreferences = textSecurePreferences,
                 configFactory = configFactory,
                 groupManagerV2 = groupManagerV2,
+                legacyGroupDeprecationManager = legacyGroupDeprecationManager,
             ) as T
         }
     }
@@ -1024,7 +1095,13 @@ class ConversationViewModel(
     data class DialogsState(
         val openLinkDialogUrl: String? = null,
         val clearAllEmoji: ClearAllEmoji? = null,
-        val deleteEveryone: DeleteForEveryoneDialogData? = null
+        val deleteEveryone: DeleteForEveryoneDialogData? = null,
+        val recreateGroupConfirm: Boolean = false,
+        val recreateGroupData: RecreateGroupDialogData? = null,
+    )
+
+    data class RecreateGroupDialogData(
+        val legacyGroupId: String,
     )
 
     data class DeleteForEveryoneDialogData(
@@ -1041,16 +1118,22 @@ class ConversationViewModel(
         val messageId: MessageId
     )
 
-    sealed class Commands {
-        data class ShowOpenUrlDialog(val url: String?) : Commands()
+    sealed interface Commands {
+        data class ShowOpenUrlDialog(val url: String?) : Commands
 
-        data class ClearEmoji(val emoji:String, val messageId: MessageId) : Commands()
+        data class ClearEmoji(val emoji:String, val messageId: MessageId) : Commands
 
-        data object HideDeleteEveryoneDialog : Commands()
-        data object HideClearEmoji : Commands()
+        data object HideDeleteEveryoneDialog : Commands
+        data object HideClearEmoji : Commands
 
-        data class MarkAsDeletedLocally(val messages: Set<MessageRecord>): Commands()
-        data class MarkAsDeletedForEveryone(val data: DeleteForEveryoneDialogData): Commands()
+        data class MarkAsDeletedLocally(val messages: Set<MessageRecord>): Commands
+        data class MarkAsDeletedForEveryone(val data: DeleteForEveryoneDialogData): Commands
+
+        data object RecreateGroup : Commands
+        data object ConfirmRecreateGroup : Commands
+        data object HideRecreateGroupConfirm : Commands
+        data object HideRecreateGroup : Commands
+        data class NavigateToConversation(val threadId: Long) : Commands
     }
 }
 
@@ -1064,6 +1147,10 @@ data class ConversationUiState(
     val enableInputMediaControls: Boolean = true,
     val showLoader: Boolean = false,
 )
+
+sealed interface ConversationUiEvent {
+    data class NavigateToConversation(val threadId: Long) : ConversationUiEvent
+}
 
 sealed interface MessageRequestUiState {
     data object Invisible : MessageRequestUiState

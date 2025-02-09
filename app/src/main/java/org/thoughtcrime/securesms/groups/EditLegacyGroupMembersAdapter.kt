@@ -13,6 +13,7 @@ class EditLegacyGroupMembersAdapter(
     private val context: Context,
     private val glide: RequestManager,
     private val admin: Boolean,
+    private val checkIsAdmin: (String) -> Boolean,
     private val memberClickListener: ((String) -> Unit)? = null
 ) : RecyclerView.Adapter<EditLegacyGroupMembersAdapter.ViewHolder>() {
 
@@ -59,6 +60,8 @@ class EditLegacyGroupMembersAdapter(
         } else {
             viewHolder.view.setOnClickListener(null)
         }
+
+        viewHolder.view.handleAdminStatus(checkIsAdmin(member))
     }
 
     class ViewHolder(val view: UserView) : RecyclerView.ViewHolder(view)
