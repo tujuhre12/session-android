@@ -125,12 +125,7 @@ class WebRtcCallBridge @Inject constructor(
         scheduledTimeout = null
         scheduledReconnect = null
         callManager.postViewModelState(CallViewModel.State.CALL_INITIALIZING) // reset to default state
-
-
-        //todo PHONE GETTING missed call notifications during all parts of a call: when picking up, hanging up, sometimes while swiping off a notification ( from older notifications as they are still unseen ? )
-        //todo PHONE: do i get two missed call notification during a busy call? But only one control message?
-
-        //todo PHONE It seems we can't call if the phone has been in sleep for a while. The call (sending) doesn't seem to do anything (not receiving anything) - stuck on "Creating call" - also same when receiving a call, it starts ok but gets stuck
+        
         //todo PHONE should we refactor ice candidates to be sent prior to answering the call?
 
     }
