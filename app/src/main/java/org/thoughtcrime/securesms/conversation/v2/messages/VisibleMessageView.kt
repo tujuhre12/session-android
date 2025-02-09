@@ -63,7 +63,7 @@ import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.home.UserDetailsBottomSheet
 import network.loki.messenger.libsession_util.getOrNull
-import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.disableClipping
 import org.thoughtcrime.securesms.util.toDp
@@ -282,6 +282,12 @@ class VisibleMessageView : FrameLayout {
         onDoubleTap = { binding.messageContentView.root.onContentDoubleTap?.invoke() }
     }
 
+    private fun showNonDisappearingMessageStatus() {
+        binding.messageStatusTextView.isVisible  = true
+        binding.messageStatusImageView.isVisible = true
+        binding.messageStatusImageView.bringToFront()
+    }
+
     // Method to display or hide the status of a message.
     // Note: Although most commonly used to display the delivery status of a message, we also use the
     // message status area to display the disappearing messages state - so in this latter case we'll
@@ -326,7 +332,7 @@ class VisibleMessageView : FrameLayout {
         //   ii.) outgoing but NOT scheduled to disappear, or
         //   iii.) outgoing AND scheduled to disappear.
 
-        // ----- Case i..) Message is incoming and scheduled to disappear -----
+        // ----- Case i..) Message is incoming AND scheduled to disappear -----
         if (message.isIncoming && scheduledToDisappear) {
             // Display the status ('Read') and the show the timer only (no delivery icon)
             binding.messageStatusTextView.isVisible  = true
@@ -340,21 +346,47 @@ class VisibleMessageView : FrameLayout {
 
         // ----- Case ii.) Message is outgoing but NOT scheduled to disappear -----
         if (!scheduledToDisappear) {
-            // If this isn't a disappearing message then we never show the timer
+            // We always show the status of messages which are in the process of being sent
+            val msgIsSending = message.isOutgoing && !message.isSent
+            if (msgIsSending) {
+                showNonDisappearingMessageStatus()
+                return
+            }
 
-            // If the message has NOT been successfully sent then always show the delivery status text and icon..
-            val neitherSentNorRead = !(message.isSent || message.isRead)
-            if (neitherSentNorRead) {
-                binding.messageStatusTextView.isVisible = true
-                binding.messageStatusImageView.isVisible = true
-            } else {
-                // ..but if the message HAS been successfully sent or read then only display the delivery status
-                // text and image if this is the last sent message.
+            // In the case of messages that we can confirm to be sent then we only show the
+            // the status of the most recently sent message.
+            // For non-blinded recipients w
+            val msgHasBeenSent = message.isOutgoing && message.isSent
+            if (msgHasBeenSent) {
                 val lastSentTimestamp = lastSentTimestampCache.getTimestamp(message.threadId)
-                val isLastSent = lastSentTimestamp == message.timestamp
-                binding.messageStatusTextView.isVisible  = isLastSent
-                binding.messageStatusImageView.isVisible = isLastSent
-                if (isLastSent) { binding.messageStatusImageView.bringToFront() }
+                if (lastSentTimestamp == null) {
+                    Log.w(TAG, "No last sent timestamp found for message ${message.id} - skipping.")
+                    return
+                }
+
+                // If we found that this message exactly matches the last sent timestamp in our
+                // cache then we show the message details and leave.
+                val gotIdenticalLastSentMatch = lastSentTimestamp == message.timestamp
+                if (gotIdenticalLastSentMatch) {
+                    showNonDisappearingMessageStatus()
+                    return
+                }
+
+                // In the case of blinded community messages we must compare against the server's message
+                // timestamp which is rounded down to the nearest second to find our last outgoing message.
+                val roundedDownMsgTimestamp    = message.timestamp / 1000 * 1000
+                val roundedDownCachedTimestamp = lastSentTimestamp / 1000 * 1000
+                val gotRoundedLastSentMatch = roundedDownMsgTimestamp == roundedDownCachedTimestamp
+                if (gotRoundedLastSentMatch) {
+                    // This is the last sent message on a community with a blinded recipient - so show
+                    // the message status and leave.
+                    showNonDisappearingMessageStatus()
+                    return
+                } else {
+                    // At this point we've exhausted our last sent message matching without identifying a msg, so
+                    // this is NOT the last sent message & we leave with the status details hidden.
+                    return
+                }
             }
         }
         else // ----- Case iii.) Message is outgoing AND scheduled to disappear -----
@@ -466,8 +498,8 @@ class VisibleMessageView : FrameLayout {
     override fun onDraw(canvas: Canvas) {
         val spacing = context.resources.getDimensionPixelSize(R.dimen.medium_spacing)
         val iconSize = toPx(24, context.resources)
-        val left =  if(isOutgoing) binding.messageInnerContainer.right + spacing
-            else binding.messageInnerContainer.left + binding.messageContentView.root.right + spacing
+        val left =  if (isOutgoing) binding.messageInnerContainer.right + spacing
+                    else            binding.messageInnerContainer.left + binding.messageContentView.root.right + spacing
         val top = (binding.messageInnerContainer.height / 2) + (iconSize / 2)
         val right = left + iconSize
         val bottom = top + iconSize
