@@ -476,8 +476,8 @@ object MessageSender {
             // pair of modified "markAsSentToCommunity" and "markUnidentifiedInCommunity" methods
             // to retrieve the local message by thread & message ID rather than timestamp when
             // handling community messages only so we can tick the delivery status over to 'Sent'.
-            // Fixed in: https://optf.atlassian.net/browse/SES-1567
-            if (messageIsAddressedToCommunity)
+            // Also: Blinded message message timestamps are rounded down to the nearest second.
+            if (messageIsAddressedToCommunity || destination is Destination.OpenGroupInbox)
             {
                 storage.markAsSentToCommunity(message.threadID!!, message.id!!)
                 storage.markUnidentifiedInCommunity(message.threadID!!, message.id!!)
