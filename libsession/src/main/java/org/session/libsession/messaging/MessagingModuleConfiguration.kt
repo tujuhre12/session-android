@@ -1,19 +1,15 @@
 package org.session.libsession.messaging
 
 import android.content.Context
-import com.goterl.lazysodium.utils.KeyPair
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
-import org.session.libsession.messaging.groups.GroupScope
 import org.session.libsession.messaging.notifications.TokenFetcher
-import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.Device
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.Toaster
-import org.session.libsignal.utilities.AccountId
 
 class MessagingModuleConfiguration(
     val context: Context,
@@ -21,7 +17,7 @@ class MessagingModuleConfiguration(
     val device: Device,
     val messageDataProvider: MessageDataProvider,
     val configFactory: ConfigFactoryProtocol,
-    val lastSentTimestampCache: LastSentTimestampCache,
+    val lastSentMessageIdCache: LastSentMessageIdCache,
     val toaster: Toaster,
     val tokenFetcher: TokenFetcher,
     val groupManagerV2: GroupManagerV2,

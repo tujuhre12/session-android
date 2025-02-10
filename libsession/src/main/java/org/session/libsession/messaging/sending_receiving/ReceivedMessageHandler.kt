@@ -353,7 +353,7 @@ fun MessageReceiver.handleVisibleMessage(
 ): Long? {
     val storage = MessagingModuleConfiguration.shared.storage
     val context = MessagingModuleConfiguration.shared.context
-    message.takeIf { it.isSenderSelf }?.sentTimestamp?.let { MessagingModuleConfiguration.shared.lastSentTimestampCache.submitTimestamp(threadId, it) }
+    message.takeIf { it.isSenderSelf }?.sentTimestamp?.let { MessagingModuleConfiguration.shared.lastSentMessageIdCache.submitMessageId(threadId, message.id!!) }
     val userPublicKey = storage.getUserPublicKey()
     val messageSender: String? = message.sender
 

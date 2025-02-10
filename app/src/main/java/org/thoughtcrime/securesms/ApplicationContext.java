@@ -67,7 +67,7 @@ import org.signal.aesgcmprovider.AesGcmProvider;
 import org.thoughtcrime.securesms.components.TypingStatusSender;
 import org.thoughtcrime.securesms.configs.ConfigUploader;
 import org.thoughtcrime.securesms.database.EmojiSearchDatabase;
-import org.thoughtcrime.securesms.database.LastSentTimestampCache;
+import org.thoughtcrime.securesms.database.LastSentMessageIdCache;
 import org.thoughtcrime.securesms.database.LokiAPIDatabase;
 import org.thoughtcrime.securesms.database.Storage;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
@@ -150,7 +150,8 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     @Inject TextSecurePreferences textSecurePreferences;
     @Inject ConfigFactory configFactory;
     @Inject PollerFactory pollerFactory;
-    @Inject LastSentTimestampCache lastSentTimestampCache;
+    @Inject
+    LastSentMessageIdCache lastSentTimestampCache;
     @Inject VersionDataFetcher versionDataFetcher;
     @Inject PushRegistrationHandler pushRegistrationHandler;
     @Inject TokenFetcher tokenFetcher;

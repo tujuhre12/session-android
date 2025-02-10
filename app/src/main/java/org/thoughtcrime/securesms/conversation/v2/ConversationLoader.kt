@@ -13,7 +13,7 @@ class ConversationLoader(
 ) : AbstractCursorLoader(context) {
 
     override fun getCursor(): Cursor {
-        MessagingModuleConfiguration.shared.lastSentTimestampCache.refresh(threadID)
+        MessagingModuleConfiguration.shared.lastSentMessageIdCache.refresh(threadID)
         return DatabaseComponent.get(context).mmsSmsDatabase().getConversation(threadID, reverse)
     }
 }
