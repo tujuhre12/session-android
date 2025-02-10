@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.groups
+package org.thoughtcrime.securesms.groups.legacy
 
 import android.content.Context
 import android.content.Intent
@@ -37,6 +37,7 @@ import org.thoughtcrime.securesms.contacts.SelectContactsActivity
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
+import org.thoughtcrime.securesms.groups.ClosedGroupEditingOptionsBottomSheet
 import org.thoughtcrime.securesms.groups.ClosedGroupManager.updateLegacyGroup
 import org.thoughtcrime.securesms.util.fadeIn
 import org.thoughtcrime.securesms.util.fadeOut
