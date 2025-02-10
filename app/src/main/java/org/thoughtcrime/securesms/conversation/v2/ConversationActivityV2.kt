@@ -20,7 +20,7 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
 import android.text.Spannable
-import android.text.SpannableString
+import android.text.SpannableStringBuilder
 import android.text.TextUtils
 import android.text.style.ImageSpan
 import android.util.Pair
@@ -86,12 +86,12 @@ import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
-import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.MediaTypes
+import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.CONVERSATION_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
@@ -516,7 +516,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 setUpSearchResultObserver()
                 scrollToFirstUnreadMessageIfNeeded()
                 setUpOutdatedClientBanner()
-                setUpLegacyGroupBanner()
+                setUpLegacyGroupUI()
 
                 if (author != null && messageTimestamp >= 0 && targetPosition >= 0) {
                     binding.conversationRecyclerView.scrollToPosition(targetPosition)
@@ -550,6 +550,22 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
 
         setupMentionView()
+        setupUiEventsObserver()
+    }
+
+    private fun setupUiEventsObserver() {
+        lifecycleScope.launch {
+            viewModel.uiEvents.collect { event ->
+                when (event) {
+                    is ConversationUiEvent.NavigateToConversation -> {
+                        finish()
+                        startActivity(Intent(this@ConversationActivityV2, ConversationActivityV2::class.java)
+                            .putExtra(THREAD_ID, event.threadId)
+                        )
+                    }
+                }
+            }
+        }
     }
 
     private fun setupMentionView() {
@@ -843,42 +859,51 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
     }
 
-    private fun setUpLegacyGroupBanner() {
-        val shouldDisplayBanner = viewModel.recipient?.isLegacyGroupRecipient ?: return
+    private fun setUpLegacyGroupUI() {
+        lifecycleScope.launch {
+            viewModel.legacyGroupBanner
+                .collectLatest { banner ->
+                    if (banner == null) {
+                        binding.outdatedGroupBanner.isVisible = false
+                        binding.outdatedGroupBanner.text = null
+                    } else {
+                        binding.outdatedGroupBanner.isVisible = true
+                        binding.outdatedGroupBanner.text = SpannableStringBuilder(banner)
+                            .apply {
+                                // we need to add the inline icon
+                                val drawable = ContextCompat.getDrawable(this@ConversationActivityV2, R.drawable.ic_square_arrow_up_right)!!
+                                val imageSize = toPx(10, resources)
+                                val imagePadding = toPx(4, resources)
+                                drawable.setBounds(0, 0, imageSize, imageSize)
+                                drawable.setTint(getColorFromAttr(R.attr.message_sent_text_color))
 
-        binding.outdatedGroupBanner.isVisible = shouldDisplayBanner
-        if (!shouldDisplayBanner) return
+                                setSpan(
+                                    PaddedImageSpan(drawable, ImageSpan.ALIGN_BASELINE,
+                                        paddingStart = imagePadding,
+                                        paddingTop = imagePadding
+                                    ),
+                                    length - 1,
+                                    length,
+                                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                                )
+                            }
 
-        val url = "https://getsession.org/blog/session-groups-v2"
+                        binding.outdatedGroupBanner.setOnClickListener {
+                            showOpenUrlDialog(NonTranslatableStringConstants.GROUP_UPDATE_URL)
+                        }
+                    }
+                }
+        }
 
-        with(binding) {
-            // Create a SpannableString with text
-            val text = SpannableString(
-                Phrase.from(this@ConversationActivityV2, R.string.groupLegacyBanner)
-                //TODO groupsv2, date
-                .put(DATE_KEY, "")
-                .format()
-            )
+        lifecycleScope.launch {
+            viewModel.showRecreateGroupButton
+                .collectLatest { show ->
+                    binding.recreateGroupButtonContainer.isVisible = show
+                }
+        }
 
-            // we need to add the inline icon
-            val drawable = ContextCompat.getDrawable(this@ConversationActivityV2, R.drawable.ic_square_arrow_up_right)
-            val imageSize = toPx(10, resources)
-            val imagePaddingTop = toPx(4, resources)
-            drawable?.setBounds(0, 0, imageSize, imageSize)
-            drawable?.setTint(getColorFromAttr(R.attr.message_sent_text_color))
-
-            // Create an ImageSpan with the drawable
-            val imageSpan = PaddedImageSpan(drawable!!, ImageSpan.ALIGN_BASELINE, imagePaddingTop)
-
-            // Append the image to the text
-            val spannable = SpannableString(text)
-            spannable.setSpan(imageSpan, text.length - 1, text.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-
-            outdatedGroupBanner.text = spannable
-
-            outdatedGroupBanner.setOnClickListener {
-                showOpenUrlDialog(url)
-            }
+        binding.recreateGroupButton.setOnClickListener {
+            viewModel.onCommand(ConversationViewModel.Commands.RecreateGroup)
         }
     }
 
@@ -993,6 +1018,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 thread = recipient,
                 context = this,
                 configFactory = configFactory,
+                deprecationManager = viewModel.legacyGroupDeprecationManager
             )
         }
         maybeUpdateToolbar(recipient)
