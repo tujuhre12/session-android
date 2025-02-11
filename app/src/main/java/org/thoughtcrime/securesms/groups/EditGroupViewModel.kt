@@ -79,13 +79,16 @@ class EditGroupViewModel @AssistedInject constructor(
         get() = groupInfo.value?.second?.mapTo(hashSetOf()) { it.accountId }.orEmpty()
 
     fun onContactSelected(contacts: Set<AccountId>) {
-        performGroupOperation(errorMessage = { err ->
-            if (err is GroupInviteException) {
-                err.format(context, storage).toString()
-            } else {
-                null
+        performGroupOperation(
+            showLoading = false,
+            errorMessage = { err ->
+                if (err is GroupInviteException) {
+                    err.format(context, storage).toString()
+                } else {
+                    null
+                }
             }
-        }) {
+        ) {
             groupManager.inviteMembers(
                 groupId,
                 contacts.toList(),
@@ -99,13 +102,13 @@ class EditGroupViewModel @AssistedInject constructor(
     }
 
     fun onPromoteContact(memberSessionId: AccountId) {
-        performGroupOperation {
+        performGroupOperation(showLoading = false) {
             groupManager.promoteMember(groupId, listOf(memberSessionId))
         }
     }
 
     fun onRemoveContact(contactSessionId: AccountId, removeMessages: Boolean) {
-        performGroupOperation {
+        performGroupOperation(showLoading = false) {
             groupManager.removeMembers(
                 groupAccountId = groupId,
                 removedMembers = listOf(contactSessionId),
@@ -170,10 +173,13 @@ class EditGroupViewModel @AssistedInject constructor(
      * This is a helper function that encapsulates the common error handling and progress tracking.
      */
     private fun performGroupOperation(
+        showLoading: Boolean = true,
         errorMessage: ((Throwable) -> String?)? = null,
         operation: suspend () -> Unit) {
         viewModelScope.launch {
-            mutableInProgress.value = true
+            if (showLoading) {
+                mutableInProgress.value = true
+            }
 
             // We need to use GlobalScope here because we don't want
             // any group operation to be cancelled when the view model is cleared.
@@ -188,7 +194,9 @@ class EditGroupViewModel @AssistedInject constructor(
                 mutableError.value = errorMessage?.invoke(e)
                     ?: context.getString(R.string.errorUnknown)
             } finally {
-                mutableInProgress.value = false
+                if (showLoading) {
+                    mutableInProgress.value = false
+                }
             }
         }
     }
