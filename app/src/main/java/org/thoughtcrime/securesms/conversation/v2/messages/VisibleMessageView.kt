@@ -38,12 +38,15 @@ import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewEmojiReactionsBinding
 import network.loki.messenger.databinding.ViewVisibleMessageBinding
 import network.loki.messenger.databinding.ViewstubVisibleMessageMarkerContainerBinding
+import network.loki.messenger.libsession_util.getOrNull
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.contacts.Contact.ContactContext
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.ThemeUtil.getThemedColor
 import org.session.libsession.utilities.ViewUtil
 import org.session.libsession.utilities.getColorFromAttr
@@ -51,6 +54,7 @@ import org.session.libsession.utilities.modifyLayoutParams
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
+import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.MmsDatabase
@@ -61,9 +65,6 @@ import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.home.UserDetailsBottomSheet
-import network.loki.messenger.libsession_util.getOrNull
-import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.MessageUtils
 import org.thoughtcrime.securesms.util.disableClipping
@@ -77,6 +78,7 @@ class VisibleMessageView : FrameLayout {
     private var replyDisabled: Boolean = false
     @Inject lateinit var threadDb: ThreadDatabase
     @Inject lateinit var lokiThreadDb: LokiThreadDatabase
+    @Inject lateinit var groupDb: GroupDatabase // for legacy groups only
     @Inject lateinit var lokiApiDb: LokiAPIDatabase
     @Inject lateinit var mmsSmsDb: MmsSmsDatabase
     @Inject lateinit var smsDb: SmsDatabase
@@ -219,7 +221,14 @@ class VisibleMessageView : FrameLayout {
                     }
                     val isModerator = OpenGroupManager.isUserModerator(context, openGroup.groupId, standardPublicKey, blindedPublicKey)
                     binding.moderatorIconImageView.isVisible = isModerator
-                } else if (thread.isGroupV2Recipient) {
+                }
+                else if (thread.isLegacyGroupRecipient) { // legacy groups
+                    val groupRecord = groupDb.getGroup(thread.address.toGroupString()).orNull()
+                    val isAdmin: Boolean = groupRecord?.admins?.contains(fromSerialized(senderAccountID)) ?: false
+
+                    binding.moderatorIconImageView.isVisible = isAdmin
+                }
+                else if (thread.isGroupV2Recipient) { // groups v2
                     val isAdmin = configFactory.withGroupConfigs(AccountId(thread.address.serialize())) {
                         it.groupMembers.getOrNull(senderAccountID)?.admin == true
                     }

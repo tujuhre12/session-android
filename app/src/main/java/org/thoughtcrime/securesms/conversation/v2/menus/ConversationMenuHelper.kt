@@ -28,6 +28,7 @@ import java.io.IOException
 import network.loki.messenger.R
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
+import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.leave
 import org.session.libsession.utilities.GroupUtil.doubleDecodeGroupID
@@ -49,8 +50,8 @@ import org.thoughtcrime.securesms.conversation.v2.utilities.NotificationUtils
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.groups.EditGroupActivity
-import org.thoughtcrime.securesms.groups.EditLegacyGroupActivity
-import org.thoughtcrime.securesms.groups.EditLegacyGroupActivity.Companion.groupIDKey
+import org.thoughtcrime.securesms.groups.legacy.EditLegacyGroupActivity
+import org.thoughtcrime.securesms.groups.legacy.EditLegacyGroupActivity.Companion.groupIDKey
 import org.thoughtcrime.securesms.groups.GroupMembersActivity
 import org.thoughtcrime.securesms.media.MediaOverviewActivity
 import org.thoughtcrime.securesms.permissions.Permissions
@@ -70,14 +71,21 @@ object ConversationMenuHelper {
         thread: Recipient,
         context: Context,
         configFactory: ConfigFactory,
+        deprecationManager: LegacyGroupDeprecationManager,
     ) {
+        val isDeprecatedLegacyGroup = thread.isLegacyGroupRecipient &&
+                deprecationManager.deprecationState.value == LegacyGroupDeprecationManager.DeprecationState.DEPRECATED
+
         // Prepare
         menu.clear()
         val isCommunity = thread.isCommunityRecipient
         // Base menu (options that should always be present)
         inflater.inflate(R.menu.menu_conversation, menu)
+        menu.findItem(R.id.menu_add_shortcut).isVisible = !isDeprecatedLegacyGroup
+
         // Expiring messages
-        if (!isCommunity && (thread.hasApprovedMe() || thread.isLegacyGroupRecipient || thread.isLocalNumber)) {
+        if (!isCommunity && (thread.hasApprovedMe() || thread.isLegacyGroupRecipient || thread.isLocalNumber)
+            && !isDeprecatedLegacyGroup) {
             inflater.inflate(R.menu.menu_conversation_expiration, menu)
         }
         // One-on-one chat menu allows copying the account id
@@ -95,6 +103,8 @@ object ConversationMenuHelper {
         // (Legacy) Closed group menu (options that should only be present in closed groups)
         if (thread.isLegacyGroupRecipient) {
             inflater.inflate(R.menu.menu_conversation_legacy_group, menu)
+
+            menu.findItem(R.id.menu_edit_group).isVisible = !isDeprecatedLegacyGroup
         }
 
         // Groups v2 menu
@@ -118,13 +128,15 @@ object ConversationMenuHelper {
             inflater.inflate(R.menu.menu_conversation_open_group, menu)
         }
         // Muting
-        if (thread.isMuted) {
-            inflater.inflate(R.menu.menu_conversation_muted, menu)
-        } else {
-            inflater.inflate(R.menu.menu_conversation_unmuted, menu)
+        if (!isDeprecatedLegacyGroup) {
+            if (thread.isMuted) {
+                inflater.inflate(R.menu.menu_conversation_muted, menu)
+            } else {
+                inflater.inflate(R.menu.menu_conversation_unmuted, menu)
+            }
         }
 
-        if (thread.isGroupOrCommunityRecipient && !thread.isMuted) {
+        if (thread.isGroupOrCommunityRecipient && !thread.isMuted && !isDeprecatedLegacyGroup) {
             inflater.inflate(R.menu.menu_conversation_notification_settings, menu)
         }
 

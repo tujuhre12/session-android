@@ -5,6 +5,7 @@ import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.notifications.TokenFetcher
+import org.session.libsession.messaging.sending_receiving.pollers.LegacyClosedGroupPollerV2
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.Device
@@ -21,7 +22,8 @@ class MessagingModuleConfiguration(
     val tokenFetcher: TokenFetcher,
     val groupManagerV2: GroupManagerV2,
     val clock: SnodeClock,
-    val preferences: TextSecurePreferences
+    val preferences: TextSecurePreferences,
+    val legacyClosedGroupPollerV2: LegacyClosedGroupPollerV2,
 ) {
 
     companion object {

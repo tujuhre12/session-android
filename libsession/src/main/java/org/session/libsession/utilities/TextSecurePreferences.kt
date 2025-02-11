@@ -36,6 +36,7 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOWN_CA
 import org.session.libsession.utilities.TextSecurePreferences.Companion._events
 import org.session.libsignal.utilities.Log
 import java.io.IOException
+import java.time.ZonedDateTime
 import java.util.Arrays
 import java.util.Date
 import javax.inject.Inject
@@ -195,6 +196,10 @@ interface TextSecurePreferences {
     fun getEnvironment(): Environment
     fun setEnvironment(value: Environment)
 
+    var deprecationStateOverride: String?
+    var deprecatedTimeOverride: ZonedDateTime?
+    var deprecatingStartTimeOverride: ZonedDateTime?
+
     var migratedToGroupV2Config: Boolean
 
     companion object {
@@ -308,6 +313,10 @@ interface TextSecurePreferences {
         const val OCEAN_LIGHT = "ocean.light"
 
         const val ALLOW_MESSAGE_REQUESTS = "libsession.ALLOW_MESSAGE_REQUESTS"
+
+        const val DEPRECATED_STATE_OVERRIDE = "deprecation_state_override"
+        const val DEPRECATED_TIME_OVERRIDE = "deprecated_time_override"
+        const val DEPRECATING_START_TIME_OVERRIDE = "deprecating_start_time_override"
 
         // Key name for if we've warned the user that saving attachments will allow other apps to access them.
         // Note: We only ever display this once - and when the user has accepted the warning we never show it again
@@ -1681,4 +1690,34 @@ class AppTextSecurePreferences @Inject constructor(
     override fun setHidePassword(value: Boolean) {
         setBooleanPreference(HIDE_PASSWORD, value)
     }
+
+    override var deprecationStateOverride: String?
+        get() = getStringPreference(TextSecurePreferences.DEPRECATED_STATE_OVERRIDE, null)
+        set(value) {
+            if (value == null) {
+                removePreference(TextSecurePreferences.DEPRECATED_STATE_OVERRIDE)
+            } else {
+                setStringPreference(TextSecurePreferences.DEPRECATED_STATE_OVERRIDE, value)
+            }
+        }
+
+    override var deprecatedTimeOverride: ZonedDateTime?
+        get() = getStringPreference(TextSecurePreferences.DEPRECATED_TIME_OVERRIDE, null)?.let(ZonedDateTime::parse)
+        set(value) {
+            if (value == null) {
+                removePreference(TextSecurePreferences.DEPRECATED_TIME_OVERRIDE)
+            } else {
+                setStringPreference(TextSecurePreferences.DEPRECATED_TIME_OVERRIDE, value.toString())
+            }
+        }
+
+    override var deprecatingStartTimeOverride: ZonedDateTime?
+        get() = getStringPreference(TextSecurePreferences.DEPRECATING_START_TIME_OVERRIDE, null)?.let(ZonedDateTime::parse)
+        set(value) {
+            if (value == null) {
+                removePreference(TextSecurePreferences.DEPRECATING_START_TIME_OVERRIDE)
+            } else {
+                setStringPreference(TextSecurePreferences.DEPRECATING_START_TIME_OVERRIDE, value.toString())
+            }
+        }
 }

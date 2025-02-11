@@ -168,6 +168,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     @Inject Lazy<MessageNotifier> messageNotifierLazy;
     @Inject LokiAPIDatabase apiDB;
     @Inject EmojiSearchDatabase emojiSearchDb;
+    @Inject LegacyClosedGroupPollerV2 legacyClosedGroupPollerV2;
 
     public volatile boolean isAppVisible;
     public String KEYGUARD_LOCK_TAG = NonTranslatableStringConstants.APP_NAME + ":KeyguardLock";
@@ -254,7 +255,8 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
                 tokenFetcher,
                 groupManagerV2,
                 snodeClock,
-                textSecurePreferences
+                textSecurePreferences,
+                legacyClosedGroupPollerV2
                 );
         callMessageProcessor = new CallMessageProcessor(this, textSecurePreferences, ProcessLifecycleOwner.get().getLifecycle(), storage);
         Log.i(TAG, "onCreate()");
@@ -340,7 +342,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
             poller.stopIfNeeded();
         }
         pollerFactory.stopAll();
-        LegacyClosedGroupPollerV2.getShared().stopAll();
+        legacyClosedGroupPollerV2.stopAll();
         versionDataFetcher.stopTimedVersionCheck();
     }
 
@@ -452,7 +454,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
             poller.startIfNeeded();
         }
         pollerFactory.startAll();
-        LegacyClosedGroupPollerV2.getShared().start();
+        legacyClosedGroupPollerV2.start();
     }
 
     public void retrieveUserProfile() {
