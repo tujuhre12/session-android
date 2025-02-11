@@ -14,7 +14,6 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
-import io.ktor.network.tls.TLSConfigBuilder
 import java.security.cert.X509Certificate
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.X509TrustManager
@@ -84,7 +83,7 @@ object HTTP {
      * Sync. Don't call from the main thread.
      */
     suspend fun execute(verb: Verb, url: String, body: ByteArray?, timeout: Long = HTTP.timeout, useSeedNodeConnection: Boolean = false): ByteArray {
-        val client = serviceNodeClient
+        val client = if (useSeedNodeConnection) seedNodeClient else serviceNodeClient
 
         try {
             val response = client.request(url) {
