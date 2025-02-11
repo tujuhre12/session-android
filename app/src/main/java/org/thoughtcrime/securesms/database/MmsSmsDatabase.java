@@ -190,7 +190,7 @@ public class MmsSmsDatabase extends Database {
     String selection = MmsSmsColumns.THREAD_ID + " = " + threadId;
 
     // Try everything with resources so that they auto-close on end of scope
-    try (Cursor cursor = queryTables(PROJECTION, selection, order, null)) {
+    try (Cursor cursor = queryTables(PROJECTION, selection, order, "1")) {
       try (MmsSmsDatabase.Reader reader = readerFor(cursor)) {
         MessageRecord messageRecord;
         while ((messageRecord = reader.getNext()) != null) {
@@ -286,13 +286,20 @@ public class MmsSmsDatabase extends Database {
     return queryTables(PROJECTION, selection, order, null);
   }
 
-  public long getLastMessageID(long threadId) {
-    String order     = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
+  public MessageRecord getLastSentMessageRecord(long threadId) {
+    // Order by normalized date sent in descending order so that the most recent is first.
+    String order = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
+    // Select messages that belong to the given thread.
     String selection = MmsSmsColumns.THREAD_ID + " = " + threadId;
 
+    // Use try-with-resources to ensure the cursor (and later the reader) is closed automatically.
     try (Cursor cursor = queryTables(PROJECTION, selection, order, "1")) {
-      cursor.moveToFirst();
-      return cursor.getLong(cursor.getColumnIndexOrThrow(MmsSmsColumns.ID));
+      // Create a reader for the cursor
+      try (MmsSmsDatabase.Reader reader = readerFor(cursor)) {
+        // Get the first record from the reader (i.e. the most recent message) and return it as a
+        // MessageRecord. This will be null if there are no sent messages.
+        return reader.getNext();
+      }
     }
   }
 
@@ -348,29 +355,10 @@ public class MmsSmsDatabase extends Database {
     return identifiedMessages;
   }
 
-  // ---- Last sent message extraction -----
-
-
-
-  public long getLastOutgoingMessageId(long threadId) {
-    // Our selection is ONLY outgoing SMS or MMS messages in this thread
-    String selection = MmsSmsColumns.THREAD_ID + " = " + threadId + " AND (" + SMS_OUTGOING_SELECTION + " OR " + MMS_OUTGOING_SELECTION + ")";
-
-    // Get the last outgoing message, limiting the query to a single message
-    try (Cursor cursor = queryTables(PROJECTION, selection, ORDER_MESSAGES_BY_DATE_DESC, "1")) {
-      if (cursor.moveToFirst()) {
-        return cursor.getLong(cursor.getColumnIndexOrThrow(MmsSmsColumns.ID));
-      }
-    }
-    Log.i(TAG, "Could not find last outgoing message - returning -1.");
-    return -1;
-  }
-
   public long getLastMessageTimestamp(long threadId) {
     String order     = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
     // make sure the last message isn't marked as deleted
-    String selection = MmsSmsColumns.THREAD_ID + " = " + threadId + " AND " +
-            "NOT " + MmsSmsColumns.IS_DELETED;
+    String selection = MmsSmsColumns.THREAD_ID + " = " + threadId + " AND " + "NOT " + MmsSmsColumns.IS_DELETED;
 
     try (Cursor cursor = queryTables(PROJECTION, selection, order, "1")) {
       if (cursor.moveToFirst()) {

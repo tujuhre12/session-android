@@ -353,14 +353,6 @@ fun MessageReceiver.handleVisibleMessage(
 ): Long? {
     val storage = MessagingModuleConfiguration.shared.storage
     val context = MessagingModuleConfiguration.shared.context
-
-    // Submit the new message to the cache if it's outgoing from us and has an id
-    message.id?.let { messageId ->
-        if (message.isSenderSelf) {
-            MessagingModuleConfiguration.shared.lastSentMessageIdCache.submitMessageId(threadId, messageId)
-        }
-    }
-
     val userPublicKey = storage.getUserPublicKey()
     val messageSender: String? = message.sender
 

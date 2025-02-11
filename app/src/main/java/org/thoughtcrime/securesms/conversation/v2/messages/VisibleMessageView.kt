@@ -51,7 +51,6 @@ import org.session.libsession.utilities.modifyLayoutParams
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
-import org.thoughtcrime.securesms.database.LastSentMessageIdCache
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.MmsDatabase
@@ -63,8 +62,10 @@ import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.home.UserDetailsBottomSheet
 import network.loki.messenger.libsession_util.getOrNull
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.util.DateUtils
+import org.thoughtcrime.securesms.util.MessageUtils
 import org.thoughtcrime.securesms.util.disableClipping
 import org.thoughtcrime.securesms.util.toDp
 import org.thoughtcrime.securesms.util.toPx
@@ -80,8 +81,8 @@ class VisibleMessageView : FrameLayout {
     @Inject lateinit var mmsSmsDb: MmsSmsDatabase
     @Inject lateinit var smsDb: SmsDatabase
     @Inject lateinit var mmsDb: MmsDatabase
-    @Inject lateinit var lastSentTimestampCache: LastSentMessageIdCache
     @Inject lateinit var configFactory: ConfigFactoryProtocol
+    @Inject lateinit var textSecurePreferences: TextSecurePreferences
 
     private val binding = ViewVisibleMessageBinding.inflate(LayoutInflater.from(context), this, true)
 
@@ -124,6 +125,11 @@ class VisibleMessageView : FrameLayout {
         const val longPressMovementThreshold = 10.0f // dp
         const val longPressDurationThreshold = 250L // ms
         const val maxDoubleTapInterval = 200L
+
+        var lastSentMessageUniqueId = -1L
+        fun setLastSentUniqueMessageId(message: MessageRecord) {
+            lastSentMessageUniqueId = MessageUtils.generateUniqueId(message)
+        }
     }
 
     // region Lifecycle
@@ -157,8 +163,7 @@ class VisibleMessageView : FrameLayout {
         senderAccountID: String,
         lastSeen: Long,
         delegate: VisibleMessageViewDelegate? = null,
-        onAttachmentNeedsDownload: (DatabaseAttachment) -> Unit,
-        lastSentMessageId: Long
+        onAttachmentNeedsDownload: (DatabaseAttachment) -> Unit
     ) {
         isOutgoing = message.isOutgoing
         replyDisabled = message.isOpenGroupInvitation
@@ -282,7 +287,7 @@ class VisibleMessageView : FrameLayout {
         onDoubleTap = { binding.messageContentView.root.onContentDoubleTap?.invoke() }
     }
 
-    private fun showNonDisappearingMessageStatus() {
+    fun showMessageDeliveryStatus() {
         binding.messageStatusTextView.isVisible  = true
         binding.messageStatusImageView.isVisible = true
         binding.messageStatusImageView.bringToFront()
@@ -293,24 +298,25 @@ class VisibleMessageView : FrameLayout {
     // message status area to display the disappearing messages state - so in this latter case we'll
     // be displaying either "Sent" or "Read" and the animating clock icon.
     private fun showStatusMessage(message: MessageRecord) {
-        // We'll start by hiding everything and then only make visible what we need
-        binding.messageStatusTextView.isVisible  = false
-        binding.messageStatusImageView.isVisible = false
-        binding.expirationTimerView.isVisible    = false
 
         // Get details regarding how we should display the message (it's delivery icon, icon tint colour, and
         // the resource string for what text to display (R.string.delivery_status_sent etc.).
-
-        // If we get a null messageStatus then the message isn't one with a state that we care about (i.e., control messages
-        // etc.) - so bail. See: `DisplayRecord.is<WHATEVER>` for the full suite of message state methods.
+        // If we get a null messageStatus then the message isn't one with a state that we care about (i.e., control
+        // messages etc.) - so bail. See: `DisplayRecord.is<WHATEVER>` for the full suite of message state methods.
         val messageStatus = getMessageStatusInfo(message) ?: return
 
+        // Always make sure visible messages are on the correct side of the screen based on whether it's incoming or outgoing
         binding.messageInnerLayout.modifyLayoutParams<FrameLayout.LayoutParams> {
             gravity = if (message.isOutgoing) Gravity.END else Gravity.START
         }
         binding.statusContainer.modifyLayoutParams<ConstraintLayout.LayoutParams> {
             horizontalBias = if (message.isOutgoing) 1f else 0f
         }
+
+        // We'll start by hiding everything and then only make visible what we need
+        binding.messageStatusTextView.isVisible  = false
+        binding.messageStatusImageView.isVisible = false
+        binding.expirationTimerView.isVisible    = false
 
         // If the message is incoming AND it is not scheduled to disappear
         // OR it is a deleted message then don't show any status or timer details
@@ -348,12 +354,19 @@ class VisibleMessageView : FrameLayout {
             // If the message has NOT been successfully sent then always show the delivery status text and icon..
             val neitherSentNorRead = !(message.isSent || message.isRead)
             if (neitherSentNorRead) {
-                showNonDisappearingMessageStatus()
+                showMessageDeliveryStatus()
             } else {
-                // ..but if the message HAS been successfully sent or read then only display the delivery status
-                // text and image if this is the last sent message.
-                val lastSentMessageId = lastSentTimestampCache.getLastSentMessageId(message.threadId)
-                if (message.id == lastSentMessageId) { showNonDisappearingMessageStatus() }
+                // ..but if the message HAS been successfully sent or read then AND this is the last sent message
+                // (as determined by its unique id) then we WILL show the delivery status.
+                // Note: We cannot identify the last sent message via timestamps because community timestamps don't
+                // match our own, especially for blinded recipients who are not contacts (those get rounded down to
+                // the nearest 1000ms). So instead, we set the unique ID of the last sent message when our
+                // conversation recycler data changes (see ConversationAdapterDataObserver) - and then compare
+                // against that here to identify the true last sent message.
+                val thisMessageUniqueId = MessageUtils.generateUniqueId(message)
+                if (thisMessageUniqueId == lastSentMessageUniqueId && message.isSent) {
+                    showMessageDeliveryStatus()
+                }
             }
         }
         else // ----- Case iii.) Message is outgoing AND scheduled to disappear -----

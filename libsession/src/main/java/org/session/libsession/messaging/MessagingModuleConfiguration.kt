@@ -17,7 +17,6 @@ class MessagingModuleConfiguration(
     val device: Device,
     val messageDataProvider: MessageDataProvider,
     val configFactory: ConfigFactoryProtocol,
-    val lastSentMessageIdCache: LastSentMessageIdCache,
     val toaster: Toaster,
     val tokenFetcher: TokenFetcher,
     val groupManagerV2: GroupManagerV2,

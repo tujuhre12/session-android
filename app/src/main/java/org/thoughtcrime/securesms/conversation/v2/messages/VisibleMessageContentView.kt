@@ -285,6 +285,8 @@ class VisibleMessageContentView : ConstraintLayout {
         binding.voiceMessageView.root.togglePlayback()
     }
 
+    fun getMessageString() = binding.bodyTextView.text.toString()
+
     fun playHighlight() {
         // Show the highlight colour immediately then slowly fade out
         val targetColor = if (ThemeUtil.isDarkTheme(context)) context.getAccentColor() else resources.getColor(R.color.black, context.theme)

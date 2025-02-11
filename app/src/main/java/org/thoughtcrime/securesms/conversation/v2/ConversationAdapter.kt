@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.conversation.v2
 
 import android.content.Context
 import android.database.Cursor
+import android.util.Log
 import android.util.SparseArray
 import android.util.SparseBooleanArray
 import android.view.MotionEvent
@@ -26,6 +27,7 @@ import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageViewDel
 import org.thoughtcrime.securesms.database.CursorRecyclerViewAdapter
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
+import org.thoughtcrime.securesms.util.MessageUtils
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.min
 
@@ -84,7 +86,9 @@ class ConversationAdapter(
         }
     }
 
-    class VisibleMessageViewHolder(val view: VisibleMessageView) : ViewHolder(view)
+    class VisibleMessageViewHolder(val view: VisibleMessageView) : ViewHolder(view) {
+        var messageId: Long = -1L
+    }
     class ControlMessageViewHolder(val view: ControlMessageView) : ViewHolder(view)
 
     override fun getItemViewType(cursor: Cursor): Int {
@@ -104,6 +108,8 @@ class ConversationAdapter(
     }
 
     override fun onBindItemViewHolder(viewHolder: ViewHolder, cursor: Cursor) {
+        Log.w("ACL", "Hit onBindItemViewHolder at: " + System.currentTimeMillis())
+
         val message = getMessage(cursor)!!
         val position = viewHolder.adapterPosition
         val messageBefore = getMessageBefore(position, cursor)
@@ -113,6 +119,10 @@ class ConversationAdapter(
                 val isSelected = selectedItems.contains(message)
                 visibleMessageView.snIsSelected = isSelected
                 visibleMessageView.indexInAdapter = position
+
+                // Store the unique message ID in the ViewHolder (the unique ID differentiates between SMS and MMS messages)
+                viewHolder.messageId = MessageUtils.generateUniqueId(message)
+
                 val senderId = message.individualRecipient.address.serialize()
                 val senderIdHash = senderId.hashCode()
                 updateQueue.trySend(senderId)
@@ -137,8 +147,7 @@ class ConversationAdapter(
                     senderId,
                     lastSeen.get(),
                     visibleMessageViewDelegate,
-                    onAttachmentNeedsDownload,
-                    lastSentMessageId
+                    onAttachmentNeedsDownload
                 )
 
                 if (!message.isDeleted) {

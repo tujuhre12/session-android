@@ -86,7 +86,6 @@ import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
-import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
@@ -189,6 +188,7 @@ import org.thoughtcrime.securesms.util.ActivityDispatcher
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.MediaUtil
+import org.thoughtcrime.securesms.util.MessageUtils
 import org.thoughtcrime.securesms.util.PaddedImageSpan
 import org.thoughtcrime.securesms.util.SaveAttachmentTask
 import org.thoughtcrime.securesms.util.drawToBitmap
@@ -374,6 +374,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         )
         adapter.visibleMessageViewDelegate = this
 
+        // Enable stable Ids BEFORE we register an observer. We use these so we can easily extract the
+        // last sent VisibleMessageView when the recycler's data set changes to display the delivery status.
+        //adapter.setHasStableIds(true)
+
         // Register an AdapterDataObserver to scroll us to the bottom of the RecyclerView for if
         // we're already near the the bottom and the data changes.
         adapter.registerAdapterDataObserver(ConversationAdapterDataObserver(binding.conversationRecyclerView, adapter))
@@ -462,17 +466,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             if (layoutManager.isSmoothScrolling) {
                 binding.conversationRecyclerView.scrollToPosition(targetPosition)
             } else {
-                // It looks like 'smoothScrollToPosition' will actually load all intermediate items in
-                // order to do the scroll, this can be very slow if there are a lot of messages so
-                // instead we check the current position and if there are more than 10 items to scroll
-                // we jump instantly to the 10th item and scroll from there (this should happen quick
-                // enough to give a similar scroll effect without having to load everything)
-//                val position = if (reverseMessageList) layoutManager.findFirstVisibleItemPosition() else layoutManager.findLastVisibleItemPosition()
-//                val targetBuffer = if (reverseMessageList) 10 else Math.max(0, (adapter.itemCount - 1) - 10)
-//                if (position > targetBuffer) {
-//                    binding.conversationRecyclerView?.scrollToPosition(targetBuffer)
-//                }
-
                 binding.conversationRecyclerView.post {
                     binding.conversationRecyclerView.smoothScrollToPosition(targetPosition)
                 }
@@ -2474,11 +2467,17 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
     }
 
-    // AdapterDataObserver implementation to scroll us to the bottom of the ConversationRecyclerView
-    // when we're already near the bottom and we send or receive a message.
     inner class ConversationAdapterDataObserver(val recyclerView: ConversationRecyclerView, val adapter: ConversationAdapter) : RecyclerView.AdapterDataObserver() {
         override fun onChanged() {
             super.onChanged()
+
+            // Update the last sent message unique ID when our RecyclerView content changes
+            val lastSentMessageRecord = mmsSmsDb.getLastSentMessageRecord(threadId)
+            if (lastSentMessageRecord != null) {
+                VisibleMessageView.setLastSentUniqueMessageId(lastSentMessageRecord)
+            }
+
+            // Scroll us to the bottom of the ConversationRecyclerView when we're already near the bottom
             if (recyclerView.isScrolledToWithin30dpOfBottom) {
                 // Note: The adapter itemCount is zero based - so calling this with the itemCount in
                 // a non-zero based manner scrolls us to the bottom of the last message (including
