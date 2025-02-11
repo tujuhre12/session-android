@@ -64,7 +64,6 @@ import org.session.libsignal.utilities.HTTP;
 import org.session.libsignal.utilities.JsonUtil;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.ThreadUtils;
-import org.signal.aesgcmprovider.AesGcmProvider;
 import org.thoughtcrime.securesms.components.TypingStatusSender;
 import org.thoughtcrime.securesms.configs.ConfigUploader;
 import org.thoughtcrime.securesms.database.EmojiSearchDatabase;
