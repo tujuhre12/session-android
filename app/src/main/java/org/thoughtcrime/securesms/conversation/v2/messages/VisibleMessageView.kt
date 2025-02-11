@@ -108,6 +108,7 @@ class VisibleMessageView : FrameLayout {
     private var onDownTimestamp = 0L
     private var onDoubleTap: (() -> Unit)? = null
     private var isOutgoing: Boolean = false
+    private var lastSentMessageUniqueId: Long = -1L
 
     var indexInAdapter: Int = -1
     var snIsSelected = false
@@ -125,11 +126,6 @@ class VisibleMessageView : FrameLayout {
         const val longPressMovementThreshold = 10.0f // dp
         const val longPressDurationThreshold = 250L // ms
         const val maxDoubleTapInterval = 200L
-
-        var lastSentMessageUniqueId = -1L
-        fun setLastSentUniqueMessageId(message: MessageRecord) {
-            lastSentMessageUniqueId = MessageUtils.generateUniqueId(message)
-        }
     }
 
     // region Lifecycle
@@ -163,7 +159,8 @@ class VisibleMessageView : FrameLayout {
         senderAccountID: String,
         lastSeen: Long,
         delegate: VisibleMessageViewDelegate? = null,
-        onAttachmentNeedsDownload: (DatabaseAttachment) -> Unit
+        onAttachmentNeedsDownload: (DatabaseAttachment) -> Unit,
+        lastSentMessageUniqueId: Long // The unique message ID differentiates between SMS and MMS message IDs which can be the same
     ) {
         isOutgoing = message.isOutgoing
         replyDisabled = message.isOpenGroupInvitation
@@ -250,9 +247,6 @@ class VisibleMessageView : FrameLayout {
         binding.dateBreakTextView.text = if (showDateBreak) DateUtils.getDisplayFormattedTimeSpanString(context, Locale.getDefault(), message.timestamp) else null
         binding.dateBreakTextView.isVisible = showDateBreak
 
-        // Update message status indicator
-        showStatusMessage(message)
-
         // Emoji Reactions
         if (!message.isDeleted && message.reactions.isNotEmpty()) {
             val capabilities = lokiThreadDb.getOpenGroupChat(threadID)?.server?.let { lokiApiDb.getServerCapabilities(it) }
@@ -285,6 +279,10 @@ class VisibleMessageView : FrameLayout {
         )
         binding.messageContentView.root.delegate = delegate
         onDoubleTap = { binding.messageContentView.root.onContentDoubleTap?.invoke() }
+
+        // Update the last sent message unique ID and THEN show the relevant status message, if any
+        this.lastSentMessageUniqueId = lastSentMessageUniqueId
+        showStatusMessage(message)
     }
 
     fun showMessageDeliveryStatus() {
@@ -361,8 +359,8 @@ class VisibleMessageView : FrameLayout {
                 // Note: We cannot identify the last sent message via timestamps because community timestamps don't
                 // match our own, especially for blinded recipients who are not contacts (those get rounded down to
                 // the nearest 1000ms). So instead, we set the unique ID of the last sent message when our
-                // conversation recycler data changes (see ConversationAdapterDataObserver) - and then compare
-                // against that here to identify the true last sent message.
+                // conversation recycler data changes (see ConversationAdapterDataObserver), pass that in to each
+                // VisibleMessageView in the `bind` method, then compare against that here to identify the last sent message.
                 val thisMessageUniqueId = MessageUtils.generateUniqueId(message)
                 if (thisMessageUniqueId == lastSentMessageUniqueId && message.isSent) {
                     showMessageDeliveryStatus()

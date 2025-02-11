@@ -55,7 +55,10 @@ class ConversationAdapter(
     private val contactCache = SparseArray<Contact>(100)
     private val contactLoadedCache = SparseBooleanArray(100)
     private val lastSeen = AtomicLong(originalLastSeen)
-    private var lastSentMessageId: Long = -1L
+
+    // The unique message ID differentiates between SMS and MMS message where IDs can be the same
+    private var lastSentMessageUniqueId: Long = -1L
+    fun setLastMessageUniqueId(uniqueId: Long) { lastSentMessageUniqueId = uniqueId }
 
     init {
         lifecycleCoroutineScope.launch(IO) {
@@ -108,7 +111,10 @@ class ConversationAdapter(
     }
 
     override fun onBindItemViewHolder(viewHolder: ViewHolder, cursor: Cursor) {
-        Log.w("ACL", "Hit onBindItemViewHolder at: " + System.currentTimeMillis())
+        // If we have never obtained the last sent message unique ID then do so now (one-time op. per opening of a message thread)
+        if (lastSentMessageUniqueId == -1L) {
+            lastSentMessageUniqueId = MessageUtils.generateUniqueId(getMessage(cursor)!!)
+        }
 
         val message = getMessage(cursor)!!
         val position = viewHolder.adapterPosition
@@ -120,7 +126,7 @@ class ConversationAdapter(
                 visibleMessageView.snIsSelected = isSelected
                 visibleMessageView.indexInAdapter = position
 
-                // Store the unique message ID in the ViewHolder (the unique ID differentiates between SMS and MMS messages)
+                // Assign message's unique ID in the ViewHolder (the unique ID differentiates between SMS and MMS messages)
                 viewHolder.messageId = MessageUtils.generateUniqueId(message)
 
                 val senderId = message.individualRecipient.address.serialize()
@@ -147,7 +153,8 @@ class ConversationAdapter(
                     senderId,
                     lastSeen.get(),
                     visibleMessageViewDelegate,
-                    onAttachmentNeedsDownload
+                    onAttachmentNeedsDownload,
+                    lastSentMessageUniqueId
                 )
 
                 if (!message.isDeleted) {

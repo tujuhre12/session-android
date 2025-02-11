@@ -2474,7 +2474,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             // Update the last sent message unique ID when our RecyclerView content changes
             val lastSentMessageRecord = mmsSmsDb.getLastSentMessageRecord(threadId)
             if (lastSentMessageRecord != null) {
-                VisibleMessageView.setLastSentUniqueMessageId(lastSentMessageRecord)
+                adapter.setLastMessageUniqueId( MessageUtils.generateUniqueId(lastSentMessageRecord) )
             }
 
             // Scroll us to the bottom of the ConversationRecyclerView when we're already near the bottom
