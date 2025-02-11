@@ -5,5 +5,5 @@ interface LastSentMessageIdCache {
     fun submitMessageId(threadId: Long, messageId: Long)
     fun delete(threadId: Long, messageIds: List<Long>)
     fun delete(threadId: Long, messageId: Long) = delete(threadId, listOf(messageId))
-    fun refresh(threadId: Long)
+    fun refreshFromDatabase(threadId: Long)
 }

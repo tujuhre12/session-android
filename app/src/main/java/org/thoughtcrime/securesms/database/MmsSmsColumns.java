@@ -68,6 +68,29 @@ public interface MmsSmsColumns {
                                                             OUTGOING_CALL_TYPE};
 
 
+    // Precompute the bitmask for outgoing types.
+    // Note: since BASE_TYPE_MASK is 0x1F, the base types are in the range 0-31.
+    private static final int OUTGOING_TYPE_BITMASK =
+            (1 << (int)BASE_OUTBOX_TYPE) |
+                    (1 << (int)BASE_SENT_TYPE) |
+                    (1 << (int)BASE_SYNCING_TYPE) |
+                    (1 << (int)BASE_RESYNCING_TYPE) |
+                    (1 << (int)BASE_SYNC_FAILED_TYPE) |
+                    (1 << (int)BASE_SENDING_TYPE) |
+                    (1 << (int)BASE_SENT_FAILED_TYPE) |
+                    (1 << (int)BASE_PENDING_SECURE_SMS_FALLBACK) |
+                    (1 << (int)BASE_PENDING_INSECURE_SMS_FALLBACK) |
+                    (1 << (int)BASE_DELETED_OUTGOING_TYPE) |
+                    (1 << (int)OUTGOING_CALL_TYPE);
+
+    // Determine is a message is an outgoing message without looping through all outgoing types
+    public static boolean isOutgoingMessageType(long type) {
+      // Extract the base type from the type value
+      int baseType = (int)(type & BASE_TYPE_MASK);
+      // Check if the bit corresponding to baseType is set in the precomputed bitmask
+      return (OUTGOING_TYPE_BITMASK & (1 << baseType)) != 0;
+    }
+
     // TODO: Clean unused keys
 
     // Message attributes
@@ -136,15 +159,6 @@ public interface MmsSmsColumns {
 
     public static boolean isFailedMessageType(long type) {
       return (type & BASE_TYPE_MASK) == BASE_SENT_FAILED_TYPE;
-    }
-
-    public static boolean isOutgoingMessageType(long type) {
-      for (long outgoingType : OUTGOING_MESSAGE_TYPES) {
-        if ((type & BASE_TYPE_MASK) == outgoingType)
-          return true;
-      }
-
-      return false;
     }
 
     public static long getOutgoingEncryptedMessageType() {

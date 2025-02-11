@@ -17,9 +17,6 @@
 package org.thoughtcrime.securesms.database;
 
 import static org.thoughtcrime.securesms.database.MmsDatabase.MESSAGE_BOX;
-import static org.thoughtcrime.securesms.database.MmsSmsColumns.Types.BASE_DELETED_INCOMING_TYPE;
-import static org.thoughtcrime.securesms.database.MmsSmsColumns.Types.BASE_DELETED_OUTGOING_TYPE;
-import static org.thoughtcrime.securesms.database.MmsSmsColumns.Types.BASE_TYPE_MASK;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -91,6 +88,29 @@ public class MmsSmsDatabase extends Database {
                                               ReactionDatabase.REACTION_JSON_ALIAS,
                                               MmsSmsColumns.HAS_MENTION
   };
+
+  // Set of all outgoing types
+  private static final String OUTGOING_TYPES = "(" +
+          MmsSmsColumns.Types.BASE_OUTBOX_TYPE + ", " +
+          MmsSmsColumns.Types.BASE_SENT_TYPE + ", " +
+          MmsSmsColumns.Types.BASE_SYNCING_TYPE + ", " +
+          MmsSmsColumns.Types.BASE_RESYNCING_TYPE + ", " +
+          MmsSmsColumns.Types.BASE_SYNC_FAILED_TYPE + ", " +
+          MmsSmsColumns.Types.BASE_SENDING_TYPE + ", " +
+          MmsSmsColumns.Types.BASE_SENT_FAILED_TYPE + ", " +
+          MmsSmsColumns.Types.BASE_PENDING_SECURE_SMS_FALLBACK + ", " +
+          MmsSmsColumns.Types.BASE_PENDING_INSECURE_SMS_FALLBACK + ", " +
+          MmsSmsColumns.Types.BASE_DELETED_OUTGOING_TYPE + ", " +
+          MmsSmsColumns.Types.OUTGOING_CALL_TYPE +
+          ")";
+
+  private static final String SMS_OUTGOING_SELECTION =
+          "(" + SmsDatabase.TYPE + " IS NOT NULL AND (" + SmsDatabase.TYPE + " & " + MmsSmsColumns.Types.BASE_TYPE_MASK + ") IN " + OUTGOING_TYPES + ")";
+
+  private static final String MMS_OUTGOING_SELECTION =
+          "(" + MmsDatabase.MESSAGE_TYPE + " IS NOT NULL AND (" + MmsDatabase.MESSAGE_BOX + " & " + MmsSmsColumns.Types.BASE_TYPE_MASK + ") IN " + OUTGOING_TYPES + ")";
+
+  private static final String ORDER_MESSAGES_BY_DATE_DESC = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
 
   public MmsSmsDatabase(Context context, SQLCipherOpenHelper databaseHelper) {
     super(context, databaseHelper);
@@ -328,47 +348,21 @@ public class MmsSmsDatabase extends Database {
     return identifiedMessages;
   }
 
-  public long getLastOutgoingTimestamp(long threadId) {
-    String order = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
-    String selection = MmsSmsColumns.THREAD_ID + " = " + threadId;
+  // ---- Last sent message extraction -----
 
-    // Try everything with resources so that they auto-close on end of scope
-    try (Cursor cursor = queryTables(PROJECTION, selection, order, null)) {
-      try (MmsSmsDatabase.Reader reader = readerFor(cursor)) {
-        MessageRecord messageRecord;
-        long attempts = 0;
-        long maxAttempts = 20;
-        while ((messageRecord = reader.getNext()) != null) {
-          // Note: We rely on the message order to get us the most recent outgoing message - so we
-          // take the first outgoing message we find as the last outgoing message.
-          if (messageRecord.isOutgoing()) return messageRecord.getTimestamp();
-          if (attempts++ > maxAttempts) break;
-        }
-      }
-    }
-    Log.i(TAG, "Could not find last sent message from us - returning -1.");
-    return -1;
-  }
+
 
   public long getLastOutgoingMessageId(long threadId) {
-    String order = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
-    String selection = MmsSmsColumns.THREAD_ID + " = " + threadId;
+    // Our selection is ONLY outgoing SMS or MMS messages in this thread
+    String selection = MmsSmsColumns.THREAD_ID + " = " + threadId + " AND (" + SMS_OUTGOING_SELECTION + " OR " + MMS_OUTGOING_SELECTION + ")";
 
-    // Try everything with resources so that they auto-close on end of scope
-    try (Cursor cursor = queryTables(PROJECTION, selection, order, null)) {
-      try (MmsSmsDatabase.Reader reader = readerFor(cursor)) {
-        MessageRecord messageRecord;
-        long attempts = 0;
-        long maxAttempts = 20;
-        while ((messageRecord = reader.getNext()) != null) {
-          // Note: We rely on the message order to get us the most recent outgoing message - so we
-          // take the first outgoing message we find as the last outgoing message.
-          if (messageRecord.isOutgoing()) return messageRecord.id;
-          if (attempts++ > maxAttempts) break;
-        }
+    // Get the last outgoing message, limiting the query to a single message
+    try (Cursor cursor = queryTables(PROJECTION, selection, ORDER_MESSAGES_BY_DATE_DESC, "1")) {
+      if (cursor.moveToFirst()) {
+        return cursor.getLong(cursor.getColumnIndexOrThrow(MmsSmsColumns.ID));
       }
     }
-    Log.i(TAG, "Could not find last sent message from us - returning -1.");
+    Log.i(TAG, "Could not find last outgoing message - returning -1.");
     return -1;
   }
 

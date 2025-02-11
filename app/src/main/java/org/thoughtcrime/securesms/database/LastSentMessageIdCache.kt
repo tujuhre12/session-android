@@ -24,21 +24,17 @@ class LastSentMessageIdCache @Inject constructor(
 
     @Synchronized
     override fun submitMessageId(threadId: Long, messageId: Long) {
-        if (map[threadId]?.let { messageId <= it } == true) return
         map[threadId] = messageId
     }
 
     @Synchronized
     override fun delete(threadId: Long, messageIds: List<Long>) {
-        if (map[threadId]?.let { it !in messageIds } == true) return
         map.remove(threadId)
-        refresh(threadId)
+        refreshFromDatabase(threadId)
     }
 
     @Synchronized
-    override fun refresh(threadId: Long) {
-        val lastOutgoingMessageId = mmsSmsDatabase.getLastOutgoingMessageId(threadId)
-        if (lastOutgoingMessageId <= 0) return
-        map[threadId] = lastOutgoingMessageId
+    override fun refreshFromDatabase(threadId: Long) {
+        map[threadId] = mmsSmsDatabase.getLastOutgoingMessageId(threadId)
     }
 }
