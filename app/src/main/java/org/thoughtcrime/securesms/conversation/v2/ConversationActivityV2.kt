@@ -2063,16 +2063,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     override fun startRecordingVoiceMessage() {
-
-        // Check if the user is spamming the record voice message button and don't start recording if so
-//        if (!viewModel.canRecordNewVoiceMessage()) {
-//            Log.i("ACL", "Voice message recording unavailable for a few more milliseconds. Bailing.")
-//            return
-//        } else {
-//            Log.w("ACL", "FINE - allowing voice recording")
-//        }
-//        viewModel.registerRecordVoiceMessageClick()
-
         Log.i(TAG, "Starting voice message recording at: ${System.currentTimeMillis()}")
 
         if (Permissions.hasAll(this, Manifest.permission.RECORD_AUDIO)) {
