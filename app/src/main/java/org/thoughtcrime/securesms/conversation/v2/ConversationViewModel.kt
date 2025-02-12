@@ -239,8 +239,6 @@ class ConversationViewModel(
         scope = viewModelScope,
     )
 
-    private var lastRecordVoiceMessageClickTimestamp: Long = System.currentTimeMillis()
-
     init {
         viewModelScope.launch(Dispatchers.Default) {
             combine(
