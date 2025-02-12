@@ -65,8 +65,11 @@ class PushReceiver @Inject constructor(
     private fun addMessageReceiveJob(pushData: PushData?){
         // send a generic notification if we have no data and the `data too long` is false
         if (pushData?.data == null) {
-            Log.d(TAG, "Push data is null, sending generic notification")
-            if(pushData?.metadata?.data_too_long != true) sendGenericNotification()
+            Log.d(TAG, "Push data is null")
+            if(pushData?.metadata?.data_too_long != true) {
+                Log.d(TAG, "Sending a generic notification (data_too_long was false)")
+                sendGenericNotification()
+            }
             return
         }
 

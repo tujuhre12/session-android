@@ -73,39 +73,22 @@ class CallViewModel @Inject constructor(
     val recipient get() = callManager.recipientEvents
     val callStartTime: Long get() = callManager.callStartTime
 
-    fun swapVideos() {
-       callManager.swapVideos()
-    }
+    fun swapVideos() = callManager.swapVideos()
 
-    fun toggleMute(){
-        callManager.toggleMuteAudio()
-    }
+    fun toggleMute() = callManager.toggleMuteAudio()
 
-    fun toggleSpeakerphone(){
-        callManager.toggleSpeakerphone()
-    }
+    fun toggleSpeakerphone() = callManager.toggleSpeakerphone()
 
-    fun toggleVideo(){
-        callManager.toggleVideo()
-    }
+    fun toggleVideo() = callManager.toggleVideo()
 
-    fun flipCamera(){
-        callManager.flipCamera()
-    }
+    fun flipCamera() = callManager.flipCamera()
 
-    fun answerCall(){
-        rtcCallBridge.handleAnswerCall()
-    }
+    fun answerCall() = rtcCallBridge.handleAnswerCall()
 
-    fun denyCall(){
-        rtcCallBridge.handleDenyCall()
-    }
+    fun denyCall() = rtcCallBridge.handleDenyCall()
 
-    fun createCall(recipientAddress: Address) {
+    fun createCall(recipientAddress: Address) =
         rtcCallBridge.handleOutgoingCall(Recipient.from(context, recipientAddress, true))
-    }
 
-    fun hangUp(){
-        rtcCallBridge.handleLocalHangup(null)
-    }
+    fun hangUp() = rtcCallBridge.handleLocalHangup(null)
 }
