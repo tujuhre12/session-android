@@ -50,6 +50,8 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.audio.AudioSlidePlayer
+import org.thoughtcrime.securesms.conversation.v2.input_bar.InputBarRecordingView
+import org.thoughtcrime.securesms.conversation.v2.input_bar.VoiceRecorderConstants
 import org.thoughtcrime.securesms.conversation.v2.menus.ConversationMenuHelper
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
@@ -66,6 +68,7 @@ import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.DateUtils
 import java.time.ZoneId
 import java.util.UUID
+import kotlin.math.abs
 
 class ConversationViewModel(
     val threadId: Long,
@@ -235,6 +238,30 @@ class ConversationViewModel(
         messageDataProvider = messageDataProvider,
         scope = viewModelScope,
     )
+
+    private var lastRecordVoiceMessageClickTimestamp: Long = System.currentTimeMillis()
+
+    // Minimum time between accepting clicks to record a voice message.
+    // We limit the click rate to just over the combined "fade-in -> fade-out then reverse"
+    // duration to ensure animations don't overlap, which will prevent us from getting into
+    // a state whereby the InputBarEditText and InputBarRecordingView visibility states can
+    // get muddled if the user spams the record voice message button very fast for several seconds.
+//    private val MINIMUM_TIME_BETWEEN_RECORDING_VOICE_MESSAGES_MS = VoiceRecorderConstants.SHOW_HIDE_VOICE_UI_DURATION_MS * 2L
+//    fun registerRecordVoiceMessageClick() {
+//        val nowMS = System.currentTimeMillis()
+//        if(nowMS - lastRecordVoiceMessageClickTimestamp > MINIMUM_TIME_BETWEEN_RECORDING_VOICE_MESSAGES_MS) {
+//            Log.w("ACL", "Registering new click at: " + nowMS)
+//            lastRecordVoiceMessageClickTimestamp = nowMS
+//        } else {
+//            Log.w("ACL", "NOT register")
+//        }
+//    }
+//    fun canRecordNewVoiceMessage(): Boolean {
+//        val diffMS = System.currentTimeMillis() - lastRecordVoiceMessageClickTimestamp
+//        val allowedToRecord = diffMS > MINIMUM_TIME_BETWEEN_RECORDING_VOICE_MESSAGES_MS
+//        Log.w("ACL", "Can record?: " + allowedToRecord)
+//        return allowedToRecord //System.currentTimeMillis() - lastRecordVoiceMessageClickTimestamp < MINIMUM_TIME_BETWEEN_RECORDING_VOICE_MESSAGES_MS
+//    }
 
     init {
         viewModelScope.launch(Dispatchers.Default) {

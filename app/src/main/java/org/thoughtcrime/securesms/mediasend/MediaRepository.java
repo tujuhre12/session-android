@@ -25,7 +25,6 @@ import network.loki.messenger.R;
 import org.session.libsession.utilities.Util;
 import org.session.libsignal.utilities.guava.Optional;
 import org.thoughtcrime.securesms.mms.PartAuthority;
-import org.thoughtcrime.securesms.util.FilenameUtils;
 import org.thoughtcrime.securesms.util.MediaUtil;
 
 /**

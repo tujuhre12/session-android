@@ -110,7 +110,7 @@ class InputBarRecordingView : RelativeLayout {
                 val durationMS = (Date().time - startTimestamp)
                 binding.recordingViewDurationTextView.text = MediaUtil.getFormattedVoiceMessageDuration(durationMS)
 
-                delay(500)
+                delay(500) // Update the voice message duration timer value every half a second
             }
         }
     }
