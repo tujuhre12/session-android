@@ -17,6 +17,7 @@ import android.widget.RelativeLayout
 import androidx.annotation.DrawableRes
 import network.loki.messenger.R
 import org.session.libsession.utilities.getColorFromAttr
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.util.GlowViewUtilities
 import org.thoughtcrime.securesms.util.InputBarButtonImageViewContainer
 import org.thoughtcrime.securesms.util.animateSizeChange
@@ -108,6 +109,9 @@ class InputBarButton : RelativeLayout {
     fun getIconID() = iconID
 
     fun expand() {
+
+        Log.w("ACL", "Hit expand at: " + System.currentTimeMillis())
+
         val fromColor = context.getColorFromAttr(colorID)
         val toColor = context.getAccentColor()
         GlowViewUtilities.animateColorChange(imageViewContainer, fromColor, toColor)
@@ -147,13 +151,17 @@ class InputBarButton : RelativeLayout {
     }
 
     private fun onDown(event: MotionEvent) {
+        // Don't process voice message recording button presses while the button is disabled (we
+        // briefly disable it on release to prevent button spam from muddling the UI state).
+        if (!this.isEnabled) return
+
         expand()
         performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
 
         longPressCallback?.let { gestureHandler.removeCallbacks(it) }
         val newLongPressCallback = Runnable { onLongPress?.invoke() }
         this.longPressCallback = newLongPressCallback
-        gestureHandler.postDelayed(newLongPressCallback, InputBarButton.longPressDurationThreshold)
+        gestureHandler.postDelayed(newLongPressCallback, longPressDurationThreshold)
         onDownTimestamp = Date().time
     }
 
@@ -170,7 +178,7 @@ class InputBarButton : RelativeLayout {
     private fun onUp(event: MotionEvent) {
         onUp?.invoke(event)
         collapse()
-        if ((Date().time - onDownTimestamp) < InputBarButton.longPressDurationThreshold) {
+        if ((Date().time - onDownTimestamp) < longPressDurationThreshold) {
             longPressCallback?.let { gestureHandler.removeCallbacks(it) }
             onPress?.invoke()
         }

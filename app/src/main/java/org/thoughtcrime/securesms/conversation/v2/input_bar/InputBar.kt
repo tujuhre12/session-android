@@ -87,9 +87,6 @@ class InputBar @JvmOverloads constructor(
     val microphoneButton = InputBarButton(context, R.drawable.ic_mic).apply { contentDescription = context.getString(R.string.AccessibilityId_voiceMessageNew)}
     private val sendButton = InputBarButton(context, R.drawable.ic_arrow_up, true).apply { contentDescription = context.getString(R.string.AccessibilityId_send)}
 
-    var lastClickMS = System.currentTimeMillis()
-    var microphoneButtonIsDown = false
-
     init {
         // Attachments button
         binding.attachmentsButtonContainer.addView(attachmentsButton)
@@ -116,27 +113,28 @@ class InputBar @JvmOverloads constructor(
 
                 when (event.action) {
                     MotionEvent.ACTION_DOWN -> {
-                        microphoneButtonIsDown = true
-                        val nowMS = System.currentTimeMillis()
-                        val timeSinceLastClick = nowMS - lastClickMS
-                        if (timeSinceLastClick <= 500) {
-                            Log.w("ACL", "Nope: " + timeSinceLastClick)
-                            lastClickMS = nowMS
-                            return true
-                        } else { Log.w("ACL", "Okay: " + timeSinceLastClick) }
 
                         // Only start spinning up the voice recorder if we're not already recording, setting up, or tearing down
                         if (voiceRecorderState == VoiceRecorderState.Idle) {
-                            microphoneButtonIsDown = true
-                            lastClickMS = nowMS
                             startRecordingVoiceMessage()
                         }
                     }
                     MotionEvent.ACTION_UP -> {
-                        // Handle the pointer up event appropriately, whether that's to keep recording if recording was locked
-                        // on, or finishing recording if just hold-to-record.
-                        microphoneButtonIsDown = false
-                        delegate?.onMicrophoneButtonUp(event)
+
+                        // If the button is not in a "I-am-being-spammed" state then proceed to process the voice message
+                        if (microphoneButton.isEnabled) {
+
+                            // Prevent button spam by briefly disabling the record button
+                            microphoneButton.isEnabled = false
+                            microphoneButton.postDelayed(
+                                { microphoneButton.isEnabled = true },
+                                VoiceRecorderConstants.SHOW_HIDE_VOICE_UI_DURATION_MS
+                            )
+
+                            // Handle the pointer up event appropriately, whether that's to keep recording if recording was locked
+                            // on, or finishing recording if just hold-to-record.
+                            delegate?.onMicrophoneButtonUp(event)
+                        }
                     }
                 }
 

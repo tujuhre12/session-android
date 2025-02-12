@@ -131,8 +131,7 @@ import org.thoughtcrime.securesms.conversation.v2.dialogs.LinkPreviewDialog
 import org.thoughtcrime.securesms.conversation.v2.input_bar.InputBarButton
 import org.thoughtcrime.securesms.conversation.v2.input_bar.InputBarDelegate
 import org.thoughtcrime.securesms.conversation.v2.input_bar.InputBarRecordingViewDelegate
-import org.thoughtcrime.securesms.conversation.v2.input_bar.VoiceRecorderConstants.ANIMATE_LOCK_DURATION_MS
-import org.thoughtcrime.securesms.conversation.v2.input_bar.VoiceRecorderConstants.SHOW_HIDE_VOICE_UI_DURATION_MS
+import org.thoughtcrime.securesms.conversation.v2.input_bar.VoiceRecorderConstants
 import org.thoughtcrime.securesms.conversation.v2.input_bar.VoiceRecorderState
 import org.thoughtcrime.securesms.conversation.v2.input_bar.mentions.MentionCandidateAdapter
 import org.thoughtcrime.securesms.conversation.v2.mention.MentionViewModel
@@ -1130,86 +1129,40 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         allButtons.forEach { it.snIsEnabled = isShowingAttachmentOptions }
     }
 
-//    override fun showVoiceMessageUI() {
-//        binding.inputBarRecordingView.show(lifecycleScope)
-//        binding.inputBar.alpha = 0.0f
-//        val animation = ValueAnimator.ofObject(FloatEvaluator(), 1.0f, 0.0f)
-//        animation.duration = SHOW_HIDE_VOICE_UI_DURATION_MS
-//        animation.addUpdateListener { animator ->
-//            binding.inputBar.alpha = animator.animatedValue as Float
-//        }
-//        animation.start()
-//    }
-
     override fun showVoiceMessageUI() {
         binding.inputBarRecordingView.show(lifecycleScope)
 
-        // This cancels any previous alpha animations on inputBar.
-        binding.inputBar.animate().cancel()
-
-        // Fade out the input bar.
-        binding.inputBar.animate()
+        // Cancel any previous input bar animations and fade out the bar
+        val inputBar = binding.inputBar
+        inputBar.animate().cancel()
+        inputBar.animate()
             .alpha(0f)
-            .setDuration(SHOW_HIDE_VOICE_UI_DURATION_MS)
-            .withEndAction { binding.inputBar.alpha = 0f } // Ensure not visible at end (whether cancelled or not)
+            .setDuration(VoiceRecorderConstants.SHOW_HIDE_VOICE_UI_DURATION_MS)
+            .withEndAction { inputBar.alpha = 0f } // Ensure not visible at end (whether cancelled or not)
             .start()
     }
 
-//    private fun expandVoiceMessageLockView() {
-//        val lockView = binding.inputBarRecordingView.lockView
-//        val animation = ValueAnimator.ofObject(FloatEvaluator(), lockView.scaleX, 1.10f)
-//        animation.duration = ANIMATE_LOCK_DURATION_MS
-//        animation.addUpdateListener { animator ->
-//            lockView.scaleX = animator.animatedValue as Float
-//            lockView.scaleY = animator.animatedValue as Float
-//        }
-//        animation.start()
-//    }
-
     private fun expandVoiceMessageLockView() {
         val lockView = binding.inputBarRecordingView.lockView
+
         lockView.animate().cancel()
         lockView.animate()
             .scaleX(1.10f)
             .scaleY(1.10f)
-            .setDuration(ANIMATE_LOCK_DURATION_MS)
+            .setDuration(VoiceRecorderConstants.ANIMATE_LOCK_DURATION_MS)
             .start()
     }
 
-//    private fun collapseVoiceMessageLockView() {
-//        val lockView = binding.inputBarRecordingView.lockView
-//        val animation = ValueAnimator.ofObject(FloatEvaluator(), lockView.scaleX, 1.0f)
-//        animation.duration = ANIMATE_LOCK_DURATION_MS
-//        animation.addUpdateListener { animator ->
-//            lockView.scaleX = animator.animatedValue as Float
-//            lockView.scaleY = animator.animatedValue as Float
-//        }
-//        animation.start()
-//    }
-
     private fun collapseVoiceMessageLockView() {
         val lockView = binding.inputBarRecordingView.lockView
+
         lockView.animate().cancel()
         lockView.animate()
             .scaleX(1.0f)
             .scaleY(1.0f)
-            .setDuration(ANIMATE_LOCK_DURATION_MS)
+            .setDuration(VoiceRecorderConstants.ANIMATE_LOCK_DURATION_MS)
             .start()
     }
-
-//    private fun hideVoiceMessageUI() {
-//        val chevronImageView = binding.inputBarRecordingView.chevronImageView
-//        val slideToCancelTextView = binding.inputBarRecordingView.slideToCancelTextView
-//        listOf( chevronImageView, slideToCancelTextView ).forEach { view ->
-//            val animation = ValueAnimator.ofObject(FloatEvaluator(), view.translationX, 0.0f)
-//            animation.duration = ANIMATE_LOCK_DURATION_MS
-//            animation.addUpdateListener { animator ->
-//                view.translationX = animator.animatedValue as Float
-//            }
-//            animation.start()
-//        }
-//        binding.inputBarRecordingView.hide()
-//    }
 
     private fun hideVoiceMessageUI() {
         listOf(
@@ -1219,32 +1172,22 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             view.animate().cancel()
             view.animate()
                 .translationX(0.0f)
-                .setDuration(ANIMATE_LOCK_DURATION_MS)
+                .setDuration(VoiceRecorderConstants.ANIMATE_LOCK_DURATION_MS)
                 .start()
         }
 
         binding.inputBarRecordingView.hide()
     }
 
-//    override fun handleVoiceMessageUIHidden() {
-//        val inputBar = binding.inputBar
-//        inputBar.alpha = 1.0f
-//        val animation = ValueAnimator.ofObject(FloatEvaluator(), 0.0f, 1.0f)
-//        animation.duration = SHOW_HIDE_VOICE_UI_DURATION_MS
-//        animation.addUpdateListener { animator ->
-//            inputBar.alpha = animator.animatedValue as Float
-//        }
-//        animation.start()
-//    }
-
     override fun handleVoiceMessageUIHidden() {
-        binding.inputBar.animate().cancel()
+        val inputBar = binding.inputBar
 
-        // Fade in the input bar.
-        binding.inputBar.animate()
+        // Cancel any previous input bar animations and fade in the bar
+        inputBar.animate().cancel()
+        inputBar.animate()
             .alpha(1.0f)
-            .setDuration(SHOW_HIDE_VOICE_UI_DURATION_MS)
-            .withEndAction { binding.inputBar.alpha = 1f } // Ensure fully visible at end (whether cancelled or not)
+            .setDuration(VoiceRecorderConstants.SHOW_HIDE_VOICE_UI_DURATION_MS)
+            .withEndAction { inputBar.alpha = 1f } // Ensure fully visible at end (whether cancelled or not)
             .start()
     }
 
@@ -1764,6 +1707,17 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     override fun onMicrophoneButtonUp(event: MotionEvent) {
+
+        // If the record button is enabled then disable it briefly to prevent button spam
+        val recordButton = binding.inputBar.microphoneButton
+        if (recordButton.isEnabled) {
+            recordButton.isEnabled = false
+            recordButton.postDelayed(
+                { recordButton.isEnabled = true },
+                VoiceRecorderConstants.SHOW_HIDE_VOICE_UI_DURATION_MS
+            )
+        }
+
         val x = event.rawX.roundToInt()
         val y = event.rawY.roundToInt()
 
@@ -1773,7 +1727,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         // to recording audio on a quick tap as the lock area animates out from the record
         // audio message button and the pointer-up event catches it mid-animation.
         val currentVoiceMessageDurationMS = System.currentTimeMillis() - voiceMessageStartTimestamp
-        if (isValidLockViewLocation(x, y) && currentVoiceMessageDurationMS >= ANIMATE_LOCK_DURATION_MS) {
+        if (isValidLockViewLocation(x, y) && currentVoiceMessageDurationMS >= VoiceRecorderConstants.ANIMATE_LOCK_DURATION_MS) {
             binding.inputBarRecordingView.lock()
 
             // If the user put the record audio button into the lock state then we are still recording audio
@@ -2206,7 +2160,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             }
 
             override fun onFailure(e: ExecutionException) {
-                Toast.makeText(this@ConversationActivityV2, R.string.audioUnableToRecord, Toast.LENGTH_LONG).show()
+                // Show a toast that we can't record if there was a genuine error, or that the user needs to press
+                // and hold the record button if they're spamming the button.
+                val textId = if (binding.inputBar.microphoneButton.isEnabled) R.string.audioUnableToRecord else R.string.messageVoiceErrorShort
+                Toast.makeText(this@ConversationActivityV2, textId, Toast.LENGTH_SHORT).show()
             }
         })
     }
