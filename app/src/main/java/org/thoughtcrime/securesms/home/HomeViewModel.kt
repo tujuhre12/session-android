@@ -55,7 +55,7 @@ class HomeViewModel @Inject constructor(
 
     val callInProgress: StateFlow<Boolean> = callManager.currentConnectionStateFlow.map {
         it !is State.Idle && it !is State.Disconnected // a call is in progress if it isn't idle nor disconnected
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), initialValue = false)
 
     /**
      * A [StateFlow] that emits the list of threads and the typing status of each thread.
