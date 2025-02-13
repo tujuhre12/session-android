@@ -89,29 +89,6 @@ public class MmsSmsDatabase extends Database {
                                               MmsSmsColumns.HAS_MENTION
   };
 
-  // Set of all outgoing types
-  private static final String OUTGOING_TYPES = "(" +
-          MmsSmsColumns.Types.BASE_OUTBOX_TYPE + ", " +
-          MmsSmsColumns.Types.BASE_SENT_TYPE + ", " +
-          MmsSmsColumns.Types.BASE_SYNCING_TYPE + ", " +
-          MmsSmsColumns.Types.BASE_RESYNCING_TYPE + ", " +
-          MmsSmsColumns.Types.BASE_SYNC_FAILED_TYPE + ", " +
-          MmsSmsColumns.Types.BASE_SENDING_TYPE + ", " +
-          MmsSmsColumns.Types.BASE_SENT_FAILED_TYPE + ", " +
-          MmsSmsColumns.Types.BASE_PENDING_SECURE_SMS_FALLBACK + ", " +
-          MmsSmsColumns.Types.BASE_PENDING_INSECURE_SMS_FALLBACK + ", " +
-          MmsSmsColumns.Types.BASE_DELETED_OUTGOING_TYPE + ", " +
-          MmsSmsColumns.Types.OUTGOING_CALL_TYPE +
-          ")";
-
-  private static final String SMS_OUTGOING_SELECTION =
-          "(" + SmsDatabase.TYPE + " IS NOT NULL AND (" + SmsDatabase.TYPE + " & " + MmsSmsColumns.Types.BASE_TYPE_MASK + ") IN " + OUTGOING_TYPES + ")";
-
-  private static final String MMS_OUTGOING_SELECTION =
-          "(" + MmsDatabase.MESSAGE_TYPE + " IS NOT NULL AND (" + MmsDatabase.MESSAGE_BOX + " & " + MmsSmsColumns.Types.BASE_TYPE_MASK + ") IN " + OUTGOING_TYPES + ")";
-
-  private static final String ORDER_MESSAGES_BY_DATE_DESC = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
-
   public MmsSmsDatabase(Context context, SQLCipherOpenHelper databaseHelper) {
     super(context, databaseHelper);
   }

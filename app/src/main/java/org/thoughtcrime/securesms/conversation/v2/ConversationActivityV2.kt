@@ -374,10 +374,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         )
         adapter.visibleMessageViewDelegate = this
 
-        // Enable stable Ids BEFORE we register an observer. We use these so we can easily extract the
-        // last sent VisibleMessageView when the recycler's data set changes to display the delivery status.
-        //adapter.setHasStableIds(true)
-
         // Register an AdapterDataObserver to scroll us to the bottom of the RecyclerView for if
         // we're already near the the bottom and the data changes.
         adapter.registerAdapterDataObserver(ConversationAdapterDataObserver(binding.conversationRecyclerView, adapter))
