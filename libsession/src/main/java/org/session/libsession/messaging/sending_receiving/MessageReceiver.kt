@@ -22,6 +22,8 @@ import org.session.libsignal.protos.SignalServiceProtos.Envelope
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
+import java.util.concurrent.TimeUnit
+import kotlin.math.abs
 
 object MessageReceiver {
 
@@ -141,6 +143,20 @@ object MessageReceiver {
         }
         // Parse the proto
         val proto = SignalServiceProtos.Content.parseFrom(PushTransportDetails.getStrippedPaddingMessageBody(plaintext))
+
+        // Verify the signature timestamp inside the content is the same as in envelope.
+        // If the message is from an open group, 6 hours of difference is allowed.
+        if (proto.hasSigTimestamp()) {
+            val isCommunityOrCommunityInbox = openGroupServerID != null || otherBlindedPublicKey != null
+
+            if (
+                (isCommunityOrCommunityInbox && abs(proto.sigTimestamp - envelope.timestamp) > TimeUnit.HOURS.toMillis(6)) ||
+                (!isCommunityOrCommunityInbox && proto.sigTimestamp != envelope.timestamp)
+            ) {
+                throw Error.InvalidSignature
+            }
+        }
+
         // Parse the message
         val message: Message = ReadReceipt.fromProto(proto) ?:
             TypingIndicator.fromProto(proto) ?:
