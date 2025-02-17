@@ -73,6 +73,13 @@ class InputBar @JvmOverloads constructor(
         set(value) {
             field = value
             showOrHideMediaControlsIfNeeded()
+
+            // Show the attachment (+) button and microphone as greyed out when they're disabled
+            if (!value) {
+                microphoneButton.setDisabledColour()
+                attachmentsButton.setDisabledColour()
+            }
+
             binding.inputBarEditText.showMediaControls = value
         }
 
@@ -252,6 +259,8 @@ class InputBar @JvmOverloads constructor(
     private fun showOrHideMediaControlsIfNeeded() {
         attachmentsButton.snIsEnabled = showMediaControls
         microphoneButton.snIsEnabled = showMediaControls
+
+        attachmentsButton
     }
 
     fun addTextChangedListener(listener: (String) -> Unit) {

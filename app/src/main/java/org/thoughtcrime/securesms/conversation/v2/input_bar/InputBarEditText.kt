@@ -69,7 +69,7 @@ class InputBarEditText : AppCompatEditText {
                     // read and display inputContentInfo asynchronously.
                     delegate?.commitInputContent(inputContentInfo.contentUri)
 
-                    true  // return true if succeeded
+                    true // return true if succeeded
                 }
         return InputConnectionCompat.createWrapper(ic, editorInfo, callback)
     }

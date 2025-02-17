@@ -76,10 +76,20 @@ class InputBarButton : RelativeLayout {
         result.layoutParams = LayoutParams(size, size)
         result.scaleType = ImageView.ScaleType.CENTER_INSIDE
         result.setImageResource(iconID)
-        result.imageTintList = if(isSendButton)
-            ColorStateList.valueOf(context.getColorFromAttr(R.attr.message_sent_text_color))
-        else ColorStateList.valueOf(context.getColorFromAttr(R.attr.input_bar_button_text_color))
+
+        result.imageTintList = if (isSendButton) {
+                ColorStateList.valueOf(context.getColorFromAttr(R.attr.message_sent_text_color))
+            } else {
+                ColorStateList.valueOf(context.getColorFromAttr(R.attr.input_bar_button_text_color))
+            }
+
         result
+    }
+
+    // When the user is not able to send multimedia files to the recipient then we show the add attachments
+    // and microphone button in a suitable greyed out colour for their theme.
+    fun setDisabledColour() {
+        imageView.imageTintList = ColorStateList.valueOf(context.getColorFromAttr(R.attr.input_bar_text_hint))
     }
 
     constructor(context: Context) : super(context) { throw IllegalAccessException("Use InputBarButton(context:iconID:) instead.") }
