@@ -389,14 +389,14 @@ class VisibleMessageView : FrameLayout {
     }
 
     private fun isStartOfMessageCluster(current: MessageRecord, previous: MessageRecord?, isGroupThread: Boolean): Boolean =
-        previous == null || previous.isUpdate || !DateUtils.isSameHour(current.timestamp, previous.timestamp) || if (isGroupThread) {
+        previous == null || previous.isControlMessage || !DateUtils.isSameHour(current.timestamp, previous.timestamp) || if (isGroupThread) {
             current.recipient.address != previous.recipient.address
         } else {
             current.isOutgoing != previous.isOutgoing
         }
 
     private fun isEndOfMessageCluster(current: MessageRecord, next: MessageRecord?, isGroupThread: Boolean): Boolean =
-        next == null || next.isUpdate || !DateUtils.isSameHour(current.timestamp, next.timestamp) || if (isGroupThread) {
+        next == null || next.isControlMessage || !DateUtils.isSameHour(current.timestamp, next.timestamp) || if (isGroupThread) {
             current.recipient.address != next.recipient.address
         } else {
             current.isOutgoing != next.isOutgoing

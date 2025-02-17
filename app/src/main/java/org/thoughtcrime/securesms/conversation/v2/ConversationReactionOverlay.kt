@@ -547,7 +547,7 @@ class ConversationReactionOverlay : FrameLayout {
         val items: MutableList<ActionItem> = ArrayList()
 
         // Prepare
-        val containsControlMessage = message.isUpdate
+        val containsControlMessage = message.isControlMessage
         val hasText = !message.body.isEmpty()
         val openGroup = lokiThreadDatabase.getOpenGroupChat(message.threadId)
         val userPublicKey = textSecurePreferences.getLocalNumber()!!
@@ -556,7 +556,7 @@ class ConversationReactionOverlay : FrameLayout {
                 deprecationManager.isDeprecated
 
         // control messages and "marked as deleted" messages can only delete
-        val isDeleteOnly = message.isDeleted || message.isControlMessage
+        val isDeleteOnly = message.isDeleted || containsControlMessage
 
         // Select message
         if(!isDeleteOnly && !isDeprecatedLegacyGroup) {
