@@ -353,9 +353,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                 handleSwipeToReply(message)
             },
             onItemLongPress = { message, position, view ->
-                if (!viewModel.isMessageRequestThread &&
-                    viewModel.canReactToMessages
-                ) {
+                if (!viewModel.isMessageRequestThread) {
                     showConversationReaction(message, view)
                 } else {
                     selectMessage(message, position)
