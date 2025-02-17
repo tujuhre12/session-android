@@ -547,10 +547,12 @@ class GroupManagerV2Impl @Inject constructor(
 
             val promotionDeferred = members.associateWith { member ->
                 async {
-                    MessageSender.sendAndAwait(
+                    // The promotion message shouldn't be persisted to avoid being retried automatically
+                    MessageSender.sendNonDurably(
                         message = promoteMessage,
                         address = Address.fromSerialized(member.hexString),
-                    )
+                        isSyncMessage = false,
+                    ).await()
                 }
             }
 
