@@ -295,8 +295,8 @@ class ConversationViewModel(
         // - For 1-on-1 conversations the recipient must not be us and they must have approved us as a contact
         val allowedFor1on1 = recipient.is1on1 && !recipient.isLocalNumber && recipient.hasApprovedMe()
 
-        // - For groups you just have to be a member of the group
-        val allowedForGroup     = (recipient.isGroupRecipient || recipient.isGroupV2Recipient)
+        // - For groups you just have to be a member of the group. Note: `isGroupRecipient` convers both legacy and V2 groups.
+        val allowedForGroup = recipient.isGroupRecipient
 
         // - For communities you must have write access to the community
         val allowedForCommunity = (recipient.isCommunityRecipient && openGroup?.canWrite == true)

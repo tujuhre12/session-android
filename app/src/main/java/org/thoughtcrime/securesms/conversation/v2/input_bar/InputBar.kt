@@ -259,8 +259,6 @@ class InputBar @JvmOverloads constructor(
     private fun showOrHideMediaControlsIfNeeded() {
         attachmentsButton.snIsEnabled = showMediaControls
         microphoneButton.snIsEnabled = showMediaControls
-
-        attachmentsButton
     }
 
     fun addTextChangedListener(listener: (String) -> Unit) {
