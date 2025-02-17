@@ -343,6 +343,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         val adapter = ConversationAdapter(
             this,
             cursor,
+            viewModel.recipient,
             storage.getLastSeen(viewModel.threadId),
             reverseMessageList,
             onItemPress = { message, position, view, event ->

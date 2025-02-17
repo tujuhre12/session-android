@@ -1243,6 +1243,10 @@ open class Storage @Inject constructor(
 
     override fun getContactNameWithAccountID(accountID: String, groupId: AccountId?, contactContext: Contact.ContactContext): String {
         val contact = sessionContactDatabase.getContactWithAccountID(accountID)
+        return getContactNameWithAccountID(contact, accountID, groupId, contactContext)
+    }
+
+    override fun getContactNameWithAccountID(contact: Contact?, accountID: String, groupId: AccountId?, contactContext: Contact.ContactContext): String {
         // first attempt to get the name from the contact
         val userName: String? = contact?.displayName(contactContext)
             ?: if(groupId != null){

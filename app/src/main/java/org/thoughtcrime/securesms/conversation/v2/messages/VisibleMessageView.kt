@@ -61,8 +61,10 @@ import org.thoughtcrime.securesms.home.UserDetailsBottomSheet
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
 import network.loki.messenger.libsession_util.getOrNull
+import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
@@ -152,11 +154,11 @@ class VisibleMessageView : FrameLayout {
         glide: RequestManager = Glide.with(this),
         searchQuery: String? = null,
         contact: Contact? = null,
+        groupId: AccountId? = null,
         senderAccountID: String,
         lastSeen: Long,
         delegate: VisibleMessageViewDelegate? = null,
-        onAttachmentNeedsDownload: (DatabaseAttachment) -> Unit,
-        lastSentMessageId: Long
+        onAttachmentNeedsDownload: (DatabaseAttachment) -> Unit
     ) {
         replyDisabled = message.isOpenGroupInvitation
         val threadID = message.threadId
@@ -233,7 +235,12 @@ class VisibleMessageView : FrameLayout {
         binding.senderNameTextView.isVisible = !message.isOutgoing && (isStartOfMessageCluster && (isGroupThread || snIsSelected))
         val contactContext =
             if (thread.isCommunityRecipient) ContactContext.OPEN_GROUP else ContactContext.REGULAR
-        binding.senderNameTextView.text = contact?.displayName(contactContext) ?: senderAccountID
+        binding.senderNameTextView.text = MessagingModuleConfiguration.shared.storage.getContactNameWithAccountID(
+            contact = contact,
+            accountID = senderAccountID,
+            contactContext = contactContext,
+            groupId = groupId
+        )
 
         // Unread marker
         val shouldShowUnreadMarker = lastSeen != -1L && message.timestamp > lastSeen && (previous == null || previous.timestamp <= lastSeen) && !message.isOutgoing
