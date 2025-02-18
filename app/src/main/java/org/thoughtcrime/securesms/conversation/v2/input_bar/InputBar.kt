@@ -30,6 +30,9 @@ import com.bumptech.glide.RequestManager
 import org.thoughtcrime.securesms.util.addTextChangedListener
 import org.thoughtcrime.securesms.util.contains
 
+import org.session.libsignal.utilities.Log
+
+
 // TODO: A lot of the logic regarding voice messages is currently performed in the ConversationActivity
 // TODO: and here - it would likely be best to move this into the CA's ViewModel.
 
@@ -69,18 +72,12 @@ class InputBar @JvmOverloads constructor(
                 showOrHideInputIfNeeded()
             }
         }
-    var showMediaControls: Boolean = true
+    var allowMultimediaButtons: Boolean = true
         set(value) {
             field = value
-            showOrHideMediaControlsIfNeeded()
+            updateMultimediaButtonsState()
 
-            // Show the attachment (+) button and microphone as greyed out when they're disabled
-            if (!value) {
-                microphoneButton.setDisabledColour()
-                attachmentsButton.setDisabledColour()
-            }
-
-            binding.inputBarEditText.showMediaControls = value
+            binding.inputBarEditText.allowMultimediaInput = value
         }
 
     var text: String
@@ -89,9 +86,17 @@ class InputBar @JvmOverloads constructor(
 
     var voiceRecorderState = VoiceRecorderState.Idle
 
-    private val attachmentsButton = InputBarButton(context, R.drawable.ic_plus).apply { contentDescription = context.getString(R.string.AccessibilityId_attachmentsButton)}
-    val microphoneButton = InputBarButton(context, R.drawable.ic_mic).apply { contentDescription = context.getString(R.string.AccessibilityId_voiceMessageNew)}
-    private val sendButton = InputBarButton(context, R.drawable.ic_arrow_up, true).apply { contentDescription = context.getString(R.string.AccessibilityId_send)}
+    private val attachmentsButton = InputBarButton(context, R.drawable.ic_plus, initiallyEnabled = false).apply {
+        contentDescription = context.getString(R.string.AccessibilityId_attachmentsButton)
+    }
+
+    val microphoneButton = InputBarButton(context, R.drawable.ic_mic, initiallyEnabled = false).apply {
+        contentDescription = context.getString(R.string.AccessibilityId_voiceMessageNew)
+    }
+
+    private val sendButton = InputBarButton(context, R.drawable.ic_arrow_up, isSendButton = true, initiallyEnabled = true).apply {
+        contentDescription = context.getString(R.string.AccessibilityId_send)
+    }
 
     init {
         // Attachments button
@@ -112,7 +117,6 @@ class InputBar @JvmOverloads constructor(
         // `microphoneButton.onUp` and tap the button then the logged output order is onUp and THEN onPress!
         microphoneButton.setOnTouchListener(object : OnTouchListener {
             override fun onTouch(v: View, event: MotionEvent): Boolean {
-                if (!microphoneButton.snIsEnabled) return true
 
                 // We only handle single finger touch events so just consume the event and bail if there are more
                 if (event.pointerCount > 1) return true
@@ -168,6 +172,7 @@ class InputBar @JvmOverloads constructor(
     }
 
     override fun inputBarEditTextContentChanged(text: CharSequence) {
+        Log.w("ACL", "Hit Inputbar.inputBarEditTextContentChanged")
         microphoneButton.isVisible = text.trim().isEmpty()
         sendButton.isVisible = microphoneButton.isGone
         delegate?.inputBarEditTextContentChanged(text)
@@ -256,9 +261,12 @@ class InputBar @JvmOverloads constructor(
         sendButton.isVisible = showInput && text.isNotEmpty()
     }
 
-    private fun showOrHideMediaControlsIfNeeded() {
-        attachmentsButton.snIsEnabled = showMediaControls
-        microphoneButton.snIsEnabled = showMediaControls
+    private fun updateMultimediaButtonsState() {
+        attachmentsButton.isEnabled = allowMultimediaButtons
+        attachmentsButton.setIconTintColourFromCurrentEnabledState()
+
+        microphoneButton.isEnabled  = allowMultimediaButtons
+        microphoneButton.setIconTintColourFromCurrentEnabledState()
     }
 
     fun addTextChangedListener(listener: (String) -> Unit) {
