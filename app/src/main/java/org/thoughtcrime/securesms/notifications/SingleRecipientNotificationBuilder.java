@@ -73,7 +73,7 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
     setChannelId(channelId != null ? channelId : NotificationChannels.getMessagesChannel(context));
 
     if (privacy.isDisplayContact()) {
-      setContentTitle(recipient.toShortString());
+      setContentTitle(recipient.getName());
 
       if (recipient.getContactUri() != null) {
         addPerson(recipient.getContactUri().toString());

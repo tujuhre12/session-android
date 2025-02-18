@@ -328,7 +328,7 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
       if (this.name == null) {
         List<String> names = new LinkedList<>();
         for (Recipient recipient : participants) {
-          names.add(recipient.toShortString());
+          names.add(recipient.name);
         }
         return Util.join(names, ", ");
       } else {
@@ -517,10 +517,6 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
     if (listeners.isEmpty()) {
       for (Recipient recipient : participants) recipient.removeListener(this);
     }
-  }
-
-  public synchronized String toShortString() {
-    return getName();
   }
 
   public synchronized @NonNull Drawable getFallbackContactPhotoDrawable(Context context, boolean inverted) {

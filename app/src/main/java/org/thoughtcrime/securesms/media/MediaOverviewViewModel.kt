@@ -65,7 +65,7 @@ class MediaOverviewViewModel(
         .shareIn(viewModelScope, SharingStarted.Eagerly, replay = 1)
 
     val title: StateFlow<String> = recipient
-        .map { it.toShortString() }
+        .map { it.name }
         .stateIn(viewModelScope, SharingStarted.Eagerly, "")
 
     val mediaListState: StateFlow<MediaOverviewContent?> = recipient

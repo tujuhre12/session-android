@@ -503,7 +503,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
         showSessionDialog {
             title(R.string.block)
             text(Phrase.from(context, R.string.blockDescription)
-                .put(NAME_KEY, thread.recipient.toShortString())
+                .put(NAME_KEY, thread.recipient.name)
                 .format())
             dangerButton(R.string.block, R.string.AccessibilityId_blockConfirm) {
                 lifecycleScope.launch(Dispatchers.Default) {
@@ -514,7 +514,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                     }
                 }
                 // Block confirmation toast added as per SS-64
-                val txt = Phrase.from(context, R.string.blockBlockedUser).put(NAME_KEY, thread.recipient.toShortString()).format().toString()
+                val txt = Phrase.from(context, R.string.blockBlockedUser).put(NAME_KEY, thread.recipient.name).format().toString()
                 Toast.makeText(context, txt, Toast.LENGTH_LONG).show()
             }
             cancelButton()
@@ -524,7 +524,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
     private fun unblockConversation(thread: ThreadRecord) {
         showSessionDialog {
             title(R.string.blockUnblock)
-            text(Phrase.from(context, R.string.blockUnblockName).put(NAME_KEY, thread.recipient.toShortString()).format())
+            text(Phrase.from(context, R.string.blockUnblockName).put(NAME_KEY, thread.recipient.name).format())
             dangerButton(R.string.blockUnblock, R.string.AccessibilityId_unblockConfirm) {
                 lifecycleScope.launch(Dispatchers.Default) {
                     storage.setBlocked(listOf(thread.recipient), false)
@@ -673,7 +673,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
             else { // If this is a 1-on-1 conversation
                 title = getString(R.string.conversationsDelete)
                 message = Phrase.from(this, R.string.conversationsDeleteDescription)
-                    .put(NAME_KEY, recipient.toShortString())
+                    .put(NAME_KEY, recipient.name)
                     .format()
             }
         }

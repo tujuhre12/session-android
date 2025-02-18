@@ -37,7 +37,7 @@ public class FromTextView extends EmojiTextView {
   }
 
   public void setText(Recipient recipient, boolean read) {
-    String fromString = recipient.toShortString();
+    String fromString = recipient.getName();
 
     int typeface;
 

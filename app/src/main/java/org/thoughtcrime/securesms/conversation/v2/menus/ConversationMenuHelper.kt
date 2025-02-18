@@ -296,7 +296,7 @@ object ConversationMenuHelper {
             override fun onPostExecute(icon: IconCompat?) {
                 val name = Optional.fromNullable<String>(thread.name)
                     .or(Optional.fromNullable<String>(thread.profileName))
-                    .or(thread.toShortString())
+                    .or(thread.name)
                 val shortcutInfo = ShortcutInfoCompat.Builder(context, thread.address.serialize() + '-' + System.currentTimeMillis())
                     .setShortLabel(name)
                     .setIcon(icon)
