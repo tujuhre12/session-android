@@ -45,7 +45,6 @@ import org.session.libsession.messaging.utilities.SodiumUtilities.blindedKeyPair
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ServiceUtil
 import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocalNumber
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getNotificationPrivacy
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getRepeatAlertsCount
@@ -58,7 +57,6 @@ import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Util
 import org.thoughtcrime.securesms.ApplicationContext
-import org.thoughtcrime.securesms.contacts.ContactUtil
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities.highlightMentions
 import org.thoughtcrime.securesms.crypto.KeyPairUtilities.getUserED25519KeyPair
 import org.thoughtcrime.securesms.database.RecipientDatabase
@@ -500,12 +498,7 @@ class DefaultMessageNotifier : MessageNotifier {
 
             // ----- Note: All further cases assume we know the contact and that Session isn't locked -----
 
-            // If this is a notification about a multimedia message from a contact we know about..
-            } else if (record.isMms && !(record as MmsMessageRecord).sharedContacts.isEmpty()) {
-                val contact = (record as MmsMessageRecord).sharedContacts[0]
-                body = ContactUtil.getStringSummary(context, contact)
-
-                // If this is a notification about a multimedia message which contains no text but DOES contain a slide deck with at least one slide..
+            // If this is a notification about a multimedia message which contains no text but DOES contain a slide deck with at least one slide..
             } else if (record.isMms && TextUtils.isEmpty(body) && !(record as MmsMessageRecord).slideDeck.slides.isEmpty()) {
                 slideDeck = (record as MediaMmsMessageRecord).slideDeck
                 body = SpanUtil.italic(slideDeck.body)
