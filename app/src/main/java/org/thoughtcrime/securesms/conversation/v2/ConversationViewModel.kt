@@ -42,6 +42,7 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
@@ -82,6 +83,7 @@ class ConversationViewModel(
     private val configFactory: ConfigFactory,
     private val groupManagerV2: GroupManagerV2,
     val legacyGroupDeprecationManager: LegacyGroupDeprecationManager,
+    private val usernameUtils: UsernameUtils
 ) : ViewModel() {
 
     val showSendAfterApprovalText: Boolean
@@ -1067,6 +1069,8 @@ class ConversationViewModel(
         return true
     }
 
+    fun getUsername(accountId: String) = usernameUtils.getContactNameWithAccountID(accountId)
+
     @dagger.assisted.AssistedFactory
     interface AssistedFactory {
         fun create(threadId: Long, edKeyPair: KeyPair?): Factory
@@ -1090,6 +1094,7 @@ class ConversationViewModel(
         private val configFactory: ConfigFactory,
         private val groupManagerV2: GroupManagerV2,
         private val legacyGroupDeprecationManager: LegacyGroupDeprecationManager,
+        private val usernameUtils: UsernameUtils
     ) : ViewModelProvider.Factory {
 
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -1108,6 +1113,7 @@ class ConversationViewModel(
                 configFactory = configFactory,
                 groupManagerV2 = groupManagerV2,
                 legacyGroupDeprecationManager = legacyGroupDeprecationManager,
+                usernameUtils = usernameUtils
             ) as T
         }
     }

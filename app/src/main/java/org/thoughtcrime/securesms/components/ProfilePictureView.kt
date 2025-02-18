@@ -21,6 +21,7 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.AppTextSecurePreferences
 import org.session.libsession.utilities.GroupUtil
+import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.utilities.Log
@@ -48,6 +49,9 @@ class ProfilePictureView @JvmOverloads constructor(
 
     @Inject
     lateinit var storage: StorageProtocol
+
+    @Inject
+    lateinit var usernameUtils: UsernameUtils
 
     private val profilePicturesCache = mutableMapOf<View, Recipient>()
     private val resourcePadding by lazy {
@@ -84,7 +88,7 @@ class ProfilePictureView @JvmOverloads constructor(
         isGroupsV2Recipient: Boolean = false,
     ) {
         fun getUserDisplayName(publicKey: String): String = prefs.takeIf { userPublicKey == publicKey }?.getProfileName()
-            ?: storage.getContactNameWithAccountID(publicKey)
+            ?: usernameUtils.getContactNameWithAccountID(publicKey)
 
         if (isLegacyGroupRecipient || isGroupsV2Recipient) {
             val members = if (isLegacyGroupRecipient) {

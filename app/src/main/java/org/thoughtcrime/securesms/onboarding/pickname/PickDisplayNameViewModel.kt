@@ -16,10 +16,7 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.SSKEnvironment.ProfileManagerProtocol.Companion.NAME_PADDED_LENGTH
 import org.session.libsession.utilities.TextSecurePreferences
-import org.thoughtcrime.securesms.ApplicationContext
-import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.onboarding.messagenotifications.MessageNotificationsViewModel
-import org.thoughtcrime.securesms.util.UsernameUtils
+import org.session.libsession.utilities.UsernameUtils
 
 internal class PickDisplayNameViewModel(
     private val loadFailed: Boolean,

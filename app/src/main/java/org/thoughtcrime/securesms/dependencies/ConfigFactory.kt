@@ -598,7 +598,7 @@ private fun MutableUserProfile.initFrom(storage: StorageProtocol,
                                         textSecurePreferences: TextSecurePreferences
 ) {
     val ownPublicKey = storage.getUserPublicKey() ?: return
-    val displayName = textSecurePreferences.getProfileName() ?: return
+    val displayName = textSecurePreferences.getProfileName() ?: return // forced to user the textPrefs directly here as we can't depend on usernameUtils as it would create a dependency cycle with the config
     val profilePicture = textSecurePreferences.getProfilePictureURL()
     val config = ConfigurationMessage.getCurrent(displayName, profilePicture, listOf()) ?: return
     setName(config.displayName)

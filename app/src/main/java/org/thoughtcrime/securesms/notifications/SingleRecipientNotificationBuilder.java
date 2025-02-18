@@ -331,7 +331,7 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
    * @param openGroupRecipient whether in an open group context
    */
   private String getGroupDisplayName(Recipient recipient, boolean openGroupRecipient) {
-    return MessagingModuleConfiguration.getShared().getStorage().getContactNameWithAccountID(
+    return MessagingModuleConfiguration.getShared().getUsernameUtils().getContactNameWithAccountID(
             recipient.getAddress().serialize(),
             null,
             openGroupRecipient ? Contact.ContactContext.OPEN_GROUP : Contact.ContactContext.REGULAR

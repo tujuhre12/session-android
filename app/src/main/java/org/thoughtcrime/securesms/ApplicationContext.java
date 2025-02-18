@@ -58,6 +58,7 @@ import org.session.libsession.utilities.ProfilePictureUtilities;
 import org.session.libsession.utilities.SSKEnvironment;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.Toaster;
+import org.session.libsession.utilities.UsernameUtils;
 import org.session.libsession.utilities.Util;
 import org.session.libsession.utilities.WindowDebouncer;
 import org.session.libsignal.utilities.HTTP;
@@ -175,6 +176,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     @Inject LegacyClosedGroupPollerV2 legacyClosedGroupPollerV2;
     @Inject LegacyGroupDeprecationManager legacyGroupDeprecationManager;
     @Inject CleanupInvitationHandler cleanupInvitationHandler;
+    @Inject UsernameUtils usernameUtils;
 
     public volatile boolean isAppVisible;
     public String KEYGUARD_LOCK_TAG = NonTranslatableStringConstants.APP_NAME + ":KeyguardLock";
@@ -264,7 +266,8 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
                 snodeClock,
                 textSecurePreferences,
                 legacyClosedGroupPollerV2,
-                legacyGroupDeprecationManager
+                legacyGroupDeprecationManager,
+                usernameUtils
                 );
         callMessageProcessor = new CallMessageProcessor(this, textSecurePreferences, ProcessLifecycleOwner.get().getLifecycle(), storage);
         Log.i(TAG, "onCreate()");

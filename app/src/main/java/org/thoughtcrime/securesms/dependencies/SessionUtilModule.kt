@@ -1,11 +1,9 @@
 package org.thoughtcrime.securesms.dependencies
 
-import android.content.Context
 import dagger.Lazy
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -18,11 +16,11 @@ import org.session.libsession.messaging.groups.GroupScope
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.sending_receiving.pollers.LegacyClosedGroupPollerV2
 import org.session.libsession.snode.SnodeClock
-import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.UsernameUtils
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
-import org.thoughtcrime.securesms.database.ConfigDatabase
-import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.SessionContactDatabase
+import org.thoughtcrime.securesms.util.UsernameUtilsImpl
 import javax.inject.Named
 import javax.inject.Singleton
 
@@ -82,4 +80,16 @@ object SessionUtilModule {
     fun provideLegacyGroupDeprecationManager(prefs: TextSecurePreferences): LegacyGroupDeprecationManager {
         return LegacyGroupDeprecationManager(prefs)
     }
+
+    @Provides
+    @Singleton
+    fun provideUsernameUtils(
+        prefs: TextSecurePreferences,
+        configFactory: ConfigFactory,
+        sessionContactDatabase: SessionContactDatabase,
+    ): UsernameUtils = UsernameUtilsImpl(
+        prefs = prefs,
+        configFactory = configFactory,
+        sessionContactDatabase = sessionContactDatabase,
+    )
 }

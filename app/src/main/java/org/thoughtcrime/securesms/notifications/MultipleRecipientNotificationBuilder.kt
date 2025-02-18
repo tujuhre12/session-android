@@ -103,7 +103,7 @@ class MultipleRecipientNotificationBuilder(context: Context, privacy: Notificati
      * @param openGroupRecipient whether in an open group context
      */
     private fun getGroupDisplayName(recipient: Recipient, openGroupRecipient: Boolean): String {
-        return MessagingModuleConfiguration.shared.storage.getContactNameWithAccountID(
+        return MessagingModuleConfiguration.shared.usernameUtils.getContactNameWithAccountID(
             accountID = recipient.address.serialize(),
             contactContext = if (openGroupRecipient) Contact.ContactContext.OPEN_GROUP else Contact.ContactContext.REGULAR
         )

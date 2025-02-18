@@ -3,11 +3,11 @@ package org.thoughtcrime.securesms.onboarding.manager
 import android.app.Application
 import org.session.libsession.snode.SnodeModule
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.UsernameUtils
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.utilities.KeyHelper
 import org.session.libsignal.utilities.hexEncodedPublicKey
 import org.thoughtcrime.securesms.crypto.KeyPairUtilities
-import org.thoughtcrime.securesms.util.UsernameUtils
 import org.thoughtcrime.securesms.util.VersionDataFetcher
 import javax.inject.Inject
 import javax.inject.Singleton
