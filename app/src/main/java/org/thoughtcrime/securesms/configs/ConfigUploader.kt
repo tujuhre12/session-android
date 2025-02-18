@@ -34,6 +34,7 @@ import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigPushResult
 import org.session.libsession.utilities.ConfigUpdateNotification
+import org.session.libsession.utilities.MutableGroupConfigs
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.getGroup
@@ -45,7 +46,6 @@ import org.session.libsignal.utilities.Snode
 import org.session.libsignal.utilities.retryWithUniformInterval
 import org.thoughtcrime.securesms.util.InternetConnectivity
 import javax.inject.Inject
-import kotlin.math.log
 
 private const val TAG = "ConfigUploader"
 
@@ -169,29 +169,53 @@ class ConfigUploader @Inject constructor(
         }
     }
 
-    private suspend fun pushGroupConfigsChangesIfNeeded(groupId: AccountId) = coroutineScope {
+    private suspend fun pushGroupConfigsChangesIfNeeded(groupId: AccountId) {
         // Only admin can push group configs
         val adminKey = configFactory.getGroup(groupId)?.adminKey
         if (adminKey == null) {
             Log.i(TAG, "Skipping group config push without admin key")
-            return@coroutineScope
+            return
         }
 
+        pushGroupConfigsChangesIfNeeded(adminKey, groupId) { groupConfigAccess ->
+            configFactory.withMutableGroupConfigs(groupId) {
+                groupConfigAccess(it)
+            }
+        }
+    }
+
+    /**
+     * Gather the group configs data and tries to push to the swarm. Generally, any change to existing
+     * configs will be batched and pushed automatically, namely operations done with
+     * [ConfigFactoryProtocol.withMutableGroupConfigs], you shouldn't need to call this method.
+     * This method is only useful when you are about to create a new group where you want a
+     * finer control over how the configs are pushed/persisted.
+     *
+     * Note: this method doesn't help you with persisting the config changes to the local database,
+     * it's merely a helper to push the changes to the swarm.
+     *
+     */
+    suspend fun pushGroupConfigsChangesIfNeeded(
+        adminKey: ByteArray,
+        groupId: AccountId,
+        groupConfigAccess: ((MutableGroupConfigs) -> Unit) -> Unit
+    ) = coroutineScope {
+        var membersPush: ConfigPush? = null
+        var infoPush: ConfigPush? = null
+        var keysPush: ByteArray? = null
+
+
         // Gather data to push
-        val (membersPush, infoPush, keysPush) = configFactory.withMutableGroupConfigs(groupId) { configs ->
-            val membersPush = if (configs.groupMembers.needsPush()) {
-                configs.groupMembers.push()
-            } else {
-                null
+        groupConfigAccess { configs ->
+            if (configs.groupMembers.needsPush()) {
+                membersPush = configs.groupMembers.push()
             }
 
-            val infoPush = if (configs.groupInfo.needsPush()) {
-                configs.groupInfo.push()
-            } else {
-                null
+            if (configs.groupInfo.needsPush()) {
+                infoPush = configs.groupInfo.push()
             }
 
-            Triple(membersPush, infoPush, configs.groupKeys.pendingConfig())
+            keysPush = configs.groupKeys.pendingConfig()
         }
 
         // Nothing to push?
@@ -205,25 +229,25 @@ class ConfigUploader @Inject constructor(
         val auth = OwnedSwarmAuth.ofClosedGroup(groupId, adminKey)
 
         // Spawn the config pushing concurrently
-        val membersConfigHashTask = membersPush?.let {
+        val membersConfigHashTask = membersPush?.let { push ->
             async {
-                membersPush to pushConfig(
+                push to pushConfig(
                     auth,
                     snode,
-                    membersPush,
+                    push,
                     Namespace.CLOSED_GROUP_MEMBERS()
                 )
             }
         }
 
-        val infoConfigHashTask = infoPush?.let {
+        val infoConfigHashTask = infoPush?.let { push ->
             async {
-                infoPush to pushConfig(auth, snode, infoPush, Namespace.CLOSED_GROUP_INFO())
+                push to pushConfig(auth, snode, push, Namespace.CLOSED_GROUP_INFO())
             }
         }
 
         // Keys push is different: it doesn't have the delete call so we don't call pushConfig
-        val keysPushResult = keysPush?.let {
+        val keysPushResult = keysPush?.let { push ->
             SnodeAPI.sendBatchRequest(
                 snode = snode,
                 publicKey = auth.accountId.hexString,
@@ -231,7 +255,7 @@ class ConfigUploader @Inject constructor(
                     Namespace.ENCRYPTION_KEYS(),
                     SnodeMessage(
                         auth.accountId.hexString,
-                        Base64.encodeBytes(keysPush),
+                        Base64.encodeBytes(push),
                         SnodeMessage.CONFIG_TTL,
                         clock.currentTimeMills(),
                     ),
@@ -245,12 +269,17 @@ class ConfigUploader @Inject constructor(
         val memberPushResult = membersConfigHashTask?.await()
         val infoPushResult = infoConfigHashTask?.await()
 
-        configFactory.confirmGroupConfigsPushed(
-            groupId,
-            memberPushResult,
-            infoPushResult,
-            keysPushResult
-        )
+        // Confirm the push
+        groupConfigAccess { configs ->
+            memberPushResult?.let { (push, result) -> configs.groupMembers.confirmPushed(push.seqNo, result.hash) }
+            infoPushResult?.let { (push, result) -> configs.groupInfo.confirmPushed(push.seqNo, result.hash) }
+            keysPushResult?.let { (hash, timestamp) ->
+                val pendingConfig = configs.groupKeys.pendingConfig()
+                if (pendingConfig != null) {
+                    configs.groupKeys.loadKey(pendingConfig, hash, timestamp)
+                }
+            }
+        }
 
         Log.i(
             TAG,
