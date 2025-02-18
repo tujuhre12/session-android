@@ -30,9 +30,6 @@ import com.bumptech.glide.RequestManager
 import org.thoughtcrime.securesms.util.addTextChangedListener
 import org.thoughtcrime.securesms.util.contains
 
-import org.session.libsignal.utilities.Log
-
-
 // TODO: A lot of the logic regarding voice messages is currently performed in the ConversationActivity
 // TODO: and here - it would likely be best to move this into the CA's ViewModel.
 
@@ -72,7 +69,7 @@ class InputBar @JvmOverloads constructor(
                 showOrHideInputIfNeeded()
             }
         }
-    var allowMultimediaButtons: Boolean = true
+    var allowAttachMultimediaButtons: Boolean = true
         set(value) {
             field = value
             updateMultimediaButtonsState()
@@ -172,7 +169,6 @@ class InputBar @JvmOverloads constructor(
     }
 
     override fun inputBarEditTextContentChanged(text: CharSequence) {
-        Log.w("ACL", "Hit Inputbar.inputBarEditTextContentChanged")
         microphoneButton.isVisible = text.trim().isEmpty()
         sendButton.isVisible = microphoneButton.isGone
         delegate?.inputBarEditTextContentChanged(text)
@@ -262,10 +258,10 @@ class InputBar @JvmOverloads constructor(
     }
 
     private fun updateMultimediaButtonsState() {
-        attachmentsButton.isEnabled = allowMultimediaButtons
+        attachmentsButton.isEnabled = allowAttachMultimediaButtons
         attachmentsButton.setIconTintColourFromCurrentEnabledState()
 
-        microphoneButton.isEnabled  = allowMultimediaButtons
+        microphoneButton.isEnabled  = allowAttachMultimediaButtons
         microphoneButton.setIconTintColourFromCurrentEnabledState()
     }
 

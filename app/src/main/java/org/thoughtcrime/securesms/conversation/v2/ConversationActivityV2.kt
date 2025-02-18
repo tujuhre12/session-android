@@ -952,7 +952,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 viewModel.uiState.collect { state ->
                     binding.inputBar.run {
                         isVisible = state.showInput
-                        allowMultimediaButtons = state.enableInputMediaControls
+                        allowAttachMultimediaButtons = state.enableAttachMediaControls
                     }
 
                     // show or hide loading indicator

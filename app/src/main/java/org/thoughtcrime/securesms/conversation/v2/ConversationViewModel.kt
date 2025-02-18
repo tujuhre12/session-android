@@ -264,7 +264,7 @@ class ConversationViewModel(
                     it.copy(
                         shouldExit = recipient == null,
                         showInput = shouldShowInput(recipient, community, deprecationState),
-                        enableInputMediaControls = shouldEnableInputMediaControls(recipient),
+                        enableAttachMediaControls = shouldEnableInputMediaControls(recipient),
                         messageRequestState = buildMessageRequestState(recipient),
                     )
                 }
@@ -1189,7 +1189,7 @@ data class ConversationUiState(
     // Note: These input media controls are with regard to whether the user can attach multimedia files
     // or record voice messages to be sent to a recipient - they are NOT things like video or audio
     // playback controls.
-    val enableInputMediaControls: Boolean = true,
+    val enableAttachMediaControls: Boolean = true,
 
     val showLoader: Boolean = false,
 )
