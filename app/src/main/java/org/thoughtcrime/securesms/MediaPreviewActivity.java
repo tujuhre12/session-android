@@ -259,7 +259,7 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
       }
 
       if      (mediaItem.outgoing)          getSupportActionBar().setTitle(getString(R.string.you));
-      else if (mediaItem.recipient != null) getSupportActionBar().setTitle(mediaItem.recipient.toShortString());
+      else if (mediaItem.recipient != null) getSupportActionBar().setTitle(mediaItem.recipient.getName());
       else                                  getSupportActionBar().setTitle("");
 
       getSupportActionBar().setSubtitle(relativeTimeSpan);

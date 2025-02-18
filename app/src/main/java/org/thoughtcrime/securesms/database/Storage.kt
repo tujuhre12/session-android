@@ -4,25 +4,18 @@ import android.content.Context
 import android.net.Uri
 import com.goterl.lazysodium.utils.KeyPair
 import dagger.hilt.android.qualifiers.ApplicationContext
-import java.security.MessageDigest
-import javax.inject.Inject
-import javax.inject.Singleton
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_PINNED
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
-import network.loki.messenger.libsession_util.getOrNull
 import network.loki.messenger.libsession_util.util.BaseCommunityInfo
-import network.loki.messenger.libsession_util.util.Contact as LibSessionContact
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupDisplayInfo
 import network.loki.messenger.libsession_util.util.GroupInfo
-import network.loki.messenger.libsession_util.util.GroupMember as LibSessionGroupMember
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.BlindedIdMapping
-import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.jobs.AttachmentUploadJob
@@ -68,12 +61,12 @@ import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.ProfileKeyUtil
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.Recipient.DisappearingState
 import org.session.libsession.utilities.recipients.getType
-import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceAttachmentPointer
@@ -97,6 +90,11 @@ import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
+import java.security.MessageDigest
+import javax.inject.Inject
+import javax.inject.Singleton
+import network.loki.messenger.libsession_util.util.Contact as LibSessionContact
+import network.loki.messenger.libsession_util.util.GroupMember as LibSessionGroupMember
 
 private const val TAG = "Storage"
 
@@ -127,6 +125,7 @@ open class Storage @Inject constructor(
     private val messageExpirationManager: SSKEnvironment.MessageExpirationManagerProtocol,
     private val clock: SnodeClock,
     private val preferences: TextSecurePreferences,
+    private val usernameUtils: UsernameUtils
 ) : Database(context, helper), StorageProtocol, ThreadDatabase.ConversationThreadUpdateListener {
 
     init {
@@ -230,7 +229,7 @@ open class Storage @Inject constructor(
     override fun getUserED25519KeyPair(): KeyPair? { return KeyPairUtilities.getUserED25519KeyPair(context) }
 
     override fun getUserProfile(): Profile {
-        val displayName = TextSecurePreferences.getProfileName(context)
+        val displayName = usernameUtils.getCurrentUsername()
         val profileKey = ProfileKeyUtil.getProfileKey(context)
         val profilePictureUrl = TextSecurePreferences.getProfilePictureURL(context)
         return Profile(displayName, profileKey, profilePictureUrl)
@@ -1245,21 +1244,6 @@ open class Storage @Inject constructor(
 
     override fun getContactWithAccountID(accountID: String): Contact? {
         return sessionContactDatabase.getContactWithAccountID(accountID)
-    }
-
-    override fun getContactNameWithAccountID(accountID: String, groupId: AccountId?, contactContext: Contact.ContactContext): String {
-        val contact = sessionContactDatabase.getContactWithAccountID(accountID)
-        return getContactNameWithAccountID(contact, accountID, groupId, contactContext)
-    }
-
-    override fun getContactNameWithAccountID(contact: Contact?, accountID: String, groupId: AccountId?, contactContext: Contact.ContactContext): String {
-        // first attempt to get the name from the contact
-        val userName: String? = contact?.displayName(contactContext)
-            ?: if(groupId != null){
-                configFactory.withGroupConfigs(groupId) { it.groupMembers.getOrNull(accountID)?.name }
-            } else null
-
-        return userName ?: truncateIdForDisplay(accountID)
     }
 
     override fun getAllContacts(): Set<Contact> {

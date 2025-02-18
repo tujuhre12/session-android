@@ -880,7 +880,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         if (shouldShowLegacy) {
 
             val txt = Phrase.from(this, R.string.disappearingMessagesLegacy)
-                .put(NAME_KEY, legacyRecipient!!.toShortString())
+                .put(NAME_KEY, legacyRecipient!!.name)
                 .format()
             binding.outdatedDisappearingBannerTextView.text = txt
         }
@@ -1265,12 +1265,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             binding.conversationRecyclerView.isVisible = false
             binding.placeholderText.text = when (groupThreadStatus) {
                 GroupThreadStatus.Kicked -> Phrase.from(this, R.string.groupRemovedYou)
-                    .put(GROUP_NAME_KEY, recipient.toShortString())
+                    .put(GROUP_NAME_KEY, recipient.name)
                     .format()
                     .toString()
 
                 GroupThreadStatus.Destroyed -> Phrase.from(this, R.string.groupDeletedMemberDescription)
-                    .put(GROUP_NAME_KEY, recipient.toShortString())
+                    .put(GROUP_NAME_KEY, recipient.name)
                     .format()
                     .toString()
 
@@ -1294,14 +1294,14 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             // If we're trying to message someone who has blocked community message requests
             blindedRecipient?.blocksCommunityMessageRequests == true -> {
                 Phrase.from(applicationContext, R.string.messageRequestsTurnedOff)
-                    .put(NAME_KEY, recipient.toShortString())
+                    .put(NAME_KEY, recipient.name)
                     .format()
             }
 
             // 10n1 and groups
             recipient.is1on1 || recipient.isGroupOrCommunityRecipient -> {
                 Phrase.from(applicationContext, R.string.groupNoMessages)
-                    .put(GROUP_NAME_KEY, recipient.toShortString())
+                    .put(GROUP_NAME_KEY, recipient.name)
                     .format()
             }
 
@@ -1354,7 +1354,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val name = if (recipient.isGroupV2Recipient && invitingAdmin != null) {
             invitingAdmin.getSearchName()
         } else {
-            recipient.toShortString()
+            recipient.name
         }
 
         showSessionDialog {
@@ -1420,7 +1420,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             title(R.string.blockUnblock)
             text(
                 Phrase.from(context, R.string.blockUnblockName)
-                    .put(NAME_KEY, recipient.toShortString())
+                    .put(NAME_KEY, recipient.name)
                     .format()
             )
             dangerButton(R.string.blockUnblock, R.string.AccessibilityId_unblockConfirm) { viewModel.unblock() }
@@ -1841,7 +1841,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     override fun sendMessage() {
         val recipient = viewModel.recipient ?: return
         if (recipient.isContactRecipient && recipient.isBlocked) {
-            BlockedDialog(recipient, this).show(supportFragmentManager, "Blocked Dialog")
+            BlockedDialog(recipient, viewModel.getUsername(recipient.address.serialize())).show(supportFragmentManager, "Blocked Dialog")
             return
         }
         val sentMessageInfo = if (binding.inputBar.linkPreview != null || binding.inputBar.quote != null) {

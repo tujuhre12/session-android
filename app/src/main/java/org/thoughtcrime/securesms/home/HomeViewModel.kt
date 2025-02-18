@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.home
 
 import android.content.ContentResolver
-import android.content.Context
 import androidx.annotation.AttrRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asFlow
@@ -28,6 +27,7 @@ import kotlinx.coroutines.flow.stateIn
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.UsernameUtils
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
@@ -42,7 +42,8 @@ class HomeViewModel @Inject constructor(
     private val contentResolver: ContentResolver,
     private val prefs: TextSecurePreferences,
     private val typingStatusRepository: TypingStatusRepository,
-    private val configFactory: ConfigFactory
+    private val configFactory: ConfigFactory,
+    private val usernameUtils: UsernameUtils
 ) : ViewModel() {
     // SharedFlow that emits whenever the user asks us to reload  the conversation
     private val manualReloadTrigger = MutableSharedFlow<Unit>(
@@ -157,6 +158,8 @@ class HomeViewModel @Inject constructor(
             it.userProfile.setNtsPriority(PRIORITY_HIDDEN)
         }
     }
+
+    fun getCurrentUsername() = usernameUtils.getCurrentUsernameWithAccountIdFallback()
 
     companion object {
         private const val CHANGE_NOTIFICATION_DEBOUNCE_MILLS = 100L

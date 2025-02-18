@@ -49,7 +49,6 @@ import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.Pair;
 import org.session.libsignal.utilities.guava.Optional;
 import org.thoughtcrime.securesms.ApplicationContext;
-import org.thoughtcrime.securesms.contacts.ContactUtil;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
 import org.thoughtcrime.securesms.database.model.GroupThreadStatus;
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord;
@@ -62,7 +61,6 @@ import org.thoughtcrime.securesms.mms.SlideDeck;
 import org.thoughtcrime.securesms.notifications.MarkReadReceiver;
 import org.thoughtcrime.securesms.util.SessionMetaProtocol;
 import java.io.Closeable;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -798,10 +796,6 @@ public class ThreadDatabase extends Database {
   private @NonNull String getFormattedBodyFor(@NonNull MessageRecord messageRecord) {
     if (messageRecord.isMms()) {
       MmsMessageRecord record = (MmsMessageRecord) messageRecord;
-      if (!record.getSharedContacts().isEmpty()) {
-        Contact contact = ((MmsMessageRecord)messageRecord).getSharedContacts().get(0);
-        return ContactUtil.getStringSummary(context, contact).toString();
-      }
       String attachmentString = record.getSlideDeck().getBody();
       if (!attachmentString.isEmpty()) {
         if (!messageRecord.getBody().isEmpty()) {

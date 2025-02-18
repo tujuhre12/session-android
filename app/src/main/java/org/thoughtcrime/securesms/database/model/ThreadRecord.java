@@ -214,7 +214,7 @@ public class ThreadRecord extends DisplayRecord {
                 prefix = context.getString(R.string.you);
             }
             else if(lastMessage != null){
-                prefix = lastMessage.getIndividualRecipient().toShortString();
+                prefix = lastMessage.getIndividualRecipient().getName();
             }
 
             return Phrase.from(context.getString(R.string.messageSnippetGroup))

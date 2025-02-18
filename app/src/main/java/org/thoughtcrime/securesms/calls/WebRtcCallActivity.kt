@@ -198,10 +198,9 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
 
         // set up the user avatar
         TextSecurePreferences.getLocalNumber(this)?.let{
-            val username = TextSecurePreferences.getProfileName(this) ?: truncateIdForDisplay(it)
             binding.userAvatar.apply {
                 publicKey = it
-                displayName = username
+                displayName = viewModel.getCurrentUsername()
                 update()
             }
         }
@@ -343,7 +342,7 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
 
                     if (latestRecipient.recipient != null) {
                         val contactPublicKey = latestRecipient.recipient.address.serialize()
-                        val contactDisplayName = viewModel.getUserName(contactPublicKey)
+                        val contactDisplayName = viewModel.getContactName(contactPublicKey)
                         supportActionBar?.title = contactDisplayName
                         binding.remoteRecipientName.text = contactDisplayName
 

@@ -86,7 +86,6 @@ class ConversationView : LinearLayout {
         binding.unreadMentionTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, textSize)
         binding.unreadMentionIndicator.isVisible = (thread.unreadMentionCount != 0 && thread.recipient.address.isGroupOrCommunity)
         val senderDisplayName = getTitle(thread.recipient)
-                ?: thread.recipient.address.toString()
         binding.conversationViewDisplayNameTextView.text = senderDisplayName
         binding.timestampTextView.text = thread.date.takeIf { it != 0L }?.let { DateUtils.getDisplayFormattedTimeSpanString(context, Locale.getDefault(), it) }
         val recipient = thread.recipient
@@ -133,9 +132,9 @@ class ConversationView : LinearLayout {
         binding.profilePictureView.recycle()
     }
 
-    private fun getTitle(recipient: Recipient): String? = when {
+    private fun getTitle(recipient: Recipient): String = when {
         recipient.isLocalNumber -> context.getString(R.string.noteToSelf)
-        else -> recipient.toShortString() // Internally uses the Contact API
+        else -> recipient.name // Internally uses the Contact API
     }
     // endregion
 }
