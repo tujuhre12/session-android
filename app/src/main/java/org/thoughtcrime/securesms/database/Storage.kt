@@ -97,6 +97,7 @@ import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
+import org.thoughtcrime.securesms.util.UsernameUtils
 
 private const val TAG = "Storage"
 
@@ -127,6 +128,7 @@ open class Storage @Inject constructor(
     private val messageExpirationManager: SSKEnvironment.MessageExpirationManagerProtocol,
     private val clock: SnodeClock,
     private val preferences: TextSecurePreferences,
+    private val usernameUtils: UsernameUtils
 ) : Database(context, helper), StorageProtocol, ThreadDatabase.ConversationThreadUpdateListener {
 
     init {
@@ -230,7 +232,7 @@ open class Storage @Inject constructor(
     override fun getUserED25519KeyPair(): KeyPair? { return KeyPairUtilities.getUserED25519KeyPair(context) }
 
     override fun getUserProfile(): Profile {
-        val displayName = TextSecurePreferences.getProfileName(context)
+        val displayName = usernameUtils.getCurrentUsername()
         val profileKey = ProfileKeyUtil.getProfileKey(context)
         val profilePictureUrl = TextSecurePreferences.getProfilePictureURL(context)
         return Profile(displayName, profileKey, profilePictureUrl)

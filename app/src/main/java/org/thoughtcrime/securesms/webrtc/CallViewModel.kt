@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import org.session.libsession.database.StorageProtocol
+import org.thoughtcrime.securesms.util.UsernameUtils
 import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager
 import org.webrtc.SurfaceViewRenderer
 import javax.inject.Inject
@@ -14,6 +15,7 @@ import javax.inject.Inject
 class CallViewModel @Inject constructor(
     private val callManager: CallManager,
     private val storage: StorageProtocol,
+    private val usernameUtils: UsernameUtils
 ): ViewModel() {
 
     enum class State {
@@ -69,7 +71,9 @@ class CallViewModel @Inject constructor(
     val recipient get() = callManager.recipientEvents
     val callStartTime: Long get() = callManager.callStartTime
 
-    fun getUserName(accountID: String) = storage.getContactNameWithAccountID(accountID)
+    fun getContactName(accountID: String) = storage.getContactNameWithAccountID(accountID)
+
+    fun getCurrentUsername() = usernameUtils.getCurrentUsernameWithAccountIdFallback()
 
     fun swapVideos() {
        callManager.swapVideos()

@@ -71,7 +71,7 @@ class ConfigFactory @Inject constructor(
     private val storage: Lazy<StorageProtocol>,
     private val textSecurePreferences: TextSecurePreferences,
     private val clock: SnodeClock,
-    private val configToDatabaseSync: Lazy<ConfigToDatabaseSync>,
+    private val configToDatabaseSync: Lazy<ConfigToDatabaseSync>
 ) : ConfigFactoryProtocol {
     companion object {
         // This is a buffer period within which we will process messages which would result in a
@@ -113,7 +113,8 @@ class ConfigFactory @Inject constructor(
                     userAccountId = userAccountId,
                     threadDb = threadDb,
                     configDatabase = configDatabase,
-                    storage = storage.get()
+                    storage = storage.get(),
+                    textSecurePreferences = textSecurePreferences
                 )
             }
         }
@@ -593,9 +594,13 @@ private fun MutableConversationVolatileConfig.initFrom(storage: StorageProtocol,
     }
 }
 
-private fun MutableUserProfile.initFrom(storage: StorageProtocol) {
+private fun MutableUserProfile.initFrom(storage: StorageProtocol,
+                                        textSecurePreferences: TextSecurePreferences
+) {
     val ownPublicKey = storage.getUserPublicKey() ?: return
-    val config = ConfigurationMessage.getCurrent(listOf()) ?: return
+    val displayName = textSecurePreferences.getProfileName() ?: return
+    val profilePicture = textSecurePreferences.getProfilePictureURL()
+    val config = ConfigurationMessage.getCurrent(displayName, profilePicture, listOf()) ?: return
     setName(config.displayName)
     val picUrl = config.profilePicture
     val picKey = config.profileKey
@@ -652,6 +657,7 @@ private class UserConfigsImpl(
     userEd25519SecKey: ByteArray,
     private val userAccountId: AccountId,
     private val configDatabase: ConfigDatabase,
+    private val textSecurePreferences: TextSecurePreferences,
     storage: StorageProtocol,
     threadDb: ThreadDatabase,
     contactsDump: ByteArray? = configDatabase.retrieveConfigAndHashes(
@@ -699,7 +705,7 @@ private class UserConfigsImpl(
         }
 
         if (userProfileDump == null) {
-            userProfile.initFrom(storage)
+            userProfile.initFrom(storage, textSecurePreferences)
         }
 
         if (convoInfoDump == null) {

@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.home
 
 import android.content.ContentResolver
-import android.content.Context
 import androidx.annotation.AttrRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asFlow
@@ -33,6 +32,7 @@ import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
+import org.thoughtcrime.securesms.util.UsernameUtils
 import org.thoughtcrime.securesms.util.observeChanges
 import javax.inject.Inject
 
@@ -42,7 +42,8 @@ class HomeViewModel @Inject constructor(
     private val contentResolver: ContentResolver,
     private val prefs: TextSecurePreferences,
     private val typingStatusRepository: TypingStatusRepository,
-    private val configFactory: ConfigFactory
+    private val configFactory: ConfigFactory,
+    private val usernameUtils: UsernameUtils
 ) : ViewModel() {
     // SharedFlow that emits whenever the user asks us to reload  the conversation
     private val manualReloadTrigger = MutableSharedFlow<Unit>(
@@ -157,6 +158,8 @@ class HomeViewModel @Inject constructor(
             it.userProfile.setNtsPriority(PRIORITY_HIDDEN)
         }
     }
+
+    fun getCurrentUsername() = usernameUtils.getCurrentUsernameWithAccountIdFallback()
 
     companion object {
         private const val CHANGE_NOTIFICATION_DEBOUNCE_MILLS = 100L

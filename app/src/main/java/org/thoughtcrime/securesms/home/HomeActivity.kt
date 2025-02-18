@@ -406,7 +406,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
     private fun updateProfileButton() {
         binding.profileButton.publicKey = publicKey
-        binding.profileButton.displayName = textSecurePreferences.getProfileName()
+        binding.profileButton.displayName = homeViewModel.getCurrentUsername()
         binding.profileButton.recycle()
         binding.profileButton.update()
     }
