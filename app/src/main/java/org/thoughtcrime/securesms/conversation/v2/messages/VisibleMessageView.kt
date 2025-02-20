@@ -164,6 +164,9 @@ class VisibleMessageView : FrameLayout {
         delegate: VisibleMessageViewDelegate? = null,
         onAttachmentNeedsDownload: (DatabaseAttachment) -> Unit
     ) {
+        clipToPadding = false
+        clipChildren = false
+
         isOutgoing = message.isOutgoing
         replyDisabled = message.isOpenGroupInvitation
         val threadID = message.threadId
