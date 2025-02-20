@@ -275,6 +275,7 @@ class ConfigFactory @Inject constructor(
 
     override fun <T> withMutableGroupConfigs(
         groupId: AccountId,
+        recreateConfigInstances: Boolean,
         cb: (MutableGroupConfigs) -> T
     ): T {
         return doWithMutableGroupConfigs(groupId = groupId) {
