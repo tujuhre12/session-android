@@ -13,13 +13,9 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Namespace
-import java.io.Closeable
 import java.util.Stack
 
-sealed class Config(initialPointer: Long): Closeable {
-    var pointer = initialPointer
-        private set
-
+sealed class Config(internal val pointer: Long) {
     init {
         check(pointer != 0L) { "Pointer is null" }
     }
@@ -28,11 +24,9 @@ sealed class Config(initialPointer: Long): Closeable {
 
     private external fun free()
 
-    final override fun close() {
-        if (pointer != 0L) {
-            free()
-            pointer = 0L
-        }
+    protected fun finalize() {
+        // Last chance to ensure we delete the native object
+        free()
     }
 }
 
@@ -469,6 +463,9 @@ interface MutableGroupKeysConfig : ReadableGroupKeysConfig {
 
 class GroupKeysConfig private constructor(
     pointer: Long,
+    private val userSecretKey: ByteArray,
+    private val groupPublicKey: ByteArray,
+    private var groupAdminKey: ByteArray?,
     private val info: GroupInfoConfig,
     private val members: GroupMembersConfig
 ): ConfigSig(pointer), MutableGroupKeysConfig {
@@ -491,24 +488,38 @@ class GroupKeysConfig private constructor(
         info: GroupInfoConfig,
         members: GroupMembersConfig
     ) : this(
-        newInstance(
-            userSecretKey,
-            groupPublicKey,
-            groupAdminKey,
-            initialDump,
-            info.pointer,
-            members.pointer
+        pointer = newInstance(
+            userSecretKey = userSecretKey,
+            groupPublicKey = groupPublicKey,
+            groupSecretKey = groupAdminKey,
+            initialDump = initialDump,
+            infoPtr = info.pointer,
+            members = members.pointer
         ),
-        info,
-        members
+        userSecretKey = userSecretKey,
+        groupPublicKey = groupPublicKey,
+        groupAdminKey = groupAdminKey,
+        info = info,
+        members = members,
     )
+
+    fun copy(): GroupKeysConfig {
+        return GroupKeysConfig(
+            userSecretKey = userSecretKey,
+            groupPublicKey = groupPublicKey,
+            groupAdminKey = groupAdminKey,
+            initialDump = dump(),
+            info = GroupInfoConfig(groupPublicKey, groupAdminKey, info.dump()),
+            members = GroupMembersConfig(groupPublicKey, groupAdminKey, members.dump())
+        )
+    }
 
     override fun namespace() = Namespace.ENCRYPTION_KEYS()
 
     external override fun groupKeys(): Stack<ByteArray>
     external override fun needsDump(): Boolean
     external override fun dump(): ByteArray
-    external fun loadKey(message: ByteArray,
+    private external fun loadKey(message: ByteArray,
                          hash: String,
                          timestampMs: Long,
                          infoPtr: Long,
@@ -520,6 +531,7 @@ class GroupKeysConfig private constructor(
 
     override fun loadAdminKey(adminKey: ByteArray) {
         loadAdminKey(adminKey, info.pointer, members.pointer)
+        this.groupAdminKey = adminKey
     }
 
     private external fun loadAdminKey(adminKey: ByteArray, infoPtr: Long, membersPtr: Long)
@@ -533,7 +545,12 @@ class GroupKeysConfig private constructor(
 
     external override fun pendingConfig(): ByteArray?
     external override fun currentHashes(): List<String>
-    external fun rekey(infoPtr: Long, membersPtr: Long): ByteArray
+
+    fun rekey(): ByteArray {
+        return rekey(pointer, members.pointer)
+    }
+
+    private external fun rekey(infoPtr: Long, membersPtr: Long): ByteArray
 
     external override fun encrypt(plaintext: ByteArray): ByteArray
     external override fun decrypt(ciphertext: ByteArray): Pair<ByteArray, AccountId>?

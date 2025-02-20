@@ -17,6 +17,7 @@ import network.loki.messenger.libsession_util.MutableContacts
 import network.loki.messenger.libsession_util.MutableConversationVolatileConfig
 import network.loki.messenger.libsession_util.MutableUserGroupsConfig
 import network.loki.messenger.libsession_util.MutableUserProfile
+import network.loki.messenger.libsession_util.ReadableGroupKeysConfig
 import network.loki.messenger.libsession_util.UserGroupsConfig
 import network.loki.messenger.libsession_util.UserProfile
 import network.loki.messenger.libsession_util.util.BaseCommunityInfo
@@ -299,6 +300,14 @@ class ConfigFactory @Inject constructor(
         }
     }
 
+    override fun snapshotGroupAuth(groupId: AccountId, oldAuth: SwarmAuth?): SwarmAuth? {
+        if (oldAuth is GroupSubAccountSwarmAuth) {
+
+        }
+
+        TODO()
+    }
+
     override fun decryptForUser(
         encoded: ByteArray,
         domain: String,
@@ -323,7 +332,7 @@ class ConfigFactory @Inject constructor(
         val changed = doWithMutableGroupConfigs(groupId) { configs ->
             // Keys must be loaded first as they are used to decrypt the other config messages
             val keysLoaded = keys.fold(false) { acc, msg ->
-                configs.groupKeys.loadKey(msg.data, msg.hash, msg.timestamp, configs.groupInfo.pointer, configs.groupMembers.pointer) || acc
+                configs.groupKeys.loadKey(msg.data, msg.hash, msg.timestamp) || acc
             }
 
             val infoMerged = info.isNotEmpty() &&
@@ -396,7 +405,7 @@ class ConfigFactory @Inject constructor(
             keysPush?.let { (hash, timestamp) ->
                 val pendingConfig = configs.groupKeys.pendingConfig()
                 if (pendingConfig != null) {
-                    configs.groupKeys.loadKey(pendingConfig, hash, timestamp, configs.groupInfo.pointer, configs.groupMembers.pointer)
+                    configs.groupKeys.loadKey(pendingConfig, hash, timestamp)
                 }
             }
 
@@ -465,10 +474,20 @@ class ConfigFactory @Inject constructor(
 
         return if (group.adminKey != null) {
             OwnedSwarmAuth.ofClosedGroup(groupId, group.adminKey!!)
-        } else if (group.authData != null) {
-            GroupSubAccountSwarmAuth(groupId, this, group.authData!!)
         } else {
-            null
+            // Return a GroupSubAccountSwarmAuth that asks current group's keys for signing
+            val authData = group.authData
+            if (authData != null) {
+                object : GroupSubAccountSwarmAuth(groupId) {
+                    override fun subAccountSign(data: ByteArray): GroupKeysConfig.SwarmAuth {
+                        return withGroupConfigs(groupId) {
+                            it.groupKeys.subAccountSign(data, authData)
+                        }
+                    }
+                }
+            } else {
+                null
+            }
         }
     }
 
@@ -482,32 +501,28 @@ class ConfigFactory @Inject constructor(
         }
     }
 
-    private class GroupSubAccountSwarmAuth(
+    private abstract class GroupSubAccountSwarmAuth(
         override val accountId: AccountId,
-        val factory: ConfigFactory,
-        val authData: ByteArray,
     ) : SwarmAuth {
         override val ed25519PublicKeyHex: String?
             get() = null
 
+        abstract fun subAccountSign(data: ByteArray): GroupKeysConfig.SwarmAuth
+
         override fun sign(data: ByteArray): Map<String, String> {
-            return factory.withGroupConfigs(accountId) {
-                val auth = it.groupKeys.subAccountSign(data, authData)
-                buildMap {
-                    put("subaccount", auth.subAccount)
-                    put("subaccount_sig", auth.subAccountSig)
-                    put("signature", auth.signature)
-                }
+            val auth = subAccountSign(data)
+            return buildMap {
+                put("subaccount", auth.subAccount)
+                put("subaccount_sig", auth.subAccountSig)
+                put("signature", auth.signature)
             }
         }
 
         override fun signForPushRegistry(data: ByteArray): Map<String, String> {
-            return factory.withGroupConfigs(accountId) {
-                val auth = it.groupKeys.subAccountSign(data, authData)
-                buildMap {
-                    put("subkey_tag", auth.subAccount)
-                    put("signature", auth.signature)
-                }
+            val auth = subAccountSign(data)
+            return buildMap {
+                put("subkey_tag", auth.subAccount)
+                put("signature", auth.signature)
             }
         }
     }
@@ -768,9 +783,5 @@ private class GroupConfigsImpl(
         }
 
         return false
-    }
-
-    override fun rekey() {
-        groupKeys.rekey(groupInfo.pointer, groupMembers.pointer)
     }
 }

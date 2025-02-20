@@ -397,18 +397,17 @@ Java_org_session_libsignal_utilities_Namespace_REVOKED_1GROUP_1MESSAGES(JNIEnv *
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_network_loki_messenger_libsession_1util_Config_free(JNIEnv *env, jobject thiz) {
+Java_network_loki_messenger_libsession_1util_Config_free(JNIEnv *env, jobject thiz, jlong pointer) {
     jclass baseClass = env->FindClass("network/loki/messenger/libsession_util/Config");
-    jfieldID pointerField = env->GetFieldID(baseClass, "pointer", "J");
     jclass sig = env->FindClass("network/loki/messenger/libsession_util/ConfigSig");
     jclass base = env->FindClass("network/loki/messenger/libsession_util/ConfigBase");
     jclass ours = env->GetObjectClass(thiz);
     if (env->IsSameObject(sig, ours)) {
         // config sig object
-        auto config = (session::config::ConfigSig*) env->GetLongField(thiz, pointerField);
+        auto config = (session::config::ConfigSig*) pointer;
         delete config;
     } else if (env->IsSameObject(base, ours)) {
-        auto config = (session::config::ConfigBase*) env->GetLongField(thiz, pointerField);
+        auto config = (session::config::ConfigBase*) pointer;
         delete config;
     }
 }

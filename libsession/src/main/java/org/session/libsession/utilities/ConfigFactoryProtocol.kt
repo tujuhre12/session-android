@@ -3,6 +3,7 @@ package org.session.libsession.utilities
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withTimeoutOrNull
 import network.loki.messenger.libsession_util.MutableConfig
@@ -91,6 +92,15 @@ interface ConfigFactoryProtocol {
 
     fun deleteGroupConfigs(groupId: AccountId)
 
+    // Take a snapshot of the group auth, this is immutable data that doesn't get updated from
+    // group config updates.
+    /**
+     * @param groupId The group ID to take the snapshot for.
+     * @param oldAuth The old auth object. This is used to make sure no new snapshot is taken when the auth object is the same, as the snapshot process is not cheap.
+     * @return The snapshot of the group auth, or null if the group doesn't exist, or the auth object is the same as the oldAuth if it hasn't changed.
+     */
+    fun snapshotGroupAuth(groupId: AccountId, oldAuth: SwarmAuth?): SwarmAuth?
+
 }
 
 class ConfigMessage(
@@ -170,6 +180,20 @@ suspend fun ConfigFactoryProtocol.waitUntilGroupConfigsPushed(groupId: AccountId
     } != null
 }
 
+/**
+ * Creates a flow that watches over the user configs and emits the result of the given access
+ * lambda whenever the user configs are updated.
+ *
+ * Note that the current config will be read immediately as the first value of the flow, then the
+ * subsequent values will be emitted whenever the user configs are updated.
+ */
+fun <T> ConfigFactoryProtocol.watchUserConfigChanges(access: (UserConfigs) -> T): Flow<T> {
+    return (configUpdateNotifications
+        .filter { it is ConfigUpdateNotification.UserConfigsMerged || it == ConfigUpdateNotification.UserConfigsModified } as Flow<*>)
+        .onStart { emit(Unit) }
+        .map { withUserConfigs(access) }
+}
+
 interface UserConfigs {
     val contacts: ReadableContacts
     val userGroups: ReadableUserGroupsConfig
@@ -212,8 +236,6 @@ interface MutableGroupConfigs : GroupConfigs {
     override val groupInfo: MutableGroupInfoConfig
     override val groupMembers: MutableGroupMembersConfig
     override val groupKeys: MutableGroupKeysConfig
-
-    fun rekey()
 }
 
 
