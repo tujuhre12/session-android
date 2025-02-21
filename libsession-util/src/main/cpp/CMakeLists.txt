@@ -22,6 +22,7 @@ set(CMAKE_BUILD_TYPE Release)
 # Gradle automatically packages shared libraries with your APK.
 
 set(STATIC_BUNDLE ON)
+set(ENABLE_ONIONREQ OFF)
 add_subdirectory(../../../libsession-util libsession)
 
 set(SOURCES
