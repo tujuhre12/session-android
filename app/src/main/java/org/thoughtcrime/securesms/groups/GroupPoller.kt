@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
-import network.loki.messenger.libsession_util.util.Sodium
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
@@ -30,7 +29,6 @@ import org.session.libsession.utilities.getGroup
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.AccountId
-import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Namespace
 import org.session.libsignal.utilities.Snode
@@ -48,6 +46,7 @@ class GroupPoller(
     private val lokiApiDatabase: LokiAPIDatabaseProtocol,
     private val clock: SnodeClock,
     private val appVisibilityManager: AppVisibilityManager,
+    private val groupRevokedMessageHandler: GroupRevokedMessageHandler,
 ) {
     companion object {
         private const val POLL_INTERVAL = 3_000L
@@ -239,7 +238,7 @@ class GroupPoller(
                     val lastHash = lokiApiDatabase.getLastMessageHashValue(
                         snode,
                         groupId.hexString,
-                        Namespace.CLOSED_GROUP_MESSAGES()
+                        Namespace.GROUP_MESSAGES()
                     ).orEmpty()
 
                     Log.d(TAG, "Retrieving group message since lastHash = $lastHash")
@@ -250,7 +249,7 @@ class GroupPoller(
                         request = SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
                             lastHash = lastHash,
                             auth = groupAuth,
-                            namespace = Namespace.CLOSED_GROUP_MESSAGES(),
+                            namespace = Namespace.GROUP_MESSAGES(),
                             maxSize = null,
                         ),
                         responseType = Map::class.java
@@ -258,9 +257,9 @@ class GroupPoller(
                 }
 
                 val groupConfigRetrieval = listOf(
-                    Namespace.ENCRYPTION_KEYS(),
-                    Namespace.CLOSED_GROUP_INFO(),
-                    Namespace.CLOSED_GROUP_MEMBERS()
+                    Namespace.GROUP_KEYS(),
+                    Namespace.GROUP_INFO(),
+                    Namespace.GROUP_MEMBERS()
                 ).map { ns ->
                     async {
                         SnodeAPI.sendBatchRequest(
@@ -288,9 +287,9 @@ class GroupPoller(
                     val result = runCatching {
                         val (keysMessage, infoMessage, membersMessage) = groupConfigRetrieval.map { it.await() }
                         handleGroupConfigMessages(keysMessage, infoMessage, membersMessage)
-                        saveLastMessageHash(snode, keysMessage, Namespace.ENCRYPTION_KEYS())
-                        saveLastMessageHash(snode, infoMessage, Namespace.CLOSED_GROUP_INFO())
-                        saveLastMessageHash(snode, membersMessage, Namespace.CLOSED_GROUP_MEMBERS())
+                        saveLastMessageHash(snode, keysMessage, Namespace.GROUP_KEYS())
+                        saveLastMessageHash(snode, infoMessage, Namespace.GROUP_INFO())
+                        saveLastMessageHash(snode, membersMessage, Namespace.GROUP_MEMBERS())
 
                         groupExpired = configFactoryProtocol.withGroupConfigs(groupId) {
                             it.groupKeys.size() == 0
@@ -370,40 +369,7 @@ class GroupPoller(
     }
 
     private suspend fun handleRevoked(messages: List<RetrieveMessageResponse.Message>) {
-        messages.forEach { msg ->
-            val decoded = configFactoryProtocol.decryptForUser(
-                msg.data,
-                Sodium.KICKED_DOMAIN,
-                groupId,
-            )
-
-            if (decoded != null) {
-                // The message should be in the format of "<sessionIdPubKeyBinary><messageGenerationASCII>",
-                // where the pub key is 32 bytes, so we need to have at least 33 bytes of data
-                if (decoded.size < 33) {
-                    Log.w(TAG, "Received an invalid kicked message, expecting at least 33 bytes, got ${decoded.size}")
-                    return@forEach
-                }
-
-                val sessionId = AccountId(IdPrefix.STANDARD, decoded.copyOfRange(0, 32))
-                val messageGeneration = decoded.copyOfRange(32, decoded.size).decodeToString().toIntOrNull()
-                if (messageGeneration == null) {
-                    Log.w(TAG, "Received an invalid kicked message: missing message generation")
-                    return@forEach
-                }
-
-                val currentKeysGeneration = configFactoryProtocol.withGroupConfigs(groupId) {
-                    it.groupKeys.currentGeneration()
-                }
-
-                val isForMe = sessionId.hexString == storage.getUserPublicKey()
-                Log.d(TAG, "Received kicked message, for us? ${isForMe}, message key generation = $messageGeneration, our key generation = $currentKeysGeneration")
-
-                if (isForMe && messageGeneration >= currentKeysGeneration) {
-                    groupManagerV2.handleKicked(groupId)
-                }
-            }
-        }
+        groupRevokedMessageHandler.handleRevokeMessage(groupId, messages.map { it.data })
     }
 
     private fun handleGroupConfigMessages(
@@ -437,7 +403,7 @@ class GroupPoller(
                 snode = snode,
                 publicKey = groupId.hexString,
                 decrypt = it.groupKeys::decrypt,
-                namespace = Namespace.CLOSED_GROUP_MESSAGES(),
+                namespace = Namespace.GROUP_MESSAGES(),
             )
         }
 
