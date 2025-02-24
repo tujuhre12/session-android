@@ -276,11 +276,6 @@ class GroupManagerV2Impl @Inject constructor(
             subAccountTokens = subAccountTokens
         )
 
-        // Send a group update message to the group telling members someone has been invited
-        if (!isReinvite) {
-            sendGroupUpdateForAddingMembers(group, adminKey, newMembers)
-        }
-
         // Call the API
         try {
             val swarmNode = SnodeAPI.getSingleTargetSnode(group.hexString).await()
@@ -310,6 +305,11 @@ class GroupManagerV2Impl @Inject constructor(
                 groupName = groupName,
                 underlying = e
             )
+        } finally {
+            // Send a group update message to the group telling members someone has been invited
+            if (!isReinvite) {
+                sendGroupUpdateForAddingMembers(group, adminKey, newMembers)
+            }
         }
 
         // Send the invitation message to the new members
@@ -346,9 +346,9 @@ class GroupManagerV2Impl @Inject constructor(
                 .build()
         ).apply { this.sentTimestamp = timestamp }
 
-        MessageSender.send(updatedMessage, Address.fromSerialized(group.hexString))
-
         storage.insertGroupInfoChange(updatedMessage, group)
+
+        MessageSender.send(updatedMessage, Address.fromSerialized(group.hexString))
     }
 
     override suspend fun removeMembers(
