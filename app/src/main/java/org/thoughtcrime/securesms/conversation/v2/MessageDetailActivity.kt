@@ -42,7 +42,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -54,6 +53,7 @@ import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
@@ -81,7 +81,6 @@ import org.thoughtcrime.securesms.ui.theme.blackAlpha40
 import org.thoughtcrime.securesms.ui.theme.bold
 import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
 import org.thoughtcrime.securesms.ui.theme.monospace
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class MessageDetailActivity : ScreenLockActionBarActivity() {
@@ -214,8 +213,10 @@ fun CellMetadata(
                 modifier = Modifier.padding(LocalDimensions.current.spacing),
                 verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
             ) {
-                TitledText(sent)
-                TitledText(received)
+                // Show the sent details if we're the sender of the message, otherwise show the received details
+                if (sent     != null) { TitledText(sent)     }
+                if (received != null) { TitledText(received) }
+
                 TitledErrorText(error)
                 senderInfo?.let {
                     TitledView(state.fromTitle) {
@@ -485,12 +486,14 @@ fun TitledText(
 ) {
     titledText?.apply {
         TitledView(title, modifier) {
-            Text(
-                text,
-                style = style,
-                color = color,
-                modifier = Modifier.fillMaxWidth()
-            )
+            if (text != null) {
+                Text(
+                    text,
+                    style = style,
+                    color = color,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
     }
 }
