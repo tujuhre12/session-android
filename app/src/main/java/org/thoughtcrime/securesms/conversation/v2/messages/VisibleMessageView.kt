@@ -619,9 +619,7 @@ class VisibleMessageView : FrameLayout {
     }
 
     private fun clickIsButtonSpam() = (SystemClock.elapsedRealtime() - lastClickTimestampMS < MINIMUM_DURATION_BETWEEN_CLICKS_ON_SAME_VIEW_MS)
-
-
-
+    
     // Note: `onPress` is called BEFORE `onContentClick` is called, so we only filter here rather than
     // in both places otherwise `onContentClick` will instantly fail the button spam test.
     private fun onPress(event: MotionEvent) {
