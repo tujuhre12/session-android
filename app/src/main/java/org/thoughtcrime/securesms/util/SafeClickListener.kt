@@ -6,7 +6,7 @@ import android.view.View
 // Listener class that only accepts clicks at given interval to prevent button spam.
 // Note: While this cannot be used on conversation views without interfering with motion events it may still be useful.
 class SafeClickListener(
-    private var minimumClickIntervalMS: Long = 1000L,
+    private var minimumClickIntervalMS: Long = 500L,
     private val onSafeClick: (View) -> Unit
 ) : View.OnClickListener {
     private var lastClickTimestampMS: Long = 0L

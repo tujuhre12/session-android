@@ -18,7 +18,8 @@ abstract class Message {
     var sender: String? = null
     var isSenderSelf: Boolean = false
 
-    // Convenience accessor to avoid having to `!isSenderSelf`
+    // Convenience accessor to avoid having to `!isSenderSelf` all the time.
+    // e.g, `message.senderIsNotUs` is simpler than mentally parsing `!message.isSenderSelf`.
     val senderIsNotUs: Boolean
         get() = !isSenderSelf
 
