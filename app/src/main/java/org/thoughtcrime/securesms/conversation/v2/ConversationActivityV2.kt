@@ -1931,10 +1931,14 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private fun sendAttachments(
         attachments: List<Attachment>,
         body: String?,
-        quotedMessage: MessageRecord? = binding.inputBar?.quote,
+        quotedMessage: MessageRecord? = binding.inputBar.quote,
         linkPreview: LinkPreview? = null
     ): Pair<Address, Long>? {
-        val recipient = viewModel.recipient ?: return null
+        if (viewModel.recipient == null) {
+            Log.w(TAG, "Cannot send attachments to a null recipient")
+            return null
+        }
+        val recipient = viewModel.recipient!!
         val sentTimestamp = SnodeAPI.nowWithOffset
         viewModel.beforeSendingAttachments()
 
