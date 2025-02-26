@@ -3,18 +3,22 @@ package org.session.libsession.messaging.jobs
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.Input
 import com.esotericsoftware.kryo.io.Output
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withTimeout
+import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.jobs.Job.Companion.MAX_BUFFER_SIZE_BYTES
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.sending_receiving.MessageSender
+import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.messaging.utilities.Data
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -42,14 +46,31 @@ class MessageSendJob(val message: Message, val destination: Destination, val sta
         private val DESTINATION_KEY = "destination"
     }
 
+    // Helper suspending function that waits until all attachments have been uploaded
+    private suspend fun waitUntilAttachmentsUploaded(
+        attachments: List<DatabaseAttachment>,
+        messageDataProvider: MessageDataProvider,
+        timeoutMillis: Long = 60_000L
+    ) {
+        withTimeout(timeoutMillis) {
+            while (attachments.any { attachment ->
+                    // Re-fetch the attachment state in case it was updated asynchronously
+                    messageDataProvider.getDatabaseAttachment(attachment.attachmentId.rowId)?.url.isNullOrEmpty()
+                }
+            ) {
+                delay(500L) // Check every half a second
+            }
+        }
+    }
+
     override suspend fun execute(dispatcherName: String) {
         val messageDataProvider = MessagingModuleConfiguration.shared.messageDataProvider
         val message = message as? VisibleMessage
         val storage = MessagingModuleConfiguration.shared.storage
 
-        // do not attempt to send if the message is marked as deleted
-        message?.sentTimestamp?.let{
-            if(messageDataProvider.isDeletedMessage(it)){
+        // Do not attempt to send if the message is marked as deleted
+        message?.sentTimestamp?.let { messageId ->
+            if (messageDataProvider.isDeletedMessage(messageId)) {
                 return@execute
             }
         }
@@ -61,26 +82,38 @@ class MessageSendJob(val message: Message, val destination: Destination, val sta
         }
 
         if (message != null) {
-            if (!messageDataProvider.isOutgoingMessage(message.sentTimestamp!!) && message.reaction == null) return // The message has been deleted
+            if (!messageDataProvider.isOutgoingMessage(message.sentTimestamp!!) && message.reaction == null) {
+                return // The message has been deleted
+            }
             val attachmentIDs = mutableListOf<Long>()
             attachmentIDs.addAll(message.attachmentIDs)
-            message.quote?.let { it.attachmentID?.let { attachmentID -> attachmentIDs.add(attachmentID) } }
+            message.quote?.let       { it.attachmentID?.let { attachmentID -> attachmentIDs.add(attachmentID) } }
             message.linkPreview?.let { it.attachmentID?.let { attachmentID -> attachmentIDs.add(attachmentID) } }
-            val attachments = attachmentIDs.mapNotNull { messageDataProvider.getDatabaseAttachment(it) }
+
+            val attachments: List<DatabaseAttachment> = attachmentIDs.mapNotNull { messageDataProvider.getDatabaseAttachment(it) }
+
+            // Create upload jobs for each attachment
             val attachmentsToUpload = attachments.filter { it.url.isNullOrEmpty() }
-            attachmentsToUpload.forEach {
-                if (storage.getAttachmentUploadJob(it.attachmentId.rowId) != null) {
-                    // Wait for it to finish
-                } else {
-                    val job = AttachmentUploadJob(it.attachmentId.rowId, message.threadID!!.toString(), message, id!!)
+            attachmentsToUpload.forEach { dbAttachment ->
+                if (storage.getAttachmentUploadJob(dbAttachment.attachmentId.rowId) == null) {
+                    val job = AttachmentUploadJob(dbAttachment.attachmentId.rowId, message.threadID!!.toString(), message, id!!)
                     JobQueue.shared.add(job)
                 }
             }
+
+            // Wait until all attachments have uploaded (or have timed out) before continuing
             if (attachmentsToUpload.isNotEmpty()) {
-                this.handleFailure(dispatcherName, AwaitingAttachmentUploadException)
-                return
-            } // Wait for all attachments to upload before continuing
+                try {
+                    waitUntilAttachmentsUploaded(attachmentsToUpload, messageDataProvider)
+                } catch (e: TimeoutCancellationException) {
+                    Log.w(TAG, "Attachment uploads did not complete in time.")
+                    this.handleFailure(dispatcherName, e)
+                    statusCallback?.trySend(Result.failure(e))
+                    return
+                }
+            }
         }
+
         val isSync = destination is Destination.Contact && destination.publicKey == sender
 
         try {
