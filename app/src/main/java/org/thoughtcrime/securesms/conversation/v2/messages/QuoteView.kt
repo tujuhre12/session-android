@@ -159,6 +159,5 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
 }
 
 interface QuoteViewDelegate {
-
     fun cancelQuoteDraft()
 }

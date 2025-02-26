@@ -8,6 +8,7 @@ import android.graphics.Rect
 import android.graphics.drawable.ColorDrawable
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.util.AttributeSet
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
@@ -46,6 +47,7 @@ import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.modifyLayoutParams
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LastSentTimestampCache
@@ -122,6 +124,10 @@ class VisibleMessageView : FrameLayout {
     var onSwipeToReply: (() -> Unit)? = null
     var onLongPress: (() -> Unit)? = null
     val messageContentView: VisibleMessageContentView get() = binding.messageContentView.root
+
+    // Prevent button spam
+    val MINIMUM_DURATION_BETWEEN_CLICKS_ON_SAME_VIEW_MS = 500L
+    var lastClickTimestampMS = 0L
 
     companion object {
         const val swipeToReplyThreshold = 64.0f // dp
@@ -613,14 +619,23 @@ class VisibleMessageView : FrameLayout {
         onLongPress?.invoke()
     }
 
-    fun onContentClick(event: MotionEvent) {
-        binding.messageContentView.root.onContentClick(event)
-    }
+    private fun clickIsButtonSpam() = (SystemClock.elapsedRealtime() - lastClickTimestampMS < MINIMUM_DURATION_BETWEEN_CLICKS_ON_SAME_VIEW_MS)
 
+
+
+    // Note: `onPress` is called BEFORE `onContentClick` is called, so we only filter here rather than
+    // in both places otherwise `onContentClick` will instantly fail the button spam test.
     private fun onPress(event: MotionEvent) {
+        // Don't process the press if it's too soon after the last one..
+        if (clickIsButtonSpam()) return
+
+        // ..otherwise take note of the time and process the event.
+        lastClickTimestampMS = SystemClock.elapsedRealtime()
         onPress?.invoke(event)
         pressCallback = null
     }
+
+    fun onContentClick(event: MotionEvent) = binding.messageContentView.root.onContentClick(event)
 
     private fun maybeShowUserDetails(publicKey: String, threadID: Long) {
         UserDetailsBottomSheet().apply {
