@@ -3,7 +3,7 @@ package org.thoughtcrime.securesms.util
 import android.os.SystemClock
 import android.view.View
 
-// Listener class that only accepts clicks at given interval to prevent button spam.
+// Listener class that only accepts clicks at a given interval to prevent button spam.
 // Note: While this cannot be used on conversation views without interfering with motion events it may still be useful.
 class SafeClickListener(
     private var minimumClickIntervalMS: Long = 500L,
