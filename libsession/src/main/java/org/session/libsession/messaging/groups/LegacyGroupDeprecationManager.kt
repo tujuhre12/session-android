@@ -33,7 +33,7 @@ class LegacyGroupDeprecationManager(private val prefs: TextSecurePreferences)  {
     val deprecatedTime: StateFlow<ZonedDateTime> get() = mutableDeprecatedTime
 
     // The time a warning will be shown to users that legacy groups are being deprecated.
-    private val defaultDeprecatingStartTime = ZonedDateTime.of(2025, 6, 23, 0, 0, 0, 0, ZoneId.of("UTC"))
+    private val defaultDeprecatingStartTime = ZonedDateTime.of(2025, 2, 24, 0, 0, 0, 0, ZoneId.of("UTC"))
 
     private val mutableDeprecatingStartTime: MutableStateFlow<ZonedDateTime> = MutableStateFlow(
         prefs.deprecatingStartTimeOverride ?: defaultDeprecatingStartTime

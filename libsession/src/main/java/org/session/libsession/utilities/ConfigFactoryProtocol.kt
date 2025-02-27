@@ -38,9 +38,23 @@ interface ConfigFactoryProtocol {
     fun <T> withGroupConfigs(groupId: AccountId, cb: (GroupConfigs) -> T): T
 
     /**
+     * Create a new group config instance. Note this does not save the group configs to the database.
+     */
+    fun createGroupConfigs(groupId: AccountId, adminKey: ByteArray): MutableGroupConfigs
+
+    /**
+     * Save the group configs to the database and the factory.
+     *
+     * **Note:** This will overwrite the existing group configs. Normally you don't want to use
+     * this function, instead use [withMutableGroupConfigs] to modify the group configs. This
+     * function is only useful when you just created a new group and want to save the configs.
+     */
+    fun saveGroupConfigs(groupId: AccountId, groupConfigs: MutableGroupConfigs)
+
+    /**
      * @param recreateConfigInstances If true, the group configs will be recreated before calling the callback. This is useful when you have received an admin key or otherwise.
      */
-    fun <T> withMutableGroupConfigs(groupId: AccountId, recreateConfigInstances: Boolean = false, cb: (MutableGroupConfigs) -> T): T
+    fun <T> withMutableGroupConfigs(groupId: AccountId, cb: (MutableGroupConfigs) -> T): T
 
     fun conversationInConfig(publicKey: String?, groupPublicKey: String?, openGroupId: String?, visibleOnly: Boolean): Boolean
     fun canPerformChange(variant: String, publicKey: String, changeTimestampMs: Long): Boolean
@@ -94,7 +108,7 @@ enum class UserConfigType(val namespace: Int) {
     CONTACTS(Namespace.CONTACTS()),
     USER_PROFILE(Namespace.USER_PROFILE()),
     CONVO_INFO_VOLATILE(Namespace.CONVO_INFO_VOLATILE()),
-    USER_GROUPS(Namespace.GROUPS()),
+    USER_GROUPS(Namespace.USER_GROUPS()),
 }
 
 /**

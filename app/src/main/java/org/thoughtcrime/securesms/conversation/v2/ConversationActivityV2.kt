@@ -165,6 +165,7 @@ import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.giph.ui.GiphyActivity
 import org.thoughtcrime.securesms.groups.OpenGroupManager
+import org.thoughtcrime.securesms.home.UserDetailsBottomSheet
 import org.thoughtcrime.securesms.home.search.getSearchName
 import org.thoughtcrime.securesms.linkpreview.LinkPreviewRepository
 import org.thoughtcrime.securesms.linkpreview.LinkPreviewUtil
@@ -220,7 +221,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     ConversationActionModeCallbackDelegate, VisibleMessageViewDelegate, RecipientModifiedListener,
     SearchBottomBar.EventListener, LoaderManager.LoaderCallbacks<Cursor>, ConversationActionBarDelegate,
     OnReactionSelectedListener, ReactWithAnyEmojiDialogFragment.Callback, ReactionsDialogFragment.Callback,
-    ConversationMenuHelper.ConversationMenuListener {
+    ConversationMenuHelper.ConversationMenuListener, UserDetailsBottomSheet.UserDetailsBottomSheetCallback {
 
     private lateinit var binding: ActivityConversationV2Binding
 
@@ -518,6 +519,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         updateUnreadCountIndicator()
         updatePlaceholder()
         setUpBlockedBanner()
+        setUpExpiredGroupBanner()
         binding.searchBottomBar.setEventListener(this)
         updateSendAfterApprovalText()
         setUpMessageRequests()
@@ -871,9 +873,18 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     // called from onCreate
     private fun setUpBlockedBanner() {
         val recipient = viewModel.recipient?.takeUnless { it.isGroupOrCommunityRecipient } ?: return
-        binding.blockedBannerTextView.text = applicationContext.getString(R.string.blockBlockedDescription)
-        binding.blockedBanner.isVisible = recipient.isBlocked
-        binding.blockedBanner.setOnClickListener { viewModel.unblock() }
+        binding.conversationHeader.blockedBannerTextView.text = applicationContext.getString(R.string.blockBlockedDescription)
+        binding.conversationHeader.blockedBanner.isVisible = recipient.isBlocked
+        binding.conversationHeader.blockedBanner.setOnClickListener { unblock() }
+    }
+
+    private fun setUpExpiredGroupBanner() {
+        lifecycleScope.launch {
+            viewModel.showExpiredGroupBanner
+                .collectLatest {
+                    binding.conversationHeader.groupExpiredBanner.isVisible = it
+                }
+        }
     }
 
     private fun setUpOutdatedClientBanner() {
@@ -882,13 +893,13 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val shouldShowLegacy = ExpirationConfiguration.isNewConfigEnabled &&
                 legacyRecipient != null
 
-        binding.outdatedDisappearingBanner.isVisible = shouldShowLegacy
+        binding.conversationHeader.outdatedDisappearingBanner.isVisible = shouldShowLegacy
         if (shouldShowLegacy) {
 
             val txt = Phrase.from(this, R.string.disappearingMessagesLegacy)
                 .put(NAME_KEY, legacyRecipient!!.name)
                 .format()
-            binding.outdatedDisappearingBannerTextView.text = txt
+            binding.conversationHeader.outdatedDisappearingBannerTextView.text = txt
         }
     }
 
@@ -897,11 +908,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             viewModel.legacyGroupBanner
                 .collectLatest { banner ->
                     if (banner == null) {
-                        binding.outdatedGroupBanner.isVisible = false
-                        binding.outdatedGroupBanner.text = null
+                        binding.conversationHeader.outdatedGroupBanner.isVisible = false
+                        binding.conversationHeader.outdatedGroupBanner.text = null
                     } else {
-                        binding.outdatedGroupBanner.isVisible = true
-                        binding.outdatedGroupBanner.text = SpannableStringBuilder(banner)
+                        binding.conversationHeader.outdatedGroupBanner.isVisible = true
+                        binding.conversationHeader.outdatedGroupBanner.text = SpannableStringBuilder(banner)
                             .apply {
                                 // Append a space as a placeholder
                                 append(" ")
@@ -924,7 +935,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                                 )
                             }
 
-                        binding.outdatedGroupBanner.setOnClickListener {
+                        binding.conversationHeader.outdatedGroupBanner.setOnClickListener {
                             showOpenUrlDialog("https://getsession.org/groups")
                         }
                     }
@@ -1072,7 +1083,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         runOnUiThread {
             val threadRecipient = viewModel.recipient ?: return@runOnUiThread
             if (threadRecipient.isContactRecipient) {
-                binding.blockedBanner.isVisible = threadRecipient.isBlocked
+                binding.conversationHeader.blockedBanner.isVisible = threadRecipient.isBlocked
             }
             invalidateOptionsMenu()
             updateSendAfterApprovalText()
@@ -1089,15 +1100,15 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     private fun setUpMessageRequests() {
-        binding.acceptMessageRequestButton.setOnClickListener {
+        binding.messageRequestBar.acceptMessageRequestButton.setOnClickListener {
             viewModel.acceptMessageRequest()
         }
 
-        binding.messageRequestBlock.setOnClickListener {
+        binding.messageRequestBar.messageRequestBlock.setOnClickListener {
             block(deleteThread = true)
         }
 
-        binding.declineMessageRequestButton.setOnClickListener {
+        binding.messageRequestBar.declineMessageRequestButton.setOnClickListener {
             fun doDecline() {
                 viewModel.declineMessageRequest()
                 finish()
@@ -1117,12 +1128,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     .map { it.messageRequestState }
                     .distinctUntilChanged()
                     .collectLatest { state ->
-                        binding.messageRequestBar.isVisible = state is MessageRequestUiState.Visible
+                        binding.messageRequestBar.root.isVisible = state is MessageRequestUiState.Visible
 
                         if (state is MessageRequestUiState.Visible) {
-                            binding.sendAcceptsTextView.setText(state.acceptButtonText)
-                            binding.messageRequestBlock.isVisible = state.blockButtonText != null
-                            binding.messageRequestBlock.text = state.blockButtonText
+                            binding.messageRequestBar.sendAcceptsTextView.setText(state.acceptButtonText)
+                            binding.messageRequestBar.messageRequestBlock.isVisible = state.blockButtonText != null
+                            binding.messageRequestBar.messageRequestBlock.text = state.blockButtonText
                         }
                     }
             }
@@ -1816,7 +1827,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             currentTargetedScrollOffsetPx = if (targetMessagePosition > 0) nonFirstMessageOffsetPx else 0
             linearSmoothScroller.targetPosition = targetMessagePosition
             (binding.conversationRecyclerView.layoutManager as? LinearLayoutManager)?.startSmoothScroll(linearSmoothScroller)
-            
+
         } ?: Log.i(TAG, "Could not find message with timestamp: $timestamp")
     }
 
@@ -2524,6 +2535,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun onSearchMoveDownPressed() {
         this.searchViewModel.onMoveDown()
+    }
+
+    override fun onNicknameSaved() {
+        adapter.notifyDataSetChanged()
     }
 
     private fun jumpToMessage(author: Address, timestamp: Long, highlight: Boolean, onMessageNotFound: Runnable?) {

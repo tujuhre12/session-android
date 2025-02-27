@@ -7,7 +7,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
@@ -30,7 +29,6 @@ import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.messaging.messages.visible.Profile
 import org.session.libsession.messaging.sending_receiving.MessageSender
-import org.session.libsession.messaging.sending_receiving.pollers.ClosedGroupPoller
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildDeleteMemberContentSignature
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildInfoChangeSignature
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildMemberChangeSignature
@@ -57,12 +55,12 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Namespace
+import org.thoughtcrime.securesms.configs.ConfigUploader
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.dependencies.PollerFactory
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -77,13 +75,14 @@ class GroupManagerV2Impl @Inject constructor(
     private val mmsSmsDatabase: MmsSmsDatabase,
     private val lokiDatabase: LokiMessageDatabase,
     private val threadDatabase: ThreadDatabase,
-    private val pollerFactory: PollerFactory,
     private val profileManager: SSKEnvironment.ProfileManagerProtocol,
     @ApplicationContext val application: Context,
     private val clock: SnodeClock,
     private val messageDataProvider: MessageDataProvider,
     private val lokiAPIDatabase: LokiAPIDatabase,
+    private val configUploader: ConfigUploader,
     private val scope: GroupScope,
+    private val groupPollerManager: GroupPollerManager,
 ) : GroupManagerV2 {
     private val dispatcher = Dispatchers.Default
 
@@ -112,10 +111,12 @@ class GroupManagerV2Impl @Inject constructor(
         val groupCreationTimestamp = clock.currentTimeMills()
 
         // Create a group in the user groups config
-        val group = configFactory.withMutableUserConfigs { configs ->
+        val group = configFactory.withUserConfigs { configs ->
             configs.userGroups.createGroup()
-                .copy(name = groupName, joinedAtSecs = TimeUnit.MILLISECONDS.toSeconds(groupCreationTimestamp))
-                .also(configs.userGroups::set)
+                .copy(
+                    name = groupName,
+                    joinedAtSecs = TimeUnit.MILLISECONDS.toSeconds(groupCreationTimestamp)
+                )
         }
 
         val adminKey = checkNotNull(group.adminKey) { "Admin key is null for new group creation." }
@@ -126,48 +127,63 @@ class GroupManagerV2Impl @Inject constructor(
         }
 
         try {
-            configFactory.withMutableGroupConfigs(groupId) { configs ->
-                // Update group's information
-                configs.groupInfo.setName(groupName)
-                configs.groupInfo.setDescription(groupDescription)
+            val newGroupConfigs = configFactory.createGroupConfigs(groupId, adminKey)
 
-                // Add members
-                for (member in memberAsRecipients) {
-                    configs.groupMembers.set(
-                        configs.groupMembers.getOrConstruct(member.address.toString()).apply {
-                            setName(member.name)
-                            setProfilePic(member.profileAvatar?.let { url ->
-                                member.profileKey?.let { key -> UserPic(url, key) }
-                            } ?: UserPic.DEFAULT)
-                        }
-                    )
-                }
+            // Update group's information
+            newGroupConfigs.groupInfo.setName(groupName)
+            newGroupConfigs.groupInfo.setDescription(groupDescription)
 
-                // Add ourselves as admin
-                configs.groupMembers.set(
-                    configs.groupMembers.getOrConstruct(ourAccountId).apply {
-                        setName(ourProfile.displayName.orEmpty())
-                        setProfilePic(ourProfile.profilePicture ?: UserPic.DEFAULT)
-                        setPromotionAccepted()
+            // Add members
+            for (member in memberAsRecipients) {
+                newGroupConfigs.groupMembers.set(
+                    newGroupConfigs.groupMembers.getOrConstruct(member.address.toString()).apply {
+                        setName(member.name)
+                        setProfilePic(member.profileAvatar?.let { url ->
+                            member.profileKey?.let { key -> UserPic(url, key) }
+                        } ?: UserPic.DEFAULT)
                     }
                 )
-
-                // Manually re-key to prevent issue with linked admin devices
-                configs.rekey()
             }
 
-            if (!configFactory.waitUntilGroupConfigsPushed(groupId)) {
-                Log.w(TAG, "Unable to push group configs in a timely manner")
-            }
+            // Add ourselves as admin
+            newGroupConfigs.groupMembers.set(
+                newGroupConfigs.groupMembers.getOrConstruct(ourAccountId).apply {
+                    setName(ourProfile.displayName.orEmpty())
+                    setProfilePic(ourProfile.profilePicture ?: UserPic.DEFAULT)
+                    setPromotionAccepted()
+                }
+            )
 
-            configFactory.withMutableUserConfigs {
-                it.convoInfoVolatile.set(
+            // Manually re-key to prevent issue with linked admin devices
+            newGroupConfigs.rekey()
+
+            // Make sure the initial group configs are pushed
+            configUploader.pushGroupConfigsChangesIfNeeded(adminKey = adminKey, groupId = groupId, groupConfigAccess = { access ->
+                access(newGroupConfigs)
+            })
+
+            // Now we can save it to our factory for further access
+            configFactory.saveGroupConfigs(groupId, newGroupConfigs)
+
+            // Once the group configs are created successfully, we add it to our config
+            configFactory.withMutableUserConfigs { configs ->
+                configs.userGroups.set(group)
+
+                configs.convoInfoVolatile.set(
                     Conversation.ClosedGroup(
                         groupId.hexString,
                         groupCreationTimestamp,
                         false
                     )
                 )
+            }
+
+            // Make sure a thread exists at this point as we will need it for successfully sending
+            // control messages. Normally the thread will be created automatically but it's done
+            // in the background. We have no way to know about the state of that async background process
+            // hence we will need to create it manually here.
+            check(storage.getOrCreateThreadIdFor(Address.fromSerialized(groupId.hexString)) != -1L) {
+                "Failed to create a thread for the group"
             }
 
             val recipient =
@@ -177,7 +193,6 @@ class GroupManagerV2Impl @Inject constructor(
             profileManager.setName(application, recipient, groupName)
             storage.setRecipientApprovedMe(recipient, true)
             storage.setRecipientApproved(recipient, true)
-            pollerFactory.updatePollers()
 
             // Invite members
             JobQueue.shared.add(
@@ -194,10 +209,6 @@ class GroupManagerV2Impl @Inject constructor(
         } catch (e: Exception) {
             Log.e(TAG, "Failed to create group", e)
 
-            // Remove the group from the user groups config is sufficient as a "rollback"
-            configFactory.withMutableUserConfigs {
-                it.userGroups.eraseClosedGroup(groupId.hexString)
-            }
             throw e
         }
     }
@@ -243,7 +254,7 @@ class GroupManagerV2Impl @Inject constructor(
                 val memberKey = configs.groupKeys.supplementFor(newMembers.map { it.hexString })
                 batchRequests.add(
                     SnodeAPI.buildAuthenticatedStoreBatchInfo(
-                        namespace = Namespace.ENCRYPTION_KEYS(),
+                        namespace = Namespace.GROUP_KEYS(),
                         message = SnodeMessage(
                             recipient = group.hexString,
                             data = Base64.encodeBytes(memberKey),
@@ -264,11 +275,6 @@ class GroupManagerV2Impl @Inject constructor(
             groupAdminAuth = groupAuth,
             subAccountTokens = subAccountTokens
         )
-
-        // Send a group update message to the group telling members someone has been invited
-        if (!isReinvite) {
-            sendGroupUpdateForAddingMembers(group, adminKey, newMembers)
-        }
 
         // Call the API
         try {
@@ -299,6 +305,11 @@ class GroupManagerV2Impl @Inject constructor(
                 groupName = groupName,
                 underlying = e
             )
+        } finally {
+            // Send a group update message to the group telling members someone has been invited
+            if (!isReinvite) {
+                sendGroupUpdateForAddingMembers(group, adminKey, newMembers)
+            }
         }
 
         // Send the invitation message to the new members
@@ -335,9 +346,9 @@ class GroupManagerV2Impl @Inject constructor(
                 .build()
         ).apply { this.sentTimestamp = timestamp }
 
-        MessageSender.send(updatedMessage, Address.fromSerialized(group.hexString))
-
         storage.insertGroupInfoChange(updatedMessage, group)
+
+        MessageSender.send(updatedMessage, Address.fromSerialized(group.hexString))
     }
 
     override suspend fun removeMembers(
@@ -478,8 +489,6 @@ class GroupManagerV2Impl @Inject constructor(
                             configFactory.waitUntilGroupConfigsPushed(groupId)
                         }
                     }
-
-                    pollerFactory.pollerFor(groupId)?.stop()
 
                     // Delete conversation and group configs
                     storage.getThreadId(Address.fromSerialized(groupId.hexString))
@@ -663,19 +672,21 @@ class GroupManagerV2Impl @Inject constructor(
             ))
         }
 
-        val poller = checkNotNull(pollerFactory.pollerFor(group.groupAccountId)) { "Unable to start a poller for groups " }
-        poller.start()
-
         // We need to wait until we have the first data polled from the poller, otherwise
         // we won't have the necessary configs to send invite response/or do anything else.
-        // We can't hang on here forever if things don't work out, bail out if it's the camse
+        // We can't hang on here forever if things don't work out, bail out if it's the case.
         withTimeout(20_000L) {
-            poller.state.filterIsInstance<ClosedGroupPoller.StartedState>()
+            // We must tell the poller to poll once, as we could have received this invitation
+            // in the background where the poller isn't running
+            groupPollerManager.pollOnce(group.groupAccountId)
+
+            groupPollerManager.watchGroupPollingState(group.groupAccountId)
                 .filter { it.hadAtLeastOneSuccessfulPoll }
                 .first()
         }
 
-        if (group.adminKey == null) {
+        val adminKey = group.adminKey
+        if (adminKey == null) {
             // Send an invite response to the group if we are invited as a regular member
             val inviteResponse = GroupUpdateInviteResponseMessage.newBuilder()
                 .setIsApproved(true)
@@ -691,6 +702,8 @@ class GroupManagerV2Impl @Inject constructor(
         } else {
             // If we are invited as admin, we can just update the group info ourselves
             configFactory.withMutableGroupConfigs(group.groupAccountId) { configs ->
+                configs.groupKeys.loadAdminKey(adminKey)
+
                 configs.groupMembers.get(key)?.let { member ->
                     configs.groupMembers.set(member.apply {
                         setPromotionAccepted()
@@ -769,9 +782,10 @@ class GroupManagerV2Impl @Inject constructor(
 
             // Update our promote state
             configFactory.withMutableGroupConfigs(
-                recreateConfigInstances = true,
                 groupId = groupId
             ) { configs ->
+                configs.groupKeys.loadAdminKey(adminKey)
+
                 configs.groupMembers.get(userAuth.accountId.hexString)?.let { member ->
                     member.setPromotionAccepted()
                     configs.groupMembers.set(member)
@@ -889,9 +903,6 @@ class GroupManagerV2Impl @Inject constructor(
 
     override suspend fun handleKicked(groupId: AccountId): Unit = scope.launchAndWait(groupId, "Handle kicked") {
         Log.d(TAG, "We were kicked from the group, delete and stop polling")
-
-        // Stop polling the group immediately
-        pollerFactory.pollerFor(groupId)?.stop()
 
         val userId = requireNotNull(storage.getUserPublicKey()) { "No current user available" }
         val group = configFactory.getGroup(groupId) ?: return@launchAndWait
