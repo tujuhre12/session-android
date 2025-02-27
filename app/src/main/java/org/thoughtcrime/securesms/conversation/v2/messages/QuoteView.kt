@@ -79,7 +79,8 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
             if (quoteIsLocalUser) context.getString(R.string.you)
             else author?.displayName(Contact.contextForRecipient(thread)) ?: truncateIdForDisplay(authorPublicKey)
         binding.quoteViewAuthorTextView.text = authorDisplayName
-        binding.quoteViewAuthorTextView.setTextColor(getTextColor(isOutgoingMessage))
+        val textColor = getTextColor(isOutgoingMessage)
+        binding.quoteViewAuthorTextView.setTextColor(textColor)
         // Body
         binding.quoteViewBodyTextView.text = if (isOpenGroupInvitation)
             resources.getString(R.string.communityInvitation)
@@ -90,7 +91,7 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
             threadID = threadID,
             context = context
         )
-        binding.quoteViewBodyTextView.setTextColor(getTextColor(isOutgoingMessage))
+        binding.quoteViewBodyTextView.setTextColor(textColor)
         // Accent line / attachment preview
         val hasAttachments = (attachments != null && attachments.asAttachments().isNotEmpty()) && !isOriginalMissing
         binding.quoteViewAccentLine.isVisible = !hasAttachments
@@ -98,12 +99,7 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
         if (!hasAttachments) {
             binding.quoteViewAccentLine.setBackgroundColor(getLineColor(isOutgoingMessage))
         } else if (attachments != null) {
-            binding.quoteViewAttachmentPreviewImageView.imageTintList = ColorStateList.valueOf(
-                context.getColorFromAttr(
-                    if(isOutgoingMessage && mode == Mode.Regular) R.attr.message_sent_text_color
-                    else R.attr.message_received_text_color
-                )
-            )
+            binding.quoteViewAttachmentPreviewImageView.imageTintList = ColorStateList.valueOf(textColor)
             binding.quoteViewAttachmentPreviewImageView.isVisible = false
             binding.quoteViewAttachmentThumbnailImageView.root.isVisible = false
             when {
