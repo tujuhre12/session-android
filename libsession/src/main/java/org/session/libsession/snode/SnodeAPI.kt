@@ -96,6 +96,9 @@ object SnodeAPI {
     private const val snodeFailureThreshold = 3
     private const val useOnionRequests = true
 
+    const val KEY_BODY = "body"
+    const val KEY_CODE = "code"
+    const val KEY_RESULTS = "results"
     private const val KEY_IP = "public_ip"
     private const val KEY_PORT = "storage_port"
     private const val KEY_X25519 = "pubkey_x25519"
@@ -577,14 +580,14 @@ object SnodeAPI {
             parameters,
             publicKey
         ).success { rawResponses ->
-            rawResponses["results"].let { it as List<RawResponse> }
+            rawResponses[KEY_RESULTS].let { it as List<RawResponse> }
                 .asSequence()
-                .filter { it["code"] as? Int != 200 }
+                .filter { it[KEY_CODE] as? Int != 200 }
                 .forEach { response ->
                     Log.w("Loki", "response code was not 200")
                     handleSnodeError(
-                        response["code"] as? Int ?: 0,
-                        response["body"] as? Map<*, *>,
+                        response[KEY_CODE] as? Int ?: 0,
+                        response[KEY_BODY] as? Map<*, *>,
                         snode,
                         publicKey
                     )
@@ -901,7 +904,7 @@ object SnodeAPI {
             val deletedMessages = swarms.mapValuesNotNull { (hexSnodePublicKey, rawJSON) ->
                 (rawJSON as? Map<String, Any>)?.let { json ->
                     val isFailed = json["failed"] as? Boolean ?: false
-                    val statusCode = json["code"] as? String
+                    val statusCode = json[KEY_CODE] as? String
                     val reason = json["reason"] as? String
 
                     if (isFailed) {
@@ -1072,7 +1075,7 @@ object SnodeAPI {
             val json = rawJSON as? Map<String, Any> ?: return@mapValuesNotNull null
             if (json["failed"] as? Boolean == true) {
                 val reason = json["reason"] as? String
-                val statusCode = json["code"] as? String
+                val statusCode = json[KEY_CODE] as? String
                 Log.e("Loki", "Failed to delete all messages from: $hexSnodePublicKey due to error: $reason ($statusCode).")
                 false
             } else {
