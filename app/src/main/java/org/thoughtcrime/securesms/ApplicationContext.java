@@ -347,13 +347,9 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
             return;
         }
 
+        startPollingIfNeeded();
+
         ThreadUtils.queue(()->{
-            if (poller != null) {
-                poller.setCaughtUp(false);
-            }
-
-            startPollingIfNeeded();
-
             OpenGroupManager.INSTANCE.startPolling();
             return Unit.INSTANCE;
         });
@@ -469,7 +465,9 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     private void setUpPollingIfNeeded() {
         String userPublicKey = textSecurePreferences.getLocalNumber();
         if (userPublicKey == null) return;
-        poller = new Poller(configFactory, storage, lokiAPIDatabase);
+        if(poller == null) {
+            poller = new Poller(configFactory, storage, lokiAPIDatabase);
+        }
     }
 
     public void startPollingIfNeeded() {
