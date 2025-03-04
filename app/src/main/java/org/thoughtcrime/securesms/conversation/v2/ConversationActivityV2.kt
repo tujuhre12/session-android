@@ -381,10 +381,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private val glide by lazy { Glide.with(this) }
     private val lockViewHitMargin by lazy { toPx(40, resources) }
 
-    private val gifButton      by lazy { InputBarButton(this, R.drawable.ic_gif,    hasOpaqueBackground = true, initiallyEnabled = false) }
-    private val documentButton by lazy { InputBarButton(this, R.drawable.ic_file,   hasOpaqueBackground = true, initiallyEnabled = false) }
-    private val libraryButton  by lazy { InputBarButton(this, R.drawable.ic_images, hasOpaqueBackground = true, initiallyEnabled = false) }
-    private val cameraButton   by lazy { InputBarButton(this, R.drawable.ic_camera, hasOpaqueBackground = true, initiallyEnabled = false) }
+    private val gifButton      by lazy { InputBarButton(this, R.drawable.ic_gif,    hasOpaqueBackground = true) }
+    private val documentButton by lazy { InputBarButton(this, R.drawable.ic_file,   hasOpaqueBackground = true) }
+    private val libraryButton  by lazy { InputBarButton(this, R.drawable.ic_images, hasOpaqueBackground = true) }
+    private val cameraButton   by lazy { InputBarButton(this, R.drawable.ic_camera, hasOpaqueBackground = true) }
 
     private val messageToScrollTimestamp = AtomicLong(-1)
     private val messageToScrollAuthor = AtomicReference<Address?>(null)

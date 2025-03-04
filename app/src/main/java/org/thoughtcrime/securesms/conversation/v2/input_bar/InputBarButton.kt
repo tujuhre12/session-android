@@ -84,8 +84,7 @@ class InputBarButton : RelativeLayout {
     constructor(context: Context,
                 @DrawableRes iconID: Int,
                 isSendButton: Boolean = false,
-                hasOpaqueBackground: Boolean = false,
-                initiallyEnabled: Boolean
+                hasOpaqueBackground: Boolean = false
     ) : super(context) {
         this.isSendButton = isSendButton
         this.iconID = iconID
@@ -102,7 +101,7 @@ class InputBarButton : RelativeLayout {
         imageView.layoutParams = imageViewLayoutParams
         gravity = Gravity.TOP or Gravity.LEFT // Intentionally not Gravity.START
         isHapticFeedbackEnabled = true
-        this.isEnabled = initiallyEnabled
+        this.isEnabled = isSendButton // Only enable the send button by default
 
         // Set the icon tint colour based on the button being enabled, regardless of it's actual enabled state
         setIconTintColourForEnabledState(true)

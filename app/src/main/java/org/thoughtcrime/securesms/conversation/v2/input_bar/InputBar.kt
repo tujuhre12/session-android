@@ -83,15 +83,15 @@ class InputBar @JvmOverloads constructor(
 
     var voiceRecorderState = VoiceRecorderState.Idle
 
-    private val attachmentsButton = InputBarButton(context, R.drawable.ic_plus, initiallyEnabled = false).apply {
+    private val attachmentsButton = InputBarButton(context, R.drawable.ic_plus).apply {
         contentDescription = context.getString(R.string.AccessibilityId_attachmentsButton)
     }
 
-    val microphoneButton = InputBarButton(context, R.drawable.ic_mic, initiallyEnabled = false).apply {
+    val microphoneButton = InputBarButton(context, R.drawable.ic_mic).apply {
         contentDescription = context.getString(R.string.AccessibilityId_voiceMessageNew)
     }
 
-    private val sendButton = InputBarButton(context, R.drawable.ic_arrow_up, isSendButton = true, initiallyEnabled = true).apply {
+    private val sendButton = InputBarButton(context, R.drawable.ic_arrow_up, isSendButton = true).apply {
         contentDescription = context.getString(R.string.AccessibilityId_send)
     }
 
