@@ -3,7 +3,6 @@
 #include <string_view>
 #include <functional>
 
-#include "logging.h"
 #include "session/logging.hpp"
 #include "session/log_level.h"
 
