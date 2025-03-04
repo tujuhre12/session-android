@@ -257,7 +257,7 @@
     <string name="create">Sukurti</string>
     <string name="cut">Iškirpti</string>
     <string name="databaseErrorGeneric">Įvyko duomenų bazės klaida.\n\nEksportuokite savo programos žurnalus, kad galėtumėte juos pasidalinti sprendžiant problemas. Jei tai bus nesėkminga, perinstaliuokite {app_name} ir atkurkite savo paskyrą.\n\nĮspėjimas: Tai sukels visų pranešimų, priedų ir paskyros duomenų senesnių nei dviejų savaičių praradimą.</string>
-    <string name="databaseErrorTimeout">Pastebėjome, kad {app_name} užtrunka ilgai paleisti.\n\nGalite toliau laukti, eksportuoti savo įrenginio žurnalus, kad galėtumėte juos pasidalinti dėl trikčių šalinimo, arba bandykite iš naujo paleisti Session.</string>
+    <string name="databaseErrorTimeout">Pastebėjome, kad {app_name} užtrunka ilgai paleisti.\n\nGalite toliau laukti, eksportuoti savo įrenginio žurnalus, kad galėtumėte juos pasidalinti dėl trikčių šalinimo, arba bandykite iš naujo paleisti {app_name}.</string>
     <string name="databaseErrorUpdate">Jūsų programos duomenų bazė nesuderinama su šia {app_name} versija. Iš naujo įdiekite programą ir atkurkite savo paskyrą, kad sugeneruotumėte naują duomenų bazę ir toliau naudotumėte {app_name}.\n\nĮspėjimas: Dėl to visos pranešimų ir priedų, senesnių nei dvi savaitės, bus prarastos.</string>
     <string name="databaseOptimizing">Optimizuojama duomenų bazė</string>
     <string name="debugLog">Derinimo žurnalas</string>
@@ -420,7 +420,6 @@
     <string name="groupLeaveDescription">Ar tikrai norite išeiti iš <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Ar tikrai norite išeiti iš <b>{group_name}</b>?\n\nTai pašalins visus narius ir ištrins visą grupės turinį.</string>
     <string name="groupLeaveErrorFailed">Nepavyko išeiti iš {group_name}</string>
-    <string name="groupLegacyBanner">Grupės buvo atnaujintos, sukurkite naują grupę norėdami atnaujinti. Senų grupių funkcionalumas bus apribotas nuo {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> išėjo iš grupės.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> ir <b>{count} kiti</b> išėjo iš grupės.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> ir <b>{other_name}</b> išėjo iš grupės.</string>
@@ -445,7 +444,6 @@
     <string name="groupOnlyAdmin">Jūs esate vienintelis administratorius grupėje <b>{group_name}</b>.\n\nGrupės nariai ir nustatymai negali būti keičiami be administratoriaus.</string>
     <string name="groupPromotedYou"><b>Jūs</b> buvote paskirti adminu.</string>
     <string name="groupPromotedYouMultiple"><b>Jūs</b> ir <b>{count} kiti</b> buvo paskirti adminais.</string>
-    <string name="groupPromotedYouTwo"><b>Jūs</b> ir <b>{name}</b> buvo paskirti adminais.</string>
     <string name="groupRemoveDescription">Ar norėtumėte pašalinti <b>{name}</b> iš <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Ar norėtumėte pašalinti <b>{name}</b> ir <b>{count} kitus</b> iš <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Ar norėtumėte pašalinti <b>{name}</b> ir <b>{other_name}</b> iš <b>{group_name}</b>?</string>

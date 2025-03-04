@@ -25,8 +25,8 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ProfileKeyUtil
 import org.session.libsession.utilities.ProfilePictureUtilities
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.utilities.ExternalStorageUtil.getImageDir
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.NoExternalStorageException
@@ -47,6 +47,7 @@ class SettingsViewModel @Inject constructor(
     private val prefs: TextSecurePreferences,
     private val configFactory: ConfigFactory,
     private val connectivity: InternetConnectivity,
+    private val usernameUtils: UsernameUtils
 ) : ViewModel() {
     private val TAG = "SettingsViewModel"
 
@@ -94,8 +95,7 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun getDisplayName(): String =
-        prefs.getProfileName() ?: truncateIdForDisplay(hexEncodedPublicKey)
+    fun getDisplayName(): String = usernameUtils.getCurrentUsernameWithAccountIdFallback()
 
     fun hasAvatar() = prefs.getProfileAvatarId() != 0
 
@@ -197,7 +197,7 @@ class SettingsViewModel @Inject constructor(
             try {
                 // Grab the profile key and kick of the promise to update the profile picture
                 val encodedProfileKey = ProfileKeyUtil.generateEncodedProfileKey(context)
-                ProfilePictureUtilities.upload(profilePicture, encodedProfileKey, context)
+                val url = ProfilePictureUtilities.upload(profilePicture, encodedProfileKey, context)
 
                 // If the online portion of the update succeeded then update the local state
                 AvatarHelper.setAvatar(
@@ -217,11 +217,10 @@ class SettingsViewModel @Inject constructor(
                     ProfileKeyUtil.setEncodedProfileKey(context, encodedProfileKey)
 
                     // Attempt to grab the details we require to update the profile picture
-                    val url = prefs.getProfilePictureURL()
                     val profileKey = ProfileKeyUtil.getProfileKey(context)
 
                     // If we have a URL and a profile key then set the user's profile picture
-                    if (!url.isNullOrEmpty() && profileKey.isNotEmpty()) {
+                    if (url.isNotEmpty() && profileKey.isNotEmpty()) {
                         configFactory.withMutableUserConfigs {
                             it.userProfile.setPic(UserPic(url, profileKey))
                         }
@@ -246,9 +245,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun updateName(displayName: String) {
-        configFactory.withMutableUserConfigs {
-            it.userProfile.setName(displayName)
-        }
+        usernameUtils.saveCurrentUserName(displayName)
     }
 
     fun permanentlyHidePassword() {

@@ -256,7 +256,7 @@
     <string name="create">Yenza</string>
     <string name="cut">Sika</string>
     <string name="databaseErrorGeneric">Kufunyenwe impazamo kwisiseko sedatha.\n\nNceda thumela ii-log zenkqubo yakho ukuze uwabelane ngazo ngeengxaki. Ukuba oku kuphumelele, reinstall {app_name} kwaye ubuyisele iakhawunti yakho.\n\nIsilumkiso: oku kuya kubangela ukulahleka kwemiyalezo yonke, ii-attachements, kunye nedatha yeakhawunti endala ngokuphakama kweveki ezimbini.</string>
-    <string name="databaseErrorTimeout">Siqaphele ukuba i-{app_name} ithatha ixesha elide ukuqala.\n\nUngaqhubeka ulinde, uthumele iingxelo zesixhobo sakho ukwabelana ngazo ukulungisa iingxaki, okanye uzame ukuqala ngokutsha i-Session.</string>
+    <string name="databaseErrorTimeout">Siqaphele ukuba i-{app_name} ithatha ixesha elide ukuqala.\n\nUngaqhubeka ulinde, uthumele iingxelo zesixhobo sakho ukwabelana ngazo ukulungisa iingxaki, okanye uzame ukuqala ngokutsha {app_name}.</string>
     <string name="databaseErrorUpdate">I-database yakho yohlelo lwe-app ayinakuvisisana nohlobo lwangoku lwe {app_name}. Faka app kwakhona kwaye ubuyisele i-akhawunti yakho ukuphuhlisa database entsha kwaye uqhubeke usebenzisa {app_name}.\n\nIsilumkiso: Oku kuya kubangela ukulahleka kwemiyalezo yonke kunye nezinto ezihambelanayo ezindala kunokuba yiveki ezimbini.</string>
     <string name="databaseOptimizing">Ukuphucula iDatha</string>
     <string name="debugLog">Ilogi yeSipseko</string>
@@ -411,7 +411,6 @@
     <string name="groupLeaveDescription">Uqinisekile ukuba ufuna ukufumana <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Uqinisekile ukuba ufuna ukushiya <b>{group_name}</b>?\n\nOku kuyakususa onke amalungu kwaye kusebenzise yonke imixholo yeqela.</string>
     <string name="groupLeaveErrorFailed">Koyekile ukuphuma ku {group_name}</string>
-    <string name="groupLegacyBanner">Amaqela aphuculwe, yenza iqela elitsha ukuphucula. Umsebenzi weqela elidala uya kunciphisa ukusukela ngomhla we {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> bashiye iqela.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> kunye <b>{count} abanye abantu</b> bashiye iqela.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> kunye <b>{other_name}</b> bashiye iqela.</string>
@@ -435,7 +434,6 @@
     <string name="groupOnlyAdmin">Unguye kuphela admin kwi <b>{group_name}</b>.\n\nAmalungu eqela kunye neesetingi azinakutshintshwa ngaphandle kwe-admin.</string>
     <string name="groupPromotedYou"><b>Mna </b> ndinyuselwe kubu-Admin.</string>
     <string name="groupPromotedYouMultiple"><b>Mna </b> kunye <b>{count} abanye abantu </b> banyuselwe kubu-Admin.</string>
-    <string name="groupPromotedYouTwo"><b>Mna</b> kunye ne <b>{name}</b> banyuselwe kubu-Admin.</string>
     <string name="groupRemoveDescription">Ungathanda ukususa <b>{name}</b> kwi-<b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Ungathanda ukususa <b>{name}</b> kunye nabanye <b>{count}</b> kwi-<b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Ungathanda ukususa <b>{name}</b> kunye no<b>{other_name}</b> kwi-<b>{group_name}</b>?</string>

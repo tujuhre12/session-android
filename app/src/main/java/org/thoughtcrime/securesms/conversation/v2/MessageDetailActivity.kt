@@ -42,7 +42,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -54,6 +53,7 @@ import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
@@ -81,7 +81,6 @@ import org.thoughtcrime.securesms.ui.theme.blackAlpha40
 import org.thoughtcrime.securesms.ui.theme.bold
 import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
 import org.thoughtcrime.securesms.ui.theme.monospace
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class MessageDetailActivity : ScreenLockActionBarActivity() {
@@ -136,7 +135,7 @@ class MessageDetailActivity : ScreenLockActionBarActivity() {
             onReply = if (state.canReply) { { setResultAndFinish(ON_REPLY) } } else null,
             onResend = state.error?.let { { setResultAndFinish(ON_RESEND) } },
             onSave = if(canSave) { { setResultAndFinish(ON_SAVE) } } else null,
-            onDelete = { setResultAndFinish(ON_DELETE) },
+            onDelete = if (state.canDelete) { { setResultAndFinish(ON_DELETE) } } else null,
             onCopy = { setResultAndFinish(ON_COPY) },
             onClickImage = { viewModel.onClickImage(it) },
             onAttachmentNeedsDownload = viewModel::onAttachmentNeedsDownload,
@@ -159,7 +158,7 @@ fun MessageDetails(
     onReply: (() -> Unit)? = null,
     onResend: (() -> Unit)? = null,
     onSave: (() -> Unit)? = null,
-    onDelete: () -> Unit = {},
+    onDelete: (() -> Unit)? = null,
     onCopy: () -> Unit = {},
     onClickImage: (Int) -> Unit = {},
     onAttachmentNeedsDownload: (DatabaseAttachment) -> Unit = { _ -> }
@@ -214,8 +213,10 @@ fun CellMetadata(
                 modifier = Modifier.padding(LocalDimensions.current.spacing),
                 verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
             ) {
-                TitledText(sent)
-                TitledText(received)
+                // Show the sent details if we're the sender of the message, otherwise show the received details
+                if (sent     != null) { TitledText(sent)     }
+                if (received != null) { TitledText(received) }
+
                 TitledErrorText(error)
                 senderInfo?.let {
                     TitledView(state.fromTitle) {
@@ -243,7 +244,7 @@ fun CellButtons(
     onReply: (() -> Unit)? = null,
     onResend: (() -> Unit)? = null,
     onSave: (() -> Unit)? = null,
-    onDelete: () -> Unit,
+    onDelete: (() -> Unit)? = null,
     onCopy: () -> Unit
 ) {
     Cell(modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing)) {
@@ -282,12 +283,14 @@ fun CellButtons(
                 Divider()
             }
 
-            LargeItemButton(
-                R.string.delete,
-                R.drawable.ic_trash_2,
-                colors = dangerButtonColors(),
-                onClick = onDelete
-            )
+            onDelete?.let {
+                LargeItemButton(
+                    R.string.delete,
+                    R.drawable.ic_trash_2,
+                    colors = dangerButtonColors(),
+                    onClick = it
+                )
+            }
         }
     }
 }
@@ -483,12 +486,14 @@ fun TitledText(
 ) {
     titledText?.apply {
         TitledView(title, modifier) {
-            Text(
-                text,
-                style = style,
-                color = color,
-                modifier = Modifier.fillMaxWidth()
-            )
+            if (text != null) {
+                Text(
+                    text,
+                    style = style,
+                    color = color,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
     }
 }

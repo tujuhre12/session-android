@@ -27,6 +27,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
 import org.session.libsession.avatars.ContactPhoto;
+import org.session.libsession.messaging.MessagingModuleConfiguration;
 import org.session.libsession.messaging.contacts.Contact;
 import org.session.libsession.utilities.NotificationPrivacyPreference;
 import org.session.libsession.utilities.Util;
@@ -72,7 +73,7 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
     setChannelId(channelId != null ? channelId : NotificationChannels.getMessagesChannel(context));
 
     if (privacy.isDisplayContact()) {
-      setContentTitle(recipient.toShortString());
+      setContentTitle(recipient.getName());
 
       if (recipient.getContactUri() != null) {
         addPerson(recipient.getContactUri().toString());
@@ -320,7 +321,7 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
   }
 
   private static Drawable getPlaceholderDrawable(Context context, Recipient recipient) {
-    String publicKey = recipient.getAddress().serialize();
+    String publicKey = recipient.getAddress().toString();
     String displayName = recipient.getName();
     return AvatarPlaceholderGenerator.generate(context, ICON_SIZE, publicKey, displayName);
   }
@@ -330,12 +331,10 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
    * @param openGroupRecipient whether in an open group context
    */
   private String getGroupDisplayName(Recipient recipient, boolean openGroupRecipient) {
-    SessionContactDatabase contactDB = DatabaseComponent.get(context).sessionContactDatabase();
-    String accountID = recipient.getAddress().serialize();
-    Contact contact = contactDB.getContactWithAccountID(accountID);
-    if (contact == null) { return accountID; }
-    String displayName = contact.displayName(openGroupRecipient ? Contact.ContactContext.OPEN_GROUP : Contact.ContactContext.REGULAR);
-    if (displayName == null) { return accountID; }
-    return displayName;
+    return MessagingModuleConfiguration.getShared().getUsernameUtils().getContactNameWithAccountID(
+            recipient.getAddress().toString(),
+            null,
+            openGroupRecipient ? Contact.ContactContext.OPEN_GROUP : Contact.ContactContext.REGULAR
+        );
   }
 }

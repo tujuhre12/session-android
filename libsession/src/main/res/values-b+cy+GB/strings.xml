@@ -260,7 +260,7 @@
     <string name="create">Creu</string>
     <string name="cut">Torri</string>
     <string name="databaseErrorGeneric">Mae gwall cronfa ddata wedi digwydd.\n\nAllforiwch gofnodion eich cais i\'w rhannu ar gyfer datrys problemau. Os yw hyn yn aflwyddiannus, ailosodwch {app_name} a adfer eich cyfrif.\n\nRhybudd: Bydd hyn yn arwain at golled o\'r holl negeseuon, atodiadau, a data cyfrif sydd ymhellach i ffwrdd na phythefnos.</string>
-    <string name="databaseErrorTimeout">Rydym wedi sylwi bod {app_name} yn cymryd llawer o amser i ddechrau.\n\nGallwch barhau i aros, allforio logiau eich dyfais i\'w rhannu ar gyfer datrys problemau, neu geisio ailgychwyn Session.</string>
+    <string name="databaseErrorTimeout">Rydym wedi sylwi bod {app_name} yn cymryd llawer o amser i ddechrau.\n\nGallwch barhau i aros, allforio logiau eich dyfais i\'w rhannu ar gyfer datrys problemau, neu geisio ailgychwyn {app_name}.</string>
     <string name="databaseErrorUpdate">Mae eich cronfa ddata ap yn anghydnaws â\'r fersiwn hon o {app_name}. Ailosodwch yr ap a darganfod eich cyfrif i greu cronfa ddata newydd a pharhau i ddefnyddio {app_name}.\n\nRhybudd: Bydd hyn yn arwain at golli’r holl negeseuon a’r atodiadau sy’n hŷn na phythefnos.</string>
     <string name="databaseOptimizing">Optimeiddio Cronfa Ddata</string>
     <string name="debugLog">Cofnod Dadfygio</string>
@@ -431,7 +431,6 @@
     <string name="groupLeaveDescription">Ydych chi\'n siŵr eich bod am adael <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Ydych chi\'n siŵr eich bod am adael <b>{group_name}</b>?\n\nBydd hyn yn dileu\'r holl aelodau ac yn dileu\'r holl gynnwys grŵp.</string>
     <string name="groupLeaveErrorFailed">Methu gadael {group_name}</string>
-    <string name="groupLegacyBanner">Mae grwpiau wedi\'u huwchraddio, creu grŵp newydd i uwchraddio. Bydd swyddogaeth hen grŵp yn dirywio o {date}.</string>
     <string name="groupMemberLeft"><b>{name} y</b> gadawodd y grŵp.</string>
     <string name="groupMemberLeftMultiple"><b>{name} y</b> a <b>{count} eraill</b> gadawodd y grŵp.</string>
     <string name="groupMemberLeftTwo"><b>{name} y</b> a <b>{other_name}</b> gadawodd y grŵp.</string>
@@ -455,7 +454,6 @@
     <string name="groupOnlyAdmin">Chi yw\'r unig weinyddwr yn <b>{group_name}</b>.\n\nNi ellir newid aelodau a gosodiadau\'r grŵp heb weinyddwr.</string>
     <string name="groupPromotedYou">Penodwyd <b>chi</b> i admin.</string>
     <string name="groupPromotedYouMultiple"><b>Chi</b> a <b>{count} eraill</b> penodwyd i admin.</string>
-    <string name="groupPromotedYouTwo"><b>Chi</b> a <b>{name}</b> penodwyd i admin.</string>
     <string name="groupRemoveDescription">Hoffech chi dynnu <b>{name}</b> o <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Hoffech chi dynnu <b>{name}</b> a <b>{count} eraill</b> o <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Hoffech chi dynnu <b>{name}</b> a <b>{other_name}</b> o <b>{group_name}</b>?</string>

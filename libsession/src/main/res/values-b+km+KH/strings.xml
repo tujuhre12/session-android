@@ -254,7 +254,7 @@
     <string name="create">បង្កើត</string>
     <string name="cut">កាត់</string>
     <string name="databaseErrorGeneric">មានបញ្ហាមូលដ្ឋានទិន្នន័យបានកើតឡើង។\n\nនាំចេញការកំណត់ត្រាអនុវត្តរបស់អ្នកដើម្បីចែករំលែកសម្រាប់ដោះស្រាយបញ្ហា។ ប្រសិនបើការនេះមិនបានជោគជ័យទេ សូមធ្វើការដំឡើង {app_name}\n\nឡើងវិញ និងស្តារឡើងវិញគណនីរបស់អ្នក។ ព្រមាន៖ នេះនឹងធ្វើឲ្យពុះសារទាំងនោះ មាតិកាភ្ជាប់ខាងក្នុង និងទិន្នន័យគណនីដែលចាស់ជាងពីរ​សប្តាហ៍បាត់មួយរយៈពេលខ្លី។</string>
-    <string name="databaseErrorTimeout">យើងគិតថា {app_name} ពុំអាចចាប់ផ្ដើមបានយ៉ាងចំហរមួយរយៈ \n\n អ្នកអាចរង់ចាំតទៅ ហៅទិន្នន័យឧបករណ៍របស់អ្នកដើម្បីជួយដោះស្រាយ បើទោះអញ្ចឹងក៏ដោយ សាកល្បងចាប់ផ្ដើម Session</string>
+    <string name="databaseErrorTimeout">យើងគិតថា {app_name} ពុំអាចចាប់ផ្ដើមបានយ៉ាងចំហរមួយរយៈ \n\n អ្នកអាចរង់ចាំតទៅ ហៅទិន្នន័យឧបករណ៍របស់អ្នកដើម្បីជួយដោះស្រាយ បើទោះអញ្ចឹងក៏ដោយ សាកល្បងចាប់ផ្ដើម {app_name}។</string>
     <string name="databaseErrorUpdate">ឃ្លាំងទិន្នន័យរបស់កម្មវិធីរបស់អ្នកមិនអាចបើកជាមួយ {app_name} នេះទេ។ កញ្ចួញកម្មវិធីឡើងវិញ ហើយស្ដារគណនីរបស់អ្នកដើម្បីបង្កើតឃ្លាំងទិន្នន័យថ្មី និង​បន្តប្រើ {app_name}។\n\nការព្រមាន៖ នេះនឹងលុបបាត់ជាស្ថាពរ នូវសារទាំងអស់ និងឯកសារភ្ជាប់ដែលអាយុចាស់ជាងពីរសប្ដាហ៍។</string>
     <string name="databaseOptimizing">កំពុងធ្វើបច្ចុប្បន្នភាពមូលដ្ខានទិន្នន័យ</string>
     <string name="debugLog">កំណត់ត្រាបញ្ហា</string>
@@ -405,7 +405,6 @@
     <string name="groupLeaveDescription">តើអ្នកប្រាកដទេថាចង់ចាកចេញពី <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">តើអ្នកប្រាកដទេថាអ្នកចង់ចាកចេញពី <b>{group_name}</b>?\n\nនេះនឹងដកសមាជិកទាំងអស់និងលុបមាតិកាក្រុមទាំងមូល។</string>
     <string name="groupLeaveErrorFailed">បរាជ័យក្នុងការចាកចេញពី {group_name}</string>
-    <string name="groupLegacyBanner">ក្រុមបានធ្វើឱ្យប្រសើរឡើង បង្កើតក្រុមថ្មីដើម្បីធ្វើឱ្យប្រសើរ។ មុខងារក្រុមចាស់នឹងត្រូវបានបន្ទោរបង់ចាប់ពី {date}។</string>
     <string name="groupMemberLeft"><b>{name}‍</b> បានចាកចេញពីក្រុមនេះ។</string>
     <string name="groupMemberLeftTwo"><b>{name}‍</b> និង <b>{other_name}‍</b> បានចាកចេញពីក្រុមនេះ។</string>
     <string name="groupMemberNew"><b>{name}‍</b>បន ចូលក្រុម។</string>
@@ -428,7 +427,6 @@
     <string name="groupOnlyAdmin">អ្នកគឺជាអ្នកគ្រប់គ្រងតែម្នាក់ប៉ុណ្ណោះនៅក្នុង <b>{group_name}</b>។\n\nសមាជិកក្រុមនិងការកំណត់មិនអាចផ្លាស់ប្តូរបានទេផុតពីអ្នកគ្រប់គ្រង។</string>
     <string name="groupPromotedYou"><b>អ្នក</b>ត្រូវបានបដិស្មីជា Admin។</string>
     <string name="groupPromotedYouMultiple"><b>អ្នក</b> និង <b>{count} នាក់ផ្សេងទៀត</b> ត្រូវបានតែងតាំងជា Admin។</string>
-    <string name="groupPromotedYouTwo"><b>អ្នក</b> និង <b>{name}</b> ត្រូវបានតែងតាំងជា Admin។</string>
     <string name="groupRemoveDescription">តើអ្នកចង់ដក <b>{name}</b> ពី <b>{group_name}</b> មែនទេ?</string>
     <string name="groupRemoveDescriptionMultiple">តើអ្នកចង់ដក <b>{name}</b> និង <b>{count} បន្ទាប់</b> ពី <b>{group_name}</b> មែនទេ?</string>
     <string name="groupRemoveDescriptionTwo">តើអ្នកចង់ដក <b>{name}</b> និង <b>{other_name}</b> ពី <b>{group_name}</b> មែនទេ?</string>

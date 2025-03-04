@@ -8,6 +8,7 @@ import android.text.SpannableStringBuilder
 import androidx.core.app.NotificationCompat
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
+import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.utilities.NotificationPrivacyPreference
 import org.session.libsession.utilities.StringSubstitutionConstants.CONVERSATION_COUNT_KEY
@@ -39,7 +40,7 @@ class MultipleRecipientNotificationBuilder(context: Context, privacy: Notificati
     }
 
     fun setMostRecentSender(recipient: Recipient, threadRecipient: Recipient) {
-        var displayName = recipient.toShortString()
+        var displayName = recipient.name
         if (threadRecipient.isGroupOrCommunityRecipient) {
             displayName = getGroupDisplayName(recipient, threadRecipient.isCommunityRecipient)
         }
@@ -68,7 +69,7 @@ class MultipleRecipientNotificationBuilder(context: Context, privacy: Notificati
     fun putStringExtra(key: String?, value: String?) { extras.putString(key, value) }
 
     fun addMessageBody(sender: Recipient, threadRecipient: Recipient, body: CharSequence?) {
-        var displayName = sender.toShortString()
+        var displayName = sender.name
         if (threadRecipient.isGroupOrCommunityRecipient) {
             displayName = getGroupDisplayName(sender, threadRecipient.isCommunityRecipient)
         }
@@ -102,11 +103,9 @@ class MultipleRecipientNotificationBuilder(context: Context, privacy: Notificati
      * @param openGroupRecipient whether in an open group context
      */
     private fun getGroupDisplayName(recipient: Recipient, openGroupRecipient: Boolean): String {
-        val contactDB = get(context).sessionContactDatabase()
-        val accountID = recipient.address.serialize()
-        val contact = contactDB.getContactWithAccountID(accountID) ?: return accountID
-        val displayName = contact.displayName(if (openGroupRecipient) Contact.ContactContext.OPEN_GROUP else Contact.ContactContext.REGULAR)
-        if (displayName == null) { return accountID }
-        return displayName
+        return MessagingModuleConfiguration.shared.usernameUtils.getContactNameWithAccountID(
+            accountID = recipient.address.toString(),
+            contactContext = if (openGroupRecipient) Contact.ContactContext.OPEN_GROUP else Contact.ContactContext.REGULAR
+        )
     }
 }

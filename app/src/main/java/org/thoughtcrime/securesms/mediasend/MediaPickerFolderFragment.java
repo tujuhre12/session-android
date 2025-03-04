@@ -47,7 +47,7 @@ public class MediaPickerFolderFragment extends Fragment implements MediaPickerFo
   public static @NonNull MediaPickerFolderFragment newInstance(@NonNull Recipient recipient) {
     String name = Optional.fromNullable(recipient.getName())
                           .or(Optional.fromNullable(recipient.getProfileName()))
-                          .or(recipient.toShortString());
+                          .or(recipient.getName());
 
     Bundle args = new Bundle();
     args.putString(KEY_RECIPIENT_NAME, name);

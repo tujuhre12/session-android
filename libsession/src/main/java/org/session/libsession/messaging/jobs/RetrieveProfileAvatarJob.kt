@@ -10,6 +10,7 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.setProfi
 import org.session.libsession.utilities.Util.copy
 import org.session.libsession.utilities.Util.equals
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.streams.ProfileCipherInputStream
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Util.SECURE_RANDOM
@@ -64,7 +65,7 @@ class RetrieveProfileAvatarJob(
         }
 
         if (profileAvatar.isNullOrEmpty()) {
-            Log.w(TAG, "Removing profile avatar for: " + recipient.address.serialize())
+            Log.w(TAG, "Removing profile avatar for: " + recipient.address.toString())
 
             if (recipient.isLocalNumber) {
                 setProfileAvatarId(context, SECURE_RANDOM.nextInt())
@@ -91,7 +92,13 @@ class RetrieveProfileAvatarJob(
             }
 
             storage.setProfilePicture(recipient, profileAvatar, profileKey)
-        } catch (e: Exception) {
+        }
+        catch (e: NonRetryableException){
+            Log.e("Loki", "Failed to download profile avatar from non-retryable error", e)
+            errorUrls += profileAvatar
+            return delegate.handleJobFailedPermanently(this, dispatcherName, e)
+        }
+        catch (e: Exception) {
             Log.e("Loki", "Failed to download profile avatar", e)
             if (failureCount + 1 >= maxFailureCount) {
                 errorUrls += profileAvatar
@@ -106,7 +113,7 @@ class RetrieveProfileAvatarJob(
     override fun serialize(): Data {
         val data = Data.Builder()
             .putString(PROFILE_AVATAR_KEY, profileAvatar)
-            .putString(RECEIPIENT_ADDRESS_KEY, recipientAddress.serialize())
+            .putString(RECEIPIENT_ADDRESS_KEY, recipientAddress.toString())
 
         if (profileKey != null) {
             data.putByteArray(PROFILE_KEY, profileKey)

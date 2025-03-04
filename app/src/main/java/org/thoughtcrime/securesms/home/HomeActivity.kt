@@ -35,6 +35,7 @@ import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import org.session.libsession.messaging.groups.GroupManagerV2
+import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.snode.SnodeClock
@@ -104,6 +105,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
     @Inject lateinit var textSecurePreferences: TextSecurePreferences
     @Inject lateinit var configFactory: ConfigFactory
     @Inject lateinit var groupManagerV2: GroupManagerV2
+    @Inject lateinit var deprecationManager: LegacyGroupDeprecationManager
     @Inject lateinit var lokiThreadDatabase: LokiThreadDatabase
     @Inject lateinit var sessionJobDatabase: SessionJobDatabase
     @Inject lateinit var clock: SnodeClock
@@ -423,7 +425,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
     private fun updateProfileButton() {
         binding.profileButton.publicKey = publicKey
-        binding.profileButton.displayName = textSecurePreferences.getProfileName()
+        binding.profileButton.displayName = homeViewModel.getCurrentUsername()
         binding.profileButton.recycle()
         binding.profileButton.update()
     }
@@ -520,7 +522,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
         showSessionDialog {
             title(R.string.block)
             text(Phrase.from(context, R.string.blockDescription)
-                .put(NAME_KEY, thread.recipient.toShortString())
+                .put(NAME_KEY, thread.recipient.name)
                 .format())
             dangerButton(R.string.block, R.string.AccessibilityId_blockConfirm) {
                 lifecycleScope.launch(Dispatchers.Default) {
@@ -531,7 +533,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                     }
                 }
                 // Block confirmation toast added as per SS-64
-                val txt = Phrase.from(context, R.string.blockBlockedUser).put(NAME_KEY, thread.recipient.toShortString()).format().toString()
+                val txt = Phrase.from(context, R.string.blockBlockedUser).put(NAME_KEY, thread.recipient.name).format().toString()
                 Toast.makeText(context, txt, Toast.LENGTH_LONG).show()
             }
             cancelButton()
@@ -541,7 +543,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
     private fun unblockConversation(thread: ThreadRecord) {
         showSessionDialog {
             title(R.string.blockUnblock)
-            text(Phrase.from(context, R.string.blockUnblockName).put(NAME_KEY, thread.recipient.toShortString()).format())
+            text(Phrase.from(context, R.string.blockUnblockName).put(NAME_KEY, thread.recipient.name).format())
             dangerButton(R.string.blockUnblock, R.string.AccessibilityId_unblockConfirm) {
                 lifecycleScope.launch(Dispatchers.Default) {
                     storage.setBlocked(listOf(thread.recipient), false)
@@ -608,6 +610,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 configFactory = configFactory,
                 storage = storage,
                 groupManager = groupManagerV2,
+                deprecationManager = deprecationManager
             )
 
             return
@@ -655,7 +658,14 @@ class HomeActivity : ScreenLockActionBarActivity(),
             positiveButtonId = R.string.leave
 
             // If you are an admin of this group you can delete it
-            if (group != null && group.admins.map { it.toString() }.contains(textSecurePreferences.getLocalNumber())) {
+            // we do not want admin related messaging once legacy groups are deprecated
+            val isGroupAdmin = if(deprecationManager.isDeprecated){
+                false
+            } else { // prior to the deprecated state, calculate admin rights properly
+                group.admins.map { it.toString() }.contains(textSecurePreferences.getLocalNumber())
+            }
+
+            if (group != null && isGroupAdmin) {
                 title = getString(R.string.groupLeave)
                 message = Phrase.from(this, R.string.groupLeaveDescriptionAdmin)
                     .put(GROUP_NAME_KEY, group.title)
@@ -682,7 +692,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
             else { // If this is a 1-on-1 conversation
                 title = getString(R.string.conversationsDelete)
                 message = Phrase.from(this, R.string.conversationsDeleteDescription)
-                    .put(NAME_KEY, recipient.toShortString())
+                    .put(NAME_KEY, recipient.name)
                     .format()
             }
         }

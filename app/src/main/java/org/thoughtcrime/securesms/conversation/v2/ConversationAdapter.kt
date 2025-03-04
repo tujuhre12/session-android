@@ -13,6 +13,8 @@ import androidx.core.util.set
 import androidx.lifecycle.LifecycleCoroutineScope
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.bumptech.glide.RequestManager
+import java.util.concurrent.atomic.AtomicLong
+import kotlin.math.min
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
@@ -20,18 +22,19 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
+import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.v2.messages.ControlMessageView
 import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageView
 import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageViewDelegate
 import org.thoughtcrime.securesms.database.CursorRecyclerViewAdapter
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
-import java.util.concurrent.atomic.AtomicLong
-import kotlin.math.min
 
 class ConversationAdapter(
     context: Context,
     cursor: Cursor,
+    conversation: Recipient?,
     originalLastSeen: Long,
     private val isReversed: Boolean,
     private val onItemPress: (MessageRecord, Int, VisibleMessageView, MotionEvent) -> Unit,
@@ -53,7 +56,10 @@ class ConversationAdapter(
     private val contactCache = SparseArray<Contact>(100)
     private val contactLoadedCache = SparseBooleanArray(100)
     private val lastSeen = AtomicLong(originalLastSeen)
-    private var lastSentMessageId: Long = -1L
+
+    private val groupId = if(conversation?.isGroupV2Recipient == true)
+        AccountId(conversation.address.toString())
+    else null
 
     init {
         lifecycleCoroutineScope.launch(IO) {
@@ -67,9 +73,7 @@ class ConversationAdapter(
     }
 
     @WorkerThread
-    private fun getSenderInfo(sender: String): Contact? {
-        return contactDB.getContactWithAccountID(sender)
-    }
+    private fun getSenderInfo(sender: String): Contact? = contactDB.getContactWithAccountID(sender)
 
     sealed class ViewType(val rawValue: Int) {
         object Visible : ViewType(0)
@@ -113,7 +117,7 @@ class ConversationAdapter(
                 val isSelected = selectedItems.contains(message)
                 visibleMessageView.snIsSelected = isSelected
                 visibleMessageView.indexInAdapter = position
-                val senderId = message.individualRecipient.address.serialize()
+                val senderId = message.individualRecipient.address.toString()
                 val senderIdHash = senderId.hashCode()
                 updateQueue.trySend(senderId)
                 if (contactCache[senderIdHash] == null && !contactLoadedCache.getOrDefault(
@@ -134,11 +138,12 @@ class ConversationAdapter(
                     glide,
                     searchQuery,
                     contact,
+                    // we pass in the groupId for groupV2 to use for determining the name of the members
+                    groupId,
                     senderId,
                     lastSeen.get(),
                     visibleMessageViewDelegate,
-                    onAttachmentNeedsDownload,
-                    lastSentMessageId
+                    onAttachmentNeedsDownload
                 )
 
                 if (!message.isDeleted) {
@@ -186,9 +191,7 @@ class ConversationAdapter(
         super.onItemViewRecycled(viewHolder)
     }
 
-    private fun getMessage(cursor: Cursor): MessageRecord? {
-        return messageDB.readerFor(cursor).current
-    }
+    private fun getMessage(cursor: Cursor): MessageRecord? = messageDB.readerFor(cursor).current
 
     private fun getMessageBefore(position: Int, cursor: Cursor): MessageRecord? {
         // The message that's visually before the current one is actually after the current

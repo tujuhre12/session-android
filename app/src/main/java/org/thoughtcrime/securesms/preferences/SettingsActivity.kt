@@ -1,11 +1,8 @@
  package org.thoughtcrime.securesms.preferences
 
 import android.Manifest
-import android.app.Activity
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
@@ -17,8 +14,11 @@ import android.view.MenuItem
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.annotation.DrawableRes
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -29,10 +29,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -45,27 +51,22 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.canhub.cropper.CropImageContract
+import com.canhub.cropper.CropImageContractOptions
+import com.canhub.cropper.CropImageOptions
+import com.canhub.cropper.CropImageView
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivitySettingsBinding
@@ -73,9 +74,9 @@ import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.utilities.SSKEnvironment.ProfileManagerProtocol
 import org.session.libsession.utilities.StringSubstitutionConstants.VERSION_KEY
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
-import org.thoughtcrime.securesms.avatar.AvatarSelection
 import org.thoughtcrime.securesms.debugmenu.DebugActivity
 import org.thoughtcrime.securesms.home.PathActivity
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
@@ -93,6 +94,7 @@ import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LargeItemButton
 import org.thoughtcrime.securesms.ui.LargeItemButtonWithDrawable
+import org.thoughtcrime.securesms.ui.components.BaseBottomSheet
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineCopyButton
 import org.thoughtcrime.securesms.ui.contentDescription
@@ -100,16 +102,17 @@ import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.setThemedContent
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
+import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
-import org.thoughtcrime.securesms.util.InternetConnectivity
+import org.thoughtcrime.securesms.util.FileProviderUtil
 import org.thoughtcrime.securesms.util.push
 import java.io.File
 import javax.inject.Inject
 
-@AndroidEntryPoint
+ @AndroidEntryPoint
 class SettingsActivity : ScreenLockActionBarActivity() {
     private val TAG = "SettingsActivity"
 
@@ -126,19 +129,33 @@ class SettingsActivity : ScreenLockActionBarActivity() {
         viewModel.onAvatarPicked(result)
     }
 
-    private val onPickImage = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ){ result ->
-        if (result.resultCode != RESULT_OK) return@registerForActivityResult
+     private val pickPhotoLauncher: ActivityResultLauncher<PickVisualMediaRequest> =
+         registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? ->
+             uri?.let {
+                 showAvatarPickerOptions = false // close the bottom sheet
 
-        val outputFile = Uri.fromFile(File(cacheDir, "cropped"))
-        val inputFile: Uri? = result.data?.data ?: viewModel.getTempFile()?.let(Uri::fromFile)
-        cropImage(inputFile, outputFile)
-    }
+                 // Handle the selected image URI
+                 val outputFile = Uri.fromFile(File(cacheDir, "cropped"))
+                 cropImage(it, outputFile)
+
+             }
+         }
+
+     // Launcher for capturing a photo using the camera.
+     private val takePhotoLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success: Boolean ->
+         if (success) {
+             showAvatarPickerOptions = false // close the bottom sheet
+
+             val outputFile = Uri.fromFile(File(cacheDir, "cropped"))
+             cropImage(viewModel.getTempFile()?.let(Uri::fromFile), outputFile)
+         } else {
+             Toast.makeText(this, R.string.errorUnknown, Toast.LENGTH_SHORT).show()
+         }
+     }
 
     private val hideRecoveryLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
-    ) { result ->
+     ) { result ->
         if (result.resultCode != RESULT_OK) return@registerForActivityResult
 
         if(result.data?.getBooleanExtra(RecoveryPasswordActivity.RESULT_RECOVERY_HIDDEN, false) == true){
@@ -146,9 +163,14 @@ class SettingsActivity : ScreenLockActionBarActivity() {
         }
     }
 
-    private val avatarSelection = AvatarSelection(this, onAvatarCropped, onPickImage)
-
     private var showAvatarDialog: Boolean by mutableStateOf(false)
+    private var showAvatarPickerOptionCamera: Boolean by mutableStateOf(false)
+    private var showAvatarPickerOptions: Boolean by mutableStateOf(false)
+
+     private val bgColor by lazy { getColorFromAttr(android.R.attr.colorPrimary) }
+     private val txtColor by lazy { getColorFromAttr(android.R.attr.textColorPrimary) }
+     private val imageScrim by lazy { ContextCompat.getColor(this, R.color.avatar_background) }
+     private val activityTitle by lazy { getString(R.string.image) }
 
     companion object {
         private const val SCROLL_STATE = "SCROLL_STATE"
@@ -164,19 +186,28 @@ class SettingsActivity : ScreenLockActionBarActivity() {
         supportActionBar?.setHomeAsUpIndicator(R.drawable.ic_x)
 
         // set the compose dialog content
-        binding.avatarDialog.setThemedContent {
-            if(showAvatarDialog){
-                AvatarDialogContainer(
-                    saveAvatar = viewModel::saveAvatar,
-                    removeAvatar = viewModel::removeAvatar,
-                    startAvatarSelection = ::startAvatarSelection
-                )
-            }
+        binding.composeLayout.setThemedContent {
+            SettingsComposeContent(
+                showAvatarDialog = showAvatarDialog,
+                startAvatarSelection = ::startAvatarSelection,
+                saveAvatar = viewModel::saveAvatar,
+                removeAvatar = viewModel::removeAvatar,
+                showAvatarPickerOptions = showAvatarPickerOptions,
+                showCamera = showAvatarPickerOptionCamera,
+                onSheetDismissRequest = { showAvatarPickerOptions = false },
+                onGalleryPicked = {
+                    pickPhotoLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                },
+                onCameraPicked = {
+                    viewModel.createTempFile()?.let{
+                        takePhotoLauncher.launch(FileProviderUtil.getUriFor(this, it))
+                    }
+                }
+            )
         }
 
         binding.run {
             profilePictureView.setOnClickListener {
-                binding.avatarDialog.isVisible = true
                 showAvatarDialog = true
             }
             ctnGroupNameSection.setOnClickListener { startActionMode(DisplayNameEditActionModeCallback()) }
@@ -354,20 +385,41 @@ class SettingsActivity : ScreenLockActionBarActivity() {
         // Ask for an optional camera permission.
         Permissions.with(this)
             .request(Manifest.permission.CAMERA)
-            .onAnyResult {
-                avatarSelection.startAvatarSelection(
-                    includeClear = false,
-                    attemptToIncludeCamera = true,
-                    createTempFile = viewModel::createTempFile
-                )
+            .onAnyDenied {
+                showAvatarPickerOptionCamera = false
+                showAvatarPickerOptions = true
+            }
+            .onAllGranted {
+                showAvatarPickerOptionCamera = true
+                showAvatarPickerOptions = true
             }
             .execute()
     }
 
     private fun cropImage(inputFile: Uri?, outputFile: Uri?){
-        avatarSelection.circularCropImage(
-            inputFile = inputFile,
-            outputFile = outputFile,
+        onAvatarCropped.launch(
+            CropImageContractOptions(
+                uri = inputFile,
+                cropImageOptions = CropImageOptions(
+                    guidelines = CropImageView.Guidelines.ON,
+                    aspectRatioX = 1,
+                    aspectRatioY = 1,
+                    fixAspectRatio = true,
+                    cropShape = CropImageView.CropShape.OVAL,
+                    customOutputUri = outputFile,
+                    allowRotation = true,
+                    allowFlipping = true,
+                    backgroundColor = imageScrim,
+                    toolbarColor = bgColor,
+                    activityBackgroundColor = bgColor,
+                    toolbarTintColor = txtColor,
+                    toolbarBackButtonColor = txtColor,
+                    toolbarTitleColor = txtColor,
+                    activityMenuIconColor = txtColor,
+                    activityMenuTextColor = txtColor,
+                    activityTitle = activityTitle
+                )
+            )
         )
     }
     // endregion
@@ -493,6 +545,38 @@ class SettingsActivity : ScreenLockActionBarActivity() {
     }
 
     @Composable
+    fun SettingsComposeContent(
+        showAvatarDialog: Boolean,
+        startAvatarSelection: ()->Unit,
+        saveAvatar: ()->Unit,
+        removeAvatar: ()->Unit,
+        showAvatarPickerOptions: Boolean,
+        showCamera: Boolean,
+        onSheetDismissRequest: () -> Unit,
+        onGalleryPicked: () -> Unit,
+        onCameraPicked: () -> Unit
+    ){
+        // dialog for the avatar
+        if(showAvatarDialog) {
+            AvatarDialogContainer(
+                startAvatarSelection = startAvatarSelection,
+                saveAvatar = saveAvatar,
+                removeAvatar = removeAvatar
+            )
+        }
+
+        // bottom sheets with options for avatar: Gallery or photo
+        if(showAvatarPickerOptions) {
+            AvatarBottomSheet(
+                showCamera = showCamera,
+                onDismissRequest = onSheetDismissRequest,
+                onGalleryPicked = onGalleryPicked,
+                onCameraPicked = onCameraPicked
+            )
+        }
+    }
+
+    @Composable
     fun AvatarDialogContainer(
         startAvatarSelection: ()->Unit,
         saveAvatar: ()->Unit,
@@ -506,6 +590,78 @@ class SettingsActivity : ScreenLockActionBarActivity() {
             saveAvatar = saveAvatar,
             removeAvatar = removeAvatar
         )
+    }
+
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    fun AvatarBottomSheet(
+        showCamera: Boolean,
+        onDismissRequest: () -> Unit,
+        onGalleryPicked: () -> Unit,
+        onCameraPicked: () -> Unit
+    ){
+        BaseBottomSheet(
+            sheetState = rememberModalBottomSheetState(),
+            onDismissRequest = onDismissRequest
+        ){
+            Row(
+                modifier = Modifier.fillMaxWidth()
+                    .padding(horizontal = LocalDimensions.current.spacing)
+                    .padding(bottom = LocalDimensions.current.spacing),
+                horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.spacing)
+            ) {
+                AvatarOption(
+                    title = stringResource(R.string.image),
+                    iconRes = R.drawable.ic_image,
+                    onClick = onGalleryPicked
+                )
+
+                if(showCamera) {
+                    AvatarOption(
+                        title = stringResource(R.string.contentDescriptionCamera),
+                        iconRes = R.drawable.ic_camera,
+                        onClick = onCameraPicked
+                    )
+                }
+            }
+        }
+    }
+
+    @Composable
+    fun AvatarOption(
+        modifier: Modifier = Modifier,
+        title: String,
+        @DrawableRes iconRes: Int,
+        onClick: () -> Unit
+    ){
+        Column(
+            modifier = modifier.clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = ripple(bounded = false),
+                onClick = onClick
+            ),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Image(
+                modifier = Modifier.size(LocalDimensions.current.iconXLarge)
+                    .background(
+                        shape = CircleShape,
+                        color = LocalColors.current.backgroundBubbleReceived,
+                    )
+                    .padding(LocalDimensions.current.smallSpacing),
+                painter = painterResource(id = iconRes),
+                contentScale = ContentScale.Fit,
+                contentDescription = null,
+                colorFilter = ColorFilter.tint(LocalColors.current.textSecondary)
+            )
+
+            Text(
+                modifier = Modifier.padding(top = LocalDimensions.current.xxsSpacing),
+                text = title,
+                style = LocalType.current.base,
+                color = LocalColors.current.text
+            )
+        }
     }
 
     @Composable
@@ -528,7 +684,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                 Box(
                     modifier = Modifier
                         .padding(top = LocalDimensions.current.smallSpacing)
-                        .size(dimensionResource(id = R.dimen.large_profile_picture_size))
+                        .size(LocalDimensions.current.iconXXLarge)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null // the ripple doesn't look nice as a square with the plus icon on top too
@@ -552,7 +708,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                         // temporary image
                         is TempAvatar -> {
                             Image(
-                                modifier = Modifier.size(dimensionResource(id = R.dimen.large_profile_picture_size))
+                                modifier = Modifier.size(LocalDimensions.current.iconXXLarge)
                                     .clip(shape = CircleShape,),
                                 bitmap = BitmapFactory.decodeByteArray(s.data, 0, s.data.size).asImageBitmap(),
                                 contentDescription = null
@@ -562,9 +718,11 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                         // empty state
                         else -> {
                             Image(
-                                modifier = Modifier.align(Alignment.Center)
-                                    .size(40.dp),
+                                modifier = Modifier.fillMaxSize()
+                                    .padding(LocalDimensions.current.badgeSize)
+                                    .align(Alignment.Center),
                                 painter = painterResource(id = R.drawable.ic_image),
+                                contentScale = ContentScale.Fit,
                                 contentDescription = null,
                                 colorFilter = ColorFilter.tint(LocalColors.current.textSecondary)
                             )
@@ -617,6 +775,21 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                 startAvatarSelection = {},
                 saveAvatar = {},
                 removeAvatar = {}
+            )
+        }
+    }
+
+    @Preview
+    @Composable
+    fun PreviewAvatarSheet(
+        @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
+    ){
+        PreviewTheme(colors) {
+            AvatarBottomSheet(
+                showCamera = true,
+                onDismissRequest = {},
+                onGalleryPicked = {},
+                onCameraPicked = {}
             )
         }
     }

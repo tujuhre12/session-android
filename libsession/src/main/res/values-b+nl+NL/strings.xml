@@ -429,7 +429,6 @@
     <string name="groupLeaveDescription">Weet u zeker dat u <b>{group_name}</b> wilt verlaten?</string>
     <string name="groupLeaveDescriptionAdmin">Weet u zeker dat u de groep <b>{group_name}</b> wil verlaten?\n\nDit zal alle leden en de inhoud van de groep verwijderen.</string>
     <string name="groupLeaveErrorFailed">Het verlaten van {group_name} is mislukt</string>
-    <string name="groupLegacyBanner">Groepen zijn geüpgraded, maak een nieuwe groep aan om te upgraden. De oude groepsfunctionaliteit zal vanaf {date} worden afgebouwd.</string>
     <string name="groupMemberLeft"><b>{name}</b> heeft de groep verlaten.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> en <b>{count} anderen</b> hebben de groep verlaten.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> en <b>{other_name}</b> hebben de groep verlaten.</string>
@@ -440,6 +439,7 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> en <b>{count} anderen</b> zijn uitgenodigd om lid te worden van de groep.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> en <b>{other_name}</b> zijn uitgenodigd om lid te worden van de groep.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>U</b> en <b>{count} anderen</b> zijn uitgenodigd om lid te worden van de groep. Geschiedenis van het gesprek is gedeeld.</string>
+    <string name="groupMemberNewYouHistoryTwo"><b>U</b> en <b>{other_name}</b> zijn uitgenodigd om lid te worden van de groep. Gespreksgeschiedenis wordt gedeeld.</string>
     <string name="groupMemberYouLeft"><b>U</b> heeft de groep verlaten.</string>
     <string name="groupMembers">Groepsleden</string>
     <string name="groupMembersNone">Er zijn geen andere leden in deze groep.</string>
@@ -454,7 +454,6 @@
     <string name="groupPendingRemoval">In afwachting van verwijdering</string>
     <string name="groupPromotedYou"><b>U</b> bent gepromoveerd tot Admin.</string>
     <string name="groupPromotedYouMultiple"><b>U</b> en <b>{count} anderen</b> zijn gepromoveerd tot Admin.</string>
-    <string name="groupPromotedYouTwo"><b>U</b> en <b>{name}</b> zijn gepromoveerd tot Admin.</string>
     <string name="groupRemoveDescription">Wilt u <b>{name}</b> verwijderen uit <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Wilt u <b>{name}</b> en <b>{count} anderen</b> verwijderen uit <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Wilt u <b>{name}</b> en <b>{other_name}</b> verwijderen uit <b>{group_name}</b>?</string>

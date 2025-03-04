@@ -255,7 +255,7 @@
     <string name="create">Ստեղծել</string>
     <string name="cut">Կտրել</string>
     <string name="databaseErrorGeneric">Տվյալների բազայի սխալ է տեղի ունեցել:\n\nԱրտահանեք ձեր ծրագրի տեղեկամատյանները՝ տրամադրելով դրանք troubleshooting-ի համար: Եթե դա չհաջողվի, վերատեղադրեք {app_name} և վերականգնեք ձեր հաշիվը:\n\nԶգուշացում: Սա կհանգեցնի բոլոր հաղորդագրությունների, կցորդների և հաշվետվությունների տվյալների կորստի, որոնք անցել են ավելի քան երկու շաբաթ անց:</string>
-    <string name="databaseErrorTimeout">Մենք նկատել ենք, որ {app_name} շատ երկար է սկսում աշխատել։\n\nԴուք կարող եք շարունակել սպասել, արտահանել ձեր սարքի տեղեկամատյանները կիսելու համար հետաքրքրությունների համար, կամ փորձել վերագործարկել Session-ը։</string>
+    <string name="databaseErrorTimeout">Մենք նկատել ենք, որ {app_name} շատ երկար է սկսում աշխատել։\n\nԴուք կարող եք շարունակել սպասել, արտահանել ձեր սարքի տեղեկամատյանները կիսելու համար հետաքրքրությունների համար, կամ փորձել վերագործարկել {app_name}-ը։</string>
     <string name="databaseErrorUpdate">Ձեր հավելվածի տվյալների բազան համադրված չէ այս {app_name} տարբերակի հետ։ Վերակայանացրեք հավելվածը և վերագործարկեք ձեր հաշիվը նոր տվյալների բազա ստեղծելու և {app_name} շարունակելու համար։\n\nԶգուշացում: Սա կհանգեցնի բոլոր հաղորդագրությունների և կցաթղթերի երկու շաբաթից ավելի հնության կորստին։</string>
     <string name="databaseOptimizing">Շտեմարանն օպտիմալացվում է</string>
     <string name="debugLog">Վրիպազերծման մատյան</string>
@@ -410,7 +410,6 @@
     <string name="groupLeaveDescription">Վստա՞հ եք, որ ուզում եք լքել <b>{group_name}</b> խումբը:</string>
     <string name="groupLeaveDescriptionAdmin">Իսկապե՞ս ուզում եք լքել <b>{group_name}</b>-ը:\n\nՍա կհեռացնի բոլոր անդամներին և կհեռացնի խմբի բոլոր բովանդակությունները:</string>
     <string name="groupLeaveErrorFailed">Չհաջողվեց լքել {group_name} խումբը</string>
-    <string name="groupLegacyBanner">Խմբերն թարմացվել են, ստեղծեք նոր խումբ՝ թարմացնելու համար: Հին խմբի ֆունկցիոնալությունը վատթարանուլ է {date}-ից:</string>
     <string name="groupMemberLeft"><b>{name}֊ը</b> լքեց խումբը:</string>
     <string name="groupMemberLeftMultiple"><b>{name}֊ը</b> և <b>{count} ուրիշներ</b> լքեցին խումբը:</string>
     <string name="groupMemberLeftTwo"><b>{name}֊ը</b> և <b>{other_name}֊ը</b> լքեցին խումբը:</string>
@@ -434,7 +433,6 @@
     <string name="groupOnlyAdmin">Դուք այս խմբի միակ ադմինն եք <b>{group_name}</b>։\n\nԽմբի անդամներն ու կարգավորումները չեն կարող փոխվել առանց ադմին։</string>
     <string name="groupPromotedYou"><b>Դուք</b> բարձրացվել եք որպես ադմին:</string>
     <string name="groupPromotedYouMultiple"><b>Դուք</b> և <b>{count} ուրիշներ</b> բարձրացվել են որպես ադմին:</string>
-    <string name="groupPromotedYouTwo"><b>Դուք</b> և <b>{name}</b> բարձրացվել են որպես ադմին:</string>
     <string name="groupRemoveDescription">Ցանկանո՞ւմ եք հեռացնել <b>{name}</b>-ին <b>{group_name}</b> խմբից։</string>
     <string name="groupRemoveDescriptionMultiple">Ցանկանո՞ւմ եք հեռացնել <b>{name}</b>-ին և <b>{count} այլ անձանց</b> <b>{group_name}</b>-ից։</string>
     <string name="groupRemoveDescriptionTwo">Ցանկանո՞ւմ եք հեռացնել <b>{name}</b>-ին և <b>{other_name}</b>-ին <b>{group_name}</b> խմբից։</string>

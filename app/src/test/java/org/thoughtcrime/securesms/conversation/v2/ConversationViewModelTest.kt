@@ -48,7 +48,10 @@ class ConversationViewModelTest: BaseViewModelTest() {
             reactionDb = mock(),
             configFactory = mock(),
             groupManagerV2 = mock(),
-            callManager = mock()
+            callManager = mock(),
+            legacyGroupDeprecationManager = mock(),
+            expiredGroupManager = mock(),
+            usernameUtils = mock()
         )
     }
 

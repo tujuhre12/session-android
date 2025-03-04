@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.UsernameUtils
 import org.webrtc.SurfaceViewRenderer
 import javax.inject.Inject
 
@@ -20,7 +21,9 @@ import javax.inject.Inject
 class CallViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val callManager: CallManager,
-    private val rtcCallBridge: WebRtcCallBridge
+    private val rtcCallBridge: WebRtcCallBridge,
+    private val usernameUtils: UsernameUtils
+
 ): ViewModel() {
 
     //todo PHONE Can we eventually remove this state and instead use the StateMachine.kt State?
@@ -91,6 +94,10 @@ class CallViewModel @Inject constructor(
         rtcCallBridge.handleOutgoingCall(Recipient.from(context, recipientAddress, true))
 
     fun hangUp() = rtcCallBridge.handleLocalHangup(null)
+
+    fun getContactName(accountID: String) = usernameUtils.getContactNameWithAccountID(accountID)
+
+    fun getCurrentUsername() = usernameUtils.getCurrentUsernameWithAccountIdFallback()
 
     data class CallState(
         val state: State,

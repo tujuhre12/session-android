@@ -12,7 +12,7 @@
     <string name="accountIdShare">Ahoj, používám {app_name} k rychlou komunikaci s úplným soukromím a bezpečností. Připoj se ke mě! Moje ID účtu je\n\n{account_id}\n\nAdresa pro stažení je {session_download_url}</string>
     <string name="accountIdYours">ID vašeho účtu</string>
     <string name="accountIdYoursDescription">Toto je vaše ID účtu. Ostatní uživatelé jej mohou naskenovat, aby s vámi mohli zahájit konverzaci.</string>
-    <string name="actualSize">Běžná velikost</string>
+    <string name="actualSize">Skutečná velikost</string>
     <string name="add">Přidat</string>
     <string name="adminCannotBeRemoved">Správce nelze odebrat.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> a <b>{count} dalších</b> byli povýšeni na správce.</string>
@@ -431,6 +431,7 @@
     <string name="groupCreateErrorNoMembers">Prosím vyberte alespoň jednoho dalšího člena skupiny.</string>
     <string name="groupDelete">Smazat skupinu</string>
     <string name="groupDeleteDescription">Jste si jisti, že chcete smazat <b>{group_name}</b>? Tímto odstraníte všechny členy a smažete veškerý obsah skupiny.</string>
+    <string name="groupDeleteDescriptionMember">Opravdu chcete smazat <b>{group_name}</b>?</string>
     <string name="groupDeletedMemberDescription">Skupina {group_name} byla smazána správcem skupiny. Nebudete moci posílat další zprávy.</string>
     <string name="groupDescriptionEnter">Zadejte popis skupiny</string>
     <string name="groupDisplayPictureUpdated">Obrázek skupiny aktualizován.</string>
@@ -463,7 +464,6 @@
     <string name="groupLeaveDescription">Opravdu chcete opustit <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Jste si jisti, že chcete opustit <b>{group_name}</b>?\n\nTímto odeberete všechny členy a smažete veškerý obsah skupiny.</string>
     <string name="groupLeaveErrorFailed">Selhalo odhlášení ze skupiny {group_name}</string>
-    <string name="groupLegacyBanner">Skupiny byly přepracovány, pro využití tohoto upgrade vytvořte prosím novou skupinu. Funkčnost staré skupiny bude omezena od {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> opustil(a) skupinu.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> a <b>{count} dalších</b> opustilo skupinu.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> a <b>{other_name}</b> opustili skupinu.</string>
@@ -474,6 +474,7 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> a <b>{count} dalších</b> bylo pozváno do skupiny.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> a <b>{other_name}</b> byli pozváni do skupiny.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Vy</b> a <b>{count} dalších</b> bylo pozváno do skupiny. Historie konverzace byla sdílena.</string>
+    <string name="groupMemberNewYouHistoryTwo"><b>Vy</b> a <b>{other_name}</b> jste byli pozvání do skupiny. Historie konverzace byla sdílena.</string>
     <string name="groupMemberYouLeft"><b>Opustil/a jste skupinu.</b></string>
     <string name="groupMembers">Členové skupiny</string>
     <string name="groupMembersNone">V této skupině nejsou žádní další členové.</string>
@@ -489,7 +490,6 @@
     <string name="groupPendingRemoval">Čeká na odebrání</string>
     <string name="groupPromotedYou"><b>Byli jste povýšeni na správce.</b></string>
     <string name="groupPromotedYouMultiple"><b>Vy</b> a <b>{count} dalších</b> jste byli povýšeni na správce.</string>
-    <string name="groupPromotedYouTwo"><b>Vy</b> a <b>{name}</b> jste byli povýšeni na správce.</string>
     <string name="groupRemoveDescription">Chcete odstranit <b>{name}</b> ze skupiny <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Chcete odstranit <b>{name}</b> a <b>{count} dalších</b> ze skupiny <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Chcete odstranit <b>{name}</b> a <b>{other_name}</b> ze skupiny <b>{group_name}</b>?</string>

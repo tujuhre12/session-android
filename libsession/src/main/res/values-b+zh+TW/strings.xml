@@ -406,7 +406,6 @@
     <string name="groupLeaveDescription">您確定要離開 <b>{group_name}</b> 嗎？</string>
     <string name="groupLeaveDescriptionAdmin">您確定要離開 <b>{group_name}</b> 嗎？\n\n這將移除所有成員並刪除所有群組內容。</string>
     <string name="groupLeaveErrorFailed">無法退出 {group_name}</string>
-    <string name="groupLegacyBanner">群組已升級，創建一個新群組以進行升級。舊群組的功能將從 {date} 開始無法正常使用。</string>
     <string name="groupMemberLeft"><b>{name}</b> 離開此群組。</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> 和 <b>{count} 位其他成員</b> 離開了群組。</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> 和 <b>{other_name}</b> 離開此群組。</string>
@@ -430,7 +429,6 @@
     <string name="groupOnlyAdmin">您是 <b>{group_name}</b> 中唯一的管理員。\n\n沒有管理員，群組成員和設定將無法更改。</string>
     <string name="groupPromotedYou"><b>你</b> 被提拔為管理員。</string>
     <string name="groupPromotedYouMultiple"><b>您</b> 和 <b>{count} 位其他成員</b> 被設置為管理員。</string>
-    <string name="groupPromotedYouTwo"><b>您</b> 和 <b>{name}</b> 被設置為管理員。</string>
     <string name="groupRemoveDescription">您是否想要從 <b>{group_name}</b> 中移除 <b>{name}</b>？</string>
     <string name="groupRemoveDescriptionMultiple">您是否想要從 <b>{group_name}</b> 中移除 <b>{name}</b> 和 <b>{count} 名其他成員</b>？</string>
     <string name="groupRemoveDescriptionTwo">您是否想要從 <b>{group_name}</b> 中移除 <b>{name}</b> 和 <b>{other_name}</b>？</string>

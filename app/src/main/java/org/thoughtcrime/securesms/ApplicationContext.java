@@ -32,16 +32,20 @@ import androidx.annotation.StringRes;
 import androidx.core.content.pm.ShortcutInfoCompat;
 import androidx.core.content.pm.ShortcutManagerCompat;
 import androidx.core.graphics.drawable.IconCompat;
+import androidx.hilt.work.HiltWorkerFactory;
 import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ProcessLifecycleOwner;
+import androidx.work.Configuration;
 
+import com.google.firebase.messaging.FirebaseMessaging;
 import com.squareup.phrase.Phrase;
 
 import org.conscrypt.Conscrypt;
 import org.session.libsession.database.MessageDataProvider;
 import org.session.libsession.messaging.MessagingModuleConfiguration;
 import org.session.libsession.messaging.groups.GroupManagerV2;
+import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager;
 import org.session.libsession.messaging.notifications.TokenFetcher;
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier;
 import org.session.libsession.messaging.sending_receiving.pollers.LegacyClosedGroupPollerV2;
@@ -54,6 +58,7 @@ import org.session.libsession.utilities.ProfilePictureUtilities;
 import org.session.libsession.utilities.SSKEnvironment;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.Toaster;
+import org.session.libsession.utilities.UsernameUtils;
 import org.session.libsession.utilities.Util;
 import org.session.libsession.utilities.WindowDebouncer;
 import org.session.libsignal.utilities.HTTP;
@@ -74,17 +79,20 @@ import org.thoughtcrime.securesms.dependencies.AppComponent;
 import org.thoughtcrime.securesms.dependencies.ConfigFactory;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 import org.thoughtcrime.securesms.dependencies.DatabaseModule;
-import org.thoughtcrime.securesms.dependencies.PollerFactory;
 import org.thoughtcrime.securesms.emoji.EmojiSource;
+import org.thoughtcrime.securesms.groups.ExpiredGroupManager;
 import org.thoughtcrime.securesms.groups.OpenGroupManager;
 import org.thoughtcrime.securesms.groups.handler.AdminStateSync;
+import org.thoughtcrime.securesms.groups.handler.CleanupInvitationHandler;
 import org.thoughtcrime.securesms.groups.handler.DestroyedGroupSync;
+import org.thoughtcrime.securesms.groups.GroupPollerManager;
 import org.thoughtcrime.securesms.groups.handler.RemoveGroupMemberHandler;
 import org.thoughtcrime.securesms.home.HomeActivity;
 import org.thoughtcrime.securesms.jobmanager.impl.NetworkConstraint;
 import org.thoughtcrime.securesms.logging.AndroidLogger;
 import org.thoughtcrime.securesms.logging.PersistentLogger;
 import org.thoughtcrime.securesms.logging.UncaughtExceptionLogger;
+import org.thoughtcrime.securesms.notifications.BackgroundPollManager;
 import org.thoughtcrime.securesms.notifications.BackgroundPollWorker;
 import org.thoughtcrime.securesms.notifications.NotificationChannels;
 import org.thoughtcrime.securesms.notifications.PushRegistrationHandler;
@@ -94,6 +102,7 @@ import org.thoughtcrime.securesms.service.KeyCachingService;
 import org.thoughtcrime.securesms.webrtc.WebRtcCallBridge;
 import org.thoughtcrime.securesms.sskenvironment.ReadReceiptManager;
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository;
+import org.thoughtcrime.securesms.util.AppVisibilityManager;
 import org.thoughtcrime.securesms.util.Broadcaster;
 import org.thoughtcrime.securesms.util.VersionDataFetcher;
 import org.thoughtcrime.securesms.webrtc.CallMessageProcessor;
@@ -110,6 +119,7 @@ import java.util.Timer;
 import java.util.concurrent.Executors;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 import dagger.Lazy;
 import dagger.hilt.EntryPoints;
@@ -128,7 +138,7 @@ import network.loki.messenger.R;
  * @author Moxie Marlinspike
  */
 @HiltAndroidApp
-public class ApplicationContext extends Application implements DefaultLifecycleObserver, Toaster {
+public class ApplicationContext extends Application implements DefaultLifecycleObserver, Toaster, Configuration.Provider {
 
     public static final String PREFERENCES_NAME = "SecureSMS-Preferences";
 
@@ -141,13 +151,13 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     private Handler conversationListHandler;
     private PersistentLogger persistentLogger;
 
+    @Inject HiltWorkerFactory workerFactory;
     @Inject LokiAPIDatabase lokiAPIDatabase;
     @Inject public Storage storage;
     @Inject Device device;
     @Inject MessageDataProvider messageDataProvider;
     @Inject TextSecurePreferences textSecurePreferences;
     @Inject ConfigFactory configFactory;
-    @Inject PollerFactory pollerFactory;
     @Inject LastSentTimestampCache lastSentTimestampCache;
     @Inject VersionDataFetcher versionDataFetcher;
     @Inject PushRegistrationHandler pushRegistrationHandler;
@@ -170,6 +180,13 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     @Inject EmojiSearchDatabase emojiSearchDb;
     @Inject WebRtcCallBridge webRtcCallBridge;
     @Inject LegacyClosedGroupPollerV2 legacyClosedGroupPollerV2;
+    @Inject LegacyGroupDeprecationManager legacyGroupDeprecationManager;
+    @Inject CleanupInvitationHandler cleanupInvitationHandler;
+    @Inject UsernameUtils usernameUtils;
+    @Inject BackgroundPollManager backgroundPollManager;  // Exists here only to start upon app starts
+    @Inject AppVisibilityManager appVisibilityManager;  // Exists here only to start upon app starts
+    @Inject GroupPollerManager groupPollerManager;  // Exists here only to start upon app starts
+    @Inject ExpiredGroupManager expiredGroupManager; // Exists here only to start upon app starts
 
     public volatile boolean isAppVisible;
 
@@ -256,7 +273,9 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
                 groupManagerV2,
                 snodeClock,
                 textSecurePreferences,
-                legacyClosedGroupPollerV2
+                legacyClosedGroupPollerV2,
+                legacyGroupDeprecationManager,
+                usernameUtils
                 );
 
         Log.i(TAG, "onCreate()");
@@ -270,7 +289,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         broadcaster = new Broadcaster(this);
         boolean useTestNet = textSecurePreferences.getEnvironment() == Environment.TEST_NET;
         SnodeModule.Companion.configure(apiDB, broadcaster, useTestNet);
-        initializePeriodicTasks();
         SSKEnvironment.Companion.configure(typingStatusRepository, readReceiptManager, profileManager, getMessageNotifier(), expiringMessageManager);
         initializeWebRtc();
         initializeBlobProvider();
@@ -287,6 +305,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         removeGroupMemberHandler.start();
         destroyedGroupSync.start();
         adminStateSync.start();
+        cleanupInvitationHandler.start();
 
         // add our shortcut debug menu if we are not in a release build
         if (BuildConfig.BUILD_TYPE != "release") {
@@ -303,6 +322,14 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
 
             ShortcutManagerCompat.pushDynamicShortcut(this, shortcut);
         }
+    }
+
+    @NonNull
+    @Override
+    public Configuration getWorkManagerConfiguration() {
+        return new Configuration.Builder()
+                .setWorkerFactory(workerFactory)
+                .build();
     }
 
     @Override
@@ -341,7 +368,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         if (poller != null) {
             poller.stopIfNeeded();
         }
-        pollerFactory.stopAll();
         legacyClosedGroupPollerV2.stopAll();
         versionDataFetcher.stopTimedVersionCheck();
     }
@@ -350,7 +376,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     public void onTerminate() {
         stopKovenant(); // Loki
         OpenGroupManager.INSTANCE.stopPolling();
-        pollerFactory.stopAll();
         versionDataFetcher.stopTimedVersionCheck();
         super.onTerminate();
     }
@@ -423,10 +448,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionLogger(originalHandler));
     }
 
-    private void initializePeriodicTasks() {
-        BackgroundPollWorker.schedulePeriodic(this);
-    }
-
     private void initializeWebRtc() {
         try {
             PeerConnectionFactory.initialize(InitializationOptions.builder(this).createInitializationOptions());
@@ -453,7 +474,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         if (poller != null) {
             poller.startIfNeeded();
         }
-        pollerFactory.startAll();
         legacyClosedGroupPollerV2.start();
     }
 
@@ -480,36 +500,5 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
             }
         });
     }
-
-    // Method to clear the local data - returns true on success otherwise false
-    @SuppressLint("ApplySharedPref")
-    public boolean clearAllData() {
-        TextSecurePreferences.clearAll(this);
-        getSharedPreferences(PREFERENCES_NAME, 0).edit().clear().commit();
-        if (!deleteDatabase(SQLCipherOpenHelper.DATABASE_NAME)) {
-            Log.d("Loki", "Failed to delete database.");
-            return false;
-        }
-        configFactory.clearAll();
-        return true;
-    }
-
-    /**
-     * Clear all local profile data and message history then restart the app after a brief delay.
-     * @return true on success, false otherwise.
-     */
-    @SuppressLint("ApplySharedPref")
-    public boolean clearAllDataAndRestart() {
-        clearAllData();
-        Util.runOnMain(() -> new Handler().postDelayed(ApplicationContext.this::restartApplication, 200));
-        return true;
-    }
-
-    public void restartApplication() {
-        Intent intent = new Intent(this, HomeActivity.class);
-        startActivity(Intent.makeRestartActivityTask(intent.getComponent()));
-        Runtime.getRuntime().exit(0);
-    }
-
     // endregion
 }

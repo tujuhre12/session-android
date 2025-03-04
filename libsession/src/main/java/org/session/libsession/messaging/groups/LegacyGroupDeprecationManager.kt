@@ -30,32 +30,49 @@ class LegacyGroupDeprecationManager(private val prefs: TextSecurePreferences)  {
         prefs.deprecatedTimeOverride ?: defaultDeprecatedTime
     )
 
-    val deprecationTime: StateFlow<ZonedDateTime> get() = mutableDeprecatedTime
+    val deprecatedTime: StateFlow<ZonedDateTime> get() = mutableDeprecatedTime
+
+    // The time a warning will be shown to users that legacy groups are being deprecated.
+    private val defaultDeprecatingStartTime = ZonedDateTime.of(2025, 2, 24, 0, 0, 0, 0, ZoneId.of("UTC"))
+
+    private val mutableDeprecatingStartTime: MutableStateFlow<ZonedDateTime> = MutableStateFlow(
+        prefs.deprecatingStartTimeOverride ?: defaultDeprecatingStartTime
+    )
+
+    val deprecatingStartTime: StateFlow<ZonedDateTime> get() = mutableDeprecatingStartTime
 
     @Suppress("OPT_IN_USAGE")
-    val deprecationState: StateFlow<DeprecationState>
-        get() = combine(mutableDeprecationStateOverride, mutableDeprecatedTime, ::Pair)
-            .flatMapLatest { (overriding, deadline) ->
-                if (overriding != null) {
-                    flowOf(overriding)
-                } else {
-                    flow {
-                        val now = ZonedDateTime.now()
+    val deprecationState: StateFlow<DeprecationState> = combine(mutableDeprecationStateOverride,
+            mutableDeprecatedTime,
+            mutableDeprecatingStartTime,
+            ::Triple
+        ).flatMapLatest { (overriding, deprecatedTime, deprecatingStartTime) ->
+            if (overriding != null) {
+                flowOf(overriding)
+            } else {
+                flow {
+                    val now = ZonedDateTime.now()
 
-                        if (now.isBefore(deadline)) {
-                            emit(DeprecationState.DEPRECATING)
-                            delay(Duration.between(now, deadline).toMillis())
-                        }
-
-                        emit(DeprecationState.DEPRECATED)
+                    if (now.isBefore(deprecatingStartTime)) {
+                        emit(DeprecationState.NOT_DEPRECATING)
+                        delay(Duration.between(now, deprecatingStartTime).toMillis())
                     }
+
+                    if (now.isBefore(deprecatedTime)) {
+                        emit(DeprecationState.DEPRECATING)
+                        delay(Duration.between(now, deprecatedTime).toMillis())
+                    }
+
+                    emit(DeprecationState.DEPRECATED)
                 }
             }
-            .stateIn(
-                scope = GlobalScope,
-                started = SharingStarted.Lazily,
-                initialValue = mutableDeprecationStateOverride.value ?: DeprecationState.DEPRECATING
-            )
+        }.stateIn(
+            scope = GlobalScope,
+            started = SharingStarted.Eagerly,
+            initialValue = mutableDeprecationStateOverride.value ?: DeprecationState.NOT_DEPRECATING
+        )
+
+    val isDeprecated: Boolean get() = deprecationState.value == DeprecationState.DEPRECATED
 
     fun overrideDeprecationState(deprecationState: DeprecationState?) {
         mutableDeprecationStateOverride.value = deprecationState
@@ -67,7 +84,13 @@ class LegacyGroupDeprecationManager(private val prefs: TextSecurePreferences)  {
         prefs.deprecatedTimeOverride = deprecatedTime
     }
 
+    fun overrideDeprecatingStartTime(deprecatingStartTime: ZonedDateTime?) {
+        mutableDeprecatingStartTime.value = deprecatingStartTime ?: defaultDeprecatingStartTime
+        prefs.deprecatingStartTimeOverride = deprecatingStartTime
+    }
+
     enum class DeprecationState {
+        NOT_DEPRECATING,
         DEPRECATING,
         DEPRECATED
     }

@@ -405,7 +405,6 @@
     <string name="groupLeaveDescription">ဤ <b>{group_name}</b> မှ ထွက်လိုသည်မှာ သေချာပါသလား။</string>
     <string name="groupLeaveDescriptionAdmin">သင် <b>{group_name}</b>ကို ထွက်ချင်သေချာပါသလား?\n\n၎င်းသည် အဖွဲ့ဝင်များအားလုံးကို ဖယ်ရှားပြီး အဖွဲ့၏အကြောင်းအရာအားလုံးကို ဖျက်သိမ်းပါမည်။</string>
     <string name="groupLeaveErrorFailed">အဖွဲ့ {group_name} မှထွက်ရန် မဖြစ်နိုင်ပါ</string>
-    <string name="groupLegacyBanner">အုပ်စုများအားအဆင့်မြှင့်ထားပြီး၊ Upgrade လုပ်ရန် အုပ်စုအသစ်တစ်ခုကိုဖန်တီးပါ။ အုပ်စု ဟောင်းများ၏ အလုပ်လုပ်မှုကို {date} မှာကျဆင်းသွားမှာဖြစ်သည်။</string>
     <string name="groupMemberLeft"><b>{name}</b> အဖွဲ့မှ ထွက်သွားပါပြီ။</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> နှင့် <b>{count} ဦး</b> အဖွဲ့မှ ထွက်သွားကြသည်။</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> နှင့် <b>{other_name}</b> အဖွဲ့မှ ထွက်သွားကြသည်။</string>
@@ -429,7 +428,6 @@
     <string name="groupOnlyAdmin">You are the only admin in <b>{group_name}.</b>\n\nGroup members and settings cannot be changed without an admin.</string>
     <string name="groupPromotedYou"><b>သင်</b> ကို အုပ်ချုပ်ရေးမှူးအဖြစ် တိုးတက်လာသည်။</string>
     <string name="groupPromotedYouMultiple"><b>သင်</b> နှင့် <b>{count} ဦး</b> အဖွဲ့ဝင်များကို အုပ်ချုပ်ရေးမှူးအဖြစ် တက်လာသည်။</string>
-    <string name="groupPromotedYouTwo"><b>သင်</b> နှင့် <b>{name}</b> ကို အုပ်ချုပ်ရေးမှူးအဖြစ် တိုးတက်လာသည်။</string>
     <string name="groupRemoveDescription">Would you like to remove <b>{name}</b> from <b>{group_name}?</b></string>
     <string name="groupRemoveDescriptionMultiple">Would you like to remove <b>{name}</b> and <b>{count} others</b> from <b>{group_name}?</b></string>
     <string name="groupRemoveDescriptionTwo">Would you like to remove <b>{name}</b> and <b>{other_name}</b> from <b>{group_name}?</b></string>

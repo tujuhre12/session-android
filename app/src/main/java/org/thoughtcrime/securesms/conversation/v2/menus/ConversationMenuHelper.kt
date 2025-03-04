@@ -50,8 +50,8 @@ import org.thoughtcrime.securesms.conversation.v2.utilities.NotificationUtils
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.groups.EditGroupActivity
-import org.thoughtcrime.securesms.groups.EditLegacyGroupActivity
-import org.thoughtcrime.securesms.groups.EditLegacyGroupActivity.Companion.groupIDKey
+import org.thoughtcrime.securesms.groups.legacy.EditLegacyGroupActivity
+import org.thoughtcrime.securesms.groups.legacy.EditLegacyGroupActivity.Companion.groupIDKey
 import org.thoughtcrime.securesms.groups.GroupMembersActivity
 import org.thoughtcrime.securesms.media.MediaOverviewActivity
 import org.thoughtcrime.securesms.permissions.Permissions
@@ -75,7 +75,7 @@ object ConversationMenuHelper {
         deprecationManager: LegacyGroupDeprecationManager,
     ) {
         val isDeprecatedLegacyGroup = thread.isLegacyGroupRecipient &&
-                deprecationManager.deprecationState.value == LegacyGroupDeprecationManager.DeprecationState.DEPRECATED
+                deprecationManager.isDeprecated
 
         // Prepare
         menu.clear()
@@ -110,7 +110,7 @@ object ConversationMenuHelper {
 
         // Groups v2 menu
         if (thread.isGroupV2Recipient) {
-            val hasAdminKey = configFactory.withUserConfigs { it.userGroups.getClosedGroup(thread.address.serialize())?.hasAdminKey() }
+            val hasAdminKey = configFactory.withUserConfigs { it.userGroups.getClosedGroup(thread.address.toString())?.hasAdminKey() }
             if (hasAdminKey == true) {
                 inflater.inflate(R.menu.menu_conversation_groups_v2_admin, menu)
             } else {
@@ -193,6 +193,7 @@ object ConversationMenuHelper {
         factory: ConfigFactory,
         storage: StorageProtocol,
         groupManager: GroupManagerV2,
+        deprecationManager: LegacyGroupDeprecationManager,
     ): ReceiveChannel<GroupLeavingStatus>? {
         when (item.itemId) {
             R.id.menu_view_all_media -> { showAllMedia(context, thread) }
@@ -206,7 +207,9 @@ object ConversationMenuHelper {
             R.id.menu_copy_open_group_url -> { copyOpenGroupUrl(context, thread) }
             R.id.menu_edit_group -> { editGroup(context, thread) }
             R.id.menu_group_members -> { showGroupMembers(context, thread) }
-            R.id.menu_leave_group -> { return leaveGroup(context, thread, threadID, factory, storage, groupManager) }
+            R.id.menu_leave_group -> { return leaveGroup(
+                context, thread, threadID, factory, storage, groupManager, deprecationManager
+            ) }
             R.id.menu_invite_to_open_group -> { inviteContacts(context, thread) }
             R.id.menu_unmute_notifications -> { unmute(context, thread) }
             R.id.menu_mute_notifications -> { mute(context, thread) }
@@ -294,8 +297,9 @@ object ConversationMenuHelper {
             override fun onPostExecute(icon: IconCompat?) {
                 val name = Optional.fromNullable<String>(thread.name)
                     .or(Optional.fromNullable<String>(thread.profileName))
-                    .or(thread.toShortString())
-                val shortcutInfo = ShortcutInfoCompat.Builder(context, thread.address.serialize() + '-' + System.currentTimeMillis())
+                    .or(thread.name)
+
+                val shortcutInfo = ShortcutInfoCompat.Builder(context, thread.address.toString() + '-' + System.currentTimeMillis())
                     .setShortLabel(name)
                     .setIcon(icon)
                     .setIntent(ShortcutLauncherActivity.createIntent(context, thread.address))
@@ -345,7 +349,7 @@ object ConversationMenuHelper {
     private fun editGroup(context: Context, thread: Recipient) {
         when {
             thread.isGroupV2Recipient -> {
-                context.startActivity(EditGroupActivity.createIntent(context, thread.address.serialize()))
+                context.startActivity(EditGroupActivity.createIntent(context, thread.address.toString()))
             }
 
             thread.isLegacyGroupRecipient -> {
@@ -359,7 +363,7 @@ object ConversationMenuHelper {
 
 
     private fun showGroupMembers(context: Context, thread: Recipient) {
-        context.startActivity(GroupMembersActivity.createIntent(context, thread.address.serialize()))
+        context.startActivity(GroupMembersActivity.createIntent(context, thread.address.toString()))
     }
 
     enum class GroupLeavingStatus {
@@ -375,20 +379,27 @@ object ConversationMenuHelper {
         configFactory: ConfigFactory,
         storage: StorageProtocol,
         groupManager: GroupManagerV2,
+        deprecationManager: LegacyGroupDeprecationManager,
     ): ReceiveChannel<GroupLeavingStatus>? {
         val channel = Channel<GroupLeavingStatus>()
 
         when {
             thread.isLegacyGroupRecipient -> {
                 val group = DatabaseComponent.get(context).groupDatabase().getGroup(thread.address.toGroupString()).orNull()
-                val admins = group.admins
-                val accountID = TextSecurePreferences.getLocalNumber(context)
-                val isCurrentUserAdmin = admins.any { it.toString() == accountID }
+
+                // we do not want admin related messaging once legacy groups are deprecated
+                val isGroupAdmin = if(deprecationManager.isDeprecated){
+                    false
+                } else { // prior to the deprecated state, calculate admin rights properly
+                    val admins = group.admins
+                    val accountID = TextSecurePreferences.getLocalNumber(context)
+                    admins.any { it.toString() == accountID }
+                }
 
                 confirmAndLeaveGroup(
                     context = context,
                     groupName = group.title,
-                    isAdmin = isCurrentUserAdmin,
+                    isAdmin = isGroupAdmin,
                     isKicked = configFactory.wasKickedFromGroupV2(thread),
                     threadID = threadID,
                     storage = storage,
@@ -411,7 +422,7 @@ object ConversationMenuHelper {
             }
 
             thread.isGroupV2Recipient -> {
-                val accountId = AccountId(thread.address.serialize())
+                val accountId = AccountId(thread.address.toString())
                 val group = configFactory.withUserConfigs { it.userGroups.getClosedGroup(accountId.hexString) } ?: return null
                 val name = configFactory.withGroupConfigs(accountId) {
                     it.groupInfo.getName()

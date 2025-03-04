@@ -16,6 +16,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -23,6 +24,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -42,6 +44,7 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
@@ -60,6 +63,7 @@ import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.groups.ExpiredGroupManager
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.mms.AudioSlide
 import org.thoughtcrime.securesms.repository.ConversationRepository
@@ -85,7 +89,10 @@ class ConversationViewModel(
     private val configFactory: ConfigFactory,
     private val groupManagerV2: GroupManagerV2,
     private val callManager: CallManager,
-    val legacyGroupDeprecationManager: LegacyGroupDeprecationManager
+    val legacyGroupDeprecationManager: LegacyGroupDeprecationManager,
+    private val expiredGroupManager: ExpiredGroupManager,
+    private val usernameUtils: UsernameUtils
+
 ) : ViewModel() {
 
     val showSendAfterApprovalText: Boolean
@@ -112,7 +119,7 @@ class ConversationViewModel(
         _isAdmin.value = when(conversationType) {
             // for Groups V2
             MessageType.GROUPS_V2 -> {
-                configFactory.getGroup(AccountId(conversation.address.serialize()))?.hasAdminKey() == true
+                configFactory.getGroup(AccountId(conversation.address.toString()))?.hasAdminKey() == true
             }
 
             // for legacy groups, check if the user created the group
@@ -169,7 +176,7 @@ class ConversationViewModel(
             val recipient = recipient ?: return GroupThreadStatus.None
             if (!recipient.isGroupV2Recipient) return GroupThreadStatus.None
 
-            return configFactory.getGroup(AccountId(recipient.address.serialize())).let { group ->
+            return configFactory.getGroup(AccountId(recipient.address.toString())).let { group ->
                 when {
                     group?.destroyed == true -> GroupThreadStatus.Destroyed
                     group?.kicked == true -> GroupThreadStatus.Kicked
@@ -200,13 +207,27 @@ class ConversationViewModel(
             return !recipient.isLocalNumber && !recipient.isLegacyGroupRecipient && !recipient.isCommunityRecipient && !recipient.isApproved
         }
 
+    val showOptionsMenu: Boolean
+        get() = !isMessageRequestThread && !isDeprecatedLegacyGroup && !isKickedGroupV2Thread
+
+    private val isKickedGroupV2Thread: Boolean
+        get() = recipient?.isGroupV2Recipient == true &&
+                configFactory.getGroup(AccountId(recipient!!.address.toString()))?.kicked == true
+
+    private val isDeprecatedLegacyGroup: Boolean
+        get() = recipient?.isLegacyGroupRecipient == true && legacyGroupDeprecationManager.isDeprecated
+
     val canReactToMessages: Boolean
         // allow reactions if the open group is null (normal conversations) or the open group's capabilities include reactions
         get() = (openGroup == null || OpenGroupApi.Capability.REACTIONS.name.lowercase() in serverCapabilities)
+                && !isDeprecatedLegacyGroup
+
+    val canRemoveReaction: Boolean
+        get() = canReactToMessages
 
     val legacyGroupBanner: StateFlow<CharSequence?> = combine(
         legacyGroupDeprecationManager.deprecationState,
-        legacyGroupDeprecationManager.deprecationTime,
+        legacyGroupDeprecationManager.deprecatedTime,
         isAdmin
     ) { state, time, admin ->
         when {
@@ -215,20 +236,30 @@ class ConversationViewModel(
                 Phrase.from(application, if (admin) R.string.legacyGroupAfterDeprecationAdmin else R.string.legacyGroupAfterDeprecationMember)
                     .format()
             }
-            else -> Phrase.from(application, if (admin) R.string.legacyGroupBeforeDeprecationAdmin else R.string.legacyGroupBeforeDeprecationMember)
+            state == LegacyGroupDeprecationManager.DeprecationState.DEPRECATING ->
+                Phrase.from(application, if (admin) R.string.legacyGroupBeforeDeprecationAdmin else R.string.legacyGroupBeforeDeprecationMember)
                 .put(DATE_KEY,
                     time.withZoneSameInstant(ZoneId.systemDefault())
-                        .toLocalDate()
-                        .format(DateUtils.getShortDateFormatter())
+                        .format(DateUtils.getMediumDateTimeFormatter())
                 )
                 .format()
-        }
-    }.stateIn(viewModelScope, SharingStarted.Lazily, null)
 
-    val showRecreateGroupButton: StateFlow<Boolean> = isAdmin
-        .map { admin ->
+            else -> null
+        }
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    val showRecreateGroupButton: StateFlow<Boolean> =
+        combine(isAdmin, legacyGroupDeprecationManager.deprecationState) { admin, state ->
             admin && recipient?.isLegacyGroupRecipient == true
-        }.stateIn(viewModelScope, SharingStarted.Lazily, false)
+                    && state != LegacyGroupDeprecationManager.DeprecationState.NOT_DEPRECATING
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    val showExpiredGroupBanner: Flow<Boolean> = if (recipient?.isGroupV2Recipient != true) {
+        flowOf(false)
+    } else {
+        val groupId = AccountId(recipient!!.address.toString())
+        expiredGroupManager.expiredGroups.map { groupId in it }
+    }
 
     private val attachmentDownloadHandler = AttachmentDownloadHandler(
         storage = storage,
@@ -395,7 +426,7 @@ class ConversationViewModel(
         }
 
         if (this.recipient?.isGroupV2Recipient == true) {
-            groupManagerV2.onBlocked(AccountId(this.recipient!!.address.serialize()))
+            groupManagerV2.onBlocked(AccountId(this.recipient!!.address.toString()))
         }
     }
 
@@ -903,7 +934,7 @@ class ConversationViewModel(
             blindedRecipient?.blocksCommunityMessageRequests == true
 
     fun legacyBannerRecipient(context: Context): Recipient? = recipient?.run {
-        storage.getLastLegacyRecipient(address.serialize())?.let { Recipient.from(context, Address.fromSerialized(it), false) }
+        storage.getLastLegacyRecipient(address.toString())?.let { Recipient.from(context, Address.fromSerialized(it), false) }
     }
 
     fun onAttachmentDownloadRequest(attachment: DatabaseAttachment) {
@@ -982,7 +1013,7 @@ class ConversationViewModel(
                 _dialogsState.update {
                     it.copy(
                         recreateGroupConfirm = false,
-                        recreateGroupData = recipient?.address?.serialize()?.let { addr -> RecreateGroupDialogData(legacyGroupId = addr) }
+                        recreateGroupData = recipient?.address?.toString()?.let { addr -> RecreateGroupDialogData(legacyGroupId = addr) }
                     )
                 }
             }
@@ -1038,6 +1069,7 @@ class ConversationViewModel(
             factory = configFactory,
             storage = storage,
             groupManager = groupManagerV2,
+            deprecationManager = legacyGroupDeprecationManager,
         )
 
         if (inProgress != null) {
@@ -1054,6 +1086,8 @@ class ConversationViewModel(
 
         return true
     }
+
+    fun getUsername(accountId: String) = usernameUtils.getContactNameWithAccountID(accountId)
 
     @dagger.assisted.AssistedFactory
     interface AssistedFactory {
@@ -1079,6 +1113,8 @@ class ConversationViewModel(
         private val groupManagerV2: GroupManagerV2,
         private val callManager: CallManager,
         private val legacyGroupDeprecationManager: LegacyGroupDeprecationManager,
+        private val expiredGroupManager: ExpiredGroupManager,
+        private val usernameUtils: UsernameUtils
     ) : ViewModelProvider.Factory {
 
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -1098,6 +1134,8 @@ class ConversationViewModel(
                 groupManagerV2 = groupManagerV2,
                 callManager = callManager,
                 legacyGroupDeprecationManager = legacyGroupDeprecationManager,
+                expiredGroupManager = expiredGroupManager,
+                usernameUtils = usernameUtils
             ) as T
         }
     }

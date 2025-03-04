@@ -17,6 +17,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DatePickerState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -26,6 +27,7 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
+import androidx.compose.material3.TimePickerState
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
@@ -41,9 +43,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
-import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.ChangeEnvironment
-import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.HideEnvironmentWarningDialog
-import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.ShowEnvironmentWarningDialog
+import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.*
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.Cell
@@ -71,25 +71,21 @@ fun DebugMenu(
     onClose: () -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
-    val showingDeprecationDatePicker = rememberDatePickerState()
+    val datePickerState = rememberDatePickerState()
+    val timePickerState = rememberTimePickerState()
 
+    var showingDeprecatedDatePicker by remember { mutableStateOf(false) }
     var showingDeprecatedTimePicker by remember { mutableStateOf(false) }
-    val deprecatedTimePickerState = rememberTimePickerState()
+
+    var showingDeprecatingStartDatePicker by remember { mutableStateOf(false) }
+    var showingDeprecatingStartTimePicker by remember { mutableStateOf(false) }
 
     val getPickedTime = {
-        val localDate = showingDeprecationDatePicker.selectedDateMillis?.let {
-            ZonedDateTime.ofInstant(Instant.ofEpochMilli(it), ZoneId.of("UTC")).toLocalDate()
-        } ?: uiState.forceDeprecatedTime.withZoneSameInstant(ZoneId.systemDefault()).toLocalDate()
+        val localDate = ZonedDateTime.ofInstant(
+            Instant.ofEpochMilli(datePickerState.selectedDateMillis!!), ZoneId.of("UTC")
+        ).toLocalDate()
 
-        val localTime = if (showingDeprecatedTimePicker) {
-            LocalTime.of(
-                deprecatedTimePickerState.hour,
-                deprecatedTimePickerState.minute
-            )
-        } else {
-            uiState.forceDeprecatedTime.withZoneSameInstant(ZoneId.systemDefault()).toLocalTime()
-        }
-
+        val localTime = LocalTime.of(timePickerState.hour, timePickerState.minute)
         ZonedDateTime.of(localDate, localTime, ZoneId.systemDefault())
     }
 
@@ -107,6 +103,25 @@ fun DebugMenu(
         }
 
         // Alert dialogs
+        if (uiState.showDeprecatedStateWarningDialog) {
+            AlertDialog(
+                onDismissRequest = { sendCommand(HideEnvironmentWarningDialog) },
+                title = "Are you sure you want to change the deprecation state?",
+                text = "This will restart the app...",
+                showCloseButton = false, // don't display the 'x' button
+                buttons = listOf(
+                    DialogButtonModel(
+                        text = GetString(R.string.cancel),
+                        onClick = { sendCommand(HideDeprecationChangeDialog) }
+                    ),
+                    DialogButtonModel(
+                        text = GetString(R.string.ok),
+                        onClick = { sendCommand(OverrideDeprecationState) }
+                    )
+                )
+            )
+        }
+
         if (uiState.showEnvironmentWarningDialog) {
             AlertDialog(
                 onDismissRequest = { sendCommand(HideEnvironmentWarningDialog) },
@@ -126,8 +141,8 @@ fun DebugMenu(
             )
         }
 
-        if (uiState.showEnvironmentLoadingDialog) {
-            LoadingDialog(title = "Changing Environment...")
+        if (uiState.showLoadingDialog) {
+            LoadingDialog(title = "Applying changes...")
         }
 
         Column(
@@ -205,71 +220,114 @@ fun DebugMenu(
                         val override = LegacyGroupDeprecationManager.DeprecationState.entries
                             .firstOrNull { it.displayName == selected }
 
-                        sendCommand(DebugMenuViewModel.Commands.OverrideDeprecationState(override))
+                        sendCommand(ShowDeprecationChangeDialog(override))
+                    }
+
+                    DebugRow(title = "Deprecating start date", modifier = Modifier.clickable {
+                        datePickerState.applyFromZonedDateTime(uiState.deprecatingStartTime)
+                        timePickerState.applyFromZonedDateTime(uiState.deprecatingStartTime)
+                        showingDeprecatingStartDatePicker = true
+                    }) {
+                        Text(text = uiState.deprecatingStartTime.withZoneSameInstant(ZoneId.systemDefault()).toLocalDate().toString())
+                    }
+
+                    DebugRow(title = "Deprecating start time", modifier = Modifier.clickable {
+                        datePickerState.applyFromZonedDateTime(uiState.deprecatingStartTime)
+                        timePickerState.applyFromZonedDateTime(uiState.deprecatingStartTime)
+                        showingDeprecatingStartTimePicker = true
+                    }) {
+                        Text(text = uiState.deprecatingStartTime.withZoneSameInstant(ZoneId.systemDefault()).toLocalTime().toString())
                     }
 
                     DebugRow(title = "Deprecated date", modifier = Modifier.clickable {
-                        showingDeprecationDatePicker.selectedDateMillis = uiState.forceDeprecatedTime.withZoneSameLocal(
-                            ZoneId.of("UTC")).toEpochSecond() * 1000L
+                        datePickerState.applyFromZonedDateTime(uiState.deprecatedTime)
+                        timePickerState.applyFromZonedDateTime(uiState.deprecatedTime)
+                        showingDeprecatedDatePicker = true
                     }) {
-                        Text(text = uiState.forceDeprecatedTime.withZoneSameInstant(ZoneId.systemDefault()).toLocalDate().toString())
+                        Text(text = uiState.deprecatedTime.withZoneSameInstant(ZoneId.systemDefault()).toLocalDate().toString())
                     }
 
                     DebugRow(title = "Deprecated time", modifier = Modifier.clickable {
+                        datePickerState.applyFromZonedDateTime(uiState.deprecatedTime)
+                        timePickerState.applyFromZonedDateTime(uiState.deprecatedTime)
                         showingDeprecatedTimePicker = true
-                        val time = uiState.forceDeprecatedTime.withZoneSameInstant(ZoneId.systemDefault()).toLocalTime()
-                        deprecatedTimePickerState.hour = time.hour
-                        deprecatedTimePickerState.minute = time.minute
                     }) {
-                        Text(text = uiState.forceDeprecatedTime.withZoneSameInstant(ZoneId.systemDefault()).toLocalTime().toString())
+                        Text(text = uiState.deprecatedTime.withZoneSameInstant(ZoneId.systemDefault()).toLocalTime().toString())
                     }
                 }
             }
         }
 
         // Deprecation date picker
-        if (showingDeprecationDatePicker.selectedDateMillis != null) {
+        if (showingDeprecatedDatePicker || showingDeprecatingStartDatePicker) {
             DatePickerDialog(
                 onDismissRequest = {
-                    showingDeprecationDatePicker.selectedDateMillis = null
+                    showingDeprecatedDatePicker = false
+                    showingDeprecatingStartDatePicker = false
                 },
                 confirmButton = {
                     TextButton(onClick = {
-                        sendCommand(DebugMenuViewModel.Commands.OverrideDeprecatedTime(getPickedTime()))
-                        showingDeprecationDatePicker.selectedDateMillis = null
+                        if (showingDeprecatedDatePicker) {
+                            sendCommand(DebugMenuViewModel.Commands.OverrideDeprecatedTime(getPickedTime()))
+                            showingDeprecatedDatePicker = false
+                        } else {
+                            sendCommand(DebugMenuViewModel.Commands.OverrideDeprecatingStartTime(getPickedTime()))
+                            showingDeprecatingStartDatePicker = false
+                        }
                     }) {
                         Text("Set", color = LocalColors.current.text)
                     }
                 },
             ) {
-                DatePicker(showingDeprecationDatePicker)
+                DatePicker(datePickerState)
             }
         }
 
-        if (showingDeprecatedTimePicker) {
+        if (showingDeprecatedTimePicker || showingDeprecatingStartTimePicker) {
             AlertDialog(
                 onDismissRequest = {
                     showingDeprecatedTimePicker = false
+                    showingDeprecatingStartTimePicker = false
                 },
-                title = "Set Deprecated Time",
+                title = "Set Time",
                 buttons = listOf(
                     DialogButtonModel(
                         text = GetString(R.string.cancel),
-                        onClick = { showingDeprecatedTimePicker = false }
+                        onClick = {
+                            showingDeprecatedTimePicker = false
+                            showingDeprecatingStartTimePicker = false
+                        }
                     ),
                     DialogButtonModel(
                         text = GetString(R.string.ok),
                         onClick = {
-                            sendCommand(DebugMenuViewModel.Commands.OverrideDeprecatedTime(getPickedTime()))
-                            showingDeprecatedTimePicker = false
+                            if (showingDeprecatedTimePicker) {
+                                sendCommand(DebugMenuViewModel.Commands.OverrideDeprecatedTime(getPickedTime()))
+                                showingDeprecatedTimePicker = false
+                            } else {
+                                sendCommand(DebugMenuViewModel.Commands.OverrideDeprecatingStartTime(getPickedTime()))
+                                showingDeprecatingStartTimePicker = false
+                            }
                         }
                     )
                 )
             ) {
-                TimePicker(deprecatedTimePickerState)
+                TimePicker(timePickerState)
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+private fun DatePickerState.applyFromZonedDateTime(time: ZonedDateTime) {
+    selectedDateMillis = time.withZoneSameInstant(ZoneId.of("UTC")).toEpochSecond() * 1000L
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+private fun TimePickerState.applyFromZonedDateTime(time: ZonedDateTime) {
+    val normalised = time.withZoneSameInstant(ZoneId.systemDefault())
+    hour = normalised.hour
+    minute = normalised.minute
 }
 
 
@@ -372,12 +430,14 @@ fun PreviewDebugMenu() {
                 environments = listOf("Development", "Production"),
                 snackMessage = null,
                 showEnvironmentWarningDialog = false,
-                showEnvironmentLoadingDialog = false,
+                showLoadingDialog = false,
+                showDeprecatedStateWarningDialog = false,
                 hideMessageRequests = true,
                 hideNoteToSelf = false,
                 forceDeprecationState = null,
-                forceDeprecatedTime = ZonedDateTime.now(),
-                availableDeprecationState = emptyList()
+                deprecatedTime = ZonedDateTime.now(),
+                availableDeprecationState = emptyList(),
+                deprecatingStartTime = ZonedDateTime.now()
             ),
             sendCommand = {},
             onClose = {}

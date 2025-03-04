@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.AssistedFactory
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.util.EnumSet
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -20,15 +21,14 @@ import network.loki.messenger.libsession_util.util.GroupMember
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigUpdateNotification
-import org.session.libsession.utilities.getMemberName
+import org.session.libsession.utilities.UsernameUtils
 import org.session.libsignal.utilities.AccountId
-import java.util.EnumSet
-
 
 abstract class BaseGroupMembersViewModel (
     private val groupId: AccountId,
     @ApplicationContext private val context: Context,
     private val storage: StorageProtocol,
+    private val usernameUtils: UsernameUtils,
     private val configFactory: ConfigFactoryProtocol
 ) : ViewModel() {
     // Output: the source-of-truth group information. Other states are derived from this.
@@ -78,7 +78,7 @@ abstract class BaseGroupMembersViewModel (
         val name = if (isMyself) {
             context.getString(R.string.you)
         } else {
-            member.getMemberName(configFactory)
+            usernameUtils.getContactNameWithAccountID(member.accountId.hexString, groupId)
         }
 
         val highlightStatus = status in EnumSet.of(
@@ -124,10 +124,11 @@ abstract class BaseGroupMembersViewModel (
                 }
             }
 
+            GroupMember.Status.INVITE_NOT_SENT -> context.getString(R.string.groupInviteNotSent)
+            GroupMember.Status.PROMOTION_NOT_SENT -> context.getString(R.string.adminPromotionNotSent)
+
             GroupMember.Status.INVITE_UNKNOWN,
             GroupMember.Status.INVITE_ACCEPTED,
-            GroupMember.Status.INVITE_NOT_SENT,
-            GroupMember.Status.PROMOTION_NOT_SENT,
             GroupMember.Status.PROMOTION_UNKNOWN,
             GroupMember.Status.PROMOTION_ACCEPTED -> ""
         }

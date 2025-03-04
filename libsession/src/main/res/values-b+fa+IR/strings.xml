@@ -253,7 +253,7 @@
     <string name="create">ایجاد</string>
     <string name="cut">برش</string>
     <string name="databaseErrorGeneric">خطایی در پایگاه داده روی داده است.\n\nگزارش‌های برنامه خود را به اشتراک بگذارید برای رفع مشکلات. اگر ناموفق بود، {app_name} را مجدداً نصب کنید و حساب خود را بازگردانید.\n\nهشدار: این کار باعث از دست رفتن تمام پیام‌ها، پیوست‌ها و داده‌های حساب کاربری قدیمی‌تر از دو هفته می‌شود.</string>
-    <string name="databaseErrorTimeout">ما متوجه شده‌ایم که {app_name} زمان طولانی‌ای برای شروع می‌برد.\n\nمی‌توانید به انتظار ادامه دهید، گزارش‌های دستگاه‌تان را برای کمک به رفع مشکل صادركنید، یا Session را دوباره راه‌اندازی کنید.</string>
+    <string name="databaseErrorTimeout">ما متوجه شده‌ایم که شروع {app_name} زمان زیادی می‌برد.\n\nمی‌توانید همچنان منتظر بمانید، گزارش‌های دستگاه خود را برای اشتراک‌گذاری برای عیب‌یابی صادر کنید، یا سعی کنید {app_name} را مجدداً راه‌اندازی کنید.</string>
     <string name="databaseErrorUpdate">پایگاه داده برنامه شما با این نسخه از {app_name} سازگار نیست. برنامه را دوباره نصب کنید و حساب خود را بازیابی کنید تا یک پایگاه داده جدید ایجاد کنید و به استفاده از {app_name} ادامه دهید.\n\nهشدار: این باعث از دست رفتن همه پیام‌ها و پیوست‌های قدیمی‌تر از دو هفته می‌شود.</string>
     <string name="databaseOptimizing">در حال بهینه‌سازی پایگاه داده</string>
     <string name="debugLog">گزارش اشکال‌زدایی</string>
@@ -415,7 +415,6 @@
     <string name="groupLeave">ترک کردن گروه</string>
     <string name="groupLeaveDescriptionAdmin">ایا مطمین هستید می خواهید <b>{group_name}</b> را ترک کنید؟ \n\nاین کار باعث حذف همه ی اعضا و پاک شدن تمام محتوای گروه خواهد شد.</string>
     <string name="groupLeaveErrorFailed">ترک {group_name} ناموفق بود</string>
-    <string name="groupLegacyBanner">گروه‌ها ارتقا یافته‌اند، یک گروه جدید ایجاد کنید تا ارتقا دهید. عملکرد گروه قدیمی از {date} کاهش می‌یابد.</string>
     <string name="groupMemberLeft"><b>{name}</b> گروه را ترک کرد.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> و <b>{count} نفر دیگر</b> گروه را ترک کردند.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> و <b>{other_name}</b> گروه را ترک کردند.</string>
@@ -439,7 +438,6 @@
     <string name="groupOnlyAdmin">شما تنها مدیر در <b>{group_name}</b> هستید.\n\nبدون مدیر، اعضای گروه و تنظیمات نمی‌توانند تغییر کنند.</string>
     <string name="groupPromotedYou"><b>شما</b> به مدیر ارتقاء یافتید.</string>
     <string name="groupPromotedYouMultiple"><b>شما</b> و <b>{count} سایرین</b> به مدیر ارتقاء یافتید.</string>
-    <string name="groupPromotedYouTwo"><b>شما</b> و <b>{name}</b> به مدیر ارتقاء یافتید.</string>
     <string name="groupRemoveDescription">آیا می‌خواهید <b>{name}</b> را از <b>{group_name}</b> حذف کنید؟</string>
     <string name="groupRemoveDescriptionMultiple">آیا می‌خواهید <b>{name}</b> و <b>{count} نفر دیگر</b> را از <b>{group_name}</b> حذف کنید؟</string>
     <string name="groupRemoveDescriptionTwo">آیا می‌خواهید <b>{name}</b> و <b>{other_name}</b> را از <b>{group_name}</b> حذف کنید؟</string>

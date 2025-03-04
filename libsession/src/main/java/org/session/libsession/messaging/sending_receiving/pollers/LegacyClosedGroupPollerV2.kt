@@ -37,7 +37,7 @@ class LegacyClosedGroupPollerV2(
         return isPolling[groupPublicKey] ?: false
     }
 
-    private fun canPoll(): Boolean = deprecationManager.deprecationState.value == LegacyGroupDeprecationManager.DeprecationState.DEPRECATING
+    private fun canPoll(): Boolean = deprecationManager.deprecationState.value != LegacyGroupDeprecationManager.DeprecationState.DEPRECATED
 
     companion object {
         private val minPollInterval = 4 * 1000
@@ -48,7 +48,7 @@ class LegacyClosedGroupPollerV2(
     class PollingCanceledException() : Exception("Polling canceled.")
 
     fun start() {
-        val allGroupPublicKeys = storage.getAllClosedGroupPublicKeys()
+        val allGroupPublicKeys = storage.getAllLegacyGroupPublicKeys()
         allGroupPublicKeys.iterator().forEach { startPolling(it) }
     }
 
