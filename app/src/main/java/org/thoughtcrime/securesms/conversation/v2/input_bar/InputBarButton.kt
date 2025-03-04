@@ -103,8 +103,11 @@ class InputBarButton : RelativeLayout {
         isHapticFeedbackEnabled = true
         this.isEnabled = isSendButton // Only enable the send button by default
 
-        // Set the icon tint colour based on the button being enabled, regardless of it's actual enabled state
-        setIconTintColourForEnabledState(true)
+        // Always tint the send button appropriately - multimedia button tints get set from `updateMultimediaButtonState`
+//        if (isSendButton) {
+//            imageView.imageTintList = ColorStateList.valueOf(context.getColorFromAttr(R.attr.message_sent_text_color))
+//        }
+        setIconTintColour(true)
     }
 
     fun getIconID() = iconID
@@ -137,20 +140,20 @@ class InputBarButton : RelativeLayout {
     }
 
     // Tint the button icon the appropriate colour for the user's theme
-    fun setIconTintColourForEnabledState(enabled: Boolean) {
-        if (enabled) {
+    fun setIconTintColour(buttonIsEnabled: Boolean) {
+        if (buttonIsEnabled) {
             imageView.imageTintList = if (isSendButton) {
                 ColorStateList.valueOf(context.getColorFromAttr(R.attr.message_sent_text_color))
             } else {
                 ColorStateList.valueOf(context.getColorFromAttr(R.attr.input_bar_button_text_color))
             }
         } else {
-            // Use the greyed out colour for the user theme
+            // Use the greyed out colour from the user theme
             imageView.imageTintList = ColorStateList.valueOf(context.getColorFromAttr(R.attr.input_bar_text_hint))
         }
     }
 
-    fun setIconTintColourFromCurrentEnabledState() = setIconTintColourForEnabledState(this.isEnabled)
+    fun setIconTintColourFromCurrentEnabledState() = setIconTintColour(this.isEnabled)
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         // Ensure disabled buttons don't respond to events.
