@@ -520,7 +520,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
 
         // in case a phone call is in progress, this banner is visible and should bring the user back to the call
-        binding.callInProgress.setOnClickListener {
+        binding.conversationHeader.callInProgress.setOnClickListener {
             startActivity(WebRtcCallActivity.getCallActivityIntent(this))
         }
 
@@ -1032,8 +1032,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.callInProgress.collect { callInProgress ->
                     when (callInProgress) {
-                        true -> binding.callInProgress.fadeIn()
-                        false -> binding.callInProgress.fadeOut()
+                        true -> binding.conversationHeader.callInProgress.fadeIn()
+                        false -> binding.conversationHeader.callInProgress.fadeOut()
                     }
                 }
             }

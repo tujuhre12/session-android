@@ -206,7 +206,7 @@ class WebRtcCallBridge @Inject constructor(
 
                 BackgroundPollWorker.scheduleOnce(
                     context,
-                    arrayOf(BackgroundPollWorker.Targets.DMS)
+                    listOf(BackgroundPollWorker.Target.ONE_TO_ONE)
                 )
             }
         }
@@ -264,7 +264,7 @@ class WebRtcCallBridge @Inject constructor(
                 callManager.startOutgoingRinger(OutgoingRinger.Type.RINGING)
                 setCallNotification(TYPE_OUTGOING_RINGING, callManager.recipient)
                 callManager.insertCallMessage(
-                    recipient.address.serialize(),
+                    recipient.address.toString(),
                     CallMessageType.CALL_OUTGOING
                 )
                 scheduledTimeout = timeoutExecutor.schedule(
@@ -586,7 +586,7 @@ class WebRtcCallBridge @Inject constructor(
 
     private fun insertMissedCall(recipient: Recipient, signal: Boolean) {
         callManager.insertCallMessage(
-            threadPublicKey = recipient.address.serialize(),
+            threadPublicKey = recipient.address.toString(),
             callMessageType = CallMessageType.CALL_MISSED,
             signal = signal
         )
