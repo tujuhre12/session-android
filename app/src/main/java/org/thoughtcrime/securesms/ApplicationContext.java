@@ -154,7 +154,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     @Inject TokenFetcher tokenFetcher;
     @Inject GroupManagerV2 groupManagerV2;
     @Inject SSKEnvironment.ProfileManagerProtocol profileManager;
-    CallMessageProcessor callMessageProcessor;
+    @Inject CallMessageProcessor callMessageProcessor;
     MessagingModuleConfiguration messagingModuleConfiguration;
     @Inject ConfigUploader configUploader;
     @Inject AdminStateSync adminStateSync;
@@ -258,8 +258,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
                 textSecurePreferences,
                 legacyClosedGroupPollerV2
                 );
-        callMessageProcessor = new CallMessageProcessor(this, textSecurePreferences,
-                ProcessLifecycleOwner.get().getLifecycle(), storage, webRtcCallBridge);
+
         Log.i(TAG, "onCreate()");
         startKovenant();
         initializeSecurityProvider();

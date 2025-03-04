@@ -131,7 +131,8 @@ class CallManager(
     private val _audioDeviceEvents = MutableStateFlow(AudioDeviceUpdate(AudioDevice.NONE, setOf()))
     val audioDeviceEvents = _audioDeviceEvents.asSharedFlow()
 
-    val currentConnectionStateFlow = stateProcessor.currentStateFlow
+    val currentConnectionStateFlow
+    get() = stateProcessor.currentStateFlow
 
     val currentConnectionState
         get() = stateProcessor.currentState
@@ -233,8 +234,6 @@ class CallManager(
     fun isPreOffer() = currentConnectionState == CallState.RemotePreOffer
 
     fun isIdle() = currentConnectionState == CallState.Idle
-
-    fun isCurrentUser(recipient: Recipient) = recipient.address.serialize() == storage.getUserPublicKey()
 
     fun initializeVideo(context: Context) {
         Util.runOnMainSync {
@@ -616,7 +615,7 @@ class CallManager(
         val recipient = recipient ?: return
         val callId = callId ?: return
 
-        val sendHangup = intentRecipient == null || (intentRecipient == recipient && !isCurrentUser(recipient))
+        val sendHangup = intentRecipient == null || (intentRecipient == recipient && !recipient.isLocalNumber)
 
         postViewModelState(CallViewModel.State.CALL_DISCONNECTED)
         stateProcessor.processEvent(Event.Hangup)

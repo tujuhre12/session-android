@@ -2,9 +2,9 @@ package org.thoughtcrime.securesms.webrtc
 
 import android.Manifest
 import android.content.Context
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.coroutineScope
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.session.libsession.database.StorageProtocol
@@ -24,12 +24,13 @@ import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.PROVISI
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.webrtc.IceCandidate
-import java.util.UUID
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class CallMessageProcessor(
-    private val context: Context,
+@Singleton
+class CallMessageProcessor @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val textSecurePreferences: TextSecurePreferences,
-    lifecycle: Lifecycle,
     private val storage: StorageProtocol,
     private val webRtcBridge: WebRtcCallBridge
 ) {
@@ -40,7 +41,7 @@ class CallMessageProcessor(
     }
 
     init {
-        lifecycle.coroutineScope.launch(IO) {
+        GlobalScope.launch(IO) {
             while (isActive) {
                 val nextMessage = WebRtcUtils.SIGNAL_QUEUE.receive()
                 Log.d("Loki", nextMessage.type?.name ?: "CALL MESSAGE RECEIVED")

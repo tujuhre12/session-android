@@ -224,7 +224,7 @@ class WebRtcCallBridge @Inject constructor(
         serviceExecutor.execute {
             val recipient = getRecipientFromAddress(address)
             val preOffer = callManager.preOfferCallData
-            if (callManager.isPreOffer() && (preOffer == null || preOffer.callId != callId || preOffer.recipient != recipient)) {
+            if (callManager.isPreOffer() && (preOffer == null || preOffer.callId != callId || preOffer.recipient.address != recipient.address)) {
                 Log.d(TAG, "Incoming ring from non-matching pre-offer")
                 return@execute
             }
@@ -429,7 +429,7 @@ class WebRtcCallBridge @Inject constructor(
         serviceExecutor.execute {
             try {
                 val recipient = getRecipientFromAddress(address)
-                if (callManager.isCurrentUser(recipient) && callManager.currentConnectionState in CallState.CAN_DECLINE_STATES) {
+                if (recipient.isLocalNumber && callManager.currentConnectionState in CallState.CAN_DECLINE_STATES) {
                     handleLocalHangup(recipient)
                     return@execute
                 }

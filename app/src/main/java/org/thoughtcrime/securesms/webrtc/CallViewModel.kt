@@ -66,9 +66,9 @@ class CallViewModel @Inject constructor(
         }
 
     val currentCallState get() = callManager.currentCallState
-    val callState: StateFlow<Pair<State, Boolean>> = callManager.callStateEvents.combine(rtcCallBridge.hasAcceptedCall){
-        state, accepted -> Pair(state, accepted)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), Pair(State.CALL_INITIALIZING, false))
+    val callState: StateFlow<CallState> = callManager.callStateEvents.combine(rtcCallBridge.hasAcceptedCall){
+        state, accepted -> CallState(state = state, hasAcceptedCall = accepted)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), CallState(State.CALL_INITIALIZING, false))
 
     val recipient get() = callManager.recipientEvents
     val callStartTime: Long get() = callManager.callStartTime
@@ -91,4 +91,10 @@ class CallViewModel @Inject constructor(
         rtcCallBridge.handleOutgoingCall(Recipient.from(context, recipientAddress, true))
 
     fun hangUp() = rtcCallBridge.handleLocalHangup(null)
+
+    data class CallState(
+        val state: State,
+        val hasAcceptedCall: Boolean
+
+    )
 }

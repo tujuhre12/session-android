@@ -372,7 +372,7 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
 
             launch {
                 viewModel.callState.collect { data ->
-                    updateControls(data.first, data.second)
+                    updateControls(data.state, data.hasAcceptedCall)
                 }
             }
 
