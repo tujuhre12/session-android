@@ -37,6 +37,7 @@ set(SOURCES
         group_keys.cpp
         group_info.cpp
         config_common.cpp
+        logging.cpp
 )
 
 add_library( # Sets the name of the library.
@@ -65,6 +66,7 @@ find_library( # Sets the name of the path variable.
 target_link_libraries( # Specifies the target library.
         session_util
         PUBLIC
+        libsession::util
         libsession::config
         libsession::crypto
         libsodium::sodium-internal
