@@ -191,11 +191,14 @@ import org.thoughtcrime.securesms.util.MediaUtil
 import org.thoughtcrime.securesms.util.PaddedImageSpan
 import org.thoughtcrime.securesms.util.SaveAttachmentTask
 import org.thoughtcrime.securesms.util.drawToBitmap
+import org.thoughtcrime.securesms.util.fadeIn
+import org.thoughtcrime.securesms.util.fadeOut
 import org.thoughtcrime.securesms.util.isScrolledToBottom
 import org.thoughtcrime.securesms.util.isScrolledToWithin30dpOfBottom
 import org.thoughtcrime.securesms.util.push
 import org.thoughtcrime.securesms.util.show
 import org.thoughtcrime.securesms.util.toPx
+import org.thoughtcrime.securesms.webrtc.WebRtcCallActivity
 import java.lang.ref.WeakReference
 import java.util.LinkedList
 import java.util.Locale
@@ -514,6 +517,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 // ..otherwise we'll use the animated `smoothScrollToPosition` to scroll to our target position.
                 binding.conversationRecyclerView.smoothScrollToPosition(targetPosition)
             }
+        }
+
+        // in case a phone call is in progress, this banner is visible and should bring the user back to the call
+        binding.conversationHeader.callInProgress.setOnClickListener {
+            startActivity(WebRtcCallActivity.getCallActivityIntent(this))
         }
 
         updateUnreadCountIndicator()
@@ -1016,6 +1024,17 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     binding.loader.isVisible = state.showLoader
 
                     updatePlaceholder()
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.callInProgress.collect { callInProgress ->
+                    when (callInProgress) {
+                        true -> binding.conversationHeader.callInProgress.fadeIn()
+                        false -> binding.conversationHeader.callInProgress.fadeOut()
+                    }
                 }
             }
         }

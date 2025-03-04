@@ -20,13 +20,11 @@ import static nl.komponents.kovenant.android.KovenantAndroid.stopKovenant;
 
 import android.annotation.SuppressLint;
 import android.app.Application;
-import android.app.KeyguardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.os.PowerManager;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -56,7 +54,6 @@ import org.session.libsession.snode.SnodeClock;
 import org.session.libsession.snode.SnodeModule;
 import org.session.libsession.utilities.Device;
 import org.session.libsession.utilities.Environment;
-import org.session.libsession.utilities.NonTranslatableStringConstants;
 import org.session.libsession.utilities.ProfilePictureUtilities;
 import org.session.libsession.utilities.SSKEnvironment;
 import org.session.libsession.utilities.TextSecurePreferences;
@@ -102,6 +99,7 @@ import org.thoughtcrime.securesms.notifications.PushRegistrationHandler;
 import org.thoughtcrime.securesms.providers.BlobProvider;
 import org.thoughtcrime.securesms.service.ExpiringMessageManager;
 import org.thoughtcrime.securesms.service.KeyCachingService;
+import org.thoughtcrime.securesms.webrtc.WebRtcCallBridge;
 import org.thoughtcrime.securesms.sskenvironment.ReadReceiptManager;
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository;
 import org.thoughtcrime.securesms.util.AppVisibilityManager;
@@ -166,7 +164,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     @Inject TokenFetcher tokenFetcher;
     @Inject GroupManagerV2 groupManagerV2;
     @Inject SSKEnvironment.ProfileManagerProtocol profileManager;
-    CallMessageProcessor callMessageProcessor;
+    @Inject CallMessageProcessor callMessageProcessor;
     MessagingModuleConfiguration messagingModuleConfiguration;
     @Inject ConfigUploader configUploader;
     @Inject AdminStateSync adminStateSync;
@@ -180,6 +178,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     @Inject Lazy<MessageNotifier> messageNotifierLazy;
     @Inject LokiAPIDatabase apiDB;
     @Inject EmojiSearchDatabase emojiSearchDb;
+    @Inject WebRtcCallBridge webRtcCallBridge;
     @Inject LegacyClosedGroupPollerV2 legacyClosedGroupPollerV2;
     @Inject LegacyGroupDeprecationManager legacyGroupDeprecationManager;
     @Inject CleanupInvitationHandler cleanupInvitationHandler;
@@ -190,8 +189,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     @Inject ExpiredGroupManager expiredGroupManager; // Exists here only to start upon app starts
 
     public volatile boolean isAppVisible;
-    public String KEYGUARD_LOCK_TAG = NonTranslatableStringConstants.APP_NAME + ":KeyguardLock";
-    public String WAKELOCK_TAG      = NonTranslatableStringConstants.APP_NAME + ":WakeLock";
 
     @Override
     public Object getSystemService(String name) {
@@ -280,7 +277,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
                 legacyGroupDeprecationManager,
                 usernameUtils
                 );
-        callMessageProcessor = new CallMessageProcessor(this, textSecurePreferences, ProcessLifecycleOwner.get().getLifecycle(), storage);
+
         Log.i(TAG, "onCreate()");
         startKovenant();
         initializeSecurityProvider();
@@ -502,35 +499,4 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         });
     }
     // endregion
-
-    // Method to wake up the screen and dismiss the keyguard
-    public void wakeUpDeviceAndDismissKeyguardIfRequired() {
-        // Get the KeyguardManager and PowerManager
-        KeyguardManager keyguardManager = (KeyguardManager)getSystemService(Context.KEYGUARD_SERVICE);
-        PowerManager powerManager       = (PowerManager)getSystemService(Context.POWER_SERVICE);
-
-        // Check if the phone is locked & if the screen is awake
-        boolean isPhoneLocked = keyguardManager.isKeyguardLocked();
-        boolean isScreenAwake = powerManager.isInteractive();
-
-        if (!isScreenAwake) {
-            PowerManager.WakeLock wakeLock = powerManager.newWakeLock(
-                    PowerManager.FULL_WAKE_LOCK
-                            | PowerManager.ACQUIRE_CAUSES_WAKEUP
-                            | PowerManager.ON_AFTER_RELEASE,
-                    WAKELOCK_TAG);
-
-            // Acquire the wake lock to wake up the device
-            wakeLock.acquire(3000);
-        }
-
-        // Dismiss the keyguard.
-        // Note: This will not bypass any app-level (Session) lock; only the device-level keyguard.
-        // TODO: When moving to a minimum Android API of 27, replace these deprecated calls with new APIs.
-        if (isPhoneLocked) {
-            KeyguardManager.KeyguardLock keyguardLock = keyguardManager.newKeyguardLock(KEYGUARD_LOCK_TAG);
-            keyguardLock.disableKeyguard();
-        }
-    }
-
 }

@@ -34,6 +34,8 @@ import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
 import org.thoughtcrime.securesms.util.observeChanges
+import org.thoughtcrime.securesms.webrtc.CallManager
+import org.thoughtcrime.securesms.webrtc.data.State
 import javax.inject.Inject
 
 @HiltViewModel
@@ -43,6 +45,7 @@ class HomeViewModel @Inject constructor(
     private val prefs: TextSecurePreferences,
     private val typingStatusRepository: TypingStatusRepository,
     private val configFactory: ConfigFactory,
+    private val callManager: CallManager,
     private val usernameUtils: UsernameUtils
 ) : ViewModel() {
     // SharedFlow that emits whenever the user asks us to reload  the conversation
@@ -50,6 +53,10 @@ class HomeViewModel @Inject constructor(
             extraBufferCapacity = 1,
             onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
+
+    val callInProgress: StateFlow<Boolean> = callManager.currentConnectionStateFlow.map {
+        it !is State.Idle && it !is State.Disconnected // a call is in progress if it isn't idle nor disconnected
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), initialValue = false)
 
     /**
      * A [StateFlow] that emits the list of threads and the typing status of each thread.

@@ -1,9 +1,10 @@
-package org.thoughtcrime.securesms.calls
+package org.thoughtcrime.securesms.webrtc
 
 import android.Manifest
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.IntentFilter
 import android.graphics.Outline
 import android.media.AudioManager
@@ -13,13 +14,11 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewOutlineProvider
 import android.view.WindowManager
-import android.widget.TextView
 import androidx.activity.viewModels
-import androidx.core.content.ContextCompat
+import androidx.core.content.IntentCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -29,49 +28,60 @@ import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityWebrtcBinding
 import org.apache.commons.lang3.time.DurationFormatUtils
 import org.session.libsession.messaging.contacts.Contact
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.permissions.Permissions
-import org.thoughtcrime.securesms.service.WebRtcCallService
-import org.thoughtcrime.securesms.webrtc.AudioManagerCommand
-import org.thoughtcrime.securesms.webrtc.CallViewModel
+import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_ANSWER_INCOMING
+import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_ANSWER_OUTGOING
 import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_CONNECTED
-import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_INCOMING
-import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_OUTGOING
-import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_PRE_INIT
+import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_DISCONNECTED
+import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_HANDLING_ICE
+import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_OFFER_INCOMING
+import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_OFFER_OUTGOING
+import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_PRE_OFFER_INCOMING
+import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_PRE_OFFER_OUTGOING
 import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_RECONNECTING
-import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_RINGING
-import org.thoughtcrime.securesms.webrtc.Orientation
-import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager.AudioDevice.EARPIECE
+import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_SENDING_ICE
+import org.thoughtcrime.securesms.webrtc.CallViewModel.State.NETWORK_FAILURE
+import org.thoughtcrime.securesms.webrtc.CallViewModel.State.RECIPIENT_UNAVAILABLE
 import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager.AudioDevice.SPEAKER_PHONE
 
 @AndroidEntryPoint
 class WebRtcCallActivity : ScreenLockActionBarActivity() {
 
     companion object {
-        const val ACTION_PRE_OFFER = "pre-offer"
         const val ACTION_FULL_SCREEN_INTENT = "fullscreen-intent"
         const val ACTION_ANSWER = "answer"
         const val ACTION_END = "end-call"
+        const val ACTION_START_CALL = "start-call"
 
-        const val BUSY_SIGNAL_DELAY_FINISH = 5500L
+        const val EXTRA_RECIPIENT_ADDRESS = "RECIPIENT_ID"
 
         private const val CALL_DURATION_FORMAT = "HH:mm:ss"
+
+        fun getCallActivityIntent(context: Context): Intent{
+            return Intent(context, WebRtcCallActivity::class.java)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_HISTORY or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
+        }
     }
 
     private val viewModel by viewModels<CallViewModel>()
     private lateinit var binding: ActivityWebrtcBinding
     private var uiJob: Job? = null
-    private var wantsToAnswer = false
-        set(value) {
-            field = value
-            WebRtcCallService.broadcastWantsToAnswer(this, value)
-        }
     private var hangupReceiver: BroadcastReceiver? = null
+
+    //todo PHONE TEMP STRINGS THAT WILL NEED TO BE REPLACED WITH CS STRINGS - putting them all here to easily discard them later
+    val TEMP_SEND_PRE_OFFER = "Creating Call"
+    val TEMP_RECEIVE_PRE_OFFER = "Receiving Pre Offer"
+    val TEMP_SENDING_OFFER = "Sending Call Offer"
+    val TEMP_RECEIVING_OFFER = "Receiving Call Offer"
+    val TEMP_SENDING_CANDIDATES = "Sending Connection Candidates"
+    val TEMP_RECEIVED_ANSWER = "Received Answer"
+    val TEMP_HANDLING_CANDIDATES = "Handling Connection Candidates"
 
     /**
      * We need to track the device's orientation so we can calculate whether or not to rotate the video streams
@@ -91,11 +101,7 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        if (intent.action == ACTION_ANSWER) {
-            val answerIntent = WebRtcCallService.acceptCallIntent(this)
-            answerIntent.flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
-            ContextCompat.startForegroundService(this, answerIntent)
-        }
+        handleIntent(intent)
     }
 
     override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
@@ -103,6 +109,7 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
 
         binding = ActivityWebrtcBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true)
             setTurnScreenOn(true)
@@ -117,48 +124,29 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
         )
         volumeControlStream = AudioManager.STREAM_VOICE_CALL
 
-        if (intent.action == ACTION_ANSWER) {
-            answerCall()
-        }
-        if (intent.action == ACTION_PRE_OFFER) {
-            wantsToAnswer = true
-            answerCall() // this will do nothing, except update notification state
-        }
-        if (intent.action == ACTION_FULL_SCREEN_INTENT) {
-            supportActionBar?.setDisplayHomeAsUpEnabled(false)
-        }
-
         binding.floatingRendererContainer.setOnClickListener {
             viewModel.swapVideos()
         }
 
         binding.microphoneButton.setOnClickListener {
-            val audioEnabledIntent =
-                WebRtcCallService.microphoneIntent(this, !viewModel.microphoneEnabled)
-            startService(audioEnabledIntent)
+            viewModel.toggleMute()
         }
 
         binding.speakerPhoneButton.setOnClickListener {
-            val command =
-                AudioManagerCommand.SetUserDevice(if (viewModel.isSpeaker) EARPIECE else SPEAKER_PHONE)
-            WebRtcCallService.sendAudioManagerCommand(this, command)
+            viewModel.toggleSpeakerphone()
         }
 
         binding.acceptCallButton.setOnClickListener {
-            if (viewModel.currentCallState == CALL_PRE_INIT) {
-                wantsToAnswer = true
-                updateControls()
-            }
             answerCall()
         }
 
         binding.declineCallButton.setOnClickListener {
-            val declineIntent = WebRtcCallService.denyCallIntent(this)
-            startService(declineIntent)
+            denyCall()
         }
 
         hangupReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
+                Log.d("", "Received hangup broadcast in webrtc activity - finishing.")
                 finish()
             }
         }
@@ -170,18 +158,17 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
             Permissions.with(this)
                 .request(Manifest.permission.CAMERA)
                 .onAllGranted {
-                    val intent = WebRtcCallService.cameraEnabled(this, !viewModel.videoState.value.userVideoEnabled)
-                    startService(intent)
+                    viewModel.toggleVideo()
                 }
                 .execute()
         }
 
         binding.switchCameraButton.setOnClickListener {
-            startService(WebRtcCallService.flipCamera(this))
+            viewModel.flipCamera()
         }
 
         binding.endCallButton.setOnClickListener {
-            startService(WebRtcCallService.hangupIntent(this))
+            hangUp()
         }
         binding.backArrow.setOnClickListener {
             onBackPressed()
@@ -205,9 +192,21 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
             }
         }
 
-        // Substitute "Session" into the "{app_name} Call" text
-        val sessionCallTV = findViewById<TextView>(R.id.sessionCallText)
-        sessionCallTV?.text = Phrase.from(this, R.string.callsSessionCall).put(APP_NAME_KEY, getString(R.string.app_name)).format()
+        handleIntent(intent)
+    }
+
+    private fun handleIntent(intent: Intent) {
+        Log.d("", "Web RTC activity handle intent ${intent.action}")
+        if (intent.action == ACTION_START_CALL && intent.hasExtra(EXTRA_RECIPIENT_ADDRESS)) {
+            viewModel.createCall(IntentCompat.getParcelableExtra(intent, EXTRA_RECIPIENT_ADDRESS, Address::class.java)!!)
+        }
+        if (intent.action == ACTION_ANSWER) {
+            answerCall()
+        }
+
+        if (intent.action == ACTION_FULL_SCREEN_INTENT) {
+            supportActionBar?.setDisplayHomeAsUpEnabled(false)
+        }
     }
 
     /**
@@ -250,8 +249,15 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
     }
 
     private fun answerCall() {
-        val answerIntent = WebRtcCallService.acceptCallIntent(this)
-        ContextCompat.startForegroundService(this, answerIntent)
+        viewModel.answerCall()
+    }
+
+    private fun denyCall(){
+        viewModel.denyCall()
+    }
+
+    private fun hangUp(){
+        viewModel.hangUp()
     }
 
     private fun updateControlsRotation() {
@@ -284,27 +290,69 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
         }
     }
 
-    private fun updateControls(state: CallViewModel.State? = null) {
+    private fun updateControls(state: CallViewModel.State, hasAcceptedCall: Boolean) {
         with(binding) {
-            if (state == null) {
-                if (wantsToAnswer) {
-                    controlGroup.isVisible = true
-                    remoteLoadingView.isVisible = true
-                    incomingControlGroup.isVisible = false
-                }
-            } else {
-                controlGroup.isVisible = state in listOf(
-                    CALL_CONNECTED,
-                    CALL_OUTGOING,
-                    CALL_INCOMING
-                ) || (state == CALL_PRE_INIT && wantsToAnswer)
-                remoteLoadingView.isVisible =
-                    state !in listOf(CALL_CONNECTED, CALL_RINGING, CALL_PRE_INIT) || wantsToAnswer
-                incomingControlGroup.isVisible =
-                    state in listOf(CALL_RINGING, CALL_PRE_INIT) && !wantsToAnswer
-                reconnectingText.isVisible = state == CALL_RECONNECTING
-                endCallButton.isVisible = endCallButton.isVisible || state == CALL_RECONNECTING
+            // set up title and subtitle
+            callTitle.text = when (state) {
+                CALL_PRE_OFFER_OUTGOING, CALL_PRE_OFFER_INCOMING,
+                CALL_OFFER_OUTGOING, CALL_OFFER_INCOMING,
+                    -> getString(R.string.callsRinging)
+
+                CALL_ANSWER_INCOMING,
+                CALL_ANSWER_OUTGOING,
+                    -> getString(R.string.callsConnecting)
+
+                CALL_CONNECTED -> ""
+
+                CALL_RECONNECTING -> getString(R.string.callsReconnecting)
+                RECIPIENT_UNAVAILABLE,
+                CALL_DISCONNECTED -> getString(R.string.callsEnded)
+
+                NETWORK_FAILURE -> getString(R.string.callsErrorStart)
+
+                else -> callTitle.text
             }
+
+            callSubtitle.text = when (state) {
+                CALL_PRE_OFFER_OUTGOING -> TEMP_SEND_PRE_OFFER
+                CALL_PRE_OFFER_INCOMING -> TEMP_RECEIVE_PRE_OFFER
+
+                CALL_OFFER_OUTGOING -> TEMP_SENDING_OFFER
+                CALL_OFFER_INCOMING -> TEMP_RECEIVING_OFFER
+
+                CALL_ANSWER_OUTGOING, CALL_ANSWER_INCOMING -> TEMP_RECEIVED_ANSWER
+
+                CALL_SENDING_ICE -> TEMP_SENDING_CANDIDATES
+                CALL_HANDLING_ICE -> TEMP_HANDLING_CANDIDATES
+
+                else -> ""
+            }
+            callSubtitle.isVisible = callSubtitle.text.isNotEmpty()
+
+            // buttons visibility
+            val showCallControls = state in listOf(
+                CALL_CONNECTED,
+                CALL_PRE_OFFER_OUTGOING,
+                CALL_OFFER_OUTGOING,
+                CALL_ANSWER_OUTGOING,
+                CALL_ANSWER_INCOMING,
+            ) || (state in listOf(
+                CALL_PRE_OFFER_INCOMING,
+                CALL_OFFER_INCOMING,
+                CALL_HANDLING_ICE,
+                CALL_SENDING_ICE
+            ) && hasAcceptedCall)
+            controlGroup.isVisible = showCallControls
+
+            endCallButton.isVisible = showCallControls || state == CALL_RECONNECTING
+
+            incomingControlGroup.isVisible =
+                state in listOf(
+                    CALL_PRE_OFFER_INCOMING,
+                    CALL_OFFER_INCOMING,
+                    CALL_HANDLING_ICE,
+                    CALL_SENDING_ICE
+                ) && !hasAcceptedCall
         }
     }
 
@@ -322,17 +370,8 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
             }
 
             launch {
-                viewModel.callState.collect { state ->
-                    Log.d("Loki", "Consuming view model state $state")
-                    when (state) {
-                        CALL_RINGING -> if (wantsToAnswer) {
-                            answerCall()
-                            wantsToAnswer = false
-                        }
-                        CALL_CONNECTED -> wantsToAnswer = false
-                        else -> {}
-                    }
-                    updateControls(state)
+                viewModel.callState.collect { data ->
+                    updateControls(data.state, data.hasAcceptedCall)
                 }
             }
 
@@ -359,14 +398,13 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
             launch {
                 while (isActive) {
                     val startTime = viewModel.callStartTime
-                    if (startTime == -1L) {
-                        binding.callTime.isVisible = false
-                    } else {
-                        binding.callTime.isVisible = true
-                        binding.callTime.text = DurationFormatUtils.formatDuration(
-                            System.currentTimeMillis() - startTime,
-                            CALL_DURATION_FORMAT
-                        )
+                    if (startTime != -1L) {
+                        if(viewModel.currentCallState == CALL_CONNECTED) {
+                            binding.callTitle.text = DurationFormatUtils.formatDuration(
+                                System.currentTimeMillis() - startTime,
+                                CALL_DURATION_FORMAT
+                            )
+                        }
                     }
 
                     delay(1_000)

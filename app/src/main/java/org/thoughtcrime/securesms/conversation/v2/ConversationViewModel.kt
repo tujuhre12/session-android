@@ -68,8 +68,11 @@ import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.mms.AudioSlide
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.DateUtils
+import org.thoughtcrime.securesms.webrtc.CallManager
+import org.thoughtcrime.securesms.webrtc.data.State
 import java.time.ZoneId
 import java.util.UUID
+
 
 class ConversationViewModel(
     val threadId: Long,
@@ -85,9 +88,11 @@ class ConversationViewModel(
     private val textSecurePreferences: TextSecurePreferences,
     private val configFactory: ConfigFactory,
     private val groupManagerV2: GroupManagerV2,
+    private val callManager: CallManager,
     val legacyGroupDeprecationManager: LegacyGroupDeprecationManager,
     private val expiredGroupManager: ExpiredGroupManager,
     private val usernameUtils: UsernameUtils
+
 ) : ViewModel() {
 
     val showSendAfterApprovalText: Boolean
@@ -261,6 +266,11 @@ class ConversationViewModel(
         messageDataProvider = messageDataProvider,
         scope = viewModelScope,
     )
+
+    val callInProgress: StateFlow<Boolean> = callManager.currentConnectionStateFlow.map {
+        // a call is in progress if it isn't idle nor disconnected and the recipient is the person on the call
+        it !is State.Idle && it !is State.Disconnected && callManager.recipient?.address == recipient?.address
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
 
     init {
         viewModelScope.launch(Dispatchers.Default) {
@@ -1101,6 +1111,7 @@ class ConversationViewModel(
         private val textSecurePreferences: TextSecurePreferences,
         private val configFactory: ConfigFactory,
         private val groupManagerV2: GroupManagerV2,
+        private val callManager: CallManager,
         private val legacyGroupDeprecationManager: LegacyGroupDeprecationManager,
         private val expiredGroupManager: ExpiredGroupManager,
         private val usernameUtils: UsernameUtils
@@ -1121,6 +1132,7 @@ class ConversationViewModel(
                 textSecurePreferences = textSecurePreferences,
                 configFactory = configFactory,
                 groupManagerV2 = groupManagerV2,
+                callManager = callManager,
                 legacyGroupDeprecationManager = legacyGroupDeprecationManager,
                 expiredGroupManager = expiredGroupManager,
                 usernameUtils = usernameUtils
