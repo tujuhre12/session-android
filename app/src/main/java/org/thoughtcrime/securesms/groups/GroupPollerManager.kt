@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
@@ -64,9 +65,12 @@ class GroupPollerManager @Inject constructor(
     @Suppress("OPT_IN_USAGE")
     private val groupPollers: StateFlow<Map<AccountId, GroupPollerHandle>> =
         combine(
-            connectivity.networkAvailable,
+            connectivity.networkAvailable.debounce(200L),
             preferences.watchLocalNumber()
-        ) { networkAvailable, localNumber -> networkAvailable && localNumber != null }
+        ) { networkAvailable, localNumber ->
+            Log.v(TAG, "Network available: $networkAvailable, hasLocalNumber: ${localNumber != null}")
+            networkAvailable && localNumber != null
+        }
             // This flatMap produces a flow of groups that should be polled now
             .flatMapLatest { shouldPoll ->
                 if (shouldPoll) {

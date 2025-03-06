@@ -7,14 +7,12 @@ import android.net.ConnectivityManager
 import android.net.ConnectivityManager.NetworkCallback
 import android.net.Network
 import android.net.NetworkCapabilities
-import android.net.NetworkRequest
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
+import org.session.libsignal.utilities.Log
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -31,24 +29,21 @@ class InternetConnectivity @Inject constructor(application: Application) {
                 network: Network,
                 networkCapabilities: NetworkCapabilities
             ) {
-                trySend(networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET))
-            }
-
-            override fun onAvailable(network: Network) {
-                trySend(true)
+                super.onCapabilitiesChanged(network, networkCapabilities)
+                val hasInternet =
+                    networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+                Log.v("InternetConnectivity", "Network capabilities changed: hasInternet? $hasInternet")
+                trySend(hasInternet)
             }
 
             override fun onLost(network: Network) {
+                super.onLost(network)
+                Log.v("InternetConnectivity", "Network become lost")
                 trySend(false)
             }
         }
 
-        connectivityManager.registerNetworkCallback(
-            NetworkRequest.Builder()
-                .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-                .build(),
-            callback
-        )
+        connectivityManager.registerDefaultNetworkCallback(callback)
 
         awaitClose {
             connectivityManager.unregisterNetworkCallback(callback)
