@@ -29,13 +29,13 @@ class NetworkConnectivity @Inject constructor(application: Application) {
             override fun onAvailable(network: Network) {
                 super.onAvailable(network)
 
-                Log.v("InternetConnectivity", "Network become available")
+                Log.v("NetworkConnectivity", "Network become available")
                 trySend(true)
             }
 
             override fun onLost(network: Network) {
                 super.onLost(network)
-                Log.v("InternetConnectivity", "Network become lost")
+                Log.v("NetworkConnectivity", "Network become lost")
                 trySend(false)
             }
         }
