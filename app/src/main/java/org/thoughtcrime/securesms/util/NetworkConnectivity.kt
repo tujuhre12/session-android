@@ -6,7 +6,6 @@ import android.content.Context.CONNECTIVITY_SERVICE
 import android.net.ConnectivityManager
 import android.net.ConnectivityManager.NetworkCallback
 import android.net.Network
-import android.net.NetworkCapabilities
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.SharingStarted
@@ -27,15 +26,11 @@ class NetworkConnectivity @Inject constructor(application: Application) {
         val connectivityManager = application.getSystemService(ConnectivityManager::class.java)
 
         val callback = object : NetworkCallback() {
-            override fun onCapabilitiesChanged(
-                network: Network,
-                networkCapabilities: NetworkCapabilities
-            ) {
-                super.onCapabilitiesChanged(network, networkCapabilities)
-                val hasInternet =
-                    networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
-                Log.v("InternetConnectivity", "Network capabilities changed: hasInternet? $hasInternet")
-                trySend(hasInternet)
+            override fun onAvailable(network: Network) {
+                super.onAvailable(network)
+
+                Log.v("InternetConnectivity", "Network become available")
+                trySend(true)
             }
 
             override fun onLost(network: Network) {
@@ -62,15 +57,7 @@ class NetworkConnectivity @Inject constructor(application: Application) {
         private fun haveValidNetworkConnection(context: Context): Boolean {
             val cm = context.getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
 
-            // Early exit if we have no active network..
-            val activeNetwork = cm.activeNetwork ?: return false
-
-            // ..otherwise determine what capabilities are available to the active network.
-            val networkCapabilities = cm.getNetworkCapabilities(activeNetwork)
-            val internetConnectionValid = networkCapabilities != null &&
-                    networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-
-            return internetConnectionValid
+            return cm.activeNetwork != null
         }
     }
 
