@@ -43,7 +43,7 @@ import org.thoughtcrime.securesms.util.CallNotificationBuilder.Companion.TYPE_IN
 import org.thoughtcrime.securesms.util.CallNotificationBuilder.Companion.TYPE_INCOMING_RINGING
 import org.thoughtcrime.securesms.util.CallNotificationBuilder.Companion.TYPE_OUTGOING_RINGING
 import org.thoughtcrime.securesms.util.CallNotificationBuilder.Companion.WEBRTC_NOTIFICATION
-import org.thoughtcrime.securesms.util.InternetConnectivity
+import org.thoughtcrime.securesms.util.NetworkConnectivity
 import org.thoughtcrime.securesms.webrtc.AudioManagerCommand
 import org.thoughtcrime.securesms.webrtc.CallManager
 import org.thoughtcrime.securesms.webrtc.CallViewModel
@@ -219,7 +219,7 @@ class WebRtcCallService : LifecycleService(), CallManager.WebRtcListener {
     lateinit var callManager: CallManager
 
     @Inject
-    lateinit var internetConnectivity: InternetConnectivity
+    lateinit var networkConnectivity: NetworkConnectivity
 
     private var wantsToAnswer = false
     private var currentTimeouts = 0
@@ -335,7 +335,7 @@ class WebRtcCallService : LifecycleService(), CallManager.WebRtcListener {
         registerUncaughtExceptionHandler()
 
         GlobalScope.launch {
-            internetConnectivity.networkAvailable.collectLatest(::networkChange)
+            networkConnectivity.networkAvailable.collectLatest(::networkChange)
         }
     }
 

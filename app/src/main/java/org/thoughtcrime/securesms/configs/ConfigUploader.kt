@@ -44,7 +44,7 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Namespace
 import org.session.libsignal.utilities.Snode
 import org.session.libsignal.utilities.retryWithUniformInterval
-import org.thoughtcrime.securesms.util.InternetConnectivity
+import org.thoughtcrime.securesms.util.NetworkConnectivity
 import javax.inject.Inject
 
 private const val TAG = "ConfigUploader"
@@ -64,7 +64,7 @@ class ConfigUploader @Inject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val storageProtocol: StorageProtocol,
     private val clock: SnodeClock,
-    private val internetConnectivity: InternetConnectivity,
+    private val networkConnectivity: NetworkConnectivity,
     private val textSecurePreferences: TextSecurePreferences,
 ) {
     private var job: Job? = null
@@ -77,7 +77,7 @@ class ConfigUploader @Inject constructor(
      * The value pushed doesn't matter as nothing is emitted when the conditions are not met.
      */
     @OptIn(ExperimentalCoroutinesApi::class)
-    private fun pathBecomesAvailable(): Flow<*> = internetConnectivity.networkAvailable
+    private fun pathBecomesAvailable(): Flow<*> = networkConnectivity.networkAvailable
         .flatMapLatest { hasNetwork ->
             if (hasNetwork) {
                 OnionRequestAPI.hasPath.filter { it }
