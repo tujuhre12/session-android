@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.groups
 
-import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -25,8 +24,6 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.supervisorScope
-import org.session.libsession.database.StorageProtocol
-import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.TextSecurePreferences
@@ -35,7 +32,7 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.util.AppVisibilityManager
-import org.thoughtcrime.securesms.util.InternetConnectivity
+import org.thoughtcrime.securesms.util.NetworkConnectivity
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -59,7 +56,7 @@ class GroupPollerManager @Inject constructor(
     clock: SnodeClock,
     preferences: TextSecurePreferences,
     appVisibilityManager: AppVisibilityManager,
-    connectivity: InternetConnectivity,
+    connectivity: NetworkConnectivity,
     groupRevokedMessageHandler: GroupRevokedMessageHandler,
 ) {
     @Suppress("OPT_IN_USAGE")
