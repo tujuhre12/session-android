@@ -5,7 +5,6 @@ import android.animation.ValueAnimator
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.PointF
-import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.AttributeSet
@@ -28,7 +27,6 @@ class InputBarButton : RelativeLayout {
     private val gestureHandler = Handler(Looper.getMainLooper())
     private var isSendButton = false
     private var hasOpaqueBackground = false
-    private var isGIFButton = false
     @DrawableRes private var iconID = 0
     private var longPressCallback: Runnable? = null
     private var onDownTimestamp = 0L
@@ -73,7 +71,7 @@ class InputBarButton : RelativeLayout {
 
     private val imageView by lazy {
         val result = ImageView(context)
-        val size = if (isGIFButton) toPx(24, resources) else toPx(16, resources)
+        val size = toPx(20, resources)
         result.layoutParams = LayoutParams(size, size)
         result.scaleType = ImageView.ScaleType.CENTER_INSIDE
         result.setImageResource(iconID)
@@ -88,11 +86,10 @@ class InputBarButton : RelativeLayout {
     constructor(context: Context, attrs: AttributeSet, defStyleAttr: Int) : super(context, attrs, defStyleAttr) { throw IllegalAccessException("Use InputBarButton(context:iconID:) instead.") }
 
     constructor(context: Context, @DrawableRes iconID: Int, isSendButton: Boolean = false,
-        hasOpaqueBackground: Boolean = false, isGIFButton: Boolean = false) : super(context) {
+        hasOpaqueBackground: Boolean = false) : super(context) {
         this.isSendButton = isSendButton
         this.iconID = iconID
         this.hasOpaqueBackground = hasOpaqueBackground
-        this.isGIFButton = isGIFButton
         val size = resources.getDimension(R.dimen.input_bar_button_expanded_size).toInt()
         val layoutParams = LayoutParams(size, size)
         this.layoutParams = layoutParams
@@ -155,7 +152,7 @@ class InputBarButton : RelativeLayout {
         longPressCallback?.let { gestureHandler.removeCallbacks(it) }
         val newLongPressCallback = Runnable { onLongPress?.invoke() }
         this.longPressCallback = newLongPressCallback
-        gestureHandler.postDelayed(newLongPressCallback, InputBarButton.longPressDurationThreshold)
+        gestureHandler.postDelayed(newLongPressCallback, longPressDurationThreshold)
         onDownTimestamp = Date().time
     }
 
@@ -172,7 +169,7 @@ class InputBarButton : RelativeLayout {
     private fun onUp(event: MotionEvent) {
         onUp?.invoke(event)
         collapse()
-        if ((Date().time - onDownTimestamp) < InputBarButton.longPressDurationThreshold) {
+        if ((Date().time - onDownTimestamp) < longPressDurationThreshold) {
             longPressCallback?.let { gestureHandler.removeCallbacks(it) }
             onPress?.invoke()
         }

@@ -1,37 +1,50 @@
 package org.thoughtcrime.securesms.webrtc
 
+import android.content.Context
+import android.content.Intent
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
-import org.session.libsession.database.StorageProtocol
-import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager
+import kotlinx.coroutines.flow.stateIn
+import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.UsernameUtils
 import org.webrtc.SurfaceViewRenderer
 import javax.inject.Inject
 
 @HiltViewModel
 class CallViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val callManager: CallManager,
-    private val storage: StorageProtocol,
+    private val rtcCallBridge: WebRtcCallBridge,
+    private val usernameUtils: UsernameUtils
+
 ): ViewModel() {
 
+    //todo PHONE Can we eventually remove this state and instead use the StateMachine.kt State?
     enum class State {
-        CALL_PENDING,
+        CALL_INITIALIZING, // default starting state before any rtc state kicks in
 
-        CALL_PRE_INIT,
-        CALL_INCOMING,
-        CALL_OUTGOING,
+        CALL_PRE_OFFER_INCOMING,
+        CALL_PRE_OFFER_OUTGOING,
+        CALL_OFFER_INCOMING,
+        CALL_OFFER_OUTGOING,
+        CALL_ANSWER_INCOMING,
+        CALL_ANSWER_OUTGOING,
+        CALL_HANDLING_ICE,
+        CALL_SENDING_ICE,
+
         CALL_CONNECTED,
-        CALL_RINGING,
-        CALL_BUSY,
         CALL_DISCONNECTED,
         CALL_RECONNECTING,
 
         NETWORK_FAILURE,
         RECIPIENT_UNAVAILABLE,
-        NO_SUCH_USER,
-        UNTRUSTED_IDENTITY,
     }
 
     val floatingRenderer: SurfaceViewRenderer?
@@ -40,20 +53,11 @@ class CallViewModel @Inject constructor(
     val fullscreenRenderer: SurfaceViewRenderer?
         get() = callManager.fullscreenRenderer
 
-    var microphoneEnabled: Boolean = true
-        private set
-
-    var isSpeaker: Boolean = false
-        private set
-
     val audioDeviceState
-        get() = callManager.audioDeviceEvents.onEach {
-            isSpeaker = it.selectedDevice == SignalAudioManager.AudioDevice.SPEAKER_PHONE
-        }
+        get() = callManager.audioDeviceEvents
 
     val localAudioEnabledState
         get() = callManager.audioEvents.map { it.isEnabled }
-            .onEach { microphoneEnabled = it }
 
     val videoState: StateFlow<VideoState>
         get() = callManager.videoState
@@ -65,13 +69,39 @@ class CallViewModel @Inject constructor(
         }
 
     val currentCallState get() = callManager.currentCallState
-    val callState get() = callManager.callStateEvents
+    val callState: StateFlow<CallState> = callManager.callStateEvents.combine(rtcCallBridge.hasAcceptedCall){
+        state, accepted -> CallState(state = state, hasAcceptedCall = accepted)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), CallState(State.CALL_INITIALIZING, false))
+
     val recipient get() = callManager.recipientEvents
     val callStartTime: Long get() = callManager.callStartTime
 
-    fun getUserName(accountID: String) = storage.getContactNameWithAccountID(accountID)
+    fun swapVideos() = callManager.swapVideos()
 
-    fun swapVideos() {
-       callManager.swapVideos()
-    }
+    fun toggleMute() = callManager.toggleMuteAudio()
+
+    fun toggleSpeakerphone() = callManager.toggleSpeakerphone()
+
+    fun toggleVideo() = callManager.toggleVideo()
+
+    fun flipCamera() = callManager.flipCamera()
+
+    fun answerCall() = rtcCallBridge.handleAnswerCall()
+
+    fun denyCall() = rtcCallBridge.handleDenyCall()
+
+    fun createCall(recipientAddress: Address) =
+        rtcCallBridge.handleOutgoingCall(Recipient.from(context, recipientAddress, true))
+
+    fun hangUp() = rtcCallBridge.handleLocalHangup(null)
+
+    fun getContactName(accountID: String) = usernameUtils.getContactNameWithAccountID(accountID)
+
+    fun getCurrentUsername() = usernameUtils.getCurrentUsernameWithAccountIdFallback()
+
+    data class CallState(
+        val state: State,
+        val hasAcceptedCall: Boolean
+
+    )
 }

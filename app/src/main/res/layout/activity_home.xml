@@ -67,7 +67,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_centerInParent="true"
-                        android:src="@drawable/ic_baseline_search_24"
+                        android:src="@drawable/ic_search"
                         app:tint="?sessionLogoTint" />
 
                 </RelativeLayout>
@@ -110,7 +110,7 @@
                     android:layout_gravity="center"
                     android:textColor="?message_sent_text_color"
                     android:background="?colorAccent"
-                    android:textSize="11sp"
+                    android:textSize="@dimen/small_font_size"
                     android:paddingVertical="4dp"
                     android:paddingHorizontal="64dp"
                     android:gravity="center"
@@ -127,6 +127,21 @@
                     android:src="@drawable/ic_x"
                     app:tint="@color/black" />
             </FrameLayout>
+
+            <TextView
+                android:id="@+id/callInProgress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:background="?colorAccent"
+                android:paddingVertical="@dimen/small_spacing"
+                android:gravity="center_horizontal"
+                android:textColor="?message_sent_text_color"
+                android:paddingHorizontal="@dimen/medium_spacing"
+                android:textSize="@dimen/small_font_size"
+                android:visibility="gone"
+                android:text="@string/callsInProgress"
+                tools:visibility="visible" />
 
         </LinearLayout>
 
@@ -174,6 +189,7 @@
             android:layout_marginBottom="@dimen/new_conversation_button_bottom_offset"
             app:rippleColor="@color/button_primary_ripple"
             android:src="@drawable/ic_plus"
+            app:maxImageSize="32dp"
             android:tint="?message_sent_text_color"/>
 
     </RelativeLayout>

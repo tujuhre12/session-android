@@ -53,13 +53,14 @@ import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.thoughtcrime.securesms.MediaPreviewActivity.getPreviewIntent
-import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
+import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.ui.Avatar
 import org.thoughtcrime.securesms.ui.CarouselNextButton
 import org.thoughtcrime.securesms.ui.CarouselPrevButton
@@ -80,10 +81,9 @@ import org.thoughtcrime.securesms.ui.theme.blackAlpha40
 import org.thoughtcrime.securesms.ui.theme.bold
 import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
 import org.thoughtcrime.securesms.ui.theme.monospace
-import javax.inject.Inject
 
 @AndroidEntryPoint
-class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
+class MessageDetailActivity : ScreenLockActionBarActivity() {
 
     @Inject
     lateinit var storage: StorageProtocol
@@ -213,8 +213,10 @@ fun CellMetadata(
                 modifier = Modifier.padding(LocalDimensions.current.spacing),
                 verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
             ) {
-                TitledText(sent)
-                TitledText(received)
+                // Show the sent details if we're the sender of the message, otherwise show the received details
+                if (sent     != null) { TitledText(sent)     }
+                if (received != null) { TitledText(received) }
+
                 TitledErrorText(error)
                 senderInfo?.let {
                     TitledView(state.fromTitle) {
@@ -250,7 +252,7 @@ fun CellButtons(
             onReply?.let {
                 LargeItemButton(
                     R.string.reply,
-                    R.drawable.ic_message_details__reply,
+                    R.drawable.ic_reply,
                     onClick = it
                 )
                 Divider()
@@ -266,7 +268,7 @@ fun CellButtons(
             onSave?.let {
                 LargeItemButton(
                     R.string.save,
-                    R.drawable.ic_baseline_save_24,
+                    R.drawable.ic_arrow_down_to_line,
                     onClick = it
                 )
                 Divider()
@@ -275,7 +277,7 @@ fun CellButtons(
             onResend?.let {
                 LargeItemButton(
                     R.string.resend,
-                    R.drawable.ic_message_details__refresh,
+                    R.drawable.ic_refresh_cw,
                     onClick = it
                 )
                 Divider()
@@ -284,7 +286,7 @@ fun CellButtons(
             onDelete?.let {
                 LargeItemButton(
                     R.string.delete,
-                    R.drawable.ic_delete,
+                    R.drawable.ic_trash_2,
                     colors = dangerButtonColors(),
                     onClick = it
                 )
@@ -353,13 +355,16 @@ fun ExpandButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
     Surface(
         shape = CircleShape,
         color = blackAlpha40,
-        modifier = modifier,
+        modifier = modifier
+            .clickable { onClick() },
         contentColor = Color.White,
     ) {
         Icon(
-            painter = painterResource(id = R.drawable.ic_expand),
+            painter = painterResource(id = R.drawable.ic_maximize_2),
             contentDescription = stringResource(id = R.string.AccessibilityId_expand),
-            modifier = Modifier.clickable { onClick() },
+            modifier = Modifier
+                .padding(LocalDimensions.current.xxsSpacing)
+                .size(LocalDimensions.current.xsSpacing),
         )
     }
 }
@@ -481,12 +486,14 @@ fun TitledText(
 ) {
     titledText?.apply {
         TitledView(title, modifier) {
-            Text(
-                text,
-                style = style,
-                color = color,
-                modifier = Modifier.fillMaxWidth()
-            )
+            if (text != null) {
+                Text(
+                    text,
+                    style = style,
+                    color = color,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
     }
 }

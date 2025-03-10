@@ -209,8 +209,6 @@ interface StorageProtocol {
 
     // Contacts
     fun getContactWithAccountID(accountID: String): Contact?
-    fun getContactNameWithAccountID(accountID: String, groupId: AccountId? = null, contactContext: Contact.ContactContext = Contact.ContactContext.REGULAR): String
-    fun getContactNameWithAccountID(contact: Contact?, accountID: String, groupId: AccountId? = null, contactContext: Contact.ContactContext = Contact.ContactContext.REGULAR): String
     fun getAllContacts(): Set<Contact>
     fun setContact(contact: Contact)
     fun getRecipientForThread(threadId: Long): Recipient?

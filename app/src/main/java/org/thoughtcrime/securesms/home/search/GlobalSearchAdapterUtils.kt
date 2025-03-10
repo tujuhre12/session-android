@@ -132,7 +132,7 @@ fun ContentView.bindModel(query: String?, model: Message) = binding.apply {
     val textSpannable = SpannableStringBuilder()
     if (model.messageResult.conversationRecipient != model.messageResult.messageRecipient) {
         // group chat, bind
-        val text = "${model.messageResult.messageRecipient.toShortString()}: "
+        val text = "${model.messageResult.messageRecipient.name}: "
         textSpannable.append(text)
     }
     textSpannable.append(getHighlight(
@@ -147,7 +147,7 @@ fun ContentView.bindModel(query: String?, model: Message) = binding.apply {
 
 fun Recipient.getSearchName(): String =
     name.takeIf { it.isNotEmpty() && !it.looksLikeAccountId }
-    ?: address.serialize().let(::truncateIdForDisplay)
+    ?: address.toString().let(::truncateIdForDisplay)
 
 fun Contact.getSearchName(): String =
     nickname?.takeIf { it.isNotEmpty() && !it.looksLikeAccountId }

@@ -4,6 +4,10 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.util.Date
+import java.util.concurrent.TimeUnit
+import javax.inject.Inject
+import kotlin.text.Typography.ellipsis
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -20,6 +24,7 @@ import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Util
 import org.session.libsession.utilities.recipients.Recipient
+import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.MediaPreviewArgs
 import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
@@ -32,9 +37,6 @@ import org.thoughtcrime.securesms.mms.Slide
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.TitledText
-import java.util.Date
-import java.util.concurrent.TimeUnit
-import javax.inject.Inject
 
 @HiltViewModel
 class MessageDetailsViewModel @Inject constructor(
@@ -44,6 +46,7 @@ class MessageDetailsViewModel @Inject constructor(
     private val threadDb: ThreadDatabase,
     private val repository: ConversationRepository,
     private val deprecationManager: LegacyGroupDeprecationManager,
+    private val context: ApplicationContext
 ) : ViewModel() {
 
     private var job: Job? = null
@@ -59,45 +62,64 @@ class MessageDetailsViewModel @Inject constructor(
             job?.cancel()
 
             field = value
-            val record = mmsSmsDatabase.getMessageForTimestamp(timestamp)
+            val messageRecord = mmsSmsDatabase.getMessageForTimestamp(timestamp)
 
-            if (record == null) {
+            if (messageRecord == null) {
                 viewModelScope.launch { event.send(Event.Finish) }
                 return
             }
 
-            val mmsRecord = record as? MmsMessageRecord
+            val mmsRecord = messageRecord as? MmsMessageRecord
 
             job = viewModelScope.launch {
-                repository.changes(record.threadId)
+                repository.changes(messageRecord.threadId)
                     .filter { mmsSmsDatabase.getMessageForTimestamp(value) == null }
                     .collect { event.send(Event.Finish) }
             }
 
-            state.value = record.run {
+            state.value = messageRecord.run {
                 val slides = mmsRecord?.slideDeck?.slides ?: emptyList()
 
                 val recipient = threadDb.getRecipientForThreadId(threadId)!!
                 val isDeprecatedLegacyGroup = recipient.isLegacyGroupRecipient &&
-                        deprecationManager.isDeprecated
+                                              deprecationManager.isDeprecated
+
+
+                val errorString = lokiMessageDatabase.getErrorMessage(id)
 
                 MessageDetailsState(
                     attachments = slides.map(::Attachment),
-                    record = record,
-                    sent = dateSent.let(::Date).toString().let { TitledText(R.string.sent, it) },
-                    received = dateReceived.let(::Date).toString().let { TitledText(R.string.received, it) },
-                    error = lokiMessageDatabase.getErrorMessage(id)?.let { TitledText(R.string.theError, it) },
-                    senderInfo = individualRecipient.run { TitledText(name, address.serialize()) },
+                    record = messageRecord,
+
+                    // Set the "Sent" message info TitledText appropriately
+                    sent = if (messageRecord.isSending && errorString == null) {
+                        val sendingWithEllipsisString = context.getString(R.string.sending) + ellipsis // e.g., "Sending…"
+                        TitledText(sendingWithEllipsisString, null)
+                    } else if (messageRecord.isSent && errorString == null) {
+                        dateReceived.let(::Date).toString().let { TitledText(R.string.sent, it) }
+                    } else {
+                        null // Not sending or sent? Don't display anything for the "Sent" element.
+                    },
+
+                    // Set the "Received" message info TitledText appropriately
+                    received = if (messageRecord.isIncoming && errorString == null) {
+                        dateReceived.let(::Date).toString().let { TitledText(R.string.received, it) }
+                    } else {
+                        null // Not incoming? Then don't display anything for the "Received" element.
+                    },
+
+                    error = errorString?.let { TitledText(context.getString(R.string.theError) + ":", it) },
+                    senderInfo = individualRecipient.run { TitledText(name, address.toString()) },
                     sender = individualRecipient,
                     thread = recipient,
-                    readOnly = isDeprecatedLegacyGroup,
+                    readOnly = isDeprecatedLegacyGroup
                 )
             }
         }
 
     private val Slide.details: List<TitledText>
         get() = listOfNotNull(
-            fileName.orNull()?.let { TitledText(R.string.attachmentsFileId, it) },
+            TitledText(R.string.attachmentsFileId, filename),
             TitledText(R.string.attachmentsFileType, asAttachment().contentType),
             TitledText(R.string.attachmentsFileSize, Util.getPrettyFileSize(fileSize)),
             takeIf { it is ImageSlide }
@@ -120,8 +142,7 @@ class MessageDetailsViewModel @Inject constructor(
                 )
             }
 
-    fun Attachment(slide: Slide): Attachment =
-        Attachment(slide.details, slide.fileName.orNull(), slide.uri, slide is ImageSlide)
+    fun Attachment(slide: Slide): Attachment = Attachment(slide.details, slide.filename, slide.uri, hasImage = (slide is ImageSlide))
 
     fun onClickImage(index: Int) {
         val state = state.value

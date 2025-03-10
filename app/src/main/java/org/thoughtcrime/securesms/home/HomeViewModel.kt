@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.home
 
 import android.content.ContentResolver
-import android.content.Context
 import androidx.annotation.AttrRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asFlow
@@ -28,12 +27,15 @@ import kotlinx.coroutines.flow.stateIn
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.UsernameUtils
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
 import org.thoughtcrime.securesms.util.observeChanges
+import org.thoughtcrime.securesms.webrtc.CallManager
+import org.thoughtcrime.securesms.webrtc.data.State
 import javax.inject.Inject
 
 @HiltViewModel
@@ -42,13 +44,19 @@ class HomeViewModel @Inject constructor(
     private val contentResolver: ContentResolver,
     private val prefs: TextSecurePreferences,
     private val typingStatusRepository: TypingStatusRepository,
-    private val configFactory: ConfigFactory
+    private val configFactory: ConfigFactory,
+    private val callManager: CallManager,
+    private val usernameUtils: UsernameUtils
 ) : ViewModel() {
     // SharedFlow that emits whenever the user asks us to reload  the conversation
     private val manualReloadTrigger = MutableSharedFlow<Unit>(
             extraBufferCapacity = 1,
             onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
+
+    val callInProgress: StateFlow<Boolean> = callManager.currentConnectionStateFlow.map {
+        it !is State.Idle && it !is State.Disconnected // a call is in progress if it isn't idle nor disconnected
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), initialValue = false)
 
     /**
      * A [StateFlow] that emits the list of threads and the typing status of each thread.
@@ -157,6 +165,8 @@ class HomeViewModel @Inject constructor(
             it.userProfile.setNtsPriority(PRIORITY_HIDDEN)
         }
     }
+
+    fun getCurrentUsername() = usernameUtils.getCurrentUsernameWithAccountIdFallback()
 
     companion object {
         private const val CHANGE_NOTIFICATION_DEBOUNCE_MILLS = 100L
