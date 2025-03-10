@@ -11,7 +11,6 @@ import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
-import androidx.core.content.IntentCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.GlobalScope
@@ -27,7 +26,7 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.notifications.BackgroundPollWorker
 import org.thoughtcrime.securesms.service.CallForegroundService
-import org.thoughtcrime.securesms.util.InternetConnectivity
+import org.thoughtcrime.securesms.util.NetworkConnectivity
 import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.TYPE_ESTABLISHED
 import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.TYPE_INCOMING_CONNECTING
 import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.TYPE_INCOMING_PRE_OFFER
@@ -64,7 +63,7 @@ import org.thoughtcrime.securesms.webrtc.data.State as CallState
 class WebRtcCallBridge @Inject constructor(
     @ApplicationContext private val context: Context,
     private val callManager: CallManager,
-    private val internetConnectivity: InternetConnectivity
+    private val networkConnectivity: NetworkConnectivity
 ): CallManager.WebRtcListener  {
 
     companion object {
@@ -105,7 +104,7 @@ class WebRtcCallBridge @Inject constructor(
         registerWiredHeadsetStateReceiver()
 
         GlobalScope.launch {
-            internetConnectivity.networkAvailable.collectLatest(::networkChange)
+            networkConnectivity.networkAvailable.collectLatest(::networkChange)
         }
     }
 
