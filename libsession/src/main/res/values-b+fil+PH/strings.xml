@@ -255,7 +255,7 @@
     <string name="create">Lumikha</string>
     <string name="cut">I-cut</string>
     <string name="databaseErrorGeneric">Nagkaroon ng error sa database.\n\n I-export ang mga log ng iyong application para i-share para sa pag-troubleshoot. Kung hindi ito matagumpay, muling i-install ang {app_name} at ibalik ang iyong account.\n\nBabala: Magreresulta ito sa pagkawala ng lahat ng mga mensahe, attachment, at data ng account na mas matanda kaysa dalawang linggo.</string>
-    <string name="databaseErrorTimeout">Napansin naming matagal bago mag-start ang {app_name}.\n\nPuwede kang maghintay nalang, i-export ang iyong device logs para i-share para sa troubleshooting, o subukan i-restart ang Session.</string>
+    <string name="databaseErrorTimeout">Napansin naming matagal bago mag-start ang {app_name}.\n\nPuwede kang maghintay nalang, i-export ang iyong device logs para i-share para sa troubleshooting, o subukan i-restart ang {app_name}.</string>
     <string name="databaseErrorUpdate">Ang iyong app database ay hindi compatible sa bersyon na ito ng {app_name}. I-reinstall ang app at i-restore ang iyong account upang makabuo ng bagong database at ipagpatuloy ang paggamit ng {app_name}.\n\nBabala: Ito ay magreresulta sa pagkawala ng lahat ng mensahe at attachments na higit sa dalawang linggo.</string>
     <string name="databaseOptimizing">Ina-optimize ang Database</string>
     <string name="debugLog">I-debug ang Log</string>
@@ -410,7 +410,6 @@
     <string name="groupLeaveDescription">Sigurado ka bang nais mong umalis sa <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Sigurado ka bang gusto mong umalis sa <b>{group_name}</b>?\n\nTatanggalin nito ang lahat ng miyembro at ang lahat ng nilalaman ng grupo.</string>
     <string name="groupLeaveErrorFailed">Nabigo sa pag-alis sa {group_name}</string>
-    <string name="groupLegacyBanner">Na-upgrade na ang mga grupo, lumikha ng bagong grupo para maisagawa ang upgrade. Ang lumang functionality ng grupo ay bababa mula {date}.</string>
     <string name="groupMemberLeft">Umalis na si <b>{name}</b> sa grupo.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> at <b>{count} iba pa</b> umalis na sa grupo.</string>
     <string name="groupMemberLeftTwo"><b>{name} </b> at <b>{other_name}</b> umalis na sa grupo.</string>
@@ -421,7 +420,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> at <b>{count} iba pa</b> ay naimbitahan na sumali sa grupo.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> at <b>{other_name}</b> ay naimbitahan na sumali sa grupo.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Ikaw</b> at <b>{count} iba pa</b> ay naimbitahan na sumali sa grupo. Ibinahagi ang kasaysayan ng chat.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Ikaw</b> at <b>{name}</b> ay naimbitahan na sumali sa grupo. Ibinahagi ang kasaysayan ng chat.</string>
     <string name="groupMemberYouLeft"><b>Ikaw</b> ay umalis sa grupo.</string>
     <string name="groupMembers">Mga Miyembro ng Grupo</string>
     <string name="groupMembersNone">Walang ibang miyembro sa grupong ito.</string>
@@ -435,7 +433,6 @@
     <string name="groupOnlyAdmin">Ikaw lang ang admin sa <b>{group_name}</b>.\n\nHindi maaaring baguhin ang mga miyembro ng grupo at mga settings kung walang admin.</string>
     <string name="groupPromotedYou"><b>Ikaw</b> ay na-promote sa Admin.</string>
     <string name="groupPromotedYouMultiple"><b>Ikaw</b> at <b>{count} iba pa</b> na-promote sa Admin.</string>
-    <string name="groupPromotedYouTwo"><b>Ikaw</b> at si <b>{name}</b> na-promote sa Admin.</string>
     <string name="groupRemoveDescription">Gusto mo bang tanggalin si <b>{name}</b> mula sa <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Gusto mo bang tanggalin si <b>{name}</b> at ang <b>{count} iba pa</b> mula sa <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Gusto mo bang tanggalin si <b>{name}</b> at si <b>{other_name}</b> mula sa <b>{group_name}</b>?</string>

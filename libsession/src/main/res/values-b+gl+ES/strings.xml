@@ -241,7 +241,7 @@
     <string name="create">Crear</string>
     <string name="cut">Cortar</string>
     <string name="databaseErrorGeneric">Produciuse un erro na base de datos.\n\nExporta os rexistros da túa aplicación para compartilos na resolución de problemas. Se non é exitoso, reinstala {app_name} e restaura a túa conta.\n\nAdvertencia: Isto resultará na perda de todas as mensaxes, anexos e datos de conta anteriores a dúas semanas.</string>
-    <string name="databaseErrorTimeout">Notamos que {app_name} está a tardar moito en iniciar.\n\nPodes esperar, exportar os teus rexistros do dispositivo para compartir e solucionar problemas, ou tentar reiniciar Session.</string>
+    <string name="databaseErrorTimeout">Notamos que {app_name} está a tardar moito en iniciar.\n\nPodes esperar, exportar os teus rexistros do dispositivo para compartir e solucionar problemas, ou tentar reiniciar {app_name}.</string>
     <string name="databaseErrorUpdate">A base de datos da túa aplicación non é compatible con esta versión de {app_name}. Reinstala a aplicación e restaura a túa conta para xerar unha nova base de datos e continuar usando {app_name}.\n\nAdvertencia: Isto resultará na perda de todas as mensaxes e adxuntos anteriores a dúas semanas.</string>
     <string name="databaseOptimizing">Optimizando a Base de Datos</string>
     <string name="debugLog">Rexistro de depuración</string>
@@ -372,7 +372,6 @@
     <string name="groupLeaveDescription">Tes a certeza de querer abandonar <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Tes a certeza de querer abandonar <b>{group_name}</b>?\n\n Isto desactivará o grupo para todos os membros.</string>
     <string name="groupLeaveErrorFailed">Non se puido abandonar {group_name}</string>
-    <string name="groupLegacyBanner">Os grupos foron modernizados, crea un novo grupo para actualizar. A funcionalidade dos antigos reséntase a partir de {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> abandonou o grupo.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> e <b>{count} máis</b> abandonaron o grupo.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> e <b>{other_name}</b> abandonaron o grupo.</string>

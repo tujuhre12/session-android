@@ -1,20 +1,17 @@
 package org.session.libsession.messaging.jobs
 
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.plus
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsignal.utilities.Log
+import java.lang.RuntimeException
 import java.util.Timer
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.schedule
 import kotlin.math.min
@@ -24,13 +21,13 @@ import kotlin.math.roundToLong
 class JobQueue : JobDelegate {
     private var hasResumedPendingJobs = false // Just for debugging
     private val jobTimestampMap = ConcurrentHashMap<Long, AtomicInteger>()
-    private val rxDispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-    private val rxMediaDispatcher = Executors.newFixedThreadPool(4).asCoroutineDispatcher()
-    private val openGroupDispatcher = Executors.newFixedThreadPool(8).asCoroutineDispatcher()
-    private val txDispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-    private val scope = CoroutineScope(Dispatchers.Default) + SupervisorJob()
+
+    private val scope: CoroutineScope = GlobalScope
     private val queue = Channel<Job>(UNLIMITED)
-    private val pendingJobIds = mutableSetOf<String>()
+
+    // Track the send message jobs that are pending or in progress. This doesn't take the
+    // first launch of the send message job into account
+    private val pendingSendMessageJobIDs = hashSetOf<String>()
 
     private val openGroupChannels = mutableMapOf<String, Channel<Job>>()
 
@@ -38,9 +35,8 @@ class JobQueue : JobDelegate {
 
     private fun CoroutineScope.processWithOpenGroupDispatcher(
         channel: Channel<Job>,
-        dispatcher: CoroutineDispatcher,
         name: String
-    ) = launch(dispatcher) {
+    ) = launch {
         for (job in channel) {
             if (!isActive) break
             val openGroupId = when (job) {
@@ -58,7 +54,7 @@ class JobQueue : JobDelegate {
                 val groupChannel = if (!openGroupChannels.containsKey(openGroupId)) {
                     Log.d("OpenGroupDispatcher", "Creating ${openGroupId.hashCode()} channel")
                     val newGroupChannel = Channel<Job>(UNLIMITED)
-                    launch(dispatcher) {
+                    launch {
                         for (groupJob in newGroupChannel) {
                             if (!isActive) break
                             groupJob.process(name)
@@ -78,14 +74,13 @@ class JobQueue : JobDelegate {
 
     private fun CoroutineScope.processWithDispatcher(
         channel: Channel<Job>,
-        dispatcher: CoroutineDispatcher,
         name: String,
         asynchronous: Boolean = true
-    ) = launch(dispatcher) {
+    ) = launch {
         for (job in channel) {
             if (!isActive) break
             if (asynchronous) {
-                launch(dispatcher) {
+                launch {
                     job.process(name)
                 }
             } else {
@@ -98,12 +93,19 @@ class JobQueue : JobDelegate {
         Log.d(dispatcherName,"processJob: ${javaClass.simpleName} (id: $id)")
         delegate = this@JobQueue
 
-        try {
+        val runResult = runCatching {
             execute(dispatcherName)
         }
-        catch (e: Exception) {
+
+        // Remove the job from the pending "send message job" list, regardless of whether
+        // we are a send message job, as IDs are unique across all job types
+        synchronized(pendingSendMessageJobIDs) {
+            pendingSendMessageJobIDs.remove(id)
+        }
+
+        runResult.onFailure { e ->
             Log.d(dispatcherName, "unhandledJobException: ${javaClass.simpleName} (id: $id)", e)
-            this@JobQueue.handleJobFailed(this, dispatcherName, e)
+            this@JobQueue.handleJobFailed(this, dispatcherName, e as? Exception ?: RuntimeException(e))
         }
     }
 
@@ -115,14 +117,18 @@ class JobQueue : JobDelegate {
             val mediaQueue = Channel<Job>(capacity = UNLIMITED)
             val openGroupQueue = Channel<Job>(capacity = UNLIMITED)
 
-            val receiveJob = processWithDispatcher(rxQueue, rxDispatcher, "rx", asynchronous = false)
-            val txJob = processWithDispatcher(txQueue, txDispatcher, "tx")
-            val mediaJob = processWithDispatcher(mediaQueue, rxMediaDispatcher, "media")
-            val openGroupJob = processWithOpenGroupDispatcher(openGroupQueue, openGroupDispatcher, "openGroup")
+            val receiveJob = processWithDispatcher(rxQueue, "rx", asynchronous = false)
+            val txJob = processWithDispatcher(txQueue, "tx")
+            val mediaJob = processWithDispatcher(mediaQueue, "media")
+            val openGroupJob = processWithOpenGroupDispatcher(openGroupQueue, "openGroup")
 
             while (isActive) {
                 when (val job = queue.receive()) {
-                    is NotifyPNServerJob, is AttachmentUploadJob, is MessageSendJob, is ConfigurationSyncJob -> {
+                    is InviteContactsJob,
+                    is NotifyPNServerJob,
+                    is AttachmentUploadJob,
+                    is GroupLeavingJob,
+                    is MessageSendJob -> {
                         txQueue.send(job)
                     }
                     is RetrieveProfileAvatarJob,
@@ -158,7 +164,6 @@ class JobQueue : JobDelegate {
     }
 
     companion object {
-
         @JvmStatic
         val shared: JobQueue by lazy { JobQueue() }
     }
@@ -184,7 +189,13 @@ class JobQueue : JobDelegate {
             Log.e("Loki", "tried to resume pending send job with no ID")
             return
         }
-        if (!pendingJobIds.add(id)) {
+
+        // Check if the job is already in progress and mark it as in progress if it is not
+        val jobIsInProgress = synchronized(pendingSendMessageJobIDs) {
+            !pendingSendMessageJobIDs.add(id)
+        }
+
+        if (jobIsInProgress) {
             Log.e("Loki","tried to re-queue pending/in-progress job (id: $id)")
             return
         }
@@ -226,7 +237,8 @@ class JobQueue : JobDelegate {
             BackgroundGroupAddJob.KEY,
             OpenGroupDeleteJob.KEY,
             RetrieveProfileAvatarJob.KEY,
-            ConfigurationSyncJob.KEY,
+            GroupLeavingJob.KEY,
+            InviteContactsJob.KEY,
         )
         allJobTypes.forEach { type ->
             resumePendingJobs(type)
@@ -236,7 +248,6 @@ class JobQueue : JobDelegate {
     override fun handleJobSucceeded(job: Job, dispatcherName: String) {
         val jobId = job.id ?: return
         MessagingModuleConfiguration.shared.storage.markJobAsSucceeded(jobId)
-        pendingJobIds.remove(jobId)
     }
 
     override fun handleJobFailed(job: Job, dispatcherName: String, error: Exception) {

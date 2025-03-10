@@ -61,8 +61,12 @@ import com.squareup.phrase.Phrase;
 import java.io.IOException;
 import java.util.Locale;
 import java.util.WeakHashMap;
+
+import dagger.hilt.android.AndroidEntryPoint;
 import kotlin.Unit;
 import network.loki.messenger.R;
+
+import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager;
 import org.session.libsession.messaging.messages.control.DataExtractionNotification;
 import org.session.libsession.messaging.sending_receiving.MessageSender;
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment;
@@ -87,9 +91,12 @@ import org.thoughtcrime.securesms.util.DateUtils;
 import org.thoughtcrime.securesms.util.SaveAttachmentTask.Attachment;
 import org.thoughtcrime.securesms.util.SaveAttachmentTask;
 
+import javax.inject.Inject;
+
 /**
  * Activity for displaying media attachments in-app
  */
+@AndroidEntryPoint
 public class MediaPreviewActivity extends PassphraseRequiredActionBarActivity implements RecipientModifiedListener,
                                                                                          LoaderManager.LoaderCallbacks<Pair<Cursor, Integer>>,
                                                                                          MediaRailAdapter.RailItemListener
@@ -123,6 +130,9 @@ public class MediaPreviewActivity extends PassphraseRequiredActionBarActivity im
   private GestureDetector       clickDetector;
   private MediaPreviewViewModel viewModel;
   private ViewPagerListener     viewPagerListener;
+
+  @Inject
+  LegacyGroupDeprecationManager deprecationManager;
 
   private int restartItem = -1;
 
@@ -406,6 +416,7 @@ public class MediaPreviewActivity extends PassphraseRequiredActionBarActivity im
   @SuppressWarnings("CodeBlock2Expr")
   @SuppressLint("InlinedApi")
   private void saveToDisk() {
+    Log.w("ACL", "Asked to save to disk!");
     MediaItem mediaItem = getCurrentMediaItem();
     if (mediaItem == null) return;
 
@@ -439,7 +450,7 @@ public class MediaPreviewActivity extends PassphraseRequiredActionBarActivity im
   }
 
   private void sendMediaSavedNotificationIfNeeded() {
-    if (conversationRecipient.isGroupRecipient()) return;
+    if (conversationRecipient.isGroupOrCommunityRecipient()) return;
     DataExtractionNotification message = new DataExtractionNotification(new DataExtractionNotification.Kind.MediaSaved(SnodeAPI.getNowWithOffset()));
     MessageSender.send(message, conversationRecipient.getAddress());
   }
@@ -475,7 +486,11 @@ public class MediaPreviewActivity extends PassphraseRequiredActionBarActivity im
     MenuInflater inflater = this.getMenuInflater();
     inflater.inflate(R.menu.media_preview, menu);
 
-    if (!isMediaInDb()) {
+    final boolean isDeprecatedLegacyGroup = conversationRecipient != null &&
+            conversationRecipient.isLegacyGroupRecipient() &&
+            deprecationManager.getDeprecationState().getValue() == LegacyGroupDeprecationManager.DeprecationState.DEPRECATED;
+
+    if (!isMediaInDb() || isDeprecatedLegacyGroup) {
       menu.findItem(R.id.media_preview__overview).setVisible(false);
       menu.findItem(R.id.delete).setVisible(false);
     }

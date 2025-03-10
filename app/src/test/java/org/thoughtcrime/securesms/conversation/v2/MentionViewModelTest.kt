@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.conversation.v2
 
 import android.text.Selection
+import androidx.test.platform.app.InstrumentationRegistry
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -69,12 +70,13 @@ class MentionViewModelTest {
     fun setUp() {
         @Suppress("UNCHECKED_CAST")
         mentionViewModel = MentionViewModel(
-            threadID,
             contentResolver = mock { },
             threadDatabase = mock {
                 on { getRecipientForThreadId(threadID) } doAnswer {
                     mock<Recipient> {
-                        on { isClosedGroupRecipient } doReturn false
+                        on { isGroupV2Recipient } doReturn false
+                        on { isLegacyGroupRecipient } doReturn false
+                        on { isGroupRecipient } doReturn false
                         on { isCommunityRecipient } doReturn true
                         on { isContactRecipient } doReturn false
                     }
@@ -105,7 +107,10 @@ class MentionViewModelTest {
             storage = mock {
                 on { getOpenGroup(threadID) } doReturn openGroup
             },
-            dispatcher = StandardTestDispatcher()
+            dispatcher = StandardTestDispatcher(),
+            configFactory = mock(),
+            threadID = threadID,
+            application = InstrumentationRegistry.getInstrumentation().context as android.app.Application
         )
     }
 
@@ -131,10 +136,10 @@ class MentionViewModelTest {
 
                 assertThat(result.members).isEqualTo(threadMembers.mapIndexed { index, m ->
                     val name =
-                        memberContacts[index].displayName(Contact.ContactContext.OPEN_GROUP).orEmpty()
+                        memberContacts[index].displayName(Contact.ContactContext.OPEN_GROUP)
 
                     MentionViewModel.Candidate(
-                        MentionViewModel.Member(m.pubKey, name, m.roles.any { it.isModerator }),
+                        MentionViewModel.Member(m.pubKey, name, m.roles.any { it.isModerator }, isMe = false),
                         name,
                         0
                     )
@@ -178,12 +183,12 @@ class MentionViewModelTest {
 
             // Should have normalised message with selected candidate
             assertThat(mentionViewModel.normalizeMessageBody())
-                .isEqualTo("Hi @pubkey1 ")
+                .isEqualTo("Hi @pubkey1")
 
             // Should have correct normalised message even with the last space deleted
             editable.delete(editable.length - 1, editable.length)
             assertThat(mentionViewModel.normalizeMessageBody())
-                .isEqualTo("Hi @pubkey1 ")
+                .isEqualTo("Hi @pubkey1")
         }
     }
 }

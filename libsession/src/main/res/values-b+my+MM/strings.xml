@@ -254,7 +254,7 @@
     <string name="create">ဖန်တီးပါ</string>
     <string name="cut">ချည်းကုတ်</string>
     <string name="databaseErrorGeneric">ဒေတာဘေ့စ အမှားတစ်ခု ဖြစ်ပွားသည်။\n\nသင့်အက်ပလီကေးရှင်း လော့ဂ်များကို ထုတ်လွှင့်ပြီး ပြဿနာရှင်းရန် မျှဝေပါ။ ဤအောင်မြင်မှုမရှိပါက {app_name} ကို ပြန်ထည့်သွင်းပြီး သင့်အကောင့်ကို ပြန်လည်ထူထောင်ပါ။\n\nသတိပေးချက်- ဤလုပ်ဆောင်ချက်သည် သင့်မက်ဆေ့ချ်များ၊ ပူးတွဲချက်နှင့် သုံးလကြာသော အကောင့်ဒေတာအားလုံး ပျောက်ဆုံးစေနိုင်ပါသည်။</string>
-    <string name="databaseErrorTimeout">We\'ve noticed {app_name} is taking a long time to start.\n\nYou can continue to wait, export your device logs to share for troubleshooting, or try restarting Session.</string>
+    <string name="databaseErrorTimeout">We\'ve noticed {app_name} is taking a long time to start.\n\nYou can continue to wait, export your device logs to share for troubleshooting, or try restarting {app_name}.</string>
     <string name="databaseErrorUpdate">သင့်အက်ပ်ဒေတာဘေ့စ်သည် {app_name} ၏ ဤဗားရှင်းနှင့် မက်စ်ပေါ်နိုင်ပါ။ အက်ပ်ကို ပြန်ထည့်သွင်းပြီး သင့်အကောင့်ကို ပြန်လည်ထားပြီး {app_name} ကို ဆက်လက်သုံးဆောင်ရန် အချက်ပြပီးနောက် ငါးပတ်အတွင်းလက်ရှိမက်ဆေ့ခ်ျနှင့်လိုက်ဖက်မှုအတင်ပျောက်သွားနိုင်သည်။ \n\n သတိပေးချက်: ဤလုပ်ဆောင်ချက်ကြောင့် အဆိုပါကာလထက်ပိုကြာသော မက်ဆေ့ခ်ျများနှင့် ပျက်စီးပိုင်ဆိုင်မှုများ ပျောက်ဆုံးသွားမည်။</string>
     <string name="databaseOptimizing">ဒေတာဘေ့စ် ဖြည့်စွမ်းနေသည်</string>
     <string name="debugLog">Debug မှတ်တမ်း</string>
@@ -405,7 +405,6 @@
     <string name="groupLeaveDescription">ဤ <b>{group_name}</b> မှ ထွက်လိုသည်မှာ သေချာပါသလား။</string>
     <string name="groupLeaveDescriptionAdmin">သင် <b>{group_name}</b>ကို ထွက်ချင်သေချာပါသလား?\n\n၎င်းသည် အဖွဲ့ဝင်များအားလုံးကို ဖယ်ရှားပြီး အဖွဲ့၏အကြောင်းအရာအားလုံးကို ဖျက်သိမ်းပါမည်။</string>
     <string name="groupLeaveErrorFailed">အဖွဲ့ {group_name} မှထွက်ရန် မဖြစ်နိုင်ပါ</string>
-    <string name="groupLegacyBanner">အုပ်စုများအားအဆင့်မြှင့်ထားပြီး၊ Upgrade လုပ်ရန် အုပ်စုအသစ်တစ်ခုကိုဖန်တီးပါ။ အုပ်စု ဟောင်းများ၏ အလုပ်လုပ်မှုကို {date} မှာကျဆင်းသွားမှာဖြစ်သည်။</string>
     <string name="groupMemberLeft"><b>{name}</b> အဖွဲ့မှ ထွက်သွားပါပြီ။</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> နှင့် <b>{count} ဦး</b> အဖွဲ့မှ ထွက်သွားကြသည်။</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> နှင့် <b>{other_name}</b> အဖွဲ့မှ ထွက်သွားကြသည်။</string>
@@ -416,7 +415,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> နှင့် <b>{count} ဦး</b> အဖွဲ့သို့ ဖိတ်ကြားခံရသည်။</string>
     <string name="groupMemberNewTwo"><b>{name}</b> နှင့် <b>{other_name}</b> အဖွဲ့သို့ ဖိတ်ကြားခံရသည်။</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>သင်</b> နှင့် <b>{count} ဦး</b> အဖွဲ့သို့ ဖိတ်ကြားခံရသည်။ စကားဝိုင်းမှတ်တမ်းကိုမျှဝေခဲ့သည်။</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>သင်</b>နှင့် <b>{name}</b> အဖွဲ့သို့ ဖိတ်ကြားခံရပြီ။ စကားဝိုင်းမှတ်တမ်းကိုမျှဝေခဲ့သည်။</string>
     <string name="groupMemberYouLeft"><b>သင်</b> အဖွဲ့မှ ထွက်သွားပါပြီ။</string>
     <string name="groupMembers">အုပ်စုဝင်များ</string>
     <string name="groupMembersNone">ဤအုပ်စုတွင် အခြား အဖွဲ့ဝင်မရှိပါ။</string>
@@ -430,7 +428,6 @@
     <string name="groupOnlyAdmin">You are the only admin in <b>{group_name}.</b>\n\nGroup members and settings cannot be changed without an admin.</string>
     <string name="groupPromotedYou"><b>သင်</b> ကို အုပ်ချုပ်ရေးမှူးအဖြစ် တိုးတက်လာသည်။</string>
     <string name="groupPromotedYouMultiple"><b>သင်</b> နှင့် <b>{count} ဦး</b> အဖွဲ့ဝင်များကို အုပ်ချုပ်ရေးမှူးအဖြစ် တက်လာသည်။</string>
-    <string name="groupPromotedYouTwo"><b>သင်</b> နှင့် <b>{name}</b> ကို အုပ်ချုပ်ရေးမှူးအဖြစ် တိုးတက်လာသည်။</string>
     <string name="groupRemoveDescription">Would you like to remove <b>{name}</b> from <b>{group_name}?</b></string>
     <string name="groupRemoveDescriptionMultiple">Would you like to remove <b>{name}</b> and <b>{count} others</b> from <b>{group_name}?</b></string>
     <string name="groupRemoveDescriptionTwo">Would you like to remove <b>{name}</b> and <b>{other_name}</b> from <b>{group_name}?</b></string>

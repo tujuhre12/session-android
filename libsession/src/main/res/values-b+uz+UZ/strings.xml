@@ -256,7 +256,7 @@
     <string name="create">Yaratish</string>
     <string name="cut">Kesish</string>
     <string name="databaseErrorGeneric">Ma\'lumotlar bazasida xato yuz berdi.\n\nDastur loglaringizni eksport qiling va muammolarni hal qilish uchun ulashing. Agar bu muvaffaqiyatsiz bo\'lsa, {app_name} ni qayta o\'rnating va akkauntingizni tiklang.\n\nOgohlik: Bu barcha xabarlar, ilova va ikki haftadan eski akkaunt ma\'lumotlarini yo\'qotishga olib keladi.</string>
-    <string name="databaseErrorTimeout">Biz {app_name}ning ishga tushishi uzoq vaqt talab qilayotganini sezib qoldik.\n\nSiz kutishni davom ettirishingiz, apparat yozuvlarini eksport qilib ulashishingiz yoki Sessionni qayta ishga tushirishingiz mumkin.</string>
+    <string name="databaseErrorTimeout">{app_name} ishga tushishiga koʻp vaqt ketayotganini aniqladik.\n\nKutishda davom etishingiz, muammolarni bartaraf etish uchun qurilma jurnallarini baham koʻrish uchun eksport qilishingiz yoki {app_name} ilovasini qayta ishga tushirishga urinib koʻrishingiz mumkin.</string>
     <string name="databaseErrorUpdate">Sizning ilova ma\'lumotlar bazasi ushbu {app_name} versiyasi bilan mos kelmaydi. Ilovani qayta o\'rnating va hisobingizni tiklang, yangi ma\'lumotlar bazasini yaratish va {app_name} dan foydalanishni davom ettirish uchun.\n\nOgohlantirish: bu ikki haftalikdan katta barcha xabarlar va ilovalarni yo\'qotishga olib keladi.</string>
     <string name="databaseOptimizing">Ma\'lumotlar bazasi optimallashtirilmoqda</string>
     <string name="debugLog">Tahlil yozuvi</string>
@@ -411,7 +411,6 @@
     <string name="groupLeaveDescription">Haqiqatan ham <b>{group_name}</b> dan ajralmoqchimisiz?</string>
     <string name="groupLeaveDescriptionAdmin">Haqiqatan ham <b>{group_name}</b> guruhini tark etmoqchimisiz?\n\nBu barcha a\'zo va guruh kontentlarini o\'chiradi.</string>
     <string name="groupLeaveErrorFailed">{group_name} dan chiqish vaqtida muammo chiqdi</string>
-    <string name="groupLegacyBanner">Guruhlar yangilandi, yangilanish uchun yangi guruh yarating. Eski guruh qobiliyatlari {date} dan pastga ketadi.</string>
     <string name="groupMemberLeft"><b>{name}</b> guruhni tark etdi.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> va <b>{count} boshqalar</b> guruhni tark etishdi.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> va <b>{other_name}</b> guruhni tark etdi.</string>
@@ -422,7 +421,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> va <b>{count} boshqalar</b> guruhga qo\'shildi.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> va <b>{other_name}</b> guruhga qo\'shildi.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Siz</b> va <b>{count} boshqalar</b> guruhga qo\'shildilar. Suhbat tarixini ko\'rish imkoniyati berilgan.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Siz</b> va <b>{name}</b> guruhga qo\'shildi. Suhbat tarixini ko\'rish imkoniyati berilgan.</string>
     <string name="groupMemberYouLeft"><b>Siz</b> guruhni tark etdik.</string>
     <string name="groupMembers">Guruh aʼzolari</string>
     <string name="groupMembersNone">Ushbu guruhda boshqa a\'zolar yo\'q.</string>
@@ -436,7 +434,6 @@
     <string name="groupOnlyAdmin">Siz <b>{group_name}</b>da yagona administrator siz.\n\nAdministrator bo\'lmaganda guruh azolari va sozlamalarini o\'zgartirib bo\'lmaydi.</string>
     <string name="groupPromotedYou"><b>Siz</b> Administrator sifatida ko\'tarildingiz.</string>
     <string name="groupPromotedYouMultiple"><b>Siz</b> va <b>{count} boshqa</b> Administrator sifatida ko\'tarildi.</string>
-    <string name="groupPromotedYouTwo"><b>Siz</b> va <b>{name}</b> Administrator sifatida ko\'tarildi.</string>
     <string name="groupRemoveDescription"><b>{name}</b>ni <b>{group_name}</b>dan o\'chirmoqchimisiz?</string>
     <string name="groupRemoveDescriptionMultiple"><b>{name}</b> va <b>{count} boshqalarni</b> <b>{group_name}</b>dan o\'chirmoqchimisiz?</string>
     <string name="groupRemoveDescriptionTwo"><b>{name}</b> va <b>{other_name}</b>ni <b>{group_name}</b>dan o\'chirmoqchimisiz?</string>

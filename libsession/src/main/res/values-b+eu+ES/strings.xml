@@ -255,7 +255,7 @@
     <string name="create">Sortu</string>
     <string name="cut">Ebaki</string>
     <string name="databaseErrorGeneric">Datu-base errorea gertatu da.\n\nAplikazioaren egunkariak esportatu arakatzean partekatzeko. Honek huts egiten badu, {app_name} berriro instalatu eta zure kontua berreskuratu.\n\nAbisua: Honek bi aste baino gehiagoko mezu, fitxategi eta kontu datu guztiak galduko ditu.</string>
-    <string name="databaseErrorTimeout">{app_name} martxan jartzeko denbora gehiegi hartzen ari dela nabaritu dugu.\n\nJarrai itzazu itxaroten, esportatu zure gailu-erregistroak konpontzeko partekatzeko edo saiatu Session berrabiarazten.</string>
+    <string name="databaseErrorTimeout">{app_name} martxan jartzeko denbora gehiegi hartzen ari dela nabaritu dugu.\n\nJarrai itzazu itxaroten, esportatu zure gailu-erregistroak konpontzeko partekatzeko edo saiatu {app_name} berrabiarazten.</string>
     <string name="databaseErrorUpdate">Zure aplikazio-datubasea ez da bateragarria {app_name} bertsio honekin. Berrinstalatu aplikazioa eta leheneratu zure kontua datubase berri bat sortzeko eta {app_name} erabiltzen jarraitzeko.\n\nAbisua: Honek bi astetik gorako mezu eta eranskinen galera eragingo du.</string>
     <string name="databaseOptimizing">Datu Basea Optimizatzen</string>
     <string name="debugLog">Arazketa egunkaria</string>
@@ -410,7 +410,6 @@
     <string name="groupLeaveDescription">Ziur zaude <b>{group_name}</b> utzi nahi duzula?</string>
     <string name="groupLeaveDescriptionAdmin">Ziur zaude <b>{group_name}</b> taldea utzi nahi duzula?\n\nHonek kide guztiak kendu eta taldeko eduki guztiak ezabatuko ditu.</string>
     <string name="groupLeaveErrorFailed">Hutsa izan da {group_name} uzten</string>
-    <string name="groupLegacyBanner">Taldeak eguneratu dira, sortu talde berria eguneratzeko. Talde zaharren funtzionalitatea {date}-tik aurrera degradatuko da.</string>
     <string name="groupMemberLeft"><b>{name}</b>(e)k taldea utzi du.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> eta <b>beste {count} pertsona</b> taldea utzi dute.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> eta <b>{other_name}</b> taldea utzi dute.</string>
@@ -421,7 +420,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> eta <b>{count} beste</b> taldera batzeko gonbidatu dira.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> eta <b>{other_name}</b> taldera batzeko gonbidatu dira.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Zuk</b> eta <b>{count} beste</b> taldera batzeko gonbidatu zaituzte. Txat historia partekatu da.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Zuk</b> eta <b>{name}</b> taldera batzeko gonbidatu zaituzte. Txat historia partekatu da.</string>
     <string name="groupMemberYouLeft"><b>Zuk</b> taldea utzi duzu.</string>
     <string name="groupMembers">Taldeko Kideak</string>
     <string name="groupMembersNone">Ez dago beste kiderik talde honetan.</string>
@@ -435,7 +433,6 @@
     <string name="groupOnlyAdmin">Zu zara <b>{group_name}</b>-ko administratzaile bakarra.\n\nTaldekideak eta ezarpenak ezin daitezke aldatu admin bat gabe.</string>
     <string name="groupPromotedYou"><b>Zuk</b> administratzaile izendatu zaituzte.</string>
     <string name="groupPromotedYouMultiple"><b>Zu</b> eta <b>{count} beste</b> administratzaile izendatu zaituztete.</string>
-    <string name="groupPromotedYouTwo"><b>Zu</b> eta <b>{name}</b> administratzaile izendatu zaituztete.</string>
     <string name="groupRemoveDescription"><b>{name}</b> <b>{group_name}</b>-tik kendu nahi duzu?</string>
     <string name="groupRemoveDescriptionMultiple"><b>{name}</b> eta <b>{count} beste batzuk</b> <b>{group_name}</b>-tik kendu nahi dituzu?</string>
     <string name="groupRemoveDescriptionTwo"><b>{name}</b> eta <b>{other_name}</b> <b>{group_name}</b>-tik kendu nahi dituzu?</string>

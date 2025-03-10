@@ -255,7 +255,7 @@
     <string name="create">د نوي اړیکې سره خبرې اترې پیل کړئ</string>
     <string name="cut">معلومات له منځه ندي تللي</string>
     <string name="databaseErrorGeneric">د ډیټابیس تېروتنه وشوه.\n\n خپل اپلیکیشن لوګونه صادر کړئ ترڅو د ډیبګ کولو لپاره یې شریک کړئ. که دا ناکامه شي، {app_name} بیا نصب کړئ او خپل حساب بیا فعاله کړئ.\n\n خبرداری: دا به ټول پیغامونه، نښلول شوي سندونه او د حساب ډاډا له دوه اونیو څخه زوړ له لاسه ورکړي.</string>
-    <string name="databaseErrorTimeout">موږ ولیدل چې {app_name} د پیل کولو لپاره اوږد وخت نیسي.\n\nتاسو کولی شئ انتظار وکړئ، د ستونزې لپاره د شریکولو لپاره خپل وسیله لاګونه صادر کړئ، یا د بیا پیل کولو هڅه وکړئ.</string>
+    <string name="databaseErrorTimeout">موږ ولیدل چې {app_name} د پیل کولو لپاره ډیر وخت نیسي.\n\nتاسو کولی شئ انتظار ته دوام ورکړئ، د ستونزو د حل لپاره د شریکولو لپاره د خپل وسیله لاګ صادر کړئ، یا د {app_name} بیا پیلولو هڅه وکړئ.</string>
     <string name="databaseErrorUpdate">ستاسو د اپ ڈیٹ ډیټابیس د {app_name} دې نسخې سره همغږي نه لري. د اپلیکیشن بیا نصب کړئ او خپل حساب بیا جوړ کړئ ترڅو یو نوی ډیټابیس جوړ کړئ او {app_name} کارول دوام ورکړئ.\n\nخبرداری: دا به د دوو هفتو څخه زوړ ټول پیغامونه او ملحقات له لاسه ورکیدو لامل شي.</string>
     <string name="databaseOptimizing">ډیټابیس سمول</string>
     <string name="debugLog">دیباگ لاګ</string>
@@ -410,7 +410,6 @@
     <string name="groupLeaveDescription">ایا تاسو ډاډه یاست چې <b>{group_name}</b> پریږدئ؟</string>
     <string name="groupLeaveDescriptionAdmin">ایا تاسو ډاډه یاست چې تاسو غواړئ <b>{group_name}</b> پریږدئ؟\n\nدا به ټول غړي لرې کړي او د ډلې ټول مینځپانګه به حذف کړي.</string>
     <string name="groupLeaveErrorFailed">د {group_name} پرېښودو کې ناکامه</string>
-    <string name="groupLegacyBanner">ډلې پرمختګ کړی دی، د نویو ډلو د جوړولو لپاره نوی ډله جوړه کړئ. د زړو ډلو فعالیت به له {date} څخه کم شي.</string>
     <string name="groupMemberLeft"><b>{name}</b> ګروپ پریښود.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> او <b>{count} نورو</b> ګروپ پریښود.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> او <b>{other_name}</b> ګروپ پریښود.</string>
@@ -421,7 +420,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> او <b>{count} نور</b> ډله کې ګډون کولو ته بلل شوي.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> او <b>{other_name}</b> ډله کې ګډون کولو ته بلل شوي.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>تاسو</b> او <b>{count} نور</b> ډله کې ګډون کولو ته بلل شوی. د خبرو تاریخ شریک شوی.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>تاسو</b> او <b>{name}</b> ډله کې ګډون کولو ته بلل شوی. د خبرو تاریخ شریک شوی.</string>
     <string name="groupMemberYouLeft"><b>تاسو</b> ګروپ پریښود.</string>
     <string name="groupMembers">د ډلې غړي</string>
     <string name="groupMembersNone">په دی ګروپ کې نور غړي نشته.</string>
@@ -435,7 +433,6 @@
     <string name="groupOnlyAdmin">تاسو یوازې په <b>{group_name}</b> کې اډمین یاست.\n\nد ګروپ غړي او ترتیبات نشي بدلیدلی له اډمین پرته.</string>
     <string name="groupPromotedYou"><b>تاسو</b> د اډمین په توګه لوړ شوي.</string>
     <string name="groupPromotedYouMultiple"><b>تاسو</b> او <b>{count} نور</b> اډمین ته پورته شوی وو.</string>
-    <string name="groupPromotedYouTwo"><b>تاسو</b> او <b>{name}</b> اډمین ته پورته شوی.</string>
     <string name="groupRemoveDescription">ایا تاسو غواړئ <b>{name}</b> له <b>{group_name}</b> څخه لرې کړئ؟</string>
     <string name="groupRemoveDescriptionMultiple">ایا تاسو غواړئ <b>{name}</b> او <b>{count} نور</b> له <b>{group_name}</b> څخه لرې کړئ؟</string>
     <string name="groupRemoveDescriptionTwo">ایا تاسو غواړئ <b>{name}</b> او <b>{other_name}</b> له <b>{group_name}</b> څخه لرې کړئ؟</string>

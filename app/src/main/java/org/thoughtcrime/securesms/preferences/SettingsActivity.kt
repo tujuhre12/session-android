@@ -2,10 +2,8 @@
 
 import android.Manifest
 import android.app.Activity
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
@@ -53,18 +51,10 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.canhub.cropper.CropImageContract
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivitySettingsBinding
@@ -103,8 +93,6 @@ import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
-import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
-import org.thoughtcrime.securesms.util.NetworkUtils
 import org.thoughtcrime.securesms.util.push
 import java.io.File
 import javax.inject.Inject
@@ -308,22 +296,15 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
         // We'll assume we fail & flip the flag on success
         var updateWasSuccessful = false
 
-        val haveNetworkConnection = NetworkUtils.haveValidNetworkConnection(this@SettingsActivity);
+        val haveNetworkConnection = viewModel.hasNetworkConnection()
         if (!haveNetworkConnection) {
             Log.w(TAG, "Cannot update display name - no network connection.")
         } else {
             // if we have a network connection then attempt to update the display name
             TextSecurePreferences.setProfileName(this, displayName)
-            val user = viewModel.getUser()
-            if (user == null) {
-                Log.w(TAG, "Cannot update display name - missing user details from configFactory.")
-            } else {
-                user.setName(displayName)
-                // sync remote config
-                ConfigurationMessageUtilities.syncConfigurationIfNeeded(this)
-                binding.btnGroupNameDisplay.text = displayName
-                updateWasSuccessful = true
-            }
+            viewModel.updateName(displayName)
+            binding.btnGroupNameDisplay.text = displayName
+            updateWasSuccessful = true
         }
 
         // Inform the user if we failed to update the display name
@@ -436,7 +417,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
-            val hasPaths by hasPaths().collectAsState(initial = false)
+            val hasPaths by OnionRequestAPI.hasPath.collectAsState()
 
             Cell {
                 Column {
@@ -625,21 +606,5 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
                 removeAvatar = {}
             )
         }
-    }
-}
-
-private fun Context.hasPaths(): Flow<Boolean> = LocalBroadcastManager.getInstance(this).hasPaths()
-private fun LocalBroadcastManager.hasPaths(): Flow<Boolean> = callbackFlow {
-    val receiver: BroadcastReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) { trySend(Unit) }
-    }
-
-    registerReceiver(receiver, IntentFilter("buildingPaths"))
-    registerReceiver(receiver, IntentFilter("pathsBuilt"))
-
-    awaitClose { unregisterReceiver(receiver) }
-}.onStart { emit(Unit) }.map {
-    withContext(Dispatchers.Default) {
-        OnionRequestAPI.paths.isNotEmpty()
     }
 }

@@ -255,7 +255,7 @@
     <string name="create">Buat</string>
     <string name="cut">Potong</string>
     <string name="databaseErrorGeneric">Ralat pangkalan data berlaku.\n\nEksport log aplikasi anda untuk bahagian penyelesaian masalah. Jika ini tidak berjaya, pasang semula {app_name} dan kembalikan akaun anda.\n\nAmaran: Ini akan menyebabkan kehilangan semua mesej, lampiran, dan data akaun lebih lama daripada dua minggu.</string>
-    <string name="databaseErrorTimeout">Kami perasan {app_name} mengambil masa yang lama untuk bermula.\n\nAnda boleh terus menunggu, eksport log peranti anda untuk perkongsian penyelesaian masalah atau cuba mulakan semula Session.</string>
+    <string name="databaseErrorTimeout">Kami perasan {app_name} mengambil masa yang lama untuk bermula.\n\nAnda boleh terus menunggu, eksport log peranti anda untuk perkongsian penyelesaian masalah atau cuba mulakan semula {app_name}.</string>
     <string name="databaseErrorUpdate">Pangkalan data aplikasi anda tidak serasi dengan versi {app_name} ini. Pasang semula aplikasi ini dan pulihkan akaun anda untuk menjana pangkalan data baru dan terus menggunakan {app_name}.\n\nAmaran: Ini akan menyebabkan kehilangan semua mesej dan lampiran yang lebih lama daripada dua minggu.</string>
     <string name="databaseOptimizing">Mengoptimumkan Pangkalan Data</string>
     <string name="debugLog">Log Nyahpepijat</string>
@@ -406,7 +406,6 @@
     <string name="groupLeaveDescription">Adakah anda yakin anda mahu meninggalkan <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Adakah anda pasti mahu meninggalkan <b>{group_name}</b>?\n\nIni akan membuang semua ahli dan memadamkan semua kandungan kumpulan.</string>
     <string name="groupLeaveErrorFailed">Gagal keluar dari {group_name}</string>
-    <string name="groupLegacyBanner">Kumpulan telah dinaik taraf, buat kumpulan baru untuk naik taraf. Fungsi kumpulan lama akan semakin merosot dari {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> meninggalkan kumpulan.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> dan <b>{count} lainnya </b> meninggalkan kumpulan.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> dan <b>{other_name} </b> meninggalkan kumpulan.</string>
@@ -417,7 +416,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> dan <b>{count} lainnya</b> dijemput untuk menyertai kumpulan.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> dan <b>{other_name}</b> dijemput untuk menyertai kumpulan.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Anda</b> dan <b>{count} yang lain</b> dijemput untuk menyertai kumpulan. Sejarah sembang telah dikongsi.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Anda</b> dan <b>{name}</b> dijemput untuk menyertai kumpulan. Sejarah sembang telah dikongsi.</string>
     <string name="groupMemberYouLeft"><b>Anda</b> meninggalkan kumpulan.</string>
     <string name="groupMembers">Ahli Kumpulan</string>
     <string name="groupMembersNone">Tiada ahli lain di dalam kumpulan ini.</string>
@@ -431,7 +429,6 @@
     <string name="groupOnlyAdmin">Anda adalah satu-satunya pentadbir dalam <b>{group_name}</b>.\n\nAhli kumpulan dan tetapan tidak boleh diubah tanpa pentadbir.</string>
     <string name="groupPromotedYou"><b>Anda</b> dinaikkan ke Admin.</string>
     <string name="groupPromotedYouMultiple"><b>Anda</b> dan <b>{count} lainnya</b> dinaikkan ke Admin.</string>
-    <string name="groupPromotedYouTwo"><b>Anda</b> dan <b>{name}</b> dinaikkan ke Admin.</string>
     <string name="groupRemoveDescription">Adakah anda ingin mengeluarkan <b>{name}</b> dari <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Adakah anda ingin mengeluarkan <b>{name}</b> dan <b>{count} yang lain</b> dari <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Adakah anda ingin mengeluarkan <b>{name}</b> dan <b>{other_name}</b> dari <b>{group_name}</b>?</string>

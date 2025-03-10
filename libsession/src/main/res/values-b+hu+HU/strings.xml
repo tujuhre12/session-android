@@ -172,8 +172,8 @@
     <string name="clearDataAllDescription">Ezáltal az összes üzeneted és kontaktod törölve lesz. Csak erről az eszközről, vagy a hálózatról is törölni kívánod az adataidat?</string>
     <string name="clearDataError">Adatok nem lettek törölve</string>
     <plurals name="clearDataErrorDescription">
-        <item quantity="one">%1$d szolgáltatási csomópoint nem törölte az adatokat. A csomópont azonosítója: %2$s.</item>
-        <item quantity="other">%1$d szolgáltatási csomópoint nem törölte az adatokat. A csomópontok azonosítói: %2$s.</item>
+        <item quantity="one">Az adatok nem lettek törölve %1$d kiszolgálócsomópont által. Kiszolgálócsomópont azonosító: %2$s.</item>
+        <item quantity="other">Az adatok nem lettek törölve %1$d kiszolgálócsomópont által. Kiszolgálócsomópontok azonosítói: %2$s.</item>
     </plurals>
     <string name="clearDataErrorDescriptionGeneric">Ismeretlen hiba történt, és az adataid nem lettek törölve. Szeretnéd törölni az adatokat csak erről az eszközről?</string>
     <string name="clearDevice">Eszköz törlése</string>
@@ -411,7 +411,6 @@
     <string name="groupLeaveDescription">Biztos, hogy ki akarsz lépni a(z) <b>{group_name}</b> csoportból?</string>
     <string name="groupLeaveDescriptionAdmin">Biztos, hogy ki akarsz lépni a <b>{group_name}</b> csoportból?\n\nEz az összes tag eltávolításával és a csoport teljes tartalmának törlésével jár.</string>
     <string name="groupLeaveErrorFailed">Nem sikerült kilépni a {group_name} csoportból</string>
-    <string name="groupLegacyBanner">A csoportok funkció frissítve lett, hozzon létre egy új csoportot a frissítéshez. A régi csoportok funkcionalitása {date} dátumtól csökkenni fog.</string>
     <string name="groupMemberLeft"><b>{name}</b> kilépett a csoportból.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> és <b>{count} másik személy</b> kiléptek a csoportból.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> és <b>{other_name}</b> kiléptek a csoportból.</string>
@@ -422,7 +421,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> és <b>{count} másik személy</b> meghívást kaptak a csoportba.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> és <b>{other_name}</b> meghívást kaptak a csoportba.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Te</b> és <b>{count} másik személy</b> meg lettetek hívva a csoportba. A beszélgetési előzményeket megosztottuk.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Te</b> és <b>{name}</b> meg lettetek hívva a csoportba. A beszélgetési előzményeket megosztottuk.</string>
     <string name="groupMemberYouLeft"><b>Te</b> kiléptél a csoportból.</string>
     <string name="groupMembers">Csoporttagok</string>
     <string name="groupMembersNone">Nincsenek más tagok ebben a csoportban.</string>
@@ -436,7 +434,6 @@
     <string name="groupOnlyAdmin">Te vagy az egyetlen adminisztrátor a <b>{group_name}</b> csoportban.\n\nA csoporttagok és beállítások nem változtathatók adminisztrátor nélkül.</string>
     <string name="groupPromotedYou"><b>Te</b> adminisztrátorrá lettél előléptetve.</string>
     <string name="groupPromotedYouMultiple"><b>Te</b> és <b>{count} másik személy</b> adminisztrátorrá lettetek előléptetve.</string>
-    <string name="groupPromotedYouTwo"><b>Te</b> és <b>{name}</b> adminisztrátorrá lettetek előléptetve.</string>
     <string name="groupRemoveDescription">El szeretnéd távolítani <b>{name}</b>-t a <b>{group_name}</b> csoportból?</string>
     <string name="groupRemoveDescriptionMultiple">El szeretnéd távolítani <b>{name}</b>-t és <b>{count} másik személyt</b> a <b>{group_name}</b> csoportból?</string>
     <string name="groupRemoveDescriptionTwo">El szeretnéd távolítani <b>{name}</b>-t és <b>{other_name}</b>-t a <b>{group_name}</b> csoportból?</string>

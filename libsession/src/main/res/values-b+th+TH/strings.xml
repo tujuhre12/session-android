@@ -255,7 +255,7 @@
     <string name="create">Create</string>
     <string name="cut">ตัด</string>
     <string name="databaseErrorGeneric">เกิดข้อผิดพลาดในฐานข้อมูล\n\nส่งออกล็อกแอปพลิเคชันของคุณเพื่อแบ่งปันแก้ไขปัญหา หากไม่สำเร็จ ให้ติดตั้ง {app_name} ใหม่และกู้คืนบัญชีของคุณ\n\nคำเตือน: การดำเนินการนี้จะส่งผลให้สูญเสียข้อความ ไฟล์แนบ และข้อมูลบัญชีที่มีอายุมากกว่าสองสัปดาห์</string>
-    <string name="databaseErrorTimeout">เราได้สังเกตว่า {app_name} ใช้เวลานานในการเริ่มต้น\n\nคุณสามารถรอต่อไป ส่งออกบันทึกอุปกรณ์ของคุณเพื่อแบ่งปันเพื่อแก้ไขปัญหา หรือลองรีสตาร์ท Session</string>
+    <string name="databaseErrorTimeout">เราได้สังเกตว่า {app_name} ใช้เวลานานในการเริ่มต้น\n\nคุณสามารถรอต่อไป ส่งออกบันทึกอุปกรณ์ของคุณเพื่อแบ่งปันเพื่อแก้ไขปัญหา หรือลองรีสตาร์ท {app_name}</string>
     <string name="databaseErrorUpdate">ฐานข้อมูลแอปของคุณไม่สามารถใช้งานร่วมกับเวอร์ชันนี้ของ {app_name} ติดตั้งใหม่และกู้คืนบัญชีเพื่อสร้างฐานข้อมูลใหม่และใช้งาน {app_name} ต่อไป \n\nคำเตือน: สิ่งนี้จะส่งผลให้สูญเสียข้อความและไฟล์แนบทั้งหมดที่มีอายุเกินสองสัปดาห์</string>
     <string name="databaseOptimizing">การเพิ่มประสิทธิภาพฐานข้อมูล</string>
     <string name="debugLog">Debug Log</string>
@@ -406,7 +406,6 @@
     <string name="groupLeaveDescription">คุณแน่ใจหรือว่าต้องการออก <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">คุณแน่ใจหรือไม่ว่าต้องการออกจากกลุ่ม <b>{group_name}</b>?\n\nการกระทำนี้จะลบสมาชิกทั้งหมดและลบเนื้อหากลุ่มทั้งหมด</string>
     <string name="groupLeaveErrorFailed">ไม่สามารถออกจาก {group_name} ได้</string>
-    <string name="groupLegacyBanner">กลุ่มถูกอัปเกรด สร้างกลุ่มใหม่เพื่ออัปเกรด ฟังก์ชันกลุ่มเก่าจะลดลงตั้งแต่ {date}</string>
     <string name="groupMemberLeft"><b>{name}</b> ได้ออกจากกลุ่ม</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> and <b>{count} อื่นๆ</b> ได้ออกจากกลุ่ม</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> และ <b>{other_name}</b> ได้ออกจากกลุ่ม</string>
@@ -417,7 +416,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> และ <b>{count} อื่นๆ</b> ถูกเชิญเข้าร่วมกลุ่ม</string>
     <string name="groupMemberNewTwo"><b>{name}</b> และ <b>{other_name}</b> ถูกเชิญเข้าร่วมกลุ่ม</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>คุณ</b> และ <b>{count} อื่นๆ</b> ถูกเชิญเข้าร่วมกลุ่ม ประวัติการแชทถูกแชร์</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>คุณ</b> และ <b>{name}</b> ถูกเชิญเข้าร่วมกลุ่ม ประวัติการแชทถูกแชร์</string>
     <string name="groupMemberYouLeft"><b>คุณ</b> ได้ออกจากกลุ่ม</string>
     <string name="groupMembers">สมาชิกกลุ่ม</string>
     <string name="groupMembersNone">ไม่มีสมาชิกคนอื่นในกลุ่มนี้</string>
@@ -431,7 +429,6 @@
     <string name="groupOnlyAdmin">คุณเป็นผู้ดูแลคนเดียวใน <b>{group_name}</b>.\n\nสมาชิกกลุ่มและการตั้งค่าไม่สามารถเปลี่ยนแปลงได้หากไม่มีผู้ดูแล</string>
     <string name="groupPromotedYou"><b>คุณ</b> ได้รับการเลื่อนตำแหน่งเป็นผู้ดูแลระบบ</string>
     <string name="groupPromotedYouMultiple"><b>คุณ</b> และ <b>{count} อื่นๆ</b> ได้รับการเลื่อนตำแหน่งเป็นผู้ดูแลระบบ</string>
-    <string name="groupPromotedYouTwo"><b>คุณ</b> และ <b>{name}</b> ได้รับการเลื่อนตำแหน่งเป็นผู้ดูแลระบบ</string>
     <string name="groupRemoveDescription">คุณต้องการลบ <b>{name}</b> ออกจาก <b>{group_name}</b> หรือไม่?</string>
     <string name="groupRemoveDescriptionMultiple">คุณต้องการลบ <b>{name}</b> และอีก <b>{count} คน</b> ออกจาก <b>{group_name}</b> หรือไม่?</string>
     <string name="groupRemoveDescriptionTwo">คุณต้องการลบ <b>{name}</b> และ <b>{other_name}</b> ออกจาก <b>{group_name}</b> หรือไม่?</string>

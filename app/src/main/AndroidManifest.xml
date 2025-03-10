@@ -163,7 +163,18 @@
             android:label="@string/conversationsBlockedContacts"
             />
         <activity
-            android:name="org.thoughtcrime.securesms.groups.EditClosedGroupActivity"
+            android:name="org.thoughtcrime.securesms.groups.legacy.EditLegacyGroupActivity"
+            android:label="@string/groupEdit"
+            android:screenOrientation="portrait" />
+
+        <activity
+            android:name="org.thoughtcrime.securesms.groups.EditGroupActivity"
+            android:theme="@style/Theme.Session.DayNight.NoActionBar"
+            android:label="@string/groupEdit"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name="org.thoughtcrime.securesms.groups.GroupMembersActivity"
+            android:theme="@style/Theme.Session.DayNight.NoActionBar"
             android:label="@string/groupEdit"
             android:screenOrientation="portrait" />
         <activity
@@ -246,7 +257,6 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="org.thoughtcrime.securesms.home.HomeActivity" />
         </activity>
-
         <activity
             android:name="org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity"
             android:screenOrientation="portrait"
@@ -437,7 +447,7 @@
             </intent-filter>
         </receiver>
         <receiver
-            android:name="org.thoughtcrime.securesms.notifications.BackgroundPollWorker$BootBroadcastReceiver"
+            android:name="org.thoughtcrime.securesms.notifications.BackgroundPollManager$BootBroadcastReceiver"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
@@ -463,6 +473,22 @@
         <meta-data
             android:name="com.sec.android.multiwindow.MINIMUM_SIZE_H"
             android:value="598.0dip" />
+
+
+        <!-- Disable work manager initializer so it uses our configuration  -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <!-- If you are using androidx.startup to initialize other components -->
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
+
+
     </application>
 
 </manifest>

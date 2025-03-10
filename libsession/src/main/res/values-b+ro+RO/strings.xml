@@ -416,7 +416,6 @@
     <string name="groupLeaveDescription">Ești sigur/ă că vrei să părăsești grupul <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Ești sigur/ă că vrei să părăsești <b>{group_name}</b>?\n\nAceastă acțiune va elimina toți membrii și va șterge tot conținutul grupului.</string>
     <string name="groupLeaveErrorFailed">Nu s-a putut părăsi grupul {group_name}</string>
-    <string name="groupLegacyBanner">Grupurile au fost actualizate, creează un grup nou pentru actualizare. Funcționalitatea grupului vechi va fi întreruptă începând cu {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> a părăsit grupul.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> și <b>alți {count}</b> au părăsit grupul.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> și <b>{other_name}</b> au părăsit grupul.</string>
@@ -427,7 +426,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> și <b> alți {count}</b> au fost invitați să se alăture grupului.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> și <b>{other_name}</b> au fost invitați să se alăture grupului.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Tu</b> și <b>alți {count}</b> ați fost invitați să vă alăturați grupului. Istoricul conversațiilor a fost partajat.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Tu</b> și <b>{name}</b> ați fost invitați să vă alăturați grupului. Istoricul conversațiilor a fost partajat.</string>
     <string name="groupMemberYouLeft"><b>Tu</b> ai părăsit grupul.</string>
     <string name="groupMembers">Membrii grupului</string>
     <string name="groupMembersNone">Nu există alți membri în acest grup.</string>
@@ -441,7 +439,6 @@
     <string name="groupOnlyAdmin">Ești singurul administrator din <b>{group_name}</b>.\n\nMembrii și setările grupului nu pot fi modificate fără un administrator.</string>
     <string name="groupPromotedYou"><b>Tu</b> ai fost promovat/ă la nivel de administrator.</string>
     <string name="groupPromotedYouMultiple"><b>Tu</b> și <b>alți {count}</b> ați fost promovați la nivel de administrator.</string>
-    <string name="groupPromotedYouTwo"><b>Tu</b> și <b>{name}</b> ați fost promovați la nivel de administrator.</string>
     <string name="groupRemoveDescription">Doriți să eliminați pe <b>{name}</b> din <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Doriți să eliminați pe <b>{name}</b> și <b>alți {count}</b> din <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Doriți să eliminați pe <b>{name}</b> și <b>{other_name}</b> din <b>{group_name}</b>?</string>

@@ -255,7 +255,7 @@
     <string name="create">Креирај</string>
     <string name="cut">Сечи</string>
     <string name="databaseErrorGeneric">Настана грешка во базата на податоци.\n\nИзвенете ги вашите дневници на апликација за да ги споделите за решавање на проблемите. Ако ова не е успешно, повторно инсталирајте ја {app_name} и вратете го вашиот акаунт.\n\nПредупредување: Ова ќе резултира со губење на сите пораки, прилози и податочни записи постари од две недели.</string>
-    <string name="databaseErrorTimeout">Забележавме дека {app_name} троши многу време за старт.\n\nМожете да продолжите да чекате, да ги извезете дневниците на вашиот уред за решавање на проблеми или да се обидете да го рестартирате Session.</string>
+    <string name="databaseErrorTimeout">Забележавме дека {app_name} троши многу време за старт.\n\nМожете да продолжите да чекате, да ги извезете дневниците на вашиот уред за решавање на проблеми или да се обидете да го рестартирате {app_name}.</string>
     <string name="databaseErrorUpdate">Вашата база на податоци на апликацијата не е компатибилна со оваа верзија на {app_name}. Повторно инсталирајте ја апликацијата и вратете го вашиот профил за да генерирате нова база на податоци и да продолжите да го користите {app_name}.\n\nПредупредување: Ова ќе резултира со губење на сите пораки и прикачувања постари од две недели.</string>
     <string name="databaseOptimizing">Оптимизирање на базата на податоци</string>
     <string name="debugLog">Дневник на грешки</string>
@@ -410,7 +410,6 @@
     <string name="groupLeaveDescription">Дали сте сигурни дека сакате да ја напуштите <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Дали сте сигурни дека сакате да ја напуштите <b>{group_name}</b>?\n\nОва ќе ги отстрани сите членови и ќе ја избрише целата содржина на групата.</string>
     <string name="groupLeaveErrorFailed">Неуспешно напуштање на {group_name}</string>
-    <string name="groupLegacyBanner">Групите се ажурирани, создадете нова група за надградба. Старите функции на групата ќе се деградираат од {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> ја напушти групата.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> и <b>{count} други</b> ја напуштија групата.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> и <b>{other_name} </b> ја напуштија групата.</string>
@@ -421,7 +420,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> и <b>{count} други</b> беа поканети да се придружат на групата.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> и <b>{other_name}</b> беа поканети да се придружат на групата.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Вие</b> и <b>{count} други</b> беа поканети да се придружат на групата. Историјата на разговорот е споделена.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Вие</b> и <b>{name}</b> беа поканети да се придружат на групата. Историјата на разговорот е споделена.</string>
     <string name="groupMemberYouLeft"><b>Вие</b> ја напуштивте групата.</string>
     <string name="groupMembers">Членови на групата</string>
     <string name="groupMembersNone">Нема други членови во оваа група.</string>
@@ -435,7 +433,6 @@
     <string name="groupOnlyAdmin">Вие сте единствениот админ во <b>{group_name}.</b>\n\nЧленовите на групата и поставките не можат да се променат без админ.</string>
     <string name="groupPromotedYou"><b>Вие</b> бевте промовирани во Админ.</string>
     <string name="groupPromotedYouMultiple"><b>Вие</b> и <b>{count} други</b> бевте промовирани во адм.</string>
-    <string name="groupPromotedYouTwo"><b>Вие</b> и <b>{name}</b> бевте промовирани во адм.</string>
     <string name="groupRemoveDescription">Дали сакате да го отстраните <b>{name}</b> од <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Дали сакате да ги отстраните <b>{name}</b> и <b>{count} други</b> од <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Дали сакате да ги отстраните <b>{name}</b> и <b>{other_name}</b> од <b>{group_name}</b>?</string>

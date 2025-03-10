@@ -5,9 +5,12 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import network.loki.messenger.libsession_util.util.UserPic
 import okio.Buffer
 import org.session.libsession.avatars.AvatarHelper
+import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.file_server.FileServerApi
+import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getLastProfilePictureUpload
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocalNumber
@@ -18,11 +21,10 @@ import org.session.libsignal.streams.ProfileCipherOutputStream
 import org.session.libsignal.streams.ProfileCipherOutputStreamFactory
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.ProfileAvatarData
-import org.session.libsignal.utilities.ThreadUtils.queue
 import org.session.libsignal.utilities.retryIfNeeded
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
-import java.util.*
+import java.util.Date
 
 object ProfilePictureUtilities {
 
@@ -38,8 +40,7 @@ object ProfilePictureUtilities {
 
             // Don't generate a new profile key here; we do that when the user changes their profile picture
             Log.d("Loki-Avatar", "Uploading Avatar Started")
-            val encodedProfileKey =
-                getProfileKey(context)
+            val encodedProfileKey = getProfileKey(context)
             try {
                 // Read the file into a byte array
                 val inputStream = AvatarHelper.getInputStreamFor(
@@ -57,7 +58,7 @@ object ProfilePictureUtilities {
                 baos.flush()
                 val profilePicture = baos.toByteArray()
                 // Re-upload it
-                upload(
+                val url = upload(
                     profilePicture,
                     encodedProfileKey!!,
                     context
@@ -69,6 +70,12 @@ object ProfilePictureUtilities {
                     Date().time
                 )
 
+                // update config with new URL for reuploaded file
+                val profileKey = ProfileKeyUtil.getProfileKey(context)
+                MessagingModuleConfiguration.shared.configFactory.withMutableUserConfigs {
+                    it.userProfile.setPic(UserPic(url, profileKey))
+                }
+
                 Log.d("Loki-Avatar", "Uploading Avatar Finished")
             } catch (e: Exception) {
                 Log.e("Loki-Avatar", "Uploading avatar failed.")
@@ -76,7 +83,7 @@ object ProfilePictureUtilities {
         }
     }
 
-    suspend fun upload(profilePicture: ByteArray, encodedProfileKey: String, context: Context) {
+    suspend fun upload(profilePicture: ByteArray, encodedProfileKey: String, context: Context): String {
         val inputStream = ByteArrayInputStream(profilePicture)
         val outputStream =
             ProfileCipherOutputStream.getCiphertextLength(profilePicture.size.toLong())
@@ -102,10 +109,12 @@ object ProfilePictureUtilities {
         // this can throw an error
         id = retryIfNeeded(4) {
             FileServerApi.upload(data)
-        }.get()
+        }.await()
 
         TextSecurePreferences.setLastProfilePictureUpload(context, Date().time)
         val url = "${FileServerApi.server}/file/$id"
         TextSecurePreferences.setProfilePictureURL(context, url)
+
+        return url
     }
 }

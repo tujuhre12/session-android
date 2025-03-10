@@ -8,7 +8,7 @@ import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.DividerItemDecoration
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.Job
@@ -16,18 +16,30 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.databinding.DialogClearAllDataBinding
+import org.session.libsession.database.StorageProtocol
+import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.snode.utilities.await
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.createSessionDialog
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
+import org.thoughtcrime.securesms.util.ClearDataUtils
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class ClearAllDataDialog : DialogFragment() {
     private val TAG = "ClearAllDataDialog"
 
     private lateinit var binding: DialogClearAllDataBinding
+
+    @Inject
+    lateinit var storage: StorageProtocol
+
+    @Inject
+    lateinit var clearDataUtils: ClearDataUtils
 
     private enum class Steps {
         INFO_PROMPT,
@@ -115,22 +127,15 @@ class ClearAllDataDialog : DialogFragment() {
     }
 
     private suspend fun performDeleteLocalDataOnlyStep() {
-        try {
-            ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(requireContext()).get()
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to force sync when deleting data", e)
-            withContext(Main) {
-                Toast.makeText(ApplicationContext.getInstance(requireContext()), R.string.errorUnknown, Toast.LENGTH_LONG).show()
-            }
-            return
+        val result = runCatching {
+            clearDataUtils.clearAllDataAndRestart()
         }
-        ApplicationContext.getInstance(context).clearAllDataAndRestart().let { success ->
-            withContext(Main) {
-                if (success) {
-                    dismissAllowingStateLoss()
-                } else {
-                    Toast.makeText(ApplicationContext.getInstance(requireContext()), R.string.errorUnknown, Toast.LENGTH_LONG).show()
-                }
+
+        withContext(Main) {
+            if (result.isSuccess) {
+                dismissAllowingStateLoss()
+            } else {
+                Toast.makeText(ApplicationContext.getInstance(requireContext()), R.string.errorUnknown, Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -147,9 +152,9 @@ class ClearAllDataDialog : DialogFragment() {
                     val deletionResultMap: Map<String, Boolean>? = try {
                         val openGroups = DatabaseComponent.get(requireContext()).lokiThreadDatabase().getAllOpenGroups()
                         openGroups.map { it.value.server }.toSet().forEach { server ->
-                            OpenGroupApi.deleteAllInboxMessages(server).get()
+                            OpenGroupApi.deleteAllInboxMessages(server).await()
                         }
-                        SnodeAPI.deleteAllMessages().get()
+                        SnodeAPI.deleteAllMessages(checkNotNull(storage.userAuth)).await()
                     } catch (e: Exception) {
                         Log.e(TAG, "Failed to delete network messages - offering user option to delete local data only.", e)
                         null
@@ -161,15 +166,7 @@ class ClearAllDataDialog : DialogFragment() {
                     }
                     else if (deletionResultMap.values.all { it }) {
                         // ..otherwise if the network data deletion was successful proceed to delete the local data as well.
-                        ApplicationContext.getInstance(context).clearAllDataAndRestart().let { success ->
-                            withContext(Main) {
-                                if (success) {
-                                    dismissAllowingStateLoss()
-                                } else {
-                                    Toast.makeText(ApplicationContext.getInstance(requireContext()), R.string.errorUnknown, Toast.LENGTH_LONG).show()
-                                }
-                            }
-                        }
+                        performDeleteLocalDataOnlyStep()
                     }
                 }
             }

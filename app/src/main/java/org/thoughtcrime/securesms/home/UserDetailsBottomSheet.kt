@@ -24,6 +24,7 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.IdPrefix
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
+import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import javax.inject.Inject
 
@@ -59,7 +60,7 @@ class UserDetailsBottomSheet: BottomSheetDialogFragment() {
             profilePictureView.update(recipient)
             nameTextViewContainer.visibility = View.VISIBLE
             nameTextViewContainer.setOnClickListener {
-                if (recipient.isOpenGroupInboxRecipient || recipient.isOpenGroupOutboxRecipient) return@setOnClickListener
+                if (recipient.isCommunityInboxRecipient || recipient.isCommunityOutboxRecipient) return@setOnClickListener
                 nameTextViewContainer.visibility = View.INVISIBLE
                 nameEditTextContainer.visibility = View.VISIBLE
                 nicknameEditText.text = null
@@ -84,15 +85,15 @@ class UserDetailsBottomSheet: BottomSheetDialogFragment() {
                     else -> return@setOnEditorActionListener false
                 }
             }
-            nameTextView.text = recipient.name ?: publicKey // Uses the Contact API internally
+            nameTextView.text = recipient.name
 
-            nameEditIcon.isVisible = threadRecipient.isContactRecipient
-                    && !threadRecipient.isOpenGroupInboxRecipient
-                    && !threadRecipient.isOpenGroupOutboxRecipient
+            nameEditIcon.isVisible = recipient.isContactRecipient
+                    && !threadRecipient.isCommunityInboxRecipient
+                    && !threadRecipient.isCommunityOutboxRecipient
 
             publicKeyTextView.isVisible = !threadRecipient.isCommunityRecipient
-                    && !threadRecipient.isOpenGroupInboxRecipient
-                    && !threadRecipient.isOpenGroupOutboxRecipient
+                    && !threadRecipient.isCommunityInboxRecipient
+                    && !threadRecipient.isCommunityOutboxRecipient
             messageButton.isVisible = !threadRecipient.isCommunityRecipient || IdPrefix.fromValue(publicKey)?.isBlinded() == true
             publicKeyTextView.text = publicKey
             publicKeyTextView.setOnLongClickListener {
@@ -140,7 +141,10 @@ class UserDetailsBottomSheet: BottomSheetDialogFragment() {
         val contact = storage.getContactWithAccountID(publicKey) ?: Contact(publicKey)
         contact.nickname = newNickName
         storage.setContact(contact)
-        nameTextView.text = recipient.name ?: publicKey // Uses the Contact API internally
+        nameTextView.text = recipient.name
+
+        (parentFragment as? UserDetailsBottomSheetCallback)
+            ?: (requireActivity() as? UserDetailsBottomSheetCallback)?.onNicknameSaved()
     }
 
     @SuppressLint("ServiceCast")
@@ -155,5 +159,9 @@ class UserDetailsBottomSheet: BottomSheetDialogFragment() {
     fun hideSoftKeyboard() {
         val imm = context?.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
         imm?.hideSoftInputFromWindow(binding.nicknameEditText.windowToken, 0)
+    }
+
+    interface UserDetailsBottomSheetCallback {
+        fun onNicknameSaved()
     }
 }

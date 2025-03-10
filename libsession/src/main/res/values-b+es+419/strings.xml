@@ -256,7 +256,7 @@
     <string name="create">Crear</string>
     <string name="cut">Cortar</string>
     <string name="databaseErrorGeneric">Se produjo un error en la base de datos.\n\nExporta tus registros de aplicación para compartirlos y solucionar problemas. Si no tiene éxito, reinstala {app_name} y restaura tu cuenta.\n\nAdvertencia: Esto resultará en la pérdida de todos los mensajes, adjuntos y datos de la cuenta mayores de dos semanas.</string>
-    <string name="databaseErrorTimeout">Hemos notado que {app_name} está tardando mucho en arrancar.\n\nPuedes esperar, exportar los registros de tu dispositivo para compartirlos para la resolución de problemas, o intentar reiniciar Session.</string>
+    <string name="databaseErrorTimeout">Hemos notado que {app_name} está tardando mucho en arrancar.\n\nPuedes esperar, exportar los registros de tu dispositivo para compartirlos para la resolución de problemas, o intentar reiniciar {app_name}.</string>
     <string name="databaseErrorUpdate">Tu base de datos de la app es incompatible con esta versión de {app_name}. Reinstala la app y restaura tu cuenta para generar una nueva base de datos y continuar usando {app_name}.\n\nAdvertencia: Esto resultará en la pérdida de todos los mensajes y archivos adjuntos mayores a dos semanas.</string>
     <string name="databaseOptimizing">Optimizando base de datos</string>
     <string name="debugLog">Registro de depuración</string>
@@ -411,7 +411,6 @@
     <string name="groupLeaveDescription">¿Estás seguro de que deseas abandonar <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">¿Estás seguro de que deseas abandonar <b>{group_name}</b>?\n\nEsto eliminará a todos los miembros y borrará todo el contenido del grupo.</string>
     <string name="groupLeaveErrorFailed">Falló al salir de {group_name}</string>
-    <string name="groupLegacyBanner">Los grupos han sido actualizados, crea un nuevo grupo para actualizar. La funcionalidad del grupo antiguo se degradará a partir de {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> ha abandonado el grupo.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> y <b>{count} más</b> abandonaron el grupo.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> y <b>{other_name}</b> abandonaron el grupo.</string>
@@ -422,7 +421,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> y <b>{count} más</b> fueron invitados a unirse al grupo.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> y <b>{other_name}</b> fueron invitados a unirse al grupo.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Tú</b> y <b>{count}</b> más fueron invitados a unirse al grupo. El historial de chat fue compartido.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Tú</b> y <b>{name}</b> fueron invitados a unirse al grupo. El historial de chat fue compartido.</string>
     <string name="groupMemberYouLeft"><b>Tú</b> abandonaste el grupo.</string>
     <string name="groupMembers">Miembros del grupo</string>
     <string name="groupMembersNone">No hay otros miembros en este grupo.</string>
@@ -436,7 +434,6 @@
     <string name="groupOnlyAdmin">Eres el único administrador en <b>{group_name}</b>.\n\nLos miembros del grupo y la configuración no se pueden cambiar sin un administrador.</string>
     <string name="groupPromotedYou"><b>Tú</b> fuiste promovido a Admin.</string>
     <string name="groupPromotedYouMultiple"><b>Tú</b> y <b>{count} más</b> fueron promovidos a Admin.</string>
-    <string name="groupPromotedYouTwo"><b>Tú</b> y <b>{name}</b> fueron promovidos a Admin.</string>
     <string name="groupRemoveDescription">¿Te gustaría eliminar a <b>{name}</b> de <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">¿Te gustaría eliminar a <b>{name}</b> y a <b>{count} otros</b> de <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">¿Te gustaría eliminar a <b>{name}</b> y a <b>{other_name}</b> de <b>{group_name}</b>?</string>

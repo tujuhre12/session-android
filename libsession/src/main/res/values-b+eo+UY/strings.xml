@@ -255,7 +255,7 @@
     <string name="create">Krei</string>
     <string name="cut">Eltondi</string>
     <string name="databaseErrorGeneric">Okazis datumbaza eraro.\n\nEksportu viajn uzaddosierojn por kunhavigi por sensiligi. Se ĉi tio malsukcesas, re-instalu {app_name} kaj restaŭru vian konton.\n\nAverto: Ĉi tio rezultos en perdo de ĉiuj mesaĝoj, enmetaĵoj, kaj kontaj datumoj pli malnovaj ol du semajnoj.</string>
-    <string name="databaseErrorTimeout">Ni rimarkis ke {app_name} bezonas longe por komenci.\n\nVi povas daŭrigi atendadon, eksporti viajn aparato-protokolojn por dividi por cimo-serĉado, aŭ reprovi relanĉi Session.</string>
+    <string name="databaseErrorTimeout">Ni rimarkis ke {app_name} bezonas longe por komenci.\n\nVi povas daŭrigi atendadon, eksporti viajn aparato-protokolojn por dividi por cimo-serĉado, aŭ reprovi relanĉi {app_name}.</string>
     <string name="databaseErrorUpdate">Via aplikaĵa datumbazo ne kongruas kun ĉi tiu versio de {app_name}. Reinstalu la aplikaĵon kaj restarigu vian konton por generi novan datumbazon kaj daŭrigi la uzadon de {app_name}.\n\nAverto: Ĉi tio rezultos en la perdo de ĉiuj mesaĝoj kaj aldonaĵoj pli aĝaj ol du semajnoj.</string>
     <string name="databaseOptimizing">Optimumigante Datumbazon</string>
     <string name="debugLog">Sencimiga protokolo</string>
@@ -410,7 +410,6 @@
     <string name="groupLeaveDescription">Ĉu vi certas, ke vi volas forlasi <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Ĉu vi certas, ke vi volas foriri el <b>{group_name}</b>?\n\nĈi tio forigos ĉiujn membrojn kaj forigos ĉiun grupon enhavo.</string>
     <string name="groupLeaveErrorFailed">Malsukceso forlasi {group_name}</string>
-    <string name="groupLegacyBanner">Grupoj ĝisdatigitaj, kreu novan grupon por ĝisdatigi. Malnova grupa funkcio malkreskos de {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> forlasis la grupon.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> kaj <b>{count} aliaj</b> forlasis la grupon.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> kaj <b>{other_name}</b> forlasis la grupon.</string>
@@ -421,7 +420,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> kaj <b>{count} aliaj</b> estis invititaj aniĝi al la grupo.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> kaj <b>{other_name}</b> estis invititaj aniĝi al la grupo.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Vi</b> kaj <b>{count} aliaj</b> estis invititaj aniĝi al la grupo. Babilhistorio estis dividita.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Vi</b> kaj <b>{name}</b> estis invititaj aniĝi al la grupo. Babilhistorio estis dividita.</string>
     <string name="groupMemberYouLeft"><b>Vi</b> forlasis la grupon.</string>
     <string name="groupMembers">Grupanoj</string>
     <string name="groupMembersNone">Ne estas aliaj membroj en ĉi tiu grupo.</string>
@@ -435,7 +433,6 @@
     <string name="groupOnlyAdmin">Vi estas la sola admin en <b>{group_name}</b>.\n\nGrupanoj kaj agordoj ne povas esti ŝanĝitaj sen admin.</string>
     <string name="groupPromotedYou"><b>Vi</b> estis promociita al Admin.</string>
     <string name="groupPromotedYouMultiple"><b>Vi</b> kaj <b>{count} aliaj</b> estis promociitaj al Admin.</string>
-    <string name="groupPromotedYouTwo"><b>Vi</b> kaj <b>{name}</b> estis promociitaj al Admin.</string>
     <string name="groupRemoveDescription">Ĉu vi ŝatus forigi <b>{name}</b> de <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Ĉu vi ŝatus forigi <b>{name}</b> kaj <b>{count} aliajn</b> de <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Ĉu vi ŝatus forigi <b>{name}</b> kaj <b>{other_name}</b> de <b>{group_name}</b>?</string>

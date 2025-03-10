@@ -255,7 +255,7 @@
     <string name="create">دروستکردن</string>
     <string name="cut">قطع کردن</string>
     <string name="databaseErrorGeneric">هەڵەی داتاکان ڕوویدا.\n\nلۆگی کرداری بەکارهێنانەکانت بخەرە دەرەوە بۆ هاوبەشی هەڵەکە. ئەگەر ئەمە سەرکەوتوو نەبوو، {app_name} دووبارە دایبمەزرێنەوە و ئەکاونتەکەت ڕۆیشتنەوە.\n\nئاگاداری: ئەمە ئەنجامی بەسەرھەڵدەات له هەموو نامەکان، ھەڤپەیوەندەکان و داتاکانی ئەکاونت بەرە لە دوو هەفتە بچیت.</string>
-    <string name="databaseErrorTimeout">دەبینین {app_name} بوونی دواخستنی درێژە. \n\nتۆ دەتوانیت بەردەوام ببهێنین، کۆگایەکانی ئامرازەکەت بەکەشێنی بۆ پشکنین، یان هەوڵبدە بە سەرەکی Session دوژخستنەوە.</string>
+    <string name="databaseErrorTimeout">دەبینین {app_name} بوونی دواخستنی درێژە. \n\nتۆ دەتوانیت بەردەوام ببهێنین، کۆگایەکانی ئامرازەکەت بەکەشێنی بۆ پشکنین، یان هەوڵبدە بە سەرەکی ={app_name}دوژخستنەوە.</string>
     <string name="databaseErrorUpdate">بنکەی زانیاری بەرنامەکەت ناگەلێرد بەم وه‌ شەپکنیکی {app_name}. بەخێربەستەوە بەرنامەکە و ئەژمێرت پاشەکەوتی بکەیت بۆ بەکاربردنی {app_name}.\n\nئاگاداری: ئەمە دوای دیترین مەکموو بەرەوکردنەکان و هاوبەشەکان بەکارە لأختە دەکاتە دوو هەفتە ئەگەری پەیامەکان.</string>
     <string name="databaseOptimizing">باشکردنی بنکەدراوە</string>
     <string name="debugLog">لەگەڵکردنی پەیام</string>
@@ -410,7 +410,6 @@
     <string name="groupLeaveDescription">دڵنیایت دەتەوێت لە <b>{group_name}</b> بڕی؟</string>
     <string name="groupLeaveDescriptionAdmin">دڵنیایت دەتەوێت مەڵحقەت ببەی تەواوی <b>{group_name}</b>?\n\nئەمە لە هەموو ئەندامەکان جێستەک دەبات و هەموو ناوەراسەکانی گروپ دەسڕێنەوە.</string>
     <string name="groupLeaveErrorFailed">نەتوانرا لاتەوێ بۆ {group_name}</string>
-    <string name="groupLegacyBanner">گروپەکان نوێکرانەوە، گروپی نوێ دروست بکە بۆ نوێکردنەوە. کار کردی گروپی کهن دابەش دەبێت لە {date}دا.</string>
     <string name="groupMemberLeft"><b>{name}</b> گروپەکەی بەجێهێشت.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> و <b>{count} کەس دیکە</b> گروپەکەی بەجێهێشت.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> و <b>{other_name}</b> گروپەکەیان بەجێهێشت.</string>
@@ -421,7 +420,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> و <b>{count} کەس دیکە</b> بانگکران بۆ بەشداریکردن لە گروپەکە.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> و <b>{other_name}</b> بانگکران بۆ بەشداریکردن لە گروپەکە.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>تۆ</b> و <b>{count} کەس دیکە</b> بانگکران بۆ بەشداریکردن لە گروپەکە. مێژوو بگردەوەیی پەیامەکان سییبرەیە.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>تۆ</b> و <b>{name}</b> بانگکران بۆ بەشداریکردن لە گروپەکە. مێژوو بگردەوەیی پەیامەکان سییبرەیە.</string>
     <string name="groupMemberYouLeft"><b>تۆ</b> گروپەکەت بەجێهێشتووە.</string>
     <string name="groupMembers">ئەندامانی گروپ</string>
     <string name="groupMembersNone">هیچ ئەندامی تر لەم گروپەدا نیە.</string>
@@ -435,7 +433,6 @@
     <string name="groupOnlyAdmin">تۆ تەنها بەڕێوەبەری <b>{group_name}</b> یت.\n\nئەم ئەندامانی گروپە و ڕێکخستنهکان نەکرێن بگۆڕدرێن بێ ئەگەری بەڕێوەبەرێک.</string>
     <string name="groupPromotedYou"><b>تۆ</b> بە بەڕێوەبەر هەڵبژێردرا.</string>
     <string name="groupPromotedYouMultiple"><b>تۆ</b> و <b>{count} کەس دیکە</b> بە بەڕێوەبەر هەڵبژێردران.</string>
-    <string name="groupPromotedYouTwo"><b>تۆ</b> و <b>{name}</b> بە بەڕێوەبەر هەڵبژێردران.</string>
     <string name="groupRemoveDescription">ئايا دەتەوێت <b>{name}</b> لە <b>{group_name}</b> بسڕیتەوە؟</string>
     <string name="groupRemoveDescriptionMultiple">ئایا دەتەوێت بڕبەیتەوە <b>{name}</b> و <b>{count} یەک و چەندێکی تر</b> لە <b>{group_name}</b>؟</string>
     <string name="groupRemoveDescriptionTwo">ئایا دەتەوێت بڕبەیتەوە <b>{name}</b> و <b>{other_name}</b> لە <b>{group_name}</b>؟</string>

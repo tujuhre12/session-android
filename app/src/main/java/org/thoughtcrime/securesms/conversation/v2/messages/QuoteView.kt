@@ -19,6 +19,7 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.database.SessionContactDatabase
 import com.bumptech.glide.RequestManager
+import org.session.libsession.utilities.truncateIdForDisplay
 import org.thoughtcrime.securesms.mms.SlideDeck
 import org.thoughtcrime.securesms.util.MediaUtil
 import org.thoughtcrime.securesms.util.getAccentColor
@@ -76,9 +77,10 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
 
         val authorDisplayName =
             if (quoteIsLocalUser) context.getString(R.string.you)
-            else author?.displayName(Contact.contextForRecipient(thread)) ?: "${authorPublicKey.take(4)}...${authorPublicKey.takeLast(4)}"
+            else author?.displayName(Contact.contextForRecipient(thread)) ?: truncateIdForDisplay(authorPublicKey)
         binding.quoteViewAuthorTextView.text = authorDisplayName
-        binding.quoteViewAuthorTextView.setTextColor(getTextColor(isOutgoingMessage))
+        val textColor = getTextColor(isOutgoingMessage)
+        binding.quoteViewAuthorTextView.setTextColor(textColor)
         // Body
         binding.quoteViewBodyTextView.text = if (isOpenGroupInvitation)
             resources.getString(R.string.communityInvitation)
@@ -89,7 +91,7 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
             threadID = threadID,
             context = context
         )
-        binding.quoteViewBodyTextView.setTextColor(getTextColor(isOutgoingMessage))
+        binding.quoteViewBodyTextView.setTextColor(textColor)
         // Accent line / attachment preview
         val hasAttachments = (attachments != null && attachments.asAttachments().isNotEmpty()) && !isOriginalMissing
         binding.quoteViewAccentLine.isVisible = !hasAttachments
@@ -97,20 +99,15 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
         if (!hasAttachments) {
             binding.quoteViewAccentLine.setBackgroundColor(getLineColor(isOutgoingMessage))
         } else if (attachments != null) {
-            binding.quoteViewAttachmentPreviewImageView.imageTintList = ColorStateList.valueOf(ResourcesCompat.getColor(resources, R.color.white, context.theme))
-            val backgroundColor = context.getAccentColor()
-            binding.quoteViewAttachmentPreviewContainer.backgroundTintList = ColorStateList.valueOf(backgroundColor)
+            binding.quoteViewAttachmentPreviewImageView.imageTintList = ColorStateList.valueOf(textColor)
             binding.quoteViewAttachmentPreviewImageView.isVisible = false
             binding.quoteViewAttachmentThumbnailImageView.root.isVisible = false
             when {
                 attachments.audioSlide != null -> {
                     binding.quoteViewAttachmentPreviewImageView.setImageResource(R.drawable.ic_microphone)
                     binding.quoteViewAttachmentPreviewImageView.isVisible = true
-                    // A missing file name is the legacy way to determine if an audio attachment is
-                    // a voice note vs. other arbitrary audio attachments.
-                    val attachment = attachments.asAttachments().firstOrNull()
-                    val isVoiceNote = attachment?.isVoiceNote == true ||
-                            attachment != null && attachment.fileName.isNullOrEmpty()
+
+                    val isVoiceNote = attachments.isVoiceNote
                     binding.quoteViewBodyTextView.text = if (isVoiceNote) {
                         resources.getString(R.string.messageVoice)
                     } else {

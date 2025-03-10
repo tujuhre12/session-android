@@ -287,6 +287,10 @@
     </plurals>
     <string name="deleteMessageDeletedGlobally">Diese Nachricht wurde gelöscht</string>
     <string name="deleteMessageDeletedLocally">Diese Nachricht wurde auf diesem Gerät gelöscht</string>
+    <plurals name="deleteMessageDescriptionDevice">
+        <item quantity="one">Bist du sicher, du möchtest diese Nachrichten nur von diesem Gerät löschen?</item>
+        <item quantity="other">Möchtest du diese Nachrichten wirklich nur von diesem Gerät löschen?</item>
+    </plurals>
     <string name="deleteMessageDescriptionEveryone">Möchtest du diese Nachricht wirklich für alle löschen?</string>
     <string name="deleteMessageDeviceOnly">Nur auf diesem Gerät löschen</string>
     <string name="deleteMessageDevicesAll">Von allen meinen Geräten löschen</string>
@@ -411,7 +415,6 @@
     <string name="groupLeaveDescription">Bist du sicher, dass du <b> {group_name}</b> verlassen möchtest?</string>
     <string name="groupLeaveDescriptionAdmin">Bist du sicher, dass du <b>{group_name}</b> verlassen möchtest?\n\nDadurch werden alle Mitglieder entfernt und alle Gruppendaten gelöscht.</string>
     <string name="groupLeaveErrorFailed">Fehler beim Verlassen von {group_name}</string>
-    <string name="groupLegacyBanner">Gruppen wurden aktualisiert. Erstelle eine neue Gruppe, um sie zu aktualisieren. Alte Gruppenfunktionen werden ab {date} eingeschränkt.</string>
     <string name="groupMemberLeft"><b>{name}</b> hat die Gruppe verlassen.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> und <b>{count} andere</b> haben die Gruppe verlassen.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> und <b>{other_name}</b> haben die Gruppe verlassen.</string>
@@ -422,7 +425,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> und <b>{count} andere</b> wurden eingeladen, der Gruppe beizutreten.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> und <b>{other_name}</b> wurden eingeladen, der Gruppe beizutreten.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Du</b> und <b>{count} andere</b> wurden eingeladen, der Gruppe beizutreten. Der Chatverlauf wurde freigegeben.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Du</b> und <b>{name}</b> wurden eingeladen, der Gruppe beizutreten. Der Chatverlauf wurde freigegeben.</string>
     <string name="groupMemberYouLeft"><b>Du</b> hast die Gruppe verlassen.</string>
     <string name="groupMembers">Gruppenmitglieder</string>
     <string name="groupMembersNone">Es gibt keine anderen Mitglieder in dieser Gruppe.</string>
@@ -436,7 +438,6 @@
     <string name="groupOnlyAdmin">Du bist der einzige Admin in <b>{group_name}</b>.\n\nGruppenmitglieder und -einstellungen können ohne einen Admin nicht geändert werden.</string>
     <string name="groupPromotedYou"><b>Du</b> wurdest zum Admin befördert.</string>
     <string name="groupPromotedYouMultiple"><b>Du</b> und <b>{count} andere</b> wurden zu Admin befördert.</string>
-    <string name="groupPromotedYouTwo"><b>Du</b> und <b>{name}</b> wurden zu Admin befördert.</string>
     <string name="groupRemoveDescription">Möchtest du <b>{name}</b> aus <b>{group_name}</b> entfernen?</string>
     <string name="groupRemoveDescriptionMultiple">Möchtest du <b>{name}</b> und <b>{count} andere</b> aus <b>{group_name}</b> entfernen?</string>
     <string name="groupRemoveDescriptionTwo">Möchtest du <b>{name}</b> und <b>{other_name}</b> aus <b>{group_name}</b> entfernen?</string>

@@ -255,7 +255,7 @@
     <string name="create">作成する</string>
     <string name="cut">切り取り</string>
     <string name="databaseErrorGeneric">データベース エラーが発生しました。\n\nトラブルシューティングのために共有するためにアプリケーション ログをエクスポートします。これが失敗した場合は、{app_name} を再インストールし、アカウントを復元してください。\n\n警告: これにより、2 週間以上前のすべてのメッセージ、添付ファイル、アカウント データが失われます。</string>
-    <string name="databaseErrorTimeout">{app_name}が起動するのに時間がかかっていることを確認しました。\n\n引き続きお待ちいただくか、トラブルシューティングのためにデバイスログをエクスポートして共有するか、Sessionを再起動してみてください。</string>
+    <string name="databaseErrorTimeout">{app_name}が起動するのに時間がかかっていることを確認しました。\n\n引き続きお待ちいただくか、トラブルシューティングのためにデバイスログをエクスポートして共有するか、{app_name}を再起動してみてください。</string>
     <string name="databaseErrorUpdate">お使いのアプリデータベースはこのバージョンの {app_name} と互換性がありません。アプリを再インストールしてアカウントを復元し、新しいデータベースを生成して {app_name} を使用し続けてください。\n\n警告: これにより、2週間以上前のすべてのメッセージと添付ファイルが失われます。</string>
     <string name="databaseOptimizing">データベースを更新中</string>
     <string name="debugLog">デバッグログ</string>
@@ -406,7 +406,6 @@
     <string name="groupLeaveDescription">本当に<b>{group_name}</b>を退出しますか？</string>
     <string name="groupLeaveDescriptionAdmin">本当に<b>{group_name}</b>を退会しますか？\n\nこれにより、すべてのメンバーが削除され、すべてのグループコンテンツが削除されます。</string>
     <string name="groupLeaveErrorFailed">{group_name} を退出できませんでした</string>
-    <string name="groupLegacyBanner">グループがアップグレードされました。アップグレードするには新しいグループを作成してください。古いグループの機能は{date}以降低下します。</string>
     <string name="groupMemberLeft"><b>{name}</b> がグループを退会しました.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> と <b>{count}人</b> がグループから退会しました</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> と <b>{other_name}</b> がグループから退会しました</string>
@@ -417,7 +416,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> と <b>{count}名</b> がグループに招待されました。</string>
     <string name="groupMemberNewTwo"><b>{name}</b> と <b>{other_name}</b> がグループに招待されました。</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>あなた</b> と <b>{count}名</b> がグループに招待されました。チャット履歴が共有されました。</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>あなた</b> と <b>{name}</b> がグループに招待されました。チャット履歴が共有されました。</string>
     <string name="groupMemberYouLeft"><b>You</b>がグループを退会しました</string>
     <string name="groupMembers">グループメンバー</string>
     <string name="groupMembersNone">このグループには他のメンバーがいません。</string>
@@ -431,7 +429,6 @@
     <string name="groupOnlyAdmin">あなたは<b>{group_name}</b>で唯一の管理者です。\n\n管理者がいないと、グループメンバーと設定は変更できません。</string>
     <string name="groupPromotedYou"><b>You</b> はアドミンに昇格しました</string>
     <string name="groupPromotedYouMultiple"><b>あなた</b> と <b>{count}名</b> はAdminに昇格しました。</string>
-    <string name="groupPromotedYouTwo"><b>あなた</b> と <b>{name}</b> はAdminに昇格しました。</string>
     <string name="groupRemoveDescription"><b>{group_name}</b>から<b>{name}</b>を削除しますか？</string>
     <string name="groupRemoveDescriptionMultiple"><b>{group_name}</b>から<b>{name}</b>と<b>{count}人</b>を削除しますか？</string>
     <string name="groupRemoveDescriptionTwo"><b>{group_name}</b>から<b>{name}</b>と<b>{other_name}</b>を削除しますか？</string>

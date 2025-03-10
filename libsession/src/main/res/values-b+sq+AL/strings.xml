@@ -255,7 +255,7 @@
     <string name="create">Krijo</string>
     <string name="cut">Prije</string>
     <string name="databaseErrorGeneric">Ndodhi një gabim në bazën e të dhënave.\n\nEksportoni regjistrat e aplikacionit tuaj për ndarjen e problemeve. Nëse kjo nuk ka sukses, ripaketoni {app_name} dhe riktheni llogarinë tuaj.\n\nParalajmërim: Kjo do të rezultojë në humbjen e të gjitha mesazheve, bashkangjitjeve dhe të dhënave të tjera të llogarisë më të vjetra se dy javë.</string>
-    <string name="databaseErrorTimeout">Ne kemi vërejtur që {app_name} po merr shumë kohë për tu nisur.\n\nJu mund të prisni, eksportoni regjistrat e pajisjes suaj për ndihmë në zgjidhjen e problemeve, ose provoni të rinisni Session.</string>
+    <string name="databaseErrorTimeout">Ne kemi vërejtur që {app_name} po merr shumë kohë për tu nisur.\n\nJu mund të prisni, eksportoni regjistrat e pajisjes suaj për ndihmë në zgjidhjen e problemeve, ose provoni të rinisni {app_name}.</string>
     <string name="databaseErrorUpdate">Baza e të dhënave të aplikacionit tuaj është e papajtueshme me këtë version të {app_name}. Rinstaloni aplikacionin dhe riktheni llogarinë tuaj për të gjeneruar një bazë të re të të dhënave dhe për të vazhduar përdorimin e {app_name}.\n\nParalajmërim: Kjo do të rezultojë në humbjen e të gjitha mesazheve dhe bashkëngjitjeve më të vjetra se dy javë.</string>
     <string name="databaseOptimizing">Optimizimi i Bazës së të Dhënave</string>
     <string name="debugLog">Regjistër Diagnostikimesh</string>
@@ -409,7 +409,6 @@
     <string name="groupLeaveDescription">A jeni të sigurt që doni ta lini <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">A jeni të sigurt që doni të largoheni nga <b>{group_name}</b>?\n\nKjo do të heqë të gjithë anëtarët dhe do të fshijë të gjitha përmbajtjet e grupit.</string>
     <string name="groupLeaveErrorFailed">Dështoi dalja nga {group_name}</string>
-    <string name="groupLegacyBanner">Grupet janë përmirësuar, krijoni një grup të ri për të përditësuar. Funksionaliteti i grupit të vjetër do të degradohet nga {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> e la grupin.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> dhe <b>{count} të tjerë</b> braktisën grupin.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> dhe <b>{other_name}</b> braktisën grupin.</string>
@@ -420,7 +419,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> dhe <b>{count} të tjerë</b> u ftuat të bashkoheni me grupin.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> dhe <b>{other_name}</b> u ftuat të bashkoheni me grupin.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Ju</b> dhe <b>{count} të tjerë</b> u ftuat të bashkoheni me grupin. Historia e bisedës u ndanë.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Ju</b> dhe <b>{name}</b> u ftuat të bashkoheni me grupin. Historia e bisedës u ndanë.</string>
     <string name="groupMemberYouLeft"><b>Ju</b> braktisët grupin.</string>
     <string name="groupMembers">Anëtarë grupi</string>
     <string name="groupMembersNone">Nuk ka anëtarë të tjerë në këtë grup.</string>
@@ -434,7 +432,6 @@
     <string name="groupOnlyAdmin">Ju jeni administratori i vetëm në <b>{group_name}</b>.\n\nAnëtarët e grupit dhe cilësimet nuk mund të ndryshohen pa një administrator.</string>
     <string name="groupPromotedYou"><b>Ju</b> u promovuat në Administrator.</string>
     <string name="groupPromotedYouMultiple"><b>Ju</b> dhe <b>{count} të tjerë</b> u promovuan në Administratorë.</string>
-    <string name="groupPromotedYouTwo"><b>Ju</b> dhe <b>{name}</b> u promovuan në Administratorë.</string>
     <string name="groupRemoveDescription">A dëshironi të hiqni <b>{name}</b> nga <b>{group_name}?</b></string>
     <string name="groupRemoveDescriptionMultiple">A dëshironi të hiqni <b>{name}</b> dhe <b>{count} të tjerë</b> nga <b>{group_name}?</b></string>
     <string name="groupRemoveDescriptionTwo">A dëshironi të hiqni <b>{name}</b> dhe <b>{other_name}</b> nga <b>{group_name}?</b></string>

@@ -6,19 +6,23 @@ import android.view.Menu
 import android.view.MenuItem
 import network.loki.messenger.R
 import org.session.libsession.messaging.MessagingModuleConfiguration
-import org.session.libsession.messaging.utilities.AccountId
+import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.IdPrefix
-import org.session.libsignal.utilities.Log
+import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.v2.ConversationAdapter
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 
-class ConversationActionModeCallback(private val adapter: ConversationAdapter, private val threadID: Long,
-    private val context: Context) : ActionMode.Callback {
+class ConversationActionModeCallback(
+    private val adapter: ConversationAdapter,
+    private val threadID: Long,
+    private val context: Context,
+    private val deprecationManager: LegacyGroupDeprecationManager,
+    ) : ActionMode.Callback {
     var delegate: ConversationActionModeCallbackDelegate? = null
 
     override fun onCreateActionMode(mode: ActionMode, menu: Menu): Boolean {
@@ -31,16 +35,19 @@ class ConversationActionModeCallback(private val adapter: ConversationAdapter, p
     fun updateActionModeMenu(menu: Menu) {
         // Prepare
         val selectedItems = adapter.selectedItems
-        val containsControlMessage = selectedItems.any { it.isUpdate }
+        val containsControlMessage = selectedItems.any { it.isControlMessage }
         val hasText = selectedItems.any { it.body.isNotEmpty() }
         if (selectedItems.isEmpty()) { return }
         val firstMessage = selectedItems.iterator().next()
         val openGroup = DatabaseComponent.get(context).lokiThreadDatabase().getOpenGroupChat(threadID)
         val thread = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(threadID)!!
         val userPublicKey = TextSecurePreferences.getLocalNumber(context)!!
-        val edKeyPair = MessagingModuleConfiguration.shared.getUserED25519KeyPair()!!
+        val edKeyPair = MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair()!!
         val blindedPublicKey = openGroup?.publicKey?.let { SodiumUtilities.blindedKeyPair(it, edKeyPair)?.publicKey?.asBytes }
             ?.let { AccountId(IdPrefix.BLINDED, it) }?.hexString
+
+        val isDeprecatedLegacyGroup = thread.isLegacyGroupRecipient &&
+                deprecationManager.isDeprecated
 
         // Embedded function
         fun userCanBanSelectedUsers(): Boolean {
@@ -53,30 +60,29 @@ class ConversationActionModeCallback(private val adapter: ConversationAdapter, p
         }
 
 
-
         // Delete message
-        menu.findItem(R.id.menu_context_delete_message).isVisible = true // can always delete since delete logic will be handled by the VM
+        menu.findItem(R.id.menu_context_delete_message).isVisible = !isDeprecatedLegacyGroup // can always delete since delete logic will be handled by the VM
         // Ban user
-        menu.findItem(R.id.menu_context_ban_user).isVisible = userCanBanSelectedUsers()
+        menu.findItem(R.id.menu_context_ban_user).isVisible = userCanBanSelectedUsers() && !isDeprecatedLegacyGroup
         // Ban and delete all
-        menu.findItem(R.id.menu_context_ban_and_delete_all).isVisible = userCanBanSelectedUsers()
+        menu.findItem(R.id.menu_context_ban_and_delete_all).isVisible = userCanBanSelectedUsers() && !isDeprecatedLegacyGroup
         // Copy message text
         menu.findItem(R.id.menu_context_copy).isVisible = !containsControlMessage && hasText
         // Copy Account ID
         menu.findItem(R.id.menu_context_copy_public_key).isVisible =
-             (thread.isGroupRecipient && !thread.isCommunityRecipient && selectedItems.size == 1 && firstMessage.individualRecipient.address.toString() != userPublicKey)
+             (thread.isGroupOrCommunityRecipient && !thread.isCommunityRecipient && selectedItems.size == 1 && firstMessage.individualRecipient.address.toString() != userPublicKey)
         // Message detail
-        menu.findItem(R.id.menu_message_details).isVisible = selectedItems.size == 1
+        menu.findItem(R.id.menu_message_details).isVisible = selectedItems.size == 1 && !isDeprecatedLegacyGroup
         // Resend
-        menu.findItem(R.id.menu_context_resend).isVisible = (selectedItems.size == 1 && firstMessage.isFailed)
+        menu.findItem(R.id.menu_context_resend).isVisible = (selectedItems.size == 1 && firstMessage.isFailed) && !isDeprecatedLegacyGroup
         // Resync
-        menu.findItem(R.id.menu_context_resync).isVisible = (selectedItems.size == 1 && firstMessage.isSyncFailed)
+        menu.findItem(R.id.menu_context_resync).isVisible = (selectedItems.size == 1 && firstMessage.isSyncFailed) && !isDeprecatedLegacyGroup
         // Save media
         menu.findItem(R.id.menu_context_save_attachment).isVisible = (selectedItems.size == 1
             && firstMessage.isMms && (firstMessage as MediaMmsMessageRecord).containsMediaSlide())
         // Reply
         menu.findItem(R.id.menu_context_reply).isVisible =
-            (selectedItems.size == 1 && !firstMessage.isPending && !firstMessage.isFailed && !firstMessage.isOpenGroupInvitation)
+            (!isDeprecatedLegacyGroup && selectedItems.size == 1 && !firstMessage.isPending && !firstMessage.isFailed && !firstMessage.isOpenGroupInvitation)
     }
 
     override fun onPrepareActionMode(mode: ActionMode?, menu: Menu): Boolean {

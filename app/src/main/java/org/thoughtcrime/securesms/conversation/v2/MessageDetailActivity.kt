@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -57,11 +56,10 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
+import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.thoughtcrime.securesms.MediaPreviewActivity.getPreviewIntent
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
-import org.thoughtcrime.securesms.database.Storage
-import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
 import org.thoughtcrime.securesms.ui.Avatar
 import org.thoughtcrime.securesms.ui.CarouselNextButton
 import org.thoughtcrime.securesms.ui.CarouselPrevButton
@@ -88,7 +86,7 @@ import javax.inject.Inject
 class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
 
     @Inject
-    lateinit var storage: Storage
+    lateinit var storage: StorageProtocol
 
     private val viewModel: MessageDetailsViewModel by viewModels()
 
@@ -137,7 +135,7 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
             onReply = if (state.canReply) { { setResultAndFinish(ON_REPLY) } } else null,
             onResend = state.error?.let { { setResultAndFinish(ON_RESEND) } },
             onSave = if(canSave) { { setResultAndFinish(ON_SAVE) } } else null,
-            onDelete = { setResultAndFinish(ON_DELETE) },
+            onDelete = if (state.canDelete) { { setResultAndFinish(ON_DELETE) } } else null,
             onCopy = { setResultAndFinish(ON_COPY) },
             onClickImage = { viewModel.onClickImage(it) },
             onAttachmentNeedsDownload = viewModel::onAttachmentNeedsDownload,
@@ -160,7 +158,7 @@ fun MessageDetails(
     onReply: (() -> Unit)? = null,
     onResend: (() -> Unit)? = null,
     onSave: (() -> Unit)? = null,
-    onDelete: () -> Unit = {},
+    onDelete: (() -> Unit)? = null,
     onCopy: () -> Unit = {},
     onClickImage: (Int) -> Unit = {},
     onAttachmentNeedsDownload: (DatabaseAttachment) -> Unit = { _ -> }
@@ -244,7 +242,7 @@ fun CellButtons(
     onReply: (() -> Unit)? = null,
     onResend: (() -> Unit)? = null,
     onSave: (() -> Unit)? = null,
-    onDelete: () -> Unit,
+    onDelete: (() -> Unit)? = null,
     onCopy: () -> Unit
 ) {
     Cell(modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing)) {
@@ -283,12 +281,14 @@ fun CellButtons(
                 Divider()
             }
 
-            LargeItemButton(
-                R.string.delete,
-                R.drawable.ic_delete,
-                colors = dangerButtonColors(),
-                onClick = onDelete
-            )
+            onDelete?.let {
+                LargeItemButton(
+                    R.string.delete,
+                    R.drawable.ic_delete,
+                    colors = dangerButtonColors(),
+                    onClick = it
+                )
+            }
         }
     }
 }

@@ -256,7 +256,7 @@
     <string name="create">Креирај</string>
     <string name="cut">Изрежи</string>
     <string name="databaseErrorGeneric">Дошло је до грешке у бази података.\n\nИзвезите своје апликације логове за дељење ради отклањања проблема. Ако ово не успе, поново инсталирајте {app_name} и обновите свој налог.\n\nУпозорење: Ово ће довести до губитка свих порука, прилога и података о налогу старијих од две недеље.</string>
-    <string name="databaseErrorTimeout">Приметили смо да {app_name} треба дуго времена да се покрене.\n\nМожете наставити да чекате, извести дневнике уређаја да их делите за решавање проблема или покушати поново покренути Session.</string>
+    <string name="databaseErrorTimeout">Приметили смо да {app_name} треба дуго времена да се покрене.\n\nМожете наставити да чекате, извести дневнике уређаја да их делите за решавање проблема или покушати поново покренути {app_name}.</string>
     <string name="databaseErrorUpdate">Ваша база података апликације није компатибилна са овом верзијом {app_name}. Поново инсталирајте апликацију и повратите ваш налог да бисте генерисали нову базу података и наставили да користите {app_name}.\n\nУпозорење: Ово ће резултирати губитком свих порука и прилога старијих од две недеље.</string>
     <string name="databaseOptimizing">Оптимизација базе података</string>
     <string name="debugLog">Извештај о грешкама</string>
@@ -415,7 +415,6 @@
     <string name="groupLeaveDescription">Да ли сте сигурни да желите да напустите <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Да ли сте сигурни да желите да напустите <b>{group_name}</b>?\n\nОво ће уклонити све чланове и избрисати сав садржај групе.</string>
     <string name="groupLeaveErrorFailed">Напуштање {group_name} није успело</string>
-    <string name="groupLegacyBanner">Групе су надограђене, креирајте нову групу да бисте ажурирали. Стара функционалност групе ће бити деградирана од {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> је напустио групу.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> и <b>{count} осталих</b> су напустили групу.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> и <b>{other_name}</b> су напустили групу.</string>
@@ -426,7 +425,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> и <b>{count} осталих</b> су позвани да се придруже групи.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> и <b>{other_name}</b> су позвани да се придруже групи.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Ви</b> и <b>{count} осталих</b> су позвани да се придруже групи. Историја ћаскања је подељена.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Ви</b> и <b>{name}</b> су позвани да се придруже групи. Историја ћаскања је подељена.</string>
     <string name="groupMemberYouLeft"><b>Ви</b> сте напустили групу.</string>
     <string name="groupMembers">Чланови групе</string>
     <string name="groupMembersNone">Нема других чланова у овој групи.</string>
@@ -440,7 +438,6 @@
     <string name="groupOnlyAdmin">Ви сте једини администратор у <b>{group_name}.</b>\n\nЧланови групе и подешавања не могу бити промењени без администратора.</string>
     <string name="groupPromotedYou"><b>Ви</b> сте унапређени у администратора.</string>
     <string name="groupPromotedYouMultiple"><b>Ви</b> и <b>{count} других</b> сте унапређени у администраторе.</string>
-    <string name="groupPromotedYouTwo"><b>Ви</b> и <b>{name}</b> сте унапређени у администраторе.</string>
     <string name="groupRemoveDescription">Да ли желите уклонити <b>{name}</b> из <b>{group_name}?</b></string>
     <string name="groupRemoveDescriptionMultiple">Да ли желите уклонити <b>{name}</b> и <b>{count} других</b> из <b>{group_name}?</b></string>
     <string name="groupRemoveDescriptionTwo">Да ли желите уклонити <b>{name}</b> и <b>{other_name}</b> из <b>{group_name}?</b></string>

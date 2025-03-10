@@ -256,7 +256,7 @@
     <string name="create">Unda</string>
     <string name="cut">Kata</string>
     <string name="databaseErrorGeneric">Kosa la database limetokea.\n\nToa logi za programu zako kushirikisha kwa utatuzi. Ikiwa hili halitafanikiwa, sakinisha tena {app_name} na urejeshe akaunti yako.\n\n Onyo: Hii itasababisha kupotea kwa ujumbe wote, viambatisho, na data ya akaunti iliyo zaidi ya wiki mbili.</string>
-    <string name="databaseErrorTimeout">Tumeona {app_name} inachukua muda mrefu kuanza.\n\nUnaweza kuendelea kusubiri, kuhamisha kumbukumbu za kifaa chako kushiriki kwa kutatua shida, au jaribu kuanzisha Session upya.</string>
+    <string name="databaseErrorTimeout">Tumeona {app_name} inachukua muda mrefu kuanza.\n\nUnaweza kuendelea kusubiri, kuhamisha kumbukumbu za kifaa chako kushiriki kwa kutatua shida, au jaribu kuanzisha {app_name} upya.</string>
     <string name="databaseErrorUpdate">Hifadhidata ya programu yako hailingani na toleo hili la {app_name}. Sakinusha programu na urejeshe akaunti yako ili kuunda hifadhidata mpya na uendelee kutumia {app_name}.\n\nOnyo: Hii itasababisha kupoteza ujumbe na viambatanisho vyote vilivyo zaidi ya wiki mbili.</string>
     <string name="databaseOptimizing">Kuhamisha Hifadhidata</string>
     <string name="debugLog">Logi ya Kurekebisha</string>
@@ -411,7 +411,6 @@
     <string name="groupLeaveDescription">Je, una uhakika unataka kuondoka <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Una uhakika unataka kutoka <b>{group_name}</b>?\n\nHii itawaondoa wanachama wote na kufuta maudhui yote ya kikundi.</string>
     <string name="groupLeaveErrorFailed">Imeshindikana kuondoka {group_name}</string>
-    <string name="groupLegacyBanner">Makundi yameboreshwa, unda kikundi kipya kuboresha. Utendaji wa kikundi wa zamani utapungua kutoka {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> ameondoka kwenye kundi.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> na <b>{count} wengine</b> wameondoka kwenye kundi.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> na <b>{other_name}</b> wameondoka kwenye kundi.</string>
@@ -422,7 +421,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> na <b>{count} wengine</b> wamealikwa kujiunga na kundi.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> na <b>{other_name}</b> wamealikwa kujiunga na kundi.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Wewe</b> na <b>{count} wengine</b> mmealikwa kujiunga na kundi. Historia ya gumzo ilishirikiwa.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Wewe</b> na <b>{name}</b> mmealikwa kujiunga na kundi. Historia ya gumzo ilishirikiwa.</string>
     <string name="groupMemberYouLeft"><b>Wewe</b> umetoka kwenye kundi.</string>
     <string name="groupMembers">Wajumbe wa kikundi</string>
     <string name="groupMembersNone">Hakuna wanachama wengine katika kikundi hiki.</string>
@@ -436,7 +434,6 @@
     <string name="groupOnlyAdmin">Wewe ndiye msimamizi pekee katika <b>{group_name}</b>.\n\nWanakundi na mipangilio hawawezi kubadilishwa bila msimamizi.</string>
     <string name="groupPromotedYou"><b>Wewe</b> umepandishwa cheo kuwa Admin.</string>
     <string name="groupPromotedYouMultiple"><b>Wewe</b> na <b>{count} wengine</b> mmepandishwa cheo kuwa Admin.</string>
-    <string name="groupPromotedYouTwo"><b>Wewe</b> na <b>{name}</b> mmepandishwa cheo kuwa Admin.</string>
     <string name="groupRemoveDescription">Ungependa kuondoa <b>{name}</b> kutoka <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Ungependa kuondoa <b>{name}</b> na <b>{count} wengine</b> kutoka <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Ungependa kuondoa <b>{name}</b> na <b>{other_name}</b> kutoka <b>{group_name}</b>?</string>

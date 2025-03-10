@@ -11,9 +11,11 @@ import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.messaging.utilities.Data
 import org.session.libsession.snode.OnionRequestAPI
+import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.DecodedAudio
 import org.session.libsession.utilities.DownloadUtilities
 import org.session.libsession.utilities.InputStreamMediaDataSource
+import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.streams.AttachmentCipherInputStream
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
@@ -63,15 +65,7 @@ class AttachmentDownloadJob(val attachmentID: Long, val databaseMessageID: Long)
                 return true
             }
 
-            // you can't be eligible without a sender
-            val sender = messageDataProvider.getIndividualRecipientForMms(databaseMessageID)?.address?.serialize()
-                ?: return false
-
-            // you can't be eligible without a contact entry
-            val contact = storage.getContactWithAccountID(sender) ?: return false
-
-            // we are eligible if we are receiving a group message or the contact is trusted
-            return threadRecipient.isGroupRecipient || contact.isTrusted
+            return storage.shouldAutoDownloadAttachments(threadRecipient)
         }
     }
 
@@ -81,7 +75,8 @@ class AttachmentDownloadJob(val attachmentID: Long, val databaseMessageID: Long)
         val threadID = storage.getThreadIdForMms(databaseMessageID)
 
         val handleFailure: (java.lang.Exception, attachmentId: AttachmentId?) -> Unit = { exception, attachment ->
-            if (exception == Error.NoAttachment
+            if (exception is NonRetryableException ||
+                exception == Error.NoAttachment
                     || exception == Error.NoThread
                     || exception == Error.NoSender
                     || (exception is OnionRequestAPI.HTTPRequestFailedAtDestinationException && exception.statusCode == 400)) {
@@ -144,7 +139,7 @@ class AttachmentDownloadJob(val attachmentID: Long, val databaseMessageID: Long)
                 Log.d("AttachmentDownloadJob", "downloading open group attachment")
                 val url = attachment.url.toHttpUrlOrNull()!!
                 val fileID = url.pathSegments.last()
-                OpenGroupApi.download(fileID, openGroup.room, openGroup.server).get().let {
+                OpenGroupApi.download(fileID, openGroup.room, openGroup.server).await().let {
                     tempFile.writeBytes(it)
                 }
             }

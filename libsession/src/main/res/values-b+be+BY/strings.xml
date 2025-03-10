@@ -257,7 +257,7 @@
     <string name="create">Стварыць</string>
     <string name="cut">Выразаць</string>
     <string name="databaseErrorGeneric">Адбылася памылка базы дадзеных.\n\nЭкспартаваць часопісы прыкладання для падзелу для ліквідацыі непаладак. Калі гэта не ўдасца, перавстанавіць {app_name} і аднавіць свой уліковы запіс.\n\nПапярэджанне: гэта прывядзе да страты ўсіх паведамленняў, укладанняў і дадзеных уліковага запісу, старэйшых за два тыдні.</string>
-    <string name="databaseErrorTimeout">Мы заўважылі, што {app_name} патрабуе шмат часу для запуску.\n\nВы можаце працягваць чакаць, экспартаваць журналы вашай прылады для спагнання праблем, альбо паспрабаваць перазапусціць Session.</string>
+    <string name="databaseErrorTimeout">Мы заўважылі, што {app_name} патрабуе шмат часу для запуску.\n\nВы можаце працягваць чакаць, экспартаваць журналы вашай прылады для спагнання праблем, альбо паспрабаваць перазапусціць {app_name}.</string>
     <string name="databaseErrorUpdate">Ваша база даных прыкладання несумяшчальная з гэтай версіяй {app_name}. Пераўсталюйце прыкладанне і аднавіце ўліковы запіс, каб стварыць новую базу даных і працягнуць выкарыстанне {app_name}.\n\nУвага: гэта прывядзе да страты ўсіх паведамленняў і ўкладанняў старэйшых за два тыдні.</string>
     <string name="databaseOptimizing">Аптымізацыя базы даных</string>
     <string name="debugLog">Логі адладкі</string>
@@ -420,7 +420,6 @@
     <string name="groupLeaveDescription">Вы ўпэўнены, што жадаеце выйсці з <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Вы ўпэўнены, што жадаеце пакінуць <b>{group_name}</b>?\n\nГэта выдаліць усіх удзельнікаў і ўсю групавую інфармацыю.</string>
     <string name="groupLeaveErrorFailed">Не атрымалася пакінуць {group_name}</string>
-    <string name="groupLegacyBanner">Групы былі абноўлены, стварыце новую групу для абнаўлення. Функцыянальнасць старой групы будзе пагоршана з {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> пакінуў групу.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> і <b>{count} іншых</b> пакінулі групу.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> і <b>{other_name}</b> пакінулі групу.</string>
@@ -431,7 +430,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> і <b>{count} іншых</b> былі запрошаны далучыцца да групы.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> і <b>{other_name}</b> былі запрошаны далучыцца да групы.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Вы</b> і яшчэ <b>{count} іншых</b> былі запрошаны далучыцца да групы. Гісторыя чатаў была абагулена.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Вы</b> і <b>{name}</b> былі запрошаны далучыцца да групы. Гісторыя чатаў была абагулена.</string>
     <string name="groupMemberYouLeft"><b>Вы</b> пакінулі групу.</string>
     <string name="groupMembers">Удзельнікі групы</string>
     <string name="groupMembersNone">У гэтай групе больш няма ўдзельнікаў.</string>
@@ -445,7 +443,6 @@
     <string name="groupOnlyAdmin">Вы з\'яўляецеся адзіным адміністратарам у <b>{group_name}</b>.\n\nУдзельнікі групы і наладкі не могуць быць змененыя без адміністратара.</string>
     <string name="groupPromotedYou"><b>Вас</b> павысілі да адміністратара.</string>
     <string name="groupPromotedYouMultiple"><b>Вы</b> і <b>{count} іншых</b> былі павышаны да адміністратараў.</string>
-    <string name="groupPromotedYouTwo"><b>Вы</b> і <b>{name}</b> былі павышаны да адміністратараў.</string>
     <string name="groupRemoveDescription">Вы жадаеце выдаліць <b>{name}</b> з <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Вы жадаеце выдаліць <b>{name}</b> і <b>{count} іншых</b> з <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Вы жадаеце выдаліць <b>{name}</b> і <b>{other_name}</b> з <b>{group_name}</b>?</string>

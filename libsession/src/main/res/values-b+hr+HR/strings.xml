@@ -256,7 +256,7 @@
     <string name="create">Stvori</string>
     <string name="cut">Izreži</string>
     <string name="databaseErrorGeneric">Došlo je do pogreške u bazi podataka.\n\nIzvezite svoje zapisnike aplikacije kako biste ih podijelili za otklanjanje poteškoća. Ako to ne uspije, ponovo instalirajte {app_name} i vratite svoj račun.\n\nUpozorenje: Ovo će rezultirati gubitkom svih poruka, privitaka i podataka računa starijih od dva tjedna.</string>
-    <string name="databaseErrorTimeout">Primijetili smo da pokretanje {app_name} traje dugo.\n\nMožete nastaviti čekati, izvesti zapise uređaja za dijeljenje radi rješavanja problema ili pokušati ponovo pokrenuti Session.</string>
+    <string name="databaseErrorTimeout">Primijetili smo da pokretanje {app_name} traje dugo.\n\nMožete nastaviti čekati, izvesti zapise uređaja za dijeljenje radi rješavanja problema ili pokušati ponovo pokrenuti {app_name}.</string>
     <string name="databaseErrorUpdate">Vaša aplikacijska baza podataka nije kompatibilna s ovom verzijom {app_name}. Ponovno instalirajte aplikaciju i vratite svoj račun kako biste generirali novu bazu podataka i nastavili koristiti {app_name}.\n\nUpozorenje: Ovo će rezultirati gubitkom svih poruka i privitaka starijih od dva tjedna.</string>
     <string name="databaseOptimizing">Optimizacija Baze podataka</string>
     <string name="debugLog">Evidencija o otklanjanju grešaka</string>
@@ -415,7 +415,6 @@
     <string name="groupLeaveDescription">Jeste li sigurni da želite napustiti <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Jeste li sigurni da želite napustiti <b>{group_name}</b>?\n\nOvo će ukloniti sve članove i izbrisati sve sadržaje grupe.</string>
     <string name="groupLeaveErrorFailed">Napustanje grupe {group_name} nije uspjelo</string>
-    <string name="groupLegacyBanner">Grupe su nadograđene, stvorite novu grupu za nadogradnju. Stara funkcionalnost grupe bit će degradirana od {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> je napustio grupu.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> i <b>{count} drugi</b> napustili su grupu.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> i <b>{other_name}</b> napustili su grupu.</string>
@@ -426,7 +425,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> i <b>{count} drugi</b> pozvani su da se pridruže grupi.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> i <b>{other_name}</b> pozvani su da se pridruže grupi.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Vi</b> i <b>{count} drugi</b> pozvani ste da se pridružite grupi. Povijest razgovora je podijeljena.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Vi</b> i <b>{name}</b> pozvani ste da se pridružite grupi. Povijest razgovora je podijeljena.</string>
     <string name="groupMemberYouLeft"><b>Napustili ste</b> grupu.</string>
     <string name="groupMembers">Članovi grupe</string>
     <string name="groupMembersNone">Nema drugih članova u ovoj grupi.</string>
@@ -440,7 +438,6 @@
     <string name="groupOnlyAdmin">Vi ste jedini admin u <b>{group_name}</b>.\n\nČlanovi grupe i postavke se ne mogu mijenjati bez admina.</string>
     <string name="groupPromotedYou"><b>Promovirani ste u Admina.</b></string>
     <string name="groupPromotedYouMultiple"><b>Vi</b> i <b>{count} drugi</b> promovirani ste u administratora.</string>
-    <string name="groupPromotedYouTwo"><b>Vi</b> i <b>{name}</b> promovirani ste u administratora.</string>
     <string name="groupRemoveDescription">Želite li ukloniti <b>{name}</b> iz <b>{group_name}?</b></string>
     <string name="groupRemoveDescriptionMultiple">Želite li ukloniti <b>{name}</b> i <b>{count} drugih</b> iz <b>{group_name}?</b></string>
     <string name="groupRemoveDescriptionTwo">Želite li ukloniti <b>{name}</b> i <b>{other_name}</b> iz <b>{group_name}?</b></string>

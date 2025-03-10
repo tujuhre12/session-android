@@ -16,6 +16,8 @@ import org.thoughtcrime.securesms.groups.OpenGroupManager;
 
 import java.util.concurrent.TimeUnit;
 
+import kotlin.Unit;
+
 public class OptimizedMessageNotifier implements MessageNotifier {
   private final MessageNotifier         wrapped;
   private final Debouncer               debouncer;
@@ -50,7 +52,7 @@ public class OptimizedMessageNotifier implements MessageNotifier {
     Poller poller = ApplicationContext.getInstance(context).poller;
     boolean isCaughtUp = true;
     if (poller != null) {
-      isCaughtUp = isCaughtUp && poller.isCaughtUp();
+      isCaughtUp = isCaughtUp && !poller.isPolling();
     }
 
     isCaughtUp = isCaughtUp && OpenGroupManager.INSTANCE.isAllCaughtUp();
@@ -67,7 +69,7 @@ public class OptimizedMessageNotifier implements MessageNotifier {
     Poller lokiPoller = ApplicationContext.getInstance(context).poller;
     boolean isCaughtUp = true;
     if (lokiPoller != null) {
-      isCaughtUp = isCaughtUp && lokiPoller.isCaughtUp();
+      isCaughtUp = isCaughtUp && !lokiPoller.isPolling();
     }
 
     isCaughtUp = isCaughtUp && OpenGroupManager.INSTANCE.isAllCaughtUp();
@@ -84,7 +86,7 @@ public class OptimizedMessageNotifier implements MessageNotifier {
     Poller lokiPoller = ApplicationContext.getInstance(context).poller;
     boolean isCaughtUp = true;
     if (lokiPoller != null) {
-      isCaughtUp = isCaughtUp && lokiPoller.isCaughtUp();
+      isCaughtUp = isCaughtUp && !lokiPoller.isPolling();
     }
 
     isCaughtUp = isCaughtUp && OpenGroupManager.INSTANCE.isAllCaughtUp();
@@ -101,7 +103,7 @@ public class OptimizedMessageNotifier implements MessageNotifier {
     Poller lokiPoller = ApplicationContext.getInstance(context).poller;
     boolean isCaughtUp = true;
     if (lokiPoller != null) {
-      isCaughtUp = isCaughtUp && lokiPoller.isCaughtUp();
+      isCaughtUp = isCaughtUp && !lokiPoller.isPolling();
     }
 
     isCaughtUp = isCaughtUp && OpenGroupManager.INSTANCE.isAllCaughtUp();
@@ -118,7 +120,10 @@ public class OptimizedMessageNotifier implements MessageNotifier {
 
   private void performOnBackgroundThreadIfNeeded(Runnable r) {
     if (Looper.myLooper() == Looper.getMainLooper()) {
-      ThreadUtils.queue(r);
+      ThreadUtils.queue(() -> {
+        r.run();
+        return Unit.INSTANCE;
+      });
     } else {
       r.run();
     }

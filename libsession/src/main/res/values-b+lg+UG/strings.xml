@@ -255,7 +255,7 @@
     <string name="create">Kilira</string>
     <string name="cut">temula</string>
     <string name="databaseErrorGeneric">Waliwo ensobi mu database.\n\nWeereza ebizito by\'ebifaananyi by\'ekiranga okusobola okuetongereza. Bw\'eba ekino ki sembral, ndamu {app_name} otandiseewo n\'okubizuuliza ku akooti yo.\n\nObulabe: Kino kijja kuba kwesitukira mu kufuuka kwa messages zonna, ebifaananyi, n\'amatabi ga accounts ey\'emyaka ebiri p...</string>
-    <string name="databaseErrorTimeout">Tukuboolabye {app_name} enetwala ebweru okuggwa.\n\nMuliisa kulinda, kusitumidde ebirukanya ebyekusibiza okugabana oludde, oba kwemuddira Session.</string>
+    <string name="databaseErrorTimeout">Tukuboolabye {app_name} enetwala ebweru okuggwa.\n\nMuliisa kulinda, kusitumidde ebirukanya ebyekusibiza okugabana oludde, oba kwemuddira {app_name}.</string>
     <string name="databaseErrorUpdate">Database y’app yo si yagwanira ne verison ya {app_name}. Tegyamu app ne kuba okwongera ku Account yo okwongera okukozesa {app_name}.\n\nWarning: Kino kyakuleeteka okufiirwa kwa bubaka bwona n’empapula ezisazeewo ezinyuuse emywaka ebiri ebalagala.</string>
     <string name="databaseOptimizing">Okuza Database</string>
     <string name="debugLog">Log ya Debug</string>
@@ -410,7 +410,6 @@
     <string name="groupLeaveDescription">Oli mukakafu nti oyagala okuva mu <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Oli mbanankubye okusula <b>{group_name}</b>?\n\nAbalonzi bonna bajja kuvawa ne ebikozesebwa byonna bijja kusangiibwa.</string>
     <string name="groupLeaveErrorFailed">Ensobi okuzaako okwetaalya mu {group_name}</string>
-    <string name="groupLegacyBanner">Ebibinja byonnookyekulusizza, Tandika ekibinja ekipya okwasuzibwa. Ekola ya Kibinja ekijja kwefaananamu kubanga okuva {date}.</string>
     <string name="groupMemberLeft"><b>{name}﻿</b> yava mu kibiina.</string>
     <string name="groupMemberLeftMultiple"><b>{name}﻿</b> ne <b>{count} abalala﻿</b> baava mu kibiina.</string>
     <string name="groupMemberLeftTwo"><b>{name}﻿</b> ne <b>{other_name}﻿</b> baava mu kibiina.</string>
@@ -421,7 +420,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> ne <b>{count} abalala</b> mwakuyitibwa okwegatta mu kibiina.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> ne <b>{other_name}</b> mwakuyitibwa okwegatta mu kibiina.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Ggwe</b> ne <b>{count} abalala</b> mwakuyitibwa okwegatta mu kibiina. Ebika by\'obubaka by\'akugabana.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Ggwe</b> ne <b>{name}</b> mwakuyitibwa okwegatta mu kibiina. Ebika by\'obubaka by\'akugabana.</string>
     <string name="groupMemberYouLeft"><b>Ggwe</b> wafuma mu kibiina.</string>
     <string name="groupMembers">Bonna</string>
     <string name="groupMembersNone">Tewali mirala mu kibiina kino.</string>
@@ -435,7 +433,6 @@
     <string name="groupOnlyAdmin">Ggwe yekka admin mu <b>{group_name}.</b>\n\nAbweeta by\'olukungguwa n\'ebisela ebiteredde - nga alimu admin.</string>
     <string name="groupPromotedYou"><b>Ggwe</b> wakyusibwa okufuuka Admin.</string>
     <string name="groupPromotedYouMultiple"><b>Ggwe</b> ne <b>{count} abalala</b> baakyusibwa okufuuka Admin.</string>
-    <string name="groupPromotedYouTwo"><b>Ggwe</b> ne <b>{name}</b> baakyusibwa okufuuka Admin.</string>
     <string name="groupRemoveDescription">Oyagala okulinyisa <b>{name}</b> okuva e <b>{group_name}?</b></string>
     <string name="groupRemoveDescriptionMultiple">Oyagala okulinyisa <b>{name}</b> n\'abalala <b>{count}</b> okuva e <b>{group_name}?</b></string>
     <string name="groupRemoveDescriptionTwo">Oyagala okulinyisa <b>{name}</b> ne <b>{other_name}</b> okuva e <b>{group_name}?</b></string>

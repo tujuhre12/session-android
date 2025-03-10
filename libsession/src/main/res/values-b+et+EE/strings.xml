@@ -255,7 +255,7 @@
     <string name="create">Loo</string>
     <string name="cut">Lõika</string>
     <string name="databaseErrorGeneric">Andmebaasi viga.\n\nEkspordi oma rakenduslogid, et jagada tõrkeotsinguteks. Kui see ei õnnestu, installige {app_name} uuesti ja taastage oma konto.\n\nHoiatus: Selle tulemusel kaotate kõik kaks nädalat vanemad sõnumid, manused ja kontoandmed.</string>
-    <string name="databaseErrorTimeout">Oleme märganud, et {app_name} käivitamine võtab kaua aega.\n\nVõite jätkata ootamist, eksportida oma seadme logisid tõrkeotsingu eesmärgil jagamiseks või proovida Session\'i taaskäivitamist.</string>
+    <string name="databaseErrorTimeout">Oleme märganud, et {app_name} käivitamine võtab kaua aega.\n\nVõite jätkata ootamist, eksportida oma seadme logisid tõrkeotsingu eesmärgil jagamiseks või proovida {app_name}\'i taaskäivitamist.</string>
     <string name="databaseErrorUpdate">Teie rakenduse andmebaas ei ühildu selle {app_name} versiooniga. Installige rakendus uuesti ja taastage oma konto, et luua uus andmebaas ja jätkata {app_name} kasutamist.\n\nHoiatus: See kaotab kõik vanemad kui kaks nädalat sõnumid ja manused.</string>
     <string name="databaseOptimizing">Andmebaasi optimeerimine</string>
     <string name="debugLog">Silumislogi</string>
@@ -410,7 +410,6 @@
     <string name="groupLeaveDescription">Kas soovite grupist või kogukonnast <b>{group_name}</b> lahkuda?</string>
     <string name="groupLeaveDescriptionAdmin">Kas olete kindel, et soovite lahkuda grupist <b>{group_name}</b>?\n\nSee eemaldab kõik liikmed ja kustutab kogu grupi sisu.</string>
     <string name="groupLeaveErrorFailed">Ebaõnnestus lahkuda grupist {group_name}</string>
-    <string name="groupLegacyBanner">Grupid on uuendatud, loo uus grupp, et uuendada. Vana grupi funktsionaalsus hakkab alates {date} aeguma.</string>
     <string name="groupMemberLeft"><b>{name}</b> lahkus grupist.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> ja <b>{count} teist</b> lahkusid grupist.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> ja <b>{other_name}</b> lahkusid grupist.</string>
@@ -421,7 +420,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> ja <b>{count} teist </b> kutsuti grupiga liituma.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> ja <b>{other_name}</b> kutsuti grupiga liituma.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Sind</b> ja <b>{count} teist</b> kutsuti grupiga liituma. Vestluse ajalugu jagati nendega.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Sind</b> ja <b>{name}</b> kutsuti grupiga liituma. Vestluse ajalugu jagati nendega.</string>
     <string name="groupMemberYouLeft"><b>Sina</b> lahkusid grupist.</string>
     <string name="groupMembers">Grupi liikmed</string>
     <string name="groupMembersNone">Selles grupis pole teisi liikmeid.</string>
@@ -435,7 +433,6 @@
     <string name="groupOnlyAdmin">Olete ainus administraator grupis <b>{group_name}</b>.\n\nGrupi liikmeid ja sätteid ei saa muuta ilma administraatorita.</string>
     <string name="groupPromotedYou"><b>Sina</b> määrati adminiks.</string>
     <string name="groupPromotedYouMultiple"><b>Sind</b> ja <b>{count} teist</b> määrati administraatoriks.</string>
-    <string name="groupPromotedYouTwo"><b>Sind</b> ja <b>{name}</b> määrati administraatoriks.</string>
     <string name="groupRemoveDescription">Kas soovite eemaldada <b>{name}</b> grupist <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Kas soovite eemaldada <b>{name}</b> ja <b>{count} teised</b> grupist <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Kas soovite eemaldada <b>{name}</b> ja <b>{other_name}</b> grupist <b>{group_name}</b>?</string>
