@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.IntentFilter
+import android.content.res.ColorStateList
 import android.graphics.Outline
 import android.media.AudioManager
 import android.os.Build
@@ -15,6 +16,7 @@ import android.view.View
 import android.view.ViewOutlineProvider
 import android.view.WindowManager
 import androidx.activity.viewModels
+import androidx.annotation.StringRes
 import androidx.core.content.IntentCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
@@ -27,13 +29,12 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityWebrtcBinding
 import org.apache.commons.lang3.time.DurationFormatUtils
-import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.truncateIdForDisplay
+import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent
+import org.thoughtcrime.securesms.conversation.v2.ViewUtil
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_ANSWER_INCOMING
 import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_ANSWER_OUTGOING
@@ -49,6 +50,7 @@ import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_SENDING_ICE
 import org.thoughtcrime.securesms.webrtc.CallViewModel.State.NETWORK_FAILURE
 import org.thoughtcrime.securesms.webrtc.CallViewModel.State.RECIPIENT_UNAVAILABLE
 import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager.AudioDevice.SPEAKER_PHONE
+import java.time.Duration
 
 @AndroidEntryPoint
 class WebRtcCallActivity : ScreenLockActionBarActivity() {
@@ -61,8 +63,6 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
 
         const val EXTRA_RECIPIENT_ADDRESS = "RECIPIENT_ID"
 
-        private const val CALL_DURATION_FORMAT = "HH:mm:ss"
-
         fun getCallActivityIntent(context: Context): Intent{
             return Intent(context, WebRtcCallActivity::class.java)
                 .setFlags(FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_HISTORY or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
@@ -74,14 +74,12 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
     private var uiJob: Job? = null
     private var hangupReceiver: BroadcastReceiver? = null
 
-    //todo PHONE TEMP STRINGS THAT WILL NEED TO BE REPLACED WITH CS STRINGS - putting them all here to easily discard them later
-    val TEMP_SEND_PRE_OFFER = "Creating Call"
-    val TEMP_RECEIVE_PRE_OFFER = "Receiving Pre Offer"
-    val TEMP_SENDING_OFFER = "Sending Call Offer"
-    val TEMP_RECEIVING_OFFER = "Receiving Call Offer"
-    val TEMP_SENDING_CANDIDATES = "Sending Connection Candidates"
-    val TEMP_RECEIVED_ANSWER = "Received Answer"
-    val TEMP_HANDLING_CANDIDATES = "Handling Connection Candidates"
+    private val CALL_DURATION_FORMAT_HOURS = "HH:mm:ss"
+    private val CALL_DURATION_FORMAT_MINS = "mm:ss"
+    private val ONE_HOUR: Long = Duration.ofHours(1).toMillis()
+
+    private val buttonColorEnabled by lazy { getColor(R.color.white) }
+    private val buttonColorDisabled by lazy { getColorFromAttr(R.attr.disabled) }
 
     /**
      * We need to track the device's orientation so we can calculate whether or not to rotate the video streams
@@ -290,69 +288,18 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
         }
     }
 
-    private fun updateControls(state: CallViewModel.State, hasAcceptedCall: Boolean) {
+    private fun updateControls(callState: CallViewModel.CallState) {
         with(binding) {
             // set up title and subtitle
-            callTitle.text = when (state) {
-                CALL_PRE_OFFER_OUTGOING, CALL_PRE_OFFER_INCOMING,
-                CALL_OFFER_OUTGOING, CALL_OFFER_INCOMING,
-                    -> getString(R.string.callsRinging)
+            callTitle.text = callState.callLabelTitle ?: callTitle.text // keep existing text if null
 
-                CALL_ANSWER_INCOMING,
-                CALL_ANSWER_OUTGOING,
-                    -> getString(R.string.callsConnecting)
-
-                CALL_CONNECTED -> ""
-
-                CALL_RECONNECTING -> getString(R.string.callsReconnecting)
-                RECIPIENT_UNAVAILABLE,
-                CALL_DISCONNECTED -> getString(R.string.callsEnded)
-
-                NETWORK_FAILURE -> getString(R.string.callsErrorStart)
-
-                else -> callTitle.text
-            }
-
-            callSubtitle.text = when (state) {
-                CALL_PRE_OFFER_OUTGOING -> TEMP_SEND_PRE_OFFER
-                CALL_PRE_OFFER_INCOMING -> TEMP_RECEIVE_PRE_OFFER
-
-                CALL_OFFER_OUTGOING -> TEMP_SENDING_OFFER
-                CALL_OFFER_INCOMING -> TEMP_RECEIVING_OFFER
-
-                CALL_ANSWER_OUTGOING, CALL_ANSWER_INCOMING -> TEMP_RECEIVED_ANSWER
-
-                CALL_SENDING_ICE -> TEMP_SENDING_CANDIDATES
-                CALL_HANDLING_ICE -> TEMP_HANDLING_CANDIDATES
-
-                else -> ""
-            }
+            callSubtitle.text = callState.callLabelSubtitle
             callSubtitle.isVisible = callSubtitle.text.isNotEmpty()
 
             // buttons visibility
-            val showCallControls = state in listOf(
-                CALL_CONNECTED,
-                CALL_PRE_OFFER_OUTGOING,
-                CALL_OFFER_OUTGOING,
-                CALL_ANSWER_OUTGOING,
-                CALL_ANSWER_INCOMING,
-            ) || (state in listOf(
-                CALL_PRE_OFFER_INCOMING,
-                CALL_OFFER_INCOMING,
-                CALL_HANDLING_ICE,
-                CALL_SENDING_ICE
-            ) && hasAcceptedCall)
-            controlGroup.isVisible = showCallControls
-
-            endCallButton.isVisible = showCallControls || state == CALL_RECONNECTING
-
-            incomingControlGroup.isVisible =
-                state in listOf(
-                    CALL_PRE_OFFER_INCOMING,
-                    CALL_OFFER_INCOMING,
-                    CALL_HANDLING_ICE,
-                    CALL_SENDING_ICE
-                ) && !hasAcceptedCall
+            controlGroup.isVisible = callState.showCallButtons
+            endCallButton.isVisible = callState.showEndCallButton
+            incomingControlGroup.isVisible = callState.showPreCallButtons
         }
     }
 
@@ -371,7 +318,7 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
 
             launch {
                 viewModel.callState.collect { data ->
-                    updateControls(data.state, data.hasAcceptedCall)
+                    updateControls(data)
                 }
             }
 
@@ -400,9 +347,12 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
                     val startTime = viewModel.callStartTime
                     if (startTime != -1L) {
                         if(viewModel.currentCallState == CALL_CONNECTED) {
+                            val duration = System.currentTimeMillis() - startTime
+                            // apply format based on whether the call is more than 1h long
+                            val durationFormat = if (duration > ONE_HOUR) CALL_DURATION_FORMAT_HOURS else CALL_DURATION_FORMAT_MINS
                             binding.callTitle.text = DurationFormatUtils.formatDuration(
-                                System.currentTimeMillis() - startTime,
-                                CALL_DURATION_FORMAT
+                                duration,
+                                durationFormat
                             )
                         }
                     }
@@ -458,6 +408,12 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
 
                     // handle buttons
                     binding.enableCameraButton.isSelected = state.userVideoEnabled
+                    binding.switchCameraButton.isEnabled = state.userVideoEnabled
+                    binding.switchCameraButton.imageTintList =
+                        ColorStateList.valueOf(
+                            if(state.userVideoEnabled) buttonColorEnabled
+                            else buttonColorDisabled
+                        )
                 }
             }
         }
