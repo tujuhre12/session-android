@@ -36,7 +36,7 @@ import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogStat
 import org.thoughtcrime.securesms.profiles.ProfileMediaConstraints
 import org.thoughtcrime.securesms.util.BitmapDecodingException
 import org.thoughtcrime.securesms.util.BitmapUtil
-import org.thoughtcrime.securesms.util.InternetConnectivity
+import org.thoughtcrime.securesms.util.NetworkConnectivity
 import java.io.File
 import java.io.IOException
 import javax.inject.Inject
@@ -46,7 +46,7 @@ class SettingsViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val prefs: TextSecurePreferences,
     private val configFactory: ConfigFactory,
-    private val connectivity: InternetConnectivity,
+    private val connectivity: NetworkConnectivity,
     private val usernameUtils: UsernameUtils
 ) : ViewModel() {
     private val TAG = "SettingsViewModel"
