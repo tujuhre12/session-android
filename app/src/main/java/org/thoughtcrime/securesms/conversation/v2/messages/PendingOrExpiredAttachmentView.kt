@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.AttributeSet
 import android.widget.LinearLayout
 import androidx.annotation.ColorInt
+import androidx.core.view.isVisible
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
@@ -11,6 +12,7 @@ import network.loki.messenger.databinding.ViewPendingAttachmentBinding
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.StringSubstitutionConstants.FILE_TYPE_KEY
+import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.conversation.v2.dialogs.AutoDownloadDialog
 import org.thoughtcrime.securesms.util.ActivityDispatcher
@@ -19,7 +21,7 @@ import java.util.Locale
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class PendingAttachmentView: LinearLayout {
+class PendingOrExpiredAttachmentView: LinearLayout {
     private val binding by lazy { ViewPendingAttachmentBinding.bind(this) }
     enum class AttachmentType {
         AUDIO,
@@ -33,11 +35,13 @@ class PendingAttachmentView: LinearLayout {
     constructor(context: Context, attrs: AttributeSet) : super(context, attrs)
     constructor(context: Context, attrs: AttributeSet, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
+    val expiredColor by lazy { context.getColorFromAttr(android.R.attr.textColorTertiary) }
+
     // endregion
     @Inject lateinit var storage: StorageProtocol
 
     // region Updating
-    fun bind(attachmentType: AttachmentType, @ColorInt textColor: Int, attachment: DatabaseAttachment) {
+    fun bind(attachmentType: AttachmentType, @ColorInt textColor: Int, attachment: DatabaseAttachment?, expired: Boolean = false) {
         val stringRes = when (attachmentType) {
             AttachmentType.AUDIO -> R.string.audio
             AttachmentType.DOCUMENT -> R.string.document
@@ -45,13 +49,23 @@ class PendingAttachmentView: LinearLayout {
             AttachmentType.VIDEO -> R.string.video
         }
 
-        val text = Phrase.from(context, R.string.attachmentsTapToDownload)
-            .put(FILE_TYPE_KEY, context.getString(stringRes).lowercase(Locale.ROOT))
-            .format()
-
-        binding.pendingDownloadIcon.setColorFilter(textColor)
-        binding.pendingDownloadSize.text = attachment.displaySize()
-        binding.pendingDownloadTitle.text = text
+        if(expired){
+            binding.pendingDownloadIcon.setColorFilter(expiredColor)
+            binding.pendingDownloadSize.isVisible = false
+            binding.pendingDownloadTitle.text = context.getString(R.string.attachmentsExpired)
+            binding.pendingDownloadTitle.setTextColor(expiredColor)
+            binding.separator.isVisible = false
+        }
+        else {
+            binding.pendingDownloadIcon.setColorFilter(textColor)
+            binding.pendingDownloadSize.isVisible = true
+            binding.pendingDownloadSize.text = attachment?.displaySize()
+            binding.pendingDownloadTitle.text = Phrase.from(context, R.string.attachmentsTapToDownload)
+                .put(FILE_TYPE_KEY, context.getString(stringRes).lowercase(Locale.ROOT))
+                .format()
+            binding.pendingDownloadTitle.setTextColor(textColor)
+            binding.separator.isVisible = true
+        }
     }
     // endregion
 

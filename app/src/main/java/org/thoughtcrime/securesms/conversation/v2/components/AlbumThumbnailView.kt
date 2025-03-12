@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Rect
 import android.util.AttributeSet
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.ViewGroup
@@ -11,6 +12,7 @@ import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.core.view.children
 import androidx.core.view.isVisible
+import com.bumptech.glide.RequestManager
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
 import network.loki.messenger.databinding.AlbumThumbnailViewBinding
@@ -22,7 +24,6 @@ import org.thoughtcrime.securesms.MediaPreviewActivity
 import org.thoughtcrime.securesms.components.CornerMask
 import org.thoughtcrime.securesms.conversation.v2.utilities.ThumbnailView
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
-import com.bumptech.glide.RequestManager
 import org.thoughtcrime.securesms.mms.Slide
 import org.thoughtcrime.securesms.util.ActivityDispatcher
 
