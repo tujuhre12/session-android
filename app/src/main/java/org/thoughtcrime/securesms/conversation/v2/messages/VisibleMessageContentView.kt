@@ -193,14 +193,14 @@ class VisibleMessageContentView : ConstraintLayout {
                     message.slideDeck.documentSlide?.let { slide ->
                         onContentClick.add {
                             // open the document when tapping it
-                            val intent = Intent(Intent.ACTION_VIEW)
-                            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                            intent.setDataAndType(
-                                PartAuthority.getAttachmentPublicUri(slide.uri),
-                                slide.contentType
-                            )
-
                             try {
+                                val intent = Intent(Intent.ACTION_VIEW)
+                                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                intent.setDataAndType(
+                                    PartAuthority.getAttachmentPublicUri(slide.uri),
+                                    slide.contentType
+                                )
+
                                 context.startActivity(intent)
                             } catch (e: ActivityNotFoundException) {
                                 Log.e("VisibleMessageContentView", "Error opening document", e)
