@@ -24,6 +24,7 @@ import javax.inject.Inject
 class PendingOrExpiredAttachmentView: LinearLayout {
     private val binding by lazy { ViewPendingAttachmentBinding.bind(this) }
     enum class AttachmentType {
+        VOICE,
         AUDIO,
         DOCUMENT,
         IMAGE,
@@ -35,21 +36,27 @@ class PendingOrExpiredAttachmentView: LinearLayout {
     constructor(context: Context, attrs: AttributeSet) : super(context, attrs)
     constructor(context: Context, attrs: AttributeSet, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
-    val expiredColor by lazy { context.getColorFromAttr(android.R.attr.textColorTertiary) }
-
     // endregion
     @Inject lateinit var storage: StorageProtocol
 
     // region Updating
-    fun bind(attachmentType: AttachmentType, @ColorInt textColor: Int, attachment: DatabaseAttachment?, expired: Boolean = false) {
-        val stringRes = when (attachmentType) {
-            AttachmentType.AUDIO -> R.string.audio
-            AttachmentType.DOCUMENT -> R.string.document
-            AttachmentType.IMAGE -> R.string.image
-            AttachmentType.VIDEO -> R.string.video
+    private fun getAttachmentData(attachmentType: AttachmentType): Pair<Int, Int> {
+        return when (attachmentType) {
+            AttachmentType.VOICE -> Pair(R.string.messageVoice, R.drawable.ic_mic)
+            AttachmentType.AUDIO -> Pair(R.string.audio, R.drawable.ic_volume_2)
+            AttachmentType.DOCUMENT -> Pair(R.string.document, R.drawable.ic_file)
+            AttachmentType.IMAGE -> Pair(R.string.image, R.drawable.ic_image)
+            AttachmentType.VIDEO -> Pair(R.string.video, R.drawable.ic_square_play)
         }
+    }
+
+    fun bind(attachmentType: AttachmentType, @ColorInt textColor: Int, attachment: DatabaseAttachment?, expired: Boolean = false) {
+        val (stringRes, iconRes) = getAttachmentData(attachmentType)
+
+        binding.pendingDownloadIcon.setImageResource(iconRes)
 
         if(expired){
+            val expiredColor = textColor.also { alpha = 0.7f }
             binding.pendingDownloadIcon.setColorFilter(expiredColor)
             binding.pendingDownloadSize.isVisible = false
             binding.pendingDownloadTitle.text = context.getString(R.string.attachmentsExpired)

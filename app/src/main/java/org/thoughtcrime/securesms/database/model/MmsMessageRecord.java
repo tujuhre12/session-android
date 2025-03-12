@@ -75,7 +75,7 @@ public abstract class MmsMessageRecord extends MessageRecord {
     boolean hasData = false;
 
     for (Slide slide : slideDeck.getSlides()) {
-      if (slide.getThumbnailUri() != null || slide.hasPlaceholder()) {
+      if (slide.getUri() != null || slide.getThumbnailUri() != null) {
         hasData = true;
         break;
       }
