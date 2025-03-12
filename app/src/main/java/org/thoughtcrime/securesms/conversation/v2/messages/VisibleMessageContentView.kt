@@ -75,6 +75,7 @@ class VisibleMessageContentView : ConstraintLayout {
         binding.contentParent.mainColor = color
         binding.contentParent.cornerRadius = resources.getDimension(R.dimen.message_corner_radius)
 
+        val hasExpired = haveAttachmentsExpired(message)
         val mediaDownloaded = message is MmsMessageRecord && message.slideDeck.asAttachments().all { it.transferState == AttachmentTransferProgress.TRANSFER_PROGRESS_DONE }
         val mediaInProgress = message is MmsMessageRecord && message.slideDeck.asAttachments().any { it.isInProgress }
 
@@ -160,8 +161,6 @@ class VisibleMessageContentView : ConstraintLayout {
                 hideBody = false
 
                 // Audio attachment
-                val hasExpired = (!message.hasAttachmentUri() && mediaDownloaded)
-
                 if (!hasExpired && (mediaDownloaded || mediaInProgress || message.isOutgoing)) {
                     binding.voiceMessageView.root.isVisible = true
                     binding.voiceMessageView.root.indexInAdapter = indexInAdapter
@@ -196,7 +195,7 @@ class VisibleMessageContentView : ConstraintLayout {
                 }
             }
 
-            //TODO EXPIRED: Logic is wrong for handling showing the expired attachment message.
+            //TODO EXPIRED: Logic is wrong for handling showing the expired attachment message: It seems we need to set the error state somewhere. I can't rely on empty uris nor downloaded nor inprogress. I need to properly set something once the image gets a 404. MAYBE I also need to cater for downloaded + no uri in case that's a real thing
             //TODO EXPIRED: do we need to worry about getting 404s? >> I think this is why we are stuck in inProgress... I need to capture the failure somewhere
             //TODO EXPIRED: handle video icons - looks like we only do image for now
             //TODO EXPIRED: Handle expiry in quotes - currently loads over and over
@@ -209,8 +208,6 @@ class VisibleMessageContentView : ConstraintLayout {
                 hideBody = false
 
                 // Document attachment
-                val hasExpired = (!message.hasAttachmentUri() && mediaDownloaded)
-
                 if (!hasExpired && (mediaDownloaded || mediaInProgress || message.isOutgoing)) {
                     binding.pendingOrExpiredAttachmentView.root.isVisible = false
 
@@ -265,7 +262,6 @@ class VisibleMessageContentView : ConstraintLayout {
             // IMAGE / VIDEO
             message is MmsMessageRecord && !suppressThumbnails && message.slideDeck.asAttachments().isNotEmpty() -> {
                 hideBody = false
-                val hasExpired = (!message.hasAttachmentUri() && mediaDownloaded)
 
                 if (!hasExpired && (mediaDownloaded || mediaInProgress || message.isOutgoing)) {
                     binding.pendingOrExpiredAttachmentView.root.isVisible = false
@@ -339,6 +335,10 @@ class VisibleMessageContentView : ConstraintLayout {
             horizontalBias = if (message.isOutgoing) 1f else 0f
         }
     }
+
+    private fun haveAttachmentsExpired(message: MessageRecord): Boolean =
+        message is MmsMessageRecord &&
+                (!message.hasAttachmentUri() && message.slideDeck.asAttachments().any { it.isInProgress })
 
     private val onContentClick: MutableList<((event: MotionEvent) -> Unit)> = mutableListOf()
 

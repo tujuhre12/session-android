@@ -57,20 +57,32 @@ class PendingOrExpiredAttachmentView: LinearLayout {
 
         if(expired){
             val expiredColor = textColor.also { alpha = 0.7f }
+
             binding.pendingDownloadIcon.setColorFilter(expiredColor)
             binding.pendingDownloadSize.isVisible = false
-            binding.pendingDownloadTitle.text = context.getString(R.string.attachmentsExpired)
-            binding.pendingDownloadTitle.setTextColor(expiredColor)
+
+            binding.pendingDownloadTitle.apply{
+                text = context.getString(R.string.attachmentsExpired)
+                setTextColor(expiredColor)
+                setTypeface(typeface, android.graphics.Typeface.ITALIC)
+            }
+
             binding.separator.isVisible = false
         }
         else {
             binding.pendingDownloadIcon.setColorFilter(textColor)
+
             binding.pendingDownloadSize.isVisible = true
             binding.pendingDownloadSize.text = attachment?.displaySize()
-            binding.pendingDownloadTitle.text = Phrase.from(context, R.string.attachmentsTapToDownload)
-                .put(FILE_TYPE_KEY, context.getString(stringRes).lowercase(Locale.ROOT))
-                .format()
-            binding.pendingDownloadTitle.setTextColor(textColor)
+
+            binding.pendingDownloadTitle.apply{
+                text = Phrase.from(context, R.string.attachmentsTapToDownload)
+                    .put(FILE_TYPE_KEY, context.getString(stringRes).lowercase(Locale.ROOT))
+                    .format()
+                setTextColor(textColor)
+                setTypeface(typeface, android.graphics.Typeface.NORMAL)
+            }
+
             binding.separator.isVisible = true
         }
     }
