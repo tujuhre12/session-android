@@ -1,6 +1,9 @@
 package org.thoughtcrime.securesms.conversation.v2
 
 import android.net.Uri
+import androidx.annotation.DrawableRes
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -87,6 +90,16 @@ class MessageDetailsViewModel @Inject constructor(
 
                 val errorString = lokiMessageDatabase.getErrorMessage(id)
 
+                var status: MessageStatus? = null
+                // create a 'failed to send' status if appropriate
+                if(messageRecord.isFailed){
+                    status = MessageStatus(
+                        title = context.getString(R.string.messageStatusFailedToSend),
+                        icon = R.drawable.ic_triangle_alert,
+                        errorStatus = true
+                    )
+                }
+
                 MessageDetailsState(
                     attachments = slides.map(::Attachment),
                     record = messageRecord,
@@ -109,6 +122,7 @@ class MessageDetailsViewModel @Inject constructor(
                     },
 
                     error = errorString?.let { TitledText(context.getString(R.string.theError) + ":", it) },
+                    status = status,
                     senderInfo = individualRecipient.run { TitledText(name, address.toString()) },
                     sender = individualRecipient,
                     thread = recipient,
@@ -181,6 +195,7 @@ data class MessageDetailsState(
     val sent: TitledText? = null,
     val received: TitledText? = null,
     val error: TitledText? = null,
+    val status: MessageStatus? = null,
     val senderInfo: TitledText? = null,
     val sender: Recipient? = null,
     val thread: Recipient? = null,
@@ -196,6 +211,12 @@ data class Attachment(
     val fileName: String?,
     val uri: Uri?,
     val hasImage: Boolean
+)
+
+data class MessageStatus(
+    val title: String,
+    @DrawableRes val icon: Int,
+    val errorStatus: Boolean
 )
 
 sealed class Event {
