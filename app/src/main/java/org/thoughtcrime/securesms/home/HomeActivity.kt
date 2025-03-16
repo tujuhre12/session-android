@@ -297,10 +297,13 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                homeViewModel.callInProgress.collect { callInProgress ->
-                    when (callInProgress) {
-                        true -> binding.callInProgress.fadeIn()
-                        false -> binding.callInProgress.fadeOut()
+                homeViewModel.callBanner.collect { callBanner ->
+                    when (callBanner) {
+                        null -> binding.callInProgress.fadeOut()
+                        else -> {
+                            binding.callInProgress.text = callBanner
+                            binding.callInProgress.fadeIn()
+                        }
                     }
                 }
             }
