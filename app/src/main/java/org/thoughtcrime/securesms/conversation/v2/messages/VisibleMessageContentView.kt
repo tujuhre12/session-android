@@ -27,6 +27,7 @@ import com.bumptech.glide.RequestManager
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentTransferProgress
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.ThemeUtil
@@ -339,8 +340,12 @@ class VisibleMessageContentView : ConstraintLayout {
     }
 
     private fun haveAttachmentsExpired(message: MessageRecord): Boolean =
-        message is MmsMessageRecord &&
-                (!message.hasAttachmentUri() && message.slideDeck.asAttachments().any { it.isInProgress })
+    // expired attachments are for Mms records only
+    message is MmsMessageRecord &&
+            // with a state marked as expired
+            (message.slideDeck.asAttachments().any { it.transferState == AttachmentState.EXPIRED.value } ||
+            // with a state marked as downloaded yet without a URI attached
+            (!message.hasAttachmentUri() && message.slideDeck.asAttachments().all { it.transferState == AttachmentTransferProgress.TRANSFER_PROGRESS_DONE }))
 
     private val onContentClick: MutableList<((event: MotionEvent) -> Unit)> = mutableListOf()
 

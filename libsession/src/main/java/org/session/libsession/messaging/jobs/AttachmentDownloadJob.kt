@@ -17,6 +17,7 @@ import org.session.libsession.utilities.InputStreamMediaDataSource
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.streams.AttachmentCipherInputStream
 import org.session.libsignal.utilities.Base64
+import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.Log
 import java.io.File
 import java.io.FileInputStream
@@ -74,8 +75,15 @@ class AttachmentDownloadJob(val attachmentID: Long, val databaseMessageID: Long)
         val threadID = storage.getThreadIdForMms(databaseMessageID)
 
         val handleFailure: (java.lang.Exception, attachmentId: AttachmentId?) -> Unit = { exception, attachment ->
-            if (exception is NonRetryableException ||
-                exception == Error.NoAttachment
+            if(exception is HTTP.HTTPRequestFailedException && exception.statusCode == 404){
+                attachment?.let { id ->
+                    Log.d("AttachmentDownloadJob", "Setting attachment state = failed, have attachment")
+                    messageDataProvider.setAttachmentState(AttachmentState.EXPIRED, id, databaseMessageID)
+                } ?: run {
+                    Log.d("AttachmentDownloadJob", "Setting attachment state = failed, don't have attachment")
+                    messageDataProvider.setAttachmentState(AttachmentState.EXPIRED, AttachmentId(attachmentID,0), databaseMessageID)
+                }
+            } else if (exception == Error.NoAttachment
                     || exception == Error.NoThread
                     || exception == Error.NoSender
                     || (exception is OnionRequestAPI.HTTPRequestFailedAtDestinationException && exception.statusCode == 400)) {
@@ -121,8 +129,10 @@ class AttachmentDownloadJob(val attachmentID: Long, val databaseMessageID: Long)
         }
 
         var tempFile: File? = null
+        var attachment: DatabaseAttachment? = null
+
         try {
-            val attachment = messageDataProvider.getDatabaseAttachment(attachmentID)
+            attachment = messageDataProvider.getDatabaseAttachment(attachmentID)
                 ?: return handleFailure(Error.NoAttachment, null)
             if (attachment.hasData()) {
                 handleFailure(Error.DuplicateData, attachment.attachmentId)
@@ -169,7 +179,7 @@ class AttachmentDownloadJob(val attachmentID: Long, val databaseMessageID: Long)
         } catch (e: Exception) {
             Log.e("AttachmentDownloadJob", "Error processing attachment download", e)
             tempFile?.delete()
-            return handleFailure(e,null)
+            return handleFailure(e,attachment?.attachmentId)
         }
     }
 
