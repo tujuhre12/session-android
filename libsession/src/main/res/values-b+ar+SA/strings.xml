@@ -464,7 +464,6 @@
     <string name="groupLeaveDescription">هل أنت متأكد من مغادرة <b>{group_name}</b>؟</string>
     <string name="groupLeaveDescriptionAdmin">هل أنت متأكد من مغادرة <b>{group_name}</b>?\n\nسيؤدي ذلك إلى إزالة جميع الأعضاء وحذف كافة محتويات المجموعة.</string>
     <string name="groupLeaveErrorFailed">فشل في مغادرة {group_name}</string>
-    <string name="groupLegacyBanner">تمت ترقية المجموعات، أنشئ مجموعة جديدة للترقية. سوف تتدهور صلاحية عمل المجموعة القديمة بدءًا من {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> غادر المجموعة.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> و <b>{count} آخرين</b> غادروا المجموعة.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> و <b>{other_name}</b> غادروا المجموعة.</string>
@@ -489,7 +488,6 @@
 <b>{group_name}</b>.\n\nلا يمكن تغيير أعضاء المجموعة والإعدادات بدون المشرف.</string>
     <string name="groupPromotedYou"><b>أنت</b> تم ترقيتك إلى مشرف.</string>
     <string name="groupPromotedYouMultiple"><b>أنت</b> و <b>{count} آخرين</b> تمت ترقيتهم إلى مشرف.</string>
-    <string name="groupPromotedYouTwo"><b>أنت</b> و <b>{name}</b> تم ترقيتهم إلى مشرف.</string>
     <string name="groupRemoveDescription">هل تود إزالة <b>{name}</b> من <b>{group_name}</b>؟</string>
     <string name="groupRemoveDescriptionMultiple">هل تود إزالة <b>{name}</b> و<b>{count} آخرين</b> من <b>{group_name}</b>؟</string>
     <string name="groupRemoveDescriptionTwo">هل تود إزالة <b>{name}</b> و<b>{other_name}</b> من <b>{group_name}</b>؟</string>

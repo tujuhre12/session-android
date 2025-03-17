@@ -274,6 +274,7 @@ interface ReadableUserGroupsConfig : ReadableConfig {
     fun allCommunityInfo(): List<GroupInfo.CommunityGroupInfo>
     fun allLegacyGroupInfo(): List<GroupInfo.LegacyGroupInfo>
     fun allClosedGroupInfo(): List<GroupInfo.ClosedGroupInfo>
+    fun createGroup(): GroupInfo.ClosedGroupInfo
 }
 
 interface MutableUserGroupsConfig : ReadableUserGroupsConfig, MutableConfig {
@@ -286,7 +287,6 @@ interface MutableUserGroupsConfig : ReadableUserGroupsConfig, MutableConfig {
     fun eraseCommunity(server: String, room: String): Boolean
     fun eraseLegacyGroup(accountId: String): Boolean
     fun eraseClosedGroup(accountId: String): Boolean
-    fun createGroup(): GroupInfo.ClosedGroupInfo
 }
 
 class UserGroupsConfig private constructor(pointer: Long): ConfigBase(pointer), MutableUserGroupsConfig {
@@ -298,7 +298,7 @@ class UserGroupsConfig private constructor(pointer: Long): ConfigBase(pointer), 
         )
     )
 
-    override fun namespace() = Namespace.GROUPS()
+    override fun namespace() = Namespace.USER_GROUPS()
 
     external override fun getCommunityInfo(baseUrl: String, room: String): GroupInfo.CommunityGroupInfo?
     external override fun getLegacyGroupInfo(accountId: String): GroupInfo.LegacyGroupInfo?
@@ -359,7 +359,7 @@ class GroupInfoConfig private constructor(pointer: Long): ConfigBase(pointer), M
         ): Long
     }
 
-    override fun namespace() = Namespace.CLOSED_GROUP_INFO()
+    override fun namespace() = Namespace.GROUP_INFO()
 
     external override fun id(): AccountId
     external override fun destroyGroup()
@@ -425,7 +425,7 @@ class GroupMembersConfig private constructor(pointer: Long): ConfigBase(pointer)
     constructor(groupPubKey: ByteArray, groupAdminKey: ByteArray?, initialDump: ByteArray?)
             : this(newInstance(groupPubKey, groupAdminKey, initialDump))
 
-    override fun namespace() = Namespace.CLOSED_GROUP_MEMBERS()
+    override fun namespace() = Namespace.GROUP_MEMBERS()
 
     external override fun all(): Stack<GroupMember>
     external override fun erase(pubKeyHex: String): Boolean
@@ -458,13 +458,20 @@ interface ReadableGroupKeysConfig {
     fun subAccountSign(message: ByteArray, signingValue: ByteArray): GroupKeysConfig.SwarmAuth
     fun getSubAccountToken(sessionId: AccountId, canWrite: Boolean = true, canDelete: Boolean = false): ByteArray
     fun currentGeneration(): Int
+    fun size(): Int
 }
 
 interface MutableGroupKeysConfig : ReadableGroupKeysConfig {
     fun makeSubAccount(sessionId: AccountId, canWrite: Boolean = true, canDelete: Boolean = false): ByteArray
+    fun loadKey(message: ByteArray, hash: String, timestampMs: Long): Boolean
+    fun loadAdminKey(adminKey: ByteArray)
 }
 
-class GroupKeysConfig private constructor(pointer: Long): ConfigSig(pointer), MutableGroupKeysConfig {
+class GroupKeysConfig private constructor(
+    pointer: Long,
+    private val info: GroupInfoConfig,
+    private val members: GroupMembersConfig
+): ConfigSig(pointer), MutableGroupKeysConfig {
     companion object {
         private external fun newInstance(
             userSecretKey: ByteArray,
@@ -491,10 +498,12 @@ class GroupKeysConfig private constructor(pointer: Long): ConfigSig(pointer), Mu
             initialDump,
             info.pointer,
             members.pointer
-        )
+        ),
+        info,
+        members
     )
 
-    override fun namespace() = Namespace.ENCRYPTION_KEYS()
+    override fun namespace() = Namespace.GROUP_KEYS()
 
     external override fun groupKeys(): Stack<ByteArray>
     external override fun needsDump(): Boolean
@@ -504,6 +513,17 @@ class GroupKeysConfig private constructor(pointer: Long): ConfigSig(pointer), Mu
                          timestampMs: Long,
                          infoPtr: Long,
                          membersPtr: Long): Boolean
+
+    override fun loadKey(message: ByteArray, hash: String, timestampMs: Long): Boolean {
+        return loadKey(message, hash, timestampMs, info.pointer, members.pointer)
+    }
+
+    override fun loadAdminKey(adminKey: ByteArray) {
+        loadAdminKey(adminKey, info.pointer, members.pointer)
+    }
+
+    private external fun loadAdminKey(adminKey: ByteArray, infoPtr: Long, membersPtr: Long)
+
     external override fun needsRekey(): Boolean
     external override fun pendingKey(): ByteArray?
     private external fun supplementFor(userSessionIds: Array<String>): ByteArray
@@ -527,6 +547,7 @@ class GroupKeysConfig private constructor(pointer: Long): ConfigSig(pointer), Mu
 
     external override fun currentGeneration(): Int
     external fun admin(): Boolean
+    external override fun size(): Int
 
     data class SwarmAuth(
         val subAccount: String,

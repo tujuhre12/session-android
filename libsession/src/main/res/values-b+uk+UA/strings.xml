@@ -447,7 +447,6 @@
     <string name="groupLeaveDescription">Чи дійсно ви бажаєте вийти з <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Ви впевнені, що хочете вийти з <b>{group_name}</b>?\n\nЦе видалить усіх учасників та вміст групи.</string>
     <string name="groupLeaveErrorFailed">Не вдалося вийти з {group_name}</string>
-    <string name="groupLegacyBanner">Групи було оновлено, створіть нову групу для оновлення. Функціонал старої групи буде скорочено з {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> покинув групу.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> та ще <b>{count} інших</b> покинули групу.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> та <b>{other_name}</b> покинули групу.</string>
@@ -471,7 +470,6 @@
     <string name="groupOnlyAdmin">Ви — єдиний адміністратор у <b>{group_name}</b>.\n\nУчасники групи та налаштування не можуть бути змінені без адміністратора.</string>
     <string name="groupPromotedYou"><b>Вас</b> підвищили до адміністратора.</string>
     <string name="groupPromotedYouMultiple"><b>Ви</b> та ще <b>{count} інших</b> були підвищені до адміністраторів.</string>
-    <string name="groupPromotedYouTwo"><b>Ви</b> та <b>{name}</b> були підвищені до адміністратора.</string>
     <string name="groupRemoveDescription">Бажаєте видалити <b>{name}</b> з <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Бажаєте видалити <b>{name}</b> і <b>{count} інших</b> з <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Бажаєте видалити <b>{name}</b> і <b>{other_name}</b> з <b>{group_name}</b>?</string>

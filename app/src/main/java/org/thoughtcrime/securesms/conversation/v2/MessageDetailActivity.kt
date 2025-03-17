@@ -7,7 +7,10 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.MotionEvent.ACTION_UP
 import androidx.activity.viewModels
+import androidx.annotation.DrawableRes
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,6 +23,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -41,8 +45,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -53,7 +57,9 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
+import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
@@ -81,7 +87,6 @@ import org.thoughtcrime.securesms.ui.theme.blackAlpha40
 import org.thoughtcrime.securesms.ui.theme.bold
 import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
 import org.thoughtcrime.securesms.ui.theme.monospace
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class MessageDetailActivity : ScreenLockActionBarActivity() {
@@ -171,24 +176,35 @@ fun MessageDetails(
         verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
     ) {
         state.record?.let { message ->
-            AndroidView(
-                modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing),
-                factory = {
-                    ViewVisibleMessageContentBinding.inflate(LayoutInflater.from(it)).mainContainerConstraint.apply {
-                        bind(
-                            message,
-                            thread = state.thread!!,
-                            onAttachmentNeedsDownload = onAttachmentNeedsDownload,
-                            suppressThumbnails = true
-                        )
+            Column(
+                modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing)
+            ) {
+                AndroidView(
+                    factory = {
+                        ViewVisibleMessageContentBinding.inflate(LayoutInflater.from(it)).mainContainerConstraint.apply {
+                            bind(
+                                message,
+                                thread = state.thread!!,
+                                onAttachmentNeedsDownload = onAttachmentNeedsDownload,
+                                suppressThumbnails = true
+                            )
 
-                        setOnTouchListener { _, event ->
-                            if (event.actionMasked == ACTION_UP) onContentClick(event)
-                            true
+                            setOnTouchListener { _, event ->
+                                if (event.actionMasked == ACTION_UP) onContentClick(event)
+                                true
+                            }
                         }
                     }
+                )
+
+                state.status?.let {
+                    Spacer(modifier = Modifier.height(LocalDimensions.current.xxsSpacing))
+                    MessageStatus(
+                        modifier = Modifier.padding(horizontal = 2.dp),
+                        status = it
+                    )
                 }
-            )
+            }
         }
         Carousel(state.imageAttachments) { onClickImage(it) }
         state.nonImageAttachmentFileDetails?.let { FileDetails(it) }
@@ -204,6 +220,43 @@ fun MessageDetails(
 }
 
 @Composable
+fun MessageStatus(
+    status: MessageStatus,
+    modifier: Modifier = Modifier
+){
+    val color = if(status.errorStatus) LocalColors.current.danger else LocalColors.current.text
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxsSpacing)
+    ) {
+        Image(
+            modifier = Modifier.size(LocalDimensions.current.iconXSmall),
+            painter = painterResource(id = status.icon),
+            colorFilter = ColorFilter.tint(color),
+            contentDescription = null,
+        )
+
+        Text(
+            text = status.title,
+            style = LocalType.current.extraSmall.copy(color = color)
+        )
+    }
+}
+
+@Preview
+@Composable
+fun PreviewStatus(){
+    PreviewTheme {
+        MessageStatus(
+            "Failed to send",
+            R.drawable.ic_triangle_alert,
+            errorStatus = true
+        )
+    }
+}
+
+@Composable
 fun CellMetadata(
     state: MessageDetailsState,
 ) {
@@ -214,8 +267,10 @@ fun CellMetadata(
                 modifier = Modifier.padding(LocalDimensions.current.spacing),
                 verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
             ) {
-                TitledText(sent)
-                TitledText(received)
+                // Show the sent details if we're the sender of the message, otherwise show the received details
+                if (sent     != null) { TitledText(sent)     }
+                if (received != null) { TitledText(received) }
+
                 TitledErrorText(error)
                 senderInfo?.let {
                     TitledView(state.fromTitle) {
@@ -485,12 +540,14 @@ fun TitledText(
 ) {
     titledText?.apply {
         TitledView(title, modifier) {
-            Text(
-                text,
-                style = style,
-                color = color,
-                modifier = Modifier.fillMaxWidth()
-            )
+            if (text != null) {
+                Text(
+                    text,
+                    style = style,
+                    color = color,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
     }
 }

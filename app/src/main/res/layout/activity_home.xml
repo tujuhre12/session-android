@@ -110,7 +110,7 @@
                     android:layout_gravity="center"
                     android:textColor="?message_sent_text_color"
                     android:background="?colorAccent"
-                    android:textSize="11sp"
+                    android:textSize="@dimen/small_font_size"
                     android:paddingVertical="4dp"
                     android:paddingHorizontal="64dp"
                     android:gravity="center"
@@ -127,6 +127,21 @@
                     android:src="@drawable/ic_x"
                     app:tint="@color/black" />
             </FrameLayout>
+
+            <TextView
+                android:id="@+id/callInProgress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:background="?colorAccent"
+                android:paddingVertical="@dimen/small_spacing"
+                android:gravity="center_horizontal"
+                android:textColor="?message_sent_text_color"
+                android:paddingHorizontal="@dimen/medium_spacing"
+                android:textSize="@dimen/small_font_size"
+                android:visibility="gone"
+                android:text="@string/callsInProgress"
+                tools:visibility="visible" />
 
         </LinearLayout>
 

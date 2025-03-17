@@ -411,7 +411,6 @@
     <string name="groupLeaveDescription">Sigurado ka bang gusto mong umalis sa <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Sigurado ka bang gusto mong umalis sa <b>{group_name}</b>?\n\nMababura nito ang lahat ng miyembro at lahat ng group content.</string>
     <string name="groupLeaveErrorFailed">Nabigong umalis sa {group_name}</string>
-    <string name="groupLegacyBanner">Na-upgrade na ang mga grupo, lumikha ng bagong grupo upang mag-upgrade. Ang lumang pagpapagana ng grupo ay babawasan mula {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> ay umalis sa grupo.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> at <b>{count} iba pa</b> ay umalis sa grupo.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> at <b>{other_name}</b> ay umalis sa grupo.</string>
@@ -435,7 +434,6 @@
     <string name="groupOnlyAdmin">Ikaw ang tanging admin sa <b>{group_name}</b>.\n\nAng mga miyembro ng grupo at mga setting ay hindi maaaring baguhin nang walang admin.</string>
     <string name="groupPromotedYou"><b>Ikaw</b> ay na-promote na Admin.</string>
     <string name="groupPromotedYouMultiple"><b>Ikaw</b> at <b>{count} iba pa</b> ay na-promote na Admin.</string>
-    <string name="groupPromotedYouTwo"><b>Ikaw</b> at <b>{name}</b> ay na-promote na Admin.</string>
     <string name="groupRemoveDescription">Gusto mo bang alisin si <b>{name}</b> mula sa <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Gusto mo bang alisin sina <b>{name}</b> at <b>{count} iba pa</b> mula sa <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Gusto mo bang alisin sina <b>{name}</b> at <b>{other_name}</b> mula sa <b>{group_name}</b>?</string>

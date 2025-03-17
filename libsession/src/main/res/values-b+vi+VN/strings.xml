@@ -431,7 +431,6 @@
     <string name="groupLeaveDescription">Bạn có chắc chắn rằng bạn muốn rời <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Bạn có chắc chắn rằng bạn muốn rời khỏi <b>{group_name}</b>?\n\nĐiều này sẽ loại bỏ tất cả các thành viên và xóa tất cả nội dung nhóm.</string>
     <string name="groupLeaveErrorFailed">Không thể rời khỏi nhóm {group_name}</string>
-    <string name="groupLegacyBanner">Các nhóm đã được nâng cấp, tạo một nhóm mới để nâng cấp. Chức năng nhóm cũ sẽ bị suy giảm từ {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> đã rời nhóm.</string>
     <string name="groupMemberLeftMultiple"><b>{name} </b> và <b>{count} người khác </b> đã rời nhóm.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> và <b>{other_name} </b> đã rời nhóm.</string>
@@ -458,7 +457,6 @@
     <string name="groupPendingRemoval">Đang chờ loại bỏ</string>
     <string name="groupPromotedYou"><b>Bạn</b> được thăng lên làm Admin.</string>
     <string name="groupPromotedYouMultiple"><b>Bạn</b> và <b>{count} người khác</b> đã được thăng lên làm Admin.</string>
-    <string name="groupPromotedYouTwo"><b>Bạn</b> và <b>{name}</b> đã được thăng lên làm Admin.</string>
     <string name="groupRemoveDescription">Bạn có muốn xóa <b>{name}</b> khỏi <b>{group_name}</b> không?</string>
     <string name="groupRemoveDescriptionMultiple">Bạn có muốn xóa <b>{name}</b> và <b>{count} người khác</b> khỏi <b>{group_name}</b> không?</string>
     <string name="groupRemoveDescriptionTwo">Bạn có muốn xóa <b>{name}</b> và <b>{other_name}</b> khỏi <b>{group_name}</b> không?</string>

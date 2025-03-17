@@ -439,7 +439,6 @@
     <string name="groupLeaveDescription">Вы уверены, что хотите покинуть <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Вы уверены, что хотите покинуть <b>{group_name}</b>?\n\nЭто удалит всех участников и всё содержимое группы.</string>
     <string name="groupLeaveErrorFailed">Не удалось выйти из {group_name}</string>
-    <string name="groupLegacyBanner">Функциональность групп была обновлена, создайте новую группу. Старые группы перестанут работать с {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> покинул(а) группу.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> и <b>{count} других человек</b> покинули группу.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> и <b>{other_name}</b> покинули группу.</string>
@@ -463,7 +462,6 @@
     <string name="groupOnlyAdmin">Вы единственный администратор в <b>{group_name}</b>.\n\nУчастники группы и настройки не могут быть изменены без администратора.</string>
     <string name="groupPromotedYou"><b>Вы</b> назначены администратором.</string>
     <string name="groupPromotedYouMultiple"><b>Вы</b> и <b>{count} других человек</b> назначены администраторами.</string>
-    <string name="groupPromotedYouTwo"><b>Вы</b> и <b>{name}</b> назначены администраторами.</string>
     <string name="groupRemoveDescription">Хотите удалить <b>{name}</b> из <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Хотите удалить <b>{name}</b> и <b>{count} других</b> из <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Хотите удалить <b>{name}</b> и <b>{other_name}</b> из <b>{group_name}</b>?</string>

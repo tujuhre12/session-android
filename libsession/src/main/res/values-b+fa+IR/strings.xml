@@ -415,7 +415,6 @@
     <string name="groupLeave">ترک کردن گروه</string>
     <string name="groupLeaveDescriptionAdmin">ایا مطمین هستید می خواهید <b>{group_name}</b> را ترک کنید؟ \n\nاین کار باعث حذف همه ی اعضا و پاک شدن تمام محتوای گروه خواهد شد.</string>
     <string name="groupLeaveErrorFailed">ترک {group_name} ناموفق بود</string>
-    <string name="groupLegacyBanner">گروه‌ها ارتقا یافته‌اند، یک گروه جدید ایجاد کنید تا ارتقا دهید. عملکرد گروه قدیمی از {date} کاهش می‌یابد.</string>
     <string name="groupMemberLeft"><b>{name}</b> گروه را ترک کرد.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> و <b>{count} نفر دیگر</b> گروه را ترک کردند.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> و <b>{other_name}</b> گروه را ترک کردند.</string>
@@ -439,7 +438,6 @@
     <string name="groupOnlyAdmin">شما تنها مدیر در <b>{group_name}</b> هستید.\n\nبدون مدیر، اعضای گروه و تنظیمات نمی‌توانند تغییر کنند.</string>
     <string name="groupPromotedYou"><b>شما</b> به مدیر ارتقاء یافتید.</string>
     <string name="groupPromotedYouMultiple"><b>شما</b> و <b>{count} سایرین</b> به مدیر ارتقاء یافتید.</string>
-    <string name="groupPromotedYouTwo"><b>شما</b> و <b>{name}</b> به مدیر ارتقاء یافتید.</string>
     <string name="groupRemoveDescription">آیا می‌خواهید <b>{name}</b> را از <b>{group_name}</b> حذف کنید؟</string>
     <string name="groupRemoveDescriptionMultiple">آیا می‌خواهید <b>{name}</b> و <b>{count} نفر دیگر</b> را از <b>{group_name}</b> حذف کنید؟</string>
     <string name="groupRemoveDescriptionTwo">آیا می‌خواهید <b>{name}</b> و <b>{other_name}</b> را از <b>{group_name}</b> حذف کنید؟</string>

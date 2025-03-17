@@ -5,16 +5,20 @@ import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.LinearLayout
+import com.bumptech.glide.RequestManager
+import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewUserBinding
-import org.session.libsession.messaging.contacts.Contact
+import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.recipients.Recipient
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent
-import com.bumptech.glide.RequestManager
-import org.session.libsession.messaging.MessagingModuleConfiguration
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class UserView : LinearLayout {
     private lateinit var binding: ViewUserBinding
+
+    @Inject
+    lateinit var usernameUtils: UsernameUtils
 
     enum class ActionIndicator {
         None,
@@ -51,10 +55,10 @@ class UserView : LinearLayout {
         fun getUserDisplayName(publicKey: String): String {
             if (isLocalUser) return context.getString(R.string.you)
 
-            return MessagingModuleConfiguration.shared.storage.getContactNameWithAccountID(publicKey)
+            return usernameUtils.getContactNameWithAccountID(publicKey)
         }
 
-        val address = user.address.serialize()
+        val address = user.address.toString()
         binding.profilePictureView.update(user)
         binding.actionIndicatorImageView.setImageResource(R.drawable.ic_radio_unselected)
         binding.nameTextView.text = if (user.isGroupOrCommunityRecipient) user.name else getUserDisplayName(address)

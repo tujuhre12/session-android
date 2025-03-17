@@ -35,7 +35,7 @@ class ConversationActionModeCallback(
     fun updateActionModeMenu(menu: Menu) {
         // Prepare
         val selectedItems = adapter.selectedItems
-        val containsControlMessage = selectedItems.any { it.isUpdate }
+        val containsControlMessage = selectedItems.any { it.isControlMessage }
         val hasText = selectedItems.any { it.body.isNotEmpty() }
         if (selectedItems.isEmpty()) { return }
         val firstMessage = selectedItems.iterator().next()

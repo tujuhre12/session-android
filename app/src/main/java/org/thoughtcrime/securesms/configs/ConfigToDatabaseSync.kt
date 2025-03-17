@@ -42,7 +42,6 @@ import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
-import org.thoughtcrime.securesms.dependencies.PollerFactory
 import org.thoughtcrime.securesms.groups.ClosedGroupManager
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
@@ -63,7 +62,6 @@ class ConfigToDatabaseSync @Inject constructor(
     private val storage: StorageProtocol,
     private val threadDatabase: ThreadDatabase,
     private val recipientDatabase: RecipientDatabase,
-    private val pollerFactory: PollerFactory,
     private val clock: SnodeClock,
     private val profileManager: ProfileManager,
     private val preferences: TextSecurePreferences,
@@ -191,6 +189,13 @@ class ConfigToDatabaseSync @Inject constructor(
         recipientDatabase.setProfileName(recipient, groupInfoConfig.name)
         profileManager.setName(context, recipient, groupInfoConfig.name.orEmpty())
 
+        // Also update the name in the user groups config
+        configFactory.withMutableUserConfigs { configs ->
+            configs.userGroups.getClosedGroup(groupInfoConfig.id.hexString)?.let { group ->
+                configs.userGroups.set(group.copy(name = groupInfoConfig.name.orEmpty()))
+            }
+        }
+
         if (groupInfoConfig.destroyed) {
             handleDestroyedGroup(threadId = threadId)
         } else {
@@ -286,7 +291,7 @@ class ConfigToDatabaseSync @Inject constructor(
                 var current = reader.next
                 while (current != null) {
                     if (current.recipient?.isGroupV2Recipient == true) {
-                        put(AccountId(current.recipient.address.serialize()), current.threadId)
+                        put(AccountId(current.recipient.address.toString()), current.threadId)
                     }
 
                     current = reader.next
@@ -314,9 +319,6 @@ class ConfigToDatabaseSync @Inject constructor(
             groupThreadsToKeep[closedGroup.groupAccountId] = threadId
 
             storage.setPinned(threadId, closedGroup.priority == PRIORITY_PINNED)
-            if (!closedGroup.invited && !closedGroup.kicked) {
-                pollerFactory.pollerFor(closedGroup.groupAccountId)?.start()
-            }
 
             if (closedGroup.destroyed) {
                 handleDestroyedGroup(threadId = threadId)
@@ -325,8 +327,7 @@ class ConfigToDatabaseSync @Inject constructor(
 
         val toRemove = existingClosedGroupThreads - groupThreadsToKeep.keys
         Log.d(TAG, "Removing ${toRemove.size} closed groups")
-        toRemove.forEach { (groupId, threadId) ->
-            pollerFactory.pollerFor(groupId)?.stop()
+        toRemove.forEach { (_, threadId) ->
             storage.removeClosedGroupThread(threadId)
         }
 

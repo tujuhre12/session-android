@@ -32,7 +32,6 @@ import network.loki.messenger.databinding.ViewEmojiReactionsBinding
 import network.loki.messenger.databinding.ViewVisibleMessageBinding
 import network.loki.messenger.databinding.ViewstubVisibleMessageMarkerContainerBinding
 import network.loki.messenger.libsession_util.getOrNull
-import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.contacts.Contact.ContactContext
 import org.session.libsession.messaging.open_groups.OpenGroupApi
@@ -41,6 +40,7 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ThemeUtil.getThemedColor
+import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.ViewUtil
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.modifyLayoutParams
@@ -85,6 +85,7 @@ class VisibleMessageView : FrameLayout {
     @Inject lateinit var mmsDb: MmsDatabase
     @Inject lateinit var lastSentTimestampCache: LastSentTimestampCache
     @Inject lateinit var configFactory: ConfigFactoryProtocol
+    @Inject lateinit var usernameUtils: UsernameUtils
 
     private val binding = ViewVisibleMessageBinding.inflate(LayoutInflater.from(context), this, true)
 
@@ -163,6 +164,9 @@ class VisibleMessageView : FrameLayout {
         delegate: VisibleMessageViewDelegate? = null,
         onAttachmentNeedsDownload: (DatabaseAttachment) -> Unit
     ) {
+        clipToPadding = false
+        clipChildren = false
+
         isOutgoing = message.isOutgoing
         replyDisabled = message.isOpenGroupInvitation
         val threadID = message.threadId
@@ -228,7 +232,7 @@ class VisibleMessageView : FrameLayout {
                     binding.moderatorIconImageView.isVisible = isAdmin
                 }
                 else if (thread.isGroupV2Recipient) { // groups v2
-                    val isAdmin = configFactory.withGroupConfigs(AccountId(thread.address.serialize())) {
+                    val isAdmin = configFactory.withGroupConfigs(AccountId(thread.address.toString())) {
                         it.groupMembers.getOrNull(senderAccountID)?.admin == true
                     }
 
@@ -239,7 +243,7 @@ class VisibleMessageView : FrameLayout {
         binding.senderNameTextView.isVisible = !message.isOutgoing && (isStartOfMessageCluster && (isGroupThread || snIsSelected))
         val contactContext =
             if (thread.isCommunityRecipient) ContactContext.OPEN_GROUP else ContactContext.REGULAR
-        binding.senderNameTextView.text = MessagingModuleConfiguration.shared.storage.getContactNameWithAccountID(
+        binding.senderNameTextView.text = usernameUtils.getContactNameWithAccountID(
             contact = contact,
             accountID = senderAccountID,
             contactContext = contactContext,
@@ -393,14 +397,14 @@ class VisibleMessageView : FrameLayout {
     }
 
     private fun isStartOfMessageCluster(current: MessageRecord, previous: MessageRecord?, isGroupThread: Boolean): Boolean =
-        previous == null || previous.isUpdate || !DateUtils.isSameHour(current.timestamp, previous.timestamp) || if (isGroupThread) {
+        previous == null || previous.isControlMessage || !DateUtils.isSameHour(current.timestamp, previous.timestamp) || if (isGroupThread) {
             current.recipient.address != previous.recipient.address
         } else {
             current.isOutgoing != previous.isOutgoing
         }
 
     private fun isEndOfMessageCluster(current: MessageRecord, next: MessageRecord?, isGroupThread: Boolean): Boolean =
-        next == null || next.isUpdate || !DateUtils.isSameHour(current.timestamp, next.timestamp) || if (isGroupThread) {
+        next == null || next.isControlMessage || !DateUtils.isSameHour(current.timestamp, next.timestamp) || if (isGroupThread) {
             current.recipient.address != next.recipient.address
         } else {
             current.isOutgoing != next.isOutgoing

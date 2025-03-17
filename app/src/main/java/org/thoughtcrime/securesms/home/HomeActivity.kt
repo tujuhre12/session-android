@@ -75,9 +75,12 @@ import org.thoughtcrime.securesms.showMuteDialog
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.ui.setThemedContent
 import org.thoughtcrime.securesms.util.disableClipping
+import org.thoughtcrime.securesms.util.fadeIn
+import org.thoughtcrime.securesms.util.fadeOut
 import org.thoughtcrime.securesms.util.push
 import org.thoughtcrime.securesms.util.show
 import org.thoughtcrime.securesms.util.start
+import org.thoughtcrime.securesms.webrtc.WebRtcCallActivity
 import javax.inject.Inject
 
 // Intent extra keys so we know where we came from
@@ -186,6 +189,11 @@ class HomeActivity : ScreenLockActionBarActivity(),
             updateLegacyConfigView()
         }
 
+        // in case a phone call is in progress, this banner is visible and should bring the user back to the call
+        binding.callInProgress.setOnClickListener {
+            startActivity(WebRtcCallActivity.getCallActivityIntent(this))
+        }
+
         // Set up empty state view
         binding.emptyStateContainer.setThemedContent {
             EmptyView(isNewAccount)
@@ -283,6 +291,17 @@ class HomeActivity : ScreenLockActionBarActivity(),
             configFactory.withMutableUserConfigs {
                 if (!it.userProfile.isBlockCommunityMessageRequestsSet()) {
                     it.userProfile.setCommunityMessageRequests(false)
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                homeViewModel.callInProgress.collect { callInProgress ->
+                    when (callInProgress) {
+                        true -> binding.callInProgress.fadeIn()
+                        false -> binding.callInProgress.fadeOut()
+                    }
                 }
             }
         }
@@ -406,7 +425,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
     private fun updateProfileButton() {
         binding.profileButton.publicKey = publicKey
-        binding.profileButton.displayName = textSecurePreferences.getProfileName()
+        binding.profileButton.displayName = homeViewModel.getCurrentUsername()
         binding.profileButton.recycle()
         binding.profileButton.update()
     }
@@ -503,7 +522,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
         showSessionDialog {
             title(R.string.block)
             text(Phrase.from(context, R.string.blockDescription)
-                .put(NAME_KEY, thread.recipient.toShortString())
+                .put(NAME_KEY, thread.recipient.name)
                 .format())
             dangerButton(R.string.block, R.string.AccessibilityId_blockConfirm) {
                 lifecycleScope.launch(Dispatchers.Default) {
@@ -514,7 +533,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                     }
                 }
                 // Block confirmation toast added as per SS-64
-                val txt = Phrase.from(context, R.string.blockBlockedUser).put(NAME_KEY, thread.recipient.toShortString()).format().toString()
+                val txt = Phrase.from(context, R.string.blockBlockedUser).put(NAME_KEY, thread.recipient.name).format().toString()
                 Toast.makeText(context, txt, Toast.LENGTH_LONG).show()
             }
             cancelButton()
@@ -524,7 +543,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
     private fun unblockConversation(thread: ThreadRecord) {
         showSessionDialog {
             title(R.string.blockUnblock)
-            text(Phrase.from(context, R.string.blockUnblockName).put(NAME_KEY, thread.recipient.toShortString()).format())
+            text(Phrase.from(context, R.string.blockUnblockName).put(NAME_KEY, thread.recipient.name).format())
             dangerButton(R.string.blockUnblock, R.string.AccessibilityId_unblockConfirm) {
                 lifecycleScope.launch(Dispatchers.Default) {
                     storage.setBlocked(listOf(thread.recipient), false)
@@ -673,7 +692,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
             else { // If this is a 1-on-1 conversation
                 title = getString(R.string.conversationsDelete)
                 message = Phrase.from(this, R.string.conversationsDeleteDescription)
-                    .put(NAME_KEY, recipient.toShortString())
+                    .put(NAME_KEY, recipient.name)
                     .format()
             }
         }

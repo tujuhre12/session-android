@@ -15,6 +15,7 @@ import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
+import com.bumptech.glide.RequestManager
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewInputBarBinding
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
@@ -26,7 +27,6 @@ import org.thoughtcrime.securesms.conversation.v2.messages.QuoteView
 import org.thoughtcrime.securesms.conversation.v2.messages.QuoteViewDelegate
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
-import com.bumptech.glide.RequestManager
 import org.thoughtcrime.securesms.util.addTextChangedListener
 import org.thoughtcrime.securesms.util.contains
 
@@ -120,12 +120,14 @@ class InputBar @JvmOverloads constructor(
 
                 when (event.action) {
                     MotionEvent.ACTION_DOWN -> {
+
                         // Only start spinning up the voice recorder if we're not already recording, setting up, or tearing down
                         if (voiceRecorderState == VoiceRecorderState.Idle) {
                             startRecordingVoiceMessage()
                         }
                     }
                     MotionEvent.ACTION_UP -> {
+
                         // Handle the pointer up event appropriately, whether that's to keep recording if recording was locked
                         // on, or finishing recording if just hold-to-record.
                         delegate?.onMicrophoneButtonUp(event)
@@ -180,7 +182,10 @@ class InputBar @JvmOverloads constructor(
 
     private fun toggleAttachmentOptions() { delegate?.toggleAttachmentOptions() }
 
-    private fun startRecordingVoiceMessage() { delegate?.startRecordingVoiceMessage() }
+
+    private fun startRecordingVoiceMessage() {
+        delegate?.startRecordingVoiceMessage()
+    }
 
     fun draftQuote(thread: Recipient, message: MessageRecord, glide: RequestManager) {
         quoteView?.let(binding.inputBarAdditionalContentContainer::removeView)
@@ -199,7 +204,7 @@ class InputBar @JvmOverloads constructor(
             it.delegate = this
             binding.inputBarAdditionalContentContainer.addView(layout)
             val attachments = (message as? MmsMessageRecord)?.slideDeck
-            val sender = if (message.isOutgoing) TextSecurePreferences.getLocalNumber(context)!! else message.individualRecipient.address.serialize()
+            val sender = if (message.isOutgoing) TextSecurePreferences.getLocalNumber(context)!! else message.individualRecipient.address.toString()
             it.bind(sender, message.body, attachments, thread, true, message.isOpenGroupInvitation, message.threadId, false, glide)
         }
 

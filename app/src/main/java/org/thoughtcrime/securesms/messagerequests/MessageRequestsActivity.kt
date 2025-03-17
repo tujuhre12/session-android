@@ -88,7 +88,7 @@ class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClick
         showSessionDialog {
             title(R.string.block)
             text(Phrase.from(context, R.string.blockDescription)
-                .put(NAME_KEY, thread.recipient.toShortString())
+                .put(NAME_KEY, thread.recipient.name)
                 .format())
             dangerButton(R.string.block, R.string.AccessibilityId_blockConfirm) {
                 doBlock()

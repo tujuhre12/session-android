@@ -20,13 +20,11 @@ import static nl.komponents.kovenant.android.KovenantAndroid.stopKovenant;
 
 import android.annotation.SuppressLint;
 import android.app.Application;
-import android.app.KeyguardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.os.PowerManager;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -34,9 +32,11 @@ import androidx.annotation.StringRes;
 import androidx.core.content.pm.ShortcutInfoCompat;
 import androidx.core.content.pm.ShortcutManagerCompat;
 import androidx.core.graphics.drawable.IconCompat;
+import androidx.hilt.work.HiltWorkerFactory;
 import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ProcessLifecycleOwner;
+import androidx.work.Configuration;
 
 import com.squareup.phrase.Phrase;
 
@@ -53,11 +53,11 @@ import org.session.libsession.snode.SnodeClock;
 import org.session.libsession.snode.SnodeModule;
 import org.session.libsession.utilities.Device;
 import org.session.libsession.utilities.Environment;
-import org.session.libsession.utilities.NonTranslatableStringConstants;
 import org.session.libsession.utilities.ProfilePictureUtilities;
 import org.session.libsession.utilities.SSKEnvironment;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.Toaster;
+import org.session.libsession.utilities.UsernameUtils;
 import org.session.libsession.utilities.Util;
 import org.session.libsession.utilities.WindowDebouncer;
 import org.session.libsignal.utilities.HTTP;
@@ -78,26 +78,30 @@ import org.thoughtcrime.securesms.dependencies.AppComponent;
 import org.thoughtcrime.securesms.dependencies.ConfigFactory;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 import org.thoughtcrime.securesms.dependencies.DatabaseModule;
-import org.thoughtcrime.securesms.dependencies.PollerFactory;
 import org.thoughtcrime.securesms.emoji.EmojiSource;
+import org.thoughtcrime.securesms.groups.ExpiredGroupManager;
 import org.thoughtcrime.securesms.groups.OpenGroupManager;
 import org.thoughtcrime.securesms.groups.handler.AdminStateSync;
 import org.thoughtcrime.securesms.groups.handler.CleanupInvitationHandler;
 import org.thoughtcrime.securesms.groups.handler.DestroyedGroupSync;
+import org.thoughtcrime.securesms.groups.GroupPollerManager;
 import org.thoughtcrime.securesms.groups.handler.RemoveGroupMemberHandler;
 import org.thoughtcrime.securesms.home.HomeActivity;
 import org.thoughtcrime.securesms.jobmanager.impl.NetworkConstraint;
 import org.thoughtcrime.securesms.logging.AndroidLogger;
 import org.thoughtcrime.securesms.logging.PersistentLogger;
 import org.thoughtcrime.securesms.logging.UncaughtExceptionLogger;
+import org.thoughtcrime.securesms.notifications.BackgroundPollManager;
 import org.thoughtcrime.securesms.notifications.BackgroundPollWorker;
 import org.thoughtcrime.securesms.notifications.NotificationChannels;
 import org.thoughtcrime.securesms.notifications.PushRegistrationHandler;
 import org.thoughtcrime.securesms.providers.BlobProvider;
 import org.thoughtcrime.securesms.service.ExpiringMessageManager;
 import org.thoughtcrime.securesms.service.KeyCachingService;
+import org.thoughtcrime.securesms.webrtc.WebRtcCallBridge;
 import org.thoughtcrime.securesms.sskenvironment.ReadReceiptManager;
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository;
+import org.thoughtcrime.securesms.util.AppVisibilityManager;
 import org.thoughtcrime.securesms.util.Broadcaster;
 import org.thoughtcrime.securesms.util.VersionDataFetcher;
 import org.thoughtcrime.securesms.webrtc.CallMessageProcessor;
@@ -114,6 +118,7 @@ import java.util.Timer;
 import java.util.concurrent.Executors;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 import dagger.Lazy;
 import dagger.hilt.EntryPoints;
@@ -122,6 +127,7 @@ import kotlin.Deprecated;
 import kotlin.Unit;
 import network.loki.messenger.BuildConfig;
 import network.loki.messenger.R;
+import network.loki.messenger.libsession_util.util.Logger;
 
 /**
  * Will be called once when the TextSecure process is created.
@@ -132,7 +138,7 @@ import network.loki.messenger.R;
  * @author Moxie Marlinspike
  */
 @HiltAndroidApp
-public class ApplicationContext extends Application implements DefaultLifecycleObserver, Toaster {
+public class ApplicationContext extends Application implements DefaultLifecycleObserver, Toaster, Configuration.Provider {
 
     public static final String PREFERENCES_NAME = "SecureSMS-Preferences";
 
@@ -145,20 +151,20 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     private Handler conversationListHandler;
     private PersistentLogger persistentLogger;
 
+    @Inject HiltWorkerFactory workerFactory;
     @Inject LokiAPIDatabase lokiAPIDatabase;
     @Inject public Storage storage;
     @Inject Device device;
     @Inject MessageDataProvider messageDataProvider;
     @Inject TextSecurePreferences textSecurePreferences;
     @Inject ConfigFactory configFactory;
-    @Inject PollerFactory pollerFactory;
     @Inject LastSentTimestampCache lastSentTimestampCache;
     @Inject VersionDataFetcher versionDataFetcher;
     @Inject PushRegistrationHandler pushRegistrationHandler;
     @Inject TokenFetcher tokenFetcher;
     @Inject GroupManagerV2 groupManagerV2;
     @Inject SSKEnvironment.ProfileManagerProtocol profileManager;
-    CallMessageProcessor callMessageProcessor;
+    @Inject CallMessageProcessor callMessageProcessor;
     MessagingModuleConfiguration messagingModuleConfiguration;
     @Inject ConfigUploader configUploader;
     @Inject AdminStateSync adminStateSync;
@@ -172,13 +178,17 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     @Inject Lazy<MessageNotifier> messageNotifierLazy;
     @Inject LokiAPIDatabase apiDB;
     @Inject EmojiSearchDatabase emojiSearchDb;
+    @Inject WebRtcCallBridge webRtcCallBridge;
     @Inject LegacyClosedGroupPollerV2 legacyClosedGroupPollerV2;
     @Inject LegacyGroupDeprecationManager legacyGroupDeprecationManager;
     @Inject CleanupInvitationHandler cleanupInvitationHandler;
+    @Inject UsernameUtils usernameUtils;
+    @Inject BackgroundPollManager backgroundPollManager;  // Exists here only to start upon app starts
+    @Inject AppVisibilityManager appVisibilityManager;  // Exists here only to start upon app starts
+    @Inject GroupPollerManager groupPollerManager;  // Exists here only to start upon app starts
+    @Inject ExpiredGroupManager expiredGroupManager; // Exists here only to start upon app starts
 
     public volatile boolean isAppVisible;
-    public String KEYGUARD_LOCK_TAG = NonTranslatableStringConstants.APP_NAME + ":KeyguardLock";
-    public String WAKELOCK_TAG      = NonTranslatableStringConstants.APP_NAME + ":WakeLock";
 
     @Override
     public Object getSystemService(String name) {
@@ -264,9 +274,10 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
                 snodeClock,
                 textSecurePreferences,
                 legacyClosedGroupPollerV2,
-                legacyGroupDeprecationManager
+                legacyGroupDeprecationManager,
+                usernameUtils
                 );
-        callMessageProcessor = new CallMessageProcessor(this, textSecurePreferences, ProcessLifecycleOwner.get().getLifecycle(), storage);
+
         Log.i(TAG, "onCreate()");
         startKovenant();
         initializeSecurityProvider();
@@ -278,7 +289,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         broadcaster = new Broadcaster(this);
         boolean useTestNet = textSecurePreferences.getEnvironment() == Environment.TEST_NET;
         SnodeModule.Companion.configure(apiDB, broadcaster, useTestNet);
-        initializePeriodicTasks();
         SSKEnvironment.Companion.configure(typingStatusRepository, readReceiptManager, profileManager, getMessageNotifier(), expiringMessageManager);
         initializeWebRtc();
         initializeBlobProvider();
@@ -314,6 +324,14 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         }
     }
 
+    @NonNull
+    @Override
+    public Configuration getWorkManagerConfiguration() {
+        return new Configuration.Builder()
+                .setWorkerFactory(workerFactory)
+                .build();
+    }
+
     @Override
     public void onStart(@NonNull LifecycleOwner owner) {
         isAppVisible = true;
@@ -326,13 +344,9 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
             return;
         }
 
+        startPollingIfNeeded();
+
         ThreadUtils.queue(()->{
-            if (poller != null) {
-                poller.setCaughtUp(false);
-            }
-
-            startPollingIfNeeded();
-
             OpenGroupManager.INSTANCE.startPolling();
             return Unit.INSTANCE;
         });
@@ -350,7 +364,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         if (poller != null) {
             poller.stopIfNeeded();
         }
-        pollerFactory.stopAll();
         legacyClosedGroupPollerV2.stopAll();
         versionDataFetcher.stopTimedVersionCheck();
     }
@@ -359,7 +372,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     public void onTerminate() {
         stopKovenant(); // Loki
         OpenGroupManager.INSTANCE.stopPolling();
-        pollerFactory.stopAll();
         versionDataFetcher.stopTimedVersionCheck();
         super.onTerminate();
     }
@@ -425,15 +437,12 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
             persistentLogger = new PersistentLogger(this);
         }
         Log.initialize(new AndroidLogger(), persistentLogger);
+        Logger.initLogger();
     }
 
     private void initializeCrashHandling() {
         final Thread.UncaughtExceptionHandler originalHandler = Thread.getDefaultUncaughtExceptionHandler();
         Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionLogger(originalHandler));
-    }
-
-    private void initializePeriodicTasks() {
-        BackgroundPollWorker.schedulePeriodic(this);
     }
 
     private void initializeWebRtc() {
@@ -454,7 +463,9 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     private void setUpPollingIfNeeded() {
         String userPublicKey = textSecurePreferences.getLocalNumber();
         if (userPublicKey == null) return;
-        poller = new Poller(configFactory, storage, lokiAPIDatabase);
+        if(poller == null) {
+            poller = new Poller(configFactory, storage, lokiAPIDatabase);
+        }
     }
 
     public void startPollingIfNeeded() {
@@ -462,7 +473,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         if (poller != null) {
             poller.startIfNeeded();
         }
-        pollerFactory.startAll();
         legacyClosedGroupPollerV2.start();
     }
 
@@ -489,67 +499,5 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
             }
         });
     }
-
-    // Method to clear the local data - returns true on success otherwise false
-    @SuppressLint("ApplySharedPref")
-    public boolean clearAllData() {
-        TextSecurePreferences.clearAll(this);
-        getSharedPreferences(PREFERENCES_NAME, 0).edit().clear().commit();
-        if (!deleteDatabase(SQLCipherOpenHelper.DATABASE_NAME)) {
-            Log.d("Loki", "Failed to delete database.");
-            return false;
-        }
-        configFactory.clearAll();
-        return true;
-    }
-
-    /**
-     * Clear all local profile data and message history then restart the app after a brief delay.
-     * @return true on success, false otherwise.
-     */
-    @SuppressLint("ApplySharedPref")
-    public boolean clearAllDataAndRestart() {
-        clearAllData();
-        Util.runOnMain(() -> new Handler().postDelayed(ApplicationContext.this::restartApplication, 200));
-        return true;
-    }
-
-    public void restartApplication() {
-        Intent intent = new Intent(this, HomeActivity.class);
-        startActivity(Intent.makeRestartActivityTask(intent.getComponent()));
-        Runtime.getRuntime().exit(0);
-    }
-
     // endregion
-
-    // Method to wake up the screen and dismiss the keyguard
-    public void wakeUpDeviceAndDismissKeyguardIfRequired() {
-        // Get the KeyguardManager and PowerManager
-        KeyguardManager keyguardManager = (KeyguardManager)getSystemService(Context.KEYGUARD_SERVICE);
-        PowerManager powerManager       = (PowerManager)getSystemService(Context.POWER_SERVICE);
-
-        // Check if the phone is locked & if the screen is awake
-        boolean isPhoneLocked = keyguardManager.isKeyguardLocked();
-        boolean isScreenAwake = powerManager.isInteractive();
-
-        if (!isScreenAwake) {
-            PowerManager.WakeLock wakeLock = powerManager.newWakeLock(
-                    PowerManager.FULL_WAKE_LOCK
-                            | PowerManager.ACQUIRE_CAUSES_WAKEUP
-                            | PowerManager.ON_AFTER_RELEASE,
-                    WAKELOCK_TAG);
-
-            // Acquire the wake lock to wake up the device
-            wakeLock.acquire(3000);
-        }
-
-        // Dismiss the keyguard.
-        // Note: This will not bypass any app-level (Session) lock; only the device-level keyguard.
-        // TODO: When moving to a minimum Android API of 27, replace these deprecated calls with new APIs.
-        if (isPhoneLocked) {
-            KeyguardManager.KeyguardLock keyguardLock = keyguardManager.newKeyguardLock(KEYGUARD_LOCK_TAG);
-            keyguardLock.disableKeyguard();
-        }
-    }
-
 }

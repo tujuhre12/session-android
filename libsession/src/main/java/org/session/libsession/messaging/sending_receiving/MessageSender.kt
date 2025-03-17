@@ -246,7 +246,7 @@ object MessageSender {
                     Namespace.UNAUTHENTICATED_CLOSED_GROUP(),
                     Namespace.DEFAULT
                 ())
-                destination is Destination.ClosedGroup -> listOf(Namespace.CLOSED_GROUP_MESSAGES())
+                destination is Destination.ClosedGroup -> listOf(Namespace.GROUP_MESSAGES())
 
                 else -> listOf(Namespace.DEFAULT())
             }
@@ -563,7 +563,7 @@ object MessageSender {
         JobQueue.shared.add(job)
 
         // if we are sending a 'Note to Self' make sure it is not hidden
-        if(address.serialize() == MessagingModuleConfiguration.shared.storage.getUserPublicKey()){
+        if(address.toString() == MessagingModuleConfiguration.shared.storage.getUserPublicKey()){
             MessagingModuleConfiguration.shared.preferences.setHasHiddenNoteToSelf(false)
             MessagingModuleConfiguration.shared.configFactory.withMutableUserConfigs {
                 it.userProfile.setNtsPriority(PRIORITY_VISIBLE)

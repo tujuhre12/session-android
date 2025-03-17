@@ -411,7 +411,6 @@
     <string name="groupLeaveDescription">Та <b>{group_name}</b>-ээс гарахдаа итгэлтэй байна уу?</string>
     <string name="groupLeaveDescriptionAdmin">Та <b>{group_name}</b> бүлгээс гарахдаа итгэлтэй байна уу?\n\nЭнэ нь бүх гишүүдийг устгаж, бүлгийн бүх контентыг устгана.</string>
     <string name="groupLeaveErrorFailed">{group_name} оос гарахад алдаа гарлаа</string>
-    <string name="groupLegacyBanner">Бүлгүүд шинэчлэгдсэн, шинэ бүлэг үүсгэ. Хуучин бүлгийн үйл ажиллагаа {date}-аас муудна.</string>
     <string name="groupMemberLeft"><b>{name} </b> бүлгээс гарлаа.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> болон <b>{count} бусад </b> бүлгээс гарлаа.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> болон <b>{other_name} </b> бүлгээс гарлаа.</string>
@@ -435,7 +434,6 @@
     <string name="groupOnlyAdmin">Та <b>{group_name}</b>-ийн цорын ганц админ байна.\n\nБүлгийн гишүүд болон тохиргоог админгүй өөрчлөх боломжгүй.</string>
     <string name="groupPromotedYou"><b>Та </b> Админ боллоо.</string>
     <string name="groupPromotedYouMultiple"><b>Та</b> болон <b>{count} бусад</b> Админ боллоо.</string>
-    <string name="groupPromotedYouTwo"><b>Та</b> болон <b>{name}</b> Админ боллоо.</string>
     <string name="groupRemoveDescription"><b>{name}</b>-г <b>{group_name}</b> -аас устгахыг хүсэж байна уу?</string>
     <string name="groupRemoveDescriptionMultiple"><b>{name}</b>-г болон <b>{count} бусдыг</b> <b>{group_name}</b>-аас устгахыг хүсэж байна уу?</string>
     <string name="groupRemoveDescriptionTwo"><b>{name}</b>-г болон <b>{other_name}</b>-г <b>{group_name}</b>-аас устгахыг хүсэж байна уу?</string>

@@ -415,7 +415,6 @@
     <string name="groupLeaveDescription">Är du säker på att du vill lämna <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Är du säker på att du vill lämna <b>{group_name}</b>?\n\nDetta kommer att ta bort alla medlemmar och radera allt gruppinnehåll.</string>
     <string name="groupLeaveErrorFailed">Misslyckades med att lämna {group_name}</string>
-    <string name="groupLegacyBanner">Grupper har uppgraderats, skapa en ny grupp för att uppgradera. Gamla gruppfunktioner kommer att försämras från och med {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> lämnade gruppen.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> och <b>{count} andra</b> lämnade gruppen.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> och <b>{other_name}</b> lämnade gruppen.</string>
@@ -439,7 +438,6 @@
     <string name="groupOnlyAdmin">Du är den enda administratören i <b>{group_name}</b>.\n\nGruppmedlemmar och inställningar kan inte ändras utan en administratör.</string>
     <string name="groupPromotedYou"><b>Du</b> blev befordrad till Admin.</string>
     <string name="groupPromotedYouMultiple"><b>Du</b> och <b>{count} andra</b> blev befordrade till Admin.</string>
-    <string name="groupPromotedYouTwo"><b>Du</b> och <b>{name}</b> blev befordrade till Admin.</string>
     <string name="groupRemoveDescription">Vill du ta bort <b>{name}</b> från <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Vill du ta bort <b>{name}</b> och <b>{count} andra</b> från <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Vill du ta bort <b>{name}</b> och <b>{other_name}</b> från <b>{group_name}</b>?</string>

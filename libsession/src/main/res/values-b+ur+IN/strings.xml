@@ -407,7 +407,6 @@
     <string name="groupLeave">گروپ چھوڑیں</string>
     <string name="groupLeaveDescriptionAdmin">کیا آپ واقعی <b>{group_name}</b> چھوڑنا چاہتے ہیں؟\n\nاس سے تمام اراکین کو ہٹا دیا جائے گا اور تمام گروپ مواد کو حذف کر دیا جائے گا۔</string>
     <string name="groupLeaveErrorFailed">{group_name} چھوڑنے میں ناکام</string>
-    <string name="groupLegacyBanner">گروپس کو اپ گریڈ کر دیا گیا ہے، اپ گریڈ کرنے کے لیے ایک نیا گروپ بنائیں۔ پرانے گروپ کی فعالیت کو {date} سے کم کر دیا جائے گا۔</string>
     <string name="groupMemberLeft"><b>{name}</b> نے گروپ چھوڑ دیا۔</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> اور <b>{count} دیگر</b> نے گروپ چھوڑ دیا۔</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> اور <b>{other_name}</b> نے گروپ چھوڑ دیا۔</string>
@@ -431,7 +430,6 @@
     <string name="groupOnlyAdmin">آپ <b>{group_name}</b> میں واحد منتظم ہیں۔\n\nگروپ اراکین اور سیٹنگز ایک منتظم کے بغیر تبدیل نہیں کی جا سکتیں۔</string>
     <string name="groupPromotedYou"><b>آپ</b> کو ایڈمن مقرر کیا گیا۔</string>
     <string name="groupPromotedYouMultiple"><b>آپ</b> اور <b>{count} دیگر</b> کو ایڈمن مقرر کیا گیا۔</string>
-    <string name="groupPromotedYouTwo"><b>آپ</b> اور <b>{name}</b> کو ایڈمن مقرر کیا گیا۔</string>
     <string name="groupRemoveDescription">کیا آپ <b>{group_name}</b> سے <b>{name}</b> کو ہٹانا چاہتے ہیں؟</string>
     <string name="groupRemoveDescriptionMultiple">کیا آپ<b>{group_name}</b>سے <b>{name}</b> اور <b>{count} دیگر</b> کو ہٹانا چاہتے ہیں؟</string>
     <string name="groupRemoveDescriptionTwo">کیا آپ <b>{group_name}</b> سے <b>{name}</b> اور <b>{other_name}</b> کو ہٹانا چاہتے ہیں؟</string>

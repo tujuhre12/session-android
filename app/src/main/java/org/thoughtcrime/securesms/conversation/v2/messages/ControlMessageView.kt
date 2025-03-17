@@ -124,7 +124,7 @@ class ControlMessageView : LinearLayout {
                 }
             }
             message.isMessageRequestResponse -> {
-                val msgRecipient = message.recipient.address.serialize()
+                val msgRecipient = message.recipient.address.toString()
                 val me = TextSecurePreferences.getLocalNumber(context)
                 binding.textView.text =  if(me == msgRecipient) { // you accepted the user's request
                     val threadRecipient = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(message.threadId)
@@ -198,7 +198,7 @@ class ControlMessageView : LinearLayout {
                                     button(R.string.sessionSettings) {
                                         val intent = Intent(context, PrivacySettingsActivity::class.java)
                                         // allow the screen to auto scroll to the appropriate toggle
-                                        intent.putExtra(PrivacySettingsActivity.SCROLL_KEY, CALL_NOTIFICATIONS_ENABLED)
+                                        intent.putExtra(PrivacySettingsActivity.SCROLL_AND_TOGGLE_KEY, CALL_NOTIFICATIONS_ENABLED)
                                         context.startActivity(intent)
                                     }
                                     cancelButton()
