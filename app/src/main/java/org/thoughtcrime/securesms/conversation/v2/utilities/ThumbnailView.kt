@@ -19,7 +19,6 @@ import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.bumptech.glide.request.RequestOptions
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ThumbnailViewBinding
-import org.session.libsession.messaging.sending_receiving.attachments.AttachmentTransferProgress
 import org.session.libsession.utilities.Util.equals
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsignal.utilities.ListenableFuture
@@ -123,7 +122,7 @@ open class ThumbnailView @JvmOverloads constructor(
         naturalHeight: Int
     ): ListenableFuture<Boolean> {
         val showPlayOverlay = (slide.thumbnailUri != null && slide.hasPlayOverlay() &&
-                (slide.transferState == AttachmentTransferProgress.TRANSFER_PROGRESS_DONE || isPreview))
+                (slide.isDone || isPreview))
         if(showPlayOverlay) {
             binding.playOverlay.isVisible = true
             // The views are poorly constructed at the moment and there is no good way to know
@@ -148,8 +147,7 @@ open class ThumbnailView @JvmOverloads constructor(
         this.slide = slide
 
         binding.thumbnailLoadIndicator.isVisible = slide.isInProgress
-        binding.thumbnailDownloadIcon.isVisible =
-            slide.transferState == AttachmentTransferProgress.TRANSFER_PROGRESS_FAILED
+        binding.thumbnailDownloadIcon.isVisible = slide.isFailed
 
         dimensDelegate.setDimens(naturalWidth, naturalHeight)
         invalidate()

@@ -54,9 +54,13 @@ public abstract class Attachment {
   public int getTransferState() { return transferState; }
 
   public boolean isInProgress() {
-    return transferState != AttachmentTransferProgress.TRANSFER_PROGRESS_DONE &&
-           transferState != AttachmentTransferProgress.TRANSFER_PROGRESS_FAILED &&
-            transferState != AttachmentTransferProgress.TRANSFER_PROGRESS_PENDING;
+    return transferState != AttachmentState.DONE.getValue() &&
+           transferState != AttachmentState.FAILED.getValue() &&
+            transferState != AttachmentState.PENDING.getValue();
+  }
+
+  public boolean isDone() {
+    return transferState == AttachmentState.DONE.getValue();
   }
 
   public long getSize() { return size; }

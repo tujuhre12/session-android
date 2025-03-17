@@ -22,7 +22,7 @@ import android.net.Uri
 import androidx.annotation.DrawableRes
 import network.loki.messenger.R
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
-import org.session.libsession.messaging.sending_receiving.attachments.AttachmentTransferProgress
+import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.messaging.sending_receiving.attachments.UriAttachment
 import org.session.libsession.utilities.MediaTypes
 import org.thoughtcrime.securesms.util.FilenameUtils
@@ -58,7 +58,7 @@ class AudioSlide : Slide {
                     uri,
                     null,        // thumbnailUri
                     contentType,
-                    AttachmentTransferProgress.TRANSFER_PROGRESS_STARTED,
+                    AttachmentState.STARTED.value,
                     dataSize,
                     0,           // width
                     0,           // height

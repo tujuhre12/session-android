@@ -28,7 +28,6 @@ import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
-import org.session.libsession.messaging.sending_receiving.attachments.AttachmentTransferProgress
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.getColorFromAttr
@@ -77,7 +76,7 @@ class VisibleMessageContentView : ConstraintLayout {
         binding.contentParent.cornerRadius = resources.getDimension(R.dimen.message_corner_radius)
 
         val hasExpired = haveAttachmentsExpired(message)
-        val mediaDownloaded = message is MmsMessageRecord && message.slideDeck.asAttachments().all { it.transferState == AttachmentTransferProgress.TRANSFER_PROGRESS_DONE }
+        val mediaDownloaded = message is MmsMessageRecord && message.slideDeck.asAttachments().all { it.isDone }
         val mediaInProgress = message is MmsMessageRecord && message.slideDeck.asAttachments().any { it.isInProgress }
 
         // reset visibilities / containers
@@ -201,6 +200,7 @@ class VisibleMessageContentView : ConstraintLayout {
             //TODO EXPIRED: handle video icons - looks like we only do image for now
             //TODO EXPIRED: Handle expiry in quotes - currently loads over and over
             //TODO EXPIRED: padding problem when quoting an attachment with an image
+            //TODO EXPIRED: what should we show in the message details view for an expired attachment? What about a regular failed one?
             //TODO EXPIRED: should the glowView encompass the whole message instead of just the body? Currently missing images and pending views
 
             // DOCUMENT
@@ -345,7 +345,7 @@ class VisibleMessageContentView : ConstraintLayout {
             // with a state marked as expired
             (message.slideDeck.asAttachments().any { it.transferState == AttachmentState.EXPIRED.value } ||
             // with a state marked as downloaded yet without a URI attached
-            (!message.hasAttachmentUri() && message.slideDeck.asAttachments().all { it.transferState == AttachmentTransferProgress.TRANSFER_PROGRESS_DONE }))
+            (!message.hasAttachmentUri() && message.slideDeck.asAttachments().all { it.isDone }))
 
     private val onContentClick: MutableList<((event: MotionEvent) -> Unit)> = mutableListOf()
 

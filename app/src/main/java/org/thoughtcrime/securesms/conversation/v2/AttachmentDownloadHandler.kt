@@ -14,7 +14,7 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.jobs.AttachmentDownloadJob
 import org.session.libsession.messaging.jobs.AttachmentUploadJob
 import org.session.libsession.messaging.jobs.JobQueue
-import org.session.libsession.messaging.sending_receiving.attachments.AttachmentTransferProgress
+import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.util.flatten
@@ -102,7 +102,7 @@ class AttachmentDownloadHandler(
 
 
     fun onAttachmentDownloadRequest(attachment: DatabaseAttachment) {
-        if (attachment.transferState != AttachmentTransferProgress.TRANSFER_PROGRESS_PENDING) {
+        if (attachment.transferState != AttachmentState.PENDING.value) {
             Log.i(
                 LOG_TAG,
                 "Attachment ${attachment.attachmentId} is not pending, skipping download"

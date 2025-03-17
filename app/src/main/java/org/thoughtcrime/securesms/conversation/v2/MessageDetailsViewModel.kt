@@ -5,10 +5,6 @@ import androidx.annotation.DrawableRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import java.util.Date
-import java.util.concurrent.TimeUnit
-import javax.inject.Inject
-import kotlin.text.Typography.ellipsis
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -21,7 +17,6 @@ import network.loki.messenger.R
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.jobs.AttachmentDownloadJob
 import org.session.libsession.messaging.jobs.JobQueue
-import org.session.libsession.messaging.sending_receiving.attachments.AttachmentTransferProgress
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
@@ -40,6 +35,10 @@ import org.thoughtcrime.securesms.mms.Slide
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.TitledText
+import java.util.Date
+import java.util.concurrent.TimeUnit
+import javax.inject.Inject
+import kotlin.text.Typography.ellipsis
 
 @HiltViewModel
 class MessageDetailsViewModel @Inject constructor(
@@ -175,7 +174,7 @@ class MessageDetailsViewModel @Inject constructor(
         val mmsRecord = state.mmsRecord ?: return
         val slide = mmsRecord.slideDeck.slides[index] ?: return
         // only open to downloaded images
-        if (slide.transferState == AttachmentTransferProgress.TRANSFER_PROGRESS_FAILED) {
+        if (slide.isFailed) {
             // Restart download here (on IO thread)
             (slide.asAttachment() as? DatabaseAttachment)?.let { attachment ->
                 onAttachmentNeedsDownload(attachment)

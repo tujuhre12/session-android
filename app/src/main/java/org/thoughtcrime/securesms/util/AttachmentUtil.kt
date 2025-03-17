@@ -4,7 +4,7 @@ import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.jobs.AttachmentDownloadJob
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
-import org.session.libsession.messaging.sending_receiving.attachments.AttachmentTransferProgress
+import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 
 private const val ZERO_SIZE = "0.00"
@@ -27,7 +27,7 @@ fun Attachment.displaySize(): String {
 
 fun JobQueue.createAndStartAttachmentDownload(attachment: DatabaseAttachment) {
     val attachmentId = attachment.attachmentId.rowId
-    if (attachment.transferState == AttachmentTransferProgress.TRANSFER_PROGRESS_PENDING
+    if (attachment.transferState == AttachmentState.PENDING.value
         && MessagingModuleConfiguration.shared.storage.getAttachmentUploadJob(attachmentId) == null) {
         // start download
         add(AttachmentDownloadJob(attachmentId, attachment.mmsId))

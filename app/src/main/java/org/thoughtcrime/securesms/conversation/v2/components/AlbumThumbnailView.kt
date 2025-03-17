@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Rect
 import android.util.AttributeSet
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.ViewGroup
@@ -16,7 +15,6 @@ import com.bumptech.glide.RequestManager
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
 import network.loki.messenger.databinding.AlbumThumbnailViewBinding
-import org.session.libsession.messaging.sending_receiving.attachments.AttachmentTransferProgress
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.StringSubstitutionConstants.COUNT_KEY
 import org.session.libsession.utilities.recipients.Recipient
@@ -63,7 +61,7 @@ class AlbumThumbnailView : RelativeLayout {
                 // hit intersects with this particular child
                 val slide = slides.getOrNull(index) ?: return@forEach
                 // only open to downloaded images
-                if (slide.transferState == AttachmentTransferProgress.TRANSFER_PROGRESS_FAILED) {
+                if (slide.isFailed) {
                     // Restart download here (on IO thread)
                     (slide.asAttachment() as? DatabaseAttachment)?.let { attachment ->
                         onAttachmentNeedsDownload(attachment)
