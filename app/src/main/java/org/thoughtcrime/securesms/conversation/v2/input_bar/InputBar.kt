@@ -264,10 +264,8 @@ class InputBar @JvmOverloads constructor(
 
     private fun updateMultimediaButtonsState() {
         attachmentsButton.isEnabled = allowAttachMultimediaButtons
-        attachmentsButton.setIconTintColourFromCurrentEnabledState()
 
         microphoneButton.isEnabled  = allowAttachMultimediaButtons
-        microphoneButton.setIconTintColourFromCurrentEnabledState()
     }
 
     fun addTextChangedListener(listener: (String) -> Unit) {

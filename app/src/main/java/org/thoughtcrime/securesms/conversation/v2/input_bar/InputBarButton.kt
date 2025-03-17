@@ -14,7 +14,6 @@ import android.view.MotionEvent
 import android.widget.ImageView
 import android.widget.RelativeLayout
 import androidx.annotation.DrawableRes
-import java.util.Date
 import network.loki.messenger.R
 import org.session.libsession.utilities.getColorFromAttr
 import org.thoughtcrime.securesms.util.GlowViewUtilities
@@ -22,6 +21,7 @@ import org.thoughtcrime.securesms.util.InputBarButtonImageViewContainer
 import org.thoughtcrime.securesms.util.animateSizeChange
 import org.thoughtcrime.securesms.util.getAccentColor
 import org.thoughtcrime.securesms.util.toPx
+import java.util.Date
 
 class InputBarButton : RelativeLayout {
     private val gestureHandler = Handler(Looper.getMainLooper())
@@ -55,6 +55,12 @@ class InputBarButton : RelativeLayout {
 
     val expandedSize by lazy { resources.getDimension(R.dimen.input_bar_button_expanded_size) }
     val collapsedSize by lazy { resources.getDimension(R.dimen.input_bar_button_collapsed_size) }
+
+    override fun setEnabled(enabled: Boolean) {
+        super.setEnabled(enabled)
+
+        setIconTintColour()
+    }
 
     private val imageViewContainer by lazy {
         val result = InputBarButtonImageViewContainer(context)
@@ -102,12 +108,6 @@ class InputBarButton : RelativeLayout {
         gravity = Gravity.TOP or Gravity.LEFT // Intentionally not Gravity.START
         isHapticFeedbackEnabled = true
         this.isEnabled = isSendButton // Only enable the send button by default
-
-        // Always tint the send button appropriately - multimedia button tints get set from `updateMultimediaButtonState`
-//        if (isSendButton) {
-//            imageView.imageTintList = ColorStateList.valueOf(context.getColorFromAttr(R.attr.message_sent_text_color))
-//        }
-        setIconTintColour(true)
     }
 
     fun getIconID() = iconID
@@ -140,8 +140,8 @@ class InputBarButton : RelativeLayout {
     }
 
     // Tint the button icon the appropriate colour for the user's theme
-    fun setIconTintColour(buttonIsEnabled: Boolean) {
-        if (buttonIsEnabled) {
+    private fun setIconTintColour() {
+        if (isEnabled) {
             imageView.imageTintList = if (isSendButton) {
                 ColorStateList.valueOf(context.getColorFromAttr(R.attr.message_sent_text_color))
             } else {
@@ -149,11 +149,10 @@ class InputBarButton : RelativeLayout {
             }
         } else {
             // Use the greyed out colour from the user theme
-            imageView.imageTintList = ColorStateList.valueOf(context.getColorFromAttr(R.attr.input_bar_text_hint))
+            imageView.imageTintList = ColorStateList.valueOf(context.getColorFromAttr(R.attr.disabled))
         }
     }
 
-    fun setIconTintColourFromCurrentEnabledState() = setIconTintColour(this.isEnabled)
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         // Ensure disabled buttons don't respond to events.
