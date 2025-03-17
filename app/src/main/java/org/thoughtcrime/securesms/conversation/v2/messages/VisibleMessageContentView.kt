@@ -34,6 +34,7 @@ import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.modifyLayoutParams
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
+import org.thoughtcrime.securesms.conversation.v2.messages.PendingOrExpiredAttachmentView.AttachmentType.*
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.conversation.v2.utilities.ModalURLSpan
 import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.getIntersectedModalSpans
@@ -176,8 +177,8 @@ class VisibleMessageContentView : ConstraintLayout {
                     // If it's an audio message but we haven't downloaded it yet show it as pending
                     (message.slideDeck.audioSlide?.asAttachment() as? DatabaseAttachment)?.let { attachment ->
                         binding.pendingOrExpiredAttachmentView.root.bind(
-                            if(attachment.isVoiceNote) PendingOrExpiredAttachmentView.AttachmentType.VOICE
-                            else PendingOrExpiredAttachmentView.AttachmentType.AUDIO,
+                            if(attachment.isVoiceNote) VOICE
+                            else AUDIO,
                             getTextColor(context,message),
                             attachment,
                             expired = hasExpired
@@ -195,13 +196,12 @@ class VisibleMessageContentView : ConstraintLayout {
                 }
             }
 
-            //TODO EXPIRED: Logic is wrong for handling showing the expired attachment message: It seems we need to set the error state somewhere. I can't rely on empty uris nor downloaded nor inprogress. I need to properly set something once the image gets a 404. MAYBE I also need to cater for downloaded + no uri in case that's a real thing
-            //TODO EXPIRED: do we need to worry about getting 404s? >> I think this is why we are stuck in inProgress... I need to capture the failure somewhere
-            //TODO EXPIRED: handle video icons - looks like we only do image for now
             //TODO EXPIRED: Handle expiry in quotes - currently loads over and over
             //TODO EXPIRED: padding problem when quoting an attachment with an image
             //TODO EXPIRED: what should we show in the message details view for an expired attachment? What about a regular failed one?
             //TODO EXPIRED: should the glowView encompass the whole message instead of just the body? Currently missing images and pending views
+            //TODO EXPIRED: quoted message look: loading, expired, failed, doc type
+            //TODO EXPIRED: failed attachment show a download icon in the quoted view, should replace with just the icon type
 
             // DOCUMENT
             message is MmsMessageRecord && message.slideDeck.documentSlide != null -> {
@@ -244,7 +244,7 @@ class VisibleMessageContentView : ConstraintLayout {
                     // If the document hasn't been downloaded yet then show it as pending
                     (message.slideDeck.documentSlide?.asAttachment() as? DatabaseAttachment)?.let { attachment ->
                         binding.pendingOrExpiredAttachmentView.root.bind(
-                            PendingOrExpiredAttachmentView.AttachmentType.DOCUMENT,
+                            DOCUMENT,
                             getTextColor(context,message),
                             attachment,
                             expired = hasExpired
@@ -291,7 +291,8 @@ class VisibleMessageContentView : ConstraintLayout {
                     val firstAttachment = message.slideDeck.asAttachments().first() as? DatabaseAttachment
                     firstAttachment?.let { attachment ->
                         binding.pendingOrExpiredAttachmentView.root.bind(
-                            PendingOrExpiredAttachmentView.AttachmentType.IMAGE,
+                            if(message.slideDeck.hasVideo()) VIDEO
+                            else IMAGE,
                             getTextColor(context,message),
                             attachment,
                             expired = hasExpired
