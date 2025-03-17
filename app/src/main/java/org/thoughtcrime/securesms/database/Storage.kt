@@ -228,6 +228,14 @@ open class Storage @Inject constructor(
 
     override fun getUserED25519KeyPair(): KeyPair? { return KeyPairUtilities.getUserED25519KeyPair(context) }
 
+    override fun getUserBlindedAccountId(serverPublicKey: String): AccountId? {
+        val userKeyPair = getUserED25519KeyPair() ?: return null
+        return AccountId(
+            IdPrefix.BLINDED,
+            SodiumUtilities.blindedKeyPair(serverPublicKey, userKeyPair)!!.publicKey.asBytes
+        )
+    }
+
     override fun getUserProfile(): Profile {
         val displayName = usernameUtils.getCurrentUsername()
         val profileKey = ProfileKeyUtil.getProfileKey(context)
@@ -979,7 +987,7 @@ open class Storage @Inject constructor(
         return lokiAPIDatabase.getLatestClosedGroupEncryptionKeyPair(groupPublicKey)
     }
 
-    override fun getAllClosedGroupPublicKeys(): Set<String> {
+    override fun getAllLegacyGroupPublicKeys(): Set<String> {
         return lokiAPIDatabase.getAllClosedGroupPublicKeys()
     }
 
@@ -1323,10 +1331,10 @@ open class Storage @Inject constructor(
         }
 
         // if we have contacts locally but that are missing from the config, remove their corresponding thread
+        val currentUserKey = getUserPublicKey()
         val  removedContacts = getAllContacts().filter { localContact ->
-            moreContacts.firstOrNull {
-                it.id == localContact.accountID
-            } == null
+            localContact.accountID != currentUserKey && // we don't want to remove ourselves (ie, our Note to Self)
+            moreContacts.none { it.id == localContact.accountID } // we don't want to remove contacts that are present in the config
         }
         removedContacts.forEach {
             getThreadId(fromSerialized(it.accountID))?.let(::deleteConversation)

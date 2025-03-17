@@ -16,6 +16,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -23,6 +24,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -61,16 +63,21 @@ import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.groups.ExpiredGroupManager
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.mms.AudioSlide
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.DateUtils
+import org.thoughtcrime.securesms.webrtc.CallManager
+import org.thoughtcrime.securesms.webrtc.data.State
 import java.time.ZoneId
 import java.util.UUID
+
 
 class ConversationViewModel(
     val threadId: Long,
     val edKeyPair: KeyPair?,
+    private val context: Context,
     private val application: Application,
     private val repository: ConversationRepository,
     private val storage: StorageProtocol,
@@ -82,8 +89,11 @@ class ConversationViewModel(
     private val textSecurePreferences: TextSecurePreferences,
     private val configFactory: ConfigFactory,
     private val groupManagerV2: GroupManagerV2,
+    private val callManager: CallManager,
     val legacyGroupDeprecationManager: LegacyGroupDeprecationManager,
+    private val expiredGroupManager: ExpiredGroupManager,
     private val usernameUtils: UsernameUtils
+
 ) : ViewModel() {
 
     val showSendAfterApprovalText: Boolean
@@ -199,13 +209,11 @@ class ConversationViewModel(
         }
 
     val showOptionsMenu: Boolean
-        get() {
-            if (isMessageRequestThread) {
-                return false
-            }
+        get() = !isMessageRequestThread && !isDeprecatedLegacyGroup && !isInactiveGroupV2Thread
 
-            return !isDeprecatedLegacyGroup
-        }
+    private val isInactiveGroupV2Thread: Boolean
+        get() = recipient?.isGroupV2Recipient == true &&
+                configFactory.getGroup(AccountId(recipient!!.address.toString()))?.shouldPoll == false
 
     private val isDeprecatedLegacyGroup: Boolean
         get() = recipient?.isLegacyGroupRecipient == true && legacyGroupDeprecationManager.isDeprecated
@@ -233,8 +241,7 @@ class ConversationViewModel(
                 Phrase.from(application, if (admin) R.string.legacyGroupBeforeDeprecationAdmin else R.string.legacyGroupBeforeDeprecationMember)
                 .put(DATE_KEY,
                     time.withZoneSameInstant(ZoneId.systemDefault())
-                        .toLocalDate()
-                        .format(DateUtils.getShortDateFormatter())
+                        .format(DateUtils.getMediumDateTimeFormatter())
                 )
                 .format()
 
@@ -248,11 +255,27 @@ class ConversationViewModel(
                     && state != LegacyGroupDeprecationManager.DeprecationState.NOT_DEPRECATING
         }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
+    val showExpiredGroupBanner: Flow<Boolean> = if (recipient?.isGroupV2Recipient != true) {
+        flowOf(false)
+    } else {
+        val groupId = AccountId(recipient!!.address.toString())
+        expiredGroupManager.expiredGroups.map { groupId in it }
+    }
+
     private val attachmentDownloadHandler = AttachmentDownloadHandler(
         storage = storage,
         messageDataProvider = messageDataProvider,
         scope = viewModelScope,
     )
+
+    val callBanner: StateFlow<String?> = callManager.currentConnectionStateFlow.map {
+        // a call is in progress if it isn't idle nor disconnected and the recipient is the person on the call
+        if(it !is State.Idle && it !is State.Disconnected && callManager.recipient?.address == recipient?.address){
+            // call is started, we need to differentiate between in progress vs incoming
+            if(it is State.Connected) context.getString(R.string.callsInProgress)
+            else context.getString(R.string.callsIncomingUnknown)
+        } else null // null when the call isn't in progress / incoming
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
 
     init {
         viewModelScope.launch(Dispatchers.Default) {
@@ -1093,12 +1116,15 @@ class ConversationViewModel(
         private val textSecurePreferences: TextSecurePreferences,
         private val configFactory: ConfigFactory,
         private val groupManagerV2: GroupManagerV2,
+        private val callManager: CallManager,
         private val legacyGroupDeprecationManager: LegacyGroupDeprecationManager,
-        private val usernameUtils: UsernameUtils
+        private val expiredGroupManager: ExpiredGroupManager,
+        private val usernameUtils: UsernameUtils,
     ) : ViewModelProvider.Factory {
 
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             return ConversationViewModel(
+                context = context,
                 threadId = threadId,
                 edKeyPair = edKeyPair,
                 application = application,
@@ -1112,7 +1138,9 @@ class ConversationViewModel(
                 textSecurePreferences = textSecurePreferences,
                 configFactory = configFactory,
                 groupManagerV2 = groupManagerV2,
+                callManager = callManager,
                 legacyGroupDeprecationManager = legacyGroupDeprecationManager,
+                expiredGroupManager = expiredGroupManager,
                 usernameUtils = usernameUtils
             ) as T
         }

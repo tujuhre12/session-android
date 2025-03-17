@@ -1,6 +1,8 @@
 package org.thoughtcrime.securesms.conversation.v2.messages
 
+import android.content.ActivityNotFoundException
 import android.content.Context
+import android.content.Intent
 import android.graphics.Color
 import android.graphics.Rect
 import android.text.Spannable
@@ -9,9 +11,10 @@ import android.text.style.ForegroundColorSpan
 import android.text.style.URLSpan
 import android.text.util.Linkify
 import android.util.AttributeSet
+import android.util.Log
 import android.view.MotionEvent
 import android.view.View
-import android.view.ViewGroup
+import android.widget.Toast
 import androidx.annotation.ColorInt
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.graphics.ColorUtils
@@ -21,8 +24,6 @@ import androidx.core.view.children
 import androidx.core.view.isVisible
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
-import java.util.Locale
-import kotlin.math.roundToInt
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -38,9 +39,12 @@ import org.thoughtcrime.securesms.conversation.v2.utilities.ModalURLSpan
 import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.getIntersectedModalSpans
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
+import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.util.GlowViewUtilities
 import org.thoughtcrime.securesms.util.SearchUtil
 import org.thoughtcrime.securesms.util.getAccentColor
+import java.util.Locale
+import kotlin.math.roundToInt
 
 class VisibleMessageContentView : ConstraintLayout {
     private val binding: ViewVisibleMessageContentBinding by lazy { ViewVisibleMessageContentBinding.bind(this) }
@@ -182,10 +186,34 @@ class VisibleMessageContentView : ConstraintLayout {
             message is MmsMessageRecord && message.slideDeck.documentSlide != null -> {
                 // Show any message that came with the attached document
                 hideBody = false
-
+                
                 // Document attachment
                 if (mediaDownloaded || mediaInProgress || message.isOutgoing) {
                     binding.documentView.root.bind(message, getTextColor(context, message))
+                    message.slideDeck.documentSlide?.let { slide ->
+                        if(!mediaInProgress) { // do not attempt to open a doc in progress of downloading
+                            onContentClick.add {
+                                // open the document when tapping it
+                                try {
+                                    val intent = Intent(Intent.ACTION_VIEW)
+                                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                    intent.setDataAndType(
+                                        PartAuthority.getAttachmentPublicUri(slide.uri),
+                                        slide.contentType
+                                    )
+
+                                    context.startActivity(intent)
+                                } catch (e: ActivityNotFoundException) {
+                                    Log.e("VisibleMessageContentView", "Error opening document", e)
+                                    Toast.makeText(
+                                        context,
+                                        R.string.attachmentsErrorOpen,
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
+                            }
+                        }
+                    }
                 } else {
                     // If the document hasn't been downloaded yet then show it as pending
                     (message.slideDeck.documentSlide?.asAttachment() as? DatabaseAttachment)?.let { attachment ->
@@ -194,7 +222,9 @@ class VisibleMessageContentView : ConstraintLayout {
                             getTextColor(context,message),
                             attachment
                             )
-                        onContentClick.add { binding.pendingAttachmentView.root.showDownloadDialog(thread, attachment) }
+                        onContentClick.add {
+                            binding.pendingAttachmentView.root.showDownloadDialog(thread, attachment)
+                        }
                     }
                 }
             }
