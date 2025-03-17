@@ -618,13 +618,13 @@ class VisibleMessageView : FrameLayout {
         onLongPress?.invoke()
     }
 
-    private fun clickIsButtonSpam() = (SystemClock.elapsedRealtime() - lastClickTimestampMS < MINIMUM_DURATION_BETWEEN_CLICKS_ON_SAME_VIEW_MS)
+    private fun clickedTooFast() = (SystemClock.elapsedRealtime() - lastClickTimestampMS < MINIMUM_DURATION_BETWEEN_CLICKS_ON_SAME_VIEW_MS)
 
     // Note: `onPress` is called BEFORE `onContentClick` is called, so we only filter here rather than
     // in both places otherwise `onContentClick` will instantly fail the button spam test.
     private fun onPress(event: MotionEvent) {
         // Don't process the press if it's too soon after the last one..
-        if (clickIsButtonSpam()) return
+        if (clickedTooFast()) return
 
         // ..otherwise take note of the time and process the event.
         lastClickTimestampMS = SystemClock.elapsedRealtime()
