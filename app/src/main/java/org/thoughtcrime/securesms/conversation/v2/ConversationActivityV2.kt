@@ -1028,10 +1028,13 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.callInProgress.collect { callInProgress ->
-                    when (callInProgress) {
-                        true -> binding.conversationHeader.callInProgress.fadeIn()
-                        false -> binding.conversationHeader.callInProgress.fadeOut()
+                viewModel.callBanner.collect { callBanner ->
+                    when (callBanner) {
+                        null -> binding.conversationHeader.callInProgress.fadeOut()
+                        else -> {
+                            binding.conversationHeader.callInProgress.text = callBanner
+                            binding.conversationHeader.callInProgress.fadeIn()
+                        }
                     }
                 }
             }

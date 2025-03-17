@@ -77,6 +77,7 @@ import java.util.UUID
 class ConversationViewModel(
     val threadId: Long,
     val edKeyPair: KeyPair?,
+    private val context: Context,
     private val application: Application,
     private val repository: ConversationRepository,
     private val storage: StorageProtocol,
@@ -267,10 +268,14 @@ class ConversationViewModel(
         scope = viewModelScope,
     )
 
-    val callInProgress: StateFlow<Boolean> = callManager.currentConnectionStateFlow.map {
+    val callBanner: StateFlow<String?> = callManager.currentConnectionStateFlow.map {
         // a call is in progress if it isn't idle nor disconnected and the recipient is the person on the call
-        it !is State.Idle && it !is State.Disconnected && callManager.recipient?.address == recipient?.address
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
+        if(it !is State.Idle && it !is State.Disconnected && callManager.recipient?.address == recipient?.address){
+            // call is started, we need to differentiate between in progress vs incoming
+            if(it is State.Connected) context.getString(R.string.callsInProgress)
+            else context.getString(R.string.callsIncomingUnknown)
+        } else null // null when the call isn't in progress / incoming
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
 
     init {
         viewModelScope.launch(Dispatchers.Default) {
@@ -1135,11 +1140,12 @@ class ConversationViewModel(
         private val callManager: CallManager,
         private val legacyGroupDeprecationManager: LegacyGroupDeprecationManager,
         private val expiredGroupManager: ExpiredGroupManager,
-        private val usernameUtils: UsernameUtils
+        private val usernameUtils: UsernameUtils,
     ) : ViewModelProvider.Factory {
 
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             return ConversationViewModel(
+                context = context,
                 threadId = threadId,
                 edKeyPair = edKeyPair,
                 application = application,
