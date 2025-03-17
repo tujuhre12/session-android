@@ -63,7 +63,8 @@ class ConversationViewModelTest: BaseViewModelTest() {
                 on { deprecatedTime } doReturn MutableStateFlow(ZonedDateTime.now())
             },
             expiredGroupManager = mock(),
-            usernameUtils = mock()
+            usernameUtils = mock(),
+            context = mock()
         )
     }
 
