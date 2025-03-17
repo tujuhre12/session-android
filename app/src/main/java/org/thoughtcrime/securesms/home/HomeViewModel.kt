@@ -1,11 +1,13 @@
 package org.thoughtcrime.securesms.home
 
 import android.content.ContentResolver
+import android.content.Context
 import androidx.annotation.AttrRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asFlow
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
@@ -24,6 +26,7 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
+import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.TextSecurePreferences
@@ -40,6 +43,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
+    @ApplicationContext
+    private val context: Context,
     private val threadDb: ThreadDatabase,
     private val contentResolver: ContentResolver,
     private val prefs: TextSecurePreferences,
@@ -54,9 +59,14 @@ class HomeViewModel @Inject constructor(
             onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
 
-    val callInProgress: StateFlow<Boolean> = callManager.currentConnectionStateFlow.map {
-        it !is State.Idle && it !is State.Disconnected // a call is in progress if it isn't idle nor disconnected
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), initialValue = false)
+    val callBanner: StateFlow<String?> = callManager.currentConnectionStateFlow.map {
+        // a call is in progress if it isn't idle nor disconnected
+        if(it !is State.Idle && it !is State.Disconnected){
+            // call is started, we need to differentiate between in progress vs incoming
+            if(it is State.Connected) context.getString(R.string.callsInProgress)
+            else context.getString(R.string.callsIncomingUnknown)
+        } else null // null when the call isn't in progress / incoming
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), initialValue = null)
 
     /**
      * A [StateFlow] that emits the list of threads and the typing status of each thread.

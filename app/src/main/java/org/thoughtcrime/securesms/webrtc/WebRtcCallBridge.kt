@@ -133,7 +133,7 @@ class WebRtcCallBridge @Inject constructor(
         serviceExecutor.execute {
             callManager.handleRemoteHangup()
 
-            if (callManager.currentConnectionState in CallState.CAN_DECLINE_STATES) {
+            if (!hasAcceptedCall.value) {
                 callManager.recipient?.let { recipient ->
                     insertMissedCall(recipient, true)
                 }
