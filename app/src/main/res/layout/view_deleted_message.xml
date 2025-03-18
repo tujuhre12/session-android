@@ -7,13 +7,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:orientation="horizontal"
     android:gravity="center_vertical"
+    android:paddingHorizontal="12dp"
     android:paddingVertical="@dimen/small_spacing">
 
     <ImageView
         android:id="@+id/deletedMessageViewIconImageView"
         android:layout_width="24dp"
         android:layout_height="24dp"
-        android:layout_marginStart="12dp"
         android:src="@drawable/ic_trash_2"
         app:tint="?android:textColorTertiary" />
 
@@ -23,7 +23,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        android:layout_marginEnd="12dp"
         android:textSize="@dimen/medium_font_size"
         android:textColor="?android:textColorTertiary"
         tools:text="This message has been deleted"

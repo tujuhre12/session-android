@@ -112,7 +112,6 @@ class AttachmentControlView: LinearLayout {
             AttachmentState.Failed -> {
                 binding.pendingDownloadIcon.setColorFilter(textColor)
 
-                //todo: This will need to be styled properly for failed
                 binding.pendingDownloadSize.apply {
                     text = attachment?.displaySize()
                     setTextColor(errorColor)
@@ -121,7 +120,7 @@ class AttachmentControlView: LinearLayout {
 
                 //todo we need the 'tap to retry' string in crowdin
                 binding.pendingDownloadTitle.apply{
-                    text = context.getString(R.string.errorUnknown) //todo we  need the right text in crowdin
+                    text = "Failed to download"//context.getString(R.string.errorUnknown) //todo we  need the right text in crowdin
                     setTextColor(errorColor)
                     setTypeface(typeface, android.graphics.Typeface.NORMAL)
                 }

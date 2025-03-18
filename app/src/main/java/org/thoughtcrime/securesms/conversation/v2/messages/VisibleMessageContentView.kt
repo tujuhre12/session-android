@@ -196,8 +196,7 @@ class VisibleMessageContentView : ConstraintLayout {
                     }
                 }
             }
-
-            //TODO: padding problem when quoting an attachment with an image
+            
             //TODO: what should we show in the message details view for an expired attachment? What about a regular failed one?
             //TODO: should the glowView encompass the whole message instead of just the body? Currently missing images and pending views
 
@@ -314,6 +313,17 @@ class VisibleMessageContentView : ConstraintLayout {
         binding.attachmentControlView.root.modifyLayoutParams<ConstraintLayout.LayoutParams> {
             horizontalBias = if (message.isOutgoing) 1f else 0f
         }
+
+        // if a quote is by itself we should add bottom padding
+        binding.quoteView.root.setPadding(
+            binding.quoteView.root.paddingStart,
+            binding.quoteView.root.paddingTop,
+            binding.quoteView.root.paddingEnd,
+            if(
+                message.body.isNotEmpty() || binding.documentView.root.isVisible
+                ) 0 else
+                context.resources.getDimensionPixelSize(R.dimen.small_spacing)
+        )
     }
 
     private fun showAttachmentControl(
