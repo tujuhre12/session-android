@@ -27,7 +27,8 @@ import com.bumptech.glide.RequestManager
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import org.session.libsession.messaging.sending_receiving.attachments.Attachment
+import org.session.libsession.messaging.jobs.AttachmentDownloadJob
+import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.ThemeUtil
@@ -35,13 +36,16 @@ import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.modifyLayoutParams
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
-import org.thoughtcrime.securesms.conversation.v2.messages.AttachmentControlView.AttachmentType.*
+import org.thoughtcrime.securesms.conversation.v2.messages.AttachmentControlView.AttachmentType.AUDIO
+import org.thoughtcrime.securesms.conversation.v2.messages.AttachmentControlView.AttachmentType.DOCUMENT
+import org.thoughtcrime.securesms.conversation.v2.messages.AttachmentControlView.AttachmentType.IMAGE
+import org.thoughtcrime.securesms.conversation.v2.messages.AttachmentControlView.AttachmentType.VIDEO
+import org.thoughtcrime.securesms.conversation.v2.messages.AttachmentControlView.AttachmentType.VOICE
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.conversation.v2.utilities.ModalURLSpan
 import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.getIntersectedModalSpans
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
-import org.thoughtcrime.securesms.home.HomeViewModel
 import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.util.GlowViewUtilities
 import org.thoughtcrime.securesms.util.SearchUtil
@@ -199,7 +203,8 @@ class VisibleMessageContentView : ConstraintLayout {
                             attachment = it,
                             type = if (it.isVoiceNote) VOICE
                             else AUDIO,
-                            attachmentControlState
+                            attachmentControlState,
+                            onAttachmentNeedsDownload = onAttachmentNeedsDownload
                         )
                     }
                 }
@@ -251,7 +256,8 @@ class VisibleMessageContentView : ConstraintLayout {
                             message = message,
                             attachment = it,
                             type = DOCUMENT,
-                            attachmentControlState
+                            attachmentControlState,
+                            onAttachmentNeedsDownload = onAttachmentNeedsDownload
                         )
                     }
                 }
@@ -287,7 +293,8 @@ class VisibleMessageContentView : ConstraintLayout {
                             attachment = it,
                             type = if (message.slideDeck.hasVideo()) VIDEO
                             else IMAGE,
-                            state = attachmentControlState
+                            state = attachmentControlState,
+                            onAttachmentNeedsDownload = onAttachmentNeedsDownload
                         )
                     }
                 }
@@ -328,7 +335,8 @@ class VisibleMessageContentView : ConstraintLayout {
         message: MmsMessageRecord,
         attachment: DatabaseAttachment,
         type: AttachmentControlView.AttachmentType,
-        state: AttachmentControlView.AttachmentState
+        state: AttachmentControlView.AttachmentState,
+        onAttachmentNeedsDownload: (DatabaseAttachment) -> Unit,
     ){
         binding.attachmentControlView.root.isVisible = true
         binding.albumThumbnailView.root.clearViews()
@@ -341,6 +349,7 @@ class VisibleMessageContentView : ConstraintLayout {
         )
 
         when(state) {
+            // While downloads haven't been enabled for this convo, show a confirmation dialog
             AttachmentControlView.AttachmentState.Pending -> {
                 onContentClick.add {
                     binding.attachmentControlView.root.showDownloadDialog(
@@ -350,7 +359,12 @@ class VisibleMessageContentView : ConstraintLayout {
                 }
             }
 
-            //todo: ATTACHMENT handle retry action for failed attachments
+            // Attempt to redownload a failed attachment on tap
+            AttachmentControlView.AttachmentState.Failed -> {
+                onContentClick.add {
+                   onAttachmentNeedsDownload(attachment)
+                }
+            }
 
             // no click actions for other cases
             else -> {}
