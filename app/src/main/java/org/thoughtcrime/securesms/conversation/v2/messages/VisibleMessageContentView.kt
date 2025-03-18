@@ -27,6 +27,7 @@ import com.bumptech.glide.RequestManager
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.ThemeUtil
@@ -34,12 +35,13 @@ import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.modifyLayoutParams
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
-import org.thoughtcrime.securesms.conversation.v2.messages.PendingOrExpiredAttachmentView.AttachmentType.*
+import org.thoughtcrime.securesms.conversation.v2.messages.AttachmentControlView.AttachmentType.*
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.conversation.v2.utilities.ModalURLSpan
 import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.getIntersectedModalSpans
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
+import org.thoughtcrime.securesms.home.HomeViewModel
 import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.util.GlowViewUtilities
 import org.thoughtcrime.securesms.util.SearchUtil
@@ -76,9 +78,17 @@ class VisibleMessageContentView : ConstraintLayout {
         binding.contentParent.mainColor = color
         binding.contentParent.cornerRadius = resources.getDimension(R.dimen.message_corner_radius)
 
-        val hasExpired = haveAttachmentsExpired(message)
         val mediaDownloaded = message is MmsMessageRecord && message.slideDeck.asAttachments().all { it.isDone }
         val mediaInProgress = message is MmsMessageRecord && message.slideDeck.asAttachments().any { it.isInProgress }
+        val hasFailed = message is MmsMessageRecord && message.slideDeck.asAttachments().any { it.isFailed }
+        val hasExpired = haveAttachmentsExpired(message)
+        val attachmentControlState = when {
+            hasExpired -> AttachmentControlView.AttachmentState.Expired
+            hasFailed -> AttachmentControlView.AttachmentState.Failed
+            mediaInProgress -> AttachmentControlView.AttachmentState.Loading
+            !mediaDownloaded -> AttachmentControlView.AttachmentState.Pending
+            else -> null
+        }
 
         // reset visibilities / containers
         onContentClick.clear()
@@ -106,7 +116,7 @@ class VisibleMessageContentView : ConstraintLayout {
         binding.bodyTextView.text = null
         binding.quoteView.root.isVisible = message is MmsMessageRecord && message.quote != null
         binding.linkPreviewView.root.isVisible = message is MmsMessageRecord && message.linkPreviews.isNotEmpty()
-        binding.pendingOrExpiredAttachmentView.root.isVisible = false
+        binding.attachmentControlView.root.isVisible = false
         binding.voiceMessageView.root.isVisible = false
         binding.documentView.root.isVisible = false
         binding.albumThumbnailView.root.isVisible = false
@@ -162,7 +172,7 @@ class VisibleMessageContentView : ConstraintLayout {
                 hideBody = false
 
                 // Audio attachment
-                if (!hasExpired && (mediaDownloaded || mediaInProgress || message.isOutgoing)) {
+                if (attachmentControlState == null || message.isOutgoing) {
                     binding.voiceMessageView.root.isVisible = true
                     binding.voiceMessageView.root.indexInAdapter = indexInAdapter
                     binding.voiceMessageView.root.delegate = context as? ConversationActivityV2
@@ -171,37 +181,28 @@ class VisibleMessageContentView : ConstraintLayout {
                     // message view) so as to not interfere with all the other gestures.
                     onContentClick.add { binding.voiceMessageView.root.togglePlayback() }
                     onContentDoubleTap = { binding.voiceMessageView.root.handleDoubleTap() }
-                    binding.pendingOrExpiredAttachmentView.root.isVisible = false
+                    binding.attachmentControlView.root.isVisible = false
                 } else {
-                    binding.pendingOrExpiredAttachmentView.root.isVisible = true
-                    // If it's an audio message but we haven't downloaded it yet show it as pending
-                    (message.slideDeck.audioSlide?.asAttachment() as? DatabaseAttachment)?.let { attachment ->
-                        binding.pendingOrExpiredAttachmentView.root.bind(
-                            if(attachment.isVoiceNote) VOICE
+                    val attachment = message.slideDeck.audioSlide?.asAttachment() as? DatabaseAttachment
+                    attachment?.let {
+                        showAttachmentControl(
+                            thread = thread,
+                            message = message,
+                            attachment = it,
+                            type = if (it.isVoiceNote) VOICE
                             else AUDIO,
-                            getTextColor(context,message),
-                            attachment,
-                            expired = hasExpired
+                            attachmentControlState
                         )
-
-                        if(!hasExpired) {
-                            onContentClick.add {
-                                binding.pendingOrExpiredAttachmentView.root.showDownloadDialog(
-                                    thread,
-                                    attachment
-                                )
-                            }
-                        }
                     }
                 }
             }
 
-            //TODO EXPIRED: Handle expiry in quotes - currently loads over and over
-            //TODO EXPIRED: padding problem when quoting an attachment with an image
-            //TODO EXPIRED: what should we show in the message details view for an expired attachment? What about a regular failed one?
-            //TODO EXPIRED: should the glowView encompass the whole message instead of just the body? Currently missing images and pending views
-            //TODO EXPIRED: quoted message look: loading, expired, failed, doc type
-            //TODO EXPIRED: failed attachment show a download icon in the quoted view, should replace with just the icon type
+            //TODO: Handle expiry in quotes - currently loads over and over
+            //TODO: padding problem when quoting an attachment with an image
+            //TODO: what should we show in the message details view for an expired attachment? What about a regular failed one?
+            //TODO: should the glowView encompass the whole message instead of just the body? Currently missing images and pending views
+            //TODO: quoted message look: loading, expired, failed, doc type
+            //TODO: failed attachment show a download icon in the quoted view, should replace with just the icon type
 
             // DOCUMENT
             message is MmsMessageRecord && message.slideDeck.documentSlide != null -> {
@@ -209,8 +210,8 @@ class VisibleMessageContentView : ConstraintLayout {
                 hideBody = false
 
                 // Document attachment
-                if (!hasExpired && (mediaDownloaded || mediaInProgress || message.isOutgoing)) {
-                    binding.pendingOrExpiredAttachmentView.root.isVisible = false
+                if (attachmentControlState == null || message.isOutgoing) {
+                    binding.attachmentControlView.root.isVisible = false
 
                     binding.documentView.root.isVisible = true
                     binding.documentView.root.bind(message, getTextColor(context, message))
@@ -240,24 +241,14 @@ class VisibleMessageContentView : ConstraintLayout {
                         }
                     }
                 } else {
-                    binding.pendingOrExpiredAttachmentView.root.isVisible = true
-                    // If the document hasn't been downloaded yet then show it as pending
-                    (message.slideDeck.documentSlide?.asAttachment() as? DatabaseAttachment)?.let { attachment ->
-                        binding.pendingOrExpiredAttachmentView.root.bind(
-                            DOCUMENT,
-                            getTextColor(context,message),
-                            attachment,
-                            expired = hasExpired
-                            )
-
-                        if(!hasExpired) {
-                            onContentClick.add {
-                                binding.pendingOrExpiredAttachmentView.root.showDownloadDialog(
-                                    thread,
-                                    attachment
-                                )
-                            }
-                        }
+                    (message.slideDeck.documentSlide?.asAttachment() as? DatabaseAttachment)?.let {
+                        showAttachmentControl(
+                            thread = thread,
+                            message = message,
+                            attachment = it,
+                            type = DOCUMENT,
+                            attachmentControlState
+                        )
                     }
                 }
             }
@@ -266,8 +257,8 @@ class VisibleMessageContentView : ConstraintLayout {
             message is MmsMessageRecord && !suppressThumbnails && message.slideDeck.asAttachments().isNotEmpty() -> {
                 hideBody = false
 
-                if (!hasExpired && (mediaDownloaded || mediaInProgress || message.isOutgoing)) {
-                    binding.pendingOrExpiredAttachmentView.root.isVisible = false
+                if (attachmentControlState == null || message.isOutgoing) {
+                    binding.attachmentControlView.root.isVisible = false
 
                     // isStart and isEnd of cluster needed for calculating the mask for full bubble image groups
                     // bind after add view because views are inflated and calculated during bind
@@ -285,27 +276,15 @@ class VisibleMessageContentView : ConstraintLayout {
                         binding.albumThumbnailView.root.calculateHitObject(event, message, thread, onAttachmentNeedsDownload)
                     }
                 } else {
-                    binding.pendingOrExpiredAttachmentView.root.isVisible = true
-                    binding.albumThumbnailView.root.clearViews()
-
-                    val firstAttachment = message.slideDeck.asAttachments().first() as? DatabaseAttachment
-                    firstAttachment?.let { attachment ->
-                        binding.pendingOrExpiredAttachmentView.root.bind(
-                            if(message.slideDeck.hasVideo()) VIDEO
+                    (message.slideDeck.asAttachments().first() as? DatabaseAttachment)?.let {
+                        showAttachmentControl(
+                            thread = thread,
+                            message = message,
+                            attachment = it,
+                            type = if (message.slideDeck.hasVideo()) VIDEO
                             else IMAGE,
-                            getTextColor(context,message),
-                            attachment,
-                            expired = hasExpired
-                            )
-
-                        if(!hasExpired) {
-                            onContentClick.add {
-                                binding.pendingOrExpiredAttachmentView.root.showDownloadDialog(
-                                    thread,
-                                    attachment
-                                )
-                            }
-                        }
+                            state = attachmentControlState
+                        )
                     }
                 }
             }
@@ -335,8 +314,42 @@ class VisibleMessageContentView : ConstraintLayout {
             horizontalBias = if (message.isOutgoing) 1f else 0f
         }
 
-        binding.pendingOrExpiredAttachmentView.root.modifyLayoutParams<ConstraintLayout.LayoutParams> {
+        binding.attachmentControlView.root.modifyLayoutParams<ConstraintLayout.LayoutParams> {
             horizontalBias = if (message.isOutgoing) 1f else 0f
+        }
+    }
+
+    private fun showAttachmentControl(
+        thread: Recipient,
+        message: MmsMessageRecord,
+        attachment: DatabaseAttachment,
+        type: AttachmentControlView.AttachmentType,
+        state: AttachmentControlView.AttachmentState
+    ){
+        binding.attachmentControlView.root.isVisible = true
+        binding.albumThumbnailView.root.clearViews()
+
+        binding.attachmentControlView.root.bind(
+            type,
+            getTextColor(context,message),
+            attachment,
+            state = state
+        )
+
+        when(state) {
+            AttachmentControlView.AttachmentState.Pending -> {
+                onContentClick.add {
+                    binding.attachmentControlView.root.showDownloadDialog(
+                        thread,
+                        attachment
+                    )
+                }
+            }
+
+            //todo: handle retry action for failed attachments
+
+            // no click actions for other cases
+            else -> {}
         }
     }
 
@@ -360,7 +373,7 @@ class VisibleMessageContentView : ConstraintLayout {
     fun recycle() {
         arrayOf(
             binding.deletedMessageView.root,
-            binding.pendingOrExpiredAttachmentView.root,
+            binding.attachmentControlView.root,
             binding.voiceMessageView.root,
             binding.openGroupInvitationView.root,
             binding.documentView.root,

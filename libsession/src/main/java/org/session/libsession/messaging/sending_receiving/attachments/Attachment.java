@@ -63,6 +63,10 @@ public abstract class Attachment {
     return transferState == AttachmentState.DONE.getValue();
   }
 
+  public boolean isFailed() {
+    return transferState == AttachmentState.FAILED.getValue();
+  }
+
   public long getSize() { return size; }
 
   public String getFilename() { return filename; }
