@@ -89,8 +89,11 @@ class AttachmentControlView: LinearLayout {
                 binding.pendingDownloadIcon.setColorFilter(textColor)
 
                 //todo: This will need to be tweaked to dynamically show the the downloaded amount
-                binding.pendingDownloadSize.isVisible = true
-                binding.pendingDownloadSize.text = attachment?.displaySize()
+                binding.pendingDownloadSize.apply {
+                    text = attachment?.displaySize()
+                    setTextColor(textColor)
+                    isVisible = true
+                }
 
                 binding.pendingDownloadTitle.apply{
                     text = context.getString(R.string.downloading)

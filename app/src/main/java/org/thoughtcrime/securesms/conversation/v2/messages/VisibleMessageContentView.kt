@@ -197,12 +197,9 @@ class VisibleMessageContentView : ConstraintLayout {
                 }
             }
 
-            //TODO: Handle expiry in quotes - currently loads over and over
             //TODO: padding problem when quoting an attachment with an image
             //TODO: what should we show in the message details view for an expired attachment? What about a regular failed one?
             //TODO: should the glowView encompass the whole message instead of just the body? Currently missing images and pending views
-            //TODO: quoted message look: loading, expired, failed, doc type
-            //TODO: failed attachment show a download icon in the quoted view, should replace with just the icon type
 
             // DOCUMENT
             message is MmsMessageRecord && message.slideDeck.documentSlide != null -> {

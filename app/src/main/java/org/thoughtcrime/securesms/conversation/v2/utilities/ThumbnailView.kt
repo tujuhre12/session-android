@@ -45,8 +45,6 @@ open class ThumbnailView @JvmOverloads constructor(
 
     // region Lifecycle
 
-    val loadIndicator: View by lazy { binding.thumbnailLoadIndicator }
-
     private val dimensDelegate = ThumbnailDimensDelegate()
 
     private var slide: Slide? = null
@@ -146,9 +144,6 @@ open class ThumbnailView @JvmOverloads constructor(
 
         this.slide = slide
 
-        binding.thumbnailLoadIndicator.isVisible = slide.isInProgress
-        binding.thumbnailDownloadIcon.isVisible = slide.isFailed
-
         dimensDelegate.setDimens(naturalWidth, naturalHeight)
         invalidate()
 
@@ -156,7 +151,7 @@ open class ThumbnailView @JvmOverloads constructor(
             when {
                 slide.thumbnailUri != null -> {
                     buildThumbnailGlideRequest(glide, slide).into(
-                        GlideDrawableListeningTarget(binding.thumbnailImage, binding.thumbnailLoadIndicator, it)
+                        GlideDrawableListeningTarget(binding.thumbnailImage, null, it)
                     )
                 }
                 slide.hasPlaceholder() -> {
@@ -206,7 +201,7 @@ open class ThumbnailView @JvmOverloads constructor(
     private fun RequestBuilder<Drawable>.intoDrawableTargetAsFuture() =
         SettableFuture<Boolean>().also {
             binding.run {
-                GlideDrawableListeningTarget(thumbnailImage, thumbnailLoadIndicator, it)
+                GlideDrawableListeningTarget(thumbnailImage, null, it)
             }.let { into(it) }
         }
 
