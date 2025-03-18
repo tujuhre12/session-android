@@ -31,10 +31,10 @@ class AttachmentControlView: LinearLayout {
         IMAGE,
         VIDEO,
     }
-    //TODO: Handle multiple images case (icon plus total size)
+    //todo: ATTACHMENT Handle multiple images case (icon plus total size)
 
     sealed class AttachmentState {
-        object Loading: AttachmentState() //todo In the future we will need to handle the loading state in the attachment control, including the download amount / total
+        object Loading: AttachmentState()
         object Pending: AttachmentState()
         object Failed: AttachmentState()
         object Expired: AttachmentState()
@@ -88,7 +88,7 @@ class AttachmentControlView: LinearLayout {
             AttachmentState.Loading -> {
                 binding.pendingDownloadIcon.setColorFilter(textColor)
 
-                //todo: This will need to be tweaked to dynamically show the the downloaded amount
+                //todo: ATTACHMENT This will need to be tweaked to dynamically show the the downloaded amount
                 binding.pendingDownloadSize.apply {
                     text = attachment?.displaySize()
                     setTextColor(textColor)
@@ -118,9 +118,9 @@ class AttachmentControlView: LinearLayout {
                     isVisible = true
                 }
 
-                //todo we need the 'tap to retry' string in crowdin
+                //todo: ATTACHMENT we need the 'tap to retry' string in crowdin
                 binding.pendingDownloadTitle.apply{
-                    text = "Failed to download"//context.getString(R.string.errorUnknown) //todo we  need the right text in crowdin
+                    text = "Failed to download"//context.getString(R.string.errorUnknown) //todo: ATTACHMENT we  need the right text in crowdin
                     setTextColor(errorColor)
                     setTypeface(typeface, android.graphics.Typeface.NORMAL)
                 }

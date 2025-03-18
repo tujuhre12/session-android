@@ -115,6 +115,14 @@ class VisibleMessageContentView : ConstraintLayout {
         // sized based on text content from a recycled view
         binding.bodyTextView.text = null
         binding.quoteView.root.isVisible = message is MmsMessageRecord && message.quote != null
+        // if a quote is by itself we should add bottom padding
+        binding.quoteView.root.setPadding(
+            binding.quoteView.root.paddingStart,
+            binding.quoteView.root.paddingTop,
+            binding.quoteView.root.paddingEnd,
+            if(message.body.isNotEmpty()) 0 else
+                context.resources.getDimensionPixelSize(R.dimen.message_spacing)
+        )
         binding.linkPreviewView.root.isVisible = message is MmsMessageRecord && message.linkPreviews.isNotEmpty()
         binding.attachmentControlView.root.isVisible = false
         binding.voiceMessageView.root.isVisible = false
@@ -196,9 +204,9 @@ class VisibleMessageContentView : ConstraintLayout {
                     }
                 }
             }
-            
-            //TODO: what should we show in the message details view for an expired attachment? What about a regular failed one?
-            //TODO: should the glowView encompass the whole message instead of just the body? Currently missing images and pending views
+
+            //todo: ATTACHMENT the messageDetails screen needs some work to properly cater for all these cases. Currently doesn't handle some failure, videos, expired (for video and images), etc..
+            //todo: ATTACHMENT should the glowView encompass the whole message instead of just the body? Currently tapped quotes only highlight text messages, not images nor attachment control
 
             // DOCUMENT
             message is MmsMessageRecord && message.slideDeck.documentSlide != null -> {
@@ -313,17 +321,6 @@ class VisibleMessageContentView : ConstraintLayout {
         binding.attachmentControlView.root.modifyLayoutParams<ConstraintLayout.LayoutParams> {
             horizontalBias = if (message.isOutgoing) 1f else 0f
         }
-
-        // if a quote is by itself we should add bottom padding
-        binding.quoteView.root.setPadding(
-            binding.quoteView.root.paddingStart,
-            binding.quoteView.root.paddingTop,
-            binding.quoteView.root.paddingEnd,
-            if(
-                message.body.isNotEmpty() || binding.documentView.root.isVisible
-                ) 0 else
-                context.resources.getDimensionPixelSize(R.dimen.small_spacing)
-        )
     }
 
     private fun showAttachmentControl(
@@ -353,7 +350,7 @@ class VisibleMessageContentView : ConstraintLayout {
                 }
             }
 
-            //todo: handle retry action for failed attachments
+            //todo: ATTACHMENT handle retry action for failed attachments
 
             // no click actions for other cases
             else -> {}

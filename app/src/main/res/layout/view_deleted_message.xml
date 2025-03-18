@@ -7,7 +7,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:orientation="horizontal"
     android:gravity="center_vertical"
-    android:paddingHorizontal="12dp"
+    android:paddingHorizontal="@dimen/message_spacing"
     android:paddingVertical="@dimen/small_spacing">
 
     <ImageView
