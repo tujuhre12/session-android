@@ -167,7 +167,7 @@ class VisibleMessageView : FrameLayout {
         senderAccountID: String,
         lastSeen: Long,
         delegate: VisibleMessageViewDelegate? = null,
-        onAttachmentNeedsDownload: (DatabaseAttachment) -> Unit,
+        downloadPendingAttachment: (DatabaseAttachment) -> Unit,
         retryFailedDownload: (DatabaseAttachment) -> Unit,
     ) {
         clipToPadding = false
@@ -301,7 +301,7 @@ class VisibleMessageView : FrameLayout {
             glide,
             thread,
             searchQuery,
-            onAttachmentNeedsDownload = onAttachmentNeedsDownload,
+            downloadPendingAttachment = downloadPendingAttachment,
             retryFailedDownload = retryFailedDownload
         )
         binding.messageContentView.root.delegate = delegate

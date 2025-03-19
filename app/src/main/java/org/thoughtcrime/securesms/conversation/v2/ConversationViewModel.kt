@@ -963,8 +963,8 @@ class ConversationViewModel(
         storage.getLastLegacyRecipient(address.toString())?.let { Recipient.from(context, Address.fromSerialized(it), false) }
     }
 
-    fun onAttachmentDownloadRequest(attachment: DatabaseAttachment) {
-        attachmentDownloadHandler.onAttachmentDownloadRequest(attachment)
+    fun downloadPendingAttachment(attachment: DatabaseAttachment) {
+        attachmentDownloadHandler.downloadPendingAttachment(attachment)
     }
 
     fun retryFailedDownload(attachment: DatabaseAttachment){

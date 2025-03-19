@@ -41,7 +41,7 @@ class ConversationAdapter(
     private val onItemSwipeToReply: (MessageRecord, Int) -> Unit,
     private val onItemLongPress: (MessageRecord, Int, View) -> Unit,
     private val onDeselect: (MessageRecord, Int) -> Unit,
-    private val onAttachmentNeedsDownload: (DatabaseAttachment) -> Unit,
+    private val downloadPendingAttachment: (DatabaseAttachment) -> Unit,
     private val retryFailedDownload: (DatabaseAttachment) -> Unit,
     private val glide: RequestManager,
     lifecycleCoroutineScope: LifecycleCoroutineScope
@@ -144,7 +144,7 @@ class ConversationAdapter(
                     senderId,
                     lastSeen.get(),
                     visibleMessageViewDelegate,
-                    onAttachmentNeedsDownload,
+                    downloadPendingAttachment,
                     retryFailedDownload
                 )
 

@@ -185,7 +185,7 @@ fun MessageDetails(
                             bind(
                                 message,
                                 thread = state.thread!!,
-                                onAttachmentNeedsDownload = {},
+                                downloadPendingAttachment = {},
                                 retryFailedDownload = retryFailedDownload,
                                 suppressThumbnails = true
                             )

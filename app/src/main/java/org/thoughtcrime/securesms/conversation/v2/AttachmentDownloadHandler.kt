@@ -24,8 +24,8 @@ import org.thoughtcrime.securesms.util.timedBuffer
  * [AttachmentDownloadHandler] is responsible for handling attachment download requests. These
  * requests will go through different level of checking before they are queued for download.
  *
- * To use this handler, call [onAttachmentDownloadRequest] with the attachment that needs to be
- * downloaded. The call to [onAttachmentDownloadRequest] is cheap and can be called multiple times.
+ * To use this handler, call [downloadPendingAttachment] with the attachment that needs to be
+ * downloaded. The call to [downloadPendingAttachment] is cheap and can be called multiple times.
  */
 class AttachmentDownloadHandler(
     private val storage: StorageProtocol,
@@ -101,7 +101,7 @@ class AttachmentDownloadHandler(
     }
 
 
-    fun onAttachmentDownloadRequest(attachment: DatabaseAttachment) {
+    fun downloadPendingAttachment(attachment: DatabaseAttachment) {
         if (attachment.transferState != AttachmentState.PENDING.value) {
             Log.i(
                 LOG_TAG,

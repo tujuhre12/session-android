@@ -73,7 +73,7 @@ class VisibleMessageContentView : ConstraintLayout {
         glide: RequestManager = Glide.with(this),
         thread: Recipient,
         searchQuery: String? = null,
-        onAttachmentNeedsDownload: (DatabaseAttachment) -> Unit,
+        downloadPendingAttachment: (DatabaseAttachment) -> Unit,
         retryFailedDownload: (DatabaseAttachment) -> Unit,
         suppressThumbnails: Boolean = false
     ) {
@@ -160,11 +160,11 @@ class VisibleMessageContentView : ConstraintLayout {
         if (message is MmsMessageRecord) {
             message.slideDeck.asAttachments().forEach { attach ->
                 val dbAttachment = attach as? DatabaseAttachment ?: return@forEach
-                onAttachmentNeedsDownload(dbAttachment)
+                downloadPendingAttachment(dbAttachment)
             }
             message.linkPreviews.forEach { preview ->
                 val previewThumbnail = preview.getThumbnail().orNull() as? DatabaseAttachment ?: return@forEach
-                onAttachmentNeedsDownload(previewThumbnail)
+                downloadPendingAttachment(previewThumbnail)
             }
         }
 
@@ -284,7 +284,7 @@ class VisibleMessageContentView : ConstraintLayout {
                         horizontalBias = if (message.isOutgoing) 1f else 0f
                     }
                     onContentClick.add { event ->
-                        binding.albumThumbnailView.root.calculateHitObject(event, message, thread, onAttachmentNeedsDownload)
+                        binding.albumThumbnailView.root.calculateHitObject(event, message, thread, downloadPendingAttachment)
                     }
                 } else {
                     (message.slideDeck.asAttachments().first() as? DatabaseAttachment)?.let {
