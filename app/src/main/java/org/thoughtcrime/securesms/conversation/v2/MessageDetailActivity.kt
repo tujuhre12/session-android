@@ -7,9 +7,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.MotionEvent.ACTION_UP
 import androidx.activity.viewModels
-import androidx.annotation.DrawableRes
-import androidx.appcompat.content.res.AppCompatResources
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -57,9 +54,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
-import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
@@ -87,6 +82,7 @@ import org.thoughtcrime.securesms.ui.theme.blackAlpha40
 import org.thoughtcrime.securesms.ui.theme.bold
 import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
 import org.thoughtcrime.securesms.ui.theme.monospace
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MessageDetailActivity : ScreenLockActionBarActivity() {
@@ -350,7 +346,6 @@ fun CellButtons(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun Carousel(attachments: List<Attachment>, onClick: (Int) -> Unit) {
     if (attachments.isEmpty()) return
@@ -379,7 +374,6 @@ fun Carousel(attachments: List<Attachment>, onClick: (Int) -> Unit) {
 }
 
 @OptIn(
-    ExperimentalFoundationApi::class,
     ExperimentalGlideComposeApi::class
 )
 @Composable
@@ -455,7 +449,8 @@ fun PreviewMessageDetails(
                         ),
                         fileName = "Screen Shot 2023-07-06 at 11.35.50 am.png",
                         uri = Uri.parse(""),
-                        hasImage = true
+                        hasImage = true,
+                        isDownloaded = true
                     ),
                     Attachment(
                         fileDetails = listOf(
@@ -463,7 +458,8 @@ fun PreviewMessageDetails(
                         ),
                         fileName = "Screen Shot 2023-07-06 at 11.35.50 am.png",
                         uri = Uri.parse(""),
-                        hasImage = true
+                        hasImage = true,
+                        isDownloaded = true
                     ),
                     Attachment(
                         fileDetails = listOf(
@@ -471,7 +467,8 @@ fun PreviewMessageDetails(
                         ),
                         fileName = "Screen Shot 2023-07-06 at 11.35.50 am.png",
                         uri = Uri.parse(""),
-                        hasImage = true
+                        hasImage = true,
+                        isDownloaded = true
                     )
 
                 ),

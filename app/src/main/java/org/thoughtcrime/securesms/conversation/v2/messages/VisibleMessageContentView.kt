@@ -212,7 +212,6 @@ class VisibleMessageContentView : ConstraintLayout {
                 }
             }
 
-            //todo: ATTACHMENT the messageDetails screen needs some work to properly cater for all these cases. Currently doesn't handle some failure, videos, expired (for video and images), etc..
             //todo: ATTACHMENT should the glowView encompass the whole message instead of just the body? Currently tapped quotes only highlight text messages, not images nor attachment control
 
             // DOCUMENT
@@ -266,10 +265,12 @@ class VisibleMessageContentView : ConstraintLayout {
             }
 
             // IMAGE / VIDEO
-            message is MmsMessageRecord && !suppressThumbnails && message.slideDeck.asAttachments().isNotEmpty() -> {
+            message is MmsMessageRecord && message.slideDeck.asAttachments().isNotEmpty() -> {
                 hideBody = false
 
-                if (overallAttachmentState == AttachmentState.DONE  || message.isOutgoing) {
+                if (overallAttachmentState == AttachmentState.DONE || message.isOutgoing) {
+                    if(suppressThumbnails) return // suppress thumbnail should hide the image, but we still want to show the attachment control if the state demands it
+
                     binding.attachmentControlView.root.isVisible = false
 
                     // isStart and isEnd of cluster needed for calculating the mask for full bubble image groups

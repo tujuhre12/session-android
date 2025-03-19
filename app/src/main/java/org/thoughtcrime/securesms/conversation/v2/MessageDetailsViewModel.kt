@@ -5,7 +5,6 @@ import androidx.annotation.DrawableRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,15 +15,11 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
-import org.session.libsession.messaging.jobs.AttachmentDownloadJob
-import org.session.libsession.messaging.jobs.JobQueue
-import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.Util
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.MediaPreviewArgs
 import org.thoughtcrime.securesms.database.AttachmentDatabase
@@ -117,8 +112,14 @@ class MessageDetailsViewModel @Inject constructor(
                         Recipient.from(context, Address.fromSerialized(prefs.getLocalNumber() ?: ""), false)
                     } else individualRecipient
 
+                    val attachments = slides.map(::Attachment)
+
+                    // we don't want to display image attachments in the carousel if their state isn't done
+                    val imageAttachments = attachments.filter { it.isDownloaded && it.hasImage }
+
                     MessageDetailsState(
-                        attachments = slides.map(::Attachment),
+                        attachments = attachments,
+                        imageAttachments = imageAttachments,
                         record = messageRecord,
 
                         // Set the "Sent" message info TitledText appropriately
@@ -179,7 +180,13 @@ class MessageDetailsViewModel @Inject constructor(
                 )
             }
 
-    fun Attachment(slide: Slide): Attachment = Attachment(slide.details, slide.filename, slide.uri, hasImage = (slide is ImageSlide))
+    fun Attachment(slide: Slide): Attachment = Attachment(
+        fileDetails = slide.details,
+        fileName = slide.filename,
+        uri = slide.uri,
+        hasImage = (slide is ImageSlide),
+        isDownloaded = slide.isDone
+    )
 
     fun onClickImage(index: Int) {
         val state = state.value
@@ -200,9 +207,13 @@ class MessageDetailsViewModel @Inject constructor(
     }
 }
 
+//todo: ATTACHMENT pending downlaods - should they be tappable? To reveal the download dialog?
+//todo: ATTACHMENT failed downlaods - should they be tappable? To retry the download?
+//todo: ATTACHMENT - Videos are not showing
+
 data class MessageDetailsState(
     val attachments: List<Attachment> = emptyList(),
-    val imageAttachments: List<Attachment> = attachments.filter { it.hasImage },
+    val imageAttachments: List<Attachment> = emptyList(),
     val nonImageAttachmentFileDetails: List<TitledText>? = attachments.firstOrNull { !it.hasImage }?.fileDetails,
     val record: MessageRecord? = null,
     val mmsRecord: MmsMessageRecord? = record as? MmsMessageRecord,
@@ -224,7 +235,8 @@ data class Attachment(
     val fileDetails: List<TitledText>,
     val fileName: String?,
     val uri: Uri?,
-    val hasImage: Boolean
+    val hasImage: Boolean,
+    val isDownloaded: Boolean
 )
 
 data class MessageStatus(

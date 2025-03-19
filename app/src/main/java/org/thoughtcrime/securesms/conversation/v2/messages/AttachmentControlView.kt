@@ -33,7 +33,6 @@ class AttachmentControlView: LinearLayout {
         IMAGE,
         VIDEO,
     }
-    //todo: ATTACHMENT Handle multiple images case (icon plus total size)
 
     // region Lifecycle
     constructor(context: Context) : super(context)
