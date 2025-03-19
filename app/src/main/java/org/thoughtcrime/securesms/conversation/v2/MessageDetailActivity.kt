@@ -394,7 +394,8 @@ private fun CarouselPager(
                 modifier = Modifier
                     .aspectRatio(1f)
                     .clickable { onClick(i) },
-                model = DecryptableStreamUriLoader.DecryptableUri(attachments[i].uri!!),
+                model = if(attachments[i].uri != null) DecryptableStreamUriLoader.DecryptableUri(attachments[i].uri!!)
+                else null,
                 contentDescription = attachments[i].fileName ?: stringResource(id = R.string.image)
             )
         }

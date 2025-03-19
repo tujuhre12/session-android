@@ -72,7 +72,7 @@ class AudioSlide : Slide {
     constructor(context: Context, attachment: Attachment) : super(context, attachment)
 
     override fun hasPlaceholder() = true
-    override fun hasImage()       = true
+    override fun hasImage()       = false
     override fun hasAudio()       = true
 
     // Legacy voice messages don't have filenames at all - so should we come across one we must synthesize a filename using the delivery date obtained from the attachment
