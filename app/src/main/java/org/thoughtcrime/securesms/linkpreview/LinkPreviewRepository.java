@@ -183,7 +183,7 @@ public class LinkPreviewRepository {
     return Optional.of(new UriAttachment(uri,
            uri,
            contentType,
-            AttachmentState.STARTED.getValue(),
+            AttachmentState.DOWNLOADING.getValue(),
            bytes.length,
            bitmap.getWidth(),
            bitmap.getHeight(),

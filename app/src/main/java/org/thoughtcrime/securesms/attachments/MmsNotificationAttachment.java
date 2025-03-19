@@ -28,7 +28,7 @@ public class MmsNotificationAttachment extends Attachment {
     {
       return AttachmentState.PENDING;
     } else if (status == MmsDatabase.Status.DOWNLOAD_CONNECTING) {
-      return AttachmentState.STARTED;
+      return AttachmentState.DOWNLOADING;
     } else {
       return AttachmentState.FAILED;
     }

@@ -31,7 +31,7 @@ class AttachmentDownloadHandler(
     private val storage: StorageProtocol,
     private val messageDataProvider: MessageDataProvider,
     jobQueue: JobQueue = JobQueue.shared,
-    scope: CoroutineScope = CoroutineScope(Dispatchers.Default) + SupervisorJob(),
+    private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default) + SupervisorJob(),
 ) {
     companion object {
         private const val BUFFER_TIMEOUT_MILLS = 500L
@@ -105,10 +105,16 @@ class AttachmentDownloadHandler(
         if (attachment.transferState != AttachmentState.PENDING.value) {
             Log.i(
                 LOG_TAG,
-                "Attachment ${attachment.attachmentId} is not pending, skipping download"
+                "Attachment ${attachment.attachmentId} is not pending nor failed, skipping download (state = ${attachment.transferState})}"
             )
             return
         }
+
+        downloadRequests.trySend(attachment)
+    }
+
+    fun retryFailedAttachment(attachment: DatabaseAttachment){
+        if(attachment.transferState != AttachmentState.FAILED.value) return Log.d(LOG_TAG, "Attachment ${attachment.attachmentId} is not failed, skipping retry")
 
         downloadRequests.trySend(attachment)
     }

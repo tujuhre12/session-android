@@ -167,7 +167,8 @@ class VisibleMessageView : FrameLayout {
         senderAccountID: String,
         lastSeen: Long,
         delegate: VisibleMessageViewDelegate? = null,
-        onAttachmentNeedsDownload: (DatabaseAttachment) -> Unit
+        onAttachmentNeedsDownload: (DatabaseAttachment) -> Unit,
+        retryFailedDownload: (DatabaseAttachment) -> Unit,
     ) {
         clipToPadding = false
         clipChildren = false
@@ -300,7 +301,8 @@ class VisibleMessageView : FrameLayout {
             glide,
             thread,
             searchQuery,
-            onAttachmentNeedsDownload
+            onAttachmentNeedsDownload = onAttachmentNeedsDownload,
+            retryFailedDownload = retryFailedDownload
         )
         binding.messageContentView.root.delegate = delegate
         onDoubleTap = { binding.messageContentView.root.onContentDoubleTap?.invoke() }

@@ -967,6 +967,10 @@ class ConversationViewModel(
         attachmentDownloadHandler.onAttachmentDownloadRequest(attachment)
     }
 
+    fun retryFailedDownload(attachment: DatabaseAttachment){
+        attachmentDownloadHandler.retryFailedAttachment(attachment)
+    }
+
     fun beforeSendingTextOnlyMessage() {
         implicitlyApproveRecipient()
     }

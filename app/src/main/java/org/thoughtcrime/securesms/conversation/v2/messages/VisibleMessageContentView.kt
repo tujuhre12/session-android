@@ -74,6 +74,7 @@ class VisibleMessageContentView : ConstraintLayout {
         thread: Recipient,
         searchQuery: String? = null,
         onAttachmentNeedsDownload: (DatabaseAttachment) -> Unit,
+        retryFailedDownload: (DatabaseAttachment) -> Unit,
         suppressThumbnails: Boolean = false
     ) {
         // Background
@@ -204,7 +205,7 @@ class VisibleMessageContentView : ConstraintLayout {
                             type = if (it.isVoiceNote) VOICE
                             else AUDIO,
                             attachmentControlState,
-                            onAttachmentNeedsDownload = onAttachmentNeedsDownload
+                            retryFailedDownload = retryFailedDownload
                         )
                     }
                 }
@@ -257,7 +258,7 @@ class VisibleMessageContentView : ConstraintLayout {
                             attachment = it,
                             type = DOCUMENT,
                             attachmentControlState,
-                            onAttachmentNeedsDownload = onAttachmentNeedsDownload
+                            retryFailedDownload = retryFailedDownload
                         )
                     }
                 }
@@ -294,7 +295,7 @@ class VisibleMessageContentView : ConstraintLayout {
                             type = if (message.slideDeck.hasVideo()) VIDEO
                             else IMAGE,
                             state = attachmentControlState,
-                            onAttachmentNeedsDownload = onAttachmentNeedsDownload
+                            retryFailedDownload = retryFailedDownload
                         )
                     }
                 }
@@ -336,7 +337,7 @@ class VisibleMessageContentView : ConstraintLayout {
         attachment: DatabaseAttachment,
         type: AttachmentControlView.AttachmentType,
         state: AttachmentControlView.AttachmentState,
-        onAttachmentNeedsDownload: (DatabaseAttachment) -> Unit,
+        retryFailedDownload: (DatabaseAttachment) -> Unit,
     ){
         binding.attachmentControlView.root.isVisible = true
         binding.albumThumbnailView.root.clearViews()
@@ -361,8 +362,9 @@ class VisibleMessageContentView : ConstraintLayout {
 
             // Attempt to redownload a failed attachment on tap
             AttachmentControlView.AttachmentState.Failed -> {
+                //todo: ATTACHMENT this won't update visually when happening in the message details screen as that screen isn't notified of updates
                 onContentClick.add {
-                   onAttachmentNeedsDownload(attachment)
+                    retryFailedDownload(attachment)
                 }
             }
 

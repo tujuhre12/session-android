@@ -259,7 +259,7 @@ public class AttachmentDatabase extends Database {
 
     Cursor cursor = null;
     try {
-      cursor = database.query(TABLE_NAME, PROJECTION, TRANSFER_STATE + " = ?", new String[] {String.valueOf(AttachmentState.STARTED.getValue())}, null, null, null);
+      cursor = database.query(TABLE_NAME, PROJECTION, TRANSFER_STATE + " = ?", new String[] {String.valueOf(AttachmentState.DOWNLOADING.getValue())}, null, null, null);
       while (cursor != null && cursor.moveToNext()) {
         attachments.addAll(getAttachment(cursor));
       }

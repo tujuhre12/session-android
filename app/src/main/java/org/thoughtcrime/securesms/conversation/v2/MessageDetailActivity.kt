@@ -144,7 +144,7 @@ class MessageDetailActivity : ScreenLockActionBarActivity() {
             onDelete = if (state.canDelete) { { setResultAndFinish(ON_DELETE) } } else null,
             onCopy = { setResultAndFinish(ON_COPY) },
             onClickImage = { viewModel.onClickImage(it) },
-            onAttachmentNeedsDownload = viewModel::onAttachmentNeedsDownload,
+            retryFailedDownload = viewModel::retryFailedAttachment
         )
     }
 
@@ -167,7 +167,7 @@ fun MessageDetails(
     onDelete: (() -> Unit)? = null,
     onCopy: () -> Unit = {},
     onClickImage: (Int) -> Unit = {},
-    onAttachmentNeedsDownload: (DatabaseAttachment) -> Unit = { _ -> }
+    retryFailedDownload: ((DatabaseAttachment) -> Unit)
 ) {
     Column(
         modifier = Modifier
@@ -185,7 +185,8 @@ fun MessageDetails(
                             bind(
                                 message,
                                 thread = state.thread!!,
-                                onAttachmentNeedsDownload = onAttachmentNeedsDownload,
+                                onAttachmentNeedsDownload = {},
+                                retryFailedDownload = retryFailedDownload,
                                 suppressThumbnails = true
                             )
 
@@ -484,7 +485,9 @@ fun PreviewMessageDetails(
                 received = TitledText(R.string.received, "6:12 AM Tue, 09/08/2022"),
                 error = TitledText(R.string.error, "Message failed to send"),
                 senderInfo = TitledText("Connor", "d4f1g54sdf5g1d5f4g65ds4564df65f4g65d54"),
-            )
+
+            ),
+            retryFailedDownload = {}
         )
     }
 }

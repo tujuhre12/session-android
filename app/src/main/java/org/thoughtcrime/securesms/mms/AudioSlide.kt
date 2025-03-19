@@ -58,7 +58,7 @@ class AudioSlide : Slide {
                     uri,
                     null,        // thumbnailUri
                     contentType,
-                    AttachmentState.STARTED.value,
+                    AttachmentState.DOWNLOADING.value,
                     dataSize,
                     0,           // width
                     0,           // height

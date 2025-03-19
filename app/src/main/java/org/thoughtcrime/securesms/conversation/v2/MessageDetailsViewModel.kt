@@ -14,19 +14,23 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
+import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.jobs.AttachmentDownloadJob
 import org.session.libsession.messaging.jobs.JobQueue
+import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.Util
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.MediaPreviewArgs
 import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
+import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
@@ -49,7 +53,9 @@ class MessageDetailsViewModel @Inject constructor(
     private val threadDb: ThreadDatabase,
     private val repository: ConversationRepository,
     private val deprecationManager: LegacyGroupDeprecationManager,
-    private val context: ApplicationContext
+    private val context: ApplicationContext,
+    private val messageDataProvider: MessageDataProvider,
+    private val storage: Storage
 ) : ViewModel() {
 
     private var job: Job? = null
@@ -59,6 +65,12 @@ class MessageDetailsViewModel @Inject constructor(
 
     private val event = Channel<Event>()
     val eventFlow = event.receiveAsFlow()
+
+    private val attachmentDownloadHandler = AttachmentDownloadHandler(
+        storage = storage,
+        messageDataProvider = messageDataProvider,
+        scope = viewModelScope,
+    )
 
     var timestamp: Long = 0L
         set(value) {
@@ -174,14 +186,7 @@ class MessageDetailsViewModel @Inject constructor(
         val mmsRecord = state.mmsRecord ?: return
         val slide = mmsRecord.slideDeck.slides[index] ?: return
         // only open to downloaded images
-        if (slide.isFailed) {
-            // Restart download here (on IO thread)
-            (slide.asAttachment() as? DatabaseAttachment)?.let { attachment ->
-                onAttachmentNeedsDownload(attachment)
-            }
-        }
-
-        if (slide.isInProgress) return
+        if (slide.isInProgress || slide.isFailed) return
 
         viewModelScope.launch {
             MediaPreviewArgs(slide, state.mmsRecord, state.thread)
@@ -190,10 +195,8 @@ class MessageDetailsViewModel @Inject constructor(
         }
     }
 
-    fun onAttachmentNeedsDownload(attachment: DatabaseAttachment) {
-        viewModelScope.launch(Dispatchers.IO) {
-            JobQueue.shared.add(AttachmentDownloadJob(attachment.attachmentId.rowId, attachment.mmsId))
-        }
+    fun retryFailedAttachment(attachment: DatabaseAttachment){
+        attachmentDownloadHandler.retryFailedAttachment(attachment)
     }
 }
 

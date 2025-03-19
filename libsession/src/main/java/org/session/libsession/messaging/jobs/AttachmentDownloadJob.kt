@@ -14,7 +14,6 @@ import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.DecodedAudio
 import org.session.libsession.utilities.DownloadUtilities
 import org.session.libsession.utilities.InputStreamMediaDataSource
-import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.streams.AttachmentCipherInputStream
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.HTTP
@@ -138,7 +137,7 @@ class AttachmentDownloadJob(val attachmentID: Long, val databaseMessageID: Long)
                 handleFailure(Error.DuplicateData, attachment.attachmentId)
                 return
             }
-            messageDataProvider.setAttachmentState(AttachmentState.STARTED, attachment.attachmentId, this.databaseMessageID)
+            messageDataProvider.setAttachmentState(AttachmentState.DOWNLOADING, attachment.attachmentId, this.databaseMessageID)
             tempFile = createTempFile()
             val openGroup = storage.getOpenGroup(threadID)
             if (openGroup == null) {

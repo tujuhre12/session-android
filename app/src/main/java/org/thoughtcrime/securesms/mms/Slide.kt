@@ -167,7 +167,7 @@ abstract class Slide(@JvmField protected val context: Context, protected val att
                 uri,
                 if (hasThumbnail) uri else null,
                 resolvedType!!,
-                AttachmentState.STARTED.value,
+                AttachmentState.DOWNLOADING.value,
                 size,
                 width,
                 height,
