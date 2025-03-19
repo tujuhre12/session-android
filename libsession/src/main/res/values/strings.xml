@@ -526,6 +526,7 @@
     <string name="hideMenuBarDescription">Toggle system menu bar visibility</string>
     <string name="hideOthers">Hide Others</string>
     <string name="image">Image</string>
+    <string name="images">Images</string>
     <string name="incognitoKeyboard">Incognito Keyboard</string>
     <string name="incognitoKeyboardDescription">Request incognito mode if available. Depending on the keyboard you are using, your keyboard may ignore this request.</string>
     <string name="info">Info</string>

@@ -185,7 +185,7 @@ fun MessageDetails(
                             bind(
                                 message,
                                 thread = state.thread!!,
-                                downloadPendingAttachment = {},
+                                downloadPendingAttachment = {}, // the view shouldn't handle this from the details activity
                                 retryFailedDownload = retryFailedDownload,
                                 suppressThumbnails = true
                             )

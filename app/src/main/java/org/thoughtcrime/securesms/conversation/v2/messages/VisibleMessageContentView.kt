@@ -343,10 +343,10 @@ class VisibleMessageContentView : ConstraintLayout {
         binding.albumThumbnailView.root.clearViews()
 
         binding.attachmentControlView.root.bind(
-            type,
-            getTextColor(context,message),
-            attachment,
-            state = state
+            attachmentType = type,
+            textColor = getTextColor(context,message),
+            state = state,
+            allMessageAttachments = message.slideDeck.slides
         )
 
         when(state) {

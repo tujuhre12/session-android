@@ -14,11 +14,12 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.StringSubstitutionConstants.FILE_TYPE_KEY
+import org.session.libsession.utilities.Util
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.conversation.v2.dialogs.AutoDownloadDialog
+import org.thoughtcrime.securesms.mms.Slide
 import org.thoughtcrime.securesms.util.ActivityDispatcher
-import org.thoughtcrime.securesms.util.displaySize
 import java.util.Locale
 import javax.inject.Inject
 
@@ -47,18 +48,28 @@ class AttachmentControlView: LinearLayout {
     }
 
     // region Updating
-    private fun getAttachmentData(attachmentType: AttachmentType): Pair<Int, Int> {
+    private fun getAttachmentData(attachmentType: AttachmentType, messageTotalAttachment: Int): Pair<Int, Int> {
         return when (attachmentType) {
             AttachmentType.VOICE -> Pair(R.string.messageVoice, R.drawable.ic_mic)
             AttachmentType.AUDIO -> Pair(R.string.audio, R.drawable.ic_volume_2)
             AttachmentType.DOCUMENT -> Pair(R.string.document, R.drawable.ic_file)
-            AttachmentType.IMAGE -> Pair(R.string.image, R.drawable.ic_image)
+            AttachmentType.IMAGE -> {
+                if(messageTotalAttachment > 1) Pair(R.string.images, R.drawable.ic_images) //todo: ATTACHMENTS we need the real string from crowdin
+                else Pair(R.string.image, R.drawable.ic_image)
+            }
             AttachmentType.VIDEO -> Pair(R.string.video, R.drawable.ic_square_play)
         }
     }
 
-    fun bind(attachmentType: AttachmentType, @ColorInt textColor: Int, attachment: DatabaseAttachment?, state: AttachmentState) {
-        val (stringRes, iconRes) = getAttachmentData(attachmentType)
+    fun bind(
+        attachmentType: AttachmentType,
+        @ColorInt textColor: Int,
+        state: AttachmentState,
+        allMessageAttachments: List<Slide>,
+    ) {
+        val (stringRes, iconRes) = getAttachmentData(attachmentType, allMessageAttachments.size)
+
+        val totalSize = Util.getPrettyFileSize(allMessageAttachments.sumOf { it.fileSize })
 
         binding.pendingDownloadIcon.setImageResource(iconRes)
 
@@ -84,7 +95,7 @@ class AttachmentControlView: LinearLayout {
 
                 //todo: ATTACHMENT This will need to be tweaked to dynamically show the the downloaded amount
                 binding.pendingDownloadSize.apply {
-                    text = attachment?.displaySize()
+                    text = totalSize
                     setTextColor(textColor)
                     isVisible = true
                 }
@@ -107,7 +118,7 @@ class AttachmentControlView: LinearLayout {
                 binding.pendingDownloadIcon.setColorFilter(textColor)
 
                 binding.pendingDownloadSize.apply {
-                    text = attachment?.displaySize()
+                    text = totalSize
                     setTextColor(errorColor)
                     isVisible = true
                 }
@@ -131,7 +142,7 @@ class AttachmentControlView: LinearLayout {
                 binding.pendingDownloadIcon.setColorFilter(textColor)
 
                 binding.pendingDownloadSize.apply {
-                    text = attachment?.displaySize()
+                    text = totalSize
                     setTextColor(textColor)
                     isVisible = true
                 }
