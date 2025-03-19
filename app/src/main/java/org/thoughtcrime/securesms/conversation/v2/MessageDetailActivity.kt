@@ -54,6 +54,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
+import com.bumptech.glide.integration.compose.placeholder
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
@@ -62,6 +63,7 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.thoughtcrime.securesms.MediaPreviewActivity.getPreviewIntent
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
+import org.thoughtcrime.securesms.mms.DecryptableStreamUriLoader
 import org.thoughtcrime.securesms.ui.Avatar
 import org.thoughtcrime.securesms.ui.CarouselNextButton
 import org.thoughtcrime.securesms.ui.CarouselPrevButton
@@ -392,7 +394,7 @@ private fun CarouselPager(
                 modifier = Modifier
                     .aspectRatio(1f)
                     .clickable { onClick(i) },
-                model = attachments[i].uri,
+                model = DecryptableStreamUriLoader.DecryptableUri(attachments[i].uri!!),
                 contentDescription = attachments[i].fileName ?: stringResource(id = R.string.image)
             )
         }

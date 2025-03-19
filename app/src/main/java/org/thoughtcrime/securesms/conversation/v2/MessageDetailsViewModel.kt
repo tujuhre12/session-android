@@ -183,8 +183,8 @@ class MessageDetailsViewModel @Inject constructor(
     fun Attachment(slide: Slide): Attachment = Attachment(
         fileDetails = slide.details,
         fileName = slide.filename,
-        uri = slide.uri,
-        hasImage = (slide is ImageSlide),
+        uri = slide.thumbnailUri,
+        hasImage = slide.hasImage(),
         isDownloaded = slide.isDone
     )
 
@@ -209,7 +209,6 @@ class MessageDetailsViewModel @Inject constructor(
 
 //todo: ATTACHMENT pending downlaods - should they be tappable? To reveal the download dialog?
 //todo: ATTACHMENT failed downlaods - should they be tappable? To retry the download?
-//todo: ATTACHMENT - Videos are not showing
 
 data class MessageDetailsState(
     val attachments: List<Attachment> = emptyList(),
