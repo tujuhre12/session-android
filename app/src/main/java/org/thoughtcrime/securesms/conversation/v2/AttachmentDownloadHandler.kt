@@ -113,9 +113,14 @@ class AttachmentDownloadHandler(
         downloadRequests.trySend(attachment)
     }
 
-    fun retryFailedAttachment(attachment: DatabaseAttachment){
-        if(attachment.transferState != AttachmentState.FAILED.value) return Log.d(LOG_TAG, "Attachment ${attachment.attachmentId} is not failed, skipping retry")
+    fun retryFailedAttachments(attachments: List<DatabaseAttachment>){
+        attachments.forEach { attachment ->
+            if (attachment.transferState != AttachmentState.FAILED.value) return Log.d(
+                LOG_TAG,
+                "Attachment ${attachment.attachmentId} is not failed, skipping retry"
+            )
 
-        downloadRequests.trySend(attachment)
+            downloadRequests.trySend(attachment)
+        }
     }
 }

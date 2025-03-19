@@ -364,7 +364,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 }
             },
             downloadPendingAttachment = viewModel::downloadPendingAttachment,
-            retryFailedDownload = viewModel::retryFailedDownload,
+            retryFailedAttachments = viewModel::retryFailedAttachments,
             glide = glide,
             lifecycleCoroutineScope = lifecycleScope
         )

@@ -74,7 +74,7 @@ class VisibleMessageContentView : ConstraintLayout {
         thread: Recipient,
         searchQuery: String? = null,
         downloadPendingAttachment: (DatabaseAttachment) -> Unit,
-        retryFailedDownload: (DatabaseAttachment) -> Unit,
+        retryFailedAttachments: (List<DatabaseAttachment>) -> Unit,
         suppressThumbnails: Boolean = false
     ) {
         // Background
@@ -94,6 +94,8 @@ class VisibleMessageContentView : ConstraintLayout {
             mediaInProgress -> AttachmentState.DOWNLOADING
             else -> AttachmentState.PENDING
         }
+
+        val databaseAttachments = (message as? MmsMessageRecord)?.slideDeck?.asAttachments()?.filterIsInstance<DatabaseAttachment>()
 
         // reset visibilities / containers
         onContentClick.clear()
@@ -158,9 +160,8 @@ class VisibleMessageContentView : ConstraintLayout {
         }
 
         if (message is MmsMessageRecord) {
-            message.slideDeck.asAttachments().forEach { attach ->
-                val dbAttachment = attach as? DatabaseAttachment ?: return@forEach
-                downloadPendingAttachment(dbAttachment)
+            databaseAttachments?.forEach { attach ->
+                downloadPendingAttachment(attach)
             }
             message.linkPreviews.forEach { preview ->
                 val previewThumbnail = preview.getThumbnail().orNull() as? DatabaseAttachment ?: return@forEach
@@ -201,11 +202,11 @@ class VisibleMessageContentView : ConstraintLayout {
                         showAttachmentControl(
                             thread = thread,
                             message = message,
-                            attachment = it,
+                            attachments = listOf(it),
                             type = if (it.isVoiceNote) VOICE
                             else AUDIO,
                             overallAttachmentState,
-                            retryFailedDownload = retryFailedDownload
+                            retryFailedAttachments = retryFailedAttachments
                         )
                     }
                 }
@@ -255,10 +256,10 @@ class VisibleMessageContentView : ConstraintLayout {
                         showAttachmentControl(
                             thread = thread,
                             message = message,
-                            attachment = it,
+                            attachments = listOf(it),
                             type = DOCUMENT,
                             overallAttachmentState,
-                            retryFailedDownload = retryFailedDownload
+                            retryFailedAttachments = retryFailedAttachments
                         )
                     }
                 }
@@ -287,15 +288,15 @@ class VisibleMessageContentView : ConstraintLayout {
                         binding.albumThumbnailView.root.calculateHitObject(event, message, thread, downloadPendingAttachment)
                     }
                 } else {
-                    (message.slideDeck.asAttachments().first() as? DatabaseAttachment)?.let {
+                    databaseAttachments?.let {
                         showAttachmentControl(
                             thread = thread,
                             message = message,
-                            attachment = it,
+                            attachments = it,
                             type = if (message.slideDeck.hasVideo()) VIDEO
                             else IMAGE,
                             state = overallAttachmentState,
-                            retryFailedDownload = retryFailedDownload
+                            retryFailedAttachments = retryFailedAttachments
                         )
                     }
                 }
@@ -334,10 +335,10 @@ class VisibleMessageContentView : ConstraintLayout {
     private fun showAttachmentControl(
         thread: Recipient,
         message: MmsMessageRecord,
-        attachment: DatabaseAttachment,
+        attachments: List<DatabaseAttachment>,
         type: AttachmentControlView.AttachmentType,
         state: AttachmentState,
-        retryFailedDownload: (DatabaseAttachment) -> Unit,
+        retryFailedAttachments: (List<DatabaseAttachment>) -> Unit,
     ){
         binding.attachmentControlView.root.isVisible = true
         binding.albumThumbnailView.root.clearViews()
@@ -355,7 +356,7 @@ class VisibleMessageContentView : ConstraintLayout {
                 onContentClick.add {
                     binding.attachmentControlView.root.showDownloadDialog(
                         thread,
-                        attachment
+                        attachments.first()
                     )
                 }
             }
@@ -364,7 +365,7 @@ class VisibleMessageContentView : ConstraintLayout {
             AttachmentState.FAILED -> {
                 //todo: ATTACHMENT this won't update visually when happening in the message details screen as that screen isn't notified of updates
                 onContentClick.add {
-                    retryFailedDownload(attachment)
+                    retryFailedAttachments(attachments)
                 }
             }
 

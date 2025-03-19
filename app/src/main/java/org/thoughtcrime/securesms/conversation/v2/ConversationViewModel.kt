@@ -967,8 +967,8 @@ class ConversationViewModel(
         attachmentDownloadHandler.downloadPendingAttachment(attachment)
     }
 
-    fun retryFailedDownload(attachment: DatabaseAttachment){
-        attachmentDownloadHandler.retryFailedAttachment(attachment)
+    fun retryFailedAttachments(attachments: List<DatabaseAttachment>){
+        attachmentDownloadHandler.retryFailedAttachments(attachments)
     }
 
     fun beforeSendingTextOnlyMessage() {

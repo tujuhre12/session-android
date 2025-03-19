@@ -195,8 +195,8 @@ class MessageDetailsViewModel @Inject constructor(
         }
     }
 
-    fun retryFailedAttachment(attachment: DatabaseAttachment){
-        attachmentDownloadHandler.retryFailedAttachment(attachment)
+    fun retryFailedAttachments(attachments: List<DatabaseAttachment>){
+        attachmentDownloadHandler.retryFailedAttachments(attachments)
     }
 }
 
