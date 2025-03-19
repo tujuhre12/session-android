@@ -11,6 +11,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewAttachmentControlBinding
 import org.session.libsession.database.StorageProtocol
+import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.StringSubstitutionConstants.FILE_TYPE_KEY
 import org.session.libsession.utilities.getColorFromAttr
@@ -32,13 +33,6 @@ class AttachmentControlView: LinearLayout {
         VIDEO,
     }
     //todo: ATTACHMENT Handle multiple images case (icon plus total size)
-
-    sealed class AttachmentState {
-        object Loading: AttachmentState()
-        object Pending: AttachmentState()
-        object Failed: AttachmentState()
-        object Expired: AttachmentState()
-    }
 
     // region Lifecycle
     constructor(context: Context) : super(context)
@@ -69,7 +63,7 @@ class AttachmentControlView: LinearLayout {
         binding.pendingDownloadIcon.setImageResource(iconRes)
 
         when(state){
-            AttachmentState.Expired -> {
+            AttachmentState.EXPIRED -> {
                 val expiredColor = textColor.also { alpha = 0.7f }
 
                 binding.pendingDownloadIcon.setColorFilter(expiredColor)
@@ -85,7 +79,7 @@ class AttachmentControlView: LinearLayout {
                 binding.pendingDownloadSubtitle.isVisible = false
             }
 
-            AttachmentState.Loading -> {
+            AttachmentState.DOWNLOADING -> {
                 binding.pendingDownloadIcon.setColorFilter(textColor)
 
                 //todo: ATTACHMENT This will need to be tweaked to dynamically show the the downloaded amount
@@ -109,7 +103,7 @@ class AttachmentControlView: LinearLayout {
                 binding.pendingDownloadSubtitle.isVisible = false
             }
 
-            AttachmentState.Failed -> {
+            AttachmentState.FAILED -> {
                 binding.pendingDownloadIcon.setColorFilter(textColor)
 
                 binding.pendingDownloadSize.apply {

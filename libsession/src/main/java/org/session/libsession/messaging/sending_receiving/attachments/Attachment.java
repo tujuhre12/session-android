@@ -54,9 +54,7 @@ public abstract class Attachment {
   public int getTransferState() { return transferState; }
 
   public boolean isInProgress() {
-    return transferState != AttachmentState.DONE.getValue() &&
-           transferState != AttachmentState.FAILED.getValue() &&
-            transferState != AttachmentState.PENDING.getValue();
+    return transferState == AttachmentState.DOWNLOADING.getValue();
   }
 
   public boolean isDone() {
