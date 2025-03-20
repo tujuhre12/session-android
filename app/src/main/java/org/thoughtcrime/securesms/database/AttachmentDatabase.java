@@ -270,6 +270,30 @@ public class AttachmentDatabase extends Database {
     return attachments;
   }
 
+  public @NonNull List<DatabaseAttachment> getAllAttachments() {
+    SQLiteDatabase database = databaseHelper.getReadableDatabase();
+    Cursor cursor = null;
+    List<DatabaseAttachment> attachments = new ArrayList<>();
+
+    try {
+      // Query all rows in the attachment table.
+      cursor = database.query(TABLE_NAME, PROJECTION, null, null, null, null, null);
+
+      while (cursor != null && cursor.moveToNext()) {
+        List<DatabaseAttachment> list = getAttachment(cursor);
+        if (list != null && !list.isEmpty()) {
+          attachments.addAll(list);
+        }
+      }
+    } finally {
+      if (cursor != null) {
+        cursor.close();
+      }
+    }
+
+    return attachments;
+  }
+
   void deleteAttachmentsForMessages(String[] messageIds) {
     StringBuilder queryBuilder = new StringBuilder();
     for (int i = 0; i < messageIds.length; i++) {

@@ -8,10 +8,10 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -23,7 +23,6 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.Util
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.MediaPreviewArgs
 import org.thoughtcrime.securesms.database.AttachmentDatabase
@@ -88,15 +87,15 @@ class MessageDetailsViewModel @Inject constructor(
 
             // listen to conversation and attachments changes
             job = viewModelScope.launch {
-                merge(
-                    repository.changes(messageRecord.threadId),
-                    context.contentResolver.observeChanges(DatabaseContentProviders.Attachment.CONTENT_URI)
-                ).collect{
-                    Log.w("", "*** Received change in convo or attachment")
-                    val updatedRecord = mmsSmsDatabase.getMessageForTimestamp(value)
-                    if(updatedRecord == null) event.send(Event.Finish)
-                    else createStateFromRecord(updatedRecord)
-                }
+                (context.contentResolver.observeChanges(DatabaseContentProviders.Conversation.getUriForThread(messageRecord.threadId)) as Flow<*>)
+                    .onStart { emit(Unit) }
+                    .collect{
+                        val updatedRecord = mmsSmsDatabase.getMessageForTimestamp(value)
+                        if(updatedRecord == null) event.send(Event.Finish)
+                        else {
+                            createStateFromRecord(updatedRecord)
+                        }
+                    }
             }
         }
 
@@ -134,6 +133,7 @@ class MessageDetailsViewModel @Inject constructor(
                 val imageAttachments = attachments.filter { it.isDownloaded && it.hasImage }
 
                 MessageDetailsState(
+                    timestamp = System.currentTimeMillis(), // used as a trick to force the state as  being marked aas different each time
                     attachments = attachments,
                     imageAttachments = imageAttachments,
                     record = messageRecord,
@@ -228,6 +228,7 @@ class MessageDetailsViewModel @Inject constructor(
 //todo: ATTACHMENT failed downloads - should they be tappable? To retry the download?
 
 data class MessageDetailsState(
+    val timestamp: Long = 0L,
     val attachments: List<Attachment> = emptyList(),
     val imageAttachments: List<Attachment> = emptyList(),
     val nonImageAttachmentFileDetails: List<TitledText>? = attachments.firstOrNull { !it.hasImage }?.fileDetails,
