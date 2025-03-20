@@ -19,6 +19,7 @@ import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.conversation.v2.dialogs.AutoDownloadDialog
 import org.thoughtcrime.securesms.mms.Slide
+import org.thoughtcrime.securesms.ui.findActivity
 import org.thoughtcrime.securesms.util.ActivityDispatcher
 import java.util.Locale
 import javax.inject.Inject
@@ -169,7 +170,7 @@ class AttachmentControlView: LinearLayout {
     fun showDownloadDialog(threadRecipient: Recipient, attachment: DatabaseAttachment) {
         if (!storage.shouldAutoDownloadAttachments(threadRecipient)) {
             // just download
-            ActivityDispatcher.get(context)?.showDialog(AutoDownloadDialog(threadRecipient, attachment))
+            (context.findActivity() as? ActivityDispatcher)?.showDialog(AutoDownloadDialog(threadRecipient, attachment))
         }
     }
 }

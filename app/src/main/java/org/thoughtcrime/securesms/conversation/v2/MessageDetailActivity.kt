@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.conversation.v2
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -51,6 +52,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
@@ -84,10 +86,12 @@ import org.thoughtcrime.securesms.ui.theme.blackAlpha40
 import org.thoughtcrime.securesms.ui.theme.bold
 import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
 import org.thoughtcrime.securesms.ui.theme.monospace
+import org.thoughtcrime.securesms.util.ActivityDispatcher
+import org.thoughtcrime.securesms.util.push
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class MessageDetailActivity : ScreenLockActionBarActivity() {
+class MessageDetailActivity : ScreenLockActionBarActivity(), ActivityDispatcher {
 
     @Inject
     lateinit var storage: StorageProtocol
@@ -124,6 +128,14 @@ class MessageDetailActivity : ScreenLockActionBarActivity() {
                 }
             }
         }
+    }
+
+    override fun dispatchIntent(body: (Context) -> Intent?) {
+        body(this)?.let { push(it, false) }
+    }
+
+    override fun showDialog(dialogFragment: DialogFragment, tag: String?) {
+        dialogFragment.show(supportFragmentManager, tag)
     }
 
     @Composable
@@ -178,8 +190,15 @@ fun MessageDetails(
                 modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing)
             ) {
                 AndroidView(
-                    factory = {
-                        ViewVisibleMessageContentBinding.inflate(LayoutInflater.from(it)).mainContainerConstraint.apply {
+                    factory = { context ->
+                        // Inflate the view once
+                        ViewVisibleMessageContentBinding.inflate(LayoutInflater.from(context)).mainContainerConstraint
+                    },
+                    update = { view ->
+                        // Rebind the view whenever state changes.
+                        // Retrieve the binding from the view
+                        val binding = ViewVisibleMessageContentBinding.bind(view)
+                        binding.mainContainerConstraint.apply {
                             bind(
                                 message,
                                 thread = state.thread!!,

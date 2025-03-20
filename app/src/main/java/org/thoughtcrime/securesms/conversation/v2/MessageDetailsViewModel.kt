@@ -5,13 +5,16 @@ import androidx.annotation.DrawableRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
@@ -20,9 +23,11 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.Util
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.MediaPreviewArgs
 import org.thoughtcrime.securesms.database.AttachmentDatabase
+import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.Storage
@@ -34,7 +39,9 @@ import org.thoughtcrime.securesms.mms.Slide
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.TitledText
+import org.thoughtcrime.securesms.util.observeChanges
 import java.util.Date
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import kotlin.text.Typography.ellipsis
@@ -79,81 +86,90 @@ class MessageDetailsViewModel @Inject constructor(
                 return
             }
 
-            val mmsRecord = messageRecord as? MmsMessageRecord
-
+            // listen to conversation and attachments changes
             job = viewModelScope.launch {
-                repository.changes(messageRecord.threadId)
-                    .filter { mmsSmsDatabase.getMessageForTimestamp(value) == null }
-                    .collect { event.send(Event.Finish) }
-            }
-
-            viewModelScope.launch {
-                state.value = messageRecord.run {
-                    val slides = mmsRecord?.slideDeck?.slides ?: emptyList()
-
-                    val conversation = threadDb.getRecipientForThreadId(threadId)!!
-                    val isDeprecatedLegacyGroup = conversation.isLegacyGroupRecipient &&
-                                                  deprecationManager.isDeprecated
-
-
-                    val errorString = lokiMessageDatabase.getErrorMessage(id)
-
-                    var status: MessageStatus? = null
-                    // create a 'failed to send' status if appropriate
-                    if(messageRecord.isFailed){
-                        status = MessageStatus(
-                            title = context.getString(R.string.messageStatusFailedToSend),
-                            icon = R.drawable.ic_triangle_alert,
-                            errorStatus = true
-                        )
-                    }
-
-                    val sender = if(messageRecord.isOutgoing){
-                        Recipient.from(context, Address.fromSerialized(prefs.getLocalNumber() ?: ""), false)
-                    } else individualRecipient
-
-                    val attachments = slides.map(::Attachment)
-
-                    // we don't want to display image attachments in the carousel if their state isn't done
-                    val imageAttachments = attachments.filter { it.isDownloaded && it.hasImage }
-
-                    MessageDetailsState(
-                        attachments = attachments,
-                        imageAttachments = imageAttachments,
-                        record = messageRecord,
-
-                        // Set the "Sent" message info TitledText appropriately
-                        sent = if (messageRecord.isSending && errorString == null) {
-                            val sendingWithEllipsisString = context.getString(R.string.sending) + ellipsis // e.g., "Sending…"
-                            TitledText(sendingWithEllipsisString, null)
-                        } else if (messageRecord.isSent && errorString == null) {
-                            dateReceived.let(::Date).toString().let { TitledText(R.string.sent, it) }
-                        } else {
-                            null // Not sending or sent? Don't display anything for the "Sent" element.
-                        },
-
-                        // Set the "Received" message info TitledText appropriately
-                        received = if (messageRecord.isIncoming && errorString == null) {
-                            dateReceived.let(::Date).toString().let { TitledText(R.string.received, it) }
-                        } else {
-                            null // Not incoming? Then don't display anything for the "Received" element.
-                        },
-
-                        error = errorString?.let { TitledText(context.getString(R.string.theError) + ":", it) },
-                        status = status,
-                        senderInfo = sender.run {
-                            TitledText(
-                                if(messageRecord.isOutgoing) context.getString(R.string.you) else name,
-                                address.toString()
-                            )
-                        },
-                        sender = sender,
-                        thread = conversation,
-                        readOnly = isDeprecatedLegacyGroup
-                    )
+                merge(
+                    repository.changes(messageRecord.threadId),
+                    context.contentResolver.observeChanges(DatabaseContentProviders.Attachment.CONTENT_URI)
+                ).collect{
+                    Log.w("", "*** Received change in convo or attachment")
+                    val updatedRecord = mmsSmsDatabase.getMessageForTimestamp(value)
+                    if(updatedRecord == null) event.send(Event.Finish)
+                    else createStateFromRecord(updatedRecord)
                 }
             }
         }
+
+    private suspend fun createStateFromRecord(messageRecord: MessageRecord){
+        val mmsRecord = messageRecord as? MmsMessageRecord
+
+        withContext(Dispatchers.Default){
+            state.value = messageRecord.run {
+                val slides = mmsRecord?.slideDeck?.slides ?: emptyList()
+
+                val conversation = threadDb.getRecipientForThreadId(threadId)!!
+                val isDeprecatedLegacyGroup = conversation.isLegacyGroupRecipient &&
+                        deprecationManager.isDeprecated
+
+
+                val errorString = lokiMessageDatabase.getErrorMessage(id)
+
+                var status: MessageStatus? = null
+                // create a 'failed to send' status if appropriate
+                if(messageRecord.isFailed){
+                    status = MessageStatus(
+                        title = context.getString(R.string.messageStatusFailedToSend),
+                        icon = R.drawable.ic_triangle_alert,
+                        errorStatus = true
+                    )
+                }
+
+                val sender = if(messageRecord.isOutgoing){
+                    Recipient.from(context, Address.fromSerialized(prefs.getLocalNumber() ?: ""), false)
+                } else individualRecipient
+
+                val attachments = slides.map(::Attachment)
+
+                // we don't want to display image attachments in the carousel if their state isn't done
+                val imageAttachments = attachments.filter { it.isDownloaded && it.hasImage }
+
+                MessageDetailsState(
+                    attachments = attachments,
+                    imageAttachments = imageAttachments,
+                    record = messageRecord,
+
+                    // Set the "Sent" message info TitledText appropriately
+                    sent = if (messageRecord.isSending && errorString == null) {
+                        val sendingWithEllipsisString = context.getString(R.string.sending) + ellipsis // e.g., "Sending…"
+                        TitledText(sendingWithEllipsisString, null)
+                    } else if (messageRecord.isSent && errorString == null) {
+                        dateReceived.let(::Date).toString().let { TitledText(R.string.sent, it) }
+                    } else {
+                        null // Not sending or sent? Don't display anything for the "Sent" element.
+                    },
+
+                    // Set the "Received" message info TitledText appropriately
+                    received = if (messageRecord.isIncoming && errorString == null) {
+                        dateReceived.let(::Date).toString().let { TitledText(R.string.received, it) }
+                    } else {
+                        null // Not incoming? Then don't display anything for the "Received" element.
+                    },
+
+                    error = errorString?.let { TitledText(context.getString(R.string.theError) + ":", it) },
+                    status = status,
+                    senderInfo = sender.run {
+                        TitledText(
+                            if(messageRecord.isOutgoing) context.getString(R.string.you) else name,
+                            address.toString()
+                        )
+                    },
+                    sender = sender,
+                    thread = conversation,
+                    readOnly = isDeprecatedLegacyGroup
+                )
+            }
+        }
+    }
 
     private val Slide.details: List<TitledText>
         get() = listOfNotNull(
@@ -174,6 +190,7 @@ class MessageDetailsViewModel @Inject constructor(
             ?.takeIf { it > 0 }
             ?.let {
                 String.format(
+                    Locale.getDefault(),
                     "%01d:%02d",
                     TimeUnit.MILLISECONDS.toMinutes(it),
                     TimeUnit.MILLISECONDS.toSeconds(it) % 60
@@ -207,8 +224,8 @@ class MessageDetailsViewModel @Inject constructor(
     }
 }
 
-//todo: ATTACHMENT pending downlaods - should they be tappable? To reveal the download dialog?
-//todo: ATTACHMENT failed downlaods - should they be tappable? To retry the download?
+//todo: ATTACHMENT pending downloads - should they be tappable? To reveal the download dialog?
+//todo: ATTACHMENT failed downloads - should they be tappable? To retry the download?
 
 data class MessageDetailsState(
     val attachments: List<Attachment> = emptyList(),
