@@ -54,7 +54,7 @@ class AttachmentControlView: LinearLayout {
             AttachmentType.AUDIO -> Pair(R.string.audio, R.drawable.ic_volume_2)
             AttachmentType.DOCUMENT -> Pair(R.string.document, R.drawable.ic_file)
             AttachmentType.IMAGE -> {
-                if(messageTotalAttachment > 1) Pair(R.string.images, R.drawable.ic_images) //todo: ATTACHMENTS we need the real string from crowdin
+                if(messageTotalAttachment > 1) Pair(R.string.images, R.drawable.ic_images)
                 else Pair(R.string.image, R.drawable.ic_image)
             }
             AttachmentType.VIDEO -> Pair(R.string.video, R.drawable.ic_square_play)
@@ -123,9 +123,8 @@ class AttachmentControlView: LinearLayout {
                     isVisible = true
                 }
 
-                //todo: ATTACHMENT we need the 'tap to retry' string in crowdin
                 binding.pendingDownloadTitle.apply{
-                    text = "Failed to download"//context.getString(R.string.errorUnknown) //todo: ATTACHMENT we  need the right text in crowdin
+                    text = context.getString(R.string.failedToDownload)
                     setTextColor(errorColor)
                     setTypeface(typeface, android.graphics.Typeface.NORMAL)
                 }

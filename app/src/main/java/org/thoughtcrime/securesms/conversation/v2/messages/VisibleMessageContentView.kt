@@ -364,7 +364,6 @@ class VisibleMessageContentView : ConstraintLayout {
 
             // Attempt to redownload a failed attachment on tap
             AttachmentState.FAILED -> {
-                //todo: ATTACHMENT this won't update visually when happening in the message details screen as that screen isn't notified of updates
                 onContentClick.add {
                     retryFailedAttachments(attachments)
                 }

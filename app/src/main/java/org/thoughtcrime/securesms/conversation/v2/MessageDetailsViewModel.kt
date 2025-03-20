@@ -224,9 +224,6 @@ class MessageDetailsViewModel @Inject constructor(
     }
 }
 
-//todo: ATTACHMENT pending downloads - should they be tappable? To reveal the download dialog?
-//todo: ATTACHMENT failed downloads - should they be tappable? To retry the download?
-
 data class MessageDetailsState(
     val timestamp: Long = 0L,
     val attachments: List<Attachment> = emptyList(),
