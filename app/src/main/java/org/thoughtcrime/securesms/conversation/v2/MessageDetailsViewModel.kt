@@ -133,6 +133,7 @@ class MessageDetailsViewModel @Inject constructor(
                 val imageAttachments = attachments.filter { it.isDownloaded && it.hasImage }
 
                 MessageDetailsState(
+                    //todo: ATTACHMENT We should sort out the equals in DatabaseAttachment which is the reason the StateFlow think the objects are the same in spite of the transferState of an attachment being different. That way we could remove the timestamp below
                     timestamp = System.currentTimeMillis(), // used as a trick to force the state as  being marked aas different each time
                     attachments = attachments,
                     imageAttachments = imageAttachments,
