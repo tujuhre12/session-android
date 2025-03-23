@@ -641,7 +641,11 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             if (author != null && messageTimestamp >= 0) {
                 jumpToMessage(author, messageTimestamp, firstLoad.get(), null)
             } else {
-                if (firstLoad.getAndSet(false)) scrollToFirstUnreadMessageIfNeeded(true)
+                if (firstLoad.getAndSet(false)) {
+                    lifecycleScope.launch(Dispatchers.Main) {
+                        scrollToFirstUnreadMessageIfNeeded(true)
+                    }
+                }
                 handleRecyclerViewScrolled()
             }
         }
@@ -972,9 +976,13 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         }
     }
 
-    private fun scrollToFirstUnreadMessageIfNeeded(isFirstLoad: Boolean = false, shouldHighlight: Boolean = false): Int {
-        val lastSeenTimestamp = threadDb.getLastSeenAndHasSent(viewModel.threadId).first()
-        val lastSeenItemPosition = adapter.findLastSeenItemPosition(lastSeenTimestamp) ?: return -1
+    private suspend fun scrollToFirstUnreadMessageIfNeeded(isFirstLoad: Boolean = false, shouldHighlight: Boolean = false): Int {
+        val lastSeenItemPosition = withContext(Dispatchers.Default) {
+            val lastSeenTimestamp = threadDb.getLastSeenAndHasSent(viewModel.threadId).first()
+            adapter.findLastSeenItemPosition(lastSeenTimestamp)
+        }
+
+        if(lastSeenItemPosition == null) return -1
 
         // If this is triggered when first opening a conversation then we want to position the top
         // of the first unread message in the middle of the screen
