@@ -1,32 +1,28 @@
 package org.thoughtcrime.securesms.components.emoji;
 
 import android.content.Context;
-import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.core.widget.TextViewCompat;
-import androidx.appcompat.widget.AppCompatTextView;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.TypedValue;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.widget.AppCompatTextView;
+import androidx.core.widget.TextViewCompat;
 import network.loki.messenger.R;
-import org.thoughtcrime.securesms.components.emoji.EmojiProvider.EmojiDrawable;
-import org.thoughtcrime.securesms.components.emoji.parsing.EmojiParser;
 import org.session.libsession.utilities.Util;
 import org.session.libsignal.utilities.guava.Optional;
 
 public class EmojiTextView extends AppCompatTextView {
   private final boolean scaleEmojis;
-
   private static final char ELLIPSIS = '…';
 
   private CharSequence previousText;
-  private BufferType   previousBufferType = BufferType.NORMAL;
-  private float        originalFontSize;
-  private boolean      sizeChangeInProgress;
-  private int          maxLength;
+  private BufferType previousBufferType = BufferType.NORMAL;
+  private float originalFontSize;
+  private boolean sizeChangeInProgress;
+  private int maxLength;
   private CharSequence overflowText;
   private CharSequence previousOverflowText;
 
@@ -34,39 +30,85 @@ public class EmojiTextView extends AppCompatTextView {
     this(context, null);
   }
 
-  public EmojiTextView(Context context, AttributeSet attrs) {
+  public EmojiTextView(Context context, @Nullable AttributeSet attrs) {
     this(context, attrs, 0);
   }
 
-  public EmojiTextView(Context context, AttributeSet attrs, int defStyleAttr) {
+  public EmojiTextView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
     super(context, attrs, defStyleAttr);
-
     scaleEmojis = true;
-    maxLength   = 1000;
+    maxLength = 1000;
     originalFontSize = getResources().getDimension(R.dimen.medium_font_size);
   }
 
-  @Override public void setText(@Nullable CharSequence text, BufferType type) {
-    // No need to do anything special if the text is null or empty
+  /**
+   * Checks if a Unicode codepoint is considered an emoji.
+   */
+  private boolean isEmoji(int codePoint) {
+    return (codePoint >= 0x1F600 && codePoint <= 0x1F64F)   // Emoticons
+            || (codePoint >= 0x1F300 && codePoint <= 0x1F5FF)   // Misc Symbols and Pictographs
+            || (codePoint >= 0x1F680 && codePoint <= 0x1F6FF)   // Transport & Map Symbols
+            || (codePoint >= 0x2600 && codePoint <= 0x26FF)     // Misc symbols
+            || (codePoint >= 0x2700 && codePoint <= 0x27BF)     // Dingbats
+            || (codePoint >= 0x1F900 && codePoint <= 0x1F9FF)   // Supplemental Symbols and Pictographs
+            || (codePoint >= 0x1F1E6 && codePoint <= 0x1F1FF);  // Regional indicator symbols (flags)
+  }
+
+  /**
+   * Returns true if the text (ignoring whitespace) consists solely of emojis.
+   */
+  private boolean isAllEmojis(CharSequence text) {
+    if (text == null || text.length() == 0) return false;
+    int len = text.length();
+    int emojiCount = 0;
+    for (int offset = 0; offset < len; ) {
+      int codePoint = Character.codePointAt(text, offset);
+      if (!Character.isWhitespace(codePoint)) {
+        if (!isEmoji(codePoint)) {
+          return false;
+        }
+        emojiCount++;
+      }
+      offset += Character.charCount(codePoint);
+    }
+    return emojiCount > 0;
+  }
+
+  /**
+   * Counts the number of emoji codepoints in the text (ignoring whitespace).
+   */
+  private int countEmojis(CharSequence text) {
+    if (text == null || text.length() == 0) return 0;
+    int len = text.length();
+    int emojiCount = 0;
+    for (int offset = 0; offset < len; ) {
+      int codePoint = Character.codePointAt(text, offset);
+      if (!Character.isWhitespace(codePoint) && isEmoji(codePoint)) {
+        emojiCount++;
+      }
+      offset += Character.charCount(codePoint);
+    }
+    return emojiCount;
+  }
+
+  @Override
+  public void setText(@Nullable CharSequence text, BufferType type) {
     if (text == null || text.length() == 0) {
-      previousText         = text;
+      previousText = text;
       previousOverflowText = overflowText;
-      previousBufferType   = type;
+      previousBufferType = type;
       super.setText(text, type);
       return;
     }
 
-    EmojiParser.CandidateList candidates = EmojiProvider.getCandidates(text);
-
-    if (scaleEmojis && candidates != null && candidates.allEmojis) {
-      int   emojis = candidates.size();
-      float scale  = 1.0f;
-
-      if (emojis <= 8) scale += 0.25f;
-      if (emojis <= 6) scale += 0.25f;
-      if (emojis <= 4) scale += 0.25f;
-      if (emojis <= 2) scale += 0.25f;
-
+    boolean allEmojis = isAllEmojis(text);
+    if (scaleEmojis && allEmojis) {
+      int emojiCount = countEmojis(text);
+      float scale = 1.0f;
+      if (emojiCount <= 8) scale += 0.25f;
+      if (emojiCount <= 6) scale += 0.25f;
+      if (emojiCount <= 4) scale += 0.25f;
+      if (emojiCount <= 2) scale += 0.25f;
       super.setTextSize(TypedValue.COMPLEX_UNIT_PX, originalFontSize * scale);
     } else if (scaleEmojis) {
       super.setTextSize(TypedValue.COMPLEX_UNIT_PX, originalFontSize);
@@ -76,28 +118,22 @@ public class EmojiTextView extends AppCompatTextView {
       return;
     }
 
-    previousText         = text;
+    previousText = text;
     previousOverflowText = overflowText;
-    previousBufferType   = type;
+    previousBufferType = type;
 
-    if (candidates == null || candidates.size() == 0) {
-      super.setText(new SpannableStringBuilder(Optional.fromNullable(text).or("")).append(Optional.fromNullable(overflowText).or("")), BufferType.NORMAL);
+    // Let EmojiCompat (already initialized elsewhere) do its work.
+    SpannableStringBuilder builder = new SpannableStringBuilder();
+    builder.append(text).append(Optional.fromNullable(overflowText).or(""));
+    super.setText(builder, BufferType.SPANNABLE);
 
-      if (getEllipsize() == TextUtils.TruncateAt.END && maxLength > 0) {
+    // Android fails to ellipsize spannable strings. (https://issuetracker.google.com/issues/36991688)
+    // We ellipsize them ourselves by manually truncating the appropriate section.
+    if (getEllipsize() == TextUtils.TruncateAt.END) {
+      if (maxLength > 0) {
         ellipsizeAnyTextForMaxLength();
-      }
-    } else {
-     // CharSequence emojified = EmojiProvider.emojify(candidates, text, this, false);
-      super.setText(new SpannableStringBuilder(text).append(Optional.fromNullable(overflowText).or("")), BufferType.SPANNABLE);
-
-      // Android fails to ellipsize spannable strings. (https://issuetracker.google.com/issues/36991688)
-      // We ellipsize them ourselves by manually truncating the appropriate section.
-      if (getEllipsize() == TextUtils.TruncateAt.END) {
-        if (maxLength > 0) {
-          ellipsizeAnyTextForMaxLength();
-        } else {
-          ellipsizeEmojiTextForMaxLines();
-        }
+      } else {
+        ellipsizeEmojiTextForMaxLines();
       }
     }
   }
@@ -110,16 +146,10 @@ public class EmojiTextView extends AppCompatTextView {
   private void ellipsizeAnyTextForMaxLength() {
     if (maxLength > 0 && getText().length() > maxLength + 1) {
       SpannableStringBuilder newContent = new SpannableStringBuilder();
-      newContent.append(getText().subSequence(0, maxLength)).append(ELLIPSIS).append(Optional.fromNullable(overflowText).or(""));
-
-      EmojiParser.CandidateList newCandidates = EmojiProvider.getCandidates(newContent);
-
-      if (newCandidates == null || newCandidates.size() == 0) {
-        super.setText(newContent, BufferType.NORMAL);
-      } else {
-        CharSequence emojified = EmojiProvider.emojify(newCandidates, newContent, this, false);
-        super.setText(emojified, BufferType.SPANNABLE);
-      }
+      newContent.append(getText().subSequence(0, maxLength))
+              .append(ELLIPSIS)
+              .append(Optional.fromNullable(overflowText).or(""));
+      super.setText(newContent, BufferType.SPANNABLE);
     }
   }
 
@@ -129,27 +159,20 @@ public class EmojiTextView extends AppCompatTextView {
         ellipsizeEmojiTextForMaxLines();
         return;
       }
-
       int maxLines = TextViewCompat.getMaxLines(EmojiTextView.this);
       if (maxLines <= 0 && maxLength < 0) {
         return;
       }
-
       int lineCount = getLineCount();
       if (lineCount > maxLines) {
         int overflowStart = getLayout().getLineStart(maxLines - 1);
         CharSequence overflow = getText().subSequence(overflowStart, getText().length());
         CharSequence ellipsized = TextUtils.ellipsize(overflow, getPaint(), getWidth(), TextUtils.TruncateAt.END);
-
         SpannableStringBuilder newContent = new SpannableStringBuilder();
         newContent.append(getText().subSequence(0, overflowStart))
-                  .append(ellipsized.subSequence(0, ellipsized.length()))
-                  .append(Optional.fromNullable(overflowText).or(""));
-
-        EmojiParser.CandidateList newCandidates = EmojiProvider.getCandidates(newContent);
-        CharSequence              emojified     = EmojiProvider.emojify(newCandidates, newContent, this, false);
-
-        super.setText(emojified, BufferType.SPANNABLE);
+                .append(ellipsized.subSequence(0, ellipsized.length()))
+                .append(Optional.fromNullable(overflowText).or(""));
+        super.setText(newContent, BufferType.SPANNABLE);
       }
     });
   }
@@ -159,18 +182,15 @@ public class EmojiTextView extends AppCompatTextView {
     CharSequence finalText = (text == null || text.length() == 0 ? "" : text);
     CharSequence finalPrevOverflowText = (previousOverflowText == null || previousOverflowText.length() == 0 ? "" : previousOverflowText);
     CharSequence finalOverflowText = (overflowText == null || overflowText.length() == 0 ? "" : overflowText);
-
-    return Util.equals(finalPrevText, finalText)                 &&
-           Util.equals(finalPrevOverflowText, finalOverflowText) &&
-           Util.equals(previousBufferType, bufferType)           &&
-           !sizeChangeInProgress;
+    return Util.equals(finalPrevText, finalText)
+            && Util.equals(finalPrevOverflowText, finalOverflowText)
+            && Util.equals(previousBufferType, bufferType)
+            && !sizeChangeInProgress;
   }
-
 
   @Override
   protected void onSizeChanged(int w, int h, int oldw, int oldh) {
     super.onSizeChanged(w, h, oldw, oldh);
-
     if (!sizeChangeInProgress) {
       sizeChangeInProgress = true;
       setText(previousText, previousBufferType);
@@ -180,11 +200,7 @@ public class EmojiTextView extends AppCompatTextView {
 
   @Override
   public void invalidateDrawable(@NonNull Drawable drawable) {
-    if (drawable instanceof EmojiDrawable) {
-      invalidate();
-    } else {
-      super.invalidateDrawable(drawable);
-    }
+    super.invalidateDrawable(drawable);
   }
 
   @Override

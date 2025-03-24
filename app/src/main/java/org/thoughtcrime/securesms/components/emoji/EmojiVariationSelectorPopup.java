@@ -40,7 +40,8 @@ public class EmojiVariationSelectorPopup extends PopupWindow {
 
     for (String variation : variations) {
       ImageView imageView = (ImageView) LayoutInflater.from(context).inflate(R.layout.emoji_variation_selector_item, list, false);
-      imageView.setImageDrawable(EmojiProvider.getEmojiDrawable(context, variation));
+      //todo: EMOJI commented out
+      //imageView.setImageDrawable(EmojiProvider.getEmojiDrawable(context, variation));
       imageView.setOnClickListener(v -> {
         listener.onEmojiSelected(variation);
         dismiss();

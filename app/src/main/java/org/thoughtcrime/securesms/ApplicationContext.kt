@@ -80,7 +80,6 @@ import org.thoughtcrime.securesms.dependencies.AppComponent
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.dependencies.DatabaseModule.init
-import org.thoughtcrime.securesms.emoji.EmojiSource.Companion.refresh
 import org.thoughtcrime.securesms.groups.ExpiredGroupManager
 import org.thoughtcrime.securesms.groups.GroupPollerManager
 import org.thoughtcrime.securesms.groups.OpenGroupManager.startPolling
@@ -301,7 +300,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
         initializeBlobProvider()
         resubmitProfilePictureIfNeeded()
         loadEmojiSearchIndexIfNeeded()
-        refresh()
 
         val networkConstraint = NetworkConstraint.Factory(this).create()
         isConnectedToNetwork = { networkConstraint.isMet }

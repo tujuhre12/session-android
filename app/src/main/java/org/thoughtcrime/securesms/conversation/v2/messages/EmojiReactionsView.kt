@@ -10,7 +10,6 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
-import androidx.core.view.setPadding
 import com.google.android.flexbox.JustifyContent
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
@@ -18,8 +17,6 @@ import network.loki.messenger.databinding.ViewEmojiReactionsBinding
 import org.session.libsession.utilities.StringSubstitutionConstants.COUNT_KEY
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocalNumber
 import org.session.libsession.utilities.ThemeUtil
-import org.thoughtcrime.securesms.components.emoji.EmojiImageView
-import org.thoughtcrime.securesms.components.emoji.EmojiUtil
 import org.thoughtcrime.securesms.conversation.v2.ViewUtil
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.ReactionRecord
@@ -155,7 +152,7 @@ class EmojiReactionsView : ConstraintLayout, OnTouchListener {
         val counters: MutableMap<String, Reaction> = LinkedHashMap()
 
         records.forEach {
-            val baseEmoji = EmojiUtil.getCanonicalRepresentation(it.emoji)
+            val baseEmoji = it.emoji
             val info = counters[baseEmoji]
 
             if (info == null) {

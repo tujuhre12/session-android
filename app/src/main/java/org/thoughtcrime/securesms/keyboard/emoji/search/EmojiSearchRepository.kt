@@ -4,14 +4,11 @@ import android.content.Context
 import android.net.Uri
 import io.reactivex.Single
 import io.reactivex.schedulers.Schedulers
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.concurrent.SignalExecutors
 import org.thoughtcrime.securesms.components.emoji.Emoji
 import org.thoughtcrime.securesms.components.emoji.EmojiPageModel
-import org.thoughtcrime.securesms.components.emoji.RecentEmojiPageModel
 import org.thoughtcrime.securesms.database.EmojiSearchDatabase
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
-import org.thoughtcrime.securesms.emoji.EmojiSource
 import java.util.function.Consumer
 
 private const val MINIMUM_QUERY_THRESHOLD = 1
@@ -38,11 +35,12 @@ class EmojiSearchRepository(private val context: Context) {
     SignalExecutors.SERIAL.execute {
       val emoji: List<String> = emojiSearchDatabase.query(query, limit)
 
-      val displayEmoji: List<Emoji> = emoji
+      //todo: EMOJI commented out
+    /*  val displayEmoji: List<Emoji> = emoji
         .mapNotNull { canonical -> EmojiSource.latest.canonicalToVariations[canonical] }
-        .map { Emoji(it) }
+        .map { Emoji(it) }*/
 
-      consumer.accept(EmojiSearchResultsPageModel(emoji, displayEmoji))
+     // consumer.accept(EmojiSearchResultsPageModel(emoji, displayEmoji))
     }
   }
 

@@ -39,10 +39,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.TIME_LARGE_K
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocalNumber
 import org.session.libsession.utilities.ThemeUtil
-import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.components.emoji.EmojiImageView
 import org.thoughtcrime.securesms.components.emoji.RecentEmojiPageModel
 import org.thoughtcrime.securesms.components.menu.ActionItem
 import org.thoughtcrime.securesms.conversation.v2.menus.ConversationMenuItemHelper.userCanBanSelectedUsers
