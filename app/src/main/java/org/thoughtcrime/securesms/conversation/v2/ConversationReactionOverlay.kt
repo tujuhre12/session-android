@@ -81,7 +81,7 @@ class ConversationReactionOverlay : FrameLayout {
     private lateinit var conversationTimestamp: TextView
     private lateinit var backgroundView: View
     private lateinit var foregroundView: ConstraintLayout
-    private lateinit var emojiViews: List<TextView>
+    private lateinit var emojiViews: List<View>
     private var contextMenu: ConversationContextMenu? = null
     private var touchDownDeadZoneSize = 0f
     private var distanceFromTouchDownPointToBottomOfScrubberDeadZone = 0f
@@ -117,7 +117,8 @@ class ConversationReactionOverlay : FrameLayout {
         conversationTimestamp = conversationItem.findViewById(R.id.conversation_item_timestamp)
         backgroundView = findViewById(R.id.conversation_reaction_scrubber_background)
         foregroundView = findViewById(R.id.conversation_reaction_scrubber_foreground)
-        emojiViews = listOf(R.id.reaction_1, R.id.reaction_2, R.id.reaction_3, R.id.reaction_4, R.id.reaction_5, R.id.reaction_6).map { findViewById(it) }
+        emojiViews = listOf(R.id.reaction_1, R.id.reaction_2, R.id.reaction_3, R.id.reaction_4, R.id.reaction_5, R.id.reaction_6, R.id.reaction_7).map { findViewById(it) }
+        customEmojiIndex = emojiViews.size - 1
         distanceFromTouchDownPointToBottomOfScrubberDeadZone = resources.getDimensionPixelSize(R.dimen.conversation_reaction_scrub_deadzone_distance_from_touch_bottom).toFloat()
         touchDownDeadZoneSize = resources.getDimensionPixelSize(R.dimen.conversation_reaction_touch_deadzone_size).toFloat()
         scrubberWidth = resources.getDimensionPixelOffset(R.dimen.reaction_scrubber_width)
@@ -446,7 +447,12 @@ class ConversationReactionOverlay : FrameLayout {
             view.scaleY = 1.0f
             view.translationY = 0f
 
-            view.text = emojis[i]
+            val isAtCustomIndex = i == customEmojiIndex
+            if (isAtCustomIndex) {
+                view.tag = null
+            } else {
+                (view as? TextView)?.text = emojis[i]
+            }
         }
     }
 
@@ -640,9 +646,7 @@ class ConversationReactionOverlay : FrameLayout {
         val revealDuration = context.resources.getInteger(R.integer.reaction_scrubber_reveal_duration)
         val revealOffset = context.resources.getInteger(R.integer.reaction_scrubber_reveal_offset)
 
-        val viewsToAnimate: MutableList<View> = emojiViews.toMutableList()
-        viewsToAnimate.add(findViewById(R.id.reaction_7))
-        val reveals = viewsToAnimate.mapIndexed { idx: Int, v: View? ->
+        val reveals = emojiViews.mapIndexed { idx: Int, v: View? ->
             AnimatorInflaterCompat.loadAnimator(context, R.animator.reactions_scrubber_reveal).apply {
                 setTarget(v)
                 startDelay = (idx * animationEmojiStartDelayFactor).toLong()

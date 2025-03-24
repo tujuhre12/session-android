@@ -105,10 +105,11 @@ public class EmojiTextView extends AppCompatTextView {
     if (scaleEmojis && allEmojis) {
       int emojiCount = countEmojis(text);
       float scale = 1.0f;
-      if (emojiCount <= 8) scale += 0.25f;
-      if (emojiCount <= 6) scale += 0.25f;
-      if (emojiCount <= 4) scale += 0.25f;
-      if (emojiCount <= 2) scale += 0.25f;
+      if (emojiCount <= 8) scale += 0.3f;
+      if (emojiCount <= 6) scale += 0.3f;
+      if (emojiCount <= 4) scale += 0.3f;
+      if (emojiCount <= 2) scale += 0.3f;
+      if (emojiCount <= 1) scale += 0.3f;
       super.setTextSize(TypedValue.COMPLEX_UNIT_PX, originalFontSize * scale);
     } else if (scaleEmojis) {
       super.setTextSize(TypedValue.COMPLEX_UNIT_PX, originalFontSize);
