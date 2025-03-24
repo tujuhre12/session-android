@@ -5,21 +5,23 @@
     android:orientation="horizontal"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
+    android:foreground="@drawable/reaction_pill_dialog_foreground"
     android:paddingVertical="2dp"
     android:paddingHorizontal="@dimen/small_spacing">
 
   <TextView
       android:scaleType="centerInside"
       android:id="@+id/reactions_pill_emoji"
-      android:textSize="13sp"
+      android:textSize="11sp"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      android:layout_gravity="center_vertical"/>
+      android:layout_gravity="center_vertical"
+      tools:text="🩷"/>
 
   <View
       android:id="@+id/reactions_pill_spacer"
       android:layout_width="6dp"
-      android:layout_height="wrap_content" />
+      android:layout_height="6dp" />
 
   <TextView
       android:id="@+id/reactions_pill_count"

@@ -126,8 +126,8 @@ final class ReactionRecipientsAdapter extends RecyclerView.Adapter<ReactionRecip
       clearAll.setOnClickListener(isUserModerator ? (View.OnClickListener) v -> {
         callback.onClearAll(emoji.getBaseEmoji(), messageId);
       } : null);
-      EmojiImageView emojiView = itemView.findViewById(R.id.header_view_emoji);
-      emojiView.setImageEmoji(emoji.getDisplayEmoji());
+      TextView emojiView = itemView.findViewById(R.id.header_view_emoji);
+      emojiView.setText(emoji.getDisplayEmoji());
       TextView count = itemView.findViewById(R.id.header_view_emoji_count);
       count.setText(String.format(" •  %s", emoji.getCount()));
     }
