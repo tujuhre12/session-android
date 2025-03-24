@@ -84,7 +84,7 @@ class ConversationReactionOverlay : FrameLayout {
     private lateinit var conversationTimestamp: TextView
     private lateinit var backgroundView: View
     private lateinit var foregroundView: ConstraintLayout
-    private lateinit var emojiViews: List<EmojiImageView>
+    private lateinit var emojiViews: List<TextView>
     private var contextMenu: ConversationContextMenu? = null
     private var touchDownDeadZoneSize = 0f
     private var distanceFromTouchDownPointToBottomOfScrubberDeadZone = 0f
@@ -109,12 +109,6 @@ class ConversationReactionOverlay : FrameLayout {
     private val scope = CoroutineScope(Dispatchers.Default)
     private var job: Job? = null
 
-    private val iconMore by lazy {
-        val d = ContextCompat.getDrawable(context, R.drawable.ic_plus)
-        d?.setTint(context.getColorFromAttr(android.R.attr.textColor))
-        d
-    }
-
     constructor(context: Context) : super(context)
     constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
 
@@ -126,8 +120,7 @@ class ConversationReactionOverlay : FrameLayout {
         conversationTimestamp = conversationItem.findViewById(R.id.conversation_item_timestamp)
         backgroundView = findViewById(R.id.conversation_reaction_scrubber_background)
         foregroundView = findViewById(R.id.conversation_reaction_scrubber_foreground)
-        emojiViews = listOf(R.id.reaction_1, R.id.reaction_2, R.id.reaction_3, R.id.reaction_4, R.id.reaction_5, R.id.reaction_6, R.id.reaction_7).map { findViewById(it) }
-        customEmojiIndex = emojiViews.size - 1
+        emojiViews = listOf(R.id.reaction_1, R.id.reaction_2, R.id.reaction_3, R.id.reaction_4, R.id.reaction_5, R.id.reaction_6).map { findViewById(it) }
         distanceFromTouchDownPointToBottomOfScrubberDeadZone = resources.getDimensionPixelSize(R.dimen.conversation_reaction_scrub_deadzone_distance_from_touch_bottom).toFloat()
         touchDownDeadZoneSize = resources.getDimensionPixelSize(R.dimen.conversation_reaction_touch_deadzone_size).toFloat()
         scrubberWidth = resources.getDimensionPixelOffset(R.dimen.reaction_scrubber_width)
@@ -195,7 +188,7 @@ class ConversationReactionOverlay : FrameLayout {
         var endScale = 1f
         val menuPadding = DimensionUnit.DP.toPixels(12f)
         val reactionBarTopPadding = DimensionUnit.DP.toPixels(32f)
-        val reactionBarHeight = backgroundView.height
+        val reactionBarHeight = foregroundView.height
         var reactionBarBackgroundY: Float
         if (isWideLayout) {
             val everythingFitsVertically = reactionBarHeight + menuPadding + reactionBarTopPadding + conversationItemSnapshot.height < overlayHeight
@@ -281,8 +274,6 @@ class ConversationReactionOverlay : FrameLayout {
 
         foregroundView.x = scrubberX
         foregroundView.y = reactionBarBackgroundY + reactionBarHeight / 2f - foregroundView.height / 2f
-        backgroundView.x = scrubberX
-        backgroundView.y = reactionBarBackgroundY
         verticalScrubBoundary.update(reactionBarBackgroundY,
                 lastSeenDownPoint.y + distanceFromTouchDownPointToBottomOfScrubberDeadZone)
         updateBoundsOnLayoutChanged()
@@ -293,7 +284,7 @@ class ConversationReactionOverlay : FrameLayout {
                 isMessageOnLeft -> scrubberRight + menuPadding
                 else -> scrubberX - contextMenu.getMaxWidth() - menuPadding
             }
-            contextMenu.show(offsetX.toInt(), Math.min(backgroundView.y, (overlayHeight - contextMenu.getMaxHeight()).toFloat()).toInt())
+            contextMenu.show(offsetX.toInt(), Math.min(foregroundView.y, (overlayHeight - contextMenu.getMaxHeight()).toFloat()).toInt())
         } else {
             val contentX = if (isMessageOnLeft) scrubberHorizontalMargin.toFloat() else selectedConversationModel.bubbleX
             val offsetX = when {
@@ -385,7 +376,7 @@ class ConversationReactionOverlay : FrameLayout {
     }
 
     private fun updateBoundsOnLayoutChanged() {
-        backgroundView.getGlobalVisibleRect(emojiStripViewBounds)
+        foregroundView.getGlobalVisibleRect(emojiStripViewBounds)
         emojiViews[0].getGlobalVisibleRect(emojiViewGlobalRect)
         emojiStripViewBounds.left = getStart(emojiViewGlobalRect)
         emojiViews[emojiViews.size - 1].getGlobalVisibleRect(emojiViewGlobalRect)
@@ -457,13 +448,8 @@ class ConversationReactionOverlay : FrameLayout {
             view.scaleX = 1.0f
             view.scaleY = 1.0f
             view.translationY = 0f
-            val isAtCustomIndex = i == customEmojiIndex
-            if (isAtCustomIndex) {
-                view.setImageDrawable(iconMore)
-                view.tag = null
-            } else {
-                view.setImageEmoji(emojis[i])
-            }
+
+            view.text = emojis[i]
         }
     }
 
@@ -656,14 +642,17 @@ class ConversationReactionOverlay : FrameLayout {
     private fun initAnimators() {
         val revealDuration = context.resources.getInteger(R.integer.reaction_scrubber_reveal_duration)
         val revealOffset = context.resources.getInteger(R.integer.reaction_scrubber_reveal_offset)
-        val reveals = emojiViews.mapIndexed { idx: Int, v: EmojiImageView? ->
+
+        val viewsToAnimate: MutableList<View> = emojiViews.toMutableList()
+        viewsToAnimate.add(findViewById(R.id.reaction_7))
+        val reveals = viewsToAnimate.mapIndexed { idx: Int, v: View? ->
             AnimatorInflaterCompat.loadAnimator(context, R.animator.reactions_scrubber_reveal).apply {
                 setTarget(v)
                 startDelay = (idx * animationEmojiStartDelayFactor).toLong()
             }
         } + AnimatorInflaterCompat.loadAnimator(context, android.R.animator.fade_in).apply {
             setTarget(backgroundView)
-            setDuration(revealDuration.toLong())
+            duration = revealDuration.toLong()
             startDelay = revealOffset.toLong()
         }
         revealAnimatorSet.interpolator = INTERPOLATOR

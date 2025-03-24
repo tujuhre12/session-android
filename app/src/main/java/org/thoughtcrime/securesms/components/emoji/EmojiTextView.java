@@ -87,8 +87,8 @@ public class EmojiTextView extends AppCompatTextView {
         ellipsizeAnyTextForMaxLength();
       }
     } else {
-      CharSequence emojified = EmojiProvider.emojify(candidates, text, this, false);
-      super.setText(new SpannableStringBuilder(emojified).append(Optional.fromNullable(overflowText).or("")), BufferType.SPANNABLE);
+     // CharSequence emojified = EmojiProvider.emojify(candidates, text, this, false);
+      super.setText(new SpannableStringBuilder(text).append(Optional.fromNullable(overflowText).or("")), BufferType.SPANNABLE);
 
       // Android fails to ellipsize spannable strings. (https://issuetracker.google.com/issues/36991688)
       // We ellipsize them ourselves by manually truncating the appropriate section.

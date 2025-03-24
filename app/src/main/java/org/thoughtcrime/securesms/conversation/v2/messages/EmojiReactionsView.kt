@@ -180,7 +180,7 @@ class EmojiReactionsView : ConstraintLayout, OnTouchListener {
 
     private fun buildPill(context: Context, parent: ViewGroup, reaction: Reaction, isCompact: Boolean): View {
         val root = LayoutInflater.from(context).inflate(R.layout.reactions_pill, parent, false)
-        val emojiView = root.findViewById<EmojiImageView>(R.id.reactions_pill_emoji)
+        val emojiView = root.findViewById<TextView>(R.id.reactions_pill_emoji)
         val countView = root.findViewById<TextView>(R.id.reactions_pill_count)
         val spacer = root.findViewById<View>(R.id.reactions_pill_spacer)
         if (isCompact) {
@@ -191,7 +191,7 @@ class EmojiReactionsView : ConstraintLayout, OnTouchListener {
             root.layoutParams = layoutParams
         }
         if (reaction.emoji != null) {
-            emojiView.setImageEmoji(reaction.emoji)
+            emojiView.text = reaction.emoji
             if (reaction.count >= 1) {
                 countView.text = getFormattedNumber(reaction.count)
             } else {
