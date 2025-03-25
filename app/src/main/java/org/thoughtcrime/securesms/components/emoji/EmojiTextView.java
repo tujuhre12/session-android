@@ -45,17 +45,21 @@ public class EmojiTextView extends AppCompatTextView {
    * Checks if a Unicode codepoint is considered an emoji.
    */
   private boolean isEmoji(int codePoint) {
-    return (codePoint >= 0x1F600 && codePoint <= 0x1F64F)   // Emoticons
-            || (codePoint >= 0x1F300 && codePoint <= 0x1F5FF)   // Misc Symbols and Pictographs
-            || (codePoint >= 0x1F680 && codePoint <= 0x1F6FF)   // Transport & Map Symbols
-            || (codePoint >= 0x2600 && codePoint <= 0x26FF)     // Misc symbols
-            || (codePoint >= 0x2700 && codePoint <= 0x27BF)     // Dingbats
-            || (codePoint >= 0x1F900 && codePoint <= 0x1F9FF)   // Supplemental Symbols and Pictographs
-            || (codePoint >= 0x1F1E6 && codePoint <= 0x1F1FF);  // Regional indicator symbols (flags)
+    return (codePoint >= 0x1F000 && codePoint <= 0x1FFFF) || // Most emojis live here
+            (codePoint >= 0x2000 && codePoint <= 0x2BFF) ||   // Includes arrows, symbols
+            (codePoint >= 0x2300 && codePoint <= 0x23FF) ||   // Technical misc
+            (codePoint >= 0x2600 && codePoint <= 0x27EF) ||   // Dingbats, misc symbols
+            (codePoint >= 0x2900 && codePoint <= 0x297F) ||   // Supplemental arrows
+            (codePoint >= 0x2B00 && codePoint <= 0x2BFF) ||   // More symbols
+            (codePoint >= 0x3000 && codePoint <= 0x303F) ||   // CJK symbols
+            (codePoint >= 0x3200 && codePoint <= 0x32FF) ||   // Enclosed CJK
+            (codePoint >= 0xFE00 && codePoint <= 0xFE0F) ||   // Variation selectors
+            (codePoint >= 0x1F900 && codePoint <= 0x1F9FF) || // Supplemental symbols
+            (codePoint >= 0x1FA70 && codePoint <= 0x1FAFF);   // Extended symbols
   }
 
   /**
-   * Returns true if the text (ignoring whitespace) consists solely of emojis.
+   * Returns true if the text (ignoring whitespace) is only emojis.
    */
   private boolean isAllEmojis(CharSequence text) {
     if (text == null || text.length() == 0) return false;
