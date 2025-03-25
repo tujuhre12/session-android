@@ -64,7 +64,7 @@ public final class ReactWithAnyEmojiDialogFragment extends BottomSheetDialogFrag
 
   @Override
   public @NonNull Dialog onCreateDialog(Bundle savedInstanceState) {
-    BottomSheetDialog dialog = (BottomSheetDialog) super.onCreateDialog(savedInstanceState);
+    BottomSheetDialog dialog = new BottomSheetDialog(requireContext(), R.style.Theme_Session_BottomSheet);
     dialog.getBehavior().setPeekHeight((int) (getResources().getDisplayMetrics().heightPixels * 0.8));
    // dialog.getBehavior().setDraggable(false);
 
