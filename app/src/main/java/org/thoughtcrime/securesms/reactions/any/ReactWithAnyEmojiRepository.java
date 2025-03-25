@@ -17,28 +17,10 @@ final class ReactWithAnyEmojiRepository {
 
   private static final String TAG = Log.tag(ReactWithAnyEmojiRepository.class);
 
-  private final Context                     context;
   private final RecentEmojiPageModel        recentEmojiPageModel;
-  private final List<ReactWithAnyEmojiPage> emojiPages;
 
   ReactWithAnyEmojiRepository(@NonNull Context context) {
-    this.context              = context;
     this.recentEmojiPageModel = new RecentEmojiPageModel(context);
-    this.emojiPages           = new LinkedList<>();
-
-    //todo: EMOJI this was commented out
-   /* emojiPages.addAll(Stream.of(EmojiSource.getLatest().getDisplayPages())
-                            .map(page -> new ReactWithAnyEmojiPage(Collections.singletonList(new ReactWithAnyEmojiPageBlock(EmojiCategory.getCategoryLabel(page.getIconAttr()), page))))
-                            .toList());*/
-  }
-
-  List<ReactWithAnyEmojiPage> getEmojiPageModels() {
-    List<ReactWithAnyEmojiPage> pages       = new LinkedList<>();
-
-    pages.add(new ReactWithAnyEmojiPage(Collections.singletonList(new ReactWithAnyEmojiPageBlock(R.string.emojiCategoryRecentlyUsed, recentEmojiPageModel))));
-    pages.addAll(emojiPages);
-
-    return pages;
   }
 
   void addEmojiToMessage(@NonNull String emoji) {
