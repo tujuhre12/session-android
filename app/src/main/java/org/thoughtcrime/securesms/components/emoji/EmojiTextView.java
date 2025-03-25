@@ -44,6 +44,7 @@ public class EmojiTextView extends AppCompatTextView {
   /**
    * Checks if a Unicode codepoint is considered an emoji.
    */
+  //todo: We need a more solid way to check for this
   private boolean isEmoji(int codePoint) {
     return (codePoint >= 0x1F000 && codePoint <= 0x1FFFF) || // Most emojis live here
             (codePoint >= 0x2000 && codePoint <= 0x2BFF) ||   // Includes arrows, symbols
@@ -81,6 +82,7 @@ public class EmojiTextView extends AppCompatTextView {
   /**
    * Counts the number of emoji codepoints in the text (ignoring whitespace).
    */
+  //todo: some modern emojis are a group of two, like the phoenix emoji, and this will return 2 instead of one
   private int countEmojis(CharSequence text) {
     if (text == null || text.length() == 0) return 0;
     int len = text.length();
