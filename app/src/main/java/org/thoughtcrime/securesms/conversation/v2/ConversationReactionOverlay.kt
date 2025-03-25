@@ -186,7 +186,7 @@ class ConversationReactionOverlay : FrameLayout {
         var endScale = 1f
         val menuPadding = DimensionUnit.DP.toPixels(12f)
         val reactionBarTopPadding = DimensionUnit.DP.toPixels(32f)
-        val reactionBarHeight = foregroundView.height
+        val reactionBarHeight = backgroundView.height
         var reactionBarBackgroundY: Float
         if (isWideLayout) {
             val everythingFitsVertically = reactionBarHeight + menuPadding + reactionBarTopPadding + conversationItemSnapshot.height < overlayHeight
