@@ -19,6 +19,7 @@ import androidx.emoji2.text.EmojiSpan;
 import network.loki.messenger.R;
 import org.session.libsession.utilities.Util;
 import org.session.libsignal.utilities.guava.Optional;
+import org.thoughtcrime.securesms.util.EmojiUtils;
 
 public class EmojiTextView extends AppCompatTextView {
   private final boolean scaleEmojis;
@@ -61,15 +62,9 @@ public class EmojiTextView extends AppCompatTextView {
       return;
     }
 
-    if(scaleEmojis && EmojiCompat.get().getLoadState() == LOAD_STATE_SUCCEEDED) {
-      // Using EmojiCompat to process the text in order to know how many emojis we have
-      CharSequence processedText = EmojiCompat.get().process(text, 0, text.length(), Integer.MAX_VALUE, EmojiCompat.REPLACE_STRATEGY_ALL);
-      boolean allEmojis = processedText instanceof Spannable && isTextOnlyEmojiUsingSpans((Spannable) processedText);
-      if (allEmojis) {
-        int emojiCount = 0;
-        Spannable spannable = (Spannable) processedText;
-        emojiCount = spannable.getSpans(0, spannable.length(), EmojiSpan.class).length;
-
+    if(scaleEmojis) {
+        int emojiCount = EmojiUtils.INSTANCE.getOnlyEmojiCount(text);
+      if(emojiCount > 0){
         float scale = 1.0f;
         if (emojiCount <= 8) scale += 0.3f;
         if (emojiCount <= 6) scale += 0.3f;
@@ -103,46 +98,6 @@ public class EmojiTextView extends AppCompatTextView {
       }
     }
   }
-
-  /**
-   * Checks if the given text only contains emojis by going through the spans
-   * @param text
-   * @return true if the text only contains emojis, false otherwise
-   */
-  public static boolean isTextOnlyEmojiUsingSpans(Spannable text) {
-    if (text == null || text.length() == 0) {
-      // Depending on how you define "only emoji," empty text might be false or true.
-      return false;
-    }
-
-    int length = text.length();
-    EmojiSpan[] spans = text.getSpans(0, length, EmojiSpan.class);
-
-    // If there are no spans at all, but the text isn't empty, it can't be all emoji
-    if (spans == null || spans.length == 0) {
-      return false;
-    }
-
-    // Track coverage for each character
-    boolean[] coverage = new boolean[length];
-    for (EmojiSpan span : spans) {
-      int start = Math.max(0, text.getSpanStart(span));
-      int end   = Math.min(length, text.getSpanEnd(span));
-
-      for (int i = start; i < end; i++) {
-        coverage[i] = true;
-      }
-    }
-
-    // Check if every character is covered
-    for (boolean covered : coverage) {
-      if (!covered) {
-        return false;
-      }
-    }
-    return true;
-  }
-
 
   private void ellipsizeAnyTextForMaxLength() {
     if (maxLength > 0 && getText().length() > maxLength + 1) {
