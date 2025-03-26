@@ -1,7 +1,10 @@
 package org.thoughtcrime.securesms.components.emoji;
 
+import static androidx.emoji2.text.EmojiCompat.LOAD_STATE_SUCCEEDED;
+
 import android.content.Context;
 import android.graphics.drawable.Drawable;
+import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 import android.util.AttributeSet;
@@ -10,6 +13,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatTextView;
 import androidx.core.widget.TextViewCompat;
+import androidx.emoji2.text.EmojiCompat;
+import androidx.emoji2.text.EmojiSpan;
+
 import network.loki.messenger.R;
 import org.session.libsession.utilities.Util;
 import org.session.libsignal.utilities.guava.Optional;
@@ -41,62 +47,6 @@ public class EmojiTextView extends AppCompatTextView {
     originalFontSize = getResources().getDimension(R.dimen.medium_font_size);
   }
 
-  /**
-   * Checks if a Unicode codepoint is considered an emoji.
-   */
-  //todo: We need a more solid way to check for this
-  private boolean isEmoji(int codePoint) {
-    return (codePoint >= 0x1F000 && codePoint <= 0x1FFFF) || // Most emojis live here
-            (codePoint >= 0x2000 && codePoint <= 0x2BFF) ||   // Includes arrows, symbols
-            (codePoint >= 0x2300 && codePoint <= 0x23FF) ||   // Technical misc
-            (codePoint >= 0x2600 && codePoint <= 0x27EF) ||   // Dingbats, misc symbols
-            (codePoint >= 0x2900 && codePoint <= 0x297F) ||   // Supplemental arrows
-            (codePoint >= 0x2B00 && codePoint <= 0x2BFF) ||   // More symbols
-            (codePoint >= 0x3000 && codePoint <= 0x303F) ||   // CJK symbols
-            (codePoint >= 0x3200 && codePoint <= 0x32FF) ||   // Enclosed CJK
-            (codePoint >= 0xFE00 && codePoint <= 0xFE0F) ||   // Variation selectors
-            (codePoint >= 0x1F900 && codePoint <= 0x1F9FF) || // Supplemental symbols
-            (codePoint >= 0x1FA70 && codePoint <= 0x1FAFF);   // Extended symbols
-  }
-
-  /**
-   * Returns true if the text (ignoring whitespace) is only emojis.
-   */
-  private boolean isAllEmojis(CharSequence text) {
-    if (text == null || text.length() == 0) return false;
-    int len = text.length();
-    int emojiCount = 0;
-    for (int offset = 0; offset < len; ) {
-      int codePoint = Character.codePointAt(text, offset);
-      if (!Character.isWhitespace(codePoint)) {
-        if (!isEmoji(codePoint)) {
-          return false;
-        }
-        emojiCount++;
-      }
-      offset += Character.charCount(codePoint);
-    }
-    return emojiCount > 0;
-  }
-
-  /**
-   * Counts the number of emoji codepoints in the text (ignoring whitespace).
-   */
-  //todo: some modern emojis are a group of two, like the phoenix emoji, and this will return 2 instead of one
-  private int countEmojis(CharSequence text) {
-    if (text == null || text.length() == 0) return 0;
-    int len = text.length();
-    int emojiCount = 0;
-    for (int offset = 0; offset < len; ) {
-      int codePoint = Character.codePointAt(text, offset);
-      if (!Character.isWhitespace(codePoint) && isEmoji(codePoint)) {
-        emojiCount++;
-      }
-      offset += Character.charCount(codePoint);
-    }
-    return emojiCount;
-  }
-
   @Override
   public void setText(@Nullable CharSequence text, BufferType type) {
     if (text == null || text.length() == 0) {
@@ -107,22 +57,31 @@ public class EmojiTextView extends AppCompatTextView {
       return;
     }
 
-    boolean allEmojis = isAllEmojis(text);
-    if (scaleEmojis && allEmojis) {
-      int emojiCount = countEmojis(text);
-      float scale = 1.0f;
-      if (emojiCount <= 8) scale += 0.3f;
-      if (emojiCount <= 6) scale += 0.3f;
-      if (emojiCount <= 4) scale += 0.3f;
-      if (emojiCount <= 2) scale += 0.3f;
-      if (emojiCount <= 1) scale += 0.3f;
-      super.setTextSize(TypedValue.COMPLEX_UNIT_PX, originalFontSize * scale);
-    } else if (scaleEmojis) {
-      super.setTextSize(TypedValue.COMPLEX_UNIT_PX, originalFontSize);
-    }
-
     if (unchanged(text, overflowText, type)) {
       return;
+    }
+
+    if(scaleEmojis && EmojiCompat.get().getLoadState() == LOAD_STATE_SUCCEEDED) {
+      // Using EmojiCompat to process the text in order to know how many emojis we have
+      CharSequence processedText = EmojiCompat.get().process(text, 0, text.length(), Integer.MAX_VALUE, EmojiCompat.REPLACE_STRATEGY_ALL);
+      boolean allEmojis = processedText instanceof Spannable && isTextOnlyEmojiUsingSpans((Spannable) processedText);
+      if (allEmojis) {
+        int emojiCount = 0;
+        Spannable spannable = (Spannable) processedText;
+        emojiCount = spannable.getSpans(0, spannable.length(), EmojiSpan.class).length;
+
+        float scale = 1.0f;
+        if (emojiCount <= 8) scale += 0.3f;
+        if (emojiCount <= 6) scale += 0.3f;
+        if (emojiCount <= 4) scale += 0.3f;
+        if (emojiCount <= 2) scale += 0.3f;
+        if (emojiCount <= 1) scale += 0.3f;
+        super.setTextSize(TypedValue.COMPLEX_UNIT_PX, originalFontSize * scale);
+      } else {
+        super.setTextSize(TypedValue.COMPLEX_UNIT_PX, originalFontSize);
+      }
+    } else {
+      super.setTextSize(TypedValue.COMPLEX_UNIT_PX, originalFontSize);
     }
 
     previousText = text;
@@ -145,10 +104,45 @@ public class EmojiTextView extends AppCompatTextView {
     }
   }
 
-  public void setOverflowText(@Nullable CharSequence overflowText) {
-    this.overflowText = overflowText;
-    setText(previousText, BufferType.SPANNABLE);
+  /**
+   * Checks if the given text only contains emojis by going through the spans
+   * @param text
+   * @return true if the text only contains emojis, false otherwise
+   */
+  public static boolean isTextOnlyEmojiUsingSpans(Spannable text) {
+    if (text == null || text.length() == 0) {
+      // Depending on how you define "only emoji," empty text might be false or true.
+      return false;
+    }
+
+    int length = text.length();
+    EmojiSpan[] spans = text.getSpans(0, length, EmojiSpan.class);
+
+    // If there are no spans at all, but the text isn't empty, it can't be all emoji
+    if (spans == null || spans.length == 0) {
+      return false;
+    }
+
+    // Track coverage for each character
+    boolean[] coverage = new boolean[length];
+    for (EmojiSpan span : spans) {
+      int start = Math.max(0, text.getSpanStart(span));
+      int end   = Math.min(length, text.getSpanEnd(span));
+
+      for (int i = start; i < end; i++) {
+        coverage[i] = true;
+      }
+    }
+
+    // Check if every character is covered
+    for (boolean covered : coverage) {
+      if (!covered) {
+        return false;
+      }
+    }
+    return true;
   }
+
 
   private void ellipsizeAnyTextForMaxLength() {
     if (maxLength > 0 && getText().length() > maxLength + 1) {
