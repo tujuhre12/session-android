@@ -70,7 +70,7 @@ object EmojiUtils {
      * @param text
      * @return true if the text only contains emojis, false otherwise
      */
-    fun isTextOnlyEmojiUsingSpans(text: Spannable?): Boolean {
+    private fun isTextOnlyEmojiUsingSpans(text: Spannable?): Boolean {
         if (text == null || text.length == 0) {
             // Depending on how you define "only emoji," empty text might be false or true.
             return false
