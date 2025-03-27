@@ -18,6 +18,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.ColorRes
 import androidx.core.content.ContextCompat
+import androidx.core.view.doOnLayout
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -86,7 +87,7 @@ class PathActivity : ScreenLockActionBarActivity() {
             }
         }
 
-        binding.pathScroll.getViewTreeObserver().addOnGlobalLayoutListener(OnGlobalLayoutListener {
+/*        binding.pathScroll.getViewTreeObserver().addOnGlobalLayoutListener(OnGlobalLayoutListener {
             val child: View = binding.pathScroll.getChildAt(0)
             val isScrollable: Boolean = child.height > binding.pathScroll.height
             val params = binding.pathRowsContainer.layoutParams as FrameLayout.LayoutParams
@@ -98,7 +99,21 @@ class PathActivity : ScreenLockActionBarActivity() {
             }
 
             binding.pathRowsContainer.layoutParams = params
-        })
+        })*/
+
+        binding.pathScroll.doOnLayout {
+            val child: View = binding.pathScroll.getChildAt(0)
+            val isScrollable: Boolean = child.height > binding.pathScroll.height
+            val params = binding.pathRowsContainer.layoutParams as FrameLayout.LayoutParams
+
+            if(isScrollable){
+                params.gravity = Gravity.CENTER_HORIZONTAL
+            } else {
+                params.gravity = Gravity.CENTER
+            }
+
+            binding.pathRowsContainer.layoutParams = params
+        }
     }
 
     private fun registerObservers() {
