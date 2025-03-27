@@ -10,7 +10,6 @@ import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
-import android.view.ViewTreeObserver.OnGlobalLayoutListener
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
@@ -86,20 +85,6 @@ class PathActivity : ScreenLockActionBarActivity() {
                     }
             }
         }
-
-/*        binding.pathScroll.getViewTreeObserver().addOnGlobalLayoutListener(OnGlobalLayoutListener {
-            val child: View = binding.pathScroll.getChildAt(0)
-            val isScrollable: Boolean = child.height > binding.pathScroll.height
-            val params = binding.pathRowsContainer.layoutParams as FrameLayout.LayoutParams
-
-            if(isScrollable){
-                params.gravity = Gravity.CENTER_HORIZONTAL
-            } else {
-                params.gravity = Gravity.CENTER
-            }
-
-            binding.pathRowsContainer.layoutParams = params
-        })*/
 
         binding.pathScroll.doOnLayout {
             val child: View = binding.pathScroll.getChildAt(0)
