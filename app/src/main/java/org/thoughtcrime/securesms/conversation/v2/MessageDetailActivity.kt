@@ -192,7 +192,7 @@ fun MessageDetails(
                 AndroidView(
                     factory = { context ->
                         // Inflate the view once
-                        ViewVisibleMessageContentBinding.inflate(LayoutInflater.from(context)).mainContainerConstraint
+                        ViewVisibleMessageContentBinding.inflate(LayoutInflater.from(context)).root
                     },
                     update = { view ->
                         // Rebind the view whenever state changes.

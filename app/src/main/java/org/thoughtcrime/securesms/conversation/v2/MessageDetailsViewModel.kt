@@ -6,11 +6,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
@@ -73,6 +75,7 @@ class MessageDetailsViewModel @Inject constructor(
         scope = viewModelScope,
     )
 
+    @OptIn(FlowPreview::class)
     var timestamp: Long = 0L
         set(value) {
             job?.cancel()
@@ -88,6 +91,7 @@ class MessageDetailsViewModel @Inject constructor(
             // listen to conversation and attachments changes
             job = viewModelScope.launch {
                 (context.contentResolver.observeChanges(DatabaseContentProviders.Conversation.getUriForThread(messageRecord.threadId)) as Flow<*>)
+                    .debounce(200L)
                     .onStart { emit(Unit) }
                     .collect{
                         val updatedRecord = mmsSmsDatabase.getMessageForTimestamp(value)
