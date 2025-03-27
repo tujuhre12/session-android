@@ -47,7 +47,6 @@ android {
 
 dependencies {
     implementation project(":libsignal")
-    implementation project(":liblazysodium")
 
     implementation("com.google.dagger:hilt-android:$daggerHiltVersion")
     ksp("com.google.dagger:hilt-compiler:$daggerHiltVersion")
