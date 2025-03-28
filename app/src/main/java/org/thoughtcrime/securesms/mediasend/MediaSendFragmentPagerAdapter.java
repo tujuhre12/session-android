@@ -92,7 +92,7 @@ class MediaSendFragmentPagerAdapter extends FragmentStatePagerAdapter {
     notifyDataSetChanged();
   }
 
-  Map<Uri, Object> getSavedState() {
+  Map<Uri, Object> calculateSavedState() {
     for (MediaSendPageFragment fragment : fragments.values()) {
       Object state = fragment.saveState();
       if (state != null) {
