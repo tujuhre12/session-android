@@ -1,464 +1,498 @@
-package org.thoughtcrime.securesms.mediasend;
+package org.thoughtcrime.securesms.mediasend
 
-import android.annotation.SuppressLint;
-import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.Rect;
-import android.net.Uri;
-import android.os.AsyncTask;
-import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.view.KeyEvent;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
-import android.view.WindowManager;
-import android.view.inputmethod.EditorInfo;
-import android.widget.ImageButton;
-import android.widget.TextView;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.view.ContextThemeWrapper;
-import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProvider;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.viewpager.widget.ViewPager;
-import com.bumptech.glide.Glide;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
-
-import dagger.hilt.android.AndroidEntryPoint;
-import network.loki.messenger.R;
-import org.session.libsession.utilities.MediaTypes;
-import org.session.libsession.utilities.TextSecurePreferences;
-import org.session.libsession.utilities.Util;
-import org.session.libsession.utilities.recipients.Recipient;
-import org.session.libsignal.utilities.ListenableFuture;
-import org.session.libsignal.utilities.Log;
-import org.session.libsignal.utilities.SettableFuture;
-import org.session.libsignal.utilities.guava.Optional;
-import org.thoughtcrime.securesms.components.ComposeText;
-import org.thoughtcrime.securesms.components.ControllableViewPager;
-import org.thoughtcrime.securesms.components.InputAwareLayout;
-import org.thoughtcrime.securesms.imageeditor.model.EditorModel;
-import org.thoughtcrime.securesms.mediapreview.MediaRailAdapter;
-import org.thoughtcrime.securesms.providers.BlobProvider;
-import org.thoughtcrime.securesms.scribbles.ImageEditorFragment;
-import org.thoughtcrime.securesms.util.CharacterCalculator.CharacterState;
-import org.thoughtcrime.securesms.util.PushCharacterCalculator;
-import org.thoughtcrime.securesms.util.Stopwatch;
+import android.annotation.SuppressLint
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Rect
+import android.net.Uri
+import android.os.AsyncTask
+import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
+import android.view.KeyEvent
+import android.view.LayoutInflater
+import android.view.View
+import android.view.View.OnFocusChangeListener
+import android.view.ViewGroup
+import android.view.ViewTreeObserver.OnGlobalLayoutListener
+import android.view.WindowManager
+import android.view.inputmethod.EditorInfo
+import android.widget.ImageButton
+import android.widget.TextView
+import android.widget.TextView.OnEditorActionListener
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import androidx.viewpager.widget.ViewPager.SimpleOnPageChangeListener
+import com.bumptech.glide.Glide
+import dagger.hilt.android.AndroidEntryPoint
+import network.loki.messenger.R
+import org.session.libsession.utilities.MediaTypes
+import org.session.libsession.utilities.TextSecurePreferences.Companion.isEnterSendsEnabled
+import org.session.libsession.utilities.Util.cancelRunnableOnMain
+import org.session.libsession.utilities.Util.isEmpty
+import org.session.libsession.utilities.Util.runOnMainDelayed
+import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.utilities.ListenableFuture
+import org.session.libsignal.utilities.Log
+import org.session.libsignal.utilities.SettableFuture
+import org.session.libsignal.utilities.guava.Optional
+import org.thoughtcrime.securesms.components.ComposeText
+import org.thoughtcrime.securesms.components.ControllableViewPager
+import org.thoughtcrime.securesms.components.InputAwareLayout
+import org.thoughtcrime.securesms.components.KeyboardAwareLinearLayout.OnKeyboardHiddenListener
+import org.thoughtcrime.securesms.components.KeyboardAwareLinearLayout.OnKeyboardShownListener
+import org.thoughtcrime.securesms.imageeditor.model.EditorModel
+import org.thoughtcrime.securesms.mediapreview.MediaRailAdapter
+import org.thoughtcrime.securesms.mediapreview.MediaRailAdapter.RailItemListener
+import org.thoughtcrime.securesms.mediasend.MediaSendViewModel
+import org.thoughtcrime.securesms.providers.BlobProvider
+import org.thoughtcrime.securesms.scribbles.ImageEditorFragment
+import org.thoughtcrime.securesms.util.PushCharacterCalculator
+import org.thoughtcrime.securesms.util.Stopwatch
+import java.io.ByteArrayOutputStream
+import java.io.IOException
+import java.util.Locale
+import java.util.concurrent.ExecutionException
 
 /**
  * Allows the user to edit and caption a set of media items before choosing to send them.
  */
 @AndroidEntryPoint
-public class MediaSendFragment extends Fragment implements ViewTreeObserver.OnGlobalLayoutListener,
-                                                           MediaRailAdapter.RailItemListener,
-                                                           InputAwareLayout.OnKeyboardShownListener,
-                                                           InputAwareLayout.OnKeyboardHiddenListener
-{
-  private static final String TAG = MediaSendFragment.class.getSimpleName();
+class MediaSendFragment : Fragment(), OnGlobalLayoutListener, RailItemListener,
+    OnKeyboardShownListener, OnKeyboardHiddenListener {
+    private var hud: InputAwareLayout? = null
+    private var captionAndRail: View? = null
+    private var sendButton: ImageButton? = null
+    private var composeText: ComposeText? = null
+    private var composeContainer: ViewGroup? = null
+    private var playbackControlsContainer: ViewGroup? = null
+    private var charactersLeft: TextView? = null
+    private var closeButton: View? = null
+    private var loader: View? = null
 
-  private static final String KEY_ADDRESS = "address";
+    private var fragmentPager: ControllableViewPager? = null
+    private var fragmentPagerAdapter: MediaSendFragmentPagerAdapter? = null
+    private var mediaRail: RecyclerView? = null
+    private var mediaRailAdapter: MediaRailAdapter? = null
 
-  private InputAwareLayout  hud;
-  private View              captionAndRail;
-  private ImageButton       sendButton;
-  private ComposeText composeText;
-  private ViewGroup         composeContainer;
-  private ViewGroup         playbackControlsContainer;
-  private TextView          charactersLeft;
-  private View              closeButton;
-  private View              loader;
+    private var visibleHeight = 0
+    private var viewModel: MediaSendViewModel? = null
+    private var controller: Controller? = null
 
-  private ControllableViewPager         fragmentPager;
-  private MediaSendFragmentPagerAdapter fragmentPagerAdapter;
-  private RecyclerView                  mediaRail;
-  private MediaRailAdapter              mediaRailAdapter;
+    private val visibleBounds = Rect()
 
-  private int                visibleHeight;
-  private MediaSendViewModel viewModel;
-  private Controller         controller;
+    private val characterCalculator = PushCharacterCalculator()
 
-  private final Rect visibleBounds = new Rect();
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
 
-  private final PushCharacterCalculator characterCalculator = new PushCharacterCalculator();
+        check(requireActivity() is Controller) { "Parent activity must implement controller interface." }
 
-  public static MediaSendFragment newInstance(@NonNull Recipient recipient) {
-    Bundle args = new Bundle();
-    args.putParcelable(KEY_ADDRESS, recipient.getAddress());
-
-    MediaSendFragment fragment = new MediaSendFragment();
-    fragment.setArguments(args);
-    return fragment;
-  }
-
-  @Override
-  public void onAttach(Context context) {
-    super.onAttach(context);
-
-    if (!(requireActivity() instanceof Controller)) {
-      throw new IllegalStateException("Parent activity must implement controller interface.");
+        controller = requireActivity() as Controller
+        viewModel = ViewModelProvider(requireActivity()).get(
+            MediaSendViewModel::class.java
+        )
     }
 
-    controller = (Controller) requireActivity();
-    viewModel = new ViewModelProvider(requireActivity()).get(MediaSendViewModel.class);
-  }
-
-  @Override
-  public @Nullable View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-    return inflater.inflate(R.layout.mediasend_fragment, container, false);
-  }
-
-  @Override
-  public void onCreate(@Nullable Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    initViewModel();
-  }
-
-  @Override
-  public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-    hud                       = view.findViewById(R.id.mediasend_hud);
-    captionAndRail            = view.findViewById(R.id.mediasend_caption_and_rail);
-    sendButton                = view.findViewById(R.id.mediasend_send_button);
-    composeText               = view.findViewById(R.id.mediasend_compose_text);
-    composeContainer          = view.findViewById(R.id.mediasend_compose_container);
-    fragmentPager             = view.findViewById(R.id.mediasend_pager);
-    mediaRail                 = view.findViewById(R.id.mediasend_media_rail);
-    playbackControlsContainer = view.findViewById(R.id.mediasend_playback_controls_container);
-    charactersLeft            = view.findViewById(R.id.mediasend_characters_left);
-    closeButton               = view.findViewById(R.id.mediasend_close_button);
-    loader                    = view.findViewById(R.id.loader);
-
-    View sendButtonBkg = view.findViewById(R.id.mediasend_send_button_bkg);
-
-    sendButton.setOnClickListener(v -> {
-      if (hud.isKeyboardOpen()) {
-        hud.hideSoftkey(composeText, null);
-      }
-
-      processMedia(fragmentPagerAdapter.getAllMedia(), fragmentPagerAdapter.getSavedState());
-    });
-
-    ComposeKeyPressedListener composeKeyPressedListener = new ComposeKeyPressedListener();
-
-    composeText.setOnKeyListener(composeKeyPressedListener);
-    composeText.addTextChangedListener(composeKeyPressedListener);
-    composeText.setOnClickListener(composeKeyPressedListener);
-    composeText.setOnFocusChangeListener(composeKeyPressedListener);
-
-    composeText.requestFocus();
-
-    fragmentPagerAdapter = new MediaSendFragmentPagerAdapter(getChildFragmentManager());
-    fragmentPager.setAdapter(fragmentPagerAdapter);
-
-    FragmentPageChangeListener pageChangeListener = new FragmentPageChangeListener();
-    fragmentPager.addOnPageChangeListener(pageChangeListener);
-    fragmentPager.post(() -> pageChangeListener.onPageSelected(fragmentPager.getCurrentItem()));
-
-    mediaRailAdapter = new MediaRailAdapter(Glide.with(this), this, true);
-    mediaRail.setLayoutManager(new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false));
-    mediaRail.setAdapter(mediaRailAdapter);
-
-    hud.getRootView().getViewTreeObserver().addOnGlobalLayoutListener(this);
-    hud.addOnKeyboardShownListener(this);
-    hud.addOnKeyboardHiddenListener(this);
-
-    composeText.append(viewModel.getBody());
-
-    Recipient recipient   = Recipient.from(requireContext(), getArguments().getParcelable(KEY_ADDRESS), false);
-    String    displayName = Optional.fromNullable(recipient.getName())
-                                    .or(Optional.fromNullable(recipient.getProfileName())
-                                                .or(recipient.getAddress().toString()));
-    composeText.setHint(getString(R.string.message), null);
-    composeText.setOnEditorActionListener((v, actionId, event) -> {
-      boolean isSend = actionId == EditorInfo.IME_ACTION_SEND;
-      if (isSend) sendButton.performClick();
-      return isSend;
-    });
-
-    closeButton.setOnClickListener(v -> requireActivity().onBackPressed());
-  }
-
-  @Override
-  public void onStart() {
-    super.onStart();
-
-    fragmentPagerAdapter.restoreState(viewModel.getDrawState());
-    viewModel.onImageEditorStarted();
-
-    requireActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-    requireActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
-  }
-
-  @Override
-  public void onHiddenChanged(boolean hidden) {
-    super.onHiddenChanged(hidden);
-  }
-
-  @Override
-  public void onStop() {
-    super.onStop();
-    fragmentPagerAdapter.saveAllState();
-    viewModel.saveDrawState(fragmentPagerAdapter.getSavedState());
-  }
-
-  @Override
-  public void onGlobalLayout() {
-    hud.getRootView().getWindowVisibleDisplayFrame(visibleBounds);
-
-    int currentVisibleHeight = visibleBounds.height();
-
-    if (currentVisibleHeight != visibleHeight) {
-      hud.getLayoutParams().height = currentVisibleHeight;
-      hud.layout(visibleBounds.left, visibleBounds.top, visibleBounds.right, visibleBounds.bottom);
-      hud.requestLayout();
-
-      visibleHeight = currentVisibleHeight;
-    }
-  }
-
-  @Override
-  public void onRailItemClicked(int distanceFromActive) {
-    viewModel.onPageChanged(fragmentPager.getCurrentItem() + distanceFromActive);
-  }
-
-  @Override
-  public void onRailItemDeleteClicked(int distanceFromActive) {
-    viewModel.onMediaItemRemoved(requireContext(), fragmentPager.getCurrentItem() + distanceFromActive);
-  }
-
-  @Override
-  public void onKeyboardShown() {
-    if (composeText.hasFocus()) {
-      mediaRail.setVisibility(View.VISIBLE);
-      composeContainer.setVisibility(View.VISIBLE);
-    } else {
-      mediaRail.setVisibility(View.GONE);
-      composeContainer.setVisibility(View.VISIBLE);
-    }
-  }
-
-  @Override
-  public void onKeyboardHidden() {
-    composeContainer.setVisibility(View.VISIBLE);
-    mediaRail.setVisibility(View.VISIBLE);
-  }
-
-  public void onTouchEventsNeeded(boolean needed) {
-    if (fragmentPager != null) {
-      fragmentPager.setEnabled(!needed);
-    }
-  }
-
-  public boolean handleBackPress() {
-    if (hud.isInputOpen()) {
-      hud.hideCurrentInput(composeText);
-      return true;
-    }
-    return false;
-  }
-
-  private void initViewModel() {
-    viewModel.getSelectedMedia().observe(this, media -> {
-      if (Util.isEmpty(media)) {
-        controller.onNoMediaAvailable();
-        return;
-      }
-
-      fragmentPagerAdapter.setMedia(media);
-
-      mediaRail.setVisibility(View.VISIBLE);
-      mediaRailAdapter.setMedia(media);
-    });
-
-    viewModel.getPosition().observe(this, position -> {
-      if (position == null || position < 0) return;
-
-      fragmentPager.setCurrentItem(position, true);
-      mediaRailAdapter.setActivePosition(position);
-      mediaRail.smoothScrollToPosition(position);
-
-      View playbackControls = fragmentPagerAdapter.getPlaybackControls(position);
-
-      if (playbackControls != null) {
-        ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        playbackControls.setLayoutParams(params);
-        playbackControlsContainer.removeAllViews();
-        playbackControlsContainer.addView(playbackControls);
-      } else {
-        playbackControlsContainer.removeAllViews();
-      }
-    });
-
-    viewModel.getBucketId().observe(this, bucketId -> {
-      if (bucketId == null) return;
-
-      mediaRailAdapter.setAddButtonListener(() -> controller.onAddMediaClicked(bucketId));
-    });
-  }
-
-
-  private void presentCharactersRemaining() {
-    String          messageBody     = composeText.getTextTrimmed();
-    CharacterState  characterState  = characterCalculator.calculateCharacters(messageBody);
-
-    if (characterState.charactersRemaining <= 15 || characterState.messagesSpent > 1) {
-      charactersLeft.setText(String.format(Locale.getDefault(),
-                                           "%d/%d (%d)",
-                                           characterState.charactersRemaining,
-                                           characterState.maxTotalMessageSize,
-                                           characterState.messagesSpent));
-      charactersLeft.setVisibility(View.VISIBLE);
-    } else {
-      charactersLeft.setVisibility(View.GONE);
-    }
-  }
-
-  @SuppressLint("StaticFieldLeak")
-  private void processMedia(@NonNull List<Media> mediaList, @NonNull Map<Uri, Object> savedState) {
-    Map<Media, ListenableFuture<Bitmap>> futures = new HashMap<>();
-
-    for (Media media : mediaList) {
-      Object state = savedState.get(media.getUri());
-
-      if (state instanceof ImageEditorFragment.Data) {
-        EditorModel model = ((ImageEditorFragment.Data) state).readModel();
-        if (model != null && model.isChanged()) {
-          futures.put(media, render(requireContext(), model));
-        }
-      }
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        return inflater.inflate(R.layout.mediasend_fragment, container, false)
     }
 
-    new AsyncTask<Void, Void, List<Media>>() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        initViewModel()
+    }
 
-      private Stopwatch   renderTimer;
-      private Runnable    progressTimer;
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        hud = view.findViewById(R.id.mediasend_hud)
+        captionAndRail = view.findViewById(R.id.mediasend_caption_and_rail)
+        sendButton = view.findViewById(R.id.mediasend_send_button)
+        composeText = view.findViewById(R.id.mediasend_compose_text)
+        composeContainer = view.findViewById(R.id.mediasend_compose_container)
+        fragmentPager = view.findViewById(R.id.mediasend_pager)
+        mediaRail = view.findViewById(R.id.mediasend_media_rail)
+        playbackControlsContainer = view.findViewById(R.id.mediasend_playback_controls_container)
+        charactersLeft = view.findViewById(R.id.mediasend_characters_left)
+        closeButton = view.findViewById(R.id.mediasend_close_button)
+        loader = view.findViewById(R.id.loader)
 
-      @Override
-      protected void onPreExecute() {
-        renderTimer   = new Stopwatch("ProcessMedia");
-        progressTimer = () -> {
-          loader.setVisibility(View.VISIBLE);
-        };
-        Util.runOnMainDelayed(progressTimer, 250);
-      }
+        val sendButtonBkg = view.findViewById<View>(R.id.mediasend_send_button_bkg)
 
-      @Override
-      protected List<Media> doInBackground(Void... voids) {
-        Context     context      = requireContext();
-        List<Media> updatedMedia = new ArrayList<>(mediaList.size());
-
-        for (Media media : mediaList) {
-          if (futures.containsKey(media)) {
-            try {
-              Bitmap                 bitmap   = futures.get(media).get();
-              ByteArrayOutputStream  baos     = new ByteArrayOutputStream();
-              bitmap.compress(Bitmap.CompressFormat.JPEG, 80, baos);
-
-              Uri uri = BlobProvider.getInstance()
-                                    .forData(baos.toByteArray())
-                                    .withMimeType(MediaTypes.IMAGE_JPEG)
-                                    .createForSingleSessionOnDisk(context, e -> Log.w(TAG, "Failed to write to disk.", e));
-
-              Media updated = new Media(uri, media.getFilename(), MediaTypes.IMAGE_JPEG, media.getDate(), bitmap.getWidth(), bitmap.getHeight(), baos.size(), media.getBucketId(), media.getCaption());
-
-              updatedMedia.add(updated);
-              renderTimer.split("item");
-            } catch (InterruptedException | ExecutionException | IOException e) {
-              Log.w(TAG, "Failed to render image. Using base image.");
-              updatedMedia.add(media);
+        sendButton!!.setOnClickListener(View.OnClickListener { v: View? ->
+            if (hud!!.isKeyboardOpen()) {
+                hud!!.hideSoftkey(composeText, null)
             }
-          } else {
-            updatedMedia.add(media);
-          }
+            processMedia(fragmentPagerAdapter!!.allMedia, fragmentPagerAdapter!!.savedState)
+        })
+
+        val composeKeyPressedListener = ComposeKeyPressedListener()
+
+        composeText!!.setOnKeyListener(composeKeyPressedListener)
+        composeText!!.addTextChangedListener(composeKeyPressedListener)
+        composeText!!.setOnClickListener(composeKeyPressedListener)
+        composeText!!.setOnFocusChangeListener(composeKeyPressedListener)
+
+        composeText!!.requestFocus()
+
+        fragmentPagerAdapter = MediaSendFragmentPagerAdapter(childFragmentManager)
+        fragmentPager!!.setAdapter(fragmentPagerAdapter)
+
+        val pageChangeListener = FragmentPageChangeListener()
+        fragmentPager!!.addOnPageChangeListener(pageChangeListener)
+        fragmentPager!!.post(Runnable { pageChangeListener.onPageSelected(fragmentPager!!.currentItem) })
+
+        mediaRailAdapter = MediaRailAdapter(Glide.with(this), this, true)
+        mediaRail!!.setLayoutManager(
+            LinearLayoutManager(
+                requireContext(),
+                LinearLayoutManager.HORIZONTAL,
+                false
+            )
+        )
+        mediaRail!!.setAdapter(mediaRailAdapter)
+
+        hud!!.getRootView().viewTreeObserver.addOnGlobalLayoutListener(this)
+        hud!!.addOnKeyboardShownListener(this)
+        hud!!.addOnKeyboardHiddenListener(this)
+
+        composeText!!.append(viewModel!!.body)
+
+        val recipient = Recipient.from(
+            requireContext(),
+            arguments!!.getParcelable(KEY_ADDRESS)!!, false
+        )
+        val displayName = Optional.fromNullable(recipient.name)
+            .or(
+                Optional.fromNullable(recipient.profileName)
+                    .or(recipient.address.toString())
+            )
+        composeText!!.setHint(getString(R.string.message), null)
+        composeText!!.setOnEditorActionListener(OnEditorActionListener { v: TextView?, actionId: Int, event: KeyEvent? ->
+            val isSend = actionId == EditorInfo.IME_ACTION_SEND
+            if (isSend) sendButton!!.performClick()
+            isSend
+        })
+
+        closeButton!!.setOnClickListener(View.OnClickListener { v: View? -> requireActivity().onBackPressed() })
+    }
+
+    override fun onStart() {
+        super.onStart()
+
+        fragmentPagerAdapter!!.restoreState(viewModel!!.drawState)
+        viewModel!!.onImageEditorStarted()
+
+        requireActivity().window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
+        requireActivity().window.clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN)
+    }
+
+    override fun onHiddenChanged(hidden: Boolean) {
+        super.onHiddenChanged(hidden)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        fragmentPagerAdapter!!.saveAllState()
+        viewModel!!.saveDrawState(fragmentPagerAdapter!!.savedState)
+    }
+
+    override fun onGlobalLayout() {
+        hud!!.rootView.getWindowVisibleDisplayFrame(visibleBounds)
+
+        val currentVisibleHeight = visibleBounds.height()
+
+        if (currentVisibleHeight != visibleHeight) {
+            hud!!.layoutParams.height = currentVisibleHeight
+            hud!!.layout(
+                visibleBounds.left,
+                visibleBounds.top,
+                visibleBounds.right,
+                visibleBounds.bottom
+            )
+            hud!!.requestLayout()
+
+            visibleHeight = currentVisibleHeight
         }
-        return updatedMedia;
-      }
-
-      @Override
-      protected void onPostExecute(List<Media> media) {
-        controller.onSendClicked(media, composeText.getTextTrimmed());
-        Util.cancelRunnableOnMain(progressTimer);
-        loader.setVisibility(View.GONE);
-        renderTimer.stop(TAG);
-      }
-    }.execute();
-  }
-
-  private static ListenableFuture<Bitmap> render(@NonNull Context context, @NonNull EditorModel model) {
-    SettableFuture<Bitmap> future = new SettableFuture<>();
-
-    AsyncTask.THREAD_POOL_EXECUTOR.execute(() -> future.set(model.render(context)));
-
-    return future;
-  }
-
-  public void onRequestFullScreen(boolean fullScreen) {
-    captionAndRail.setVisibility(fullScreen ? View.GONE : View.VISIBLE);
-  }
-
-  private class FragmentPageChangeListener extends ViewPager.SimpleOnPageChangeListener {
-    @Override
-    public void onPageSelected(int position) {
-      viewModel.onPageChanged(position);
     }
-  }
 
-  private class ComposeKeyPressedListener implements View.OnKeyListener, View.OnClickListener, TextWatcher, View.OnFocusChangeListener {
+    override fun onRailItemClicked(distanceFromActive: Int) {
+        viewModel!!.onPageChanged(fragmentPager!!.currentItem + distanceFromActive)
+    }
 
-    int beforeLength;
+    override fun onRailItemDeleteClicked(distanceFromActive: Int) {
+        viewModel!!.onMediaItemRemoved(
+            requireContext(),
+            fragmentPager!!.currentItem + distanceFromActive
+        )
+    }
 
-    @Override
-    public boolean onKey(View v, int keyCode, KeyEvent event) {
-      if (event.getAction() == KeyEvent.ACTION_DOWN) {
-        if (keyCode == KeyEvent.KEYCODE_ENTER) {
-          if (TextSecurePreferences.isEnterSendsEnabled(requireContext())) {
-            sendButton.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER));
-            sendButton.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ENTER));
-            return true;
-          }
+    override fun onKeyboardShown() {
+        if (composeText!!.hasFocus()) {
+            mediaRail!!.visibility = View.VISIBLE
+            composeContainer!!.visibility = View.VISIBLE
+        } else {
+            mediaRail!!.visibility = View.GONE
+            composeContainer!!.visibility = View.VISIBLE
         }
-      }
-      return false;
     }
 
-    @Override
-    public void onClick(View v) {
-      hud.showSoftkey(composeText);
+    override fun onKeyboardHidden() {
+        composeContainer!!.visibility = View.VISIBLE
+        mediaRail!!.visibility = View.VISIBLE
     }
 
-    @Override
-    public void beforeTextChanged(CharSequence s, int start, int count,int after) {
-      beforeLength = composeText.getTextTrimmed().length();
+    fun onTouchEventsNeeded(needed: Boolean) {
+        if (fragmentPager != null) {
+            fragmentPager!!.isEnabled = !needed
+        }
     }
 
-    @Override
-    public void afterTextChanged(Editable s) {
-      presentCharactersRemaining();
-      viewModel.onBodyChanged(s);
+    fun handleBackPress(): Boolean {
+        if (hud!!.isInputOpen) {
+            hud!!.hideCurrentInput(composeText)
+            return true
+        }
+        return false
     }
 
-    @Override
-    public void onTextChanged(CharSequence s, int start, int before,int count) {}
+    private fun initViewModel() {
+        viewModel!!.getSelectedMedia().observe(
+            this
+        ) { media: List<Media?>? ->
+            if (isEmpty(media)) {
+                controller!!.onNoMediaAvailable()
+                return@observe
+            }
+            fragmentPagerAdapter!!.setMedia(media!!)
 
-    @Override
-    public void onFocusChange(View v, boolean hasFocus) {}
-  }
+            mediaRail!!.visibility = View.VISIBLE
+            mediaRailAdapter!!.setMedia(media)
+        }
 
-  public interface Controller {
-    void onAddMediaClicked(@NonNull String bucketId);
-    void onSendClicked(@NonNull List<Media> media, @NonNull String body);
-    void onNoMediaAvailable();
-  }
+        viewModel!!.getPosition().observe(this) { position: Int? ->
+            if (position == null || position < 0) return@observe
+            fragmentPager!!.setCurrentItem(position, true)
+            mediaRailAdapter!!.setActivePosition(position)
+            mediaRail!!.smoothScrollToPosition(position)
+
+            val playbackControls = fragmentPagerAdapter!!.getPlaybackControls(position)
+            if (playbackControls != null) {
+                val params = ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
+                playbackControls.layoutParams = params
+                playbackControlsContainer!!.removeAllViews()
+                playbackControlsContainer!!.addView(playbackControls)
+            } else {
+                playbackControlsContainer!!.removeAllViews()
+            }
+        }
+
+        viewModel!!.getBucketId().observe(this) { bucketId: String? ->
+            if (bucketId == null) return@observe
+            mediaRailAdapter!!.setAddButtonListener { controller!!.onAddMediaClicked(bucketId) }
+        }
+    }
+
+
+    private fun presentCharactersRemaining() {
+        val messageBody = composeText!!.textTrimmed
+        val characterState = characterCalculator.calculateCharacters(messageBody)
+
+        if (characterState.charactersRemaining <= 15 || characterState.messagesSpent > 1) {
+            charactersLeft!!.text = String.format(
+                Locale.getDefault(),
+                "%d/%d (%d)",
+                characterState.charactersRemaining,
+                characterState.maxTotalMessageSize,
+                characterState.messagesSpent
+            )
+            charactersLeft!!.visibility = View.VISIBLE
+        } else {
+            charactersLeft!!.visibility = View.GONE
+        }
+    }
+
+    @SuppressLint("StaticFieldLeak")
+    private fun processMedia(mediaList: List<Media>, savedState: Map<Uri, Any>) {
+        val futures: MutableMap<Media, ListenableFuture<Bitmap>> = HashMap()
+
+        for (media in mediaList) {
+            val state = savedState[media.uri]
+
+            if (state is ImageEditorFragment.Data) {
+                val model = state.readModel()
+                if (model != null && model.isChanged) {
+                    futures[media] = render(requireContext(), model)
+                }
+            }
+        }
+
+        object : AsyncTask<Void?, Void?, List<Media>>() {
+            private var renderTimer: Stopwatch? = null
+            private var progressTimer: Runnable? = null
+
+            override fun onPreExecute() {
+                renderTimer = Stopwatch("ProcessMedia")
+                progressTimer = Runnable {
+                    loader!!.visibility = View.VISIBLE
+                }
+                runOnMainDelayed(progressTimer!!, 250)
+            }
+
+            override fun doInBackground(vararg params: Void?): List<Media> {
+                val context = requireContext()
+                val updatedMedia: MutableList<Media> = ArrayList(mediaList.size)
+
+                for (media in mediaList) {
+                    if (futures.containsKey(media)) {
+                        try {
+                            val bitmap = futures[media]!!.get()
+                            val baos = ByteArrayOutputStream()
+                            bitmap.compress(Bitmap.CompressFormat.JPEG, 80, baos)
+
+                            val uri = BlobProvider.getInstance()
+                                .forData(baos.toByteArray())
+                                .withMimeType(MediaTypes.IMAGE_JPEG)
+                                .createForSingleSessionOnDisk(
+                                    context
+                                ) { e: IOException? ->
+                                    Log.w(
+                                        TAG,
+                                        "Failed to write to disk.",
+                                        e
+                                    )
+                                }
+
+                            val updated = Media(
+                                uri,
+                                media.filename,
+                                MediaTypes.IMAGE_JPEG,
+                                media.date,
+                                bitmap.width,
+                                bitmap.height,
+                                baos.size().toLong(),
+                                media.bucketId,
+                                media.caption
+                            )
+
+                            updatedMedia.add(updated)
+                            renderTimer!!.split("item")
+                        } catch (e: InterruptedException) {
+                            Log.w(TAG, "Failed to render image. Using base image.")
+                            updatedMedia.add(media)
+                        } catch (e: ExecutionException) {
+                            Log.w(TAG, "Failed to render image. Using base image.")
+                            updatedMedia.add(media)
+                        } catch (e: IOException) {
+                            Log.w(TAG, "Failed to render image. Using base image.")
+                            updatedMedia.add(media)
+                        }
+                    } else {
+                        updatedMedia.add(media)
+                    }
+                }
+                return updatedMedia
+            }
+
+            override fun onPostExecute(media: List<Media>) {
+                controller!!.onSendClicked(media, composeText!!.textTrimmed)
+                cancelRunnableOnMain(progressTimer!!)
+                loader!!.visibility = View.GONE
+                renderTimer!!.stop(TAG)
+            }
+        }.execute()
+    }
+
+    fun onRequestFullScreen(fullScreen: Boolean) {
+        captionAndRail!!.visibility =
+            if (fullScreen) View.GONE else View.VISIBLE
+    }
+
+    private inner class FragmentPageChangeListener : SimpleOnPageChangeListener() {
+        override fun onPageSelected(position: Int) {
+            viewModel!!.onPageChanged(position)
+        }
+    }
+
+    private inner class ComposeKeyPressedListener : View.OnKeyListener, View.OnClickListener,
+        TextWatcher, OnFocusChangeListener {
+        var beforeLength: Int = 0
+
+        override fun onKey(v: View, keyCode: Int, event: KeyEvent): Boolean {
+            if (event.action == KeyEvent.ACTION_DOWN) {
+                if (keyCode == KeyEvent.KEYCODE_ENTER) {
+                    if (isEnterSendsEnabled(requireContext())) {
+                        sendButton!!.dispatchKeyEvent(
+                            KeyEvent(
+                                KeyEvent.ACTION_DOWN,
+                                KeyEvent.KEYCODE_ENTER
+                            )
+                        )
+                        sendButton!!.dispatchKeyEvent(
+                            KeyEvent(
+                                KeyEvent.ACTION_UP,
+                                KeyEvent.KEYCODE_ENTER
+                            )
+                        )
+                        return true
+                    }
+                }
+            }
+            return false
+        }
+
+        override fun onClick(v: View) {
+            hud!!.showSoftkey(composeText)
+        }
+
+        override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {
+            beforeLength = composeText!!.textTrimmed.length
+        }
+
+        override fun afterTextChanged(s: Editable) {
+            presentCharactersRemaining()
+            viewModel!!.onBodyChanged(s)
+        }
+
+        override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {}
+
+        override fun onFocusChange(v: View, hasFocus: Boolean) {}
+    }
+
+    interface Controller {
+        fun onAddMediaClicked(bucketId: String)
+        fun onSendClicked(media: List<Media>, body: String)
+        fun onNoMediaAvailable()
+    }
+
+    companion object {
+        private val TAG: String = MediaSendFragment::class.java.simpleName
+
+        private const val KEY_ADDRESS = "address"
+
+        fun newInstance(recipient: Recipient): MediaSendFragment {
+            val args = Bundle()
+            args.putParcelable(KEY_ADDRESS, recipient.address)
+
+            val fragment = MediaSendFragment()
+            fragment.arguments = args
+            return fragment
+        }
+
+        private fun render(context: Context, model: EditorModel): ListenableFuture<Bitmap> {
+            val future = SettableFuture<Bitmap>()
+
+            AsyncTask.THREAD_POOL_EXECUTOR.execute { future.set(model.render(context)) }
+
+            return future
+        }
+    }
 }
