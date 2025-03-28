@@ -15,7 +15,7 @@
         android:layout_height="match_parent"
         android:paddingHorizontal="@dimen/message_spacing"
         android:background="@drawable/view_quote_attachment_preview_background">
-        <com.google.android.material.progressindicator.CircularProgressIndicator
+        <ProgressBar
             android:id="@+id/documentViewProgress"
             style="@style/Widget.Material3.CircularProgressIndicator.Small"
             android:layout_gravity="center_vertical"
