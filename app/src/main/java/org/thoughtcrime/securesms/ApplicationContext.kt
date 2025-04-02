@@ -205,7 +205,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
     @Volatile
     var isAppVisible: Boolean = false
 
-    override fun getSystemService(name: String): Any {
+    override fun getSystemService(name: String): Any? {
         if (MessagingModuleConfiguration.MESSAGING_MODULE_SERVICE == name) {
             return messagingModuleConfiguration!!
         }
