@@ -270,24 +270,30 @@ class VisibleMessageContentView : ConstraintLayout {
                 hideBody = false
 
                 if (overallAttachmentState == AttachmentState.DONE || message.isOutgoing) {
-                    if(suppressThumbnails) return // suppress thumbnail should hide the image, but we still want to show the attachment control if the state demands it
+                    if(!suppressThumbnails) { // suppress thumbnail should hide the image, but we still want to show the attachment control if the state demands it
 
-                    binding.attachmentControlView.root.isVisible = false
+                        binding.attachmentControlView.root.isVisible = false
 
-                    // isStart and isEnd of cluster needed for calculating the mask for full bubble image groups
-                    // bind after add view because views are inflated and calculated during bind
-                    binding.albumThumbnailView.root.isVisible = true
-                    binding.albumThumbnailView.root.bind(
-                        glideRequests = glide,
-                        message = message,
-                        isStart = isStartOfMessageCluster,
-                        isEnd = isEndOfMessageCluster
-                    )
-                    binding.albumThumbnailView.root.modifyLayoutParams<LayoutParams> {
-                        horizontalBias = if (message.isOutgoing) 1f else 0f
-                    }
-                    onContentClick.add { event ->
-                        binding.albumThumbnailView.root.calculateHitObject(event, message, thread, downloadPendingAttachment)
+                        // isStart and isEnd of cluster needed for calculating the mask for full bubble image groups
+                        // bind after add view because views are inflated and calculated during bind
+                        binding.albumThumbnailView.root.isVisible = true
+                        binding.albumThumbnailView.root.bind(
+                            glideRequests = glide,
+                            message = message,
+                            isStart = isStartOfMessageCluster,
+                            isEnd = isEndOfMessageCluster
+                        )
+                        binding.albumThumbnailView.root.modifyLayoutParams<LayoutParams> {
+                            horizontalBias = if (message.isOutgoing) 1f else 0f
+                        }
+                        onContentClick.add { event ->
+                            binding.albumThumbnailView.root.calculateHitObject(
+                                event,
+                                message,
+                                thread,
+                                downloadPendingAttachment
+                            )
+                        }
                     }
                 } else {
                     databaseAttachments?.let {
