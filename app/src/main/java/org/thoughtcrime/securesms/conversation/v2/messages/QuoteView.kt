@@ -106,25 +106,25 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
                 attachments.audioSlide != null -> {
                     val isVoiceNote = attachments.isVoiceNote
                     if (isVoiceNote) {
-                        binding.quoteViewBodyTextView.text = resources.getString(R.string.messageVoice)
+                        updateQuoteTextIfEmpty(resources.getString(R.string.messageVoice))
                         binding.quoteViewAttachmentPreviewImageView.setImageResource(R.drawable.ic_mic)
                     } else {
-                        binding.quoteViewBodyTextView.text = resources.getString(R.string.audio)
+                        updateQuoteTextIfEmpty(resources.getString(R.string.audio))
                         binding.quoteViewAttachmentPreviewImageView.setImageResource(R.drawable.ic_volume_2)
                     }
                 }
                 attachments.documentSlide != null -> {
                     binding.quoteViewAttachmentPreviewImageView.setImageResource(R.drawable.ic_file)
-                    binding.quoteViewBodyTextView.text = resources.getString(R.string.document)
+                    updateQuoteTextIfEmpty(resources.getString(R.string.document))
                 }
                 attachments.thumbnailSlide != null -> {
                     val slide = attachments.thumbnailSlide!!
 
                     if (MediaUtil.isVideo(slide.asAttachment())){
-                        binding.quoteViewBodyTextView.text = resources.getString(R.string.video)
+                        updateQuoteTextIfEmpty(resources.getString(R.string.video))
                         binding.quoteViewAttachmentPreviewImageView.setImageResource(R.drawable.ic_square_play)
                     } else {
-                        binding.quoteViewBodyTextView.text = resources.getString(R.string.image)
+                        updateQuoteTextIfEmpty(resources.getString(R.string.image))
                         binding.quoteViewAttachmentPreviewImageView.setImageResource(R.drawable.ic_image)
                     }
 
@@ -143,6 +143,12 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
 
                 }
             }
+        }
+    }
+
+    private fun updateQuoteTextIfEmpty(text: String){
+        if(binding.quoteViewBodyTextView.text.isNullOrEmpty()){
+            binding.quoteViewBodyTextView.text = text
         }
     }
     // endregion
