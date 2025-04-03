@@ -2087,7 +2087,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 // ..otherwise we can attempt to send the attachment(s).
                 // Note: The only multi-attachment message type is when sending images - all others
                 // attempt send the attachment immediately upon file selection.
-                sendAttachments(attachmentManager.buildSlideDeck().asAttachments(), null)
+                sendAttachments(attachmentManager.buildSlideDeck().asAttachments(), getMessageBody())
             }
 
             override fun onFailure(e: ExecutionException?) {

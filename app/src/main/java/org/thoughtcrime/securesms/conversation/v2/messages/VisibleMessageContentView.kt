@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.conversation.v2.messages
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Rect
 import android.text.Spannable
@@ -81,6 +82,8 @@ class VisibleMessageContentView : ConstraintLayout {
         val color = if (message.isOutgoing) context.getAccentColor()
         else context.getColorFromAttr(R.attr.message_received_background_color)
         binding.contentParent.mainColor = color
+        binding.documentView.root.backgroundTintList = ColorStateList.valueOf(color)
+        binding.voiceMessageView.root.backgroundTintList = ColorStateList.valueOf(color)
         binding.contentParent.cornerRadius = resources.getDimension(R.dimen.message_corner_radius)
 
         val mediaDownloaded = message is MmsMessageRecord && message.slideDeck.asAttachments().all { it.isDone }

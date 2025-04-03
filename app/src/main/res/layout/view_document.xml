@@ -5,6 +5,7 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     xmlns:tools="http://schemas.android.com/tools"
+    android:background="@drawable/message_bubble_background"
     android:orientation="horizontal"
     android:paddingEnd="@dimen/message_spacing"
     android:gravity="center"
