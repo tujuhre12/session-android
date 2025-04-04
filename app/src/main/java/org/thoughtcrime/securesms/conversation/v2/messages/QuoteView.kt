@@ -9,6 +9,7 @@ import androidx.core.content.res.ResourcesCompat
 import androidx.core.content.res.use
 import androidx.core.text.toSpannable
 import androidx.core.view.isVisible
+import com.bumptech.glide.RequestManager
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewQuoteBinding
@@ -16,13 +17,11 @@ import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.truncateIdForDisplay
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.database.SessionContactDatabase
-import com.bumptech.glide.RequestManager
-import org.session.libsession.utilities.truncateIdForDisplay
 import org.thoughtcrime.securesms.mms.SlideDeck
 import org.thoughtcrime.securesms.util.MediaUtil
-import org.thoughtcrime.securesms.util.getAccentColor
 import org.thoughtcrime.securesms.util.toPx
 import javax.inject.Inject
 
