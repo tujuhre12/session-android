@@ -205,6 +205,11 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
     @Volatile
     var isAppVisible: Boolean = false
 
+    override val workManagerConfiguration: Configuration
+        get() = Configuration.Builder()
+            .setWorkerFactory(workerFactory)
+            .build()
+
     override fun getSystemService(name: String): Any? {
         if (MessagingModuleConfiguration.MESSAGING_MODULE_SERVICE == name) {
             return messagingModuleConfiguration!!
@@ -328,12 +333,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
 
             ShortcutManagerCompat.pushDynamicShortcut(this, shortcut)
         }
-    }
-
-    override fun getWorkManagerConfiguration(): Configuration {
-        return Configuration.Builder()
-            .setWorkerFactory(workerFactory)
-            .build()
     }
 
     override fun onStart(owner: LifecycleOwner) {
