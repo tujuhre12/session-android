@@ -23,7 +23,6 @@ import com.bumptech.glide.RequestManager
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
@@ -46,7 +45,6 @@ import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_K
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
@@ -69,7 +67,7 @@ import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter
 import org.thoughtcrime.securesms.home.search.GlobalSearchInputLayout
 import org.thoughtcrime.securesms.home.search.GlobalSearchResult
 import org.thoughtcrime.securesms.home.search.GlobalSearchViewModel
-import org.thoughtcrime.securesms.home.search.getSearchName
+import org.thoughtcrime.securesms.home.search.SearchContactActionBottomSheet
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.SettingsActivity
@@ -93,7 +91,8 @@ private const val FROM_ONBOARDING = "HomeActivity_FROM_ONBOARDING"
 @AndroidEntryPoint
 class HomeActivity : ScreenLockActionBarActivity(),
     ConversationClickListener,
-    GlobalSearchInputLayout.GlobalSearchInputLayoutListener {
+    GlobalSearchInputLayout.GlobalSearchInputLayoutListener,
+    SearchContactActionBottomSheet.Callbacks{
 
     private val TAG = "HomeActivity"
 
@@ -123,34 +122,44 @@ class HomeActivity : ScreenLockActionBarActivity(),
         HomeAdapter(context = this, configFactory = configFactory, listener = this, ::showMessageRequests, ::hideMessageRequests)
     }
 
-    private val globalSearchAdapter = GlobalSearchAdapter { model ->
-        when (model) {
-            is GlobalSearchAdapter.Model.Message -> push<ConversationActivityV2> {
-                model.messageResult.run {
-                    putExtra(ConversationActivityV2.THREAD_ID, threadId)
-                    putExtra(ConversationActivityV2.SCROLL_MESSAGE_ID, sentTimestampMs)
-                    putExtra(ConversationActivityV2.SCROLL_MESSAGE_AUTHOR, messageRecipient.address)
+    private val globalSearchAdapter = GlobalSearchAdapter(
+        onContactClicked = { model ->
+            when (model) {
+                is GlobalSearchAdapter.Model.Message -> push<ConversationActivityV2> {
+                    model.messageResult.run {
+                        putExtra(ConversationActivityV2.THREAD_ID, threadId)
+                        putExtra(ConversationActivityV2.SCROLL_MESSAGE_ID, sentTimestampMs)
+                        putExtra(ConversationActivityV2.SCROLL_MESSAGE_AUTHOR, messageRecipient.address)
+                    }
                 }
-            }
-            is GlobalSearchAdapter.Model.SavedMessages -> push<ConversationActivityV2> {
-                putExtra(ConversationActivityV2.ADDRESS, Address.fromSerialized(model.currentUserPublicKey))
-            }
-            is GlobalSearchAdapter.Model.Contact -> push<ConversationActivityV2> {
-                putExtra(
-                    ConversationActivityV2.ADDRESS,
-                    model.contact.hexString.let(Address::fromSerialized)
-                )
-            }
+                is GlobalSearchAdapter.Model.SavedMessages -> push<ConversationActivityV2> {
+                    putExtra(ConversationActivityV2.ADDRESS, Address.fromSerialized(model.currentUserPublicKey))
+                }
+                is GlobalSearchAdapter.Model.Contact -> push<ConversationActivityV2> {
+                    putExtra(
+                        ConversationActivityV2.ADDRESS,
+                        model.contact.hexString.let(Address::fromSerialized)
+                    )
+                }
 
-            is GlobalSearchAdapter.Model.GroupConversation -> model.groupId
-                .let { Recipient.from(this, Address.fromSerialized(it), false) }
-                .let(threadDb::getThreadIdIfExistsFor)
-                .takeIf { it >= 0 }
-                ?.let {
-                    push<ConversationActivityV2> { putExtra(ConversationActivityV2.THREAD_ID, it) }
-                }
-            else -> Log.d("Loki", "callback with model: $model")
+                is GlobalSearchAdapter.Model.GroupConversation -> model.groupId
+                    .let { Recipient.from(this, Address.fromSerialized(it), false) }
+                    .let(threadDb::getThreadIdIfExistsFor)
+                    .takeIf { it >= 0 }
+                    ?.let {
+                        push<ConversationActivityV2> { putExtra(ConversationActivityV2.THREAD_ID, it) }
+                    }
+                else -> Log.d("Loki", "callback with model: $model")
+            }
+        },
+        onContactLongPressed = { model ->
+            onSearchContactLongPress(model.contact.hexString, model.name)
         }
+    )
+
+    private fun onSearchContactLongPress(accountId: String, contactName: String) {
+        val bottomSheet = SearchContactActionBottomSheet.newInstance(accountId, contactName)
+        bottomSheet.show(supportFragmentManager, bottomSheet.tag)
     }
 
     private val isFromOnboarding: Boolean get() = intent.getBooleanExtra(FROM_ONBOARDING, false)
@@ -184,7 +193,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
         binding.globalSearchInputLayout.listener = this
         homeAdapter.setHasStableIds(true)
         homeAdapter.glide = glide
-        binding.recyclerView.adapter = homeAdapter
+        binding.searchContactsRecyclerView.adapter = homeAdapter
         binding.globalSearchRecycler.adapter = globalSearchAdapter
 
         binding.configOutdatedView.setOnClickListener {
@@ -221,7 +230,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 homeViewModel.data
                     .filterNotNull() // We don't actually want the null value here as it indicates a loading state (maybe we need a loading state?)
                     .collectLatest { data ->
-                        val manager = binding.recyclerView.layoutManager as LinearLayoutManager
+                        val manager = binding.searchContactsRecyclerView.layoutManager as LinearLayoutManager
                         val firstPos = manager.findFirstCompletelyVisibleItemPosition()
                         val offsetTop = if(firstPos >= 0) {
                             manager.findViewByPosition(firstPos)?.let { view ->
@@ -330,6 +339,14 @@ class HomeActivity : ScreenLockActionBarActivity(),
         homeViewModel.onCancelSearchClicked()
     }
 
+    override fun onBlockContact(accountId: String) {
+        homeViewModel.blockContact(accountId)
+    }
+
+    override fun onDeleteContact(accountId: String) {
+        homeViewModel.deleteContact(accountId)
+    }
+
     private val GlobalSearchResult.groupedContacts: List<GlobalSearchAdapter.Model> get() {
         class NamedValue<T>(val name: String?, val value: T)
 
@@ -388,7 +405,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
         binding.searchToolbar.isVisible = isShown
         binding.sessionToolbar.isVisible = !isShown
-        binding.recyclerView.isVisible = !isShown
+        binding.searchContactsRecyclerView.isVisible = !isShown
         binding.seedReminderView.isVisible = !TextSecurePreferences.getHasViewedSeed(this) && !isShown
         binding.globalSearchRecycler.isVisible = isShown
         binding.conversationListContainer.isVisible = !isShown
@@ -441,8 +458,8 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
     // region Updating
     private fun updateEmptyState() {
-        val threadCount = (binding.recyclerView.adapter)!!.itemCount
-        binding.emptyStateContainer.isVisible = threadCount == 0 && binding.recyclerView.isVisible
+        val threadCount = (binding.searchContactsRecyclerView.adapter)!!.itemCount
+        binding.emptyStateContainer.isVisible = threadCount == 0 && binding.searchContactsRecyclerView.isVisible
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -565,7 +582,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                     storage.setBlocked(listOf(thread.recipient), true)
 
                     withContext(Dispatchers.Main) {
-                        binding.recyclerView.adapter!!.notifyDataSetChanged()
+                        binding.searchContactsRecyclerView.adapter!!.notifyDataSetChanged()
                     }
                 }
                 // Block confirmation toast added as per SS-64
@@ -584,7 +601,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 lifecycleScope.launch(Dispatchers.Default) {
                     storage.setBlocked(listOf(thread.recipient), false)
                     withContext(Dispatchers.Main) {
-                        binding.recyclerView.adapter!!.notifyDataSetChanged()
+                        binding.searchContactsRecyclerView.adapter!!.notifyDataSetChanged()
                     }
                 }
             }
@@ -597,7 +614,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
             lifecycleScope.launch(Dispatchers.Default) {
                 recipientDatabase.setMuted(thread.recipient, 0)
                 withContext(Dispatchers.Main) {
-                    binding.recyclerView.adapter!!.notifyDataSetChanged()
+                    binding.searchContactsRecyclerView.adapter!!.notifyDataSetChanged()
                 }
             }
         } else {
@@ -605,7 +622,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 lifecycleScope.launch(Dispatchers.Default) {
                     recipientDatabase.setMuted(thread.recipient, until)
                     withContext(Dispatchers.Main) {
-                        binding.recyclerView.adapter!!.notifyDataSetChanged()
+                        binding.searchContactsRecyclerView.adapter!!.notifyDataSetChanged()
                     }
                 }
             }
@@ -616,7 +633,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
         lifecycleScope.launch(Dispatchers.Default) {
             recipientDatabase.setNotifyType(thread.recipient, newNotifyType)
             withContext(Dispatchers.Main) {
-                binding.recyclerView.adapter!!.notifyDataSetChanged()
+                binding.searchContactsRecyclerView.adapter!!.notifyDataSetChanged()
             }
         }
     }
@@ -662,18 +679,12 @@ class HomeActivity : ScreenLockActionBarActivity(),
             lifecycleScope.launch(Dispatchers.Main) {
                 val context = this@HomeActivity
                 // Cancel any outstanding jobs
-                sessionJobDatabase
-                    .cancelPendingMessageSendJobs(threadID)
+                sessionJobDatabase.cancelPendingMessageSendJobs(threadID)
 
                 // Delete the conversation
-                val community = lokiThreadDatabase
-                    .getOpenGroupChat(threadID)
+                val community = lokiThreadDatabase.getOpenGroupChat(threadID)
                 if (community != null) {
-                    OpenGroupManager.delete(
-                        community.server,
-                        community.room,
-                        context
-                    )
+                    OpenGroupManager.delete(community.server, community.room, context)
                 } else {
                     lifecycleScope.launch(Dispatchers.Default) {
                         threadDb.deleteConversation(threadID)
