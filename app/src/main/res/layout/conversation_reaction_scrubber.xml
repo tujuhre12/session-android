@@ -5,9 +5,9 @@
     android:id="@+id/conversation_reaction_scrubber"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:elevation="1000dp"
     android:clipToPadding="false"
     android:clipChildren="false"
+    android:background="@color/conversation_overlay_scrim"
     android:visibility="gone"
     tools:visibility="visible">
 

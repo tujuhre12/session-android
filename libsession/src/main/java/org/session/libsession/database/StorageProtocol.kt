@@ -3,7 +3,6 @@ package org.session.libsession.database
 import android.content.Context
 import android.net.Uri
 import com.goterl.lazysodium.utils.KeyPair
-import network.loki.messenger.libsession_util.util.GroupDisplayInfo
 import org.session.libsession.messaging.BlindedIdMapping
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.messaging.contacts.Contact
@@ -29,6 +28,7 @@ import org.session.libsession.messaging.sending_receiving.link_preview.LinkPrevi
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
 import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.GroupDisplayInfo
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
@@ -212,9 +212,10 @@ interface StorageProtocol {
     fun getContactWithAccountID(accountID: String): Contact?
     fun getAllContacts(): Set<Contact>
     fun setContact(contact: Contact)
+    fun deleteContactAndSyncConfig(accountId: String)
     fun getRecipientForThread(threadId: Long): Recipient?
     fun getRecipientSettings(address: Address): RecipientSettings?
-    fun addLibSessionContacts(contacts: List<LibSessionContact>, timestamp: Long?)
+    fun syncLibSessionContacts(contacts: List<LibSessionContact>, timestamp: Long?)
     fun hasAutoDownloadFlagBeenSet(recipient: Recipient): Boolean
     fun addContacts(contacts: List<ConfigurationMessage.Contact>)
     fun shouldAutoDownloadAttachments(recipient: Recipient): Boolean

@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
+import network.loki.messenger.libsession_util.Namespace
 import network.loki.messenger.libsession_util.util.ConfigPush
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
@@ -41,7 +42,6 @@ import org.session.libsession.utilities.getGroup
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.Namespace
 import org.session.libsignal.utilities.Snode
 import org.session.libsignal.utilities.retryWithUniformInterval
 import org.thoughtcrime.securesms.util.NetworkConnectivity
@@ -138,7 +138,7 @@ class ConfigUploader @Inject constructor(
                                         configFactory.withUserConfigs { configs -> configs.userGroups.allClosedGroupInfo() }
                                             .asSequence()
                                             .filter { !it.destroyed && !it.kicked }
-                                            .map { it.groupAccountId }
+                                            .map { AccountId(it.groupAccountId) }
                                             .asFlow()
                                     },
 
@@ -208,11 +208,15 @@ class ConfigUploader @Inject constructor(
         // Gather data to push
         groupConfigAccess { configs ->
             if (configs.groupMembers.needsPush()) {
-                membersPush = configs.groupMembers.push()
+                membersPush = runCatching { configs.groupMembers.push() }
+                    .onFailure { Log.w(TAG, "Error generating group members config push", it) }
+                    .getOrNull()
             }
 
             if (configs.groupInfo.needsPush()) {
-                infoPush = configs.groupInfo.push()
+                infoPush = runCatching { configs.groupInfo.push() }
+                    .onFailure { Log.w(TAG, "Error generating group info config push", it) }
+                    .getOrNull()
             }
 
             keysPush = configs.groupKeys.pendingConfig()
@@ -338,7 +342,12 @@ class ConfigUploader @Inject constructor(
                         return@mapNotNull null
                     }
 
-                    type to config.push()
+                    val configPush = runCatching { config.push() }
+                        .onFailure { Log.w(TAG, "Error generating $type config", it) }
+                        .getOrNull()
+                        ?: return@mapNotNull null
+
+                    type to configPush
                 }
         }
 
@@ -352,17 +361,17 @@ class ConfigUploader @Inject constructor(
 
         val pushTasks = pushes.map { (configType, configPush) ->
             async {
-                (configType to configPush) to pushConfig(
+                Triple(configType, configPush, pushConfig(
                     userAuth,
                     snode,
                     configPush,
                     configType.namespace
-                )
+                ))
             }
         }
 
         val pushResults =
-            pushTasks.awaitAll().associate { it.first.first to (it.first.second to it.second) }
+            pushTasks.awaitAll().associate { (configType, push, result) -> configType to (push to result) }
 
         Log.d(TAG, "Pushed ${pushResults.size} user configs")
 
