@@ -56,7 +56,6 @@ import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
-import com.bumptech.glide.integration.compose.placeholder
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
@@ -66,7 +65,7 @@ import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAt
 import org.thoughtcrime.securesms.MediaPreviewActivity.getPreviewIntent
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.mms.DecryptableStreamUriLoader
-import org.thoughtcrime.securesms.ui.Avatar
+import org.thoughtcrime.securesms.ui.XmlAvatar
 import org.thoughtcrime.securesms.ui.CarouselNextButton
 import org.thoughtcrime.securesms.ui.CarouselPrevButton
 import org.thoughtcrime.securesms.ui.Cell
@@ -294,7 +293,7 @@ fun CellMetadata(
                     TitledView(state.fromTitle) {
                         Row {
                             sender?.let {
-                                Avatar(
+                                XmlAvatar(
                                     recipient = it,
                                     modifier = Modifier
                                         .align(Alignment.CenterVertically)

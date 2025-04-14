@@ -1,7 +1,6 @@
  package org.thoughtcrime.securesms.preferences
 
 import android.Manifest
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
@@ -36,7 +35,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -90,7 +88,7 @@ import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogStat
 import org.thoughtcrime.securesms.preferences.appearance.AppearanceSettingsActivity
 import org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity
 import org.thoughtcrime.securesms.ui.AlertDialog
-import org.thoughtcrime.securesms.ui.Avatar
+import org.thoughtcrime.securesms.ui.XmlAvatar
 import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.DialogButtonModel
 import org.thoughtcrime.securesms.ui.Divider
@@ -731,7 +729,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                     when(val s = state){
                         // user avatar
                         is UserAvatar -> {
-                            Avatar(userAddress = s.address)
+                            XmlAvatar(userAddress = s.address)
                         }
 
                         // temporary image

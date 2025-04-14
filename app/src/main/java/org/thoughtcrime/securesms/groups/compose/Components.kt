@@ -3,7 +3,6 @@ package org.thoughtcrime.securesms.groups.compose
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -24,7 +23,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import network.loki.messenger.R
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.groups.ContactItem
-import org.thoughtcrime.securesms.ui.Avatar
+import org.thoughtcrime.securesms.ui.XmlAvatar
 import org.thoughtcrime.securesms.ui.components.RadioButtonIndicator
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -79,7 +78,7 @@ fun  MemberItem(
         horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing),
         verticalAlignment = CenterVertically,
     ) {
-        Avatar(
+        XmlAvatar(
             accountId = accountId,
             isAdmin = showAsAdmin,
             modifier = Modifier.size(LocalDimensions.current.iconLarge)

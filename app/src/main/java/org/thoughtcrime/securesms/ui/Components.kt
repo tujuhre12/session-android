@@ -458,7 +458,7 @@ fun Divider(modifier: Modifier = Modifier, startIndent: Dp = 0.dp) {
 
 //TODO This component should be fully rebuilt in Compose at some point ~~
 @Composable
-private fun BaseAvatar(
+private fun BaseXmlAvatar(
     modifier: Modifier = Modifier,
     isAdmin: Boolean = false,
     update: (ProfilePictureView)->Unit
@@ -494,7 +494,7 @@ private fun BaseAvatar(
                 contentDescription = null,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .offset(1.dp, 1.dp) // used to make up for trasparent padding in icon
+                    .offset(1.dp, 1.dp) // used to make up for transparent padding in icon
                     .size(LocalDimensions.current.badgeSize)
             )
         }
@@ -505,7 +505,7 @@ private fun BaseAvatar(
 @Composable
 fun PreviewAvatar() {
     PreviewTheme {
-        Avatar(
+        XmlAvatar(
             modifier = Modifier.padding(20.dp),
             isAdmin = true,
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1235")
@@ -514,12 +514,12 @@ fun PreviewAvatar() {
 }
 
 @Composable
-fun Avatar(
+fun XmlAvatar(
     recipient: Recipient,
     modifier: Modifier = Modifier,
     isAdmin: Boolean = false
 ) {
-    BaseAvatar(
+    BaseXmlAvatar(
         modifier = modifier,
         isAdmin = isAdmin,
         update = {
@@ -529,12 +529,12 @@ fun Avatar(
 }
 
 @Composable
-fun Avatar(
+fun XmlAvatar(
     userAddress: Address,
     modifier: Modifier = Modifier,
     isAdmin: Boolean = false
 ) {
-    BaseAvatar(
+    BaseXmlAvatar(
         modifier = modifier,
         isAdmin = isAdmin,
         update = {
@@ -544,12 +544,12 @@ fun Avatar(
 }
 
 @Composable
-fun Avatar(
+fun XmlAvatar(
     accountId: AccountId,
     modifier: Modifier = Modifier,
     isAdmin: Boolean = false
 ) {
-    Avatar(Address.fromSerialized(accountId.hexString),
+    XmlAvatar(Address.fromSerialized(accountId.hexString),
         modifier = modifier,
         isAdmin = isAdmin
     )
