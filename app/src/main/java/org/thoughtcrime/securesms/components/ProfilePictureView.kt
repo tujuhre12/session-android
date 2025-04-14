@@ -65,9 +65,11 @@ class ProfilePictureView @JvmOverloads constructor(
         update(sender)
     }
 
-    private fun createUnknownRecipientDrawable(): Drawable {
+    private fun createUnknownRecipientDrawable(publicKey: String? = null): Drawable {
+        val color = if(publicKey.isNullOrEmpty()) ContactColors.UNKNOWN_COLOR.toConversationColor(context)
+        else ContactColors.generateFor(publicKey).toConversationColor(context)
         return ResourceContactPhoto(R.drawable.ic_user_filled_custom)
-            .asDrawable(context, ContactColors.UNKNOWN_COLOR.toConversationColor(context), false, resourcePadding)
+            .asDrawable(context, color, false, resourcePadding)
     }
 
     fun update(recipient: Recipient) {
@@ -99,10 +101,16 @@ class ProfilePictureView @JvmOverloads constructor(
                     .map { Address.fromSerialized(it.accountId()) }
             }.sorted().take(2)
 
-            if (members.size <= 1) {
+            if (members.isEmpty()) {
                 publicKey = ""
                 displayName = ""
                 additionalPublicKey = ""
+                additionalDisplayName = ""
+            } else if (members.size == 1) {
+                val pk = members.getOrNull(0)?.toString() ?: ""
+                publicKey = pk
+                displayName = getUserDisplayName(pk)
+                additionalPublicKey = address.toString() // use the group address to later generate a colour based on the group id
                 additionalDisplayName = ""
             } else {
                 val pk = members.getOrNull(0)?.toString() ?: ""
@@ -176,6 +184,11 @@ class ProfilePictureView @JvmOverloads constructor(
                     .centerCrop()
                     .error(glide.load(placeholder))
                     .diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .circleCrop()
+                    .into(imageView)
+            } else if(recipient.isGroupRecipient) { // for groups, if we have an unknown it needs to display the unknown icon but with a bg colour based on the group's id
+                glide.load(createUnknownRecipientDrawable(publicKey))
+                    .centerCrop()
                     .circleCrop()
                     .into(imageView)
             } else if (recipient.isCommunityRecipient && recipient.groupAvatarId == null) {
