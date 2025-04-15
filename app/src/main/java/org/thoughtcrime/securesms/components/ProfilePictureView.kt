@@ -87,6 +87,7 @@ class ProfilePictureView @JvmOverloads constructor(
                     )
                     isLegacyGroupRecipient -> ProfileViewDataType.LegacyGroup
                     isCommunityRecipient -> ProfileViewDataType.Community
+                    isCommunityInboxRecipient -> ProfileViewDataType.CommunityInbox
                     else -> ProfileViewDataType.OneOnOne
                 }
             )
@@ -141,7 +142,7 @@ class ProfilePictureView @JvmOverloads constructor(
                     additionalDisplayName = getUserDisplayName(apk)
                 }
             }
-        } else if(profileViewDataType is ProfileViewDataType.Community) {
+        } else if(profileViewDataType is ProfileViewDataType.CommunityInbox) {
             val publicKey = GroupUtil.getDecodedOpenGroupInboxAccountId(address.toString())
             this.publicKey = publicKey
             displayName = getUserDisplayName(publicKey)
@@ -245,6 +246,7 @@ class ProfilePictureView @JvmOverloads constructor(
         data object OneOnOne: ProfileViewDataType
         data object LegacyGroup: ProfileViewDataType
         data object Community: ProfileViewDataType
+        data object CommunityInbox: ProfileViewDataType
         data class GroupvV2(
             val customGroupImage: String? = null
         ): ProfileViewDataType

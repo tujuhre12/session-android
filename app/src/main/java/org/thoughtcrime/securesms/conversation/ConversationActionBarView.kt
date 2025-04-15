@@ -5,6 +5,10 @@ import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.LinearLayout
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -26,6 +30,10 @@ import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.database.Storage
+import org.thoughtcrime.securesms.ui.components.Avatar
+import org.thoughtcrime.securesms.ui.setThemedContent
+import org.thoughtcrime.securesms.ui.theme.LocalDimensions
+import org.thoughtcrime.securesms.util.AvatarUtils
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -39,6 +47,7 @@ class ConversationActionBarView @JvmOverloads constructor(
     @Inject lateinit var lokiApiDb: LokiAPIDatabase
     @Inject lateinit var groupDb: GroupDatabase
     @Inject lateinit var storage: Storage
+    @Inject lateinit var avatarUtils: AvatarUtils
 
     var delegate: ConversationActionBarDelegate? = null
 
@@ -48,8 +57,7 @@ class ConversationActionBarView @JvmOverloads constructor(
         }
     }
 
-    val profilePictureView
-        get() = binding.profilePictureView
+    private var avatarRecipient: Recipient? by mutableStateOf(null)
 
     init {
         var previousState: Int
@@ -73,25 +81,32 @@ class ConversationActionBarView @JvmOverloads constructor(
 
     fun bind(
         delegate: ConversationActionBarDelegate,
-        threadId: Long,
         recipient: Recipient,
         config: ExpirationConfiguration? = null,
         openGroup: OpenGroup? = null
     ) {
         this.delegate = delegate
-        binding.profilePictureView.layoutParams = resources.getDimensionPixelSize(
-            if (recipient.isGroupRecipient) R.dimen.medium_profile_picture_size else R.dimen.small_profile_picture_size
-        ).let { LayoutParams(it, it) }
+        avatarRecipient = recipient
+
+        binding.avatar.setThemedContent {
+            if(avatarRecipient != null) {
+                Avatar(
+                    size = LocalDimensions.current.iconLarge,
+                    data = avatarUtils.getUIDataFromRecipient(avatarRecipient!!)
+                )
+            }
+        }
+
         update(recipient, openGroup, config)
     }
 
     fun update(recipient: Recipient, openGroup: OpenGroup? = null, config: ExpirationConfiguration? = null) {
-        binding.profilePictureView.update(recipient)
+        avatarRecipient = recipient
         binding.conversationTitleView.text = recipient.takeUnless { it.isLocalNumber }?.name ?: context.getString(R.string.noteToSelf)
         updateSubtitle(recipient, openGroup, config)
 
         binding.conversationTitleContainer.modifyLayoutParams<MarginLayoutParams> {
-            marginEnd = if (recipient.showCallMenu()) 0 else binding.profilePictureView.width
+            marginEnd = if (recipient.showCallMenu()) 0 else binding.avatar.width
         }
     }
 

@@ -783,7 +783,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         actionBar.setHomeButtonEnabled(true)
         binding.toolbarContent.bind(
             this,
-            viewModel.threadId,
             recipient,
             viewModel.expirationConfiguration,
             viewModel.openGroup

@@ -49,8 +49,14 @@ class AvatarUtils @Inject constructor(
     }
 
     fun getUIDataFromRecipient(recipient: Recipient): AvatarUIData {
+        // set up the data based on the conversation type
+
+        // todo AVATAR Add rules here
+        
         val name = if(recipient.isLocalNumber) usernameUtils.getCurrentUsernameWithAccountIdFallback()
         else recipient.name
+
+
         return AvatarUIData(
             elements = listOf(
                 AvatarUIElement(
@@ -59,6 +65,16 @@ class AvatarUtils @Inject constructor(
                     contactPhoto = if(hasAvatar(recipient.contactPhoto)) recipient.contactPhoto else null
                 )
             )
+        )
+    }
+
+    private fun getUIElementForRecipient(recipient: Recipient): AvatarUIElement {
+        val name = if(recipient.isLocalNumber) usernameUtils.getCurrentUsernameWithAccountIdFallback()
+        else recipient.name
+        return AvatarUIElement(
+            name = extractLabel(name),
+            color = Color(getColorFromKey(recipient.address.toString())),
+            contactPhoto = if(hasAvatar(recipient.contactPhoto)) recipient.contactPhoto else null
         )
     }
 
