@@ -37,26 +37,27 @@ import org.thoughtcrime.securesms.ui.theme.primaryBlue
 import org.thoughtcrime.securesms.ui.theme.primaryGreen
 import org.thoughtcrime.securesms.util.AvatarBadge
 import org.thoughtcrime.securesms.util.AvatarUIData
+import org.thoughtcrime.securesms.util.AvatarUIElement
 
 
 @Composable
 fun BaseAvatar(
     size: Dp,
+    data: AvatarUIData,
     modifier: Modifier = Modifier,
-    data: List<AvatarUIData> = emptyList(),
     badge: (@Composable () -> Unit)? = null,
 ) {
     Box(modifier = modifier.size(size)) {
 
         when {
-            data.isEmpty() -> {
+            data.elements.isEmpty() -> {
                 // Do nothing when there is no avatar data.
             }
-            data.size == 1 -> {
+            data.elements.size == 1 -> {
                 // Only one element, occupy the full parent's size.
                 AvatarElement(
                     size = size,
-                    data = data.first()
+                    data = data.elements.first()
                 )
             }
             else -> {
@@ -65,12 +66,12 @@ fun BaseAvatar(
                 AvatarElement(
                     modifier = Modifier.align(Alignment.TopStart),
                     size = avatarSize,
-                    data = data[0]
+                    data = data.elements[0]
                 )
                 AvatarElement(
                     modifier = Modifier.align(Alignment.BottomEnd),
                     size = avatarSize,
-                    data = data[1]
+                    data = data.elements[1]
                 )
             }
         }
@@ -89,28 +90,10 @@ fun BaseAvatar(
     }
 }
 
-/**
- * Convenience function for singular avatar
- */
 @Composable
 fun Avatar(
     size: Dp,
     data: AvatarUIData,
-    modifier: Modifier = Modifier,
-    badge: AvatarBadge = AvatarBadge.None,
-){
-    Avatar(
-        size = size,
-        modifier = modifier,
-        data = listOf(data),
-        badge = badge
-    )
-}
-
-@Composable
-fun Avatar(
-    size: Dp,
-    data: List<AvatarUIData>,
     modifier: Modifier = Modifier,
     badge: AvatarBadge = AvatarBadge.None,
 ){
@@ -138,7 +121,7 @@ fun Avatar(
 private fun AvatarElement(
     size: Dp,
     modifier: Modifier = Modifier,
-    data: AvatarUIData
+    data: AvatarUIElement
 ){
     Box(
         modifier = modifier.size(size)
@@ -186,7 +169,7 @@ fun PreviewAvatarElement(){
     PreviewTheme {
         AvatarElement(
             size = LocalDimensions.current.iconLarge,
-            data = AvatarUIData(
+            data = AvatarUIElement(
                 name = "TO",
                 color = primaryGreen,
                 contactPhoto = null
@@ -201,11 +184,12 @@ fun PreviewAvatarSingleAdmin(){
     PreviewTheme {
         Avatar(
             size = LocalDimensions.current.iconLarge,
-            data = listOf(AvatarUIData(
+            data = AvatarUIData(
+                listOf(AvatarUIElement(
                 name = "AT",
                 color = primaryGreen,
                 contactPhoto = null
-            )),
+            ))),
             badge = AvatarBadge.Admin
         )
     }
@@ -217,18 +201,18 @@ fun PreviewAvatarDouble(){
     PreviewTheme {
         Avatar(
             size = LocalDimensions.current.iconLarge,
-            data = listOf(
-                AvatarUIData(
+            data = AvatarUIData(
+                listOf(AvatarUIElement(
                     name = "FR",
                     color = primaryGreen,
                     contactPhoto = null
                 ),
-                AvatarUIData(
+                AvatarUIElement(
                     name = "AT",
                     color = primaryBlue,
                     contactPhoto = null
                 )
-            )
+            ))
         )
     }
 }
@@ -239,11 +223,12 @@ fun PreviewAvatarSingleUnknown(){
     PreviewTheme {
         Avatar(
             size = LocalDimensions.current.iconLarge,
-            data = listOf(AvatarUIData(
+            data = AvatarUIData(
+                listOf(AvatarUIElement(
                 name = "",
                 color = null,
                 contactPhoto = null
-            ))
+            )))
         )
     }
 }
@@ -254,14 +239,15 @@ fun PreviewAvatarSinglePhoto(){
     PreviewTheme {
         Avatar(
             size = LocalDimensions.current.iconLarge,
-            data = listOf(AvatarUIData(
+            data = AvatarUIData(
+                listOf(AvatarUIElement(
                 name = "AT",
                 color = primaryGreen,
                 contactPhoto = ProfileContactPhoto(
                     Address.fromSerialized("05c0d6db0f2d400c392a745105dc93b666642b9dd43993e97c2c4d7440c453b620"),
                     "305422957"
                 )
-            ))
+            )))
         )
     }
 }

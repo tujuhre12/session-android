@@ -78,6 +78,7 @@ import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.primaryBlue
 import org.thoughtcrime.securesms.util.AvatarUIData
+import org.thoughtcrime.securesms.util.AvatarUIElement
 
 @Composable
 fun EditGroupScreen(
@@ -486,8 +487,12 @@ private fun EditGroupPreviewSheet() {
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234"),
             name = "Test User",
             avatarUIData = AvatarUIData(
-                name = "TOTO",
-                color = primaryBlue
+                listOf(
+                    AvatarUIElement(
+                        name = "TOTO",
+                        color = primaryBlue
+                    )
+                )
             ),
             status = GroupMember.Status.INVITE_SENT,
             highlightStatus = false,
@@ -503,8 +508,12 @@ private fun EditGroupPreviewSheet() {
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1235"),
             name = "Test User 2",
             avatarUIData = AvatarUIData(
-                name = "TOTO",
-                color = primaryBlue
+                listOf(
+                    AvatarUIElement(
+                        name = "TOTO",
+                        color = primaryBlue
+                    )
+                )
             ),
             status = GroupMember.Status.PROMOTION_FAILED,
             highlightStatus = true,
@@ -520,8 +529,12 @@ private fun EditGroupPreviewSheet() {
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1236"),
             name = "Test User 3",
             avatarUIData = AvatarUIData(
-                name = "TOTO",
-                color = primaryBlue
+                listOf(
+                    AvatarUIElement(
+                        name = "TOTO",
+                        color = primaryBlue
+                    )
+                )
             ),
             status = null,
             highlightStatus = false,
@@ -577,8 +590,12 @@ private fun EditGroupPreview3() {
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234"),
             name = "Test User",
             avatarUIData = AvatarUIData(
-                name = "TOTO",
-                color = primaryBlue
+                listOf(
+                    AvatarUIElement(
+                        name = "TOTO",
+                        color = primaryBlue
+                    )
+                )
             ),
             status = GroupMember.Status.INVITE_SENT,
             highlightStatus = false,
@@ -594,8 +611,12 @@ private fun EditGroupPreview3() {
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1235"),
             name = "Test User 2",
             avatarUIData = AvatarUIData(
-                name = "TOTO",
-                color = primaryBlue
+                listOf(
+                    AvatarUIElement(
+                        name = "TOTO",
+                        color = primaryBlue
+                    )
+                )
             ),
             status = GroupMember.Status.PROMOTION_FAILED,
             highlightStatus = true,
@@ -611,8 +632,12 @@ private fun EditGroupPreview3() {
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1236"),
             name = "Test User 3",
             avatarUIData = AvatarUIData(
-                name = "TOTO",
-                color = primaryBlue
+                listOf(
+                    AvatarUIElement(
+                        name = "TOTO",
+                        color = primaryBlue
+                    )
+                )
             ),
             status = null,
             highlightStatus = false,
@@ -667,8 +692,12 @@ private fun EditGroupPreview() {
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234"),
             name = "Test User",
             avatarUIData = AvatarUIData(
-                name = "TOTO",
-                color = primaryBlue
+                listOf(
+                    AvatarUIElement(
+                        name = "TOTO",
+                        color = primaryBlue
+                    )
+                )
             ),
             status = GroupMember.Status.INVITE_SENT,
             highlightStatus = false,
@@ -684,8 +713,12 @@ private fun EditGroupPreview() {
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1235"),
             name = "Test User 2",
             avatarUIData = AvatarUIData(
-                name = "TOTO",
-                color = primaryBlue
+                listOf(
+                    AvatarUIElement(
+                        name = "TOTO",
+                        color = primaryBlue
+                    )
+                )
             ),
             status = GroupMember.Status.PROMOTION_FAILED,
             highlightStatus = true,
@@ -701,8 +734,12 @@ private fun EditGroupPreview() {
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1236"),
             name = "Test User 3",
             avatarUIData = AvatarUIData(
-                name = "TOTO",
-                color = primaryBlue
+                listOf(
+                    AvatarUIElement(
+                        name = "TOTO",
+                        color = primaryBlue
+                    )
+                )
             ),
             status = null,
             highlightStatus = false,
@@ -759,8 +796,12 @@ private fun EditGroupEditNamePreview(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234"),
             name = "Test User",
             avatarUIData = AvatarUIData(
-                name = "TOTO",
-                color = primaryBlue
+                listOf(
+                    AvatarUIElement(
+                        name = "TOTO",
+                        color = primaryBlue
+                    )
+                )
             ),
             status = GroupMember.Status.INVITE_SENT,
             highlightStatus = false,
@@ -776,8 +817,12 @@ private fun EditGroupEditNamePreview(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1235"),
             name = "Test User 2",
             avatarUIData = AvatarUIData(
-                name = "TOTO",
-                color = primaryBlue
+                listOf(
+                    AvatarUIElement(
+                        name = "TOTO",
+                        color = primaryBlue
+                    )
+                )
             ),
             status = GroupMember.Status.PROMOTION_FAILED,
             highlightStatus = true,
@@ -793,8 +838,12 @@ private fun EditGroupEditNamePreview(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1236"),
             name = "Test User 3",
             avatarUIData = AvatarUIData(
-                name = "TOTO",
-                color = primaryBlue
+                listOf(
+                    AvatarUIElement(
+                        name = "TOTO",
+                        color = primaryBlue
+                    )
+                )
             ),
             status = null,
             highlightStatus = false,

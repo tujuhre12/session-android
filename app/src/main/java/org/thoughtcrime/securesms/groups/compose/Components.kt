@@ -50,6 +50,7 @@ import org.thoughtcrime.securesms.ui.theme.primaryBlue
 import org.thoughtcrime.securesms.ui.theme.primaryOrange
 import org.thoughtcrime.securesms.util.AvatarBadge
 import org.thoughtcrime.securesms.util.AvatarUIData
+import org.thoughtcrime.securesms.util.AvatarUIElement
 
 
 @Composable
@@ -201,8 +202,12 @@ fun PreviewMemberList() {
                         accountID = AccountId(random),
                         name = "Person",
                         avatarUIData = AvatarUIData(
-                            name = "TOTO",
-                            color = primaryBlue
+                            listOf(
+                                AvatarUIElement(
+                                    name = "TOTO",
+                                    color = primaryBlue
+                                )
+                            )
                         ),
                         selected = false,
                     ),
@@ -210,8 +215,12 @@ fun PreviewMemberList() {
                         accountID = AccountId(random),
                         name = "Cow",
                         avatarUIData = AvatarUIData(
-                            name = "TOTO",
-                            color = primaryBlue
+                            listOf(
+                                AvatarUIElement(
+                                    name = "TOTO",
+                                    color = primaryBlue
+                                )
+                            )
                         ),
                         selected = true,
                     )

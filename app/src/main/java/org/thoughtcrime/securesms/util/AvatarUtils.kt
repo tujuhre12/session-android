@@ -44,7 +44,7 @@ class AvatarUtils @Inject constructor(
         ContextCompat.getColor(context, R.color.accent_red),
     )
 
-    fun getUIDataFromAccountId(accountId: String): AvatarUIData{
+    fun getUIDataFromAccountId(accountId: String): AvatarUIData {
         return getUIDataFromRecipient(Recipient.from(context, Address.fromSerialized(accountId), false))
     }
 
@@ -52,9 +52,13 @@ class AvatarUtils @Inject constructor(
         val name = if(recipient.isLocalNumber) usernameUtils.getCurrentUsernameWithAccountIdFallback()
         else recipient.name
         return AvatarUIData(
-            name = extractLabel(name),
-            color = Color(getColorFromKey(recipient.address.toString())),
-            contactPhoto = if(hasAvatar(recipient.contactPhoto)) recipient.contactPhoto else null
+            elements = listOf(
+                AvatarUIElement(
+                    name = extractLabel(name),
+                    color = Color(getColorFromKey(recipient.address.toString())),
+                    contactPhoto = if(hasAvatar(recipient.contactPhoto)) recipient.contactPhoto else null
+                )
+            )
         )
     }
 
@@ -149,6 +153,10 @@ class AvatarUtils @Inject constructor(
 }
 
 data class AvatarUIData(
+    val elements: List<AvatarUIElement>,
+)
+
+data class AvatarUIElement(
     val name: String? = null,
     val color: Color? = null,
     val contactPhoto: ContactPhoto? = null,

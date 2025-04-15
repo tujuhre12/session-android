@@ -21,6 +21,7 @@ import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.primaryBlue
 import org.thoughtcrime.securesms.util.AvatarUIData
+import org.thoughtcrime.securesms.util.AvatarUIElement
 
 @Composable
 fun GroupMembersScreen(
@@ -90,7 +91,14 @@ private fun EditGroupPreview() {
             showAsAdmin = false,
             clickable = true,
             statusLabel = "Invited",
-            avatarUIData = AvatarUIData(name = "Toto", color = primaryBlue)
+            avatarUIData = AvatarUIData(
+                listOf(
+                    AvatarUIElement(
+                        name = "TOTO",
+                        color = primaryBlue
+                    )
+                )
+            ),
         )
         val twoMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1235"),
@@ -104,7 +112,14 @@ private fun EditGroupPreview() {
             showAsAdmin = true,
             clickable = true,
             statusLabel = "Promotion failed",
-            avatarUIData = AvatarUIData(name = "Toto", color = primaryBlue)
+            avatarUIData = AvatarUIData(
+                listOf(
+                    AvatarUIElement(
+                        name = "TOTO",
+                        color = primaryBlue
+                    )
+                )
+            ),
         )
         val threeMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1236"),
@@ -118,7 +133,14 @@ private fun EditGroupPreview() {
             showAsAdmin = false,
             clickable = true,
             statusLabel = "",
-            avatarUIData = AvatarUIData(name = "Toto", color = primaryBlue)
+            avatarUIData = AvatarUIData(
+                listOf(
+                    AvatarUIElement(
+                        name = "TOTO",
+                        color = primaryBlue
+                    )
+                )
+            ),
         )
 
         GroupMembers(
