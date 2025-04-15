@@ -89,11 +89,29 @@ fun BaseAvatar(
     }
 }
 
+/**
+ * Convenience function for singular avatar
+ */
 @Composable
 fun Avatar(
     size: Dp,
+    data: AvatarUIData,
     modifier: Modifier = Modifier,
-    data: List<AvatarUIData> = emptyList(),
+    badge: AvatarBadge = AvatarBadge.None,
+){
+    Avatar(
+        size = size,
+        modifier = modifier,
+        data = listOf(data),
+        badge = badge
+    )
+}
+
+@Composable
+fun Avatar(
+    size: Dp,
+    data: List<AvatarUIData>,
+    modifier: Modifier = Modifier,
     badge: AvatarBadge = AvatarBadge.None,
 ){
     BaseAvatar(

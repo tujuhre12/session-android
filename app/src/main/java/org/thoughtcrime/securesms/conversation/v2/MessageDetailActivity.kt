@@ -74,6 +74,7 @@ import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.HorizontalPagerIndicator
 import org.thoughtcrime.securesms.ui.LargeItemButton
 import org.thoughtcrime.securesms.ui.TitledText
+import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.setComposeContent
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -293,6 +294,10 @@ fun CellMetadata(
                     TitledView(state.fromTitle) {
                         Row {
                             sender?.let {
+                                Avatar(
+                                    size = LocalDimensions.current.iconLarge,
+                                    data =
+                                )
                                 XmlAvatar(
                                     recipient = it,
                                     modifier = Modifier

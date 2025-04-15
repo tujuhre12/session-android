@@ -235,9 +235,11 @@ class SettingsActivity : ScreenLockActionBarActivity() {
 
         binding.userAvatar.setThemedContent {
             val avatarData by viewModel.avatarData.collectAsState()
+            if(avatarData == null) return@setThemedContent
+
             Avatar(
                 size = LocalDimensions.current.iconXXLarge,
-                data = if(avatarData == null) emptyList() else listOf(avatarData!!)
+                data = avatarData!!
             )
         }
 
@@ -715,7 +717,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                         is UserAvatar -> {
                             Avatar(
                                 size = LocalDimensions.current.iconXXLarge,
-                                data = listOf(s.data)
+                                data = s.data
                             )
                         }
 
