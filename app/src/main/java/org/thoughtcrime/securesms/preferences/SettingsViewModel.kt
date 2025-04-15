@@ -58,7 +58,9 @@ class SettingsViewModel @Inject constructor(
 
     val hexEncodedPublicKey: String = prefs.getLocalNumber() ?: ""
 
-    private val userAddress = Address.fromSerialized(hexEncodedPublicKey)
+    private val userRecipient by lazy {
+        Recipient.from(context, Address.fromSerialized(hexEncodedPublicKey), false)
+    }
 
     private val _avatarDialogState: MutableStateFlow<AvatarDialogState> = MutableStateFlow(
         getDefaultAvatarDialogState()
@@ -84,9 +86,8 @@ class SettingsViewModel @Inject constructor(
 
     private fun updateAvatar(){
         viewModelScope.launch(Dispatchers.Default) {
-            val recipient = Recipient.from(context, Address.fromSerialized(hexEncodedPublicKey), false)
             _avatarData.update {
-                avatarUtils.getUIDataFromRecipient(recipient)
+                avatarUtils.getUIDataFromRecipient(userRecipient)
             }
         }
     }
@@ -146,7 +147,9 @@ class SettingsViewModel @Inject constructor(
         _avatarDialogState.value = getDefaultAvatarDialogState()
     }
 
-    fun getDefaultAvatarDialogState() = if (hasAvatar()) AvatarDialogState.UserAvatar(userAddress)
+    private fun getDefaultAvatarDialogState() = if (hasAvatar()) AvatarDialogState.UserAvatar(
+        avatarUtils.getUIDataFromRecipient(userRecipient)
+    )
     else AvatarDialogState.NoAvatar
 
     fun saveAvatar() {
@@ -223,7 +226,7 @@ class SettingsViewModel @Inject constructor(
                     }
 
                     // update dialog state
-                    _avatarDialogState.value = AvatarDialogState.UserAvatar(userAddress)
+                    _avatarDialogState.value = AvatarDialogState.UserAvatar(avatarUtils.getUIDataFromRecipient(userRecipient))
                 }
 
             } catch (e: Exception){ // If the sync failed then inform the user
@@ -254,7 +257,7 @@ class SettingsViewModel @Inject constructor(
 
     sealed class AvatarDialogState() {
         object NoAvatar : AvatarDialogState()
-        data class UserAvatar(val address: Address) : AvatarDialogState()
+        data class UserAvatar(val data: AvatarUIData) : AvatarDialogState()
         data class TempAvatar(
             val data: ByteArray,
             val hasAvatar: Boolean // true if the user has an avatar set already but is in this temp state because they are trying out a new avatar

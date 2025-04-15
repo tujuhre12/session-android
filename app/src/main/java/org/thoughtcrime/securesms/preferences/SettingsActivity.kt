@@ -249,7 +249,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
 
         applyCommonWindowInsetsOnViews(mainScrollView = binding.scrollView)
     }
-     
+
     override fun finish() {
         super.finish()
         overridePendingTransition(R.anim.fade_scale_in, R.anim.slide_to_bottom)
@@ -713,7 +713,10 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                     when(val s = state){
                         // user avatar
                         is UserAvatar -> {
-                            XmlAvatar(userAddress = s.address)
+                            Avatar(
+                                size = LocalDimensions.current.iconXXLarge,
+                                data = listOf(s.data)
+                            )
                         }
 
                         // temporary image
