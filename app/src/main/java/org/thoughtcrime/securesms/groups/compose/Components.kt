@@ -22,12 +22,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
@@ -263,14 +265,18 @@ fun AutoResizeText(
         }
 
         // Render the text with the calculated maximum font size.
-        Text(
-            text = text,
-            fontSize = textSize,
-            style = style,
-            textAlign = textAlign,
-            maxLines = maxLines,
+        Box(
             modifier = Modifier.fillMaxSize(),
-        )
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = text,
+                fontSize = textSize,
+                style = style,
+                textAlign = textAlign,
+                maxLines = maxLines,
+            )
+        }
     }
 }
 
@@ -282,15 +288,15 @@ fun PreviewAutoTextSize() {
             verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
         ) {
             Box (
-                modifier = Modifier.size(200.dp)
+                modifier = Modifier.size(200.dp).background(Color.DarkGray)
             ){
-                AutoResizeText(text = "YO")
+                AutoResizeText(text = "TO")
             }
 
             Box (
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(20.dp).background(Color.DarkGray)
             ){
-                AutoResizeText(text = "YO")
+                AutoResizeText(text = "TO")
             }
         }
     }

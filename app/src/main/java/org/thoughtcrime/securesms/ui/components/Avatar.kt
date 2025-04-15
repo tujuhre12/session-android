@@ -169,7 +169,7 @@ fun PreviewAvatarElement(){
         AvatarElement(
             size = LocalDimensions.current.iconLarge,
             data = AvatarUIData(
-                name = "AT",
+                name = "TO",
                 color = primaryGreen,
                 contactPhoto = null
             )

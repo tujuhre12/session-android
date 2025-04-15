@@ -33,12 +33,10 @@ import org.session.libsession.utilities.NotificationPrivacyPreference;
 import org.session.libsession.utilities.Util;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.utilities.Log;
-import org.thoughtcrime.securesms.database.SessionContactDatabase;
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 import org.thoughtcrime.securesms.mms.DecryptableStreamUriLoader;
 import org.thoughtcrime.securesms.mms.Slide;
 import org.thoughtcrime.securesms.mms.SlideDeck;
-import org.thoughtcrime.securesms.util.AvatarPlaceholderGenerator;
+import org.thoughtcrime.securesms.util.AvatarUtils;
 import org.thoughtcrime.securesms.util.BitmapUtil;
 
 import java.util.LinkedList;
@@ -103,7 +101,7 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
 
     } else {
       setContentTitle(context.getString(R.string.app_name));
-      setLargeIcon(AvatarPlaceholderGenerator.generate(context, ICON_SIZE, "", "Unknown"));
+      setLargeIcon(AvatarUtils.generateTextBitmap(context, ICON_SIZE, "", "Unknown"));
     }
   }
 
@@ -323,7 +321,7 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
   private static Drawable getPlaceholderDrawable(Context context, Recipient recipient) {
     String publicKey = recipient.getAddress().toString();
     String displayName = recipient.getName();
-    return AvatarPlaceholderGenerator.generate(context, ICON_SIZE, publicKey, displayName);
+    return AvatarUtils.generateTextBitmap(context, ICON_SIZE, publicKey, displayName);
   }
 
   /**

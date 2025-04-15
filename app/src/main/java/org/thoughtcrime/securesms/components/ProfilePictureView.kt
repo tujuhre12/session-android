@@ -26,7 +26,7 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.GroupDatabase
-import org.thoughtcrime.securesms.util.AvatarPlaceholderGenerator
+import org.thoughtcrime.securesms.util.AvatarUtils
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -68,7 +68,7 @@ class ProfilePictureView @JvmOverloads constructor(
 
     private fun createUnknownRecipientDrawable(publicKey: String? = null): Drawable {
         val color = if(publicKey.isNullOrEmpty()) ContactColors.UNKNOWN_COLOR.toConversationColor(context)
-        else AvatarPlaceholderGenerator.getColorFromKey(context, publicKey)
+        else AvatarUtils.getColorFromKey(publicKey)
         return ResourceContactPhoto(R.drawable.ic_user_filled_custom)
             .asDrawable(context, color, false, resourcePadding)
     }
@@ -191,7 +191,7 @@ class ProfilePictureView @JvmOverloads constructor(
             profilePicturesCache[imageView] = recipient.clone()
             val signalProfilePicture = recipient.contactPhoto
             val avatar = (signalProfilePicture as? ProfileContactPhoto)?.avatarObject
-Log.w("", "*** AVATAR: $signalProfilePicture")
+
             glide.clear(imageView)
 
             val placeholder = PlaceholderAvatarPhoto(publicKey, displayName ?: truncateIdForDisplay(publicKey))

@@ -95,6 +95,7 @@ import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LargeItemButton
 import org.thoughtcrime.securesms.ui.LargeItemButtonWithDrawable
+import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.BaseBottomSheet
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineCopyButton
@@ -214,7 +215,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
         }
 
         binding.run {
-            profilePictureView.setOnClickListener {
+            userAvatar.setOnClickListener {
                 showAvatarDialog = true
             }
             ctnGroupNameSection.setOnClickListener { startActionMode(DisplayNameEditActionModeCallback()) }
@@ -232,30 +233,27 @@ class SettingsActivity : ScreenLockActionBarActivity() {
             Buttons(recoveryHidden = recoveryHidden)
         }
 
+        binding.userAvatar.setThemedContent {
+            val avatarData by viewModel.avatarData.collectAsState()
+            Avatar(
+                size = LocalDimensions.current.iconXXLarge,
+                data = if(avatarData == null) emptyList() else listOf(avatarData!!)
+            )
+        }
+
         lifecycleScope.launch {
             viewModel.showLoader.collect {
                 binding.loader.isVisible = it
             }
         }
 
-        lifecycleScope.launch {
+        //todo AVATAR find way to refresh avatar
+/*        lifecycleScope.launch {
             viewModel.refreshAvatar.collect {
                 binding.profilePictureView.recycle()
                 binding.profilePictureView.update()
             }
-        }
-
-        lifecycleScope.launch {
-            viewModel.avatarData.collect {
-                if(it == null) return@collect
-
-                binding.profilePictureView.apply {
-                    publicKey = it.publicKey
-                    displayName = it.displayName
-                    update(it.recipient)
-                }
-            }
-        }
+        }*/
 
         applyCommonWindowInsetsOnViews(mainScrollView = binding.scrollView)
     }
@@ -263,7 +261,8 @@ class SettingsActivity : ScreenLockActionBarActivity() {
     override fun onStart() {
         super.onStart()
 
-        binding.profilePictureView.update()
+        //todo AVATAR find way to refresh avatar
+        //binding.profilePictureView.update()
     }
 
     override fun finish() {

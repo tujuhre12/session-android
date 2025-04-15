@@ -34,6 +34,8 @@ import org.session.libsignal.utilities.Util.SECURE_RANDOM
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.TempAvatar
 import org.thoughtcrime.securesms.profiles.ProfileMediaConstraints
+import org.thoughtcrime.securesms.util.AvatarUIData
+import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.BitmapDecodingException
 import org.thoughtcrime.securesms.util.BitmapUtil
 import org.thoughtcrime.securesms.util.NetworkConnectivity
@@ -71,8 +73,8 @@ class SettingsViewModel @Inject constructor(
     val recoveryHidden: StateFlow<Boolean>
         get() = _recoveryHidden
 
-    private val _avatarData: MutableStateFlow<AvatarData?> = MutableStateFlow(null)
-    val avatarData: StateFlow<AvatarData?>
+    private val _avatarData: MutableStateFlow<AvatarUIData?> = MutableStateFlow(null)
+    val avatarData: StateFlow<AvatarUIData?>
         get() = _avatarData
 
     /**
@@ -86,11 +88,7 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.Default) {
             val recipient = Recipient.from(context, Address.fromSerialized(hexEncodedPublicKey), false)
             _avatarData.update {
-                AvatarData(
-                    publicKey = hexEncodedPublicKey,
-                    displayName = getDisplayName(),
-                    recipient = recipient
-                )
+                AvatarUtils.getUIDataFromRecipient(getDisplayName(), recipient)
             }
         }
     }
@@ -264,10 +262,4 @@ class SettingsViewModel @Inject constructor(
             val hasAvatar: Boolean // true if the user has an avatar set already but is in this temp state because they are trying out a new avatar
         ) : AvatarDialogState()
     }
-
-    data class AvatarData(
-        val publicKey: String,
-        val displayName: String,
-        val recipient: Recipient
-    )
 }
