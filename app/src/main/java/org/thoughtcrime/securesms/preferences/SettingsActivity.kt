@@ -247,24 +247,9 @@ class SettingsActivity : ScreenLockActionBarActivity() {
             }
         }
 
-        //todo AVATAR find way to refresh avatar
-/*        lifecycleScope.launch {
-            viewModel.refreshAvatar.collect {
-                binding.profilePictureView.recycle()
-                binding.profilePictureView.update()
-            }
-        }*/
-
         applyCommonWindowInsetsOnViews(mainScrollView = binding.scrollView)
     }
-
-    override fun onStart() {
-        super.onStart()
-
-        //todo AVATAR find way to refresh avatar
-        //binding.profilePictureView.update()
-    }
-
+     
     override fun finish() {
         super.finish()
         overridePendingTransition(R.anim.fade_scale_in, R.anim.slide_to_bottom)

@@ -78,14 +78,11 @@ class SettingsViewModel @Inject constructor(
     val avatarData: StateFlow<AvatarUIData?>
         get() = _avatarData
 
-    /**
-     * Refreshes the avatar on the main settings page
-     */
-    private val _refreshAvatar: MutableSharedFlow<Unit> = MutableSharedFlow()
-    val refreshAvatar: SharedFlow<Unit>
-        get() = _refreshAvatar.asSharedFlow()
-
     init {
+        updateAvatar()
+    }
+
+    private fun updateAvatar(){
         viewModelScope.launch(Dispatchers.Default) {
             val recipient = Recipient.from(context, Address.fromSerialized(hexEncodedPublicKey), false)
             _avatarData.update {
@@ -237,7 +234,7 @@ class SettingsViewModel @Inject constructor(
             }
 
             // Finally update the main avatar
-            _refreshAvatar.emit(Unit)
+            updateAvatar()
             // And remove the loader animation after we've waited for the attempt to succeed or fail
             _showLoader.value = false
         }
