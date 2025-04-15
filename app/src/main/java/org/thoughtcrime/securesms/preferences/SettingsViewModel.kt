@@ -49,7 +49,8 @@ class SettingsViewModel @Inject constructor(
     private val prefs: TextSecurePreferences,
     private val configFactory: ConfigFactory,
     private val connectivity: NetworkConnectivity,
-    private val usernameUtils: UsernameUtils
+    private val usernameUtils: UsernameUtils,
+    private val avatarUtils: AvatarUtils
 ) : ViewModel() {
     private val TAG = "SettingsViewModel"
 
@@ -88,7 +89,7 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.Default) {
             val recipient = Recipient.from(context, Address.fromSerialized(hexEncodedPublicKey), false)
             _avatarData.update {
-                AvatarUtils.getUIDataFromRecipient(getDisplayName(), recipient)
+                avatarUtils.getUIDataFromRecipient(recipient)
             }
         }
     }

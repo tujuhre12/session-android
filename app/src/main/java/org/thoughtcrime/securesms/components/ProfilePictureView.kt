@@ -55,6 +55,9 @@ class ProfilePictureView @JvmOverloads constructor(
     @Inject
     lateinit var usernameUtils: UsernameUtils
 
+    @Inject
+    lateinit var avatarUtils: AvatarUtils
+
     private val profilePicturesCache = mutableMapOf<View, Recipient>()
     private val resourcePadding by lazy {
         context.resources.getDimensionPixelSize(R.dimen.normal_padding).toFloat()
@@ -68,7 +71,7 @@ class ProfilePictureView @JvmOverloads constructor(
 
     private fun createUnknownRecipientDrawable(publicKey: String? = null): Drawable {
         val color = if(publicKey.isNullOrEmpty()) ContactColors.UNKNOWN_COLOR.toConversationColor(context)
-        else AvatarUtils.getColorFromKey(publicKey)
+        else avatarUtils.getColorFromKey(publicKey)
         return ResourceContactPhoto(R.drawable.ic_user_filled_custom)
             .asDrawable(context, color, false, resourcePadding)
     }
@@ -194,7 +197,11 @@ class ProfilePictureView @JvmOverloads constructor(
 
             glide.clear(imageView)
 
-            val placeholder = PlaceholderAvatarPhoto(publicKey, displayName ?: truncateIdForDisplay(publicKey))
+            val placeholder = PlaceholderAvatarPhoto(
+                publicKey,
+                displayName ?: truncateIdForDisplay(publicKey),
+                avatarUtils.generateTextBitmap(128, publicKey, displayName)
+            )
 
             if (signalProfilePicture != null && avatar != "0" && avatar != "") {
                 glide.load(signalProfilePicture)

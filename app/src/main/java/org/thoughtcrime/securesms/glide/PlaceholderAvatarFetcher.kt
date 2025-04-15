@@ -9,12 +9,11 @@ import org.session.libsession.avatars.PlaceholderAvatarPhoto
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.util.AvatarUtils
 
-class PlaceholderAvatarFetcher(private val context: Context,
-                               private val photo: PlaceholderAvatarPhoto): DataFetcher<BitmapDrawable> {
+class PlaceholderAvatarFetcher(private val photo: PlaceholderAvatarPhoto): DataFetcher<BitmapDrawable> {
 
     override fun loadData(priority: Priority,callback: DataFetcher.DataCallback<in BitmapDrawable>) {
         try {
-            val avatar = AvatarUtils.generateTextBitmap(context, 128, photo.hashString, photo.displayName)
+            val avatar = photo.bitmap
             callback.onDataReady(avatar)
         } catch (e: Exception) {
             Log.e("Loki", "Error in fetching avatar")
