@@ -297,7 +297,7 @@ fun CellMetadata(
                                     recipient = it,
                                     modifier = Modifier
                                         .align(Alignment.CenterVertically)
-                                        .size(46.dp)
+                                        .size(LocalDimensions.current.iconLarge)
                                 )
                                 Spacer(modifier = Modifier.width(LocalDimensions.current.smallSpacing))
                             }

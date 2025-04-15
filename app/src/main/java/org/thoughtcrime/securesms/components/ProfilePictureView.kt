@@ -78,13 +78,13 @@ class ProfilePictureView @JvmOverloads constructor(
         recipient.run {
             update(
                 address = address,
-                avatarData = when {
-                    isGroupV2Recipient -> AvatarData.GroupvV2(
+                profileViewDataType = when {
+                    isGroupV2Recipient -> ProfileViewDataType.GroupvV2(
                         customGroupImage = profileAvatar
                     )
-                    isLegacyGroupRecipient -> AvatarData.LegacyGroup
-                    isCommunityRecipient -> AvatarData.Community
-                    else -> AvatarData.OneOnOne
+                    isLegacyGroupRecipient -> ProfileViewDataType.LegacyGroup
+                    isCommunityRecipient -> ProfileViewDataType.Community
+                    else -> ProfileViewDataType.OneOnOne
                 }
             )
         }
@@ -92,25 +92,25 @@ class ProfilePictureView @JvmOverloads constructor(
 
     fun update(
         address: Address,
-        avatarData: AvatarData = AvatarData.OneOnOne
+        profileViewDataType: ProfileViewDataType = ProfileViewDataType.OneOnOne
     ) {
         fun getUserDisplayName(publicKey: String): String = prefs.takeIf { userPublicKey == publicKey }?.getProfileName()
             ?: usernameUtils.getContactNameWithAccountID(publicKey)
 
         // group avatar
-        if (avatarData is AvatarData.GroupvV2 || avatarData is AvatarData.LegacyGroup) {
+        if (profileViewDataType is ProfileViewDataType.GroupvV2 || profileViewDataType is ProfileViewDataType.LegacyGroup) {
             // if the group has a custom image, use that
             // other wise make up a double avatar from the first two members
             // if there is only one member then use that member + an unknown icon coloured based on the group id
 
             // first check if we have a custom image
-            if((avatarData as? AvatarData.GroupvV2)?.customGroupImage != null){
+            if((profileViewDataType as? ProfileViewDataType.GroupvV2)?.customGroupImage != null){
                 publicKey =  address.toString()
                 displayName = ""
                 additionalPublicKey = null // we don't want a second image when there is a custom image set
             } else { // otherwise apply the logic based on members
 
-                val members = if (avatarData is AvatarData.LegacyGroup) {
+                val members = if (profileViewDataType is ProfileViewDataType.LegacyGroup) {
                     groupDatabase.getGroupMemberAddresses(address.toGroupString(), true)
                 } else {
                     storage.getMembers(address.toString())
@@ -138,7 +138,7 @@ class ProfilePictureView @JvmOverloads constructor(
                     additionalDisplayName = getUserDisplayName(apk)
                 }
             }
-        } else if(avatarData is AvatarData.Community) {
+        } else if(profileViewDataType is ProfileViewDataType.Community) {
             val publicKey = GroupUtil.getDecodedOpenGroupInboxAccountId(address.toString())
             this.publicKey = publicKey
             displayName = getUserDisplayName(publicKey)
@@ -191,7 +191,7 @@ class ProfilePictureView @JvmOverloads constructor(
             profilePicturesCache[imageView] = recipient.clone()
             val signalProfilePicture = recipient.contactPhoto
             val avatar = (signalProfilePicture as? ProfileContactPhoto)?.avatarObject
-
+Log.w("", "*** AVATAR: $signalProfilePicture")
             glide.clear(imageView)
 
             val placeholder = PlaceholderAvatarPhoto(publicKey, displayName ?: truncateIdForDisplay(publicKey))
@@ -234,12 +234,12 @@ class ProfilePictureView @JvmOverloads constructor(
     }
     // endregion
 
-    sealed interface AvatarData{
-        data object OneOnOne: AvatarData
-        data object LegacyGroup: AvatarData
-        data object Community: AvatarData
+    sealed interface ProfileViewDataType{
+        data object OneOnOne: ProfileViewDataType
+        data object LegacyGroup: ProfileViewDataType
+        data object Community: ProfileViewDataType
         data class GroupvV2(
             val customGroupImage: String? = null
-        ): AvatarData
+        ): ProfileViewDataType
     }
 }
