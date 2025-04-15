@@ -23,13 +23,16 @@ import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.GroupDisplayInfo
 import org.session.libsession.utilities.UsernameUtils
 import org.session.libsignal.utilities.AccountId
+import org.thoughtcrime.securesms.util.AvatarUIData
+import org.thoughtcrime.securesms.util.AvatarUtils
 
 abstract class BaseGroupMembersViewModel (
     private val groupId: AccountId,
     @ApplicationContext private val context: Context,
     private val storage: StorageProtocol,
     private val usernameUtils: UsernameUtils,
-    private val configFactory: ConfigFactoryProtocol
+    private val configFactory: ConfigFactoryProtocol,
+    private val avatarUtils: AvatarUtils
 ) : ViewModel() {
     // Output: the source-of-truth group information. Other states are derived from this.
     protected val groupInfo: StateFlow<Pair<GroupDisplayInfo, List<GroupMemberState>>?> =
@@ -102,6 +105,7 @@ abstract class BaseGroupMembersViewModel (
             status = status.takeIf { !isMyself }, // Status is only meant for other members
             highlightStatus = highlightStatus,
             showAsAdmin = member.isAdminOrBeingPromoted(status),
+            avatarUIData = avatarUtils.getUIDataFromAccountId(memberAccountId.hexString),
             clickable = !isMyself,
             statusLabel = getMemberLabel(status, context, amIAdmin),
         )
@@ -172,6 +176,7 @@ abstract class BaseGroupMembersViewModel (
 
 data class GroupMemberState(
     val accountId: AccountId,
+    val avatarUIData: AvatarUIData,
     val name: String,
     val status: GroupMember.Status?,
     val highlightStatus: Boolean,

@@ -30,11 +30,14 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.home.search.getSearchName
+import org.thoughtcrime.securesms.util.AvatarUIData
+import org.thoughtcrime.securesms.util.AvatarUtils
 
 @OptIn(FlowPreview::class)
 @HiltViewModel(assistedFactory = SelectContactsViewModel.Factory::class)
 class SelectContactsViewModel @AssistedInject constructor(
     private val configFactory: ConfigFactory,
+    private val avatarUtils: AvatarUtils,
     @ApplicationContext private val appContext: Context,
     @Assisted private val excludingAccountIDs: Set<AccountId>,
     @Assisted private val scope: CoroutineScope,
@@ -111,6 +114,7 @@ class SelectContactsViewModel @AssistedInject constructor(
                 ContactItem(
                     name = contact.getSearchName(),
                     accountID = accountId,
+                    avatarUIData = avatarUtils.getUIDataFromRecipient(contact),
                     selected = selectedAccountIDs.contains(accountId),
                 )
             }
@@ -150,5 +154,6 @@ class SelectContactsViewModel @AssistedInject constructor(
 data class ContactItem(
     val accountID: AccountId,
     val name: String,
+    val avatarUIData: AvatarUIData,
     val selected: Boolean,
 )

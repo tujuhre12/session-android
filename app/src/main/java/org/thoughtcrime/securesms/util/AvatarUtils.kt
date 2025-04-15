@@ -17,8 +17,10 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import network.loki.messenger.R
 import org.session.libsession.avatars.ContactPhoto
 import org.session.libsession.avatars.ProfileContactPhoto
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import java.math.BigInteger
 import java.security.MessageDigest
@@ -41,6 +43,10 @@ class AvatarUtils @Inject constructor(
         ContextCompat.getColor(context, R.color.accent_orange),
         ContextCompat.getColor(context, R.color.accent_red),
     )
+
+    fun getUIDataFromAccountId(accountId: String): AvatarUIData{
+        return getUIDataFromRecipient(Recipient.from(context, Address.fromSerialized(accountId), false))
+    }
 
     fun getUIDataFromRecipient(recipient: Recipient): AvatarUIData {
         val name = if(recipient.isLocalNumber) usernameUtils.getCurrentUsernameWithAccountIdFallback()

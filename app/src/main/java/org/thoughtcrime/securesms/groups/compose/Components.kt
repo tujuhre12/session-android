@@ -43,13 +43,17 @@ import network.loki.messenger.R
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.groups.ContactItem
 import org.thoughtcrime.securesms.ui.XmlAvatar
+import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.RadioButtonIndicator
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
+import org.thoughtcrime.securesms.ui.theme.primaryBlue
 import org.thoughtcrime.securesms.ui.theme.primaryOrange
+import org.thoughtcrime.securesms.util.AvatarBadge
+import org.thoughtcrime.securesms.util.AvatarUIData
 
 
 @Composable
@@ -75,6 +79,7 @@ fun GroupMinimumVersionBanner(modifier: Modifier = Modifier) {
 fun  MemberItem(
     accountId: AccountId,
     title: String,
+    avatarUIData: AvatarUIData,
     showAsAdmin: Boolean,
     modifier: Modifier = Modifier,
     onClick: ((accountId: AccountId) -> Unit)? = null,
@@ -97,10 +102,10 @@ fun  MemberItem(
         horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing),
         verticalAlignment = CenterVertically,
     ) {
-        XmlAvatar(
-            accountId = accountId,
-            isAdmin = showAsAdmin,
-            modifier = Modifier.size(LocalDimensions.current.iconLarge)
+        Avatar(
+            size = LocalDimensions.current.iconLarge,
+            data = avatarUIData,
+            badge = if (showAsAdmin) { AvatarBadge.Admin } else AvatarBadge.None
         )
 
         Column(
@@ -133,6 +138,7 @@ fun RadioMemberItem(
     enabled: Boolean,
     selected: Boolean,
     accountId: AccountId,
+    avatarUIData: AvatarUIData,
     title: String,
     onClick: (accountId: AccountId) -> Unit,
     showAsAdmin: Boolean,
@@ -142,6 +148,7 @@ fun RadioMemberItem(
 ) {
     MemberItem(
         accountId = accountId,
+        avatarUIData = avatarUIData,
         title = title,
         subtitle = subtitle,
         subtitleColor = subtitleColor,
@@ -174,6 +181,7 @@ fun LazyListScope.multiSelectMemberList(
                 enabled = enabled,
                 selected = contact.selected,
                 accountId = contact.accountID,
+                avatarUIData = contact.avatarUIData,
                 title = contact.name,
                 showAsAdmin = false,
                 onClick = { onContactItemClicked(contact.accountID) }
@@ -196,11 +204,19 @@ fun PreviewMemberList() {
                     ContactItem(
                         accountID = AccountId(random),
                         name = "Person",
+                        avatarUIData = AvatarUIData(
+                            name = "TOTO",
+                            color = primaryBlue
+                        ),
                         selected = false,
                     ),
                     ContactItem(
                         accountID = AccountId(random),
                         name = "Cow",
+                        avatarUIData = AvatarUIData(
+                            name = "TOTO",
+                            color = primaryBlue
+                        ),
                         selected = true,
                     )
                 ),

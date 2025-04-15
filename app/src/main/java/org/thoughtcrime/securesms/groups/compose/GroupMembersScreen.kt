@@ -19,6 +19,8 @@ import org.thoughtcrime.securesms.groups.GroupMembersViewModel
 import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
+import org.thoughtcrime.securesms.ui.theme.primaryBlue
+import org.thoughtcrime.securesms.util.AvatarUIData
 
 @Composable
 fun GroupMembersScreen(
@@ -63,7 +65,8 @@ fun GroupMembers(
                     } else {
                         LocalColors.current.textSecondary
                     },
-                    showAsAdmin = member.showAsAdmin
+                    showAsAdmin = member.showAsAdmin,
+                    avatarUIData = member.avatarUIData
                 )
             }
         }
@@ -86,7 +89,8 @@ private fun EditGroupPreview() {
             canResendPromotion = false,
             showAsAdmin = false,
             clickable = true,
-            statusLabel = "Invited"
+            statusLabel = "Invited",
+            avatarUIData = AvatarUIData(name = "Toto", color = primaryBlue)
         )
         val twoMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1235"),
@@ -99,7 +103,8 @@ private fun EditGroupPreview() {
             canResendPromotion = false,
             showAsAdmin = true,
             clickable = true,
-            statusLabel = "Promotion failed"
+            statusLabel = "Promotion failed",
+            avatarUIData = AvatarUIData(name = "Toto", color = primaryBlue)
         )
         val threeMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1236"),
@@ -112,7 +117,8 @@ private fun EditGroupPreview() {
             canResendPromotion = false,
             showAsAdmin = false,
             clickable = true,
-            statusLabel = ""
+            statusLabel = "",
+            avatarUIData = AvatarUIData(name = "Toto", color = primaryBlue)
         )
 
         GroupMembers(

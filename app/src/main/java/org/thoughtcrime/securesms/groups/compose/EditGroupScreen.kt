@@ -76,6 +76,8 @@ import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
+import org.thoughtcrime.securesms.ui.theme.primaryBlue
+import org.thoughtcrime.securesms.util.AvatarUIData
 
 @Composable
 fun EditGroupScreen(
@@ -462,6 +464,7 @@ fun EditMemberItem(
             LocalColors.current.textSecondary
         },
         showAsAdmin = member.showAsAdmin,
+        avatarUIData = member.avatarUIData,
         onClick = if(member.clickable) onClick else null,
         modifier = modifier
     ){
@@ -482,6 +485,10 @@ private fun EditGroupPreviewSheet() {
         val oneMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234"),
             name = "Test User",
+            avatarUIData = AvatarUIData(
+                name = "TOTO",
+                color = primaryBlue
+            ),
             status = GroupMember.Status.INVITE_SENT,
             highlightStatus = false,
             canPromote = true,
@@ -495,6 +502,10 @@ private fun EditGroupPreviewSheet() {
         val twoMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1235"),
             name = "Test User 2",
+            avatarUIData = AvatarUIData(
+                name = "TOTO",
+                color = primaryBlue
+            ),
             status = GroupMember.Status.PROMOTION_FAILED,
             highlightStatus = true,
             canPromote = true,
@@ -508,6 +519,10 @@ private fun EditGroupPreviewSheet() {
         val threeMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1236"),
             name = "Test User 3",
+            avatarUIData = AvatarUIData(
+                name = "TOTO",
+                color = primaryBlue
+            ),
             status = null,
             highlightStatus = false,
             canPromote = true,
@@ -561,6 +576,10 @@ private fun EditGroupPreview3() {
         val oneMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234"),
             name = "Test User",
+            avatarUIData = AvatarUIData(
+                name = "TOTO",
+                color = primaryBlue
+            ),
             status = GroupMember.Status.INVITE_SENT,
             highlightStatus = false,
             canPromote = true,
@@ -574,6 +593,10 @@ private fun EditGroupPreview3() {
         val twoMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1235"),
             name = "Test User 2",
+            avatarUIData = AvatarUIData(
+                name = "TOTO",
+                color = primaryBlue
+            ),
             status = GroupMember.Status.PROMOTION_FAILED,
             highlightStatus = true,
             canPromote = true,
@@ -587,6 +610,10 @@ private fun EditGroupPreview3() {
         val threeMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1236"),
             name = "Test User 3",
+            avatarUIData = AvatarUIData(
+                name = "TOTO",
+                color = primaryBlue
+            ),
             status = null,
             highlightStatus = false,
             canPromote = true,
@@ -639,6 +666,10 @@ private fun EditGroupPreview() {
         val oneMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234"),
             name = "Test User",
+            avatarUIData = AvatarUIData(
+                name = "TOTO",
+                color = primaryBlue
+            ),
             status = GroupMember.Status.INVITE_SENT,
             highlightStatus = false,
             canPromote = true,
@@ -652,6 +683,10 @@ private fun EditGroupPreview() {
         val twoMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1235"),
             name = "Test User 2",
+            avatarUIData = AvatarUIData(
+                name = "TOTO",
+                color = primaryBlue
+            ),
             status = GroupMember.Status.PROMOTION_FAILED,
             highlightStatus = true,
             canPromote = true,
@@ -665,6 +700,10 @@ private fun EditGroupPreview() {
         val threeMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1236"),
             name = "Test User 3",
+            avatarUIData = AvatarUIData(
+                name = "TOTO",
+                color = primaryBlue
+            ),
             status = null,
             highlightStatus = false,
             canPromote = true,
@@ -719,6 +758,10 @@ private fun EditGroupEditNamePreview(
         val oneMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234"),
             name = "Test User",
+            avatarUIData = AvatarUIData(
+                name = "TOTO",
+                color = primaryBlue
+            ),
             status = GroupMember.Status.INVITE_SENT,
             highlightStatus = false,
             canPromote = true,
@@ -732,6 +775,10 @@ private fun EditGroupEditNamePreview(
         val twoMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1235"),
             name = "Test User 2",
+            avatarUIData = AvatarUIData(
+                name = "TOTO",
+                color = primaryBlue
+            ),
             status = GroupMember.Status.PROMOTION_FAILED,
             highlightStatus = true,
             canPromote = true,
@@ -745,6 +792,10 @@ private fun EditGroupEditNamePreview(
         val threeMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1236"),
             name = "Test User 3",
+            avatarUIData = AvatarUIData(
+                name = "TOTO",
+                color = primaryBlue
+            ),
             status = null,
             highlightStatus = false,
             canPromote = true,

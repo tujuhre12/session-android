@@ -37,6 +37,8 @@ import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
+import org.thoughtcrime.securesms.ui.theme.primaryBlue
+import org.thoughtcrime.securesms.util.AvatarUIData
 
 
 @Serializable
@@ -140,6 +142,7 @@ private fun PreviewSelectContacts() {
             accountID = AccountId(random),
             name = "User $it",
             selected = it % 3 == 0,
+            avatarUIData = AvatarUIData(name = "Toto", color = primaryBlue)
         )
     }
 
