@@ -65,7 +65,6 @@ import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAt
 import org.thoughtcrime.securesms.MediaPreviewActivity.getPreviewIntent
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.mms.DecryptableStreamUriLoader
-import org.thoughtcrime.securesms.ui.XmlAvatar
 import org.thoughtcrime.securesms.ui.CarouselNextButton
 import org.thoughtcrime.securesms.ui.CarouselPrevButton
 import org.thoughtcrime.securesms.ui.Cell
@@ -293,16 +292,12 @@ fun CellMetadata(
                 senderInfo?.let {
                     TitledView(state.fromTitle) {
                         Row {
-                            sender?.let {
+                            senderAvatarData?.let {
                                 Avatar(
-                                    size = LocalDimensions.current.iconLarge,
-                                    data =
-                                )
-                                XmlAvatar(
-                                    recipient = it,
                                     modifier = Modifier
-                                        .align(Alignment.CenterVertically)
-                                        .size(LocalDimensions.current.iconLarge)
+                                        .align(Alignment.CenterVertically),
+                                    size = LocalDimensions.current.iconLarge,
+                                    data = senderAvatarData
                                 )
                                 Spacer(modifier = Modifier.width(LocalDimensions.current.smallSpacing))
                             }
