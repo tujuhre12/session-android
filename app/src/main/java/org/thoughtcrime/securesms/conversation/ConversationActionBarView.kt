@@ -33,6 +33,7 @@ import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.setThemedContent
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
+import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 import javax.inject.Inject
 
@@ -57,7 +58,7 @@ class ConversationActionBarView @JvmOverloads constructor(
         }
     }
 
-    private var avatarRecipient: Recipient? by mutableStateOf(null)
+    private var avatarUiData: AvatarUIData? by mutableStateOf(null)
 
     init {
         var previousState: Int
@@ -82,26 +83,27 @@ class ConversationActionBarView @JvmOverloads constructor(
     fun bind(
         delegate: ConversationActionBarDelegate,
         recipient: Recipient,
+        avatarUIData: AvatarUIData?,
         config: ExpirationConfiguration? = null,
         openGroup: OpenGroup? = null
     ) {
         this.delegate = delegate
-        avatarRecipient = recipient
+        avatarUiData = avatarUIData
 
         binding.avatar.setThemedContent {
-            if(avatarRecipient != null) {
+            if(avatarUiData != null) {
                 Avatar(
                     size = LocalDimensions.current.iconLarge,
-                    data = avatarUtils.getUIDataFromRecipient(avatarRecipient!!)
+                    data = avatarUiData!!
                 )
             }
         }
 
-        update(recipient, openGroup, config)
+        update(recipient, avatarUIData, openGroup, config)
     }
 
-    fun update(recipient: Recipient, openGroup: OpenGroup? = null, config: ExpirationConfiguration? = null) {
-        avatarRecipient = recipient
+    fun update(recipient: Recipient, avatarUIData: AvatarUIData?, openGroup: OpenGroup? = null, config: ExpirationConfiguration? = null) {
+        avatarUiData = avatarUIData
         binding.conversationTitleView.text = recipient.takeUnless { it.isLocalNumber }?.name ?: context.getString(R.string.noteToSelf)
         updateSubtitle(recipient, openGroup, config)
 

@@ -63,7 +63,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     private val _avatarDialogState: MutableStateFlow<AvatarDialogState> = MutableStateFlow(
-        getDefaultAvatarDialogState()
+        AvatarDialogState.NoAvatar
     )
     val avatarDialogState: StateFlow<AvatarDialogState>
         get() = _avatarDialogState
@@ -82,6 +82,11 @@ class SettingsViewModel @Inject constructor(
 
     init {
         updateAvatar()
+
+        // set default dialog ui
+        viewModelScope.launch {
+            _avatarDialogState.value = getDefaultAvatarDialogState()
+        }
     }
 
     private fun updateAvatar(){
@@ -144,10 +149,12 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun onAvatarDialogDismissed() {
-        _avatarDialogState.value = getDefaultAvatarDialogState()
+        viewModelScope.launch {
+            _avatarDialogState.value = getDefaultAvatarDialogState()
+        }
     }
 
-    private fun getDefaultAvatarDialogState() = if (hasAvatar()) AvatarDialogState.UserAvatar(
+    private suspend fun getDefaultAvatarDialogState() = if (hasAvatar()) AvatarDialogState.UserAvatar(
         avatarUtils.getUIDataFromRecipient(userRecipient)
     )
     else AvatarDialogState.NoAvatar

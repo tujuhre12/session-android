@@ -13,15 +13,19 @@ import androidx.annotation.DrawableRes
 import androidx.compose.ui.graphics.Color
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.createBitmap
+import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import org.session.libsession.avatars.ContactPhoto
 import org.session.libsession.avatars.ProfileContactPhoto
+import org.session.libsession.database.StorageProtocol
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
+import org.thoughtcrime.securesms.database.GroupDatabase
 import java.math.BigInteger
 import java.security.MessageDigest
 import java.util.Locale
@@ -31,7 +35,9 @@ import javax.inject.Singleton
 @Singleton
 class AvatarUtils @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val usernameUtils: UsernameUtils
+    private val usernameUtils: UsernameUtils,
+    private val groupDatabase: GroupDatabase, // for legacy groups
+    private val storage: Lazy<StorageProtocol>,
 ) {
     // Hardcoded possible bg colors for avatar backgrounds
     private val avatarBgColors = arrayOf(
@@ -44,28 +50,64 @@ class AvatarUtils @Inject constructor(
         ContextCompat.getColor(context, R.color.accent_red),
     )
 
-    fun getUIDataFromAccountId(accountId: String): AvatarUIData {
-        return getUIDataFromRecipient(Recipient.from(context, Address.fromSerialized(accountId), false))
-    }
+    suspend fun getUIDataFromAccountId(accountId: String): AvatarUIData =
+        withContext(Dispatchers.Default) {
+            getUIDataFromRecipient(Recipient.from(context, Address.fromSerialized(accountId), false))
+        }
 
-    fun getUIDataFromRecipient(recipient: Recipient): AvatarUIData {
-        // set up the data based on the conversation type
+    suspend fun getUIDataFromRecipient(recipient: Recipient): AvatarUIData =
+        withContext(Dispatchers.Default) {
+            // set up the data based on the conversation type
+            val elements = mutableListOf<AvatarUIElement>()
 
-        // todo AVATAR Add rules here
-        
-        val name = if(recipient.isLocalNumber) usernameUtils.getCurrentUsernameWithAccountIdFallback()
-        else recipient.name
+            // Groups can have a double avatar setup, if they don't have a custom image
+            if(recipient.isGroupRecipient){
+                // if the group has a custom image, use that
+                // other wise make up a double avatar from the first two members
+                // if there is only one member then use that member + an unknown icon coloured based on the group id
+                if(recipient.profileAvatar != null){
+                    elements.add(getUIElementForRecipient(recipient))
+                } else {
+                    val members = if (recipient.isLegacyGroupRecipient) {
+                        groupDatabase.getGroupMemberAddresses(recipient.address.toGroupString(), true)
+                    } else {
+                        storage.get().getMembers(recipient.address.toString())
+                            .map { Address.fromSerialized(it.accountId()) }
+                    }.sorted().take(2)
 
+                    when (members.size) {
+                        0 -> elements.add(AvatarUIElement())
 
-        return AvatarUIData(
-            elements = listOf(
-                AvatarUIElement(
-                    name = extractLabel(name),
-                    color = Color(getColorFromKey(recipient.address.toString())),
-                    contactPhoto = if(hasAvatar(recipient.contactPhoto)) recipient.contactPhoto else null
-                )
+                        1 -> {
+                            // when we only have one member, use that member as one of the two avatar
+                            // and the second should be the unknown icon with a colour based on the group id
+                            elements.add(getUIElementForRecipient(
+                                Recipient.from(context, Address.fromSerialized(
+                                    members[0].toString()
+                                ), false))
+                            )
+
+                            elements.add(
+                                AvatarUIElement(
+                                    color = Color(getColorFromKey(recipient.address.toString()))
+                                )
+                            )
+                        }
+
+                        else -> {
+                            members.forEach {
+                                elements.add(getUIElementForRecipient(Recipient.from(context, it, false)))
+                            }
+                        }
+                    }
+                }
+            } else {
+                elements.add(getUIElementForRecipient(recipient))
+            }
+
+            AvatarUIData(
+                elements = elements
             )
-        )
     }
 
     private fun getUIElementForRecipient(recipient: Recipient): AvatarUIElement {

@@ -51,16 +51,12 @@ abstract class BaseGroupMembersViewModel (
                     val displayInfo = storage.getClosedGroupDisplayInfo(groupId.hexString)
                         ?: return@withContext null
 
-                    val memberState = configFactory.withGroupConfigs(groupId) { it.groupMembers.allWithStatus() }
-                        .map { (member, status) ->
-                            createGroupMember(
-                                member = member,
-                                status = status,
-                                myAccountId = currentUserId,
-                                amIAdmin = displayInfo.isUserAdmin,
-                            )
-                        }
-                        .toList()
+                    val rawMembers = configFactory.withGroupConfigs(groupId) { it.groupMembers.allWithStatus() }
+
+                    val memberState = mutableListOf<GroupMemberState>()
+                    for ((member, status) in rawMembers) {
+                        memberState.add(createGroupMember(member, status, currentUserId, displayInfo.isUserAdmin))
+                    }
 
                     displayInfo to sortMembers(memberState, currentUserId)
                 }
@@ -71,7 +67,7 @@ abstract class BaseGroupMembersViewModel (
         .map { it?.second.orEmpty() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
 
-    private fun createGroupMember(
+    private suspend fun createGroupMember(
         member: GroupMember,
         status: GroupMember.Status,
         myAccountId: AccountId,

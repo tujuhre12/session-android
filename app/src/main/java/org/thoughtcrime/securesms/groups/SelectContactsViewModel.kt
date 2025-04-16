@@ -101,25 +101,27 @@ class SelectContactsViewModel @AssistedInject constructor(
         }
 
 
-    private fun filterContacts(
+    private suspend fun filterContacts(
         contacts: Collection<Recipient>,
         query: String,
         selectedAccountIDs: Set<AccountId>
     ): List<ContactItem> {
-        return contacts
-            .asSequence()
-            .filter { query.isBlank() || it.getSearchName().contains(query, ignoreCase = true) }
-            .map { contact ->
+        val items = mutableListOf<ContactItem>()
+        for (contact in contacts) {
+            if (query.isBlank() || contact.getSearchName().contains(query, ignoreCase = true)) {
                 val accountId = AccountId(contact.address.toString())
-                ContactItem(
-                    name = contact.getSearchName(),
-                    accountID = accountId,
-                    avatarUIData = avatarUtils.getUIDataFromRecipient(contact),
-                    selected = selectedAccountIDs.contains(accountId),
+                val avatarData = avatarUtils.getUIDataFromRecipient(contact)
+                items.add(
+                    ContactItem(
+                        name = contact.getSearchName(),
+                        accountID = accountId,
+                        avatarUIData = avatarData,
+                        selected = selectedAccountIDs.contains(accountId)
+                    )
                 )
             }
-            .toList()
-            .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name })
+        }
+        return items.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name })
     }
 
     fun setManuallyAddedContacts(accountIDs: Set<AccountId>) {
