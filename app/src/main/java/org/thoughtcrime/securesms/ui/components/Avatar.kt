@@ -23,6 +23,7 @@ import com.bumptech.glide.integration.compose.CrossFade
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import network.loki.messenger.R
 import org.session.libsession.avatars.ContactPhoto
 import org.session.libsession.avatars.ProfileContactPhoto
@@ -132,20 +133,17 @@ private fun AvatarElement(
             .clip(CircleShape),
     ) {
         if(data.contactPhoto != null){
-            // this acts as a placeholder while the image loads. The actual 'placeholder' property of the GlideImage
-            // does not allow for padding so the icon looks fullscreen. So instead we place an image here.
-            Image(
-                modifier = Modifier.fillMaxSize().padding(size * 0.2f),
-                painter = painterResource(id = R.drawable.ic_user_filled_custom),
-                contentDescription = null,
-            )
-
             GlideImage(
                 model = data.contactPhoto,
                 modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop,
                 contentDescription = null,
                 transition = CrossFade,
+                loading = placeholder(R.drawable.ic_user_filled_custom_padded),
+                requestBuilderTransform = {
+                    it.diskCacheStrategy(DiskCacheStrategy.NONE)
+                        .centerCrop()
+                        .circleCrop()
+                }
             )
         } else if(!data.name.isNullOrEmpty()){
             AutoResizeText(
