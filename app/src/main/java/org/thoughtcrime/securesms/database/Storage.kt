@@ -8,6 +8,7 @@ import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDD
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_PINNED
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.util.BaseCommunityInfo
+import network.loki.messenger.libsession_util.util.Bytes
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import network.loki.messenger.libsession_util.util.UserPic
@@ -93,6 +94,7 @@ import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
 import java.security.MessageDigest
 import javax.inject.Inject
+import javax.inject.Provider
 import javax.inject.Singleton
 import kotlin.collections.set
 import network.loki.messenger.libsession_util.util.Contact as LibSessionContact
@@ -103,7 +105,7 @@ private const val TAG = "Storage"
 @Singleton
 open class Storage @Inject constructor(
     @ApplicationContext context: Context,
-    helper: SQLCipherOpenHelper,
+    helper: Provider<SQLCipherOpenHelper>,
     private val configFactory: ConfigFactory,
     private val jobDatabase: SessionJobDatabase,
     private val threadDatabase: ThreadDatabase,
@@ -589,7 +591,7 @@ open class Storage @Inject constructor(
 
     override fun getOpenGroup(threadId: Long): OpenGroup? {
         if (threadId.toInt() < 0) { return null }
-        val database = databaseHelper.readableDatabase
+        val database = readableDatabase
         return database.get(LokiThreadDatabase.publicChatTable, "${LokiThreadDatabase.threadID} = ?", arrayOf( threadId.toString() )) { cursor ->
             val publicChatAsJson = cursor.getString(LokiThreadDatabase.publicChat)
             OpenGroup.fromJSON(publicChatAsJson)
@@ -880,8 +882,8 @@ open class Storage @Inject constructor(
                 name = name,
                 members = members,
                 priority = PRIORITY_VISIBLE,
-                encPubKey = (encryptionKeyPair.publicKey as DjbECPublicKey).publicKey,  // 'serialize()' inserts an extra byte
-                encSecKey = encryptionKeyPair.privateKey.serialize(),
+                encPubKey = Bytes((encryptionKeyPair.publicKey as DjbECPublicKey).publicKey),  // 'serialize()' inserts an extra byte
+                encSecKey = Bytes(encryptionKeyPair.privateKey.serialize()),
                 disappearingTimer = expirationTimer.toLong(),
                 joinedAtSecs = (formationTimestamp / 1000L)
             )
@@ -912,8 +914,8 @@ open class Storage @Inject constructor(
             val groupInfo = userGroups.getOrConstructLegacyGroupInfo(groupPublicKey).copy(
                 name = name,
                 members = membersMap,
-                encPubKey = (latestKeyPair.publicKey as DjbECPublicKey).publicKey,  // 'serialize()' inserts an extra byte
-                encSecKey = latestKeyPair.privateKey.serialize(),
+                encPubKey = Bytes((latestKeyPair.publicKey as DjbECPublicKey).publicKey),  // 'serialize()' inserts an extra byte
+                encSecKey = Bytes(latestKeyPair.privateKey.serialize()),
                 priority = if (isPinned(threadID)) PRIORITY_PINNED else PRIORITY_VISIBLE,
                 disappearingTimer = getExpirationConfiguration(threadID)?.expiryMode?.expirySeconds ?: 0L,
                 joinedAtSecs = (existingGroup.formationTimestamp / 1000L)
@@ -1323,8 +1325,8 @@ open class Storage @Inject constructor(
 
             if (contact.profilePicture != UserPic.DEFAULT) {
                 val (url, key) = contact.profilePicture
-                if (key.size != ProfileKeyUtil.PROFILE_KEY_BYTES) return@forEach
-                profileManager.setProfilePicture(context, recipient, url, key)
+                if (key.data.size != ProfileKeyUtil.PROFILE_KEY_BYTES) return@forEach
+                profileManager.setProfilePicture(context, recipient, url, key.data)
                 profileManager.setUnidentifiedAccessMode(context, recipient, Recipient.UnidentifiedAccessMode.UNKNOWN)
             } else {
                 profileManager.setProfilePicture(context, recipient, null, null)
@@ -1352,10 +1354,11 @@ open class Storage @Inject constructor(
         // if we have contacts locally but that are missing from the config, remove their corresponding thread
         val currentUserKey = getUserPublicKey()
 
-        //NOTE: I used to cycle through all Contact here instead or all Recipients, but turns out a Contact isn't saved until we have a name, nickname or avatar
+        //NOTE: We used to cycle through all Contact here instead or all Recipients, but turns out a Contact isn't saved until we have a name, nickname or avatar
         // which in the case of contacts we are messaging for the first time and who haven't yet approved us, it won't be the case
         // But that person is saved in the Recipient db. We might need to investigate how to clean the relationship between Recipients, Contacts and config Contacts.
         val removedContacts = recipientDatabase.allRecipients.filter { localContact ->
+            localContact.is1on1 && // only for conversations
             localContact.address.toString() != currentUserKey && // we don't want to remove ourselves (ie, our Note to Self)
             moreContacts.none { it.id == localContact.address.toString() } // we don't want to remove contacts that are present in the config
         }
@@ -1639,7 +1642,7 @@ open class Storage @Inject constructor(
                     profileManager.setUnidentifiedAccessMode(context, sender, Recipient.UnidentifiedAccessMode.UNKNOWN)
                 }
             }
-            threadDatabase.setHasSent(threadId, true)
+            
             val mappingDb = blindedIdMappingDatabase
             val mappings = mutableMapOf<String, BlindedIdMapping>()
             threadDatabase.readerFor(threadDatabase.conversationList).use { reader ->
@@ -1674,7 +1677,6 @@ open class Storage @Inject constructor(
                 alreadyApprovedMe = it.contacts.get(sender.address.toString())?.approvedMe ?: false
             }
 
-            setRecipientApproved(sender, true)
             setRecipientApprovedMe(sender, true)
 
             // only show the message if wasn't already approvedMe before
