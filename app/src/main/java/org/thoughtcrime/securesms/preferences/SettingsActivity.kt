@@ -734,7 +734,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                         else -> {
                             Image(
                                 modifier = Modifier.fillMaxSize()
-                                    .padding(LocalDimensions.current.badgeSize)
+                                    .padding(LocalDimensions.current.iconSmall)
                                     .align(Alignment.Center),
                                 painter = painterResource(id = R.drawable.ic_image),
                                 contentScale = ContentScale.Fit,
