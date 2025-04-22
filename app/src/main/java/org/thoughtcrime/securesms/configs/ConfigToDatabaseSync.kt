@@ -192,7 +192,7 @@ class ConfigToDatabaseSync @Inject constructor(
         profileManager.setProfilePicture(
             context, recipient,
             profilePictureURL = groupInfoConfig.profilePic?.url,
-            profileKey = groupInfoConfig.profilePic?.key
+            profileKey = groupInfoConfig.profilePic?.key?.data
         )
 
         // Also update the name in the user groups config
