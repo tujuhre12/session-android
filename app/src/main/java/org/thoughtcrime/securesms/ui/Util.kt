@@ -5,11 +5,13 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.view.View
 import android.view.ViewTreeObserver
+import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.fragment.app.Fragment
@@ -88,3 +90,7 @@ inline fun <T : View> T.afterMeasured(crossinline block: T.() -> Unit) {
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun Modifier.qaTag(tag: String) = semantics { testTagsAsResourceId = true }.testTag(tag)
+
+@OptIn(ExperimentalComposeUiApi::class)
+@Composable
+fun Modifier.qaTag(@StringRes tagResId: Int) = semantics { testTagsAsResourceId = true }.testTag(stringResource(tagResId))

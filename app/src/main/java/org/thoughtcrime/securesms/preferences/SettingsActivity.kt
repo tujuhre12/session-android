@@ -621,7 +621,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                 horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.spacing)
             ) {
                 AvatarOption(
-                    modifier = Modifier.qaTag(stringResource(R.string.AccessibilityId_imageButton)),
+                    modifier = Modifier.qaTag(R.string.AccessibilityId_imageButton),
                     title = stringResource(R.string.image),
                     iconRes = R.drawable.ic_image,
                     onClick = onGalleryPicked
@@ -629,7 +629,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
 
                 if(showCamera) {
                     AvatarOption(
-                        modifier = Modifier.qaTag(stringResource(R.string.AccessibilityId_cameraButton)),
+                        modifier = Modifier.qaTag(R.string.AccessibilityId_cameraButton),
                         title = stringResource(R.string.contentDescriptionCamera),
                         iconRes = R.drawable.ic_camera,
                         onClick = onCameraPicked
@@ -703,7 +703,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                         ) {
                             startAvatarSelection()
                         }
-                        .qaTag(stringResource(R.string.AccessibilityId_avatarPicker))
+                        .qaTag(R.string.AccessibilityId_avatarPicker)
                         .background(
                             shape = CircleShape,
                             color = LocalColors.current.backgroundBubbleReceived,

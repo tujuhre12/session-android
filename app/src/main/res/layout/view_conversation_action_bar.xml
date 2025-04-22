@@ -9,8 +9,8 @@
 
     <androidx.compose.ui.platform.ComposeView
         android:id="@+id/avatar"
-        android:layout_width="@dimen/medium_profile_picture_size"
-        android:layout_height="@dimen/medium_profile_picture_size" />
+        android:layout_width="@dimen/very_small_profile_picture_size"
+        android:layout_height="@dimen/very_small_profile_picture_size" />
 
     <LinearLayout
         android:id="@+id/conversationTitleContainer"

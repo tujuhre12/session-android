@@ -105,7 +105,7 @@ private fun EnterAccountId(
                     text = state.newMessageIdOrOns,
                     modifier = Modifier
                         .padding(horizontal = LocalDimensions.current.spacing)
-                        .qaTag(stringResource(R.string.AccessibilityId_sessionIdInput)),
+                        .qaTag(R.string.AccessibilityId_sessionIdInput),
                     placeholder = stringResource(R.string.accountIdOrOnsEnter),
                     onChange = callbacks::onChange,
                     onContinue = callbacks::onContinue,

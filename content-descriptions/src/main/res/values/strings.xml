@@ -63,7 +63,8 @@
     <string name="AccessibilityId_messageNew">New direct message</string>
     <!-- Join community pop up -->
     <string name="AccessibilityId_communityEnterUrl">Community input</string>
-    <!-- Conversation options (three dots menu)-->
+    <!-- Conversation -->
+    <string name="qa_conversation_options">conversation-options-avatar</string>
     <string name="AccessibilityId_conversationsAddToHome">Add to home screen</string>
     <string name="AccessibilityId_conversationsSettingsAllMedia">All media</string>
     <string name="AccessibilityId_block">Block</string>

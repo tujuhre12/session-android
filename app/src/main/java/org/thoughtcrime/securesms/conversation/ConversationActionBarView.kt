@@ -9,6 +9,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -31,6 +33,7 @@ import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.ui.components.Avatar
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.setThemedContent
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.util.AvatarUIData
@@ -93,6 +96,7 @@ class ConversationActionBarView @JvmOverloads constructor(
         binding.avatar.setThemedContent {
             if(avatarUiData != null) {
                 Avatar(
+                    modifier = Modifier.qaTag(R.string.qa_conversation_options),
                     size = LocalDimensions.current.iconLarge,
                     data = avatarUiData!!
                 )
