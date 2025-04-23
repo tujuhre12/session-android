@@ -98,6 +98,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_K
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.Stub
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOTIFICATIONS_ENABLED
 import org.session.libsession.utilities.concurrent.SimpleTask
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
@@ -114,7 +115,6 @@ import org.thoughtcrime.securesms.attachments.ScreenshotObserver
 import org.thoughtcrime.securesms.audio.AudioRecorder
 import org.thoughtcrime.securesms.components.emoji.RecentEmojiPageModel
 import org.thoughtcrime.securesms.contacts.SelectContactsToInviteToGroupActivity.Companion.SELECTED_CONTACTS_KEY
-import org.thoughtcrime.securesms.conversation.ConversationActionBarDelegate
 import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesActivity
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnActionSelectedListener
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnReactionSelectedListener
@@ -180,10 +180,16 @@ import org.thoughtcrime.securesms.mms.Slide
 import org.thoughtcrime.securesms.mms.SlideDeck
 import org.thoughtcrime.securesms.mms.VideoSlide
 import org.thoughtcrime.securesms.permissions.Permissions
+import org.thoughtcrime.securesms.preferences.PrivacySettingsActivity
 import org.thoughtcrime.securesms.reactions.ReactionsDialogFragment
 import org.thoughtcrime.securesms.reactions.any.ReactWithAnyEmojiDialogFragment
 import org.thoughtcrime.securesms.showSessionDialog
+import org.thoughtcrime.securesms.ui.components.ConversationAppBar
+import org.thoughtcrime.securesms.ui.getSubbedString
+import org.thoughtcrime.securesms.ui.setThemedContent
 import org.thoughtcrime.securesms.util.ActivityDispatcher
+import org.thoughtcrime.securesms.util.AvatarUIData
+import org.thoughtcrime.securesms.util.AvatarUIElement
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.MediaUtil
@@ -199,6 +205,8 @@ import org.thoughtcrime.securesms.util.push
 import org.thoughtcrime.securesms.util.show
 import org.thoughtcrime.securesms.util.toPx
 import org.thoughtcrime.securesms.webrtc.WebRtcCallActivity
+import org.thoughtcrime.securesms.webrtc.WebRtcCallActivity.Companion.ACTION_START_CALL
+import org.thoughtcrime.securesms.webrtc.WebRtcCallBridge.Companion.EXTRA_RECIPIENT_ADDRESS
 import java.lang.ref.WeakReference
 import java.util.LinkedList
 import java.util.Locale
@@ -222,7 +230,7 @@ private const val TAG = "ConversationActivityV2"
 class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     InputBarRecordingViewDelegate, AttachmentManager.AttachmentListener, ActivityDispatcher,
     ConversationActionModeCallbackDelegate, VisibleMessageViewDelegate, RecipientModifiedListener,
-    SearchBottomBar.EventListener, LoaderManager.LoaderCallbacks<Cursor>, ConversationActionBarDelegate,
+    SearchBottomBar.EventListener, LoaderManager.LoaderCallbacks<Cursor>,
     OnReactionSelectedListener, ReactWithAnyEmojiDialogFragment.Callback, ReactionsDialogFragment.Callback,
     ConversationMenuHelper.ConversationMenuListener, UserDetailsBottomSheet.UserDetailsBottomSheetCallback {
 
@@ -558,7 +566,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 setUpRecyclerView()
                 setUpTypingObserver()
                 setUpRecipientObserver()
-                getLatestOpenGroupInfoIfNeeded()
                 setUpSearchResultObserver()
                 scrollToFirstUnreadMessageIfNeeded()
                 setUpOutdatedClientBanner()
@@ -608,6 +615,13 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                         startActivity(Intent(this@ConversationActivityV2, ConversationActivityV2::class.java)
                             .putExtra(THREAD_ID, event.threadId)
                         )
+                    }
+
+                    is ConversationUiEvent.ShowDisappearingMessages -> {
+                        val intent = Intent(this@ConversationActivityV2, DisappearingMessagesActivity::class.java).apply {
+                            putExtra(DisappearingMessagesActivity.THREAD_ID, event.threadId)
+                        }
+                        startActivity(intent)
                     }
                 }
             }
@@ -696,7 +710,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
         updatePlaceholder()
         viewModel.recipient?.let {
-            maybeUpdateToolbar(recipient = it)
             setUpOutdatedClientBanner()
         }
     }
@@ -774,22 +787,18 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     // called from onCreate
     private fun setUpToolBar() {
-        setSupportActionBar(binding.toolbar)
-        val actionBar = supportActionBar ?: return
-        val recipient = viewModel.recipient ?: return
-        actionBar.title = ""
-        actionBar.setDisplayHomeAsUpEnabled(true)
-        actionBar.setHomeButtonEnabled(true)
-        lifecycleScope.launch {
-            binding.toolbarContent.bind(
-                this@ConversationActivityV2,
-                recipient,
-                viewModel.getConversationAvatarData(),
-                viewModel.expirationConfiguration,
-                viewModel.openGroup
-            )
-        }
-        maybeUpdateToolbar(recipient)
+        binding.conversationAppBar.setThemedContent {
+           val data by viewModel.appBarData.collectAsState()
+
+           ConversationAppBar(
+               data = data,
+               onBackPressed = ::finish,
+               onCallPressed = ::callRecipient,
+               onAvatarPressed = {
+                   //todo UCS link to new options screen
+               }
+           )
+       }
     }
 
     // called from onCreate
@@ -869,14 +878,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     private fun setUpRecipientObserver()    = viewModel.recipient?.addListener(this)
     private fun tearDownRecipientObserver() = viewModel.recipient?.removeListener(this)
-
-    private fun getLatestOpenGroupInfoIfNeeded() {
-        val openGroup = viewModel.openGroup ?: return
-        OpenGroupApi.getMemberCount(openGroup.room, openGroup.server) successUi {
-            binding.toolbarContent.updateSubtitle(viewModel.recipient!!, openGroup, viewModel.expirationConfiguration)
-            maybeUpdateToolbar(viewModel.recipient!!)
-        }
-    }
 
     // called from onCreate
     private fun setUpBlockedBanner() {
@@ -1067,22 +1068,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
     }
 
-    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
-        val recipient = viewModel.recipient ?: return false
-        if (viewModel.showOptionsMenu) {
-            ConversationMenuHelper.onPrepareOptionsMenu(
-                menu = menu,
-                inflater = menuInflater,
-                thread = recipient,
-                context = this,
-                configFactory = configFactory,
-                deprecationManager = viewModel.legacyGroupDeprecationManager
-            )
-        }
-        maybeUpdateToolbar(recipient)
-        return true
-    }
-
     override fun onDestroy() {
         if(::binding.isInitialized) {
             viewModel.saveDraft(binding.inputBar.text.trim())
@@ -1109,18 +1094,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             }
             invalidateOptionsMenu()
             updateSendAfterApprovalText()
-            maybeUpdateToolbar(threadRecipient)
-        }
-    }
-
-    private fun maybeUpdateToolbar(recipient: Recipient) {
-        lifecycleScope.launch {
-            binding.toolbarContent.update(
-                recipient,
-                viewModel.getConversationAvatarData(),
-                viewModel.openGroup,
-                viewModel.expirationConfiguration
-            )
         }
     }
 
@@ -1384,8 +1357,50 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     // endregion
 
     // region Interaction
-    override fun onDisappearingMessagesClicked() {
-        viewModel.recipient?.let { showDisappearingMessages(it) }
+    // TODO: don't need to allow new closed group check here, removed in new disappearing messages
+    override fun showDisappearingMessages(thread: Recipient) {
+        viewModel.showDisappearingMessages()
+    }
+
+    private fun callRecipient() {
+        if(viewModel.recipient == null) return
+
+        // if the user has not enabled voice/video calls
+        if (!TextSecurePreferences.isCallNotificationsEnabled(this)) {
+            showSessionDialog {
+                title(R.string.callsPermissionsRequired)
+                text(R.string.callsPermissionsRequiredDescription)
+                button(R.string.sessionSettings, R.string.AccessibilityId_sessionSettings) {
+                    val intent = Intent(context, PrivacySettingsActivity::class.java)
+                    // allow the screen to auto scroll to the appropriate toggle
+                    intent.putExtra(PrivacySettingsActivity.SCROLL_AND_TOGGLE_KEY, CALL_NOTIFICATIONS_ENABLED)
+                    context.startActivity(intent)
+                }
+                cancelButton()
+            }
+            return
+        }
+        // or if the user has not granted audio/microphone permissions
+        else if (!Permissions.hasAll(this, Manifest.permission.RECORD_AUDIO)) {
+            Log.d("Loki", "Attempted to make a call without audio permissions")
+
+            Permissions.with(this)
+                .request(Manifest.permission.RECORD_AUDIO)
+                .withPermanentDenialDialog(
+                    getSubbedString(R.string.permissionsMicrophoneAccessRequired,
+                        APP_NAME_KEY to getString(R.string.app_name))
+                )
+                .execute()
+
+            return
+        }
+
+        WebRtcCallActivity.getCallActivityIntent(this)
+            .apply {
+                action = ACTION_START_CALL
+                putExtra(EXTRA_RECIPIENT_ADDRESS, viewModel.recipient!!.address)
+            }
+            .let(::startActivity)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -1442,16 +1457,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val manager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
         manager.setPrimaryClip(clip)
         Toast.makeText(this, R.string.copied, Toast.LENGTH_SHORT).show()
-    }
-
-    // TODO: don't need to allow new closed group check here, removed in new disappearing messages
-    override fun showDisappearingMessages(thread: Recipient) {
-        if (thread.isLegacyGroupRecipient) {
-            groupDb.getGroup(thread.address.toGroupString()).orNull()?.run { if (!isActive) return }
-        }
-        Intent(this, DisappearingMessagesActivity::class.java)
-            .apply { putExtra(DisappearingMessagesActivity.THREAD_ID, viewModel.threadId) }
-            .also { show(it, true) }
     }
 
     override fun unblock() {

@@ -237,7 +237,7 @@ fun AutoResizeText(
     modifier: Modifier = Modifier,
     style: TextStyle = TextStyle.Default,
     textAlign: TextAlign = TextAlign.Center,
-    minFontSize: TextUnit = 10.sp,
+    minFontSize: TextUnit = 6.sp,
     maxLines: Int = 1,
     precision: TextUnit = 1.sp // Determines search precision
 ) {

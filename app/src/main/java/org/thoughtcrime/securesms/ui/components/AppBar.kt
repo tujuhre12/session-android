@@ -170,8 +170,13 @@ fun ActionAppBar(
 }
 
 @Composable
-fun AppBarText(title: String, singleLine: Boolean = false) {
+fun AppBarText(
+    title: String,
+    modifier: Modifier = Modifier,
+    singleLine: Boolean = false
+) {
     Text(
+        modifier = modifier,
         text = title,
         style = LocalType.current.h4,
         maxLines = if(singleLine) 1 else Int.MAX_VALUE,
@@ -188,6 +193,7 @@ fun AppBarBackIcon(onBack: () -> Unit) {
     ) {
         Icon(
             painter = painterResource(id = R.drawable.ic_chevron_left),
+            tint = LocalColors.current.text,
             contentDescription = null
         )
     }

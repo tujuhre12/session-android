@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.conversation.v2
 
 import android.app.Application
 import android.content.Context
+import android.content.Intent
 import android.view.MenuItem
 import android.widget.Toast
 import androidx.annotation.StringRes
@@ -31,6 +32,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
@@ -42,7 +44,9 @@ import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAt
 import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
+import org.session.libsession.utilities.ExpirationUtil
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.getGroup
@@ -53,8 +57,10 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.audio.AudioSlidePlayer
+import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesActivity
 import org.thoughtcrime.securesms.conversation.v2.menus.ConversationMenuHelper
 import org.thoughtcrime.securesms.database.GroupDatabase
+import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.ReactionDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
@@ -67,6 +73,9 @@ import org.thoughtcrime.securesms.groups.ExpiredGroupManager
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.mms.AudioSlide
 import org.thoughtcrime.securesms.repository.ConversationRepository
+import org.thoughtcrime.securesms.ui.components.ConversationAppBarData
+import org.thoughtcrime.securesms.ui.components.ConversationAppBarPagerData
+import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.DateUtils
@@ -88,6 +97,7 @@ class ConversationViewModel(
     private val threadDb: ThreadDatabase,
     private val reactionDb: ReactionDatabase,
     private val lokiMessageDb: LokiMessageDatabase,
+    private val lokiAPIDb: LokiAPIDatabase,
     private val textSecurePreferences: TextSecurePreferences,
     private val configFactory: ConfigFactory,
     private val groupManagerV2: GroupManagerV2,
@@ -113,6 +123,18 @@ class ConversationViewModel(
 
     private val _isAdmin = MutableStateFlow(false)
     val isAdmin: StateFlow<Boolean> = _isAdmin
+
+    // all the data we need for the conversation app bar
+    private val _appBarData = MutableStateFlow(ConversationAppBarData(
+        title = "",
+        pagerData = emptyList(),
+        showCall = false,
+        showAvatar = false,
+        avatarUIData = AvatarUIData(
+            elements = emptyList()
+        )
+    ))
+    val appBarData: StateFlow<ConversationAppBarData> = _appBarData
 
     private var _recipient: RetrieveOnce<Recipient> = RetrieveOnce {
         val conversation = repository.maybeGetRecipientForThreadId(threadId)
@@ -143,6 +165,8 @@ class ConversationViewModel(
             // false in other cases
             else -> false
         }
+
+        updateAppBarData(conversation)
 
         conversation
     }
@@ -280,6 +304,7 @@ class ConversationViewModel(
         } else null // null when the call isn't in progress / incoming
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
 
+
     init {
         viewModelScope.launch(Dispatchers.Default) {
             combine(
@@ -314,6 +339,81 @@ class ConversationViewModel(
                     // update our community object
                     _openGroup.value = openGroup?.copy(canWrite = it)
                 }
+        }
+    }
+
+    private fun updateAppBarData(conversation: Recipient?) {
+        viewModelScope.launch {
+            // sort out the pager data, if any
+            val pagerData: MutableList<ConversationAppBarPagerData> = mutableListOf()
+            if (conversation != null) {
+                // Specify the disappearing messages subtitle if we should
+                val config = expirationConfiguration
+                if (config?.isEnabled == true) {
+                    // Get the type of disappearing message and the abbreviated duration..
+                    val dmTypeString = when (config.expiryMode) {
+                        is ExpiryMode.AfterRead -> R.string.disappearingMessagesDisappearAfterReadState
+                        else -> R.string.disappearingMessagesDisappearAfterSendState
+                    }
+                    val durationAbbreviated = ExpirationUtil.getExpirationAbbreviatedDisplayValue(config.expiryMode.expirySeconds)
+
+                    // ..then substitute into the string..
+                    val subtitleTxt = context.getSubbedString(dmTypeString,
+                        TIME_KEY to durationAbbreviated
+                    )
+
+                    // .. and apply to the subtitle.
+                    pagerData += ConversationAppBarPagerData(
+                        title = subtitleTxt,
+                        action = {
+                            showDisappearingMessages()
+                        },
+                        icon = R.drawable.ic_clock_11,
+                        qaTag = context.resources.getString(R.string.AccessibilityId_disappearingMessagesDisappear)
+                    )
+                }
+
+                if (conversation.isMuted) {
+                    pagerData += ConversationAppBarPagerData(
+                        title = conversation.mutedUntil.takeUnless { it == Long.MAX_VALUE }
+                            ?.let { context.getString(R.string.notificationsMuted) }
+                            ?: context.getString(R.string.notificationsMuted),
+                        action = {
+                            //todo UCS take user to new mute screen (old code had no click action for this)
+                        },
+                        R.drawable.ic_volume_off
+                    )
+                }
+
+                if (conversation.isGroupOrCommunityRecipient) {
+                    val title = if (conversation.isCommunityRecipient) {
+                        val userCount = openGroup?.let { lokiAPIDb.getUserCount(it.room, it.server) } ?: 0
+                        context.resources.getQuantityString(R.plurals.membersActive, userCount, userCount)
+                    } else {
+                        val userCount = if (conversation.isGroupV2Recipient) {
+                            storage.getMembers(conversation.address.toString()).size
+                        } else { // legacy closed groups
+                            groupDb.getGroupMemberAddresses(conversation.address.toGroupString(), true).size
+                        }
+                        context.resources.getQuantityString(R.plurals.members, userCount, userCount)
+                    }
+                    pagerData += ConversationAppBarPagerData(
+                        title = title,
+                        action = {
+                            //todo UCS take user to appropriate group members screen (old code had no click action for this)
+                        },
+                    )
+                }
+            }
+
+            // calculate the main app bar data
+            _appBarData.value = ConversationAppBarData(
+                title = conversation.takeUnless { it?.isLocalNumber == true }?.name ?: context.getString(R.string.noteToSelf),
+                pagerData = pagerData,
+                showCall = conversation?.showCallMenu() ?: false,
+                showAvatar = showOptionsMenu,
+                avatarUIData = avatarUtils.getUIDataFromRecipient(conversation)
+            )
         }
     }
 
@@ -855,18 +955,8 @@ class ConversationViewModel(
     /**
      * Stops audio player if its current playing is the one given in the message.
      */
-    private fun stopMessageAudio(message: MessageRecord) {
-        val mmsMessage = message as? MmsMessageRecord ?: return
-        val audioSlide = mmsMessage.slideDeck.audioSlide ?: return
-        stopMessageAudio(audioSlide)
-    }
     private fun stopMessageAudio(audioSlide: AudioSlide) {
         AudioSlidePlayer.getInstance()?.takeIf { it.audioSlide == audioSlide }?.stop()
-    }
-
-    fun setRecipientApproved() {
-        val recipient = recipient ?: return Log.w("Loki", "Recipient was null for set approved action")
-        repository.setApproved(recipient, true)
     }
 
     fun banUser(recipient: Recipient) = viewModelScope.launch {
@@ -945,12 +1035,9 @@ class ConversationViewModel(
         }
     }
 
-    fun hasReceived(): Boolean {
-        return repository.hasReceived(threadId)
-    }
-
     fun updateRecipient() {
         _recipient.updateTo(repository.maybeGetRecipientForThreadId(threadId))
+        updateAppBarData(recipient)
     }
 
     /**
@@ -1122,9 +1209,16 @@ class ConversationViewModel(
 
     fun getUsername(accountId: String) = usernameUtils.getContactNameWithAccountID(accountId)
 
-    suspend fun getConversationAvatarData(): AvatarUIData? {
-        return if(recipient == null) null
-        else avatarUtils.getUIDataFromRecipient(recipient!!)
+    fun showDisappearingMessages() {
+        recipient?.let { convo ->
+            if (convo.isLegacyGroupRecipient) {
+                groupDb.getGroup(convo.address.toGroupString()).orNull()?.run {
+                    if (!isActive) return
+                }
+            }
+
+            _uiEvents.tryEmit(ConversationUiEvent.ShowDisappearingMessages(threadId))
+        }
     }
 
     @dagger.assisted.AssistedFactory
@@ -1146,6 +1240,7 @@ class ConversationViewModel(
         @ApplicationContext
         private val context: Context,
         private val lokiMessageDb: LokiMessageDatabase,
+        private val lokiAPIDb: LokiAPIDatabase,
         private val textSecurePreferences: TextSecurePreferences,
         private val configFactory: ConfigFactory,
         private val groupManagerV2: GroupManagerV2,
@@ -1169,6 +1264,7 @@ class ConversationViewModel(
                 threadDb = threadDb,
                 reactionDb = reactionDb,
                 lokiMessageDb = lokiMessageDb,
+                lokiAPIDb = lokiAPIDb,
                 textSecurePreferences = textSecurePreferences,
                 configFactory = configFactory,
                 groupManagerV2 = groupManagerV2,
@@ -1244,6 +1340,7 @@ data class ConversationUiState(
 
 sealed interface ConversationUiEvent {
     data class NavigateToConversation(val threadId: Long) : ConversationUiEvent
+    data class ShowDisappearingMessages(val threadId: Long) : ConversationUiEvent
 }
 
 sealed interface MessageRequestUiState {
