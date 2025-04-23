@@ -334,7 +334,7 @@ class ConfigToDatabaseSync @Inject constructor(
         val toRemove = existingClosedGroupThreads - groupThreadsToKeep.keys
         Log.d(TAG, "Removing ${toRemove.size} closed groups")
         toRemove.forEach { (_, threadId) ->
-            storage.removeClosedGroupThread(threadId)
+            storage.deleteConversation(threadId)
         }
 
         for (group in userGroups.legacyGroupInfo) {
