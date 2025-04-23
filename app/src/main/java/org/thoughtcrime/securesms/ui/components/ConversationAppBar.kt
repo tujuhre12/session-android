@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -162,6 +163,7 @@ private fun ConversationSettingsPager(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // '<' icon
             if(pages.size > 1) {
                 Image(
                     modifier = Modifier.size(12.dp),
@@ -171,6 +173,18 @@ private fun ConversationSettingsPager(
                 )
             }
 
+            // optional icon
+            if(pages[page].icon != null) {
+                Spacer(modifier = Modifier.size(LocalDimensions.current.xxxsSpacing))
+                Image(
+                    modifier = Modifier.size(LocalDimensions.current.iconXXSmall),
+                    painter = painterResource(id = pages[page].icon!!),
+                    colorFilter = ColorFilter.tint(LocalColors.current.text),
+                    contentDescription = null,
+                )
+            }
+
+            // Page name
             Text(
                 modifier = Modifier.padding(horizontal = LocalDimensions.current.xxxsSpacing),
                 text = pages[page].title,
@@ -179,6 +193,7 @@ private fun ConversationSettingsPager(
                 style = LocalType.current.extraSmall
             )
 
+            // '>' icon
             if(pages.size > 1) {
                 Image(
                     modifier = Modifier.size(12.dp)
@@ -291,6 +306,7 @@ fun ConversationTopBarPreview(
         val settingsPages = List(params.settingsPagesCount) { index ->
             ConversationAppBarPagerData(
                 title = "Settings $index",
+                icon = R.drawable.ic_clock_11,
                 action = {}
             )
         }

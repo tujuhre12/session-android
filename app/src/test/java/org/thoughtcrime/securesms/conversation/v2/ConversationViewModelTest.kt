@@ -16,6 +16,7 @@ import org.mockito.Mockito
 import org.mockito.Mockito.anyLong
 import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
+import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
@@ -26,6 +27,8 @@ import org.thoughtcrime.securesms.MainCoroutineRule
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.repository.ConversationRepository
+import org.thoughtcrime.securesms.util.AvatarUIData
+import org.thoughtcrime.securesms.util.AvatarUtils
 import java.time.ZonedDateTime
 
 class ConversationViewModelTest: BaseViewModelTest() {
@@ -35,12 +38,20 @@ class ConversationViewModelTest: BaseViewModelTest() {
 
     private val repository = mock<ConversationRepository>()
     private val storage = mock<Storage>()
-    private val application = mock<Application>()
 
     private val threadId = 123L
     private val edKeyPair = mock<KeyPair>()
     private lateinit var recipient: Recipient
     private lateinit var messageRecord: MessageRecord
+
+    private val application = mock<Application> {
+        on { getString(any()) } doReturn ""
+    }
+
+    private val avatarUtils = mock<AvatarUtils> {
+        onBlocking { getUIDataFromRecipient(anyOrNull()) }
+            .doReturn(AvatarUIData(elements = emptyList()))
+    }
 
     private val viewModel: ConversationViewModel by lazy {
         ConversationViewModel(
@@ -64,8 +75,9 @@ class ConversationViewModelTest: BaseViewModelTest() {
             },
             expiredGroupManager = mock(),
             usernameUtils = mock(),
-            context = mock(),
-            avatarUtils = mock()
+            context = application,
+            avatarUtils = avatarUtils,
+            lokiAPIDb = mock()
         )
     }
 
@@ -205,5 +217,4 @@ class ConversationViewModelTest: BaseViewModelTest() {
         assertThat(viewModel.blindedRecipient, notNullValue())
         assertThat(viewModel.shouldHideInputBar(), equalTo(true))
     }
-
 }

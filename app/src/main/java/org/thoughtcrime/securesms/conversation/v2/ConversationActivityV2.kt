@@ -600,6 +600,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
         setupMentionView()
         setupUiEventsObserver()
+
+        onSearchOpened()
     }
 
     private fun setupUiEventsObserver() {
