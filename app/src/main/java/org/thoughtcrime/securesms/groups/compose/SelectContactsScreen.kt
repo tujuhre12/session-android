@@ -95,7 +95,7 @@ fun InviteContacts(
                 onValueChanged = onSearchQueryChanged,
                 placeholder = stringResource(R.string.searchContacts),
                 modifier = Modifier.padding(horizontal = LocalDimensions.current.smallSpacing)
-                    .qaTag(stringResource(R.string.AccessibilityId_groupNameSearch)),
+                    .qaTag(R.string.AccessibilityId_groupNameSearch),
                 backgroundColor = LocalColors.current.backgroundSecondary,
             )
 
@@ -122,7 +122,7 @@ fun InviteContacts(
                     modifier = Modifier
                         .padding(vertical = LocalDimensions.current.spacing)
                         .defaultMinSize(minWidth = LocalDimensions.current.minButtonWidth)
-                        .qaTag(stringResource(R.string.AccessibilityId_selectContactConfirm)),
+                        .qaTag(R.string.AccessibilityId_selectContactConfirm),
                 ) {
                     Text(
                         stringResource(id = okButtonResId)

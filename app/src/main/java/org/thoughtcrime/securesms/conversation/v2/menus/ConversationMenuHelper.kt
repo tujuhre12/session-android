@@ -141,9 +141,9 @@ object ConversationMenuHelper {
             inflater.inflate(R.menu.menu_conversation_notification_settings, menu)
         }
 
-        if (thread.showCallMenu()) {
+        /*if (thread.showCallMenu()) {
             inflater.inflate(R.menu.menu_conversation_call, menu)
-        }
+        }*/
 
         // Search
         val searchViewItem = menu.findItem(R.id.menu_search)
@@ -214,7 +214,6 @@ object ConversationMenuHelper {
             R.id.menu_unmute_notifications -> { unmute(context, thread) }
             R.id.menu_mute_notifications -> { mute(context, thread) }
             R.id.menu_notification_settings -> { setNotifyType(context, thread) }
-            R.id.menu_call -> { call(context, thread) }
         }
 
         return null
@@ -228,46 +227,6 @@ object ConversationMenuHelper {
     private fun search(context: Context) {
         val searchViewModel = (context as ConversationActivityV2).searchViewModel
         searchViewModel.onSearchOpened()
-    }
-
-    private fun call(context: Context, thread: Recipient) {
-
-        // if the user has not enabled voice/video calls
-        if (!TextSecurePreferences.isCallNotificationsEnabled(context)) {
-            context.showSessionDialog {
-                title(R.string.callsPermissionsRequired)
-                text(R.string.callsPermissionsRequiredDescription)
-                button(R.string.sessionSettings, R.string.AccessibilityId_sessionSettings) {
-                    val intent = Intent(context, PrivacySettingsActivity::class.java)
-                    // allow the screen to auto scroll to the appropriate toggle
-                    intent.putExtra(PrivacySettingsActivity.SCROLL_AND_TOGGLE_KEY, CALL_NOTIFICATIONS_ENABLED)
-                    context.startActivity(intent)
-                }
-                cancelButton()
-            }
-            return
-        }
-        // or if the user has not granted audio/microphone permissions
-        else if (!Permissions.hasAll(context, Manifest.permission.RECORD_AUDIO)) {
-            Log.d("Loki", "Attempted to make a call without audio permissions")
-
-            Permissions.with(context.findActivity())
-                .request(Manifest.permission.RECORD_AUDIO)
-                .withPermanentDenialDialog(
-                    context.getSubbedString(R.string.permissionsMicrophoneAccessRequired,
-                    APP_NAME_KEY to context.getString(R.string.app_name))
-                )
-                .execute()
-
-            return
-        }
-
-        WebRtcCallActivity.getCallActivityIntent(context)
-            .apply {
-                action = ACTION_START_CALL
-                putExtra(EXTRA_RECIPIENT_ADDRESS, thread.address)
-            }
-            .let(context::startActivity)
     }
 
     @SuppressLint("StaticFieldLeak")

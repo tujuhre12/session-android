@@ -130,7 +130,7 @@ fun AlertDialog(
                                 style = LocalType.current.h7,
                                 modifier = Modifier
                                     .padding(bottom = LocalDimensions.current.xxsSpacing)
-                                    .qaTag(stringResource(R.string.AccessibilityId_modalTitle))
+                                    .qaTag(R.string.AccessibilityId_modalTitle)
                             )
                         }
                         text?.let {
@@ -153,7 +153,7 @@ fun AlertDialog(
                                 textAlign = TextAlign.Center,
                                 style = textStyle,
                                 modifier = textModifier
-                                    .qaTag(stringResource(R.string.AccessibilityId_modalMessage))
+                                    .qaTag(R.string.AccessibilityId_modalMessage)
                             )
                         }
                         content()
@@ -309,7 +309,7 @@ fun LoadingDialog(
                             title,
                             modifier = Modifier
                                 .align(Alignment.CenterHorizontally)
-                                .qaTag(stringResource(R.string.AccessibilityId_modalTitle)),
+                                .qaTag(R.string.AccessibilityId_modalTitle),
                             style = LocalType.current.large
                         )
                     }

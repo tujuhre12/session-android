@@ -557,7 +557,7 @@ fun SearchBar(
                             horizontal = LocalDimensions.current.smallSpacing,
                             vertical = LocalDimensions.current.xxsSpacing
                         )
-                        .size(LocalDimensions.current.iconMedium)
+                        .size(LocalDimensions.current.iconSmall)
                 )
 
                 Box(modifier = Modifier.weight(1f)) {
@@ -576,4 +576,16 @@ fun SearchBar(
         modifier = modifier,
         cursorBrush = SolidColor(LocalColors.current.text)
     )
+}
+
+@Preview
+@Composable
+fun PreviewSearchBar() {
+    PreviewTheme {
+        SearchBar(
+            query = "",
+            onValueChanged = {},
+            placeholder = "Search"
+        )
+    }
 }

@@ -198,7 +198,7 @@ fun EditGroup(
                                     min = LocalDimensions.current.mediumSpacing,
                                     max = maxNameWidth
                                 )
-                                .qaTag(stringResource(R.string.AccessibilityId_groupName)),
+                                .qaTag(R.string.AccessibilityId_groupName),
                             text = editingName.orEmpty(),
                             onChange = onEditingNameValueChanged,
                             textStyle = LocalType.current.h8,
@@ -237,7 +237,7 @@ fun EditGroup(
                     Box(modifier = Modifier.weight(1f)) {
                         if (canEditName) {
                             IconButton(
-                                modifier = Modifier.qaTag(stringResource(R.string.AccessibilityId_groupName)),
+                                modifier = Modifier.qaTag(R.string.AccessibilityId_groupName),
                                 onClick = onEditNameClicked
                             ) {
                                 Icon(
@@ -271,7 +271,7 @@ fun EditGroup(
                     PrimaryOutlineButton(
                         stringResource(R.string.membersInvite),
                         onClick = onAddMemberClick,
-                        modifier = Modifier.qaTag(stringResource(R.string.AccessibilityId_membersInvite))
+                        modifier = Modifier.qaTag(R.string.AccessibilityId_membersInvite)
                     )
                 }
             }

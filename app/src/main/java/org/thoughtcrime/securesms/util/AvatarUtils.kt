@@ -55,21 +55,28 @@ class AvatarUtils @Inject constructor(
             getUIDataFromRecipient(Recipient.from(context, Address.fromSerialized(accountId), false))
         }
 
-    suspend fun getUIDataFromRecipient(recipient: Recipient): AvatarUIData =
-        withContext(Dispatchers.Default) {
+    suspend fun getUIDataFromRecipient(recipient: Recipient?): AvatarUIData {
+        if (recipient == null) {
+            return AvatarUIData(elements = emptyList())
+        }
+
+        return withContext(Dispatchers.Default) {
             // set up the data based on the conversation type
             val elements = mutableListOf<AvatarUIElement>()
 
             // Groups can have a double avatar setup, if they don't have a custom image
-            if(recipient.isGroupRecipient){
+            if (recipient.isGroupRecipient) {
                 // if the group has a custom image, use that
                 // other wise make up a double avatar from the first two members
                 // if there is only one member then use that member + an unknown icon coloured based on the group id
-                if(recipient.profileAvatar != null){
+                if (recipient.profileAvatar != null) {
                     elements.add(getUIElementForRecipient(recipient))
                 } else {
                     val members = if (recipient.isLegacyGroupRecipient) {
-                        groupDatabase.getGroupMemberAddresses(recipient.address.toGroupString(), true)
+                        groupDatabase.getGroupMemberAddresses(
+                            recipient.address.toGroupString(),
+                            true
+                        )
                     } else {
                         storage.get().getMembers(recipient.address.toString())
                             .map { Address.fromSerialized(it.accountId()) }
@@ -81,10 +88,14 @@ class AvatarUtils @Inject constructor(
                         1 -> {
                             // when we only have one member, use that member as one of the two avatar
                             // and the second should be the unknown icon with a colour based on the group id
-                            elements.add(getUIElementForRecipient(
-                                Recipient.from(context, Address.fromSerialized(
-                                    members[0].toString()
-                                ), false))
+                            elements.add(
+                                getUIElementForRecipient(
+                                    Recipient.from(
+                                        context, Address.fromSerialized(
+                                            members[0].toString()
+                                        ), false
+                                    )
+                                )
                             )
 
                             elements.add(
@@ -96,7 +107,11 @@ class AvatarUtils @Inject constructor(
 
                         else -> {
                             members.forEach {
-                                elements.add(getUIElementForRecipient(Recipient.from(context, it, false)))
+                                elements.add(
+                                    getUIElementForRecipient(
+                                        Recipient.from(context, it, false)
+                                    )
+                                )
                             }
                         }
                     }
@@ -108,6 +123,7 @@ class AvatarUtils @Inject constructor(
             AvatarUIData(
                 elements = elements
             )
+        }
     }
 
     private fun getUIElementForRecipient(recipient: Recipient): AvatarUIElement {
