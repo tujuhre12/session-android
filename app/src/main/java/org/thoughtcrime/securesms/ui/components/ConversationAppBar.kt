@@ -107,7 +107,7 @@ fun ConversationAppBar(
             // Avatar
             if(data.showAvatar) {
                 Avatar(
-                    modifier = Modifier.qaTag(R.string.qa_conversation_options)
+                    modifier = Modifier.qaTag(R.string.qa_conversation_avatar)
                         .clickable { onAvatarPressed() },
                     size = LocalDimensions.current.iconLargeAvatar,
                     data = data.avatarUIData

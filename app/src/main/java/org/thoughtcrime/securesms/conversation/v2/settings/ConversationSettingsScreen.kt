@@ -1,16 +1,32 @@
 package org.thoughtcrime.securesms.conversation.v2.settings
 
+import android.widget.ImageButton
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import network.loki.messenger.R
@@ -18,9 +34,14 @@ import network.loki.messenger.libsession_util.util.GroupMember
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.groups.GroupMemberState
 import org.thoughtcrime.securesms.groups.GroupMembersViewModel
+import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.BackAppBar
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
+import org.thoughtcrime.securesms.ui.theme.LocalDimensions
+import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
+import org.thoughtcrime.securesms.ui.theme.monospace
 import org.thoughtcrime.securesms.ui.theme.primaryBlue
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
@@ -34,7 +55,10 @@ fun ConversationSettingsScreen(
         factory.create(threadId)
     }
 
+    val data by viewModel.uiState.collectAsState()
+
     ConversationSettings(
+        data = data,
         onBack = onBack,
     )
 
@@ -43,6 +67,7 @@ fun ConversationSettingsScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConversationSettings(
+    data: ConversationSettingsViewModel.UIState,
     onBack: () -> Unit,
 ) {
     Scaffold(
@@ -54,9 +79,75 @@ fun ConversationSettings(
         }
     ) { paddings ->
         Column(
-            modifier = Modifier.padding(paddings).consumeWindowInsets(paddings),
+            modifier = Modifier.padding(paddings).consumeWindowInsets(paddings)
+                .fillMaxWidth()
+                .padding(
+                    horizontal = LocalDimensions.current.spacing,
+                    vertical = LocalDimensions.current.smallSpacing
+                ),
+            horizontalAlignment = CenterHorizontally
         ) {
+            // Profile picture
+            Avatar(
+                modifier = Modifier.qaTag(R.string.qa_conversation_settings_avatar),
+                size = LocalDimensions.current.xlargeSpacing,
+                data = data.avatarUIData
+            )
 
+            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+
+            // name and edit icon
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    modifier = Modifier.qaTag(R.string.qa_conversation_settings_name)
+                        .weight(
+                            weight = 1.0f,
+                            fill = false,
+                        ),
+                    text = data.name,
+                    textAlign = TextAlign.Center,
+                    style = LocalType.current.h4,
+                    color = LocalColors.current.text
+                )
+
+                if(data.canEditName) {
+                    //todo UCS check rtl ltr behaviour
+                    Image(
+                        modifier = Modifier.padding(start = LocalDimensions.current.xxsSpacing)
+                            .size(LocalDimensions.current.iconSmall),
+                        painter = painterResource(R.drawable.ic_pencil),
+                        colorFilter = ColorFilter.tint(LocalColors.current.textSecondary),
+                        contentDescription = null,
+                    )
+                }
+            }
+
+            // description or display name
+            if(!data.description.isNullOrEmpty()){
+                Spacer(modifier = Modifier.height(LocalDimensions.current.xxsSpacing))
+                Text(
+                    modifier = Modifier.qaTag(R.string.qa_conversation_settings_display_name),
+                    text = data.description,
+                    style = LocalType.current.small,
+                    color = LocalColors.current.textSecondary
+                )
+            }
+
+            // account ID
+            if(!data.accountId.isNullOrEmpty()){
+                Spacer(modifier = Modifier.height(LocalDimensions.current.xxsSpacing))
+                Text(
+                    modifier = Modifier.qaTag(R.string.qa_conversation_settings_account_id),
+                    text = data.accountId,
+                    textAlign = TextAlign.Center,
+                    style = LocalType.current.base.monospace(),
+                    color = LocalColors.current.text
+                )
+            }
         }
     }
 
@@ -64,11 +155,50 @@ fun ConversationSettings(
 
 @Preview
 @Composable
-private fun ConversationSettingsPreview() {
+private fun ConversationSettings1on1Preview() {
     PreviewTheme {
 
         ConversationSettings(
             onBack = {},
+            data = ConversationSettingsViewModel.UIState(
+                name = "Nickname",
+                canEditName = true,
+                description = "(Real name)",
+                accountId = "05000000000000000000000000000000000000000000000000000000000000000",
+                avatarUIData = AvatarUIData(
+                    listOf(
+                        AvatarUIElement(
+                            name = "TO",
+                            color = primaryBlue
+                        )
+                    )
+                ),
+            )
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ConversationSettings1on1LongNamePreview() {
+    PreviewTheme {
+
+        ConversationSettings(
+            onBack = {},
+            data = ConversationSettingsViewModel.UIState(
+                name = "Nickname that is very long but the text shouldn't be cut off because there is no limit to the display here so it should show the whole thing",
+                canEditName = true,
+                description = "(Real name)",
+                accountId = "05000000000000000000000000000000000000000000000000000000000000000",
+                avatarUIData = AvatarUIData(
+                    listOf(
+                        AvatarUIElement(
+                            name = "TO",
+                            color = primaryBlue
+                        )
+                    )
+                ),
+            )
         )
     }
 }
