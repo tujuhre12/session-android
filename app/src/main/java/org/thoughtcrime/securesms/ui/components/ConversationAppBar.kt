@@ -107,7 +107,8 @@ fun ConversationAppBar(
             // Avatar
             if(data.showAvatar) {
                 Avatar(
-                    modifier = Modifier.qaTag(R.string.qa_conversation_options),
+                    modifier = Modifier.qaTag(R.string.qa_conversation_options)
+                        .clickable { onAvatarPressed() },
                     size = LocalDimensions.current.iconLargeAvatar,
                     data = data.avatarUIData
                 )
@@ -303,7 +304,7 @@ fun ConversationTopBarPreview(
                 avatarUIData = AvatarUIData(
                     listOf(
                         AvatarUIElement(
-                            name = "TOTO",
+                            name = "TO",
                             color = primaryBlue
                         )
                     )

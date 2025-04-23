@@ -26,7 +26,6 @@ import android.text.style.ImageSpan
 import android.util.Pair
 import android.util.TypedValue
 import android.view.ActionMode
-import android.view.Menu
 import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
@@ -72,7 +71,6 @@ import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityConversationV2Binding
 import network.loki.messenger.libsession_util.util.ExpiryMode
-import nl.komponents.kovenant.ui.successUi
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.messages.ExpirationConfiguration
@@ -142,6 +140,7 @@ import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageView
 import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageViewDelegate
 import org.thoughtcrime.securesms.conversation.v2.search.SearchBottomBar
 import org.thoughtcrime.securesms.conversation.v2.search.SearchViewModel
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsActivity
 import org.thoughtcrime.securesms.conversation.v2.utilities.AttachmentManager
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.conversation.v2.utilities.ResendMessageUtilities
@@ -188,8 +187,6 @@ import org.thoughtcrime.securesms.ui.components.ConversationAppBar
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.ui.setThemedContent
 import org.thoughtcrime.securesms.util.ActivityDispatcher
-import org.thoughtcrime.securesms.util.AvatarUIData
-import org.thoughtcrime.securesms.util.AvatarUIElement
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.MediaUtil
@@ -202,7 +199,6 @@ import org.thoughtcrime.securesms.util.isFullyScrolled
 import org.thoughtcrime.securesms.util.isScrolledToBottom
 import org.thoughtcrime.securesms.util.isScrolledToWithin30dpOfBottom
 import org.thoughtcrime.securesms.util.push
-import org.thoughtcrime.securesms.util.show
 import org.thoughtcrime.securesms.util.toPx
 import org.thoughtcrime.securesms.webrtc.WebRtcCallActivity
 import org.thoughtcrime.securesms.webrtc.WebRtcCallActivity.Companion.ACTION_START_CALL
@@ -795,7 +791,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                onBackPressed = ::finish,
                onCallPressed = ::callRecipient,
                onAvatarPressed = {
-                   //todo UCS link to new options screen
+                   startActivity(ConversationSettingsActivity.createIntent(this, viewModel.threadId))
                }
            )
        }
