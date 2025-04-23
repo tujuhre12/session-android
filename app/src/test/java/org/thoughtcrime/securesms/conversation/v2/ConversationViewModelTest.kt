@@ -65,7 +65,8 @@ class ConversationViewModelTest: BaseViewModelTest() {
             expiredGroupManager = mock(),
             usernameUtils = mock(),
             context = mock(),
-            avatarUtils = mock()
+            avatarUtils = mock(),
+            lokiAPIDb = mock()
         )
     }
 
