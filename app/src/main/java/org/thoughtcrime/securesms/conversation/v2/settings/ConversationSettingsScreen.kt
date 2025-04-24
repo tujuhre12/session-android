@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.conversation.v2.settings
 
-import android.widget.ImageButton
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -11,8 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -23,17 +20,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import network.loki.messenger.R
-import network.loki.messenger.libsession_util.util.GroupMember
-import org.session.libsignal.utilities.AccountId
-import org.thoughtcrime.securesms.groups.GroupMemberState
-import org.thoughtcrime.securesms.groups.GroupMembersViewModel
+import org.thoughtcrime.securesms.groups.compose.ExpandableText
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.qaTag
@@ -41,6 +34,7 @@ import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
+import org.thoughtcrime.securesms.ui.theme.bold
 import org.thoughtcrime.securesms.ui.theme.monospace
 import org.thoughtcrime.securesms.ui.theme.primaryBlue
 import org.thoughtcrime.securesms.util.AvatarUIData
@@ -129,11 +123,13 @@ fun ConversationSettings(
             // description or display name
             if(!data.description.isNullOrEmpty()){
                 Spacer(modifier = Modifier.height(LocalDimensions.current.xxsSpacing))
-                Text(
-                    modifier = Modifier.qaTag(R.string.qa_conversation_settings_display_name),
+                ExpandableText(
                     text = data.description,
-                    style = LocalType.current.small,
-                    color = LocalColors.current.textSecondary
+                    textStyle = LocalType.current.small,
+                    textColor = LocalColors.current.textSecondary,
+                    buttonTextStyle = LocalType.current.base.bold(),
+                    buttonTextColor = LocalColors.current.textSecondary,
+                    textAlign = TextAlign.Center
                 )
             }
 
@@ -188,7 +184,7 @@ private fun ConversationSettings1on1LongNamePreview() {
             data = ConversationSettingsViewModel.UIState(
                 name = "Nickname that is very long but the text shouldn't be cut off because there is no limit to the display here so it should show the whole thing",
                 canEditName = true,
-                description = "(Real name)",
+                description = "This is a long description asdklajsdklj aslkd lkasjdasldkj jlasdjasldkj alskdjaslkdj lkasdjlkasdjalskdj lakjsdlkasd lkasjdlaksdj lkasjdlaksjdalsk ljkasjdaskl",
                 accountId = "05000000000000000000000000000000000000000000000000000000000000000",
                 avatarUIData = AvatarUIData(
                     listOf(

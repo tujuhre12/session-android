@@ -268,6 +268,13 @@ class ConversationTopBarParamsProvider : PreviewParameterProvider<ConversationTo
             isCallAvailable = false,
             showAvatar = true
         ),
+        // Long title without call button
+        ConversationTopBarPreviewParams(
+            title = "Really Long Conversation Title That Should Ellipsize",
+            settingsPagesCount = 0,
+            isCallAvailable = false,
+            showAvatar = true
+        ),
         // Long title with call button
         ConversationTopBarPreviewParams(
             title = "Really Long Conversation Title That Should Ellipsize",
