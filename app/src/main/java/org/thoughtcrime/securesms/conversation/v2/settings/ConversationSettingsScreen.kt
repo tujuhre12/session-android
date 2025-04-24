@@ -1,21 +1,25 @@
 package org.thoughtcrime.securesms.conversation.v2.settings
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ButtonColors
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -28,13 +32,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.onLongClick
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import network.loki.messenger.R
-import org.thoughtcrime.securesms.debugmenu.DebugActivity
 import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.ExpandableText
@@ -52,9 +60,9 @@ import org.thoughtcrime.securesms.ui.theme.bold
 import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
 import org.thoughtcrime.securesms.ui.theme.monospace
 import org.thoughtcrime.securesms.ui.theme.primaryBlue
+import org.thoughtcrime.securesms.ui.theme.transparentButtonColors
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
-import org.thoughtcrime.securesms.util.push
 
 @Composable
 fun ConversationSettingsScreen(
@@ -69,6 +77,7 @@ fun ConversationSettingsScreen(
 
     ConversationSettings(
         data = data,
+        sendCommand = viewModel::onCommand,
         onBack = onBack,
     )
 
@@ -78,6 +87,7 @@ fun ConversationSettingsScreen(
 @Composable
 fun ConversationSettings(
     data: ConversationSettingsViewModel.UIState,
+    sendCommand: (ConversationSettingsViewModel.Commands) -> Unit,
     onBack: () -> Unit,
 ) {
     Scaffold(
@@ -86,7 +96,8 @@ fun ConversationSettings(
                 title = stringResource(id = R.string.sessionSettings),
                 onBack = onBack,
             )
-        }
+        },
+        contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal),
     ) { paddings ->
 
         Column(
@@ -94,11 +105,12 @@ fun ConversationSettings(
                 .padding(paddings).consumeWindowInsets(paddings)
                 .padding(
                     horizontal = LocalDimensions.current.spacing,
-                    vertical = LocalDimensions.current.smallSpacing
                 )
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = CenterHorizontally
         ) {
+            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+
             // Profile picture
             Avatar(
                 modifier = Modifier.qaTag(R.string.qa_conversation_settings_avatar),
@@ -154,8 +166,25 @@ fun ConversationSettings(
             // account ID
             if(!data.accountId.isNullOrEmpty()){
                 Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
+                val haptics = LocalHapticFeedback.current
+                val longPressLabel = stringResource(R.string.accountIDCopy)
+                val onLongPress = {
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    sendCommand(ConversationSettingsViewModel.Commands.CopyAccountId)
+                }
                 Text(
-                    modifier = Modifier.qaTag(R.string.qa_conversation_settings_account_id),
+                    modifier = Modifier.qaTag(R.string.qa_conversation_settings_account_id)
+                        .pointerInput(Unit) {
+                            detectTapGestures(
+                                onLongPress = { onLongPress() }
+                            )
+                        }
+                        .semantics {
+                            onLongClick(label = longPressLabel) {
+                                onLongPress()
+                                true
+                            }
+                        },
                     text = data.accountId,
                     textAlign = TextAlign.Center,
                     style = LocalType.current.base.monospace(),
@@ -231,10 +260,8 @@ fun ConversationSettingsSubCategory(
                         data.items.lastIndex -> getCellBottomShape()
                         else -> RectangleShape
                     },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Transparent,
-                        contentColor = data.color
-                    ),
+                    colors = if(data.danger) dangerButtonColors()
+                    else transparentButtonColors(),
                     onClick = option.onClick,
                 )
 
@@ -251,6 +278,7 @@ private fun ConversationSettings1on1Preview() {
     PreviewTheme {
 
         ConversationSettings(
+            sendCommand = {},
             onBack = {},
             data = ConversationSettingsViewModel.UIState(
                 name = "Nickname",
@@ -269,7 +297,6 @@ private fun ConversationSettings1on1Preview() {
                     ConversationSettingsViewModel.OptionsCategory(
                         items = listOf(
                             ConversationSettingsViewModel.OptionsSubCategory(
-                                color = LocalColors.current.text,
                                 items = listOf(
                                     ConversationSettingsViewModel.OptionsItem(
                                         name = "Search",
@@ -290,7 +317,6 @@ private fun ConversationSettings1on1Preview() {
                         name = "Admin",
                         items = listOf(
                             ConversationSettingsViewModel.OptionsSubCategory(
-                                color = LocalColors.current.text,
                                 items = listOf(
                                     ConversationSettingsViewModel.OptionsItem(
                                         name = "Invite Contacts",
@@ -305,7 +331,7 @@ private fun ConversationSettings1on1Preview() {
                                 )
                             ),
                             ConversationSettingsViewModel.OptionsSubCategory(
-                                color = LocalColors.current.danger,
+                                danger = true,
                                 items = listOf(
                                     ConversationSettingsViewModel.OptionsItem(
                                         name = "Clear Messages",
@@ -333,6 +359,7 @@ private fun ConversationSettings1on1LongNamePreview() {
     PreviewTheme {
 
         ConversationSettings(
+            sendCommand = {},
             onBack = {},
             data = ConversationSettingsViewModel.UIState(
                 name = "Nickname that is very long but the text shouldn't be cut off because there is no limit to the display here so it should show the whole thing",
@@ -351,7 +378,6 @@ private fun ConversationSettings1on1LongNamePreview() {
                     ConversationSettingsViewModel.OptionsCategory(
                         items = listOf(
                             ConversationSettingsViewModel.OptionsSubCategory(
-                                color = LocalColors.current.text,
                                 items = listOf(
                                     ConversationSettingsViewModel.OptionsItem(
                                         name = "Search",
@@ -372,7 +398,6 @@ private fun ConversationSettings1on1LongNamePreview() {
                         name = "Admin",
                         items = listOf(
                             ConversationSettingsViewModel.OptionsSubCategory(
-                                color = LocalColors.current.text,
                                 items = listOf(
                                     ConversationSettingsViewModel.OptionsItem(
                                         name = "Invite Contacts",
@@ -387,7 +412,6 @@ private fun ConversationSettings1on1LongNamePreview() {
                                 )
                             ),
                             ConversationSettingsViewModel.OptionsSubCategory(
-                                color = LocalColors.current.danger,
                                 items = listOf(
                                     ConversationSettingsViewModel.OptionsItem(
                                         name = "Clear Messages",

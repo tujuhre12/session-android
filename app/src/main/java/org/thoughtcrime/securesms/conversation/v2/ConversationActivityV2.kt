@@ -2336,7 +2336,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         endActionMode()
     }
 
-    override fun copyAccountID(messages: Set<MessageRecord>) {
+    private fun copyAccountID(messages: Set<MessageRecord>) {
         val accountID = messages.first().individualRecipient.address.toString()
         val clip = ClipData.newPlainText("Account ID", accountID)
         val manager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
