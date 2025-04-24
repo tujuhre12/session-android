@@ -140,13 +140,18 @@ fun LargeItemButtonWithDrawable(
     @StringRes textId: Int,
     @DrawableRes icon: Int,
     modifier: Modifier = Modifier,
+    subtitle: String? = null,
     colors: ButtonColors = transparentButtonColors(),
     shape: Shape = RectangleShape,
     onClick: () -> Unit
 ) {
     ItemButtonWithDrawable(
         textId, icon, modifier,
-        LocalType.current.h8, colors, shape, onClick
+        subtitle = subtitle,
+        textStyle = LocalType.current.h8,
+        colors = colors,
+        shape = shape,
+        onClick = onClick
     )
 }
 
@@ -155,6 +160,7 @@ fun ItemButtonWithDrawable(
     @StringRes textId: Int,
     @DrawableRes icon: Int,
     modifier: Modifier = Modifier,
+    subtitle: String? = null,
     textStyle: TextStyle = LocalType.current.xl,
     colors: ButtonColors = transparentButtonColors(),
     shape: Shape = RectangleShape,
@@ -184,6 +190,7 @@ fun LargeItemButton(
     @StringRes textId: Int,
     @DrawableRes icon: Int,
     modifier: Modifier = Modifier,
+    subtitle: String? = null,
     colors: ButtonColors = transparentButtonColors(),
     shape: Shape = RectangleShape,
     onClick: () -> Unit
@@ -192,6 +199,7 @@ fun LargeItemButton(
         textId = textId,
         icon = icon,
         modifier = modifier,
+        subtitle = subtitle,
         minHeight = LocalDimensions.current.minLargeItemButtonHeight,
         textStyle = LocalType.current.h8,
         colors = colors,
@@ -205,6 +213,7 @@ fun LargeItemButton(
     text: String,
     @DrawableRes icon: Int,
     modifier: Modifier = Modifier,
+    subtitle: String? = null,
     colors: ButtonColors = transparentButtonColors(),
     shape: Shape = RectangleShape,
     onClick: () -> Unit
@@ -213,6 +222,7 @@ fun LargeItemButton(
         text = text,
         icon = icon,
         modifier = modifier,
+        subtitle = subtitle,
         minHeight = LocalDimensions.current.minLargeItemButtonHeight,
         textStyle = LocalType.current.h8,
         colors = colors,
@@ -226,8 +236,10 @@ fun ItemButton(
     text: String,
     icon: Int,
     modifier: Modifier,
+    subtitle: String? = null,
     minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
     textStyle: TextStyle = LocalType.current.xl,
+    subtitleStyle: TextStyle = LocalType.current.small,
     colors: ButtonColors = transparentButtonColors(),
     shape: Shape = RectangleShape,
     onClick: () -> Unit
@@ -235,6 +247,7 @@ fun ItemButton(
     ItemButton(
         text = text,
         modifier = modifier,
+        subtitle = subtitle,
         icon = {
             Icon(
                 painter = painterResource(id = icon),
@@ -244,6 +257,7 @@ fun ItemButton(
         },
         minHeight = minHeight,
         textStyle = textStyle,
+        subtitleStyle = subtitleStyle,
         colors = colors,
         shape = shape,
         onClick = onClick
@@ -258,8 +272,10 @@ fun ItemButton(
     @StringRes textId: Int,
     @DrawableRes icon: Int,
     modifier: Modifier = Modifier,
+    subtitle: String? = null,
     minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
     textStyle: TextStyle = LocalType.current.xl,
+    subtitleStyle: TextStyle = LocalType.current.small,
     colors: ButtonColors = transparentButtonColors(),
     shape: Shape = RectangleShape,
     onClick: () -> Unit
@@ -267,6 +283,7 @@ fun ItemButton(
     ItemButton(
         text = stringResource(textId),
         modifier = modifier,
+        subtitle = subtitle,
         icon = {
             Icon(
                 painter = painterResource(id = icon),
@@ -276,6 +293,7 @@ fun ItemButton(
         },
         minHeight = minHeight,
         textStyle = textStyle,
+        subtitleStyle = subtitleStyle,
         colors = colors,
         shape = shape,
         onClick = onClick
@@ -292,8 +310,10 @@ fun ItemButton(
     text: String,
     icon: @Composable BoxScope.() -> Unit,
     modifier: Modifier = Modifier,
+    subtitle: String? = null,
     minHeight: Dp = LocalDimensions.current.minLargeItemButtonHeight,
     textStyle: TextStyle = LocalType.current.xl,
+    subtitleStyle: TextStyle = LocalType.current.small,
     colors: ButtonColors = transparentButtonColors(),
     shape: Shape = RectangleShape,
     onClick: () -> Unit
@@ -313,13 +333,25 @@ fun ItemButton(
             content = icon
         )
 
-        Text(
-            text,
-            Modifier
-                .fillMaxWidth()
-                .align(Alignment.CenterVertically),
-            style = textStyle
-        )
+        Column(
+            modifier = Modifier.fillMaxWidth()
+                .align(Alignment.CenterVertically)
+        ) {
+            Text(
+                text,
+                Modifier
+                    .fillMaxWidth(),
+                style = textStyle
+            )
+
+            subtitle?.let {
+                Text(
+                    text = it,
+                    modifier = Modifier.fillMaxWidth(),
+                    style = subtitleStyle,
+                )
+            }
+        }
     }
 }
 
@@ -700,6 +732,8 @@ fun ExpandableText(
 
     val density = LocalDensity.current
 
+    val enableScrolling = expanded && maxHeight != Dp.Unspecified
+
     BaseExpandableText(
         text = text,
         modifier = modifier,
@@ -715,7 +749,7 @@ fun ExpandableText(
         collapseButtonText = collapseButtonText,
         showButton = showButton,
         expanded = expanded,
-        showScroll = maxHeight != Dp.Unspecified,
+        showScroll = enableScrolling,
         onTextMeasured = { textLayoutResult ->
             showButton = expanded || textLayoutResult.hasVisualOverflow
             val lastVisible = (expandedMaxLines - 1).coerceAtMost(textLayoutResult.lineCount - 1)

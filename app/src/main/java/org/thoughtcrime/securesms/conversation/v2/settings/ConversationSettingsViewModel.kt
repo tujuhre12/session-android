@@ -1,6 +1,8 @@
 package org.thoughtcrime.securesms.conversation.v2.settings
 
 import android.content.Context
+import androidx.annotation.DrawableRes
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
@@ -15,10 +17,16 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.database.StorageProtocol
+import org.session.libsession.messaging.utilities.SodiumUtilities
+import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.UsernameUtils
+import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.getGroup
+import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
+import org.session.libsignal.utilities.IdPrefix
+import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
@@ -31,6 +39,8 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private val avatarUtils: AvatarUtils,
     private val repository: ConversationRepository,
     private val configFactory: ConfigFactoryProtocol,
+    private val storage: StorageProtocol,
+    private val textSecurePreferences: TextSecurePreferences,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<UIState> = MutableStateFlow(
@@ -55,6 +65,36 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         val conversation = recipient ?: return
         val configContact = configFactory.withUserConfigs { configs ->
             configs.contacts.get(conversation.address.toString())
+        }
+
+        // admin
+        val isAdmin =  when {
+            // for Groups V2
+            conversation.isGroupV2Recipient -> {
+                configFactory.getGroup(AccountId(conversation.address.toString()))
+                    ?.hasAdminKey() == true
+            }
+
+            // for communities the the `isUserModerator` field
+            conversation.isCommunityRecipient -> {
+                storage.getOpenGroup(threadId)?.let { openGroup ->
+                    val userPublicKey = textSecurePreferences.getLocalNumber() ?: return@let false
+                    val keyPair = storage.getUserED25519KeyPair() ?: return@let false
+                    val blindedPublicKey = openGroup.publicKey.let { SodiumUtilities.blindedKeyPair(it, keyPair)?.publicKey?.asBytes }
+                        ?.let { AccountId(IdPrefix.BLINDED, it) }?.hexString
+                    OpenGroupManager.isUserModerator(context, openGroup.id, userPublicKey, blindedPublicKey)
+                } ?: false
+            }
+
+            // false in other cases
+            else -> false
+        }
+
+        // edit name - Can edit name for 1on1, or if admin of a groupV2
+        val canEditName = when {
+            conversation.is1on1 -> true
+            conversation.isGroupV2Recipient && isAdmin -> true
+            else -> false
         }
 
         // description / display name
@@ -83,7 +123,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             _uiState.value.copy(
                 name = conversation.takeUnless { it.isLocalNumber }?.name ?: context.getString(
                     R.string.noteToSelf),
-                canEditName = true, //todo UCS determine real value here << TEMP test only
+                canEditName = canEditName,
                 description = description,
                 accountId = accountId,
                 avatarUIData = avatarUtils.getUIDataFromRecipient(conversation)
@@ -102,5 +142,23 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         val canEditName: Boolean = false,
         val description: String? = null,
         val accountId: String? = null,
+        val categories: List<OptionsCategory> = emptyList()
+    )
+
+    data class OptionsCategory(
+        val name: String? = null,
+        val items: List<OptionsSubCategory> = emptyList()
+    )
+
+    data class OptionsSubCategory(
+        val color: Color,
+        val items: List<OptionsItem> = emptyList()
+    )
+
+    data class OptionsItem(
+        val name: String,
+        @DrawableRes val icon: Int,
+        val subtitle: String? = null,
+        val onClick: () -> Unit
     )
 }

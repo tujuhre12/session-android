@@ -6,10 +6,16 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -19,26 +25,36 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import network.loki.messenger.R
+import org.thoughtcrime.securesms.debugmenu.DebugActivity
+import org.thoughtcrime.securesms.ui.Cell
+import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.ExpandableText
+import org.thoughtcrime.securesms.ui.LargeItemButton
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.BackAppBar
+import org.thoughtcrime.securesms.ui.getCellBottomShape
+import org.thoughtcrime.securesms.ui.getCellTopShape
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.bold
+import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
 import org.thoughtcrime.securesms.ui.theme.monospace
 import org.thoughtcrime.securesms.ui.theme.primaryBlue
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
+import org.thoughtcrime.securesms.util.push
 
 @Composable
 fun ConversationSettingsScreen(
@@ -72,13 +88,15 @@ fun ConversationSettings(
             )
         }
     ) { paddings ->
+
         Column(
-            modifier = Modifier.padding(paddings).consumeWindowInsets(paddings)
-                .fillMaxWidth()
+            modifier = Modifier.fillMaxSize()
+                .padding(paddings).consumeWindowInsets(paddings)
                 .padding(
                     horizontal = LocalDimensions.current.spacing,
                     vertical = LocalDimensions.current.smallSpacing
-                ),
+                )
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = CenterHorizontally
         ) {
             // Profile picture
@@ -135,7 +153,7 @@ fun ConversationSettings(
 
             // account ID
             if(!data.accountId.isNullOrEmpty()){
-                Spacer(modifier = Modifier.height(LocalDimensions.current.xxsSpacing))
+                Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
                 Text(
                     modifier = Modifier.qaTag(R.string.qa_conversation_settings_account_id),
                     text = data.accountId,
@@ -144,10 +162,88 @@ fun ConversationSettings(
                     color = LocalColors.current.text
                 )
             }
+
+            // settings options
+            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+            data.categories.forEachIndexed { index, optionsCategory ->
+                ConversationSettingsCategory(
+                    data = optionsCategory
+                )
+
+                // add spacing
+                when (index) {
+                    data.categories.lastIndex -> Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+                    else -> Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
+                }
+            }
         }
     }
-
 }
+@Composable
+fun ConversationSettingsCategory(
+    modifier: Modifier = Modifier,
+    data: ConversationSettingsViewModel.OptionsCategory,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth()
+    ) {
+        if (!data.name.isNullOrEmpty()) {
+            Text(
+                modifier = Modifier.padding(
+                    start = LocalDimensions.current.smallSpacing,
+                    bottom = LocalDimensions.current.smallSpacing
+                ),
+                text = data.name,
+                style = LocalType.current.base,
+                color = LocalColors.current.textSecondary
+            )
+        }
+
+        data.items.forEachIndexed { index, items ->
+            ConversationSettingsSubCategory(
+                data = items
+            )
+
+            // add spacing, except on the last one
+            if (index < data.items.lastIndex) {
+                Spacer(modifier = Modifier.height(LocalDimensions.current.xxsSpacing))
+            }
+        }
+    }
+}
+
+@Composable
+fun ConversationSettingsSubCategory(
+    modifier: Modifier = Modifier,
+    data: ConversationSettingsViewModel.OptionsSubCategory,
+) {
+    Cell(
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        Column {
+            data.items.forEachIndexed { index, option ->
+                LargeItemButton(
+                    text = option.name,
+                    subtitle = option.subtitle,
+                    icon = option.icon,
+                    shape = when (index) {
+                        0 -> getCellTopShape()
+                        data.items.lastIndex -> getCellBottomShape()
+                        else -> RectangleShape
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = data.color
+                    ),
+                    onClick = option.onClick,
+                )
+
+                if(index != data.items.lastIndex) Divider()
+            }
+        }
+    }
+}
+
 
 @Preview
 @Composable
@@ -166,6 +262,63 @@ private fun ConversationSettings1on1Preview() {
                         AvatarUIElement(
                             name = "TO",
                             color = primaryBlue
+                        )
+                    )
+                ),
+                categories = listOf(
+                    ConversationSettingsViewModel.OptionsCategory(
+                        items = listOf(
+                            ConversationSettingsViewModel.OptionsSubCategory(
+                                color = LocalColors.current.text,
+                                items = listOf(
+                                    ConversationSettingsViewModel.OptionsItem(
+                                        name = "Search",
+                                        icon = R.drawable.ic_search,
+                                        onClick = {}
+                                    ),
+                                    ConversationSettingsViewModel.OptionsItem(
+                                        name = "Notifications",
+                                        subtitle = "All Messages",
+                                        icon = R.drawable.ic_volume_2,
+                                        onClick = {}
+                                    )
+                                )
+                            )
+                        )
+                    ),
+                    ConversationSettingsViewModel.OptionsCategory(
+                        name = "Admin",
+                        items = listOf(
+                            ConversationSettingsViewModel.OptionsSubCategory(
+                                color = LocalColors.current.text,
+                                items = listOf(
+                                    ConversationSettingsViewModel.OptionsItem(
+                                        name = "Invite Contacts",
+                                        icon = R.drawable.ic_user_round_plus,
+                                        onClick = {}
+                                    ),
+                                    ConversationSettingsViewModel.OptionsItem(
+                                        name = "Manage members",
+                                        icon = R.drawable.ic_users_group_custom,
+                                        onClick = {}
+                                    )
+                                )
+                            ),
+                            ConversationSettingsViewModel.OptionsSubCategory(
+                                color = LocalColors.current.danger,
+                                items = listOf(
+                                    ConversationSettingsViewModel.OptionsItem(
+                                        name = "Clear Messages",
+                                        icon = R.drawable.ic_message_square,
+                                        onClick = {}
+                                    ),
+                                    ConversationSettingsViewModel.OptionsItem(
+                                        name = "Delete Group",
+                                        icon = R.drawable.ic_trash_2,
+                                        onClick = {}
+                                    )
+                                )
+                            )
                         )
                     )
                 ),
@@ -191,6 +344,63 @@ private fun ConversationSettings1on1LongNamePreview() {
                         AvatarUIElement(
                             name = "TO",
                             color = primaryBlue
+                        )
+                    )
+                ),
+                categories = listOf(
+                    ConversationSettingsViewModel.OptionsCategory(
+                        items = listOf(
+                            ConversationSettingsViewModel.OptionsSubCategory(
+                                color = LocalColors.current.text,
+                                items = listOf(
+                                    ConversationSettingsViewModel.OptionsItem(
+                                        name = "Search",
+                                        icon = R.drawable.ic_search,
+                                        onClick = {}
+                                    ),
+                                    ConversationSettingsViewModel.OptionsItem(
+                                        name = "Notifications",
+                                        subtitle = "All Messages",
+                                        icon = R.drawable.ic_volume_2,
+                                        onClick = {}
+                                    )
+                                )
+                            )
+                        )
+                    ),
+                    ConversationSettingsViewModel.OptionsCategory(
+                        name = "Admin",
+                        items = listOf(
+                            ConversationSettingsViewModel.OptionsSubCategory(
+                                color = LocalColors.current.text,
+                                items = listOf(
+                                    ConversationSettingsViewModel.OptionsItem(
+                                        name = "Invite Contacts",
+                                        icon = R.drawable.ic_user_round_plus,
+                                        onClick = {}
+                                    ),
+                                    ConversationSettingsViewModel.OptionsItem(
+                                        name = "Manage members",
+                                        icon = R.drawable.ic_users_group_custom,
+                                        onClick = {}
+                                    )
+                                )
+                            ),
+                            ConversationSettingsViewModel.OptionsSubCategory(
+                                color = LocalColors.current.danger,
+                                items = listOf(
+                                    ConversationSettingsViewModel.OptionsItem(
+                                        name = "Clear Messages",
+                                        icon = R.drawable.ic_message_square,
+                                        onClick = {}
+                                    ),
+                                    ConversationSettingsViewModel.OptionsItem(
+                                        name = "Delete Group",
+                                        icon = R.drawable.ic_trash_2,
+                                        onClick = {}
+                                    )
+                                )
+                            )
                         )
                     )
                 ),

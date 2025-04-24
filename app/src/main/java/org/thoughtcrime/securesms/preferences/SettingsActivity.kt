@@ -543,10 +543,11 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                     LargeItemButton(R.string.sessionHelp, R.drawable.ic_question_custom, Modifier.contentDescription(R.string.AccessibilityId_help)) { push<HelpSettingsActivity>() }
                     Divider()
 
-                    LargeItemButton(R.string.sessionClearData,
-                        R.drawable.ic_trash_2,
-                        Modifier.contentDescription(R.string.AccessibilityId_sessionClearData),
-                        dangerButtonColors(),
+                    LargeItemButton(
+                        textId = R.string.sessionClearData,
+                        icon = R.drawable.ic_trash_2,
+                        modifier = Modifier.contentDescription(R.string.AccessibilityId_sessionClearData),
+                        colors = dangerButtonColors(),
                         shape = getCellBottomShape()
                     ) { ClearAllDataDialog().show(supportFragmentManager, "Clear All Data Dialog") }
                 }
