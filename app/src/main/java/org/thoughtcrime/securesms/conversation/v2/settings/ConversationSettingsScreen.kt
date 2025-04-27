@@ -205,6 +205,8 @@ fun ConversationSettings(
                     else -> Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
                 }
             }
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
         }
     }
 }

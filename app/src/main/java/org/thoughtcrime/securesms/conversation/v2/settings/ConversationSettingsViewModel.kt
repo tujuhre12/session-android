@@ -204,6 +204,112 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 )
             }
 
+            conversation.isGroupV2Recipient -> {
+                val mainOptions = mutableListOf<OptionsItem>()
+                val adminOptions = mutableListOf<OptionsItem>()
+                val dangerOptions = mutableListOf<OptionsItem>()
+
+                mainOptions.add(optionSearch)
+
+                // for non admins, disappearing messages is in the non admin section
+                if(!isAdmin){
+                    mainOptions.add(optionDisappearingMessage)
+                }
+
+                mainOptions.addAll(listOf(
+                    optionPin, //todo UCS pin/unpin logic
+                    optionNotifications(null), //todo UCS notifications logic
+                    optionGroupMembers,
+                    optionAttachments,
+                ))
+
+                // apply different options depending on admin status
+                if(isAdmin){
+                    dangerOptions.addAll(
+                        listOf(
+                            optionClearMessages,
+                            optionDeleteGroup
+                        )
+                    )
+
+                    // admin options
+                    adminOptions.addAll(listOf(
+                        optionManageMembers,
+                        optionDisappearingMessage
+                    ))
+
+                    // the returned options for group admins
+                    listOf(
+                        OptionsCategory(
+                            items = listOf(
+                                OptionsSubCategory(items = mainOptions),
+                            )
+                        ),
+                        OptionsCategory(
+                            name = context.getString(R.string.adminSettings),
+                            items = listOf(
+                                OptionsSubCategory(items = adminOptions),
+                                OptionsSubCategory(
+                                    danger = true,
+                                    items = dangerOptions
+                                )
+                            )
+                        )
+                    )
+                } else {
+                    dangerOptions.addAll(
+                        listOf(
+                            optionClearMessages,
+                            optionLeaveGroup
+                        )
+                    )
+
+                    // the returned options for group non-admins
+                    listOf(
+                        OptionsCategory(
+                            items = listOf(
+                                OptionsSubCategory(items = mainOptions),
+                                OptionsSubCategory(
+                                    danger = true,
+                                    items = dangerOptions
+                                )
+                            )
+                        )
+                    )
+                }
+            }
+
+            conversation.isCommunityRecipient -> {
+                val mainOptions = mutableListOf<OptionsItem>()
+                val dangerOptions = mutableListOf<OptionsItem>()
+
+                mainOptions.addAll(listOf(
+                    optionCopyCommunityURL,
+                    optionSearch,
+                    optionPin, //todo UCS pin/unpin logic
+                    optionNotifications(null), //todo UCS notifications logic
+                    optionInviteMembers,
+                    optionAttachments,
+                ))
+
+                dangerOptions.addAll(listOf(
+                    optionClearMessages,
+                    optionLeaveCommunity
+                ))
+
+                listOf(
+                    OptionsCategory(
+                        items = listOf(
+                            OptionsSubCategory(items = mainOptions),
+                            OptionsSubCategory(
+                                danger = true,
+                                items = dangerOptions
+                            )
+                        )
+                    )
+                )
+            }
+
             //todo UCS handle groupsV2 and community
 
             else -> emptyList()
@@ -245,7 +351,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         fun create(threadId: Long): ConversationSettingsViewModel
     }
 
-    val optionCopyAccountId: OptionsItem by lazy{
+    private val optionCopyAccountId: OptionsItem by lazy{
         OptionsItem(
             name = context.getString(R.string.accountIDCopy),
             icon = R.drawable.ic_copy,
@@ -254,7 +360,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         )
     }
 
-    val optionSearch: OptionsItem by lazy{
+    private val optionSearch: OptionsItem by lazy{
         OptionsItem(
             name = context.getString(R.string.searchConversation),
             icon = R.drawable.ic_search,
@@ -264,7 +370,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     }
 
     //todo UCS will the subtitle need to be dynamic in order to update when the option changes?
-    val optionDisappearingMessage: OptionsItem by lazy {
+    private val optionDisappearingMessage: OptionsItem by lazy {
         val expiration = storage.getExpirationConfiguration(threadId)
         val subtitle = if(expiration?.isEnabled == true) {
             // Get the type of disappearing message and the abbreviated duration..
@@ -291,7 +397,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         )
     }
 
-    val optionPin: OptionsItem by lazy {
+    private val optionPin: OptionsItem by lazy {
         OptionsItem(
             name = context.getString(R.string.pinConversation),
             icon = R.drawable.ic_pin,
@@ -300,7 +406,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         )
     }
 
-    val optionUnpin: OptionsItem by lazy {
+    private val optionUnpin: OptionsItem by lazy {
         OptionsItem(
             name = context.getString(R.string.pinUnpinConversation),
             icon = R.drawable.ic_pin_off,
@@ -309,7 +415,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         )
     }
 
-    fun optionNotifications(subtitle: String?): OptionsItem {
+    private fun optionNotifications(subtitle: String?): OptionsItem {
         return OptionsItem(
             name = context.getString(R.string.sessionNotifications),
             subtitle = subtitle,
@@ -319,7 +425,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         )
     }
 
-    val optionAttachments: OptionsItem by lazy{
+    private val optionAttachments: OptionsItem by lazy{
         OptionsItem(
             name = context.getString(R.string.attachments),
             icon = R.drawable.ic_file,
@@ -328,7 +434,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         )
     }
 
-    val optionBlock: OptionsItem by lazy{
+    private val optionBlock: OptionsItem by lazy{
         OptionsItem(
             name = context.getString(R.string.block),
             icon = R.drawable.ic_ban,
@@ -337,7 +443,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         )
     }
 
-    val optionClearMessages: OptionsItem by lazy{
+    private val optionClearMessages: OptionsItem by lazy{
         OptionsItem(
             name = context.getString(R.string.clearMessages),
             icon = R.drawable.ic_message_trash_custom,
@@ -346,7 +452,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         )
     }
 
-    val optionDeleteConversation: OptionsItem by lazy{
+    private val optionDeleteConversation: OptionsItem by lazy{
         OptionsItem(
             name = context.getString(R.string.conversationsDelete),
             icon = R.drawable.ic_trash_2,
@@ -355,7 +461,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         )
     }
 
-    val optionDeleteContact: OptionsItem by lazy{
+    private val optionDeleteContact: OptionsItem by lazy{
         OptionsItem(
             name = context.getString(R.string.contactDelete),
             icon = R.drawable.ic_user_round_trash,
@@ -364,7 +470,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         )
     }
 
-    val optionHideNTS: OptionsItem by lazy{
+    private val optionHideNTS: OptionsItem by lazy{
         OptionsItem(
             name = context.getString(R.string.noteToSelfHide),
             icon = R.drawable.ic_eye_off,
@@ -374,7 +480,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     }
 
     // Groups
-    val optionGroupMembers: OptionsItem by lazy{
+    private val optionGroupMembers: OptionsItem by lazy{
         OptionsItem(
             name = context.getString(R.string.groupMembers),
             icon = R.drawable.ic_users_round,
@@ -383,7 +489,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         )
     }
 
-    val optionInviteMembers: OptionsItem by lazy{
+    private val optionInviteMembers: OptionsItem by lazy{
         OptionsItem(
             name = context.getString(R.string.membersInvite),
             icon = R.drawable.ic_user_round_plus,
@@ -392,7 +498,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         )
     }
 
-    val optionManageMembers: OptionsItem by lazy{
+    private val optionManageMembers: OptionsItem by lazy{
         OptionsItem(
             name = context.getString(R.string.manageMembers),
             icon = R.drawable.ic_user_round_pen,
@@ -401,7 +507,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         )
     }
 
-    val optionLeaveGroup: OptionsItem by lazy{
+    private val optionLeaveGroup: OptionsItem by lazy{
         OptionsItem(
             name = context.getString(R.string.groupLeave),
             icon = R.drawable.ic_log_out,
@@ -410,7 +516,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         )
     }
 
-    val optionDeleteGroup: OptionsItem by lazy{
+    private val optionDeleteGroup: OptionsItem by lazy{
         OptionsItem(
             name = context.getString(R.string.groupDelete),
             icon = R.drawable.ic_trash_2,
@@ -420,7 +526,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     }
 
     // Community
-    val optionCopyCommunityURL: OptionsItem by lazy{
+    private val optionCopyCommunityURL: OptionsItem by lazy{
         OptionsItem(
             name = context.getString(R.string.communityUrlCopy),
             icon = R.drawable.ic_copy,
@@ -429,7 +535,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         )
     }
 
-    val optionLeaveCommunty: OptionsItem by lazy{
+    private val optionLeaveCommunity: OptionsItem by lazy{
         OptionsItem(
             name = context.getString(R.string.communityLeave),
             icon = R.drawable.ic_log_out,
