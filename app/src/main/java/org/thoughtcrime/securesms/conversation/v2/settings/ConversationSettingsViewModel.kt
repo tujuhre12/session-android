@@ -64,9 +64,9 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     )
     val uiState: StateFlow<UIState> = _uiState
 
-    var recipient: Recipient? = null
+    private var recipient: Recipient? = null
 
-    val groupV2: GroupInfo.ClosedGroupInfo? by lazy {
+    private val groupV2: GroupInfo.ClosedGroupInfo? by lazy {
         if(recipient == null) return@lazy null
         configFactory.getGroup(AccountId(recipient!!.address.toString()))
     }
