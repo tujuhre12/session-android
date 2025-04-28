@@ -3,12 +3,10 @@ package org.thoughtcrime.securesms.conversation.v2.settings
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import android.graphics.Path.Op
 import android.widget.Toast
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity.CLIPBOARD_SERVICE
-import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
@@ -25,20 +23,16 @@ import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsession.database.StorageProtocol
+import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.utilities.SodiumUtilities
-import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ExpirationUtil
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getGroup
-import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
-import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.DeleteForEveryoneDialogData
-import org.thoughtcrime.securesms.database.model.MessageId
-import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.ui.getSubbedString
@@ -71,6 +65,10 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         configFactory.getGroup(AccountId(recipient!!.address.toString()))
     }
 
+    private val community: OpenGroup? by lazy {
+        storage.getOpenGroup(threadId)
+    }
+
     init {
         viewModelScope.launch(Dispatchers.Default) {
             repository.recipientUpdateFlow(threadId).collect{
@@ -87,20 +85,12 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         }
 
         // admin
-        val isAdmin =  when {
+        val isAdmin: Boolean =  when {
             // for Groups V2
             conversation.isGroupV2Recipient -> groupV2?.hasAdminKey() == true
 
             // for communities the the `isUserModerator` field
-            conversation.isCommunityRecipient -> {
-                storage.getOpenGroup(threadId)?.let { openGroup ->
-                    val userPublicKey = textSecurePreferences.getLocalNumber() ?: return@let false
-                    val keyPair = storage.getUserED25519KeyPair() ?: return@let false
-                    val blindedPublicKey = openGroup.publicKey.let { SodiumUtilities.blindedKeyPair(it, keyPair)?.publicKey?.asBytes }
-                        ?.let { AccountId(IdPrefix.BLINDED, it) }?.hexString
-                    OpenGroupManager.isUserModerator(context, openGroup.id, userPublicKey, blindedPublicKey)
-                } ?: false
-            }
+            conversation.isCommunityRecipient -> isCommunityAdmin()
 
             // false in other cases
             else -> false
@@ -114,7 +104,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         }
 
         // description / display name
-        val description = when{
+        val description: String? = when{
             // for 1on1, if the user has a nickname it should be displayed as the
             // main name, and the description should show the real name in parentheses
             conversation.is1on1 -> {
@@ -124,11 +114,18 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 } else null
             }
 
-            /*conversation.isGroupV2Recipient -> {
-                groupV2?.description
-            }*/
+            conversation.isGroupV2Recipient -> {
+                if(groupV2 == null) null
+                else {
+                    configFactory.withGroupConfigs(AccountId(groupV2!!.groupAccountId)){
+                        it.groupInfo.getDescription()
+                    }
+                }
+            }
 
-            //todo UCS add description for other types
+            conversation.isCommunityRecipient -> {
+                community?.description
+            }
 
             else -> null
         }
@@ -334,6 +331,17 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         val manager = context.getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
         manager.setPrimaryClip(clip)
         Toast.makeText(context, R.string.copied, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun isCommunityAdmin(): Boolean {
+        if(community == null) return false
+        else{
+            val userPublicKey = textSecurePreferences.getLocalNumber() ?: return false
+            val keyPair = storage.getUserED25519KeyPair() ?: return false
+            val blindedPublicKey = community!!.publicKey.let { SodiumUtilities.blindedKeyPair(it, keyPair)?.publicKey?.asBytes }
+                ?.let { AccountId(IdPrefix.BLINDED, it) }?.hexString
+            return OpenGroupManager.isUserModerator(context, community!!.id, userPublicKey, blindedPublicKey)
+        }
     }
 
     fun onCommand(command: Commands) {
