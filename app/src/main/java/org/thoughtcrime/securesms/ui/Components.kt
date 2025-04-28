@@ -4,9 +4,14 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -23,8 +28,10 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Card
 import androidx.compose.material3.HorizontalDivider
@@ -35,9 +42,16 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -49,11 +63,15 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -122,13 +140,18 @@ fun LargeItemButtonWithDrawable(
     @StringRes textId: Int,
     @DrawableRes icon: Int,
     modifier: Modifier = Modifier,
+    subtitle: String? = null,
     colors: ButtonColors = transparentButtonColors(),
     shape: Shape = RectangleShape,
     onClick: () -> Unit
 ) {
     ItemButtonWithDrawable(
         textId, icon, modifier,
-        LocalType.current.h8, colors, shape, onClick
+        subtitle = subtitle,
+        textStyle = LocalType.current.h8,
+        colors = colors,
+        shape = shape,
+        onClick = onClick
     )
 }
 
@@ -137,6 +160,7 @@ fun ItemButtonWithDrawable(
     @StringRes textId: Int,
     @DrawableRes icon: Int,
     modifier: Modifier = Modifier,
+    subtitle: String? = null,
     textStyle: TextStyle = LocalType.current.xl,
     colors: ButtonColors = transparentButtonColors(),
     shape: Shape = RectangleShape,
@@ -166,6 +190,7 @@ fun LargeItemButton(
     @StringRes textId: Int,
     @DrawableRes icon: Int,
     modifier: Modifier = Modifier,
+    subtitle: String? = null,
     colors: ButtonColors = transparentButtonColors(),
     shape: Shape = RectangleShape,
     onClick: () -> Unit
@@ -174,6 +199,7 @@ fun LargeItemButton(
         textId = textId,
         icon = icon,
         modifier = modifier,
+        subtitle = subtitle,
         minHeight = LocalDimensions.current.minLargeItemButtonHeight,
         textStyle = LocalType.current.h8,
         colors = colors,
@@ -187,6 +213,7 @@ fun LargeItemButton(
     text: String,
     @DrawableRes icon: Int,
     modifier: Modifier = Modifier,
+    subtitle: String? = null,
     colors: ButtonColors = transparentButtonColors(),
     shape: Shape = RectangleShape,
     onClick: () -> Unit
@@ -195,6 +222,7 @@ fun LargeItemButton(
         text = text,
         icon = icon,
         modifier = modifier,
+        subtitle = subtitle,
         minHeight = LocalDimensions.current.minLargeItemButtonHeight,
         textStyle = LocalType.current.h8,
         colors = colors,
@@ -208,8 +236,10 @@ fun ItemButton(
     text: String,
     icon: Int,
     modifier: Modifier,
+    subtitle: String? = null,
     minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
     textStyle: TextStyle = LocalType.current.xl,
+    subtitleStyle: TextStyle = LocalType.current.small,
     colors: ButtonColors = transparentButtonColors(),
     shape: Shape = RectangleShape,
     onClick: () -> Unit
@@ -217,6 +247,7 @@ fun ItemButton(
     ItemButton(
         text = text,
         modifier = modifier,
+        subtitle = subtitle,
         icon = {
             Icon(
                 painter = painterResource(id = icon),
@@ -226,6 +257,7 @@ fun ItemButton(
         },
         minHeight = minHeight,
         textStyle = textStyle,
+        subtitleStyle = subtitleStyle,
         colors = colors,
         shape = shape,
         onClick = onClick
@@ -240,8 +272,10 @@ fun ItemButton(
     @StringRes textId: Int,
     @DrawableRes icon: Int,
     modifier: Modifier = Modifier,
+    subtitle: String? = null,
     minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
     textStyle: TextStyle = LocalType.current.xl,
+    subtitleStyle: TextStyle = LocalType.current.small,
     colors: ButtonColors = transparentButtonColors(),
     shape: Shape = RectangleShape,
     onClick: () -> Unit
@@ -249,6 +283,7 @@ fun ItemButton(
     ItemButton(
         text = stringResource(textId),
         modifier = modifier,
+        subtitle = subtitle,
         icon = {
             Icon(
                 painter = painterResource(id = icon),
@@ -258,6 +293,7 @@ fun ItemButton(
         },
         minHeight = minHeight,
         textStyle = textStyle,
+        subtitleStyle = subtitleStyle,
         colors = colors,
         shape = shape,
         onClick = onClick
@@ -274,8 +310,10 @@ fun ItemButton(
     text: String,
     icon: @Composable BoxScope.() -> Unit,
     modifier: Modifier = Modifier,
+    subtitle: String? = null,
     minHeight: Dp = LocalDimensions.current.minLargeItemButtonHeight,
     textStyle: TextStyle = LocalType.current.xl,
+    subtitleStyle: TextStyle = LocalType.current.small,
     colors: ButtonColors = transparentButtonColors(),
     shape: Shape = RectangleShape,
     onClick: () -> Unit
@@ -295,13 +333,25 @@ fun ItemButton(
             content = icon
         )
 
-        Text(
-            text,
-            Modifier
-                .fillMaxWidth()
-                .align(Alignment.CenterVertically),
-            style = textStyle
-        )
+        Column(
+            modifier = Modifier.fillMaxWidth()
+                .align(Alignment.CenterVertically)
+        ) {
+            Text(
+                text,
+                Modifier
+                    .fillMaxWidth(),
+                style = textStyle
+            )
+
+            subtitle?.let {
+                Text(
+                    text = it,
+                    modifier = Modifier.fillMaxWidth(),
+                    style = subtitleStyle,
+                )
+            }
+        }
     }
 }
 
@@ -524,6 +574,74 @@ fun LoadingArcOr(loading: Boolean, content: @Composable () -> Unit) {
     }
 }
 
+// Permanently visible vertical scrollbar.
+// Note: This scrollbar modifier was adapted from Mardann's fantastic solution at: https://stackoverflow.com/a/78453760/24337669
+@Composable
+fun Modifier.verticalScrollbar(
+    state: ScrollState,
+    scrollbarWidth: Dp = 6.dp,
+    barColour: Color = LocalColors.current.textSecondary,
+    backgroundColour: Color = LocalColors.current.borders,
+    edgePadding: Dp = LocalDimensions.current.xxsSpacing
+): Modifier {
+    // Calculate the viewport and content heights
+    val viewHeight    = state.viewportSize.toFloat()
+    val contentHeight = state.maxValue + viewHeight
+
+    // Determine if the scrollbar is needed
+    val isScrollbarNeeded = contentHeight > viewHeight
+
+    // Set the target alpha based on whether scrolling is possible
+    val alphaTarget = when {
+        !isScrollbarNeeded       -> 0f // No scrollbar needed, set alpha to 0f
+        state.isScrollInProgress -> 1f
+        else                     -> 0.2f
+    }
+
+    // Animate the alpha value smoothly
+    val alpha by animateFloatAsState(
+        targetValue   = alphaTarget,
+        animationSpec = tween(400, delayMillis = if (state.isScrollInProgress) 0 else 700),
+        label         = "VerticalScrollbarAnimation"
+    )
+
+    return this.then(Modifier.drawWithContent {
+        drawContent()
+
+        // Only proceed if the scrollbar is needed
+        if (isScrollbarNeeded) {
+            val minScrollBarHeight = 10.dp.toPx()
+            val maxScrollBarHeight = viewHeight
+            val scrollbarHeight = (viewHeight * (viewHeight / contentHeight)).coerceIn(
+                minOf(minScrollBarHeight, maxScrollBarHeight)..maxOf(minScrollBarHeight, maxScrollBarHeight)
+            )
+            val variableZone = viewHeight - scrollbarHeight
+            val scrollbarYoffset = (state.value.toFloat() / state.maxValue) * variableZone
+
+            // Calculate the horizontal offset with padding
+            val scrollbarXOffset = size.width - scrollbarWidth.toPx() - edgePadding.toPx()
+
+            // Draw the missing section of the scrollbar track
+            drawRoundRect(
+                color = backgroundColour,
+                topLeft = Offset(scrollbarXOffset, 0f),
+                size = Size(scrollbarWidth.toPx(), viewHeight),
+                cornerRadius = CornerRadius(scrollbarWidth.toPx() / 2),
+                alpha = alpha
+            )
+
+            // Draw the scrollbar thumb
+            drawRoundRect(
+                color = barColour,
+                topLeft = Offset(scrollbarXOffset, scrollbarYoffset),
+                size = Size(scrollbarWidth.toPx(), scrollbarHeight),
+                cornerRadius = CornerRadius(scrollbarWidth.toPx() / 2),
+                alpha = alpha
+            )
+        }
+    })
+}
+
 
 @Composable
 fun SearchBar(
@@ -586,6 +704,207 @@ fun PreviewSearchBar() {
             query = "",
             onValueChanged = {},
             placeholder = "Search"
+        )
+    }
+}
+
+/**
+ * The convenience based expandable text which handles some internal state
+ */
+@Composable
+fun ExpandableText(
+    text: String,
+    modifier: Modifier = Modifier,
+    textStyle: TextStyle = LocalType.current.base,
+    buttonTextStyle: TextStyle = LocalType.current.base,
+    textColor: Color = LocalColors.current.text,
+    buttonTextColor: Color = LocalColors.current.text,
+    textAlign: TextAlign = TextAlign.Start,
+    @StringRes qaTag: Int? = null,
+    collapsedMaxLines: Int = 2,
+    expandedMaxLines: Int = Int.MAX_VALUE,
+    expandButtonText: String = stringResource(id = R.string.viewMore),
+    collapseButtonText: String = stringResource(id = R.string.viewLess),
+){
+    var expanded by remember { mutableStateOf(false) }
+    var showButton by remember { mutableStateOf(false) }
+    var maxHeight by remember { mutableStateOf(Dp.Unspecified) }
+
+    val density = LocalDensity.current
+
+    val enableScrolling = expanded && maxHeight != Dp.Unspecified
+
+    BaseExpandableText(
+        text = text,
+        modifier = modifier,
+        textStyle = textStyle,
+        buttonTextStyle = buttonTextStyle,
+        textColor = textColor,
+        buttonTextColor = buttonTextColor,
+        textAlign = textAlign,
+        qaTag = qaTag,
+        collapsedMaxLines = collapsedMaxLines,
+        expandedMaxHeight = maxHeight ?: Dp.Unspecified,
+        expandButtonText = expandButtonText,
+        collapseButtonText = collapseButtonText,
+        showButton = showButton,
+        expanded = expanded,
+        showScroll = enableScrolling,
+        onTextMeasured = { textLayoutResult ->
+            showButton = expanded || textLayoutResult.hasVisualOverflow
+            val lastVisible = (expandedMaxLines - 1).coerceAtMost(textLayoutResult.lineCount - 1)
+            val px = textLayoutResult.getLineBottom(lastVisible)          // bottom of that line in px
+            maxHeight = with(density) { px.toDp() }
+        },
+        onTap = {
+            expanded = !expanded
+        }
+    )
+}
+
+@Preview
+@Composable
+private fun PreviewExpandedTextShort() {
+    PreviewTheme {
+        ExpandableText(
+            text = "This is a short description"
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PreviewExpandedTextLongExpanded() {
+    PreviewTheme {
+        ExpandableText(
+            text = "This is a long description with a lot of text that should be more than 2 lines and should be truncated but you never know, it depends on size and such things dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk lkasdjfalsdkfjasdklfj lsadkfjalsdkfjsadklf lksdjfalsdkfjasdlkfjasdlkf asldkfjasdlkfja and this is the end",
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PreviewExpandedTextLongMaxLinesExpanded() {
+    PreviewTheme {
+        ExpandableText(
+            text = "This is a long description with a lot of text that should be more than 2 lines and should be truncated but you never know, it depends on size and such things dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk lkasdjfalsdkfjasdklfj lsadkfjalsdkfjsadklf lksdjfalsdkfjasdlkfjasdlkf asldkfjasdlkfja and this is the end",
+            expandedMaxLines = 10
+        )
+    }
+}
+
+/**
+ * The base stateless version of the expandable text
+ */
+@Composable
+fun BaseExpandableText(
+    text: String,
+    modifier: Modifier = Modifier,
+    textStyle: TextStyle = LocalType.current.base,
+    buttonTextStyle: TextStyle = LocalType.current.base,
+    textColor: Color = LocalColors.current.text,
+    buttonTextColor: Color = LocalColors.current.text,
+    textAlign: TextAlign = TextAlign.Start,
+    @StringRes qaTag: Int? = null,
+    collapsedMaxLines: Int = 2,
+    expandedMaxHeight: Dp = Dp.Unspecified,
+    expandButtonText: String = stringResource(id = R.string.viewMore),
+    collapseButtonText: String = stringResource(id = R.string.viewLess),
+    showButton: Boolean = false,
+    expanded: Boolean = false,
+    showScroll: Boolean = false,
+    onTextMeasured: (TextLayoutResult) -> Unit = {},
+    onTap: () -> Unit = {}
+){
+    var textModifier: Modifier = Modifier
+    if(qaTag != null) textModifier = textModifier.qaTag(qaTag)
+    if(expanded) textModifier = textModifier.height(expandedMaxHeight)
+    if(showScroll){
+        val scrollState = rememberScrollState()
+        val scrollEdge = LocalDimensions.current.xxxsSpacing
+        val scrollWidth = 2.dp
+        textModifier = textModifier
+            .verticalScrollbar(
+                state = scrollState,
+                scrollbarWidth = scrollWidth,
+                edgePadding = scrollEdge
+            )
+            .verticalScroll(scrollState)
+            .padding(end = scrollWidth + scrollEdge*2)
+    }
+
+    Column(
+        modifier = modifier.clickable { onTap() },
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            modifier = textModifier.animateContentSize(),
+            onTextLayout = {
+                onTextMeasured(it)
+            },
+            text = text,
+            textAlign = textAlign,
+            style = textStyle,
+            color = textColor,
+            maxLines = if (expanded) Int.MAX_VALUE else collapsedMaxLines,
+            overflow = if (expanded) TextOverflow.Clip else TextOverflow.Ellipsis
+        )
+
+        if(showButton) {
+            Spacer(modifier = Modifier.height(LocalDimensions.current.xxsSpacing))
+            Text(
+                text = if (expanded) collapseButtonText else expandButtonText,
+                style = buttonTextStyle,
+                color = buttonTextColor
+            )
+        }
+    }
+}
+
+
+@Preview
+@Composable
+private fun PreviewBaseExpandedTextShort() {
+    PreviewTheme {
+        BaseExpandableText(
+            text = "This is a short description"
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PreviewBaseExpandedTextLong() {
+    PreviewTheme {
+        BaseExpandableText(
+            text = "This is a long description with a lot of text that should be more than 2 lines and should be truncated but you never know, it depends on size and such things dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk lkasdjfalsdkfjasdklfj lsadkfjalsdkfjsadklf lksdjfalsdkfjasdlkfjasdlkf asldkfjasdlkfja and this is the end",
+            showButton = true
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PreviewBaseExpandedTextLongExpanded() {
+    PreviewTheme {
+        BaseExpandableText(
+            text = "This is a long description with a lot of text that should be more than 2 lines and should be truncated but you never know, it depends on size and such things dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk lkasdjfalsdkfjasdklfj lsadkfjalsdkfjsadklf lksdjfalsdkfjasdlkfjasdlkf asldkfjasdlkfja and this is the end",
+            showButton = true,
+            expanded = true
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PreviewBaseExpandedTextLongExpandedMaxLines() {
+    PreviewTheme {
+        BaseExpandableText(
+            text = "This is a long description with a lot of text that should be more than 2 lines and should be truncated but you never know, it depends on size and such things dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk lkasdjfalsdkfjasdklfj lsadkfjalsdkfjsadklf lksdjfalsdkfjasdlkfjasdlkf asldkfjasdlkfja and this is the end",
+            showButton = true,
+            expanded = true,
+            expandedMaxHeight = 200.dp,
+            showScroll = true
         )
     }
 }

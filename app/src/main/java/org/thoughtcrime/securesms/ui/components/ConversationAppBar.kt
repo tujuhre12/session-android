@@ -31,6 +31,8 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -100,7 +102,7 @@ fun ConversationAppBar(
                         painter = painterResource(id = R.drawable.ic_phone),
                         contentDescription = stringResource(id = R.string.AccessibilityId_call),
                         tint = LocalColors.current.text,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(LocalDimensions.current.iconMedium)
                     )
                 }
             }
@@ -108,7 +110,8 @@ fun ConversationAppBar(
             // Avatar
             if(data.showAvatar) {
                 Avatar(
-                    modifier = Modifier.qaTag(R.string.qa_conversation_options),
+                    modifier = Modifier.qaTag(R.string.qa_conversation_avatar)
+                        .clickable { onAvatarPressed() },
                     size = LocalDimensions.current.iconLargeAvatar,
                     data = data.avatarUIData
                 )
@@ -267,6 +270,13 @@ class ConversationTopBarParamsProvider : PreviewParameterProvider<ConversationTo
             isCallAvailable = false,
             showAvatar = true
         ),
+        // Long title without call button
+        ConversationTopBarPreviewParams(
+            title = "Really Long Conversation Title That Should Ellipsize",
+            settingsPagesCount = 0,
+            isCallAvailable = false,
+            showAvatar = true
+        ),
         // Long title with call button
         ConversationTopBarPreviewParams(
             title = "Really Long Conversation Title That Should Ellipsize",
@@ -319,7 +329,7 @@ fun ConversationTopBarPreview(
                 avatarUIData = AvatarUIData(
                     listOf(
                         AvatarUIElement(
-                            name = "TOTO",
+                            name = "TO",
                             color = primaryBlue
                         )
                     )

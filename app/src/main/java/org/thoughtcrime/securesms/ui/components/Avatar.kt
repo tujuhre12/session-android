@@ -4,32 +4,31 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.bumptech.glide.integration.compose.CrossFade
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import network.loki.messenger.R
-import org.session.libsession.avatars.ContactPhoto
 import org.session.libsession.avatars.ProfileContactPhoto
 import org.session.libsession.utilities.Address
-import org.thoughtcrime.securesms.groups.compose.AutoResizeText
-import org.thoughtcrime.securesms.mms.DecryptableStreamUriLoader
+import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
@@ -146,11 +145,23 @@ private fun AvatarElement(
                 }
             )
         } else if(!data.name.isNullOrEmpty()){
-            AutoResizeText(
-                modifier = Modifier.padding(size * 0.2f),
-                text = data.name,
-                style = LocalType.current.base
-            )
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                BasicText(
+                    modifier = Modifier.padding(size * 0.2f),
+                    autoSize = TextAutoSize.StepBased(
+                        minFontSize = 6.sp
+                    ),
+                    text = data.name,
+                    style = LocalType.current.base.copy(
+                        color = LocalColors.current.text,
+                        textAlign = TextAlign.Center,
+                    ),
+                    maxLines = 1
+                )
+            }
         } else { // no name nor image data > show the default unknown icon
             Image(
                 modifier = Modifier.fillMaxSize().padding(size * 0.2f),
