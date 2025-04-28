@@ -29,6 +29,7 @@ import org.thoughtcrime.securesms.MainCoroutineRule
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.ExpiryRadioOption
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.OptionsCardData
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.UiState
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsNavigator
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
@@ -58,6 +59,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
     @Mock lateinit var threadDb: ThreadDatabase
     @Mock lateinit var groupDb: GroupDatabase
     @Mock lateinit var storage: Storage
+    @Mock lateinit var navigator: ConversationSettingsNavigator
     @Mock lateinit var recipient: Recipient
     @Mock lateinit var groupRecord: GroupRecord
 
@@ -468,14 +470,15 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
     )
 
     private fun createViewModel(isNewConfigEnabled: Boolean = true) = DisappearingMessagesViewModel(
-        THREAD_ID,
-        application,
-        textSecurePreferences,
-        disappearingMessages,
-        threadDb,
-        groupDb,
-        storage,
-        isNewConfigEnabled,
+        threadId = THREAD_ID,
+        context = application,
+        textSecurePreferences = textSecurePreferences,
+        disappearingMessages = disappearingMessages,
+        threadDb = threadDb,
+        groupDb = groupDb,
+        storage = storage,
+        navigator = navigator,
+        isNewConfigEnabled = isNewConfigEnabled,
         showDebugOptions = false
     )
 }

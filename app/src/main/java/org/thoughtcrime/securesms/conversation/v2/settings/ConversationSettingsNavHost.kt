@@ -1,12 +1,17 @@
 package org.thoughtcrime.securesms.conversation.v2.settings
 
+import androidx.activity.viewModels
 import androidx.compose.runtime.Composable
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import kotlinx.serialization.Serializable
+import network.loki.messenger.BuildConfig
+import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsignal.utilities.AccountId
+import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesViewModel
+import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.DisappearingMessagesScreen
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteConversationSettings
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteInviteContacts
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteManageMembers
@@ -31,6 +36,9 @@ sealed interface ConversationSettingsDestination {
     data class RouteInviteContacts(
         val excludingAccountIDs: List<String>
     ): ConversationSettingsDestination
+
+    @Serializable
+    data object RouteDisappearingMessages: ConversationSettingsDestination
 }
 
 @Composable
@@ -98,6 +106,22 @@ fun ConversationSettingsNavHost(
                     navController.popBackStack()
                 },
                 onBackClicked = { navController.popBackStack() },
+            )
+        }
+
+        horizontalSlideComposable<ConversationSettingsDestination.RouteDisappearingMessages> {
+            val viewModel: DisappearingMessagesViewModel =
+                hiltViewModel<DisappearingMessagesViewModel, DisappearingMessagesViewModel.Factory> { factory ->
+                    factory.create(
+                        threadId = threadId,
+                        isNewConfigEnabled = ExpirationConfiguration.isNewConfigEnabled,
+                        showDebugOptions = BuildConfig.DEBUG
+                    )
+                }
+
+            DisappearingMessagesScreen(
+                viewModel = viewModel,
+                onBack = navController::popBackStack,
             )
         }
     }

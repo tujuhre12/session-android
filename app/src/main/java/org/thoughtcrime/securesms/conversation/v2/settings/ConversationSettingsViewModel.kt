@@ -408,7 +408,9 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             subtitle = subtitle,
             icon = R.drawable.ic_timer,
             qaTag = R.string.qa_conversation_settings_disappearing,
-            onClick = ::copyAccountId //todo UCS get proper method
+            onClick = {
+                navigateTo(ConversationSettingsDestination.RouteDisappearingMessages)
+            }
         )
     }
 
@@ -425,7 +427,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         OptionsItem(
             name = context.getString(R.string.pinUnpinConversation),
             icon = R.drawable.ic_pin_off,
-            qaTag = R.string.qa_conversation_settings_pin, //todo UCS check with emily if this needs its own
+            qaTag = R.string.qa_conversation_settings_pin,
             onClick = ::copyAccountId //todo UCS get proper method
         )
     }
