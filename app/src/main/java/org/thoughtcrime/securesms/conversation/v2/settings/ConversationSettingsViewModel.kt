@@ -49,6 +49,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val storage: StorageProtocol,
     private val textSecurePreferences: TextSecurePreferences,
+    private val navigator: ConversationSettingsNavigator
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<UIState> = MutableStateFlow(
@@ -350,6 +351,12 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         }
     }
 
+    private fun navigateTo(destination: ConversationSettingsDestination){
+        viewModelScope.launch {
+            navigator.navigate(destination)
+        }
+    }
+
     sealed interface Commands {
         data object CopyAccountId : Commands
     }
@@ -511,7 +518,11 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             name = context.getString(R.string.manageMembers),
             icon = R.drawable.ic_user_round_pen,
             qaTag = R.string.qa_conversation_settings_manage_members,
-            onClick = ::copyAccountId //todo UCS get proper method
+            onClick = {
+                navigateTo(ConversationSettingsDestination.RouteManageMembers(
+                    groupId = groupV2?.groupAccountId ?: "")
+                )
+            }
         )
     }
 

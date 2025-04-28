@@ -42,19 +42,12 @@ import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
 
 
-@Serializable
-object RouteSelectContacts
-
 @Composable
 fun InviteContactsScreen(
-    excludingAccountIDs: Set<AccountId> = emptySet(),
+    viewModel: SelectContactsViewModel,
     onDoneClicked: (selectedContacts: Set<AccountId>) -> Unit,
     onBackClicked: () -> Unit,
 ) {
-    val viewModel = hiltViewModel<SelectContactsViewModel, SelectContactsViewModel.Factory> { factory ->
-        factory.create(excludingAccountIDs)
-    }
-
     InviteContacts(
         contacts = viewModel.contacts.collectAsState().value,
         onContactItemClicked = viewModel::onContactItemClicked,
@@ -84,7 +77,7 @@ fun InviteContacts(
             )
         },
         contentWindowInsets = WindowInsets.safeContent
-    ) { paddings ->
+    ) { paddings -> //todo UCS the horizontal padding is now wrong...
         Column(
             modifier = Modifier.padding(paddings).consumeWindowInsets(paddings),
             verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)

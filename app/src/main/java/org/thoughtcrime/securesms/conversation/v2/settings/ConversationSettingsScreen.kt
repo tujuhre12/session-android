@@ -66,13 +66,9 @@ import org.thoughtcrime.securesms.util.AvatarUIElement
 
 @Composable
 fun ConversationSettingsScreen(
-    threadId: Long,
+    viewModel: ConversationSettingsViewModel,
     onBack: () -> Unit,
 ) {
-    val viewModel = hiltViewModel<ConversationSettingsViewModel, ConversationSettingsViewModel.Factory> { factory ->
-        factory.create(threadId)
-    }
-
     val data by viewModel.uiState.collectAsState()
 
     ConversationSettings(
@@ -80,7 +76,6 @@ fun ConversationSettingsScreen(
         sendCommand = viewModel::onCommand,
         onBack = onBack,
     )
-
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

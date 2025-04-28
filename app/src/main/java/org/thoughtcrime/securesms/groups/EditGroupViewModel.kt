@@ -80,8 +80,8 @@ class EditGroupViewModel @AssistedInject constructor(
     val error: StateFlow<String?> get() = mutableError
 
     // Output:
-    val excludingAccountIDsFromContactSelection: Set<AccountId>
-        get() = groupInfo.value?.second?.mapTo(hashSetOf()) { it.accountId }.orEmpty()
+    val excludingAccountIDsFromContactSelection: Set<String>
+        get() = groupInfo.value?.second?.mapTo(hashSetOf()) { it.accountId.hexString }.orEmpty()
 
     fun onContactSelected(contacts: Set<AccountId>) {
         performGroupOperation(

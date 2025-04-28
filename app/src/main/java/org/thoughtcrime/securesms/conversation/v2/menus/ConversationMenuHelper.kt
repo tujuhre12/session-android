@@ -49,7 +49,6 @@ import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.utilities.NotificationUtils
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
-import org.thoughtcrime.securesms.groups.EditGroupActivity
 import org.thoughtcrime.securesms.groups.legacy.EditLegacyGroupActivity
 import org.thoughtcrime.securesms.groups.legacy.EditLegacyGroupActivity.Companion.groupIDKey
 import org.thoughtcrime.securesms.groups.GroupMembersActivity
@@ -308,7 +307,7 @@ object ConversationMenuHelper {
     private fun editGroup(context: Context, thread: Recipient) {
         when {
             thread.isGroupV2Recipient -> {
-                context.startActivity(EditGroupActivity.createIntent(context, thread.address.toString()))
+                //context.startActivity(EditGroupActivity.createIntent(context, thread.address.toString()))
             }
 
             thread.isLegacyGroupRecipient -> {

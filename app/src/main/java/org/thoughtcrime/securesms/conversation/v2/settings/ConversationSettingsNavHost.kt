@@ -1,0 +1,104 @@
+package org.thoughtcrime.securesms.conversation.v2.settings
+
+import androidx.compose.runtime.Composable
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
+import kotlinx.serialization.Serializable
+import org.session.libsignal.utilities.AccountId
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteConversationSettings
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteInviteContacts
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteManageMembers
+import org.thoughtcrime.securesms.groups.EditGroupViewModel
+import org.thoughtcrime.securesms.groups.SelectContactsViewModel
+import org.thoughtcrime.securesms.groups.compose.EditGroupScreen
+import org.thoughtcrime.securesms.groups.compose.InviteContactsScreen
+import org.thoughtcrime.securesms.ui.ObserveAsEvents
+import org.thoughtcrime.securesms.ui.horizontalSlideComposable
+
+// Destinations
+sealed interface ConversationSettingsDestination {
+    @Serializable
+    data object RouteConversationSettings: ConversationSettingsDestination
+
+    @Serializable
+    data class RouteManageMembers(
+        val groupId: String
+    ): ConversationSettingsDestination
+
+    @Serializable
+    data class RouteInviteContacts(
+        val excludingAccountIDs: List<String>
+    ): ConversationSettingsDestination
+}
+
+@Composable
+fun ConversationSettingsNavHost(
+    threadId: Long,
+    navigator: ConversationSettingsNavigator,
+    onBack: () -> Unit
+){
+    val navController = rememberNavController()
+
+    ObserveAsEvents(flow = navigator.navigationActions) { action ->
+        when(action) {
+            is NavigationAction.Navigate -> navController.navigate(
+                action.destination
+            ) {
+                action.navOptions(this)
+            }
+            NavigationAction.NavigateUp -> navController.navigateUp()
+        }
+    }
+
+    NavHost(navController = navController, startDestination = navigator.startDestination) {
+        // Conversation Settings
+        horizontalSlideComposable<RouteConversationSettings> {
+            val viewModel = hiltViewModel<ConversationSettingsViewModel, ConversationSettingsViewModel.Factory> { factory ->
+                factory.create(threadId)
+            }
+
+            ConversationSettingsScreen(
+                viewModel = viewModel,
+                onBack = onBack,
+            )
+        }
+
+        // Edit Group
+        horizontalSlideComposable<RouteManageMembers> { backStackEntry ->
+            val data: RouteManageMembers = backStackEntry.toRoute()
+
+            val viewModel = hiltViewModel<EditGroupViewModel, EditGroupViewModel.Factory> { factory ->
+                factory.create(AccountId(data.groupId))
+            }
+            EditGroupScreen(
+                viewModel = viewModel,
+                navigateToInviteContact = {
+                    navController.navigate(RouteInviteContacts(
+                        viewModel.excludingAccountIDsFromContactSelection.toList()
+                    ))
+                },
+                onBack = navController::popBackStack,
+            )
+        }
+
+        // Invite Contacts
+        horizontalSlideComposable<RouteInviteContacts> { backStackEntry ->
+            val data: RouteInviteContacts = backStackEntry.toRoute()
+
+            val viewModel = hiltViewModel<SelectContactsViewModel, SelectContactsViewModel.Factory> { factory ->
+                factory.create(data.excludingAccountIDs.map(::AccountId).toSet())
+            }
+
+            InviteContactsScreen(
+                viewModel = viewModel,
+                onDoneClicked = {
+                    //todo UCS this needs to call on the other ViewModels (EditGroup's) viewModel.onContactSelected(it)
+                    navController.popBackStack()
+                },
+                onBackClicked = { navController.popBackStack() },
+            )
+        }
+    }
+}

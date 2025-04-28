@@ -5,6 +5,7 @@ import android.content.Intent
 import androidx.compose.runtime.Composable
 import dagger.hilt.android.AndroidEntryPoint
 import org.thoughtcrime.securesms.FullComposeScreenLockActivity
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class ConversationSettingsActivity: FullComposeScreenLockActivity() {
@@ -19,11 +20,14 @@ class ConversationSettingsActivity: FullComposeScreenLockActivity() {
         }
     }
 
+    @Inject
+    lateinit var navigator: ConversationSettingsNavigator
 
     @Composable
     override fun ComposeContent() {
-        ConversationSettingsScreen(
+        ConversationSettingsNavHost(
             threadId = intent.getLongExtra(THREAD_ID, 0),
+            navigator = navigator,
             onBack = this::finish
         )
     }

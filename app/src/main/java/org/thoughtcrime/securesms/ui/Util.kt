@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewTreeObserver
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
@@ -15,11 +16,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.shouldShowRationale
 import com.squareup.phrase.Phrase
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
 import org.thoughtcrime.securesms.ui.theme.SessionMaterialTheme
 
 fun Activity.setComposeContent(content: @Composable () -> Unit) {
@@ -94,3 +101,24 @@ fun Modifier.qaTag(tag: String) = semantics { testTagsAsResourceId = true }.test
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun Modifier.qaTag(@StringRes tagResId: Int) = semantics { testTagsAsResourceId = true }.testTag(stringResource(tagResId))
+
+/**
+ * helper function to observe flows as events properly
+ * Including not losing events when the lifecycle gets destroyed by using Dispatchers.Main.immediate
+ */
+@Composable
+fun <T> ObserveAsEvents(
+    flow: Flow<T>,
+    key1: Any? = null,
+    key2: Any? = null,
+    onEvent: (T) -> Unit
+) {
+    val lifecycleOwner = LocalLifecycleOwner.current
+    LaunchedEffect(key1 = lifecycleOwner.lifecycle, key1, key2) {
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            withContext(Dispatchers.Main.immediate) {
+                flow.collect(onEvent)
+            }
+        }
+    }
+}
