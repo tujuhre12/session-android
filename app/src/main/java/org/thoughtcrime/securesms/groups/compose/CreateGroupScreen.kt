@@ -120,7 +120,6 @@ fun CreateGroup(
                 onBack = onBack,
             )
         },
-        contentWindowInsets = WindowInsets.safeContent
     ) { paddings ->
         Column(
             modifier = modifier.padding(paddings).consumeWindowInsets(paddings),

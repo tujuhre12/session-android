@@ -76,8 +76,7 @@ fun InviteContacts(
                 onBack = onBack,
             )
         },
-        contentWindowInsets = WindowInsets.safeContent
-    ) { paddings -> //todo UCS the horizontal padding is now wrong...
+    ) { paddings -> 
         Column(
             modifier = Modifier.padding(paddings).consumeWindowInsets(paddings),
             verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
