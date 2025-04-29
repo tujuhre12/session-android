@@ -83,26 +83,6 @@ class EditGroupViewModel @AssistedInject constructor(
     val excludingAccountIDsFromContactSelection: Set<String>
         get() = groupInfo.value?.second?.mapTo(hashSetOf()) { it.accountId.hexString }.orEmpty()
 
-    fun onContactSelected(contacts: Set<AccountId>) {
-        performGroupOperation(
-            showLoading = false,
-            errorMessage = { err ->
-                if (err is GroupInviteException) {
-                    err.format(context, usernameUtils).toString()
-                } else {
-                    null
-                }
-            }
-        ) {
-            groupManager.inviteMembers(
-                groupId,
-                contacts.toList(),
-                shareHistory = false,
-                isReinvite = false,
-            )
-        }
-    }
-
     fun onResendInviteClicked(contactSessionId: AccountId) {
         performGroupOperation(
             showLoading = false,

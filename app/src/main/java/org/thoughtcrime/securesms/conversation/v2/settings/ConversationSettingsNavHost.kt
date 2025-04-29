@@ -15,6 +15,7 @@ import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.Disappear
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.*
 import org.thoughtcrime.securesms.groups.EditGroupViewModel
 import org.thoughtcrime.securesms.groups.GroupMembersViewModel
+import org.thoughtcrime.securesms.groups.InviteContactsViewModel
 import org.thoughtcrime.securesms.groups.SelectContactsViewModel
 import org.thoughtcrime.securesms.groups.compose.EditGroupScreen
 import org.thoughtcrime.securesms.groups.compose.GroupMembersScreen
@@ -41,6 +42,7 @@ sealed interface ConversationSettingsDestination {
 
     @Serializable
     data class RouteInviteContacts(
+        val groupId: String,
         val excludingAccountIDs: List<String>
     ): ConversationSettingsDestination
 
@@ -108,7 +110,8 @@ fun ConversationSettingsNavHost(
                 viewModel = viewModel,
                 navigateToInviteContact = {
                     navController.navigate(RouteInviteContacts(
-                        viewModel.excludingAccountIDsFromContactSelection.toList()
+                        groupId = data.groupId,
+                        excludingAccountIDs = viewModel.excludingAccountIDsFromContactSelection.toList()
                     ))
                 },
                 onBack = navController::popBackStack,
@@ -119,8 +122,11 @@ fun ConversationSettingsNavHost(
         horizontalSlideComposable<RouteInviteContacts> { backStackEntry ->
             val data: RouteInviteContacts = backStackEntry.toRoute()
 
-            val viewModel = hiltViewModel<SelectContactsViewModel, SelectContactsViewModel.Factory> { factory ->
-                factory.create(data.excludingAccountIDs.map(::AccountId).toSet())
+            val viewModel = hiltViewModel<InviteContactsViewModel, InviteContactsViewModel.Factory> { factory ->
+                factory.create(
+                    groupId = AccountId(data.groupId),
+                    excludingAccountIDs = data.excludingAccountIDs.map(::AccountId).toSet()
+                )
             }
 
             InviteContactsScreen(

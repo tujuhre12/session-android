@@ -97,7 +97,8 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                     timeOption(ExpiryType.AFTER_SEND, 1.days),
                     timeOption(ExpiryType.AFTER_SEND, 7.days),
                     timeOption(ExpiryType.AFTER_SEND, 14.days)
-                )
+                ),
+                subtitle = GetString(R.string.disappearingMessagesDisappearAfterSendDescription)
             )
         )
     }
@@ -137,7 +138,8 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                     timeOption(ExpiryType.AFTER_SEND, 7.days),
                     timeOption(ExpiryType.AFTER_SEND, 14.days)
                 ),
-                showGroupFooter = true
+                showGroupFooter = true,
+                subtitle = GetString(R.string.disappearingMessagesDisappearAfterSendDescription)
             )
         )
     }
@@ -179,6 +181,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                 ),
                 showGroupFooter = true,
                 showSetButton = false,
+                subtitle = GetString(R.string.disappearingMessagesDisappearAfterSendDescription)
             )
         )
     }
@@ -216,7 +219,8 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                     typeOption(ExpiryMode.NONE, selected = true),
                     typeOption(12.hours, ExpiryType.AFTER_READ),
                     typeOption(1.days, ExpiryType.AFTER_SEND)
-                )
+                ),
+                subtitle = GetString(R.string.disappearingMessagesDescription1)
             )
         )
     }
@@ -262,7 +266,8 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                     timeOption(ExpiryType.AFTER_SEND, 1.days),
                     timeOption(ExpiryType.AFTER_SEND, 7.days),
                     timeOption(ExpiryType.AFTER_SEND, 14.days)
-                )
+                ),
+                subtitle = GetString(R.string.disappearingMessagesDescription1)
             )
         )
     }
@@ -308,7 +313,8 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                     timeOption(ExpiryType.AFTER_SEND, 1.days, selected = true),
                     timeOption(ExpiryType.AFTER_SEND, 7.days),
                     timeOption(ExpiryType.AFTER_SEND, 14.days)
-                )
+                ),
+                subtitle = GetString(R.string.disappearingMessagesDescription1)
             )
         )
     }
@@ -357,7 +363,8 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                     timeOption(ExpiryType.AFTER_READ, 1.days, selected = true),
                     timeOption(ExpiryType.AFTER_READ, 7.days),
                     timeOption(ExpiryType.AFTER_READ, 14.days)
-                )
+                ),
+                subtitle = GetString(R.string.disappearingMessagesDescription1)
             )
         )
     }
@@ -408,7 +415,8 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                     timeOption(ExpiryType.AFTER_SEND, 1.days, selected = true),
                     timeOption(ExpiryType.AFTER_SEND, 7.days),
                     timeOption(ExpiryType.AFTER_SEND, 14.days)
-                )
+                ),
+                subtitle = GetString(R.string.disappearingMessagesDescription1)
             )
         )
     }

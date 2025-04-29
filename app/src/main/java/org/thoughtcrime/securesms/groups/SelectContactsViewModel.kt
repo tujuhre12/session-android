@@ -35,7 +35,7 @@ import org.thoughtcrime.securesms.util.AvatarUtils
 
 @OptIn(FlowPreview::class)
 @HiltViewModel(assistedFactory = SelectContactsViewModel.Factory::class)
-class SelectContactsViewModel @AssistedInject constructor(
+open class SelectContactsViewModel @AssistedInject constructor(
     private val configFactory: ConfigFactory,
     private val avatarUtils: AvatarUtils,
     @ApplicationContext private val appContext: Context,

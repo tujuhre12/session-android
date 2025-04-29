@@ -5,13 +5,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContent
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -23,12 +20,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.hilt.navigation.compose.hiltViewModel
-import kotlinx.serialization.Serializable
 import network.loki.messenger.R
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.groups.ContactItem
-import org.thoughtcrime.securesms.groups.SelectContactsViewModel
+import org.thoughtcrime.securesms.groups.InviteContactsViewModel
 import org.thoughtcrime.securesms.ui.BottomFadingEdgeBox
 import org.thoughtcrime.securesms.ui.SearchBar
 import org.thoughtcrime.securesms.ui.components.BackAppBar
@@ -44,7 +39,7 @@ import org.thoughtcrime.securesms.util.AvatarUIElement
 
 @Composable
 fun InviteContactsScreen(
-    viewModel: SelectContactsViewModel,
+    viewModel: InviteContactsViewModel,
     onDoneClicked: (selectedContacts: Set<AccountId>) -> Unit,
     onBackClicked: () -> Unit,
 ) {
