@@ -1910,7 +1910,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private fun sendTextOnlyMessage(hasPermissionToSendSeed: Boolean = false): Pair<Address, Long>? {
         val recipient = viewModel.recipient ?: return null
         val sentTimestamp = SnodeAPI.nowWithOffset
-        viewModel.beforeSendingTextOnlyMessage()
+        viewModel.implicitlyApproveRecipient()
         val text = getMessageBody()
         val userPublicKey = textSecurePreferences.getLocalNumber()
         val isNoteToSelf = (recipient.isContactRecipient && recipient.address.toString() == userPublicKey)
@@ -1949,6 +1949,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 null,
                 true
             )
+
             MessageSender.send(message, recipient.address)
         }
         // Send a typing stopped message
@@ -1968,7 +1969,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
         val recipient = viewModel.recipient!!
         val sentTimestamp = SnodeAPI.nowWithOffset
-        viewModel.beforeSendingAttachments()
+        viewModel.implicitlyApproveRecipient()
 
         // Create the message
         val message = VisibleMessage().applyExpiryMode(viewModel.threadId)
@@ -2014,6 +2015,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 null,
                 runThreadUpdate = true
             )
+
             MessageSender.send(message, recipient.address, attachments, quote, linkPreview)
         }
 

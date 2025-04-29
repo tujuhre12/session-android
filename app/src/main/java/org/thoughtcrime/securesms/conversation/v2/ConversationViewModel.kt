@@ -15,6 +15,7 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -971,18 +972,10 @@ class ConversationViewModel(
         attachmentDownloadHandler.retryFailedAttachments(attachments)
     }
 
-    fun beforeSendingTextOnlyMessage() {
-        implicitlyApproveRecipient()
-    }
+   fun implicitlyApproveRecipient() {
+       val recipient = recipient
 
-    fun beforeSendingAttachments() {
-        implicitlyApproveRecipient()
-    }
-
-    private fun implicitlyApproveRecipient() {
-        val recipient = recipient
-
-        if (uiState.value.messageRequestState is MessageRequestUiState.Visible) {
+       if (uiState.value.messageRequestState is MessageRequestUiState.Visible) {
             acceptMessageRequest()
         } else if (recipient?.isApproved == false) {
             // edge case for new outgoing thread on new recipient without sending approval messages
