@@ -76,7 +76,7 @@ fun InviteContacts(
                 onBack = onBack,
             )
         },
-    ) { paddings -> 
+    ) { paddings ->
         Column(
             modifier = Modifier.padding(paddings).consumeWindowInsets(paddings),
             verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)

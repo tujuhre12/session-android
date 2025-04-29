@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.conversation.v2.settings
 
-import androidx.activity.viewModels
 import androidx.compose.runtime.Composable
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
@@ -12,12 +11,12 @@ import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesViewModel
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.DisappearingMessagesScreen
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteConversationSettings
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteInviteContacts
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteManageMembers
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.*
 import org.thoughtcrime.securesms.groups.EditGroupViewModel
+import org.thoughtcrime.securesms.groups.GroupMembersViewModel
 import org.thoughtcrime.securesms.groups.SelectContactsViewModel
 import org.thoughtcrime.securesms.groups.compose.EditGroupScreen
+import org.thoughtcrime.securesms.groups.compose.GroupMembersScreen
 import org.thoughtcrime.securesms.groups.compose.InviteContactsScreen
 import org.thoughtcrime.securesms.ui.ObserveAsEvents
 import org.thoughtcrime.securesms.ui.horizontalSlideComposable
@@ -26,6 +25,11 @@ import org.thoughtcrime.securesms.ui.horizontalSlideComposable
 sealed interface ConversationSettingsDestination {
     @Serializable
     data object RouteConversationSettings: ConversationSettingsDestination
+
+    @Serializable
+    data class RouteGroupMembers(
+        val groupId: String
+    ): ConversationSettingsDestination
 
     @Serializable
     data class RouteManageMembers(
@@ -73,6 +77,19 @@ fun ConversationSettingsNavHost(
             )
         }
 
+        // Group Members
+        horizontalSlideComposable<RouteGroupMembers> { backStackEntry ->
+            val data: RouteGroupMembers = backStackEntry.toRoute()
+
+            val viewModel = hiltViewModel<GroupMembersViewModel, GroupMembersViewModel.Factory> { factory ->
+                factory.create(AccountId(data.groupId))
+            }
+
+            GroupMembersScreen (
+                viewModel = viewModel,
+                onBack = navController::popBackStack,
+            )
+        }
         // Edit Group
         horizontalSlideComposable<RouteManageMembers> { backStackEntry ->
             val data: RouteManageMembers = backStackEntry.toRoute()

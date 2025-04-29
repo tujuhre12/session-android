@@ -502,7 +502,11 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             name = context.getString(R.string.groupMembers),
             icon = R.drawable.ic_users_round,
             qaTag = R.string.qa_conversation_settings_group_members,
-            onClick = ::copyAccountId //todo UCS get proper method
+            onClick = {
+                navigateTo(ConversationSettingsDestination.RouteGroupMembers(
+                    groupId = groupV2?.groupAccountId ?: "")
+                )
+            }
         )
     }
 
