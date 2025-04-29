@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.groups.compose
 
-import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,13 +18,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import network.loki.messenger.R
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.groups.ContactItem
-import org.thoughtcrime.securesms.groups.InviteContactsViewModel
+import org.thoughtcrime.securesms.groups.SelectContactsViewModel
 import org.thoughtcrime.securesms.ui.BottomFadingEdgeBox
 import org.thoughtcrime.securesms.ui.SearchBar
 import org.thoughtcrime.securesms.ui.components.BackAppBar
@@ -41,28 +39,16 @@ import org.thoughtcrime.securesms.util.AvatarUIElement
 
 @Composable
 fun InviteContactsScreen(
-    viewModel: InviteContactsViewModel,
+    viewModel: SelectContactsViewModel,
+    onDoneClicked: () -> Unit,
     onBack: () -> Unit,
 ) {
-    val context = LocalContext.current
-
     InviteContacts(
         contacts = viewModel.contacts.collectAsState().value,
         onContactItemClicked = viewModel::onContactItemClicked,
         searchQuery = viewModel.searchQuery.collectAsState().value,
         onSearchQueryChanged = viewModel::onSearchQueryChanged,
-        onDoneClicked = {
-            // send invites
-            viewModel.onContactSelected(viewModel.currentSelected)
-            // show toast
-            Toast.makeText(
-                context,
-                context.resources.getQuantityString(R.plurals.groupInviteSending, 1),
-                Toast.LENGTH_SHORT
-            ).show()
-            // go back
-            onBack()
-        },
+        onDoneClicked = onDoneClicked,
         onBack = onBack,
     )
 }

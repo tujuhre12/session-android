@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.conversation.v2.settings
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
@@ -12,10 +13,14 @@ import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesViewModel
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.DisappearingMessagesScreen
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.*
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteAllMedia
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteConversationSettings
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteDisappearingMessages
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteGroupMembers
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteInviteContacts
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteManageMembers
 import org.thoughtcrime.securesms.groups.EditGroupViewModel
 import org.thoughtcrime.securesms.groups.GroupMembersViewModel
-import org.thoughtcrime.securesms.groups.InviteContactsViewModel
 import org.thoughtcrime.securesms.groups.SelectContactsViewModel
 import org.thoughtcrime.securesms.groups.compose.EditGroupScreen
 import org.thoughtcrime.securesms.groups.compose.GroupMembersScreen
@@ -106,6 +111,7 @@ fun ConversationSettingsNavHost(
             val viewModel = hiltViewModel<EditGroupViewModel, EditGroupViewModel.Factory> { factory ->
                 factory.create(AccountId(data.groupId))
             }
+
             EditGroupScreen(
                 viewModel = viewModel,
                 navigateToInviteContact = {
@@ -122,15 +128,28 @@ fun ConversationSettingsNavHost(
         horizontalSlideComposable<RouteInviteContacts> { backStackEntry ->
             val data: RouteInviteContacts = backStackEntry.toRoute()
 
-            val viewModel = hiltViewModel<InviteContactsViewModel, InviteContactsViewModel.Factory> { factory ->
+            val viewModel = hiltViewModel<SelectContactsViewModel, SelectContactsViewModel.Factory> { factory ->
                 factory.create(
-                    groupId = AccountId(data.groupId),
                     excludingAccountIDs = data.excludingAccountIDs.map(::AccountId).toSet()
                 )
             }
 
+            // grab a hold of manage group's VM
+            val parentEntry = remember(navController.currentBackStackEntry) {
+                navController.getBackStackEntry(
+                    RouteManageMembers(data.groupId)
+                )
+            }
+            val editGroupViewModel: EditGroupViewModel = hiltViewModel(parentEntry)
+
             InviteContactsScreen(
                 viewModel = viewModel,
+                onDoneClicked = {
+                    //send invites from the manage group screen
+                    editGroupViewModel.onContactSelected(viewModel.currentSelected)
+
+                    navController.popBackStack()
+                },
                 onBack = navController::popBackStack,
             )
         }
