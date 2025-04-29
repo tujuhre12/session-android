@@ -447,7 +447,9 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             name = context.getString(R.string.attachments),
             icon = R.drawable.ic_file,
             qaTag = R.string.qa_conversation_settings_attachments,
-            onClick = ::copyAccountId //todo UCS get proper method
+            onClick = {
+                navigateTo(ConversationSettingsDestination.RouteAllMedia)
+            }
         )
     }
 

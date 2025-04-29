@@ -8,6 +8,7 @@ import androidx.navigation.toRoute
 import kotlinx.serialization.Serializable
 import network.loki.messenger.BuildConfig
 import org.session.libsession.messaging.messages.ExpirationConfiguration
+import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesViewModel
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.DisappearingMessagesScreen
@@ -18,6 +19,8 @@ import org.thoughtcrime.securesms.groups.SelectContactsViewModel
 import org.thoughtcrime.securesms.groups.compose.EditGroupScreen
 import org.thoughtcrime.securesms.groups.compose.GroupMembersScreen
 import org.thoughtcrime.securesms.groups.compose.InviteContactsScreen
+import org.thoughtcrime.securesms.media.MediaOverviewScreen
+import org.thoughtcrime.securesms.media.MediaOverviewViewModel
 import org.thoughtcrime.securesms.ui.ObserveAsEvents
 import org.thoughtcrime.securesms.ui.horizontalSlideComposable
 
@@ -43,11 +46,15 @@ sealed interface ConversationSettingsDestination {
 
     @Serializable
     data object RouteDisappearingMessages: ConversationSettingsDestination
+
+    @Serializable
+    data object RouteAllMedia: ConversationSettingsDestination
 }
 
 @Composable
 fun ConversationSettingsNavHost(
     threadId: Long,
+    threadAddress: Address?,
     navigator: ConversationSettingsNavigator,
     onBack: () -> Unit
 ){
@@ -126,7 +133,8 @@ fun ConversationSettingsNavHost(
             )
         }
 
-        horizontalSlideComposable<ConversationSettingsDestination.RouteDisappearingMessages> {
+        // Disappearing Messages
+        horizontalSlideComposable<RouteDisappearingMessages> {
             val viewModel: DisappearingMessagesViewModel =
                 hiltViewModel<DisappearingMessagesViewModel, DisappearingMessagesViewModel.Factory> { factory ->
                     factory.create(
@@ -139,6 +147,23 @@ fun ConversationSettingsNavHost(
             DisappearingMessagesScreen(
                 viewModel = viewModel,
                 onBack = navController::popBackStack,
+            )
+        }
+
+        // All Media
+        horizontalSlideComposable<RouteAllMedia> {
+            if(threadAddress == null) {
+                navController.popBackStack()
+                return@horizontalSlideComposable
+            }
+
+            val viewModel = hiltViewModel<MediaOverviewViewModel, MediaOverviewViewModel.Factory> { factory ->
+                factory.create(threadAddress)
+            }
+
+            MediaOverviewScreen(
+                viewModel = viewModel,
+                onClose = navController::popBackStack,
             )
         }
     }

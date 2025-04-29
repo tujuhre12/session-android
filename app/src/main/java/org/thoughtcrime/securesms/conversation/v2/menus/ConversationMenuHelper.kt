@@ -46,7 +46,6 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.groups.legacy.EditLegacyGroupActivity
 import org.thoughtcrime.securesms.groups.legacy.EditLegacyGroupActivity.Companion.groupIDKey
-import org.thoughtcrime.securesms.media.MediaOverviewActivity
 import org.thoughtcrime.securesms.showMuteDialog
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.util.BitmapUtil
@@ -208,8 +207,8 @@ object ConversationMenuHelper {
     }
 
     private fun showAllMedia(context: Context, thread: Recipient) {
-        val activity = context as AppCompatActivity
-        activity.startActivity(MediaOverviewActivity.createIntent(context, thread.address))
+//        val activity = context as AppCompatActivity
+//        activity.startActivity(MediaOverviewActivity.createIntent(context, thread.address))
     }
 
     private fun search(context: Context) {

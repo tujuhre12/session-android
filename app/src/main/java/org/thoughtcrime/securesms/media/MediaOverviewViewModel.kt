@@ -5,11 +5,10 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -48,8 +47,9 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-class MediaOverviewViewModel(
-    private val address: Address,
+@HiltViewModel(assistedFactory = MediaOverviewViewModel.Factory::class)
+class MediaOverviewViewModel @AssistedInject constructor(
+    @Assisted private val address: Address,
     private val application: Application,
     private val threadDatabase: ThreadDatabase,
     private val mediaDatabase: MediaDatabase
@@ -353,23 +353,8 @@ class MediaOverviewViewModel(
     }
 
     @dagger.assisted.AssistedFactory
-    interface AssistedFactory {
-        fun create(address: Address): Factory
-    }
-
-    class Factory @AssistedInject constructor(
-        @Assisted private val address: Address,
-        private val application: Application,
-        private val threadDatabase: ThreadDatabase,
-        private val mediaDatabase: MediaDatabase
-    ) : ViewModelProvider.Factory {
-        @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T = MediaOverviewViewModel(
-            address,
-            application,
-            threadDatabase,
-            mediaDatabase
-        ) as T
+    interface Factory {
+        fun create(address: Address): MediaOverviewViewModel
     }
 }
 

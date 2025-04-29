@@ -791,7 +791,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                onBackPressed = ::finish,
                onCallPressed = ::callRecipient,
                onAvatarPressed = {
-                   startActivity(ConversationSettingsActivity.createIntent(this, viewModel.threadId))
+                   startActivity(ConversationSettingsActivity.createIntent(
+                       context = this,
+                       threadId = viewModel.threadId,
+                       threadAddress = viewModel.recipient?.address
+                   ))
                }
            )
        }
