@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.groups.compose
 
+import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import network.loki.messenger.R
@@ -40,16 +42,28 @@ import org.thoughtcrime.securesms.util.AvatarUIElement
 @Composable
 fun InviteContactsScreen(
     viewModel: InviteContactsViewModel,
-    onDoneClicked: (selectedContacts: Set<AccountId>) -> Unit,
-    onBackClicked: () -> Unit,
+    onBack: () -> Unit,
 ) {
+    val context = LocalContext.current
+
     InviteContacts(
         contacts = viewModel.contacts.collectAsState().value,
         onContactItemClicked = viewModel::onContactItemClicked,
         searchQuery = viewModel.searchQuery.collectAsState().value,
         onSearchQueryChanged = viewModel::onSearchQueryChanged,
-        onDoneClicked = { onDoneClicked(viewModel.currentSelected) },
-        onBack = onBackClicked,
+        onDoneClicked = {
+            // send invites
+            viewModel.onContactSelected(viewModel.currentSelected)
+            // show toast
+            Toast.makeText(
+                context,
+                context.resources.getQuantityString(R.plurals.groupInviteSending, 1),
+                Toast.LENGTH_SHORT
+            ).show()
+            // go back
+            onBack()
+        },
+        onBack = onBack,
     )
 }
 
@@ -73,7 +87,9 @@ fun InviteContacts(
         },
     ) { paddings ->
         Column(
-            modifier = Modifier.padding(paddings).consumeWindowInsets(paddings),
+            modifier = Modifier
+                .padding(paddings)
+                .consumeWindowInsets(paddings),
             verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
         ) {
             GroupMinimumVersionBanner()
@@ -81,7 +97,8 @@ fun InviteContacts(
                 query = searchQuery,
                 onValueChanged = onSearchQueryChanged,
                 placeholder = stringResource(R.string.searchContacts),
-                modifier = Modifier.padding(horizontal = LocalDimensions.current.smallSpacing)
+                modifier = Modifier
+                    .padding(horizontal = LocalDimensions.current.smallSpacing)
                     .qaTag(R.string.AccessibilityId_groupNameSearch),
                 backgroundColor = LocalColors.current.backgroundSecondary,
             )

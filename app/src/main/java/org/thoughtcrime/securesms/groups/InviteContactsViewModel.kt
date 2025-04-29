@@ -9,7 +9,9 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
@@ -32,60 +34,22 @@ class InviteContactsViewModel @AssistedInject constructor(
     excludingAccountIDs,
     scope
 ) {
-   /* fun onContactSelected(contacts: Set<AccountId>) {
-        performGroupOperation(
-            showLoading = false,
-            errorMessage = { err ->
-                if (err is GroupInviteException) {
-                    err.format(context, usernameUtils).toString()
-                } else {
-                    null
-                }
-            }
-        ) {
-            groupManager.inviteMembers(
-                groupId,
-                contacts.toList(),
-                shareHistory = false,
-                isReinvite = false,
-            )
-        }
-    }*/
-
-    /**
-     * Perform a group operation, such as inviting a member, removing a member.
-     *
-     * This is a helper function that encapsulates the common error handling and progress tracking.
-     */
-   /* private fun performGroupOperation(
-        showLoading: Boolean = true,
-        errorMessage: ((Throwable) -> String?)? = null,
-        operation: suspend () -> Unit) {
-        viewModelScope.launch {
-            if (showLoading) {
-                mutableInProgress.value = true
-            }
-
-            // We need to use GlobalScope here because we don't want
-            // any group operation to be cancelled when the view model is cleared.
-            @Suppress("OPT_IN_USAGE")
-            val task = GlobalScope.async {
-                operation()
-            }
-
+    fun onContactSelected(contacts: Set<AccountId>) {
+        // perform this on a global scope as a fire and forget
+        // other screens can deal with displaying something for the invite failure
+        GlobalScope.launch {
             try {
-                task.await()
+                groupManager.inviteMembers(
+                    groupId,
+                    contacts.toList(),
+                    shareHistory = false,
+                    isReinvite = false,
+                )
             } catch (e: Exception) {
-                mutableError.value = errorMessage?.invoke(e)
-                    ?: context.getString(R.string.errorUnknown)
-            } finally {
-                if (showLoading) {
-                    mutableInProgress.value = false
-                }
+                // we can safely ignore exceptions
             }
         }
-    }*/
-
+    }
 
     @AssistedFactory
     interface Factory {

@@ -19,11 +19,9 @@ import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.GroupUtil
-import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.guava.Optional
-import org.thoughtcrime.securesms.BaseCoroutineTest
 import org.thoughtcrime.securesms.BaseViewModelTest
 import org.thoughtcrime.securesms.MainCoroutineRule
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.ExpiryRadioOption
@@ -54,7 +52,6 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
 
     @Mock lateinit var application: Application
     @Mock lateinit var textSecurePreferences: TextSecurePreferences
-    @Mock lateinit var messageExpirationManager: SSKEnvironment.MessageExpirationManagerProtocol
     @Mock lateinit var disappearingMessages: DisappearingMessages
     @Mock lateinit var threadDb: ThreadDatabase
     @Mock lateinit var groupDb: GroupDatabase

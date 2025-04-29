@@ -131,11 +131,7 @@ fun ConversationSettingsNavHost(
 
             InviteContactsScreen(
                 viewModel = viewModel,
-                onDoneClicked = {
-                    //todo UCS this needs to call on the other ViewModels (EditGroup's) viewModel.onContactSelected(it)
-                    navController.popBackStack()
-                },
-                onBackClicked = { navController.popBackStack() },
+                onBack = navController::popBackStack,
             )
         }
 
