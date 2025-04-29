@@ -8,11 +8,16 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.view.ViewGroup.MarginLayoutParams
+import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.core.os.bundleOf
-import androidx.core.view.isInvisible
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
+import androidx.core.view.updateLayoutParams
+import androidx.core.view.updatePadding
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -22,7 +27,6 @@ import com.bumptech.glide.RequestManager
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
@@ -45,7 +49,6 @@ import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_K
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
@@ -68,7 +71,7 @@ import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter
 import org.thoughtcrime.securesms.home.search.GlobalSearchInputLayout
 import org.thoughtcrime.securesms.home.search.GlobalSearchResult
 import org.thoughtcrime.securesms.home.search.GlobalSearchViewModel
-import org.thoughtcrime.securesms.home.search.getSearchName
+import org.thoughtcrime.securesms.home.search.SearchContactActionBottomSheet
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.SettingsActivity
@@ -92,7 +95,8 @@ private const val FROM_ONBOARDING = "HomeActivity_FROM_ONBOARDING"
 @AndroidEntryPoint
 class HomeActivity : ScreenLockActionBarActivity(),
     ConversationClickListener,
-    GlobalSearchInputLayout.GlobalSearchInputLayoutListener {
+    GlobalSearchInputLayout.GlobalSearchInputLayoutListener,
+    SearchContactActionBottomSheet.Callbacks{
 
     private val TAG = "HomeActivity"
 
@@ -122,42 +126,55 @@ class HomeActivity : ScreenLockActionBarActivity(),
         HomeAdapter(context = this, configFactory = configFactory, listener = this, ::showMessageRequests, ::hideMessageRequests)
     }
 
-    private val globalSearchAdapter = GlobalSearchAdapter { model ->
-        when (model) {
-            is GlobalSearchAdapter.Model.Message -> push<ConversationActivityV2> {
-                model.messageResult.run {
-                    putExtra(ConversationActivityV2.THREAD_ID, threadId)
-                    putExtra(ConversationActivityV2.SCROLL_MESSAGE_ID, sentTimestampMs)
-                    putExtra(ConversationActivityV2.SCROLL_MESSAGE_AUTHOR, messageRecipient.address)
+    private val globalSearchAdapter = GlobalSearchAdapter(
+        onContactClicked = { model ->
+            when (model) {
+                is GlobalSearchAdapter.Model.Message -> push<ConversationActivityV2> {
+                    model.messageResult.run {
+                        putExtra(ConversationActivityV2.THREAD_ID, threadId)
+                        putExtra(ConversationActivityV2.SCROLL_MESSAGE_ID, sentTimestampMs)
+                        putExtra(ConversationActivityV2.SCROLL_MESSAGE_AUTHOR, messageRecipient.address)
+                    }
                 }
-            }
-            is GlobalSearchAdapter.Model.SavedMessages -> push<ConversationActivityV2> {
-                putExtra(ConversationActivityV2.ADDRESS, Address.fromSerialized(model.currentUserPublicKey))
-            }
-            is GlobalSearchAdapter.Model.Contact -> push<ConversationActivityV2> {
-                putExtra(
-                    ConversationActivityV2.ADDRESS,
-                    model.contact.hexString.let(Address::fromSerialized)
-                )
-            }
+                is GlobalSearchAdapter.Model.SavedMessages -> push<ConversationActivityV2> {
+                    putExtra(ConversationActivityV2.ADDRESS, Address.fromSerialized(model.currentUserPublicKey))
+                }
+                is GlobalSearchAdapter.Model.Contact -> push<ConversationActivityV2> {
+                    putExtra(
+                        ConversationActivityV2.ADDRESS,
+                        model.contact.hexString.let(Address::fromSerialized)
+                    )
+                }
 
-            is GlobalSearchAdapter.Model.GroupConversation -> model.groupId
-                .let { Recipient.from(this, Address.fromSerialized(it), false) }
-                .let(threadDb::getThreadIdIfExistsFor)
-                .takeIf { it >= 0 }
-                ?.let {
-                    push<ConversationActivityV2> { putExtra(ConversationActivityV2.THREAD_ID, it) }
-                }
-            else -> Log.d("Loki", "callback with model: $model")
+                is GlobalSearchAdapter.Model.GroupConversation -> model.groupId
+                    .let { Recipient.from(this, Address.fromSerialized(it), false) }
+                    .let(threadDb::getThreadIdIfExistsFor)
+                    .takeIf { it >= 0 }
+                    ?.let {
+                        push<ConversationActivityV2> { putExtra(ConversationActivityV2.THREAD_ID, it) }
+                    }
+                else -> Log.d("Loki", "callback with model: $model")
+            }
+        },
+        onContactLongPressed = { model ->
+            onSearchContactLongPress(model.contact.hexString, model.name)
         }
+    )
+
+    private fun onSearchContactLongPress(accountId: String, contactName: String) {
+        val bottomSheet = SearchContactActionBottomSheet.newInstance(accountId, contactName)
+        bottomSheet.show(supportFragmentManager, bottomSheet.tag)
     }
 
     private val isFromOnboarding: Boolean get() = intent.getBooleanExtra(FROM_ONBOARDING, false)
     private val isNewAccount: Boolean get() = intent.getBooleanExtra(NEW_ACCOUNT, false)
 
+    override val applyDefaultWindowInsets: Boolean
+        get() = false
+
     // region Lifecycle
-    override fun onCreate(savedInstanceState: Bundle?, isReady: Boolean) {
-        super.onCreate(savedInstanceState, isReady)
+    override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
+        super.onCreate(savedInstanceState, ready)
 
         // Set content view
         binding = ActivityHomeBinding.inflate(layoutInflater)
@@ -183,7 +200,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
         binding.globalSearchInputLayout.listener = this
         homeAdapter.setHasStableIds(true)
         homeAdapter.glide = glide
-        binding.recyclerView.adapter = homeAdapter
+        binding.conversationsRecyclerView.adapter = homeAdapter
         binding.globalSearchRecycler.adapter = globalSearchAdapter
 
         binding.configOutdatedView.setOnClickListener {
@@ -220,7 +237,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 homeViewModel.data
                     .filterNotNull() // We don't actually want the null value here as it indicates a loading state (maybe we need a loading state?)
                     .collectLatest { data ->
-                        val manager = binding.recyclerView.layoutManager as LinearLayoutManager
+                        val manager = binding.conversationsRecyclerView.layoutManager as LinearLayoutManager
                         val firstPos = manager.findFirstCompletelyVisibleItemPosition()
                         val offsetTop = if(firstPos >= 0) {
                             manager.findViewByPosition(firstPos)?.let { view ->
@@ -269,7 +286,12 @@ class HomeActivity : ScreenLockActionBarActivity(),
                             addAll(result.groupedContacts)
                         }
                         else -> buildList {
-                            result.contactAndGroupList.takeUnless { it.isEmpty() }?.let {
+                            val conversations = result.contactAndGroupList.toMutableList()
+                            if(result.showNoteToSelf){
+                                conversations.add(GlobalSearchAdapter.Model.SavedMessages(publicKey))
+                            }
+
+                            conversations.takeUnless { it.isEmpty() }?.let {
                                 add(GlobalSearchAdapter.Model.Header(R.string.sessionConversations))
                                 addAll(it)
                             }
@@ -318,10 +340,35 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 setSearchShown(open)
             }
         }
+
+        ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { _, insets ->
+            // Apply status bar insets to the toolbar
+            binding.toolbar.updatePadding(
+                top = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
+            )
+
+            val bottomInsets = insets.getInsets(WindowInsetsCompat.Type.navigationBars() or WindowInsetsCompat.Type.ime()).bottom
+
+            binding.globalSearchRecycler.updatePadding(bottom = bottomInsets)
+            binding.newConversationButton.updateLayoutParams<MarginLayoutParams> {
+                bottomMargin = bottomInsets + resources.getDimensionPixelSize(R.dimen.new_conversation_button_bottom_offset)
+            }
+
+            // There shouldn't be anything else needing the insets so we'll consume all of them
+            WindowInsetsCompat.CONSUMED
+        }
     }
 
     override fun onCancelClicked() {
         homeViewModel.onCancelSearchClicked()
+    }
+
+    override fun onBlockContact(accountId: String) {
+        homeViewModel.blockContact(accountId)
+    }
+
+    override fun onDeleteContact(accountId: String) {
+        homeViewModel.deleteContact(accountId)
     }
 
     private val GlobalSearchResult.groupedContacts: List<GlobalSearchAdapter.Model> get() {
@@ -382,10 +429,22 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
         binding.searchToolbar.isVisible = isShown
         binding.sessionToolbar.isVisible = !isShown
-        binding.recyclerView.isVisible = !isShown
+        binding.conversationsRecyclerView.isVisible = !isShown
         binding.seedReminderView.isVisible = !TextSecurePreferences.getHasViewedSeed(this) && !isShown
-        binding.globalSearchRecycler.isInvisible = !isShown
-        binding.conversationListContainer.isInvisible = isShown
+        binding.globalSearchRecycler.isVisible = isShown
+        binding.conversationListContainer.isVisible = !isShown
+        if(isShown){
+            binding.newConversationButton.animate().cancel()
+            binding.newConversationButton.isVisible = false
+        } else {
+            updateEmptyState()
+            binding.newConversationButton.apply {
+                alpha = 0.0f
+                visibility = View.VISIBLE
+                animate().cancel()
+                animate().setStartDelay(350).setDuration(250L).alpha(1.0f).setListener(null).start()
+            }
+        }
     }
 
     private fun updateLegacyConfigView() {
@@ -424,8 +483,8 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
     // region Updating
     private fun updateEmptyState() {
-        val threadCount = (binding.recyclerView.adapter)!!.itemCount
-        binding.emptyStateContainer.isVisible = threadCount == 0 && binding.recyclerView.isVisible
+        val threadCount = binding.conversationsRecyclerView.adapter?.itemCount ?: 0
+        binding.emptyStateContainer.isVisible = threadCount == 0 && binding.conversationsRecyclerView.isVisible
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -548,7 +607,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                     storage.setBlocked(listOf(thread.recipient), true)
 
                     withContext(Dispatchers.Main) {
-                        binding.recyclerView.adapter!!.notifyDataSetChanged()
+                        binding.conversationsRecyclerView.adapter!!.notifyDataSetChanged()
                     }
                 }
                 // Block confirmation toast added as per SS-64
@@ -567,7 +626,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 lifecycleScope.launch(Dispatchers.Default) {
                     storage.setBlocked(listOf(thread.recipient), false)
                     withContext(Dispatchers.Main) {
-                        binding.recyclerView.adapter!!.notifyDataSetChanged()
+                        binding.conversationsRecyclerView.adapter!!.notifyDataSetChanged()
                     }
                 }
             }
@@ -579,17 +638,11 @@ class HomeActivity : ScreenLockActionBarActivity(),
         if (!isMuted) {
             lifecycleScope.launch(Dispatchers.Default) {
                 recipientDatabase.setMuted(thread.recipient, 0)
-                withContext(Dispatchers.Main) {
-                    binding.recyclerView.adapter!!.notifyDataSetChanged()
-                }
             }
         } else {
             showMuteDialog(this) { until ->
                 lifecycleScope.launch(Dispatchers.Default) {
                     recipientDatabase.setMuted(thread.recipient, until)
-                    withContext(Dispatchers.Main) {
-                        binding.recyclerView.adapter!!.notifyDataSetChanged()
-                    }
                 }
             }
         }
@@ -598,9 +651,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
     private fun setNotifyType(thread: ThreadRecord, newNotifyType: Int) {
         lifecycleScope.launch(Dispatchers.Default) {
             recipientDatabase.setNotifyType(thread.recipient, newNotifyType)
-            withContext(Dispatchers.Main) {
-                binding.recyclerView.adapter!!.notifyDataSetChanged()
-            }
         }
     }
 
@@ -645,21 +695,15 @@ class HomeActivity : ScreenLockActionBarActivity(),
             lifecycleScope.launch(Dispatchers.Main) {
                 val context = this@HomeActivity
                 // Cancel any outstanding jobs
-                sessionJobDatabase
-                    .cancelPendingMessageSendJobs(threadID)
+                sessionJobDatabase.cancelPendingMessageSendJobs(threadID)
 
                 // Delete the conversation
-                val community = lokiThreadDatabase
-                    .getOpenGroupChat(threadID)
+                val community = lokiThreadDatabase.getOpenGroupChat(threadID)
                 if (community != null) {
-                    OpenGroupManager.delete(
-                        community.server,
-                        community.room,
-                        context
-                    )
+                    OpenGroupManager.delete(community.server, community.room, context)
                 } else {
                     lifecycleScope.launch(Dispatchers.Default) {
-                        threadDb.deleteConversation(threadID)
+                        storage.deleteConversation(threadID)
                     }
                 }
 

@@ -32,6 +32,13 @@ plugins {
 
 allprojects {
     repositories {
+        maven {
+            url uri("https://oxen.rocks/session-foundation/libsession-util-android/maven")
+            content {
+                includeGroup('org.sessionfoundation')
+            }
+        }
+
         google()
         mavenCentral()
         maven {
@@ -44,12 +51,6 @@ allprojects {
             url "https://raw.github.com/signalapp/maven/master/shortcutbadger/releases/"
             content {
                 includeGroupByRegex "me\\.leolin.*"
-            }
-        }
-        maven {
-            url "https://raw.github.com/signalapp/maven/master/circular-progress-button/releases/"
-            content {
-                includeGroupByRegex "com\\.github\\.dmytrodanylyk\\.circular-progress-button\\.*"
             }
         }
         maven {
@@ -72,7 +73,7 @@ allprojects {
 
     project.ext {
         androidMinimumSdkVersion = 26
-        androidTargetSdkVersion  = 34
-        androidCompileSdkVersion = 34
+        androidTargetSdkVersion  = 35
+        androidCompileSdkVersion = 35
     }
 }

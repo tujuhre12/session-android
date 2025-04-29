@@ -17,25 +17,28 @@
  */
 package org.thoughtcrime.securesms.database;
 
-import static org.session.libsession.utilities.GroupUtil.LEGACY_CLOSED_GROUP_PREFIX;
 import static org.session.libsession.utilities.GroupUtil.COMMUNITY_PREFIX;
+import static org.session.libsession.utilities.GroupUtil.LEGACY_CLOSED_GROUP_PREFIX;
 import static org.thoughtcrime.securesms.database.GroupDatabase.GROUP_ID;
+import static org.thoughtcrime.securesms.database.UtilKt.generatePlaceholders;
 
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.MergeCursor;
 import android.net.Uri;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
 import com.annimon.stream.Stream;
+
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
-import org.jetbrains.annotations.NotNull;
+
 import org.session.libsession.messaging.MessagingModuleConfiguration;
 import org.session.libsession.snode.SnodeAPI;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.ConfigFactoryProtocolKt;
-import org.session.libsession.utilities.Contact;
 import org.session.libsession.utilities.DelimiterUtil;
 import org.session.libsession.utilities.DistributionTypes;
 import org.session.libsession.utilities.GroupRecord;
@@ -59,8 +62,9 @@ import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 import org.thoughtcrime.securesms.mms.Slide;
 import org.thoughtcrime.securesms.mms.SlideDeck;
 import org.thoughtcrime.securesms.notifications.MarkReadReceiver;
-import org.thoughtcrime.securesms.util.SessionMetaProtocol;
+
 import java.io.Closeable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -68,17 +72,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.inject.Provider;
+
 import network.loki.messenger.libsession_util.util.GroupInfo;
 
 public class ThreadDatabase extends Database {
 
   public interface ConversationThreadUpdateListener {
     void threadCreated(@NonNull Address address, long threadId);
-    void threadDeleted(@NonNull Address address, long threadId);
   }
 
   private static final String TAG = ThreadDatabase.class.getSimpleName();
 
+  // Map of threadID -> Address
   private final Map<Long, Address> addressCache = new HashMap<>();
 
   public  static final String TABLE_NAME             = "thread";
@@ -151,7 +157,7 @@ public class ThreadDatabase extends Database {
 
   private ConversationThreadUpdateListener updateListener;
 
-  public ThreadDatabase(Context context, SQLCipherOpenHelper databaseHelper) {
+  public ThreadDatabase(Context context, Provider<SQLCipherOpenHelper> databaseHelper) {
     super(context, databaseHelper);
   }
 
@@ -168,7 +174,7 @@ public class ThreadDatabase extends Database {
 
     contentValues.put(MESSAGE_COUNT, 0);
 
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = getWritableDatabase();
     return db.insert(TABLE_NAME, null, contentValues);
   }
 
@@ -191,7 +197,7 @@ public class ThreadDatabase extends Database {
 
     if (unarchive) { contentValues.put(ARCHIVED, 0); }
 
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = getWritableDatabase();
     db.update(TABLE_NAME, contentValues, ID + " = ?", new String[] {threadId + ""});
     notifyConversationListListeners();
   }
@@ -201,7 +207,7 @@ public class ThreadDatabase extends Database {
 
     contentValues.put(SNIPPET, "");
 
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = getWritableDatabase();
     db.update(TABLE_NAME, contentValues, ID + " = ?", new String[] {threadId + ""});
     notifyConversationListListeners();
   }
@@ -220,24 +226,20 @@ public class ThreadDatabase extends Database {
       contentValues.put(ARCHIVED, 0);
     }
 
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = getWritableDatabase();
     db.update(TABLE_NAME, contentValues, ID + " = ?", new String[] {threadId + ""});
     notifyConversationListListeners();
   }
 
-  private void deleteThread(long threadId) {
-    Recipient recipient = getRecipientForThreadId(threadId);
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
-    int numberRemoved = db.delete(TABLE_NAME, ID_WHERE, new String[] {threadId + ""});
+  public void deleteThread(long threadId) {
+    SQLiteDatabase db = getWritableDatabase();
+    db.delete(TABLE_NAME, ID_WHERE, new String[] {threadId + ""});
     addressCache.remove(threadId);
     notifyConversationListListeners();
-    if (updateListener != null && numberRemoved > 0 && recipient != null) {
-      updateListener.threadDeleted(recipient.getAddress(), threadId);
-    }
   }
 
   private void deleteThreads(Set<Long> threadIds) {
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = getWritableDatabase();
     String where      = "";
 
     for (long threadId : threadIds) { where += ID + " = '" + threadId + "' OR "; }
@@ -252,7 +254,7 @@ public class ThreadDatabase extends Database {
   }
 
   private void deleteAllThreads() {
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = getWritableDatabase();
     db.delete(TABLE_NAME, null, null);
     addressCache.clear();
     notifyConversationListListeners();
@@ -329,7 +331,7 @@ public class ThreadDatabase extends Database {
     contentValues.put(READ, smsRecords.isEmpty() && mmsRecords.isEmpty());
     contentValues.put(LAST_SEEN, lastReadTime);
 
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = getWritableDatabase();
     db.update(TABLE_NAME, contentValues, ID_WHERE, new String[] {threadId+""});
 
     notifyConversationListListeners();
@@ -350,7 +352,7 @@ public class ThreadDatabase extends Database {
       contentValues.put(LAST_SEEN, SnodeAPI.getNowWithOffset());
     }
 
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = getWritableDatabase();
     db.update(TABLE_NAME, contentValues, ID_WHERE, new String[] {threadId+""});
 
     final List<MarkedMessageInfo> smsRecords = DatabaseComponent.get(context).smsDatabase().setMessagesRead(threadId);
@@ -368,7 +370,7 @@ public class ThreadDatabase extends Database {
     ContentValues contentValues = new ContentValues(1);
     contentValues.put(DISTRIBUTION_TYPE, distributionType);
 
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = getWritableDatabase();
     db.update(TABLE_NAME, contentValues, ID_WHERE, new String[] {threadId + ""});
     notifyConversationListListeners();
   }
@@ -376,13 +378,13 @@ public class ThreadDatabase extends Database {
   public void setCreationDate(long threadId, long date) {
     ContentValues contentValues = new ContentValues(1);
     contentValues.put(THREAD_CREATION_DATE, date);
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = getWritableDatabase();
     int updated = db.update(TABLE_NAME, contentValues, ID_WHERE, new String[] {threadId+""});
     if (updated > 0) notifyConversationListListeners();
   }
 
   public int getDistributionType(long threadId) {
-    SQLiteDatabase db     = databaseHelper.getReadableDatabase();
+    SQLiteDatabase db     = getReadableDatabase();
     Cursor         cursor = db.query(TABLE_NAME, new String[]{DISTRIBUTION_TYPE}, ID_WHERE, new String[]{String.valueOf(threadId)}, null, null, null);
 
     try {
@@ -397,85 +399,73 @@ public class ThreadDatabase extends Database {
 
   }
 
-  public Cursor searchConversationAddresses(String addressQuery) {
+  public Cursor searchConversationAddresses(String addressQuery, Set<String> excludeAddresses) {
     if (addressQuery == null || addressQuery.isEmpty()) {
       return null;
     }
 
-    SQLiteDatabase db = databaseHelper.getReadableDatabase();
-    String   selection      = TABLE_NAME + "." + ADDRESS + " LIKE ? AND " + TABLE_NAME + "." + MESSAGE_COUNT + " != 0";
-    String[] selectionArgs  = new String[]{addressQuery+"%"};
-    String query = createQuery(selection, 0);
-    Cursor cursor = db.rawQuery(query, selectionArgs);
-    return cursor;
+    SQLiteDatabase db = getReadableDatabase();
+    StringBuilder selection = new StringBuilder(TABLE_NAME + "." + ADDRESS + " LIKE ?");
+
+    List<String> selectionArgs = new ArrayList<>();
+    selectionArgs.add(addressQuery + "%");
+
+    // Add exclusion for blocked contacts
+    if (excludeAddresses != null && !excludeAddresses.isEmpty()) {
+      selection.append(" AND ").append(TABLE_NAME).append(".").append(ADDRESS).append(" NOT IN (");
+
+      // Use the helper method to generate placeholders
+      selection.append(generatePlaceholders(excludeAddresses.size()));
+      selection.append(")");
+
+      // Add all exclusion addresses to selection args
+      selectionArgs.addAll(excludeAddresses);
+    }
+
+    String query = createQuery(selection.toString(), 0);
+    return db.rawQuery(query, selectionArgs.toArray(new String[0]));
   }
+
 
   public Cursor getFilteredConversationList(@Nullable List<Address> filter) {
     if (filter == null || filter.size() == 0)
       return null;
 
-    SQLiteDatabase      db                   = databaseHelper.getReadableDatabase();
+    SQLiteDatabase      db                   = getReadableDatabase();
     List<List<Address>> partitionedAddresses = Util.partition(filter, 900);
     List<Cursor>        cursors              = new LinkedList<>();
 
     for (List<Address> addresses : partitionedAddresses) {
-      String   selection      = TABLE_NAME + "." + ADDRESS + " = ?";
-      String[] selectionArgs  = new String[addresses.size()];
+      StringBuilder selection = new StringBuilder(TABLE_NAME + "." + ADDRESS + " = ?");
+      String[] selectionArgs = new String[addresses.size()];
 
-      for (int i=0;i<addresses.size()-1;i++)
-        selection += (" OR " + TABLE_NAME + "." + ADDRESS + " = ?");
+      for (int i = 0; i < addresses.size() - 1; i++) {
+        selection.append(" OR " + TABLE_NAME + "." + ADDRESS + " = ?");
+      }
 
       int i= 0;
       for (Address address : addresses) {
         selectionArgs[i++] = DelimiterUtil.escape(address.toString(), ' ');
       }
 
-      String query = createQuery(selection, 0);
+      String query = createQuery(selection.toString(), 0);
       cursors.add(db.rawQuery(query, selectionArgs));
     }
 
-    Cursor cursor = cursors.size() > 1 ? new MergeCursor(cursors.toArray(new Cursor[cursors.size()])) : cursors.get(0);
+    Cursor cursor = cursors.size() > 1 ? new MergeCursor(cursors.toArray(new Cursor[0])) : cursors.get(0);
     setNotifyConversationListListeners(cursor);
     return cursor;
   }
 
   public Cursor getRecentConversationList(int limit) {
-    SQLiteDatabase db    = databaseHelper.getReadableDatabase();
-    String         query = createQuery(MESSAGE_COUNT + " != 0", limit);
+    SQLiteDatabase db    = getReadableDatabase();
+    String         query = createQuery("", limit);
 
     return db.rawQuery(query, null);
   }
 
-  public long getLatestUnapprovedConversationTimestamp() {
-    SQLiteDatabase db = databaseHelper.getReadableDatabase();
-    Cursor cursor     = null;
-
-    try {
-      String where    = "SELECT " + THREAD_CREATION_DATE + " FROM " + TABLE_NAME +
-              " LEFT OUTER JOIN " + RecipientDatabase.TABLE_NAME +
-              " ON " + TABLE_NAME + "." + ADDRESS + " = " + RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.ADDRESS +
-              " LEFT OUTER JOIN " + GroupDatabase.TABLE_NAME +
-              " ON " + TABLE_NAME + "." + ADDRESS + " = " + GroupDatabase.TABLE_NAME + "." + GROUP_ID +
-              " WHERE " + MESSAGE_COUNT + " != 0 AND " + ARCHIVED + " = 0 AND " + HAS_SENT + " = 0 AND " +
-              RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.BLOCK + " = 0 AND " +
-              RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.APPROVED + " = 0 AND " +
-              GroupDatabase.TABLE_NAME + "." + GROUP_ID + " IS NULL ORDER BY " + THREAD_CREATION_DATE + " DESC LIMIT 1";
-      cursor          = db.rawQuery(where, null);
-
-      if (cursor != null && cursor.moveToFirst())
-        return cursor.getLong(0);
-    } finally {
-      if (cursor != null)
-        cursor.close();
-    }
-
-    return 0;
-  }
-
   public Cursor getConversationList() {
-    String where  = "(" + MESSAGE_COUNT + " != 0 OR " + GroupDatabase.TABLE_NAME + "." + GROUP_ID + " LIKE '" + COMMUNITY_PREFIX + "%') " +
-            "AND " + ARCHIVED + " = 0 ";
-    return getConversationList(where);
+    return getConversationList(ARCHIVED + " = 0 ");
   }
 
   public Cursor getBlindedConversationList() {
@@ -500,7 +490,7 @@ public class ThreadDatabase extends Database {
   }
 
   private Cursor getConversationList(String where) {
-    SQLiteDatabase db     = databaseHelper.getReadableDatabase();
+    SQLiteDatabase db     = getReadableDatabase();
     String         query  = createQuery(where, 0);
     Cursor         cursor = db.rawQuery(query, null);
 
@@ -510,8 +500,8 @@ public class ThreadDatabase extends Database {
   }
 
   public Cursor getDirectShareList() {
-    SQLiteDatabase db    = databaseHelper.getReadableDatabase();
-    String         query = createQuery(MESSAGE_COUNT + " != 0", 0);
+    SQLiteDatabase db    = getReadableDatabase();
+    String         query = createQuery("", 0);
 
     return db.rawQuery(query, null);
   }
@@ -527,7 +517,7 @@ public class ThreadDatabase extends Database {
     Recipient forThreadId = getRecipientForThreadId(threadId);
     if (mmsSmsDatabase.getConversationCount(threadId) <= 0 && forThreadId != null && forThreadId.isCommunityRecipient()) return false;
 
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = getWritableDatabase();
 
     ContentValues contentValues = new ContentValues(1);
     long lastSeenTime = timestamp == -1 ? SnodeAPI.getNowWithOffset() : timestamp;
@@ -563,7 +553,7 @@ public class ThreadDatabase extends Database {
   }
 
   public Pair<Long, Boolean> getLastSeenAndHasSent(long threadId) {
-    SQLiteDatabase db     = databaseHelper.getReadableDatabase();
+    SQLiteDatabase db     = getReadableDatabase();
     Cursor         cursor = db.query(TABLE_NAME, new String[]{LAST_SEEN, HAS_SENT}, ID_WHERE, new String[]{String.valueOf(threadId)}, null, null, null);
 
     try {
@@ -578,7 +568,7 @@ public class ThreadDatabase extends Database {
   }
 
   public long getLastUpdated(long threadId) {
-    SQLiteDatabase db     = databaseHelper.getReadableDatabase();
+    SQLiteDatabase db     = getReadableDatabase();
     Cursor         cursor = db.query(TABLE_NAME, new String[]{THREAD_CREATION_DATE}, ID_WHERE, new String[]{String.valueOf(threadId)}, null, null, null);
 
     try {
@@ -593,7 +583,7 @@ public class ThreadDatabase extends Database {
   }
 
   public int getMessageCount(long threadId) {
-    SQLiteDatabase db      = databaseHelper.getReadableDatabase();
+    SQLiteDatabase db      = getReadableDatabase();
     String[]       columns = new String[]{MESSAGE_COUNT};
     String[]       args    = new String[]{String.valueOf(threadId)};
     try (Cursor cursor = db.query(TABLE_NAME, columns, ID_WHERE, args, null, null, null)) {
@@ -605,19 +595,8 @@ public class ThreadDatabase extends Database {
     }
   }
 
-  public void deleteConversation(long threadId) {
-    DatabaseComponent.get(context).smsDatabase().deleteThread(threadId);
-    DatabaseComponent.get(context).mmsDatabase().deleteThread(threadId);
-    DatabaseComponent.get(context).draftDatabase().clearDrafts(threadId);
-    DatabaseComponent.get(context).lokiMessageDatabase().deleteThread(threadId);
-    deleteThread(threadId);
-    notifyConversationListeners(threadId);
-    notifyConversationListListeners();
-    SessionMetaProtocol.clearReceivedMessages();
-  }
-
   public long getThreadIdIfExistsFor(String address) {
-    SQLiteDatabase db      = databaseHelper.getReadableDatabase();
+    SQLiteDatabase db      = getReadableDatabase();
     String where           = ADDRESS + " = ?";
     String[] recipientsArg = new String[] {address};
     Cursor cursor          = null;
@@ -647,7 +626,7 @@ public class ThreadDatabase extends Database {
     ContentValues contentValues = new ContentValues(1);
     contentValues.put(ARCHIVED, 1);
 
-    databaseHelper.getWritableDatabase().update(TABLE_NAME, contentValues, ID_WHERE,
+    getWritableDatabase().update(TABLE_NAME, contentValues, ID_WHERE,
             new String[] {String.valueOf(threadId)});
 
     notifyConversationListListeners();
@@ -655,7 +634,7 @@ public class ThreadDatabase extends Database {
   }
 
   public long getOrCreateThreadIdFor(Recipient recipient, int distributionType) {
-    SQLiteDatabase db            = databaseHelper.getReadableDatabase();
+    SQLiteDatabase db            = getReadableDatabase();
     String         where         = ADDRESS + " = ?";
     String[]       recipientsArg = new String[]{recipient.getAddress().toString()};
     Cursor         cursor        = null;
@@ -696,7 +675,7 @@ public class ThreadDatabase extends Database {
       return Recipient.from(context, addressCache.get(threadId), false);
     }
 
-    SQLiteDatabase db = databaseHelper.getReadableDatabase();
+    SQLiteDatabase db = getReadableDatabase();
     Cursor cursor     = null;
 
     try {
@@ -719,7 +698,7 @@ public class ThreadDatabase extends Database {
     ContentValues contentValues = new ContentValues(1);
     contentValues.put(HAS_SENT, hasSent ? 1 : 0);
 
-    databaseHelper.getWritableDatabase().update(TABLE_NAME, contentValues, ID_WHERE,
+    getWritableDatabase().update(TABLE_NAME, contentValues, ID_WHERE,
                                                 new String[] {String.valueOf(threadId)});
 
     notifyConversationListeners(threadId);
@@ -758,7 +737,7 @@ public class ThreadDatabase extends Database {
     ContentValues contentValues = new ContentValues(1);
     contentValues.put(IS_PINNED, pinned ? 1 : 0);
 
-    databaseHelper.getWritableDatabase().update(TABLE_NAME, contentValues, ID_WHERE,
+    getWritableDatabase().update(TABLE_NAME, contentValues, ID_WHERE,
             new String[] {String.valueOf(threadId)});
 
     notifyConversationListeners(threadId);
@@ -838,13 +817,6 @@ public class ThreadDatabase extends Database {
     }
 
     return query;
-  }
-
-  public void migrateEncodedGroup(long threadId, @NotNull String newEncodedGroupId) {
-    ContentValues contentValues = new ContentValues(1);
-    contentValues.put(ADDRESS, newEncodedGroupId);
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
-    db.update(TABLE_NAME, contentValues, ID_WHERE, new String[] {threadId+""});
   }
 
   public void notifyThreadUpdated(long threadId) {

@@ -5,14 +5,10 @@ import static org.session.libsession.utilities.GroupUtil.COMMUNITY_PREFIX;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
 import com.annimon.stream.Stream;
-
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
-
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.MaterialColor;
 import org.session.libsession.utilities.Util;
@@ -24,11 +20,12 @@ import org.session.libsignal.utilities.Base64;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.guava.Optional;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.inject.Provider;
 
 public class RecipientDatabase extends Database {
 
@@ -147,8 +144,8 @@ public class RecipientDatabase extends Database {
   public static String getUpdateApprovedSelectConversations() {
     return "UPDATE "+ TABLE_NAME + " SET "+APPROVED+" = 1, "+APPROVED_ME+" = 1 "+
             "WHERE "+ADDRESS+ " NOT LIKE '"+ COMMUNITY_PREFIX +"%' " +
-            "AND ("+ADDRESS+" IN (SELECT "+ThreadDatabase.TABLE_NAME+"."+ThreadDatabase.ADDRESS+" FROM "+ThreadDatabase.TABLE_NAME+" WHERE ("+ThreadDatabase.MESSAGE_COUNT+" != 0) "+
-            "OR "+ADDRESS+" IN (SELECT "+GroupDatabase.TABLE_NAME+"."+GroupDatabase.ADMINS+" FROM "+GroupDatabase.TABLE_NAME+")))";
+            "AND ("+ADDRESS+" IN (SELECT "+ThreadDatabase.TABLE_NAME+"."+ThreadDatabase.ADDRESS+" FROM "+ThreadDatabase.TABLE_NAME+" WHERE "+
+            ADDRESS +" IN (SELECT "+GroupDatabase.TABLE_NAME+"."+GroupDatabase.ADMINS+" FROM "+GroupDatabase.TABLE_NAME+")))";
   }
 
   public static String getCreateDisappearingStateCommand() {
@@ -170,12 +167,12 @@ public class RecipientDatabase extends Database {
   public static final int NOTIFY_TYPE_MENTIONS = 1;
   public static final int NOTIFY_TYPE_NONE = 2;
 
-  public RecipientDatabase(Context context, SQLCipherOpenHelper databaseHelper) {
+  public RecipientDatabase(Context context, Provider<SQLCipherOpenHelper> databaseHelper) {
     super(context, databaseHelper);
   }
 
   public RecipientReader getRecipientsWithNotificationChannels() {
-    SQLiteDatabase database = databaseHelper.getReadableDatabase();
+    SQLiteDatabase database = getReadableDatabase();
     Cursor         cursor   = database.query(TABLE_NAME, new String[] {ID, ADDRESS}, NOTIFICATION_CHANNEL  + " NOT NULL",
                                              null, null, null, null, null);
 
@@ -183,7 +180,7 @@ public class RecipientDatabase extends Database {
   }
 
   public Optional<RecipientSettings> getRecipientSettings(@NonNull Address address) {
-    SQLiteDatabase database = databaseHelper.getReadableDatabase();
+    SQLiteDatabase database = getReadableDatabase();
 
     try (Cursor cursor = database.query(TABLE_NAME, null, ADDRESS + " = ?", new String[]{address.toString()}, null, null, null)) {
 
@@ -350,6 +347,14 @@ public class RecipientDatabase extends Database {
     notifyRecipientListeners();
   }
 
+  // Delete a recipient with the given address from the database
+  public void deleteRecipient(@NonNull String recipientAddress) {
+    SQLiteDatabase db = getWritableDatabase();
+    int rowCount = db.delete(TABLE_NAME, ADDRESS + " = ?", new String[] { recipientAddress });
+    if (rowCount == 0) { Log.w(TAG, "Could not find to delete recipient with address: " + recipientAddress); }
+    notifyRecipientListeners();
+  }
+
   public void setAutoDownloadAttachments(@NonNull Recipient recipient, boolean shouldAutoDownloadAttachments) {
     SQLiteDatabase db = getWritableDatabase();
     db.beginTransaction();
@@ -453,7 +458,7 @@ public class RecipientDatabase extends Database {
   }
 
   private void updateOrInsert(Address address, ContentValues contentValues) {
-    SQLiteDatabase database = databaseHelper.getWritableDatabase();
+    SQLiteDatabase database = getWritableDatabase();
 
     database.beginTransaction();
 
@@ -470,7 +475,7 @@ public class RecipientDatabase extends Database {
   }
 
   public List<Recipient> getBlockedContacts() {
-    SQLiteDatabase database = databaseHelper.getReadableDatabase();
+    SQLiteDatabase database = getReadableDatabase();
 
     Cursor         cursor   = database.query(TABLE_NAME, new String[] {ID, ADDRESS}, BLOCK + " = 1",
             null, null, null, null, null);
@@ -481,6 +486,29 @@ public class RecipientDatabase extends Database {
     while ((current = reader.getNext()) != null) {
       returnList.add(current);
     }
+    reader.close();
+    return returnList;
+  }
+
+  /**
+   * Returns a list of all recipients in the database.
+   *
+   * @return A list of all recipients
+   */
+  public List<Recipient> getAllRecipients() {
+    SQLiteDatabase database = getReadableDatabase();
+
+    Cursor cursor = database.query(TABLE_NAME, new String[] {ID, ADDRESS}, null,
+            null, null, null, null, null);
+
+    RecipientReader reader = new RecipientReader(context, cursor);
+    List<Recipient> returnList = new ArrayList<>();
+    Recipient current;
+
+    while ((current = reader.getNext()) != null) {
+      returnList.add(current);
+    }
+
     reader.close();
     return returnList;
   }

@@ -56,13 +56,13 @@ class InviteContactsJob(val groupSessionId: String, val memberSessionIds: Array<
                         // Make the request for this member
                         val memberId = AccountId(memberSessionId)
                         val (groupName, subAccount) = configs.withMutableGroupConfigs(sessionId) { configs ->
-                            configs.groupInfo.getName() to configs.groupKeys.makeSubAccount(memberId)
+                            configs.groupInfo.getName() to configs.groupKeys.makeSubAccount(memberSessionId)
                         }
 
                         val timestamp = SnodeAPI.nowWithOffset
                         val signature = SodiumUtilities.sign(
                             buildGroupInviteSignature(memberId, timestamp),
-                            adminKey
+                            adminKey.data
                         )
 
                         val groupInvite = GroupUpdateInviteMessage.newBuilder()

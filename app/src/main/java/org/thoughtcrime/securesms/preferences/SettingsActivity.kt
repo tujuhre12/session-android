@@ -36,6 +36,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -51,6 +52,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -99,6 +101,8 @@ import org.thoughtcrime.securesms.ui.components.BaseBottomSheet
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineCopyButton
 import org.thoughtcrime.securesms.ui.contentDescription
+import org.thoughtcrime.securesms.ui.getCellBottomShape
+import org.thoughtcrime.securesms.ui.getCellTopShape
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.setThemedContent
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -109,6 +113,7 @@ import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
 import org.thoughtcrime.securesms.util.FileProviderUtil
+import org.thoughtcrime.securesms.util.applyCommonWindowInsetsOnViews
 import org.thoughtcrime.securesms.util.push
 import java.io.File
 import javax.inject.Inject
@@ -176,6 +181,9 @@ class SettingsActivity : ScreenLockActionBarActivity() {
     companion object {
         private const val SCROLL_STATE = "SCROLL_STATE"
     }
+
+     override val applyDefaultWindowInsets: Boolean
+         get() = false
 
     // region Lifecycle
     override fun onCreate(savedInstanceState: Bundle?, isReady: Boolean) {
@@ -250,6 +258,8 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                 }
             }
         }
+
+        applyCommonWindowInsetsOnViews(mainScrollView = binding.scrollView)
     }
 
     override fun onStart() {
@@ -494,12 +504,21 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                 Column {
                     // add the debug menu in non release builds
                     if (BuildConfig.BUILD_TYPE != "release") {
-                        LargeItemButton("Debug Menu", R.drawable.ic_settings) { push<DebugActivity>() }
+                        LargeItemButton(
+                            "Debug Menu",
+                            R.drawable.ic_settings,
+                            shape = getCellTopShape()
+                        ) { push<DebugActivity>() }
                         Divider()
                     }
 
                     Crossfade(if (hasPaths) R.drawable.ic_status else R.drawable.ic_path_yellow, label = "path") {
-                        LargeItemButtonWithDrawable(R.string.onionRoutingPath, it) { push<PathActivity>() }
+                        LargeItemButtonWithDrawable(
+                            R.string.onionRoutingPath,
+                            it,
+                            shape = if (BuildConfig.BUILD_TYPE != "release") RectangleShape
+                            else getCellTopShape()
+                        ) { push<PathActivity>() }
                     }
                     Divider()
 
@@ -544,7 +563,8 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                     LargeItemButton(R.string.sessionClearData,
                         R.drawable.ic_trash_2,
                         Modifier.contentDescription(R.string.AccessibilityId_sessionClearData),
-                        dangerButtonColors()
+                        dangerButtonColors(),
+                        shape = getCellBottomShape()
                     ) { ClearAllDataDialog().show(supportFragmentManager, "Clear All Data Dialog") }
                 }
             }
@@ -601,7 +621,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    fun AvatarBottomSheet(
+    fun  AvatarBottomSheet(
         showCamera: Boolean,
         onDismissRequest: () -> Unit,
         onGalleryPicked: () -> Unit,
@@ -618,6 +638,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                 horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.spacing)
             ) {
                 AvatarOption(
+                    modifier = Modifier.qaTag(stringResource(R.string.AccessibilityId_imageButton)),
                     title = stringResource(R.string.image),
                     iconRes = R.drawable.ic_image,
                     onClick = onGalleryPicked
@@ -625,6 +646,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
 
                 if(showCamera) {
                     AvatarOption(
+                        modifier = Modifier.qaTag(stringResource(R.string.AccessibilityId_cameraButton)),
                         title = stringResource(R.string.contentDescriptionCamera),
                         iconRes = R.drawable.ic_camera,
                         onClick = onCameraPicked

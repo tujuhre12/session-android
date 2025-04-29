@@ -107,14 +107,13 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.ListenableFuture
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.guava.Optional
 import org.session.libsignal.utilities.hexEncodedPrivateKey
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.attachments.ScreenshotObserver
 import org.thoughtcrime.securesms.audio.AudioRecorder
 import org.thoughtcrime.securesms.components.emoji.RecentEmojiPageModel
-import org.thoughtcrime.securesms.contacts.SelectContactsActivity.Companion.selectedContactsKey
+import org.thoughtcrime.securesms.contacts.SelectContactsToInviteToGroupActivity.Companion.SELECTED_CONTACTS_KEY
 import org.thoughtcrime.securesms.conversation.ConversationActionBarDelegate
 import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesActivity
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnActionSelectedListener
@@ -193,6 +192,7 @@ import org.thoughtcrime.securesms.util.SaveAttachmentTask
 import org.thoughtcrime.securesms.util.drawToBitmap
 import org.thoughtcrime.securesms.util.fadeIn
 import org.thoughtcrime.securesms.util.fadeOut
+import org.thoughtcrime.securesms.util.isFullyScrolled
 import org.thoughtcrime.securesms.util.isScrolledToBottom
 import org.thoughtcrime.securesms.util.isScrolledToWithin30dpOfBottom
 import org.thoughtcrime.securesms.util.push
@@ -363,7 +363,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     onDeselect(message, position, it)
                 }
             },
-            onAttachmentNeedsDownload = viewModel::onAttachmentDownloadRequest,
+            downloadPendingAttachment = viewModel::downloadPendingAttachment,
+            retryFailedAttachments = viewModel::retryFailedAttachments,
             glide = glide,
             lifecycleCoroutineScope = lifecycleScope
         )
@@ -822,7 +823,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                         AttachmentManager.MediaType.GIF    == mediaType ||
                         AttachmentManager.MediaType.VIDEO  == mediaType)
             ) {
-                val media = Media(mediaURI, filename, mimeType, 0, 0, 0, 0, Optional.absent(), Optional.absent())
+                val media = Media(mediaURI, filename, mimeType, 0, 0, 0, 0, null, null)
                 startActivityForResult(MediaSendActivity.buildEditorIntent(this, listOf( media ), viewModel.recipient!!, ""), PICK_FROM_LIBRARY)
                 return
             } else {
@@ -1539,24 +1540,17 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
         emojiPickerVisible = true
         ViewUtil.hideKeyboard(this, messageView)
-        binding.reactionsShade.isVisible = true
         binding.scrollToBottomButton.isVisible = false
         binding.conversationRecyclerView.suppressLayout(true)
         reactionDelegate.setOnActionSelectedListener(ReactionsToolbarListener(message))
         reactionDelegate.setOnHideListener(object: ConversationReactionOverlay.OnHideListener {
             override fun startHide() {
                 emojiPickerVisible = false
-                binding.reactionsShade.let {
-                    ViewUtil.fadeOut(it, resources.getInteger(R.integer.reaction_scrubber_hide_duration), View.GONE)
-                }
                 showScrollToBottomButtonIfApplicable()
             }
 
             override fun onHide() {
                 binding.conversationRecyclerView.suppressLayout(false)
-
-                WindowUtil.setLightStatusBarFromTheme(this@ConversationActivityV2);
-                WindowUtil.setLightNavigationBarFromTheme(this@ConversationActivityV2);
             }
 
         })
@@ -1909,7 +1903,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val recipient = viewModel.recipient ?: return
         val mimeType = MediaUtil.getMimeType(this, contentUri)!!
         val filename = FilenameUtils.getFilenameFromUri(this, contentUri, mimeType)
-        val media = Media(contentUri, filename, mimeType, 0, 0, 0, 0, Optional.absent(), Optional.absent())
+        val media = Media(contentUri, filename, mimeType, 0, 0, 0, 0, null, null)
         startActivityForResult(MediaSendActivity.buildEditorIntent(this, listOf( media ), recipient, getMessageBody()), PICK_FROM_LIBRARY)
     }
 
@@ -2089,6 +2083,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 // Note: The only multi-attachment message type is when sending images - all others
                 // attempt send the attachment immediately upon file selection.
                 sendAttachments(attachmentManager.buildSlideDeck().asAttachments(), null)
+                //todo: The current system sends the document the moment it has been selected, without text (body is set to null above) - We will want to fix this and allow the user to add text with a document AND be able to confirm before sending
+                //todo: Simply setting body to getMessageBody() above isn't good enough as it doesn't give the user a chance to confirm their message before sending it.
             }
 
             override fun onFailure(e: ExecutionException?) {
@@ -2122,9 +2118,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 for (media in mediaList) {
                     val mediaFilename: String? = media.filename
                     when {
-                        MediaUtil.isVideoType(media.mimeType) -> { slideDeck.addSlide(VideoSlide(this, media.uri, mediaFilename, 0, media.caption.orNull()))                            }
-                        MediaUtil.isGif(media.mimeType)       -> { slideDeck.addSlide(GifSlide(this, media.uri, mediaFilename, 0, media.width, media.height, media.caption.orNull()))   }
-                        MediaUtil.isImageType(media.mimeType) -> { slideDeck.addSlide(ImageSlide(this, media.uri, mediaFilename, 0, media.width, media.height, media.caption.orNull())) }
+                        MediaUtil.isVideoType(media.mimeType) -> { slideDeck.addSlide(VideoSlide(this, media.uri, mediaFilename, 0, media.caption))                            }
+                        MediaUtil.isGif(media.mimeType)       -> { slideDeck.addSlide(GifSlide(this, media.uri, mediaFilename, 0, media.width, media.height, media.caption))   }
+                        MediaUtil.isImageType(media.mimeType) -> { slideDeck.addSlide(ImageSlide(this, media.uri, mediaFilename, 0, media.width, media.height, media.caption)) }
                         else -> {
                             Log.d(TAG, "Asked to send an unexpected media type: '" + media.mimeType + "'. Skipping.")
                         }
@@ -2135,8 +2131,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             INVITE_CONTACTS -> {
                 if (viewModel.recipient?.isCommunityRecipient != true) { return }
                 val extras = intent?.extras ?: return
-                if (!intent.hasExtra(selectedContactsKey)) { return }
-                val selectedContacts = extras.getStringArray(selectedContactsKey)!!
+                if (!intent.hasExtra(SELECTED_CONTACTS_KEY)) { return }
+                val selectedContacts = extras.getStringArray(SELECTED_CONTACTS_KEY)!!
                 val recipients = selectedContacts.map { contact ->
                     Recipient.from(this, fromSerialized(contact), true)
                 }
@@ -2610,7 +2606,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     inner class ConversationAdapterDataObserver(val recyclerView: ConversationRecyclerView, val adapter: ConversationAdapter) : RecyclerView.AdapterDataObserver() {
         override fun onChanged() {
             super.onChanged()
-            if (recyclerView.isScrolledToWithin30dpOfBottom) {
+            if (recyclerView.isScrolledToWithin30dpOfBottom && !recyclerView.isFullyScrolled) {
                 // Note: The adapter itemCount is zero based - so calling this with the itemCount in
                 // a non-zero based manner scrolls us to the bottom of the last message (including
                 // to the bottom of long messages as required by Jira SES-789 / GitHub 1364).

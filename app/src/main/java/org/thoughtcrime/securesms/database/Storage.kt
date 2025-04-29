@@ -8,8 +8,8 @@ import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDD
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_PINNED
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.util.BaseCommunityInfo
+import network.loki.messenger.libsession_util.util.Bytes
 import network.loki.messenger.libsession_util.util.ExpiryMode
-import network.loki.messenger.libsession_util.util.GroupDisplayInfo
 import network.loki.messenger.libsession_util.util.GroupInfo
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.avatars.AvatarHelper
@@ -56,6 +56,7 @@ import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
+import org.session.libsession.utilities.GroupDisplayInfo
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.ProfileKeyUtil
@@ -67,6 +68,7 @@ import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.Recipient.DisappearingState
 import org.session.libsession.utilities.recipients.getType
+import org.session.libsession.utilities.upsertContact
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceAttachmentPointer
@@ -85,14 +87,18 @@ import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.dependencies.DatabaseComponent.Companion.get
 import org.thoughtcrime.securesms.groups.GroupManager
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
+import org.thoughtcrime.securesms.util.SessionMetaProtocol.clearReceivedMessages
 import java.security.MessageDigest
 import javax.inject.Inject
+import javax.inject.Provider
 import javax.inject.Singleton
+import kotlin.collections.set
 import network.loki.messenger.libsession_util.util.Contact as LibSessionContact
 import network.loki.messenger.libsession_util.util.GroupMember as LibSessionGroupMember
 
@@ -101,7 +107,7 @@ private const val TAG = "Storage"
 @Singleton
 open class Storage @Inject constructor(
     @ApplicationContext context: Context,
-    helper: SQLCipherOpenHelper,
+    helper: Provider<SQLCipherOpenHelper>,
     private val configFactory: ConfigFactory,
     private val jobDatabase: SessionJobDatabase,
     private val threadDatabase: ThreadDatabase,
@@ -189,36 +195,6 @@ open class Storage @Inject constructor(
                     configs.convoInfoVolatile.getOrConstructOneToOne(address.toString())
                 }
             }
-        }
-    }
-
-    override fun threadDeleted(address: Address, threadId: Long) {
-        configFactory.withMutableUserConfigs { configs ->
-            if (address.isGroupOrCommunity) {
-                if (address.isLegacyGroup) {
-                    val accountId = GroupUtil.doubleDecodeGroupId(address.toString())
-                    configs.convoInfoVolatile.eraseLegacyClosedGroup(accountId)
-                    configs.userGroups.eraseLegacyGroup(accountId)
-                } else if (address.isCommunity) {
-                    // these should be removed in the group leave / handling new configs
-                    Log.w("Loki", "Thread delete called for open group address, expecting to be handled elsewhere")
-                } else if (address.isGroupV2) {
-                    Log.w("Loki", "Thread delete called for closed group address, expecting to be handled elsewhere")
-                }
-            } else {
-                // non-standard contact prefixes: 15, 00 etc shouldn't be stored in config
-                if (AccountId(address.toString()).prefix != IdPrefix.STANDARD) return@withMutableUserConfigs
-                configs.convoInfoVolatile.eraseOneToOne(address.toString())
-                if (getUserPublicKey() != address.toString()) {
-                    configs.contacts.upsertContact(address.toString()) {
-                        priority = PRIORITY_HIDDEN
-                    }
-                } else {
-                    configs.userProfile.setNtsPriority(PRIORITY_HIDDEN)
-                }
-            }
-
-            Unit
         }
     }
 
@@ -567,7 +543,7 @@ open class Storage @Inject constructor(
         preferences.setProfileAvatarId(0)
         preferences.setProfilePictureURL(null)
 
-        Recipient.removeCached(fromSerialized(userPublicKey))
+        Recipient.removeCached(fromSerialized(userPublicKey)) // ACL HERE?!?!?!
         if (clearConfig) {
             configFactory.withMutableUserConfigs {
                 it.userProfile.setPic(UserPic.DEFAULT)
@@ -587,7 +563,7 @@ open class Storage @Inject constructor(
 
     override fun getOpenGroup(threadId: Long): OpenGroup? {
         if (threadId.toInt() < 0) { return null }
-        val database = databaseHelper.readableDatabase
+        val database = readableDatabase
         return database.get(LokiThreadDatabase.publicChatTable, "${LokiThreadDatabase.threadID} = ?", arrayOf( threadId.toString() )) { cursor ->
             val publicChatAsJson = cursor.getString(LokiThreadDatabase.publicChat)
             OpenGroup.fromJSON(publicChatAsJson)
@@ -878,8 +854,8 @@ open class Storage @Inject constructor(
                 name = name,
                 members = members,
                 priority = PRIORITY_VISIBLE,
-                encPubKey = (encryptionKeyPair.publicKey as DjbECPublicKey).publicKey,  // 'serialize()' inserts an extra byte
-                encSecKey = encryptionKeyPair.privateKey.serialize(),
+                encPubKey = Bytes((encryptionKeyPair.publicKey as DjbECPublicKey).publicKey),  // 'serialize()' inserts an extra byte
+                encSecKey = Bytes(encryptionKeyPair.privateKey.serialize()),
                 disappearingTimer = expirationTimer.toLong(),
                 joinedAtSecs = (formationTimestamp / 1000L)
             )
@@ -910,8 +886,8 @@ open class Storage @Inject constructor(
             val groupInfo = userGroups.getOrConstructLegacyGroupInfo(groupPublicKey).copy(
                 name = name,
                 members = membersMap,
-                encPubKey = (latestKeyPair.publicKey as DjbECPublicKey).publicKey,  // 'serialize()' inserts an extra byte
-                encSecKey = latestKeyPair.privateKey.serialize(),
+                encPubKey = Bytes((latestKeyPair.publicKey as DjbECPublicKey).publicKey),  // 'serialize()' inserts an extra byte
+                encSecKey = Bytes(latestKeyPair.privateKey.serialize()),
                 priority = if (isPinned(threadID)) PRIORITY_PINNED else PRIORITY_VISIBLE,
                 disappearingTimer = getExpirationConfiguration(threadID)?.expiryMode?.expirySeconds ?: 0L,
                 joinedAtSecs = (existingGroup.formationTimestamp / 1000L)
@@ -1013,10 +989,6 @@ open class Storage @Inject constructor(
         lokiAPIDatabase.removeAllClosedGroupEncryptionKeyPairs(groupPublicKey)
     }
 
-    override fun removeClosedGroupThread(threadID: Long) {
-        threadDatabase.deleteConversation(threadID)
-    }
-
     override fun updateFormationTimestamp(groupID: String, formationTimestamp: Long) {
         groupDatabase
             .updateFormationTimestamp(groupID, formationTimestamp)
@@ -1041,7 +1013,7 @@ open class Storage @Inject constructor(
         return configFactory.withGroupConfigs(AccountId(groupAccountId)) { configs ->
             val info = configs.groupInfo
             GroupDisplayInfo(
-                id = info.id(),
+                id = AccountId(info.id()),
                 name = info.getName(),
                 profilePic = info.getProfilePic(),
                 expiryTimer = info.getExpiryTimer(),
@@ -1267,6 +1239,23 @@ open class Storage @Inject constructor(
         setRecipientHash(recipient, recipientHash)
     }
 
+    override fun deleteContactAndSyncConfig(accountId: String) {
+        deleteContact(accountId)
+        // also handle the contact removal from the config's point of view
+        configFactory.removeContact(accountId)
+    }
+
+    private fun deleteContact(accountId: String){
+        sessionContactDatabase.deleteContact(accountId)
+        Recipient.removeCached(fromSerialized(accountId))
+        recipientDatabase.deleteRecipient(accountId)
+
+        val threadId: Long = threadDatabase.getThreadIdIfExistsFor(accountId)
+        deleteConversation(threadId)
+
+        notifyRecipientListeners()
+    }
+
     override fun getRecipientForThread(threadId: Long): Recipient? {
         return threadDatabase.getRecipientForThreadId(threadId)
     }
@@ -1279,7 +1268,7 @@ open class Storage @Inject constructor(
         return recipientDatabase.isAutoDownloadFlagSet(recipient)
     }
 
-    override fun addLibSessionContacts(contacts: List<LibSessionContact>, timestamp: Long?) {
+    override fun syncLibSessionContacts(contacts: List<LibSessionContact>, timestamp: Long?) {
         val mappingDb = blindedIdMappingDatabase
         val moreContacts = contacts.filter { contact ->
             val id = AccountId(contact.id)
@@ -1304,8 +1293,8 @@ open class Storage @Inject constructor(
 
             if (contact.profilePicture != UserPic.DEFAULT) {
                 val (url, key) = contact.profilePicture
-                if (key.size != ProfileKeyUtil.PROFILE_KEY_BYTES) return@forEach
-                profileManager.setProfilePicture(context, recipient, url, key)
+                if (key.data.size != ProfileKeyUtil.PROFILE_KEY_BYTES) return@forEach
+                profileManager.setProfilePicture(context, recipient, url, key.data)
                 profileManager.setUnidentifiedAccessMode(context, recipient, Recipient.UnidentifiedAccessMode.UNKNOWN)
             } else {
                 profileManager.setProfilePicture(context, recipient, null, null)
@@ -1332,12 +1321,17 @@ open class Storage @Inject constructor(
 
         // if we have contacts locally but that are missing from the config, remove their corresponding thread
         val currentUserKey = getUserPublicKey()
-        val  removedContacts = getAllContacts().filter { localContact ->
-            localContact.accountID != currentUserKey && // we don't want to remove ourselves (ie, our Note to Self)
-            moreContacts.none { it.id == localContact.accountID } // we don't want to remove contacts that are present in the config
+
+        //NOTE: We used to cycle through all Contact here instead or all Recipients, but turns out a Contact isn't saved until we have a name, nickname or avatar
+        // which in the case of contacts we are messaging for the first time and who haven't yet approved us, it won't be the case
+        // But that person is saved in the Recipient db. We might need to investigate how to clean the relationship between Recipients, Contacts and config Contacts.
+        val removedContacts = recipientDatabase.allRecipients.filter { localContact ->
+            localContact.is1on1 && // only for conversations
+            localContact.address.toString() != currentUserKey && // we don't want to remove ourselves (ie, our Note to Self)
+            moreContacts.none { it.id == localContact.address.toString() } // we don't want to remove contacts that are present in the config
         }
         removedContacts.forEach {
-            getThreadId(fromSerialized(it.accountID))?.let(::deleteConversation)
+            deleteContact(it.address.toString())
         }
     }
 
@@ -1484,32 +1478,51 @@ open class Storage @Inject constructor(
     override fun deleteConversation(threadID: Long) {
         val threadDB = threadDatabase
         val groupDB = groupDatabase
-        threadDB.deleteConversation(threadID)
+
+        // Delete the conversation and its messages
+        smsDatabase.deleteThread(threadID)
+        mmsDatabase.deleteThread(threadID)
+        get(context).draftDatabase().clearDrafts(threadID)
+        lokiMessageDatabase.deleteThread(threadID)
+        threadDB.deleteThread(threadID)
+        notifyConversationListeners(threadID)
+        notifyConversationListListeners()
+        clearReceivedMessages()
 
         val recipient = getRecipientForThread(threadID)
-        if (recipient == null) {
-            Log.w(TAG, "Got null recipient when deleting conversation - aborting.");
-            return
-        }
+        if (recipient == null) return
 
-        // There is nothing further we need to do if this is a 1-on-1 conversation, and it's not
-        // possible to delete communities in this manner so bail.
-        if (recipient.isContactRecipient || recipient.isCommunityRecipient) return
-
-        // If we get here then this is a closed group conversation (i.e., recipient.isClosedGroupRecipient)
         configFactory.withMutableUserConfigs { configs ->
-            val volatile = configs.convoInfoVolatile
-            val groups = configs.userGroups
-            val groupID = recipient.address.toGroupString()
-            val closedGroup = getGroup(groupID)
-            val groupPublicKey = GroupUtil.doubleDecodeGroupId(recipient.address.toString())
-            if (closedGroup != null) {
-                groupDB.delete(groupID)
-                volatile.eraseLegacyClosedGroup(groupPublicKey)
-                groups.eraseLegacyGroup(groupPublicKey)
+            if (recipient.address.isGroupOrCommunity) {
+                if (recipient.address.isLegacyGroup) {
+                    val accountId = GroupUtil.doubleDecodeGroupId(recipient.address.toString())
+                    groupDB.delete(recipient.address.toString())
+                    configs.convoInfoVolatile.eraseLegacyClosedGroup(accountId)
+                    configs.userGroups.eraseLegacyGroup(accountId)
+                } else if (recipient.address.isCommunity) {
+                    // these should be removed in the group leave / handling new configs
+                    Log.w("Loki", "Thread delete called for open group address, expecting to be handled elsewhere")
+                } else if (recipient.address.isGroupV2) {
+                    Log.w("Loki", "Thread delete called for closed group address, expecting to be handled elsewhere")
+                }
             } else {
-                Log.w("Loki-DBG", "Failed to find a closed group for ${groupPublicKey.take(4)}")
+                // non-standard contact prefixes: 15, 00 etc shouldn't be stored in config
+                if (AccountId(recipient.address.toString()).prefix != IdPrefix.STANDARD) return@withMutableUserConfigs
+                configs.convoInfoVolatile.eraseOneToOne(recipient.address.toString())
+
+                if (getUserPublicKey() != recipient.address.toString()) {
+                    // only update the priority if the contact exists in our config
+                    // (this helps for example when deleting a contact and we do not want to recreate one here only to mark it hidden)
+                    configs.contacts.get(recipient.address.toString())?.let{
+                        it.priority = PRIORITY_HIDDEN
+                        configs.contacts.set(it)
+                    }
+                } else {
+                    configs.userProfile.setNtsPriority(PRIORITY_HIDDEN)
+                }
             }
+
+            Unit
         }
     }
 
@@ -1618,7 +1631,7 @@ open class Storage @Inject constructor(
                     profileManager.setUnidentifiedAccessMode(context, sender, Recipient.UnidentifiedAccessMode.UNKNOWN)
                 }
             }
-            threadDatabase.setHasSent(threadId, true)
+            
             val mappingDb = blindedIdMappingDatabase
             val mappings = mutableMapOf<String, BlindedIdMapping>()
             threadDatabase.readerFor(threadDatabase.conversationList).use { reader ->
@@ -1644,38 +1657,43 @@ open class Storage @Inject constructor(
                 val blindedThreadId = threadDatabase.getOrCreateThreadIdFor(Recipient.from(context, fromSerialized(mapping.key), false))
                 mmsDatabase.updateThreadId(blindedThreadId, threadId)
                 smsDatabase.updateThreadId(blindedThreadId, threadId)
-                threadDatabase.deleteConversation(blindedThreadId)
+                deleteConversation(blindedThreadId)
             }
-            setRecipientApproved(sender, true)
+
+            var alreadyApprovedMe: Boolean = false
+            configFactory.withUserConfigs {
+                // check is the person had not yet approvedMe
+                alreadyApprovedMe = it.contacts.get(sender.address.toString())?.approvedMe ?: false
+            }
+
             setRecipientApprovedMe(sender, true)
 
-            // Also update the config about this contact
-            configFactory.withMutableUserConfigs {
-                it.contacts.upsertContact(sender.address.toString()) {
-                    approved = true
-                    approvedMe = true
-                }
+            // only show the message if wasn't already approvedMe before
+            if(!alreadyApprovedMe) {
+                val message = IncomingMediaMessage(
+                    sender.address,
+                    response.sentTimestamp!!,
+                    -1,
+                    0,
+                    0,
+                    false,
+                    false,
+                    true,
+                    false,
+                    Optional.absent(),
+                    Optional.absent(),
+                    Optional.absent(),
+                    Optional.absent(),
+                    Optional.absent(),
+                    Optional.absent(),
+                    Optional.absent()
+                )
+                mmsDatabase.insertSecureDecryptedMessageInbox(
+                    message,
+                    threadId,
+                    runThreadUpdate = true
+                )
             }
-
-            val message = IncomingMediaMessage(
-                sender.address,
-                response.sentTimestamp!!,
-                -1,
-                0,
-                0,
-                false,
-                false,
-                true,
-                false,
-                Optional.absent(),
-                Optional.absent(),
-                Optional.absent(),
-                Optional.absent(),
-                Optional.absent(),
-                Optional.absent(),
-                Optional.absent()
-            )
-            mmsDatabase.insertSecureDecryptedMessageInbox(message, threadId, runThreadUpdate = true)
         }
     }
 
