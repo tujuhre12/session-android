@@ -35,7 +35,6 @@ import com.annimon.stream.Stream;
 
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
-import org.jetbrains.annotations.NotNull;
 import org.session.libsession.messaging.MessagingModuleConfiguration;
 import org.session.libsession.snode.SnodeAPI;
 import org.session.libsession.utilities.Address;
@@ -63,7 +62,6 @@ import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 import org.thoughtcrime.securesms.mms.Slide;
 import org.thoughtcrime.securesms.mms.SlideDeck;
 import org.thoughtcrime.securesms.notifications.MarkReadReceiver;
-import org.thoughtcrime.securesms.util.SessionMetaProtocol;
 
 import java.io.Closeable;
 import java.util.ArrayList;
@@ -407,8 +405,7 @@ public class ThreadDatabase extends Database {
     }
 
     SQLiteDatabase db = getReadableDatabase();
-    StringBuilder selection = new StringBuilder(TABLE_NAME + "." + ADDRESS + " LIKE ? AND " +
-            TABLE_NAME + "." + MESSAGE_COUNT + " != 0");
+    StringBuilder selection = new StringBuilder(TABLE_NAME + "." + ADDRESS + " LIKE ?");
 
     List<String> selectionArgs = new ArrayList<>();
     selectionArgs.add(addressQuery + "%");
@@ -439,63 +436,36 @@ public class ThreadDatabase extends Database {
     List<Cursor>        cursors              = new LinkedList<>();
 
     for (List<Address> addresses : partitionedAddresses) {
-      String   selection      = TABLE_NAME + "." + ADDRESS + " = ?";
-      String[] selectionArgs  = new String[addresses.size()];
+      StringBuilder selection = new StringBuilder(TABLE_NAME + "." + ADDRESS + " = ?");
+      String[] selectionArgs = new String[addresses.size()];
 
-      for (int i=0;i<addresses.size()-1;i++)
-        selection += (" OR " + TABLE_NAME + "." + ADDRESS + " = ?");
+      for (int i = 0; i < addresses.size() - 1; i++) {
+        selection.append(" OR " + TABLE_NAME + "." + ADDRESS + " = ?");
+      }
 
       int i= 0;
       for (Address address : addresses) {
         selectionArgs[i++] = DelimiterUtil.escape(address.toString(), ' ');
       }
 
-      String query = createQuery(selection, 0);
+      String query = createQuery(selection.toString(), 0);
       cursors.add(db.rawQuery(query, selectionArgs));
     }
 
-    Cursor cursor = cursors.size() > 1 ? new MergeCursor(cursors.toArray(new Cursor[cursors.size()])) : cursors.get(0);
+    Cursor cursor = cursors.size() > 1 ? new MergeCursor(cursors.toArray(new Cursor[0])) : cursors.get(0);
     setNotifyConversationListListeners(cursor);
     return cursor;
   }
 
   public Cursor getRecentConversationList(int limit) {
     SQLiteDatabase db    = getReadableDatabase();
-    String         query = createQuery(MESSAGE_COUNT + " != 0", limit);
+    String         query = createQuery("", limit);
 
     return db.rawQuery(query, null);
   }
 
-  public long getLatestUnapprovedConversationTimestamp() {
-    SQLiteDatabase db = getReadableDatabase();
-    Cursor cursor     = null;
-
-    try {
-      String where    = "SELECT " + THREAD_CREATION_DATE + " FROM " + TABLE_NAME +
-              " LEFT OUTER JOIN " + RecipientDatabase.TABLE_NAME +
-              " ON " + TABLE_NAME + "." + ADDRESS + " = " + RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.ADDRESS +
-              " LEFT OUTER JOIN " + GroupDatabase.TABLE_NAME +
-              " ON " + TABLE_NAME + "." + ADDRESS + " = " + GroupDatabase.TABLE_NAME + "." + GROUP_ID +
-              " WHERE " + MESSAGE_COUNT + " != 0 AND " + ARCHIVED + " = 0 AND " + HAS_SENT + " = 0 AND " +
-              RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.BLOCK + " = 0 AND " +
-              RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.APPROVED + " = 0 AND " +
-              GroupDatabase.TABLE_NAME + "." + GROUP_ID + " IS NULL ORDER BY " + THREAD_CREATION_DATE + " DESC LIMIT 1";
-      cursor          = db.rawQuery(where, null);
-
-      if (cursor != null && cursor.moveToFirst())
-        return cursor.getLong(0);
-    } finally {
-      if (cursor != null)
-        cursor.close();
-    }
-
-    return 0;
-  }
-
   public Cursor getConversationList() {
-    String where  = "(" + MESSAGE_COUNT + " != 0 OR " + GroupDatabase.TABLE_NAME + "." + GROUP_ID + " LIKE '" + COMMUNITY_PREFIX + "%') " +
-            "AND " + ARCHIVED + " = 0 ";
-    return getConversationList(where);
+    return getConversationList(ARCHIVED + " = 0 ");
   }
 
   public Cursor getBlindedConversationList() {
@@ -531,7 +501,7 @@ public class ThreadDatabase extends Database {
 
   public Cursor getDirectShareList() {
     SQLiteDatabase db    = getReadableDatabase();
-    String         query = createQuery(MESSAGE_COUNT + " != 0", 0);
+    String         query = createQuery("", 0);
 
     return db.rawQuery(query, null);
   }
@@ -847,13 +817,6 @@ public class ThreadDatabase extends Database {
     }
 
     return query;
-  }
-
-  public void migrateEncodedGroup(long threadId, @NotNull String newEncodedGroupId) {
-    ContentValues contentValues = new ContentValues(1);
-    contentValues.put(ADDRESS, newEncodedGroupId);
-    SQLiteDatabase db = getWritableDatabase();
-    db.update(TABLE_NAME, contentValues, ID_WHERE, new String[] {threadId+""});
   }
 
   public void notifyThreadUpdated(long threadId) {
