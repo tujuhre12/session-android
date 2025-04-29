@@ -11,6 +11,9 @@ fun DisappearingMessagesScreen(
     onBack: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState(UiState())
-//todo UCS I need to recreate the app bar in compose here
-    DisappearingMessages(uiState, callbacks = viewModel)
+    DisappearingMessages(
+        state = uiState,
+        callbacks = viewModel,
+        onBack = onBack
+    )
 }
