@@ -246,7 +246,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                         } else 0
                         homeAdapter.data = data
                         if(firstPos >= 0) { manager.scrollToPositionWithOffset(firstPos, offsetTop) }
-                        updateEmptyState()
+                        binding.emptyStateContainer.isVisible = homeAdapter.itemCount == 0
                     }
             }
         }
@@ -437,7 +437,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
             binding.newConversationButton.animate().cancel()
             binding.newConversationButton.isVisible = false
         } else {
-            updateEmptyState()
             binding.newConversationButton.apply {
                 alpha = 0.0f
                 visibility = View.VISIBLE
@@ -482,11 +481,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
     // endregion
 
     // region Updating
-    private fun updateEmptyState() {
-        val threadCount = binding.conversationsRecyclerView.adapter?.itemCount ?: 0
-        binding.emptyStateContainer.isVisible = threadCount == 0 && binding.conversationsRecyclerView.isVisible
-    }
-
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onUpdateProfileEvent(event: ProfilePictureModifiedEvent) {
         if (event.recipient.isLocalNumber) {
