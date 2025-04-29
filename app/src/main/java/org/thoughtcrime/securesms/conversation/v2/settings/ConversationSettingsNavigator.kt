@@ -1,13 +1,14 @@
 package org.thoughtcrime.securesms.conversation.v2.settings
 
 import androidx.navigation.NavOptionsBuilder
+import dagger.hilt.android.scopes.ActivityRetainedScoped
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 import javax.inject.Singleton
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.*
 import javax.inject.Inject
 
-@Singleton
+@ActivityRetainedScoped
 class ConversationSettingsNavigator @Inject constructor(){
     val startDestination: ConversationSettingsDestination = RouteConversationSettings
 
