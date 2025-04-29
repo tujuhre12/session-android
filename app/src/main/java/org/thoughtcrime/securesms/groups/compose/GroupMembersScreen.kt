@@ -10,7 +10,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.hilt.navigation.compose.hiltViewModel
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.GroupMember
 import org.session.libsignal.utilities.AccountId
@@ -25,13 +24,9 @@ import org.thoughtcrime.securesms.util.AvatarUIElement
 
 @Composable
 fun GroupMembersScreen(
-    groupId: AccountId,
+    viewModel: GroupMembersViewModel,
     onBack: () -> Unit,
 ) {
-    val viewModel = hiltViewModel<GroupMembersViewModel, GroupMembersViewModel.Factory> { factory ->
-        factory.create(groupId)
-    }
-
     GroupMembers(
         onBack = onBack,
         members = viewModel.members.collectAsState().value

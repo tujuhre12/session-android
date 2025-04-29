@@ -10,16 +10,19 @@ typealias ExpiryOptionsCardData = OptionsCardData<ExpiryMode>
 data class UiState(
     val cards: List<ExpiryOptionsCardData> = emptyList(),
     val showGroupFooter: Boolean = false,
-    val showSetButton: Boolean = true
+    val showSetButton: Boolean = true,
+    val subtitle: GetString? = null,
 ) {
     constructor(
         vararg cards: ExpiryOptionsCardData,
         showGroupFooter: Boolean = false,
         showSetButton: Boolean = true,
+        subtitle: GetString? = null,
     ): this(
         cards.asList(),
         showGroupFooter,
-        showSetButton
+        showSetButton,
+        subtitle,
     )
 }
 

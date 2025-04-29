@@ -163,11 +163,6 @@ abstract class BaseGroupMembersViewModel (
                 .thenComparing(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name }) // Sort by name (case insensitive)
                 .thenBy { it.accountId } // Last resort: sort by account ID
         )
-
-    @AssistedFactory
-    interface Factory {
-        fun create(groupId: AccountId): EditGroupViewModel
-    }
 }
 
 data class GroupMemberState(

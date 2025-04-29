@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.imeNestedScroll
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
@@ -46,10 +45,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.rememberNavController
 import com.squareup.phrase.Phrase
-import kotlinx.serialization.Serializable
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.GroupMember
@@ -68,7 +64,6 @@ import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
-import org.thoughtcrime.securesms.ui.horizontalSlideComposable
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -82,57 +77,35 @@ import org.thoughtcrime.securesms.util.AvatarUIElement
 
 @Composable
 fun EditGroupScreen(
-    groupId: AccountId,
+    viewModel: EditGroupViewModel,
+    navigateToInviteContact: (Set<String>) -> Unit,
     onBack: () -> Unit,
 ) {
-    val navController = rememberNavController()
-    val viewModel = hiltViewModel<EditGroupViewModel, EditGroupViewModel.Factory> { factory ->
-        factory.create(groupId)
-    }
-
-    NavHost(navController = navController, startDestination = RouteEditGroup) {
-        horizontalSlideComposable<RouteEditGroup> {
-            EditGroup(
-                onBack = onBack,
-                onAddMemberClick = { navController.navigate(RouteSelectContacts) },
-                onResendInviteClick = viewModel::onResendInviteClicked,
-                onPromoteClick = viewModel::onPromoteContact,
-                onRemoveClick = viewModel::onRemoveContact,
-                onEditNameClicked = viewModel::onEditNameClicked,
-                onEditNameCancelClicked = viewModel::onCancelEditingNameClicked,
-                onEditNameConfirmed = viewModel::onEditNameConfirmClicked,
-                onEditingNameValueChanged = viewModel::onEditingNameChanged,
-                editingName = viewModel.editingName.collectAsState().value,
-                members = viewModel.members.collectAsState().value,
-                groupName = viewModel.groupName.collectAsState().value,
-                showAddMembers = viewModel.showAddMembers.collectAsState().value,
-                canEditName = viewModel.canEditGroupName.collectAsState().value,
-                onResendPromotionClick = viewModel::onResendPromotionClicked,
-                showingError = viewModel.error.collectAsState().value,
-                onErrorDismissed = viewModel::onDismissError,
-                onMemberClicked = viewModel::onMemberClicked,
-                hideActionSheet = viewModel::hideActionBottomSheet,
-                clickedMember = viewModel.clickedMember.collectAsState().value,
-                showLoading = viewModel.inProgress.collectAsState().value,
-            )
-        }
-
-        horizontalSlideComposable<RouteSelectContacts> {
-            InviteContactsScreen(
-                excludingAccountIDs = viewModel.excludingAccountIDsFromContactSelection,
-                onDoneClicked = {
-                    viewModel.onContactSelected(it)
-                    navController.popBackStack()
-                },
-                onBackClicked = { navController.popBackStack() },
-            )
-        }
-    }
-
+    EditGroup(
+        onBack = onBack,
+        onAddMemberClick = { navigateToInviteContact(viewModel.excludingAccountIDsFromContactSelection) },
+        onResendInviteClick = viewModel::onResendInviteClicked,
+        onPromoteClick = viewModel::onPromoteContact,
+        onRemoveClick = viewModel::onRemoveContact,
+        onEditNameClicked = viewModel::onEditNameClicked,
+        onEditNameCancelClicked = viewModel::onCancelEditingNameClicked,
+        onEditNameConfirmed = viewModel::onEditNameConfirmClicked,
+        onEditingNameValueChanged = viewModel::onEditingNameChanged,
+        editingName = viewModel.editingName.collectAsState().value,
+        members = viewModel.members.collectAsState().value,
+        groupName = viewModel.groupName.collectAsState().value,
+        showAddMembers = viewModel.showAddMembers.collectAsState().value,
+        canEditName = viewModel.canEditGroupName.collectAsState().value,
+        onResendPromotionClick = viewModel::onResendPromotionClicked,
+        showingError = viewModel.error.collectAsState().value,
+        onErrorDismissed = viewModel::onDismissError,
+        onMemberClicked = viewModel::onMemberClicked,
+        hideActionSheet = viewModel::hideActionBottomSheet,
+        clickedMember = viewModel.clickedMember.collectAsState().value,
+        showLoading = viewModel.inProgress.collectAsState().value,
+    )
 }
 
-@Serializable
-private object RouteEditGroup
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -164,7 +137,7 @@ fun EditGroup(
     }
 
     val maxNameWidth = 240.dp
-
+//todo UCS this screen entry transition seem to lag when there are many members
     Scaffold(
         topBar = {
             BackAppBar(

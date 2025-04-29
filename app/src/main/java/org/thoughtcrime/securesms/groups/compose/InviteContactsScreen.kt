@@ -5,13 +5,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContent
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -23,8 +20,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.hilt.navigation.compose.hiltViewModel
-import kotlinx.serialization.Serializable
 import network.loki.messenger.R
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.groups.ContactItem
@@ -42,26 +37,19 @@ import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
 
 
-@Serializable
-object RouteSelectContacts
-
 @Composable
 fun InviteContactsScreen(
-    excludingAccountIDs: Set<AccountId> = emptySet(),
-    onDoneClicked: (selectedContacts: Set<AccountId>) -> Unit,
-    onBackClicked: () -> Unit,
+    viewModel: SelectContactsViewModel,
+    onDoneClicked: () -> Unit,
+    onBack: () -> Unit,
 ) {
-    val viewModel = hiltViewModel<SelectContactsViewModel, SelectContactsViewModel.Factory> { factory ->
-        factory.create(excludingAccountIDs)
-    }
-
     InviteContacts(
         contacts = viewModel.contacts.collectAsState().value,
         onContactItemClicked = viewModel::onContactItemClicked,
         searchQuery = viewModel.searchQuery.collectAsState().value,
         onSearchQueryChanged = viewModel::onSearchQueryChanged,
-        onDoneClicked = { onDoneClicked(viewModel.currentSelected) },
-        onBack = onBackClicked,
+        onDoneClicked = onDoneClicked,
+        onBack = onBack,
     )
 }
 
@@ -83,10 +71,11 @@ fun InviteContacts(
                 onBack = onBack,
             )
         },
-        contentWindowInsets = WindowInsets.safeContent
     ) { paddings ->
         Column(
-            modifier = Modifier.padding(paddings).consumeWindowInsets(paddings),
+            modifier = Modifier
+                .padding(paddings)
+                .consumeWindowInsets(paddings),
             verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
         ) {
             GroupMinimumVersionBanner()
@@ -94,7 +83,8 @@ fun InviteContacts(
                 query = searchQuery,
                 onValueChanged = onSearchQueryChanged,
                 placeholder = stringResource(R.string.searchContacts),
-                modifier = Modifier.padding(horizontal = LocalDimensions.current.smallSpacing)
+                modifier = Modifier
+                    .padding(horizontal = LocalDimensions.current.smallSpacing)
                     .qaTag(R.string.AccessibilityId_groupNameSearch),
                 backgroundColor = LocalColors.current.backgroundSecondary,
             )

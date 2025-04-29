@@ -17,7 +17,8 @@ fun State.toUiState() = UiState(
         timeOptions()?.let { ExpiryOptionsCardData(GetString(R.string.disappearingMessagesTimer), it) }
     ),
     showGroupFooter = isGroup && isNewConfigEnabled,
-    showSetButton = isSelfAdmin
+    showSetButton = isSelfAdmin,
+    subtitle = subtitle
 )
 
 private fun State.typeOptions(): List<ExpiryRadioOption>? = if (typeOptionsHidden) null else {
