@@ -384,6 +384,14 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         Toast.makeText(context, R.string.copied, Toast.LENGTH_SHORT).show()
     }
 
+    private fun copyCommunityUrl(){
+        val url = community?.joinURL ?: return
+        val clip = ClipData.newPlainText(context.getString(R.string.communityUrl), url)
+        val manager = context.getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+        manager.setPrimaryClip(clip)
+        Toast.makeText(context, R.string.copied, Toast.LENGTH_SHORT).show()
+    }
+
     private fun isCommunityAdmin(): Boolean {
         if(community == null) return false
         else{
@@ -591,7 +599,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             name = context.getString(R.string.communityUrlCopy),
             icon = R.drawable.ic_copy,
             qaTag = R.string.qa_conversation_settings_copy_community_url,
-            onClick = ::copyAccountId //todo UCS get proper method
+            onClick = ::copyCommunityUrl
         )
     }
 

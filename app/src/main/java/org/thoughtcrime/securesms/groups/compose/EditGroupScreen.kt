@@ -87,15 +87,9 @@ fun EditGroupScreen(
         onResendInviteClick = viewModel::onResendInviteClicked,
         onPromoteClick = viewModel::onPromoteContact,
         onRemoveClick = viewModel::onRemoveContact,
-        onEditNameClicked = viewModel::onEditNameClicked,
-        onEditNameCancelClicked = viewModel::onCancelEditingNameClicked,
-        onEditNameConfirmed = viewModel::onEditNameConfirmClicked,
-        onEditingNameValueChanged = viewModel::onEditingNameChanged,
-        editingName = viewModel.editingName.collectAsState().value,
         members = viewModel.members.collectAsState().value,
         groupName = viewModel.groupName.collectAsState().value,
         showAddMembers = viewModel.showAddMembers.collectAsState().value,
-        canEditName = viewModel.canEditGroupName.collectAsState().value,
         onResendPromotionClick = viewModel::onResendPromotionClicked,
         showingError = viewModel.error.collectAsState().value,
         onErrorDismissed = viewModel::onDismissError,
@@ -116,15 +110,9 @@ fun EditGroup(
     onResendPromotionClick: (accountId: AccountId) -> Unit,
     onPromoteClick: (accountId: AccountId) -> Unit,
     onRemoveClick: (accountId: AccountId, removeMessages: Boolean) -> Unit,
-    onEditingNameValueChanged: (String) -> Unit,
-    editingName: String?,
-    onEditNameClicked: () -> Unit,
-    onEditNameConfirmed: () -> Unit,
-    onEditNameCancelClicked: () -> Unit,
     onMemberClicked: (GroupMemberState) -> Unit,
     hideActionSheet: () -> Unit,
     clickedMember: GroupMemberState?,
-    canEditName: Boolean,
     groupName: String,
     members: List<GroupMemberState>,
     showAddMembers: Boolean,
@@ -141,7 +129,7 @@ fun EditGroup(
     Scaffold(
         topBar = {
             BackAppBar(
-                title = stringResource(id = R.string.groupEdit),
+                title = stringResource(id = R.string.manageMembers),
                 onBack = onBack,
             )
         },
@@ -151,79 +139,15 @@ fun EditGroup(
             GroupMinimumVersionBanner()
 
             // Group name title
-            Crossfade(editingName != null, label = "Editable group name") { showNameEditing ->
-                if (showNameEditing) {
-                    GroupNameContainer {
-                        IconButton(
-                            modifier = Modifier.size(LocalDimensions.current.spacing),
-                            onClick = onEditNameCancelClicked
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_x),
-                                contentDescription = stringResource(R.string.AccessibilityId_cancel),
-                                tint = LocalColors.current.text,
-                            )
-                        }
-
-                        SessionOutlinedTextField(
-                            modifier = Modifier
-                                .widthIn(
-                                    min = LocalDimensions.current.mediumSpacing,
-                                    max = maxNameWidth
-                                )
-                                .qaTag(R.string.AccessibilityId_groupName),
-                            text = editingName.orEmpty(),
-                            onChange = onEditingNameValueChanged,
-                            textStyle = LocalType.current.h8,
-                            singleLine = true,
-                            innerPadding = PaddingValues(
-                                horizontal = LocalDimensions.current.spacing,
-                                vertical = LocalDimensions.current.smallSpacing
-                            )
-                        )
-
-                    IconButton(
-                        modifier = Modifier.size(LocalDimensions.current.spacing),
-                        onClick = onEditNameConfirmed
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_check),
-                            contentDescription = stringResource(R.string.AccessibilityId_confirm),
-                            tint = LocalColors.current.text,
-                        )
-                    }
-                }
-
-
-                } else {
-                    GroupNameContainer {
-                        Spacer(modifier = Modifier.weight(1f))
-                        Text(
-                            text = groupName,
-                            style = LocalType.current.h4,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier
-                                .widthIn(max = maxNameWidth)
-                                .padding(vertical = LocalDimensions.current.smallSpacing),
-                        )
-
-                    Box(modifier = Modifier.weight(1f)) {
-                        if (canEditName) {
-                            IconButton(
-                                modifier = Modifier.qaTag(R.string.AccessibilityId_groupName),
-                                onClick = onEditNameClicked
-                            ) {
-                                Icon(
-                                    painterResource(R.drawable.ic_pencil),
-                                    contentDescription = stringResource(R.string.edit),
-                                    tint = LocalColors.current.text,
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
+            Text(
+                text = groupName,
+                style = LocalType.current.h4,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .align(CenterHorizontally)
+                    .widthIn(max = maxNameWidth)
+                    .padding(vertical = LocalDimensions.current.smallSpacing),
+            )
 
             // Header & Add member button
             Row(
@@ -528,19 +452,7 @@ private fun EditGroupPreviewSheet() {
             onResendInviteClick = {},
             onPromoteClick = {},
             onRemoveClick = { _, _ -> },
-            onEditNameCancelClicked = {
-                setEditingName(null)
-            },
-            onEditNameConfirmed = {
-                setEditingName(null)
-            },
-            onEditNameClicked = {
-                setEditingName("Test Group")
-            },
-            editingName = editingName,
-            onEditingNameValueChanged = setEditingName,
             members = listOf(oneMember, twoMember, threeMember),
-            canEditName = true,
             groupName = "Test ",
             showAddMembers = true,
             onResendPromotionClick = {},
@@ -555,209 +467,6 @@ private fun EditGroupPreviewSheet() {
 }
 
 
-@Preview
-@Composable
-private fun EditGroupPreview3() {
-    PreviewTheme {
-        val oneMember = GroupMemberState(
-            accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234"),
-            name = "Test User",
-            avatarUIData = AvatarUIData(
-                listOf(
-                    AvatarUIElement(
-                        name = "TOTO",
-                        color = primaryBlue
-                    )
-                )
-            ),
-            status = GroupMember.Status.INVITE_SENT,
-            highlightStatus = false,
-            canPromote = true,
-            canRemove = true,
-            canResendInvite = false,
-            canResendPromotion = false,
-            showAsAdmin = false,
-            clickable = true,
-            statusLabel = "Invited"
-        )
-        val twoMember = GroupMemberState(
-            accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1235"),
-            name = "Test User 2",
-            avatarUIData = AvatarUIData(
-                listOf(
-                    AvatarUIElement(
-                        name = "TOTO",
-                        color = primaryBlue
-                    )
-                )
-            ),
-            status = GroupMember.Status.PROMOTION_FAILED,
-            highlightStatus = true,
-            canPromote = true,
-            canRemove = true,
-            canResendInvite = false,
-            canResendPromotion = false,
-            showAsAdmin = true,
-            clickable = true,
-            statusLabel = "Promotion failed"
-        )
-        val threeMember = GroupMemberState(
-            accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1236"),
-            name = "Test User 3",
-            avatarUIData = AvatarUIData(
-                listOf(
-                    AvatarUIElement(
-                        name = "TOTO",
-                        color = primaryBlue
-                    )
-                )
-            ),
-            status = null,
-            highlightStatus = false,
-            canPromote = true,
-            canRemove = true,
-            canResendInvite = false,
-            canResendPromotion = false,
-            showAsAdmin = false,
-            clickable = true,
-            statusLabel = ""
-        )
-
-        val (editingName, setEditingName) = remember { mutableStateOf<String?>(null) }
-
-        EditGroup(
-            onBack = {},
-            onAddMemberClick = {},
-            onResendInviteClick = {},
-            onPromoteClick = {},
-            onRemoveClick = { _, _ -> },
-            onEditNameCancelClicked = {
-                setEditingName(null)
-            },
-            onEditNameConfirmed = {
-                setEditingName(null)
-            },
-            onEditNameClicked = {
-                setEditingName("Test Group")
-            },
-            editingName = editingName,
-            onEditingNameValueChanged = setEditingName,
-            members = listOf(oneMember, twoMember, threeMember),
-            canEditName = true,
-            groupName = "Test ",
-            showAddMembers = true,
-            onResendPromotionClick = {},
-            showingError = "Error",
-            onErrorDismissed = {},
-            onMemberClicked = {},
-            hideActionSheet = {},
-            clickedMember = null,
-            showLoading = true,
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun EditGroupPreview() {
-    PreviewTheme {
-        val oneMember = GroupMemberState(
-            accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234"),
-            name = "Test User",
-            avatarUIData = AvatarUIData(
-                listOf(
-                    AvatarUIElement(
-                        name = "TOTO",
-                        color = primaryBlue
-                    )
-                )
-            ),
-            status = GroupMember.Status.INVITE_SENT,
-            highlightStatus = false,
-            canPromote = true,
-            canRemove = true,
-            canResendInvite = false,
-            canResendPromotion = false,
-            showAsAdmin = false,
-            clickable = true,
-            statusLabel = "Invited"
-        )
-        val twoMember = GroupMemberState(
-            accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1235"),
-            name = "Test User 2",
-            avatarUIData = AvatarUIData(
-                listOf(
-                    AvatarUIElement(
-                        name = "TOTO",
-                        color = primaryBlue
-                    )
-                )
-            ),
-            status = GroupMember.Status.PROMOTION_FAILED,
-            highlightStatus = true,
-            canPromote = true,
-            canRemove = true,
-            canResendInvite = false,
-            canResendPromotion = false,
-            showAsAdmin = true,
-            clickable = true,
-            statusLabel = "Promotion failed"
-        )
-        val threeMember = GroupMemberState(
-            accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1236"),
-            name = "Test User 3",
-            avatarUIData = AvatarUIData(
-                listOf(
-                    AvatarUIElement(
-                        name = "TOTO",
-                        color = primaryBlue
-                    )
-                )
-            ),
-            status = null,
-            highlightStatus = false,
-            canPromote = true,
-            canRemove = true,
-            canResendInvite = false,
-            canResendPromotion = false,
-            showAsAdmin = false,
-            clickable = true,
-            statusLabel = ""
-        )
-
-        val (editingName, setEditingName) = remember { mutableStateOf<String?>(null) }
-
-        EditGroup(
-            onBack = {},
-            onAddMemberClick = {},
-            onResendInviteClick = {},
-            onPromoteClick = {},
-            onRemoveClick = { _, _ -> },
-            onEditNameCancelClicked = {
-                setEditingName(null)
-            },
-            onEditNameConfirmed = {
-                setEditingName(null)
-            },
-            onEditNameClicked = {
-                setEditingName("Test Group")
-            },
-            editingName = editingName,
-            onEditingNameValueChanged = setEditingName,
-            members = listOf(oneMember, twoMember, threeMember),
-            canEditName = true,
-            groupName = "Test name that is very very long indeed because many words in it",
-            showAddMembers = true,
-            onResendPromotionClick = {},
-            showingError = "Error",
-            onErrorDismissed = {},
-            onMemberClicked = {},
-            hideActionSheet = {},
-            clickedMember = null,
-            showLoading = false,
-        )
-    }
-}
 
 @Preview
 @Composable
@@ -835,13 +544,7 @@ private fun EditGroupEditNamePreview(
             onResendInviteClick = {},
             onPromoteClick = {},
             onRemoveClick = { _, _ -> },
-            onEditNameCancelClicked = {},
-            onEditNameConfirmed = {},
-            onEditNameClicked = {},
-            editingName = "Test name that is very very long indeed because many words in it",
-            onEditingNameValueChanged = { },
             members = listOf(oneMember, twoMember, threeMember),
-            canEditName = true,
             groupName = "Test name that is very very long indeed because many words in it",
             showAddMembers = true,
             onResendPromotionClick = {},
