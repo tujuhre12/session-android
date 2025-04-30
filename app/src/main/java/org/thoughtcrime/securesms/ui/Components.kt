@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
@@ -62,6 +63,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -907,4 +909,26 @@ private fun PreviewBaseExpandedTextLongExpandedMaxLines() {
             showScroll = true
         )
     }
+}
+
+/**
+ * Applies an opinionated safety width on content based our design decisions:
+ * - Max width of maxContentWidth
+ * - Extra horizontal padding
+ * - Smaller extra padding for small devices (arbitrarily decided as devices below 380 width
+ */
+@Composable
+fun Modifier.safeContentWidth(
+    regularExtraPadding: Dp = LocalDimensions.current.mediumSpacing,
+    smallExtraPadding: Dp = LocalDimensions.current.xsSpacing,
+): Modifier {
+    val screenWidthDp = LocalConfiguration.current.screenWidthDp.dp
+
+    return this.widthIn(max = LocalDimensions.current.maxContentWidth)
+        .padding(
+            horizontal = when {
+                screenWidthDp < 380.dp -> smallExtraPadding
+                else -> regularExtraPadding
+            }
+        )
 }

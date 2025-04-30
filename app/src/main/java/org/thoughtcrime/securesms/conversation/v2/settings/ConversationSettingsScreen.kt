@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -41,6 +42,7 @@ import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.Cell
@@ -52,6 +54,7 @@ import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.getCellBottomShape
 import org.thoughtcrime.securesms.ui.getCellTopShape
 import org.thoughtcrime.securesms.ui.qaTag
+import org.thoughtcrime.securesms.ui.safeContentWidth
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -63,6 +66,7 @@ import org.thoughtcrime.securesms.ui.theme.primaryBlue
 import org.thoughtcrime.securesms.ui.theme.transparentButtonColors
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
+import java.util.Locale
 
 @Composable
 fun ConversationSettingsScreen(
@@ -117,7 +121,8 @@ fun ConversationSettings(
 
             // name and edit icon
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth()
+                    .safeContentWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
@@ -134,7 +139,6 @@ fun ConversationSettings(
                 )
 
                 if(data.canEditName) {
-                    //todo UCS check rtl ltr behaviour
                     Image(
                         modifier = Modifier.padding(start = LocalDimensions.current.xxsSpacing)
                             .size(LocalDimensions.current.iconSmall),
@@ -149,6 +153,7 @@ fun ConversationSettings(
             if(!data.description.isNullOrEmpty()){
                 Spacer(modifier = Modifier.height(LocalDimensions.current.xxsSpacing))
                 ExpandableText(
+                    modifier = Modifier.safeContentWidth(),
                     text = data.description,
                     textStyle = LocalType.current.small,
                     textColor = LocalColors.current.textSecondary,
@@ -169,6 +174,7 @@ fun ConversationSettings(
                 }
                 Text(
                     modifier = Modifier.qaTag(R.string.qa_conversation_settings_account_id)
+                        .safeContentWidth()
                         .pointerInput(Unit) {
                             detectTapGestures(
                                 onLongPress = { onLongPress() }
@@ -350,7 +356,8 @@ private fun ConversationSettings1on1Preview() {
     }
 }
 
-@Preview
+@Preview(locale = "en")
+@Preview(locale = "ar")
 @Composable
 private fun ConversationSettings1on1LongNamePreview() {
     PreviewTheme {
