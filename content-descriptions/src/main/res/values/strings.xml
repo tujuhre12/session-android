@@ -82,9 +82,14 @@
     <string name="AccessibilityId_search">Search</string>
     <!-- Conversation settings -->
     <string name="qa_conversation_settings_avatar">profile-picture</string>
-    <string name="qa_conversation_settings_name">username</string>
     <string name="qa_conversation_settings_edit_name">edit-profile-icon</string>
-    <string name="qa_conversation_settings_display_name">display-name</string>
+    <string name="qa_conversation_settings_display_name_nts">your-profile-name</string>
+    <string name="qa_conversation_settings_display_name_1on1">preferred-display-name</string>
+    <string name="qa_conversation_settings_display_name_groups">group-name</string>
+    <string name="qa_conversation_settings_display_name_community">community-name</string>
+    <string name="qa_conversation_settings_description_1on1">fallback-display-name</string>
+    <string name="qa_conversation_settings_description_groups">group-description</string>
+    <string name="qa_conversation_settings_description_community">community-description</string>
     <string name="qa_conversation_settings_account_id">account-id</string>
     <string name="qa_conversation_settings_copy_account">copy-account-id-menu-option</string>
     <string name="qa_conversation_settings_search">search-conversation-menu-option</string>

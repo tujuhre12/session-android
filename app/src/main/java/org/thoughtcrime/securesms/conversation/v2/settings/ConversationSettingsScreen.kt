@@ -127,7 +127,7 @@ fun ConversationSettings(
                 horizontalArrangement = Arrangement.Center
             ) {
                 Text(
-                    modifier = Modifier.qaTag(R.string.qa_conversation_settings_name)
+                    modifier = Modifier.qaTag(data.nameQaTag)
                         .weight(
                             weight = 1.0f,
                             fill = false,
@@ -153,7 +153,8 @@ fun ConversationSettings(
             if(!data.description.isNullOrEmpty()){
                 Spacer(modifier = Modifier.height(LocalDimensions.current.xxsSpacing))
                 ExpandableText(
-                    modifier = Modifier.safeContentWidth(),
+                    modifier = Modifier.safeContentWidth()
+                        .qaTag(data.descriptionQaTag),
                     text = data.description,
                     textStyle = LocalType.current.small,
                     textColor = LocalColors.current.textSecondary,

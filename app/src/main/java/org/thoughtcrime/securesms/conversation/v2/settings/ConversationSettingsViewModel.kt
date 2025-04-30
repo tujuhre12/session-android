@@ -122,31 +122,39 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             else -> false
         }
 
-        // description / display name
-        val description: String? = when{
+        // description / display name with QA tags
+        val (description: String?, descriptionQaTag: String?) = when{
             // for 1on1, if the user has a nickname it should be displayed as the
             // main name, and the description should show the real name in parentheses
             conversation.is1on1 -> {
-                if(configContact?.nickname?.isNotEmpty() == true &&
-                    configContact.name.isNotEmpty()) {
-                   "(${configContact.name})"
-                } else null
+                if(configContact?.nickname?.isNotEmpty() == true && configContact.name.isNotEmpty()) {
+                    (
+                        "(${configContact.name})" to // description
+                        context.getString(R.string.qa_conversation_settings_description_1on1) // description qa tag
+                    )
+                } else (null to null)
             }
 
             conversation.isGroupV2Recipient -> {
-                if(groupV2 == null) null
+                if(groupV2 == null) (null to null)
                 else {
-                    configFactory.withGroupConfigs(AccountId(groupV2!!.groupAccountId)){
-                        it.groupInfo.getDescription()
-                    }
+                    (
+                        configFactory.withGroupConfigs(AccountId(groupV2!!.groupAccountId)){
+                            it.groupInfo.getDescription()
+                        } to // description
+                        context.getString(R.string.qa_conversation_settings_description_groups) // description qa tag
+                    )
                 }
             }
 
-            conversation.isCommunityRecipient -> {
-                community?.description //todo UCS currently this property is null for existing communitites and is never updated if the community was already added before caring for the description
+            conversation.isCommunityRecipient -> { //todo UCS currently this property is null for existing communities and is never updated if the community was already added before caring for the description
+                (
+                    community?.description to // description
+                    context.getString(R.string.qa_conversation_settings_description_community) // description qa tag
+                )
             }
 
-            else -> null
+            else -> (null to null)
         }
 
         // account ID
@@ -351,8 +359,16 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             _uiState.value.copy(
                 name = conversation.takeUnless { it.isLocalNumber }?.name ?: context.getString(
                     R.string.noteToSelf),
+                nameQaTag = when {
+                    conversation.isLocalNumber -> context.getString(R.string.qa_conversation_settings_display_name_nts)
+                    conversation.is1on1 -> context.getString(R.string.qa_conversation_settings_display_name_1on1)
+                    conversation.isGroupV2Recipient -> context.getString(R.string.qa_conversation_settings_display_name_groups)
+                    conversation.isCommunityRecipient -> context.getString(R.string.qa_conversation_settings_display_name_community)
+                    else -> null
+                },
                 canEditName = canEditName,
                 description = description,
+                descriptionQaTag = descriptionQaTag,
                 accountId = accountId,
                 avatarUIData = avatarUtils.getUIDataFromRecipient(conversation),
                 categories = optionData
@@ -591,8 +607,10 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     data class UIState(
         val avatarUIData: AvatarUIData,
         val name: String = "",
+        val nameQaTag: String? = null,
         val canEditName: Boolean = false,
         val description: String? = null,
+        val descriptionQaTag: String? = null,
         val accountId: String? = null,
         val categories: List<OptionsCategory> = emptyList()
     )

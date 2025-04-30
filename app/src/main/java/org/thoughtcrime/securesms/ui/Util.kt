@@ -96,7 +96,10 @@ inline fun <T : View> T.afterMeasured(crossinline block: T.() -> Unit) {
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun Modifier.qaTag(tag: String) = semantics { testTagsAsResourceId = true }.testTag(tag)
+fun Modifier.qaTag(tag: String?): Modifier {
+    if (tag == null) return this
+    return this.semantics { testTagsAsResourceId = true }.testTag(tag)
+}
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
