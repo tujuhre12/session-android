@@ -9,6 +9,8 @@ import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity.CLIPBOARD_SERVICE
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.cash.copper.flow.observeQuery
+import com.squareup.phrase.Phrase
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -20,7 +22,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
@@ -31,6 +32,7 @@ import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ExpirationUtil
+import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getGroup
@@ -38,6 +40,7 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
+import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.ui.getSubbedString
@@ -56,7 +59,8 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val storage: StorageProtocol,
     private val textSecurePreferences: TextSecurePreferences,
-    private val navigator: ConversationSettingsNavigator
+    private val navigator: ConversationSettingsNavigator,
+    private val threadDb: ThreadDatabase,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<UIState> = MutableStateFlow(
@@ -82,7 +86,15 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         viewModelScope.launch {
             (context.contentResolver.observeChanges(DatabaseContentProviders.Conversation.getUriForThread(threadId)) as Flow<*>)
                 .debounce(200L)
-                .onStart { emit(Unit) }
+                .collect{
+                    if(recipient != null) getStateFromRecipient()
+                }
+        }
+
+        viewModelScope.launch {
+            context.contentResolver
+                .observeQuery(DatabaseContentProviders.Recipient.CONTENT_URI)
+                .debounce(200L)
                 .collect{
                     if(recipient != null) getStateFromRecipient()
                 }
@@ -181,6 +193,8 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             )
         } else null
 
+        val pinned = threadDb.isPinned(threadId)
+
         // organise the setting options
         val optionData = when {
             conversation.isLocalNumber -> {
@@ -191,7 +205,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                     optionCopyAccountId,
                     optionSearch,
                     optionDisappearingMessage(disappearingSubtitle),
-                    optionPin, //todo UCS pin/unpin logic
+                    if(pinned) optionUnpin else optionPin,
                     optionAttachments,
                 ))
 
@@ -221,13 +235,13 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                     optionCopyAccountId,
                     optionSearch,
                     optionDisappearingMessage(disappearingSubtitle),
-                    optionPin, //todo UCS pin/unpin logic
+                    if(pinned) optionUnpin else optionPin,
                     optionNotifications(null), //todo UCS notifications logic
                     optionAttachments,
                 ))
 
                 dangerOptions.addAll(listOf(
-                    optionBlock,
+                    if(recipient?.isBlocked == true) optionUnblock else optionBlock,
                     optionClearMessages,
                     optionDeleteConversation,
                     optionDeleteContact
@@ -259,7 +273,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 }
 
                 mainOptions.addAll(listOf(
-                    optionPin, //todo UCS pin/unpin logic
+                    if(pinned) optionUnpin else optionPin,
                     optionNotifications(null), //todo UCS notifications logic
                     optionGroupMembers,
                     optionAttachments,
@@ -328,7 +342,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 mainOptions.addAll(listOf(
                     optionCopyCommunityURL,
                     optionSearch,
-                    optionPin, //todo UCS pin/unpin logic
+                    if(pinned) optionUnpin else optionPin,
                     optionNotifications(null), //todo UCS notifications logic
                     optionInviteMembers,
                     optionAttachments,
@@ -403,9 +417,78 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         }
     }
 
+    private fun pinConversation(){
+        viewModelScope.launch {
+            storage.setPinned(threadId, true)
+        }
+    }
+
+    private fun unpinConversation(){
+        viewModelScope.launch {
+            storage.setPinned(threadId, false)
+        }
+    }
+
+    private fun confirmBlockUser(){
+        _uiState.update {
+            it.copy(
+                showSimpleDialog = Dialog(
+                    title = context.getString(R.string.block),
+                    message = Phrase.from(context, R.string.blockDescription)
+                        .put(NAME_KEY, recipient?.name ?: "")
+                        .format(),
+                    positiveText = context.getString(R.string.block),
+                    negativeText = context.getString(R.string.cancel),
+                    positiveQaTag = context.getString(R.string.qa_conversation_settings_dialog_block_confirm),
+                    negativeQaTag = context.getString(R.string.qa_conversation_settings_dialog_block_cancel),
+                    onPositive = ::blockUser,
+                    onNegative = {}
+                )
+            )
+        }
+    }
+
+    private fun confirmUnblockUser(){
+        _uiState.update {
+            it.copy(
+                showSimpleDialog = Dialog(
+                    title = context.getString(R.string.blockUnblock),
+                    message = Phrase.from(context, R.string.blockUnblockName)
+                        .put(NAME_KEY, recipient?.name ?: "")
+                        .format(),
+                    positiveText = context.getString(R.string.blockUnblock),
+                    negativeText = context.getString(R.string.cancel),
+                    positiveQaTag = context.getString(R.string.qa_conversation_settings_dialog_unblock_confirm),
+                    negativeQaTag = context.getString(R.string.qa_conversation_settings_dialog_unblock_cancel),
+                    onPositive = ::unblockUser,
+                    onNegative = {}
+                )
+            )
+        }
+    }
+
+
+    private fun blockUser() {
+        if(recipient == null) return
+        viewModelScope.launch {
+            repository.setBlocked(recipient!!, true)
+        }
+    }
+
+    private fun unblockUser() {
+        if(recipient == null) return
+        viewModelScope.launch {
+            repository.setBlocked(recipient!!, false)
+        }
+    }
+
     fun onCommand(command: Commands) {
         when (command) {
             is Commands.CopyAccountId -> copyAccountId()
+
+            is Commands.HideSimpleDialog -> _uiState.update {
+                it.copy(showSimpleDialog = null)
+            }
         }
     }
 
@@ -417,6 +500,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
     sealed interface Commands {
         data object CopyAccountId : Commands
+        data object HideSimpleDialog : Commands
     }
 
     @AssistedFactory
@@ -460,7 +544,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             name = context.getString(R.string.pinConversation),
             icon = R.drawable.ic_pin,
             qaTag = R.string.qa_conversation_settings_pin,
-            onClick = ::copyAccountId //todo UCS get proper method
+            onClick = ::pinConversation
         )
     }
 
@@ -469,7 +553,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             name = context.getString(R.string.pinUnpinConversation),
             icon = R.drawable.ic_pin_off,
             qaTag = R.string.qa_conversation_settings_pin,
-            onClick = ::copyAccountId //todo UCS get proper method
+            onClick = ::unpinConversation
         )
     }
 
@@ -497,9 +581,18 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private val optionBlock: OptionsItem by lazy{
         OptionsItem(
             name = context.getString(R.string.block),
-            icon = R.drawable.ic_ban,
+            icon = R.drawable.ic_user_round_x,
             qaTag = R.string.qa_conversation_settings_block,
-            onClick = ::copyAccountId //todo UCS get proper method
+            onClick = ::confirmBlockUser
+        )
+    }
+
+    private val optionUnblock: OptionsItem by lazy{
+        OptionsItem(
+            name = context.getString(R.string.blockUnblock),
+            icon = R.drawable.ic_user_round_tick,
+            qaTag = R.string.qa_conversation_settings_block,
+            onClick = ::confirmUnblockUser
         )
     }
 
@@ -620,7 +713,22 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         val description: String? = null,
         val descriptionQaTag: String? = null,
         val accountId: String? = null,
+        val showSimpleDialog: Dialog? = null,
         val categories: List<OptionsCategory> = emptyList()
+    )
+
+    /**
+     * Data to display a simple dialog
+     */
+    data class Dialog(
+        val title: String,
+        val message: CharSequence,
+        val positiveText: String,
+        val negativeText: String,
+        val positiveQaTag: String?,
+        val negativeQaTag: String?,
+        val onPositive: () -> Unit,
+        val onNegative: () -> Unit
     )
 
     data class OptionsCategory(

@@ -2,7 +2,6 @@ package org.thoughtcrime.securesms.conversation.v2
 
 import android.app.Application
 import android.content.Context
-import android.content.Intent
 import android.view.MenuItem
 import android.widget.Toast
 import androidx.annotation.StringRes
@@ -57,7 +56,6 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.audio.AudioSlidePlayer
-import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesActivity
 import org.thoughtcrime.securesms.conversation.v2.menus.ConversationMenuHelper
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
@@ -551,7 +549,7 @@ class ConversationViewModel(
         // inviting admin will be non-null if this request is a closed group message request
         val recipient = invitingAdmin ?: recipient ?: return Log.w("Loki", "Recipient was null for block action")
         if (recipient.isContactRecipient || recipient.isGroupV2Recipient) {
-            repository.setBlocked(threadId, recipient, true)
+            repository.setBlocked(recipient, true)
         }
 
         if (this.recipient?.isGroupV2Recipient == true) {
@@ -562,7 +560,7 @@ class ConversationViewModel(
     fun unblock() {
         val recipient = recipient ?: return Log.w("Loki", "Recipient was null for unblock action")
         if (recipient.isContactRecipient) {
-            repository.setBlocked(threadId, recipient, false)
+            repository.setBlocked(recipient, false)
         }
     }
 

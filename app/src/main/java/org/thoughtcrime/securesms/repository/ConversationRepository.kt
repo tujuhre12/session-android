@@ -54,7 +54,7 @@ interface ConversationRepository {
     fun getDraft(threadId: Long): String?
     fun clearDrafts(threadId: Long)
     fun inviteContacts(threadId: Long, contacts: List<Recipient>)
-    fun setBlocked(threadId: Long, recipient: Recipient, blocked: Boolean)
+    fun setBlocked(recipient: Recipient, blocked: Boolean)
     fun markAsDeletedLocally(messages: Set<MessageRecord>, displayedMessage: String)
     fun deleteMessages(messages: Set<MessageRecord>, threadId: Long)
     fun deleteAllLocalMessagesInThreadFromSenderOfMessage(messageRecord: MessageRecord)
@@ -185,7 +185,7 @@ class DefaultConversationRepository @Inject constructor(
     }
 
     // This assumes that recipient.isContactRecipient is true
-    override fun setBlocked(threadId: Long, recipient: Recipient, blocked: Boolean) {
+    override fun setBlocked(recipient: Recipient, blocked: Boolean) {
         if (recipient.isContactRecipient) {
             storage.setBlocked(listOf(recipient), blocked)
         }
@@ -399,7 +399,7 @@ class DefaultConversationRepository @Inject constructor(
                     deleteMessageRequest(reader.current)
                     val recipient = reader.current.recipient
                     if (block && !recipient.isGroupV2Recipient) {
-                        setBlocked(reader.current.threadId, recipient, true)
+                        setBlocked(recipient, true)
                     }
                 }
             }

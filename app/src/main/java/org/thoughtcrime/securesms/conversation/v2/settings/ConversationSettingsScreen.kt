@@ -1,8 +1,6 @@
 package org.thoughtcrime.securesms.conversation.v2.settings
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -18,7 +16,6 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -30,7 +27,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -42,15 +38,18 @@ import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import network.loki.messenger.R
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.*
+import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.Cell
+import org.thoughtcrime.securesms.ui.DialogButtonModel
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.ExpandableText
+import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LargeItemButton
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.BackAppBar
+import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.getCellBottomShape
 import org.thoughtcrime.securesms.ui.getCellTopShape
 import org.thoughtcrime.securesms.ui.qaTag
@@ -66,7 +65,6 @@ import org.thoughtcrime.securesms.ui.theme.primaryBlue
 import org.thoughtcrime.securesms.ui.theme.transparentButtonColors
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
-import java.util.Locale
 
 @Composable
 fun ConversationSettingsScreen(
@@ -209,6 +207,29 @@ fun ConversationSettings(
             }
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+        }
+
+        // Dialogs
+        if(data.showSimpleDialog != null){
+            AlertDialog(
+                onDismissRequest = {
+                    // hide dialog
+                    sendCommand(HideSimpleDialog)
+                },
+                title = annotatedStringResource(data.showSimpleDialog.title),
+                text = annotatedStringResource(data.showSimpleDialog.message),
+                buttons = listOf(
+                    DialogButtonModel(
+                        text = GetString(data.showSimpleDialog.positiveText),
+                        color = LocalColors.current.danger,
+                        onClick = data.showSimpleDialog.onPositive
+                    ),
+                    DialogButtonModel(
+                        text = GetString(data.showSimpleDialog.negativeText),
+                        onClick = data.showSimpleDialog.onNegative
+                    )
+                )
+            )
         }
     }
 }
