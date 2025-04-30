@@ -17,11 +17,16 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
@@ -49,7 +54,7 @@ import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.observeChanges
 
 
-@OptIn(FlowPreview::class)
+@OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 @HiltViewModel(assistedFactory = ConversationSettingsViewModel.Factory::class)
 class ConversationSettingsViewModel @AssistedInject constructor(
     @Assisted private val threadId: Long,
@@ -82,30 +87,26 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     }
 
     init {
-        // update data when we have changes to the underlying conversation/thread
-        viewModelScope.launch {
-            (context.contentResolver.observeChanges(DatabaseContentProviders.Conversation.getUriForThread(threadId)) as Flow<*>)
-                .debounce(200L)
-                .collect{
-                    if(recipient != null) getStateFromRecipient()
-                }
-        }
-
-        viewModelScope.launch {
-            context.contentResolver
-                .observeQuery(DatabaseContentProviders.Recipient.CONTENT_URI)
-                .debounce(200L)
-                .collect{
-                    if(recipient != null) getStateFromRecipient()
-                }
-        }
-
-        // update data when we have a recipient
+        // update data when we have a recipient and update when there are changes from the thread or recipient
         viewModelScope.launch(Dispatchers.Default) {
-            repository.recipientUpdateFlow(threadId).collect{
-                recipient = it
-                getStateFromRecipient()
-            }
+            repository.recipientUpdateFlow(threadId) // get the recipient
+                .flatMapLatest { recipient -> // get updates from the thread or recipient
+                    merge(
+                        context.contentResolver
+                            .observeQuery(DatabaseContentProviders.Recipient.CONTENT_URI), // recipient updates
+                        (context.contentResolver.observeChanges(
+                            DatabaseContentProviders.Conversation.getUriForThread(threadId)
+                        ) as Flow<*>) // thread updates
+                    ).map {
+                        recipient // return the recipient
+                    }
+                        .onStart { emit(recipient) } // make sure there's a value straight away
+                        .debounce(200L)
+                }
+                .collect {
+                    recipient = it
+                    getStateFromRecipient()
+                }
         }
     }
 
