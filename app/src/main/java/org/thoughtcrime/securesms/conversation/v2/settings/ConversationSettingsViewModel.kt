@@ -15,8 +15,12 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
@@ -33,13 +37,16 @@ import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
+import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
+import org.thoughtcrime.securesms.util.observeChanges
 
 
+@OptIn(FlowPreview::class)
 @HiltViewModel(assistedFactory = ConversationSettingsViewModel.Factory::class)
 class ConversationSettingsViewModel @AssistedInject constructor(
     @Assisted private val threadId: Long,
@@ -71,6 +78,17 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     }
 
     init {
+        // update data when we have changes to the underlying conversation/thread
+        viewModelScope.launch {
+            (context.contentResolver.observeChanges(DatabaseContentProviders.Conversation.getUriForThread(threadId)) as Flow<*>)
+                .debounce(200L)
+                .onStart { emit(Unit) }
+                .collect{
+                    if(recipient != null) getStateFromRecipient()
+                }
+        }
+
+        // update data when we have a recipient
         viewModelScope.launch(Dispatchers.Default) {
             repository.recipientUpdateFlow(threadId).collect{
                 recipient = it
@@ -125,7 +143,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             }
 
             conversation.isCommunityRecipient -> {
-                community?.description
+                community?.description //todo UCS currently this property is null for existing communitites and is never updated if the community was already added before caring for the description
             }
 
             else -> null
@@ -137,6 +155,24 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             else -> null
         }
 
+        // disappearing message type
+        val expiration = storage.getExpirationConfiguration(threadId)
+        val disappearingSubtitle = if(expiration?.isEnabled == true) {
+            // Get the type of disappearing message and the abbreviated duration..
+            val dmTypeString = when (expiration.expiryMode) {
+                is ExpiryMode.AfterRead -> R.string.disappearingMessagesDisappearAfterReadState
+                else -> R.string.disappearingMessagesDisappearAfterSendState
+            }
+            val durationAbbreviated =
+                ExpirationUtil.getExpirationAbbreviatedDisplayValue(expiration.expiryMode.expirySeconds)
+
+            // ..then substitute into the string..
+            context.getSubbedString(
+                dmTypeString,
+                TIME_KEY to durationAbbreviated
+            )
+        } else null
+
         // organise the setting options
         val optionData = when {
             conversation.isLocalNumber -> {
@@ -146,7 +182,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 mainOptions.addAll(listOf(
                     optionCopyAccountId,
                     optionSearch,
-                    optionDisappearingMessage,
+                    optionDisappearingMessage(disappearingSubtitle),
                     optionPin, //todo UCS pin/unpin logic
                     optionAttachments,
                 ))
@@ -176,7 +212,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 mainOptions.addAll(listOf(
                     optionCopyAccountId,
                     optionSearch,
-                    optionDisappearingMessage,
+                    optionDisappearingMessage(disappearingSubtitle),
                     optionPin, //todo UCS pin/unpin logic
                     optionNotifications(null), //todo UCS notifications logic
                     optionAttachments,
@@ -211,7 +247,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
                 // for non admins, disappearing messages is in the non admin section
                 if(!isAdmin){
-                    mainOptions.add(optionDisappearingMessage)
+                    mainOptions.add(optionDisappearingMessage(disappearingSubtitle))
                 }
 
                 mainOptions.addAll(listOf(
@@ -233,7 +269,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                     // admin options
                     adminOptions.addAll(listOf(
                         optionManageMembers,
-                        optionDisappearingMessage
+                        optionDisappearingMessage(disappearingSubtitle)
                     ))
 
                     // the returned options for group admins
@@ -307,8 +343,6 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                     )
                 )
             }
-
-            //todo UCS handle groupsV2 and community
 
             else -> emptyList()
         }
@@ -384,26 +418,9 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         )
     }
 
-    //todo UCS will the subtitle need to be dynamic in order to update when the option changes?
-    private val optionDisappearingMessage: OptionsItem by lazy {
-        val expiration = storage.getExpirationConfiguration(threadId)
-        val subtitle = if(expiration?.isEnabled == true) {
-            // Get the type of disappearing message and the abbreviated duration..
-            val dmTypeString = when (expiration.expiryMode) {
-                is ExpiryMode.AfterRead -> R.string.disappearingMessagesDisappearAfterReadState
-                else -> R.string.disappearingMessagesDisappearAfterSendState
-            }
-            val durationAbbreviated =
-                ExpirationUtil.getExpirationAbbreviatedDisplayValue(expiration.expiryMode.expirySeconds)
 
-            // ..then substitute into the string..
-            context.getSubbedString(
-                dmTypeString,
-                TIME_KEY to durationAbbreviated
-            )
-        } else null
-
-        OptionsItem(
+    private fun optionDisappearingMessage(subtitle: String?): OptionsItem {
+        return OptionsItem(
             name = context.getString(R.string.disappearingMessages),
             subtitle = subtitle,
             icon = R.drawable.ic_timer,
