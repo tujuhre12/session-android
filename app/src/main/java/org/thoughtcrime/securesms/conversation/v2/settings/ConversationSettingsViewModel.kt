@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity.CLIPBOARD_SERVICE
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.cash.copper.flow.observeQuery
+import com.bumptech.glide.Glide
 import com.squareup.phrase.Phrase
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -51,7 +52,9 @@ import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
+import org.thoughtcrime.securesms.util.avatarOptions
 import org.thoughtcrime.securesms.util.observeChanges
+import kotlin.math.min
 
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
@@ -370,6 +373,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             else -> emptyList()
         }
 
+        val avatarData = avatarUtils.getUIDataFromRecipient(conversation)
         _uiState.update {
             _uiState.value.copy(
                 name = conversation.takeUnless { it.isLocalNumber }?.name ?: context.getString(
@@ -385,9 +389,17 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 description = description,
                 descriptionQaTag = descriptionQaTag,
                 accountId = accountId,
-                avatarUIData = avatarUtils.getUIDataFromRecipient(conversation),
+                avatarUIData = avatarData,
                 categories = optionData
             )
+        }
+
+        // also preload the larger version of the avatar in case the user goes to the fullscreen avatar
+        avatarData.elements.mapNotNull { it.contactPhoto }.forEach {
+            val  loadSize = min(context.resources.displayMetrics.widthPixels, context.resources.displayMetrics.heightPixels)
+            Glide.with(context).load(it)
+                .avatarOptions(loadSize)
+                .preload(loadSize, loadSize)
         }
     }
 

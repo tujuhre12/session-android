@@ -16,13 +16,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.bumptech.glide.integration.compose.CrossFade
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
@@ -40,6 +40,7 @@ import org.thoughtcrime.securesms.ui.theme.primaryGreen
 import org.thoughtcrime.securesms.util.AvatarBadge
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
+import org.thoughtcrime.securesms.util.avatarOptions
 
 
 @Composable
@@ -48,6 +49,7 @@ fun BaseAvatar(
     data: AvatarUIData,
     modifier: Modifier = Modifier,
     clip: Shape = CircleShape,
+    maxSizeLoad: Dp = LocalDimensions.current.iconLarge,
     badge: (@Composable () -> Unit)? = null,
 ) {
     Box(modifier = modifier.size(size)) {
@@ -61,7 +63,8 @@ fun BaseAvatar(
                 AvatarElement(
                     size = size,
                     data = data.elements.first(),
-                    clip = clip
+                    clip = clip,
+                    maxSizeLoad = maxSizeLoad
                 )
             }
             else -> {
@@ -71,13 +74,15 @@ fun BaseAvatar(
                     modifier = Modifier.align(Alignment.TopStart),
                     size = avatarSize,
                     data = data.elements[0],
-                    clip = clip
+                    clip = clip,
+                    maxSizeLoad = maxSizeLoad
                 )
                 AvatarElement(
                     modifier = Modifier.align(Alignment.BottomEnd),
                     size = avatarSize,
                     data = data.elements[1],
-                    clip = clip
+                    clip = clip,
+                    maxSizeLoad = maxSizeLoad
                 )
             }
         }
@@ -102,6 +107,7 @@ fun Avatar(
     data: AvatarUIData,
     modifier: Modifier = Modifier,
     clip: Shape = CircleShape,
+    maxSizeLoad: Dp = LocalDimensions.current.iconLarge,
     badge: AvatarBadge = AvatarBadge.None,
 ){
     BaseAvatar(
@@ -109,6 +115,7 @@ fun Avatar(
         modifier = modifier,
         data = data,
         clip = clip,
+        maxSizeLoad = maxSizeLoad,
         badge = when (badge) {
                 AvatarBadge.None -> null
 
@@ -130,7 +137,8 @@ private fun AvatarElement(
     size: Dp,
     modifier: Modifier = Modifier,
     data: AvatarUIElement,
-    clip: Shape = CircleShape
+    clip: Shape = CircleShape,
+    maxSizeLoad: Dp = LocalDimensions.current.iconLarge,
 ){
     Box(
         modifier = modifier.size(size)
@@ -141,15 +149,14 @@ private fun AvatarElement(
             .clip(clip),
     ) {
         if(data.contactPhoto != null){
+            val maxSizePx = with(LocalDensity.current) { maxSizeLoad.toPx().toInt() }
             GlideImage(
                 model = data.contactPhoto,
                 modifier = Modifier.fillMaxSize(),
                 contentDescription = null,
-                transition = CrossFade,
                 loading = placeholder(R.drawable.ic_user_filled_custom_padded),
                 requestBuilderTransform = {
-                    it.diskCacheStrategy(DiskCacheStrategy.NONE)
-                        .centerCrop()
+                    it.avatarOptions(maxSizePx)
                 }
             )
         } else if(!data.name.isNullOrEmpty()){

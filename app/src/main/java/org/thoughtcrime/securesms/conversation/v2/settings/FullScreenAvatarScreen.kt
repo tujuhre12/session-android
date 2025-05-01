@@ -10,9 +10,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
@@ -31,6 +33,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.min
 import org.thoughtcrime.securesms.ui.components.AppBarCloseIcon
 import org.thoughtcrime.securesms.ui.components.Avatar
@@ -69,8 +72,14 @@ fun FullscreenAvatarScreen(
                 mutableStateOf(Offset.Zero)
             }
 
+            // keep only the start / end paddings
+            val horizontalPadding = PaddingValues(
+                start = paddings.calculateStartPadding(LayoutDirection.Ltr),
+                end   = paddings.calculateEndPadding(LayoutDirection.Ltr)
+            )
+
             BoxWithConstraints(
-                modifier = Modifier.fillMaxSize().padding(paddings).consumeWindowInsets(paddings),
+                modifier = Modifier.fillMaxSize().padding(horizontalPadding),
                 contentAlignment = Alignment.Center
             ) {
                 // transformations states so we can pinch zoom
@@ -89,6 +98,7 @@ fun FullscreenAvatarScreen(
                     )
                 }
 
+                val imageSize = min(this.maxWidth, this.maxHeight)
                 Avatar(
                     modifier = Modifier
                         .sharedBounds(
@@ -106,7 +116,8 @@ fun FullscreenAvatarScreen(
                         // after offset
                         .transformable(state = state),
                     data = data,
-                    size = min(this.maxWidth, this.maxHeight),
+                    size = imageSize,
+                    maxSizeLoad = imageSize,
                     clip = RectangleShape
                 )
             }

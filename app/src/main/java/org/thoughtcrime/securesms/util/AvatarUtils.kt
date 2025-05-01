@@ -7,12 +7,15 @@ import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.Typeface
 import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import android.text.TextPaint
 import android.text.TextUtils
 import androidx.annotation.DrawableRes
 import androidx.compose.ui.graphics.Color
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.createBitmap
+import com.bumptech.glide.RequestBuilder
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -241,3 +244,9 @@ sealed class AvatarBadge(@DrawableRes val icon: Int){
     data object Admin: AvatarBadge(R.drawable.ic_crown_custom)
     data class Custom(@DrawableRes val iconRes: Int): AvatarBadge(iconRes)
 }
+
+// Helper function for our common avatar Glide options
+fun RequestBuilder<Drawable>.avatarOptions(sizePx: Int) = this.override(sizePx)
+    .dontTransform()
+    .diskCacheStrategy(DiskCacheStrategy.NONE)
+    .centerCrop()

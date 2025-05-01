@@ -27,6 +27,7 @@ import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.util.AvatarUtils
+import org.thoughtcrime.securesms.util.avatarOptions
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -205,28 +206,24 @@ class ProfilePictureView @JvmOverloads constructor(
             )
 
             if (signalProfilePicture != null && avatar != "0" && avatar != "") {
+                val maxSizePx = context.resources.getDimensionPixelSize(R.dimen.medium_profile_picture_size)
                 glide.load(signalProfilePicture)
+                    .avatarOptions(maxSizePx)
                     .placeholder(createUnknownRecipientDrawable())
-                    .centerCrop()
                     .error(glide.load(placeholder))
-                    .diskCacheStrategy(DiskCacheStrategy.NONE)
-                    .circleCrop()
                     .into(imageView)
             } else if(recipient.isGroupRecipient) { // for groups, if we have an unknown it needs to display the unknown icon but with a bg colour based on the group's id
                 glide.load(createUnknownRecipientDrawable(publicKey))
                     .centerCrop()
-                    .circleCrop()
                     .into(imageView)
             } else if (recipient.isCommunityRecipient && recipient.groupAvatarId == null) {
                 glide.load(unknownOpenGroupDrawable)
                     .centerCrop()
-                    .circleCrop()
                     .into(imageView)
             } else {
                 glide.load(placeholder)
                     .placeholder(createUnknownRecipientDrawable())
                     .centerCrop()
-                    .circleCrop()
                     .diskCacheStrategy(DiskCacheStrategy.NONE)
                     .into(imageView)
             }

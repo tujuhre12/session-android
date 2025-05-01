@@ -143,8 +143,9 @@ fun ConversationSettings(
                                 animatedVisibilityScope = animatedContentScope
                             )
                             .clickable { showFullscreenAvatar() },
-                        size = LocalDimensions.current.xlargeSpacing,
-                        data = data.avatarUIData
+                        size = LocalDimensions.current.iconXXLarge,
+                        maxSizeLoad = LocalDimensions.current.iconXXLarge, // make sure we load the right size
+                        data = data.avatarUIData,
                     )
 
                     Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
