@@ -100,8 +100,8 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                     ).map {
                         recipient // return the recipient
                     }
-                        .onStart { emit(recipient) } // make sure there's a value straight away
                         .debounce(200L)
+                        .onStart { emit(recipient) } // make sure there's a value straight away
                 }
                 .collect {
                     recipient = it
