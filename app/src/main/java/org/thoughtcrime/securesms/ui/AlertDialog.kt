@@ -55,6 +55,7 @@ import org.thoughtcrime.securesms.ui.theme.bold
 
 class DialogButtonModel(
     val text: GetString,
+    val qaTag: String? = null,
     val color: Color = Color.Unspecified,
     val dismissOnClick: Boolean = true,
     val enabled: Boolean = true,
@@ -165,7 +166,7 @@ fun AlertDialog(
                                     text = it.text(),
                                     modifier = Modifier
                                         .fillMaxHeight()
-                                        .qaTag(it.text.string())
+                                        .qaTag(it.qaTag ?: it.text.string())
                                         .weight(1f),
                                     color = it.color,
                                     enabled = it.enabled

@@ -9,14 +9,24 @@ import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity.CLIPBOARD_SERVICE
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.cash.copper.flow.observeQuery
+import com.squareup.phrase.Phrase
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
@@ -27,19 +37,24 @@ import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ExpirationUtil
+import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
+import org.thoughtcrime.securesms.database.DatabaseContentProviders
+import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
+import org.thoughtcrime.securesms.util.observeChanges
 
 
+@OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 @HiltViewModel(assistedFactory = ConversationSettingsViewModel.Factory::class)
 class ConversationSettingsViewModel @AssistedInject constructor(
     @Assisted private val threadId: Long,
@@ -49,7 +64,8 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val storage: StorageProtocol,
     private val textSecurePreferences: TextSecurePreferences,
-    private val navigator: ConversationSettingsNavigator
+    private val navigator: ConversationSettingsNavigator,
+    private val threadDb: ThreadDatabase,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<UIState> = MutableStateFlow(
@@ -71,11 +87,26 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     }
 
     init {
+        // update data when we have a recipient and update when there are changes from the thread or recipient
         viewModelScope.launch(Dispatchers.Default) {
-            repository.recipientUpdateFlow(threadId).collect{
-                recipient = it
-                getStateFromRecipient()
-            }
+            repository.recipientUpdateFlow(threadId) // get the recipient
+                .flatMapLatest { recipient -> // get updates from the thread or recipient
+                    merge(
+                        context.contentResolver
+                            .observeQuery(DatabaseContentProviders.Recipient.CONTENT_URI), // recipient updates
+                        (context.contentResolver.observeChanges(
+                            DatabaseContentProviders.Conversation.getUriForThread(threadId)
+                        ) as Flow<*>) // thread updates
+                    ).map {
+                        recipient // return the recipient
+                    }
+                        .debounce(200L)
+                        .onStart { emit(recipient) } // make sure there's a value straight away
+                }
+                .collect {
+                    recipient = it
+                    getStateFromRecipient()
+                }
         }
     }
 
@@ -104,31 +135,39 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             else -> false
         }
 
-        // description / display name
-        val description: String? = when{
+        // description / display name with QA tags
+        val (description: String?, descriptionQaTag: String?) = when{
             // for 1on1, if the user has a nickname it should be displayed as the
             // main name, and the description should show the real name in parentheses
             conversation.is1on1 -> {
-                if(configContact?.nickname?.isNotEmpty() == true &&
-                    configContact.name.isNotEmpty()) {
-                   "(${configContact.name})"
-                } else null
+                if(configContact?.nickname?.isNotEmpty() == true && configContact.name.isNotEmpty()) {
+                    (
+                        "(${configContact.name})" to // description
+                        context.getString(R.string.qa_conversation_settings_description_1on1) // description qa tag
+                    )
+                } else (null to null)
             }
 
             conversation.isGroupV2Recipient -> {
-                if(groupV2 == null) null
+                if(groupV2 == null) (null to null)
                 else {
-                    configFactory.withGroupConfigs(AccountId(groupV2!!.groupAccountId)){
-                        it.groupInfo.getDescription()
-                    }
+                    (
+                        configFactory.withGroupConfigs(AccountId(groupV2!!.groupAccountId)){
+                            it.groupInfo.getDescription()
+                        } to // description
+                        context.getString(R.string.qa_conversation_settings_description_groups) // description qa tag
+                    )
                 }
             }
 
-            conversation.isCommunityRecipient -> {
-                community?.description
+            conversation.isCommunityRecipient -> { //todo UCS currently this property is null for existing communities and is never updated if the community was already added before caring for the description
+                (
+                    community?.description to // description
+                    context.getString(R.string.qa_conversation_settings_description_community) // description qa tag
+                )
             }
 
-            else -> null
+            else -> (null to null)
         }
 
         // account ID
@@ -136,6 +175,26 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             conversation.is1on1 || conversation.isLocalNumber -> conversation.address.toString()
             else -> null
         }
+
+        // disappearing message type
+        val expiration = storage.getExpirationConfiguration(threadId)
+        val disappearingSubtitle = if(expiration?.isEnabled == true) {
+            // Get the type of disappearing message and the abbreviated duration..
+            val dmTypeString = when (expiration.expiryMode) {
+                is ExpiryMode.AfterRead -> R.string.disappearingMessagesDisappearAfterReadState
+                else -> R.string.disappearingMessagesDisappearAfterSendState
+            }
+            val durationAbbreviated =
+                ExpirationUtil.getExpirationAbbreviatedDisplayValue(expiration.expiryMode.expirySeconds)
+
+            // ..then substitute into the string..
+            context.getSubbedString(
+                dmTypeString,
+                TIME_KEY to durationAbbreviated
+            )
+        } else null
+
+        val pinned = threadDb.isPinned(threadId)
 
         // organise the setting options
         val optionData = when {
@@ -146,8 +205,8 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 mainOptions.addAll(listOf(
                     optionCopyAccountId,
                     optionSearch,
-                    optionDisappearingMessage,
-                    optionPin, //todo UCS pin/unpin logic
+                    optionDisappearingMessage(disappearingSubtitle),
+                    if(pinned) optionUnpin else optionPin,
                     optionAttachments,
                 ))
 
@@ -176,14 +235,14 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 mainOptions.addAll(listOf(
                     optionCopyAccountId,
                     optionSearch,
-                    optionDisappearingMessage,
-                    optionPin, //todo UCS pin/unpin logic
+                    optionDisappearingMessage(disappearingSubtitle),
+                    if(pinned) optionUnpin else optionPin,
                     optionNotifications(null), //todo UCS notifications logic
                     optionAttachments,
                 ))
 
                 dangerOptions.addAll(listOf(
-                    optionBlock,
+                    if(recipient?.isBlocked == true) optionUnblock else optionBlock,
                     optionClearMessages,
                     optionDeleteConversation,
                     optionDeleteContact
@@ -211,11 +270,11 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
                 // for non admins, disappearing messages is in the non admin section
                 if(!isAdmin){
-                    mainOptions.add(optionDisappearingMessage)
+                    mainOptions.add(optionDisappearingMessage(disappearingSubtitle))
                 }
 
                 mainOptions.addAll(listOf(
-                    optionPin, //todo UCS pin/unpin logic
+                    if(pinned) optionUnpin else optionPin,
                     optionNotifications(null), //todo UCS notifications logic
                     optionGroupMembers,
                     optionAttachments,
@@ -233,7 +292,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                     // admin options
                     adminOptions.addAll(listOf(
                         optionManageMembers,
-                        optionDisappearingMessage
+                        optionDisappearingMessage(disappearingSubtitle)
                     ))
 
                     // the returned options for group admins
@@ -284,7 +343,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 mainOptions.addAll(listOf(
                     optionCopyCommunityURL,
                     optionSearch,
-                    optionPin, //todo UCS pin/unpin logic
+                    if(pinned) optionUnpin else optionPin,
                     optionNotifications(null), //todo UCS notifications logic
                     optionInviteMembers,
                     optionAttachments,
@@ -308,8 +367,6 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 )
             }
 
-            //todo UCS handle groupsV2 and community
-
             else -> emptyList()
         }
 
@@ -317,8 +374,16 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             _uiState.value.copy(
                 name = conversation.takeUnless { it.isLocalNumber }?.name ?: context.getString(
                     R.string.noteToSelf),
+                nameQaTag = when {
+                    conversation.isLocalNumber -> context.getString(R.string.qa_conversation_settings_display_name_nts)
+                    conversation.is1on1 -> context.getString(R.string.qa_conversation_settings_display_name_1on1)
+                    conversation.isGroupV2Recipient -> context.getString(R.string.qa_conversation_settings_display_name_groups)
+                    conversation.isCommunityRecipient -> context.getString(R.string.qa_conversation_settings_display_name_community)
+                    else -> null
+                },
                 canEditName = canEditName,
                 description = description,
+                descriptionQaTag = descriptionQaTag,
                 accountId = accountId,
                 avatarUIData = avatarUtils.getUIDataFromRecipient(conversation),
                 categories = optionData
@@ -329,6 +394,14 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private fun copyAccountId(){
         val accountID = recipient?.address?.toString() ?: ""
         val clip = ClipData.newPlainText("Account ID", accountID)
+        val manager = context.getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+        manager.setPrimaryClip(clip)
+        Toast.makeText(context, R.string.copied, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun copyCommunityUrl(){
+        val url = community?.joinURL ?: return
+        val clip = ClipData.newPlainText(context.getString(R.string.communityUrl), url)
         val manager = context.getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
         manager.setPrimaryClip(clip)
         Toast.makeText(context, R.string.copied, Toast.LENGTH_SHORT).show()
@@ -345,9 +418,78 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         }
     }
 
+    private fun pinConversation(){
+        viewModelScope.launch {
+            storage.setPinned(threadId, true)
+        }
+    }
+
+    private fun unpinConversation(){
+        viewModelScope.launch {
+            storage.setPinned(threadId, false)
+        }
+    }
+
+    private fun confirmBlockUser(){
+        _uiState.update {
+            it.copy(
+                showSimpleDialog = Dialog(
+                    title = context.getString(R.string.block),
+                    message = Phrase.from(context, R.string.blockDescription)
+                        .put(NAME_KEY, recipient?.name ?: "")
+                        .format(),
+                    positiveText = context.getString(R.string.block),
+                    negativeText = context.getString(R.string.cancel),
+                    positiveQaTag = context.getString(R.string.qa_conversation_settings_dialog_block_confirm),
+                    negativeQaTag = context.getString(R.string.qa_conversation_settings_dialog_block_cancel),
+                    onPositive = ::blockUser,
+                    onNegative = {}
+                )
+            )
+        }
+    }
+
+    private fun confirmUnblockUser(){
+        _uiState.update {
+            it.copy(
+                showSimpleDialog = Dialog(
+                    title = context.getString(R.string.blockUnblock),
+                    message = Phrase.from(context, R.string.blockUnblockName)
+                        .put(NAME_KEY, recipient?.name ?: "")
+                        .format(),
+                    positiveText = context.getString(R.string.blockUnblock),
+                    negativeText = context.getString(R.string.cancel),
+                    positiveQaTag = context.getString(R.string.qa_conversation_settings_dialog_unblock_confirm),
+                    negativeQaTag = context.getString(R.string.qa_conversation_settings_dialog_unblock_cancel),
+                    onPositive = ::unblockUser,
+                    onNegative = {}
+                )
+            )
+        }
+    }
+
+
+    private fun blockUser() {
+        if(recipient == null) return
+        viewModelScope.launch {
+            repository.setBlocked(recipient!!, true)
+        }
+    }
+
+    private fun unblockUser() {
+        if(recipient == null) return
+        viewModelScope.launch {
+            repository.setBlocked(recipient!!, false)
+        }
+    }
+
     fun onCommand(command: Commands) {
         when (command) {
             is Commands.CopyAccountId -> copyAccountId()
+
+            is Commands.HideSimpleDialog -> _uiState.update {
+                it.copy(showSimpleDialog = null)
+            }
         }
     }
 
@@ -359,6 +501,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
     sealed interface Commands {
         data object CopyAccountId : Commands
+        data object HideSimpleDialog : Commands
     }
 
     @AssistedFactory
@@ -384,26 +527,9 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         )
     }
 
-    //todo UCS will the subtitle need to be dynamic in order to update when the option changes?
-    private val optionDisappearingMessage: OptionsItem by lazy {
-        val expiration = storage.getExpirationConfiguration(threadId)
-        val subtitle = if(expiration?.isEnabled == true) {
-            // Get the type of disappearing message and the abbreviated duration..
-            val dmTypeString = when (expiration.expiryMode) {
-                is ExpiryMode.AfterRead -> R.string.disappearingMessagesDisappearAfterReadState
-                else -> R.string.disappearingMessagesDisappearAfterSendState
-            }
-            val durationAbbreviated =
-                ExpirationUtil.getExpirationAbbreviatedDisplayValue(expiration.expiryMode.expirySeconds)
 
-            // ..then substitute into the string..
-            context.getSubbedString(
-                dmTypeString,
-                TIME_KEY to durationAbbreviated
-            )
-        } else null
-
-        OptionsItem(
+    private fun optionDisappearingMessage(subtitle: String?): OptionsItem {
+        return OptionsItem(
             name = context.getString(R.string.disappearingMessages),
             subtitle = subtitle,
             icon = R.drawable.ic_timer,
@@ -419,7 +545,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             name = context.getString(R.string.pinConversation),
             icon = R.drawable.ic_pin,
             qaTag = R.string.qa_conversation_settings_pin,
-            onClick = ::copyAccountId //todo UCS get proper method
+            onClick = ::pinConversation
         )
     }
 
@@ -428,7 +554,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             name = context.getString(R.string.pinUnpinConversation),
             icon = R.drawable.ic_pin_off,
             qaTag = R.string.qa_conversation_settings_pin,
-            onClick = ::copyAccountId //todo UCS get proper method
+            onClick = ::unpinConversation
         )
     }
 
@@ -456,9 +582,18 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private val optionBlock: OptionsItem by lazy{
         OptionsItem(
             name = context.getString(R.string.block),
-            icon = R.drawable.ic_ban,
+            icon = R.drawable.ic_user_round_x,
             qaTag = R.string.qa_conversation_settings_block,
-            onClick = ::copyAccountId //todo UCS get proper method
+            onClick = ::confirmBlockUser
+        )
+    }
+
+    private val optionUnblock: OptionsItem by lazy{
+        OptionsItem(
+            name = context.getString(R.string.blockUnblock),
+            icon = R.drawable.ic_user_round_tick,
+            qaTag = R.string.qa_conversation_settings_block,
+            onClick = ::confirmUnblockUser
         )
     }
 
@@ -558,7 +693,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             name = context.getString(R.string.communityUrlCopy),
             icon = R.drawable.ic_copy,
             qaTag = R.string.qa_conversation_settings_copy_community_url,
-            onClick = ::copyAccountId //todo UCS get proper method
+            onClick = ::copyCommunityUrl
         )
     }
 
@@ -574,10 +709,27 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     data class UIState(
         val avatarUIData: AvatarUIData,
         val name: String = "",
+        val nameQaTag: String? = null,
         val canEditName: Boolean = false,
         val description: String? = null,
+        val descriptionQaTag: String? = null,
         val accountId: String? = null,
+        val showSimpleDialog: Dialog? = null,
         val categories: List<OptionsCategory> = emptyList()
+    )
+
+    /**
+     * Data to display a simple dialog
+     */
+    data class Dialog(
+        val title: String,
+        val message: CharSequence,
+        val positiveText: String,
+        val negativeText: String,
+        val positiveQaTag: String?,
+        val negativeQaTag: String?,
+        val onPositive: () -> Unit,
+        val onNegative: () -> Unit
     )
 
     data class OptionsCategory(

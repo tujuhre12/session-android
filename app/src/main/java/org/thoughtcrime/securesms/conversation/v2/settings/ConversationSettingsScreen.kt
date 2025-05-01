@@ -1,8 +1,6 @@
 package org.thoughtcrime.securesms.conversation.v2.settings
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -29,7 +27,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -41,17 +38,22 @@ import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.hilt.navigation.compose.hiltViewModel
 import network.loki.messenger.R
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.*
+import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.Cell
+import org.thoughtcrime.securesms.ui.DialogButtonModel
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.ExpandableText
+import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LargeItemButton
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.BackAppBar
+import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.getCellBottomShape
 import org.thoughtcrime.securesms.ui.getCellTopShape
 import org.thoughtcrime.securesms.ui.qaTag
+import org.thoughtcrime.securesms.ui.safeContentWidth
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -117,12 +119,13 @@ fun ConversationSettings(
 
             // name and edit icon
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth()
+                    .safeContentWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
                 Text(
-                    modifier = Modifier.qaTag(R.string.qa_conversation_settings_name)
+                    modifier = Modifier.qaTag(data.nameQaTag)
                         .weight(
                             weight = 1.0f,
                             fill = false,
@@ -134,7 +137,6 @@ fun ConversationSettings(
                 )
 
                 if(data.canEditName) {
-                    //todo UCS check rtl ltr behaviour
                     Image(
                         modifier = Modifier.padding(start = LocalDimensions.current.xxsSpacing)
                             .size(LocalDimensions.current.iconSmall),
@@ -149,6 +151,8 @@ fun ConversationSettings(
             if(!data.description.isNullOrEmpty()){
                 Spacer(modifier = Modifier.height(LocalDimensions.current.xxsSpacing))
                 ExpandableText(
+                    modifier = Modifier.safeContentWidth()
+                        .qaTag(data.descriptionQaTag),
                     text = data.description,
                     textStyle = LocalType.current.small,
                     textColor = LocalColors.current.textSecondary,
@@ -169,6 +173,7 @@ fun ConversationSettings(
                 }
                 Text(
                     modifier = Modifier.qaTag(R.string.qa_conversation_settings_account_id)
+                        .safeContentWidth()
                         .pointerInput(Unit) {
                             detectTapGestures(
                                 onLongPress = { onLongPress() }
@@ -202,6 +207,29 @@ fun ConversationSettings(
             }
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+        }
+
+        // Dialogs
+        if(data.showSimpleDialog != null){
+            AlertDialog(
+                onDismissRequest = {
+                    // hide dialog
+                    sendCommand(HideSimpleDialog)
+                },
+                title = annotatedStringResource(data.showSimpleDialog.title),
+                text = annotatedStringResource(data.showSimpleDialog.message),
+                buttons = listOf(
+                    DialogButtonModel(
+                        text = GetString(data.showSimpleDialog.positiveText),
+                        color = LocalColors.current.danger,
+                        onClick = data.showSimpleDialog.onPositive
+                    ),
+                    DialogButtonModel(
+                        text = GetString(data.showSimpleDialog.negativeText),
+                        onClick = data.showSimpleDialog.onNegative
+                    )
+                )
+            )
         }
     }
 }
@@ -350,7 +378,8 @@ private fun ConversationSettings1on1Preview() {
     }
 }
 
-@Preview
+@Preview(locale = "en")
+@Preview(locale = "ar")
 @Composable
 private fun ConversationSettings1on1LongNamePreview() {
     PreviewTheme {

@@ -127,7 +127,7 @@ class ConversationViewModelTest: BaseViewModelTest() {
 
         viewModel.unblock()
 
-        verify(repository).setBlocked(threadId, recipient, false)
+        verify(repository).setBlocked(recipient, false)
     }
 
     @Test

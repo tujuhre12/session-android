@@ -35,4 +35,6 @@ data class Dimensions(
 
     val shapeSmall: Dp = 12.dp,
     val shapeMedium: Dp = 16.dp,
+
+    val maxContentWidth: Dp = 410.dp,
 )
