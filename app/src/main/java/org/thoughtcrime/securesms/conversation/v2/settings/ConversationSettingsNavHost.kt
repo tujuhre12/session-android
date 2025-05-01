@@ -1,12 +1,23 @@
 package org.thoughtcrime.securesms.conversation.v2.settings
 
+import android.annotation.SuppressLint
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.core.EaseIn
+import androidx.compose.animation.core.EaseOut
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -18,7 +29,13 @@ import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesViewModel
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.DisappearingMessagesScreen
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.*
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteAllMedia
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteConversationSettings
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteDisappearingMessages
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteFullscreenAvatar
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteGroupMembers
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteInviteContacts
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteManageMembers
 import org.thoughtcrime.securesms.groups.EditGroupViewModel
 import org.thoughtcrime.securesms.groups.GroupMembersViewModel
 import org.thoughtcrime.securesms.groups.SelectContactsViewModel
@@ -27,10 +44,12 @@ import org.thoughtcrime.securesms.groups.compose.GroupMembersScreen
 import org.thoughtcrime.securesms.groups.compose.InviteContactsScreen
 import org.thoughtcrime.securesms.media.MediaOverviewScreen
 import org.thoughtcrime.securesms.media.MediaOverviewViewModel
+import org.thoughtcrime.securesms.ui.ANIM_TIME
 import org.thoughtcrime.securesms.ui.ObserveAsEvents
 import org.thoughtcrime.securesms.ui.horizontalSlideComposable
 
 // Destinations
+@Serializable
 sealed interface ConversationSettingsDestination {
     @Serializable
     data object RouteConversationSettings: ConversationSettingsDestination
@@ -61,6 +80,7 @@ sealed interface ConversationSettingsDestination {
     data object RouteFullscreenAvatar: ConversationSettingsDestination
 }
 
+@SuppressLint("RestrictedApi")
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun ConversationSettingsNavHost(
@@ -86,7 +106,52 @@ fun ConversationSettingsNavHost(
 
         NavHost(navController = navController, startDestination = navigator.startDestination) {
             // Conversation Settings
-            horizontalSlideComposable<RouteConversationSettings> {
+            composable<RouteConversationSettings>(
+                enterTransition = {
+                    fadeIn(
+                        animationSpec = tween(
+                            ANIM_TIME, easing = LinearEasing
+                        )
+                    ) + slideIntoContainer(
+                        animationSpec = tween(ANIM_TIME, easing = EaseIn),
+                        towards = AnimatedContentTransitionScope.SlideDirection.Start
+                    )
+                },
+                exitTransition = { // conditional exit - we don't want the slide for things like coming back from the fullscreen avatar
+                    if (targetState.destination.hasRoute<RouteFullscreenAvatar>())
+                        ExitTransition.None
+                    else fadeOut(
+                        animationSpec = tween(
+                            ANIM_TIME, easing = LinearEasing
+                        )
+                    ) + slideOutOfContainer(
+                        animationSpec = tween(ANIM_TIME, easing = EaseOut),
+                        towards = AnimatedContentTransitionScope.SlideDirection.Start
+                    )
+                },
+                popEnterTransition = { // conditional pop enter - we don't want the slide for things like coming back from the fullscreen avatar
+                    if (initialState.destination.hasRoute<RouteFullscreenAvatar>())
+                        EnterTransition.None
+                    else fadeIn(
+                        animationSpec = tween(
+                            ANIM_TIME, easing = LinearEasing
+                        )
+                    ) + slideIntoContainer(
+                        animationSpec = tween(ANIM_TIME, easing = EaseIn),
+                        towards = AnimatedContentTransitionScope.SlideDirection.End
+                    )
+                },
+                popExitTransition = {
+                    fadeOut(
+                        animationSpec = tween(
+                            ANIM_TIME, easing = LinearEasing
+                        )
+                    ) + slideOutOfContainer(
+                        animationSpec = tween(ANIM_TIME, easing = EaseOut),
+                        towards = AnimatedContentTransitionScope.SlideDirection.End
+                    )
+                }
+            ) {
                 val viewModel =
                     hiltViewModel<ConversationSettingsViewModel, ConversationSettingsViewModel.Factory> { factory ->
                         factory.create(threadId)

@@ -91,7 +91,7 @@ fun FullscreenAvatarScreen(
 
                 Avatar(
                     modifier = Modifier
-                        .sharedElement(
+                        .sharedBounds(
                             sharedTransitionScope.rememberSharedContentState(key = "avatar"),
                             animatedVisibilityScope = animatedContentScope
                         )

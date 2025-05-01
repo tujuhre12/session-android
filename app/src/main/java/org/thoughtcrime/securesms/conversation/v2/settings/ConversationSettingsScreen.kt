@@ -6,6 +6,8 @@ import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -104,160 +106,168 @@ fun ConversationSettings(
     showFullscreenAvatar: () -> Unit,
     onBack: () -> Unit,
 ) {
-    with(sharedTransitionScope) {
-        Scaffold(
-            topBar = {
-                BackAppBar(
-                    title = stringResource(id = R.string.sessionSettings),
-                    onBack = onBack,
-                )
-            },
-            contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal),
-        ) { paddings ->
-
-            Column(
-                modifier = Modifier.fillMaxSize()
-                    .padding(paddings).consumeWindowInsets(paddings)
-                    .padding(
-                        horizontal = LocalDimensions.current.spacing,
-                    )
-                    .verticalScroll(rememberScrollState()),
-                horizontalAlignment = CenterHorizontally
-            ) {
-                Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-
-                // Profile picture
-                Avatar(
-                    modifier = Modifier.qaTag(R.string.qa_conversation_settings_avatar)
-                        .sharedElement(
-                            sharedTransitionScope.rememberSharedContentState(key = "avatar"),
-                            animatedVisibilityScope = animatedContentScope
-                        )
-                        .clickable { showFullscreenAvatar() },
-                    size = LocalDimensions.current.xlargeSpacing,
-                    data = data.avatarUIData
-                )
-
-                Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-
-                // name and edit icon
-                Row(
-                    modifier = Modifier.fillMaxWidth()
-                        .safeContentWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        modifier = Modifier.qaTag(data.nameQaTag)
-                            .weight(
-                                weight = 1.0f,
-                                fill = false,
+    with(animatedContentScope) {
+        with(sharedTransitionScope) {
+            Scaffold(
+                topBar = {
+                    BackAppBar(
+                        // keeps the bar during shared transitions, this way the fullscreen avatar doesn't appear in front of it
+                        modifier = Modifier.renderInSharedTransitionScopeOverlay(zIndexInOverlay = 1f)
+                            .animateEnterExit(
+                                enter = fadeIn(),
+                                exit = fadeOut()
                             ),
-                        text = data.name,
-                        textAlign = TextAlign.Center,
-                        style = LocalType.current.h4,
-                        color = LocalColors.current.text
+                        title = stringResource(id = R.string.sessionSettings),
+                        onBack = onBack,
+                    )
+                },
+                contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal),
+            ) { paddings ->
+
+                Column(
+                    modifier = Modifier.fillMaxSize()
+                        .padding(paddings).consumeWindowInsets(paddings)
+                        .padding(
+                            horizontal = LocalDimensions.current.spacing,
+                        )
+                        .verticalScroll(rememberScrollState()),
+                    horizontalAlignment = CenterHorizontally
+                ) {
+                    Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+
+                    // Profile picture
+                    Avatar(
+                        modifier = Modifier.qaTag(R.string.qa_conversation_settings_avatar)
+                            .sharedBounds(
+                                sharedTransitionScope.rememberSharedContentState(key = "avatar"),
+                                animatedVisibilityScope = animatedContentScope
+                            )
+                            .clickable { showFullscreenAvatar() },
+                        size = LocalDimensions.current.xlargeSpacing,
+                        data = data.avatarUIData
                     )
 
-                    if (data.canEditName) {
-                        Image(
-                            modifier = Modifier.padding(start = LocalDimensions.current.xxsSpacing)
-                                .size(LocalDimensions.current.iconSmall),
-                            painter = painterResource(R.drawable.ic_pencil),
-                            colorFilter = ColorFilter.tint(LocalColors.current.textSecondary),
-                            contentDescription = null,
+                    Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+
+                    // name and edit icon
+                    Row(
+                        modifier = Modifier.fillMaxWidth()
+                            .safeContentWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            modifier = Modifier.qaTag(data.nameQaTag)
+                                .weight(
+                                    weight = 1.0f,
+                                    fill = false,
+                                ),
+                            text = data.name,
+                            textAlign = TextAlign.Center,
+                            style = LocalType.current.h4,
+                            color = LocalColors.current.text
+                        )
+
+                        if (data.canEditName) {
+                            Image(
+                                modifier = Modifier.padding(start = LocalDimensions.current.xxsSpacing)
+                                    .size(LocalDimensions.current.iconSmall),
+                                painter = painterResource(R.drawable.ic_pencil),
+                                colorFilter = ColorFilter.tint(LocalColors.current.textSecondary),
+                                contentDescription = null,
+                            )
+                        }
+                    }
+
+                    // description or display name
+                    if (!data.description.isNullOrEmpty()) {
+                        Spacer(modifier = Modifier.height(LocalDimensions.current.xxsSpacing))
+                        ExpandableText(
+                            modifier = Modifier.safeContentWidth()
+                                .qaTag(data.descriptionQaTag),
+                            text = data.description,
+                            textStyle = LocalType.current.small,
+                            textColor = LocalColors.current.textSecondary,
+                            buttonTextStyle = LocalType.current.base.bold(),
+                            buttonTextColor = LocalColors.current.textSecondary,
+                            textAlign = TextAlign.Center,
                         )
                     }
-                }
 
-                // description or display name
-                if (!data.description.isNullOrEmpty()) {
-                    Spacer(modifier = Modifier.height(LocalDimensions.current.xxsSpacing))
-                    ExpandableText(
-                        modifier = Modifier.safeContentWidth()
-                            .qaTag(data.descriptionQaTag),
-                        text = data.description,
-                        textStyle = LocalType.current.small,
-                        textColor = LocalColors.current.textSecondary,
-                        buttonTextStyle = LocalType.current.base.bold(),
-                        buttonTextColor = LocalColors.current.textSecondary,
-                        textAlign = TextAlign.Center,
-                    )
-                }
-
-                // account ID
-                if (!data.accountId.isNullOrEmpty()) {
-                    Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
-                    val haptics = LocalHapticFeedback.current
-                    val longPressLabel = stringResource(R.string.accountIDCopy)
-                    val onLongPress = {
-                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                        sendCommand(ConversationSettingsViewModel.Commands.CopyAccountId)
-                    }
-                    Text(
-                        modifier = Modifier.qaTag(R.string.qa_conversation_settings_account_id)
-                            .safeContentWidth()
-                            .pointerInput(Unit) {
-                                detectTapGestures(
-                                    onLongPress = { onLongPress() }
-                                )
-                            }
-                            .semantics {
-                                onLongClick(label = longPressLabel) {
-                                    onLongPress()
-                                    true
+                    // account ID
+                    if (!data.accountId.isNullOrEmpty()) {
+                        Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
+                        val haptics = LocalHapticFeedback.current
+                        val longPressLabel = stringResource(R.string.accountIDCopy)
+                        val onLongPress = {
+                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                            sendCommand(ConversationSettingsViewModel.Commands.CopyAccountId)
+                        }
+                        Text(
+                            modifier = Modifier.qaTag(R.string.qa_conversation_settings_account_id)
+                                .safeContentWidth()
+                                .pointerInput(Unit) {
+                                    detectTapGestures(
+                                        onLongPress = { onLongPress() }
+                                    )
                                 }
-                            },
-                        text = data.accountId,
-                        textAlign = TextAlign.Center,
-                        style = LocalType.current.base.monospace(),
-                        color = LocalColors.current.text
-                    )
+                                .semantics {
+                                    onLongClick(label = longPressLabel) {
+                                        onLongPress()
+                                        true
+                                    }
+                                },
+                            text = data.accountId,
+                            textAlign = TextAlign.Center,
+                            style = LocalType.current.base.monospace(),
+                            color = LocalColors.current.text
+                        )
+                    }
+
+                    // settings options
+                    Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+                    data.categories.forEachIndexed { index, optionsCategory ->
+                        ConversationSettingsCategory(
+                            data = optionsCategory
+                        )
+
+                        // add spacing
+                        when (index) {
+                            data.categories.lastIndex -> Spacer(
+                                modifier = Modifier.height(
+                                    LocalDimensions.current.spacing
+                                )
+                            )
+
+                            else -> Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
                 }
 
-                // settings options
-                Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-                data.categories.forEachIndexed { index, optionsCategory ->
-                    ConversationSettingsCategory(
-                        data = optionsCategory
-                    )
-
-                    // add spacing
-                    when (index) {
-                        data.categories.lastIndex -> Spacer(
-                            modifier = Modifier.height(
-                                LocalDimensions.current.spacing
+                // Dialogs
+                if (data.showSimpleDialog != null) {
+                    AlertDialog(
+                        onDismissRequest = {
+                            // hide dialog
+                            sendCommand(HideSimpleDialog)
+                        },
+                        title = annotatedStringResource(data.showSimpleDialog.title),
+                        text = annotatedStringResource(data.showSimpleDialog.message),
+                        buttons = listOf(
+                            DialogButtonModel(
+                                text = GetString(data.showSimpleDialog.positiveText),
+                                color = LocalColors.current.danger,
+                                onClick = data.showSimpleDialog.onPositive
+                            ),
+                            DialogButtonModel(
+                                text = GetString(data.showSimpleDialog.negativeText),
+                                onClick = data.showSimpleDialog.onNegative
                             )
                         )
-
-                        else -> Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-            }
-
-            // Dialogs
-            if (data.showSimpleDialog != null) {
-                AlertDialog(
-                    onDismissRequest = {
-                        // hide dialog
-                        sendCommand(HideSimpleDialog)
-                    },
-                    title = annotatedStringResource(data.showSimpleDialog.title),
-                    text = annotatedStringResource(data.showSimpleDialog.message),
-                    buttons = listOf(
-                        DialogButtonModel(
-                            text = GetString(data.showSimpleDialog.positiveText),
-                            color = LocalColors.current.danger,
-                            onClick = data.showSimpleDialog.onPositive
-                        ),
-                        DialogButtonModel(
-                            text = GetString(data.showSimpleDialog.negativeText),
-                            onClick = data.showSimpleDialog.onNegative
-                        )
                     )
-                )
+                }
             }
         }
     }
