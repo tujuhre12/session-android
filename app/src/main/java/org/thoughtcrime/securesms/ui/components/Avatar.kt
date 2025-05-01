@@ -14,6 +14,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -45,6 +47,7 @@ fun BaseAvatar(
     size: Dp,
     data: AvatarUIData,
     modifier: Modifier = Modifier,
+    clip: Shape = CircleShape,
     badge: (@Composable () -> Unit)? = null,
 ) {
     Box(modifier = modifier.size(size)) {
@@ -57,7 +60,8 @@ fun BaseAvatar(
                 // Only one element, occupy the full parent's size.
                 AvatarElement(
                     size = size,
-                    data = data.elements.first()
+                    data = data.elements.first(),
+                    clip = clip
                 )
             }
             else -> {
@@ -66,12 +70,14 @@ fun BaseAvatar(
                 AvatarElement(
                     modifier = Modifier.align(Alignment.TopStart),
                     size = avatarSize,
-                    data = data.elements[0]
+                    data = data.elements[0],
+                    clip = clip
                 )
                 AvatarElement(
                     modifier = Modifier.align(Alignment.BottomEnd),
                     size = avatarSize,
-                    data = data.elements[1]
+                    data = data.elements[1],
+                    clip = clip
                 )
             }
         }
@@ -95,12 +101,14 @@ fun Avatar(
     size: Dp,
     data: AvatarUIData,
     modifier: Modifier = Modifier,
+    clip: Shape = CircleShape,
     badge: AvatarBadge = AvatarBadge.None,
 ){
     BaseAvatar(
         size = size,
         modifier = modifier,
         data = data,
+        clip = clip,
         badge = when (badge) {
                 AvatarBadge.None -> null
 
@@ -121,15 +129,16 @@ fun Avatar(
 private fun AvatarElement(
     size: Dp,
     modifier: Modifier = Modifier,
-    data: AvatarUIElement
+    data: AvatarUIElement,
+    clip: Shape = CircleShape
 ){
     Box(
         modifier = modifier.size(size)
             .background(
                 color = data.color ?: classicLight1,
-                shape = CircleShape,
+                shape = clip,
             )
-            .clip(CircleShape),
+            .clip(clip),
     ) {
         if(data.contactPhoto != null){
             GlideImage(
@@ -141,7 +150,6 @@ private fun AvatarElement(
                 requestBuilderTransform = {
                     it.diskCacheStrategy(DiskCacheStrategy.NONE)
                         .centerCrop()
-                        .circleCrop()
                 }
             )
         } else if(!data.name.isNullOrEmpty()){
@@ -257,6 +265,22 @@ fun PreviewAvatarSinglePhoto(){
                     "305422957"
                 )
             )))
+        )
+    }
+}
+
+@Preview
+@Composable
+fun PreviewAvatarElementUnclipped(){
+    PreviewTheme {
+        AvatarElement(
+            size = LocalDimensions.current.iconLarge,
+            data = AvatarUIElement(
+                name = "TO",
+                color = primaryGreen,
+                contactPhoto = null
+            ),
+            clip = RectangleShape
         )
     }
 }

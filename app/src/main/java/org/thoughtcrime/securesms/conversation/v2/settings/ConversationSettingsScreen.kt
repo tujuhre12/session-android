@@ -1,6 +1,13 @@
 package org.thoughtcrime.securesms.conversation.v2.settings
 
+import android.annotation.SuppressLint
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedContentScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -39,7 +46,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import network.loki.messenger.R
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.*
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.HideSimpleDialog
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.DialogButtonModel
@@ -66,9 +73,13 @@ import org.thoughtcrime.securesms.ui.theme.transparentButtonColors
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun ConversationSettingsScreen(
     viewModel: ConversationSettingsViewModel,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedContentScope: AnimatedContentScope,
+    showFullscreenAvatar: () -> Unit,
     onBack: () -> Unit,
 ) {
     val data by viewModel.uiState.collectAsState()
@@ -76,160 +87,178 @@ fun ConversationSettingsScreen(
     ConversationSettings(
         data = data,
         sendCommand = viewModel::onCommand,
+        sharedTransitionScope = sharedTransitionScope,
+        animatedContentScope = animatedContentScope,
+        showFullscreenAvatar = showFullscreenAvatar,
         onBack = onBack,
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun ConversationSettings(
     data: ConversationSettingsViewModel.UIState,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedContentScope: AnimatedContentScope,
     sendCommand: (ConversationSettingsViewModel.Commands) -> Unit,
+    showFullscreenAvatar: () -> Unit,
     onBack: () -> Unit,
 ) {
-    Scaffold(
-        topBar = {
-            BackAppBar(
-                title = stringResource(id = R.string.sessionSettings),
-                onBack = onBack,
-            )
-        },
-        contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal),
-    ) { paddings ->
-
-        Column(
-            modifier = Modifier.fillMaxSize()
-                .padding(paddings).consumeWindowInsets(paddings)
-                .padding(
-                    horizontal = LocalDimensions.current.spacing,
+    with(sharedTransitionScope) {
+        Scaffold(
+            topBar = {
+                BackAppBar(
+                    title = stringResource(id = R.string.sessionSettings),
+                    onBack = onBack,
                 )
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = CenterHorizontally
-        ) {
-            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+            },
+            contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal),
+        ) { paddings ->
 
-            // Profile picture
-            Avatar(
-                modifier = Modifier.qaTag(R.string.qa_conversation_settings_avatar),
-                size = LocalDimensions.current.xlargeSpacing,
-                data = data.avatarUIData
-            )
-
-            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-
-            // name and edit icon
-            Row(
-                modifier = Modifier.fillMaxWidth()
-                    .safeContentWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
+            Column(
+                modifier = Modifier.fillMaxSize()
+                    .padding(paddings).consumeWindowInsets(paddings)
+                    .padding(
+                        horizontal = LocalDimensions.current.spacing,
+                    )
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = CenterHorizontally
             ) {
-                Text(
-                    modifier = Modifier.qaTag(data.nameQaTag)
-                        .weight(
-                            weight = 1.0f,
-                            fill = false,
-                        ),
-                    text = data.name,
-                    textAlign = TextAlign.Center,
-                    style = LocalType.current.h4,
-                    color = LocalColors.current.text
+                Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+
+                // Profile picture
+                Avatar(
+                    modifier = Modifier.qaTag(R.string.qa_conversation_settings_avatar)
+                        .sharedElement(
+                            sharedTransitionScope.rememberSharedContentState(key = "avatar"),
+                            animatedVisibilityScope = animatedContentScope
+                        )
+                        .clickable { showFullscreenAvatar() },
+                    size = LocalDimensions.current.xlargeSpacing,
+                    data = data.avatarUIData
                 )
 
-                if(data.canEditName) {
-                    Image(
-                        modifier = Modifier.padding(start = LocalDimensions.current.xxsSpacing)
-                            .size(LocalDimensions.current.iconSmall),
-                        painter = painterResource(R.drawable.ic_pencil),
-                        colorFilter = ColorFilter.tint(LocalColors.current.textSecondary),
-                        contentDescription = null,
+                Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+
+                // name and edit icon
+                Row(
+                    modifier = Modifier.fillMaxWidth()
+                        .safeContentWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        modifier = Modifier.qaTag(data.nameQaTag)
+                            .weight(
+                                weight = 1.0f,
+                                fill = false,
+                            ),
+                        text = data.name,
+                        textAlign = TextAlign.Center,
+                        style = LocalType.current.h4,
+                        color = LocalColors.current.text
+                    )
+
+                    if (data.canEditName) {
+                        Image(
+                            modifier = Modifier.padding(start = LocalDimensions.current.xxsSpacing)
+                                .size(LocalDimensions.current.iconSmall),
+                            painter = painterResource(R.drawable.ic_pencil),
+                            colorFilter = ColorFilter.tint(LocalColors.current.textSecondary),
+                            contentDescription = null,
+                        )
+                    }
+                }
+
+                // description or display name
+                if (!data.description.isNullOrEmpty()) {
+                    Spacer(modifier = Modifier.height(LocalDimensions.current.xxsSpacing))
+                    ExpandableText(
+                        modifier = Modifier.safeContentWidth()
+                            .qaTag(data.descriptionQaTag),
+                        text = data.description,
+                        textStyle = LocalType.current.small,
+                        textColor = LocalColors.current.textSecondary,
+                        buttonTextStyle = LocalType.current.base.bold(),
+                        buttonTextColor = LocalColors.current.textSecondary,
+                        textAlign = TextAlign.Center,
                     )
                 }
-            }
 
-            // description or display name
-            if(!data.description.isNullOrEmpty()){
-                Spacer(modifier = Modifier.height(LocalDimensions.current.xxsSpacing))
-                ExpandableText(
-                    modifier = Modifier.safeContentWidth()
-                        .qaTag(data.descriptionQaTag),
-                    text = data.description,
-                    textStyle = LocalType.current.small,
-                    textColor = LocalColors.current.textSecondary,
-                    buttonTextStyle = LocalType.current.base.bold(),
-                    buttonTextColor = LocalColors.current.textSecondary,
-                    textAlign = TextAlign.Center,
-                )
-            }
-
-            // account ID
-            if(!data.accountId.isNullOrEmpty()){
-                Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
-                val haptics = LocalHapticFeedback.current
-                val longPressLabel = stringResource(R.string.accountIDCopy)
-                val onLongPress = {
-                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                    sendCommand(ConversationSettingsViewModel.Commands.CopyAccountId)
-                }
-                Text(
-                    modifier = Modifier.qaTag(R.string.qa_conversation_settings_account_id)
-                        .safeContentWidth()
-                        .pointerInput(Unit) {
-                            detectTapGestures(
-                                onLongPress = { onLongPress() }
-                            )
-                        }
-                        .semantics {
-                            onLongClick(label = longPressLabel) {
-                                onLongPress()
-                                true
+                // account ID
+                if (!data.accountId.isNullOrEmpty()) {
+                    Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
+                    val haptics = LocalHapticFeedback.current
+                    val longPressLabel = stringResource(R.string.accountIDCopy)
+                    val onLongPress = {
+                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                        sendCommand(ConversationSettingsViewModel.Commands.CopyAccountId)
+                    }
+                    Text(
+                        modifier = Modifier.qaTag(R.string.qa_conversation_settings_account_id)
+                            .safeContentWidth()
+                            .pointerInput(Unit) {
+                                detectTapGestures(
+                                    onLongPress = { onLongPress() }
+                                )
                             }
-                        },
-                    text = data.accountId,
-                    textAlign = TextAlign.Center,
-                    style = LocalType.current.base.monospace(),
-                    color = LocalColors.current.text
-                )
-            }
-
-            // settings options
-            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-            data.categories.forEachIndexed { index, optionsCategory ->
-                ConversationSettingsCategory(
-                    data = optionsCategory
-                )
-
-                // add spacing
-                when (index) {
-                    data.categories.lastIndex -> Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-                    else -> Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
+                            .semantics {
+                                onLongClick(label = longPressLabel) {
+                                    onLongPress()
+                                    true
+                                }
+                            },
+                        text = data.accountId,
+                        textAlign = TextAlign.Center,
+                        style = LocalType.current.base.monospace(),
+                        color = LocalColors.current.text
+                    )
                 }
+
+                // settings options
+                Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+                data.categories.forEachIndexed { index, optionsCategory ->
+                    ConversationSettingsCategory(
+                        data = optionsCategory
+                    )
+
+                    // add spacing
+                    when (index) {
+                        data.categories.lastIndex -> Spacer(
+                            modifier = Modifier.height(
+                                LocalDimensions.current.spacing
+                            )
+                        )
+
+                        else -> Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
             }
 
-            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-        }
-
-        // Dialogs
-        if(data.showSimpleDialog != null){
-            AlertDialog(
-                onDismissRequest = {
-                    // hide dialog
-                    sendCommand(HideSimpleDialog)
-                },
-                title = annotatedStringResource(data.showSimpleDialog.title),
-                text = annotatedStringResource(data.showSimpleDialog.message),
-                buttons = listOf(
-                    DialogButtonModel(
-                        text = GetString(data.showSimpleDialog.positiveText),
-                        color = LocalColors.current.danger,
-                        onClick = data.showSimpleDialog.onPositive
-                    ),
-                    DialogButtonModel(
-                        text = GetString(data.showSimpleDialog.negativeText),
-                        onClick = data.showSimpleDialog.onNegative
+            // Dialogs
+            if (data.showSimpleDialog != null) {
+                AlertDialog(
+                    onDismissRequest = {
+                        // hide dialog
+                        sendCommand(HideSimpleDialog)
+                    },
+                    title = annotatedStringResource(data.showSimpleDialog.title),
+                    text = annotatedStringResource(data.showSimpleDialog.message),
+                    buttons = listOf(
+                        DialogButtonModel(
+                            text = GetString(data.showSimpleDialog.positiveText),
+                            color = LocalColors.current.danger,
+                            onClick = data.showSimpleDialog.onPositive
+                        ),
+                        DialogButtonModel(
+                            text = GetString(data.showSimpleDialog.negativeText),
+                            onClick = data.showSimpleDialog.onNegative
+                        )
                     )
                 )
-            )
+            }
         }
     }
 }
@@ -296,165 +325,180 @@ fun ConversationSettingsSubCategory(
     }
 }
 
-
+@OptIn(ExperimentalSharedTransitionApi::class)
+@SuppressLint("UnusedContentLambdaTargetStateParameter")
 @Preview
 @Composable
 private fun ConversationSettings1on1Preview() {
     PreviewTheme {
-
-        ConversationSettings(
-            sendCommand = {},
-            onBack = {},
-            data = ConversationSettingsViewModel.UIState(
-                name = "Nickname",
-                canEditName = true,
-                description = "(Real name)",
-                accountId = "05000000000000000000000000000000000000000000000000000000000000000",
-                avatarUIData = AvatarUIData(
-                    listOf(
-                        AvatarUIElement(
-                            name = "TO",
-                            color = primaryBlue
-                        )
-                    )
-                ),
-                categories = listOf(
-                    ConversationSettingsViewModel.OptionsCategory(
-                        items = listOf(
-                            ConversationSettingsViewModel.OptionsSubCategory(
-                                items = listOf(
-                                    ConversationSettingsViewModel.OptionsItem(
-                                        name = "Search",
-                                        icon = R.drawable.ic_search,
-                                        onClick = {}
-                                    ),
-                                    ConversationSettingsViewModel.OptionsItem(
-                                        name = "Notifications",
-                                        subtitle = "All Messages",
-                                        icon = R.drawable.ic_volume_2,
-                                        onClick = {}
-                                    )
+        SharedTransitionLayout {
+            AnimatedContent(targetState = Unit, label = "preview") {
+                ConversationSettings(
+                    sendCommand = {},
+                    onBack = {},
+                    showFullscreenAvatar = {},
+                    sharedTransitionScope = this@SharedTransitionLayout,
+                    animatedContentScope = this@AnimatedContent,
+                    data = ConversationSettingsViewModel.UIState(
+                        name = "Nickname",
+                        canEditName = true,
+                        description = "(Real name)",
+                        accountId = "05000000000000000000000000000000000000000000000000000000000000000",
+                        avatarUIData = AvatarUIData(
+                            listOf(
+                                AvatarUIElement(
+                                    name = "TO",
+                                    color = primaryBlue
                                 )
                             )
-                        )
-                    ),
-                    ConversationSettingsViewModel.OptionsCategory(
-                        name = "Admin",
-                        items = listOf(
-                            ConversationSettingsViewModel.OptionsSubCategory(
+                        ),
+                        categories = listOf(
+                            ConversationSettingsViewModel.OptionsCategory(
                                 items = listOf(
-                                    ConversationSettingsViewModel.OptionsItem(
-                                        name = "Invite Contacts",
-                                        icon = R.drawable.ic_user_round_plus,
-                                        onClick = {}
-                                    ),
-                                    ConversationSettingsViewModel.OptionsItem(
-                                        name = "Manage members",
-                                        icon = R.drawable.ic_users_group_custom,
-                                        onClick = {}
+                                    ConversationSettingsViewModel.OptionsSubCategory(
+                                        items = listOf(
+                                            ConversationSettingsViewModel.OptionsItem(
+                                                name = "Search",
+                                                icon = R.drawable.ic_search,
+                                                onClick = {}
+                                            ),
+                                            ConversationSettingsViewModel.OptionsItem(
+                                                name = "Notifications",
+                                                subtitle = "All Messages",
+                                                icon = R.drawable.ic_volume_2,
+                                                onClick = {}
+                                            )
+                                        )
                                     )
                                 )
                             ),
-                            ConversationSettingsViewModel.OptionsSubCategory(
-                                danger = true,
+                            ConversationSettingsViewModel.OptionsCategory(
+                                name = "Admin",
                                 items = listOf(
-                                    ConversationSettingsViewModel.OptionsItem(
-                                        name = "Clear Messages",
-                                        icon = R.drawable.ic_message_square,
-                                        onClick = {}
+                                    ConversationSettingsViewModel.OptionsSubCategory(
+                                        items = listOf(
+                                            ConversationSettingsViewModel.OptionsItem(
+                                                name = "Invite Contacts",
+                                                icon = R.drawable.ic_user_round_plus,
+                                                onClick = {}
+                                            ),
+                                            ConversationSettingsViewModel.OptionsItem(
+                                                name = "Manage members",
+                                                icon = R.drawable.ic_users_group_custom,
+                                                onClick = {}
+                                            )
+                                        )
                                     ),
-                                    ConversationSettingsViewModel.OptionsItem(
-                                        name = "Delete Group",
-                                        icon = R.drawable.ic_trash_2,
-                                        onClick = {}
+                                    ConversationSettingsViewModel.OptionsSubCategory(
+                                        danger = true,
+                                        items = listOf(
+                                            ConversationSettingsViewModel.OptionsItem(
+                                                name = "Clear Messages",
+                                                icon = R.drawable.ic_message_square,
+                                                onClick = {}
+                                            ),
+                                            ConversationSettingsViewModel.OptionsItem(
+                                                name = "Delete Group",
+                                                icon = R.drawable.ic_trash_2,
+                                                onClick = {}
+                                            )
+                                        )
                                     )
                                 )
                             )
-                        )
+                        ),
                     )
-                ),
-            )
-        )
+                )
+            }
+        }
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
+@SuppressLint("UnusedContentLambdaTargetStateParameter")
 @Preview(locale = "en")
 @Preview(locale = "ar")
 @Composable
 private fun ConversationSettings1on1LongNamePreview() {
     PreviewTheme {
-
-        ConversationSettings(
-            sendCommand = {},
-            onBack = {},
-            data = ConversationSettingsViewModel.UIState(
-                name = "Nickname that is very long but the text shouldn't be cut off because there is no limit to the display here so it should show the whole thing",
-                canEditName = true,
-                description = "This is a long description with a lot of text that should be more than 2 lines and should be truncated but you never know, it depends on size and such things dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk lkasdjfalsdkfjasdklfj lsadkfjalsdkfjsadklf lksdjfalsdkfjasdlkfjasdlkf asldkfjasdlkfja and this is the end",
-                accountId = "05000000000000000000000000000000000000000000000000000000000000000",
-                avatarUIData = AvatarUIData(
-                    listOf(
-                        AvatarUIElement(
-                            name = "TO",
-                            color = primaryBlue
-                        )
-                    )
-                ),
-                categories = listOf(
-                    ConversationSettingsViewModel.OptionsCategory(
-                        items = listOf(
-                            ConversationSettingsViewModel.OptionsSubCategory(
-                                items = listOf(
-                                    ConversationSettingsViewModel.OptionsItem(
-                                        name = "Search",
-                                        icon = R.drawable.ic_search,
-                                        onClick = {}
-                                    ),
-                                    ConversationSettingsViewModel.OptionsItem(
-                                        name = "Notifications",
-                                        subtitle = "All Messages",
-                                        icon = R.drawable.ic_volume_2,
-                                        onClick = {}
-                                    )
+        SharedTransitionLayout {
+            AnimatedContent(targetState = Unit, label = "preview") {
+                ConversationSettings(
+                    sendCommand = {},
+                    onBack = {},
+                    showFullscreenAvatar = {},
+                    sharedTransitionScope = this@SharedTransitionLayout,
+                    animatedContentScope = this@AnimatedContent,
+                    data = ConversationSettingsViewModel.UIState(
+                        name = "Nickname that is very long but the text shouldn't be cut off because there is no limit to the display here so it should show the whole thing",
+                        canEditName = true,
+                        description = "This is a long description with a lot of text that should be more than 2 lines and should be truncated but you never know, it depends on size and such things dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk lkasdjfalsdkfjasdklfj lsadkfjalsdkfjsadklf lksdjfalsdkfjasdlkfjasdlkf asldkfjasdlkfja and this is the end",
+                        accountId = "05000000000000000000000000000000000000000000000000000000000000000",
+                        avatarUIData = AvatarUIData(
+                            listOf(
+                                AvatarUIElement(
+                                    name = "TO",
+                                    color = primaryBlue
                                 )
                             )
-                        )
-                    ),
-                    ConversationSettingsViewModel.OptionsCategory(
-                        name = "Admin",
-                        items = listOf(
-                            ConversationSettingsViewModel.OptionsSubCategory(
+                        ),
+                        categories = listOf(
+                            ConversationSettingsViewModel.OptionsCategory(
                                 items = listOf(
-                                    ConversationSettingsViewModel.OptionsItem(
-                                        name = "Invite Contacts",
-                                        icon = R.drawable.ic_user_round_plus,
-                                        onClick = {}
-                                    ),
-                                    ConversationSettingsViewModel.OptionsItem(
-                                        name = "Manage members",
-                                        icon = R.drawable.ic_users_group_custom,
-                                        onClick = {}
+                                    ConversationSettingsViewModel.OptionsSubCategory(
+                                        items = listOf(
+                                            ConversationSettingsViewModel.OptionsItem(
+                                                name = "Search",
+                                                icon = R.drawable.ic_search,
+                                                onClick = {}
+                                            ),
+                                            ConversationSettingsViewModel.OptionsItem(
+                                                name = "Notifications",
+                                                subtitle = "All Messages",
+                                                icon = R.drawable.ic_volume_2,
+                                                onClick = {}
+                                            )
+                                        )
                                     )
                                 )
                             ),
-                            ConversationSettingsViewModel.OptionsSubCategory(
+                            ConversationSettingsViewModel.OptionsCategory(
+                                name = "Admin",
                                 items = listOf(
-                                    ConversationSettingsViewModel.OptionsItem(
-                                        name = "Clear Messages",
-                                        icon = R.drawable.ic_message_square,
-                                        onClick = {}
+                                    ConversationSettingsViewModel.OptionsSubCategory(
+                                        items = listOf(
+                                            ConversationSettingsViewModel.OptionsItem(
+                                                name = "Invite Contacts",
+                                                icon = R.drawable.ic_user_round_plus,
+                                                onClick = {}
+                                            ),
+                                            ConversationSettingsViewModel.OptionsItem(
+                                                name = "Manage members",
+                                                icon = R.drawable.ic_users_group_custom,
+                                                onClick = {}
+                                            )
+                                        )
                                     ),
-                                    ConversationSettingsViewModel.OptionsItem(
-                                        name = "Delete Group",
-                                        icon = R.drawable.ic_trash_2,
-                                        onClick = {}
+                                    ConversationSettingsViewModel.OptionsSubCategory(
+                                        items = listOf(
+                                            ConversationSettingsViewModel.OptionsItem(
+                                                name = "Clear Messages",
+                                                icon = R.drawable.ic_message_square,
+                                                onClick = {}
+                                            ),
+                                            ConversationSettingsViewModel.OptionsItem(
+                                                name = "Delete Group",
+                                                icon = R.drawable.ic_trash_2,
+                                                onClick = {}
+                                            )
+                                        )
                                     )
                                 )
                             )
-                        )
+                        ),
                     )
-                ),
-            )
-        )
+                )
+            }
+        }
     }
 }
