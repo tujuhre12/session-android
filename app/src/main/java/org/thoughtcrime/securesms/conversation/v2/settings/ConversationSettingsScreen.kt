@@ -259,7 +259,8 @@ fun ConversationSettings(
                         buttons = listOf(
                             DialogButtonModel(
                                 text = GetString(data.showSimpleDialog.positiveText),
-                                color = LocalColors.current.danger,
+                                color = if(data.showSimpleDialog.positiveStyleDanger) LocalColors.current.danger
+                                else LocalColors.current.text,
                                 onClick = data.showSimpleDialog.onPositive
                             ),
                             DialogButtonModel(

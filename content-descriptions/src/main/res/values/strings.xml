@@ -116,6 +116,10 @@
     <string name="qa_conversation_settings_invite_contacts">invite-contacts-menu-option</string>
     <string name="qa_conversation_settings_leave_group">leave-group-confirm-button</string>
     <string name="qa_conversation_settings_delete_group">delete-group-menu-option</string>
+    <string name="qa_conversation_settings_dialog_hide_nts_confirm">hide-nts-confirm-button</string>
+    <string name="qa_conversation_settings_dialog_hide_nts_cancel">hide-nts-cancel-button</string>
+    <string name="qa_conversation_settings_dialog_show_nts_confirm">show-nts-confirm-button</string>
+    <string name="qa_conversation_settings_dialog_show_nts_cancel">show-nts-cancel-button</string>
     <string name="qa_conversation_settings_dialog_block_confirm">block-user-confirm-button</string>
     <string name="qa_conversation_settings_dialog_block_cancel">block-user-cancel-button</string>
     <string name="qa_conversation_settings_dialog_unblock_confirm">unblock-user-confirm-button</string>

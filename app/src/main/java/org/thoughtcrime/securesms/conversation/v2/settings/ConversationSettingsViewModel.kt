@@ -31,6 +31,8 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
+import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsession.database.StorageProtocol
@@ -71,6 +73,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private val navigator: ConversationSettingsNavigator,
     private val threadDb: ThreadDatabase,
     private val groupManagerV2: GroupManagerV2,
+    private val prefs: TextSecurePreferences,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<UIState> = MutableStateFlow(
@@ -207,6 +210,8 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 val mainOptions = mutableListOf<OptionsItem>()
                 val dangerOptions = mutableListOf<OptionsItem>()
 
+                val ntsHidden = prefs.hasHiddenNoteToSelf()
+
                 mainOptions.addAll(listOf(
                     optionCopyAccountId,
                     optionSearch,
@@ -215,8 +220,10 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                     optionAttachments,
                 ))
 
+                if(ntsHidden) mainOptions.add(optionShowNTS)
+                else dangerOptions.add(optionHideNTS)
+
                 dangerOptions.addAll(listOf(
-                    optionHideNTS,
                     optionClearMessages,
                 ))
 
@@ -482,7 +489,6 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         }
     }
 
-
     private fun blockUser() {
         val conversation = recipient ?: return
         viewModelScope.launch {
@@ -502,6 +508,63 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         if(recipient == null) return
         viewModelScope.launch {
             repository.setBlocked(recipient!!, false)
+        }
+    }
+
+    private fun confirmHideNTS(){
+        _uiState.update {
+            it.copy(
+                showSimpleDialog = Dialog(
+                    title = context.getString(R.string.noteToSelfHide),
+                    message = context.getString(R.string.noteToSelfHideDescription), //todo UCS need latest from crowdin here
+                    positiveText = context.getString(R.string.hide),
+                    negativeText = context.getString(R.string.cancel),
+                    positiveQaTag = context.getString(R.string.qa_conversation_settings_dialog_hide_nts_confirm),
+                    negativeQaTag = context.getString(R.string.qa_conversation_settings_dialog_hide_nts_cancel),
+                    onPositive = ::hideNoteToSelf,
+                    onNegative = {}
+                )
+            )
+        }
+    }
+
+    private fun confirmShowNTS(){
+        _uiState.update {
+            it.copy(
+                showSimpleDialog = Dialog(
+                    title = context.getString(R.string.showNoteToSelf),
+                    message = context.getText(R.string.showNoteToSelfDescription),
+                    positiveText = context.getString(R.string.show),
+                    negativeText = context.getString(R.string.cancel),
+                    positiveQaTag = context.getString(R.string.qa_conversation_settings_dialog_show_nts_confirm),
+                    negativeQaTag = context.getString(R.string.qa_conversation_settings_dialog_show_nts_cancel),
+                    positiveStyleDanger = false,
+                    onPositive = ::showNoteToSelf,
+                    onNegative = {}
+                )
+            )
+        }
+    }
+
+    private fun hideNoteToSelf() {
+        prefs.setHasHiddenNoteToSelf(true)
+        configFactory.withMutableUserConfigs {
+            it.userProfile.setNtsPriority(PRIORITY_HIDDEN)
+        }
+        // update state to reflect the change
+        viewModelScope.launch {
+            getStateFromRecipient()
+        }
+    }
+
+    fun showNoteToSelf() {
+        prefs.setHasHiddenNoteToSelf(false)
+        configFactory.withMutableUserConfigs {
+            it.userProfile.setNtsPriority(PRIORITY_VISIBLE)
+        }
+        // update state to reflect the change
+        viewModelScope.launch {
+            getStateFromRecipient()
         }
     }
 
@@ -651,7 +714,16 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             name = context.getString(R.string.noteToSelfHide),
             icon = R.drawable.ic_eye_off,
             qaTag = R.string.qa_conversation_settings_hide_nts,
-            onClick = ::copyAccountId //todo UCS get proper method
+            onClick = ::confirmHideNTS
+        )
+    }
+
+    private val optionShowNTS: OptionsItem by lazy{
+        OptionsItem(
+            name = context.getString(R.string.showNoteToSelf),
+            icon = R.drawable.ic_eye,
+            qaTag = R.string.qa_conversation_settings_hide_nts,
+            onClick = ::confirmShowNTS
         )
     }
 
@@ -747,6 +819,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         val title: String,
         val message: CharSequence,
         val positiveText: String,
+        val positiveStyleDanger: Boolean = true,
         val negativeText: String,
         val positiveQaTag: String?,
         val negativeQaTag: String?,
