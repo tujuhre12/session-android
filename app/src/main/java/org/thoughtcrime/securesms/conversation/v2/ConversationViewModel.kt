@@ -2,7 +2,6 @@ package org.thoughtcrime.securesms.conversation.v2
 
 import android.app.Application
 import android.content.Context
-import android.view.MenuItem
 import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
@@ -10,7 +9,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import app.cash.copper.flow.observeQuery
 import com.bumptech.glide.Glide
-import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.goterl.lazysodium.utils.KeyPair
 import com.squareup.phrase.Phrase
 import dagger.assisted.Assisted
@@ -18,7 +16,6 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -59,7 +56,6 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.audio.AudioSlidePlayer
-import org.thoughtcrime.securesms.conversation.v2.menus.ConversationMenuHelper
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
@@ -82,7 +78,6 @@ import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.avatarOptions
-import org.thoughtcrime.securesms.util.observeChanges
 import org.thoughtcrime.securesms.webrtc.CallManager
 import org.thoughtcrime.securesms.webrtc.data.State
 import java.time.ZoneId
@@ -1209,39 +1204,6 @@ class ConversationViewModel(
         _dialogsState.update {
             it.copy(clearAllEmoji = ClearAllEmoji(emoji, messageId))
         }
-    }
-
-    fun onOptionItemSelected(
-        // This must be the context of the activity as requirement from ConversationMenuHelper
-        context: Context,
-        item: MenuItem
-    ): Boolean {
-        val recipient = recipient ?: return false
-
-        val inProgress = ConversationMenuHelper.onOptionItemSelected(
-            context = context,
-            item = item,
-            thread = recipient,
-            threadID = threadId,
-            factory = configFactory,
-            storage = storage,
-            groupManager = groupManagerV2,
-            deprecationManager = legacyGroupDeprecationManager,
-        )
-
-        if (inProgress != null) {
-            viewModelScope.launch {
-                inProgress.consumeEach { status ->
-                    when (status) {
-                        ConversationMenuHelper.GroupLeavingStatus.Left,
-                        ConversationMenuHelper.GroupLeavingStatus.Error -> _uiState.update { it.copy(showLoader = false) }
-                        else -> _uiState.update { it.copy(showLoader = true) }
-                    }
-                }
-            }
-        }
-
-        return true
     }
 
     fun getUsername(accountId: String) = usernameUtils.getContactNameWithAccountID(accountId)

@@ -1405,10 +1405,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             .let(::startActivity)
     }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return if (item.itemId == android.R.id.home) false else viewModel.onOptionItemSelected(this, item)
-    }
-
     fun block(deleteThread: Boolean) {
         val recipient = viewModel.recipient ?: return Log.w("Loki", "Recipient was null for block action")
         val invitingAdmin = viewModel.invitingAdmin

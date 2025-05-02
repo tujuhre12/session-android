@@ -130,6 +130,10 @@
     <string name="qa_conversation_settings_dialog_delete_conversation_cancel">delete-conversation-cancel-button</string>
     <string name="qa_conversation_settings_dialog_leave_community_confirm">leave-community-confirm-option</string>
     <string name="qa_conversation_settings_dialog_leave_community_cancel">leave-community-cancel-option</string>
+    <string name="qa_conversation_settings_dialog_delete_group_confirm">delete-group-confirm-button</string>
+    <string name="qa_conversation_settings_dialog_delete_group_cancel">delete-group-cancel-button</string>
+    <string name="qa_conversation_settings_dialog_leave_group_confirm">leave-group-confirm-button</string>
+    <string name="qa_conversation_settings_dialog_leave_group_cancel">leave-group-cancel-button</string>
     <!--  Conversation options for closed group-->
     <string name="AccessibilityId_groupNameNew">Accept name change</string>
     <string name="AccessibilityId_membersInvite">Invite button</string>

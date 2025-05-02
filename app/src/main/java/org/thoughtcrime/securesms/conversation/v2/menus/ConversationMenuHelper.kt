@@ -193,9 +193,9 @@ object ConversationMenuHelper {
             R.id.menu_copy_open_group_url -> { copyOpenGroupUrl(context, thread) }
             R.id.menu_edit_group -> { editGroup(context, thread) }
             R.id.menu_group_members -> { showGroupMembers(context, thread) }
-            R.id.menu_leave_group -> { return leaveGroup(
+           /* R.id.menu_leave_group -> { return leaveGroup(
                 context, thread, threadID, factory, storage, groupManager, deprecationManager
-            ) }
+            ) }*/
             R.id.menu_invite_to_open_group -> { inviteContacts(context, thread) }
             R.id.menu_unmute_notifications -> { unmute(context, thread) }
             R.id.menu_mute_notifications -> { mute(context, thread) }
@@ -311,7 +311,7 @@ object ConversationMenuHelper {
         Error,
     }
 
-    fun leaveGroup(
+/*    fun leaveGroup(
         context: Context,
         thread: Recipient,
         threadID: Long,
@@ -393,9 +393,9 @@ object ConversationMenuHelper {
         }
 
         return null
-    }
+    }*/
 
-    private fun confirmAndLeaveGroup(
+   /* private fun confirmAndLeaveGroup(
         context: Context,
         groupName: String,
         isAdmin: Boolean,
@@ -454,7 +454,7 @@ object ConversationMenuHelper {
             }
             button(R.string.cancel)
         }
-    }
+    }*/
 
     private fun inviteContacts(context: Context, thread: Recipient) {
         if (!thread.isCommunityRecipient) { return }

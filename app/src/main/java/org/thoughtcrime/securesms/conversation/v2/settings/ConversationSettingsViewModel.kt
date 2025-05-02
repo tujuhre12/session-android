@@ -663,6 +663,76 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             goBackHome()
         }
     }
+//todo UCS kicked/destroyed groups should allow settings, and they have their own designs
+
+    private fun getGroupName(): String{
+        val conversation = recipient ?: return ""
+        val accountId = AccountId(conversation.address.toString())
+        return configFactory.withGroupConfigs(accountId) {
+            it.groupInfo.getName()
+        } ?: groupV2?.name ?: ""
+    }
+
+    private fun confirmLeaveGroup(){
+        val groupData = groupV2 ?: return
+        _uiState.update {
+
+            var title = R.string.groupDelete
+            var message: CharSequence = ""
+            var positiveButton = R.string.delete
+            var positiveQaTag = R.string.qa_conversation_settings_dialog_delete_group_confirm
+            var negativeQaTag = R.string.qa_conversation_settings_dialog_delete_group_cancel
+
+            val groupName = getGroupName()
+
+            if(groupData.kicked || groupData.destroyed){
+                message = Phrase.from(context, R.string.groupDeleteDescriptionMember)
+                    .put(GROUP_NAME_KEY, groupName)
+                    .format()
+
+            } else if (groupData.hasAdminKey()) {
+                message = Phrase.from(context, R.string.groupLeaveDescriptionAdmin)
+                    .put(GROUP_NAME_KEY, groupName)
+                    .format()
+            } else {
+                message = Phrase.from(context, R.string.groupLeaveDescription)
+                    .put(GROUP_NAME_KEY, groupName)
+                    .format()
+
+                title = R.string.groupLeave
+                positiveButton = R.string.leave
+                positiveQaTag = R.string.qa_conversation_settings_dialog_leave_group_confirm
+                negativeQaTag = R.string.qa_conversation_settings_dialog_leave_group_cancel
+            }
+
+
+            it.copy(
+                showSimpleDialog = Dialog(
+                    title = context.getString(title),
+                    message = message,
+                    positiveText = context.getString(positiveButton),
+                    negativeText = context.getString(R.string.cancel),
+                    positiveQaTag = context.getString(positiveQaTag),
+                    negativeQaTag = context.getString(negativeQaTag),
+                    onPositive = ::leaveGroup,
+                    onNegative = {}
+                )
+            )
+        }
+    }
+
+    private fun leaveGroup() {
+        val conversation = recipient ?: return
+        viewModelScope.launch {
+            withContext(Dispatchers.Default) {
+                //todo UCS I need a loader here
+                groupManagerV2.leaveGroup(AccountId(conversation.address.toString()))
+                //todo UCS I need to handle errors here potentially
+            }
+
+            goBackHome()
+        }
+    }
 
     private suspend fun goBackHome(){
         navigator.navigateToIntent(
@@ -876,7 +946,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             name = context.getString(R.string.groupLeave),
             icon = R.drawable.ic_log_out,
             qaTag = R.string.qa_conversation_settings_leave_group,
-            onClick = ::copyAccountId //todo UCS get proper method
+            onClick = ::confirmLeaveGroup
         )
     }
 
@@ -885,7 +955,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             name = context.getString(R.string.groupDelete),
             icon = R.drawable.ic_trash_2,
             qaTag = R.string.qa_conversation_settings_delete_group,
-            onClick = ::copyAccountId //todo UCS get proper method
+            onClick = ::confirmLeaveGroup
         )
     }
 
