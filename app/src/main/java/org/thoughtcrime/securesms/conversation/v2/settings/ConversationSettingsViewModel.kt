@@ -211,7 +211,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         val pinned = threadDb.isPinned(threadId)
 
         // organise the setting options
-        val optionData = when {
+        val optionData = options@when {
             conversation.isLocalNumber -> {
                 val mainOptions = mutableListOf<OptionsItem>()
                 val dangerOptions = mutableListOf<OptionsItem>()
@@ -280,77 +280,95 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             }
 
             conversation.isGroupV2Recipient -> {
-                val mainOptions = mutableListOf<OptionsItem>()
-                val adminOptions = mutableListOf<OptionsItem>()
-                val dangerOptions = mutableListOf<OptionsItem>()
-
-                mainOptions.add(optionSearch)
-
-                // for non admins, disappearing messages is in the non admin section
-                if(!isAdmin){
-                    mainOptions.add(optionDisappearingMessage(disappearingSubtitle))
-                }
-
-                mainOptions.addAll(listOf(
-                    if(pinned) optionUnpin else optionPin,
-                    optionNotifications(null), //todo UCS notifications logic
-                    optionGroupMembers,
-                    optionAttachments,
-                ))
-
-                // apply different options depending on admin status
-                if(isAdmin){
-                    dangerOptions.addAll(
-                        listOf(
-                            optionClearMessages,
-                            optionDeleteGroup
-                        )
-                    )
-
-                    // admin options
-                    adminOptions.addAll(listOf(
-                        optionManageMembers,
-                        optionDisappearingMessage(disappearingSubtitle)
-                    ))
-
-                    // the returned options for group admins
+                // if the user is kicked or the group destroyed, only show "Delete Group"
+                if(groupV2 != null && groupV2?.shouldPoll == false){
                     listOf(
-                        OptionsCategory(
-                            items = listOf(
-                                OptionsSubCategory(items = mainOptions),
-                            )
-                        ),
-                        OptionsCategory(
-                            name = context.getString(R.string.adminSettings),
-                            items = listOf(
-                                OptionsSubCategory(items = adminOptions),
-                                OptionsSubCategory(
-                                    danger = true,
-                                    items = dangerOptions
+                            OptionsCategory(
+                                items = listOf(
+                                    OptionsSubCategory(
+                                        danger = true,
+                                        items = listOf(optionDeleteGroup)
+                                    )
                                 )
                             )
-                        )
                     )
                 } else {
-                    dangerOptions.addAll(
+                    val mainOptions = mutableListOf<OptionsItem>()
+                    val adminOptions = mutableListOf<OptionsItem>()
+                    val dangerOptions = mutableListOf<OptionsItem>()
+
+                    mainOptions.add(optionSearch)
+
+                    // for non admins, disappearing messages is in the non admin section
+                    if (!isAdmin) {
+                        mainOptions.add(optionDisappearingMessage(disappearingSubtitle))
+                    }
+
+                    mainOptions.addAll(
                         listOf(
-                            optionClearMessages,
-                            optionLeaveGroup
+                            if (pinned) optionUnpin else optionPin,
+                            optionNotifications(null), //todo UCS notifications logic
+                            optionGroupMembers,
+                            optionAttachments,
                         )
                     )
 
-                    // the returned options for group non-admins
-                    listOf(
-                        OptionsCategory(
-                            items = listOf(
-                                OptionsSubCategory(items = mainOptions),
-                                OptionsSubCategory(
-                                    danger = true,
-                                    items = dangerOptions
+                    // apply different options depending on admin status
+                    if (isAdmin) {
+                        dangerOptions.addAll(
+                            listOf(
+                                optionClearMessages,
+                                optionDeleteGroup
+                            )
+                        )
+
+                        // admin options
+                        adminOptions.addAll(
+                            listOf(
+                                optionManageMembers,
+                                optionDisappearingMessage(disappearingSubtitle)
+                            )
+                        )
+
+                        // the returned options for group admins
+                        listOf(
+                            OptionsCategory(
+                                items = listOf(
+                                    OptionsSubCategory(items = mainOptions),
+                                )
+                            ),
+                            OptionsCategory(
+                                name = context.getString(R.string.adminSettings),
+                                items = listOf(
+                                    OptionsSubCategory(items = adminOptions),
+                                    OptionsSubCategory(
+                                        danger = true,
+                                        items = dangerOptions
+                                    )
                                 )
                             )
                         )
-                    )
+                    } else {
+                        dangerOptions.addAll(
+                            listOf(
+                                optionClearMessages,
+                                optionLeaveGroup
+                            )
+                        )
+
+                        // the returned options for group non-admins
+                        listOf(
+                            OptionsCategory(
+                                items = listOf(
+                                    OptionsSubCategory(items = mainOptions),
+                                    OptionsSubCategory(
+                                        danger = true,
+                                        items = dangerOptions
+                                    )
+                                )
+                            )
+                        )
+                    }
                 }
             }
 
@@ -595,6 +613,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private fun deleteContact() {
         val conversation = recipient ?: return
         viewModelScope.launch {
+            //todo UCS I need a loader here?
             withContext(Dispatchers.Default) {
                 storage.deleteContactAndSyncConfig(conversation.address.toString())
             }
@@ -624,6 +643,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
     private fun deleteConversation() {
         viewModelScope.launch {
+            //todo UCS I need a loader here?
             withContext(Dispatchers.Default) {
                 storage.deleteConversation(threadId)
             }
@@ -653,6 +673,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
     private fun leaveCommunity() {
         viewModelScope.launch {
+            //todo UCS I need a loader here?
             withContext(Dispatchers.Default) {
                 val community = lokiThreadDatabase.getOpenGroupChat(threadId)
                 if (community != null) {
@@ -663,7 +684,6 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             goBackHome()
         }
     }
-//todo UCS kicked/destroyed groups should allow settings, and they have their own designs
 
     private fun getGroupName(): String{
         val conversation = recipient ?: return ""
@@ -685,7 +705,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
             val groupName = getGroupName()
 
-            if(groupData.kicked || groupData.destroyed){
+            if(!groupData.shouldPoll){
                 message = Phrase.from(context, R.string.groupDeleteDescriptionMember)
                     .put(GROUP_NAME_KEY, groupName)
                     .format()

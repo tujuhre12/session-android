@@ -311,7 +311,7 @@ object ConversationMenuHelper {
         Error,
     }
 
-/*    fun leaveGroup(
+    fun leaveGroup(
         context: Context,
         thread: Recipient,
         threadID: Long,
@@ -393,9 +393,9 @@ object ConversationMenuHelper {
         }
 
         return null
-    }*/
+    }
 
-   /* private fun confirmAndLeaveGroup(
+    private fun confirmAndLeaveGroup(
         context: Context,
         groupName: String,
         isAdmin: Boolean,
@@ -454,7 +454,7 @@ object ConversationMenuHelper {
             }
             button(R.string.cancel)
         }
-    }*/
+    }
 
     private fun inviteContacts(context: Context, thread: Recipient) {
         if (!thread.isCommunityRecipient) { return }

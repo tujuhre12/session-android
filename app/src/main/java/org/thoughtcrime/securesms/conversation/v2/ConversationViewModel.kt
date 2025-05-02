@@ -235,11 +235,7 @@ class ConversationViewModel(
         }
 
     val showOptionsMenu: Boolean
-        get() = !isMessageRequestThread && !isDeprecatedLegacyGroup && !isInactiveGroupV2Thread
-
-    private val isInactiveGroupV2Thread: Boolean
-        get() = recipient?.isGroupV2Recipient == true &&
-                configFactory.getGroup(AccountId(recipient!!.address.toString()))?.shouldPoll == false
+        get() = !isMessageRequestThread && !isDeprecatedLegacyGroup
 
     private val isDeprecatedLegacyGroup: Boolean
         get() = recipient?.isLegacyGroupRecipient == true && legacyGroupDeprecationManager.isDeprecated
