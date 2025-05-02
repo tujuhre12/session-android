@@ -8,6 +8,7 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import app.cash.copper.flow.observeQuery
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.goterl.lazysodium.utils.KeyPair
@@ -59,6 +60,7 @@ import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.audio.AudioSlidePlayer
 import org.thoughtcrime.securesms.conversation.v2.menus.ConversationMenuHelper
+import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
@@ -80,6 +82,7 @@ import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.avatarOptions
+import org.thoughtcrime.securesms.util.observeChanges
 import org.thoughtcrime.securesms.webrtc.CallManager
 import org.thoughtcrime.securesms.webrtc.data.State
 import java.time.ZoneId
@@ -320,6 +323,21 @@ class ConversationViewModel(
                         showInput = shouldShowInput(recipient, community, deprecationState),
                         enableAttachMediaControls = shouldEnableInputMediaControls(recipient),
                         messageRequestState = buildMessageRequestState(recipient),
+                        userBlocked = recipient?.isBlocked ?: false
+                    )
+                }
+            }
+        }
+
+        // update state on recipient changes
+        viewModelScope.launch(Dispatchers.Default) {
+            context.contentResolver
+                .observeQuery(DatabaseContentProviders.Recipient.CONTENT_URI).collect {
+                _uiState.update {
+                    it.copy(
+                        shouldExit = recipient == null,
+                        enableAttachMediaControls = shouldEnableInputMediaControls(recipient),
+                        userBlocked = recipient?.isBlocked ?: false
                     )
                 }
             }
@@ -441,6 +459,9 @@ class ConversationViewModel(
             return false
         }
 
+        // disable for blocked users
+        if (recipient.isBlocked) return false
+
         // Specifically allow multimedia in our note-to-self
         if (recipient.isLocalNumber) return true
 
@@ -560,18 +581,24 @@ class ConversationViewModel(
         // inviting admin will be non-null if this request is a closed group message request
         val recipient = invitingAdmin ?: recipient ?: return Log.w("Loki", "Recipient was null for block action")
         if (recipient.isContactRecipient || recipient.isGroupV2Recipient) {
-            repository.setBlocked(recipient, true)
+            viewModelScope.launch {
+                repository.setBlocked(recipient, true)
+            }
         }
 
-        if (this.recipient?.isGroupV2Recipient == true) {
-            groupManagerV2.onBlocked(AccountId(this.recipient!!.address.toString()))
+        if (recipient.isGroupV2Recipient) {
+            viewModelScope.launch {
+                groupManagerV2.onBlocked(AccountId(recipient.address.toString()))
+            }
         }
     }
 
     fun unblock() {
         val recipient = recipient ?: return Log.w("Loki", "Recipient was null for unblock action")
         if (recipient.isContactRecipient) {
-            repository.setBlocked(recipient, false)
+            viewModelScope.launch {
+                repository.setBlocked(recipient, false)
+            }
         }
     }
 
@@ -1047,6 +1074,7 @@ class ConversationViewModel(
     fun updateRecipient() {
         _recipient.updateTo(repository.maybeGetRecipientForThreadId(threadId))
         updateAppBarData(recipient)
+        // update ui accordingly
     }
 
     /**
@@ -1343,6 +1371,8 @@ data class ConversationUiState(
     // or record voice messages to be sent to a recipient - they are NOT things like video or audio
     // playback controls.
     val enableAttachMediaControls: Boolean = true,
+
+    val userBlocked: Boolean = false,
 
     val showLoader: Boolean = false,
 )

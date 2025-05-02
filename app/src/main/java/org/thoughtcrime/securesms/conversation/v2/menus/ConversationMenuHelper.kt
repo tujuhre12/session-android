@@ -81,13 +81,13 @@ object ConversationMenuHelper {
             inflater.inflate(R.menu.menu_conversation_copy_account_id, menu)
         }
         // One-on-one chat menu (options that should only be present for one-on-one chats)
-        if (thread.isContactRecipient) {
+       /* if (thread.isContactRecipient) {
             if (thread.isBlocked) {
                 inflater.inflate(R.menu.menu_conversation_unblock, menu)
             } else if (!thread.isLocalNumber) {
                 inflater.inflate(R.menu.menu_conversation_block, menu)
             }
-        }
+        }*/
         // (Legacy) Closed group menu (options that should only be present in closed groups)
         if (thread.isLegacyGroupRecipient) {
             inflater.inflate(R.menu.menu_conversation_legacy_group, menu)
@@ -187,9 +187,8 @@ object ConversationMenuHelper {
             R.id.menu_search -> { search(context) }
             R.id.menu_add_shortcut -> { addShortcut(context, thread) }
             R.id.menu_expiring_messages -> { showDisappearingMessages(context, thread) }
-            R.id.menu_unblock -> { unblock(context, thread) }
-            R.id.menu_block -> { block(context, thread, deleteThread = false) }
-            R.id.menu_block_delete -> { blockAndDelete(context, thread) }
+           /* R.id.menu_unblock -> { unblock(context, thread) }
+            R.id.menu_block -> { block(context, thread, deleteThread = false) }*/
             R.id.menu_copy_account_id -> { copyAccountID(context, thread) }
             R.id.menu_copy_open_group_url -> { copyOpenGroupUrl(context, thread) }
             R.id.menu_edit_group -> { editGroup(context, thread) }
@@ -262,7 +261,7 @@ object ConversationMenuHelper {
         listener.showDisappearingMessages(thread)
     }
 
-    private fun unblock(context: Context, thread: Recipient) {
+ /*   private fun unblock(context: Context, thread: Recipient) {
         if (!thread.isContactRecipient) { return }
         val listener = context as? ConversationMenuListener ?: return
         listener.unblock()
@@ -272,13 +271,7 @@ object ConversationMenuHelper {
         if (!thread.isContactRecipient) { return }
         val listener = context as? ConversationMenuListener ?: return
         listener.block(deleteThread)
-    }
-
-    private fun blockAndDelete(context: Context, thread: Recipient) {
-        if (!thread.isContactRecipient) { return }
-        val listener = context as? ConversationMenuListener ?: return
-        listener.block(deleteThread = true)
-    }
+    }*/
 
     private fun copyAccountID(context: Context, thread: Recipient) {
         if (!thread.isContactRecipient) { return }
@@ -487,8 +480,6 @@ object ConversationMenuHelper {
     }
 
     interface ConversationMenuListener {
-        fun block(deleteThread: Boolean = false)
-        fun unblock()
         fun copyAccountID(accountId: String)
         fun copyOpenGroupUrl(thread: Recipient)
         fun showDisappearingMessages(thread: Recipient)

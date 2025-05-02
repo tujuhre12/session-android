@@ -1019,6 +1019,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     binding.inputBar.run {
                         isVisible = state.showInput
                         allowAttachMultimediaButtons = state.enableAttachMediaControls
+                        // if the user is blocked, hide input and show blocked message
+                        setBlockedState(state.userBlocked)
                     }
 
                     // show or hide loading indicator
@@ -1407,7 +1409,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         return if (item.itemId == android.R.id.home) false else viewModel.onOptionItemSelected(this, item)
     }
 
-    override fun block(deleteThread: Boolean) {
+    fun block(deleteThread: Boolean) {
         val recipient = viewModel.recipient ?: return Log.w("Loki", "Recipient was null for block action")
         val invitingAdmin = viewModel.invitingAdmin
 
@@ -1459,7 +1461,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         Toast.makeText(this, R.string.copied, Toast.LENGTH_SHORT).show()
     }
 
-    override fun unblock() {
+    override fun unblockUserFromInput() {
+        unblock()
+    }
+
+    fun unblock() {
         val recipient = viewModel.recipient ?: return Log.w("Loki", "Recipient was null for unblock action")
 
         if (!recipient.isContactRecipient) {

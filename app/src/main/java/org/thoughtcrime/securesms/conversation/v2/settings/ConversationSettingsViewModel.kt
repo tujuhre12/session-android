@@ -34,6 +34,7 @@ import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsession.database.StorageProtocol
+import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -69,6 +70,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private val textSecurePreferences: TextSecurePreferences,
     private val navigator: ConversationSettingsNavigator,
     private val threadDb: ThreadDatabase,
+    private val groupManagerV2: GroupManagerV2,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<UIState> = MutableStateFlow(
@@ -482,9 +484,17 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
 
     private fun blockUser() {
-        if(recipient == null) return
+        val conversation = recipient ?: return
         viewModelScope.launch {
-            repository.setBlocked(recipient!!, true)
+            repository.setBlocked(conversation, true)
+
+            if (conversation.isContactRecipient || conversation.isGroupV2Recipient) {
+                repository.setBlocked(conversation, true)
+            }
+
+            if (conversation.isGroupV2Recipient) {
+                groupManagerV2.onBlocked(AccountId(conversation.address.toString()))
+            }
         }
     }
 
