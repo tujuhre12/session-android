@@ -101,6 +101,10 @@ fun ConversationSettingsNavHost(
                 }
 
                 NavigationAction.NavigateUp -> navController.navigateUp()
+
+                is NavigationAction.NavigateToIntent -> {
+                    navController.context.startActivity(action.intent)
+                }
             }
         }
 

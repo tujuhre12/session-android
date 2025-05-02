@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.conversation.v2.settings
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
 import android.widget.Toast
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
@@ -30,6 +31,7 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
@@ -51,6 +53,7 @@ import org.session.libsignal.utilities.IdPrefix
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.groups.OpenGroupManager
+import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.AvatarUIData
@@ -492,8 +495,6 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private fun blockUser() {
         val conversation = recipient ?: return
         viewModelScope.launch {
-            repository.setBlocked(conversation, true)
-
             if (conversation.isContactRecipient || conversation.isGroupV2Recipient) {
                 repository.setBlocked(conversation, true)
             }
@@ -516,7 +517,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             it.copy(
                 showSimpleDialog = Dialog(
                     title = context.getString(R.string.noteToSelfHide),
-                    message = context.getString(R.string.noteToSelfHideDescription), //todo UCS need latest from crowdin here
+                    message = context.getText(R.string.hideNoteToSelfDescription),
                     positiveText = context.getString(R.string.hide),
                     negativeText = context.getString(R.string.cancel),
                     positiveQaTag = context.getString(R.string.qa_conversation_settings_dialog_hide_nts_confirm),
@@ -566,6 +567,49 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         viewModelScope.launch {
             getStateFromRecipient()
         }
+    }
+
+    private fun confirmDeleteContact(){
+        _uiState.update {
+            it.copy(
+                showSimpleDialog = Dialog(
+                    title = context.getString(R.string.contactDelete),
+                    message = Phrase.from(context, R.string.deleteContactDescription)
+                        .put(NAME_KEY, recipient?.name ?: "")
+                        .put(NAME_KEY, recipient?.name ?: "")
+                        .format(),
+                    positiveText = context.getString(R.string.delete),
+                    negativeText = context.getString(R.string.cancel),
+                    positiveQaTag = context.getString(R.string.qa_conversation_settings_dialog_delete_contact_confirm),
+                    negativeQaTag = context.getString(R.string.qa_conversation_settings_dialog_delete_contact_cancel),
+                    onPositive = ::deleteContact,
+                    onNegative = {}
+                )
+            )
+        }
+    }
+
+    private fun deleteContact() {
+        val conversation = recipient ?: return
+        viewModelScope.launch {
+            withContext(Dispatchers.Default) {
+                storage.deleteContactAndSyncConfig(conversation.address.toString())
+            }
+
+            goBackHome()
+        }
+    }
+
+    private suspend fun goBackHome(){
+        navigator.navigateToIntent(
+            Intent(context, HomeActivity::class.java).apply {
+                // pop back to home activity
+                addFlags(
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                            Intent.FLAG_ACTIVITY_SINGLE_TOP
+                )
+            }
+        )
     }
 
     fun onCommand(command: Commands) {
@@ -705,7 +749,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             name = context.getString(R.string.contactDelete),
             icon = R.drawable.ic_user_round_trash,
             qaTag = R.string.qa_conversation_settings_delete_contact,
-            onClick = ::copyAccountId //todo UCS get proper method
+            onClick = ::confirmDeleteContact
         )
     }
 

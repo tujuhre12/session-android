@@ -124,6 +124,8 @@
     <string name="qa_conversation_settings_dialog_block_cancel">block-user-cancel-button</string>
     <string name="qa_conversation_settings_dialog_unblock_confirm">unblock-user-confirm-button</string>
     <string name="qa_conversation_settings_dialog_unblock_cancel">unblock-user-cancel-button</string>
+    <string name="qa_conversation_settings_dialog_delete_contact_confirm">delete-contact-confirm-button</string>
+    <string name="qa_conversation_settings_dialog_delete_contact_cancel">delete-contact-cancel-button</string>
     <!--  Conversation options for closed group-->
     <string name="AccessibilityId_groupNameNew">Accept name change</string>
     <string name="AccessibilityId_membersInvite">Invite button</string>
