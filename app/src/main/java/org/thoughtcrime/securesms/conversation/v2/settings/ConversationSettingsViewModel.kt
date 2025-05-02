@@ -600,6 +600,35 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         }
     }
 
+    private fun confirmDeleteConversation(){
+        _uiState.update {
+            it.copy(
+                showSimpleDialog = Dialog(
+                    title = context.getString(R.string.conversationsDelete),
+                    message = Phrase.from(context, R.string.deleteConversationDescription)
+                        .put(NAME_KEY, recipient?.name ?: "")
+                        .format(),
+                    positiveText = context.getString(R.string.delete),
+                    negativeText = context.getString(R.string.cancel),
+                    positiveQaTag = context.getString(R.string.qa_conversation_settings_dialog_delete_conversation_confirm),
+                    negativeQaTag = context.getString(R.string.qa_conversation_settings_dialog_delete_conversation_cancel),
+                    onPositive = ::deleteConversation,
+                    onNegative = {}
+                )
+            )
+        }
+    }
+
+    private fun deleteConversation() {
+        viewModelScope.launch {
+            withContext(Dispatchers.Default) {
+                storage.deleteConversation(threadId)
+            }
+
+            goBackHome()
+        }
+    }
+
     private suspend fun goBackHome(){
         navigator.navigateToIntent(
             Intent(context, HomeActivity::class.java).apply {
@@ -740,7 +769,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             name = context.getString(R.string.conversationsDelete),
             icon = R.drawable.ic_trash_2,
             qaTag = R.string.qa_conversation_settings_delete_conversation,
-            onClick = ::copyAccountId //todo UCS get proper method
+            onClick = ::confirmDeleteConversation
         )
     }
 
