@@ -128,6 +128,8 @@
     <string name="qa_conversation_settings_dialog_delete_contact_cancel">delete-contact-cancel-button</string>
     <string name="qa_conversation_settings_dialog_delete_conversation_confirm">delete-conversation-confirm-button</string>
     <string name="qa_conversation_settings_dialog_delete_conversation_cancel">delete-conversation-cancel-button</string>
+    <string name="qa_conversation_settings_dialog_leave_community_confirm">leave-community-confirm-option</string>
+    <string name="qa_conversation_settings_dialog_leave_community_cancel">leave-community-cancel-option</string>
     <!--  Conversation options for closed group-->
     <string name="AccessibilityId_groupNameNew">Accept name change</string>
     <string name="AccessibilityId_membersInvite">Invite button</string>

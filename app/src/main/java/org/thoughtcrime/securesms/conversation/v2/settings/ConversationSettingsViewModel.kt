@@ -43,6 +43,7 @@ import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ExpirationUtil
+import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
@@ -51,6 +52,7 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
+import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.home.HomeActivity
@@ -77,6 +79,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private val threadDb: ThreadDatabase,
     private val groupManagerV2: GroupManagerV2,
     private val prefs: TextSecurePreferences,
+    private val lokiThreadDatabase: LokiThreadDatabase,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<UIState> = MutableStateFlow(
@@ -629,6 +632,38 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         }
     }
 
+    private fun confirmLeaveCommunity(){
+        _uiState.update {
+            it.copy(
+                showSimpleDialog = Dialog(
+                    title = context.getString(R.string.communityLeave),
+                    message = Phrase.from(context, R.string.groupLeaveDescription)
+                        .put(GROUP_NAME_KEY, recipient?.name ?: "")
+                        .format(),
+                    positiveText = context.getString(R.string.leave),
+                    negativeText = context.getString(R.string.cancel),
+                    positiveQaTag = context.getString(R.string.qa_conversation_settings_dialog_leave_community_confirm),
+                    negativeQaTag = context.getString(R.string.qa_conversation_settings_dialog_leave_community_cancel),
+                    onPositive = ::leaveCommunity,
+                    onNegative = {}
+                )
+            )
+        }
+    }
+
+    private fun leaveCommunity() {
+        viewModelScope.launch {
+            withContext(Dispatchers.Default) {
+                val community = lokiThreadDatabase.getOpenGroupChat(threadId)
+                if (community != null) {
+                    OpenGroupManager.delete(community.server, community.room, context)
+                }
+            }
+
+            goBackHome()
+        }
+    }
+
     private suspend fun goBackHome(){
         navigator.navigateToIntent(
             Intent(context, HomeActivity::class.java).apply {
@@ -869,7 +904,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             name = context.getString(R.string.communityLeave),
             icon = R.drawable.ic_log_out,
             qaTag = R.string.qa_conversation_settings_leave_community,
-            onClick = ::copyAccountId //todo UCS get proper method
+            onClick = ::confirmLeaveCommunity
         )
     }
 
