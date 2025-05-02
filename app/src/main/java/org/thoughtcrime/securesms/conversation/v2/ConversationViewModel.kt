@@ -8,6 +8,8 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.goterl.lazysodium.utils.KeyPair
 import com.squareup.phrase.Phrase
 import dagger.assisted.Assisted
@@ -77,6 +79,7 @@ import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.DateUtils
+import org.thoughtcrime.securesms.util.avatarOptions
 import org.thoughtcrime.securesms.webrtc.CallManager
 import org.thoughtcrime.securesms.webrtc.data.State
 import java.time.ZoneId
@@ -405,13 +408,21 @@ class ConversationViewModel(
             }
 
             // calculate the main app bar data
+            val avatarData = avatarUtils.getUIDataFromRecipient(conversation)
             _appBarData.value = ConversationAppBarData(
                 title = conversation.takeUnless { it?.isLocalNumber == true }?.name ?: context.getString(R.string.noteToSelf),
                 pagerData = pagerData,
                 showCall = conversation?.showCallMenu() ?: false,
                 showAvatar = showOptionsMenu,
-                avatarUIData = avatarUtils.getUIDataFromRecipient(conversation)
+                avatarUIData = avatarData
             )
+            // also preload the larger version of the avatar in case the user goes to the settings
+            avatarData.elements.mapNotNull { it.contactPhoto }.forEach {
+                val loadSize = context.resources.getDimensionPixelSize(R.dimen.large_profile_picture_size)
+                Glide.with(context).load(it)
+                    .avatarOptions(loadSize)
+                    .preload(loadSize, loadSize)
+            }
         }
     }
 

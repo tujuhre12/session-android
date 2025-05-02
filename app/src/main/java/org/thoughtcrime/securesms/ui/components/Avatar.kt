@@ -14,13 +14,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.bumptech.glide.integration.compose.CrossFade
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
@@ -38,6 +40,7 @@ import org.thoughtcrime.securesms.ui.theme.primaryGreen
 import org.thoughtcrime.securesms.util.AvatarBadge
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
+import org.thoughtcrime.securesms.util.avatarOptions
 
 
 @Composable
@@ -45,6 +48,8 @@ fun BaseAvatar(
     size: Dp,
     data: AvatarUIData,
     modifier: Modifier = Modifier,
+    clip: Shape = CircleShape,
+    maxSizeLoad: Dp = LocalDimensions.current.iconLarge,
     badge: (@Composable () -> Unit)? = null,
 ) {
     Box(modifier = modifier.size(size)) {
@@ -57,7 +62,9 @@ fun BaseAvatar(
                 // Only one element, occupy the full parent's size.
                 AvatarElement(
                     size = size,
-                    data = data.elements.first()
+                    data = data.elements.first(),
+                    clip = clip,
+                    maxSizeLoad = maxSizeLoad
                 )
             }
             else -> {
@@ -66,12 +73,16 @@ fun BaseAvatar(
                 AvatarElement(
                     modifier = Modifier.align(Alignment.TopStart),
                     size = avatarSize,
-                    data = data.elements[0]
+                    data = data.elements[0],
+                    clip = clip,
+                    maxSizeLoad = maxSizeLoad
                 )
                 AvatarElement(
                     modifier = Modifier.align(Alignment.BottomEnd),
                     size = avatarSize,
-                    data = data.elements[1]
+                    data = data.elements[1],
+                    clip = clip,
+                    maxSizeLoad = maxSizeLoad
                 )
             }
         }
@@ -95,12 +106,16 @@ fun Avatar(
     size: Dp,
     data: AvatarUIData,
     modifier: Modifier = Modifier,
+    clip: Shape = CircleShape,
+    maxSizeLoad: Dp = LocalDimensions.current.iconLarge,
     badge: AvatarBadge = AvatarBadge.None,
 ){
     BaseAvatar(
         size = size,
         modifier = modifier,
         data = data,
+        clip = clip,
+        maxSizeLoad = maxSizeLoad,
         badge = when (badge) {
                 AvatarBadge.None -> null
 
@@ -121,27 +136,27 @@ fun Avatar(
 private fun AvatarElement(
     size: Dp,
     modifier: Modifier = Modifier,
-    data: AvatarUIElement
+    data: AvatarUIElement,
+    clip: Shape = CircleShape,
+    maxSizeLoad: Dp = LocalDimensions.current.iconLarge,
 ){
     Box(
         modifier = modifier.size(size)
             .background(
                 color = data.color ?: classicLight1,
-                shape = CircleShape,
+                shape = clip,
             )
-            .clip(CircleShape),
+            .clip(clip),
     ) {
         if(data.contactPhoto != null){
+            val maxSizePx = with(LocalDensity.current) { maxSizeLoad.toPx().toInt() }
             GlideImage(
                 model = data.contactPhoto,
                 modifier = Modifier.fillMaxSize(),
                 contentDescription = null,
-                transition = CrossFade,
                 loading = placeholder(R.drawable.ic_user_filled_custom_padded),
                 requestBuilderTransform = {
-                    it.diskCacheStrategy(DiskCacheStrategy.NONE)
-                        .centerCrop()
-                        .circleCrop()
+                    it.avatarOptions(maxSizePx)
                 }
             )
         } else if(!data.name.isNullOrEmpty()){
@@ -257,6 +272,22 @@ fun PreviewAvatarSinglePhoto(){
                     "305422957"
                 )
             )))
+        )
+    }
+}
+
+@Preview
+@Composable
+fun PreviewAvatarElementUnclipped(){
+    PreviewTheme {
+        AvatarElement(
+            size = LocalDimensions.current.iconLarge,
+            data = AvatarUIElement(
+                name = "TO",
+                color = primaryGreen,
+                contactPhoto = null
+            ),
+            clip = RectangleShape
         )
     }
 }
