@@ -299,6 +299,19 @@ open class Storage @Inject constructor(
         }
     }
 
+    override fun clearAllMessages(threadId: Long) {
+        val messages = mmsSmsDatabase.getAllMessageForThread(threadId)
+        val (mmsMessages, smsMessages) = messages.partition { it.isMms }
+        if (mmsMessages.isNotEmpty()) {
+            messageDataProvider.deleteMessages(mmsMessages.map(MessageRecord::id), threadId, isSms = false)
+        }
+        if (smsMessages.isNotEmpty()) {
+            messageDataProvider.deleteMessages(smsMessages.map(MessageRecord::id), threadId, isSms = true)
+        }
+
+        return messages.map { it.hash } //todo UCS I need to join tables in order to get this hash returned with the rest
+    }
+
     override fun markConversationAsRead(threadId: Long, lastSeenTime: Long, force: Boolean) {
         val threadDb = threadDatabase
         getRecipientForThread(threadId)?.let { recipient ->

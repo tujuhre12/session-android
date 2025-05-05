@@ -426,6 +426,12 @@ class GroupManagerV2Impl @Inject constructor(
         SnodeAPI.deleteMessage(groupAccountId.hexString, groupAdminAuth, messagesToDelete)
     }
 
+    override suspend fun clearAllMessagesForEveryone(threadId: Long) {
+        //todo UCS change the delete_before
+
+        //todo UCS remove messages from swarm SnodeAPI.deleteMessage
+    }
+
     override suspend fun handleMemberLeftMessage(memberId: AccountId, group: AccountId) = scope.launchAndWait(group, "Handle member left message") {
         val closedGroup = configFactory.getGroup(group) ?: return@launchAndWait
         val groupAdminKey = closedGroup.adminKey?.data

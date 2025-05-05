@@ -75,6 +75,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private val repository: ConversationRepository,
     private val configFactory: ConfigFactoryProtocol,
     private val storage: StorageProtocol,
+    private val conversationRepository: ConversationRepository,
     private val textSecurePreferences: TextSecurePreferences,
     private val navigator: ConversationSettingsNavigator,
     private val threadDb: ThreadDatabase,
@@ -731,22 +732,21 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                     negativeText = context.getString(R.string.cancel),
                     positiveQaTag = context.getString(R.string.qa_conversation_settings_dialog_clear_messages_confirm),
                     negativeQaTag = context.getString(R.string.qa_conversation_settings_dialog_clear_messages_cancel),
-                    onPositive = ::clearMessages,
+                    onPositive = { clearMessages(false) },
                     onNegative = {}
                 )
             )
         }
     }
 
-    private fun clearMessages() {
+    private fun clearMessages(clearForEveryoneGroupsV2: Boolean) {
         viewModelScope.launch {
             showLoading()
             withContext(Dispatchers.Default) {
-
+                conversationRepository.clearAllMessages(threadId, clearForEveryoneGroupsV2)
             }
 
             hideLoading()
-           // goBackHome()
         }
     }
 
@@ -854,9 +854,8 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 it.copy(showGroupAdminClearMessagesDialog = false)
             }
 
-            //todo UCS properly handle both cases
-            is Commands.ClearMessagesGroupDeviceOnly -> clearMessages()
-            is Commands.ClearMessagesGroupEveryone -> clearMessages()
+            is Commands.ClearMessagesGroupDeviceOnly -> clearMessages(false)
+            is Commands.ClearMessagesGroupEveryone -> clearMessages(true)
         }
     }
 

@@ -93,6 +93,7 @@ interface ConversationRepository {
     suspend fun declineMessageRequest(threadId: Long, recipient: Recipient): Result<Unit>
     fun hasReceived(threadId: Long): Boolean
     fun getInvitingAdmin(threadId: Long): Recipient?
+    suspend fun clearAllMessages(threadId: Long, syncGroupV2: Boolean)
 }
 
 class DefaultConversationRepository @Inject constructor(
@@ -417,6 +418,18 @@ class DefaultConversationRepository @Inject constructor(
                         setBlocked(recipient, true)
                     }
                 }
+            }
+        }
+    }
+
+    override suspend fun clearAllMessages(threadId: Long, syncGroupV2: Boolean) {
+        withContext(Dispatchers.Default) {
+            // delete data locally
+            storage.clearAllMessages(threadId)
+
+            // if required, also sync groupV2 data
+            if (syncGroupV2) {
+                groupManager.clearAllMessagesForEveryone(threadId)
             }
         }
     }

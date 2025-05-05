@@ -212,6 +212,8 @@ class ConfigToDatabaseSync @Inject constructor(
                 // Mark visible messages as deleted, and control messages actually deleted.
                 conversationRepository.markAsDeletedLocally(visibleMessages.toSet(), context.getString(R.string.deleteMessageDeletedGlobally))
                 conversationRepository.deleteMessages(controlMessages.toSet(), threadId)
+
+                //todo UCS if the current user is an admin of this group they should also remove the message from the swarm
             }
             groupInfoConfig.deleteAttachmentsBefore?.let { removeAttachmentsBefore ->
                 val messagesWithAttachment = mmsSmsDatabase.getAllMessageRecordsBefore(threadId, TimeUnit.SECONDS.toMillis(removeAttachmentsBefore))
