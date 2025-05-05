@@ -43,6 +43,7 @@ import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ExpirationUtil
+import org.session.libsession.utilities.StringSubstitutionConstants.COMMUNITY_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
@@ -688,6 +689,68 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         }
     }
 
+    private fun confirmClearMessages(){
+        //todo UCS group admin should show a multi choice dialog
+        val conversation = recipient ?: return
+
+        // default to 1on1
+        var message: CharSequence = Phrase.from(context, R.string.clearMessagesChatDescriptionUpdated)
+            .put(NAME_KEY,conversation.name)
+            .format()
+
+        when{
+            conversation.isGroupV2Recipient -> {
+                message = if(groupV2?.hasAdminKey() == true){
+                    Phrase.from(context, R.string.clearMessagesGroupAdminDescriptionUpdated)
+                        .put(GROUP_NAME_KEY, getGroupName())
+                        .format()
+                } else {
+                    Phrase.from(context, R.string.clearMessagesGroupDescriptionUpdated)
+                        .put(GROUP_NAME_KEY, getGroupName())
+                        .format()
+                }
+            }
+
+            conversation.isCommunityRecipient -> {
+                message = Phrase.from(context, R.string.clearMessagesCommunityUpdated)
+                    .put(COMMUNITY_NAME_KEY, conversation.name)
+                    .format()
+            }
+
+            conversation.isLocalNumber -> {
+                message = context.getText(R.string.clearMessagesNoteToSelfDescriptionUpdated)
+            }
+        }
+
+        _uiState.update {
+            it.copy(
+                showSimpleDialog = Dialog(
+                    title = context.getString(R.string.clearMessages),
+                    message = message,
+                    positiveText = context.getString(R.string.clear),
+                    negativeText = context.getString(R.string.cancel),
+                    positiveQaTag = context.getString(R.string.qa_conversation_settings_dialog_clear_messages_confirm),
+                    negativeQaTag = context.getString(R.string.qa_conversation_settings_dialog_clear_messages_cancel),
+                    onPositive = ::clearMessages,
+                    onNegative = {}
+                )
+            )
+        }
+    }
+
+    private fun clearMessages() {
+        viewModelScope.launch {
+            showLoading()
+            withContext(Dispatchers.Default) {
+
+            }
+
+            hideLoading()
+           // goBackHome()
+        }
+    }
+
+
     private fun getGroupName(): String{
         val conversation = recipient ?: return ""
         val accountId = AccountId(conversation.address.toString())
@@ -910,7 +973,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             name = context.getString(R.string.clearMessages),
             icon = R.drawable.ic_message_trash_custom,
             qaTag = R.string.qa_conversation_settings_clear_messages,
-            onClick = ::copyAccountId //todo UCS get proper method
+            onClick = ::confirmClearMessages
         )
     }
 

@@ -50,7 +50,7 @@ class ConversationViewModelTest: BaseViewModelTest() {
     private lateinit var messageRecord: MessageRecord
 
     private val testContentResolver = mock<ContentResolver>()
-    
+
     private val application = mock<Application> {
         on { getString(any()) } doReturn ""
         on { contentResolver } doReturn testContentResolver

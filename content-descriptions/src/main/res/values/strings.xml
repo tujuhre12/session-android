@@ -134,6 +134,10 @@
     <string name="qa_conversation_settings_dialog_delete_group_cancel">delete-group-cancel-button</string>
     <string name="qa_conversation_settings_dialog_leave_group_confirm">leave-group-confirm-button</string>
     <string name="qa_conversation_settings_dialog_leave_group_cancel">leave-group-cancel-button</string>
+    <string name="qa_conversation_settings_dialog_clear_messages_confirm">clear-all-messages-confirm-button</string>
+    <string name="qa_conversation_settings_dialog_clear_messages_cancel">clear-all-messages-cancel-button</string>
+    <string name="qa_conversation_settings_clear_messages_radio_device">clear-device-radio-option</string>
+    <string name="qa_conversation_settings_clear_messages_radio_everyone">clear-everyone-radio-option</string>
     <!--  Conversation options for closed group-->
     <string name="AccessibilityId_groupNameNew">Accept name change</string>
     <string name="AccessibilityId_membersInvite">Invite button</string>
