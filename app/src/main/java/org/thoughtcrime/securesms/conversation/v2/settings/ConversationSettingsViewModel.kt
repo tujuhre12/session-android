@@ -613,11 +613,12 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private fun deleteContact() {
         val conversation = recipient ?: return
         viewModelScope.launch {
-            //todo UCS I need a loader here?
+            showLoading()
             withContext(Dispatchers.Default) {
                 storage.deleteContactAndSyncConfig(conversation.address.toString())
             }
 
+            hideLoading()
             goBackHome()
         }
     }
@@ -643,11 +644,12 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
     private fun deleteConversation() {
         viewModelScope.launch {
-            //todo UCS I need a loader here?
+            showLoading()
             withContext(Dispatchers.Default) {
                 storage.deleteConversation(threadId)
             }
 
+            hideLoading()
             goBackHome()
         }
     }
@@ -673,7 +675,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
     private fun leaveCommunity() {
         viewModelScope.launch {
-            //todo UCS I need a loader here?
+            showLoading()
             withContext(Dispatchers.Default) {
                 val community = lokiThreadDatabase.getOpenGroupChat(threadId)
                 if (community != null) {
@@ -681,6 +683,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 }
             }
 
+            hideLoading()
             goBackHome()
         }
     }
@@ -744,13 +747,23 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private fun leaveGroup() {
         val conversation = recipient ?: return
         viewModelScope.launch {
+            showLoading()
             withContext(Dispatchers.Default) {
-                //todo UCS I need a loader here
-                groupManagerV2.leaveGroup(AccountId(conversation.address.toString()))
-                //todo UCS I need to handle errors here potentially
-            }
+                try {
+                    groupManagerV2.leaveGroup(AccountId(conversation.address.toString()))
+                    hideLoading()
+                    goBackHome()
+                } catch (e: Exception){
+                    withContext(Dispatchers.Main) {
+                        hideLoading()
 
-            goBackHome()
+                        val txt = Phrase.from(context, R.string.groupLeaveErrorFailed)
+                            .put(GROUP_NAME_KEY, getGroupName())
+                            .format().toString()
+                        Toast.makeText(context, txt, Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
         }
     }
 
@@ -773,6 +786,18 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             is Commands.HideSimpleDialog -> _uiState.update {
                 it.copy(showSimpleDialog = null)
             }
+        }
+    }
+
+    private fun showLoading(){
+        _uiState.update {
+            it.copy(showLoading = true)
+        }
+    }
+
+    private fun hideLoading(){
+        _uiState.update {
+            it.copy(showLoading = false)
         }
     }
 
@@ -1007,6 +1032,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         val descriptionQaTag: String? = null,
         val accountId: String? = null,
         val showSimpleDialog: Dialog? = null,
+        val showLoading: Boolean = false,
         val categories: List<OptionsCategory> = emptyList()
     )
 
