@@ -7,7 +7,6 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import app.cash.copper.flow.observeQuery
 import com.bumptech.glide.Glide
 import com.goterl.lazysodium.utils.KeyPair
 import com.squareup.phrase.Phrase
@@ -16,6 +15,7 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -88,7 +88,6 @@ import java.util.UUID
 class ConversationViewModel(
     val threadId: Long,
     val edKeyPair: KeyPair?,
-    private val context: Context,
     private val application: Application,
     private val repository: ConversationRepository,
     private val storage: StorageProtocol,
@@ -296,11 +295,13 @@ class ConversationViewModel(
         // a call is in progress if it isn't idle nor disconnected and the recipient is the person on the call
         if(it !is State.Idle && it !is State.Disconnected && callManager.recipient?.address == recipient?.address){
             // call is started, we need to differentiate between in progress vs incoming
-            if(it is State.Connected) context.getString(R.string.callsInProgress)
-            else context.getString(R.string.callsIncomingUnknown)
+            if(it is State.Connected) application.getString(R.string.callsInProgress)
+            else application.getString(R.string.callsIncomingUnknown)
         } else null // null when the call isn't in progress / incoming
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
 
+    val lastSeenMessageId: Flow<MessageId?>
+        get() = repository.getLastSentMessageID(threadId)
 
     init {
         viewModelScope.launch(Dispatchers.Default) {
@@ -369,7 +370,7 @@ class ConversationViewModel(
                     val durationAbbreviated = ExpirationUtil.getExpirationAbbreviatedDisplayValue(config.expiryMode.expirySeconds)
 
                     // ..then substitute into the string..
-                    val subtitleTxt = context.getSubbedString(dmTypeString,
+                    val subtitleTxt = application.getSubbedString(dmTypeString,
                         TIME_KEY to durationAbbreviated
                     )
 
@@ -380,15 +381,15 @@ class ConversationViewModel(
                             showDisappearingMessages()
                         },
                         icon = R.drawable.ic_clock_11,
-                        qaTag = context.resources.getString(R.string.AccessibilityId_disappearingMessagesDisappear)
+                        qaTag = application.resources.getString(R.string.AccessibilityId_disappearingMessagesDisappear)
                     )
                 }
 
                 if (conversation.isMuted) {
                     pagerData += ConversationAppBarPagerData(
                         title = conversation.mutedUntil.takeUnless { it == Long.MAX_VALUE }
-                            ?.let { context.getString(R.string.notificationsMuted) }
-                            ?: context.getString(R.string.notificationsMuted),
+                            ?.let { application.getString(R.string.notificationsMuted) }
+                            ?: application.getString(R.string.notificationsMuted),
                         action = {
                             //todo UCS take user to new mute screen (old code had no click action for this)
                         },
@@ -399,14 +400,14 @@ class ConversationViewModel(
                 if (conversation.isGroupOrCommunityRecipient) {
                     val title = if (conversation.isCommunityRecipient) {
                         val userCount = openGroup?.let { lokiAPIDb.getUserCount(it.room, it.server) } ?: 0
-                        context.resources.getQuantityString(R.plurals.membersActive, userCount, userCount)
+                        application.resources.getQuantityString(R.plurals.membersActive, userCount, userCount)
                     } else {
                         val userCount = if (conversation.isGroupV2Recipient) {
                             storage.getMembers(conversation.address.toString()).size
                         } else { // legacy closed groups
                             groupDb.getGroupMemberAddresses(conversation.address.toGroupString(), true).size
                         }
-                        context.resources.getQuantityString(R.plurals.members, userCount, userCount)
+                        application.resources.getQuantityString(R.plurals.members, userCount, userCount)
                     }
                     pagerData += ConversationAppBarPagerData(
                         title = title,
@@ -420,7 +421,7 @@ class ConversationViewModel(
             // calculate the main app bar data
             val avatarData = avatarUtils.getUIDataFromRecipient(conversation)
             _appBarData.value = ConversationAppBarData(
-                title = conversation.takeUnless { it?.isLocalNumber == true }?.name ?: context.getString(R.string.noteToSelf),
+                title = conversation.takeUnless { it?.isLocalNumber == true }?.name ?: application.getString(R.string.noteToSelf),
                 pagerData = pagerData,
                 showCall = conversation?.showCallMenu() ?: false,
                 showAvatar = showOptionsMenu,
@@ -428,8 +429,8 @@ class ConversationViewModel(
             )
             // also preload the larger version of the avatar in case the user goes to the settings
             avatarData.elements.mapNotNull { it.contactPhoto }.forEach {
-                val loadSize = context.resources.getDimensionPixelSize(R.dimen.large_profile_picture_size)
-                Glide.with(context).load(it)
+                val loadSize = application.resources.getDimensionPixelSize(R.dimen.large_profile_picture_size)
+                Glide.with(application).load(it)
                     .avatarOptions(loadSize)
                     .preload(loadSize, loadSize)
             }
@@ -1012,7 +1013,7 @@ class ConversationViewModel(
             }
     }
 
-    fun acceptMessageRequest() = viewModelScope.launch {
+    fun acceptMessageRequest(): Job = viewModelScope.launch {
         val recipient = recipient ?: return@launch Log.w("Loki", "Recipient was null for accept message request action")
         val currentState = _uiState.value.messageRequestState as? MessageRequestUiState.Visible
             ?: return@launch Log.w("Loki", "Current state was not visible for accept message request action")
@@ -1089,23 +1090,25 @@ class ConversationViewModel(
         attachmentDownloadHandler.retryFailedAttachments(attachments)
     }
 
-    fun beforeSendingTextOnlyMessage() {
-        implicitlyApproveRecipient()
-    }
-
-    fun beforeSendingAttachments() {
-        implicitlyApproveRecipient()
-    }
-
-    private fun implicitlyApproveRecipient() {
+    /**
+     * Implicitly approve the recipient.
+     *
+     * @return The (kotlin coroutine) job of sending job message request, if one should be sent. The job
+     * instance is normally just for observing purpose. Note that the completion of this job
+     * does not mean the message is sent, it only means the the successful submission to the message
+     * send queue and they will be sent later. You will not be able to observe the completion
+     * of message sending through this method.
+     */
+    fun implicitlyApproveRecipient(): Job? {
         val recipient = recipient
 
         if (uiState.value.messageRequestState is MessageRequestUiState.Visible) {
-            acceptMessageRequest()
+            return acceptMessageRequest()
         } else if (recipient?.isApproved == false) {
             // edge case for new outgoing thread on new recipient without sending approval messages
             repository.setApproved(recipient, true)
         }
+        return null
     }
 
     fun onCommand(command: Commands) {
@@ -1249,7 +1252,6 @@ class ConversationViewModel(
 
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             return ConversationViewModel(
-                context = context,
                 threadId = threadId,
                 edKeyPair = edKeyPair,
                 application = application,

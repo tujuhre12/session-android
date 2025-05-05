@@ -57,6 +57,7 @@ import com.bumptech.glide.Glide
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collectLatest
@@ -460,6 +461,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
     }
 
+    // The coroutine job that was used to submit a message approval response to the snode
+    private var conversationApprovalJob: Job? = null
+
     // region Settings
     companion object {
         // Extras
@@ -755,6 +759,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             viewModel.isAdmin.collect{
                 adapter.isAdmin = it
             }
+        }
+
+        lifecycleScope.launch {
+            viewModel
+                .lastSeenMessageId
+                .collectLatest { adapter.lastSentMessageId = it }
         }
     }
 
@@ -1111,7 +1121,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     private fun setUpMessageRequests() {
         binding.messageRequestBar.acceptMessageRequestButton.setOnClickListener {
-            viewModel.acceptMessageRequest()
+            conversationApprovalJob = viewModel.acceptMessageRequest()
         }
 
         binding.messageRequestBar.messageRequestBlock.setOnClickListener {
@@ -1928,10 +1938,19 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         startActivityForResult(MediaSendActivity.buildEditorIntent(this, listOf( media ), recipient, getMessageBody()), PICK_FROM_LIBRARY)
     }
 
+    // If we previously approve this recipient, either implicitly or explicitly, we need to wait for
+    // that submission to complete first.
+    private suspend fun waitForApprovalJobToBeSubmitted() {
+        withContext(Dispatchers.Main) {
+            conversationApprovalJob?.join()
+            conversationApprovalJob = null
+        }
+    }
+
     private fun sendTextOnlyMessage(hasPermissionToSendSeed: Boolean = false): Pair<Address, Long>? {
         val recipient = viewModel.recipient ?: return null
         val sentTimestamp = SnodeAPI.nowWithOffset
-        viewModel.beforeSendingTextOnlyMessage()
+        viewModel.implicitlyApproveRecipient()?.let { conversationApprovalJob = it }
         val text = getMessageBody()
         val userPublicKey = textSecurePreferences.getLocalNumber()
         val isNoteToSelf = (recipient.isContactRecipient && recipient.address.toString() == userPublicKey)
@@ -1970,6 +1989,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 null,
                 true
             )
+
+            waitForApprovalJobToBeSubmitted()
             MessageSender.send(message, recipient.address)
         }
         // Send a typing stopped message
@@ -1989,7 +2010,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
         val recipient = viewModel.recipient!!
         val sentTimestamp = SnodeAPI.nowWithOffset
-        viewModel.beforeSendingAttachments()
+        viewModel.implicitlyApproveRecipient()?.let { conversationApprovalJob = it }
 
         // Create the message
         val message = VisibleMessage().applyExpiryMode(viewModel.threadId)
@@ -2026,7 +2047,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         if (isShowingAttachmentOptions) { toggleAttachmentOptions() }
 
         // do the heavy work in the bg
-        lifecycleScope.launch(Dispatchers.IO) {
+        lifecycleScope.launch(Dispatchers.Default) {
             // Put the message in the database and send it
             message.id = mmsDb.insertMessageOutbox(
                 outgoingTextMessage,
@@ -2035,6 +2056,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 null,
                 runThreadUpdate = true
             )
+
+            waitForApprovalJobToBeSubmitted()
+
             MessageSender.send(message, recipient.address, attachments, quote, linkPreview)
         }
 

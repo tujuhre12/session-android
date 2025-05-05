@@ -51,6 +51,8 @@ class ConversationViewModelTest: BaseViewModelTest() {
 
     private val application = mock<Application> {
         on { getString(any()) } doReturn ""
+        on { contentResolver } doReturn testContentResolver
+        on { getString(any()) } doReturn ""
     }
 
     private val avatarUtils = mock<AvatarUtils> {
@@ -59,11 +61,6 @@ class ConversationViewModelTest: BaseViewModelTest() {
     }
 
     private val testContentResolver = mock<ContentResolver>()
-
-    private val context = mock<Context> {
-        on { contentResolver } doReturn testContentResolver
-        on { getString(any()) } doReturn ""
-    }
 
     object NoopRecipientChangeSource : RecipientChangeSource {
         override fun changes(): Flow<Query> = emptyFlow()
@@ -91,10 +88,10 @@ class ConversationViewModelTest: BaseViewModelTest() {
             },
             expiredGroupManager = mock(),
             usernameUtils = mock(),
-            context = context,
             avatarUtils = avatarUtils,
             lokiAPIDb = mock(),
             recipientChangeSource = NoopRecipientChangeSource
+
         )
     }
 
