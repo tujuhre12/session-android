@@ -746,6 +746,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 adapter.isAdmin = it
             }
         }
+
+        lifecycleScope.launch {
+            viewModel
+                .lastSeenMessageId
+                .collectLatest { adapter.lastSentMessageId = it }
+        }
     }
 
     private fun scrollToMostRecentMessageIfWeShould() {
