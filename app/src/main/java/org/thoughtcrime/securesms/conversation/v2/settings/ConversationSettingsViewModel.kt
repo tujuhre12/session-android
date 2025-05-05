@@ -788,7 +788,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             }
         }
     }
-//todo UCS it seems the app bar does weird things, like when bringing up the keyboard in a conversation
+
     private fun showLoading(){
         _uiState.update {
             it.copy(showLoading = true)

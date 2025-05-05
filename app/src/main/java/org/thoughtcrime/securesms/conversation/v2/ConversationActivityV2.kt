@@ -108,6 +108,7 @@ import org.session.libsignal.utilities.ListenableFuture
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.hexEncodedPrivateKey
 import org.thoughtcrime.securesms.ApplicationContext
+import org.thoughtcrime.securesms.FullComposeActivity.Companion.applyCommonPropertiesForCompose
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.attachments.ScreenshotObserver
 import org.thoughtcrime.securesms.audio.AudioRecorder
@@ -480,6 +481,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     fun showOpenUrlDialog(url: String) = viewModel.onCommand(ShowOpenUrlDialog(url))
 
     // region Lifecycle
+    override fun onCreate(savedInstanceState: Bundle?) {
+        applyCommonPropertiesForCompose()
+        super.onCreate(savedInstanceState)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?, isReady: Boolean) {
         super.onCreate(savedInstanceState, isReady)
         binding = ActivityConversationV2Binding.inflate(layoutInflater)
@@ -488,7 +494,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         // set the compose dialog content
         binding.dialogOpenUrl.apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-            setContent {
+            setThemedContent {
                 val dialogsState by viewModel.dialogsState.collectAsState()
                 ConversationV2Dialogs(
                     dialogsState = dialogsState,
