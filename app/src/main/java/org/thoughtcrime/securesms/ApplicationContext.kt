@@ -93,6 +93,7 @@ import org.thoughtcrime.securesms.jobmanager.impl.NetworkConstraint
 import org.thoughtcrime.securesms.logging.AndroidLogger
 import org.thoughtcrime.securesms.logging.PersistentLogger
 import org.thoughtcrime.securesms.logging.UncaughtExceptionLogger
+import org.thoughtcrime.securesms.migration.DatabaseMigrationManager
 import org.thoughtcrime.securesms.notifications.BackgroundPollManager
 import org.thoughtcrime.securesms.notifications.NotificationChannels
 import org.thoughtcrime.securesms.notifications.PushRegistrationHandler
@@ -164,6 +165,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
     @Inject lateinit var destroyedGroupSync: DestroyedGroupSync
     @Inject lateinit var removeGroupMemberHandler: RemoveGroupMemberHandler // Exists here only to start upon app starts
     @Inject lateinit var snodeClock: SnodeClock
+    @Inject lateinit var migrationManager: DatabaseMigrationManager
 
     @get:Deprecated(message = "Use proper DI to inject this component")
     @Inject
@@ -204,6 +206,11 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
 
     @Volatile
     var isAppVisible: Boolean = false
+
+    override val workManagerConfiguration: Configuration
+        get() = Configuration.Builder()
+            .setWorkerFactory(workerFactory)
+            .build()
 
     override fun getSystemService(name: String): Any? {
         if (MessagingModuleConfiguration.MESSAGING_MODULE_SERVICE == name) {
@@ -313,6 +320,9 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
         adminStateSync.start()
         cleanupInvitationHandler.start()
 
+        // Start our migration process as early as possible so we can show the user a progress UI
+        migrationManager.requestMigration(fromRetry = false)
+
         // add our shortcut debug menu if we are not in a release build
         if (BuildConfig.BUILD_TYPE != "release") {
             // add the config settings shortcut
@@ -328,12 +338,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
 
             ShortcutManagerCompat.pushDynamicShortcut(this, shortcut)
         }
-    }
-
-    override fun getWorkManagerConfiguration(): Configuration {
-        return Configuration.Builder()
-            .setWorkerFactory(workerFactory)
-            .build()
     }
 
     override fun onStart(owner: LifecycleOwner) {
@@ -439,9 +443,9 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
     private class ProviderInitializationException : RuntimeException()
 
     private fun setUpPollingIfNeeded() {
-        val userPublicKey = textSecurePreferences!!.getLocalNumber() ?: return
+        val userPublicKey = textSecurePreferences.getLocalNumber() ?: return
         if (poller == null) {
-            poller = Poller(configFactory!!, storage!!, lokiAPIDatabase!!)
+            poller = Poller(configFactory, storage, lokiAPIDatabase, prefs)
         }
     }
 
@@ -450,7 +454,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
         if (poller != null) {
             poller!!.startIfNeeded()
         }
-        legacyClosedGroupPollerV2!!.start()
+        legacyClosedGroupPollerV2.start()
     }
 
     fun retrieveUserProfile() {

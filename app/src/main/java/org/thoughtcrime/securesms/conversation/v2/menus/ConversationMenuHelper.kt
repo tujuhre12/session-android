@@ -42,9 +42,9 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
 import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.ShortcutLauncherActivity
+import org.thoughtcrime.securesms.contacts.SelectContactsToInviteToGroupActivity
 import org.thoughtcrime.securesms.webrtc.WebRtcCallActivity
 import org.thoughtcrime.securesms.webrtc.WebRtcCallActivity.Companion.ACTION_START_CALL
-import org.thoughtcrime.securesms.contacts.SelectContactsActivity
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.utilities.NotificationUtils
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
@@ -400,7 +400,8 @@ object ConversationMenuHelper {
                     context = context,
                     groupName = group.title,
                     isAdmin = isGroupAdmin,
-                    isKicked = configFactory.wasKickedFromGroupV2(thread),
+                    isKicked = false,
+                    isDestroyed = false,
                     threadID = threadID,
                     storage = storage,
                     doLeave = {
@@ -433,6 +434,7 @@ object ConversationMenuHelper {
                     groupName = name,
                     isAdmin = group.hasAdminKey(),
                     isKicked = configFactory.wasKickedFromGroupV2(thread),
+                    isDestroyed = group.destroyed,
                     threadID = threadID,
                     storage = storage,
                     doLeave = {
@@ -459,6 +461,7 @@ object ConversationMenuHelper {
         groupName: String,
         isAdmin: Boolean,
         isKicked: Boolean,
+        isDestroyed: Boolean,
         threadID: Long,
         storage: StorageProtocol,
         doLeave: suspend () -> Unit,
@@ -467,7 +470,7 @@ object ConversationMenuHelper {
         var message: CharSequence = ""
         var positiveButton = R.string.leave
 
-        if(isKicked){
+        if(isKicked || isDestroyed){
             message = Phrase.from(context, R.string.groupDeleteDescriptionMember)
                 .put(GROUP_NAME_KEY, groupName)
                 .format()
@@ -516,7 +519,7 @@ object ConversationMenuHelper {
 
     private fun inviteContacts(context: Context, thread: Recipient) {
         if (!thread.isCommunityRecipient) { return }
-        val intent = Intent(context, SelectContactsActivity::class.java)
+        val intent = Intent(context, SelectContactsToInviteToGroupActivity::class.java)
         val activity = context as AppCompatActivity
         activity.startActivityForResult(intent, ConversationActivityV2.INVITE_CONTACTS)
     }

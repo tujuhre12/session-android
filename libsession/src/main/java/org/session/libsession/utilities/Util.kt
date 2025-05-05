@@ -9,22 +9,18 @@ import android.os.Looper
 import android.provider.Telephony
 import android.text.Spannable
 import android.text.SpannableString
-import android.text.Spanned
 import android.text.TextUtils
 import android.text.style.StyleSpan
-import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Base64
+import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Util.SECURE_RANDOM
 import java.io.*
 import java.nio.charset.StandardCharsets
-import java.security.SecureRandom
-import java.text.DecimalFormat
 import java.util.*
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
-import kotlin.collections.LinkedHashMap
 import kotlin.math.min
 
 object Util {
@@ -44,17 +40,12 @@ object Util {
 
     @JvmStatic
     @Throws(IOException::class)
-    fun copy(`in`: InputStream, out: OutputStream?): Long {
-        val buffer = ByteArray(8192)
-        var read: Int
-        var total: Long = 0
-        while (`in`.read(buffer).also { read = it } != -1) {
-            out?.write(buffer, 0, read)
-            total += read.toLong()
+    fun copy(src: InputStream, dst: OutputStream): Long {
+        return src.use {
+            dst.use {
+                src.copyTo(dst)
+            }
         }
-        `in`.close()
-        out?.close()
-        return total
     }
 
     @JvmStatic
@@ -350,14 +341,6 @@ object Util {
         parts[1] = ByteArray(secondLength)
         System.arraycopy(input, firstLength, parts[1], 0, secondLength)
         return parts
-    }
-
-    @JvmStatic
-    fun getPrettyFileSize(sizeBytes: Long): String {
-        if (sizeBytes <= 0) return "0"
-        val units = arrayOf("B", "kB", "MB", "GB", "TB")
-        val digitGroups = (Math.log10(sizeBytes.toDouble()) / Math.log10(1024.0)).toInt()
-        return DecimalFormat("#,##0.#").format(sizeBytes / Math.pow(1024.0, digitGroups.toDouble())) + " " + units[digitGroups]
     }
 }
 

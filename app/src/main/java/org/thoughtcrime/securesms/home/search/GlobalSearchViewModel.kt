@@ -6,28 +6,17 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.WhileSubscribed
-import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.shareIn
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.plus
 import kotlinx.coroutines.withContext
+import network.loki.messenger.R
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
@@ -56,6 +45,8 @@ class GlobalSearchViewModel @Inject constructor(
         configFactory.configUpdateNotifications
     )
 
+    val noteToSelfString by lazy { application.getString(R.string.noteToSelf).lowercase() }
+
     val result = combine(
         _queryText,
         observeChangesAffectingSearch().onStart { emit(Unit) }
@@ -69,11 +60,18 @@ class GlobalSearchViewModel @Inject constructor(
                         // without a nickname/name who haven't approved us.
                         GlobalSearchResult(
                             query,
-                            searchRepository.queryContacts("05").first.toList()
+                            searchRepository.queryContacts("05").toList()
                         )
                     }
                 } else {
-                    searchRepository.suspendQuery(query).toGlobalSearchResult()
+                    val results = searchRepository.suspendQuery(query).toGlobalSearchResult()
+
+                    // show "Note to Self" is the user searches for parts of"Note to Self"
+                    if(noteToSelfString.contains(query.lowercase())){
+                        results.copy(showNoteToSelf = true)
+                    } else {
+                        results
+                    }
                 }
             } catch (e: Exception) {
                 Log.e("GlobalSearchViewModel", "Error searching len = ${query.length}", e)

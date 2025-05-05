@@ -9,6 +9,7 @@ import androidx.core.content.res.ResourcesCompat
 import androidx.core.content.res.use
 import androidx.core.text.toSpannable
 import androidx.core.view.isVisible
+import com.bumptech.glide.RequestManager
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewQuoteBinding
@@ -16,13 +17,11 @@ import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.truncateIdForDisplay
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.database.SessionContactDatabase
-import com.bumptech.glide.RequestManager
-import org.session.libsession.utilities.truncateIdForDisplay
 import org.thoughtcrime.securesms.mms.SlideDeck
 import org.thoughtcrime.securesms.util.MediaUtil
-import org.thoughtcrime.securesms.util.getAccentColor
 import org.thoughtcrime.securesms.util.toPx
 import javax.inject.Inject
 
@@ -100,35 +99,55 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
             binding.quoteViewAccentLine.setBackgroundColor(getLineColor(isOutgoingMessage))
         } else if (attachments != null) {
             binding.quoteViewAttachmentPreviewImageView.imageTintList = ColorStateList.valueOf(textColor)
-            binding.quoteViewAttachmentPreviewImageView.isVisible = false
+            binding.quoteViewAttachmentPreviewImageView.isVisible = true
             binding.quoteViewAttachmentThumbnailImageView.root.isVisible = false
             when {
                 attachments.audioSlide != null -> {
-                    binding.quoteViewAttachmentPreviewImageView.setImageResource(R.drawable.ic_mic)
-                    binding.quoteViewAttachmentPreviewImageView.isVisible = true
-
                     val isVoiceNote = attachments.isVoiceNote
-                    binding.quoteViewBodyTextView.text = if (isVoiceNote) {
-                        resources.getString(R.string.messageVoice)
+                    if (isVoiceNote) {
+                        updateQuoteTextIfEmpty(resources.getString(R.string.messageVoice))
+                        binding.quoteViewAttachmentPreviewImageView.setImageResource(R.drawable.ic_mic)
                     } else {
-                        resources.getString(R.string.audio)
+                        updateQuoteTextIfEmpty(resources.getString(R.string.audio))
+                        binding.quoteViewAttachmentPreviewImageView.setImageResource(R.drawable.ic_volume_2)
                     }
                 }
                 attachments.documentSlide != null -> {
                     binding.quoteViewAttachmentPreviewImageView.setImageResource(R.drawable.ic_file)
-                    binding.quoteViewAttachmentPreviewImageView.isVisible = true
-                    binding.quoteViewBodyTextView.text = resources.getString(R.string.document)
+                    updateQuoteTextIfEmpty(resources.getString(R.string.document))
                 }
                 attachments.thumbnailSlide != null -> {
                     val slide = attachments.thumbnailSlide!!
-                    // This internally fetches the thumbnail
-                    binding.quoteViewAttachmentThumbnailImageView
-                        .root.setRoundedCorners(toPx(4, resources))
-                    binding.quoteViewAttachmentThumbnailImageView.root.setImageResource(glide, slide, false)
-                    binding.quoteViewAttachmentThumbnailImageView.root.isVisible = true
-                    binding.quoteViewBodyTextView.text = if (MediaUtil.isVideo(slide.asAttachment())) resources.getString(R.string.video) else resources.getString(R.string.image)
+
+                    if (MediaUtil.isVideo(slide.asAttachment())){
+                        updateQuoteTextIfEmpty(resources.getString(R.string.video))
+                        binding.quoteViewAttachmentPreviewImageView.setImageResource(R.drawable.ic_square_play)
+                    } else {
+                        updateQuoteTextIfEmpty(resources.getString(R.string.image))
+                        binding.quoteViewAttachmentPreviewImageView.setImageResource(R.drawable.ic_image)
+                    }
+
+                    // display the image if we are in the appropriate state
+                    if(attachments.asAttachments().all { it.isDone }) {
+                        binding.quoteViewAttachmentThumbnailImageView
+                            .root.setRoundedCorners(toPx(4, resources))
+                        binding.quoteViewAttachmentThumbnailImageView.root.setImageResource(
+                            glide,
+                            slide,
+                            false
+                        )
+                        binding.quoteViewAttachmentThumbnailImageView.root.isVisible = true
+                        binding.quoteViewAttachmentPreviewImageView.isVisible = false
+                    }
+
                 }
             }
+        }
+    }
+
+    private fun updateQuoteTextIfEmpty(text: String){
+        if(binding.quoteViewBodyTextView.text.isNullOrEmpty()){
+            binding.quoteViewBodyTextView.text = text
         }
     }
     // endregion

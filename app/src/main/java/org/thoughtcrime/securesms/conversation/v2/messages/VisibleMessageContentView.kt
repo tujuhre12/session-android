@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.conversation.v2.messages
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Rect
 import android.text.Spannable
@@ -27,13 +28,18 @@ import com.bumptech.glide.RequestManager
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import org.session.libsession.messaging.sending_receiving.attachments.AttachmentTransferProgress
+import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.modifyLayoutParams
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
+import org.thoughtcrime.securesms.conversation.v2.messages.AttachmentControlView.AttachmentType.AUDIO
+import org.thoughtcrime.securesms.conversation.v2.messages.AttachmentControlView.AttachmentType.DOCUMENT
+import org.thoughtcrime.securesms.conversation.v2.messages.AttachmentControlView.AttachmentType.IMAGE
+import org.thoughtcrime.securesms.conversation.v2.messages.AttachmentControlView.AttachmentType.VIDEO
+import org.thoughtcrime.securesms.conversation.v2.messages.AttachmentControlView.AttachmentType.VOICE
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.conversation.v2.utilities.ModalURLSpan
 import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.getIntersectedModalSpans
@@ -66,18 +72,38 @@ class VisibleMessageContentView : ConstraintLayout {
         glide: RequestManager = Glide.with(this),
         thread: Recipient,
         searchQuery: String? = null,
-        onAttachmentNeedsDownload: (DatabaseAttachment) -> Unit,
+        downloadPendingAttachment: (DatabaseAttachment) -> Unit,
+        retryFailedAttachments: (List<DatabaseAttachment>) -> Unit,
         suppressThumbnails: Boolean = false
     ) {
         // Background
         val color = if (message.isOutgoing) context.getAccentColor()
         else context.getColorFromAttr(R.attr.message_received_background_color)
         binding.contentParent.mainColor = color
+        binding.documentView.root.backgroundTintList = ColorStateList.valueOf(color)
+        binding.voiceMessageView.root.backgroundTintList = ColorStateList.valueOf(color)
         binding.contentParent.cornerRadius = resources.getDimension(R.dimen.message_corner_radius)
 
-        val mediaDownloaded = message is MmsMessageRecord && message.slideDeck.asAttachments().all { it.transferState == AttachmentTransferProgress.TRANSFER_PROGRESS_DONE }
+        // we considered all media downloaded if all are done, barring potential 404s.
+        // Meaning if the one or all attachments are 404 we consider the overall attachment expired
+        // But in the case of random errors where one image in a set of many somehow reaches a 404 state
+        // we still want the rest of the images to show up as downloaded
+        val hasExpired = haveAttachmentsExpired(message)
+        val mediaDownloaded = !hasExpired && // it is not done if ALL attachments have expired
+                message is MmsMessageRecord &&
+                // we filter out potential expiry in the set, which would be rare errors, and consider the rest
+                message.slideDeck.asAttachments().filter { it.transferState != AttachmentState.EXPIRED.value }.all { it.isDone }
         val mediaInProgress = message is MmsMessageRecord && message.slideDeck.asAttachments().any { it.isInProgress }
-        val mediaThumbnailMessage = message is MmsMessageRecord && message.slideDeck.thumbnailSlide != null
+        val hasFailed = message is MmsMessageRecord && message.slideDeck.asAttachments().any { it.isFailed }
+        val overallAttachmentState = when {
+            mediaDownloaded -> AttachmentState.DONE
+            hasExpired -> AttachmentState.EXPIRED
+            hasFailed -> AttachmentState.FAILED
+            mediaInProgress -> AttachmentState.DOWNLOADING
+            else -> AttachmentState.PENDING
+        }
+
+        val databaseAttachments = (message as? MmsMessageRecord)?.slideDeck?.asAttachments()?.filterIsInstance<DatabaseAttachment>()
 
         // reset visibilities / containers
         onContentClick.clear()
@@ -104,11 +130,19 @@ class VisibleMessageContentView : ConstraintLayout {
         // sized based on text content from a recycled view
         binding.bodyTextView.text = null
         binding.quoteView.root.isVisible = message is MmsMessageRecord && message.quote != null
+        // if a quote is by itself we should add bottom padding
+        binding.quoteView.root.setPadding(
+            binding.quoteView.root.paddingStart,
+            binding.quoteView.root.paddingTop,
+            binding.quoteView.root.paddingEnd,
+            if(message.body.isNotEmpty()) 0 else
+                context.resources.getDimensionPixelSize(R.dimen.message_spacing)
+        )
         binding.linkPreviewView.root.isVisible = message is MmsMessageRecord && message.linkPreviews.isNotEmpty()
-        binding.pendingAttachmentView.root.isVisible = !mediaDownloaded && !mediaInProgress && message is MmsMessageRecord && message.quote == null && message.linkPreviews.isEmpty()
-        binding.voiceMessageView.root.isVisible = (mediaDownloaded || mediaInProgress) && message is MmsMessageRecord && message.slideDeck.audioSlide != null
-        binding.documentView.root.isVisible = (mediaDownloaded || mediaInProgress) && message is MmsMessageRecord && message.slideDeck.documentSlide != null
-        binding.albumThumbnailView.root.isVisible = mediaThumbnailMessage
+        binding.attachmentControlView.root.isVisible = false
+        binding.voiceMessageView.root.isVisible = false
+        binding.documentView.root.isVisible = false
+        binding.albumThumbnailView.root.isVisible = false
         binding.openGroupInvitationView.root.isVisible = message.isOpenGroupInvitation
 
         var hideBody = false
@@ -134,13 +168,12 @@ class VisibleMessageContentView : ConstraintLayout {
         }
 
         if (message is MmsMessageRecord) {
-            message.slideDeck.asAttachments().forEach { attach ->
-                val dbAttachment = attach as? DatabaseAttachment ?: return@forEach
-                onAttachmentNeedsDownload(dbAttachment)
+            databaseAttachments?.forEach { attach ->
+                downloadPendingAttachment(attach)
             }
             message.linkPreviews.forEach { preview ->
                 val previewThumbnail = preview.getThumbnail().orNull() as? DatabaseAttachment ?: return@forEach
-                onAttachmentNeedsDownload(previewThumbnail)
+                downloadPendingAttachment(previewThumbnail)
             }
         }
 
@@ -161,7 +194,8 @@ class VisibleMessageContentView : ConstraintLayout {
                 hideBody = false
 
                 // Audio attachment
-                if (mediaDownloaded || mediaInProgress || message.isOutgoing) {
+                if (overallAttachmentState == AttachmentState.DONE || message.isOutgoing) {
+                    binding.voiceMessageView.root.isVisible = true
                     binding.voiceMessageView.root.indexInAdapter = indexInAdapter
                     binding.voiceMessageView.root.delegate = context as? ConversationActivityV2
                     binding.voiceMessageView.root.bind(message, isStartOfMessageCluster, isEndOfMessageCluster)
@@ -169,27 +203,37 @@ class VisibleMessageContentView : ConstraintLayout {
                     // message view) so as to not interfere with all the other gestures.
                     onContentClick.add { binding.voiceMessageView.root.togglePlayback() }
                     onContentDoubleTap = { binding.voiceMessageView.root.handleDoubleTap() }
+                    binding.attachmentControlView.root.isVisible = false
                 } else {
-                    // If it's an audio message but we haven't downloaded it yet show it as pending
-                    (message.slideDeck.audioSlide?.asAttachment() as? DatabaseAttachment)?.let { attachment ->
-                        binding.pendingAttachmentView.root.bind(
-                            PendingAttachmentView.AttachmentType.AUDIO,
-                            getTextColor(context,message),
-                            attachment
+                    val attachment = message.slideDeck.audioSlide?.asAttachment() as? DatabaseAttachment
+                    attachment?.let {
+                        showAttachmentControl(
+                            thread = thread,
+                            message = message,
+                            attachments = listOf(it),
+                            type = if (it.isVoiceNote) VOICE
+                            else AUDIO,
+                            overallAttachmentState,
+                            retryFailedAttachments = retryFailedAttachments
                         )
-                        onContentClick.add { binding.pendingAttachmentView.root.showDownloadDialog(thread, attachment) }
                     }
                 }
             }
+
+            //todo: ATTACHMENT should the glowView encompass the whole message instead of just the body? Currently tapped quotes only highlight text messages, not images nor attachment control
 
             // DOCUMENT
             message is MmsMessageRecord && message.slideDeck.documentSlide != null -> {
                 // Show any message that came with the attached document
                 hideBody = false
-                
+
                 // Document attachment
-                if (mediaDownloaded || mediaInProgress || message.isOutgoing) {
+                if (overallAttachmentState == AttachmentState.DONE  || message.isOutgoing) {
+                    binding.attachmentControlView.root.isVisible = false
+
+                    binding.documentView.root.isVisible = true
                     binding.documentView.root.bind(message, getTextColor(context, message))
+
                     message.slideDeck.documentSlide?.let { slide ->
                         if(!mediaInProgress) { // do not attempt to open a doc in progress of downloading
                             onContentClick.add {
@@ -215,50 +259,60 @@ class VisibleMessageContentView : ConstraintLayout {
                         }
                     }
                 } else {
-                    // If the document hasn't been downloaded yet then show it as pending
-                    (message.slideDeck.documentSlide?.asAttachment() as? DatabaseAttachment)?.let { attachment ->
-                        binding.pendingAttachmentView.root.bind(
-                            PendingAttachmentView.AttachmentType.DOCUMENT,
-                            getTextColor(context,message),
-                            attachment
-                            )
-                        onContentClick.add {
-                            binding.pendingAttachmentView.root.showDownloadDialog(thread, attachment)
-                        }
+                    (message.slideDeck.documentSlide?.asAttachment() as? DatabaseAttachment)?.let {
+                        showAttachmentControl(
+                            thread = thread,
+                            message = message,
+                            attachments = listOf(it),
+                            type = DOCUMENT,
+                            overallAttachmentState,
+                            retryFailedAttachments = retryFailedAttachments
+                        )
                     }
                 }
             }
 
             // IMAGE / VIDEO
-            message is MmsMessageRecord && !suppressThumbnails && message.slideDeck.asAttachments().isNotEmpty() -> {
-                if (mediaDownloaded || mediaInProgress || message.isOutgoing) {
-                    // isStart and isEnd of cluster needed for calculating the mask for full bubble image groups
-                    // bind after add view because views are inflated and calculated during bind
-                    binding.albumThumbnailView.root.bind(
-                        glideRequests = glide,
-                        message = message,
-                        isStart = isStartOfMessageCluster,
-                        isEnd = isEndOfMessageCluster
-                    )
-                    binding.albumThumbnailView.root.modifyLayoutParams<LayoutParams> {
-                        horizontalBias = if (message.isOutgoing) 1f else 0f
-                    }
-                    onContentClick.add { event ->
-                        binding.albumThumbnailView.root.calculateHitObject(event, message, thread, onAttachmentNeedsDownload)
+            message is MmsMessageRecord && message.slideDeck.asAttachments().isNotEmpty() -> {
+                hideBody = false
+
+                if (overallAttachmentState == AttachmentState.DONE || message.isOutgoing) {
+                    if(!suppressThumbnails) { // suppress thumbnail should hide the image, but we still want to show the attachment control if the state demands it
+
+                        binding.attachmentControlView.root.isVisible = false
+
+                        // isStart and isEnd of cluster needed for calculating the mask for full bubble image groups
+                        // bind after add view because views are inflated and calculated during bind
+                        binding.albumThumbnailView.root.isVisible = true
+                        binding.albumThumbnailView.root.bind(
+                            glideRequests = glide,
+                            message = message,
+                            isStart = isStartOfMessageCluster,
+                            isEnd = isEndOfMessageCluster
+                        )
+                        binding.albumThumbnailView.root.modifyLayoutParams<LayoutParams> {
+                            horizontalBias = if (message.isOutgoing) 1f else 0f
+                        }
+                        onContentClick.add { event ->
+                            binding.albumThumbnailView.root.calculateHitObject(
+                                event,
+                                message,
+                                thread,
+                                downloadPendingAttachment
+                            )
+                        }
                     }
                 } else {
-                    hideBody = true
-                    binding.albumThumbnailView.root.clearViews()
-                    val firstAttachment = message.slideDeck.asAttachments().first() as? DatabaseAttachment
-                    firstAttachment?.let { attachment ->
-                        binding.pendingAttachmentView.root.bind(
-                            PendingAttachmentView.AttachmentType.IMAGE,
-                            getTextColor(context,message),
-                            attachment
-                            )
-                        onContentClick.add {
-                            binding.pendingAttachmentView.root.showDownloadDialog(thread, attachment)
-                        }
+                    databaseAttachments?.let {
+                        showAttachmentControl(
+                            thread = thread,
+                            message = message,
+                            attachments = it,
+                            type = if (message.slideDeck.hasVideo()) VIDEO
+                            else IMAGE,
+                            state = overallAttachmentState,
+                            retryFailedAttachments = retryFailedAttachments
+                        )
                     }
                 }
             }
@@ -284,10 +338,74 @@ class VisibleMessageContentView : ConstraintLayout {
                 }
             }
         }
-        binding.contentParent.modifyLayoutParams<ConstraintLayout.LayoutParams> {
-            horizontalBias = if (message.isOutgoing) 1f else 0f
+
+        // handle bias for our views
+        val bias = if (message.isOutgoing) 1f else 0f
+        binding.contentParent.modifyLayoutParams<LayoutParams> {
+            horizontalBias = bias
+        }
+
+        binding.documentView.root.modifyLayoutParams<LayoutParams> {
+            horizontalBias = bias
+        }
+
+        binding.voiceMessageView.root.modifyLayoutParams<LayoutParams> {
+            horizontalBias = bias
+        }
+
+        binding.attachmentControlView.root.modifyLayoutParams<LayoutParams> {
+            horizontalBias = bias
         }
     }
+
+    private fun showAttachmentControl(
+        thread: Recipient,
+        message: MmsMessageRecord,
+        attachments: List<DatabaseAttachment>,
+        type: AttachmentControlView.AttachmentType,
+        state: AttachmentState,
+        retryFailedAttachments: (List<DatabaseAttachment>) -> Unit,
+    ){
+        binding.attachmentControlView.root.isVisible = true
+        binding.albumThumbnailView.root.clearViews()
+
+        binding.attachmentControlView.root.bind(
+            attachmentType = type,
+            textColor = getTextColor(context,message),
+            state = state,
+            allMessageAttachments = message.slideDeck.slides
+        )
+
+        when(state) {
+            // While downloads haven't been enabled for this convo, show a confirmation dialog
+            AttachmentState.PENDING -> {
+                onContentClick.add {
+                    binding.attachmentControlView.root.showDownloadDialog(
+                        thread,
+                        attachments.first()
+                    )
+                }
+            }
+
+            // Attempt to redownload a failed attachment on tap
+            AttachmentState.FAILED -> {
+                onContentClick.add {
+                    retryFailedAttachments(attachments)
+                }
+            }
+
+            // no click actions for other cases
+            else -> {}
+        }
+    }
+
+    private fun haveAttachmentsExpired(message: MessageRecord): Boolean =
+    // expired attachments are for Mms records only
+    message is MmsMessageRecord &&
+            // with a state marked as expired
+            (message.slideDeck.asAttachments().all { it.transferState == AttachmentState.EXPIRED.value } ||
+            // with a state marked as downloaded yet without a URI attached
+            (!message.hasAttachmentUri() && message.slideDeck.asAttachments().all { it.isDone }))
 
     private val onContentClick: MutableList<((event: MotionEvent) -> Unit)> = mutableListOf()
 
@@ -301,7 +419,7 @@ class VisibleMessageContentView : ConstraintLayout {
     fun recycle() {
         arrayOf(
             binding.deletedMessageView.root,
-            binding.pendingAttachmentView.root,
+            binding.attachmentControlView.root,
             binding.voiceMessageView.root,
             binding.openGroupInvitationView.root,
             binding.documentView.root,

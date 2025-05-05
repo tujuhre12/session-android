@@ -30,6 +30,7 @@ import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.DraftDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
@@ -416,11 +417,8 @@ class DefaultConversationRepository @Inject constructor(
                 )
             } else {
                 val message = MessageRequestResponse(true)
-                MessageSender.sendNonDurably(
-                    message = message,
-                    destination = Destination.from(recipient.address),
-                    isSyncMessage = recipient.isLocalNumber
-                ).await()
+
+                MessageSender.send(message = message, address = recipient.address)
 
                 // add a control message for our user
                 storage.insertMessageRequestResponseFromYou(threadId)

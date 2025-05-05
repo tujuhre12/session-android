@@ -7,6 +7,7 @@ import android.provider.Settings
 import androidx.annotation.ArrayRes
 import androidx.annotation.StyleRes
 import androidx.core.app.NotificationCompat
+import androidx.core.content.edit
 import androidx.preference.PreferenceManager.getDefaultSharedPreferences
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.BufferOverflow
@@ -202,6 +203,8 @@ interface TextSecurePreferences {
     var deprecatingStartTimeOverride: ZonedDateTime?
 
     var migratedToGroupV2Config: Boolean
+    var migratedToDisablingKDF: Boolean
+    var migratedToMultiPartConfig: Boolean
 
     companion object {
         val TAG = TextSecurePreferences::class.simpleName
@@ -292,6 +295,8 @@ interface TextSecurePreferences {
         const val LAST_VERSION_CHECK = "pref_last_version_check"
         const val ENVIRONMENT = "debug_environment"
         const val MIGRATED_TO_GROUP_V2_CONFIG = "migrated_to_group_v2_config"
+        const val MIGRATED_TO_DISABLING_KDF = "migrated_to_disabling_kdf"
+        const val MIGRATED_TO_MULTIPART_CONFIG = "migrated_to_multi_part_config"
 
         const val HAS_RECEIVED_LEGACY_CONFIG = "has_received_legacy_config"
         const val HAS_FORCED_NEW_CONFIG = "has_forced_new_config"
@@ -994,6 +999,16 @@ class AppTextSecurePreferences @Inject constructor(
     override var migratedToGroupV2Config: Boolean
         get() = getBooleanPreference(TextSecurePreferences.MIGRATED_TO_GROUP_V2_CONFIG, false)
         set(value) = setBooleanPreference(TextSecurePreferences.MIGRATED_TO_GROUP_V2_CONFIG, value)
+
+    override var migratedToDisablingKDF: Boolean
+        get() = getBooleanPreference(TextSecurePreferences.MIGRATED_TO_DISABLING_KDF, false)
+        set(value) = getDefaultSharedPreferences(context).edit(commit = true) {
+            putBoolean(TextSecurePreferences.MIGRATED_TO_DISABLING_KDF, value)
+        }
+
+    override var migratedToMultiPartConfig: Boolean
+        get() = getBooleanPreference(TextSecurePreferences.MIGRATED_TO_MULTIPART_CONFIG, false)
+        set(value) = setBooleanPreference(TextSecurePreferences.MIGRATED_TO_MULTIPART_CONFIG, value)
 
     override fun getConfigurationMessageSynced(): Boolean {
         return getBooleanPreference(TextSecurePreferences.CONFIGURATION_SYNCED, false)

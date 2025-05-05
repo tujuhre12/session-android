@@ -20,6 +20,7 @@ import network.loki.messenger.libsession_util.MutableUserProfile
 import network.loki.messenger.libsession_util.UserGroupsConfig
 import network.loki.messenger.libsession_util.UserProfile
 import network.loki.messenger.libsession_util.util.BaseCommunityInfo
+import network.loki.messenger.libsession_util.util.Bytes
 import network.loki.messenger.libsession_util.util.ConfigPush
 import network.loki.messenger.libsession_util.util.Contact
 import network.loki.messenger.libsession_util.util.ExpiryMode
@@ -108,33 +109,59 @@ class ConfigFactory @Inject constructor(
     private fun ensureUserConfigsInitialized(): Pair<ReentrantReadWriteLock, UserConfigsImpl> {
         val userAccountId = requiresCurrentUserAccountId()
 
-        return synchronized(userConfigs) {
-            userConfigs.getOrPut(userAccountId) {
-                ReentrantReadWriteLock() to UserConfigsImpl(
-                    userEd25519SecKey = requiresCurrentUserED25519SecKey(),
-                    userAccountId = userAccountId,
-                    threadDb = threadDb,
-                    configDatabase = configDatabase,
-                    storage = storage.get(),
-                    textSecurePreferences = textSecurePreferences,
-                    usernameUtils = usernameUtils.get()
-
-                )
+        // Fast check and return if already initialized
+        synchronized(userConfigs) {
+            val instance = userConfigs[userAccountId]
+            if (instance != null) {
+                return instance
             }
+        }
+
+        // Once we reach here, we are going to create the config instance, but since we are
+        // not in the lock, there's a potential we could have created a duplicate instance. But it
+        // is not a problem in itself as we are going to take the lock and check
+        // again if another one already exists before setting it to use.
+        // This is to avoid having to do database operation inside the lock
+        val instance = ReentrantReadWriteLock() to UserConfigsImpl(
+            userEd25519SecKey = requiresCurrentUserED25519SecKey(),
+            userAccountId = userAccountId,
+            threadDb = threadDb,
+            configDatabase = configDatabase,
+            storage = storage.get(),
+            textSecurePreferences = textSecurePreferences,
+            usernameUtils = usernameUtils.get()
+        )
+
+        return synchronized(userConfigs) {
+            userConfigs.getOrPut(userAccountId) { instance }
         }
     }
 
     private fun ensureGroupConfigsInitialized(groupId: AccountId): Pair<ReentrantReadWriteLock, GroupConfigsImpl> {
         val groupAdminKey = getGroup(groupId)?.adminKey
-        return synchronized(groupConfigs) {
-            groupConfigs.getOrPut(groupId) {
-                ReentrantReadWriteLock() to GroupConfigsImpl(
-                    userEd25519SecKey = requiresCurrentUserED25519SecKey(),
-                    groupAccountId = groupId,
-                    groupAdminKey = groupAdminKey,
-                    configDatabase = configDatabase
-                )
+
+        // Fast check and return if already initialized
+        synchronized(groupConfigs) {
+            val instance = groupConfigs[groupId]
+            if (instance != null) {
+                return instance
             }
+        }
+
+        // Once we reach here, we are going to create the config instance, but since we are
+        // not in the lock, there's a potential we could have created a duplicate instance. But it
+        // is not a problem in itself as we are going to take the lock and check
+        // again if another one already exists before setting it to use.
+        // This is to avoid having to do database operation inside the lock
+        val instance = ReentrantReadWriteLock() to GroupConfigsImpl(
+            userEd25519SecKey = requiresCurrentUserED25519SecKey(),
+            groupAccountId = groupId,
+            groupAdminKey = groupAdminKey?.data,
+            configDatabase = configDatabase
+        )
+
+        return synchronized(groupConfigs) {
+            groupConfigs.getOrPut(groupId) { instance }
         }
     }
 
@@ -287,6 +314,12 @@ class ConfigFactory @Inject constructor(
         }
     }
 
+    override fun removeContact(accountId: String) {
+        withMutableUserConfigs {
+            it.contacts.erase(accountId)
+        }
+    }
+
     override fun removeGroup(groupId: AccountId) {
         withMutableUserConfigs {
             it.userGroups.eraseClosedGroup(groupId.hexString)
@@ -372,7 +405,7 @@ class ConfigFactory @Inject constructor(
                     )
                 )
                 .filter { (push, _) -> push != null }
-                .onEach { (push, config) -> config.second.confirmPushed(push!!.first.seqNo, push.second.hash) }
+                .onEach { (push, config) -> config.second.confirmPushed(push!!.first.seqNo, push.second.hashes.toTypedArray()) }
                 .map { (push, config) ->
                     Triple(config.first.configVariant, config.second.dump(), push!!.second.timestamp)
                 }.toList() to emptyList()
@@ -396,12 +429,20 @@ class ConfigFactory @Inject constructor(
         }
 
         doWithMutableGroupConfigs(groupId) { configs ->
-            members?.let { (push, result) -> configs.groupMembers.confirmPushed(push.seqNo, result.hash) }
-            info?.let { (push, result) -> configs.groupInfo.confirmPushed(push.seqNo, result.hash) }
-            keysPush?.let { (hash, timestamp) ->
+            members?.let { (push, result) -> configs.groupMembers.confirmPushed(push.seqNo, result.hashes.toTypedArray()) }
+            info?.let { (push, result) -> configs.groupInfo.confirmPushed(push.seqNo, result.hashes.toTypedArray()) }
+            keysPush?.let { (hashes, timestamp) ->
                 val pendingConfig = configs.groupKeys.pendingConfig()
                 if (pendingConfig != null) {
-                    configs.groupKeys.loadKey(pendingConfig, hash, timestamp, configs.groupInfo.pointer, configs.groupMembers.pointer)
+                    for (hash in hashes) {
+                        configs.groupKeys.loadKey(
+                            pendingConfig,
+                            hash,
+                            timestamp,
+                            configs.groupInfo.pointer,
+                            configs.groupMembers.pointer
+                        )
+                    }
                 }
             }
 
@@ -469,9 +510,9 @@ class ConfigFactory @Inject constructor(
         val group = getGroup(groupId) ?: return null
 
         return if (group.adminKey != null) {
-            OwnedSwarmAuth.ofClosedGroup(groupId, group.adminKey!!)
+            OwnedSwarmAuth.ofClosedGroup(groupId, group.adminKey!!.data)
         } else if (group.authData != null) {
-            GroupSubAccountSwarmAuth(groupId, this, group.authData!!)
+            GroupSubAccountSwarmAuth(groupId, this, group.authData!!.data)
         } else {
             null
         }
@@ -561,8 +602,8 @@ private fun MutableUserGroupsConfig.initFrom(storage: StorageProtocol) {
                 name = group.title,
                 members = admins + members,
                 priority = if (isPinned) ConfigBase.PRIORITY_PINNED else ConfigBase.PRIORITY_VISIBLE,
-                encPubKey = (encryptionKeyPair.publicKey as DjbECPublicKey).publicKey,  // 'serialize()' inserts an extra byte
-                encSecKey = encryptionKeyPair.privateKey.serialize(),
+                encPubKey = Bytes((encryptionKeyPair.publicKey as DjbECPublicKey).publicKey),  // 'serialize()' inserts an extra byte
+                encSecKey = Bytes(encryptionKeyPair.privateKey.serialize()),
                 disappearingTimer = recipient.expireMessages.toLong(),
                 joinedAtSecs = (group.formationTimestamp / 1000L)
             )
@@ -675,8 +716,8 @@ private class UserConfigsImpl(
     userEd25519SecKey: ByteArray,
     private val userAccountId: AccountId,
     private val configDatabase: ConfigDatabase,
-    private val textSecurePreferences: TextSecurePreferences,
-    private val usernameUtils: UsernameUtils,
+    textSecurePreferences: TextSecurePreferences,
+    usernameUtils: UsernameUtils,
     storage: StorageProtocol,
     threadDb: ThreadDatabase,
     contactsDump: ByteArray? = configDatabase.retrieveConfigAndHashes(

@@ -19,8 +19,10 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import network.loki.messenger.libsession_util.Namespace
 import nl.komponents.kovenant.Deferred
 import nl.komponents.kovenant.Promise
+import nl.komponents.kovenant.all
 import nl.komponents.kovenant.deferred
 import nl.komponents.kovenant.functional.bind
 import nl.komponents.kovenant.resolve
@@ -40,13 +42,12 @@ import org.session.libsession.snode.utilities.asyncPromise
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigMessage
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.Namespace
 import org.session.libsignal.utilities.Snode
-import org.session.libsignal.utilities.Util.SECURE_RANDOM
 
 private const val TAG = "Poller"
 
@@ -54,6 +55,7 @@ class Poller(
     private val configFactory: ConfigFactoryProtocol,
     private val storage: StorageProtocol,
     private val lokiApiDatabase: LokiAPIDatabaseProtocol,
+    private val preferences: TextSecurePreferences,
 ) {
     private val userPublicKey: String
         get() = storage.getUserPublicKey().orEmpty()
@@ -69,6 +71,7 @@ class Poller(
         private const val NEXT_RETRY_MULTIPLIER: Float = 1.2f // If we fail to poll we multiply our current retry interval by this (up to the above max) then try again
     }
     // endregion
+
 
     // region Public API
     fun startIfNeeded() {
@@ -100,6 +103,24 @@ class Poller(
 
     // region Private API
     private suspend fun setUpPolling() {
+        // Migrate to multipart config when needed
+        if (!preferences.migratedToMultiPartConfig) {
+            val allConfigNamespaces = intArrayOf(Namespace.USER_PROFILE(),
+                Namespace.USER_GROUPS(),
+                Namespace.CONTACTS(),
+                Namespace.CONVO_INFO_VOLATILE(),
+                Namespace.GROUP_KEYS(),
+                Namespace.GROUP_INFO(),
+                Namespace.GROUP_MEMBERS()
+            )
+            // To migrate to multi part config, we'll need to fetch all the config messages so we
+            // get the chance to process those multipart messages again...
+            lokiApiDatabase.clearLastMessageHashesByNamespaces(*allConfigNamespaces)
+            lokiApiDatabase.clearReceivedMessageHashValuesByNamespaces(*allConfigNamespaces)
+
+            preferences.migratedToMultiPartConfig = true
+        }
+
         val pollPool = hashSetOf<Snode>() // pollPool is the list of snodes we can use while rotating snodes from our swarm
         var retryScalingFactor = 1.0f // We increment the retry interval by NEXT_RETRY_MULTIPLIER times this value, which we bump on each failure
 
@@ -189,7 +210,7 @@ class Poller(
         val userAuth = requireNotNull(MessagingModuleConfiguration.shared.storage.userAuth)
 
         configFactory.withUserConfigs {
-            hashesToExtend += it.userProfile.currentHashes()
+            hashesToExtend += it.userProfile.activeHashes()
         }
 
         requests += SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
@@ -261,7 +282,7 @@ class Poller(
                 .entries
                 .map { type ->
                     val config = configs.getConfig(type)
-                    hashesToExtend += config.currentHashes()
+                    hashesToExtend += config.activeHashes()
                     type.namespace to SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
                         lastHash = lokiApiDatabase.getLastMessageHashValue(
                             snode = snode,

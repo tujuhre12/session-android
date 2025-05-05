@@ -13,6 +13,7 @@ import network.loki.messenger.libsession_util.MutableGroupKeysConfig
 import network.loki.messenger.libsession_util.MutableGroupMembersConfig
 import network.loki.messenger.libsession_util.MutableUserGroupsConfig
 import network.loki.messenger.libsession_util.MutableUserProfile
+import network.loki.messenger.libsession_util.Namespace
 import network.loki.messenger.libsession_util.ReadableConfig
 import network.loki.messenger.libsession_util.ReadableContacts
 import network.loki.messenger.libsession_util.ReadableConversationVolatileConfig
@@ -26,7 +27,6 @@ import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
-import org.session.libsignal.utilities.Namespace
 
 interface ConfigFactoryProtocol {
     val configUpdateNotifications: Flow<ConfigUpdateNotification>
@@ -63,6 +63,7 @@ interface ConfigFactoryProtocol {
 
     fun getGroupAuth(groupId: AccountId): SwarmAuth?
     fun removeGroup(groupId: AccountId)
+    fun removeContact(accountId: String)
 
     fun decryptForUser(encoded: ByteArray,
                        domain: String,
@@ -100,7 +101,7 @@ class ConfigMessage(
 )
 
 data class ConfigPushResult(
-    val hash: String,
+    val hashes: List<String>,
     val timestamp: Long
 )
 
@@ -123,6 +124,12 @@ fun ConfigFactoryProtocol.getGroup(groupId: AccountId): GroupInfo.ClosedGroupInf
  */
 fun ConfigFactoryProtocol.wasKickedFromGroupV2(group: Recipient) =
     group.isGroupV2Recipient && getGroup(AccountId(group.address.toString()))?.kicked == true
+
+/**
+ * Shortcut to check if the a given group is destroyed
+ */
+fun ConfigFactoryProtocol.isGroupDestroyed(group: Recipient) =
+    group.isGroupV2Recipient && getGroup(AccountId(group.address.toString()))?.destroyed == true
 
 /**
  * Wait until all user configs are pushed to the server.
