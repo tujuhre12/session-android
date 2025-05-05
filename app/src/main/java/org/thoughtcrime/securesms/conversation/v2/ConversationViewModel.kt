@@ -1065,7 +1065,6 @@ class ConversationViewModel(
     fun updateRecipient() {
         _recipient.updateTo(repository.maybeGetRecipientForThreadId(threadId))
         updateAppBarData(recipient)
-        // update ui accordingly
     }
 
     /**
