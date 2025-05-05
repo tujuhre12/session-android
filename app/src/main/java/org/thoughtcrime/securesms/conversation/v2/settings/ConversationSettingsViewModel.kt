@@ -690,7 +690,6 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     }
 
     private fun confirmClearMessages(){
-        //todo UCS group admin should show a multi choice dialog
         val conversation = recipient ?: return
 
         // default to 1on1
@@ -700,12 +699,13 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
         when{
             conversation.isGroupV2Recipient -> {
-                message = if(groupV2?.hasAdminKey() == true){
-                    Phrase.from(context, R.string.clearMessagesGroupAdminDescriptionUpdated)
-                        .put(GROUP_NAME_KEY, getGroupName())
-                        .format()
+                if(groupV2?.hasAdminKey() == true){
+                    // group admin clearing messages have a dedicated custom dialog
+                    _uiState.update { it.copy(showGroupAdminClearMessagesDialog = true) }
+                    return
+
                 } else {
-                    Phrase.from(context, R.string.clearMessagesGroupDescriptionUpdated)
+                    message = Phrase.from(context, R.string.clearMessagesGroupDescriptionUpdated)
                         .put(GROUP_NAME_KEY, getGroupName())
                         .format()
                 }
@@ -849,6 +849,14 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             is Commands.HideSimpleDialog -> _uiState.update {
                 it.copy(showSimpleDialog = null)
             }
+
+            is Commands.HideGroupAdminClearMessagesDialog -> _uiState.update {
+                it.copy(showGroupAdminClearMessagesDialog = false)
+            }
+
+            //todo UCS properly handle both cases
+            is Commands.ClearMessagesGroupDeviceOnly -> clearMessages()
+            is Commands.ClearMessagesGroupEveryone -> clearMessages()
         }
     }
 
@@ -873,6 +881,9 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     sealed interface Commands {
         data object CopyAccountId : Commands
         data object HideSimpleDialog : Commands
+        data object HideGroupAdminClearMessagesDialog : Commands
+        data object ClearMessagesGroupDeviceOnly : Commands
+        data object ClearMessagesGroupEveryone : Commands
     }
 
     @AssistedFactory
@@ -1095,6 +1106,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         val descriptionQaTag: String? = null,
         val accountId: String? = null,
         val showSimpleDialog: Dialog? = null,
+        val showGroupAdminClearMessagesDialog: Boolean = false,
         val showLoading: Boolean = false,
         val categories: List<OptionsCategory> = emptyList()
     )

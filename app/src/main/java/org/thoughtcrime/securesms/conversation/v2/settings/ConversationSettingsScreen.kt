@@ -13,6 +13,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -33,6 +34,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
@@ -40,15 +44,20 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import com.squareup.phrase.Phrase
 import network.loki.messenger.R
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.HideSimpleDialog
+import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.*
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.DialogButtonModel
@@ -57,8 +66,10 @@ import org.thoughtcrime.securesms.ui.ExpandableText
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LargeItemButton
 import org.thoughtcrime.securesms.ui.LoadingDialog
+import org.thoughtcrime.securesms.ui.RadioOption
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.BackAppBar
+import org.thoughtcrime.securesms.ui.components.TitledRadioButton
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.getCellBottomShape
 import org.thoughtcrime.securesms.ui.getCellTopShape
@@ -272,6 +283,14 @@ fun ConversationSettings(
                     )
                 }
 
+                // Group admin clear messages
+                if(data.showGroupAdminClearMessagesDialog) {
+                    GroupAdminClearMessagesDialog(
+                        groupName = data.name,
+                        sendCommand = sendCommand
+                    )
+                }
+
                 // Loading
                 if (data.showLoading) {
                     LoadingDialog()
@@ -341,6 +360,73 @@ fun ConversationSettingsSubCategory(
             }
         }
     }
+}
+
+@Composable
+fun GroupAdminClearMessagesDialog(
+    modifier: Modifier = Modifier,
+    groupName: String,
+    sendCommand: (ConversationSettingsViewModel.Commands) -> Unit,
+){
+    var deleteForEveryone by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+
+    AlertDialog(
+        onDismissRequest = {
+            // hide dialog
+            sendCommand(HideGroupAdminClearMessagesDialog)
+        },
+        title = annotatedStringResource(R.string.groupLeave),
+        text =  annotatedStringResource(Phrase.from(context, R.string.clearMessagesGroupAdminDescriptionUpdated)
+            .put(GROUP_NAME_KEY, groupName)
+            .format()),
+        content = {
+            TitledRadioButton(
+                contentPadding = PaddingValues(
+                    horizontal = LocalDimensions.current.xxsSpacing,
+                    vertical = 0.dp
+                ),
+                option = RadioOption(
+                    value = Unit,
+                    title = GetString(stringResource(R.string.clearDeviceOnly)),
+                    selected = !deleteForEveryone
+                )
+            ) {
+                deleteForEveryone = false
+            }
+
+            TitledRadioButton(
+                contentPadding = PaddingValues(
+                    horizontal = LocalDimensions.current.xxsSpacing,
+                    vertical = 0.dp
+                ),
+                option = RadioOption(
+                    value = Unit,
+                    title = GetString(stringResource(R.string.clearMessagesForEveryone)),
+                    selected = deleteForEveryone,
+                )
+            ) {
+                deleteForEveryone = true
+            }
+        },
+        buttons = listOf(
+            DialogButtonModel(
+                text = GetString(stringResource(id = R.string.clear)),
+                color = LocalColors.current.danger,
+                onClick = {
+                    // clear messages based on chosen option
+                    sendCommand(
+                        if(deleteForEveryone) ClearMessagesGroupEveryone
+                        else ClearMessagesGroupDeviceOnly
+                    )
+                }
+            ),
+            DialogButtonModel(
+                GetString(stringResource(R.string.cancel))
+            )
+        )
+    )
 }
 
 @OptIn(ExperimentalSharedTransitionApi::class)
