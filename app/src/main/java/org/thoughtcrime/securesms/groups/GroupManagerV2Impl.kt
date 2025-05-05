@@ -427,7 +427,7 @@ class GroupManagerV2Impl @Inject constructor(
     }
 
     override suspend fun clearAllMessagesForEveryone(groupAccountId: AccountId, deletedHashes: List<String?>) {
-        // remove messages from swarm SnodeAPI.deleteMessage
+        // only admins can perform these tasks
         val groupAdminAuth = configFactory.getGroup(groupAccountId)?.adminKey?.data?.let {
             OwnedSwarmAuth.ofClosedGroup(groupAccountId, it)
         } ?: return
@@ -437,6 +437,7 @@ class GroupManagerV2Impl @Inject constructor(
             configs.groupInfo.setDeleteBefore(clock.currentTimeSeconds())
         }
 
+        // remove messages from swarm SnodeAPI.deleteMessage
         val cleanedHashes: List<String> = deletedHashes.filter { !it.isNullOrEmpty() }.filterNotNull()
         if(cleanedHashes.isNotEmpty()) SnodeAPI.deleteMessage(groupAccountId.hexString, groupAdminAuth, cleanedHashes)
     }

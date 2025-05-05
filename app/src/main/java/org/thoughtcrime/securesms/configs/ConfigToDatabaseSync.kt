@@ -25,6 +25,8 @@ import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.sending_receiving.notifications.PushRegistryV1
 import org.session.libsession.messaging.sending_receiving.pollers.LegacyClosedGroupPollerV2
+import org.session.libsession.snode.OwnedSwarmAuth
+import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -32,6 +34,7 @@ import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.SSKEnvironment.ProfileManagerProtocol.Companion.NAME_PADDED_LENGTH
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
+import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.crypto.ecc.DjbECPrivateKey
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
@@ -207,17 +210,32 @@ class ConfigToDatabaseSync @Inject constructor(
         } else {
             groupInfoConfig.deleteBefore?.let { removeBefore ->
                 val messages = mmsSmsDatabase.getAllMessageRecordsBefore(threadId, TimeUnit.SECONDS.toMillis(removeBefore))
-                val (controlMessages, visibleMessages) = messages.partition { it.isControlMessage }
+                val (controlMessages, visibleMessages) = messages.map { it.first }.partition { it.isControlMessage }
 
                 // Mark visible messages as deleted, and control messages actually deleted.
                 conversationRepository.markAsDeletedLocally(visibleMessages.toSet(), context.getString(R.string.deleteMessageDeletedGlobally))
                 conversationRepository.deleteMessages(controlMessages.toSet(), threadId)
 
-                //todo UCS if the current user is an admin of this group they should also remove the message from the swarm
+                // if the current user is an admin of this group they should also remove the message from the swarm
+                // as a safety measure
+                val groupAdminAuth = configFactory.getGroup(groupInfoConfig.id)?.adminKey?.data?.let {
+                    OwnedSwarmAuth.ofClosedGroup(groupInfoConfig.id, it)
+                } ?: return
+
+                // remove messages from swarm SnodeAPI.deleteMessage
+                GlobalScope.launch(Dispatchers.Default) {
+                    val cleanedHashes: List<String> =
+                        messages.map { it.second }.filter { !it.isNullOrEmpty() }.filterNotNull()
+                    if (cleanedHashes.isNotEmpty()) SnodeAPI.deleteMessage(
+                        groupInfoConfig.id.hexString,
+                        groupAdminAuth,
+                        cleanedHashes
+                    )
+                }
             }
             groupInfoConfig.deleteAttachmentsBefore?.let { removeAttachmentsBefore ->
                 val messagesWithAttachment = mmsSmsDatabase.getAllMessageRecordsBefore(threadId, TimeUnit.SECONDS.toMillis(removeAttachmentsBefore))
-                    .filterTo(mutableSetOf()) { it is MmsMessageRecord && it.containsAttachment }
+                    .map{ it.first}.filterTo(mutableSetOf()) { it is MmsMessageRecord && it.containsAttachment }
 
                 conversationRepository.markAsDeletedLocally(messagesWithAttachment,  context.getString(R.string.deleteMessageDeletedGlobally))
             }

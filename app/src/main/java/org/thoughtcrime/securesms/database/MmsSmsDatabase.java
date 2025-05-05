@@ -334,16 +334,19 @@ public class MmsSmsDatabase extends Database {
     return identifiedMessages;
   }
 
-  public Set<MessageRecord> getAllMessageRecordsBefore(long threadId, long timestampMills) {
+  public List<Pair<MessageRecord, String>> getAllMessageRecordsBefore(long threadId, long timestampMills) {
     String selection = MmsSmsColumns.THREAD_ID + " = " + threadId + " AND " + MmsSmsColumns.NORMALIZED_DATE_SENT + " < " + timestampMills;
-    Set<MessageRecord> identifiedMessages = new HashSet<>();
+    List<Pair<MessageRecord, String>> identifiedMessages = new ArrayList<>();
 
     // Try everything with resources so that they auto-close on end of scope
     try (Cursor cursor = queryTables(PROJECTION, selection, null, null)) {
       try (MmsSmsDatabase.Reader reader = readerFor(cursor)) {
         MessageRecord messageRecord;
         while ((messageRecord = reader.getNext()) != null) {
-          identifiedMessages.add(messageRecord);
+          @Nullable String hash =
+                  cursor.getString(cursor.getColumnIndexOrThrow(MmsSmsColumns.SERVER_HASH));
+
+          identifiedMessages.add(new Pair<>(messageRecord, hash));
         }
       }
     }
@@ -353,7 +356,7 @@ public class MmsSmsDatabase extends Database {
   public List<Pair<MessageRecord, String>> getAllMessagesWithHash(long threadId) {
 
     String selection = MmsSmsColumns.THREAD_ID + " = " + threadId;
-    List<Pair<MessageRecord, String>> out = new ArrayList<>();
+    List<Pair<MessageRecord, String>> identifiedMessages = new ArrayList<>();
 
     try (Cursor cursor = queryTables(PROJECTION, selection, null, null);
          MmsSmsDatabase.Reader reader = readerFor(cursor)) {
@@ -363,10 +366,10 @@ public class MmsSmsDatabase extends Database {
         @Nullable String hash =
                 cursor.getString(cursor.getColumnIndexOrThrow(MmsSmsColumns.SERVER_HASH));
 
-        out.add(new Pair<>(record, hash));   // android.util.Pair
+        identifiedMessages.add(new Pair<>(record, hash));
       }
     }
-    return out;
+    return identifiedMessages;
   }
   public long getLastOutgoingTimestamp(long threadId) {
     String order = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
