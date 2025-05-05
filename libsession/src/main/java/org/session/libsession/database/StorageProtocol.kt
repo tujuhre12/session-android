@@ -240,7 +240,7 @@ interface StorageProtocol {
     fun conversationHasOutgoing(userPublicKey: String): Boolean
     fun deleteMessagesByHash(threadId: Long, hashes: List<String>)
     fun deleteMessagesByUser(threadId: Long, userSessionId: String)
-    fun clearAllMessages(threadId: Long)
+    fun clearAllMessages(threadId: Long): List<String?>
 
     // Last Inbox Message Id
     fun getLastInboxMessageId(server: String): Long?

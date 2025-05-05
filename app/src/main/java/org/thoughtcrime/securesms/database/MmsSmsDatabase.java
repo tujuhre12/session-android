@@ -350,22 +350,24 @@ public class MmsSmsDatabase extends Database {
     return identifiedMessages;
   }
 
-  public Set<MessageRecord> getAllMessageForThread(long threadId) {
-    String selection = MmsSmsColumns.THREAD_ID + " = " + threadId;
-    Set<MessageRecord> identifiedMessages = new HashSet<>();
+  public List<Pair<MessageRecord, String>> getAllMessagesWithHash(long threadId) {
 
-    // Try everything with resources so that they auto-close on end of scope
-    try (Cursor cursor = queryTables(PROJECTION, selection, null, null)) {
-      try (MmsSmsDatabase.Reader reader = readerFor(cursor)) {
-        MessageRecord messageRecord;
-        while ((messageRecord = reader.getNext()) != null) {
-          identifiedMessages.add(messageRecord);
-        }
+    String selection = MmsSmsColumns.THREAD_ID + " = " + threadId;
+    List<Pair<MessageRecord, String>> out = new ArrayList<>();
+
+    try (Cursor cursor = queryTables(PROJECTION, selection, null, null);
+         MmsSmsDatabase.Reader reader = readerFor(cursor)) {
+
+      MessageRecord record;
+      while ((record = reader.getNext()) != null) {
+        @Nullable String hash =
+                cursor.getString(cursor.getColumnIndexOrThrow(MmsSmsColumns.SERVER_HASH));
+
+        out.add(new Pair<>(record, hash));   // android.util.Pair
       }
     }
-    return identifiedMessages;
+    return out;
   }
-
   public long getLastOutgoingTimestamp(long threadId) {
     String order = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
     String selection = MmsSmsColumns.THREAD_ID + " = " + threadId;
@@ -635,7 +637,7 @@ public class MmsSmsDatabase extends Database {
     mmsColumnsPresent.add(MmsDatabase.STATUS);
     mmsColumnsPresent.add(MmsDatabase.NETWORK_FAILURE);
     mmsColumnsPresent.add(MmsSmsColumns.HAS_MENTION);
-    mmsColumnsPresent.add(MmsSmsColumns.SERVER_HASH);
+    mmsColumnsPresent.add("mms_hash.server_hash AS " + MmsSmsColumns.SERVER_HASH);
 
     mmsColumnsPresent.add(AttachmentDatabase.ROW_ID);
     mmsColumnsPresent.add(AttachmentDatabase.UNIQUE_ID);
@@ -709,7 +711,7 @@ public class MmsSmsDatabase extends Database {
     smsColumnsPresent.add(ReactionDatabase.DATE_SENT);
     smsColumnsPresent.add(ReactionDatabase.DATE_RECEIVED);
     smsColumnsPresent.add(ReactionDatabase.REACTION_JSON_ALIAS);
-    smsColumnsPresent.add(MmsSmsColumns.SERVER_HASH);
+    smsColumnsPresent.add("sms_hash.server_hash AS " + MmsSmsColumns.SERVER_HASH);
 
     @SuppressWarnings("deprecation")
     String mmsSubQuery = mmsQueryBuilder.buildUnionSubQuery(TRANSPORT, mmsProjection, mmsColumnsPresent, 5, MMS_TRANSPORT, selection, null, MmsDatabase.TABLE_NAME + "." + MmsDatabase.ID, null);

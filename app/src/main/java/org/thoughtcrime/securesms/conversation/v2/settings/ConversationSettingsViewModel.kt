@@ -743,7 +743,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         viewModelScope.launch {
             showLoading()
             withContext(Dispatchers.Default) {
-                conversationRepository.clearAllMessages(threadId, clearForEveryoneGroupsV2)
+                conversationRepository.clearAllMessages(threadId, if(clearForEveryoneGroupsV2 && groupV2 != null) AccountId(groupV2!!.groupAccountId) else null)
             }
 
             hideLoading()

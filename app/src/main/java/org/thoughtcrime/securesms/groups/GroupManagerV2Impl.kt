@@ -426,10 +426,19 @@ class GroupManagerV2Impl @Inject constructor(
         SnodeAPI.deleteMessage(groupAccountId.hexString, groupAdminAuth, messagesToDelete)
     }
 
-    override suspend fun clearAllMessagesForEveryone(threadId: Long) {
-        //todo UCS change the delete_before
+    override suspend fun clearAllMessagesForEveryone(groupAccountId: AccountId, deletedHashes: List<String?>) {
+        // remove messages from swarm SnodeAPI.deleteMessage
+        val groupAdminAuth = configFactory.getGroup(groupAccountId)?.adminKey?.data?.let {
+            OwnedSwarmAuth.ofClosedGroup(groupAccountId, it)
+        } ?: return
 
-        //todo UCS remove messages from swarm SnodeAPI.deleteMessage
+        // change the delete_before
+        configFactory.withMutableGroupConfigs(groupAccountId) { configs ->
+            configs.groupInfo.setDeleteBefore(clock.currentTimeSeconds())
+        }
+
+        val cleanedHashes: List<String> = deletedHashes.filter { !it.isNullOrEmpty() }.filterNotNull()
+        if(cleanedHashes.isNotEmpty()) SnodeAPI.deleteMessage(groupAccountId.hexString, groupAdminAuth, cleanedHashes)
     }
 
     override suspend fun handleMemberLeftMessage(memberId: AccountId, group: AccountId) = scope.launchAndWait(group, "Handle member left message") {

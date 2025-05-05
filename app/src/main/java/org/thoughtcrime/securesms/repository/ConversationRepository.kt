@@ -14,7 +14,6 @@ import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.groups.GroupManagerV2
-import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.MarkAsDeletedMessage
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
 import org.session.libsession.messaging.messages.control.UnsendRequest
@@ -93,7 +92,7 @@ interface ConversationRepository {
     suspend fun declineMessageRequest(threadId: Long, recipient: Recipient): Result<Unit>
     fun hasReceived(threadId: Long): Boolean
     fun getInvitingAdmin(threadId: Long): Recipient?
-    suspend fun clearAllMessages(threadId: Long, syncGroupV2: Boolean)
+    suspend fun clearAllMessages(threadId: Long, groupId: AccountId?)
 }
 
 class DefaultConversationRepository @Inject constructor(
@@ -422,14 +421,15 @@ class DefaultConversationRepository @Inject constructor(
         }
     }
 
-    override suspend fun clearAllMessages(threadId: Long, syncGroupV2: Boolean) {
+    override suspend fun clearAllMessages(threadId: Long, groupId: AccountId?) {
         withContext(Dispatchers.Default) {
             // delete data locally
-            storage.clearAllMessages(threadId)
+            val deletedHashes = storage.clearAllMessages(threadId)
+            Log.i("", "Cleared messages with hashes: $deletedHashes")
 
             // if required, also sync groupV2 data
-            if (syncGroupV2) {
-                groupManager.clearAllMessagesForEveryone(threadId)
+            if (groupId != null) {
+                groupManager.clearAllMessagesForEveryone(groupId, deletedHashes)
             }
         }
     }
