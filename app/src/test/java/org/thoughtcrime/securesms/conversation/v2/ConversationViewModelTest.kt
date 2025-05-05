@@ -1,7 +1,11 @@
 package org.thoughtcrime.securesms.conversation.v2
 
 import android.app.Application
+import android.content.ContentResolver
+import android.content.Context
+import app.cash.copper.Query
 import com.goterl.lazysodium.utils.KeyPair
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
@@ -29,6 +33,7 @@ import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
+import org.thoughtcrime.securesms.util.RecipientChangeSource
 import java.time.ZonedDateTime
 
 class ConversationViewModelTest: BaseViewModelTest() {
@@ -53,6 +58,17 @@ class ConversationViewModelTest: BaseViewModelTest() {
             .doReturn(AvatarUIData(elements = emptyList()))
     }
 
+    private val testContentResolver = mock<ContentResolver>()
+
+    private val context = mock<Context> {
+        on { contentResolver } doReturn testContentResolver
+        on { getString(any()) } doReturn ""
+    }
+
+    object NoopRecipientChangeSource : RecipientChangeSource {
+        override fun changes(): Flow<Query> = emptyFlow()
+    }
+
     private val viewModel: ConversationViewModel by lazy {
         ConversationViewModel(
             threadId = threadId,
@@ -75,9 +91,10 @@ class ConversationViewModelTest: BaseViewModelTest() {
             },
             expiredGroupManager = mock(),
             usernameUtils = mock(),
-            context = application,
+            context = context,
             avatarUtils = avatarUtils,
-            lokiAPIDb = mock()
+            lokiAPIDb = mock(),
+            recipientChangeSource = NoopRecipientChangeSource
         )
     }
 

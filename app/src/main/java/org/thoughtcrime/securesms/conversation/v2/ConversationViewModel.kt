@@ -77,6 +77,7 @@ import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.DateUtils
+import org.thoughtcrime.securesms.util.RecipientChangeSource
 import org.thoughtcrime.securesms.util.avatarOptions
 import org.thoughtcrime.securesms.webrtc.CallManager
 import org.thoughtcrime.securesms.webrtc.data.State
@@ -104,7 +105,8 @@ class ConversationViewModel(
     val legacyGroupDeprecationManager: LegacyGroupDeprecationManager,
     private val expiredGroupManager: ExpiredGroupManager,
     private val usernameUtils: UsernameUtils,
-    private val avatarUtils: AvatarUtils
+    private val avatarUtils: AvatarUtils,
+    private val recipientChangeSource: RecipientChangeSource
 
 ) : ViewModel() {
 
@@ -322,8 +324,7 @@ class ConversationViewModel(
 
         // update state on recipient changes
         viewModelScope.launch(Dispatchers.Default) {
-            context.contentResolver
-                .observeQuery(DatabaseContentProviders.Recipient.CONTENT_URI).collect {
+            recipientChangeSource.changes().collect {
                 _uiState.update {
                     it.copy(
                         shouldExit = recipient == null,
@@ -1243,6 +1244,7 @@ class ConversationViewModel(
         private val expiredGroupManager: ExpiredGroupManager,
         private val usernameUtils: UsernameUtils,
         private val avatarUtils: AvatarUtils,
+        private val recipientChangeSource: RecipientChangeSource,
     ) : ViewModelProvider.Factory {
 
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -1267,6 +1269,7 @@ class ConversationViewModel(
                 expiredGroupManager = expiredGroupManager,
                 usernameUtils = usernameUtils,
                 avatarUtils = avatarUtils,
+                recipientChangeSource = recipientChangeSource
             ) as T
         }
     }
