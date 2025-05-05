@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.conversation.v2.settings
 
+import android.content.Intent
 import androidx.navigation.NavOptionsBuilder
 import dagger.hilt.android.scopes.ActivityRetainedScoped
 import kotlinx.coroutines.channels.Channel
@@ -28,6 +29,10 @@ class ConversationSettingsNavigator @Inject constructor(){
     suspend fun navigateUp() {
         _navigationActions.send(NavigationAction.NavigateUp)
     }
+
+    suspend fun navigateToIntent(intent: Intent) {
+        _navigationActions.send(NavigationAction.NavigateToIntent(intent))
+    }
 }
 
 sealed interface NavigationAction {
@@ -37,4 +42,8 @@ sealed interface NavigationAction {
     ): NavigationAction
 
     data object NavigateUp: NavigationAction
+
+    data class NavigateToIntent(
+        val intent: Intent
+    ): NavigationAction
 }

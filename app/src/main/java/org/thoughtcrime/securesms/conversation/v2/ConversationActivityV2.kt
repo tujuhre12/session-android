@@ -108,6 +108,7 @@ import org.session.libsignal.utilities.ListenableFuture
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.hexEncodedPrivateKey
 import org.thoughtcrime.securesms.ApplicationContext
+import org.thoughtcrime.securesms.FullComposeActivity.Companion.applyCommonPropertiesForCompose
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.attachments.ScreenshotObserver
 import org.thoughtcrime.securesms.audio.AudioRecorder
@@ -480,6 +481,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     fun showOpenUrlDialog(url: String) = viewModel.onCommand(ShowOpenUrlDialog(url))
 
     // region Lifecycle
+    override fun onCreate(savedInstanceState: Bundle?) {
+        applyCommonPropertiesForCompose()
+        super.onCreate(savedInstanceState)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?, isReady: Boolean) {
         super.onCreate(savedInstanceState, isReady)
         binding = ActivityConversationV2Binding.inflate(layoutInflater)
@@ -488,7 +494,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         // set the compose dialog content
         binding.dialogOpenUrl.apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-            setContent {
+            setThemedContent {
                 val dialogsState by viewModel.dialogsState.collectAsState()
                 ConversationV2Dialogs(
                     dialogsState = dialogsState,
@@ -1019,6 +1025,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     binding.inputBar.run {
                         isVisible = state.showInput
                         allowAttachMultimediaButtons = state.enableAttachMediaControls
+                        // if the user is blocked, hide input and show blocked message
+                        setBlockedState(state.userBlocked)
                     }
 
                     // show or hide loading indicator
@@ -1403,11 +1411,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             .let(::startActivity)
     }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return if (item.itemId == android.R.id.home) false else viewModel.onOptionItemSelected(this, item)
-    }
-
-    override fun block(deleteThread: Boolean) {
+    fun block(deleteThread: Boolean) {
         val recipient = viewModel.recipient ?: return Log.w("Loki", "Recipient was null for block action")
         val invitingAdmin = viewModel.invitingAdmin
 
@@ -1459,7 +1463,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         Toast.makeText(this, R.string.copied, Toast.LENGTH_SHORT).show()
     }
 
-    override fun unblock() {
+    override fun unblockUserFromInput() {
+        unblock()
+    }
+
+    fun unblock() {
         val recipient = viewModel.recipient ?: return Log.w("Loki", "Recipient was null for unblock action")
 
         if (!recipient.isContactRecipient) {

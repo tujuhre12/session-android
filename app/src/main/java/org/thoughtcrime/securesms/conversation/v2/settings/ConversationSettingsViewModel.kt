@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.conversation.v2.settings
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
 import android.widget.Toast
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
@@ -30,14 +31,19 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
+import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsession.database.StorageProtocol
+import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ExpirationUtil
+import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
@@ -46,8 +52,10 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
+import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.groups.OpenGroupManager
+import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.AvatarUIData
@@ -69,6 +77,9 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private val textSecurePreferences: TextSecurePreferences,
     private val navigator: ConversationSettingsNavigator,
     private val threadDb: ThreadDatabase,
+    private val groupManagerV2: GroupManagerV2,
+    private val prefs: TextSecurePreferences,
+    private val lokiThreadDatabase: LokiThreadDatabase,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<UIState> = MutableStateFlow(
@@ -200,10 +211,12 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         val pinned = threadDb.isPinned(threadId)
 
         // organise the setting options
-        val optionData = when {
+        val optionData = options@when {
             conversation.isLocalNumber -> {
                 val mainOptions = mutableListOf<OptionsItem>()
                 val dangerOptions = mutableListOf<OptionsItem>()
+
+                val ntsHidden = prefs.hasHiddenNoteToSelf()
 
                 mainOptions.addAll(listOf(
                     optionCopyAccountId,
@@ -213,8 +226,10 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                     optionAttachments,
                 ))
 
+                if(ntsHidden) mainOptions.add(optionShowNTS)
+                else dangerOptions.add(optionHideNTS)
+
                 dangerOptions.addAll(listOf(
-                    optionHideNTS,
                     optionClearMessages,
                 ))
 
@@ -265,77 +280,95 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             }
 
             conversation.isGroupV2Recipient -> {
-                val mainOptions = mutableListOf<OptionsItem>()
-                val adminOptions = mutableListOf<OptionsItem>()
-                val dangerOptions = mutableListOf<OptionsItem>()
-
-                mainOptions.add(optionSearch)
-
-                // for non admins, disappearing messages is in the non admin section
-                if(!isAdmin){
-                    mainOptions.add(optionDisappearingMessage(disappearingSubtitle))
-                }
-
-                mainOptions.addAll(listOf(
-                    if(pinned) optionUnpin else optionPin,
-                    optionNotifications(null), //todo UCS notifications logic
-                    optionGroupMembers,
-                    optionAttachments,
-                ))
-
-                // apply different options depending on admin status
-                if(isAdmin){
-                    dangerOptions.addAll(
-                        listOf(
-                            optionClearMessages,
-                            optionDeleteGroup
-                        )
-                    )
-
-                    // admin options
-                    adminOptions.addAll(listOf(
-                        optionManageMembers,
-                        optionDisappearingMessage(disappearingSubtitle)
-                    ))
-
-                    // the returned options for group admins
+                // if the user is kicked or the group destroyed, only show "Delete Group"
+                if(groupV2 != null && groupV2?.shouldPoll == false){
                     listOf(
-                        OptionsCategory(
-                            items = listOf(
-                                OptionsSubCategory(items = mainOptions),
-                            )
-                        ),
-                        OptionsCategory(
-                            name = context.getString(R.string.adminSettings),
-                            items = listOf(
-                                OptionsSubCategory(items = adminOptions),
-                                OptionsSubCategory(
-                                    danger = true,
-                                    items = dangerOptions
+                            OptionsCategory(
+                                items = listOf(
+                                    OptionsSubCategory(
+                                        danger = true,
+                                        items = listOf(optionDeleteGroup)
+                                    )
                                 )
                             )
-                        )
                     )
                 } else {
-                    dangerOptions.addAll(
+                    val mainOptions = mutableListOf<OptionsItem>()
+                    val adminOptions = mutableListOf<OptionsItem>()
+                    val dangerOptions = mutableListOf<OptionsItem>()
+
+                    mainOptions.add(optionSearch)
+
+                    // for non admins, disappearing messages is in the non admin section
+                    if (!isAdmin) {
+                        mainOptions.add(optionDisappearingMessage(disappearingSubtitle))
+                    }
+
+                    mainOptions.addAll(
                         listOf(
-                            optionClearMessages,
-                            optionLeaveGroup
+                            if (pinned) optionUnpin else optionPin,
+                            optionNotifications(null), //todo UCS notifications logic
+                            optionGroupMembers,
+                            optionAttachments,
                         )
                     )
 
-                    // the returned options for group non-admins
-                    listOf(
-                        OptionsCategory(
-                            items = listOf(
-                                OptionsSubCategory(items = mainOptions),
-                                OptionsSubCategory(
-                                    danger = true,
-                                    items = dangerOptions
+                    // apply different options depending on admin status
+                    if (isAdmin) {
+                        dangerOptions.addAll(
+                            listOf(
+                                optionClearMessages,
+                                optionDeleteGroup
+                            )
+                        )
+
+                        // admin options
+                        adminOptions.addAll(
+                            listOf(
+                                optionManageMembers,
+                                optionDisappearingMessage(disappearingSubtitle)
+                            )
+                        )
+
+                        // the returned options for group admins
+                        listOf(
+                            OptionsCategory(
+                                items = listOf(
+                                    OptionsSubCategory(items = mainOptions),
+                                )
+                            ),
+                            OptionsCategory(
+                                name = context.getString(R.string.adminSettings),
+                                items = listOf(
+                                    OptionsSubCategory(items = adminOptions),
+                                    OptionsSubCategory(
+                                        danger = true,
+                                        items = dangerOptions
+                                    )
                                 )
                             )
                         )
-                    )
+                    } else {
+                        dangerOptions.addAll(
+                            listOf(
+                                optionClearMessages,
+                                optionLeaveGroup
+                            )
+                        )
+
+                        // the returned options for group non-admins
+                        listOf(
+                            OptionsCategory(
+                                items = listOf(
+                                    OptionsSubCategory(items = mainOptions),
+                                    OptionsSubCategory(
+                                        danger = true,
+                                        items = dangerOptions
+                                    )
+                                )
+                            )
+                        )
+                    }
                 }
             }
 
@@ -480,11 +513,16 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         }
     }
 
-
     private fun blockUser() {
-        if(recipient == null) return
+        val conversation = recipient ?: return
         viewModelScope.launch {
-            repository.setBlocked(recipient!!, true)
+            if (conversation.isContactRecipient || conversation.isGroupV2Recipient) {
+                repository.setBlocked(conversation, true)
+            }
+
+            if (conversation.isGroupV2Recipient) {
+                groupManagerV2.onBlocked(AccountId(conversation.address.toString()))
+            }
         }
     }
 
@@ -495,6 +533,252 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         }
     }
 
+    private fun confirmHideNTS(){
+        _uiState.update {
+            it.copy(
+                showSimpleDialog = Dialog(
+                    title = context.getString(R.string.noteToSelfHide),
+                    message = context.getText(R.string.hideNoteToSelfDescription),
+                    positiveText = context.getString(R.string.hide),
+                    negativeText = context.getString(R.string.cancel),
+                    positiveQaTag = context.getString(R.string.qa_conversation_settings_dialog_hide_nts_confirm),
+                    negativeQaTag = context.getString(R.string.qa_conversation_settings_dialog_hide_nts_cancel),
+                    onPositive = ::hideNoteToSelf,
+                    onNegative = {}
+                )
+            )
+        }
+    }
+
+    private fun confirmShowNTS(){
+        _uiState.update {
+            it.copy(
+                showSimpleDialog = Dialog(
+                    title = context.getString(R.string.showNoteToSelf),
+                    message = context.getText(R.string.showNoteToSelfDescription),
+                    positiveText = context.getString(R.string.show),
+                    negativeText = context.getString(R.string.cancel),
+                    positiveQaTag = context.getString(R.string.qa_conversation_settings_dialog_show_nts_confirm),
+                    negativeQaTag = context.getString(R.string.qa_conversation_settings_dialog_show_nts_cancel),
+                    positiveStyleDanger = false,
+                    onPositive = ::showNoteToSelf,
+                    onNegative = {}
+                )
+            )
+        }
+    }
+
+    private fun hideNoteToSelf() {
+        prefs.setHasHiddenNoteToSelf(true)
+        configFactory.withMutableUserConfigs {
+            it.userProfile.setNtsPriority(PRIORITY_HIDDEN)
+        }
+        // update state to reflect the change
+        viewModelScope.launch {
+            getStateFromRecipient()
+        }
+    }
+
+    fun showNoteToSelf() {
+        prefs.setHasHiddenNoteToSelf(false)
+        configFactory.withMutableUserConfigs {
+            it.userProfile.setNtsPriority(PRIORITY_VISIBLE)
+        }
+        // update state to reflect the change
+        viewModelScope.launch {
+            getStateFromRecipient()
+        }
+    }
+
+    private fun confirmDeleteContact(){
+        _uiState.update {
+            it.copy(
+                showSimpleDialog = Dialog(
+                    title = context.getString(R.string.contactDelete),
+                    message = Phrase.from(context, R.string.deleteContactDescription)
+                        .put(NAME_KEY, recipient?.name ?: "")
+                        .put(NAME_KEY, recipient?.name ?: "")
+                        .format(),
+                    positiveText = context.getString(R.string.delete),
+                    negativeText = context.getString(R.string.cancel),
+                    positiveQaTag = context.getString(R.string.qa_conversation_settings_dialog_delete_contact_confirm),
+                    negativeQaTag = context.getString(R.string.qa_conversation_settings_dialog_delete_contact_cancel),
+                    onPositive = ::deleteContact,
+                    onNegative = {}
+                )
+            )
+        }
+    }
+
+    private fun deleteContact() {
+        val conversation = recipient ?: return
+        viewModelScope.launch {
+            showLoading()
+            withContext(Dispatchers.Default) {
+                storage.deleteContactAndSyncConfig(conversation.address.toString())
+            }
+
+            hideLoading()
+            goBackHome()
+        }
+    }
+
+    private fun confirmDeleteConversation(){
+        _uiState.update {
+            it.copy(
+                showSimpleDialog = Dialog(
+                    title = context.getString(R.string.conversationsDelete),
+                    message = Phrase.from(context, R.string.deleteConversationDescription)
+                        .put(NAME_KEY, recipient?.name ?: "")
+                        .format(),
+                    positiveText = context.getString(R.string.delete),
+                    negativeText = context.getString(R.string.cancel),
+                    positiveQaTag = context.getString(R.string.qa_conversation_settings_dialog_delete_conversation_confirm),
+                    negativeQaTag = context.getString(R.string.qa_conversation_settings_dialog_delete_conversation_cancel),
+                    onPositive = ::deleteConversation,
+                    onNegative = {}
+                )
+            )
+        }
+    }
+
+    private fun deleteConversation() {
+        viewModelScope.launch {
+            showLoading()
+            withContext(Dispatchers.Default) {
+                storage.deleteConversation(threadId)
+            }
+
+            hideLoading()
+            goBackHome()
+        }
+    }
+
+    private fun confirmLeaveCommunity(){
+        _uiState.update {
+            it.copy(
+                showSimpleDialog = Dialog(
+                    title = context.getString(R.string.communityLeave),
+                    message = Phrase.from(context, R.string.groupLeaveDescription)
+                        .put(GROUP_NAME_KEY, recipient?.name ?: "")
+                        .format(),
+                    positiveText = context.getString(R.string.leave),
+                    negativeText = context.getString(R.string.cancel),
+                    positiveQaTag = context.getString(R.string.qa_conversation_settings_dialog_leave_community_confirm),
+                    negativeQaTag = context.getString(R.string.qa_conversation_settings_dialog_leave_community_cancel),
+                    onPositive = ::leaveCommunity,
+                    onNegative = {}
+                )
+            )
+        }
+    }
+
+    private fun leaveCommunity() {
+        viewModelScope.launch {
+            showLoading()
+            withContext(Dispatchers.Default) {
+                val community = lokiThreadDatabase.getOpenGroupChat(threadId)
+                if (community != null) {
+                    OpenGroupManager.delete(community.server, community.room, context)
+                }
+            }
+
+            hideLoading()
+            goBackHome()
+        }
+    }
+
+    private fun getGroupName(): String{
+        val conversation = recipient ?: return ""
+        val accountId = AccountId(conversation.address.toString())
+        return configFactory.withGroupConfigs(accountId) {
+            it.groupInfo.getName()
+        } ?: groupV2?.name ?: ""
+    }
+
+    private fun confirmLeaveGroup(){
+        val groupData = groupV2 ?: return
+        _uiState.update {
+
+            var title = R.string.groupDelete
+            var message: CharSequence = ""
+            var positiveButton = R.string.delete
+            var positiveQaTag = R.string.qa_conversation_settings_dialog_delete_group_confirm
+            var negativeQaTag = R.string.qa_conversation_settings_dialog_delete_group_cancel
+
+            val groupName = getGroupName()
+
+            if(!groupData.shouldPoll){
+                message = Phrase.from(context, R.string.groupDeleteDescriptionMember)
+                    .put(GROUP_NAME_KEY, groupName)
+                    .format()
+
+            } else if (groupData.hasAdminKey()) {
+                message = Phrase.from(context, R.string.groupLeaveDescriptionAdmin)
+                    .put(GROUP_NAME_KEY, groupName)
+                    .format()
+            } else {
+                message = Phrase.from(context, R.string.groupLeaveDescription)
+                    .put(GROUP_NAME_KEY, groupName)
+                    .format()
+
+                title = R.string.groupLeave
+                positiveButton = R.string.leave
+                positiveQaTag = R.string.qa_conversation_settings_dialog_leave_group_confirm
+                negativeQaTag = R.string.qa_conversation_settings_dialog_leave_group_cancel
+            }
+
+
+            it.copy(
+                showSimpleDialog = Dialog(
+                    title = context.getString(title),
+                    message = message,
+                    positiveText = context.getString(positiveButton),
+                    negativeText = context.getString(R.string.cancel),
+                    positiveQaTag = context.getString(positiveQaTag),
+                    negativeQaTag = context.getString(negativeQaTag),
+                    onPositive = ::leaveGroup,
+                    onNegative = {}
+                )
+            )
+        }
+    }
+
+    private fun leaveGroup() {
+        val conversation = recipient ?: return
+        viewModelScope.launch {
+            showLoading()
+            withContext(Dispatchers.Default) {
+                try {
+                    groupManagerV2.leaveGroup(AccountId(conversation.address.toString()))
+                    hideLoading()
+                    goBackHome()
+                } catch (e: Exception){
+                    withContext(Dispatchers.Main) {
+                        hideLoading()
+
+                        val txt = Phrase.from(context, R.string.groupLeaveErrorFailed)
+                            .put(GROUP_NAME_KEY, getGroupName())
+                            .format().toString()
+                        Toast.makeText(context, txt, Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
+        }
+    }
+
+    private suspend fun goBackHome(){
+        navigator.navigateToIntent(
+            Intent(context, HomeActivity::class.java).apply {
+                // pop back to home activity
+                addFlags(
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                            Intent.FLAG_ACTIVITY_SINGLE_TOP
+                )
+            }
+        )
+    }
+
     fun onCommand(command: Commands) {
         when (command) {
             is Commands.CopyAccountId -> copyAccountId()
@@ -502,6 +786,18 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             is Commands.HideSimpleDialog -> _uiState.update {
                 it.copy(showSimpleDialog = null)
             }
+        }
+    }
+
+    private fun showLoading(){
+        _uiState.update {
+            it.copy(showLoading = true)
+        }
+    }
+
+    private fun hideLoading(){
+        _uiState.update {
+            it.copy(showLoading = false)
         }
     }
 
@@ -623,7 +919,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             name = context.getString(R.string.conversationsDelete),
             icon = R.drawable.ic_trash_2,
             qaTag = R.string.qa_conversation_settings_delete_conversation,
-            onClick = ::copyAccountId //todo UCS get proper method
+            onClick = ::confirmDeleteConversation
         )
     }
 
@@ -632,7 +928,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             name = context.getString(R.string.contactDelete),
             icon = R.drawable.ic_user_round_trash,
             qaTag = R.string.qa_conversation_settings_delete_contact,
-            onClick = ::copyAccountId //todo UCS get proper method
+            onClick = ::confirmDeleteContact
         )
     }
 
@@ -641,7 +937,16 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             name = context.getString(R.string.noteToSelfHide),
             icon = R.drawable.ic_eye_off,
             qaTag = R.string.qa_conversation_settings_hide_nts,
-            onClick = ::copyAccountId //todo UCS get proper method
+            onClick = ::confirmHideNTS
+        )
+    }
+
+    private val optionShowNTS: OptionsItem by lazy{
+        OptionsItem(
+            name = context.getString(R.string.showNoteToSelf),
+            icon = R.drawable.ic_eye,
+            qaTag = R.string.qa_conversation_settings_hide_nts,
+            onClick = ::confirmShowNTS
         )
     }
 
@@ -686,7 +991,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             name = context.getString(R.string.groupLeave),
             icon = R.drawable.ic_log_out,
             qaTag = R.string.qa_conversation_settings_leave_group,
-            onClick = ::copyAccountId //todo UCS get proper method
+            onClick = ::confirmLeaveGroup
         )
     }
 
@@ -695,7 +1000,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             name = context.getString(R.string.groupDelete),
             icon = R.drawable.ic_trash_2,
             qaTag = R.string.qa_conversation_settings_delete_group,
-            onClick = ::copyAccountId //todo UCS get proper method
+            onClick = ::confirmLeaveGroup
         )
     }
 
@@ -714,7 +1019,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             name = context.getString(R.string.communityLeave),
             icon = R.drawable.ic_log_out,
             qaTag = R.string.qa_conversation_settings_leave_community,
-            onClick = ::copyAccountId //todo UCS get proper method
+            onClick = ::confirmLeaveCommunity
         )
     }
 
@@ -727,6 +1032,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         val descriptionQaTag: String? = null,
         val accountId: String? = null,
         val showSimpleDialog: Dialog? = null,
+        val showLoading: Boolean = false,
         val categories: List<OptionsCategory> = emptyList()
     )
 
@@ -737,6 +1043,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         val title: String,
         val message: CharSequence,
         val positiveText: String,
+        val positiveStyleDanger: Boolean = true,
         val negativeText: String,
         val positiveQaTag: String?,
         val negativeQaTag: String?,

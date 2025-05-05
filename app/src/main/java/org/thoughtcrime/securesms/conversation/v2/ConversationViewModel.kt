@@ -2,14 +2,13 @@ package org.thoughtcrime.securesms.conversation.v2
 
 import android.app.Application
 import android.content.Context
-import android.view.MenuItem
 import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import app.cash.copper.flow.observeQuery
 import com.bumptech.glide.Glide
-import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.goterl.lazysodium.utils.KeyPair
 import com.squareup.phrase.Phrase
 import dagger.assisted.Assisted
@@ -17,7 +16,6 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -58,7 +56,7 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.audio.AudioSlidePlayer
-import org.thoughtcrime.securesms.conversation.v2.menus.ConversationMenuHelper
+import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
@@ -79,6 +77,7 @@ import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.DateUtils
+import org.thoughtcrime.securesms.util.RecipientChangeSource
 import org.thoughtcrime.securesms.util.avatarOptions
 import org.thoughtcrime.securesms.webrtc.CallManager
 import org.thoughtcrime.securesms.webrtc.data.State
@@ -106,7 +105,8 @@ class ConversationViewModel(
     val legacyGroupDeprecationManager: LegacyGroupDeprecationManager,
     private val expiredGroupManager: ExpiredGroupManager,
     private val usernameUtils: UsernameUtils,
-    private val avatarUtils: AvatarUtils
+    private val avatarUtils: AvatarUtils,
+    private val recipientChangeSource: RecipientChangeSource
 
 ) : ViewModel() {
 
@@ -237,11 +237,7 @@ class ConversationViewModel(
         }
 
     val showOptionsMenu: Boolean
-        get() = !isMessageRequestThread && !isDeprecatedLegacyGroup && !isInactiveGroupV2Thread
-
-    private val isInactiveGroupV2Thread: Boolean
-        get() = recipient?.isGroupV2Recipient == true &&
-                configFactory.getGroup(AccountId(recipient!!.address.toString()))?.shouldPoll == false
+        get() = !isMessageRequestThread && !isDeprecatedLegacyGroup
 
     private val isDeprecatedLegacyGroup: Boolean
         get() = recipient?.isLegacyGroupRecipient == true && legacyGroupDeprecationManager.isDeprecated
@@ -320,6 +316,20 @@ class ConversationViewModel(
                         showInput = shouldShowInput(recipient, community, deprecationState),
                         enableAttachMediaControls = shouldEnableInputMediaControls(recipient),
                         messageRequestState = buildMessageRequestState(recipient),
+                        userBlocked = recipient?.isBlocked ?: false
+                    )
+                }
+            }
+        }
+
+        // update state on recipient changes
+        viewModelScope.launch(Dispatchers.Default) {
+            recipientChangeSource.changes().collect {
+                _uiState.update {
+                    it.copy(
+                        shouldExit = recipient == null,
+                        enableAttachMediaControls = shouldEnableInputMediaControls(recipient),
+                        userBlocked = recipient?.isBlocked ?: false
                     )
                 }
             }
@@ -441,6 +451,9 @@ class ConversationViewModel(
             return false
         }
 
+        // disable for blocked users
+        if (recipient.isBlocked) return false
+
         // Specifically allow multimedia in our note-to-self
         if (recipient.isLocalNumber) return true
 
@@ -560,18 +573,24 @@ class ConversationViewModel(
         // inviting admin will be non-null if this request is a closed group message request
         val recipient = invitingAdmin ?: recipient ?: return Log.w("Loki", "Recipient was null for block action")
         if (recipient.isContactRecipient || recipient.isGroupV2Recipient) {
-            repository.setBlocked(recipient, true)
+            viewModelScope.launch {
+                repository.setBlocked(recipient, true)
+            }
         }
 
-        if (this.recipient?.isGroupV2Recipient == true) {
-            groupManagerV2.onBlocked(AccountId(this.recipient!!.address.toString()))
+        if (recipient.isGroupV2Recipient) {
+            viewModelScope.launch {
+                groupManagerV2.onBlocked(AccountId(recipient.address.toString()))
+            }
         }
     }
 
     fun unblock() {
         val recipient = recipient ?: return Log.w("Loki", "Recipient was null for unblock action")
         if (recipient.isContactRecipient) {
-            repository.setBlocked(recipient, false)
+            viewModelScope.launch {
+                repository.setBlocked(recipient, false)
+            }
         }
     }
 
@@ -1183,39 +1202,6 @@ class ConversationViewModel(
         }
     }
 
-    fun onOptionItemSelected(
-        // This must be the context of the activity as requirement from ConversationMenuHelper
-        context: Context,
-        item: MenuItem
-    ): Boolean {
-        val recipient = recipient ?: return false
-
-        val inProgress = ConversationMenuHelper.onOptionItemSelected(
-            context = context,
-            item = item,
-            thread = recipient,
-            threadID = threadId,
-            factory = configFactory,
-            storage = storage,
-            groupManager = groupManagerV2,
-            deprecationManager = legacyGroupDeprecationManager,
-        )
-
-        if (inProgress != null) {
-            viewModelScope.launch {
-                inProgress.consumeEach { status ->
-                    when (status) {
-                        ConversationMenuHelper.GroupLeavingStatus.Left,
-                        ConversationMenuHelper.GroupLeavingStatus.Error -> _uiState.update { it.copy(showLoader = false) }
-                        else -> _uiState.update { it.copy(showLoader = true) }
-                    }
-                }
-            }
-        }
-
-        return true
-    }
-
     fun getUsername(accountId: String) = usernameUtils.getContactNameWithAccountID(accountId)
 
     fun showDisappearingMessages() {
@@ -1258,6 +1244,7 @@ class ConversationViewModel(
         private val expiredGroupManager: ExpiredGroupManager,
         private val usernameUtils: UsernameUtils,
         private val avatarUtils: AvatarUtils,
+        private val recipientChangeSource: RecipientChangeSource,
     ) : ViewModelProvider.Factory {
 
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -1282,6 +1269,7 @@ class ConversationViewModel(
                 expiredGroupManager = expiredGroupManager,
                 usernameUtils = usernameUtils,
                 avatarUtils = avatarUtils,
+                recipientChangeSource = recipientChangeSource
             ) as T
         }
     }
@@ -1343,6 +1331,8 @@ data class ConversationUiState(
     // or record voice messages to be sent to a recipient - they are NOT things like video or audio
     // playback controls.
     val enableAttachMediaControls: Boolean = true,
+
+    val userBlocked: Boolean = false,
 
     val showLoader: Boolean = false,
 )

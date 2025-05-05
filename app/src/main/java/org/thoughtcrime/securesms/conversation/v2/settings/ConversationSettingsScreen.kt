@@ -56,6 +56,7 @@ import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.ExpandableText
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LargeItemButton
+import org.thoughtcrime.securesms.ui.LoadingDialog
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
@@ -259,7 +260,8 @@ fun ConversationSettings(
                         buttons = listOf(
                             DialogButtonModel(
                                 text = GetString(data.showSimpleDialog.positiveText),
-                                color = LocalColors.current.danger,
+                                color = if(data.showSimpleDialog.positiveStyleDanger) LocalColors.current.danger
+                                else LocalColors.current.text,
                                 onClick = data.showSimpleDialog.onPositive
                             ),
                             DialogButtonModel(
@@ -268,6 +270,11 @@ fun ConversationSettings(
                             )
                         )
                     )
+                }
+
+                // Loading
+                if (data.showLoading) {
+                    LoadingDialog()
                 }
             }
         }
