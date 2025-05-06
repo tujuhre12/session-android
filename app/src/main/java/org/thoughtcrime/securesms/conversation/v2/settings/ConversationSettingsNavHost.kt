@@ -34,7 +34,7 @@ import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsD
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteDisappearingMessages
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteFullscreenAvatar
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteGroupMembers
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteInviteContacts
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteInviteToGroup
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteManageMembers
 import org.thoughtcrime.securesms.groups.EditGroupViewModel
 import org.thoughtcrime.securesms.groups.GroupMembersViewModel
@@ -65,7 +65,7 @@ sealed interface ConversationSettingsDestination {
     ): ConversationSettingsDestination
 
     @Serializable
-    data class RouteInviteContacts(
+    data class RouteInviteToGroup(
         val groupId: String,
         val excludingAccountIDs: List<String>
     ): ConversationSettingsDestination
@@ -78,6 +78,9 @@ sealed interface ConversationSettingsDestination {
 
     @Serializable
     data object RouteFullscreenAvatar: ConversationSettingsDestination
+
+    @Serializable
+    data object RouteInviteToCommunity: ConversationSettingsDestination
 }
 
 @SuppressLint("RestrictedApi")
@@ -199,7 +202,7 @@ fun ConversationSettingsNavHost(
                     viewModel = viewModel,
                     navigateToInviteContact = {
                         navController.navigate(
-                            RouteInviteContacts(
+                            RouteInviteToGroup(
                                 groupId = data.groupId,
                                 excludingAccountIDs = viewModel.excludingAccountIDsFromContactSelection.toList()
                             )
@@ -209,9 +212,9 @@ fun ConversationSettingsNavHost(
                 )
             }
 
-            // Invite Contacts
-            horizontalSlideComposable<RouteInviteContacts> { backStackEntry ->
-                val data: RouteInviteContacts = backStackEntry.toRoute()
+            // Invite Contacts to group
+            horizontalSlideComposable<RouteInviteToGroup> { backStackEntry ->
+                val data: RouteInviteToGroup = backStackEntry.toRoute()
 
                 val viewModel =
                     hiltViewModel<SelectContactsViewModel, SelectContactsViewModel.Factory> { factory ->

@@ -98,8 +98,10 @@ interface ConversationRepository {
      * If a groupId is passed along, and if the user is an admin of that group,
      * this will also remove the messages from the swarm and update
      * the delete_before flag for that group to now
+     *
+     * Returns the amount of deleted messages
      */
-    suspend fun clearAllMessages(threadId: Long, groupId: AccountId?)
+    suspend fun clearAllMessages(threadId: Long, groupId: AccountId?): Int
 }
 
 class DefaultConversationRepository @Inject constructor(
@@ -428,8 +430,8 @@ class DefaultConversationRepository @Inject constructor(
         }
     }
 
-    override suspend fun clearAllMessages(threadId: Long, groupId: AccountId?) {
-        withContext(Dispatchers.Default) {
+    override suspend fun clearAllMessages(threadId: Long, groupId: AccountId?): Int {
+        return withContext(Dispatchers.Default) {
             // delete data locally
             val deletedHashes = storage.clearAllMessages(threadId)
             Log.i("", "Cleared messages with hashes: $deletedHashes")
@@ -438,6 +440,8 @@ class DefaultConversationRepository @Inject constructor(
             if (groupId != null) {
                 groupManager.clearAllMessagesForEveryone(groupId, deletedHashes)
             }
+
+            deletedHashes.size
         }
     }
 

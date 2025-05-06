@@ -31,6 +31,7 @@ import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
+import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.primaryBlue
 import org.thoughtcrime.securesms.util.AvatarUIData
@@ -92,14 +93,23 @@ fun InviteContacts(
             val scrollState = rememberLazyListState()
 
             BottomFadingEdgeBox(modifier = Modifier.weight(1f)) { bottomContentPadding ->
-                LazyColumn(
-                    state = scrollState,
-                    contentPadding = PaddingValues(bottom = bottomContentPadding),
-                ) {
-                    multiSelectMemberList(
-                        contacts = contacts,
-                        onContactItemClicked = onContactItemClicked,
+                if(contacts.isEmpty()){
+                    Text(
+                        text = stringResource(id = R.string.contactNone),
+                        modifier = Modifier.padding(top = LocalDimensions.current.spacing)
+                            .align(Alignment.TopCenter),
+                        style = LocalType.current.base.copy(color = LocalColors.current.textSecondary)
                     )
+                } else {
+                    LazyColumn(
+                        state = scrollState,
+                        contentPadding = PaddingValues(bottom = bottomContentPadding),
+                    ) {
+                        multiSelectMemberList(
+                            contacts = contacts,
+                            onContactItemClicked = onContactItemClicked,
+                        )
+                    }
                 }
             }
 
@@ -143,6 +153,23 @@ private fun PreviewSelectContacts() {
             ),
         )
     }
+
+    PreviewTheme {
+        InviteContacts(
+            contacts = contacts,
+            onContactItemClicked = {},
+            searchQuery = "",
+            onSearchQueryChanged = {},
+            onDoneClicked = {},
+            onBack = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PreviewSelectEmptyContacts() {
+    val contacts = emptyList<ContactItem>()
 
     PreviewTheme {
         InviteContacts(

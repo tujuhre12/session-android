@@ -743,7 +743,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         viewModelScope.launch {
             showLoading()
             try {
-                withContext(Dispatchers.Default) {
+                val messagesDeleted = withContext(Dispatchers.Default) {
                     conversationRepository.clearAllMessages(
                         threadId,
                         if (clearForEveryoneGroupsV2 && groupV2 != null) AccountId(groupV2!!.groupAccountId) else null
@@ -752,8 +752,8 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
                 Toast.makeText(context, context.resources.getQuantityString(
                     R.plurals.deleteMessageDeleted,
-                    2, // we don't care about the number, just that it is multiple messages since we are doing "Clear All"
-                    2
+                    messagesDeleted,
+                    messagesDeleted
                 ), Toast.LENGTH_LONG).show()
             } catch (e: Exception){
                 Toast.makeText(context, context.resources.getQuantityString(
