@@ -14,7 +14,6 @@ import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.groups.GroupManagerV2
-import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.MarkAsDeletedMessage
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
 import org.session.libsession.messaging.messages.control.UnsendRequest
@@ -93,6 +92,14 @@ interface ConversationRepository {
     suspend fun declineMessageRequest(threadId: Long, recipient: Recipient): Result<Unit>
     fun hasReceived(threadId: Long): Boolean
     fun getInvitingAdmin(threadId: Long): Recipient?
+
+    /**
+     * This will delete all messages from the database.
+     * If a groupId is passed along, and if the user is an admin of that group,
+     * this will also remove the messages from the swarm and update
+     * the delete_before flag for that group to now
+     */
+    suspend fun clearAllMessages(threadId: Long, groupId: AccountId?)
 }
 
 class DefaultConversationRepository @Inject constructor(
@@ -417,6 +424,19 @@ class DefaultConversationRepository @Inject constructor(
                         setBlocked(recipient, true)
                     }
                 }
+            }
+        }
+    }
+
+    override suspend fun clearAllMessages(threadId: Long, groupId: AccountId?) {
+        withContext(Dispatchers.Default) {
+            // delete data locally
+            val deletedHashes = storage.clearAllMessages(threadId)
+            Log.i("", "Cleared messages with hashes: $deletedHashes")
+
+            // if required, also sync groupV2 data
+            if (groupId != null) {
+                groupManager.clearAllMessagesForEveryone(groupId, deletedHashes)
             }
         }
     }

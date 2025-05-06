@@ -31,6 +31,12 @@ interface GroupManagerV2 {
     )
 
     /**
+     * Clears all messages from the group for everyone on the config side
+     * This does not delete the messages from the local db (this is handled by the storage class.
+     */
+    suspend fun clearAllMessagesForEveryone(groupAccountId: AccountId, deletedHashes: List<String?>)
+
+    /**
      * Remove all messages from the group for the given members.
      *
      * This will delete all messages locally, and, if the user is an admin, remotely as well.
