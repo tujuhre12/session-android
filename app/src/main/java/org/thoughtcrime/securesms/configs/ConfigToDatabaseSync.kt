@@ -225,7 +225,7 @@ class ConfigToDatabaseSync @Inject constructor(
                 // remove messages from swarm SnodeAPI.deleteMessage
                 GlobalScope.launch(Dispatchers.Default) {
                     val cleanedHashes: List<String> =
-                        messages.map { it.second }.filter { !it.isNullOrEmpty() }.filterNotNull()
+                        messages.asSequence().map { it.second }.filter { !it.isNullOrEmpty() }.filterNotNull().toList()
                     if (cleanedHashes.isNotEmpty()) SnodeAPI.deleteMessage(
                         groupInfoConfig.id.hexString,
                         groupAdminAuth,
