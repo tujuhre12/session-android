@@ -114,7 +114,6 @@ import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.attachments.ScreenshotObserver
 import org.thoughtcrime.securesms.audio.AudioRecorder
 import org.thoughtcrime.securesms.components.emoji.RecentEmojiPageModel
-import org.thoughtcrime.securesms.contacts.SelectContactsToInviteToGroupActivity.Companion.SELECTED_CONTACTS_KEY
 import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesActivity
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnActionSelectedListener
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnReactionSelectedListener
@@ -477,8 +476,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         const val TAKE_PHOTO = 7
         const val PICK_GIF = 10
         const val PICK_FROM_LIBRARY = 12
-        const val INVITE_CONTACTS = 124
-        const val CONVERSATION_SETTINGS = 125 // used to open conversation search on result
     }
     // endregion
 
@@ -2172,16 +2169,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     }
                 }
                 sendAttachments(slideDeck.asAttachments(), body)
-            }
-            INVITE_CONTACTS -> {
-                if (viewModel.recipient?.isCommunityRecipient != true) { return }
-                val extras = intent?.extras ?: return
-                if (!intent.hasExtra(SELECTED_CONTACTS_KEY)) { return }
-                val selectedContacts = extras.getStringArray(SELECTED_CONTACTS_KEY)!!
-                val recipients = selectedContacts.map { contact ->
-                    Recipient.from(this, fromSerialized(contact), true)
-                }
-                viewModel.inviteContacts(recipients)
             }
         }
     }

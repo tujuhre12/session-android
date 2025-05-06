@@ -41,6 +41,7 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.utilities.SodiumUtilities
+import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ExpirationUtil
 import org.session.libsession.utilities.StringSubstitutionConstants.COMMUNITY_NAME_KEY
@@ -52,6 +53,7 @@ import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
@@ -828,21 +830,20 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         val conversation = recipient ?: return
         viewModelScope.launch {
             showLoading()
-            withContext(Dispatchers.Default) {
-                try {
-                    groupManagerV2.leaveGroup(AccountId(conversation.address.toString()))
-                    hideLoading()
-                    goBackHome()
-                } catch (e: Exception){
-                    withContext(Dispatchers.Main) {
-                        hideLoading()
 
-                        val txt = Phrase.from(context, R.string.groupLeaveErrorFailed)
-                            .put(GROUP_NAME_KEY, getGroupName())
-                            .format().toString()
-                        Toast.makeText(context, txt, Toast.LENGTH_LONG).show()
-                    }
+            try {
+                withContext(Dispatchers.Default) {
+                    groupManagerV2.leaveGroup(AccountId(conversation.address.toString()))
                 }
+                hideLoading()
+                goBackHome()
+            } catch (e: Exception){
+                hideLoading()
+
+                val txt = Phrase.from(context, R.string.groupLeaveErrorFailed)
+                    .put(GROUP_NAME_KEY, getGroupName())
+                    .format().toString()
+                Toast.makeText(context, txt, Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -891,6 +892,34 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private fun navigateTo(destination: ConversationSettingsDestination){
         viewModelScope.launch {
             navigator.navigate(destination)
+        }
+    }
+
+    fun inviteContactsToCommunity(contacts: Set<AccountId>) {
+        showLoading()
+        viewModelScope.launch {
+            try {
+                withContext(Dispatchers.Default) {
+                    val recipients = contacts.map { contact ->
+                        Recipient.from(context, fromSerialized(contact.hexString), true)
+                    }
+
+                    repository.inviteContactsToCommunity(threadId, recipients)
+                }
+
+                hideLoading()
+
+                // show confirmation toast
+                Toast.makeText(context, context.resources.getQuantityString(
+                    R.plurals.groupInviteSending,
+                    contacts.size,
+                    contacts.size
+                ), Toast.LENGTH_LONG).show()
+            } catch (e: Exception){
+                Log.w("", "Error sending community invites", e)
+                hideLoading()
+                Toast.makeText(context, R.string.errorUnknown, Toast.LENGTH_LONG).show()
+            }
         }
     }
 
@@ -1059,7 +1088,11 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             name = context.getString(R.string.membersInvite),
             icon = R.drawable.ic_user_round_plus,
             qaTag = R.string.qa_conversation_settings_invite_contacts,
-            onClick = ::copyAccountId //todo UCS get proper method
+            onClick = {
+                navigateTo(ConversationSettingsDestination.RouteInviteToCommunity(
+                    communityUrl = community?.joinURL ?: ""
+                ))
+            }
         )
     }
 

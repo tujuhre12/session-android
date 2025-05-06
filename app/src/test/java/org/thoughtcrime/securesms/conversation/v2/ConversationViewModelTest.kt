@@ -127,15 +127,6 @@ class ConversationViewModelTest: BaseViewModelTest() {
     }
 
     @Test
-    fun `should invite contacts`() = runBlockingTest {
-        val contacts = listOf<Recipient>()
-
-        viewModel.inviteContacts(contacts)
-
-        verify(repository).inviteContacts(threadId, contacts)
-    }
-
-    @Test
     fun `should unblock contact recipient`() = runBlockingTest {
         whenever(recipient.isContactRecipient).thenReturn(true)
 

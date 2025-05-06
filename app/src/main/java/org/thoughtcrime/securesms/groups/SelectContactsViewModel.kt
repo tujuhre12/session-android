@@ -144,6 +144,10 @@ open class SelectContactsViewModel @AssistedInject constructor(
         mutableSelectedContactAccountIDs.value += accountIDs
     }
 
+    fun clearSelection(){
+        mutableSelectedContactAccountIDs.value = emptySet()
+    }
+
     @AssistedFactory
     interface Factory {
         fun create(

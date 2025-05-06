@@ -196,7 +196,7 @@ object ConversationMenuHelper {
            /* R.id.menu_leave_group -> { return leaveGroup(
                 context, thread, threadID, factory, storage, groupManager, deprecationManager
             ) }*/
-            R.id.menu_invite_to_open_group -> { inviteContacts(context, thread) }
+//            R.id.menu_invite_to_open_group -> { inviteContacts(context, thread) }
             R.id.menu_unmute_notifications -> { unmute(context, thread) }
             R.id.menu_mute_notifications -> { mute(context, thread) }
             R.id.menu_notification_settings -> { setNotifyType(context, thread) }
@@ -454,13 +454,6 @@ object ConversationMenuHelper {
             }
             button(R.string.cancel)
         }
-    }
-
-    private fun inviteContacts(context: Context, thread: Recipient) {
-        if (!thread.isCommunityRecipient) { return }
-        val intent = Intent(context, SelectContactsToInviteToGroupActivity::class.java)
-        val activity = context as AppCompatActivity
-        activity.startActivityForResult(intent, ConversationActivityV2.INVITE_CONTACTS)
     }
 
     private fun unmute(context: Context, thread: Recipient) {
