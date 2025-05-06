@@ -742,8 +742,25 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private fun clearMessages(clearForEveryoneGroupsV2: Boolean) {
         viewModelScope.launch {
             showLoading()
-            withContext(Dispatchers.Default) {
-                conversationRepository.clearAllMessages(threadId, if(clearForEveryoneGroupsV2 && groupV2 != null) AccountId(groupV2!!.groupAccountId) else null)
+            try {
+                withContext(Dispatchers.Default) {
+                    conversationRepository.clearAllMessages(
+                        threadId,
+                        if (clearForEveryoneGroupsV2 && groupV2 != null) AccountId(groupV2!!.groupAccountId) else null
+                    )
+                }
+
+                Toast.makeText(context, context.resources.getQuantityString(
+                    R.plurals.deleteMessageDeleted,
+                    2, // we don't care about the number, just that it is multiple messages since we are doing "Clear All"
+                    2
+                ), Toast.LENGTH_LONG).show()
+            } catch (e: Exception){
+                Toast.makeText(context, context.resources.getQuantityString(
+                    R.plurals.deleteMessageFailed,
+                    2, // we don't care about the number, just that it is multiple messages since we are doing "Clear All"
+                    2
+                ), Toast.LENGTH_LONG).show()
             }
 
             hideLoading()
