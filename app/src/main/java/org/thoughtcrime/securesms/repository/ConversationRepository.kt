@@ -92,6 +92,13 @@ interface ConversationRepository {
     suspend fun declineMessageRequest(threadId: Long, recipient: Recipient): Result<Unit>
     fun hasReceived(threadId: Long): Boolean
     fun getInvitingAdmin(threadId: Long): Recipient?
+
+    /**
+     * This will delete all messages from the database.
+     * If a groupId is passed along, and if the user is an admin of that group,
+     * this will also remove the messages from the swarm and update
+     * the delete_before flag for that group to now
+     */
     suspend fun clearAllMessages(threadId: Long, groupId: AccountId?)
 }
 
