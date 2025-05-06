@@ -115,7 +115,7 @@ class ConversationView : LinearLayout {
         binding.statusIndicatorImageView.visibility = View.VISIBLE
         binding.statusIndicatorImageView.imageTintList = ColorStateList.valueOf(ThemeUtil.getThemedColor(context, android.R.attr.textColorTertiary)) // tertiary in the current xml styling is actually what figma uses as secondary text color...
         when {
-            !thread.isOutgoing -> binding.statusIndicatorImageView.visibility = View.GONE
+            !thread.isOutgoing || thread.lastMessage == null -> binding.statusIndicatorImageView.visibility = View.GONE
             thread.isFailed -> {
                 val drawable = ContextCompat.getDrawable(context, R.drawable.ic_triangle_alert)?.mutate()
                 binding.statusIndicatorImageView.setImageDrawable(drawable)
