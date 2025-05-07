@@ -36,9 +36,11 @@ class CreateGroupViewModel @AssistedInject constructor(
     @Assisted createFromLegacyGroupId: String?,
 ): ViewModel() {
     // Child view model to handle contact selection logic
+    //todo we should probably extend this VM instead of instantiating it here
     val selectContactsViewModel = SelectContactsViewModel(
         configFactory = configFactory,
         excludingAccountIDs = emptySet(),
+        applyDefaultFiltering = true,
         scope = viewModelScope,
         appContext = appContext,
         avatarUtils = avatarUtils

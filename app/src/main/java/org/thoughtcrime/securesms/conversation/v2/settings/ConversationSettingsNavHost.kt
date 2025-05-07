@@ -29,13 +29,7 @@ import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesViewModel
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.DisappearingMessagesScreen
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteAllMedia
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteConversationSettings
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteDisappearingMessages
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteFullscreenAvatar
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteGroupMembers
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteInviteContacts
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteManageMembers
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.*
 import org.thoughtcrime.securesms.groups.EditGroupViewModel
 import org.thoughtcrime.securesms.groups.GroupMembersViewModel
 import org.thoughtcrime.securesms.groups.SelectContactsViewModel
@@ -65,7 +59,7 @@ sealed interface ConversationSettingsDestination {
     ): ConversationSettingsDestination
 
     @Serializable
-    data class RouteInviteContacts(
+    data class RouteInviteToGroup(
         val groupId: String,
         val excludingAccountIDs: List<String>
     ): ConversationSettingsDestination
@@ -78,6 +72,11 @@ sealed interface ConversationSettingsDestination {
 
     @Serializable
     data object RouteFullscreenAvatar: ConversationSettingsDestination
+
+    @Serializable
+    data class RouteInviteToCommunity(
+        val communityUrl: String
+    ): ConversationSettingsDestination
 }
 
 @SuppressLint("RestrictedApi")
@@ -199,7 +198,7 @@ fun ConversationSettingsNavHost(
                     viewModel = viewModel,
                     navigateToInviteContact = {
                         navController.navigate(
-                            RouteInviteContacts(
+                            RouteInviteToGroup(
                                 groupId = data.groupId,
                                 excludingAccountIDs = viewModel.excludingAccountIDsFromContactSelection.toList()
                             )
@@ -209,9 +208,9 @@ fun ConversationSettingsNavHost(
                 )
             }
 
-            // Invite Contacts
-            horizontalSlideComposable<RouteInviteContacts> { backStackEntry ->
-                val data: RouteInviteContacts = backStackEntry.toRoute()
+            // Invite Contacts to group
+            horizontalSlideComposable<RouteInviteToGroup> { backStackEntry ->
+                val data: RouteInviteToGroup = backStackEntry.toRoute()
 
                 val viewModel =
                     hiltViewModel<SelectContactsViewModel, SelectContactsViewModel.Factory> { factory ->
@@ -235,6 +234,34 @@ fun ConversationSettingsNavHost(
                         editGroupViewModel.onContactSelected(viewModel.currentSelected)
 
                         navController.popBackStack()
+                    },
+                    onBack = navController::popBackStack,
+                )
+            }
+
+            // Invite Contacts to community
+            horizontalSlideComposable<RouteInviteToCommunity> { backStackEntry ->
+                val viewModel =
+                    hiltViewModel<SelectContactsViewModel, SelectContactsViewModel.Factory> { factory ->
+                        factory.create()
+                    }
+
+                // grab a hold of settings' VM
+                val parentEntry = remember(navController.currentBackStackEntry) {
+                    navController.getBackStackEntry(
+                        RouteConversationSettings
+                    )
+                }
+                val settingsViewModel: ConversationSettingsViewModel = hiltViewModel(parentEntry)
+
+                InviteContactsScreen(
+                    viewModel = viewModel,
+                    onDoneClicked = {
+                        //send invites from the settings screen
+                        settingsViewModel.inviteContactsToCommunity(viewModel.currentSelected)
+
+                        // clear selected contacts
+                        viewModel.clearSelection()
                     },
                     onBack = navController::popBackStack,
                 )

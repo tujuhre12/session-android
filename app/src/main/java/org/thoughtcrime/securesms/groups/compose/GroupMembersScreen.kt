@@ -1,6 +1,9 @@
 package org.thoughtcrime.securesms.groups.compose
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -15,8 +18,11 @@ import network.loki.messenger.libsession_util.util.GroupMember
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.groups.GroupMemberState
 import org.thoughtcrime.securesms.groups.GroupMembersViewModel
+import org.thoughtcrime.securesms.ui.SearchBar
 import org.thoughtcrime.securesms.ui.components.BackAppBar
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
+import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.primaryBlue
 import org.thoughtcrime.securesms.util.AvatarUIData
@@ -29,7 +35,10 @@ fun GroupMembersScreen(
 ) {
     GroupMembers(
         onBack = onBack,
-        members = viewModel.members.collectAsState().value
+        members = viewModel.members.collectAsState().value,
+        searchQuery = viewModel.searchQuery.collectAsState().value,
+        onSearchQueryChanged = viewModel::onSearchQueryChanged,
+        onSearchQueryClear = {viewModel.onSearchQueryChanged("") },
     )
 
 }
@@ -39,6 +48,9 @@ fun GroupMembersScreen(
 fun GroupMembers(
     onBack: () -> Unit,
     members: List<GroupMemberState>,
+    searchQuery: String,
+    onSearchQueryChanged: (String) -> Unit,
+    onSearchQueryClear: () -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -48,22 +60,40 @@ fun GroupMembers(
             )
         }
     ) { paddingValues ->
-        // List of members
-        LazyColumn(modifier = Modifier.consumeWindowInsets(paddingValues), contentPadding = paddingValues) {
-            items(members) { member ->
-                // Each member's view
-                MemberItem(
-                    accountId = member.accountId,
-                    title = member.name,
-                    subtitle = member.statusLabel,
-                    subtitleColor = if (member.highlightStatus) {
-                        LocalColors.current.danger
-                    } else {
-                        LocalColors.current.textSecondary
-                    },
-                    showAsAdmin = member.showAsAdmin,
-                    avatarUIData = member.avatarUIData
-                )
+        Column(
+            modifier = Modifier
+                .padding(paddingValues)
+                .consumeWindowInsets(paddingValues),
+            verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
+        ) {
+            SearchBar(
+                query = searchQuery,
+                onValueChanged = onSearchQueryChanged,
+                onClear = onSearchQueryClear,
+                placeholder = stringResource(R.string.searchContacts),
+                modifier = Modifier
+                    .padding(horizontal = LocalDimensions.current.smallSpacing)
+                    .qaTag(R.string.AccessibilityId_groupNameSearch),
+                backgroundColor = LocalColors.current.backgroundSecondary,
+            )
+
+            // List of members
+            LazyColumn() {
+                items(members) { member ->
+                    // Each member's view
+                    MemberItem(
+                        accountId = member.accountId,
+                        title = member.name,
+                        subtitle = member.statusLabel,
+                        subtitleColor = if (member.highlightStatus) {
+                            LocalColors.current.danger
+                        } else {
+                            LocalColors.current.textSecondary
+                        },
+                        showAsAdmin = member.showAsAdmin,
+                        avatarUIData = member.avatarUIData
+                    )
+                }
             }
         }
     }
@@ -141,6 +171,9 @@ private fun EditGroupPreview() {
         GroupMembers(
             onBack = {},
             members = listOf(oneMember, twoMember, threeMember),
+            searchQuery = "",
+            onSearchQueryChanged = {},
+            onSearchQueryClear = {},
         )
     }
 }

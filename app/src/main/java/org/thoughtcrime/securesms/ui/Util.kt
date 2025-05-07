@@ -94,14 +94,12 @@ inline fun <T : View> T.afterMeasured(crossinline block: T.() -> Unit) {
  * As such we need to repeat it for every component that wants to use testTag, until such
  * a time as we have one root composable
  */
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun Modifier.qaTag(tag: String?): Modifier {
     if (tag == null) return this
     return this.semantics { testTagsAsResourceId = true }.testTag(tag)
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun Modifier.qaTag(@StringRes tagResId: Int) = semantics { testTagsAsResourceId = true }.testTag(stringResource(tagResId))
 

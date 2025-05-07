@@ -3,12 +3,14 @@ package org.thoughtcrime.securesms.groups
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dagger.assisted.AssistedFactory
 import dagger.hilt.android.qualifiers.ApplicationContext
-import java.util.EnumSet
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
@@ -25,6 +27,7 @@ import org.session.libsession.utilities.UsernameUtils
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
+import java.util.EnumSet
 
 abstract class BaseGroupMembersViewModel (
     private val groupId: AccountId,
@@ -62,10 +65,28 @@ abstract class BaseGroupMembersViewModel (
                 }
           }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
+    private val mutableSearchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> get() = mutableSearchQuery
+
     // Output: the list of the members and their state in the group.
-    val members: StateFlow<List<GroupMemberState>> = groupInfo
-        .map { it?.second.orEmpty() }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
+    @OptIn(FlowPreview::class)
+    val members: StateFlow<List<GroupMemberState>> = combine(
+        groupInfo.map { it?.second.orEmpty() },
+        mutableSearchQuery.debounce(100L),
+        ::filterContacts
+    ).stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+    fun onSearchQueryChanged(query: String) {
+        mutableSearchQuery.value = query
+    }
+
+    private fun filterContacts(
+        contacts: List<GroupMemberState>,
+        query: String,
+    ): List<GroupMemberState> {
+        return if(query.isBlank()) contacts
+        else contacts.filter { it.name.contains(query, ignoreCase = true) }
+    }
 
     private suspend fun createGroupMember(
         member: GroupMember,
@@ -138,28 +159,8 @@ abstract class BaseGroupMembersViewModel (
     // Refer to notion doc for the sorting logic
     private fun sortMembers(members: List<GroupMemberState>, currentUserId: AccountId) =
         members.sortedWith(
-            compareBy<GroupMemberState>{
-                when (it.status) {
-                    GroupMember.Status.INVITE_FAILED -> 0
-                    GroupMember.Status.INVITE_NOT_SENT -> 1
-                    GroupMember.Status.INVITE_SENDING -> 2
-                    GroupMember.Status.INVITE_SENT -> 3
-                    GroupMember.Status.INVITE_UNKNOWN -> 4
-                    GroupMember.Status.REMOVED,
-                    GroupMember.Status.REMOVED_UNKNOWN,
-                    GroupMember.Status.REMOVED_INCLUDING_MESSAGES -> 5
-                    GroupMember.Status.PROMOTION_FAILED -> 6
-                    GroupMember.Status.PROMOTION_NOT_SENT -> 7
-                    GroupMember.Status.PROMOTION_SENDING -> 8
-                    GroupMember.Status.PROMOTION_SENT -> 9
-                    GroupMember.Status.PROMOTION_UNKNOWN -> 10
-                    null,
-                    GroupMember.Status.INVITE_ACCEPTED,
-                    GroupMember.Status.PROMOTION_ACCEPTED -> 11
-                }
-            }
+            compareBy<GroupMemberState>{ it.accountId != currentUserId } // Current user comes first
                 .thenBy { !it.showAsAdmin } // Admins come first
-                .thenBy { it.accountId != currentUserId } // Being myself comes first
                 .thenComparing(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name }) // Sort by name (case insensitive)
                 .thenBy { it.accountId } // Last resort: sort by account ID
         )

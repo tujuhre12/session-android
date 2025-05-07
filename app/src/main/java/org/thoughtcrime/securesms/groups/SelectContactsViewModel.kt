@@ -40,6 +40,7 @@ open class SelectContactsViewModel @AssistedInject constructor(
     private val avatarUtils: AvatarUtils,
     @ApplicationContext private val appContext: Context,
     @Assisted private val excludingAccountIDs: Set<AccountId>,
+    @Assisted private val applyDefaultFiltering: Boolean, // true by default - If true will filter out blocked and unapproved contacts
     @Assisted private val scope: CoroutineScope,
 ) : ViewModel() {
     // Input: The search query
@@ -85,7 +86,7 @@ open class SelectContactsViewModel @AssistedInject constructor(
                             .asSequence()
                             .map { AccountId(it.id) } + manuallyAdded)
 
-                    if (excludingAccountIDs.isEmpty()) {
+                    val recipientContacts = if (excludingAccountIDs.isEmpty()) {
                         allContacts.toSet()
                     } else {
                         allContacts.filterNotTo(mutableSetOf()) { it in excludingAccountIDs }
@@ -96,6 +97,10 @@ open class SelectContactsViewModel @AssistedInject constructor(
                             false
                         )
                     }
+
+                    if(applyDefaultFiltering){
+                        recipientContacts.filter { !it.isBlocked && it.isApproved } // filter out blocked contacts and unapproved contacts
+                    } else recipientContacts
                 }
             }
         }
@@ -144,10 +149,15 @@ open class SelectContactsViewModel @AssistedInject constructor(
         mutableSelectedContactAccountIDs.value += accountIDs
     }
 
+    fun clearSelection(){
+        mutableSelectedContactAccountIDs.value = emptySet()
+    }
+
     @AssistedFactory
     interface Factory {
         fun create(
             excludingAccountIDs: Set<AccountId> = emptySet(),
+            applyDefaultFiltering: Boolean = true,
             scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate),
         ): SelectContactsViewModel
     }

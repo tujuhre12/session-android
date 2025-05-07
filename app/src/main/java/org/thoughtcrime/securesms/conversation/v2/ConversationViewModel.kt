@@ -566,10 +566,6 @@ class ConversationViewModel(
         return draft
     }
 
-    fun inviteContacts(contacts: List<Recipient>) {
-        repository.inviteContacts(threadId, contacts)
-    }
-
     fun block() {
         // inviting admin will be non-null if this request is a closed group message request
         val recipient = invitingAdmin ?: recipient ?: return Log.w("Loki", "Recipient was null for block action")
