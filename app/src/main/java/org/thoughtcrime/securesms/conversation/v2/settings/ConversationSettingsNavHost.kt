@@ -215,7 +215,7 @@ fun ConversationSettingsNavHost(
                 val viewModel =
                     hiltViewModel<SelectContactsViewModel, SelectContactsViewModel.Factory> { factory ->
                         factory.create(
-                            excludingAccountIDs = data.excludingAccountIDs.map(::AccountId).toSet() //todo UCS Make sure we do not show blocked contacts
+                            excludingAccountIDs = data.excludingAccountIDs.map(::AccountId).toSet() 
                         )
                     }
 
@@ -243,10 +243,10 @@ fun ConversationSettingsNavHost(
             horizontalSlideComposable<RouteInviteToCommunity> { backStackEntry ->
                 val viewModel =
                     hiltViewModel<SelectContactsViewModel, SelectContactsViewModel.Factory> { factory ->
-                        factory.create() //todo UCS Make sure we do not show blocked contacts
+                        factory.create()
                     }
 
-                // grab a hold of settings's VM
+                // grab a hold of settings' VM
                 val parentEntry = remember(navController.currentBackStackEntry) {
                     navController.getBackStackEntry(
                         RouteConversationSettings
@@ -257,7 +257,7 @@ fun ConversationSettingsNavHost(
                 InviteContactsScreen(
                     viewModel = viewModel,
                     onDoneClicked = {
-                        //send invites from the manage group screen
+                        //send invites from the settings screen
                         settingsViewModel.inviteContactsToCommunity(viewModel.currentSelected)
 
                         // clear selected contacts
