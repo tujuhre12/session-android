@@ -30,6 +30,8 @@ import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesViewModel
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.DisappearingMessagesScreen
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.*
+import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsScreen
+import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsViewModel
 import org.thoughtcrime.securesms.groups.EditGroupViewModel
 import org.thoughtcrime.securesms.groups.GroupMembersViewModel
 import org.thoughtcrime.securesms.groups.SelectContactsViewModel
@@ -72,6 +74,9 @@ sealed interface ConversationSettingsDestination {
 
     @Serializable
     data object RouteFullscreenAvatar: ConversationSettingsDestination
+
+    @Serializable
+    data object RouteNotifications: ConversationSettingsDestination
 
     @Serializable
     data class RouteInviteToCommunity(
@@ -299,6 +304,19 @@ fun ConversationSettingsNavHost(
                 MediaOverviewScreen(
                     viewModel = viewModel,
                     onClose = navController::popBackStack,
+                )
+            }
+
+            // Notifications
+            horizontalSlideComposable<RouteNotifications> {
+                 val viewModel =
+                    hiltViewModel<NotificationSettingsViewModel, NotificationSettingsViewModel.Factory> { factory ->
+                        factory.create(threadId)
+                    }
+
+                NotificationSettingsScreen(
+                    viewModel = viewModel,
+                    onBack = navController::popBackStack
                 )
             }
 

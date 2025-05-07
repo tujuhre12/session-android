@@ -82,7 +82,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
-import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.OptionsCardData
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.components.TitledRadioButton
@@ -112,17 +111,27 @@ data class RadioOption<T>(
     val enabled: Boolean = true,
 )
 
+data class OptionsCardData<T>(
+    val title: GetString?,
+    val options: List<RadioOption<T>>
+) {
+    constructor(title: GetString, vararg options: RadioOption<T>): this(title, options.asList())
+    constructor(@StringRes title: Int, vararg options: RadioOption<T>): this(GetString(title), options.asList())
+}
+
 @Composable
 fun <T> OptionsCard(card: OptionsCardData<T>, callbacks: Callbacks<T>) {
     Column {
-        Text(
-            modifier = Modifier.padding(start = LocalDimensions.current.smallSpacing),
-            text = card.title(),
-            style = LocalType.current.base,
-            color = LocalColors.current.textSecondary
-        )
+        if (card.title != null && card.title.string().isNotEmpty()) {
+            Text(
+                modifier = Modifier.padding(start = LocalDimensions.current.smallSpacing),
+                text = card.title.string(),
+                style = LocalType.current.base,
+                color = LocalColors.current.textSecondary
+            )
 
-        Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
+            Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
+        }
 
         Cell {
             LazyColumn(

@@ -991,7 +991,9 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             subtitle = subtitle,
             icon = R.drawable.ic_volume_2,
             qaTag = R.string.qa_conversation_settings_notifications,
-            onClick = ::copyAccountId //todo UCS get proper method
+            onClick = {
+                navigateTo(ConversationSettingsDestination.RouteNotifications)
+            }
         )
     }
 

@@ -197,9 +197,9 @@ object ConversationMenuHelper {
                 context, thread, threadID, factory, storage, groupManager, deprecationManager
             ) }*/
 //            R.id.menu_invite_to_open_group -> { inviteContacts(context, thread) }
-            R.id.menu_unmute_notifications -> { unmute(context, thread) }
-            R.id.menu_mute_notifications -> { mute(context, thread) }
-            R.id.menu_notification_settings -> { setNotifyType(context, thread) }
+//            R.id.menu_unmute_notifications -> { unmute(context, thread) }
+//            R.id.menu_mute_notifications -> { mute(context, thread) }
+//            R.id.menu_notification_settings -> { setNotifyType(context, thread) }
         }
 
         return null
@@ -456,7 +456,7 @@ object ConversationMenuHelper {
         }
     }
 
-    private fun unmute(context: Context, thread: Recipient) {
+/*    private fun unmute(context: Context, thread: Recipient) {
         DatabaseComponent.get(context).recipientDatabase().setMuted(thread, 0)
     }
 
@@ -470,7 +470,7 @@ object ConversationMenuHelper {
         NotificationUtils.showNotifyDialog(context, thread) { notifyType ->
             DatabaseComponent.get(context).recipientDatabase().setNotifyType(thread, notifyType)
         }
-    }
+    }*/
 
     interface ConversationMenuListener {
         fun copyAccountID(accountId: String)
