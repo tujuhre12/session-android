@@ -3,12 +3,14 @@ package org.thoughtcrime.securesms.groups
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dagger.assisted.AssistedFactory
 import dagger.hilt.android.qualifiers.ApplicationContext
-import java.util.EnumSet
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
@@ -25,6 +27,7 @@ import org.session.libsession.utilities.UsernameUtils
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
+import java.util.EnumSet
 
 abstract class BaseGroupMembersViewModel (
     private val groupId: AccountId,
@@ -62,10 +65,28 @@ abstract class BaseGroupMembersViewModel (
                 }
           }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
+    private val mutableSearchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> get() = mutableSearchQuery
+
     // Output: the list of the members and their state in the group.
-    val members: StateFlow<List<GroupMemberState>> = groupInfo
-        .map { it?.second.orEmpty() }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
+    @OptIn(FlowPreview::class)
+    val members: StateFlow<List<GroupMemberState>> = combine(
+        groupInfo.map { it?.second.orEmpty() },
+        mutableSearchQuery.debounce(100L),
+        ::filterContacts
+    ).stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+    fun onSearchQueryChanged(query: String) {
+        mutableSearchQuery.value = query
+    }
+
+    private fun filterContacts(
+        contacts: List<GroupMemberState>,
+        query: String,
+    ): List<GroupMemberState> {
+        return if(query.isBlank()) contacts
+        else contacts.filter { it.name.contains(query, ignoreCase = true) }
+    }
 
     private suspend fun createGroupMember(
         member: GroupMember,
