@@ -649,6 +649,7 @@ fun Modifier.verticalScrollbar(
 fun SearchBar(
     query: String,
     onValueChanged: (String) -> Unit,
+    onClear: () -> Unit,
     modifier: Modifier = Modifier,
     placeholder: String? = null,
     enabled: Boolean = true,
@@ -690,6 +691,23 @@ fun SearchBar(
                         )
                     }
                 }
+
+                Image(
+                    painterResource(id = R.drawable.ic_x),
+                    contentDescription = stringResource(R.string.clear),
+                    colorFilter = ColorFilter.tint(
+                        LocalColors.current.textSecondary
+                    ),
+                    modifier = Modifier
+                        .padding(
+                            horizontal = LocalDimensions.current.smallSpacing,
+                            vertical = LocalDimensions.current.xxsSpacing
+                        )
+                        .size(LocalDimensions.current.iconSmall)
+                        .clickable {
+                            onClear()
+                        }
+                )
             }
         },
         textStyle = LocalType.current.base.copy(color = LocalColors.current.text),
@@ -705,6 +723,7 @@ fun PreviewSearchBar() {
         SearchBar(
             query = "",
             onValueChanged = {},
+            onClear = {},
             placeholder = "Search"
         )
     }

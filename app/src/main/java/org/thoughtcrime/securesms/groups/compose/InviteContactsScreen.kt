@@ -49,6 +49,7 @@ fun InviteContactsScreen(
         onContactItemClicked = viewModel::onContactItemClicked,
         searchQuery = viewModel.searchQuery.collectAsState().value,
         onSearchQueryChanged = viewModel::onSearchQueryChanged,
+        onSearchQueryClear = {viewModel.onSearchQueryChanged("") },
         onDoneClicked = onDoneClicked,
         onBack = onBack,
     )
@@ -61,6 +62,7 @@ fun InviteContacts(
     onContactItemClicked: (accountId: AccountId) -> Unit,
     searchQuery: String,
     onSearchQueryChanged: (String) -> Unit,
+    onSearchQueryClear: () -> Unit,
     onDoneClicked: () -> Unit,
     onBack: () -> Unit,
     @StringRes okButtonResId: Int = R.string.ok
@@ -83,6 +85,7 @@ fun InviteContacts(
             SearchBar(
                 query = searchQuery,
                 onValueChanged = onSearchQueryChanged,
+                onClear = onSearchQueryClear,
                 placeholder = stringResource(R.string.searchContacts),
                 modifier = Modifier
                     .padding(horizontal = LocalDimensions.current.smallSpacing)
@@ -160,6 +163,7 @@ private fun PreviewSelectContacts() {
             onContactItemClicked = {},
             searchQuery = "",
             onSearchQueryChanged = {},
+            onSearchQueryClear = {},
             onDoneClicked = {},
             onBack = {},
         )
@@ -177,6 +181,7 @@ private fun PreviewSelectEmptyContacts() {
             onContactItemClicked = {},
             searchQuery = "",
             onSearchQueryChanged = {},
+            onSearchQueryClear = {},
             onDoneClicked = {},
             onBack = {},
         )
