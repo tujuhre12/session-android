@@ -125,7 +125,7 @@ fun EditGroup(
     }
 
     val maxNameWidth = 240.dp
-//todo UCS this screen entry transition seem to lag when there are many members
+
     Scaffold(
         topBar = {
             BackAppBar(
