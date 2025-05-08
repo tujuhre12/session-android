@@ -24,6 +24,8 @@ import org.thoughtcrime.securesms.ui.Callbacks
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.OptionsCardData
 import org.thoughtcrime.securesms.ui.RadioOption
+import org.thoughtcrime.securesms.util.DateUtils
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -44,7 +46,7 @@ class NotificationSettingsViewModel @AssistedInject constructor(
 
     // the option selected on this screen
     private var selectedOption: NotificationType = NotificationType.All
-    private var selectedMuteDuration: Long? = durationForever
+    private var selectedMuteDuration: Long? = null
 
     private val _uiState = MutableStateFlow(UiState())
     val uiState: StateFlow<UiState> = _uiState
@@ -57,12 +59,18 @@ class NotificationSettingsViewModel @AssistedInject constructor(
 
                 // update the user's current choice of notification
                 currentMutedUntil = it?.mutedUntil
+                val hasMutedUntil = currentMutedUntil != null && currentMutedUntil != 0L
 
                 currentOption = when{
-                    currentMutedUntil != null -> NotificationType.Mute
+                    hasMutedUntil -> NotificationType.Mute
                     it?.notifyType == NOTIFY_TYPE_MENTIONS -> NotificationType.MentionsOnly
                     else -> NotificationType.All
                 }
+
+                // set our default selection to those
+                selectedOption = currentOption
+                // default selection for mute is either our custom "Muted Until" or "Forever" if nothing is pre picked
+                selectedMuteDuration = if(hasMutedUntil) currentMutedUntil else durationForever
 
                 updateState()
             }
@@ -102,22 +110,42 @@ class NotificationSettingsViewModel @AssistedInject constructor(
 
         // add the mute options if necessary
         if(selectedOption is NotificationType.Mute) {
+            val muteRadioOptions = mutableListOf<RadioOption<Long>>()
+
+            // if the user is currently "muting until", and that muting is not forever,
+            // then add a new option that specifies how much longer the mute  is on for
+            if(currentMutedUntil != null && currentMutedUntil!! > 0L &&
+                currentMutedUntil!! < System.currentTimeMillis() + TimeUnit.DAYS.toMillis(14)){ // more than two weeks from now means forever
+                muteRadioOptions.add(
+                    RadioOption(
+                        value = currentMutedUntil!!,
+                        title = GetString("Muted Until: ${DateUtils.getFormattedDateTime(currentMutedUntil!!, "HH:mm dd/MM/yy", Locale.getDefault())}"), //todo UCS need the crowdin string
+                        selected = selectedMuteDuration == currentMutedUntil
+                    )
+                )
+            }
+
+            // add the regular options
+            muteRadioOptions.addAll(
+                muteDurations.map {
+                    RadioOption(
+                        value = it,
+                        title =
+                            if(it == durationForever) GetString(R.string.forever)
+                            else GetString(
+                                LocalisedTimeUtil.getDurationWithSingleLargestTimeUnit(
+                                    context,
+                                    it.milliseconds
+                                )
+                            ),
+                        selected = selectedMuteDuration == it
+                    )
+                }
+            )
+
             muteOptions = OptionsCardData(
                     title = GetString(R.string.disappearingMessagesTimer),
-                    options = muteDurations.map {
-                        RadioOption(
-                            value = it,
-                            title =
-                                if(it == durationForever) GetString(R.string.forever)
-                                else GetString(
-                                    LocalisedTimeUtil.getDurationWithSingleLargestTimeUnit(
-                                        context,
-                                        it.milliseconds
-                                    )
-                            ),
-                            selected = false //todo UCS calculate this properly
-                        )
-                    }
+                    options = muteRadioOptions
                 )
         }
 
@@ -131,11 +159,10 @@ class NotificationSettingsViewModel @AssistedInject constructor(
     }
 
     private fun shouldEnableSetButton(): Boolean {
-        return true //todo UCS implement this properly
-        /*return when{
-            selectedOption is NotificationType.Mute -> selectedMuteDuration != currentMuteDuration
+        return when{
+            selectedOption is NotificationType.Mute -> selectedMuteDuration != currentMutedUntil
             else -> selectedOption != currentOption
-        }*/
+        }
     }
 
     override fun onSetClick() = viewModelScope.launch {
@@ -186,14 +213,6 @@ class NotificationSettingsViewModel @AssistedInject constructor(
         TimeUnit.DAYS.toMillis(1),
         TimeUnit.DAYS.toMillis(7),
     )
-
-/*    sealed class MuteDuration(val duration: Long) {
-        data object Forever: MuteDuration(Long.MAX_VALUE)
-        data object OneHour: MuteDuration(TimeUnit.HOURS.toMillis(1))
-        data object TwoHours: MuteDuration(TimeUnit.HOURS.toMillis(2))
-        data object OneDay: MuteDuration(TimeUnit.DAYS.toMillis(1))
-        data object OneWeek: MuteDuration(TimeUnit.DAYS.toMillis(7))
-    }*/
 
     @AssistedFactory
     interface Factory {
