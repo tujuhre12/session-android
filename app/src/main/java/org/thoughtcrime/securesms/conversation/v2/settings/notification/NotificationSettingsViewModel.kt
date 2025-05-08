@@ -70,7 +70,7 @@ class NotificationSettingsViewModel @AssistedInject constructor(
 
                 // update the user's current choice of notification
                 currentMutedUntil = it?.mutedUntil
-                val hasMutedUntil = currentMutedUntil != null && currentMutedUntil != 0L
+                val hasMutedUntil = currentMutedUntil != null && currentMutedUntil!! > 0L
 
                 currentOption = when{
                     hasMutedUntil -> NotificationType.Mute
@@ -184,24 +184,24 @@ class NotificationSettingsViewModel @AssistedInject constructor(
 
              }
             else -> {
-                if(selectedMuteDuration != null) {
-                    mute(System.currentTimeMillis() + selectedMuteDuration!!)
+                val muteDuration = selectedMuteDuration ?: return@launch
 
-                    // also show a toast in this case
-                    val toastString = if(selectedMuteDuration == durationForever) {
-                        context.getString(R.string.notificationsMuted)
-                    } else {
-                        context.getSubbedString(
-                            R.string.notificationsMutedFor,
-                            TIME_LARGE_KEY to LocalisedTimeUtil.getDurationWithSingleLargestTimeUnit(
-                                context,
-                                selectedMuteDuration!!.milliseconds
-                            )
+                mute(if(muteDuration == durationForever) muteDuration else System.currentTimeMillis() + muteDuration)
+
+                // also show a toast in this case
+                val toastString = if(muteDuration == durationForever) {
+                    context.getString(R.string.notificationsMuted)
+                } else {
+                    context.getSubbedString(
+                        R.string.notificationsMutedFor,
+                        TIME_LARGE_KEY to LocalisedTimeUtil.getDurationWithSingleLargestTimeUnit(
+                            context,
+                            muteDuration.milliseconds
                         )
-                    }
-
-                    Toast.makeText(context, toastString, Toast.LENGTH_LONG).show()
+                    )
                 }
+
+                Toast.makeText(context, toastString, Toast.LENGTH_LONG).show()
             }
         }
 

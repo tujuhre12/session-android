@@ -249,7 +249,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                     )
                 )
             }
-
+//todo UCS need qa tags for subtitles apparently... (disappearing messages and notifications)
             conversation.is1on1 -> {
                 val mainOptions = mutableListOf<OptionsItem>()
                 val dangerOptions = mutableListOf<OptionsItem>()
