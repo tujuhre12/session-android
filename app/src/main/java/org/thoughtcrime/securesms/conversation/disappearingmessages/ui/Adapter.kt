@@ -59,7 +59,7 @@ private fun State.typeOption(
     value = type.defaultMode(persistedMode),
     title = GetString(type.title),
     subtitle = type.subtitle?.let(::GetString),
-    contentDescription = GetString(type.contentDescription),
+    qaTag = GetString(type.contentDescription),
     selected = expiryType == type,
     enabled = enabled
 )
@@ -94,7 +94,7 @@ private fun State.timeOption(
     value = mode,
     title = title,
     subtitle = subtitle,
-    contentDescription = title,
+    qaTag = title,
     selected = mode.duration == expiryMode?.duration,
     enabled = isTimeOptionsEnabled
 )

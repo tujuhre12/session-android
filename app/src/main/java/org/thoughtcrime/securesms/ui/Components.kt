@@ -106,7 +106,8 @@ data class RadioOption<T>(
     val value: T,
     val title: GetString,
     val subtitle: GetString? = null,
-    val contentDescription: GetString = title,
+    @DrawableRes val iconRes: Int? = null,
+    val qaTag: GetString? = null,
     val selected: Boolean = false,
     val enabled: Boolean = true,
 )

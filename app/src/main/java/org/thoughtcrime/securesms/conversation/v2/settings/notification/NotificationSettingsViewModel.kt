@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.conversation.v2.settings.notification
 
 import android.content.Context
-import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
@@ -15,7 +14,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
-import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.LocalisedTimeUtil
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.database.RecipientDatabase
@@ -36,7 +34,13 @@ class NotificationSettingsViewModel @AssistedInject constructor(
 ) : ViewModel(), Callbacks<NotificationSettingsViewModel.NotificationType> {
     private var thread: Recipient? = null
 
-    private var selectedOption: NotificationType = NotificationType.All //todo UCS this should be read from last selected choice in prefs
+    // the options the user is currently using
+    private var currentOption: NotificationType = NotificationType.All //todo UCS this should be read from last selected choice in prefs
+    private var currentMuteDuration: Long = Long.MAX_VALUE //todo UCS this should be read from last selected choice in prefs
+
+    // the option selected on this screen
+    private var selectedOption: NotificationType = currentOption
+    private var selectedMuteDuration: Long = currentMuteDuration
 
     private val _uiState = MutableStateFlow(UiState())
     val uiState: StateFlow<UiState> = _uiState
@@ -57,30 +61,55 @@ class NotificationSettingsViewModel @AssistedInject constructor(
         val defaultOptions = OptionsCardData(
             title = null,
             options = listOf(
-                NotificationType.All.toRadioOption(selectedOption),
-                NotificationType.MentionsOnly.toRadioOption(selectedOption),
-                NotificationType.Mute.toRadioOption(selectedOption)
+                // All
+                RadioOption(
+                    value = NotificationType.All,
+                    title = GetString(R.string.notificationsAllMessages),
+                    iconRes = R.drawable.ic_volume_2,
+                    selected = selectedOption is NotificationType.All
+                ),
+                // Mentions Only
+                RadioOption(
+                    value = NotificationType.MentionsOnly,
+                    title = GetString(R.string.notificationsMentionsOnly),
+                    iconRes = R.drawable.ic_at_sign,
+                    selected = selectedOption is NotificationType.MentionsOnly
+                ),
+                // Mute
+                RadioOption(
+                    value = NotificationType.Mute(selectedMuteDuration),
+                    title = GetString(R.string.notificationsMute),
+                    iconRes = R.drawable.ic_volume_off,
+                    selected = selectedOption is NotificationType.Mute
+                ),
             )
         )
 
         val options = mutableListOf(defaultOptions)
 
         // add the mute options if necessary
-        if(selectedOption is NotificationType.Mute || selectedOption is NotificationType.MuteType) {
+        if(selectedOption is NotificationType.Mute) {
             options.add(
-                //todo UCS add actual mute options
-                //todo UCS figure out selection for this sub category when visible
                 OptionsCardData(
-                    title = null,
-                    options = listOf(
-                        NotificationType.All.toRadioOption(selectedOption),
-                        NotificationType.MentionsOnly.toRadioOption(selectedOption),
-                        NotificationType.Mute.toRadioOption(selectedOption)
-                    )
+                    title = GetString(R.string.disappearingMessagesTimer),
+                    options = muteDurations.map {
+                        RadioOption(
+                            value = NotificationType.Mute(it),
+                            title =
+                                if(it == Long.MAX_VALUE) GetString(R.string.forever)
+                                else GetString(
+                                    LocalisedTimeUtil.getDurationWithSingleLargestTimeUnit(
+                                        context,
+                                        it.milliseconds
+                                    )
+                            ),
+                            selected = (selectedOption as? NotificationType.Mute)?.duration == it
+                        )
+                    }
                 )
             )
         }
-//todo UCS need to add icons ro radio options
+
         _uiState.update {
             UiState(
                 cards = options,
@@ -91,6 +120,10 @@ class NotificationSettingsViewModel @AssistedInject constructor(
 
     override fun setValue(value: NotificationType){
         selectedOption = value
+        if(value is NotificationType.Mute){
+            selectedMuteDuration = value.duration
+        }
+
         updateState()
     }
 
@@ -113,6 +146,14 @@ class NotificationSettingsViewModel @AssistedInject constructor(
         //conversation.setNotifyType(thread, notifyType)
     }
 
+    private val muteDurations = listOf(
+        Long.MAX_VALUE,
+        TimeUnit.HOURS.toMillis(1),
+        TimeUnit.HOURS.toMillis(2),
+        TimeUnit.DAYS.toMillis(1),
+        TimeUnit.DAYS.toMillis(7),
+    )
+
     data class UiState(
         val cards: List<OptionsCardData<NotificationType>> = emptyList(),
         val enableButton: Boolean = false,
@@ -121,36 +162,7 @@ class NotificationSettingsViewModel @AssistedInject constructor(
     sealed interface NotificationType {
         data object All: NotificationType
         data object MentionsOnly: NotificationType
-        data object Mute: NotificationType
-        sealed class MuteType(
-            val duration: Long
-        ): NotificationType{
-            data object Mute1H: MuteType(TimeUnit.HOURS.toMillis(1))
-            data object Mute2H: MuteType(TimeUnit.HOURS.toMillis(2))
-            data object Mute1Day: MuteType(TimeUnit.DAYS.toMillis(1))
-            data object Mute1Week: MuteType(TimeUnit.DAYS.toMillis(7))
-            data object MuteForever: MuteType(Long.MAX_VALUE)
-
-            fun getTitleFromDuration(context: Context)  = LocalisedTimeUtil.getDurationWithSingleLargestTimeUnit(
-                context,
-                this.duration.milliseconds
-            )
-        }
-
-        fun getTitle(context: Context): String {
-            return when(this){
-                is All -> context.getString(R.string.notificationsAllMessages)
-                is MentionsOnly -> context.getString(R.string.notificationsMentionsOnly)
-                is Mute -> context.getString(R.string.notificationsMute)
-                is MuteType -> getTitleFromDuration(context)
-            }
-        }
-
-        fun toRadioOption(currentlySelectedOption: NotificationType) = RadioOption(
-            value = this,
-            title = GetString(this::getTitle),
-            selected = this == currentlySelectedOption
-        )
+        data class Mute(val duration: Long): NotificationType
     }
 
     @AssistedFactory

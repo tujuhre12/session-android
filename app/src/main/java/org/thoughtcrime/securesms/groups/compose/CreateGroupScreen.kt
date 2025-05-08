@@ -190,7 +190,6 @@ fun CreateGroup(
                 onClick = onCreateClicked,
                 modifier = Modifier
                     .padding(horizontal = LocalDimensions.current.spacing)
-                    .widthIn(min = LocalDimensions.current.minButtonWidth)
                     .qaTag(R.string.AccessibilityId_groupCreate)
             ) {
                 LoadingArcOr(loading = showLoading) {
