@@ -386,7 +386,6 @@ class ConversationViewModel(
                     )
                 }
 
-                //todo UCS check with team if we want this to have a value for all notifications
                 if (conversation.isMuted || conversation.notifyType == RecipientDatabase.NOTIFY_TYPE_MENTIONS) {
                     pagerData += ConversationAppBarPagerData(
                         title = if(conversation.isMuted) application.getString(R.string.notificationsHeaderMute)
