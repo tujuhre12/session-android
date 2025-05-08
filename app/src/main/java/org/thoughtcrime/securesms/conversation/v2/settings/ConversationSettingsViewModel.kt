@@ -56,6 +56,7 @@ import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
+import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.home.HomeActivity
@@ -214,6 +215,13 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
         val pinned = threadDb.isPinned(threadId)
 
+        val (notificationIconRes, notificationSubtitle) = when{
+            conversation.isMuted -> R.drawable.ic_volume_off to context.getString(R.string.notificationsMuted)
+            conversation.notifyType == RecipientDatabase.NOTIFY_TYPE_MENTIONS ->
+                R.drawable.ic_at_sign to context.getString(R.string.notificationsMentionsOnly)
+            else -> R.drawable.ic_volume_2 to context.getString(R.string.notificationsAllMessages)
+        }
+
         // organise the setting options
         val optionData = options@when {
             conversation.isLocalNumber -> {
@@ -259,7 +267,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                     optionSearch,
                     optionDisappearingMessage(disappearingSubtitle),
                     if(pinned) optionUnpin else optionPin,
-                    optionNotifications(null), //todo UCS notifications logic
+                    optionNotifications(notificationIconRes, notificationSubtitle),
                     optionAttachments,
                 ))
 
@@ -311,7 +319,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                     mainOptions.addAll(
                         listOf(
                             if (pinned) optionUnpin else optionPin,
-                            optionNotifications(null), //todo UCS notifications logic
+                            optionNotifications(notificationIconRes, notificationSubtitle),
                             optionGroupMembers,
                             optionAttachments,
                         )
@@ -384,7 +392,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                     optionCopyCommunityURL,
                     optionSearch,
                     if(pinned) optionUnpin else optionPin,
-                    optionNotifications(null), //todo UCS notifications logic
+                    optionNotifications(notificationIconRes, notificationSubtitle),
                     optionInviteMembers,
                     optionAttachments,
                 ))
@@ -985,11 +993,11 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         )
     }
 
-    private fun optionNotifications(subtitle: String?): OptionsItem {
+    private fun optionNotifications(iconRes: Int, subtitle: String?): OptionsItem {
         return OptionsItem(
             name = context.getString(R.string.sessionNotifications),
             subtitle = subtitle,
-            icon = R.drawable.ic_volume_2,
+            icon = iconRes,
             qaTag = R.string.qa_conversation_settings_notifications,
             onClick = {
                 navigateTo(ConversationSettingsDestination.RouteNotifications)
