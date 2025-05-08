@@ -1,8 +1,11 @@
 package org.thoughtcrime.securesms.conversation.v2.settings.notification
 
 import android.content.Context
+import android.content.Intent
+import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.squareup.phrase.Phrase
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -15,15 +18,22 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.LocalisedTimeUtil
+import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.TIME_LARGE_KEY
 import org.session.libsession.utilities.recipients.Recipient
+import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsNavigator
 import org.thoughtcrime.securesms.database.RecipientDatabase
+import org.thoughtcrime.securesms.database.RecipientDatabase.NOTIFY_TYPE_ALL
 import org.thoughtcrime.securesms.database.RecipientDatabase.NOTIFY_TYPE_MENTIONS
 import org.thoughtcrime.securesms.database.RecipientDatabase.NOTIFY_TYPE_NONE
+import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.ui.Callbacks
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.OptionsCardData
 import org.thoughtcrime.securesms.ui.RadioOption
+import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.DateUtils
 import java.util.Locale
 import java.util.concurrent.TimeUnit
@@ -35,14 +45,15 @@ class NotificationSettingsViewModel @AssistedInject constructor(
     @ApplicationContext private val context: Context,
     private val recipientDatabase: RecipientDatabase,
     private val repository: ConversationRepository,
+    private val navigator: ConversationSettingsNavigator,
 ) : ViewModel(), Callbacks<Any> {
     private var thread: Recipient? = null
 
     private val durationForever: Long = Long.MAX_VALUE
 
     // the options the user is currently using
-    private var currentOption: NotificationType = NotificationType.All //todo UCS this should be read from last selected choice in prefs
-    private var currentMutedUntil: Long? = null //todo UCS this should be read from last selected choice in prefs
+    private var currentOption: NotificationType = NotificationType.All
+    private var currentMutedUntil: Long? = null
 
     // the option selected on this screen
     private var selectedOption: NotificationType = NotificationType.All
@@ -166,7 +177,36 @@ class NotificationSettingsViewModel @AssistedInject constructor(
     }
 
     override fun onSetClick() = viewModelScope.launch {
-        //todo UCS implement
+        when(selectedOption){
+            is NotificationType.All, is NotificationType.MentionsOnly -> {
+                unmute()
+                setNotifyType(selectedOption.notifyType)
+
+             }
+            else -> {
+                if(selectedMuteDuration != null) {
+                    mute(System.currentTimeMillis() + selectedMuteDuration!!)
+
+                    // also show a toast in this case
+                    val toastString = if(selectedMuteDuration == durationForever) {
+                        context.getString(R.string.notificationsMuted)
+                    } else {
+                        context.getSubbedString(
+                            R.string.notificationsMutedFor,
+                            TIME_LARGE_KEY to LocalisedTimeUtil.getDurationWithSingleLargestTimeUnit(
+                                context,
+                                selectedMuteDuration!!.milliseconds
+                            )
+                        )
+                    }
+
+                    Toast.makeText(context, toastString, Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+
+        // navigate back to the conversation settings
+        navigator.navigateUp()
     }
 
     override fun setValue(value: Any) {
@@ -179,19 +219,19 @@ class NotificationSettingsViewModel @AssistedInject constructor(
         updateState()
     }
 
-    private fun unmute(context: Context) {
+    private fun unmute() {
         val conversation = thread ?: return
-       // recipientDatabase.setMuted(conversation, 0)
+        recipientDatabase.setMuted(conversation, 0)
     }
 
-    private fun mute(context: Context) {
+    private fun mute(until: Long) {
         val conversation = thread ?: return
-        //conversation.setMuted(thread, until)
+        recipientDatabase.setMuted(conversation, until)
     }
 
-    private fun setNotifyType(context: Context) {
+    private fun setNotifyType(notifyType: Int) {
         val conversation = thread ?: return
-        //conversation.setNotifyType(thread, notifyType)
+        recipientDatabase.setNotifyType(conversation, notifyType)
     }
 
     data class UiState(
@@ -200,10 +240,10 @@ class NotificationSettingsViewModel @AssistedInject constructor(
         val enableButton: Boolean = false,
     )
 
-    sealed interface NotificationType {
-        data object All: NotificationType
-        data object MentionsOnly: NotificationType
-        data object Mute: NotificationType
+    sealed class NotificationType(val notifyType: Int) {
+        data object All: NotificationType(NOTIFY_TYPE_ALL)
+        data object MentionsOnly: NotificationType(NOTIFY_TYPE_MENTIONS)
+        data object Mute: NotificationType(NOTIFY_TYPE_NONE)
     }
 
     private val muteDurations = listOf(
