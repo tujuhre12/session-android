@@ -57,7 +57,7 @@ fun NotificationSettingsScreen(
 @Composable
 fun NotificationSettings(
     state: NotificationSettingsViewModel.UiState,
-    callbacks: Callbacks<NotificationSettingsViewModel.NotificationType> = NoOpCallbacks,
+    callbacks: Callbacks<Any> = NoOpCallbacks,
     onBack: () -> Unit
 ) { //todo UCS add test tags
     Scaffold(
@@ -79,13 +79,15 @@ fun NotificationSettings(
                 ) {
                     Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
 
-                    state.cards.forEachIndexed { index, option ->
-                        OptionsCard(option, callbacks)
+                    // notification options
+                    if(state.notificationTypes != null) {
+                        OptionsCard(state.notificationTypes, callbacks)
+                    }
 
-                        // add spacing if not the last item
-                        if (index != state.cards.lastIndex) {
-                            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-                        }
+                    // mute types
+                    if(state.muteTypes != null) {
+                        Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+                        OptionsCard(state.muteTypes, callbacks)
                     }
 
                     Spacer(modifier = Modifier.height(bottomContentPadding))
@@ -111,8 +113,7 @@ fun PreviewNotificationSettings(){
     PreviewTheme {
         NotificationSettings(
             state = NotificationSettingsViewModel.UiState(
-                cards = listOf(
-                    OptionsCardData(
+                notificationTypes = OptionsCardData(
                         title = null,
                         options = listOf(
                             RadioOption(
@@ -127,21 +128,20 @@ fun PreviewNotificationSettings(){
                             ),
                         )
                     ),
-                    OptionsCardData(
+                muteTypes = OptionsCardData(
                         title = GetString("Other Options"),
                         options = listOf(
                             RadioOption(
-                                value = NotificationSettingsViewModel.NotificationType.All,
+                                value = Long.MAX_VALUE,
                                 title = GetString("Something"),
                                 selected = false
                             ),
                             RadioOption(
-                                value = NotificationSettingsViewModel.NotificationType.All,
+                                value = Long.MAX_VALUE,
                                 title = GetString("Something Else"),
                                 selected = false
                             ),
                         )
-                    )
                 ),
                 enableButton = true
             ),

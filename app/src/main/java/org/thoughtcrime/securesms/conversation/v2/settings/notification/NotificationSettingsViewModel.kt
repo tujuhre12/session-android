@@ -17,6 +17,8 @@ import network.loki.messenger.R
 import org.session.libsession.LocalisedTimeUtil
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.database.RecipientDatabase
+import org.thoughtcrime.securesms.database.RecipientDatabase.NOTIFY_TYPE_MENTIONS
+import org.thoughtcrime.securesms.database.RecipientDatabase.NOTIFY_TYPE_NONE
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.ui.Callbacks
 import org.thoughtcrime.securesms.ui.GetString
@@ -31,16 +33,18 @@ class NotificationSettingsViewModel @AssistedInject constructor(
     @ApplicationContext private val context: Context,
     private val recipientDatabase: RecipientDatabase,
     private val repository: ConversationRepository,
-) : ViewModel(), Callbacks<NotificationSettingsViewModel.NotificationType> {
+) : ViewModel(), Callbacks<Any> {
     private var thread: Recipient? = null
+
+    private val durationForever: Long = Long.MAX_VALUE
 
     // the options the user is currently using
     private var currentOption: NotificationType = NotificationType.All //todo UCS this should be read from last selected choice in prefs
-    private var currentMuteDuration: Long? = null //todo UCS this should be read from last selected choice in prefs
+    private var currentMutedUntil: Long? = null //todo UCS this should be read from last selected choice in prefs
 
     // the option selected on this screen
-    private var selectedOption: NotificationType = currentOption
-    private var selectedMuteDuration: Long? = currentMuteDuration
+    private var selectedOption: NotificationType = NotificationType.All
+    private var selectedMuteDuration: Long? = durationForever
 
     private val _uiState = MutableStateFlow(UiState())
     val uiState: StateFlow<UiState> = _uiState
@@ -50,6 +54,15 @@ class NotificationSettingsViewModel @AssistedInject constructor(
         viewModelScope.launch(Dispatchers.Default) {
             repository.recipientUpdateFlow(threadId).collect {
                 thread = it
+
+                // update the user's current choice of notification
+                currentMutedUntil = it?.mutedUntil
+
+                currentOption = when{
+                    currentMutedUntil != null -> NotificationType.Mute
+                    it?.notifyType == NOTIFY_TYPE_MENTIONS -> NotificationType.MentionsOnly
+                    else -> NotificationType.All
+                }
 
                 updateState()
             }
@@ -77,7 +90,7 @@ class NotificationSettingsViewModel @AssistedInject constructor(
                 ),
                 // Mute
                 RadioOption(
-                    value = NotificationType.Mute(selectedMuteDuration ?: Long.MAX_VALUE),
+                    value = NotificationType.Mute,
                     title = GetString(R.string.notificationsMute),
                     iconRes = R.drawable.ic_volume_off,
                     selected = selectedOption is NotificationType.Mute
@@ -85,62 +98,63 @@ class NotificationSettingsViewModel @AssistedInject constructor(
             )
         )
 
-        val options = mutableListOf(defaultOptions)
+        var muteOptions: OptionsCardData<Long>? = null
 
         // add the mute options if necessary
         if(selectedOption is NotificationType.Mute) {
-            options.add(
-                OptionsCardData(
+            muteOptions = OptionsCardData(
                     title = GetString(R.string.disappearingMessagesTimer),
                     options = muteDurations.map {
                         RadioOption(
-                            value = NotificationType.Mute(it),
+                            value = it,
                             title =
-                                if(it == Long.MAX_VALUE) GetString(R.string.forever)
+                                if(it == durationForever) GetString(R.string.forever)
                                 else GetString(
                                     LocalisedTimeUtil.getDurationWithSingleLargestTimeUnit(
                                         context,
                                         it.milliseconds
                                     )
                             ),
-                            selected = (selectedOption as? NotificationType.Mute)?.duration == it
+                            selected = false //todo UCS calculate this properly
                         )
                     }
                 )
-            )
         }
 
         _uiState.update {
             UiState(
-                cards = options,
+                notificationTypes = defaultOptions,
+                muteTypes = muteOptions,
                 enableButton = shouldEnableSetButton()
             )
         }
     }
 
     private fun shouldEnableSetButton(): Boolean {
-        return when{
+        return true //todo UCS implement this properly
+        /*return when{
             selectedOption is NotificationType.Mute -> selectedMuteDuration != currentMuteDuration
             else -> selectedOption != currentOption
-        }
-    }
-
-    override fun setValue(value: NotificationType){
-        selectedOption = value
-        if(value is NotificationType.Mute){
-            selectedMuteDuration = value.duration
-        }
-
-        updateState()
+        }*/
     }
 
     override fun onSetClick() = viewModelScope.launch {
         //todo UCS implement
     }
 
+    override fun setValue(value: Any) {
+        when(value){
+            is Long -> selectedMuteDuration = value
+
+            is NotificationType -> selectedOption = value
+        }
+
+        updateState()
+    }
+
     private fun unmute(context: Context) {
         val conversation = thread ?: return
-        recipientDatabase.setMuted(conversation, 0)
+       // recipientDatabase.setMuted(conversation, 0)
     }
 
     private fun mute(context: Context) {
@@ -153,24 +167,33 @@ class NotificationSettingsViewModel @AssistedInject constructor(
         //conversation.setNotifyType(thread, notifyType)
     }
 
-    private val muteDurations = listOf(
-        Long.MAX_VALUE,
-        TimeUnit.HOURS.toMillis(1),
-        TimeUnit.HOURS.toMillis(2),
-        TimeUnit.DAYS.toMillis(1),
-        TimeUnit.DAYS.toMillis(7),
-    )
-
     data class UiState(
-        val cards: List<OptionsCardData<NotificationType>> = emptyList(),
+        val notificationTypes: OptionsCardData<NotificationType>? = null,
+        val muteTypes: OptionsCardData<Long>? = null,
         val enableButton: Boolean = false,
     )
 
     sealed interface NotificationType {
         data object All: NotificationType
         data object MentionsOnly: NotificationType
-        data class Mute(val duration: Long): NotificationType
+        data object Mute: NotificationType
     }
+
+    private val muteDurations = listOf(
+        durationForever,
+        TimeUnit.HOURS.toMillis(1),
+        TimeUnit.HOURS.toMillis(2),
+        TimeUnit.DAYS.toMillis(1),
+        TimeUnit.DAYS.toMillis(7),
+    )
+
+/*    sealed class MuteDuration(val duration: Long) {
+        data object Forever: MuteDuration(Long.MAX_VALUE)
+        data object OneHour: MuteDuration(TimeUnit.HOURS.toMillis(1))
+        data object TwoHours: MuteDuration(TimeUnit.HOURS.toMillis(2))
+        data object OneDay: MuteDuration(TimeUnit.DAYS.toMillis(1))
+        data object OneWeek: MuteDuration(TimeUnit.DAYS.toMillis(7))
+    }*/
 
     @AssistedFactory
     interface Factory {
