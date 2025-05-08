@@ -36,11 +36,11 @@ class NotificationSettingsViewModel @AssistedInject constructor(
 
     // the options the user is currently using
     private var currentOption: NotificationType = NotificationType.All //todo UCS this should be read from last selected choice in prefs
-    private var currentMuteDuration: Long = Long.MAX_VALUE //todo UCS this should be read from last selected choice in prefs
+    private var currentMuteDuration: Long? = null //todo UCS this should be read from last selected choice in prefs
 
     // the option selected on this screen
     private var selectedOption: NotificationType = currentOption
-    private var selectedMuteDuration: Long = currentMuteDuration
+    private var selectedMuteDuration: Long? = currentMuteDuration
 
     private val _uiState = MutableStateFlow(UiState())
     val uiState: StateFlow<UiState> = _uiState
@@ -77,7 +77,7 @@ class NotificationSettingsViewModel @AssistedInject constructor(
                 ),
                 // Mute
                 RadioOption(
-                    value = NotificationType.Mute(selectedMuteDuration),
+                    value = NotificationType.Mute(selectedMuteDuration ?: Long.MAX_VALUE),
                     title = GetString(R.string.notificationsMute),
                     iconRes = R.drawable.ic_volume_off,
                     selected = selectedOption is NotificationType.Mute
@@ -113,8 +113,15 @@ class NotificationSettingsViewModel @AssistedInject constructor(
         _uiState.update {
             UiState(
                 cards = options,
-                enableButton = true //todo UCS calculate this properly
+                enableButton = shouldEnableSetButton()
             )
+        }
+    }
+
+    private fun shouldEnableSetButton(): Boolean {
+        return when{
+            selectedOption is NotificationType.Mute -> selectedMuteDuration != currentMuteDuration
+            else -> selectedOption != currentOption
         }
     }
 
