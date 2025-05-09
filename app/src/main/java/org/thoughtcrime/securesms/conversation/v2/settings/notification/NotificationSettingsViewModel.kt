@@ -35,6 +35,9 @@ import org.thoughtcrime.securesms.ui.OptionsCardData
 import org.thoughtcrime.securesms.ui.RadioOption
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.DateUtils
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.milliseconds
@@ -130,7 +133,7 @@ class NotificationSettingsViewModel @AssistedInject constructor(
                 muteRadioOptions.add(
                     RadioOption(
                         value = currentMutedUntil!!,
-                        title = GetString("Muted Until: ${DateUtils.getFormattedDateTime(currentMutedUntil!!, "HH:mm dd/MM/yy", Locale.getDefault())}"), //todo UCS need the crowdin string
+                        title = GetString("Muted Until: ${formatTime(currentMutedUntil!!)}"), //todo UCS need the crowdin string
                         selected = selectedMuteDuration == currentMutedUntil
                     )
                 )
@@ -167,6 +170,15 @@ class NotificationSettingsViewModel @AssistedInject constructor(
                 enableButton = shouldEnableSetButton()
             )
         }
+    }
+
+    //todo UCS update with date utils functions once we have the code from the network page
+    private fun formatTime(timestamp: Long): String{
+        val formatter = DateTimeFormatter.ofPattern("HH:mm dd/MM/yy")
+
+        return Instant.ofEpochMilli(timestamp)
+            .atZone(ZoneId.systemDefault())
+            .format(formatter)
     }
 
     private fun shouldEnableSetButton(): Boolean {
