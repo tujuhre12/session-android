@@ -413,12 +413,12 @@ fun Cell(
 ) {
     Box(
         modifier = modifier
+            .clip(MaterialTheme.shapes.small)
             .background(
                 color = LocalColors.current.backgroundSecondary,
-                shape = MaterialTheme.shapes.small
             )
             .wrapContentHeight()
-            .fillMaxWidth(),
+            .fillMaxWidth()
     ) {
         content()
     }
