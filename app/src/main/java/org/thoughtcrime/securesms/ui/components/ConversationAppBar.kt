@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -14,7 +15,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
@@ -23,6 +26,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -61,7 +65,6 @@ fun ConversationAppBar(
     onCallPressed: () -> Unit,
     onAvatarPressed: () -> Unit
 ) {
-    //todo UCS need to sort out the centering when multiple actions
     val pagerState = rememberPagerState(pageCount = { data.pagerData.size })
 
     CenterAlignedTopAppBar(
@@ -79,7 +82,8 @@ fun ConversationAppBar(
                 if (data.pagerData.isNotEmpty()) {
                     // Settings content pager
                     ConversationSettingsPager(
-                        modifier = Modifier.padding(top = 2.dp),
+                        modifier = Modifier.padding(top = 2.dp)
+                            .fillMaxWidth(0.8f),
                         pages = data.pagerData,
                         pagerState = pagerState
                     )
@@ -111,7 +115,7 @@ fun ConversationAppBar(
             }
 
             // Avatar
-            if(data.showAvatar) {
+            if (data.showAvatar) {
                 Avatar(
                     modifier = Modifier.qaTag(R.string.qa_conversation_avatar)
                         .clickable { onAvatarPressed() },
@@ -157,7 +161,7 @@ private fun ConversationSettingsPager(
 ) {
     HorizontalPager(
         state = pagerState,
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier,
     ) { page ->
         Row (
             modifier = Modifier.fillMaxWidth()
@@ -201,8 +205,7 @@ private fun ConversationSettingsPager(
             // '>' icon
             if(pages.size > 1) {
                 Image(
-                    modifier = Modifier.size(12.dp)
-                        .rotate(180f),
+                    modifier = Modifier.size(12.dp).rotate(180f),
                     painter = painterResource(id = R.drawable.ic_chevron_left),
                     colorFilter = ColorFilter.tint(LocalColors.current.text),
                     contentDescription = null,
@@ -271,6 +274,20 @@ class ConversationTopBarParamsProvider : PreviewParameterProvider<ConversationTo
             title = "Alice Smith",
             settingsPagesCount = 0,
             isCallAvailable = false,
+            showAvatar = true
+        ),
+        // Basic conversation with no settings
+        ConversationTopBarPreviewParams(
+            title = "Alice Smith",
+            settingsPagesCount = 0,
+            isCallAvailable = true,
+            showAvatar = true
+        ),
+        // Basic conversation with no settings
+        ConversationTopBarPreviewParams(
+            title = "Alice Smith",
+            settingsPagesCount = 3,
+            isCallAvailable = true,
             showAvatar = true
         ),
         // Long title without call button

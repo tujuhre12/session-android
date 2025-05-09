@@ -823,6 +823,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     // called from onCreate
     private fun setUpToolBar() {
+        binding.conversationAppBar.applySafeInsetsPaddings(WindowInsetsCompat.Type.statusBars())
         binding.conversationAppBar.setThemedContent {
            val data by viewModel.appBarData.collectAsState()
 
