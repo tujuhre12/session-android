@@ -26,7 +26,7 @@ import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.SlimOutlineButton
 import org.thoughtcrime.securesms.ui.components.SlimOutlineCopyButton
 import org.thoughtcrime.securesms.ui.components.border
-import org.thoughtcrime.securesms.ui.contentDescription
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -58,7 +58,7 @@ internal fun InviteFriend(
             Text(
                 accountId,
                 modifier = Modifier
-                    .contentDescription(R.string.AccessibilityId_shareAccountId)
+                    .qaTag(R.string.AccessibilityId_shareAccountId)
                     .fillMaxWidth()
                     .border()
                     .padding(LocalDimensions.current.spacing),
@@ -86,7 +86,7 @@ internal fun InviteFriend(
                     stringResource(R.string.share),
                     modifier = Modifier
                         .weight(1f)
-                        .contentDescription("Share button"),
+                        .qaTag("Share button"),
                     onClick = sendInvitation
                 )
 

@@ -98,7 +98,6 @@ import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.BaseBottomSheet
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineCopyButton
-import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.getCellBottomShape
 import org.thoughtcrime.securesms.ui.getCellTopShape
 import org.thoughtcrime.securesms.ui.qaTag
@@ -508,22 +507,22 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                     LargeItemButton(R.string.sessionPrivacy, R.drawable.ic_lock_keyhole) { push<PrivacySettingsActivity>() }
                     Divider()
 
-                    LargeItemButton(R.string.sessionNotifications, R.drawable.ic_volume_2, Modifier.contentDescription(R.string.AccessibilityId_notifications)) { push<NotificationSettingsActivity>() }
+                    LargeItemButton(R.string.sessionNotifications, R.drawable.ic_volume_2, Modifier.qaTag(R.string.AccessibilityId_notifications)) { push<NotificationSettingsActivity>() }
                     Divider()
 
-                    LargeItemButton(R.string.sessionConversations, R.drawable.ic_message_square, Modifier.contentDescription(R.string.AccessibilityId_sessionConversations)) { push<ChatSettingsActivity>() }
+                    LargeItemButton(R.string.sessionConversations, R.drawable.ic_message_square, Modifier.qaTag(R.string.AccessibilityId_sessionConversations)) { push<ChatSettingsActivity>() }
                     Divider()
 
-                    LargeItemButton(R.string.sessionMessageRequests, R.drawable.ic_message_square_warning, Modifier.contentDescription(R.string.AccessibilityId_sessionMessageRequests)) { push<MessageRequestsActivity>() }
+                    LargeItemButton(R.string.sessionMessageRequests, R.drawable.ic_message_square_warning, Modifier.qaTag(R.string.AccessibilityId_sessionMessageRequests)) { push<MessageRequestsActivity>() }
                     Divider()
 
-                    LargeItemButton(R.string.sessionAppearance, R.drawable.ic_paintbrush_vertical, Modifier.contentDescription(R.string.AccessibilityId_sessionAppearance)) { push<AppearanceSettingsActivity>() }
+                    LargeItemButton(R.string.sessionAppearance, R.drawable.ic_paintbrush_vertical, Modifier.qaTag(R.string.AccessibilityId_sessionAppearance)) { push<AppearanceSettingsActivity>() }
                     Divider()
 
                     LargeItemButton(
                         R.string.sessionInviteAFriend,
                         R.drawable.ic_user_round_plus,
-                        Modifier.contentDescription(R.string.AccessibilityId_sessionInviteAFriend)
+                        Modifier.qaTag(R.string.AccessibilityId_sessionInviteAFriend)
                     ) { sendInvitationToUseSession() }
                     Divider()
 
@@ -532,7 +531,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                         LargeItemButton(
                             R.string.sessionRecoveryPassword,
                             R.drawable.ic_recovery_password_custom,
-                            Modifier.contentDescription(R.string.AccessibilityId_sessionRecoveryPasswordMenuItem)
+                            Modifier.qaTag(R.string.AccessibilityId_sessionRecoveryPasswordMenuItem)
                         ) {
                             hideRecoveryLauncher.launch(Intent(baseContext, RecoveryPasswordActivity::class.java))
                             overridePendingTransition(R.anim.slide_from_right, R.anim.slide_to_left)
@@ -540,13 +539,13 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                         Divider()
                     }
 
-                    LargeItemButton(R.string.sessionHelp, R.drawable.ic_question_custom, Modifier.contentDescription(R.string.AccessibilityId_help)) { push<HelpSettingsActivity>() }
+                    LargeItemButton(R.string.sessionHelp, R.drawable.ic_question_custom, Modifier.qaTag(R.string.AccessibilityId_help)) { push<HelpSettingsActivity>() }
                     Divider()
 
                     LargeItemButton(
                         textId = R.string.sessionClearData,
                         icon = R.drawable.ic_trash_2,
-                        modifier = Modifier.contentDescription(R.string.AccessibilityId_sessionClearData),
+                        modifier = Modifier.qaTag(R.string.AccessibilityId_sessionClearData),
                         colors = dangerButtonColors(),
                         shape = getCellBottomShape()
                     ) { ClearAllDataDialog().show(supportFragmentManager, "Clear All Data Dialog") }

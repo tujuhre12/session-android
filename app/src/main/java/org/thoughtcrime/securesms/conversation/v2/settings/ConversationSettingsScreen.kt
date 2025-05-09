@@ -373,6 +373,7 @@ fun GroupAdminClearMessagesDialog(
     val context = LocalContext.current
 
     AlertDialog(
+        modifier = modifier,
         onDismissRequest = {
             // hide dialog
             sendCommand(HideGroupAdminClearMessagesDialog)

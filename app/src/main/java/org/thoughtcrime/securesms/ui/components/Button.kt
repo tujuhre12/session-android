@@ -39,7 +39,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.LaunchedEffectAsync
-import org.thoughtcrime.securesms.ui.contentDescription
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -182,7 +182,7 @@ fun OutlineCopyButton(
     val interactionSource = remember { MutableInteractionSource() }
 
     Button(
-        modifier = modifier.contentDescription(R.string.AccessibilityId_copy),
+        modifier = modifier.qaTag(R.string.AccessibilityId_copy),
         interactionSource = interactionSource,
         style = style,
         type = ButtonType.Outline(color),

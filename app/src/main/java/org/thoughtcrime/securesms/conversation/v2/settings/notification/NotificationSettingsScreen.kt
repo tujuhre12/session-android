@@ -4,14 +4,12 @@ package org.thoughtcrime.securesms.conversation.v2.settings.notification
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -19,8 +17,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.BottomFadingEdgeBox
@@ -32,10 +28,8 @@ import org.thoughtcrime.securesms.ui.OptionsCardData
 import org.thoughtcrime.securesms.ui.RadioOption
 import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
-import org.thoughtcrime.securesms.ui.contentDescription
-import org.thoughtcrime.securesms.ui.theme.LocalColors
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
-import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 
 
@@ -97,7 +91,7 @@ fun NotificationSettings(
             PrimaryOutlineButton(
                 stringResource(R.string.set),
                 modifier = Modifier
-                    .contentDescription(R.string.AccessibilityId_setButton)
+                    .qaTag(R.string.AccessibilityId_setButton)
                     .align(Alignment.CenterHorizontally)
                     .padding(bottom = LocalDimensions.current.spacing),
                 enabled = state.enableButton,
