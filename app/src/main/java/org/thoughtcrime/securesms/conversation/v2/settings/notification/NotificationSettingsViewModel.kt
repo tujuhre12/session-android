@@ -1,11 +1,9 @@
 package org.thoughtcrime.securesms.conversation.v2.settings.notification
 
 import android.content.Context
-import android.content.Intent
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.squareup.phrase.Phrase
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -18,27 +16,22 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.LocalisedTimeUtil
-import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_LARGE_KEY
 import org.session.libsession.utilities.recipients.Recipient
-import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsNavigator
 import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.RecipientDatabase.NOTIFY_TYPE_ALL
 import org.thoughtcrime.securesms.database.RecipientDatabase.NOTIFY_TYPE_MENTIONS
 import org.thoughtcrime.securesms.database.RecipientDatabase.NOTIFY_TYPE_NONE
-import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.ui.Callbacks
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.OptionsCardData
 import org.thoughtcrime.securesms.ui.RadioOption
 import org.thoughtcrime.securesms.ui.getSubbedString
-import org.thoughtcrime.securesms.util.DateUtils
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -101,6 +94,7 @@ class NotificationSettingsViewModel @AssistedInject constructor(
                     value = NotificationType.All,
                     title = GetString(R.string.notificationsAllMessages),
                     iconRes = R.drawable.ic_volume_2,
+                    qaTag = GetString(R.string.qa_conversation_settings_notifications_radio_all),
                     selected = selectedOption is NotificationType.All
                 ),
                 // Mentions Only
@@ -108,6 +102,7 @@ class NotificationSettingsViewModel @AssistedInject constructor(
                     value = NotificationType.MentionsOnly,
                     title = GetString(R.string.notificationsMentionsOnly),
                     iconRes = R.drawable.ic_at_sign,
+                    qaTag = GetString(R.string.qa_conversation_settings_notifications_radio_mentions),
                     selected = selectedOption is NotificationType.MentionsOnly
                 ),
                 // Mute
@@ -115,6 +110,7 @@ class NotificationSettingsViewModel @AssistedInject constructor(
                     value = NotificationType.Mute,
                     title = GetString(R.string.notificationsMute),
                     iconRes = R.drawable.ic_volume_off,
+                    qaTag = GetString(R.string.qa_conversation_settings_notifications_radio_mute),
                     selected = selectedOption is NotificationType.Mute
                 ),
             )
@@ -134,6 +130,7 @@ class NotificationSettingsViewModel @AssistedInject constructor(
                     RadioOption(
                         value = currentMutedUntil!!,
                         title = GetString("Muted Until: ${formatTime(currentMutedUntil!!)}"), //todo UCS need the crowdin string
+                        qaTag = GetString(R.string.qa_conversation_settings_notifications_radio_muted_until),
                         selected = selectedMuteDuration == currentMutedUntil
                     )
                 )
@@ -143,16 +140,17 @@ class NotificationSettingsViewModel @AssistedInject constructor(
             muteRadioOptions.addAll(
                 muteDurations.map {
                     RadioOption(
-                        value = it,
+                        value = it.first,
                         title =
-                            if(it == durationForever) GetString(R.string.forever)
+                            if(it.first == durationForever) GetString(R.string.forever)
                             else GetString(
                                 LocalisedTimeUtil.getDurationWithSingleLargestTimeUnit(
                                     context,
-                                    it.milliseconds
+                                    it.first.milliseconds
                                 )
                             ),
-                        selected = selectedMuteDuration == it
+                        qaTag = GetString(it.second),
+                        selected = selectedMuteDuration == it.first
                     )
                 }
             )
@@ -259,11 +257,11 @@ class NotificationSettingsViewModel @AssistedInject constructor(
     }
 
     private val muteDurations = listOf(
-        durationForever,
-        TimeUnit.HOURS.toMillis(1),
-        TimeUnit.HOURS.toMillis(2),
-        TimeUnit.DAYS.toMillis(1),
-        TimeUnit.DAYS.toMillis(7),
+        durationForever to R.string.qa_conversation_settings_notifications_radio_forever,
+        TimeUnit.HOURS.toMillis(1) to R.string.qa_conversation_settings_notifications_radio_1h,
+        TimeUnit.HOURS.toMillis(2) to R.string.qa_conversation_settings_notifications_radio_2h,
+        TimeUnit.DAYS.toMillis(1) to R.string.qa_conversation_settings_notifications_radio_1d,
+        TimeUnit.DAYS.toMillis(7) to R.string.qa_conversation_settings_notifications_radio_1w,
     )
 
     @AssistedFactory

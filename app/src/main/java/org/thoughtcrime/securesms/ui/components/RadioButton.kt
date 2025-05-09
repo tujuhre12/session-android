@@ -171,11 +171,7 @@ fun <T> TitledRadioButton(
     onClick: () -> Unit
 ) {
     RadioButton(
-        modifier = modifier.then (
-            if(option.qaTag != null)
-                Modifier.qaTag(option.qaTag.string())
-            else Modifier
-        ),
+        modifier = modifier.qaTag(option.qaTag?.string()),
         onClick = onClick,
         selected = option.selected,
         enabled = option.enabled,

@@ -53,7 +53,7 @@ fun NotificationSettings(
     state: NotificationSettingsViewModel.UiState,
     callbacks: Callbacks<Any> = NoOpCallbacks,
     onBack: () -> Unit
-) { //todo UCS add test tags
+) {
     Scaffold(
         topBar = {
             BackAppBar(
