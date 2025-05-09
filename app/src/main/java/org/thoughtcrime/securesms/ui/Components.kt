@@ -153,6 +153,7 @@ fun LargeItemButtonWithDrawable(
     @DrawableRes icon: Int,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
+    @StringRes subtitleQaTag: Int? = null,
     colors: ButtonColors = transparentButtonColors(),
     shape: Shape = RectangleShape,
     onClick: () -> Unit
@@ -160,6 +161,7 @@ fun LargeItemButtonWithDrawable(
     ItemButtonWithDrawable(
         textId, icon, modifier,
         subtitle = subtitle,
+        subtitleQaTag = subtitleQaTag,
         textStyle = LocalType.current.h8,
         colors = colors,
         shape = shape,
@@ -173,6 +175,7 @@ fun ItemButtonWithDrawable(
     @DrawableRes icon: Int,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
+    @StringRes subtitleQaTag: Int? = null,
     textStyle: TextStyle = LocalType.current.xl,
     colors: ButtonColors = transparentButtonColors(),
     shape: Shape = RectangleShape,
@@ -191,6 +194,8 @@ fun ItemButtonWithDrawable(
             )
         },
         textStyle = textStyle,
+        subtitle = subtitle,
+        subtitleQaTag = subtitleQaTag,
         colors = colors,
         shape = shape,
         onClick = onClick
@@ -203,6 +208,7 @@ fun LargeItemButton(
     @DrawableRes icon: Int,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
+    @StringRes subtitleQaTag: Int? = null,
     colors: ButtonColors = transparentButtonColors(),
     shape: Shape = RectangleShape,
     onClick: () -> Unit
@@ -212,6 +218,7 @@ fun LargeItemButton(
         icon = icon,
         modifier = modifier,
         subtitle = subtitle,
+        subtitleQaTag = subtitleQaTag,
         minHeight = LocalDimensions.current.minLargeItemButtonHeight,
         textStyle = LocalType.current.h8,
         colors = colors,
@@ -226,6 +233,7 @@ fun LargeItemButton(
     @DrawableRes icon: Int,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
+    @StringRes subtitleQaTag: Int? = null,
     colors: ButtonColors = transparentButtonColors(),
     shape: Shape = RectangleShape,
     onClick: () -> Unit
@@ -235,6 +243,7 @@ fun LargeItemButton(
         icon = icon,
         modifier = modifier,
         subtitle = subtitle,
+        subtitleQaTag = subtitleQaTag,
         minHeight = LocalDimensions.current.minLargeItemButtonHeight,
         textStyle = LocalType.current.h8,
         colors = colors,
@@ -249,6 +258,7 @@ fun ItemButton(
     icon: Int,
     modifier: Modifier,
     subtitle: String? = null,
+    @StringRes subtitleQaTag: Int? = null,
     minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
     textStyle: TextStyle = LocalType.current.xl,
     subtitleStyle: TextStyle = LocalType.current.small,
@@ -260,6 +270,7 @@ fun ItemButton(
         text = text,
         modifier = modifier,
         subtitle = subtitle,
+        subtitleQaTag = subtitleQaTag,
         icon = {
             Icon(
                 painter = painterResource(id = icon),
@@ -285,6 +296,7 @@ fun ItemButton(
     @DrawableRes icon: Int,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
+    @StringRes subtitleQaTag: Int? = null,
     minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
     textStyle: TextStyle = LocalType.current.xl,
     subtitleStyle: TextStyle = LocalType.current.small,
@@ -296,6 +308,7 @@ fun ItemButton(
         text = stringResource(textId),
         modifier = modifier,
         subtitle = subtitle,
+        subtitleQaTag = subtitleQaTag,
         icon = {
             Icon(
                 painter = painterResource(id = icon),
@@ -323,6 +336,7 @@ fun ItemButton(
     icon: @Composable BoxScope.() -> Unit,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
+    @StringRes subtitleQaTag: Int? = null,
     minHeight: Dp = LocalDimensions.current.minLargeItemButtonHeight,
     textStyle: TextStyle = LocalType.current.xl,
     subtitleStyle: TextStyle = LocalType.current.small,
@@ -359,7 +373,8 @@ fun ItemButton(
             subtitle?.let {
                 Text(
                     text = it,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth()
+                        .qaTag(subtitleQaTag),
                     style = subtitleStyle,
                 )
             }

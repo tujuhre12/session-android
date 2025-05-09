@@ -343,8 +343,10 @@ fun ConversationSettingsSubCategory(
         Column {
             data.items.forEachIndexed { index, option ->
                 LargeItemButton(
+                    modifier = Modifier.qaTag(option.qaTag),
                     text = option.name,
                     subtitle = option.subtitle,
+                    subtitleQaTag = option.subtitleQaTag,
                     icon = option.icon,
                     shape = when (index) {
                         0 -> getCellTopShape()

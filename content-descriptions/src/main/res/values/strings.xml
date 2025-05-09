@@ -97,6 +97,7 @@
     <string name="qa_conversation_settings_disappearing_sub">disappearing-messages-timer-details-menu-option</string>
     <string name="qa_conversation_settings_pin">pin-conversation-menu-option</string>
     <string name="qa_conversation_settings_notifications">notifications-menu-option</string>
+    <string name="qa_conversation_settings_notifications_sub">notifications-details-menu-option</string>
     <string name="qa_conversation_settings_attachments">attachments-menu-option</string>
     <string name="qa_conversation_settings_block">block-user-menu-option</string>
     <string name="qa_conversation_settings_clear_messages">clear-all-messages-menu-option</string>

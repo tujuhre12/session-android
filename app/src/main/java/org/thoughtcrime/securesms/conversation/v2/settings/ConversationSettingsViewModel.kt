@@ -257,7 +257,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                     )
                 )
             }
-//todo UCS need qa tags for subtitles apparently... (disappearing messages and notifications)
+//todo UCS make group members items tappable
             conversation.is1on1 -> {
                 val mainOptions = mutableListOf<OptionsItem>()
                 val dangerOptions = mutableListOf<OptionsItem>()
@@ -969,6 +969,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             subtitle = subtitle,
             icon = R.drawable.ic_timer,
             qaTag = R.string.qa_conversation_settings_disappearing,
+            subtitleQaTag = R.string.qa_conversation_settings_disappearing_sub,
             onClick = {
                 navigateTo(ConversationSettingsDestination.RouteDisappearingMessages)
             }
@@ -999,6 +1000,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             subtitle = subtitle,
             icon = iconRes,
             qaTag = R.string.qa_conversation_settings_notifications,
+            subtitleQaTag = R.string.qa_conversation_settings_notifications_sub,
             onClick = {
                 navigateTo(ConversationSettingsDestination.RouteNotifications)
             }
@@ -1200,6 +1202,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         @DrawableRes val icon: Int,
         @StringRes val qaTag: Int? = null,
         val subtitle: String? = null,
+        @StringRes val subtitleQaTag: Int? = null,
         val onClick: () -> Unit
     )
 }
