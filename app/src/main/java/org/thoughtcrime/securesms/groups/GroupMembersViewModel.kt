@@ -33,7 +33,7 @@ class GroupMembersViewModel @AssistedInject constructor(
 ) : BaseGroupMembersViewModel(groupId, context, storage, usernameUtils, configFactory, avatarUtils) {
 
     private val _navigationActions = Channel<Intent>()
-    val navigationActions = _navigationActions.receiveAsFlow()
+    val navigationActions get() = _navigationActions.receiveAsFlow()
 
     @AssistedFactory
     interface Factory {
