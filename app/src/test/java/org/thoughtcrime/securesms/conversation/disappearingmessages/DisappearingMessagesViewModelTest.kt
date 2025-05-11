@@ -128,7 +128,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
         ).isEqualTo(
             UiState(
                 OptionsCardData(
-                    R.string.disappearingMessagesTimer,
+                    title = R.string.disappearingMessagesTimer,
                     typeOption(ExpiryMode.NONE, selected = true),
                     timeOption(ExpiryType.AFTER_SEND, 12.hours),
                     timeOption(ExpiryType.AFTER_SEND, 1.days),
@@ -426,6 +426,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
     ) = ExpiryRadioOption(
         value = type.mode(time),
         title = GetString(time),
+        qaTag = GetString(type.mode(time).duration),
         enabled = enabled,
         selected = selected
     )
