@@ -493,10 +493,10 @@ fun typeOption(time: Duration, type: ExpiryType, selected: Boolean = false, enab
 
 fun typeOption(mode: ExpiryMode, selected: Boolean = false, enabled: Boolean = true) =
     ExpiryRadioOption(
-        mode,
-        GetString(mode.type.title),
-        mode.type.subtitle?.let(::GetString),
-        GetString(mode.type.contentDescription),
+        value = mode,
+        title = GetString(mode.type.title),
+        subtitle = mode.type.subtitle?.let(::GetString),
+        qaTag = GetString(mode.type.contentDescription),
         selected = selected,
         enabled = enabled
     )

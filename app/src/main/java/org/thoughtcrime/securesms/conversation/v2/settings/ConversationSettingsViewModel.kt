@@ -257,7 +257,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                     )
                 )
             }
-//todo UCS make group members items tappable
+
             conversation.is1on1 -> {
                 val mainOptions = mutableListOf<OptionsItem>()
                 val dangerOptions = mutableListOf<OptionsItem>()
