@@ -101,7 +101,10 @@ fun Modifier.qaTag(tag: String?): Modifier {
 }
 
 @Composable
-fun Modifier.qaTag(@StringRes tagResId: Int) = semantics { testTagsAsResourceId = true }.testTag(stringResource(tagResId))
+fun Modifier.qaTag(@StringRes tagResId: Int?): Modifier {
+    if (tagResId == null) return this
+    return this.semantics { testTagsAsResourceId = true }.testTag(stringResource(tagResId))
+}
 
 /**
  * helper function to observe flows as events properly

@@ -50,6 +50,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -82,7 +83,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
-import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.OptionsCardData
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.components.TitledRadioButton
@@ -107,22 +107,33 @@ data class RadioOption<T>(
     val value: T,
     val title: GetString,
     val subtitle: GetString? = null,
-    val contentDescription: GetString = title,
+    @DrawableRes val iconRes: Int? = null,
+    val qaTag: GetString? = null,
     val selected: Boolean = false,
     val enabled: Boolean = true,
 )
 
+data class OptionsCardData<T>(
+    val title: GetString?,
+    val options: List<RadioOption<T>>
+) {
+    constructor(title: GetString, vararg options: RadioOption<T>): this(title, options.asList())
+    constructor(@StringRes title: Int, vararg options: RadioOption<T>): this(GetString(title), options.asList())
+}
+
 @Composable
 fun <T> OptionsCard(card: OptionsCardData<T>, callbacks: Callbacks<T>) {
     Column {
-        Text(
-            modifier = Modifier.padding(start = LocalDimensions.current.smallSpacing),
-            text = card.title(),
-            style = LocalType.current.base,
-            color = LocalColors.current.textSecondary
-        )
+        if (card.title != null && card.title.string().isNotEmpty()) {
+            Text(
+                modifier = Modifier.padding(start = LocalDimensions.current.smallSpacing),
+                text = card.title.string(),
+                style = LocalType.current.base,
+                color = LocalColors.current.textSecondary
+            )
 
-        Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
+            Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
+        }
 
         Cell {
             LazyColumn(
@@ -143,6 +154,7 @@ fun LargeItemButtonWithDrawable(
     @DrawableRes icon: Int,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
+    @StringRes subtitleQaTag: Int? = null,
     colors: ButtonColors = transparentButtonColors(),
     shape: Shape = RectangleShape,
     onClick: () -> Unit
@@ -150,6 +162,7 @@ fun LargeItemButtonWithDrawable(
     ItemButtonWithDrawable(
         textId, icon, modifier,
         subtitle = subtitle,
+        subtitleQaTag = subtitleQaTag,
         textStyle = LocalType.current.h8,
         colors = colors,
         shape = shape,
@@ -163,6 +176,7 @@ fun ItemButtonWithDrawable(
     @DrawableRes icon: Int,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
+    @StringRes subtitleQaTag: Int? = null,
     textStyle: TextStyle = LocalType.current.xl,
     colors: ButtonColors = transparentButtonColors(),
     shape: Shape = RectangleShape,
@@ -181,6 +195,8 @@ fun ItemButtonWithDrawable(
             )
         },
         textStyle = textStyle,
+        subtitle = subtitle,
+        subtitleQaTag = subtitleQaTag,
         colors = colors,
         shape = shape,
         onClick = onClick
@@ -193,6 +209,7 @@ fun LargeItemButton(
     @DrawableRes icon: Int,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
+    @StringRes subtitleQaTag: Int? = null,
     colors: ButtonColors = transparentButtonColors(),
     shape: Shape = RectangleShape,
     onClick: () -> Unit
@@ -202,6 +219,7 @@ fun LargeItemButton(
         icon = icon,
         modifier = modifier,
         subtitle = subtitle,
+        subtitleQaTag = subtitleQaTag,
         minHeight = LocalDimensions.current.minLargeItemButtonHeight,
         textStyle = LocalType.current.h8,
         colors = colors,
@@ -216,6 +234,7 @@ fun LargeItemButton(
     @DrawableRes icon: Int,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
+    @StringRes subtitleQaTag: Int? = null,
     colors: ButtonColors = transparentButtonColors(),
     shape: Shape = RectangleShape,
     onClick: () -> Unit
@@ -225,6 +244,7 @@ fun LargeItemButton(
         icon = icon,
         modifier = modifier,
         subtitle = subtitle,
+        subtitleQaTag = subtitleQaTag,
         minHeight = LocalDimensions.current.minLargeItemButtonHeight,
         textStyle = LocalType.current.h8,
         colors = colors,
@@ -239,6 +259,7 @@ fun ItemButton(
     icon: Int,
     modifier: Modifier,
     subtitle: String? = null,
+    @StringRes subtitleQaTag: Int? = null,
     minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
     textStyle: TextStyle = LocalType.current.xl,
     subtitleStyle: TextStyle = LocalType.current.small,
@@ -250,6 +271,7 @@ fun ItemButton(
         text = text,
         modifier = modifier,
         subtitle = subtitle,
+        subtitleQaTag = subtitleQaTag,
         icon = {
             Icon(
                 painter = painterResource(id = icon),
@@ -275,6 +297,7 @@ fun ItemButton(
     @DrawableRes icon: Int,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
+    @StringRes subtitleQaTag: Int? = null,
     minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
     textStyle: TextStyle = LocalType.current.xl,
     subtitleStyle: TextStyle = LocalType.current.small,
@@ -286,6 +309,7 @@ fun ItemButton(
         text = stringResource(textId),
         modifier = modifier,
         subtitle = subtitle,
+        subtitleQaTag = subtitleQaTag,
         icon = {
             Icon(
                 painter = painterResource(id = icon),
@@ -313,6 +337,7 @@ fun ItemButton(
     icon: @Composable BoxScope.() -> Unit,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
+    @StringRes subtitleQaTag: Int? = null,
     minHeight: Dp = LocalDimensions.current.minLargeItemButtonHeight,
     textStyle: TextStyle = LocalType.current.xl,
     subtitleStyle: TextStyle = LocalType.current.small,
@@ -349,7 +374,8 @@ fun ItemButton(
             subtitle?.let {
                 Text(
                     text = it,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth()
+                        .qaTag(subtitleQaTag),
                     style = subtitleStyle,
                 )
             }

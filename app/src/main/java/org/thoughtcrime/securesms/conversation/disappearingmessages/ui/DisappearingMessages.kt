@@ -29,7 +29,7 @@ import org.thoughtcrime.securesms.ui.components.AppBarBackIcon
 import org.thoughtcrime.securesms.ui.components.AppBarText
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.components.appBarColors
-import org.thoughtcrime.securesms.ui.contentDescription
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -115,7 +115,7 @@ fun DisappearingMessages(
                 PrimaryOutlineButton(
                     stringResource(R.string.set),
                     modifier = Modifier
-                        .contentDescription(R.string.AccessibilityId_setButton)
+                        .qaTag(R.string.AccessibilityId_setButton)
                         .align(Alignment.CenterHorizontally)
                         .padding(bottom = LocalDimensions.current.spacing),
                     onClick = callbacks::onSetClick

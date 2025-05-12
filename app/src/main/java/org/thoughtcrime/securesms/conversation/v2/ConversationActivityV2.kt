@@ -198,6 +198,7 @@ import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.MediaUtil
 import org.thoughtcrime.securesms.util.PaddedImageSpan
 import org.thoughtcrime.securesms.util.SaveAttachmentTask
+import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
 import org.thoughtcrime.securesms.util.drawToBitmap
 import org.thoughtcrime.securesms.util.fadeIn
 import org.thoughtcrime.securesms.util.fadeOut
@@ -820,6 +821,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     // called from onCreate
     private fun setUpToolBar() {
+        binding.conversationAppBar.applySafeInsetsPaddings(WindowInsetsCompat.Type.statusBars())
+
         binding.conversationAppBar.setThemedContent {
            val data by viewModel.appBarData.collectAsState()
 

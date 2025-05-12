@@ -61,6 +61,7 @@ import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.ReactionDatabase
+import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.GroupThreadStatus
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -385,15 +386,13 @@ class ConversationViewModel(
                     )
                 }
 
-                if (conversation.isMuted) {
+                if (conversation.isMuted || conversation.notifyType == RecipientDatabase.NOTIFY_TYPE_MENTIONS) {
                     pagerData += ConversationAppBarPagerData(
-                        title = conversation.mutedUntil.takeUnless { it == Long.MAX_VALUE }
-                            ?.let { application.getString(R.string.notificationsMuted) }
-                            ?: application.getString(R.string.notificationsMuted),
+                        title = if(conversation.isMuted) application.getString(R.string.notificationsHeaderMute)
+                        else application.getString(R.string.notificationsHeaderMentionsOnly),
                         action = {
                             //todo UCS take user to new mute screen (old code had no click action for this)
-                        },
-                        R.drawable.ic_volume_off
+                        }
                     )
                 }
 

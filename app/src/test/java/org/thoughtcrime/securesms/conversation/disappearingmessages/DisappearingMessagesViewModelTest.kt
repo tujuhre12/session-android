@@ -25,13 +25,13 @@ import org.session.libsignal.utilities.guava.Optional
 import org.thoughtcrime.securesms.BaseViewModelTest
 import org.thoughtcrime.securesms.MainCoroutineRule
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.ExpiryRadioOption
-import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.OptionsCardData
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.UiState
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsNavigator
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.ui.GetString
+import org.thoughtcrime.securesms.ui.OptionsCardData
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
@@ -128,7 +128,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
         ).isEqualTo(
             UiState(
                 OptionsCardData(
-                    R.string.disappearingMessagesTimer,
+                    title = R.string.disappearingMessagesTimer,
                     typeOption(ExpiryMode.NONE, selected = true),
                     timeOption(ExpiryType.AFTER_SEND, 12.hours),
                     timeOption(ExpiryType.AFTER_SEND, 1.days),
@@ -426,6 +426,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
     ) = ExpiryRadioOption(
         value = type.mode(time),
         title = GetString(time),
+        qaTag = GetString(type.mode(time).duration),
         enabled = enabled,
         selected = selected
     )
@@ -493,10 +494,10 @@ fun typeOption(time: Duration, type: ExpiryType, selected: Boolean = false, enab
 
 fun typeOption(mode: ExpiryMode, selected: Boolean = false, enabled: Boolean = true) =
     ExpiryRadioOption(
-        mode,
-        GetString(mode.type.title),
-        mode.type.subtitle?.let(::GetString),
-        GetString(mode.type.contentDescription),
+        value = mode,
+        title = GetString(mode.type.title),
+        subtitle = mode.type.subtitle?.let(::GetString),
+        qaTag = GetString(mode.type.contentDescription),
         selected = selected,
         enabled = enabled
     )

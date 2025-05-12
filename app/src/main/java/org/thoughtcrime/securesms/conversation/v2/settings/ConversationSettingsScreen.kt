@@ -13,7 +13,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -47,17 +46,18 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.*
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.ClearMessagesGroupDeviceOnly
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.ClearMessagesGroupEveryone
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.HideGroupAdminClearMessagesDialog
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.HideSimpleDialog
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.DialogButtonModel
@@ -69,7 +69,7 @@ import org.thoughtcrime.securesms.ui.LoadingDialog
 import org.thoughtcrime.securesms.ui.RadioOption
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.BackAppBar
-import org.thoughtcrime.securesms.ui.components.TitledRadioButton
+import org.thoughtcrime.securesms.ui.components.DialogTitledRadioButton
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.getCellBottomShape
 import org.thoughtcrime.securesms.ui.getCellTopShape
@@ -343,8 +343,10 @@ fun ConversationSettingsSubCategory(
         Column {
             data.items.forEachIndexed { index, option ->
                 LargeItemButton(
+                    modifier = Modifier.qaTag(option.qaTag),
                     text = option.name,
                     subtitle = option.subtitle,
+                    subtitleQaTag = option.subtitleQaTag,
                     icon = option.icon,
                     shape = when (index) {
                         0 -> getCellTopShape()
@@ -373,6 +375,7 @@ fun GroupAdminClearMessagesDialog(
     val context = LocalContext.current
 
     AlertDialog(
+        modifier = modifier,
         onDismissRequest = {
             // hide dialog
             sendCommand(HideGroupAdminClearMessagesDialog)
@@ -382,11 +385,7 @@ fun GroupAdminClearMessagesDialog(
             .put(GROUP_NAME_KEY, groupName)
             .format()),
         content = {
-            TitledRadioButton(
-                contentPadding = PaddingValues(
-                    horizontal = LocalDimensions.current.xxsSpacing,
-                    vertical = 0.dp
-                ),
+            DialogTitledRadioButton(
                 option = RadioOption(
                     value = Unit,
                     title = GetString(stringResource(R.string.clearDeviceOnly)),
@@ -396,11 +395,7 @@ fun GroupAdminClearMessagesDialog(
                 deleteForEveryone = false
             }
 
-            TitledRadioButton(
-                contentPadding = PaddingValues(
-                    horizontal = LocalDimensions.current.xxsSpacing,
-                    vertical = 0.dp
-                ),
+            DialogTitledRadioButton(
                 option = RadioOption(
                     value = Unit,
                     title = GetString(stringResource(R.string.clearMessagesForEveryone)),

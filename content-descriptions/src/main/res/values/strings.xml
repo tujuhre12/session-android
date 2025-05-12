@@ -97,6 +97,16 @@
     <string name="qa_conversation_settings_disappearing_sub">disappearing-messages-timer-details-menu-option</string>
     <string name="qa_conversation_settings_pin">pin-conversation-menu-option</string>
     <string name="qa_conversation_settings_notifications">notifications-menu-option</string>
+    <string name="qa_conversation_settings_notifications_sub">notifications-details-menu-option</string>
+    <string name="qa_conversation_settings_notifications_radio_all">notifications-all-messages-radio-button</string>
+    <string name="qa_conversation_settings_notifications_radio_mentions">notifications-mentions-only-radio-button</string>
+    <string name="qa_conversation_settings_notifications_radio_mute">notifications-mute-radio-button</string>
+    <string name="qa_conversation_settings_notifications_radio_muted_until">notifications-muted-until-radio-button</string>
+    <string name="qa_conversation_settings_notifications_radio_forever">notifications-forever-time-option</string>
+    <string name="qa_conversation_settings_notifications_radio_1h">notifications-one-hour-time-option</string>
+    <string name="qa_conversation_settings_notifications_radio_2h">notifications-two-hours-time-option</string>
+    <string name="qa_conversation_settings_notifications_radio_1d">notifications-one-day-time-option</string>
+    <string name="qa_conversation_settings_notifications_radio_1w">notifications-one-week-time-option</string>
     <string name="qa_conversation_settings_attachments">attachments-menu-option</string>
     <string name="qa_conversation_settings_block">block-user-menu-option</string>
     <string name="qa_conversation_settings_clear_messages">clear-all-messages-menu-option</string>

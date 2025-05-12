@@ -93,7 +93,7 @@ class ConversationView : LinearLayout {
         val drawableRes = if (recipient.isMuted || recipient.notifyType == NOTIFY_TYPE_NONE) {
             R.drawable.ic_volume_off
         } else {
-            R.drawable.ic_notifications_mentions
+            R.drawable.ic_at_sign
         }
         binding.muteIndicatorImageView.setImageResource(drawableRes)
 

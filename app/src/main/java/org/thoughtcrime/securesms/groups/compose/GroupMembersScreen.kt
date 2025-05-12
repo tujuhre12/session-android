@@ -11,6 +11,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import network.loki.messenger.R
@@ -18,6 +19,7 @@ import network.loki.messenger.libsession_util.util.GroupMember
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.groups.GroupMemberState
 import org.thoughtcrime.securesms.groups.GroupMembersViewModel
+import org.thoughtcrime.securesms.ui.ObserveAsEvents
 import org.thoughtcrime.securesms.ui.SearchBar
 import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.qaTag
@@ -33,12 +35,19 @@ fun GroupMembersScreen(
     viewModel: GroupMembersViewModel,
     onBack: () -> Unit,
 ) {
+
+    val context = LocalContext.current
+    ObserveAsEvents(flow = viewModel.navigationActions) { intent ->
+        context.startActivity(intent)
+    }
+
     GroupMembers(
         onBack = onBack,
         members = viewModel.members.collectAsState().value,
         searchQuery = viewModel.searchQuery.collectAsState().value,
         onSearchQueryChanged = viewModel::onSearchQueryChanged,
         onSearchQueryClear = {viewModel.onSearchQueryChanged("") },
+        onMemberClicked = viewModel::onMemberClicked
     )
 
 }
@@ -51,6 +60,7 @@ fun GroupMembers(
     searchQuery: String,
     onSearchQueryChanged: (String) -> Unit,
     onSearchQueryClear: () -> Unit,
+    onMemberClicked: (AccountId) -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -83,6 +93,7 @@ fun GroupMembers(
                     // Each member's view
                     MemberItem(
                         accountId = member.accountId,
+                        onClick = { onMemberClicked(member.accountId) },
                         title = member.name,
                         subtitle = member.statusLabel,
                         subtitleColor = if (member.highlightStatus) {
@@ -174,6 +185,7 @@ private fun EditGroupPreview() {
             searchQuery = "",
             onSearchQueryChanged = {},
             onSearchQueryClear = {},
+            onMemberClicked = {},
         )
     }
 }

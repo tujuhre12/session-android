@@ -124,7 +124,6 @@ fun InviteContacts(
                     onClick = onDoneClicked,
                     modifier = Modifier
                         .padding(vertical = LocalDimensions.current.spacing)
-                        .defaultMinSize(minWidth = LocalDimensions.current.minButtonWidth)
                         .qaTag(R.string.AccessibilityId_selectContactConfirm),
                 ) {
                     Text(
