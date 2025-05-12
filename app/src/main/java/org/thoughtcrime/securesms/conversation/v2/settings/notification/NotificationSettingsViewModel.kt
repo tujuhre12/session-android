@@ -2,8 +2,10 @@ package org.thoughtcrime.securesms.conversation.v2.settings.notification
 
 import android.content.Context
 import android.widget.Toast
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.squareup.phrase.Phrase
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -16,6 +18,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.LocalisedTimeUtil
+import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.DATE_TIME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_LARGE_KEY
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsNavigator
@@ -125,10 +129,13 @@ class NotificationSettingsViewModel @AssistedInject constructor(
             // then add a new option that specifies how much longer the mute  is on for
             if(currentMutedUntil != null && currentMutedUntil!! > 0L &&
                 currentMutedUntil!! < System.currentTimeMillis() + TimeUnit.DAYS.toMillis(14)){ // more than two weeks from now means forever
+                val title = Phrase.from(context.getString(R.string.notificationsMutedForTime))
+                    .put(DATE_TIME_KEY, formatTime(currentMutedUntil!!))
+                    .format().toString()
                 muteRadioOptions.add(
                     RadioOption(
                         value = currentMutedUntil!!,
-                        title = GetString("Muted Until: ${formatTime(currentMutedUntil!!)}"), //todo UCS need the crowdin string
+                        title = GetString(title),
                         qaTag = GetString(R.string.qa_conversation_settings_notifications_radio_muted_until),
                         selected = selectedMuteDuration == currentMutedUntil
                     )
