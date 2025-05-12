@@ -167,6 +167,7 @@ import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.giph.ui.GiphyActivity
+import org.thoughtcrime.securesms.groups.GroupMembersActivity
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.home.UserDetailsBottomSheet
 import org.thoughtcrime.securesms.home.search.getSearchName
@@ -648,6 +649,13 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     is ConversationUiEvent.ShowDisappearingMessages -> {
                         val intent = Intent(this@ConversationActivityV2, DisappearingMessagesActivity::class.java).apply {
                             putExtra(DisappearingMessagesActivity.THREAD_ID, event.threadId)
+                        }
+                        startActivity(intent)
+                    }
+
+                    is ConversationUiEvent.ShowGroupMembers -> {
+                        val intent = Intent(this@ConversationActivityV2, GroupMembersActivity::class.java).apply {
+                            putExtra(GroupMembersActivity.GROUP_ID, event.groupId)
                         }
                         startActivity(intent)
                     }

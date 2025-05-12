@@ -411,7 +411,7 @@ class ConversationViewModel(
                     pagerData += ConversationAppBarPagerData(
                         title = title,
                         action = {
-                            //todo UCS take user to appropriate group members screen (old code had no click action for this)
+                            showGroupMembers()
                         },
                     )
                 }
@@ -1214,6 +1214,14 @@ class ConversationViewModel(
         }
     }
 
+    fun showGroupMembers() {
+        recipient?.let { convo ->
+            val groupId = recipient?.address?.toString() ?: return
+
+            _uiEvents.tryEmit(ConversationUiEvent.ShowGroupMembers(groupId))
+        }
+    }
+
     @dagger.assisted.AssistedFactory
     interface AssistedFactory {
         fun create(threadId: Long, edKeyPair: KeyPair?): Factory
@@ -1337,6 +1345,7 @@ data class ConversationUiState(
 sealed interface ConversationUiEvent {
     data class NavigateToConversation(val threadId: Long) : ConversationUiEvent
     data class ShowDisappearingMessages(val threadId: Long) : ConversationUiEvent
+    data class ShowGroupMembers(val groupId: String) : ConversationUiEvent
 }
 
 sealed interface MessageRequestUiState {

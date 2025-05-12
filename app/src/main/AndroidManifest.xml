@@ -188,7 +188,9 @@
         <activity android:name="org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesActivity"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.Session.DayNight.NoActionBar" />
-
+        <activity android:name="org.thoughtcrime.securesms.groups.GroupMembersActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Session.DayNight.NoActionBar" />
         <activity
             android:exported="true"
             android:name="org.thoughtcrime.securesms.ShareActivity"
