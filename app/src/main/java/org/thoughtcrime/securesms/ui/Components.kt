@@ -711,6 +711,7 @@ fun SearchBar(
                     innerTextField()
                     if (query.isEmpty() && placeholder != null) {
                         Text(
+                            modifier = Modifier.qaTag(R.string.qa_conversation_search_input),
                             text = placeholder,
                             color = LocalColors.current.textSecondary,
                             style = LocalType.current.xl
@@ -724,7 +725,7 @@ fun SearchBar(
                     colorFilter = ColorFilter.tint(
                         LocalColors.current.textSecondary
                     ),
-                    modifier = Modifier
+                    modifier = Modifier.qaTag(R.string.qa_conversation_search_clear)
                         .padding(
                             horizontal = LocalDimensions.current.smallSpacing,
                             vertical = LocalDimensions.current.xxsSpacing

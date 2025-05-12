@@ -54,6 +54,7 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.RecipientDatabase
@@ -868,6 +869,12 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         )
     }
 
+    private fun goBackToSearch(){
+        viewModelScope.launch {
+            navigator.returnResult(ConversationActivityV2.SHOW_SEARCH, true)
+        }
+    }
+
     fun onCommand(command: Commands) {
         when (command) {
             is Commands.CopyAccountId -> copyAccountId()
@@ -958,7 +965,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             name = context.getString(R.string.searchConversation),
             icon = R.drawable.ic_search,
             qaTag = R.string.qa_conversation_settings_search,
-            onClick = ::copyAccountId //todo UCS get proper method
+            onClick = ::goBackToSearch
         )
     }
 

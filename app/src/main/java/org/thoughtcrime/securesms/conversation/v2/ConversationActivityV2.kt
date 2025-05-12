@@ -26,7 +26,6 @@ import android.text.style.ImageSpan
 import android.util.Pair
 import android.util.TypedValue
 import android.view.ActionMode
-import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup.LayoutParams
@@ -321,7 +320,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
     // Search
     val searchViewModel: SearchViewModel by viewModels()
-    var searchViewItem: MenuItem? = null
 
     private val bufferedLastSeenChannel = Channel<Long>(capacity = 512, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
@@ -431,6 +429,14 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     private var isVoiceToastShowing = false
 
+    // launcher that handles getting results back from the settings page
+    private val settingsLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
+        if (res.resultCode == RESULT_OK &&
+            res.data?.getBooleanExtra(SHOW_SEARCH, false) == true) {
+            onSearchOpened()
+        }
+    }
+
     // Only show a toast related to voice messages if the toast is not already showing (used if to
     // rate limit & prevent toast queueing when the user spams the microphone button).
     private fun showVoiceMessageToastIfNotAlreadyVisible() {
@@ -484,6 +490,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         const val FROM_GROUP_THREAD_ID = "from_group_thread_id"
         const val SCROLL_MESSAGE_ID = "scroll_message_id"
         const val SCROLL_MESSAGE_AUTHOR = "scroll_message_author"
+        const val SHOW_SEARCH = "show_search"
         // Request codes
         const val PICK_DOCUMENT = 2
         const val TAKE_PHOTO = 7
@@ -847,11 +854,13 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                onBackPressed = ::finish,
                onCallPressed = ::callRecipient,
                onAvatarPressed = {
-                   startActivity(ConversationSettingsActivity.createIntent(
+                   val intent = ConversationSettingsActivity.createIntent(
                        context = this,
                        threadId = viewModel.threadId,
                        threadAddress = viewModel.recipient?.address
-                   ))
+                   )
+
+                   settingsLauncher.launch(intent)
                }
            )
        }
@@ -1579,7 +1588,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             deprecationManager = viewModel.legacyGroupDeprecationManager
         )
         actionModeCallback.delegate = this
-        searchViewItem?.collapseActionView()
+        if(binding.searchBottomBar.isVisible) onSearchClosed()
         if (actionMode == null) { // Nothing should be selected if this is the case
             adapter.toggleSelection(message, position)
             this.actionMode = startActionMode(actionModeCallback, ActionMode.TYPE_PRIMARY)
