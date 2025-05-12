@@ -3,6 +3,8 @@ package org.thoughtcrime.securesms.conversation.v2.search
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import java.io.Closeable
 import javax.inject.Inject
 import org.session.libsession.utilities.Debouncer
@@ -18,24 +20,27 @@ class SearchViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val result: CloseableLiveData<SearchResult> = CloseableLiveData()
-    private val debouncer: Debouncer = Debouncer(500)
-    private var firstSearch = false
+    private val debouncer: Debouncer = Debouncer(200)
     private var searchOpen = false
-    private var activeQuery: String? = null
     private var activeThreadId: Long = 0
     val searchResults: LiveData<SearchResult>
         get() = result
 
+    private val mutableSearchQuery: MutableStateFlow<String?> = MutableStateFlow(null)
+    val searchQuery: StateFlow<String?> get() = mutableSearchQuery
+
+    private val MIN_QUERY_SIZE = 2
+
     fun onQueryUpdated(query: String, threadId: Long) {
-        if (query == activeQuery) {
+        if (query == mutableSearchQuery.value) {
             return
         }
         updateQuery(query, threadId)
     }
 
     fun onMissingResult() {
-        if (activeQuery != null) {
-            updateQuery(activeQuery!!, activeThreadId)
+        if (mutableSearchQuery.value != null) {
+            updateQuery(mutableSearchQuery.value!!, activeThreadId)
         }
     }
 
@@ -55,12 +60,11 @@ class SearchViewModel @Inject constructor(
 
     fun onSearchOpened() {
         searchOpen = true
-        firstSearch = true
     }
 
     fun onSearchClosed() {
         searchOpen = false
-        activeQuery = null
+        mutableSearchQuery.value = null
         debouncer.clear()
         result.close()
     }
@@ -71,13 +75,18 @@ class SearchViewModel @Inject constructor(
     }
 
     private fun updateQuery(query: String, threadId: Long) {
-        activeQuery = query
+        mutableSearchQuery.value = query
         activeThreadId = threadId
+
+        if(query.length < MIN_QUERY_SIZE) {
+            result.value = SearchResult(CursorList.emptyList(), 0)
+            return
+        }
+
         debouncer.publish {
-            firstSearch = false
             searchRepository.query(query, threadId) { messages: CursorList<MessageResult?> ->
                 runOnMain {
-                    if (searchOpen && query == activeQuery) {
+                    if (searchOpen && query == mutableSearchQuery.value) {
                         result.setValue(SearchResult(messages, 0))
                     } else {
                         messages.close()
@@ -86,8 +95,6 @@ class SearchViewModel @Inject constructor(
             }
         }
     }
-
-    public fun getActiveQuery() = activeQuery
 
     class SearchResult(private val results: CursorList<MessageResult?>, val position: Int) : Closeable {
 

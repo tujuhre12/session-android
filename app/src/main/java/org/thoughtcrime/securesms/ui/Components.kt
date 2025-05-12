@@ -78,6 +78,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.min
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -691,7 +692,8 @@ fun SearchBar(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(backgroundColor, RoundedCornerShape(100))
+                    .heightIn(min = LocalDimensions.current.minSearchInputHeight)
+                    .background(backgroundColor, MaterialTheme.shapes.small)
             ) {
                 Image(
                     painterResource(id = R.drawable.ic_search),

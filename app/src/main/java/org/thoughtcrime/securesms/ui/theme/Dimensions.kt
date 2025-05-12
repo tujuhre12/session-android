@@ -16,6 +16,7 @@ data class Dimensions(
     val xlargeSpacing: Dp = 64.dp,
 
     val appBarHeight: Dp = 64.dp,
+    val minSearchInputHeight: Dp = 35.dp,
     val minItemButtonHeight: Dp = 50.dp,
     val minLargeItemButtonHeight: Dp = 60.dp,
     val minButtonWidth: Dp = 160.dp,

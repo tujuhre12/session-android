@@ -457,9 +457,13 @@ class VisibleMessageContentView : ConstraintLayout {
                 context = context
             )
             body = SearchUtil.getHighlightedSpan(Locale.getDefault(),
-                { BackgroundColorSpan(Color.WHITE) }, body, searchQuery)
+                {
+                    BackgroundColorSpan(context.getColorFromAttr(R.attr.colorPrimary))
+                }, body, searchQuery)
             body = SearchUtil.getHighlightedSpan(Locale.getDefault(),
-                { ForegroundColorSpan(Color.BLACK) }, body, searchQuery)
+                {
+                    ForegroundColorSpan(context.getColorFromAttr(android.R.attr.textColorPrimary))
+                }, body, searchQuery)
 
             Linkify.addLinks(body, Linkify.WEB_URLS)
 

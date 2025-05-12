@@ -848,11 +848,16 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
         binding.conversationAppBar.setThemedContent {
            val data by viewModel.appBarData.collectAsState()
+            val query by searchViewModel.searchQuery.collectAsState()
 
            ConversationAppBar(
                data = data,
                onBackPressed = ::finish,
                onCallPressed = ::callRecipient,
+               searchQuery = query ?: "",
+               onSearchQueryChanged = ::onSearchQueryUpdated,
+               onSearchQueryClear = {  onSearchQueryUpdated("") },
+               onSearchCanceled = ::onSearchClosed,
                onAvatarPressed = {
                    val intent = ConversationSettingsActivity.createIntent(
                        context = this,
@@ -2599,7 +2604,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             if (result.getResults().isNotEmpty()) {
                 result.getResults()[result.position]?.let {
                     jumpToMessage(it.messageRecipient.address, it.sentTimestampMs, true) {
-                        searchViewModel.onMissingResult() }
+                        searchViewModel.onMissingResult()
+                    }
                 }
             }
 
@@ -2608,6 +2614,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     fun onSearchOpened() {
+        viewModel.onSearchOpened()
         searchViewModel.onSearchOpened()
         binding.searchBottomBar.visibility = View.VISIBLE
         binding.searchBottomBar.setData(0, 0)
@@ -2617,6 +2624,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     fun onSearchClosed() {
+        viewModel.onSearchClosed()
         searchViewModel.onSearchClosed()
         binding.searchBottomBar.visibility = View.GONE
         binding.inputBar.visibility = View.VISIBLE
@@ -2626,8 +2634,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     fun onSearchQueryUpdated(query: String) {
-        searchViewModel.onQueryUpdated(query, viewModel.threadId)
         binding.searchBottomBar.showLoading()
+        searchViewModel.onQueryUpdated(query, viewModel.threadId)
         adapter.onSearchQueryUpdated(query)
     }
 
