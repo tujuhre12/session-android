@@ -41,12 +41,10 @@ import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.ShortcutLauncherActivity
 import org.thoughtcrime.securesms.contacts.SelectContactsToInviteToGroupActivity
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
-import org.thoughtcrime.securesms.conversation.v2.utilities.NotificationUtils
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.groups.legacy.EditLegacyGroupActivity
 import org.thoughtcrime.securesms.groups.legacy.EditLegacyGroupActivity.Companion.groupIDKey
-import org.thoughtcrime.securesms.showMuteDialog
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.util.BitmapUtil
 import java.io.IOException
