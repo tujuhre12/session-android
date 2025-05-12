@@ -19,7 +19,6 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.utilities.TextSecurePreferences
-import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.ExpiryCallbacks
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.UiState
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.toUiState
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsNavigator
@@ -39,7 +38,7 @@ class DisappearingMessagesViewModel @AssistedInject constructor(
     private val groupDb: GroupDatabase,
     private val storage: Storage,
     private val navigator: ConversationSettingsNavigator,
-) : ViewModel(), ExpiryCallbacks {
+) : ViewModel() {
 
     private val _state = MutableStateFlow(
         State(
@@ -84,9 +83,9 @@ class DisappearingMessagesViewModel @AssistedInject constructor(
         }
     }
 
-    override fun setValue(value: ExpiryMode) = _state.update { it.copy(expiryMode = value) }
+    fun onOptionSelected(value: ExpiryMode) = _state.update { it.copy(expiryMode = value) }
 
-    override fun onSetClick() = viewModelScope.launch {
+    fun onSetClicked() = viewModelScope.launch {
         val state = _state.value
         val mode = state.expiryMode
         val address = state.address

@@ -13,7 +13,8 @@ fun DisappearingMessagesScreen(
     val uiState by viewModel.uiState.collectAsState(UiState())
     DisappearingMessages(
         state = uiState,
-        callbacks = viewModel,
+        onOptionSelected = viewModel::onOptionSelected,
+        onSetClicked = viewModel::onSetClicked,
         onBack = onBack
     )
 }
