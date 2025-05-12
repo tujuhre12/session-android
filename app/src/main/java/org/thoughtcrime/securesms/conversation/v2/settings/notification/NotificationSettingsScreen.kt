@@ -13,11 +13,13 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.BottomFadingEdgeBox
 import org.thoughtcrime.securesms.ui.Callbacks
@@ -88,6 +90,7 @@ fun NotificationSettings(
                 }
             }
 
+            val coroutineScope = rememberCoroutineScope()
             PrimaryOutlineButton(
                 stringResource(R.string.set),
                 modifier = Modifier
@@ -95,7 +98,12 @@ fun NotificationSettings(
                     .align(Alignment.CenterHorizontally)
                     .padding(bottom = LocalDimensions.current.spacing),
                 enabled = state.enableButton,
-                onClick = callbacks::onSetClick
+                onClick = {
+                    coroutineScope.launch {
+                        callbacks.onSetClick()
+                        onBack() // leave screen once value is set
+                    }
+                }
             )
         }
     }

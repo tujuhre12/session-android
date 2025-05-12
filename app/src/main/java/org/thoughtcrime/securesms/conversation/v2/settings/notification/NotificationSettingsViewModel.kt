@@ -41,7 +41,6 @@ class NotificationSettingsViewModel @AssistedInject constructor(
     @ApplicationContext private val context: Context,
     private val recipientDatabase: RecipientDatabase,
     private val repository: ConversationRepository,
-    private val navigator: ConversationSettingsNavigator,
 ) : ViewModel(), Callbacks<Any> {
     private var thread: Recipient? = null
 
@@ -214,9 +213,6 @@ class NotificationSettingsViewModel @AssistedInject constructor(
                 Toast.makeText(context, toastString, Toast.LENGTH_LONG).show()
             }
         }
-
-        // navigate back to the conversation settings
-        navigator.navigateUp()
     }
 
     override fun setValue(value: Any) {

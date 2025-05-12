@@ -391,7 +391,7 @@ class ConversationViewModel(
                         title = if(conversation.isMuted) application.getString(R.string.notificationsHeaderMute)
                         else application.getString(R.string.notificationsHeaderMentionsOnly),
                         action = {
-                            //todo UCS take user to new mute screen (old code had no click action for this)
+                            showNotificationSettings()
                         }
                     )
                 }
@@ -1202,7 +1202,7 @@ class ConversationViewModel(
 
     fun getUsername(accountId: String) = usernameUtils.getContactNameWithAccountID(accountId)
 
-    fun showDisappearingMessages() {
+    private fun showDisappearingMessages() {
         recipient?.let { convo ->
             if (convo.isLegacyGroupRecipient) {
                 groupDb.getGroup(convo.address.toGroupString()).orNull()?.run {
@@ -1214,12 +1214,16 @@ class ConversationViewModel(
         }
     }
 
-    fun showGroupMembers() {
+    private fun showGroupMembers() {
         recipient?.let { convo ->
             val groupId = recipient?.address?.toString() ?: return
 
             _uiEvents.tryEmit(ConversationUiEvent.ShowGroupMembers(groupId))
         }
+    }
+
+    private fun showNotificationSettings() {
+        _uiEvents.tryEmit(ConversationUiEvent.ShowNotificationSettings(threadId))
     }
 
     @dagger.assisted.AssistedFactory
@@ -1345,6 +1349,7 @@ data class ConversationUiState(
 sealed interface ConversationUiEvent {
     data class NavigateToConversation(val threadId: Long) : ConversationUiEvent
     data class ShowDisappearingMessages(val threadId: Long) : ConversationUiEvent
+    data class ShowNotificationSettings(val threadId: Long) : ConversationUiEvent
     data class ShowGroupMembers(val groupId: String) : ConversationUiEvent
 }
 

@@ -186,7 +186,7 @@ object ConversationMenuHelper {
             R.id.menu_view_all_media -> { showAllMedia(context, thread) }
             R.id.menu_search -> { search(context) }
             R.id.menu_add_shortcut -> { addShortcut(context, thread) }
-            R.id.menu_expiring_messages -> { showDisappearingMessages(context, thread) }
+            //R.id.menu_expiring_messages -> { showDisappearingMessages(context, thread) }
            /* R.id.menu_unblock -> { unblock(context, thread) }
             R.id.menu_block -> { block(context, thread, deleteThread = false) }*/
             R.id.menu_copy_account_id -> { copyAccountID(context, thread) }
@@ -256,10 +256,10 @@ object ConversationMenuHelper {
         }.execute()
     }
 
-    private fun showDisappearingMessages(context: Context, thread: Recipient) {
+   /* private fun showDisappearingMessages(context: Context, thread: Recipient) {
         val listener = context as? ConversationMenuListener ?: return
         listener.showDisappearingMessages(thread)
-    }
+    }*/
 
  /*   private fun unblock(context: Context, thread: Recipient) {
         if (!thread.isContactRecipient) { return }
@@ -475,7 +475,6 @@ object ConversationMenuHelper {
     interface ConversationMenuListener {
         fun copyAccountID(accountId: String)
         fun copyOpenGroupUrl(thread: Recipient)
-        fun showDisappearingMessages(thread: Recipient)
     }
 
 }
