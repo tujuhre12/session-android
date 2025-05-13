@@ -151,7 +151,7 @@ private fun AppDisguiseSettings(
                     }
 
                     Text(
-                        stringResource(R.string.appIconAndNameDescription),
+                        stringResource(R.string.appIconAndNameSelectionDescription),
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = LocalDimensions.current.smallSpacing),
