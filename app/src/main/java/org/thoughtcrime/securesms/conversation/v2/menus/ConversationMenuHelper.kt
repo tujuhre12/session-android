@@ -9,10 +9,6 @@ import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.view.ContextThemeWrapper
-import androidx.appcompat.widget.SearchView
-import androidx.appcompat.widget.SearchView.OnQueryTextListener
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
@@ -39,8 +35,6 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
 import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.ShortcutLauncherActivity
-import org.thoughtcrime.securesms.contacts.SelectContactsToInviteToGroupActivity
-import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.groups.legacy.EditLegacyGroupActivity
@@ -131,7 +125,7 @@ object ConversationMenuHelper {
         }*/
 
         // Search
-        val searchViewItem = menu.findItem(R.id.menu_search)
+        /*val searchViewItem = menu.findItem(R.id.menu_search)
         (context as ConversationActivityV2).searchViewItem = searchViewItem
         val searchView = searchViewItem.actionView as SearchView
         val queryListener = object : OnQueryTextListener {
@@ -161,7 +155,7 @@ object ConversationMenuHelper {
                 context.onSearchClosed()
                 return true
             }
-        })
+        })*/
     }
 
     /**
@@ -182,7 +176,7 @@ object ConversationMenuHelper {
     ): ReceiveChannel<GroupLeavingStatus>? {
         when (item.itemId) {
             R.id.menu_view_all_media -> { showAllMedia(context, thread) }
-            R.id.menu_search -> { search(context) }
+         //   R.id.menu_search -> { search(context) }
             R.id.menu_add_shortcut -> { addShortcut(context, thread) }
             //R.id.menu_expiring_messages -> { showDisappearingMessages(context, thread) }
            /* R.id.menu_unblock -> { unblock(context, thread) }
@@ -208,10 +202,10 @@ object ConversationMenuHelper {
 //        activity.startActivity(MediaOverviewActivity.createIntent(context, thread.address))
     }
 
-    private fun search(context: Context) {
-        val searchViewModel = (context as ConversationActivityV2).searchViewModel
-        searchViewModel.onSearchOpened()
-    }
+//    private fun search(context: Context) {
+//        val searchViewModel = (context as ConversationActivityV2).searchViewModel
+//        searchViewModel.onSearchOpened()
+//    }
 
     @SuppressLint("StaticFieldLeak")
     private fun addShortcut(context: Context, thread: Recipient) {

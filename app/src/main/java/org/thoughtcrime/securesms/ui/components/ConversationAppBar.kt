@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.ui.components
 
 import androidx.annotation.DrawableRes
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -28,11 +30,15 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -42,8 +48,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.min
 import network.loki.messenger.R
+import org.thoughtcrime.securesms.ui.SearchBar
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -61,71 +70,122 @@ import org.thoughtcrime.securesms.util.AvatarUIElement
 @Composable
 fun ConversationAppBar(
     data: ConversationAppBarData,
+    searchQuery: String,
+    onSearchQueryChanged: (String) -> Unit,
+    onSearchQueryClear: () -> Unit,
+    onSearchCanceled: () -> Unit,
     onBackPressed: () -> Unit,
     onCallPressed: () -> Unit,
-    onAvatarPressed: () -> Unit
+    onAvatarPressed: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    val pagerState = rememberPagerState(pageCount = { data.pagerData.size })
+    Box (
+        modifier = modifier
+    ) {
+        // cross fade between the default app bar and the search bar
+        Crossfade(targetState = data.showSearch) { showSearch ->
+            when(showSearch){
+                false -> {
+                    val pagerState = rememberPagerState(pageCount = { data.pagerData.size })
 
-    CenterAlignedTopAppBar(
-        windowInsets = WindowInsets(0, 0, 0, 0),
-        title = {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                AppBarText(
-                    modifier = Modifier.qaTag(R.string.AccessibilityId_conversationTitle),
-                    title = data.title,
-                    singleLine = true
-                )
+                    CenterAlignedTopAppBar(
+                        windowInsets = WindowInsets(0, 0, 0, 0),
+                        title = {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                AppBarText(
+                                    modifier = Modifier.qaTag(R.string.AccessibilityId_conversationTitle),
+                                    title = data.title,
+                                    singleLine = true
+                                )
 
-                if (data.pagerData.isNotEmpty()) {
-                    // Settings content pager
-                    ConversationSettingsPager(
-                        modifier = Modifier.padding(top = 2.dp)
-                            .fillMaxWidth(0.8f),
-                        pages = data.pagerData,
-                        pagerState = pagerState
-                    )
+                                if (data.pagerData.isNotEmpty()) {
+                                    // Settings content pager
+                                    ConversationSettingsPager(
+                                        modifier = Modifier.padding(top = 2.dp)
+                                            .fillMaxWidth(0.8f),
+                                        pages = data.pagerData,
+                                        pagerState = pagerState
+                                    )
 
-                    // Dot indicators
-                    PagerIndicator(
-                        modifier = Modifier.padding(top = 2.dp),
-                        pageCount = data.pagerData.size,
-                        currentPage = pagerState.currentPage
+                                    // Dot indicators
+                                    PagerIndicator(
+                                        modifier = Modifier.padding(top = 2.dp),
+                                        pageCount = data.pagerData.size,
+                                        currentPage = pagerState.currentPage
+                                    )
+                                }
+                            }
+                        },
+                        navigationIcon = {
+                            AppBarBackIcon(onBack = onBackPressed)
+                        },
+                        actions = {
+                            if (data.showCall) {
+                                IconButton(
+                                    onClick = onCallPressed
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.ic_phone),
+                                        contentDescription = stringResource(id = R.string.AccessibilityId_call),
+                                        tint = LocalColors.current.text,
+                                        modifier = Modifier.size(LocalDimensions.current.iconMedium)
+                                    )
+                                }
+                            }
+
+                            // Avatar
+                            if (data.showAvatar) {
+                                Avatar(
+                                    modifier = Modifier.qaTag(R.string.qa_conversation_avatar)
+                                        .clickable { onAvatarPressed() },
+                                    size = LocalDimensions.current.iconLargeAvatar,
+                                    data = data.avatarUIData
+                                )
+                            }
+                        },
+                        colors = appBarColors(LocalColors.current.background)
                     )
                 }
-            }
-        },
-        navigationIcon = {
-            AppBarBackIcon(onBack = onBackPressed)
-        },
-        actions = {
-            if (data.showCall) {
-                IconButton(
-                    onClick = onCallPressed
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_phone),
-                        contentDescription = stringResource(id = R.string.AccessibilityId_call),
-                        tint = LocalColors.current.text,
-                        modifier = Modifier.size(LocalDimensions.current.iconMedium)
-                    )
+
+                true -> {
+                    Row(
+                        modifier = Modifier.padding(horizontal = LocalDimensions.current.smallSpacing)
+                            .heightIn(min = LocalDimensions.current.appBarHeight),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+
+                        val focusRequester = remember { FocusRequester() }
+                        LaunchedEffect (Unit) {
+                            focusRequester.requestFocus()
+                        }
+
+                        SearchBar(
+                            query = searchQuery,
+                            onValueChanged = onSearchQueryChanged,
+                            onClear = onSearchQueryClear,
+                            placeholder = stringResource(R.string.search),
+                            modifier = Modifier.weight(1f)
+                                .focusRequester(focusRequester),
+                            backgroundColor = LocalColors.current.backgroundSecondary,
+                        )
+
+                        Spacer(Modifier.width(LocalDimensions.current.xsSpacing))
+
+                        Text(
+                            modifier = Modifier.clickable {
+                                onSearchCanceled()
+                            },
+                            text = stringResource(R.string.cancel),
+                            style = LocalType.current.large,
+                        )
+                    }
                 }
             }
 
-            // Avatar
-            if (data.showAvatar) {
-                Avatar(
-                    modifier = Modifier.qaTag(R.string.qa_conversation_avatar)
-                        .clickable { onAvatarPressed() },
-                    size = LocalDimensions.current.iconLargeAvatar,
-                    data = data.avatarUIData
-                )
-            }
-        },
-        colors = appBarColors(LocalColors.current.background)
-    )
+        }
+    }
 }
 
 /**
@@ -136,9 +196,9 @@ data class ConversationAppBarData(
     val pagerData: List<ConversationAppBarPagerData>,
     val showAvatar: Boolean = false,
     val showCall: Boolean = false,
+    val showSearch: Boolean = false,
     val avatarUIData: AvatarUIData
 )
-
 
 /**
  * Data class representing a pager item data
@@ -261,7 +321,8 @@ class ConversationTopBarPreviewParams(
     val title: String,
     val settingsPagesCount: Int,
     val isCallAvailable: Boolean,
-    val showAvatar: Boolean
+    val showAvatar: Boolean,
+    val showSearch: Boolean = false
 )
 
 /**
@@ -275,6 +336,14 @@ class ConversationTopBarParamsProvider : PreviewParameterProvider<ConversationTo
             settingsPagesCount = 0,
             isCallAvailable = false,
             showAvatar = true
+        ),
+        // search
+        ConversationTopBarPreviewParams(
+            title = "Alice Smith",
+            settingsPagesCount = 0,
+            isCallAvailable = false,
+            showAvatar = true,
+            showSearch = true
         ),
         // Basic conversation with no settings
         ConversationTopBarPreviewParams(
@@ -346,6 +415,7 @@ fun ConversationTopBarPreview(
                 pagerData = settingsPages,
                 showAvatar = params.showAvatar,
                 showCall = params.isCallAvailable,
+                showSearch = params.showSearch,
                 avatarUIData = AvatarUIData(
                     listOf(
                         AvatarUIElement(
@@ -357,7 +427,11 @@ fun ConversationTopBarPreview(
             ),
             onBackPressed = { /* no-op for preview */ },
             onCallPressed = { /* no-op for preview */ },
-            onAvatarPressed = { /* no-op for preview */ }
+            onAvatarPressed = { /* no-op for preview */ },
+            searchQuery = "",
+            onSearchQueryChanged = {},
+            onSearchQueryClear = {},
+            onSearchCanceled = {},
         )
     }
 }

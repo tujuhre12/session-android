@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.conversation.v2.settings
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -91,6 +92,7 @@ fun ConversationSettingsNavHost(
     threadId: Long,
     threadAddress: Address?,
     navigator: ConversationSettingsNavigator,
+    returnResult: (String, Boolean) -> Unit,
     onBack: () -> Unit
 ){
     SharedTransitionLayout {
@@ -108,6 +110,10 @@ fun ConversationSettingsNavHost(
 
                 is NavigationAction.NavigateToIntent -> {
                     navController.context.startActivity(action.intent)
+                }
+
+                is NavigationAction.ReturnResult -> {
+                    returnResult(action.code, action.value)
                 }
             }
         }

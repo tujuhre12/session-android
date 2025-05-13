@@ -33,6 +33,10 @@ class ConversationSettingsActivity: FullComposeScreenLockActivity() {
             threadId = intent.getLongExtra(THREAD_ID, 0),
             threadAddress =   IntentCompat.getParcelableExtra(intent, THREAD_ADDRESS, Address::class.java),
             navigator = navigator,
+            returnResult = { code, value ->
+                setResult(RESULT_OK, Intent().putExtra(code, value))
+                finish()
+            },
             onBack = this::finish
         )
     }

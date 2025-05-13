@@ -33,6 +33,10 @@ class ConversationSettingsNavigator @Inject constructor(){
     suspend fun navigateToIntent(intent: Intent) {
         _navigationActions.send(NavigationAction.NavigateToIntent(intent))
     }
+
+    suspend fun returnResult(code: String, value: Boolean) {
+        _navigationActions.send(NavigationAction.ReturnResult(code, value))
+    }
 }
 
 sealed interface NavigationAction {
@@ -45,5 +49,10 @@ sealed interface NavigationAction {
 
     data class NavigateToIntent(
         val intent: Intent
+    ): NavigationAction
+
+    data class ReturnResult(
+        val code: String,
+        val value: Boolean
     ): NavigationAction
 }

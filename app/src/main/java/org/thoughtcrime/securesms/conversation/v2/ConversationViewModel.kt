@@ -1202,6 +1202,14 @@ class ConversationViewModel(
 
     fun getUsername(accountId: String) = usernameUtils.getContactNameWithAccountID(accountId)
 
+    fun onSearchOpened(){
+        _appBarData.update { _appBarData.value.copy(showSearch = true) }
+    }
+
+    fun onSearchClosed(){
+        _appBarData.update { _appBarData.value.copy(showSearch = false) }
+    }
+
     private fun showDisappearingMessages() {
         recipient?.let { convo ->
             if (convo.isLegacyGroupRecipient) {
