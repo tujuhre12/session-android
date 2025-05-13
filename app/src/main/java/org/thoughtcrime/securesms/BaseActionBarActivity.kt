@@ -89,8 +89,6 @@ abstract class BaseActionBarActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        val navigationBarStyle: SystemBarStyle
-
         val detectDarkMode = { _: Resources -> ThemeUtil.isDarkTheme(this) }
 
         // The code above does this:
@@ -99,7 +97,7 @@ abstract class BaseActionBarActivity : AppCompatActivity() {
         // could be that the scrim is present or not, depending on the color on the screen.
         // However, if applyAutoScrimForNavigationBar is set to false, we use the specific
         // SystemBarStyle where the contrast isn't enforced. This means that the scrim is always NOT applied.
-        navigationBarStyle = when {
+        val navigationBarStyle = when {
             applyAutoScrimForNavigationBar -> {
                 SystemBarStyle.auto(DefaultLightScrim, DefaultDarkScrim, detectDarkMode)
             }
