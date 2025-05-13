@@ -180,10 +180,6 @@ fun ConversationAppBar(
                             text = stringResource(R.string.cancel),
                             style = LocalType.current.large,
                         )
-
-                        //todo UCS we get the weird android 15 bounce on every search query
-                        //todo UCS I need to update the search loading view
-                        //todo UCS show "no matches"
                     }
                 }
             }

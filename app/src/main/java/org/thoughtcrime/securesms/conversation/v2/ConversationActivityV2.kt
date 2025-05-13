@@ -814,6 +814,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     private fun scrollToMostRecentMessageIfWeShould() {
+        //don't do anything during search - it still needs to happen when starting the search when the keyboard opens
+        // so we check the state of the query as an indication that we are scrolling due to search
+        if(!searchViewModel.searchQuery.value.isNullOrEmpty()) return
+
         val lm = layoutManager ?: return Log.w(TAG, "Cannot scroll recycler view without a layout manager - bailing.")
 
         // Grab an initial 'previous' last visible message..
