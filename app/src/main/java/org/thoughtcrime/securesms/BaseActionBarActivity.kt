@@ -97,7 +97,7 @@ abstract class BaseActionBarActivity : AppCompatActivity() {
         // If applyAutoScrimForNavigationBar is set to true, we use auto system bar style and the
         // system will detect if it needs to apply a scrim so that a contrast is enforced. The end result
         // could be that the scrim is present or not, depending on the color on the screen.
-        // However, if applyAutoDarkScrimForNavigationBar is set to false, we use the specific
+        // However, if applyAutoScrimForNavigationBar is set to false, we use the specific
         // SystemBarStyle where the contrast isn't enforced. This means that the scrim is always NOT applied.
         navigationBarStyle = when {
             applyAutoScrimForNavigationBar -> {
