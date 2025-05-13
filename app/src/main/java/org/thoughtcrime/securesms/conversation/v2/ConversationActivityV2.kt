@@ -2609,7 +2609,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 }
             }
 
-            binding.searchBottomBar.setData(result.position, result.getResults().size)
+            binding.searchBottomBar.setData(result.position, result.getResults().size, searchViewModel.searchQuery.value)
         })
     }
 
@@ -2617,7 +2617,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         viewModel.onSearchOpened()
         searchViewModel.onSearchOpened()
         binding.searchBottomBar.visibility = View.VISIBLE
-        binding.searchBottomBar.setData(0, 0)
+        binding.searchBottomBar.setData(0, 0, searchViewModel.searchQuery.value)
         binding.inputBar.visibility = View.INVISIBLE
         binding.root.requestApplyInsets()
 
@@ -2636,7 +2636,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     fun onSearchQueryUpdated(query: String) {
         binding.searchBottomBar.showLoading()
         searchViewModel.onQueryUpdated(query, viewModel.threadId)
-        adapter.onSearchQueryUpdated(query)
+        adapter.onSearchQueryUpdated(query.takeUnless { it.length < 2 })
     }
 
     override fun onSearchMoveUpPressed() {

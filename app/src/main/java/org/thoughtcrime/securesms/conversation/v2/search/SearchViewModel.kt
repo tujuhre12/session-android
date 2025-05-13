@@ -19,6 +19,10 @@ class SearchViewModel @Inject constructor(
     private val searchRepository: SearchRepository
 ) : ViewModel() {
 
+    companion object {
+        const val MIN_QUERY_SIZE = 2
+    }
+
     private val result: CloseableLiveData<SearchResult> = CloseableLiveData()
     private val debouncer: Debouncer = Debouncer(200)
     private var searchOpen = false
@@ -28,8 +32,6 @@ class SearchViewModel @Inject constructor(
 
     private val mutableSearchQuery: MutableStateFlow<String?> = MutableStateFlow(null)
     val searchQuery: StateFlow<String?> get() = mutableSearchQuery
-
-    private val MIN_QUERY_SIZE = 2
 
     fun onQueryUpdated(query: String, threadId: Long) {
         if (query == mutableSearchQuery.value) {
@@ -96,7 +98,10 @@ class SearchViewModel @Inject constructor(
         }
     }
 
-    class SearchResult(private val results: CursorList<MessageResult?>, val position: Int) : Closeable {
+    class SearchResult(
+        private val results: CursorList<MessageResult?>,
+        val position: Int
+    ) : Closeable {
 
         fun getResults(): List<MessageResult?> {
             return results
