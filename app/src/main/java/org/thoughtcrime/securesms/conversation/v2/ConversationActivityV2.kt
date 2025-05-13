@@ -259,7 +259,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     override val applyDefaultWindowInsets: Boolean
         get() = false
 
-    override val applyAutoDarkScrimForNavigationBar: Boolean
+    override val applyAutoScrimForNavigationBar: Boolean
         get() = false
 
     private val screenshotObserver by lazy {
