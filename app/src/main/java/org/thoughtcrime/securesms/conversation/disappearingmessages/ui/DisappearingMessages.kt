@@ -21,8 +21,6 @@ import androidx.compose.ui.text.style.TextAlign
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.thoughtcrime.securesms.ui.BottomFadingEdgeBox
-import org.thoughtcrime.securesms.ui.Callbacks
-import org.thoughtcrime.securesms.ui.NoOpCallbacks
 import org.thoughtcrime.securesms.ui.OptionsCard
 import org.thoughtcrime.securesms.ui.RadioOption
 import org.thoughtcrime.securesms.ui.components.AppBarBackIcon
@@ -34,14 +32,14 @@ import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 
-typealias ExpiryCallbacks   = Callbacks<ExpiryMode>
 typealias ExpiryRadioOption = RadioOption<ExpiryMode>
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DisappearingMessages(
     state: UiState,
-    callbacks: ExpiryCallbacks = NoOpCallbacks,
+    onOptionSelected: (ExpiryMode) -> Unit,
+    onSetClicked: () -> Unit,
     onBack: () -> Unit
 ) {
     Scaffold(
@@ -86,7 +84,7 @@ fun DisappearingMessages(
                     Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
 
                     state.cards.forEachIndexed { index, option ->
-                        OptionsCard(option, callbacks)
+                        OptionsCard(option, onOptionSelected)
 
                         // add spacing if not the last item
                         if (index != state.cards.lastIndex) {
@@ -118,7 +116,7 @@ fun DisappearingMessages(
                         .qaTag(R.string.AccessibilityId_setButton)
                         .align(Alignment.CenterHorizontally)
                         .padding(bottom = LocalDimensions.current.spacing),
-                    onClick = callbacks::onSetClick
+                    onClick = onSetClicked
                 )
             }
         }

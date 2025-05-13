@@ -2,7 +2,6 @@ package org.thoughtcrime.securesms.conversation.v2.settings.notification
 
 import android.content.Context
 import android.widget.Toast
-import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.squareup.phrase.Phrase
@@ -16,19 +15,17 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import org.session.libsession.LocalisedTimeUtil
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_TIME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_LARGE_KEY
 import org.session.libsession.utilities.recipients.Recipient
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsNavigator
 import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.RecipientDatabase.NOTIFY_TYPE_ALL
 import org.thoughtcrime.securesms.database.RecipientDatabase.NOTIFY_TYPE_MENTIONS
 import org.thoughtcrime.securesms.database.RecipientDatabase.NOTIFY_TYPE_NONE
 import org.thoughtcrime.securesms.repository.ConversationRepository
-import org.thoughtcrime.securesms.ui.Callbacks
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.OptionsCardData
 import org.thoughtcrime.securesms.ui.RadioOption
@@ -45,7 +42,7 @@ class NotificationSettingsViewModel @AssistedInject constructor(
     @ApplicationContext private val context: Context,
     private val recipientDatabase: RecipientDatabase,
     private val repository: ConversationRepository,
-) : ViewModel(), Callbacks<Any> {
+) : ViewModel() {
     private var thread: Recipient? = null
 
     private val durationForever: Long = Long.MAX_VALUE
@@ -192,15 +189,15 @@ class NotificationSettingsViewModel @AssistedInject constructor(
         }
     }
 
-    override fun onSetClick() = viewModelScope.launch {
+    suspend fun onSetClicked()  {
         when(selectedOption){
             is NotificationType.All, is NotificationType.MentionsOnly -> {
                 unmute()
                 setNotifyType(selectedOption.notifyType)
-
              }
+
             else -> {
-                val muteDuration = selectedMuteDuration ?: return@launch
+                val muteDuration = selectedMuteDuration ?: return
 
                 mute(if(muteDuration == durationForever) muteDuration else System.currentTimeMillis() + muteDuration)
 
@@ -222,7 +219,7 @@ class NotificationSettingsViewModel @AssistedInject constructor(
         }
     }
 
-    override fun setValue(value: Any) {
+    fun onOptionSelected(value: Any) {
         when(value){
             is Long -> selectedMuteDuration = value
 
@@ -232,19 +229,25 @@ class NotificationSettingsViewModel @AssistedInject constructor(
         updateState()
     }
 
-    private fun unmute() {
+    private suspend fun unmute() {
         val conversation = thread ?: return
-        recipientDatabase.setMuted(conversation, 0)
+        withContext(Dispatchers.Default) {
+            recipientDatabase.setMuted(conversation, 0)
+        }
     }
 
-    private fun mute(until: Long) {
+    private suspend fun mute(until: Long) {
         val conversation = thread ?: return
-        recipientDatabase.setMuted(conversation, until)
+        withContext(Dispatchers.Default) {
+            recipientDatabase.setMuted(conversation, until)
+        }
     }
 
-    private fun setNotifyType(notifyType: Int) {
+    private suspend fun setNotifyType(notifyType: Int) {
         val conversation = thread ?: return
-        recipientDatabase.setNotifyType(conversation, notifyType)
+        withContext(Dispatchers.Default) {
+            recipientDatabase.setNotifyType(conversation, notifyType)
+        }
     }
 
     data class UiState(

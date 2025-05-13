@@ -377,7 +377,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
 
         advanceUntilIdle()
 
-        viewModel.setValue(afterSendMode(1.days))
+        viewModel.onOptionSelected(afterSendMode(1.days))
 
         advanceUntilIdle()
 

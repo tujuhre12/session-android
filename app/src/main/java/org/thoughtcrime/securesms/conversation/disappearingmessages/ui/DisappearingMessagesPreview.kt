@@ -22,6 +22,8 @@ fun PreviewStates(
     PreviewTheme {
         DisappearingMessages(
             state.toUiState(),
+            onOptionSelected = {},
+            onSetClicked = {},
             onBack = {},
         )
     }
@@ -54,6 +56,8 @@ fun PreviewThemes(
     PreviewTheme(colors) {
         DisappearingMessages(
             State(expiryMode = ExpiryMode.AfterSend(43200)).toUiState(),
+            onOptionSelected = {},
+            onSetClicked = {},
             onBack = {}
         )
     }
