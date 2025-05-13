@@ -66,6 +66,10 @@ abstract class BaseActionBarActivity : AppCompatActivity() {
             return themeState.accentStyle
         }
 
+    // Whether we should automatically apply dark scrim to the navigation bar
+    open val applyAutoDarkScrimForNavigationBar: Boolean
+        get() = true
+
     override fun getTheme(): Resources.Theme {
         if (modifiedTheme != null) {
             return modifiedTheme!!
@@ -83,13 +87,32 @@ abstract class BaseActionBarActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        val detectDarkMode = { _: Resources ->
-            ThemeUtil.isDarkTheme(this)
+        val statusBarStyle: SystemBarStyle
+        val navigationBarStyle: SystemBarStyle
+
+        // The code above does this:
+        // If applyAutoDarkScrimForNavigationBar is set to true, we use auto system bar style and the
+        // system will detect if it needs to apply a scrim so that a contrast is enforced. The end result
+        // could be that the scrim is present or not, depending on the color on the screen.
+        // However, if applyAutoDarkScrimForNavigationBar is set to false, we use the specific
+        // SystemBarStyle where the contrast isn't enforced. This means that the scrim is always NOT applied.
+        if (applyAutoDarkScrimForNavigationBar) {
+            val detectDarkMode = { _: Resources -> ThemeUtil.isDarkTheme(this) }
+            statusBarStyle = SystemBarStyle.auto(DefaultLightScrim, DefaultDarkScrim, detectDarkMode)
+            navigationBarStyle = SystemBarStyle.auto(DefaultLightScrim, DefaultDarkScrim, detectDarkMode)
+        } else {
+            if (ThemeUtil.isDarkTheme(this)) {
+                statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT)
+                navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT)
+            } else {
+                statusBarStyle = SystemBarStyle.light(DefaultLightScrim, DefaultDarkScrim)
+                navigationBarStyle = SystemBarStyle.light(DefaultLightScrim, DefaultDarkScrim)
+            }
         }
 
         enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT, detectDarkMode),
-            navigationBarStyle = SystemBarStyle.auto(DefaultLightScrim, DefaultDarkScrim, detectDarkMode)
+            statusBarStyle = statusBarStyle,
+            navigationBarStyle = navigationBarStyle
         )
         super.onCreate(savedInstanceState)
 
