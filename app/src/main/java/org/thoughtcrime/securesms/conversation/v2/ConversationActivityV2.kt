@@ -146,6 +146,7 @@ import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageViewDel
 import org.thoughtcrime.securesms.conversation.v2.search.SearchBottomBar
 import org.thoughtcrime.securesms.conversation.v2.search.SearchViewModel
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsActivity
+import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsActivity
 import org.thoughtcrime.securesms.conversation.v2.utilities.AttachmentManager
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.conversation.v2.utilities.ResendMessageUtilities
@@ -167,6 +168,7 @@ import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.giph.ui.GiphyActivity
+import org.thoughtcrime.securesms.groups.GroupMembersActivity
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.home.UserDetailsBottomSheet
 import org.thoughtcrime.securesms.home.search.getSearchName
@@ -648,6 +650,20 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     is ConversationUiEvent.ShowDisappearingMessages -> {
                         val intent = Intent(this@ConversationActivityV2, DisappearingMessagesActivity::class.java).apply {
                             putExtra(DisappearingMessagesActivity.THREAD_ID, event.threadId)
+                        }
+                        startActivity(intent)
+                    }
+
+                    is ConversationUiEvent.ShowGroupMembers -> {
+                        val intent = Intent(this@ConversationActivityV2, GroupMembersActivity::class.java).apply {
+                            putExtra(GroupMembersActivity.GROUP_ID, event.groupId)
+                        }
+                        startActivity(intent)
+                    }
+
+                    is ConversationUiEvent.ShowNotificationSettings -> {
+                        val intent = Intent(this@ConversationActivityV2, NotificationSettingsActivity::class.java).apply {
+                            putExtra(NotificationSettingsActivity.THREAD_ID, event.threadId)
                         }
                         startActivity(intent)
                     }
@@ -1401,11 +1417,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     // endregion
 
     // region Interaction
-    // TODO: don't need to allow new closed group check here, removed in new disappearing messages
-    override fun showDisappearingMessages(thread: Recipient) {
-        viewModel.showDisappearingMessages()
-    }
-
     private fun callRecipient() {
         if(viewModel.recipient == null) return
 

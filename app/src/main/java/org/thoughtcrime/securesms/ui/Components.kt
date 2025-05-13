@@ -93,16 +93,6 @@ import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.transparentButtonColors
 import kotlin.math.roundToInt
 
-interface Callbacks<in T> {
-    fun onSetClick(): Any?
-    fun setValue(value: T)
-}
-
-object NoOpCallbacks: Callbacks<Any> {
-    override fun onSetClick() {}
-    override fun setValue(value: Any) {}
-}
-
 data class RadioOption<T>(
     val value: T,
     val title: GetString,
@@ -122,7 +112,7 @@ data class OptionsCardData<T>(
 }
 
 @Composable
-fun <T> OptionsCard(card: OptionsCardData<T>, callbacks: Callbacks<T>) {
+fun <T> OptionsCard(card: OptionsCardData<T>, onOptionSelected: (T) -> Unit) {
     Column {
         if (card.title != null && card.title.string().isNotEmpty()) {
             Text(
@@ -141,7 +131,7 @@ fun <T> OptionsCard(card: OptionsCardData<T>, callbacks: Callbacks<T>) {
             ) {
                 itemsIndexed(card.options) { i, it ->
                     if (i != 0) Divider()
-                    TitledRadioButton(option = it) { callbacks.setValue(it.value) }
+                    TitledRadioButton(option = it) { onOptionSelected(it.value) }
                 }
             }
         }

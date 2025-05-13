@@ -13,16 +13,16 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.BottomFadingEdgeBox
-import org.thoughtcrime.securesms.ui.Callbacks
 import org.thoughtcrime.securesms.ui.GetString
-import org.thoughtcrime.securesms.ui.NoOpCallbacks
 import org.thoughtcrime.securesms.ui.OptionsCard
 import org.thoughtcrime.securesms.ui.OptionsCardData
 import org.thoughtcrime.securesms.ui.RadioOption
@@ -42,7 +42,8 @@ fun NotificationSettingsScreen(
 
     NotificationSettings(
         state = state,
-        callbacks = viewModel,
+        onOptionSelected = viewModel::onOptionSelected,
+        onSetClicked = viewModel::onSetClicked,
         onBack = onBack
     )
 }
@@ -51,7 +52,8 @@ fun NotificationSettingsScreen(
 @Composable
 fun NotificationSettings(
     state: NotificationSettingsViewModel.UiState,
-    callbacks: Callbacks<Any> = NoOpCallbacks,
+    onOptionSelected: (Any) -> Unit,
+    onSetClicked: suspend () -> Unit,
     onBack: () -> Unit
 ) {
     Scaffold(
@@ -75,19 +77,20 @@ fun NotificationSettings(
 
                     // notification options
                     if(state.notificationTypes != null) {
-                        OptionsCard(state.notificationTypes, callbacks)
+                        OptionsCard(state.notificationTypes, onOptionSelected)
                     }
 
                     // mute types
                     if(state.muteTypes != null) {
                         Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-                        OptionsCard(state.muteTypes, callbacks)
+                        OptionsCard(state.muteTypes, onOptionSelected)
                     }
 
                     Spacer(modifier = Modifier.height(bottomContentPadding))
                 }
             }
 
+            val coroutineScope = rememberCoroutineScope()
             PrimaryOutlineButton(
                 stringResource(R.string.set),
                 modifier = Modifier
@@ -95,7 +98,12 @@ fun NotificationSettings(
                     .align(Alignment.CenterHorizontally)
                     .padding(bottom = LocalDimensions.current.spacing),
                 enabled = state.enableButton,
-                onClick = callbacks::onSetClick
+                onClick = {
+                    coroutineScope.launch {
+                        onSetClicked()
+                        onBack() // leave screen once value is set
+                    }
+                }
             )
         }
     }
@@ -139,7 +147,8 @@ fun PreviewNotificationSettings(){
                 ),
                 enableButton = true
             ),
-            callbacks = NoOpCallbacks,
+            onOptionSelected = {},
+            onSetClicked = {},
             onBack = {}
         )
     }

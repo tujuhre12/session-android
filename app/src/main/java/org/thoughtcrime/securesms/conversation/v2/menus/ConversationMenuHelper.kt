@@ -41,12 +41,10 @@ import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.ShortcutLauncherActivity
 import org.thoughtcrime.securesms.contacts.SelectContactsToInviteToGroupActivity
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
-import org.thoughtcrime.securesms.conversation.v2.utilities.NotificationUtils
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.groups.legacy.EditLegacyGroupActivity
 import org.thoughtcrime.securesms.groups.legacy.EditLegacyGroupActivity.Companion.groupIDKey
-import org.thoughtcrime.securesms.showMuteDialog
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.util.BitmapUtil
 import java.io.IOException
@@ -186,7 +184,7 @@ object ConversationMenuHelper {
             R.id.menu_view_all_media -> { showAllMedia(context, thread) }
             R.id.menu_search -> { search(context) }
             R.id.menu_add_shortcut -> { addShortcut(context, thread) }
-            R.id.menu_expiring_messages -> { showDisappearingMessages(context, thread) }
+            //R.id.menu_expiring_messages -> { showDisappearingMessages(context, thread) }
            /* R.id.menu_unblock -> { unblock(context, thread) }
             R.id.menu_block -> { block(context, thread, deleteThread = false) }*/
             R.id.menu_copy_account_id -> { copyAccountID(context, thread) }
@@ -256,10 +254,10 @@ object ConversationMenuHelper {
         }.execute()
     }
 
-    private fun showDisappearingMessages(context: Context, thread: Recipient) {
+   /* private fun showDisappearingMessages(context: Context, thread: Recipient) {
         val listener = context as? ConversationMenuListener ?: return
         listener.showDisappearingMessages(thread)
-    }
+    }*/
 
  /*   private fun unblock(context: Context, thread: Recipient) {
         if (!thread.isContactRecipient) { return }
@@ -475,7 +473,6 @@ object ConversationMenuHelper {
     interface ConversationMenuListener {
         fun copyAccountID(accountId: String)
         fun copyOpenGroupUrl(thread: Recipient)
-        fun showDisappearingMessages(thread: Recipient)
     }
 
 }
