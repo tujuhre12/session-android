@@ -492,7 +492,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     }
 
     private fun confirmBlockUser(){
-        _uiState.update {
+        _dialogState.update {
             it.copy(
                 showSimpleDialog = Dialog(
                     title = context.getString(R.string.block),
@@ -511,7 +511,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     }
 
     private fun confirmUnblockUser(){
-        _uiState.update {
+        _dialogState.update {
             it.copy(
                 showSimpleDialog = Dialog(
                     title = context.getString(R.string.blockUnblock),
@@ -550,7 +550,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     }
 
     private fun confirmHideNTS(){
-        _uiState.update {
+        _dialogState.update {
             it.copy(
                 showSimpleDialog = Dialog(
                     title = context.getString(R.string.noteToSelfHide),
@@ -567,7 +567,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     }
 
     private fun confirmShowNTS(){
-        _uiState.update {
+        _dialogState.update {
             it.copy(
                 showSimpleDialog = Dialog(
                     title = context.getString(R.string.showNoteToSelf),
@@ -607,7 +607,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     }
 
     private fun confirmDeleteContact(){
-        _uiState.update {
+        _dialogState.update {
             it.copy(
                 showSimpleDialog = Dialog(
                     title = context.getString(R.string.contactDelete),
@@ -640,7 +640,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     }
 
     private fun confirmDeleteConversation(){
-        _uiState.update {
+        _dialogState.update {
             it.copy(
                 showSimpleDialog = Dialog(
                     title = context.getString(R.string.conversationsDelete),
@@ -671,7 +671,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     }
 
     private fun confirmLeaveCommunity(){
-        _uiState.update {
+        _dialogState.update {
             it.copy(
                 showSimpleDialog = Dialog(
                     title = context.getString(R.string.communityLeave),
@@ -716,7 +716,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             conversation.isGroupV2Recipient -> {
                 if(groupV2?.hasAdminKey() == true){
                     // group admin clearing messages have a dedicated custom dialog
-                    _uiState.update { it.copy(showGroupAdminClearMessagesDialog = true) }
+                    _dialogState.update { it.copy(groupAdminClearMessagesDialog = GroupAdminClearMessageDialog(getGroupName())) }
                     return
 
                 } else {
@@ -737,7 +737,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             }
         }
 
-        _uiState.update {
+        _dialogState.update {
             it.copy(
                 showSimpleDialog = Dialog(
                     title = context.getString(R.string.clearMessages),
@@ -792,7 +792,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
     private fun confirmLeaveGroup(){
         val groupData = groupV2 ?: return
-        _uiState.update {
+        _dialogState.update {
 
             var title = R.string.groupDelete
             var message: CharSequence = ""
@@ -882,12 +882,12 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         when (command) {
             is Commands.CopyAccountId -> copyAccountId()
 
-            is Commands.HideSimpleDialog -> _uiState.update {
+            is Commands.HideSimpleDialog -> _dialogState.update {
                 it.copy(showSimpleDialog = null)
             }
 
-            is Commands.HideGroupAdminClearMessagesDialog -> _uiState.update {
-                it.copy(showGroupAdminClearMessagesDialog = false)
+            is Commands.HideGroupAdminClearMessagesDialog -> _dialogState.update {
+                it.copy(groupAdminClearMessagesDialog = null)
             }
 
             is Commands.ClearMessagesGroupDeviceOnly -> clearMessages(false)
@@ -1238,8 +1238,6 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         val description: String? = null,
         val descriptionQaTag: String? = null,
         val accountId: String? = null,
-        val showSimpleDialog: Dialog? = null,
-        val showGroupAdminClearMessagesDialog: Boolean = false,
         val showLoading: Boolean = false,
         val categories: List<OptionsCategory> = emptyList()
     )
@@ -1279,8 +1277,10 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     )
 
     data class DialogsState(
+        val showSimpleDialog: Dialog? = null,
         val nicknameDialog: NicknameDialogData? = null,
         val groupEditDialog: NicknameDialogData? = null,
+        val groupAdminClearMessagesDialog: GroupAdminClearMessageDialog? = null,
     )
 
     data class NicknameDialogData(
@@ -1294,5 +1294,9 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
     data class GroupEditDialog(
         val name: String?
+    )
+
+    data class GroupAdminClearMessageDialog(
+        val groupName: String
     )
 }

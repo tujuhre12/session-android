@@ -2,6 +2,10 @@ package org.thoughtcrime.securesms.conversation.v2.settings
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -9,14 +13,21 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
+import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.ClearMessagesGroupDeviceOnly
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.ClearMessagesGroupEveryone
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.HideGroupAdminClearMessagesDialog
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.HideNicknameDialog
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.HideSimpleDialog
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.RemoveNickname
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.SetNickname
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.UpdateNickname
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.DialogButtonModel
 import org.thoughtcrime.securesms.ui.GetString
+import org.thoughtcrime.securesms.ui.RadioOption
+import org.thoughtcrime.securesms.ui.components.DialogTitledRadioButton
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.qaTag
@@ -30,6 +41,38 @@ fun ConversationSettingsDialogs(
     sendCommand: (ConversationSettingsViewModel.Commands) -> Unit
 ){
     val context = LocalContext.current
+
+    //  Simple dialogs
+    if (dialogsState.showSimpleDialog != null) {
+        AlertDialog(
+            onDismissRequest = {
+                // hide dialog
+                sendCommand(HideSimpleDialog)
+            },
+            title = annotatedStringResource(dialogsState.showSimpleDialog.title),
+            text = annotatedStringResource(dialogsState.showSimpleDialog.message),
+            buttons = listOf(
+                DialogButtonModel(
+                    text = GetString(dialogsState.showSimpleDialog.positiveText),
+                    color = if(dialogsState.showSimpleDialog.positiveStyleDanger) LocalColors.current.danger
+                    else LocalColors.current.text,
+                    onClick = dialogsState.showSimpleDialog.onPositive
+                ),
+                DialogButtonModel(
+                    text = GetString(dialogsState.showSimpleDialog.negativeText),
+                    onClick = dialogsState.showSimpleDialog.onNegative
+                )
+            )
+        )
+    }
+
+    // Group admin clear messages
+    if(dialogsState.groupAdminClearMessagesDialog != null) {
+        GroupAdminClearMessagesDialog(
+            groupName = dialogsState.groupAdminClearMessagesDialog.groupName,
+            sendCommand = sendCommand
+        )
+    }
 
     // Nickname
     if(dialogsState.nicknameDialog != null){
@@ -74,6 +117,66 @@ fun ConversationSettingsDialogs(
             )
         )
     }
+}
+
+@Composable
+fun GroupAdminClearMessagesDialog(
+    modifier: Modifier = Modifier,
+    groupName: String,
+    sendCommand: (ConversationSettingsViewModel.Commands) -> Unit,
+){
+    var deleteForEveryone by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+
+    AlertDialog(
+        modifier = modifier,
+        onDismissRequest = {
+            // hide dialog
+            sendCommand(HideGroupAdminClearMessagesDialog)
+        },
+        title = annotatedStringResource(R.string.groupLeave),
+        text =  annotatedStringResource(Phrase.from(context, R.string.clearMessagesGroupAdminDescriptionUpdated)
+            .put(GROUP_NAME_KEY, groupName)
+            .format()),
+        content = {
+            DialogTitledRadioButton(
+                option = RadioOption(
+                    value = Unit,
+                    title = GetString(stringResource(R.string.clearDeviceOnly)),
+                    selected = !deleteForEveryone
+                )
+            ) {
+                deleteForEveryone = false
+            }
+
+            DialogTitledRadioButton(
+                option = RadioOption(
+                    value = Unit,
+                    title = GetString(stringResource(R.string.clearMessagesForEveryone)),
+                    selected = deleteForEveryone,
+                )
+            ) {
+                deleteForEveryone = true
+            }
+        },
+        buttons = listOf(
+            DialogButtonModel(
+                text = GetString(stringResource(id = R.string.clear)),
+                color = LocalColors.current.danger,
+                onClick = {
+                    // clear messages based on chosen option
+                    sendCommand(
+                        if(deleteForEveryone) ClearMessagesGroupEveryone
+                        else ClearMessagesGroupDeviceOnly
+                    )
+                }
+            ),
+            DialogButtonModel(
+                GetString(stringResource(R.string.cancel))
+            )
+        )
+    )
 }
 
 @Preview

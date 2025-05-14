@@ -272,38 +272,6 @@ fun ConversationSettings(
                     sendCommand = sendCommand
                 )
 
-                //todo UCS move other dialogs in dialog composable
-                if (data.showSimpleDialog != null) {
-                    AlertDialog(
-                        onDismissRequest = {
-                            // hide dialog
-                            sendCommand(HideSimpleDialog)
-                        },
-                        title = annotatedStringResource(data.showSimpleDialog.title),
-                        text = annotatedStringResource(data.showSimpleDialog.message),
-                        buttons = listOf(
-                            DialogButtonModel(
-                                text = GetString(data.showSimpleDialog.positiveText),
-                                color = if(data.showSimpleDialog.positiveStyleDanger) LocalColors.current.danger
-                                else LocalColors.current.text,
-                                onClick = data.showSimpleDialog.onPositive
-                            ),
-                            DialogButtonModel(
-                                text = GetString(data.showSimpleDialog.negativeText),
-                                onClick = data.showSimpleDialog.onNegative
-                            )
-                        )
-                    )
-                }
-
-                // Group admin clear messages
-                if(data.showGroupAdminClearMessagesDialog) {
-                    GroupAdminClearMessagesDialog(
-                        groupName = data.name,
-                        sendCommand = sendCommand
-                    )
-                }
-
                 // Loading
                 if (data.showLoading) {
                     LoadingDialog()
@@ -375,66 +343,6 @@ fun ConversationSettingsSubCategory(
             }
         }
     }
-}
-
-@Composable
-fun GroupAdminClearMessagesDialog(
-    modifier: Modifier = Modifier,
-    groupName: String,
-    sendCommand: (ConversationSettingsViewModel.Commands) -> Unit,
-){
-    var deleteForEveryone by remember { mutableStateOf(false) }
-
-    val context = LocalContext.current
-
-    AlertDialog(
-        modifier = modifier,
-        onDismissRequest = {
-            // hide dialog
-            sendCommand(HideGroupAdminClearMessagesDialog)
-        },
-        title = annotatedStringResource(R.string.groupLeave),
-        text =  annotatedStringResource(Phrase.from(context, R.string.clearMessagesGroupAdminDescriptionUpdated)
-            .put(GROUP_NAME_KEY, groupName)
-            .format()),
-        content = {
-            DialogTitledRadioButton(
-                option = RadioOption(
-                    value = Unit,
-                    title = GetString(stringResource(R.string.clearDeviceOnly)),
-                    selected = !deleteForEveryone
-                )
-            ) {
-                deleteForEveryone = false
-            }
-
-            DialogTitledRadioButton(
-                option = RadioOption(
-                    value = Unit,
-                    title = GetString(stringResource(R.string.clearMessagesForEveryone)),
-                    selected = deleteForEveryone,
-                )
-            ) {
-                deleteForEveryone = true
-            }
-        },
-        buttons = listOf(
-            DialogButtonModel(
-                text = GetString(stringResource(id = R.string.clear)),
-                color = LocalColors.current.danger,
-                onClick = {
-                    // clear messages based on chosen option
-                    sendCommand(
-                        if(deleteForEveryone) ClearMessagesGroupEveryone
-                        else ClearMessagesGroupDeviceOnly
-                    )
-                }
-            ),
-            DialogButtonModel(
-                GetString(stringResource(R.string.cancel))
-            )
-        )
-    )
 }
 
 @OptIn(ExperimentalSharedTransitionApi::class)
