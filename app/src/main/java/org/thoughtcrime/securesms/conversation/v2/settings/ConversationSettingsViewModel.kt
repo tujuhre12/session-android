@@ -95,6 +95,9 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     )
     val uiState: StateFlow<UIState> = _uiState
 
+    private val _dialogState: MutableStateFlow<DialogsState> = MutableStateFlow(DialogsState())
+    val dialogState: StateFlow<DialogsState> = _dialogState
+
     private var recipient: Recipient? = null
 
     private val groupV2: GroupInfo.ClosedGroupInfo? by lazy {
@@ -889,6 +892,22 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
             is Commands.ClearMessagesGroupDeviceOnly -> clearMessages(false)
             is Commands.ClearMessagesGroupEveryone -> clearMessages(true)
+
+            is Commands.HideNicknameDialog -> _dialogState.update {
+                it.copy(nicknameDialog = null)
+            }
+
+            is Commands.HideGroupEditDialog -> _dialogState.update {
+                it.copy(groupEditDialog = null)
+            }
+
+            is Commands.RemoveNickname -> {
+                //todo UCS implement
+            }
+
+            is Commands.SetNickname -> {
+                //todo UCS implement
+            }
         }
     }
 
@@ -944,6 +963,13 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         data object HideGroupAdminClearMessagesDialog : Commands
         data object ClearMessagesGroupDeviceOnly : Commands
         data object ClearMessagesGroupEveryone : Commands
+
+        // dialogs
+        data object HideNicknameDialog : Commands
+        data object RemoveNickname : Commands
+        data class SetNickname(val nickname: String): Commands
+
+        data object HideGroupEditDialog : Commands
     }
 
     @AssistedFactory
@@ -1211,5 +1237,19 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         val subtitle: String? = null,
         @StringRes val subtitleQaTag: Int? = null,
         val onClick: () -> Unit
+    )
+
+    data class DialogsState(
+        val nicknameDialog: NicknameDialogData? = null,
+        val groupEditDialog: NicknameDialogData? = null,
+    )
+
+    data class NicknameDialogData(
+        val name: String,
+        val nickname: String?,
+    )
+
+    data class GroupEditDialog(
+        val name: String?
     )
 }

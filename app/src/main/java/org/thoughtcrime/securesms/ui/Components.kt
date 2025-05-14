@@ -700,7 +700,6 @@ fun SearchBar(
                 )
 
                 Box(modifier = Modifier.weight(1f)) {
-                    innerTextField()
                     if (query.isEmpty() && placeholder != null) {
                         Text(
                             modifier = Modifier.qaTag(R.string.qa_conversation_search_input),
@@ -708,6 +707,8 @@ fun SearchBar(
                             color = LocalColors.current.textSecondary,
                             style = LocalType.current.xl
                         )
+                    } else {
+                        innerTextField()
                     }
                 }
 
