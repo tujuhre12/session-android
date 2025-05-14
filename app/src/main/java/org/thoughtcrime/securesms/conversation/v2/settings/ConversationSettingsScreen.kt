@@ -11,6 +11,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -30,6 +31,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -54,10 +56,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.ClearMessagesGroupDeviceOnly
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.ClearMessagesGroupEveryone
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.HideGroupAdminClearMessagesDialog
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.HideSimpleDialog
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.*
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.DialogButtonModel
@@ -97,9 +96,11 @@ fun ConversationSettingsScreen(
     onBack: () -> Unit,
 ) {
     val data by viewModel.uiState.collectAsState()
+    val dialogsState by viewModel.dialogState.collectAsState()
 
     ConversationSettings(
         data = data,
+        dialogsState = dialogsState,
         sendCommand = viewModel::onCommand,
         sharedTransitionScope = sharedTransitionScope,
         animatedContentScope = animatedContentScope,
@@ -112,6 +113,7 @@ fun ConversationSettingsScreen(
 @Composable
 fun ConversationSettings(
     data: ConversationSettingsViewModel.UIState,
+    dialogsState: ConversationSettingsViewModel.DialogsState,
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope,
     sendCommand: (ConversationSettingsViewModel.Commands) -> Unit,
@@ -165,7 +167,12 @@ fun ConversationSettings(
                     // name and edit icon
                     Row(
                         modifier = Modifier.fillMaxWidth()
-                            .safeContentWidth(),
+                            .safeContentWidth()
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = ripple(bounded = false),
+                                onClick = { sendCommand(ShowNicknameDialog) }
+                            ),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
                     ) {
@@ -214,7 +221,7 @@ fun ConversationSettings(
                         val longPressLabel = stringResource(R.string.accountIDCopy)
                         val onLongPress = {
                             haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                            sendCommand(ConversationSettingsViewModel.Commands.CopyAccountId)
+                            sendCommand(CopyAccountId)
                         }
                         Text(
                             modifier = Modifier.qaTag(R.string.qa_conversation_settings_account_id)
@@ -260,6 +267,12 @@ fun ConversationSettings(
                 }
 
                 // Dialogs
+                ConversationSettingsDialogs(
+                    dialogsState = dialogsState,
+                    sendCommand = sendCommand
+                )
+
+                //todo UCS move other dialogs in dialog composable
                 if (data.showSimpleDialog != null) {
                     AlertDialog(
                         onDismissRequest = {
@@ -506,7 +519,8 @@ private fun ConversationSettings1on1Preview() {
                                 )
                             )
                         ),
-                    )
+                    ),
+                    dialogsState = ConversationSettingsViewModel.DialogsState()
                 )
             }
         }
@@ -595,7 +609,8 @@ private fun ConversationSettings1on1LongNamePreview() {
                                 )
                             )
                         ),
-                    )
+                    ),
+                    dialogsState = ConversationSettingsViewModel.DialogsState()
                 )
             }
         }

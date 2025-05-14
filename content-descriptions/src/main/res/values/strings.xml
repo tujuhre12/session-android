@@ -148,6 +148,9 @@
     <string name="qa_conversation_settings_dialog_clear_messages_cancel">clear-all-messages-cancel-button</string>
     <string name="qa_conversation_settings_clear_messages_radio_device">clear-device-radio-option</string>
     <string name="qa_conversation_settings_clear_messages_radio_everyone">clear-everyone-radio-option</string>
+    <string name="qa_conversation_settings_dialog_nickname_input">nickname-input</string>
+    <string name="qa_conversation_settings_dialog_nickname_set">set-nickname-confirm-button</string>
+    <string name="qa_conversation_settings_dialog_nickname_remove">set-nickname-remove-button</string>
     <!--  Conversation options for closed group-->
     <string name="AccessibilityId_groupNameNew">Accept name change</string>
     <string name="AccessibilityId_membersInvite">Invite button</string>

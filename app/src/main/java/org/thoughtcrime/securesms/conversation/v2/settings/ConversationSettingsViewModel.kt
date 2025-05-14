@@ -897,6 +897,8 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 it.copy(nicknameDialog = null)
             }
 
+            is Commands.ShowNicknameDialog -> showNicknameDialog()
+
             is Commands.HideGroupEditDialog -> _dialogState.update {
                 it.copy(groupEditDialog = null)
             }
@@ -908,6 +910,41 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             is Commands.SetNickname -> {
                 //todo UCS implement
             }
+
+            is Commands.UpdateNickname -> {
+                //todo UCS handle error
+                _dialogState.update {
+                    it.copy(
+                        nicknameDialog = it.nicknameDialog?.copy(
+                            inputNickname = command.nickname,
+                            setEnabled = command.nickname.isNotEmpty() && // can save if we have an input
+                            command.nickname != it.nicknameDialog.currentNickname // ... and it isn't the same as what is already saved
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+    fun showNicknameDialog(){
+        val conversation = recipient ?: return
+
+        val configContact = configFactory.withUserConfigs { configs ->
+            configs.contacts.get(conversation.address.toString())
+        }
+
+        _dialogState.update {
+            it.copy(
+                nicknameDialog = NicknameDialogData(
+                    name = configContact?.name ?: "",
+                    currentNickname = configContact?.nickname,
+                    inputNickname = configContact?.nickname,
+                    setEnabled = false,
+                    removeEnabled = configContact?.nickname?.isEmpty() == false,  // can only remove is we have a nickname already
+                    error = null
+                ),
+                groupEditDialog = null
+            )
         }
     }
 
@@ -965,9 +1002,11 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         data object ClearMessagesGroupEveryone : Commands
 
         // dialogs
+        data object ShowNicknameDialog : Commands
         data object HideNicknameDialog : Commands
         data object RemoveNickname : Commands
-        data class SetNickname(val nickname: String): Commands
+        data object SetNickname: Commands
+        data class UpdateNickname(val nickname: String): Commands
 
         data object HideGroupEditDialog : Commands
     }
@@ -1246,7 +1285,11 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
     data class NicknameDialogData(
         val name: String,
-        val nickname: String?,
+        val currentNickname: String?, // the currently saved nickname, if any
+        val inputNickname: String?, // the nickname being inputted
+        val setEnabled: Boolean,
+        val removeEnabled: Boolean,
+        val error: String?
     )
 
     data class GroupEditDialog(

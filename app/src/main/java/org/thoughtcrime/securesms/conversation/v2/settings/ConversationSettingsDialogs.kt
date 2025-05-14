@@ -1,33 +1,27 @@
 package org.thoughtcrime.securesms.conversation.v2.settings
 
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
-import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.*
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.HideNicknameDialog
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.RemoveNickname
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.SetNickname
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.UpdateNickname
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.DialogButtonModel
 import org.thoughtcrime.securesms.ui.GetString
-import org.thoughtcrime.securesms.ui.RadioOption
-import org.thoughtcrime.securesms.ui.components.DialogTitledRadioButton
+import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
-import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 
 @Composable
@@ -49,23 +43,33 @@ fun ConversationSettingsDialogs(
             text = annotatedStringResource(Phrase.from(context, R.string.nicknameDescription)
                 .put(NAME_KEY, dialogsState.nicknameDialog.name)
                 .format()),
+            showCloseButton = true,
             content = {
-                //todo UCS add input
+                SessionOutlinedTextField(
+                    text = dialogsState.nicknameDialog.inputNickname ?: "",
+                    modifier = Modifier.qaTag(R.string.AccessibilityId_sessionIdInput)
+                        .padding(top = LocalDimensions.current.smallSpacing),
+                    placeholder = stringResource(R.string.accountIdOrOnsEnter),
+                    onChange = { updatedText ->
+                        sendCommand(UpdateNickname(updatedText))
+                    },
+                    onContinue = { sendCommand(SetNickname) },
+                    error = dialogsState.nicknameDialog.error,
+                )
             },
             buttons = listOf(
                 DialogButtonModel(
                     text = GetString(stringResource(id = R.string.save)),
-                    onClick = {
-                        // delete messages based on chosen option
-                        sendCommand(SetNickname("")) //todo UCS set real data (or will it be in the VM already?)
-                    } //todo UCS handle disabled
+                    enabled = dialogsState.nicknameDialog.setEnabled,
+                    onClick = { sendCommand(SetNickname) }
                 ),
                 DialogButtonModel(
                     text = GetString(stringResource(R.string.remove)),
                     color = LocalColors.current.danger,
+                    enabled = dialogsState.nicknameDialog.removeEnabled,
                     onClick = {
                         sendCommand(RemoveNickname)
-                    } //todo UCS handle disabled
+                    }
                 )
             )
         )
@@ -79,8 +83,33 @@ fun PreviewNicknameSetDialog() {
         ConversationSettingsDialogs(
             dialogsState = ConversationSettingsViewModel.DialogsState(
                 nicknameDialog = ConversationSettingsViewModel.NicknameDialogData(
-                    name = "Thomas",
-                    nickname = "Toto"
+                    name = "Rick",
+                    currentNickname = "Razza",
+                    inputNickname = "Rickety",
+                    setEnabled = true,
+                    removeEnabled = true,
+                    error = null,
+                )
+            ),
+            sendCommand = {}
+        )
+    }
+}
+
+
+@Preview
+@Composable
+fun PreviewNicknameEmptyDialog() {
+    PreviewTheme {
+        ConversationSettingsDialogs(
+            dialogsState = ConversationSettingsViewModel.DialogsState(
+                nicknameDialog = ConversationSettingsViewModel.NicknameDialogData(
+                    name = "Rick",
+                    currentNickname = null,
+                    inputNickname = null,
+                    setEnabled = false,
+                    removeEnabled = false,
+                    error = null,
                 )
             ),
             sendCommand = {}
@@ -90,13 +119,17 @@ fun PreviewNicknameSetDialog() {
 
 @Preview
 @Composable
-fun PreviewNicknameEmptytDialog() {
+fun PreviewNicknameEmptyWithInputDialog() {
     PreviewTheme {
         ConversationSettingsDialogs(
             dialogsState = ConversationSettingsViewModel.DialogsState(
                 nicknameDialog = ConversationSettingsViewModel.NicknameDialogData(
-                    name = "Thomas",
-                    nickname = null
+                    name = "Rick",
+                    currentNickname = null,
+                    inputNickname = "Rickety",
+                    setEnabled = true,
+                    removeEnabled = false,
+                    error = null,
                 )
             ),
             sendCommand = {}
