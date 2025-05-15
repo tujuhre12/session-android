@@ -10,6 +10,7 @@ import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity.CLIPBOARD_SERVICE
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import app.cash.copper.flow.observeQuery
 import com.bumptech.glide.Glide
 import com.squareup.phrase.Phrase
@@ -89,6 +90,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private val groupManagerV2: GroupManagerV2,
     private val prefs: TextSecurePreferences,
     private val lokiThreadDatabase: LokiThreadDatabase,
+    private val groupManager: GroupManagerV2,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<UIState> = MutableStateFlow(
@@ -194,6 +196,15 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             }
 
             else -> (null to null)
+        }
+
+        // name
+        val name = when {
+            conversation.isLocalNumber -> context.getString(R.string.noteToSelf)
+
+            conversation.isGroupV2Recipient -> getGroupName()
+
+            else -> conversation.name
         }
 
         // account ID
@@ -428,8 +439,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         val avatarData = avatarUtils.getUIDataFromRecipient(conversation)
         _uiState.update {
             _uiState.value.copy(
-                name = conversation.takeUnless { it.isLocalNumber }?.name ?: context.getString(
-                    R.string.noteToSelf),
+                name = name,
                 nameQaTag = when {
                     conversation.isLocalNumber -> context.getString(R.string.qa_conversation_settings_display_name_nts)
                     conversation.is1on1 -> context.getString(R.string.qa_conversation_settings_display_name_1on1)
@@ -785,7 +795,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     }
 
 
-    private fun getGroupName(): String{
+    private fun getGroupName(): String {
         val conversation = recipient ?: return ""
         val accountId = AccountId(conversation.address.toString())
         return configFactory.withGroupConfigs(accountId) {
@@ -803,7 +813,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             var positiveQaTag = R.string.qa_conversation_settings_dialog_delete_group_confirm
             var negativeQaTag = R.string.qa_conversation_settings_dialog_delete_group_cancel
 
-            val groupName = getGroupName()
+            val groupName = _uiState.value.name
 
             if(!groupData.shouldPoll){
                 message = Phrase.from(context, R.string.groupDeleteDescriptionMember)
@@ -985,8 +995,29 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             }
 
             is Commands.SetGroupText -> {
+                val groupData = groupV2 ?: return
+                val dialogData = _dialogState.value.groupEditDialog ?: return
 
+                showLoading()
                 hideGroupEditDialog()
+                viewModelScope.launch {
+                    // save name if needed
+                    if(dialogData.inputName != dialogData.currentName) {
+                        groupManager.setName(
+                            AccountId(groupData.groupAccountId),
+                            dialogData.inputName ?: dialogData.currentName
+                        )
+                    }
+
+                    // save description if needed
+                  /*  if(dialogData.inputtedDescription != dialogData.currentDescription)
+                        groupManager.setDescription(
+                            AccountId(groupData.groupAccountId),
+                            dialogData.inputtedDescription ?: dialogData.currentDescription
+                        )*/
+
+                    hideLoading()
+                }
             }
         }
     }
@@ -1026,10 +1057,11 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     }
 
     private fun showGroupEditDialog(){
+        val groupName = _uiState.value.name
         _dialogState.update {
             it.copy(groupEditDialog = GroupEditDialog(
-                currentName = getGroupName(),
-                inputName = getGroupName(),
+                currentName = groupName,
+                inputName = groupName,
                 currentDescription = "",
                 inputtedDescription = "",
                 saveEnabled = false,
