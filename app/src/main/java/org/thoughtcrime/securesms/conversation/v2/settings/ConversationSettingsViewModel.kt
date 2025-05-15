@@ -38,6 +38,7 @@ import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISI
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsession.database.StorageProtocol
+import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.utilities.SodiumUtilities
@@ -55,10 +56,12 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
+import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSizeInBytes
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.dependencies.ConfigFactory.Companion.MAX_NAME_BYTES
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.repository.ConversationRepository
@@ -893,9 +896,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             is Commands.ClearMessagesGroupDeviceOnly -> clearMessages(false)
             is Commands.ClearMessagesGroupEveryone -> clearMessages(true)
 
-            is Commands.HideNicknameDialog -> _dialogState.update {
-                it.copy(nicknameDialog = null)
-            }
+            is Commands.HideNicknameDialog -> hideNicknameDialog()
 
             is Commands.ShowNicknameDialog -> showNicknameDialog()
 
@@ -904,25 +905,48 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             }
 
             is Commands.RemoveNickname -> {
-                //todo UCS implement
+                setNickname(null)
+
+                hideNicknameDialog()
             }
 
             is Commands.SetNickname -> {
-                //todo UCS implement
+                setNickname(_dialogState.value.nicknameDialog?.inputNickname)
+
+                hideNicknameDialog()
             }
 
             is Commands.UpdateNickname -> {
-                //todo UCS handle error
+                val error: String? = when {
+                    command.nickname.textSizeInBytes() > MAX_NAME_BYTES -> context.getString(R.string.nicknameErrorShorter)
+
+                    else -> null
+                }
+
                 _dialogState.update {
                     it.copy(
                         nicknameDialog = it.nicknameDialog?.copy(
                             inputNickname = command.nickname,
-                            setEnabled = command.nickname.isNotEmpty() && // can save if we have an input
-                            command.nickname != it.nicknameDialog.currentNickname // ... and it isn't the same as what is already saved
+                            setEnabled = command.nickname.trim().isNotEmpty() && // can save if we have an input
+                                command.nickname != it.nicknameDialog.currentNickname && // ... and it isn't the same as what is already saved
+                                error == null, // ... and there are no errors
+                            error = error
                         )
                     )
                 }
             }
+        }
+    }
+
+    private fun setNickname(nickname: String?){
+        val conversation = recipient ?: return
+
+        viewModelScope.launch(Dispatchers.Default) {
+            val publicKey = conversation.address.toString()
+
+            val contact = storage.getContactWithAccountID(publicKey) ?: Contact(publicKey)
+            contact.nickname = nickname
+            storage.setContact(contact)
         }
     }
 
@@ -945,6 +969,12 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 ),
                 groupEditDialog = null
             )
+        }
+    }
+
+    private fun hideNicknameDialog(){
+        _dialogState.update {
+            it.copy(nicknameDialog = null)
         }
     }
 

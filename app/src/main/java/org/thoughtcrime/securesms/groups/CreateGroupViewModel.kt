@@ -96,7 +96,7 @@ class CreateGroupViewModel @AssistedInject constructor(
             }
 
             // validate name length (needs to be less than 100 bytes)
-            if(groupName.textSizeInBytes() > MAX_GROUP_NAME_BYTES){
+            if(groupName.textSizeInBytes() > ConfigFactory.MAX_NAME_BYTES){
                 mutableGroupNameError.value = appContext.getString(R.string.groupNameEnterShorter)
                 return@launch
             }

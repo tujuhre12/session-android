@@ -2,11 +2,14 @@ package org.thoughtcrime.securesms.conversation.v2.settings
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -77,6 +80,11 @@ fun ConversationSettingsDialogs(
     // Nickname
     if(dialogsState.nicknameDialog != null){
 
+        val focusRequester = remember { FocusRequester() }
+        LaunchedEffect (Unit) {
+            focusRequester.requestFocus()
+        }
+
         AlertDialog(
             onDismissRequest = {
                 // hide dialog
@@ -90,7 +98,8 @@ fun ConversationSettingsDialogs(
             content = {
                 SessionOutlinedTextField(
                     text = dialogsState.nicknameDialog.inputNickname ?: "",
-                    modifier = Modifier.qaTag(R.string.AccessibilityId_sessionIdInput)
+                    modifier = Modifier.qaTag(R.string.qa_conversation_settings_dialog_nickname_input)
+                        .focusRequester(focusRequester)
                         .padding(top = LocalDimensions.current.smallSpacing),
                     placeholder = stringResource(R.string.accountIdOrOnsEnter),
                     onChange = { updatedText ->
@@ -104,12 +113,14 @@ fun ConversationSettingsDialogs(
                 DialogButtonModel(
                     text = GetString(stringResource(id = R.string.save)),
                     enabled = dialogsState.nicknameDialog.setEnabled,
+                    qaTag = stringResource(R.string.qa_conversation_settings_dialog_nickname_set),
                     onClick = { sendCommand(SetNickname) }
                 ),
                 DialogButtonModel(
                     text = GetString(stringResource(R.string.remove)),
                     color = LocalColors.current.danger,
                     enabled = dialogsState.nicknameDialog.removeEnabled,
+                    qaTag = stringResource(R.string.qa_conversation_settings_dialog_nickname_remove),
                     onClick = {
                         sendCommand(RemoveNickname)
                     }

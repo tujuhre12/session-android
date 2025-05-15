@@ -1,6 +1,8 @@
 package org.thoughtcrime.securesms.ui.components
 
 import androidx.annotation.DrawableRes
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -177,17 +179,19 @@ fun SessionOutlinedTextField(
                     }
                 }
 
-                error?.let {
-                    Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
-                    Text(
-                        it,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .qaTag(R.string.AccessibilityId_theError),
-                        textAlign = TextAlign.Center,
-                        style = LocalType.current.base.bold(),
-                        color = LocalColors.current.danger
-                    )
+                AnimatedContent (error) { errorText ->
+                    if (errorText != null) {
+                        Text(
+                            errorText,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = LocalDimensions.current.xsSpacing)
+                                .qaTag(R.string.AccessibilityId_theError),
+                            textAlign = TextAlign.Center,
+                            style = LocalType.current.base.bold(),
+                            color = LocalColors.current.danger
+                        )
+                    }
                 }
             }
         }
