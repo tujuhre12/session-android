@@ -130,7 +130,6 @@ fun ConversationSettingsDialogs(
         LaunchedEffect (Unit) {
             focusRequester.requestFocus()
         }
-        //todo UCs have focus at the end of existing text
 
         AlertDialog(
             onDismissRequest = {
@@ -156,12 +155,13 @@ fun ConversationSettingsDialogs(
                     )
 
                     // group description
-                    //todo UCS add max line rules
                     SessionOutlinedTextField(
                         text = dialogsState.groupEditDialog.inputtedDescription ?: "",
                         modifier = Modifier.qaTag(R.string.qa_conversation_settings_dialog_groupname_description_input)
                             .padding(top = LocalDimensions.current.xxsSpacing),
                         placeholder = stringResource(R.string.groupDescriptionEnter),
+                        minLines = 3,
+                        maxLines = 12,
                         onChange = { updatedText ->
                              sendCommand(UpdateGroupDescription(updatedText))
                         },

@@ -51,6 +51,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.qaTag
@@ -121,6 +122,8 @@ fun SessionOutlinedTextField(
     isTextErrorColor: Boolean = error != null,
     enabled: Boolean = true,
     singleLine: Boolean = false,
+    maxLines: Int = if (singleLine) 1 else Int.MAX_VALUE,
+    minLines: Int = 1,
     showClear: Boolean = false,
 ) {
     // in order to allow the cursor to be at the end of the text by default
@@ -147,6 +150,7 @@ fun SessionOutlinedTextField(
         cursorBrush = SolidColor(LocalColors.current.text(isTextErrorColor)),
         enabled = enabled,
         keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+
         keyboardActions = KeyboardActions(
             onDone = { onContinue() },
             onGo = { onContinue() },
@@ -154,6 +158,8 @@ fun SessionOutlinedTextField(
             onSend = { onContinue() },
         ),
         singleLine = singleLine,
+        maxLines = maxLines,
+        minLines = minLines,
         decorationBox = { innerTextField ->
             Column(modifier = Modifier.animateContentSize()) {
                 Box(
@@ -167,38 +173,38 @@ fun SessionOutlinedTextField(
                         .wrapContentHeight()
                         .padding(innerPadding),
                 ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Box(
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            innerTextField()
+                        }
+
+                        if(showClear && text.isNotEmpty()){
+                            Image(
+                                painterResource(id = R.drawable.ic_x),
+                                contentDescription = stringResource(R.string.clear),
+                                colorFilter = ColorFilter.tint(
+                                    LocalColors.current.textSecondary
+                                ),
+                                modifier = Modifier.qaTag(R.string.qa_conversation_search_clear)
+                                    .padding(start = LocalDimensions.current.smallSpacing)
+                                    .size(LocalDimensions.current.iconSmall)
+                                    .clickable {
+                                        onChange("")
+                                    }
+                            )
+                        }
+                    }
+
                     if (placeholder.isNotEmpty() && text.isEmpty()) {
                         Text(
                             text = placeholder,
                             style = textStyle.copy(color = LocalColors.current.textSecondary),
                         )
-                    } else {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Box(
-                                modifier = Modifier.weight(1f),
-                            ) {
-                                innerTextField()
-                            }
-
-                            if(showClear){
-                                Image(
-                                    painterResource(id = R.drawable.ic_x),
-                                    contentDescription = stringResource(R.string.clear),
-                                    colorFilter = ColorFilter.tint(
-                                        LocalColors.current.textSecondary
-                                    ),
-                                    modifier = Modifier.qaTag(R.string.qa_conversation_search_clear)
-                                        .padding(start = LocalDimensions.current.smallSpacing)
-                                        .size(LocalDimensions.current.iconSmall)
-                                        .clickable {
-                                            onChange("")
-                                        }
-                                )
-                            }
-                        }
                     }
                 }
 

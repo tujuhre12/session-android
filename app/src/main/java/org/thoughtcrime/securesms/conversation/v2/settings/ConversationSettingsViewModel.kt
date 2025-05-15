@@ -942,7 +942,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 val trimmedName = command.name.trim()
 
                 val error: String? = when {
-                    trimmedName.length > 200 -> context.getString(R.string.groupNameEnterShorter)
+                    trimmedName.textSizeInBytes() > MAX_NAME_BYTES -> context.getString(R.string.groupNameEnterShorter)
 
                     else -> null
                 }
@@ -953,7 +953,8 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                             inputName = command.name,
                             saveEnabled = trimmedName.isNotEmpty() && // can save if we have an input
                                     trimmedName != it.groupEditDialog.currentName && // ... and it isn't the same as what is already saved
-                                    error == null, // ... and there are no errors
+                                    error == null && // ... and there are no name errors
+                                    it.groupEditDialog.errorDescription == null, // ... and there are no description errors
                             errorName = error
                         )
                     )
@@ -961,7 +962,26 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             }
 
             is Commands.UpdateGroupDescription -> {
+                val trimmedDescription = command.description.trim()
 
+                val error: String? = when {
+                    trimmedDescription.length > 200 -> context.getString(R.string.updateGroupInformationEnterShorterDescription)
+
+                    else -> null
+                }
+
+                _dialogState.update {
+                    it.copy(
+                        groupEditDialog = it.groupEditDialog?.copy(
+                            inputtedDescription = command.description,
+                            saveEnabled = trimmedDescription.isNotEmpty() && // can save if we have an input
+                                    trimmedDescription != it.groupEditDialog.currentName && // ... and it isn't the same as what is already saved
+                                    error == null && // ... and there are no description errors
+                                    it.groupEditDialog.errorName == null, // ... and there are no name errors
+                            errorName = error
+                        )
+                    )
+                }
             }
 
             is Commands.SetGroupText -> {
