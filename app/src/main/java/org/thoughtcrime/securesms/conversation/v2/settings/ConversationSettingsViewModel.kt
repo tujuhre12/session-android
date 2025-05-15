@@ -26,6 +26,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
@@ -45,6 +47,7 @@ import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.ExpirationUtil
 import org.session.libsession.utilities.StringSubstitutionConstants.COMMUNITY_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
@@ -124,7 +127,9 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                             .observeQuery(DatabaseContentProviders.Recipient.CONTENT_URI), // recipient updates
                         (context.contentResolver.observeChanges(
                             DatabaseContentProviders.Conversation.getUriForThread(threadId)
-                        ) as Flow<*>) // thread updates
+                        ) as Flow<*>), // thread updates
+                        configFactory.configUpdateNotifications.filterIsInstance<ConfigUpdateNotification.GroupConfigsUpdated>()
+                            .filter { it.groupId.hexString == recipient?.address?.toString() }
                     ).map {
                         recipient // return the recipient
                     }
@@ -1010,11 +1015,12 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                     }
 
                     // save description if needed
-                  /*  if(dialogData.inputtedDescription != dialogData.currentDescription)
+                    if(dialogData.inputtedDescription != dialogData.currentDescription && dialogData.inputtedDescription?.isNotEmpty() == true) {
                         groupManager.setDescription(
                             AccountId(groupData.groupAccountId),
-                            dialogData.inputtedDescription ?: dialogData.currentDescription
-                        )*/
+                            dialogData.inputtedDescription
+                        )
+                    }
 
                     hideLoading()
                 }
@@ -1034,7 +1040,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         }
     }
 
-    fun showNicknameDialog(){
+    private fun showNicknameDialog(){
         val conversation = recipient ?: return
 
         val configContact = configFactory.withUserConfigs { configs ->
@@ -1058,17 +1064,21 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
     private fun showGroupEditDialog(){
         val groupName = _uiState.value.name
+        val groupDescription = _uiState.value.description
+
         _dialogState.update {
             it.copy(groupEditDialog = GroupEditDialog(
                 currentName = groupName,
                 inputName = groupName,
-                currentDescription = "",
-                inputtedDescription = "",
+                currentDescription = groupDescription,
+                inputtedDescription = groupDescription,
                 saveEnabled = false,
                 errorName = null,
                 errorDescription = null
             ))
         }
+
+        //todo UCS description is too narrow
     }
 
     private fun hideNicknameDialog(){

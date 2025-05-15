@@ -1001,6 +1001,17 @@ class GroupManagerV2Impl @Inject constructor(
             MessageSender.sendAndAwait(message, Address.fromSerialized(groupId.hexString))
         }
 
+    override suspend fun setDescription(groupId: AccountId, newDescription: String): Unit =
+        scope.launchAndWait(groupId, "Set group description") {
+            requireAdminAccess(groupId)
+
+            configFactory.withMutableGroupConfigs(groupId) { configs ->
+                if (configs.groupInfo.getDescription() != newDescription) {
+                    configs.groupInfo.setDescription(newDescription)
+                }
+            }
+        }
+
     override suspend fun requestMessageDeletion(
         groupId: AccountId,
         messageHashes: Set<String>

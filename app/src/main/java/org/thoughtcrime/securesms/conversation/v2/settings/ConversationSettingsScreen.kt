@@ -211,7 +211,7 @@ fun ConversationSettings(
                             modifier = Modifier.safeContentWidth()
                                 .qaTag(data.descriptionQaTag),
                             text = data.description,
-                            textStyle = LocalType.current.small,
+                            textStyle = LocalType.current.base,
                             textColor = LocalColors.current.textSecondary,
                             buttonTextStyle = LocalType.current.base.bold(),
                             buttonTextColor = LocalColors.current.textSecondary,
