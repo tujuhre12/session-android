@@ -166,9 +166,10 @@ fun ConversationAppBar(
                         Spacer(Modifier.width(LocalDimensions.current.xsSpacing))
 
                         Text(
-                            modifier = Modifier.clickable {
-                                onSearchCanceled()
-                            },
+                            modifier = Modifier.qaTag(R.string.qa_conversation_search_cancel)
+                                .clickable {
+                                    onSearchCanceled()
+                                },
                             text = stringResource(R.string.cancel),
                             style = LocalType.current.large,
                         )

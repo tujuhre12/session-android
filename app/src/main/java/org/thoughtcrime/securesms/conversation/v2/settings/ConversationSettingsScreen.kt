@@ -191,6 +191,7 @@ fun ConversationSettings(
                         if (data.canEditName) {
                             Image(
                                 modifier = Modifier.padding(start = LocalDimensions.current.xxsSpacing)
+                                    .qaTag(R.string.qa_conversation_settings_edit_name)
                                     .size(LocalDimensions.current.iconSmall),
                                 painter = painterResource(R.drawable.ic_pencil),
                                 colorFilter = ColorFilter.tint(LocalColors.current.textSecondary),

@@ -9,7 +9,6 @@
     <string name="AccessibilityId_recoveryPasswordHidePermanentlyConfirm">Confirm button</string>
     <string name="AccessibilityId_accountIdCopy">Copy Account ID</string>
     <string name="AccessibilityId_copy">Copy button</string>
-    <string name="AccessibilityId_theError">Error message</string>
     <string name="AccessibilityId_recoveryPasswordHideRecoveryPassword">Hide recovery password button</string>
     <string name="AccessibilityId_qrCode">QR code</string>
     <string name="AccessibilityId_sessionRecoveryPassword">Recovery password</string>
@@ -151,7 +150,10 @@
     <string name="qa_conversation_settings_dialog_nickname_input">nickname-input</string>
     <string name="qa_conversation_settings_dialog_nickname_set">set-nickname-confirm-button</string>
     <string name="qa_conversation_settings_dialog_nickname_remove">set-nickname-remove-button</string>
-    <string name="schleem">set-nickname-remove-button</string>
+    <string name="qa_conversation_settings_dialog_groupname_input">update-group-info-name-input</string>
+    <string name="qa_conversation_settings_dialog_groupname_description_input">update-group-info-description-input</string>
+    <string name="qa_conversation_settings_dialog_groupname_save">update-group-info-confirm-button</string>
+    <string name="qa_conversation_settings_dialog_groupname_cancel">update-group-info-cancel-button</string>
     <!--  Conversation options for closed group-->
     <string name="AccessibilityId_groupNameNew">Accept name change</string>
     <string name="AccessibilityId_membersInvite">Invite button</string>
@@ -251,5 +253,6 @@
     <string name="AccessibilityId_mediaMessage">Media message</string>
     <string name="AccessibilityId_save">Save</string>
     <string name="AccessibilityId_remove">Remove</string>
+    <string name="qa_input_error">error-message</string>
 
 </resources>

@@ -155,6 +155,7 @@ fun GroupAdminClearMessagesDialog(
                 option = RadioOption(
                     value = Unit,
                     title = GetString(stringResource(R.string.clearDeviceOnly)),
+                    qaTag = GetString(R.string.qa_conversation_settings_clear_messages_radio_device),
                     selected = !deleteForEveryone
                 )
             ) {
@@ -165,6 +166,7 @@ fun GroupAdminClearMessagesDialog(
                 option = RadioOption(
                     value = Unit,
                     title = GetString(stringResource(R.string.clearMessagesForEveryone)),
+                    qaTag = GetString(R.string.qa_conversation_settings_clear_messages_radio_everyone),
                     selected = deleteForEveryone,
                 )
             ) {

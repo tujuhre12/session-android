@@ -186,7 +186,7 @@ fun SessionOutlinedTextField(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(top = LocalDimensions.current.xsSpacing)
-                                .qaTag(R.string.AccessibilityId_theError),
+                                .qaTag(R.string.qa_input_error),
                             textAlign = TextAlign.Center,
                             style = LocalType.current.base.bold(),
                             color = LocalColors.current.danger
