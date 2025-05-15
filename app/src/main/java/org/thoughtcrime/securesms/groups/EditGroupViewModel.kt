@@ -26,7 +26,6 @@ import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.util.AvatarUtils
 
 
-const val MAX_GROUP_NAME_BYTES = 100
 
 @HiltViewModel(assistedFactory = EditGroupViewModel.Factory::class)
 class EditGroupViewModel @AssistedInject constructor(

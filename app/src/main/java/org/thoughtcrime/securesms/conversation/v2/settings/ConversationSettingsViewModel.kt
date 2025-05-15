@@ -10,6 +10,7 @@ import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity.CLIPBOARD_SERVICE
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import app.cash.copper.flow.observeQuery
 import com.bumptech.glide.Glide
 import com.squareup.phrase.Phrase
@@ -25,6 +26,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
@@ -38,11 +41,13 @@ import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISI
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsession.database.StorageProtocol
+import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.ExpirationUtil
 import org.session.libsession.utilities.StringSubstitutionConstants.COMMUNITY_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
@@ -55,10 +60,12 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
+import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSizeInBytes
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.dependencies.ConfigFactory.Companion.MAX_NAME_BYTES
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.repository.ConversationRepository
@@ -86,6 +93,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private val groupManagerV2: GroupManagerV2,
     private val prefs: TextSecurePreferences,
     private val lokiThreadDatabase: LokiThreadDatabase,
+    private val groupManager: GroupManagerV2,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<UIState> = MutableStateFlow(
@@ -94,6 +102,9 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         )
     )
     val uiState: StateFlow<UIState> = _uiState
+
+    private val _dialogState: MutableStateFlow<DialogsState> = MutableStateFlow(DialogsState())
+    val dialogState: StateFlow<DialogsState> = _dialogState
 
     private var recipient: Recipient? = null
 
@@ -116,7 +127,9 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                             .observeQuery(DatabaseContentProviders.Recipient.CONTENT_URI), // recipient updates
                         (context.contentResolver.observeChanges(
                             DatabaseContentProviders.Conversation.getUriForThread(threadId)
-                        ) as Flow<*>) // thread updates
+                        ) as Flow<*>), // thread updates
+                        configFactory.configUpdateNotifications.filterIsInstance<ConfigUpdateNotification.GroupConfigsUpdated>()
+                            .filter { it.groupId.hexString == recipient?.address?.toString() }
                     ).map {
                         recipient // return the recipient
                     }
@@ -149,10 +162,10 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         }
 
         // edit name - Can edit name for 1on1, or if admin of a groupV2
-        val canEditName = when {
-            conversation.is1on1 -> true
-            conversation.isGroupV2Recipient && isAdmin -> true
-            else -> false
+        val editCommand = when {
+            conversation.is1on1 -> Commands.ShowNicknameDialog
+            conversation.isGroupV2Recipient && isAdmin -> Commands.ShowGroupEditDialog
+            else -> null
         }
 
         // description / display name with QA tags
@@ -188,6 +201,15 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             }
 
             else -> (null to null)
+        }
+
+        // name
+        val name = when {
+            conversation.isLocalNumber -> context.getString(R.string.noteToSelf)
+
+            conversation.isGroupV2Recipient -> getGroupName()
+
+            else -> conversation.name
         }
 
         // account ID
@@ -422,8 +444,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         val avatarData = avatarUtils.getUIDataFromRecipient(conversation)
         _uiState.update {
             _uiState.value.copy(
-                name = conversation.takeUnless { it.isLocalNumber }?.name ?: context.getString(
-                    R.string.noteToSelf),
+                name = name,
                 nameQaTag = when {
                     conversation.isLocalNumber -> context.getString(R.string.qa_conversation_settings_display_name_nts)
                     conversation.is1on1 -> context.getString(R.string.qa_conversation_settings_display_name_1on1)
@@ -431,7 +452,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                     conversation.isCommunityRecipient -> context.getString(R.string.qa_conversation_settings_display_name_community)
                     else -> null
                 },
-                canEditName = canEditName,
+                editCommand = editCommand,
                 description = description,
                 descriptionQaTag = descriptionQaTag,
                 accountId = accountId,
@@ -489,7 +510,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     }
 
     private fun confirmBlockUser(){
-        _uiState.update {
+        _dialogState.update {
             it.copy(
                 showSimpleDialog = Dialog(
                     title = context.getString(R.string.block),
@@ -508,7 +529,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     }
 
     private fun confirmUnblockUser(){
-        _uiState.update {
+        _dialogState.update {
             it.copy(
                 showSimpleDialog = Dialog(
                     title = context.getString(R.string.blockUnblock),
@@ -547,7 +568,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     }
 
     private fun confirmHideNTS(){
-        _uiState.update {
+        _dialogState.update {
             it.copy(
                 showSimpleDialog = Dialog(
                     title = context.getString(R.string.noteToSelfHide),
@@ -564,7 +585,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     }
 
     private fun confirmShowNTS(){
-        _uiState.update {
+        _dialogState.update {
             it.copy(
                 showSimpleDialog = Dialog(
                     title = context.getString(R.string.showNoteToSelf),
@@ -604,7 +625,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     }
 
     private fun confirmDeleteContact(){
-        _uiState.update {
+        _dialogState.update {
             it.copy(
                 showSimpleDialog = Dialog(
                     title = context.getString(R.string.contactDelete),
@@ -637,7 +658,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     }
 
     private fun confirmDeleteConversation(){
-        _uiState.update {
+        _dialogState.update {
             it.copy(
                 showSimpleDialog = Dialog(
                     title = context.getString(R.string.conversationsDelete),
@@ -668,7 +689,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     }
 
     private fun confirmLeaveCommunity(){
-        _uiState.update {
+        _dialogState.update {
             it.copy(
                 showSimpleDialog = Dialog(
                     title = context.getString(R.string.communityLeave),
@@ -713,7 +734,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             conversation.isGroupV2Recipient -> {
                 if(groupV2?.hasAdminKey() == true){
                     // group admin clearing messages have a dedicated custom dialog
-                    _uiState.update { it.copy(showGroupAdminClearMessagesDialog = true) }
+                    _dialogState.update { it.copy(groupAdminClearMessagesDialog = GroupAdminClearMessageDialog(getGroupName())) }
                     return
 
                 } else {
@@ -734,7 +755,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             }
         }
 
-        _uiState.update {
+        _dialogState.update {
             it.copy(
                 showSimpleDialog = Dialog(
                     title = context.getString(R.string.clearMessages),
@@ -779,7 +800,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     }
 
 
-    private fun getGroupName(): String{
+    private fun getGroupName(): String {
         val conversation = recipient ?: return ""
         val accountId = AccountId(conversation.address.toString())
         return configFactory.withGroupConfigs(accountId) {
@@ -789,7 +810,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
     private fun confirmLeaveGroup(){
         val groupData = groupV2 ?: return
-        _uiState.update {
+        _dialogState.update {
 
             var title = R.string.groupDelete
             var message: CharSequence = ""
@@ -797,7 +818,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             var positiveQaTag = R.string.qa_conversation_settings_dialog_delete_group_confirm
             var negativeQaTag = R.string.qa_conversation_settings_dialog_delete_group_cancel
 
-            val groupName = getGroupName()
+            val groupName = _uiState.value.name
 
             if(!groupData.shouldPoll){
                 message = Phrase.from(context, R.string.groupDeleteDescriptionMember)
@@ -879,16 +900,196 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         when (command) {
             is Commands.CopyAccountId -> copyAccountId()
 
-            is Commands.HideSimpleDialog -> _uiState.update {
+            is Commands.HideSimpleDialog -> _dialogState.update {
                 it.copy(showSimpleDialog = null)
             }
 
-            is Commands.HideGroupAdminClearMessagesDialog -> _uiState.update {
-                it.copy(showGroupAdminClearMessagesDialog = false)
+            is Commands.HideGroupAdminClearMessagesDialog -> _dialogState.update {
+                it.copy(groupAdminClearMessagesDialog = null)
             }
 
             is Commands.ClearMessagesGroupDeviceOnly -> clearMessages(false)
             is Commands.ClearMessagesGroupEveryone -> clearMessages(true)
+
+            is Commands.HideNicknameDialog -> hideNicknameDialog()
+
+            is Commands.ShowNicknameDialog -> showNicknameDialog()
+
+            is Commands.ShowGroupEditDialog -> showGroupEditDialog()
+
+            is Commands.HideGroupEditDialog -> hideGroupEditDialog()
+
+            is Commands.RemoveNickname -> {
+                setNickname(null)
+
+                hideNicknameDialog()
+            }
+
+            is Commands.SetNickname -> {
+                setNickname(_dialogState.value.nicknameDialog?.inputNickname?.trim())
+
+                hideNicknameDialog()
+            }
+
+            is Commands.UpdateNickname -> {
+                val trimmedName = command.nickname.trim()
+
+                val error: String? = when {
+                    trimmedName.textSizeInBytes() > MAX_NAME_BYTES -> context.getString(R.string.nicknameErrorShorter)
+
+                    else -> null
+                }
+
+                _dialogState.update {
+                    it.copy(
+                        nicknameDialog = it.nicknameDialog?.copy(
+                            inputNickname = command.nickname,
+                            setEnabled = trimmedName.isNotEmpty() && // can save if we have an input
+                                    trimmedName != it.nicknameDialog.currentNickname && // ... and it isn't the same as what is already saved
+                                error == null, // ... and there are no errors
+                            error = error
+                        )
+                    )
+                }
+            }
+
+            is Commands.UpdateGroupName -> {
+                val trimmedName = command.name.trim()
+
+                val error: String? = when {
+                    trimmedName.textSizeInBytes() > MAX_NAME_BYTES -> context.getString(R.string.groupNameEnterShorter)
+
+                    else -> null
+                }
+
+                _dialogState.update {
+                    it.copy(
+                        groupEditDialog = it.groupEditDialog?.copy(
+                            inputName = command.name,
+                            saveEnabled = trimmedName.isNotEmpty() && // can save if we have an input
+                                    trimmedName != it.groupEditDialog.currentName && // ... and it isn't the same as what is already saved
+                                    error == null && // ... and there are no name errors
+                                    it.groupEditDialog.errorDescription == null, // ... and there are no description errors
+                            errorName = error
+                        )
+                    )
+                }
+            }
+
+            is Commands.UpdateGroupDescription -> {
+                val trimmedDescription = command.description.trim()
+
+                val error: String? = when {
+                    trimmedDescription.length > 200 -> context.getString(R.string.updateGroupInformationEnterShorterDescription)
+
+                    else -> null
+                }
+
+                _dialogState.update {
+                    it.copy(
+                        groupEditDialog = it.groupEditDialog?.copy(
+                            inputtedDescription = command.description,
+                            saveEnabled = trimmedDescription.isNotEmpty() && // can save if we have an input
+                                    trimmedDescription != it.groupEditDialog.currentName && // ... and it isn't the same as what is already saved
+                                    error == null && // ... and there are no description errors
+                                    it.groupEditDialog.errorName == null, // ... and there are no name errors
+                            errorName = error
+                        )
+                    )
+                }
+            }
+
+            is Commands.SetGroupText -> {
+                val groupData = groupV2 ?: return
+                val dialogData = _dialogState.value.groupEditDialog ?: return
+
+                showLoading()
+                hideGroupEditDialog()
+                viewModelScope.launch {
+                    // save name if needed
+                    if(dialogData.inputName != dialogData.currentName) {
+                        groupManager.setName(
+                            AccountId(groupData.groupAccountId),
+                            dialogData.inputName ?: dialogData.currentName
+                        )
+                    }
+
+                    // save description if needed
+                    if(dialogData.inputtedDescription != dialogData.currentDescription && dialogData.inputtedDescription?.isNotEmpty() == true) {
+                        groupManager.setDescription(
+                            AccountId(groupData.groupAccountId),
+                            dialogData.inputtedDescription
+                        )
+                    }
+
+                    hideLoading()
+                }
+            }
+        }
+    }
+
+    private fun setNickname(nickname: String?){
+        val conversation = recipient ?: return
+
+        viewModelScope.launch(Dispatchers.Default) {
+            val publicKey = conversation.address.toString()
+
+            val contact = storage.getContactWithAccountID(publicKey) ?: Contact(publicKey)
+            contact.nickname = nickname
+            storage.setContact(contact)
+        }
+    }
+
+    private fun showNicknameDialog(){
+        val conversation = recipient ?: return
+
+        val configContact = configFactory.withUserConfigs { configs ->
+            configs.contacts.get(conversation.address.toString())
+        }
+
+        _dialogState.update {
+            it.copy(
+                nicknameDialog = NicknameDialogData(
+                    name = configContact?.name ?: "",
+                    currentNickname = configContact?.nickname,
+                    inputNickname = configContact?.nickname,
+                    setEnabled = false,
+                    removeEnabled = configContact?.nickname?.isEmpty() == false,  // can only remove is we have a nickname already
+                    error = null
+                ),
+                groupEditDialog = null
+            )
+        }
+    }
+
+    private fun showGroupEditDialog(){
+        val groupName = _uiState.value.name
+        val groupDescription = _uiState.value.description
+
+        _dialogState.update {
+            it.copy(groupEditDialog = GroupEditDialog(
+                currentName = groupName,
+                inputName = groupName,
+                currentDescription = groupDescription,
+                inputtedDescription = groupDescription,
+                saveEnabled = false,
+                errorName = null,
+                errorDescription = null
+            ))
+        }
+
+        //todo UCS description is too narrow
+    }
+
+    private fun hideNicknameDialog(){
+        _dialogState.update {
+            it.copy(nicknameDialog = null)
+        }
+    }
+
+    private fun hideGroupEditDialog(){
+        _dialogState.update {
+            it.copy(groupEditDialog = null)
         }
     }
 
@@ -944,6 +1145,19 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         data object HideGroupAdminClearMessagesDialog : Commands
         data object ClearMessagesGroupDeviceOnly : Commands
         data object ClearMessagesGroupEveryone : Commands
+
+        // dialogs
+        data object ShowNicknameDialog : Commands
+        data object HideNicknameDialog : Commands
+        data object RemoveNickname : Commands
+        data object SetNickname: Commands
+        data class UpdateNickname(val nickname: String): Commands
+        data class UpdateGroupName(val name: String): Commands
+        data class UpdateGroupDescription(val description: String): Commands
+        data object SetGroupText: Commands
+
+        data object ShowGroupEditDialog : Commands
+        data object HideGroupEditDialog : Commands
     }
 
     @AssistedFactory
@@ -1169,13 +1383,11 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         val avatarUIData: AvatarUIData,
         val name: String = "",
         val nameQaTag: String? = null,
-        val canEditName: Boolean = false,
         val description: String? = null,
         val descriptionQaTag: String? = null,
         val accountId: String? = null,
-        val showSimpleDialog: Dialog? = null,
-        val showGroupAdminClearMessagesDialog: Boolean = false,
         val showLoading: Boolean = false,
+        val editCommand: Commands? = null,
         val categories: List<OptionsCategory> = emptyList()
     )
 
@@ -1211,5 +1423,35 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         val subtitle: String? = null,
         @StringRes val subtitleQaTag: Int? = null,
         val onClick: () -> Unit
+    )
+
+    data class DialogsState(
+        val showSimpleDialog: Dialog? = null,
+        val nicknameDialog: NicknameDialogData? = null,
+        val groupEditDialog: GroupEditDialog? = null,
+        val groupAdminClearMessagesDialog: GroupAdminClearMessageDialog? = null,
+    )
+
+    data class NicknameDialogData(
+        val name: String,
+        val currentNickname: String?, // the currently saved nickname, if any
+        val inputNickname: String?, // the nickname being inputted
+        val setEnabled: Boolean,
+        val removeEnabled: Boolean,
+        val error: String?
+    )
+
+    data class GroupEditDialog(
+        val currentName: String, // the currently saved name
+        val inputName: String?, // the name being inputted
+        val currentDescription: String?,
+        val inputtedDescription: String?,
+        val saveEnabled: Boolean,
+        val errorName: String?,
+        val errorDescription: String?,
+    )
+
+    data class GroupAdminClearMessageDialog(
+        val groupName: String
     )
 }

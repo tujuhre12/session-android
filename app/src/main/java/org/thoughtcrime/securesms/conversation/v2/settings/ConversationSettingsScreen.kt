@@ -11,6 +11,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -30,6 +31,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -54,10 +56,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.ClearMessagesGroupDeviceOnly
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.ClearMessagesGroupEveryone
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.HideGroupAdminClearMessagesDialog
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.HideSimpleDialog
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.*
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.DialogButtonModel
@@ -97,9 +96,11 @@ fun ConversationSettingsScreen(
     onBack: () -> Unit,
 ) {
     val data by viewModel.uiState.collectAsState()
+    val dialogsState by viewModel.dialogState.collectAsState()
 
     ConversationSettings(
         data = data,
+        dialogsState = dialogsState,
         sendCommand = viewModel::onCommand,
         sharedTransitionScope = sharedTransitionScope,
         animatedContentScope = animatedContentScope,
@@ -112,6 +113,7 @@ fun ConversationSettingsScreen(
 @Composable
 fun ConversationSettings(
     data: ConversationSettingsViewModel.UIState,
+    dialogsState: ConversationSettingsViewModel.DialogsState,
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope,
     sendCommand: (ConversationSettingsViewModel.Commands) -> Unit,
@@ -165,7 +167,16 @@ fun ConversationSettings(
                     // name and edit icon
                     Row(
                         modifier = Modifier.fillMaxWidth()
-                            .safeContentWidth(),
+                            .safeContentWidth()
+                            .then(
+                                // make the component clickable is there is an edit action
+                                if (data.editCommand != null) Modifier.clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = ripple(bounded = false),
+                                    onClick = { sendCommand(data.editCommand) }
+                                )
+                                else Modifier
+                            ),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
                     ) {
@@ -181,9 +192,10 @@ fun ConversationSettings(
                             color = LocalColors.current.text
                         )
 
-                        if (data.canEditName) {
+                        if (data.editCommand != null) {
                             Image(
                                 modifier = Modifier.padding(start = LocalDimensions.current.xxsSpacing)
+                                    .qaTag(R.string.qa_conversation_settings_edit_name)
                                     .size(LocalDimensions.current.iconSmall),
                                 painter = painterResource(R.drawable.ic_pencil),
                                 colorFilter = ColorFilter.tint(LocalColors.current.textSecondary),
@@ -199,7 +211,7 @@ fun ConversationSettings(
                             modifier = Modifier.safeContentWidth()
                                 .qaTag(data.descriptionQaTag),
                             text = data.description,
-                            textStyle = LocalType.current.small,
+                            textStyle = LocalType.current.base,
                             textColor = LocalColors.current.textSecondary,
                             buttonTextStyle = LocalType.current.base.bold(),
                             buttonTextColor = LocalColors.current.textSecondary,
@@ -214,7 +226,7 @@ fun ConversationSettings(
                         val longPressLabel = stringResource(R.string.accountIDCopy)
                         val onLongPress = {
                             haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                            sendCommand(ConversationSettingsViewModel.Commands.CopyAccountId)
+                            sendCommand(CopyAccountId)
                         }
                         Text(
                             modifier = Modifier.qaTag(R.string.qa_conversation_settings_account_id)
@@ -260,36 +272,10 @@ fun ConversationSettings(
                 }
 
                 // Dialogs
-                if (data.showSimpleDialog != null) {
-                    AlertDialog(
-                        onDismissRequest = {
-                            // hide dialog
-                            sendCommand(HideSimpleDialog)
-                        },
-                        title = annotatedStringResource(data.showSimpleDialog.title),
-                        text = annotatedStringResource(data.showSimpleDialog.message),
-                        buttons = listOf(
-                            DialogButtonModel(
-                                text = GetString(data.showSimpleDialog.positiveText),
-                                color = if(data.showSimpleDialog.positiveStyleDanger) LocalColors.current.danger
-                                else LocalColors.current.text,
-                                onClick = data.showSimpleDialog.onPositive
-                            ),
-                            DialogButtonModel(
-                                text = GetString(data.showSimpleDialog.negativeText),
-                                onClick = data.showSimpleDialog.onNegative
-                            )
-                        )
-                    )
-                }
-
-                // Group admin clear messages
-                if(data.showGroupAdminClearMessagesDialog) {
-                    GroupAdminClearMessagesDialog(
-                        groupName = data.name,
-                        sendCommand = sendCommand
-                    )
-                }
+                ConversationSettingsDialogs(
+                    dialogsState = dialogsState,
+                    sendCommand = sendCommand
+                )
 
                 // Loading
                 if (data.showLoading) {
@@ -364,66 +350,6 @@ fun ConversationSettingsSubCategory(
     }
 }
 
-@Composable
-fun GroupAdminClearMessagesDialog(
-    modifier: Modifier = Modifier,
-    groupName: String,
-    sendCommand: (ConversationSettingsViewModel.Commands) -> Unit,
-){
-    var deleteForEveryone by remember { mutableStateOf(false) }
-
-    val context = LocalContext.current
-
-    AlertDialog(
-        modifier = modifier,
-        onDismissRequest = {
-            // hide dialog
-            sendCommand(HideGroupAdminClearMessagesDialog)
-        },
-        title = annotatedStringResource(R.string.groupLeave),
-        text =  annotatedStringResource(Phrase.from(context, R.string.clearMessagesGroupAdminDescriptionUpdated)
-            .put(GROUP_NAME_KEY, groupName)
-            .format()),
-        content = {
-            DialogTitledRadioButton(
-                option = RadioOption(
-                    value = Unit,
-                    title = GetString(stringResource(R.string.clearDeviceOnly)),
-                    selected = !deleteForEveryone
-                )
-            ) {
-                deleteForEveryone = false
-            }
-
-            DialogTitledRadioButton(
-                option = RadioOption(
-                    value = Unit,
-                    title = GetString(stringResource(R.string.clearMessagesForEveryone)),
-                    selected = deleteForEveryone,
-                )
-            ) {
-                deleteForEveryone = true
-            }
-        },
-        buttons = listOf(
-            DialogButtonModel(
-                text = GetString(stringResource(id = R.string.clear)),
-                color = LocalColors.current.danger,
-                onClick = {
-                    // clear messages based on chosen option
-                    sendCommand(
-                        if(deleteForEveryone) ClearMessagesGroupEveryone
-                        else ClearMessagesGroupDeviceOnly
-                    )
-                }
-            ),
-            DialogButtonModel(
-                GetString(stringResource(R.string.cancel))
-            )
-        )
-    )
-}
-
 @OptIn(ExperimentalSharedTransitionApi::class)
 @SuppressLint("UnusedContentLambdaTargetStateParameter")
 @Preview
@@ -440,7 +366,7 @@ private fun ConversationSettings1on1Preview() {
                     animatedContentScope = this@AnimatedContent,
                     data = ConversationSettingsViewModel.UIState(
                         name = "Nickname",
-                        canEditName = true,
+                        editCommand = ShowGroupEditDialog,
                         description = "(Real name)",
                         accountId = "05000000000000000000000000000000000000000000000000000000000000000",
                         avatarUIData = AvatarUIData(
@@ -506,7 +432,8 @@ private fun ConversationSettings1on1Preview() {
                                 )
                             )
                         ),
-                    )
+                    ),
+                    dialogsState = ConversationSettingsViewModel.DialogsState()
                 )
             }
         }
@@ -530,7 +457,7 @@ private fun ConversationSettings1on1LongNamePreview() {
                     animatedContentScope = this@AnimatedContent,
                     data = ConversationSettingsViewModel.UIState(
                         name = "Nickname that is very long but the text shouldn't be cut off because there is no limit to the display here so it should show the whole thing",
-                        canEditName = true,
+                        editCommand = ShowGroupEditDialog,
                         description = "This is a long description with a lot of text that should be more than 2 lines and should be truncated but you never know, it depends on size and such things dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk lkasdjfalsdkfjasdklfj lsadkfjalsdkfjsadklf lksdjfalsdkfjasdlkfjasdlkf asldkfjasdlkfja and this is the end",
                         accountId = "05000000000000000000000000000000000000000000000000000000000000000",
                         avatarUIData = AvatarUIData(
@@ -595,7 +522,8 @@ private fun ConversationSettings1on1LongNamePreview() {
                                 )
                             )
                         ),
-                    )
+                    ),
+                    dialogsState = ConversationSettingsViewModel.DialogsState()
                 )
             }
         }

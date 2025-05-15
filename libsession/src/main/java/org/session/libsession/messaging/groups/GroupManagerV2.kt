@@ -81,6 +81,7 @@ interface GroupManagerV2 {
     suspend fun handleKicked(groupId: AccountId)
 
     suspend fun setName(groupId: AccountId, newName: String)
+    suspend fun setDescription(groupId: AccountId, newName: String)
 
     /**
      * Send a request to the group to delete the given messages.
