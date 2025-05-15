@@ -28,6 +28,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -37,9 +42,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
@@ -116,9 +123,25 @@ fun SessionOutlinedTextField(
     singleLine: Boolean = false,
     showClear: Boolean = false,
 ) {
+    // in order to allow the cursor to be at the end of the text by default
+    // we need o handle the TextFieldValue manually here
+    var fieldValue by rememberSaveable(stateSaver = TextFieldValue.Saver) {
+        mutableStateOf(TextFieldValue(text, TextRange(text.length)))
+    }
+
+    // If caller changes 'text', mirror it and move the caret to end
+    LaunchedEffect(text) {
+        if (text != fieldValue.text) {
+            fieldValue = TextFieldValue(text, TextRange(text.length))
+        }
+    }
+
     BasicTextField(
-        value = text,
-        onValueChange = onChange,
+        value = fieldValue,
+        onValueChange = { newValue ->
+            fieldValue = newValue
+            onChange(newValue.text)     // propagate only the text outward
+        },
         modifier = modifier,
         textStyle = textStyle.copy(color = LocalColors.current.text(isTextErrorColor)),
         cursorBrush = SolidColor(LocalColors.current.text(isTextErrorColor)),

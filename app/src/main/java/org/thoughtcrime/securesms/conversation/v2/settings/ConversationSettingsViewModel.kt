@@ -155,10 +155,10 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         }
 
         // edit name - Can edit name for 1on1, or if admin of a groupV2
-        val canEditName = when {
-            conversation.is1on1 -> true
-            conversation.isGroupV2Recipient && isAdmin -> true
-            else -> false
+        val editCommand = when {
+            conversation.is1on1 -> Commands.ShowNicknameDialog
+            conversation.isGroupV2Recipient && isAdmin -> Commands.ShowGroupEditDialog
+            else -> null
         }
 
         // description / display name with QA tags
@@ -437,7 +437,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                     conversation.isCommunityRecipient -> context.getString(R.string.qa_conversation_settings_display_name_community)
                     else -> null
                 },
-                canEditName = canEditName,
+                editCommand = editCommand,
                 description = description,
                 descriptionQaTag = descriptionQaTag,
                 accountId = accountId,
@@ -900,9 +900,9 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
             is Commands.ShowNicknameDialog -> showNicknameDialog()
 
-            is Commands.HideGroupEditDialog -> _dialogState.update {
-                it.copy(groupEditDialog = null)
-            }
+            is Commands.ShowGroupEditDialog -> showGroupEditDialog()
+
+            is Commands.HideGroupEditDialog -> hideGroupEditDialog()
 
             is Commands.RemoveNickname -> {
                 setNickname(null)
@@ -911,14 +911,16 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             }
 
             is Commands.SetNickname -> {
-                setNickname(_dialogState.value.nicknameDialog?.inputNickname)
+                setNickname(_dialogState.value.nicknameDialog?.inputNickname?.trim())
 
                 hideNicknameDialog()
             }
 
             is Commands.UpdateNickname -> {
+                val trimmedName = command.nickname.trim()
+
                 val error: String? = when {
-                    command.nickname.textSizeInBytes() > MAX_NAME_BYTES -> context.getString(R.string.nicknameErrorShorter)
+                    trimmedName.textSizeInBytes() > MAX_NAME_BYTES -> context.getString(R.string.nicknameErrorShorter)
 
                     else -> null
                 }
@@ -927,13 +929,44 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                     it.copy(
                         nicknameDialog = it.nicknameDialog?.copy(
                             inputNickname = command.nickname,
-                            setEnabled = command.nickname.trim().isNotEmpty() && // can save if we have an input
-                                command.nickname != it.nicknameDialog.currentNickname && // ... and it isn't the same as what is already saved
+                            setEnabled = trimmedName.isNotEmpty() && // can save if we have an input
+                                    trimmedName != it.nicknameDialog.currentNickname && // ... and it isn't the same as what is already saved
                                 error == null, // ... and there are no errors
                             error = error
                         )
                     )
                 }
+            }
+
+            is Commands.UpdateGroupName -> {
+                val trimmedName = command.name.trim()
+
+                val error: String? = when {
+                    trimmedName.length > 200 -> context.getString(R.string.groupNameEnterShorter)
+
+                    else -> null
+                }
+
+                _dialogState.update {
+                    it.copy(
+                        groupEditDialog = it.groupEditDialog?.copy(
+                            inputName = command.name,
+                            saveEnabled = trimmedName.isNotEmpty() && // can save if we have an input
+                                    trimmedName != it.groupEditDialog.currentName && // ... and it isn't the same as what is already saved
+                                    error == null, // ... and there are no errors
+                            errorName = error
+                        )
+                    )
+                }
+            }
+
+            is Commands.UpdateGroupDescription -> {
+
+            }
+
+            is Commands.SetGroupText -> {
+
+                hideGroupEditDialog()
             }
         }
     }
@@ -972,9 +1005,29 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         }
     }
 
+    private fun showGroupEditDialog(){
+        _dialogState.update {
+            it.copy(groupEditDialog = GroupEditDialog(
+                currentName = getGroupName(),
+                inputName = getGroupName(),
+                currentDescription = "",
+                inputtedDescription = "",
+                saveEnabled = false,
+                errorName = null,
+                errorDescription = null
+            ))
+        }
+    }
+
     private fun hideNicknameDialog(){
         _dialogState.update {
             it.copy(nicknameDialog = null)
+        }
+    }
+
+    private fun hideGroupEditDialog(){
+        _dialogState.update {
+            it.copy(groupEditDialog = null)
         }
     }
 
@@ -1037,7 +1090,11 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         data object RemoveNickname : Commands
         data object SetNickname: Commands
         data class UpdateNickname(val nickname: String): Commands
+        data class UpdateGroupName(val name: String): Commands
+        data class UpdateGroupDescription(val description: String): Commands
+        data object SetGroupText: Commands
 
+        data object ShowGroupEditDialog : Commands
         data object HideGroupEditDialog : Commands
     }
 
@@ -1264,11 +1321,11 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         val avatarUIData: AvatarUIData,
         val name: String = "",
         val nameQaTag: String? = null,
-        val canEditName: Boolean = false,
         val description: String? = null,
         val descriptionQaTag: String? = null,
         val accountId: String? = null,
         val showLoading: Boolean = false,
+        val editCommand: Commands? = null,
         val categories: List<OptionsCategory> = emptyList()
     )
 
@@ -1309,7 +1366,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     data class DialogsState(
         val showSimpleDialog: Dialog? = null,
         val nicknameDialog: NicknameDialogData? = null,
-        val groupEditDialog: NicknameDialogData? = null,
+        val groupEditDialog: GroupEditDialog? = null,
         val groupAdminClearMessagesDialog: GroupAdminClearMessageDialog? = null,
     )
 
@@ -1323,7 +1380,13 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     )
 
     data class GroupEditDialog(
-        val name: String?
+        val currentName: String, // the currently saved name
+        val inputName: String?, // the name being inputted
+        val currentDescription: String?,
+        val inputtedDescription: String?,
+        val saveEnabled: Boolean,
+        val errorName: String?,
+        val errorDescription: String?,
     )
 
     data class GroupAdminClearMessageDialog(

@@ -168,10 +168,14 @@ fun ConversationSettings(
                     Row(
                         modifier = Modifier.fillMaxWidth()
                             .safeContentWidth()
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = ripple(bounded = false),
-                                onClick = { sendCommand(ShowNicknameDialog) }
+                            .then(
+                                // make the component clickable is there is an edit action
+                                if (data.editCommand != null) Modifier.clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = ripple(bounded = false),
+                                    onClick = { sendCommand(data.editCommand) }
+                                )
+                                else Modifier
                             ),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
@@ -188,7 +192,7 @@ fun ConversationSettings(
                             color = LocalColors.current.text
                         )
 
-                        if (data.canEditName) {
+                        if (data.editCommand != null) {
                             Image(
                                 modifier = Modifier.padding(start = LocalDimensions.current.xxsSpacing)
                                     .qaTag(R.string.qa_conversation_settings_edit_name)
@@ -362,7 +366,7 @@ private fun ConversationSettings1on1Preview() {
                     animatedContentScope = this@AnimatedContent,
                     data = ConversationSettingsViewModel.UIState(
                         name = "Nickname",
-                        canEditName = true,
+                        editCommand = ShowGroupEditDialog,
                         description = "(Real name)",
                         accountId = "05000000000000000000000000000000000000000000000000000000000000000",
                         avatarUIData = AvatarUIData(
@@ -453,7 +457,7 @@ private fun ConversationSettings1on1LongNamePreview() {
                     animatedContentScope = this@AnimatedContent,
                     data = ConversationSettingsViewModel.UIState(
                         name = "Nickname that is very long but the text shouldn't be cut off because there is no limit to the display here so it should show the whole thing",
-                        canEditName = true,
+                        editCommand = ShowGroupEditDialog,
                         description = "This is a long description with a lot of text that should be more than 2 lines and should be truncated but you never know, it depends on size and such things dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk dfkjdfklj asjdlkj lkjdf lkjsa dlkfjlk asdflkjlksdfjklasdfjasdlkfjasdflk lkasdjfalsdkfjasdklfj lsadkfjalsdkfjsadklf lksdjfalsdkfjasdlkfjasdlkf asldkfjasdlkfja and this is the end",
                         accountId = "05000000000000000000000000000000000000000000000000000000000000000",
                         avatarUIData = AvatarUIData(

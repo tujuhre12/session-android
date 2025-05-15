@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.conversation.v2.settings
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -18,14 +19,7 @@ import com.squareup.phrase.Phrase
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.ClearMessagesGroupDeviceOnly
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.ClearMessagesGroupEveryone
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.HideGroupAdminClearMessagesDialog
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.HideNicknameDialog
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.HideSimpleDialog
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.RemoveNickname
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.SetNickname
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.UpdateNickname
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.*
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.DialogButtonModel
 import org.thoughtcrime.securesms.ui.GetString
@@ -124,6 +118,68 @@ fun ConversationSettingsDialogs(
                     onClick = {
                         sendCommand(RemoveNickname)
                     }
+                )
+            )
+        )
+    }
+
+    // Group Edit
+    if(dialogsState.groupEditDialog != null){
+
+        val focusRequester = remember { FocusRequester() }
+        LaunchedEffect (Unit) {
+            focusRequester.requestFocus()
+        }
+        //todo UCs have focus at the end of existing text
+
+        AlertDialog(
+            onDismissRequest = {
+                // hide dialog
+                sendCommand(HideGroupEditDialog)
+            },
+            title = stringResource(R.string.updateGroupInformation),
+            text = stringResource(R.string.updateGroupInformationDescription),
+            showCloseButton = true,
+            content = {
+                Column {
+                    // group name
+                    SessionOutlinedTextField(
+                        text = dialogsState.groupEditDialog.inputName ?: "",
+                        modifier = Modifier.qaTag(R.string.qa_conversation_settings_dialog_groupname_input)
+                            .focusRequester(focusRequester)
+                            .padding(top = LocalDimensions.current.smallSpacing),
+                        placeholder = stringResource(R.string.groupNameEnter),
+                        onChange = { updatedText ->
+                             sendCommand(UpdateGroupName(updatedText))
+                        },
+                        error = dialogsState.groupEditDialog.errorName,
+                    )
+
+                    // group description
+                    //todo UCS add max line rules
+                    SessionOutlinedTextField(
+                        text = dialogsState.groupEditDialog.inputtedDescription ?: "",
+                        modifier = Modifier.qaTag(R.string.qa_conversation_settings_dialog_groupname_description_input)
+                            .padding(top = LocalDimensions.current.xxsSpacing),
+                        placeholder = stringResource(R.string.groupDescriptionEnter),
+                        onChange = { updatedText ->
+                             sendCommand(UpdateGroupDescription(updatedText))
+                        },
+                        error = dialogsState.groupEditDialog.errorDescription,
+                    )
+                }
+            },
+            buttons = listOf(
+                DialogButtonModel(
+                    text = GetString(stringResource(id = R.string.save)),
+                    enabled = dialogsState.groupEditDialog.saveEnabled,
+                    qaTag = stringResource(R.string.qa_conversation_settings_dialog_groupname_save),
+                    onClick = { sendCommand(SetGroupText) }
+                ),
+                DialogButtonModel(
+                    text = GetString(stringResource(R.string.cancel)),
+                    color = LocalColors.current.danger,
+                    qaTag = stringResource(R.string.qa_conversation_settings_dialog_groupname_cancel),
                 )
             )
         )
@@ -246,6 +302,27 @@ fun PreviewNicknameEmptyWithInputDialog() {
                     setEnabled = true,
                     removeEnabled = false,
                     error = null,
+                )
+            ),
+            sendCommand = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+fun PreviewBaseGroupDialog() {
+    PreviewTheme {
+        ConversationSettingsDialogs(
+            dialogsState = ConversationSettingsViewModel.DialogsState(
+                groupEditDialog = ConversationSettingsViewModel.GroupEditDialog(
+                    currentName = "the Crew",
+                    inputName = null,
+                    currentDescription = null,
+                    inputtedDescription = null,
+                    saveEnabled = true,
+                    errorName = null,
+                    errorDescription = null,
                 )
             ),
             sendCommand = {}
