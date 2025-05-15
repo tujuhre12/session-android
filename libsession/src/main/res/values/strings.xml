@@ -4,6 +4,7 @@
     <string name="about">About</string>
     <string name="accept">Accept</string>
     <string name="accountIDCopy">Copy Account ID</string>
+    <string name="accountId">Account ID</string>
     <string name="accountIdCopied">Account ID Copied</string>
     <string name="accountIdCopyDescription">Copy your Account ID then share it with your friends so they can message you.</string>
     <string name="accountIdEnter">Enter Account ID</string>
@@ -16,7 +17,7 @@
     <string name="actualSize">Actual Size</string>
     <string name="add">Add</string>
     <string name="addAdmins">Add Admins</string>
-    <string name="addAdminsDescription">Enter the Account ID of the user you are promoting to admin.\n\nTo add multiple users, enter each Account ID separated by a comma.</string>
+    <string name="addAdminsDescription">Enter the Account ID of the user you are promoting to admin.\n\nTo add multiple users, enter each Account ID separated by a comma. Up to 20 Account IDs can be specified at a time.</string>
     <string name="adminCannotBeRemoved">Admins cannot be removed.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> and <b>{count} others</b> were promoted to Admin.</string>
     <string name="adminPromote">Promote Admins</string>
@@ -50,7 +51,10 @@
     <string name="andMore">+{count}</string>
     <string name="anonymous">Anonymous</string>
     <string name="appIcon">App Icon</string>
+    <string name="appIconAndNameChange">Change App Icon and Name</string>
+    <string name="appIconAndNameChangeConfirmation">Changing the app icon and name requires {app_name} to be closed. Notifications will continue to use the default {app_name} icon and name.</string>
     <string name="appIconAndNameDescription">Alternate app icon and name is displayed on home screen and app drawer.</string>
+    <string name="appIconAndNameSelectionDescription">The selected app icon and name is displayed on the home screen and app drawer.</string>
     <string name="appIconAndNameSelectionTitle">Icon and name</string>
     <string name="appIconDescription">Alternate app icon is displayed on home screen and app library. App name will still appear as \'{app_name}\'.</string>
     <string name="appIconEnableIcon">Use alternate app icon</string>
@@ -225,6 +229,7 @@
     <string name="clearMessagesNoteToSelfDescriptionUpdated">Are you sure you want to clear all <b>Note to Self</b> messages on this device?</string>
     <string name="clearOnThisDevice">Clear on this device</string>
     <string name="close">Close</string>
+    <string name="closeApp">Close App</string>
     <string name="closeWindow">Close Window</string>
     <string name="commitHashDesktop">Commit Hash: {hash}</string>
     <string name="communityBanDeleteDescription">This will ban the selected user from this Community and delete all their messages. Are you sure you want to continue?</string>
@@ -644,6 +649,8 @@
         <item quantity="other">You\'ve got %1$d new messages in %2$s.</item>
     </plurals>
     <string name="messageReplyingTo">Replying to</string>
+    <string name="messageRequestDisabledToastAttachments">You cannot send attachments until your Message Request is accepted</string>
+    <string name="messageRequestDisabledToastVoiceMessages">You cannot send voice messages until your Message Request is accepted</string>
     <string name="messageRequestGroupInvite"><b>{name}</b> invited you to join <b>{group_name}</b>.</string>
     <string name="messageRequestGroupInviteDescription">Sending a message to this group will automatically accept the group invite.</string>
     <string name="messageRequestPending">Your message request is currently pending.</string>
@@ -710,6 +717,7 @@
     <string name="notificationsMuteUnmute">Unmute</string>
     <string name="notificationsMuted">Muted</string>
     <string name="notificationsMutedFor">Muted for {time_large}</string>
+    <string name="notificationsMutedForTime">Muted until {date_time}</string>
     <string name="notificationsSlowMode">Slow Mode</string>
     <string name="notificationsSlowModeDescription">{app_name} will occasionally check for new messages in the background.</string>
     <string name="notificationsSound">Sound</string>
@@ -888,6 +896,7 @@
     <string name="searchSearching">Searching...</string>
     <string name="select">Select</string>
     <string name="selectAll">Select All</string>
+    <string name="selectAppIcon">Select app icon</string>
     <string name="send">Send</string>
     <string name="sending">Sending</string>
     <string name="sendingCallOffer">Sending Call Offer</string>
