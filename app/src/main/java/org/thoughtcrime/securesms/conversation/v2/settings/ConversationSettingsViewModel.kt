@@ -993,7 +993,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                                     trimmedDescription != it.groupEditDialog.currentName && // ... and it isn't the same as what is already saved
                                     error == null && // ... and there are no description errors
                                     it.groupEditDialog.errorName == null, // ... and there are no name errors
-                            errorName = error
+                            errorDescription = error
                         )
                     )
                 }
@@ -1077,8 +1077,6 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 errorDescription = null
             ))
         }
-
-        //todo UCS description is too narrow
     }
 
     private fun hideNicknameDialog(){
