@@ -813,13 +813,11 @@ interface TextSecurePreferences {
         fun hasForcedNewConfig(context: Context): Boolean {
             return getBooleanPreference(context, HAS_FORCED_NEW_CONFIG, false)
         }
-
-        @JvmStatic
+        
         fun forcedCommunityDescriptionPoll(context: Context, room: String): Boolean {
             return getBooleanPreference(context, FORCED_COMMUNITY_DESCRIPTION_POLL+room, false)
         }
 
-        @JvmStatic
         fun setForcedCommunityDescriptionPoll(context: Context, room: String, forced: Boolean) {
             setBooleanPreference(context, FORCED_COMMUNITY_DESCRIPTION_POLL+room, forced)
         }
