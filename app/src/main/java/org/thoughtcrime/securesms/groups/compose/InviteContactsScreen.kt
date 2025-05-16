@@ -5,9 +5,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -43,6 +46,7 @@ fun InviteContactsScreen(
     viewModel: SelectContactsViewModel,
     onDoneClicked: () -> Unit,
     onBack: () -> Unit,
+    banner: @Composable ()->Unit = {}
 ) {
     InviteContacts(
         contacts = viewModel.contacts.collectAsState().value,
@@ -52,6 +56,7 @@ fun InviteContactsScreen(
         onSearchQueryClear = {viewModel.onSearchQueryChanged("") },
         onDoneClicked = onDoneClicked,
         onBack = onBack,
+        banner = banner
     )
 }
 
@@ -65,7 +70,8 @@ fun InviteContacts(
     onSearchQueryClear: () -> Unit,
     onDoneClicked: () -> Unit,
     onBack: () -> Unit,
-    @StringRes okButtonResId: Int = R.string.ok
+    @StringRes okButtonResId: Int = R.string.ok,
+    banner: @Composable ()->Unit = {}
 ) {
     Scaffold(
         topBar = {
@@ -79,9 +85,11 @@ fun InviteContacts(
             modifier = Modifier
                 .padding(paddings)
                 .consumeWindowInsets(paddings),
-            verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
         ) {
-            GroupMinimumVersionBanner()
+            banner()
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
+
             SearchBar(
                 query = searchQuery,
                 onValueChanged = onSearchQueryChanged,
@@ -94,6 +102,8 @@ fun InviteContacts(
             )
 
             val scrollState = rememberLazyListState()
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
             BottomFadingEdgeBox(modifier = Modifier.weight(1f)) { bottomContentPadding ->
                 if(contacts.isEmpty()){
@@ -115,6 +125,8 @@ fun InviteContacts(
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
             Box(
                 contentAlignment = Alignment.Center,
@@ -183,6 +195,7 @@ private fun PreviewSelectEmptyContacts() {
             onSearchQueryClear = {},
             onDoneClicked = {},
             onBack = {},
+            banner = { GroupMinimumVersionBanner() }
         )
     }
 }

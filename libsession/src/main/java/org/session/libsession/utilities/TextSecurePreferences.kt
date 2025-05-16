@@ -300,6 +300,7 @@ interface TextSecurePreferences {
         const val MIGRATED_TO_GROUP_V2_CONFIG = "migrated_to_group_v2_config"
         const val MIGRATED_TO_DISABLING_KDF = "migrated_to_disabling_kdf"
         const val MIGRATED_TO_MULTIPART_CONFIG = "migrated_to_multi_part_config"
+        const val FORCED_COMMUNITY_DESCRIPTION_POLL = "forced_community_description_poll"
 
         const val HAS_RECEIVED_LEGACY_CONFIG = "has_received_legacy_config"
         const val HAS_FORCED_NEW_CONFIG = "has_forced_new_config"
@@ -811,6 +812,14 @@ interface TextSecurePreferences {
         @JvmStatic
         fun hasForcedNewConfig(context: Context): Boolean {
             return getBooleanPreference(context, HAS_FORCED_NEW_CONFIG, false)
+        }
+        
+        fun forcedCommunityDescriptionPoll(context: Context, room: String): Boolean {
+            return getBooleanPreference(context, FORCED_COMMUNITY_DESCRIPTION_POLL+room, false)
+        }
+
+        fun setForcedCommunityDescriptionPoll(context: Context, room: String, forced: Boolean) {
+            setBooleanPreference(context, FORCED_COMMUNITY_DESCRIPTION_POLL+room, forced)
         }
 
         @JvmStatic

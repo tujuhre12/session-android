@@ -151,24 +151,16 @@ fun LazyListScope.multiSelectMemberList(
 ) {
     items(contacts.size) { index ->
         val contact = contacts[index]
-        Column(modifier = modifier) {
-            if (index == 0) {
-                // Show top divider for the first item only
-                HorizontalDivider(color = LocalColors.current.borders)
-            }
-
-            RadioMemberItem(
-                enabled = enabled,
-                selected = contact.selected,
-                accountId = contact.accountID,
-                avatarUIData = contact.avatarUIData,
-                title = contact.name,
-                showAsAdmin = false,
-                onClick = { onContactItemClicked(contact.accountID) }
-            )
-
-            HorizontalDivider(color = LocalColors.current.borders)
-        }
+        RadioMemberItem(
+            modifier = modifier,
+            enabled = enabled,
+            selected = contact.selected,
+            accountId = contact.accountID,
+            avatarUIData = contact.avatarUIData,
+            title = contact.name,
+            showAsAdmin = false,
+            onClick = { onContactItemClicked(contact.accountID) }
+        )
     }
 }
 
