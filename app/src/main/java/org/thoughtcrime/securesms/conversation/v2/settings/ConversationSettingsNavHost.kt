@@ -38,6 +38,7 @@ import org.thoughtcrime.securesms.groups.GroupMembersViewModel
 import org.thoughtcrime.securesms.groups.SelectContactsViewModel
 import org.thoughtcrime.securesms.groups.compose.EditGroupScreen
 import org.thoughtcrime.securesms.groups.compose.GroupMembersScreen
+import org.thoughtcrime.securesms.groups.compose.GroupMinimumVersionBanner
 import org.thoughtcrime.securesms.groups.compose.InviteContactsScreen
 import org.thoughtcrime.securesms.media.MediaOverviewScreen
 import org.thoughtcrime.securesms.media.MediaOverviewViewModel
@@ -247,6 +248,9 @@ fun ConversationSettingsNavHost(
                         navController.popBackStack()
                     },
                     onBack = navController::popBackStack,
+                    banner = {
+                        GroupMinimumVersionBanner()
+                    }
                 )
             }
 
