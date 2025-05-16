@@ -36,7 +36,7 @@ class DateUtils @Inject constructor(
     private val defaultDateFormat = "dd/MM/yyyy"
     private val defaultTimeFormat = "HH:mm"
     private val twelveHourFormat = "h:mm a"
-    private val defaultDateTimeFormat = "h:mm a, d MMM yyyy"
+    private val defaultDateTimeFormat = "d MMM YYYY hh:mm a"
 
     // System defaults and patterns
     private val systemDefaultPattern by lazy {

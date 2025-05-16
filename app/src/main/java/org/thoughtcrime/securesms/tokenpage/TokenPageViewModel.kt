@@ -201,8 +201,7 @@ class TokenPageViewModel @Inject constructor(
                 networkSecuredByUSDString = "\$- ${USD_NAME_SHORT}",
                 infoResponseData = null,
                 priceDataPopupText = Phrase.from(SESSION_NETWORK_DATA_PRICE)
-                    .put(DATE_KEY, "-")
-                    .put(TIME_KEY, "")
+                    .put(DATE_TIME_KEY, "-")
                     .format().toString()
             )
         }
