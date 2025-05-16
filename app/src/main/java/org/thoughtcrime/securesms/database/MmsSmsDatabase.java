@@ -40,6 +40,7 @@ import org.thoughtcrime.securesms.database.MessagingDatabase.SyncMessageId;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
 import org.thoughtcrime.securesms.database.model.MessageId;
 import org.thoughtcrime.securesms.database.model.MessageRecord;
+import org.thoughtcrime.securesms.database.model.ThreadRecord;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 
 import java.io.Closeable;
@@ -98,18 +99,24 @@ public class MmsSmsDatabase extends Database {
     super(context, databaseHelper);
   }
 
-  public @Nullable MessageRecord getMessageForTimestamp(long timestamp) {
-    try (Cursor cursor = queryTables(PROJECTION, MmsSmsColumns.NORMALIZED_DATE_SENT + " = " + timestamp, null, null)) {
+  public @Nullable MessageRecord getMessageForTimestamp(long threadId, long timestamp) {
+    final String selection = MmsSmsColumns.NORMALIZED_DATE_SENT + " = " + timestamp +
+            " AND " + MmsSmsColumns.THREAD_ID + " = " + threadId;
+
+    try (Cursor cursor = queryTables(PROJECTION, selection, null, null)) {
       MmsSmsDatabase.Reader reader = readerFor(cursor);
       return reader.getNext();
     }
   }
 
-  public @Nullable MessageRecord getNonDeletedMessageForTimestamp(long timestamp) {
-    String selection = MmsSmsColumns.NORMALIZED_DATE_SENT + " = " + timestamp;
-    try (Cursor cursor = queryTables(PROJECTION, selection, null, null)) {
-      MmsSmsDatabase.Reader reader = readerFor(cursor);
-      return reader.getNext();
+  public @Nullable MessageRecord getMessageById(@NonNull MessageId id) {
+    if (id.isMms()) {
+      final MmsDatabase db = DatabaseComponent.get(context).mmsDatabase();
+      try (final Cursor cursor = db.getMessage(id.getId())) {
+        return db.readerFor(cursor, true).getNext();
+      }
+    } else {
+      return DatabaseComponent.get(context).smsDatabase().getMessageOrNull(id.getId());
     }
   }
 
@@ -371,19 +378,16 @@ public class MmsSmsDatabase extends Database {
     return -1;
   }
 
-  public long getLastMessageTimestamp(long threadId) {
+  @Nullable
+  public MessageRecord getLastMessage(long threadId) {
     String order     = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
     // make sure the last message isn't marked as deleted
     String selection = MmsSmsColumns.THREAD_ID + " = " + threadId + " AND " +
             "NOT " + MmsSmsColumns.IS_DELETED;
 
     try (Cursor cursor = queryTables(PROJECTION, selection, order, "1")) {
-      if (cursor.moveToFirst()) {
-        return cursor.getLong(cursor.getColumnIndexOrThrow(MmsSmsColumns.NORMALIZED_DATE_SENT));
-      }
+      return readerFor(cursor).getNext();
     }
-
-    return -1;
   }
 
   public Cursor getUnread() {

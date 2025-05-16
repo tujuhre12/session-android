@@ -30,13 +30,14 @@ import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupDisplayInfo
 import org.session.libsession.utilities.GroupRecord
-import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.Recipient.RecipientSettings
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceAttachmentPointer
 import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.utilities.AccountId
+import org.thoughtcrime.securesms.database.model.MessageId
+import org.thoughtcrime.securesms.database.model.MessageRecord
 import network.loki.messenger.libsession_util.util.Contact as LibSessionContact
 import network.loki.messenger.libsession_util.util.GroupMember as LibSessionGroupMember
 
@@ -118,18 +119,17 @@ interface StorageProtocol {
      * Returns the IDs of the saved attachments.
      */
     fun persistAttachments(messageID: Long, attachments: List<Attachment>): List<Long>
-    fun getAttachmentsForMessage(messageID: Long): List<DatabaseAttachment>
-    fun getMessageIdInDatabase(timestamp: Long, author: String): Pair<Long, Boolean>? // TODO: This is a weird name
-    fun getMessageType(timestamp: Long, author: String): MessageType?
-    fun updateSentTimestamp(messageID: Long, isMms: Boolean, openGroupSentTimestamp: Long, threadId: Long)
-    fun markAsResyncing(timestamp: Long, author: String)
-    fun markAsSyncing(timestamp: Long, author: String)
-    fun markAsSending(timestamp: Long, author: String)
-    fun markAsSent(messageID: Long, isMms: Boolean)
-    fun markAsSyncFailed(timestamp: Long, author: String, error: Exception)
-    fun markAsSentFailed(timestamp: Long, author: String, error: Exception)
-    fun clearErrorMessage(messageID: Long)
-    fun setMessageServerHash(messageID: Long, mms: Boolean, serverHash: String)
+    fun getAttachmentsForMessage(mmsMessageId: Long): List<DatabaseAttachment>
+    fun getMessageBy(timestamp: Long, author: String): MessageRecord?
+    fun updateSentTimestamp(messageId: MessageId, openGroupSentTimestamp: Long, threadId: Long)
+    fun markAsResyncing(messageId: MessageId)
+    fun markAsSyncing(messageId: MessageId)
+    fun markAsSending(messageId: MessageId)
+    fun markAsSent(messageId: MessageId)
+    fun markAsSyncFailed(messageId: MessageId, error: Exception)
+    fun markAsSentFailed(messageId: MessageId, error: Exception)
+    fun clearErrorMessage(messageID: MessageId)
+    fun setMessageServerHash(messageId: MessageId, serverHash: String)
 
     // Legacy Closed Groups
     fun getGroup(groupID: String): GroupRecord?
@@ -225,7 +225,7 @@ interface StorageProtocol {
     /**
      * Returns the ID of the `TSIncomingMessage` that was constructed.
      */
-    fun persist(message: VisibleMessage, quotes: QuoteModel?, linkPreview: List<LinkPreview?>, groupPublicKey: String?, openGroupID: String?, attachments: List<Attachment>, runThreadUpdate: Boolean): Long?
+    fun persist(message: VisibleMessage, quotes: QuoteModel?, linkPreview: List<LinkPreview?>, groupPublicKey: String?, openGroupID: String?, attachments: List<Attachment>, runThreadUpdate: Boolean): MessageId?
     fun markConversationAsRead(threadId: Long, lastSeenTime: Long, force: Boolean = false)
     fun getLastSeen(threadId: Long): Long
     fun ensureMessageHashesAreSender(hashes: Set<String>, sender: String, closedGroupId: String): Boolean
@@ -252,8 +252,8 @@ interface StorageProtocol {
     fun removeLastOutboxMessageId(server: String)
     fun getOrCreateBlindedIdMapping(blindedId: String, server: String, serverPublicKey: String, fromOutbox: Boolean = false): BlindedIdMapping
 
-    fun addReaction(reaction: Reaction, messageSender: String, notifyUnread: Boolean)
-    fun removeReaction(emoji: String, messageTimestamp: Long, author: String, notifyUnread: Boolean)
+    fun addReaction(reaction: Reaction, threadId: Long, messageSender: String, notifyUnread: Boolean)
+    fun removeReaction(emoji: String, messageTimestamp: Long, threadId: Long, author: String, notifyUnread: Boolean)
     fun updateReactionIfNeeded(message: Message, sender: String, openGroupSentTimestamp: Long)
     fun deleteReactions(messageId: Long, mms: Boolean)
     fun deleteReactions(messageIds: List<Long>, mms: Boolean)
