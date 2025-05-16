@@ -721,10 +721,10 @@ object OpenGroupApi {
             // we need to make sure communities have their description data, and since we were not
             // tracking that property before (04/20205) we need to force existing communities to
             // request their info data
-            val forcedDescriptionPoll = if(TextSecurePreferences.forcedCommunityDescriptionPoll(context, room)){
+            val forcedDescriptionPoll = if(TextSecurePreferences.forcedCommunityDescriptionPoll(context, server+room)){
                 true
             } else {
-                TextSecurePreferences.setForcedCommunityDescriptionPoll(context, room, true)
+                TextSecurePreferences.setForcedCommunityDescriptionPoll(context, server+room, true)
                 false
             }
 
