@@ -55,8 +55,6 @@ android {
         }
     }
 
-    A FAIRE: SOLVE CONFLICTS TO BRING NETWORK PAGE TO DEV THEN DEV TO UCS - THEN LOOK INTO THOSE SMALL TICKETS I OPENED AND CONTINUE CLEANING BACKLOG
-
     splits {
         abi {
             enable !project.hasProperty('huawei') // huawei builds do not need the split variants
