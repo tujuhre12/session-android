@@ -46,6 +46,9 @@ public abstract class GiphyFragment extends Fragment implements LoaderManager.Lo
     this.loadingProgress = ViewUtil.findById(container, R.id.loading_progress);
     this.noResultsView   = ViewUtil.findById(container, R.id.no_results);
 
+    // Now that views are ready, apply the searchString if it's set
+    applySearchStringToUI();
+
     return container;
   }
 
@@ -89,12 +92,21 @@ public abstract class GiphyFragment extends Fragment implements LoaderManager.Lo
                       : new LinearLayoutManager(getActivity());
   }
 
+
   public void setSearchString(@Nullable String searchString) {
     this.searchString = searchString;
-    this.noResultsView.setVisibility(View.GONE);
-    this.getLoaderManager().restartLoader(0, null, this);
+    if (this.noResultsView != null) {
+      applySearchStringToUI();
+    }
   }
 
+  private void applySearchStringToUI() {
+    if (this.noResultsView != null) {
+      this.noResultsView.setVisibility(View.GONE);
+      this.getLoaderManager().restartLoader(0, null, this);
+    }
+  }
+  
   @Override
   public void onClick(GiphyAdapter.GiphyViewHolder viewHolder) {
     if (getActivity() instanceof GiphyAdapter.OnItemClickListener) {
