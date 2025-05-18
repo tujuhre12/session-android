@@ -95,7 +95,7 @@ fun ConversationSettingsDialogs(
                     modifier = Modifier.qaTag(R.string.qa_conversation_settings_dialog_nickname_input)
                         .focusRequester(focusRequester)
                         .padding(top = LocalDimensions.current.smallSpacing),
-                    placeholder = stringResource(R.string.accountIdOrOnsEnter),
+                    placeholder = stringResource(R.string.nicknameEnter),
                     onChange = { updatedText ->
                         sendCommand(UpdateNickname(updatedText))
                     },
