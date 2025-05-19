@@ -286,7 +286,6 @@ fun ItemButton(
     @StringRes subtitleQaTag: Int? = null,
     minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
     textStyle: TextStyle = LocalType.current.xl,
-    subtitleStyle: TextStyle = LocalType.current.small,
     colors: ButtonColors = transparentButtonColors(),
     shape: Shape = RectangleShape,
     onClick: () -> Unit
@@ -307,7 +306,6 @@ fun ItemButton(
         colors = colors,
         subtitle = subtitle,
         subtitleQaTag = subtitleQaTag,
-        subtitleStyle = subtitleStyle,
         onClick = onClick,
     )
 }
@@ -324,7 +322,6 @@ fun ItemButton(
     @StringRes subtitleQaTag: Int? = null,
     minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
     textStyle: TextStyle = LocalType.current.xl,
-    subtitleStyle: TextStyle = LocalType.current.small,
     colors: ButtonColors = transparentButtonColors(),
     shape: Shape = RectangleShape,
     onClick: () -> Unit
@@ -339,7 +336,6 @@ fun ItemButton(
         colors = colors,
         subtitle = subtitle,
         subtitleQaTag = subtitleQaTag,
-        subtitleStyle = subtitleStyle,
         onClick = onClick
     )
 }
@@ -353,7 +349,6 @@ fun ItemButton(
     @StringRes subtitleQaTag: Int? = null,
     minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
     textStyle: TextStyle = LocalType.current.xl,
-    subtitleStyle: TextStyle = LocalType.current.small,
     colors: ButtonColors = transparentButtonColors(),
     shape: Shape = RectangleShape,
     onClick: () -> Unit
@@ -372,7 +367,6 @@ fun ItemButton(
         },
         minHeight = minHeight,
         textStyle = textStyle,
-        subtitleStyle = subtitleStyle,
         colors = colors,
         shape = shape,
         onClick = onClick
@@ -394,7 +388,6 @@ fun ItemButton(
     @StringRes subtitleQaTag: Int? = null,
     minHeight: Dp = LocalDimensions.current.minLargeItemButtonHeight,
     textStyle: TextStyle = LocalType.current.xl,
-    subtitleStyle: TextStyle = LocalType.current.small,
     colors: ButtonColors = transparentButtonColors(),
     shape: Shape = RectangleShape,
     onClick: () -> Unit
@@ -430,7 +423,7 @@ fun ItemButton(
                     text = it,
                     modifier = Modifier.fillMaxWidth()
                         .qaTag(subtitleQaTag),
-                    style = subtitleStyle,
+                    style = LocalType.current.small,
                 )
             }
         }
