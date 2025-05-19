@@ -8,10 +8,37 @@
     <color name="compose_view_background">#1B1B1B</color>
     <color name="compose_text_view_background">#141414</color>
     <color name="paths_building">#FFCE3A</color>
+    <color name="cell_selected">#0C0C0C</color>
 
     <color name="call_action_button">#DD353535</color>
     <color name="call_action_button_highlighted">#FFFFFF</color>
     <color name="call_action_foreground_highlighted">#171717</color>
+
+    <color name="accent_green">#ff31F196</color>
+    <color name="accent_blue">#ff57C9FA</color>
+    <color name="accent_purple">#ffC993FF</color>
+    <color name="accent_pink">#ffFF95EF</color>
+    <color name="accent_red">#ffFF9C8E</color>
+    <color name="accent_orange">#ffFCB159</color>
+    <color name="accent_yellow">#ffFAD657</color>
+
+    <color name="rust">#A64B00</color>
+
+    <color name="signal_primary">@color/accent_green</color>
+    <color name="signal_primary_dark">@color/accent_green</color>
+
+    <color name="textsecure_primary">@color/signal_primary</color>
+    <color name="textsecure_primary_dark">@color/signal_primary_dark</color>
+
+    <array name="profile_picture_placeholder_colors">
+        <item>@color/accent_green</item>
+        <item>@color/accent_blue</item>
+        <item>@color/accent_yellow</item>
+        <item>@color/accent_pink</item>
+        <item>@color/accent_purple</item>
+        <item>@color/accent_orange</item>
+        <item>@color/accent_red</item>
+    </array>
 
     <color name="loki_darkest_gray">#0a0a0a</color>
 

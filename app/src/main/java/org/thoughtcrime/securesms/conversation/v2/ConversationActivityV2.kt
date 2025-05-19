@@ -10,6 +10,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.database.Cursor
+import android.graphics.Color
 import android.graphics.Rect
 import android.graphics.Typeface
 import android.net.Uri
@@ -38,6 +39,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.content.ContextCompat
+import androidx.core.content.IntentCompat
+import androidx.core.os.BundleCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
@@ -121,7 +124,6 @@ import org.thoughtcrime.securesms.conversation.disappearingmessages.Disappearing
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnActionSelectedListener
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnReactionSelectedListener
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.ShowOpenUrlDialog
-import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.MESSAGE_TIMESTAMP
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_COPY
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_DELETE
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_REPLY
@@ -259,6 +261,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     @Inject lateinit var typingStatusSender: TypingStatusSender
 
     override val applyDefaultWindowInsets: Boolean
+        get() = false
+
+    override val applyAutoScrimForNavigationBar: Boolean
         get() = false
 
     private val screenshotObserver by lazy {
@@ -2036,14 +2041,14 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         binding.inputBar.cancelLinkPreviewDraft()
         lifecycleScope.launch(Dispatchers.Default) {
             // Put the message in the database and send it
-            message.id = smsDb.insertMessageOutbox(
+            message.id = MessageId(smsDb.insertMessageOutbox(
                 viewModel.threadId,
                 outgoingTextMessage,
                 false,
                 message.sentTimestamp!!,
                 null,
                 true
-            )
+            ), false)
 
             waitForApprovalJobToBeSubmitted()
             MessageSender.send(message, recipient.address)
@@ -2104,17 +2109,17 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         // do the heavy work in the bg
         lifecycleScope.launch(Dispatchers.Default) {
             // Put the message in the database and send it
-            message.id = mmsDb.insertMessageOutbox(
+            message.id = MessageId(mmsDb.insertMessageOutbox(
                 outgoingTextMessage,
                 viewModel.threadId,
                 false,
                 null,
                 runThreadUpdate = true
-            )
+            ), true)
 
             waitForApprovalJobToBeSubmitted()
 
-            MessageSender.send(message, recipient.address, attachments, quote, linkPreview)
+            MessageSender.send(message, recipient.address, quote, linkPreview)
         }
 
         // Send a typing stopped message
@@ -2441,8 +2446,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     private val handleMessageDetail = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
-        val message = result.data?.extras?.getLong(MESSAGE_TIMESTAMP)
-            ?.let(mmsSmsDb::getMessageForTimestamp)
+        val message = result.data?.let { IntentCompat.getParcelableExtra(it, MessageDetailActivity.MESSAGE_ID, MessageId::class.java) }
+            ?.let(mmsSmsDb::getMessageById)
 
         val set = setOfNotNull(message)
 
@@ -2459,7 +2464,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun showMessageDetail(messages: Set<MessageRecord>) {
         Intent(this, MessageDetailActivity::class.java)
-            .apply { putExtra(MESSAGE_TIMESTAMP, messages.first().timestamp) }
+            .apply { putExtra(MessageDetailActivity.MESSAGE_ID, messages.first().let {
+                MessageId(it.id, it.isMms)
+            }) }
             .let {
                 handleMessageDetail.launch(it)
                 overridePendingTransition(R.anim.slide_from_right, R.anim.slide_to_left)

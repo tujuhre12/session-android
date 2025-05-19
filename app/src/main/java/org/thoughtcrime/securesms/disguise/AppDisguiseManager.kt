@@ -1,16 +1,21 @@
 package org.thoughtcrime.securesms.disguise
 
+import android.app.Activity
 import android.app.Application
+import android.app.Application.ActivityLifecycleCallbacks
 import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Bundle
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -23,6 +28,7 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
 import javax.inject.Inject
@@ -37,7 +43,10 @@ class AppDisguiseManager @Inject constructor(
     application: Application,
     private val prefs: TextSecurePreferences,
 ) {
+    @OptIn(DelicateCoroutinesApi::class)
     private val scope: CoroutineScope = GlobalScope
+
+    private var currentActivity: Activity? = null
 
     val allAppAliases: Flow<List<AppAlias>> = flow {
         emit(
@@ -56,8 +65,11 @@ class AppDisguiseManager @Inject constructor(
                     AppAlias(
                         activityAliasName = info.activityInfo.name,
                         defaultEnabled = info.activityInfo.enabled,
-                        appName = info.activityInfo.labelRes.takeIf { it != 0 },
-                        appIcon = info.activityInfo.icon.takeIf { it != 0 },
+                        appName = info.activityInfo.labelRes.takeIf { it != 0 }
+                            ?: info.labelRes.takeIf { it != 0 }
+                            ?: R.string.app_name,
+                        appIcon = info.activityInfo.icon.takeIf { it != 0 }
+                            ?: info.iconResource.takeIf { it != 0 },
                     )
                 }
                 .toList()
@@ -81,38 +93,29 @@ class AppDisguiseManager @Inject constructor(
                 initialValue = prefs.selectedActivityAliasName
             )
 
-    /**
-     * Whether the app disguise is on or off.
-     */
-    val isOn: StateFlow<Boolean> = prefChangeNotification
-            .mapLatest { prefs.isAppDiguiseOn }
-            .stateIn(
-                scope = scope,
-                started = SharingStarted.Eagerly,
-                initialValue = prefs.isAppDiguiseOn
-            )
-
     init {
         scope.launch {
             combine(
                 selectedAppAliasName,
                 allAppAliases,
-                isOn,
-            ) { selected, all, on ->
-                val enabledAlias = when {
-                    on -> all.firstOrNull { it.activityAliasName == selected } ?: all.first { it.defaultEnabled }
-                    else -> all.first { it.defaultEnabled }
-                }
+            ) { selected, all ->
+                val enabledAlias = all.firstOrNull { it.activityAliasName == selected }
+                    ?: all.first { it.defaultEnabled }
 
                 all.map { alias ->
                     val state = if (alias === enabledAlias) PackageManager.COMPONENT_ENABLED_STATE_ENABLED
                         else PackageManager.COMPONENT_ENABLED_STATE_DISABLED
 
-                    ComponentName(application, alias.activityAliasName) to state
+                    Triple(
+                        ComponentName(application, alias.activityAliasName),
+                        state,
+                        alias.defaultEnabled
+                    )
                 }
             }.collectLatest { all ->
+                val packageManager = application.packageManager
                 if (android.os.Build.VERSION.SDK_INT >= 33) {
-                    application.packageManager.setComponentEnabledSettings(
+                    packageManager.setComponentEnabledSettings(
                         all.map { (name, state) ->
                             PackageManager.ComponentEnabledSetting(
                                 name, state, PackageManager.DONT_KILL_APP or PackageManager.SYNCHRONOUS
@@ -120,26 +123,56 @@ class AppDisguiseManager @Inject constructor(
                         }
                     )
                 } else {
-                    all.forEach { (name, state) ->
-                        application.packageManager.setComponentEnabledSetting(
+                    // Query current enable state for each component
+                    val changed = all.filter { (name, desiredState, defaultEnabled) ->
+                        val state = packageManager.getComponentEnabledSetting(name)
+                        val wasEnabled = when (state) {
+                            PackageManager.COMPONENT_ENABLED_STATE_ENABLED -> true
+                            PackageManager.COMPONENT_ENABLED_STATE_DISABLED -> false
+                            else -> defaultEnabled
+                        }
+
+                        val willBeEnabled = (desiredState == PackageManager.COMPONENT_ENABLED_STATE_ENABLED) ||
+                                (desiredState == PackageManager.COMPONENT_ENABLED_STATE_DEFAULT && defaultEnabled)
+                        wasEnabled != willBeEnabled
+                    }
+
+                    changed.forEach { (name, state) ->
+                        packageManager.setComponentEnabledSetting(
                             name,
                             state,
                             PackageManager.DONT_KILL_APP
                         )
                     }
+
+                    if (changed.isNotEmpty()) {
+                        // Finish current activity if the disguise is on
+                        currentActivity?.finishAffinity()
+                    }
                 }
             }
         }
+
+        application.registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
+            override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}
+            override fun onActivityStarted(activity: Activity) {
+                currentActivity = activity
+            }
+            override fun onActivityResumed(activity: Activity) {}
+            override fun onActivityPaused(activity: Activity) {}
+            override fun onActivityStopped(activity: Activity) {
+                if (currentActivity === activity) {
+                    currentActivity = null
+                }
+            }
+            override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
+            override fun onActivityDestroyed(activity: Activity) {}
+        })
     }
 
     fun setSelectedAliasName(name: String?) {
         Log.d(TAG, "setSelectedAliasName: $name")
         prefs.selectedActivityAliasName = name
-        prefChangeNotification.tryEmit(Unit)
-    }
-
-    fun setOn(on: Boolean) {
-        prefs.isAppDiguiseOn = on
         prefChangeNotification.tryEmit(Unit)
     }
 

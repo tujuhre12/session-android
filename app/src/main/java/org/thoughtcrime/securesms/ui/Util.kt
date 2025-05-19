@@ -19,10 +19,6 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.PermissionState
-import com.google.accompanist.permissions.isGranted
-import com.google.accompanist.permissions.shouldShowRationale
 import com.squareup.phrase.Phrase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -59,11 +55,6 @@ fun ComposeView.setThemedContent(content: @Composable () -> Unit) = setContent {
     SessionMaterialTheme {
         content()
     }
-}
-
-@ExperimentalPermissionsApi
-fun PermissionState.isPermanentlyDenied(): Boolean {
-    return !status.shouldShowRationale && !status.isGranted
 }
 
 fun Context.findActivity(): Activity {

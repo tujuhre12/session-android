@@ -224,6 +224,7 @@
         <activity-alias
             android:name=".RoutingActivity"
             android:exported="true"
+            android:icon="@mipmap/ic_launcher"
             android:targetActivity="org.thoughtcrime.securesms.home.HomeActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -519,20 +520,6 @@
             android:icon="@mipmap/ic_launcher_notes"
             android:enabled="false"
             android:targetActivity="org.thoughtcrime.securesms.home.HomeActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity-alias>
-
-        <activity-alias
-            android:name=".News"
-            android:label="@string/appNameNews"
-            android:icon="@mipmap/ic_launcher_news"
-            android:targetActivity="org.thoughtcrime.securesms.home.HomeActivity"
-            android:enabled="false"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

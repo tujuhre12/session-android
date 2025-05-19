@@ -27,8 +27,10 @@ import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
@@ -50,6 +52,7 @@ import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
+import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.repository.ConversationRepository
@@ -104,7 +107,6 @@ class ConversationReactionOverlay : FrameLayout {
     @Inject lateinit var textSecurePreferences: TextSecurePreferences
     @Inject lateinit var deprecationManager: LegacyGroupDeprecationManager
 
-    private val scope = CoroutineScope(Dispatchers.Default)
     private var job: Job? = null
 
     private val iconMore by lazy {
@@ -163,10 +165,14 @@ class ConversationReactionOverlay : FrameLayout {
         this.activity = activity
         doOnLayout { showAfterLayout(messageRecord, lastSeenDownPoint, isMessageOnLeft) }
 
-        job = scope.launch(Dispatchers.IO) {
+        job = GlobalScope.launch {
+            // Wait for the message to be deleted
             repository.changes(messageRecord.threadId)
-                .filter { mmsSmsDatabase.getMessageForTimestamp(messageRecord.timestamp) == null }
-                .collect { withContext(Dispatchers.Main) { hide() } }
+                .first { mmsSmsDatabase.getMessageById(messageRecord.messageId) == null }
+
+            withContext(Dispatchers.Main) {
+                hide()
+            }
         }
     }
 
@@ -340,6 +346,11 @@ class ConversationReactionOverlay : FrameLayout {
     private fun hideInternal(onHideListener: OnHideListener?) {
         job?.cancel()
         overlayState = OverlayState.HIDDEN
+        contextMenu?.dismiss()
+
+        // in case hide is called before show
+        if (!::selectedConversationModel.isInitialized) return
+
         val animatorSet = newHideAnimatorSet()
         hideAnimatorSet = animatorSet
         revealAnimatorSet.end()
@@ -352,7 +363,6 @@ class ConversationReactionOverlay : FrameLayout {
                 onHideListener?.onHide()
             }
         })
-        contextMenu?.dismiss()
     }
 
     val isShowing: Boolean
