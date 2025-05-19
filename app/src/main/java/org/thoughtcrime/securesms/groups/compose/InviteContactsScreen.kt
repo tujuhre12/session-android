@@ -5,13 +5,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContent
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -23,8 +23,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.hilt.navigation.compose.hiltViewModel
-import kotlinx.serialization.Serializable
 import network.loki.messenger.R
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.groups.ContactItem
@@ -36,29 +34,29 @@ import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
+import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
+import org.thoughtcrime.securesms.ui.theme.primaryBlue
+import org.thoughtcrime.securesms.util.AvatarUIData
+import org.thoughtcrime.securesms.util.AvatarUIElement
 
-
-@Serializable
-object RouteSelectContacts
 
 @Composable
 fun InviteContactsScreen(
-    excludingAccountIDs: Set<AccountId> = emptySet(),
-    onDoneClicked: (selectedContacts: Set<AccountId>) -> Unit,
-    onBackClicked: () -> Unit,
+    viewModel: SelectContactsViewModel,
+    onDoneClicked: () -> Unit,
+    onBack: () -> Unit,
+    banner: @Composable ()->Unit = {}
 ) {
-    val viewModel = hiltViewModel<SelectContactsViewModel, SelectContactsViewModel.Factory> { factory ->
-        factory.create(excludingAccountIDs)
-    }
-
     InviteContacts(
         contacts = viewModel.contacts.collectAsState().value,
         onContactItemClicked = viewModel::onContactItemClicked,
         searchQuery = viewModel.searchQuery.collectAsState().value,
         onSearchQueryChanged = viewModel::onSearchQueryChanged,
-        onDoneClicked = { onDoneClicked(viewModel.currentSelected) },
-        onBack = onBackClicked,
+        onSearchQueryClear = {viewModel.onSearchQueryChanged("") },
+        onDoneClicked = onDoneClicked,
+        onBack = onBack,
+        banner = banner
     )
 }
 
@@ -69,9 +67,11 @@ fun InviteContacts(
     onContactItemClicked: (accountId: AccountId) -> Unit,
     searchQuery: String,
     onSearchQueryChanged: (String) -> Unit,
+    onSearchQueryClear: () -> Unit,
     onDoneClicked: () -> Unit,
     onBack: () -> Unit,
-    @StringRes okButtonResId: Int = R.string.ok
+    @StringRes okButtonResId: Int = R.string.ok,
+    banner: @Composable ()->Unit = {}
 ) {
     Scaffold(
         topBar = {
@@ -80,35 +80,53 @@ fun InviteContacts(
                 onBack = onBack,
             )
         },
-        contentWindowInsets = WindowInsets.safeContent
     ) { paddings ->
         Column(
-            modifier = Modifier.padding(paddings).consumeWindowInsets(paddings),
-            verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
+            modifier = Modifier
+                .padding(paddings)
+                .consumeWindowInsets(paddings),
         ) {
-            GroupMinimumVersionBanner()
+            banner()
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
+
             SearchBar(
                 query = searchQuery,
                 onValueChanged = onSearchQueryChanged,
+                onClear = onSearchQueryClear,
                 placeholder = stringResource(R.string.searchContacts),
-                modifier = Modifier.padding(horizontal = LocalDimensions.current.smallSpacing)
-                    .qaTag(stringResource(R.string.AccessibilityId_groupNameSearch)),
+                modifier = Modifier
+                    .padding(horizontal = LocalDimensions.current.smallSpacing)
+                    .qaTag(R.string.AccessibilityId_groupNameSearch),
                 backgroundColor = LocalColors.current.backgroundSecondary,
             )
 
             val scrollState = rememberLazyListState()
 
+            Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
+
             BottomFadingEdgeBox(modifier = Modifier.weight(1f)) { bottomContentPadding ->
-                LazyColumn(
-                    state = scrollState,
-                    contentPadding = PaddingValues(bottom = bottomContentPadding),
-                ) {
-                    multiSelectMemberList(
-                        contacts = contacts,
-                        onContactItemClicked = onContactItemClicked,
+                if(contacts.isEmpty()){
+                    Text(
+                        text = stringResource(id = R.string.contactNone),
+                        modifier = Modifier.padding(top = LocalDimensions.current.spacing)
+                            .align(Alignment.TopCenter),
+                        style = LocalType.current.base.copy(color = LocalColors.current.textSecondary)
                     )
+                } else {
+                    LazyColumn(
+                        state = scrollState,
+                        contentPadding = PaddingValues(bottom = bottomContentPadding),
+                    ) {
+                        multiSelectMemberList(
+                            contacts = contacts,
+                            onContactItemClicked = onContactItemClicked,
+                        )
+                    }
                 }
             }
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
             Box(
                 contentAlignment = Alignment.Center,
@@ -118,8 +136,7 @@ fun InviteContacts(
                     onClick = onDoneClicked,
                     modifier = Modifier
                         .padding(vertical = LocalDimensions.current.spacing)
-                        .defaultMinSize(minWidth = LocalDimensions.current.minButtonWidth)
-                        .qaTag(stringResource(R.string.AccessibilityId_selectContactConfirm)),
+                        .qaTag(R.string.AccessibilityId_selectContactConfirm),
                 ) {
                     Text(
                         stringResource(id = okButtonResId)
@@ -140,6 +157,14 @@ private fun PreviewSelectContacts() {
             accountID = AccountId(random),
             name = "User $it",
             selected = it % 3 == 0,
+            avatarUIData = AvatarUIData(
+                listOf(
+                    AvatarUIElement(
+                        name = "TOTO",
+                        color = primaryBlue
+                    )
+                )
+            ),
         )
     }
 
@@ -149,8 +174,28 @@ private fun PreviewSelectContacts() {
             onContactItemClicked = {},
             searchQuery = "",
             onSearchQueryChanged = {},
+            onSearchQueryClear = {},
             onDoneClicked = {},
             onBack = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PreviewSelectEmptyContacts() {
+    val contacts = emptyList<ContactItem>()
+
+    PreviewTheme {
+        InviteContacts(
+            contacts = contacts,
+            onContactItemClicked = {},
+            searchQuery = "",
+            onSearchQueryChanged = {},
+            onSearchQueryClear = {},
+            onDoneClicked = {},
+            onBack = {},
+            banner = { GroupMinimumVersionBanner() }
         )
     }
 }

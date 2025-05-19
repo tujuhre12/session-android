@@ -20,8 +20,8 @@ class LokiMessageDatabase(context: Context, helper: Provider<SQLCipherOpenHelper
         private const val messageThreadMappingTable = "loki_message_thread_mapping_database"
         private const val errorMessageTable = "loki_error_message_database"
         private const val messageHashTable = "loki_message_hash_database"
-        private const val smsHashTable = "loki_sms_hash_database"
-        private const val mmsHashTable = "loki_mms_hash_database"
+        const val smsHashTable = "loki_sms_hash_database"
+        const val mmsHashTable = "loki_mms_hash_database"
         const val groupInviteTable = "loki_group_invites"
 
         private const val groupInviteDeleteTrigger = "group_invite_delete_trigger"

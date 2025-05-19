@@ -297,6 +297,19 @@ open class Storage @Inject constructor(
         }
     }
 
+    override fun clearAllMessages(threadId: Long): List<String?> {
+        val messages = mmsSmsDatabase.getAllMessagesWithHash(threadId)
+        val (mmsMessages, smsMessages) = messages.partition { it.first.isMms }
+        if (mmsMessages.isNotEmpty()) {
+            messageDataProvider.deleteMessages(mmsMessages.map{ it.first.id }, threadId, isSms = false)
+        }
+        if (smsMessages.isNotEmpty()) {
+            messageDataProvider.deleteMessages(smsMessages.map{ it.first.id }, threadId, isSms = true)
+        }
+
+        return messages.map { it.second } // return the message hashes
+    }
+
     override fun markConversationAsRead(threadId: Long, lastSeenTime: Long, force: Boolean) {
         val threadDb = threadDatabase
         getRecipientForThread(threadId)?.let { recipient ->

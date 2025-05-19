@@ -55,7 +55,7 @@ import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.conversation.start.StartConversationFragment
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.menus.ConversationMenuHelper
-import org.thoughtcrime.securesms.conversation.v2.utilities.NotificationUtils
+import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsActivity
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
@@ -76,7 +76,6 @@ import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.SettingsActivity
 import org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity
-import org.thoughtcrime.securesms.showMuteDialog
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.tokenpage.TokenPageNotificationManager
 import org.thoughtcrime.securesms.ui.setThemedContent
@@ -590,15 +589,13 @@ class HomeActivity : ScreenLockActionBarActivity(),
             bottomSheet.dismiss()
             deleteConversation(thread)
         }
-        bottomSheet.onSetMuteTapped = { muted ->
-            bottomSheet.dismiss()
-            setConversationMuted(thread, muted)
-        }
         bottomSheet.onNotificationTapped = {
             bottomSheet.dismiss()
-            NotificationUtils.showNotifyDialog(this, thread.recipient) { notifyType ->
-                setNotifyType(thread, notifyType)
+            // go to the notification settings
+            val intent = Intent(this, NotificationSettingsActivity::class.java).apply {
+                putExtra(NotificationSettingsActivity.THREAD_ID, thread.threadId)
             }
+            startActivity(intent)
         }
         bottomSheet.onPinTapped = {
             bottomSheet.dismiss()
@@ -650,26 +647,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 }
             }
             cancelButton()
-        }
-    }
-
-    private fun setConversationMuted(thread: ThreadRecord, isMuted: Boolean) {
-        if (!isMuted) {
-            lifecycleScope.launch(Dispatchers.Default) {
-                recipientDatabase.setMuted(thread.recipient, 0)
-            }
-        } else {
-            showMuteDialog(this) { until ->
-                lifecycleScope.launch(Dispatchers.Default) {
-                    recipientDatabase.setMuted(thread.recipient, until)
-                }
-            }
-        }
-    }
-
-    private fun setNotifyType(thread: ThreadRecord, newNotifyType: Int) {
-        lifecycleScope.launch(Dispatchers.Default) {
-            recipientDatabase.setNotifyType(thread.recipient, newNotifyType)
         }
     }
 

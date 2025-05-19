@@ -308,7 +308,7 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.assertj.core)
     testImplementation(libs.mockito.kotlin)
-    androidTestImplementation(libs.mockito.android)
+    androidTestImplementation(libs.mockito.core)
     androidTestImplementation(libs.mockito.kotlin)
     testImplementation(libs.androidx.core)
     testImplementation(libs.androidx.core.testing)
