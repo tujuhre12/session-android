@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.conversation.v2.settings
 
 import android.annotation.SuppressLint
-import android.content.Intent
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -18,6 +17,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -30,7 +30,15 @@ import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesViewModel
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.DisappearingMessagesScreen
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.*
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteAllMedia
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteConversationSettings
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteDisappearingMessages
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteFullscreenAvatar
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteGroupMembers
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteInviteToCommunity
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteInviteToGroup
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteManageMembers
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteNotifications
 import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsScreen
 import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsViewModel
 import org.thoughtcrime.securesms.groups.EditGroupViewModel
@@ -194,7 +202,9 @@ fun ConversationSettingsNavHost(
 
                 GroupMembersScreen(
                     viewModel = viewModel,
-                    onBack = navController::popBackStack,
+                    onBack = dropUnlessResumed {
+                        navController.popBackStack()
+                    },
                 )
             }
             // Edit Group
@@ -216,7 +226,9 @@ fun ConversationSettingsNavHost(
                             )
                         )
                     },
-                    onBack = navController::popBackStack,
+                    onBack = dropUnlessResumed {
+                        navController.popBackStack()
+                    },
                 )
             }
 
@@ -232,7 +244,7 @@ fun ConversationSettingsNavHost(
                     }
 
                 // grab a hold of manage group's VM
-                val parentEntry = remember(navController.currentBackStackEntry) {
+                val parentEntry = remember(backStackEntry) {
                     navController.getBackStackEntry(
                         RouteManageMembers(data.groupId)
                     )
@@ -241,13 +253,15 @@ fun ConversationSettingsNavHost(
 
                 InviteContactsScreen(
                     viewModel = viewModel,
-                    onDoneClicked = {
+                    onDoneClicked = dropUnlessResumed {
                         //send invites from the manage group screen
                         editGroupViewModel.onContactSelected(viewModel.currentSelected)
 
                         navController.popBackStack()
                     },
-                    onBack = navController::popBackStack,
+                    onBack = dropUnlessResumed {
+                        navController.popBackStack()
+                    },
                     banner = {
                         GroupMinimumVersionBanner()
                     }
@@ -262,7 +276,7 @@ fun ConversationSettingsNavHost(
                     }
 
                 // grab a hold of settings' VM
-                val parentEntry = remember(navController.currentBackStackEntry) {
+                val parentEntry = remember(backStackEntry) {
                     navController.getBackStackEntry(
                         RouteConversationSettings
                     )
@@ -278,7 +292,9 @@ fun ConversationSettingsNavHost(
                         // clear selected contacts
                         viewModel.clearSelection()
                     },
-                    onBack = navController::popBackStack,
+                    onBack = dropUnlessResumed {
+                        navController.popBackStack()
+                    },
                 )
             }
 
@@ -295,7 +311,9 @@ fun ConversationSettingsNavHost(
 
                 DisappearingMessagesScreen(
                     viewModel = viewModel,
-                    onBack = navController::popBackStack,
+                    onBack = dropUnlessResumed {
+                        navController.popBackStack()
+                    },
                 )
             }
 
@@ -313,27 +331,31 @@ fun ConversationSettingsNavHost(
 
                 MediaOverviewScreen(
                     viewModel = viewModel,
-                    onClose = navController::popBackStack,
+                    onClose = dropUnlessResumed {
+                        navController.popBackStack()
+                    },
                 )
             }
 
             // Notifications
             horizontalSlideComposable<RouteNotifications> {
-                 val viewModel =
+                val viewModel =
                     hiltViewModel<NotificationSettingsViewModel, NotificationSettingsViewModel.Factory> { factory ->
                         factory.create(threadId)
                     }
 
                 NotificationSettingsScreen(
                     viewModel = viewModel,
-                    onBack = navController::popBackStack
+                    onBack = dropUnlessResumed {
+                        navController.popBackStack()
+                    }
                 )
             }
 
             // Fullscreen Avatar
             composable<RouteFullscreenAvatar> {
                 // grab a hold of manage convo setting's VM
-                val parentEntry = remember(navController.currentBackStackEntry) {
+                val parentEntry = remember(it) {
                     navController.getBackStackEntry(
                         RouteConversationSettings
                     )
@@ -345,7 +367,9 @@ fun ConversationSettingsNavHost(
                     data = data.avatarUIData,
                     sharedTransitionScope = this@SharedTransitionLayout,
                     animatedContentScope = this,
-                    onBack = navController::popBackStack,
+                    onBack = dropUnlessResumed {
+                        navController.popBackStack()
+                    },
                 )
             }
         }
