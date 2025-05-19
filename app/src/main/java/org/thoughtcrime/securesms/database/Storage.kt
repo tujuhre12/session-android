@@ -1263,6 +1263,7 @@ open class Storage @Inject constructor(
         // which in the case of contacts we are messaging for the first time and who haven't yet approved us, it won't be the case
         // But that person is saved in the Recipient db. We might need to investigate how to clean the relationship between Recipients, Contacts and config Contacts.
         val removedContacts = recipientDatabase.allRecipients.filter { localContact ->
+            AccountId(localContact.address.toString()).prefix == IdPrefix.STANDARD && // only want standard address
             localContact.is1on1 && // only for conversations
             localContact.address.toString() != currentUserKey && // we don't want to remove ourselves (ie, our Note to Self)
             moreContacts.none { it.id == localContact.address.toString() } // we don't want to remove contacts that are present in the config
