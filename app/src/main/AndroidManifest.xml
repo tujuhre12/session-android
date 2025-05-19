@@ -231,6 +231,7 @@
         <activity-alias
             android:name=".RoutingActivity"
             android:exported="true"
+            android:icon="@mipmap/ic_launcher"
             android:targetActivity="org.thoughtcrime.securesms.home.HomeActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
