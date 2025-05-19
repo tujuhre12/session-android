@@ -90,8 +90,8 @@ class ConversationViewModelTest: BaseViewModelTest() {
             usernameUtils = mock(),
             avatarUtils = avatarUtils,
             lokiAPIDb = mock(),
-            recipientChangeSource = NoopRecipientChangeSource
-
+            recipientChangeSource = NoopRecipientChangeSource,
+            dateUtils = mock()
         )
     }
 

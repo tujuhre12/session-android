@@ -37,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -62,6 +63,7 @@ import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.bold
 import org.thoughtcrime.securesms.ui.theme.borders
 import org.thoughtcrime.securesms.ui.theme.text
+import org.thoughtcrime.securesms.ui.theme.textSecondary
 
 @Preview
 @Composable
@@ -105,6 +107,13 @@ fun PreviewSessionOutlinedTextField() {
                 error = "error",
                 isTextErrorColor = false
             )
+
+            SessionOutlinedTextField(
+                text = "Disabled",
+                placeholder = "",
+                isTextErrorColor = false,
+                enabled = false
+            )
         }
     }
 }
@@ -116,6 +125,7 @@ fun SessionOutlinedTextField(
     onChange: (String) -> Unit = {},
     textStyle: TextStyle = LocalType.current.base,
     innerPadding: PaddingValues = PaddingValues(LocalDimensions.current.spacing),
+    borderShape: Shape = MaterialTheme.shapes.small,
     placeholder: String = "",
     onContinue: () -> Unit = {},
     error: String? = null,
@@ -146,7 +156,8 @@ fun SessionOutlinedTextField(
             onChange(newValue.text)     // propagate only the text outward
         },
         modifier = modifier,
-        textStyle = textStyle.copy(color = LocalColors.current.text(isTextErrorColor)),
+        textStyle = textStyle.copy(
+            color = if (enabled) LocalColors.current.text(isTextErrorColor) else LocalColors.current.textSecondary),
         cursorBrush = SolidColor(LocalColors.current.text(isTextErrorColor)),
         enabled = enabled,
         keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
@@ -167,7 +178,7 @@ fun SessionOutlinedTextField(
                         .border(
                             width = LocalDimensions.current.borderStroke,
                             color = LocalColors.current.borders(error != null),
-                            shape = MaterialTheme.shapes.small
+                            shape = borderShape
                         )
                         .fillMaxWidth()
                         .wrapContentHeight()
@@ -203,7 +214,8 @@ fun SessionOutlinedTextField(
                     if (placeholder.isNotEmpty() && text.isEmpty()) {
                         Text(
                             text = placeholder,
-                            style = textStyle.copy(color = LocalColors.current.textSecondary),
+                            style = textStyle.copy(fontFamily = null),
+                            color = LocalColors.current.textSecondary(isTextErrorColor)
                         )
                     }
                 }

@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.ui
 
+import android.content.Context
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.appcompat.content.res.AppCompatResources
@@ -11,6 +12,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -35,6 +37,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
@@ -49,6 +52,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
@@ -58,6 +62,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
@@ -72,13 +77,20 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.min
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupPositionProvider
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -176,7 +188,7 @@ fun ItemButtonWithDrawable(
     val context = LocalContext.current
 
     ItemButton(
-        text = stringResource(textId),
+        annotatedStringText = AnnotatedString(stringResource(textId)),
         modifier = modifier,
         icon = {
             Image(
@@ -245,9 +257,30 @@ fun LargeItemButton(
 }
 
 @Composable
+fun LargeItemButton(
+    annotatedStringText: AnnotatedString,
+    @DrawableRes icon: Int,
+    modifier: Modifier = Modifier,
+    colors: ButtonColors = transparentButtonColors(),
+    shape: Shape = RectangleShape,
+    onClick: () -> Unit
+) {
+    ItemButton(
+        modifier = modifier,
+        annotatedStringText = annotatedStringText,
+        icon = icon,
+        minHeight = LocalDimensions.current.minLargeItemButtonHeight,
+        textStyle = LocalType.current.h8,
+        colors = colors,
+        shape = shape,
+        onClick = onClick
+    )
+}
+
+@Composable
 fun ItemButton(
     text: String,
-    icon: Int,
+    @DrawableRes icon: Int,
     modifier: Modifier,
     subtitle: String? = null,
     @StringRes subtitleQaTag: Int? = null,
@@ -259,10 +292,8 @@ fun ItemButton(
     onClick: () -> Unit
 ) {
     ItemButton(
-        text = text,
+        annotatedStringText = AnnotatedString(text),
         modifier = modifier,
-        subtitle = subtitle,
-        subtitleQaTag = subtitleQaTag,
         icon = {
             Icon(
                 painter = painterResource(id = icon),
@@ -272,10 +303,12 @@ fun ItemButton(
         },
         minHeight = minHeight,
         textStyle = textStyle,
-        subtitleStyle = subtitleStyle,
-        colors = colors,
         shape = shape,
-        onClick = onClick
+        colors = colors,
+        subtitle = subtitle,
+        subtitleQaTag = subtitleQaTag,
+        subtitleStyle = subtitleStyle,
+        onClick = onClick,
     )
 }
 
@@ -297,7 +330,36 @@ fun ItemButton(
     onClick: () -> Unit
 ) {
     ItemButton(
-        text = stringResource(textId),
+        annotatedStringText = AnnotatedString(stringResource(textId)),
+        modifier = modifier,
+        icon = icon,
+        minHeight = minHeight,
+        textStyle = textStyle,
+        shape = shape,
+        colors = colors,
+        subtitle = subtitle,
+        subtitleQaTag = subtitleQaTag,
+        subtitleStyle = subtitleStyle,
+        onClick = onClick
+    )
+}
+
+@Composable
+fun ItemButton(
+    annotatedStringText: AnnotatedString,
+    icon: Int,
+    modifier: Modifier,
+    subtitle: String? = null,
+    @StringRes subtitleQaTag: Int? = null,
+    minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
+    textStyle: TextStyle = LocalType.current.xl,
+    subtitleStyle: TextStyle = LocalType.current.small,
+    colors: ButtonColors = transparentButtonColors(),
+    shape: Shape = RectangleShape,
+    onClick: () -> Unit
+) {
+    ItemButton(
+        annotatedStringText = annotatedStringText,
         modifier = modifier,
         subtitle = subtitle,
         subtitleQaTag = subtitleQaTag,
@@ -318,13 +380,14 @@ fun ItemButton(
 }
 
 /**
-* Base [ItemButton] implementation.
+ * Base [ItemButton] implementation using an AnnotatedString rather than a plain String.
  *
  * A button to be used in a list of buttons, usually in a [Cell] or [Card]
-*/
+ */
+// THIS IS THE FINAL DEEP LEVEL ANNOTATED STRING BUTTON
 @Composable
 fun ItemButton(
-    text: String,
+    annotatedStringText: AnnotatedString,
     icon: @Composable BoxScope.() -> Unit,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
@@ -356,7 +419,7 @@ fun ItemButton(
                 .align(Alignment.CenterVertically)
         ) {
             Text(
-                text,
+                annotatedStringText,
                 Modifier
                     .fillMaxWidth(),
                 style = textStyle
@@ -661,6 +724,75 @@ fun Modifier.verticalScrollbar(
     })
 }
 
+@Composable
+fun SimplePopup(
+    arrowSize: DpSize = DpSize(
+        LocalDimensions.current.smallSpacing,
+        LocalDimensions.current.xsSpacing
+    ),
+    onDismiss: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    val popupBackgroundColour = LocalColors.current.backgroundBubbleReceived
+
+    Popup(
+        popupPositionProvider = AboveCenterPositionProvider(),
+        onDismissRequest = onDismiss
+    ) {
+        Box(
+            modifier = Modifier.clickable { onDismiss() },
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = CenterHorizontally
+            ) {
+                // Speech bubble card
+                Card(
+                    shape = RoundedCornerShape(LocalDimensions.current.spacing),
+                    colors = CardDefaults.cardColors(
+                        containerColor = popupBackgroundColour
+                    ),
+                    elevation = CardDefaults.elevatedCardElevation(4.dp)
+                ) {
+                    content()
+                }
+
+                // Triangle below the card to make it look like a speech bubble
+                Canvas(
+                    modifier = Modifier.size(arrowSize)
+                ) {
+                    val path = Path().apply {
+                        moveTo(0f, 0f)
+                        lineTo(size.width, 0f)
+                        lineTo(size.width / 2, size.height)
+                        close()
+                    }
+                    drawPath(
+                        path = path,
+                        color = popupBackgroundColour
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Positions the popup above/centered from its parent
+ */
+class AboveCenterPositionProvider() : PopupPositionProvider {
+    override fun calculatePosition(
+        anchorBounds: IntRect,
+        windowSize: IntSize,
+        layoutDirection: LayoutDirection,
+        popupContentSize: IntSize
+    ): IntOffset {
+        return IntOffset(
+            anchorBounds.topCenter.x - (popupContentSize.width / 2),
+            anchorBounds.topCenter.y - popupContentSize.height
+        )
+    }
+}
 
 @Composable
 fun SearchBar(

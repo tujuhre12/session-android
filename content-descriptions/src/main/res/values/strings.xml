@@ -245,6 +245,7 @@
     <string name="AccessibilityId_sessionPrivacy">Privacy</string>
     <string name="AccessibilityId_setButton">Set button</string>
     <string name="AccessibilityId_displayName">Display name</string>
+    <string name="qa_settings_item_session_network">session-network-menu-item</string>
 
     <!-- Misc. -->
     <string name="AccessibilityId_navigateBack">Navigate back</string>
@@ -254,5 +255,6 @@
     <string name="AccessibilityId_save">Save</string>
     <string name="AccessibilityId_remove">Remove</string>
     <string name="qa_input_error">error-message</string>
+    <string name="qa_button_submit">submit-button</string>
 
 </resources>

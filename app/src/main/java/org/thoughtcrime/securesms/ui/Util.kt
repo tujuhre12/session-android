@@ -6,9 +6,15 @@ import android.content.ContextWrapper
 import android.view.View
 import android.view.ViewTreeObserver
 import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.core.FiniteAnimationSpec
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.testTag
@@ -115,5 +121,23 @@ fun <T> ObserveAsEvents(
                 flow.collect(onEvent)
             }
         }
+    }
+}
+
+@Composable
+fun AnimateFade(
+    visible: Boolean,
+    modifier: Modifier = Modifier,
+    fadeInAnimationSpec: FiniteAnimationSpec<Float> = spring(stiffness = Spring.StiffnessMediumLow),
+    fadeOutAnimationSpec: FiniteAnimationSpec<Float> = spring(stiffness = Spring.StiffnessMediumLow),
+    content: @Composable() AnimatedVisibilityScope.() -> Unit
+){
+    AnimatedVisibility(
+        modifier = modifier,
+        visible = visible,
+        enter = fadeIn(animationSpec = fadeInAnimationSpec),
+        exit = fadeOut(animationSpec = fadeOutAnimationSpec)
+    ) {
+        content()
     }
 }

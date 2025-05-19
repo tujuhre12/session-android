@@ -22,6 +22,7 @@ data class Dimensions(
     val minButtonWidth: Dp = 160.dp,
 
     val indicatorHeight: Dp = 4.dp,
+
     val borderStroke: Dp = 1.dp,
 
     val iconXXSmall: Dp = 9.dp,
@@ -34,6 +35,7 @@ data class Dimensions(
     val iconXLarge: Dp = 60.dp,
     val iconXXLarge: Dp = 80.dp,
 
+    val shapeExtraSmall: Dp = 8.dp,
     val shapeSmall: Dp = 12.dp,
     val shapeMedium: Dp = 16.dp,
 
