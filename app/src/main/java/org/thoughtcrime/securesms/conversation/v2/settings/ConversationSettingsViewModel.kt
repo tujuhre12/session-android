@@ -193,7 +193,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 }
             }
 
-            conversation.isCommunityRecipient -> { //todo UCS currently this property is null for existing communities and is never updated if the community was already added before caring for the description
+            conversation.isCommunityRecipient -> {
                 (
                     community?.description to // description
                     context.getString(R.string.qa_conversation_settings_description_community) // description qa tag
