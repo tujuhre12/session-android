@@ -551,7 +551,7 @@ object MessageSender {
         // if we are sending a 'Note to Self' make sure it is not hidden
         if( message is VisibleMessage &&
             address.toString() == MessagingModuleConfiguration.shared.storage.getUserPublicKey() &&
-            // only show the NTW if it is currently marked as hidden
+            // only show the NTS if it is currently marked as hidden
             MessagingModuleConfiguration.shared.configFactory.withUserConfigs { it.userProfile.getNtsPriority() == PRIORITY_HIDDEN }
         ){
             // make sure note to self is not hidden
