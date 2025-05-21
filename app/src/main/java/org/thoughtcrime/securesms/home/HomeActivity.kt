@@ -26,6 +26,7 @@ import com.bumptech.glide.RequestManager
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
@@ -38,6 +39,7 @@ import network.loki.messenger.databinding.ActivityHomeBinding
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
+import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.jobs.JobQueue
@@ -49,12 +51,13 @@ import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_K
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.wasKickedFromGroupV2
+import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.conversation.start.StartConversationFragment
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
-import org.thoughtcrime.securesms.conversation.v2.menus.ConversationMenuHelper
 import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsActivity
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.database.GroupDatabase
@@ -668,14 +671,31 @@ class HomeActivity : ScreenLockActionBarActivity(),
         val recipient = thread.recipient
 
         if (recipient.isGroupV2Recipient) {
-            ConversationMenuHelper.leaveGroup(
-                context = this,
-                thread = recipient,
+            val accountId = AccountId(recipient.address.toString())
+            val group = configFactory.withUserConfigs { it.userGroups.getClosedGroup(accountId.hexString) } ?: return
+            val name = configFactory.withGroupConfigs(accountId) {
+                it.groupInfo.getName()
+            } ?: group.name
+
+            confirmAndLeaveGroup(
+                groupName = name,
+                isAdmin = group.hasAdminKey(),
+                isKicked = configFactory.wasKickedFromGroupV2(recipient),
+                isDestroyed = group.destroyed,
                 threadID = threadID,
-                configFactory = configFactory,
                 storage = storage,
-                groupManager = groupManagerV2,
-                deprecationManager = deprecationManager
+                doLeave = {
+                    try {
+                        //todo UCS are we missing this feature from the UCS group leave?
+                        //FIX ISSUES AND ADD BACK FEATURE BELOW BUT ALSO THE CHANNEL CODE HERE AND IN THE UCS MENU
+                      //  channel.trySend(GroupLeavingStatus.Leaving)
+                        homeViewModel.leaveGroup(accountId)
+                        //channel.trySend(GroupLeavingStatus.Left)
+                    } catch (e: Exception) {
+                        //channel.trySend(GroupLeavingStatus.Error)
+                        throw e
+                    }
+                }
             )
 
             return
@@ -763,6 +783,66 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 deleteAction()
             }
             button(negativeButtonId)
+        }
+    }
+
+    private fun confirmAndLeaveGroup(
+        groupName: String,
+        isAdmin: Boolean,
+        isKicked: Boolean,
+        isDestroyed: Boolean,
+        threadID: Long,
+        storage: StorageProtocol,
+        doLeave: suspend () -> Unit,
+    ) {
+        var title = R.string.groupLeave
+        var message: CharSequence = ""
+        var positiveButton = R.string.leave
+
+        if(isKicked || isDestroyed){
+            message = Phrase.from(this, R.string.groupDeleteDescriptionMember)
+                .put(GROUP_NAME_KEY, groupName)
+                .format()
+
+            title = R.string.groupDelete
+            positiveButton = R.string.delete
+        } else if (isAdmin) {
+            message = Phrase.from(this, R.string.groupLeaveDescriptionAdmin)
+                .put(GROUP_NAME_KEY, groupName)
+                .format()
+        } else {
+            message = Phrase.from(this, R.string.groupLeaveDescription)
+                .put(GROUP_NAME_KEY, groupName)
+                .format()
+        }
+
+        fun onLeaveFailed() {
+            val txt = Phrase.from(this, R.string.groupLeaveErrorFailed)
+                .put(GROUP_NAME_KEY, groupName)
+                .format().toString()
+            Toast.makeText(this, txt, Toast.LENGTH_LONG).show()
+        }
+
+        showSessionDialog {
+            title(title)
+            text(message)
+            dangerButton(positiveButton) {
+                GlobalScope.launch(Dispatchers.Default) {
+                    try {
+                        // Cancel any outstanding jobs
+                        storage.cancelPendingMessageSendJobs(threadID)
+
+                        doLeave()
+                    } catch (e: Exception) {
+                        Log.e("Conversation", "Error leaving group", e)
+                        withContext(Dispatchers.Main) {
+                            onLeaveFailed()
+                        }
+                    }
+                }
+
+            }
+            button(R.string.cancel)
         }
     }
 

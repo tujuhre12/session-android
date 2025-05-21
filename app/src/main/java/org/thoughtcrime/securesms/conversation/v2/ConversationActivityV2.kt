@@ -10,7 +10,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.database.Cursor
-import android.graphics.Color
 import android.graphics.Rect
 import android.graphics.Typeface
 import android.net.Uri
@@ -40,7 +39,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
-import androidx.core.os.BundleCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
@@ -140,7 +138,6 @@ import org.thoughtcrime.securesms.conversation.v2.input_bar.mentions.MentionCand
 import org.thoughtcrime.securesms.conversation.v2.mention.MentionViewModel
 import org.thoughtcrime.securesms.conversation.v2.menus.ConversationActionModeCallback
 import org.thoughtcrime.securesms.conversation.v2.menus.ConversationActionModeCallbackDelegate
-import org.thoughtcrime.securesms.conversation.v2.menus.ConversationMenuHelper
 import org.thoughtcrime.securesms.conversation.v2.messages.ControlMessageView
 import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageView
 import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageViewDelegate
@@ -238,7 +235,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     ConversationActionModeCallbackDelegate, VisibleMessageViewDelegate, RecipientModifiedListener,
     SearchBottomBar.EventListener, LoaderManager.LoaderCallbacks<Cursor>,
     OnReactionSelectedListener, ReactWithAnyEmojiDialogFragment.Callback, ReactionsDialogFragment.Callback,
-    ConversationMenuHelper.ConversationMenuListener, UserDetailsBottomSheet.UserDetailsBottomSheetCallback {
+    UserDetailsBottomSheet.UserDetailsBottomSheetCallback {
 
     private lateinit var binding: ActivityConversationV2Binding
 
@@ -1513,25 +1510,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             }
             cancelButton()
         }
-    }
-
-    override fun copyAccountID(accountId: String) {
-        val clip = ClipData.newPlainText("Account ID", accountId)
-        val manager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
-        manager.setPrimaryClip(clip)
-        Toast.makeText(this, R.string.copied, Toast.LENGTH_SHORT).show()
-    }
-
-    override fun copyOpenGroupUrl(thread: Recipient) {
-        if (!thread.isCommunityRecipient) { return }
-
-        val threadId = threadDb.getThreadIdIfExistsFor(thread)
-        val openGroup = lokiThreadDb.getOpenGroupChat(threadId) ?: return
-
-        val clip = ClipData.newPlainText("Community URL", openGroup.joinURL)
-        val manager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
-        manager.setPrimaryClip(clip)
-        Toast.makeText(this, R.string.copied, Toast.LENGTH_SHORT).show()
     }
 
     override fun unblockUserFromInput() {

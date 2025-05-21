@@ -1312,7 +1312,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 )
             }
         )
-    }
+    } //todo UCS it seems this can crash when going to the settings right after creating a group?
 
     private val optionInviteMembers: OptionsItem by lazy{
         OptionsItem(
