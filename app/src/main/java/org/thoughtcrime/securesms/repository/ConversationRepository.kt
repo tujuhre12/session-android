@@ -242,11 +242,11 @@ class DefaultConversationRepository @Inject constructor(
         val (mms, sms) = messages.partition { it.isMms }
 
         if(mms.isNotEmpty()){
-            messageDataProvider.markMessagesAsDeleted(mms.map { MarkAsDeletedMessage(
-                messageId = it.id,
-                isOutgoing = it.isOutgoing
-            ) },
-                isSms = false,
+            messageDataProvider.markMessagesAsDeleted(
+                mms.map { MarkAsDeletedMessage(
+                    messageId = it.messageId,
+                    isOutgoing = it.isOutgoing
+                ) },
                 displayedMessage = displayedMessage
             )
 
@@ -255,11 +255,11 @@ class DefaultConversationRepository @Inject constructor(
         }
 
         if(sms.isNotEmpty()){
-            messageDataProvider.markMessagesAsDeleted(sms.map { MarkAsDeletedMessage(
-                messageId = it.id,
-                isOutgoing = it.isOutgoing
-            ) },
-                isSms = true,
+            messageDataProvider.markMessagesAsDeleted(
+                sms.map { MarkAsDeletedMessage(
+                    messageId = it.messageId,
+                    isOutgoing = it.isOutgoing
+                ) },
                 displayedMessage = displayedMessage
             )
 
@@ -273,7 +273,7 @@ class DefaultConversationRepository @Inject constructor(
         val senderId = messageRecord.recipient.address.contactIdentifier()
         val messageRecordsToRemoveFromLocalStorage = mmsSmsDb.getAllMessageRecordsFromSenderInThread(threadId, senderId)
         for (message in messageRecordsToRemoveFromLocalStorage) {
-            messageDataProvider.deleteMessage(message.id, !message.isMms)
+            messageDataProvider.deleteMessage(messageId = message.messageId)
         }
     }
 
@@ -288,7 +288,7 @@ class DefaultConversationRepository @Inject constructor(
         val community = checkNotNull(lokiThreadDb.getOpenGroupChat(threadId)) { "Not a community" }
 
         messages.forEach { message ->
-            lokiMessageDb.getServerID(message.id, !message.isMms)?.let { messageServerID ->
+            lokiMessageDb.getServerID(message.messageId)?.let { messageServerID ->
                 OpenGroupApi.deleteMessage(messageServerID, community.room, community.server).await()
             }
         }
@@ -308,7 +308,7 @@ class DefaultConversationRepository @Inject constructor(
 
         messages.forEach { message ->
             // delete from swarm
-            messageDataProvider.getServerHashForMessage(message.id, message.isMms)
+            messageDataProvider.getServerHashForMessage(message.messageId)
                 ?.let { serverHash ->
                     SnodeAPI.deleteMessage(publicKey, userAuth, listOf(serverHash))
                 }
@@ -349,7 +349,7 @@ class DefaultConversationRepository @Inject constructor(
 
         val groupId = AccountId(recipient.address.toString())
         val hashes = messages.mapNotNullTo(mutableSetOf()) { msg ->
-            messageDataProvider.getServerHashForMessage(msg.id, msg.isMms)
+            messageDataProvider.getServerHashForMessage(msg.messageId)
         }
 
         groupManager.requestMessageDeletion(groupId, hashes)
@@ -369,7 +369,7 @@ class DefaultConversationRepository @Inject constructor(
 
         messages.forEach { message ->
             // delete from swarm
-            messageDataProvider.getServerHashForMessage(message.id, message.isMms)
+            messageDataProvider.getServerHashForMessage(message.messageId)
                 ?.let { serverHash ->
                     SnodeAPI.deleteMessage(publicKey, userAuth, listOf(serverHash))
                 }
@@ -379,10 +379,6 @@ class DefaultConversationRepository @Inject constructor(
                 userAddress?.let { MessageSender.send(unsendRequest, it) }
             }
         }
-    }
-
-    private fun shouldSendUnsendRequest(recipient: Recipient): Boolean {
-        return recipient.is1on1 || recipient.isLegacyGroupRecipient
     }
 
     private fun buildUnsendRequest(message: MessageRecord): UnsendRequest {
