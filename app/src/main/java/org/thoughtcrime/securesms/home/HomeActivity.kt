@@ -679,22 +679,11 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
             confirmAndLeaveGroup(
                 groupName = name,
-                isAdmin = group.hasAdminKey(),
-                isKicked = configFactory.wasKickedFromGroupV2(recipient),
-                isDestroyed = group.destroyed,
+                dialogData = groupManagerV2.getLeaveGroupConfirmationDialogData(accountId),
                 threadID = threadID,
                 storage = storage,
                 doLeave = {
-                    try {
-                        //todo UCS are we missing this feature from the UCS group leave?
-                        //FIX ISSUES AND ADD BACK FEATURE BELOW BUT ALSO THE CHANNEL CODE HERE AND IN THE UCS MENU
-                      //  channel.trySend(GroupLeavingStatus.Leaving)
-                        homeViewModel.leaveGroup(accountId)
-                        //channel.trySend(GroupLeavingStatus.Left)
-                    } catch (e: Exception) {
-                        //channel.trySend(GroupLeavingStatus.Error)
-                        throw e
-                    }
+                    homeViewModel.leaveGroup(accountId)
                 }
             )
 
@@ -788,33 +777,12 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
     private fun confirmAndLeaveGroup(
         groupName: String,
-        isAdmin: Boolean,
-        isKicked: Boolean,
-        isDestroyed: Boolean,
+        dialogData: GroupManagerV2.ConfirmDialogData?,
         threadID: Long,
         storage: StorageProtocol,
         doLeave: suspend () -> Unit,
     ) {
-        var title = R.string.groupLeave
-        var message: CharSequence = ""
-        var positiveButton = R.string.leave
-
-        if(isKicked || isDestroyed){
-            message = Phrase.from(this, R.string.groupDeleteDescriptionMember)
-                .put(GROUP_NAME_KEY, groupName)
-                .format()
-
-            title = R.string.groupDelete
-            positiveButton = R.string.delete
-        } else if (isAdmin) {
-            message = Phrase.from(this, R.string.groupLeaveDescriptionAdmin)
-                .put(GROUP_NAME_KEY, groupName)
-                .format()
-        } else {
-            message = Phrase.from(this, R.string.groupLeaveDescription)
-                .put(GROUP_NAME_KEY, groupName)
-                .format()
-        }
+        if (dialogData == null) return
 
         fun onLeaveFailed() {
             val txt = Phrase.from(this, R.string.groupLeaveErrorFailed)
@@ -824,9 +792,12 @@ class HomeActivity : ScreenLockActionBarActivity(),
         }
 
         showSessionDialog {
-            title(title)
-            text(message)
-            dangerButton(positiveButton) {
+            title(dialogData.title)
+            text(dialogData.message)
+            dangerButton(
+                dialogData.positiveText,
+                contentDescriptionRes = dialogData.positiveQaTag ?: dialogData.positiveText
+            ) {
                 GlobalScope.launch(Dispatchers.Default) {
                     try {
                         // Cancel any outstanding jobs
@@ -842,7 +813,10 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 }
 
             }
-            button(R.string.cancel)
+            button(
+                dialogData.negativeText,
+                contentDescriptionRes = dialogData.negativeQaTag ?: dialogData.negativeText
+            )
         }
     }
 

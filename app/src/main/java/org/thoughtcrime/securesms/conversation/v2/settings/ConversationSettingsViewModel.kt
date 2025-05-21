@@ -810,45 +810,18 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
     private fun confirmLeaveGroup(){
         val groupData = groupV2 ?: return
-        _dialogState.update {
+        _dialogState.update { state ->
+            val dialogData = groupManager.getLeaveGroupConfirmationDialogData(AccountId(groupData.groupAccountId))
+                ?: return
 
-            var title = R.string.groupDelete
-            var message: CharSequence = ""
-            var positiveButton = R.string.delete
-            var positiveQaTag = R.string.qa_conversation_settings_dialog_delete_group_confirm
-            var negativeQaTag = R.string.qa_conversation_settings_dialog_delete_group_cancel
-
-            val groupName = _uiState.value.name
-
-            if(!groupData.shouldPoll){
-                message = Phrase.from(context, R.string.groupDeleteDescriptionMember)
-                    .put(GROUP_NAME_KEY, groupName)
-                    .format()
-
-            } else if (groupData.hasAdminKey()) {
-                message = Phrase.from(context, R.string.groupLeaveDescriptionAdmin)
-                    .put(GROUP_NAME_KEY, groupName)
-                    .format()
-            } else {
-                message = Phrase.from(context, R.string.groupLeaveDescription)
-                    .put(GROUP_NAME_KEY, groupName)
-                    .format()
-
-                title = R.string.groupLeave
-                positiveButton = R.string.leave
-                positiveQaTag = R.string.qa_conversation_settings_dialog_leave_group_confirm
-                negativeQaTag = R.string.qa_conversation_settings_dialog_leave_group_cancel
-            }
-
-
-            it.copy(
+            state.copy(
                 showSimpleDialog = Dialog(
-                    title = context.getString(title),
-                    message = message,
-                    positiveText = context.getString(positiveButton),
-                    negativeText = context.getString(R.string.cancel),
-                    positiveQaTag = context.getString(positiveQaTag),
-                    negativeQaTag = context.getString(negativeQaTag),
+                    title = dialogData.title,
+                    message = dialogData.message,
+                    positiveText = context.getString(dialogData.positiveText),
+                    negativeText = context.getString(dialogData.negativeText),
+                    positiveQaTag = dialogData.positiveQaTag?.let{ context.getString(it) },
+                    negativeQaTag = dialogData.negativeQaTag?.let{ context.getString(it) },
                     onPositive = ::leaveGroup,
                     onNegative = {}
                 )
@@ -1312,7 +1285,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 )
             }
         )
-    } //todo UCS it seems this can crash when going to the settings right after creating a group?
+    } 
 
     private val optionInviteMembers: OptionsItem by lazy{
         OptionsItem(
