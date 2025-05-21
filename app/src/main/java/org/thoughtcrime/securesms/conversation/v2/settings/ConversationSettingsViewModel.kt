@@ -146,7 +146,8 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             configs.contacts.get(conversation.address.toString())
         }
 
-        groupV2 = configFactory.getGroup(AccountId(recipient!!.address.toString()))
+        groupV2 = if(conversation.isGroupV2Recipient) configFactory.getGroup(AccountId(conversation.address.toString()))
+        else null
 
         // admin
         val isAdmin: Boolean =  when {
