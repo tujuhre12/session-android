@@ -679,7 +679,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
             confirmAndLeaveGroup(
                 groupName = name,
-                dialogData = groupManagerV2.getLeaveGroupConfirmationDialogData(accountId),
+                dialogData = groupManagerV2.getLeaveGroupConfirmationDialogData(accountId, name),
                 threadID = threadID,
                 storage = storage,
                 doLeave = {

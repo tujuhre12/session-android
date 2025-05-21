@@ -118,7 +118,7 @@ interface GroupManagerV2 {
      */
     fun onBlocked(groupAccountId: AccountId)
 
-    fun getLeaveGroupConfirmationDialogData(groupId: AccountId): ConfirmDialogData?
+    fun getLeaveGroupConfirmationDialogData(groupId: AccountId, name: String): ConfirmDialogData?
 
     data class ConfirmDialogData(
         val title: String,

@@ -1222,7 +1222,7 @@ class GroupManagerV2Impl @Inject constructor(
         storage.insertGroupInfoChange(message, groupId)
     }
 
-    override fun getLeaveGroupConfirmationDialogData(groupId: AccountId): GroupManagerV2.ConfirmDialogData? {
+    override fun getLeaveGroupConfirmationDialogData(groupId: AccountId, name: String): GroupManagerV2.ConfirmDialogData? {
         val groupData = configFactory.getGroup(groupId) ?: return null
 
         var title = R.string.groupDelete
@@ -1234,16 +1234,16 @@ class GroupManagerV2Impl @Inject constructor(
 
         if(!groupData.shouldPoll){
             message = Phrase.from(application, R.string.groupDeleteDescriptionMember)
-                .put(GROUP_NAME_KEY, groupData.name)
+                .put(GROUP_NAME_KEY, name)
                 .format()
 
         } else if (groupData.hasAdminKey()) {
             message = Phrase.from(application, R.string.groupLeaveDescriptionAdmin)
-                .put(GROUP_NAME_KEY, groupData.name)
+                .put(GROUP_NAME_KEY, name)
                 .format()
         } else {
             message = Phrase.from(application, R.string.groupLeaveDescription)
-                .put(GROUP_NAME_KEY, groupData.name)
+                .put(GROUP_NAME_KEY, name)
                 .format()
 
             title = R.string.groupLeave

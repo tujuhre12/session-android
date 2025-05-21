@@ -108,10 +108,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
     private var recipient: Recipient? = null
 
-    private val groupV2: GroupInfo.ClosedGroupInfo? by lazy {
-        if(recipient == null) return@lazy null
-        configFactory.getGroup(AccountId(recipient!!.address.toString()))
-    }
+    private var groupV2: GroupInfo.ClosedGroupInfo? = null
 
     private val community: OpenGroup? by lazy {
         storage.getOpenGroup(threadId)
@@ -148,6 +145,8 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         val configContact = configFactory.withUserConfigs { configs ->
             configs.contacts.get(conversation.address.toString())
         }
+
+        groupV2 = configFactory.getGroup(AccountId(recipient!!.address.toString()))
 
         // admin
         val isAdmin: Boolean =  when {
@@ -811,8 +810,10 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private fun confirmLeaveGroup(){
         val groupData = groupV2 ?: return
         _dialogState.update { state ->
-            val dialogData = groupManager.getLeaveGroupConfirmationDialogData(AccountId(groupData.groupAccountId))
-                ?: return
+            val dialogData = groupManager.getLeaveGroupConfirmationDialogData(
+                AccountId(groupData.groupAccountId),
+                _uiState.value.name
+            ) ?: return
 
             state.copy(
                 showSimpleDialog = Dialog(
