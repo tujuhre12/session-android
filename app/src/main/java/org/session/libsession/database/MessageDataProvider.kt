@@ -13,25 +13,20 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.messages.SignalServiceAttachmentPointer
 import org.session.libsignal.messages.SignalServiceAttachmentStream
 import org.thoughtcrime.securesms.database.model.MessageId
-import org.thoughtcrime.securesms.database.model.MessageRecord
 import java.io.InputStream
 
 interface MessageDataProvider {
 
-    fun getMessageID(serverID: Long): Long?
-    /**
-     * @return pair of sms or mms table-specific ID and whether it is in SMS table
-     */
-    fun getMessageID(serverId: Long, threadId: Long): Pair<Long, Boolean>?
+    fun getMessageID(serverId: Long, threadId: Long): MessageId?
     fun getMessageIDs(serverIDs: List<Long>, threadID: Long): Pair<List<Long>, List<Long>>
     fun getUserMessageHashes(threadId: Long, userPubKey: String): List<String>
-    fun deleteMessage(messageID: Long, isSms: Boolean)
+    fun deleteMessage(messageId: MessageId)
     fun deleteMessages(messageIDs: List<Long>, threadId: Long, isSms: Boolean)
-    fun markMessageAsDeleted(timestamp: Long, author: String, displayedMessage: String)
-    fun markMessagesAsDeleted(messages: List<MarkAsDeletedMessage>, isSms: Boolean, displayedMessage: String)
+    fun markMessageAsDeleted(messageId: MessageId, displayedMessage: String)
+    fun markMessagesAsDeleted(messages: List<MarkAsDeletedMessage>, displayedMessage: String)
     fun markMessagesAsDeleted(threadId: Long, serverHashes: List<String>, displayedMessage: String)
     fun markUserMessagesAsDeleted(threadId: Long, until: Long, sender: String, displayedMessage: String)
-    fun getServerHashForMessage(messageID: Long, mms: Boolean): String?
+    fun getServerHashForMessage(messageID: MessageId): String?
     fun getDatabaseAttachment(attachmentId: Long): DatabaseAttachment?
     fun getAttachmentStream(attachmentId: Long): SessionServiceAttachmentStream?
     fun getAttachmentPointer(attachmentId: Long): SessionServiceAttachmentPointer?
@@ -41,7 +36,6 @@ interface MessageDataProvider {
     fun setAttachmentState(attachmentState: AttachmentState, attachmentId: AttachmentId, messageID: Long)
     fun insertAttachment(messageId: Long, attachmentId: AttachmentId, stream : InputStream)
     fun updateAudioAttachmentDuration(attachmentId: AttachmentId, durationMs: Long, threadId: Long)
-    fun isMmsOutgoing(mmsMessageId: Long): Boolean
     fun isOutgoingMessage(id: MessageId): Boolean
     fun isDeletedMessage(id: MessageId): Boolean
     fun handleSuccessfulAttachmentUpload(attachmentId: Long, attachmentStream: SignalServiceAttachmentStream, attachmentKey: ByteArray, uploadResult: UploadResult)

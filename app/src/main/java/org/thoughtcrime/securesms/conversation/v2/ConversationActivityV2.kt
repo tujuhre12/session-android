@@ -1700,15 +1700,14 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         } else {
             // Put the message in the database
             val reaction = ReactionRecord(
-                messageId = originalMessage.id,
-                isMms = originalMessage.isMms,
+                messageId = originalMessage.messageId,
                 author = author,
                 emoji = emoji,
                 count = 1,
                 dateSent = emojiTimestamp,
                 dateReceived = emojiTimestamp
             )
-            reactionDb.addReaction(MessageId(originalMessage.id, originalMessage.isMms), reaction, false)
+            reactionDb.addReaction(reaction, false)
 
             val originalAuthor = if (originalMessage.isOutgoing) {
                 fromSerialized(viewModel.blindedPublicKey ?: textSecurePreferences.getLocalNumber()!!)
@@ -1718,7 +1717,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             reactionMessage.reaction = Reaction.from(originalMessage.timestamp, originalAuthor.toString(), emoji, true)
             if (recipient.isCommunityRecipient) {
 
-                val messageServerId = lokiMessageDb.getServerID(originalMessage.id, !originalMessage.isMms) ?:
+                val messageServerId = lokiMessageDb.getServerID(originalMessage.messageId) ?:
                     return Log.w(TAG, "Failed to find message server ID when adding emoji reaction")
 
                 viewModel.openGroup?.let {
@@ -1754,7 +1753,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             message.reaction = Reaction.from(originalMessage.timestamp, originalAuthor.toString(), emoji, false)
             if (recipient.isCommunityRecipient) {
 
-                val messageServerId = lokiMessageDb.getServerID(originalMessage.id, !originalMessage.isMms) ?:
+                val messageServerId = lokiMessageDb.getServerID(originalMessage.messageId) ?:
                     return Log.w(TAG, "Failed to find message server ID when removing emoji reaction")
 
                 viewModel.openGroup?.let {
