@@ -678,7 +678,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
             } ?: group.name
 
             confirmAndLeaveGroup(
-                groupName = name,
                 dialogData = groupManagerV2.getLeaveGroupConfirmationDialogData(accountId, name),
                 threadID = threadID,
                 storage = storage,
@@ -776,20 +775,12 @@ class HomeActivity : ScreenLockActionBarActivity(),
     }
 
     private fun confirmAndLeaveGroup(
-        groupName: String,
         dialogData: GroupManagerV2.ConfirmDialogData?,
         threadID: Long,
         storage: StorageProtocol,
         doLeave: suspend () -> Unit,
     ) {
         if (dialogData == null) return
-
-        fun onLeaveFailed() {
-            val txt = Phrase.from(this, R.string.groupLeaveErrorFailed)
-                .put(GROUP_NAME_KEY, groupName)
-                .format().toString()
-            Toast.makeText(this, txt, Toast.LENGTH_LONG).show()
-        }
 
         showSessionDialog {
             title(dialogData.title)
@@ -799,17 +790,10 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 contentDescriptionRes = dialogData.positiveQaTag ?: dialogData.positiveText
             ) {
                 GlobalScope.launch(Dispatchers.Default) {
-                    try {
-                        // Cancel any outstanding jobs
-                        storage.cancelPendingMessageSendJobs(threadID)
+                    // Cancel any outstanding jobs
+                    storage.cancelPendingMessageSendJobs(threadID)
 
-                        doLeave()
-                    } catch (e: Exception) {
-                        Log.e("Conversation", "Error leaving group", e)
-                        withContext(Dispatchers.Main) {
-                            onLeaveFailed()
-                        }
-                    }
+                    doLeave()
                 }
 
             }
