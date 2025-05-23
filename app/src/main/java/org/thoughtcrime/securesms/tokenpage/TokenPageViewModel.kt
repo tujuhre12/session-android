@@ -215,7 +215,7 @@ class TokenPageViewModel @Inject constructor(
         viewModelScope.launch {
             // if the data isn't stale then we don't need to refresh it, instead we fake a small wait
             try {
-                if (!tokenDataManager.fetchInfoDataIfNeeded(tempDebug = true)) {
+                if (!tokenDataManager.fetchInfoDataIfNeeded()) {
                     // If there is no fresh server data then we'll update the UI elements to show their loading
                     // state for half a second then put them back as they were.
                     showLoading()
