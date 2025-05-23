@@ -214,15 +214,18 @@ class TokenPageViewModel @Inject constructor(
 
         viewModelScope.launch {
             // if the data isn't stale then we don't need to refresh it, instead we fake a small wait
-            if (!tokenDataManager.fetchInfoDataIfNeeded()) {
-                // If there is no fresh server data then we'll update the UI elements to show their loading
-                // state for half a second then put them back as they were.
-                showLoading()
-                delay(timeMillis = 500)
-                handleInfoResponse(infoResponse)
-            }
+            try {
+                if (!tokenDataManager.fetchInfoDataIfNeeded(tempDebug = true)) {
+                    // If there is no fresh server data then we'll update the UI elements to show their loading
+                    // state for half a second then put them back as they were.
+                    showLoading()
+                    delay(timeMillis = 500)
+                    handleInfoResponse(infoResponse)
+                }
+            } catch (e: Exception){ /* exception can be ignored here as the infoResponse can return a wrapped failure object */ }
 
             // Reset the refreshing state when done
+            delay(100) // it seems there's a bug in compose where the refresh does not go away if hidden too quickly
             _uiState.update { state ->
                 state.copy(
                     isRefreshing = false
