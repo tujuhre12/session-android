@@ -7,15 +7,14 @@ import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 object ContactUtilities {
 
     @JvmStatic
-    fun getAllContacts(context: Context): Set<Recipient> {
+    fun getAllContacts(context: Context): Set<Pair<Recipient, Long>> {
         val threadDatabase = DatabaseComponent.get(context).threadDatabase()
         val cursor = threadDatabase.conversationList
-        val result = mutableSetOf<Recipient>()
+        val result = mutableSetOf<Pair<Recipient, Long>>()
         threadDatabase.readerFor(cursor).use { reader ->
             while (reader.next != null) {
                 val thread = reader.current
-                val recipient = thread.recipient
-                result.add(recipient)
+                result.add(Pair(thread.recipient, thread.lastMessage?.timestamp ?: 0))
             }
         }
         return result

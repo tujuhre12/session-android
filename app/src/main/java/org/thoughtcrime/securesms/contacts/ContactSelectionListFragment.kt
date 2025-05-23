@@ -42,7 +42,6 @@ class ContactSelectionListFragment : Fragment(), LoaderManager.LoaderCallbacks<L
     }
 
     companion object {
-        @JvmField val DISPLAY_MODE = "display_mode"
         @JvmField val MULTI_SELECT = "multi_select"
         @JvmField val REFRESHABLE = "refreshable"
     }
@@ -94,7 +93,7 @@ class ContactSelectionListFragment : Fragment(), LoaderManager.LoaderCallbacks<L
     override fun onCreateLoader(id: Int, args: Bundle?): Loader<List<ContactSelectionListItem>> {
         return ContactSelectionListLoader(
             context = requireActivity(),
-            mode = requireActivity().intent.getIntExtra(DISPLAY_MODE, ContactsCursorLoader.DisplayMode.FLAG_ALL),
+            mode = ContactsCursorLoader.DisplayMode.FLAG_ALL,
             filter = cursorFilter,
             deprecationManager = deprecationManager
         )

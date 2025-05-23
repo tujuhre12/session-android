@@ -81,10 +81,6 @@ class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
 
     override fun onCreate(icicle: Bundle?, ready: Boolean) {
 
-        if (!intent.hasExtra(ContactSelectionListFragment.DISPLAY_MODE)) {
-            intent.putExtra(ContactSelectionListFragment.DISPLAY_MODE, ContactSelectionListLoader.DisplayMode.FLAG_ALL)
-        }
-
         intent.putExtra(ContactSelectionListFragment.REFRESHABLE, false)
 
         setContentView(R.layout.share_activity)
