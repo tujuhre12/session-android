@@ -7,6 +7,7 @@ import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.util.Base64;
 
+import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -173,7 +174,7 @@ public final class KeyStoreHelper {
       this.data = data;
     }
 
-    @SuppressWarnings("unused")
+    @Keep
     public SealedData() {}
 
     public String serialize() {

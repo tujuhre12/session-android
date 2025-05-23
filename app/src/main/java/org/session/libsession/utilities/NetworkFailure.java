@@ -1,5 +1,7 @@
 package org.session.libsession.utilities;
 
+import androidx.annotation.Keep;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -14,6 +16,7 @@ public class NetworkFailure {
     this.address = address.toString();
   }
 
+  @Keep
   public NetworkFailure() {}
 
   @JsonIgnore

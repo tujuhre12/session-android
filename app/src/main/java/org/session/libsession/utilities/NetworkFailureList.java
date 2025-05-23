@@ -1,5 +1,7 @@
 package org.session.libsession.utilities;
 
+import androidx.annotation.Keep;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -11,6 +13,7 @@ public class NetworkFailureList implements Document<NetworkFailure> {
   @JsonProperty(value = "l")
   private List<NetworkFailure> failures;
 
+  @Keep
   public NetworkFailureList() {
     this.failures = new LinkedList<>();
   }

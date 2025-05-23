@@ -1,5 +1,7 @@
 package org.session.libsession.utilities;
 
+import androidx.annotation.Keep;
+
 import org.session.libsignal.utilities.Log;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -32,6 +34,7 @@ public class IdentityKeyMismatch {
   @JsonDeserialize(using = IdentityKeyDeserializer.class)
   private IdentityKey identityKey;
 
+  @Keep
   public IdentityKeyMismatch() {}
 
   public IdentityKeyMismatch(Address address, IdentityKey identityKey) {

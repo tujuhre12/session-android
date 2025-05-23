@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.crypto;
 
 
+import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
 import android.util.Base64;
 
@@ -49,7 +50,7 @@ public class AttachmentSecret {
     this.modernKey        = modernKey;
   }
 
-  @SuppressWarnings("unused")
+  @Keep
   public AttachmentSecret() {
 
   }

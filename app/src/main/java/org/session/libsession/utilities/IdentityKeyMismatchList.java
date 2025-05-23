@@ -1,5 +1,7 @@
 package org.session.libsession.utilities;
 
+import androidx.annotation.Keep;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -11,6 +13,7 @@ public class IdentityKeyMismatchList implements Document<IdentityKeyMismatch> {
   @JsonProperty(value = "m")
   private List<IdentityKeyMismatch> mismatches;
 
+  @Keep
   public IdentityKeyMismatchList() {
     this.mismatches = new LinkedList<>();
   }

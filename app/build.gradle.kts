@@ -118,12 +118,36 @@ android {
 
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+
+            proguardFiles(
+                // Default file with automatically generated optimization rules.
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+
+                file("proguard-rules.pro"),
+            )
+        }
+
+        create("qa") {
+            signingConfig = signingConfigs.getByName("debug")
+
+            isMinifyEnabled = true
+            isShrinkResources = true
+
+            proguardFiles(
+                // Default file with automatically generated optimization rules.
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+
+                file("proguard-rules.pro"),
+            )
+
+            matchingFallbacks += "release"
         }
 
         getByName("debug") {
             isDefault = true
-            isMinifyEnabled = false
+
             enableUnitTestCoverage = false
             signingConfig = signingConfigs.getByName("debug")
         }

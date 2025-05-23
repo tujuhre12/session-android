@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.database.model;
 
+import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -16,6 +17,7 @@ public final class EmojiSearchData {
   @JsonProperty
   private List<String> tags;
 
+  @Keep
   public EmojiSearchData() {}
 
   public @NonNull String getEmoji() {
