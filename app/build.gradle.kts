@@ -286,7 +286,6 @@ dependencies {
     implementation(libs.androidx.sqlite.ktx)
     implementation(libs.sqlcipher.android)
     implementation(libs.kotlinx.serialization.json)
-    implementation(project(":liblazysodium"))
     implementation(libs.protobuf.java)
     implementation(libs.jackson.databind)
     implementation(libs.okhttp)
@@ -295,11 +294,6 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kovenant)
     implementation(libs.kovenant.android)
-    implementation(libs.jna) {
-        artifact {
-            type = "aar"
-        }
-    }
     implementation(libs.opencsv)
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.rxbinding)

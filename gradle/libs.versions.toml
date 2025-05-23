@@ -32,14 +32,13 @@ fragmentKtxVersion = "1.8.6"
 gradlePluginVersion = "8.10.0"
 dependenciesAnalysisVersion = "2.17.0"
 googleServicesVersion = "4.4.2"
-jnaVersion = "5.17.0"
 junit = "1.1.5"
 kotlinVersion = "2.1.10"
 kotlinxDatetimeVersion = "0.6.0"
 kryoVersion = "5.1.1"
 kspVersion = "2.1.10-1.0.31"
 legacySupportV13Version = "1.0.0"
-libsessionUtilAndroidVersion = "1.0.4-3-ge192c9a"
+libsessionUtilAndroidVersion = "1.0.4-4-g81b2127"
 media3ExoplayerVersion = "1.4.0"
 mockitoCoreVersion = "5.17.0"
 navVersion = "2.9.0"
@@ -129,7 +128,6 @@ libsession-util-android = { module = "org.sessionfoundation:libsession-util-andr
 zxing-core = { module = "com.google.zxing:core", version.ref = "zxingVersion" }
 curve25519-java = { module = "com.github.session-foundation.session-android-curve-25519:curve25519-java", version.ref = "curve25519JavaVersion" }
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jacksonDatabindVersion" }
-jna = { module = "net.java.dev.jna:jna", version.ref = "jnaVersion" }
 junit = { module = "junit:junit", version.ref = "junitVersion" }
 kinkerapps-android-smsmms = { module = "com.klinkerapps:android-smsmms", version.ref = "androidSmsmmsVersion" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityKtxVersion" }

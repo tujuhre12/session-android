@@ -6,8 +6,8 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ED25519
+import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.ExpiryMode
-import network.loki.messenger.libsession_util.util.Sodium
 import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.MessagingModuleConfiguration
@@ -41,7 +41,6 @@ import org.session.libsession.messaging.utilities.MessageAuthentication.buildDel
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildGroupInviteSignature
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildInfoChangeSignature
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildMemberChangeSignature
-import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.messaging.utilities.WebRtcUtils
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
@@ -62,6 +61,7 @@ import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
+import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
@@ -371,9 +371,12 @@ fun MessageReceiver.handleVisibleMessage(
     val threadRecipient = storage.getRecipientForThread(threadID)
     val userBlindedKey = openGroupID?.let {
         val openGroup = storage.getOpenGroup(threadID) ?: return@let null
-        val blindedKey = SodiumUtilities.blindedKeyPair(openGroup.publicKey, MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair()!!) ?: return@let null
+        val blindedKey = BlindKeyAPI.blind15KeyPairOrNull(
+            ed25519SecretKey = MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair()!!.secretKey.data,
+            serverPubKey = Hex.fromStringCondensed(openGroup.publicKey),
+        ) ?: return@let null
         AccountId(
-            IdPrefix.BLINDED, blindedKey.publicKey.asBytes
+            IdPrefix.BLINDED, blindedKey.pubKey.data
         ).hexString
     }
     // Update profile if needed
@@ -545,8 +548,11 @@ fun MessageReceiver.handleOpenGroupReactions(
     val userPublicKey = storage.getUserPublicKey()!!
     val openGroup = storage.getOpenGroup(threadId)
     val blindedPublicKey = openGroup?.publicKey?.let { serverPublicKey ->
-        SodiumUtilities.blindedKeyPair(serverPublicKey, MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair()!!)
-            ?.let { AccountId(IdPrefix.BLINDED, it.publicKey.asBytes).hexString }
+        BlindKeyAPI.blind15KeyPairOrNull(
+            ed25519SecretKey = MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair()!!.secretKey.data,
+            serverPubKey = Hex.fromStringCondensed(serverPublicKey),
+        )
+            ?.let { AccountId(IdPrefix.BLINDED, it.pubKey.data).hexString }
     }
     for ((emoji, reaction) in reactions) {
         val pendingUserReaction = OpenGroupApi.pendingReactions
@@ -765,7 +771,7 @@ private fun handlePromotionMessage(message: GroupUpdated) {
         try {
             MessagingModuleConfiguration.shared.groupManagerV2
                 .handlePromotion(
-                    groupId = AccountId(IdPrefix.GROUP, Sodium.ed25519KeyPair(seed).pubKey.data),
+                    groupId = AccountId(IdPrefix.GROUP, ED25519.generate(seed).pubKey.data),
                     groupName = promotion.name,
                     adminKeySeed = seed,
                     promoter = adminId,

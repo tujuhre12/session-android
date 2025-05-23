@@ -1,9 +1,9 @@
 package org.session.libsession.messaging.sending_receiving
 
 import network.loki.messenger.libsession_util.SessionEncrypt
+import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.sending_receiving.MessageReceiver.Error
-import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.Log
@@ -38,25 +38,30 @@ object MessageDecrypter {
         otherBlindedPublicKey: String,
         serverPublicKey: String
     ): Pair<ByteArray, String> {
-        val userEdKeyPair = MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair() ?: throw Error.NoUserED25519KeyPair
-        val blindedKeyPair = SodiumUtilities.blindedKeyPair(serverPublicKey, userEdKeyPair) ?: throw Error.DecryptionFailed
-        val otherKeyBytes = Hex.fromStringCondensed(otherBlindedPublicKey.removingIdPrefixIfNeeded())
+        val userEdKeyPair = MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair()
+            ?: throw Error.NoUserED25519KeyPair
+        val blindedKeyPair = BlindKeyAPI.blind15KeyPairOrNull(
+            ed25519SecretKey = userEdKeyPair.secretKey.data,
+            serverPubKey = Hex.fromStringCondensed(serverPublicKey),
+        ) ?: throw Error.DecryptionFailed
+        val otherKeyBytes =
+            Hex.fromStringCondensed(otherBlindedPublicKey.removingIdPrefixIfNeeded())
 
         val senderKeyBytes: ByteArray
         val recipientKeyBytes: ByteArray
 
         if (isOutgoing) {
-            senderKeyBytes = blindedKeyPair.publicKey.asBytes
+            senderKeyBytes = blindedKeyPair.pubKey.data
             recipientKeyBytes = otherKeyBytes
         } else {
             senderKeyBytes = otherKeyBytes
-            recipientKeyBytes = blindedKeyPair.publicKey.asBytes
+            recipientKeyBytes = blindedKeyPair.pubKey.data
         }
 
         try {
             val (sessionId, plainText) = SessionEncrypt.decryptForBlindedRecipient(
                 ciphertext = message,
-                myEd25519Privkey = userEdKeyPair.secretKey.asBytes,
+                myEd25519Privkey = userEdKeyPair.secretKey.data,
                 openGroupPubkey = Hex.fromStringCondensed(serverPublicKey),
                 senderBlindedId = byteArrayOf(0x15) + senderKeyBytes,
                 recipientBlindId = byteArrayOf(0x15) + recipientKeyBytes,
