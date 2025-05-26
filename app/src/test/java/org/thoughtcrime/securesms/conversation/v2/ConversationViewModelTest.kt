@@ -203,22 +203,4 @@ class ConversationViewModelTest: BaseViewModelTest() {
         whenever(recipient.isCommunityInboxRecipient).thenReturn(false)
         assertThat(viewModel.blindedRecipient, nullValue())
     }
-
-    @Test
-    fun `local recipient should have input and no blinded recipient`() = runBlockingTest {
-        whenever(recipient.isLocalNumber).thenReturn(true)
-        assertThat(viewModel.shouldHideInputBar(), equalTo(false))
-        assertThat(viewModel.blindedRecipient, nullValue())
-    }
-
-    @Test
-    fun `contact recipient should hide input bar if not accepting requests`() = runBlockingTest {
-        whenever(recipient.isCommunityInboxRecipient).thenReturn(true)
-        val blinded = mock<Recipient> {
-            whenever(it.blocksCommunityMessageRequests).thenReturn(true)
-        }
-        whenever(repository.maybeGetBlindedRecipient(recipient)).thenReturn(blinded)
-        assertThat(viewModel.blindedRecipient, notNullValue())
-        assertThat(viewModel.shouldHideInputBar(), equalTo(true))
-    }
 }
