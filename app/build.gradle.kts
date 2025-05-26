@@ -277,10 +277,6 @@ dependencies {
     implementation(libs.tooltips) {
         exclude(group = "com.android.support", module = "appcompat-v7")
     }
-    implementation(libs.kinkerapps.android.smsmms) {
-        exclude(group = "com.squareup.okhttp", module = "okhttp")
-        exclude(group = "com.squareup.okhttp", module = "okhttp-urlconnection")
-    }
     implementation(libs.stream)
     implementation(libs.androidx.sqlite.ktx)
     implementation(libs.sqlcipher.android)

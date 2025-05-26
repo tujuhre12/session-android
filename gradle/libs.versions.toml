@@ -6,7 +6,6 @@ accompanistPermissionsVersion = "0.36.0"
 accompanistThemeadapterAppcompatVersion = "0.33.1-alpha"
 activityKtxVersion = "1.10.1"
 androidImageCropperVersion = "4.5.0"
-androidSmsmmsVersion = "4.0.1"
 androidVersion = "125.6422.07"
 annotationVersion = "1.5.0"
 assertjCoreVersion = "3.11.1"
@@ -125,7 +124,6 @@ libsession-util-android = { module = "org.sessionfoundation:libsession-util-andr
 zxing-core = { module = "com.google.zxing:core", version.ref = "zxingVersion" }
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jacksonDatabindVersion" }
 junit = { module = "junit:junit", version.ref = "junitVersion" }
-kinkerapps-android-smsmms = { module = "com.klinkerapps:android-smsmms", version.ref = "androidSmsmmsVersion" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityKtxVersion" }
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompatVersion" }
 androidx-cardview = { module = "androidx.cardview:cardview", version.ref = "cardviewVersion" }
