@@ -9,7 +9,6 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-
     <androidx.compose.ui.platform.ComposeView
         android:id="@+id/conversationAppBar"
         android:layout_width="0dp"

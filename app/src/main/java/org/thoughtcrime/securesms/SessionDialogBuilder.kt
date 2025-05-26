@@ -54,6 +54,13 @@ class SessionDialogBuilder(val context: Context) {
 
     private val buttonLayout = LinearLayout(context)
 
+    private val root = LinearLayout(context).apply { orientation = VERTICAL }
+        .also(dialogBuilder::setView)
+        .apply {
+            addView(contentView)
+            addView(buttonLayout)
+        }
+
     // Main title entry point
     fun title(text: String?) {
         text(
