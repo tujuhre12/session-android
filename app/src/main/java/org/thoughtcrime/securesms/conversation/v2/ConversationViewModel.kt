@@ -386,7 +386,7 @@ class ConversationViewModel(
             // the user does not have write access in the community
             openGroup?.canWrite == false -> InputBarState(
                 contentState = InputBarContentState.Disabled(
-                    text = "You don't have write permissions in this community", //todo INPUT replace with real crowdin string
+                    text = application.getString(R.string.permissionsWriteCommunity),
                 ),
                 enableAttachMediaControls = false
             )
