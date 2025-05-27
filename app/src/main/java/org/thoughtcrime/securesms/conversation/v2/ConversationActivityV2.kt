@@ -677,6 +677,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                         }
                         startActivity(intent)
                     }
+
+                    is ConversationUiEvent.ShowUnblockConfirmation -> {
+                        unblock()
+                    }
                 }
             }
         }
@@ -1093,12 +1097,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { state ->
-                    binding.inputBar.run {
-                        isVisible = state.showInput
-                        allowAttachMultimediaButtons = state.enableAttachMediaControls
-                        // if the user is blocked, hide input and show blocked message
-                        setBlockedState(state.userBlocked)
-                    }
+                    binding.inputBar.setState(state.inputBarState)
 
                     binding.root.requestApplyInsets()
 
@@ -1510,10 +1509,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             }
             cancelButton()
         }
-    }
-
-    override fun unblockUserFromInput() {
-        unblock()
     }
 
     fun unblock() {

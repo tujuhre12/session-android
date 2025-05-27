@@ -471,7 +471,7 @@ class DefaultConversationRepository @Inject constructor(
                     approved = false
                 )
             } else {
-                storage.deleteConversation(threadId)
+                storage.deleteConversation(threadId) //todo should we delete the contact here instead of just the conversation?
             }
         }
     }
