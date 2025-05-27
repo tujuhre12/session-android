@@ -714,8 +714,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             true,
             screenshotObserver
         )
-
-        //todo AVATAR Old code was force refreshing avatar here. Is it needed?
     }
 
     override fun onPause() {
@@ -1198,7 +1196,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
             showSessionDialog {
                 title(R.string.delete)
-                text(resources.getString(R.string.messageRequestsDelete))
+                text(resources.getString(R.string.messageRequestsContactDelete))
                 dangerButton(R.string.delete) { doDecline() }
                 button(R.string.cancel)
             }
