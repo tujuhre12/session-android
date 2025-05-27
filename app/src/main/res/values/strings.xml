@@ -662,6 +662,7 @@
     <string name="messageRequestsClearAllExplanation">Are you sure you want to clear all message requests and group invites?</string>
     <string name="messageRequestsCommunities">Community Message Requests</string>
     <string name="messageRequestsCommunitiesDescription">Allow message requests from Community conversations.</string>
+    <string name="messageRequestsContactDelete">Are you sure you want to delete this message request and the associated contact?</string>
     <string name="messageRequestsDelete">Are you sure you want to delete this message request?</string>
     <string name="messageRequestsNew">You have a new message request</string>
     <string name="messageRequestsNonePending">No pending message requests</string>
