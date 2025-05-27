@@ -70,6 +70,7 @@
         android:id="@+id/disabledBanner"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        tools:visibility="visible"
         android:visibility="gone">
 
         <TextView
@@ -77,10 +78,11 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
+            android:gravity="center"
             style="@style/Signal.Text.Preview"
-            android:layout_marginHorizontal="@dimen/new_conversation_button_bottom_offset"
+            android:layout_marginHorizontal="70dp"
             android:textColor="?android:textColorTertiary"
-            tools:text="@string/blockBlockedDescription" />
+            tools:text="@string/permissionsWriteCommunity" />
     </FrameLayout>
 
 </FrameLayout>
