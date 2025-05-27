@@ -152,7 +152,7 @@
     <string name="banUserBanned">User banned</string>
     <string name="banUserDescription">Enter the Account ID of the user you are banning</string>
     <string name="block">Block</string>
-    <string name="blockBlockedDescription">Unblock this contact to send a message.</string>
+    <string name="blockBlockedDescription">Unblock this contact to send a message</string>
     <string name="blockBlockedNone">No blocked contacts</string>
     <string name="blockBlockedUser">Blocked {name}</string>
     <string name="blockDescription">Are you sure you want to block <b>{name}</b>? Blocked users cannot send you message requests, group invites or call you.</string>
@@ -810,6 +810,7 @@
     <string name="permissionsStorageSave">{app_name} needs storage access to save attachments and media.</string>
     <string name="permissionsStorageSaveDenied">{app_name} needs storage access to save photos and videos, but it has been permanently denied. Please continue to app settings, select \"Permissions\", and enable \"Storage\".</string>
     <string name="permissionsStorageSend">{app_name} needs storage access to send photos and videos.</string>
+    <string name="permissionsWriteCommunity">You don\'t have write permissions in this community</string>
     <string name="pin">Pin</string>
     <string name="pinConversation">Pin Conversation</string>
     <string name="pinUnpin">Unpin</string>
