@@ -1,5 +1,5 @@
 -dontobfuscate
--keepattributes Signature, LineNumber
+-keepattributes Signature, LineNumber, Annotation, SourceFile
 
 # Firebase message is missing its analytics connector but we deliberately don't want them
 -dontwarn com.google.firebase.**
