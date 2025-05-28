@@ -123,6 +123,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
     @Inject lateinit var clock: SnodeClock
     @Inject lateinit var messageNotifier: MessageNotifier
     @Inject lateinit var dateUtils: DateUtils
+    @Inject lateinit var openGroupManager: OpenGroupManager
 
     private val globalSearchViewModel by viewModels<GlobalSearchViewModel>()
     private val homeViewModel by viewModels<HomeViewModel>()
@@ -282,7 +283,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 // update things based on TextSecurePrefs (profile info etc)
                 // Set up remaining components if needed
                 if (textSecurePreferences.getLocalNumber() != null) {
-                    OpenGroupManager.startPolling()
                     JobQueue.shared.resumePendingJobs()
                 }
 
@@ -718,7 +718,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 // Delete the conversation
                 val community = lokiThreadDatabase.getOpenGroupChat(threadID)
                 if (community != null) {
-                    OpenGroupManager.delete(community.server, community.room, context)
+                    openGroupManager.delete(community.server, community.room, context)
                 } else {
                     lifecycleScope.launch(Dispatchers.Default) {
                         storage.deleteConversation(threadID)

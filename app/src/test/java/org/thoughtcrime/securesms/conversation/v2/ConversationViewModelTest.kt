@@ -90,7 +90,10 @@ class ConversationViewModelTest: BaseViewModelTest() {
             avatarUtils = avatarUtils,
             lokiAPIDb = mock(),
             recipientChangeSource = NoopRecipientChangeSource,
-            dateUtils = mock()
+            dateUtils = mock(),
+            openGroupManager = mock {
+                on { getCommunitiesWriteAccessFlow() } doReturn MutableStateFlow(emptyMap())
+            }
         )
     }
 
