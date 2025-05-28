@@ -46,6 +46,7 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
     var onDeleteTapped: (() -> Unit)? = null
     var onMarkAllAsReadTapped: (() -> Unit)? = null
     var onNotificationTapped: (() -> Unit)? = null
+    var onDeleteContactTapped: (() -> Unit)? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         binding = FragmentConversationBottomSheetBinding.inflate(LayoutInflater.from(parentContext), container, false)
@@ -64,6 +65,7 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
             binding.deleteTextView -> onDeleteTapped?.invoke()
             binding.markAllAsReadTextView -> onMarkAllAsReadTapped?.invoke()
             binding.notificationsTextView -> onNotificationTapped?.invoke()
+            binding.deleteContactTextView -> onDeleteContactTapped?.invoke()
         }
     }
 
@@ -71,6 +73,9 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
         super.onViewCreated(view, savedInstanceState)
         if (!this::thread.isInitialized) { return dismiss() }
         val recipient = thread.recipient
+
+        binding.deleteContactTextView.isVisible = false
+
         if (!recipient.isGroupOrCommunityRecipient && !recipient.isLocalNumber) {
             binding.detailsTextView.visibility = View.VISIBLE
             binding.unblockTextView.visibility = if (recipient.isBlocked) View.VISIBLE else View.GONE
@@ -138,9 +143,13 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
 
                 // 1on1
                 else -> {
-                    text = context.getString(R.string.delete)
+                    text = context.getString(R.string.conversationsDelete)
                     contentDescription = context.getString(R.string.AccessibilityId_delete)
                     drawableStartRes = R.drawable.ic_trash_2
+
+                    // also show delete contact for 1on1
+                    binding.deleteContactTextView.isVisible = true
+                    binding.deleteContactTextView.setOnClickListener(this@ConversationOptionsBottomSheet)
                 }
             }
 

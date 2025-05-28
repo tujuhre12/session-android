@@ -606,6 +606,10 @@ class HomeActivity : ScreenLockActionBarActivity(),
             bottomSheet.dismiss()
             markAllAsRead(thread)
         }
+        bottomSheet.onDeleteContactTapped = {
+            bottomSheet.dismiss()
+            confirmDeleteContact(thread)
+        }
         bottomSheet.show(supportFragmentManager, bottomSheet.tag)
     }
 
@@ -642,6 +646,22 @@ class HomeActivity : ScreenLockActionBarActivity(),
                         binding.conversationsRecyclerView.adapter!!.notifyDataSetChanged()
                     }
                 }
+            }
+            cancelButton()
+        }
+    }
+
+    private fun confirmDeleteContact(thread: ThreadRecord) {
+        showSessionDialog {
+            title(R.string.contactDelete)
+            text(
+                Phrase.from(context, R.string.deleteContactDescription)
+                    .put(NAME_KEY, thread.recipient?.name ?: "")
+                    .put(NAME_KEY, thread.recipient?.name ?: "")
+                    .format()
+            )
+            dangerButton(R.string.delete, R.string.qa_conversation_settings_dialog_delete_contact_confirm) {
+                homeViewModel.deleteContact(thread.recipient.address.toString())
             }
             cancelButton()
         }
