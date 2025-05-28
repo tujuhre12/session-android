@@ -164,11 +164,10 @@ class TokenPageViewModel @Inject constructor(
 
                     showNodeCountsAsRefreshing = false,
 
-                    currentSentPriceUSD = infoResponse.priceData.tokenPriceUSD,                        // Raw token price value "1.23" etc.
-                    currentSentPriceUSDString = infoResponse.priceData.getLocaleFormattedTokenPriceString(), // Formatted token price value "$1.23 USD" etc.
-                    currentMarketCapUSD = infoResponse.priceData.marketCapUSD,                         // Raw market cap value "1,234,567" etc.
-                    currentMarketCapUSDString = infoResponse.priceData.getLocaleFormattedMarketCapString(),  // Formatted market cap value "$1,234,567 USD" etc.
-
+                    currentSentPriceUSDString = "\$" + infoResponse.priceData.tokenPriceUSD.formatWithDecimalPlaces(2) + " $USD_NAME_SHORT", // Formatted token price value "$1.23 USD" etc.
+                    currentMarketCapUSDString = if(infoResponse.priceData.marketCapUSD ==  null) unavailableString
+                        else "\$" + infoResponse.priceData.marketCapUSD.formatWithDecimalPlaces( 0) + " $USD_NAME_SHORT",  // Formatted market cap value "$1,234,567 USD" etc.
+                    
                     currentStakingRewardPool = infoResponse.tokenData.stakingRewardPool,
                     currentStakingRewardPoolString = infoResponse.tokenData.getLocaleFormattedStakingRewardPool() + " $TOKEN_NAME_SHORT",
 
