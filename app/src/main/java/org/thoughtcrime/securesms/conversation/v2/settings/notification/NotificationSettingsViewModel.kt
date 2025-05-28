@@ -141,7 +141,26 @@ class NotificationSettingsViewModel @AssistedInject constructor(
                 )
             }
 
-            // add the regular options
+            // add debug options on non prod builds
+            muteRadioOptions.addAll(
+                debugMuteDurations.map {
+                    RadioOption(
+                        value = it.first,
+                        title = GetString(
+                            LocalisedTimeUtil.getDurationWithSingleLargestTimeUnit(
+                                context,
+                                it.first.milliseconds
+                            )
+                        ),
+                        subtitle = GetString("For testing purposes"),
+                        qaTag = GetString(it.second),
+                        selected = selectedMuteDuration == it.first
+                    )
+                }
+            )
+
+
+                    // add the regular options
             muteRadioOptions.addAll(
                 muteDurations.map {
                     RadioOption(
@@ -258,6 +277,11 @@ class NotificationSettingsViewModel @AssistedInject constructor(
         data object MentionsOnly: NotificationType(NOTIFY_TYPE_MENTIONS)
         data object Mute: NotificationType(NOTIFY_TYPE_NONE)
     }
+
+    private val debugMuteDurations = listOf(
+        TimeUnit.MINUTES.toMillis(1) to R.string.qa_conversation_settings_notifications_radio_1m,
+        TimeUnit.MINUTES.toMillis(5) to R.string.qa_conversation_settings_notifications_radio_5m,
+    )
 
     private val muteDurations = listOf(
         durationForever to R.string.qa_conversation_settings_notifications_radio_forever,
