@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import org.session.libsession.LocalisedTimeUtil
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_TIME_KEY
@@ -142,25 +143,26 @@ class NotificationSettingsViewModel @AssistedInject constructor(
             }
 
             // add debug options on non prod builds
-            muteRadioOptions.addAll(
-                debugMuteDurations.map {
-                    RadioOption(
-                        value = it.first,
-                        title = GetString(
-                            LocalisedTimeUtil.getDurationWithSingleLargestTimeUnit(
-                                context,
-                                it.first.milliseconds
-                            )
-                        ),
-                        subtitle = GetString("For testing purposes"),
-                        qaTag = GetString(it.second),
-                        selected = selectedMuteDuration == it.first
-                    )
-                }
-            )
+            if (BuildConfig.BUILD_TYPE != "release") {
+                muteRadioOptions.addAll(
+                    debugMuteDurations.map {
+                        RadioOption(
+                            value = it.first,
+                            title = GetString(
+                                LocalisedTimeUtil.getDurationWithSingleLargestTimeUnit(
+                                    context,
+                                    it.first.milliseconds
+                                )
+                            ),
+                            subtitle = GetString("For testing purposes"),
+                            qaTag = GetString(it.second),
+                            selected = selectedMuteDuration == it.first
+                        )
+                    }
+                )
+            }
 
-
-                    // add the regular options
+            // add the regular options
             muteRadioOptions.addAll(
                 muteDurations.map {
                     RadioOption(
