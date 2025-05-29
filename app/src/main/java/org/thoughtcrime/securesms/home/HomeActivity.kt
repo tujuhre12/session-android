@@ -26,17 +26,20 @@ import com.bumptech.glide.RequestManager
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityHomeBinding
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
+import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.jobs.JobQueue
@@ -48,13 +51,14 @@ import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_K
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.wasKickedFromGroupV2
+import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.conversation.start.StartConversationFragment
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
-import org.thoughtcrime.securesms.conversation.v2.menus.ConversationMenuHelper
-import org.thoughtcrime.securesms.conversation.v2.utilities.NotificationUtils
+import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsActivity
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
@@ -75,9 +79,11 @@ import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.SettingsActivity
 import org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity
-import org.thoughtcrime.securesms.showMuteDialog
 import org.thoughtcrime.securesms.showSessionDialog
+import org.thoughtcrime.securesms.tokenpage.TokenPageNotificationManager
 import org.thoughtcrime.securesms.ui.setThemedContent
+import org.thoughtcrime.securesms.util.DateUtils
+import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
 import org.thoughtcrime.securesms.util.disableClipping
 import org.thoughtcrime.securesms.util.fadeIn
 import org.thoughtcrime.securesms.util.fadeOut
@@ -109,12 +115,15 @@ class HomeActivity : ScreenLockActionBarActivity(),
     @Inject lateinit var groupDatabase: GroupDatabase
     @Inject lateinit var textSecurePreferences: TextSecurePreferences
     @Inject lateinit var configFactory: ConfigFactory
+    @Inject lateinit var tokenPageNotificationManager: TokenPageNotificationManager
     @Inject lateinit var groupManagerV2: GroupManagerV2
     @Inject lateinit var deprecationManager: LegacyGroupDeprecationManager
     @Inject lateinit var lokiThreadDatabase: LokiThreadDatabase
     @Inject lateinit var sessionJobDatabase: SessionJobDatabase
     @Inject lateinit var clock: SnodeClock
     @Inject lateinit var messageNotifier: MessageNotifier
+    @Inject lateinit var dateUtils: DateUtils
+    @Inject lateinit var openGroupManager: OpenGroupManager
 
     private val globalSearchViewModel by viewModels<GlobalSearchViewModel>()
     private val homeViewModel by viewModels<HomeViewModel>()
@@ -125,40 +134,57 @@ class HomeActivity : ScreenLockActionBarActivity(),
         HomeAdapter(context = this, configFactory = configFactory, listener = this, ::showMessageRequests, ::hideMessageRequests)
     }
 
-    private val globalSearchAdapter = GlobalSearchAdapter(
-        onContactClicked = { model ->
-            when (model) {
-                is GlobalSearchAdapter.Model.Message -> push<ConversationActivityV2> {
-                    model.messageResult.run {
-                        putExtra(ConversationActivityV2.THREAD_ID, threadId)
-                        putExtra(ConversationActivityV2.SCROLL_MESSAGE_ID, sentTimestampMs)
-                        putExtra(ConversationActivityV2.SCROLL_MESSAGE_AUTHOR, messageRecipient.address)
+    private val globalSearchAdapter by lazy {
+        GlobalSearchAdapter(
+            dateUtils = dateUtils,
+            onContactClicked = { model ->
+                when (model) {
+                    is GlobalSearchAdapter.Model.Message -> push<ConversationActivityV2> {
+                        model.messageResult.run {
+                            putExtra(ConversationActivityV2.THREAD_ID, threadId)
+                            putExtra(ConversationActivityV2.SCROLL_MESSAGE_ID, sentTimestampMs)
+                            putExtra(
+                                ConversationActivityV2.SCROLL_MESSAGE_AUTHOR,
+                                messageRecipient.address
+                            )
+                        }
                     }
-                }
-                is GlobalSearchAdapter.Model.SavedMessages -> push<ConversationActivityV2> {
-                    putExtra(ConversationActivityV2.ADDRESS, Address.fromSerialized(model.currentUserPublicKey))
-                }
-                is GlobalSearchAdapter.Model.Contact -> push<ConversationActivityV2> {
-                    putExtra(
-                        ConversationActivityV2.ADDRESS,
-                        model.contact.hexString.let(Address::fromSerialized)
-                    )
-                }
 
-                is GlobalSearchAdapter.Model.GroupConversation -> model.groupId
-                    .let { Recipient.from(this, Address.fromSerialized(it), false) }
-                    .let(threadDb::getThreadIdIfExistsFor)
-                    .takeIf { it >= 0 }
-                    ?.let {
-                        push<ConversationActivityV2> { putExtra(ConversationActivityV2.THREAD_ID, it) }
+                    is GlobalSearchAdapter.Model.SavedMessages -> push<ConversationActivityV2> {
+                        putExtra(
+                            ConversationActivityV2.ADDRESS,
+                            Address.fromSerialized(model.currentUserPublicKey)
+                        )
                     }
-                else -> Log.d("Loki", "callback with model: $model")
+
+                    is GlobalSearchAdapter.Model.Contact -> push<ConversationActivityV2> {
+                        putExtra(
+                            ConversationActivityV2.ADDRESS,
+                            model.contact.hexString.let(Address::fromSerialized)
+                        )
+                    }
+
+                    is GlobalSearchAdapter.Model.GroupConversation -> model.groupId
+                        .let { Recipient.from(this, Address.fromSerialized(it), false) }
+                        .let(threadDb::getThreadIdIfExistsFor)
+                        .takeIf { it >= 0 }
+                        ?.let {
+                            push<ConversationActivityV2> {
+                                putExtra(
+                                    ConversationActivityV2.THREAD_ID,
+                                    it
+                                )
+                            }
+                        }
+
+                    else -> Log.d("Loki", "callback with model: $model")
+                }
+            },
+            onContactLongPressed = { model ->
+                onSearchContactLongPress(model.contact.hexString, model.name)
             }
-        },
-        onContactLongPressed = { model ->
-            onSearchContactLongPress(model.contact.hexString, model.name)
-        }
-    )
+        )
+    }
 
     private fun onSearchContactLongPress(accountId: String, contactName: String) {
         val bottomSheet = SearchContactActionBottomSheet.newInstance(accountId, contactName)
@@ -257,7 +283,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 // update things based on TextSecurePrefs (profile info etc)
                 // Set up remaining components if needed
                 if (textSecurePreferences.getLocalNumber() != null) {
-                    OpenGroupManager.startPolling()
                     JobQueue.shared.resumePendingJobs()
                 }
 
@@ -319,6 +344,12 @@ class HomeActivity : ScreenLockActionBarActivity(),
             }
         }
 
+        // Schedule a notification about the new Token Page for 1 hour after running the updated app for the first time.
+        // Note: We do NOT schedule a debug notification on startup - but one may be triggered from the Debug Menu.
+        if (!BuildConfig.DEBUG) {
+            tokenPageNotificationManager.scheduleTokenPageNotification(constructDebugNotification = false)
+        }
+
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 homeViewModel.callBanner.collect { callBanner ->
@@ -340,22 +371,15 @@ class HomeActivity : ScreenLockActionBarActivity(),
             }
         }
 
-        ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { _, insets ->
-            // Apply status bar insets to the toolbar
-            binding.toolbar.updatePadding(
-                top = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
-            )
-
-            val bottomInsets = insets.getInsets(WindowInsetsCompat.Type.navigationBars() or WindowInsetsCompat.Type.ime()).bottom
-
-            binding.globalSearchRecycler.updatePadding(bottom = bottomInsets)
-            binding.newConversationButton.updateLayoutParams<MarginLayoutParams> {
-                bottomMargin = bottomInsets + resources.getDimensionPixelSize(R.dimen.new_conversation_button_bottom_offset)
+        binding.root.applySafeInsetsPaddings(
+            applyBottom = false,
+            alsoApply = { insets ->
+                binding.globalSearchRecycler.updatePadding(bottom = insets.bottom)
+                binding.newConversationButton.updateLayoutParams<MarginLayoutParams> {
+                    bottomMargin = insets.bottom + resources.getDimensionPixelSize(R.dimen.new_conversation_button_bottom_offset)
+                }
             }
-
-            // There shouldn't be anything else needing the insets so we'll consume all of them
-            WindowInsetsCompat.CONSUMED
-        }
+        )
     }
 
     override fun onCancelClicked() {
@@ -373,8 +397,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
     private val GlobalSearchResult.groupedContacts: List<GlobalSearchAdapter.Model> get() {
         class NamedValue<T>(val name: String?, val value: T)
 
-        // Unknown is temporarily to be grouped together with numbers title.
-        // https://optf.atlassian.net/browse/SES-2287
+        // Unknown is temporarily to be grouped together with numbers title - see: SES-2287
         val numbersTitle = "#"
         val unknownTitle = numbersTitle
 
@@ -563,15 +586,13 @@ class HomeActivity : ScreenLockActionBarActivity(),
             bottomSheet.dismiss()
             deleteConversation(thread)
         }
-        bottomSheet.onSetMuteTapped = { muted ->
-            bottomSheet.dismiss()
-            setConversationMuted(thread, muted)
-        }
         bottomSheet.onNotificationTapped = {
             bottomSheet.dismiss()
-            NotificationUtils.showNotifyDialog(this, thread.recipient) { notifyType ->
-                setNotifyType(thread, notifyType)
+            // go to the notification settings
+            val intent = Intent(this, NotificationSettingsActivity::class.java).apply {
+                putExtra(NotificationSettingsActivity.THREAD_ID, thread.threadId)
             }
+            startActivity(intent)
         }
         bottomSheet.onPinTapped = {
             bottomSheet.dismiss()
@@ -584,6 +605,10 @@ class HomeActivity : ScreenLockActionBarActivity(),
         bottomSheet.onMarkAllAsReadTapped = {
             bottomSheet.dismiss()
             markAllAsRead(thread)
+        }
+        bottomSheet.onDeleteContactTapped = {
+            bottomSheet.dismiss()
+            confirmDeleteContact(thread)
         }
         bottomSheet.show(supportFragmentManager, bottomSheet.tag)
     }
@@ -626,23 +651,19 @@ class HomeActivity : ScreenLockActionBarActivity(),
         }
     }
 
-    private fun setConversationMuted(thread: ThreadRecord, isMuted: Boolean) {
-        if (!isMuted) {
-            lifecycleScope.launch(Dispatchers.Default) {
-                recipientDatabase.setMuted(thread.recipient, 0)
+    private fun confirmDeleteContact(thread: ThreadRecord) {
+        showSessionDialog {
+            title(R.string.contactDelete)
+            text(
+                Phrase.from(context, R.string.deleteContactDescription)
+                    .put(NAME_KEY, thread.recipient?.name ?: "")
+                    .put(NAME_KEY, thread.recipient?.name ?: "")
+                    .format()
+            )
+            dangerButton(R.string.delete, R.string.qa_conversation_settings_dialog_delete_contact_confirm) {
+                homeViewModel.deleteContact(thread.recipient.address.toString())
             }
-        } else {
-            showMuteDialog(this) { until ->
-                lifecycleScope.launch(Dispatchers.Default) {
-                    recipientDatabase.setMuted(thread.recipient, until)
-                }
-            }
-        }
-    }
-
-    private fun setNotifyType(thread: ThreadRecord, newNotifyType: Int) {
-        lifecycleScope.launch(Dispatchers.Default) {
-            recipientDatabase.setNotifyType(thread.recipient, newNotifyType)
+            cancelButton()
         }
     }
 
@@ -664,14 +685,19 @@ class HomeActivity : ScreenLockActionBarActivity(),
         val recipient = thread.recipient
 
         if (recipient.isGroupV2Recipient) {
-            ConversationMenuHelper.leaveGroup(
-                context = this,
-                thread = recipient,
+            val accountId = AccountId(recipient.address.toString())
+            val group = configFactory.withUserConfigs { it.userGroups.getClosedGroup(accountId.hexString) } ?: return
+            val name = configFactory.withGroupConfigs(accountId) {
+                it.groupInfo.getName()
+            } ?: group.name
+
+            confirmAndLeaveGroup(
+                dialogData = groupManagerV2.getLeaveGroupConfirmationDialogData(accountId, name),
                 threadID = threadID,
-                configFactory = configFactory,
                 storage = storage,
-                groupManager = groupManagerV2,
-                deprecationManager = deprecationManager
+                doLeave = {
+                    homeViewModel.leaveGroup(accountId)
+                }
             )
 
             return
@@ -692,7 +718,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 // Delete the conversation
                 val community = lokiThreadDatabase.getOpenGroupChat(threadID)
                 if (community != null) {
-                    OpenGroupManager.delete(community.server, community.room, context)
+                    openGroupManager.delete(community.server, community.room, context)
                 } else {
                     lifecycleScope.launch(Dispatchers.Default) {
                         storage.deleteConversation(threadID)
@@ -759,6 +785,36 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 deleteAction()
             }
             button(negativeButtonId)
+        }
+    }
+
+    private fun confirmAndLeaveGroup(
+        dialogData: GroupManagerV2.ConfirmDialogData?,
+        threadID: Long,
+        storage: StorageProtocol,
+        doLeave: suspend () -> Unit,
+    ) {
+        if (dialogData == null) return
+
+        showSessionDialog {
+            title(dialogData.title)
+            text(dialogData.message)
+            dangerButton(
+                dialogData.positiveText,
+                contentDescriptionRes = dialogData.positiveQaTag ?: dialogData.positiveText
+            ) {
+                GlobalScope.launch(Dispatchers.Default) {
+                    // Cancel any outstanding jobs
+                    storage.cancelPendingMessageSendJobs(threadID)
+
+                    doLeave()
+                }
+
+            }
+            button(
+                dialogData.negativeText,
+                contentDescriptionRes = dialogData.negativeQaTag ?: dialogData.negativeText
+            )
         }
     }
 

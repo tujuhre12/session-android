@@ -3,7 +3,7 @@ package org.thoughtcrime.securesms.conversation.v2
 import android.animation.Animator
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
-import android.animation.ValueAnimator
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.graphics.PointF
@@ -25,15 +25,19 @@ import androidx.core.view.isVisible
 import androidx.vectordrawable.graphics.drawable.AnimatorInflaterCompat
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineScope
+import java.util.Locale
+import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import org.session.libsession.LocalisedTimeUtil.toShortTwoPartString
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
+import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_LARGE_KEY
 import org.session.libsession.utilities.TextSecurePreferences
@@ -41,23 +45,19 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocal
 import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.components.emoji.EmojiImageView
 import org.thoughtcrime.securesms.components.emoji.RecentEmojiPageModel
 import org.thoughtcrime.securesms.components.menu.ActionItem
-import org.thoughtcrime.securesms.conversation.v2.menus.ConversationMenuItemHelper.userCanBanSelectedUsers
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.ReactionRecord
+import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.AnimationCompleteListener
 import org.thoughtcrime.securesms.util.DateUtils
-import java.util.Locale
-import javax.inject.Inject
-import kotlin.time.Duration.Companion.milliseconds
 
 @AndroidEntryPoint
 class ConversationReactionOverlay : FrameLayout {
@@ -99,12 +99,13 @@ class ConversationReactionOverlay : FrameLayout {
 
     @Inject lateinit var mmsSmsDatabase: MmsSmsDatabase
     @Inject lateinit var repository: ConversationRepository
+    @Inject lateinit var dateUtils: DateUtils
     @Inject lateinit var lokiThreadDatabase: LokiThreadDatabase
     @Inject lateinit var threadDatabase: ThreadDatabase
     @Inject lateinit var textSecurePreferences: TextSecurePreferences
     @Inject lateinit var deprecationManager: LegacyGroupDeprecationManager
+    @Inject lateinit var openGroupManager: OpenGroupManager
 
-    private val scope = CoroutineScope(Dispatchers.Default)
     private var job: Job? = null
 
     private val iconMore by lazy {
@@ -154,7 +155,10 @@ class ConversationReactionOverlay : FrameLayout {
         val conversationItemSnapshot = selectedConversationModel.bitmap
         conversationBubble.layoutParams = LinearLayout.LayoutParams(conversationItemSnapshot.width, conversationItemSnapshot.height)
         conversationBubble.background = BitmapDrawable(resources, conversationItemSnapshot)
-        conversationTimestamp.text = DateUtils.getDisplayFormattedTimeSpanString(context, Locale.getDefault(), messageRecord.timestamp)
+        conversationTimestamp.text = dateUtils.getDisplayFormattedTimeSpanString(
+            Locale.getDefault(),
+            messageRecord.timestamp
+        )
         updateConversationTimestamp(messageRecord)
         val isMessageOnLeft = selectedConversationModel.isOutgoing xor ViewUtil.isLtr(this)
         conversationItem.scaleX = LONG_PRESS_SCALE_FACTOR
@@ -163,10 +167,14 @@ class ConversationReactionOverlay : FrameLayout {
         this.activity = activity
         doOnLayout { showAfterLayout(messageRecord, lastSeenDownPoint, isMessageOnLeft) }
 
-        job = scope.launch(Dispatchers.IO) {
+        job = GlobalScope.launch {
+            // Wait for the message to be deleted
             repository.changes(messageRecord.threadId)
-                .filter { mmsSmsDatabase.getMessageForTimestamp(messageRecord.timestamp) == null }
-                .collect { withContext(Dispatchers.Main) { hide() } }
+                .first { mmsSmsDatabase.getMessageById(messageRecord.messageId) == null }
+
+            withContext(Dispatchers.Main) {
+                hide()
+            }
         }
     }
 
@@ -369,7 +377,6 @@ class ConversationReactionOverlay : FrameLayout {
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
-
         hide()
     }
 
@@ -629,6 +636,12 @@ class ConversationReactionOverlay : FrameLayout {
         return items
     }
 
+    private fun userCanBanSelectedUsers(context: Context, message: MessageRecord, openGroup: OpenGroup?, userPublicKey: String, blindedPublicKey: String?): Boolean {
+        if (openGroup == null)  return false
+        if (message.isOutgoing) return false // Users can't ban themselves
+        return openGroupManager.isUserModerator(openGroup.groupId, userPublicKey, blindedPublicKey)
+    }
+
     private fun handleActionItemClicked(action: Action) {
         hideInternal(object : OnHideListener {
             override fun startHide() {
@@ -642,6 +655,7 @@ class ConversationReactionOverlay : FrameLayout {
         })
     }
 
+    @SuppressLint("RestrictedApi")
     private fun initAnimators() {
         val revealDuration = context.resources.getInteger(R.integer.reaction_scrubber_reveal_duration)
         val revealOffset = context.resources.getInteger(R.integer.reaction_scrubber_reveal_offset)
