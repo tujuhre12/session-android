@@ -101,6 +101,8 @@ fun ConversationSettingsDialogs(
                     onChange = { updatedText ->
                         sendCommand(UpdateNickname(updatedText))
                     },
+                    showClear = true,
+                    singleLine = true,
                     onContinue = { sendCommand(SetNickname) },
                     error = dialogsState.nicknameDialog.error,
                 )
@@ -154,6 +156,8 @@ fun ConversationSettingsDialogs(
                         onChange = { updatedText ->
                              sendCommand(UpdateGroupName(updatedText))
                         },
+                        showClear = true,
+                        singleLine = true,
                         error = dialogsState.groupEditDialog.errorName,
                     )
 
@@ -169,6 +173,7 @@ fun ConversationSettingsDialogs(
                         onChange = { updatedText ->
                              sendCommand(UpdateGroupDescription(updatedText))
                         },
+                        showClear = true,
                         error = dialogsState.groupEditDialog.errorDescription,
                     )
                 }

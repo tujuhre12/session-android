@@ -146,7 +146,17 @@ fun ConversationSettings(
                                 sharedTransitionScope.rememberSharedContentState(key = "avatar"),
                                 animatedVisibilityScope = animatedContentScope
                             )
-                            .clickable { showFullscreenAvatar() },
+                            .then(
+                                if(data.avatarUIData.isSingleCustomAvatar()){
+                                    Modifier.clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = ripple(bounded = false, radius = LocalDimensions.current.iconXXLarge/2),
+                                        onClick = showFullscreenAvatar
+                                    )
+                                } else {
+                                    Modifier
+                                }
+                            ),
                         size = LocalDimensions.current.iconXXLarge,
                         maxSizeLoad = LocalDimensions.current.iconXXLarge, // make sure we load the right size
                         data = data.avatarUIData,

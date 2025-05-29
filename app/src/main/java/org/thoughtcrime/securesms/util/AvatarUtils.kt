@@ -231,7 +231,14 @@ class AvatarUtils @Inject constructor(
 
 data class AvatarUIData(
     val elements: List<AvatarUIElement>,
-)
+){
+    /**
+     * Helper function to determine if an avatar is composed of a single element, which is
+     * a custom photo.
+     * This is used for example to know when to display a fullscreen avatar on tap
+     */
+    fun isSingleCustomAvatar() = elements.size == 1 && elements[0].contactPhoto != null
+}
 
 data class AvatarUIElement(
     val name: String? = null,
