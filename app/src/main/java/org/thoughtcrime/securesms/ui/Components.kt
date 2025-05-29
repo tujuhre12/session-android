@@ -921,9 +921,9 @@ fun ExpandableText(
             val px = textLayoutResult.getLineBottom(lastVisible)          // bottom of that line in px
             maxHeight = with(density) { px.toDp() }
         },
-        onTap = {
-            expanded = !expanded
-        }
+        onTap = if(showButton){ // only expand if there is enough text
+            { expanded = !expanded }
+        } else null
     )
 }
 
@@ -979,7 +979,7 @@ fun BaseExpandableText(
     expanded: Boolean = false,
     showScroll: Boolean = false,
     onTextMeasured: (TextLayoutResult) -> Unit = {},
-    onTap: () -> Unit = {}
+    onTap: (() -> Unit)? = null
 ){
     var textModifier: Modifier = Modifier
     if(qaTag != null) textModifier = textModifier.qaTag(qaTag)
@@ -999,7 +999,9 @@ fun BaseExpandableText(
     }
 
     Column(
-        modifier = modifier.clickable { onTap() },
+        modifier = modifier.then(
+            if(onTap != null) Modifier.clickable { onTap() } else Modifier
+        ),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
