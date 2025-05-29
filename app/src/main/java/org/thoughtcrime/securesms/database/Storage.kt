@@ -254,12 +254,6 @@ open class Storage @Inject constructor(
         return registrationID
     }
 
-    override fun persistAttachments(messageID: Long, attachments: List<Attachment>): List<Long> {
-        val database = attachmentDatabase
-        val databaseAttachments = attachments.mapNotNull { it.toSignalAttachment() }
-        return database.insertAttachments(messageID, databaseAttachments)
-    }
-
     override fun getAttachmentsForMessage(mmsMessageId: Long): List<DatabaseAttachment> {
         return attachmentDatabase.getAttachmentsForMessage(mmsMessageId)
     }
@@ -872,7 +866,12 @@ open class Storage @Inject constructor(
             Log.w(TAG, "Bailing from insertOutgoingInfoMessage because we believe the message has already been sent!")
             return null
         }
-        val infoMessageID = mmsDB.insertMessageOutbox(infoMessage, threadID, false, null, runThreadUpdate = true)
+        val infoMessageID = mmsDB.insertMessageOutbox(
+            infoMessage,
+            threadID,
+            false,
+            runThreadUpdate = true
+        )
         mmsDB.markAsSent(infoMessageID, true)
         return infoMessageID
     }
@@ -1030,7 +1029,12 @@ open class Storage @Inject constructor(
             val mmsSmsDB = mmsSmsDatabase
             // check for conflict here, not returning duplicate in case it's different
             if (mmsSmsDB.getMessageFor(sentTimestamp, userPublicKey) != null) return null
-            val infoMessageID = mmsDB.insertMessageOutbox(infoMessage, threadID, false, null, runThreadUpdate = true)
+            val infoMessageID = mmsDB.insertMessageOutbox(
+                infoMessage,
+                threadID,
+                false,
+                runThreadUpdate = true
+            )
             mmsDB.markAsSent(infoMessageID, true)
             return infoMessageID
         } else {

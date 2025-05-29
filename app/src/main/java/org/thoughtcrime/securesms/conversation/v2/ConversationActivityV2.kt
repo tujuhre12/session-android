@@ -59,6 +59,7 @@ import com.annimon.stream.Stream
 import com.bumptech.glide.Glide
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
@@ -115,7 +116,8 @@ import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.FullComposeActivity.Companion.applyCommonPropertiesForCompose
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.attachments.ScreenshotObserver
-import org.thoughtcrime.securesms.audio.AudioRecorder
+import org.thoughtcrime.securesms.audio.AudioRecorderHandle
+import org.thoughtcrime.securesms.audio.recordAudio
 import org.thoughtcrime.securesms.components.TypingStatusSender
 import org.thoughtcrime.securesms.components.emoji.RecentEmojiPageModel
 import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesActivity
@@ -150,6 +152,7 @@ import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.conversation.v2.utilities.ResendMessageUtilities
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.crypto.MnemonicUtilities
+import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
@@ -210,6 +213,7 @@ import org.thoughtcrime.securesms.util.toPx
 import org.thoughtcrime.securesms.webrtc.WebRtcCallActivity
 import org.thoughtcrime.securesms.webrtc.WebRtcCallActivity.Companion.ACTION_START_CALL
 import org.thoughtcrime.securesms.webrtc.WebRtcCallBridge.Companion.EXTRA_RECIPIENT_ADDRESS
+import java.io.File
 import java.lang.ref.WeakReference
 import java.util.LinkedList
 import java.util.Locale
@@ -258,6 +262,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     @Inject lateinit var typingStatusRepository: TypingStatusRepository
     @Inject lateinit var typingStatusSender: TypingStatusSender
     @Inject lateinit var openGroupManager: OpenGroupManager
+    @Inject lateinit var attachmentDatabase: AttachmentDatabase
 
     override val applyDefaultWindowInsets: Boolean
         get() = false
@@ -309,7 +314,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private var unreadCount = Int.MAX_VALUE
     // Attachments
     private var voiceMessageStartTimestamp: Long = 0L
-    private val audioRecorder = AudioRecorder(this)
+    private var audioRecorderHandle: AudioRecorderHandle? = null
     private val stopAudioHandler = Handler(Looper.getMainLooper())
     private val stopVoiceMessageRecordingTask = Runnable { sendVoiceMessage() }
     private val attachmentManager by lazy { AttachmentManager(this, this) }
@@ -2024,7 +2029,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 outgoingTextMessage,
                 false,
                 message.sentTimestamp!!,
-                null,
                 true
             ), false)
 
@@ -2040,7 +2044,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         attachments: List<Attachment>,
         body: String?,
         quotedMessage: MessageRecord? = binding.inputBar.quote,
-        linkPreview: LinkPreview? = null
+        linkPreview: LinkPreview? = null,
+        deleteAttachmentFilesAfterSave: Boolean = false,
     ): Pair<Address, Long>? {
         if (viewModel.recipient == null) {
             Log.w(TAG, "Cannot send attachments to a null recipient")
@@ -2091,9 +2096,16 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 outgoingTextMessage,
                 viewModel.threadId,
                 false,
-                null,
                 runThreadUpdate = true
-            ), true)
+            ), mms = true)
+
+            if (deleteAttachmentFilesAfterSave) {
+                attachments
+                    .asSequence()
+                    .mapNotNull { a -> a.dataUri?.takeIf { it.scheme == "file" }?.path?.let(::File) }
+                    .filter { it.exists() }
+                    .forEach { it.delete() }
+            }
 
             waitForApprovalJobToBeSubmitted()
 
@@ -2225,26 +2237,33 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         binding.inputBar.voiceRecorderState = VoiceRecorderState.SettingUpToRecord
 
         if (Permissions.hasAll(this, Manifest.permission.RECORD_AUDIO)) {
-            showVoiceMessageUI()
-            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            // Cancel any previous recording attempt
+            audioRecorderHandle?.cancel()
+            audioRecorderHandle = null
 
-            // Allow the caller (us!) to define what should happen when the voice recording finishes.
-            // Specifically in this instance, if we just tap the record audio button then by the time
-            // we actually finish setting up and get here the recording has been cancelled and the voice
-            // recorder state is Idle! As such we'll only tick the recorder state over to Recording if
-            // we were still in the SettingUpToRecord state when we got here (i.e., the record voice
-            // message button is still held or is locked to keep recording audio without being held).
-            val callback: () -> Unit = {
-                if (binding.inputBar.voiceRecorderState == VoiceRecorderState.SettingUpToRecord) {
-                    binding.inputBar.voiceRecorderState = VoiceRecorderState.Recording
+            audioRecorderHandle = recordAudio(lifecycleScope, this@ConversationActivityV2).also {
+                it.addOnStartedListener { result ->
+                    if (result.isSuccess) {
+                        showVoiceMessageUI()
+                        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
+                        voiceMessageStartTimestamp = System.currentTimeMillis()
+                        binding.inputBar.voiceRecorderState = VoiceRecorderState.Recording
+
+                        // Limit voice messages to 5 minute each
+                        stopAudioHandler.postDelayed(stopVoiceMessageRecordingTask, 5.minutes.inWholeMilliseconds)
+                    } else {
+                        Log.e(TAG, "Error while starting voice message recording", result.exceptionOrNull())
+                        hideVoiceMessageUI()
+                        binding.inputBar.voiceRecorderState = VoiceRecorderState.Idle
+                        Toast.makeText(
+                            this@ConversationActivityV2,
+                            R.string.audioUnableToRecord,
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
                 }
             }
-
-            voiceMessageStartTimestamp = System.currentTimeMillis()
-            audioRecorder.startRecording(callback)
-
-            // Limit voice messages to 5 minute each
-            stopAudioHandler.postDelayed(stopVoiceMessageRecordingTask, 5.minutes.inWholeMilliseconds)
         } else {
             binding.inputBar.voiceRecorderState = VoiceRecorderState.Idle
 
@@ -2257,82 +2276,80 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
     }
 
-    override fun sendVoiceMessage() {
-        Log.i(TAG, "Sending voice message at: ${System.currentTimeMillis()}")
-
+    private fun stopRecording(send: Boolean) {
         // When the record voice message button is released we always need to reset the UI and cancel
         // any further recording operation.
         hideVoiceMessageUI()
         window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
-        // How long was the voice message? Because the pointer up event could have been a regular
-        // hold-and-release or a release over the lock icon followed by a final tap to send so we
-        // update the voice message duration based on the current time here.
-        val voiceMessageDurationMS = System.currentTimeMillis() - voiceMessageStartTimestamp
-
-        val voiceMessageMeetsMinimumDuration = MediaUtil.voiceMessageMeetsMinimumDuration(voiceMessageDurationMS)
-        val future = audioRecorder.stopRecording(voiceMessageMeetsMinimumDuration)
-        stopAudioHandler.removeCallbacks(stopVoiceMessageRecordingTask)
-
         binding.inputBar.voiceRecorderState = VoiceRecorderState.Idle
 
-        // Generate a filename from the current time such as: "Session-VoiceMessage_2025-01-08-152733.aac"
-        val voiceMessageFilename = FilenameUtils.constructNewVoiceMessageFilename(applicationContext)
+        // Clear the audio session immediately for the next recording attempt
+        val handle = audioRecorderHandle
+        audioRecorderHandle = null
+        stopAudioHandler.removeCallbacks(stopVoiceMessageRecordingTask)
 
-        // Voice message too short? Warn with toast instead of sending.
-        // Note: The 0L check prevents the warning toast being shown when leaving the conversation activity.
-        if (voiceMessageDurationMS != 0L && !voiceMessageMeetsMinimumDuration) {
+        if (handle == null) {
+            Log.w(TAG, "Audio recorder handle is null - cannot stop recording")
+            return
+        }
+
+        if (!MediaUtil.voiceMessageMeetsMinimumDuration(System.currentTimeMillis() - voiceMessageStartTimestamp)) {
+            handle.cancel()
+            // If the voice message is too short, we show a toast and return early
+            Log.w(TAG, "Voice message is too short: ${System.currentTimeMillis() - voiceMessageStartTimestamp}ms")
             voiceNoteTooShortToast.setText(applicationContext.getString(R.string.messageVoiceErrorShort))
             showVoiceMessageToastIfNotAlreadyVisible()
             return
         }
 
-        // Note: We could return here if there was a network or node path issue, but instead we'll try
-        // our best to send the voice message even if it might fail - because in that case it'll get put
-        // into the draft database and can be retried when we regain network connectivity and a working
-        // node path.
+        // If we don't send, we'll cancel the audio recording
+        if (!send) {
+            handle.cancel()
+            return
+        }
 
-        // Attempt to send it the voice message
-        future.addListener(object : ListenableFuture.Listener<Pair<Uri, Long>> {
+        // If we do send, we will stop the audio recording, wait for it to complete successfully,
+        // then send the audio message as an attachment.
+        lifecycleScope.launch {
+            try {
+                val result = handle.stop()
 
-            override fun onSuccess(result: Pair<Uri, Long>) {
-                val uri = result.first
-                val dataSizeBytes = result.second
+                // Generate a filename from the current time such as: "Session-VoiceMessage_2025-01-08-152733.aac"
+                val voiceMessageFilename = FilenameUtils.constructNewVoiceMessageFilename(applicationContext)
 
-                // Only proceed with sending the voice message if it's long enough
-                if (voiceMessageMeetsMinimumDuration) {
-                    val formattedAudioDuration = MediaUtil.getFormattedVoiceMessageDuration(voiceMessageDurationMS)
-                    val audioSlide = AudioSlide(this@ConversationActivityV2, uri, voiceMessageFilename, dataSizeBytes, MediaTypes.AUDIO_AAC, true, formattedAudioDuration)
-                    val slideDeck = SlideDeck()
-                    slideDeck.addSlide(audioSlide)
-                    sendAttachments(slideDeck.asAttachments(), body = null)
-                }
-            }
+                val audioSlide = AudioSlide(this@ConversationActivityV2,
+                    Uri.fromFile(result.file),
+                    voiceMessageFilename,
+                    result.length,
+                    MediaTypes.AUDIO_AAC,
+                    true,
+                    result.duration.inWholeMilliseconds)
 
-            override fun onFailure(e: ExecutionException) {
+                val slideDeck = SlideDeck()
+                slideDeck.addSlide(audioSlide)
+                sendAttachments(slideDeck.asAttachments(), body = null, deleteAttachmentFilesAfterSave = true)
+
+            } catch (ec: CancellationException) {
+                // If we get cancelled then do nothing
+                throw ec
+            } catch (ec: Exception) {
+                Log.e(TAG, "Error while recording", ec)
                 Toast.makeText(this@ConversationActivityV2, R.string.audioUnableToRecord, Toast.LENGTH_LONG).show()
             }
-        })
+        }
+    }
+
+    override fun sendVoiceMessage() {
+        Log.i(TAG, "Sending voice message at: ${System.currentTimeMillis()}")
+
+        stopRecording(true)
     }
 
     // Cancel voice message is called when the user is press-and-hold recording a voice message and then
     // slides the microphone icon left, or when they lock voice recording on but then later click Cancel.
     override fun cancelVoiceMessage() {
-        val voiceMessageDurationMS = System.currentTimeMillis() - voiceMessageStartTimestamp
-
-        hideVoiceMessageUI()
-        window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        val voiceMessageMeetsMinimumDuration = MediaUtil.voiceMessageMeetsMinimumDuration(voiceMessageDurationMS)
-        audioRecorder.stopRecording(voiceMessageMeetsMinimumDuration)
-        stopAudioHandler.removeCallbacks(stopVoiceMessageRecordingTask)
-
-        binding.inputBar.voiceRecorderState = VoiceRecorderState.Idle
-
-        // Note: The 0L check prevents the warning toast being shown when leaving the conversation activity
-        if (voiceMessageDurationMS != 0L && !voiceMessageMeetsMinimumDuration) {
-            voiceNoteTooShortToast.setText(applicationContext.getString(R.string.messageVoiceErrorShort))
-            showVoiceMessageToastIfNotAlreadyVisible()
-        }
+        stopRecording(false)
     }
 
     override fun selectMessages(messages: Set<MessageRecord>) {
