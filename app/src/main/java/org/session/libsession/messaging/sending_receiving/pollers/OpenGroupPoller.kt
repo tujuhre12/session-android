@@ -15,9 +15,14 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 import nl.komponents.kovenant.functional.map
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.MediaType.Companion.toMediaType
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.BlindedIdMapping
+import org.session.libsession.messaging.community.SOGSService
+import org.session.libsession.messaging.community.UnsignedSOGSService
 import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
 import org.session.libsession.messaging.jobs.GroupAvatarDownloadJob
 import org.session.libsession.messaging.jobs.JobQueue
@@ -37,13 +42,17 @@ import org.session.libsession.messaging.sending_receiving.MessageReceiver
 import org.session.libsession.messaging.sending_receiving.handle
 import org.session.libsession.messaging.sending_receiving.handleOpenGroupReactions
 import org.session.libsession.snode.OnionRequestAPI
+import org.session.libsession.snode.SnodeClock
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupUtil
+import org.session.libsession.utilities.retrofit.SOGSCallFactory
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.util.AppVisibilityManager
+import retrofit2.Retrofit
+import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import java.util.concurrent.TimeUnit
 
 private typealias ManualPollRequestToken = Channel<Result<Unit>>
@@ -59,11 +68,42 @@ private typealias ManualPollRequestToken = Channel<Result<Unit>>
 class OpenGroupPoller @AssistedInject constructor(
     private val storage: StorageProtocol,
     private val appVisibilityManager: AppVisibilityManager,
+    private val snodeClock: SnodeClock,
     @Assisted private val server: String,
     @Assisted private val scope: CoroutineScope,
 ) {
     private val mutableIsCaughtUp = MutableStateFlow(false)
     val isCaughtUp: StateFlow<Boolean> get() = mutableIsCaughtUp
+
+    private val json = Json {
+        ignoreUnknownKeys = true
+    }
+
+    private val service = Retrofit.Builder()
+        .baseUrl(server)
+        .callFactory(SOGSCallFactory(
+            serverUrl = server.toHttpUrl(),
+            serverPubKey = storage.getOpenGroupPublicKey(server) ?: "",
+            clockSource = snodeClock,
+            userEd25519KeyPair = storage.getUserED25519KeyPair()!!,
+            signRequest = true,
+        ).also { it.useBlindId.set(true) })
+        .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+        .build()
+        .create(SOGSService::class.java)
+
+    private val unsignedService = Retrofit.Builder()
+        .baseUrl(server)
+        .callFactory(SOGSCallFactory(
+            serverUrl = server.toHttpUrl(),
+            serverPubKey = storage.getOpenGroupPublicKey(server) ?: "",
+            clockSource = snodeClock,
+            userEd25519KeyPair = storage.getUserED25519KeyPair()!!,
+            signRequest = false,
+        ).also { it.useBlindId.set(true) })
+        .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+        .build()
+        .create(UnsignedSOGSService::class.java)
 
     private val manualPollRequest = Channel<ManualPollRequestToken>()
 
@@ -194,6 +234,13 @@ class OpenGroupPoller @AssistedInject constructor(
             .filter { it.server == server }
             .map { it.room }
             .toList()
+
+        runCatching {
+            val roomInfo = service.getRoomInfo(rooms.first())
+            Log.d(TAG, "Got $roomInfo")
+        }.onFailure {
+            Log.e(TAG, "Failed to get capabilities for server $server", it)
+        }
 
         try {
             OpenGroupApi

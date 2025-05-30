@@ -270,6 +270,8 @@ dependencies {
     implementation(libs.glide)
     implementation(libs.compose)
     implementation(libs.eventbus)
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.kotlinx.serialization)
     implementation(libs.android.image.cropper)
     implementation(libs.subsampling.scale.image.view) {
         exclude(group = "com.android.support", module = "support-annotations")

@@ -134,7 +134,7 @@ object HTTP {
                     200 -> response.body!!.bytes()
                     else -> {
                         Log.d("Loki", "${verb.rawValue} request to $url failed with status code: $statusCode.")
-                        throw HTTPRequestFailedException(statusCode, null)
+                        throw HTTPRequestFailedException(statusCode, null, message = response.body?.string().orEmpty())
                     }
                 }
             }
