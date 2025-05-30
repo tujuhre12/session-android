@@ -116,6 +116,7 @@ fun DisappearingMessages(
                         .qaTag(R.string.AccessibilityId_setButton)
                         .align(Alignment.CenterHorizontally)
                         .padding(bottom = LocalDimensions.current.spacing),
+                    enabled = !state.disableSetButton,
                     onClick = onSetClicked
                 )
             }
