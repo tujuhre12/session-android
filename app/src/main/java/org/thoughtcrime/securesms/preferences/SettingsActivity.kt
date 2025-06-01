@@ -102,6 +102,7 @@ import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LargeItemButton
 import org.thoughtcrime.securesms.ui.LargeItemButtonWithDrawable
+import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.BaseBottomSheet
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
@@ -117,6 +118,7 @@ import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
+import org.thoughtcrime.securesms.ui.theme.primaryButtonColors
 import org.thoughtcrime.securesms.util.FileProviderUtil
 import org.thoughtcrime.securesms.util.applyCommonWindowInsetsOnViews
 import org.thoughtcrime.securesms.util.push
@@ -172,6 +174,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
         }
     }
 
+    private var showDonateDialog: Boolean by mutableStateOf(false)
     private var showAvatarDialog: Boolean by mutableStateOf(false)
     private var showAvatarPickerOptionCamera: Boolean by mutableStateOf(false)
     private var showAvatarPickerOptions: Boolean by mutableStateOf(false)
@@ -200,12 +203,14 @@ class SettingsActivity : ScreenLockActionBarActivity() {
         // set the compose dialog content
         binding.composeLayout.setThemedContent {
             SettingsComposeContent(
+                showDonateDialog = showDonateDialog,
                 showAvatarDialog = showAvatarDialog,
                 startAvatarSelection = ::startAvatarSelection,
                 saveAvatar = viewModel::saveAvatar,
                 removeAvatar = viewModel::removeAvatar,
                 showAvatarPickerOptions = showAvatarPickerOptions,
                 showCamera = showAvatarPickerOptionCamera,
+                hideDonateDialog = { showDonateDialog = false },
                 onSheetDismissRequest = { showAvatarPickerOptions = false },
                 onGalleryPicked = {
                     pickPhotoLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
@@ -510,6 +515,18 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                     }
                     Divider()
 
+                    // Donate
+                    //todo DONATE need crowdin string
+                    LargeItemButton(
+                        textId = R.string.sessionDonate,
+                        icon = R.drawable.ic_heart,
+                        modifier = Modifier.qaTag(R.string.AccessibilityId_sessionPrivacy),
+                        colors = primaryButtonColors()
+                    ) {
+                        showDonateDialog = true
+                    }
+                    Divider()
+
                     LargeItemButton(R.string.sessionPrivacy, R.drawable.ic_lock_keyhole, Modifier.qaTag(R.string.AccessibilityId_sessionPrivacy)) { push<PrivacySettingsActivity>() }
                     Divider()
 
@@ -532,27 +549,10 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                     ) { sendInvitationToUseSession() }
                     Divider()
 
-                    // Add the token page option.
-                    // Note: We can't do this all-in-one via `annotatedStringResource` because the font sizes vary.
-                    val sessionNetworkAS = buildAnnotatedString {
-                        // "Session Network" part styled with normal theme color
-                        withStyle(style = SpanStyle(color = LocalColors.current.text)) {
-                            append(NETWORK_NAME)
-                        }
-                        // " • New" part styled with theme accent color, small font size, and normal (not bold) weight
-                        withStyle(
-                            style = SpanStyle(
-                                color = LocalColors.current.primaryText,
-                                fontSize = LocalType.current.extraSmall.fontSize,
-                                fontWeight = FontWeight.Normal
-                            )
-                        ) {
-                            append(" "+applicationContext.getString(R.string.sessionNew))
-                        }
-                    }
+                    // Network page
                     LargeItemButton(
                         modifier = Modifier.qaTag(R.string.qa_settings_item_session_network),
-                        annotatedStringText = sessionNetworkAS,
+                        text = NETWORK_NAME,
                         icon = R.drawable.session_network_logo
                     ) { push<TokenPageActivity>() }
                     Divider()
@@ -587,10 +587,12 @@ class SettingsActivity : ScreenLockActionBarActivity() {
 
     @Composable
     fun SettingsComposeContent(
+        showDonateDialog: Boolean,
         showAvatarDialog: Boolean,
         startAvatarSelection: ()->Unit,
         saveAvatar: ()->Unit,
         removeAvatar: ()->Unit,
+        hideDonateDialog: ()->Unit,
         showAvatarPickerOptions: Boolean,
         showCamera: Boolean,
         onSheetDismissRequest: () -> Unit,
@@ -603,6 +605,14 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                 startAvatarSelection = startAvatarSelection,
                 saveAvatar = saveAvatar,
                 removeAvatar = removeAvatar
+            )
+        }
+
+        // donate confirmation
+        if(showDonateDialog){
+            OpenURLAlertDialog(
+                url = "https://session.foundation/donate",
+                onDismissRequest = hideDonateDialog
             )
         }
 
