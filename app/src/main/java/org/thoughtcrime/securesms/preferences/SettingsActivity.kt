@@ -516,9 +516,8 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                     Divider()
 
                     // Donate
-                    //todo DONATE need crowdin string
                     LargeItemButton(
-                        textId = R.string.sessionDonate,
+                        textId = R.string.donate,
                         icon = R.drawable.ic_heart,
                         modifier = Modifier.qaTag(R.string.AccessibilityId_sessionPrivacy),
                         colors = primaryButtonColors()
