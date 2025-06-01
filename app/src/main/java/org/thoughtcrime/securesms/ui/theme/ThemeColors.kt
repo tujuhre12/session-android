@@ -98,6 +98,12 @@ fun dangerButtonColors() = ButtonDefaults.buttonColors(
     contentColor = LocalColors.current.danger
 )
 
+@Composable
+fun primaryButtonColors() = ButtonDefaults.buttonColors(
+    containerColor = Color.Transparent,
+    contentColor = LocalColors.current.primary
+)
+
 // Our themes
 data class ClassicDark(override val primary: Color = primaryGreen) : ThemeColors {
     override val isLight = false
