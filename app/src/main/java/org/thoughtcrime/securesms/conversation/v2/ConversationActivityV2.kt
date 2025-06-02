@@ -377,10 +377,14 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 handleSwipeToReply(message)
             },
             onItemLongPress = { message, position, view ->
-                if (!viewModel.isMessageRequestThread) {
-                    showConversationReaction(message, view)
-                } else {
-                    selectMessage(message, position)
+                // long pressing message for blocked users should show unblock dialog
+                if(viewModel.recipient?.isBlocked == true) unblock()
+                else {
+                    if (!viewModel.isMessageRequestThread) {
+                        showConversationReaction(message, view)
+                    } else {
+                        selectMessage(message, position)
+                    }
                 }
             },
             onDeselect = { message, position ->
