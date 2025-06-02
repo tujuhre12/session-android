@@ -1408,8 +1408,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     .format()
             }
 
-            // 10n1 and groups
-            recipient.is1on1 || recipient.isGroupOrCommunityRecipient -> {
+            // 10n1 and groups and blinded 1on1
+            recipient.isCommunityInboxRecipient || recipient.isCommunityOutboxRecipient ||
+                    recipient.is1on1 || recipient.isGroupOrCommunityRecipient -> {
                 Phrase.from(applicationContext, R.string.groupNoMessages)
                     .put(GROUP_NAME_KEY, recipient.name)
                     .format()
