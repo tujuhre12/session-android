@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.mediasend
 import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
@@ -46,8 +47,7 @@ import java.io.IOException
 @AndroidEntryPoint
 class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragment.Controller,
     MediaPickerItemFragment.Controller, MediaSendFragment.Controller,
-    ImageEditorFragment.Controller,
-    Camera1Fragment.Controller {
+    ImageEditorFragment.Controller, CameraXFragment.Controller{
     private var recipient: Recipient? = null
     private val viewModel: MediaSendViewModel by viewModels()
 
@@ -86,7 +86,7 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
         val isCamera = intent.getBooleanExtra(KEY_IS_CAMERA, false)
 
         if (isCamera) {
-            val fragment: Fragment = Camera1Fragment.newInstance()
+            val fragment: Fragment = CameraXFragment()
             supportFragmentManager.beginTransaction()
                 .replace(R.id.mediasend_fragment_container, fragment, TAG_CAMERA)
                 .commit()
@@ -235,31 +235,18 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
         finish()
     }
 
-    override fun onImageCaptured(data: ByteArray, width: Int, height: Int) {
+    override fun onImageCaptured(imageUri: Uri, width: Int, height: Int) {
         Log.i(TAG, "Camera image captured.")
         SimpleTask.run(lifecycle, {
             try {
-                val uri = BlobProvider.getInstance()
-                    .forData(data)
-                    .withMimeType(MediaTypes.IMAGE_JPEG)
-                    .createForSingleSessionOnDisk(
-                        this
-                    ) { e: IOException? ->
-                        Log.w(
-                            TAG,
-                            "Failed to write to disk.",
-                            e
-                        )
-                    }.get()
-
                 return@run Media(
-                    uri,
+                    imageUri,
                     constructPhotoFilename(this),
                     MediaTypes.IMAGE_JPEG,
                     System.currentTimeMillis(),
                     width,
                     height,
-                    data.size.toLong(),
+                    BlobProvider.getFileSize(imageUri) ?: 0L,
                     Media.ALL_MEDIA_BUCKET_ID,
                     null
                 )
@@ -276,10 +263,6 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
             viewModel.onImageCaptured(media)
             navigateToMediaSend(recipient!!)
         })
-    }
-
-    override fun getDisplayRotation(): Int {
-        return windowManager.defaultDisplay.rotation
     }
 
     private fun initializeCountButtonObserver() {
@@ -405,12 +388,12 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
             .execute()
     }
 
-    private val orCreateCameraFragment: Camera1Fragment
+    private val orCreateCameraFragment: CameraXFragment
         get() {
             val fragment =
-                supportFragmentManager.findFragmentByTag(TAG_CAMERA) as Camera1Fragment?
+                supportFragmentManager.findFragmentByTag(TAG_CAMERA) as CameraXFragment?
 
-            return fragment ?: Camera1Fragment.newInstance()
+            return fragment ?: CameraXFragment()
         }
 
     private fun animateButtonVisibility(button: View, oldVisibility: Int, newVisibility: Int) {
