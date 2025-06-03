@@ -24,6 +24,7 @@ import androidx.fragment.app.Fragment
 import network.loki.messenger.databinding.CameraxFragmentBinding
 import org.session.libsession.utilities.MediaTypes
 import org.thoughtcrime.securesms.providers.BlobProvider
+import org.thoughtcrime.securesms.util.applySafeInsetsMargins
 import org.thoughtcrime.securesms.util.setSafeOnClickListener
 import java.io.IOException
 import java.util.concurrent.ExecutorService
@@ -69,6 +70,8 @@ class CameraXFragment : Fragment() {
                 requireActivity(), REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
             )
         }
+
+        binding.cameraControlsSafeArea.applySafeInsetsMargins()
 
         //todo CAM handle orientation change
         binding.cameraCaptureButton.setSafeOnClickListener { takePhoto() } //todo CAM optimise layout
