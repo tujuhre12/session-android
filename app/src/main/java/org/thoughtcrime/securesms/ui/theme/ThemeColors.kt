@@ -99,9 +99,9 @@ fun dangerButtonColors() = ButtonDefaults.buttonColors(
 )
 
 @Composable
-fun primaryButtonColors() = ButtonDefaults.buttonColors(
+fun primaryTextButtonColors() = ButtonDefaults.buttonColors(
     containerColor = Color.Transparent,
-    contentColor = LocalColors.current.primary
+    contentColor = LocalColors.current.primaryText
 )
 
 // Our themes
@@ -202,6 +202,9 @@ private fun ThemeColors() {
     Column {
         Box(Modifier.background(LocalColors.current.primary)) {
             Text("primary", style = LocalType.current.base)
+        }
+        Box(Modifier.background(LocalColors.current.primaryText)) {
+            Text("primaryText", style = LocalType.current.base)
         }
         Box(Modifier.background(LocalColors.current.background)) {
             Text("background", style = LocalType.current.base)

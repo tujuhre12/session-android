@@ -55,10 +55,6 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.core.content.ContextCompat
@@ -71,8 +67,6 @@ import com.canhub.cropper.CropImageOptions
 import com.canhub.cropper.CropImageView
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
-import java.io.File
-import javax.inject.Inject
 import kotlinx.coroutines.launch
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
@@ -118,10 +112,12 @@ import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
-import org.thoughtcrime.securesms.ui.theme.primaryButtonColors
+import org.thoughtcrime.securesms.ui.theme.primaryTextButtonColors
 import org.thoughtcrime.securesms.util.FileProviderUtil
 import org.thoughtcrime.securesms.util.applyCommonWindowInsetsOnViews
 import org.thoughtcrime.securesms.util.push
+import java.io.File
+import javax.inject.Inject
 
  @AndroidEntryPoint
 class SettingsActivity : ScreenLockActionBarActivity() {
@@ -519,8 +515,8 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                     LargeItemButton(
                         textId = R.string.donate,
                         icon = R.drawable.ic_heart,
-                        modifier = Modifier.qaTag(R.string.AccessibilityId_sessionPrivacy),
-                        colors = primaryButtonColors()
+                        modifier = Modifier.qaTag(R.string.qa_settings_item_donate),
+                        colors = primaryTextButtonColors()
                     ) {
                         showDonateDialog = true
                     }
