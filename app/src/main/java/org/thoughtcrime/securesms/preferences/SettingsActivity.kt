@@ -610,7 +610,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
         // donate confirmation
         if(showDonateDialog){
             OpenURLAlertDialog(
-                url = "https://session.foundation/donate",
+                url = "https://session.foundation/donate#app",
                 onDismissRequest = hideDonateDialog
             )
         }
