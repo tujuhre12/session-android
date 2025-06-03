@@ -1,14 +1,10 @@
 package org.thoughtcrime.securesms.mediasend
 
 import android.Manifest
-import android.content.ContentValues
 import android.content.Context
 import android.content.pm.PackageManager
-import android.graphics.BitmapFactory
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.provider.MediaStore
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -16,24 +12,28 @@ import android.view.ViewGroup
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
+import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.databinding.CameraxFragmentBinding
 import org.session.libsession.utilities.MediaTypes
+import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.providers.BlobProvider
 import org.thoughtcrime.securesms.util.applySafeInsetsMargins
 import org.thoughtcrime.securesms.util.setSafeOnClickListener
-import java.io.IOException
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class CameraXFragment : Fragment() {
 
     interface Controller {
-        fun onImageCaptured(imageUri: Uri, width: Int, height: Int)
+        fun onImageCaptured(imageUri: Uri, size: Long, width: Int, height: Int)
         fun onCameraError()
     }
 
@@ -43,8 +43,11 @@ class CameraXFragment : Fragment() {
     private var controller: Controller? = null
 
     private var imageCapture: ImageCapture? = null
-    private var cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA //todo CAM use text prefs and save it back to there when flipping
+    private lateinit var cameraSelector: CameraSelector
     private lateinit var cameraExecutor: ExecutorService
+
+    @Inject
+    lateinit var prefs: TextSecurePreferences
 
     companion object {
         private const val TAG = "CameraXFragment"
@@ -61,7 +64,10 @@ class CameraXFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        cameraSelector = prefs.getPreferredCameraDirection()
         cameraExecutor = Executors.newSingleThreadExecutor()
+
+        prefs.getPreferredCameraDirection()
 
         if (allPermissionsGranted()) {
             startCamera()
@@ -73,9 +79,9 @@ class CameraXFragment : Fragment() {
 
         binding.cameraControlsSafeArea.applySafeInsetsMargins()
 
-        //todo CAM handle orientation change
-        binding.cameraCaptureButton.setSafeOnClickListener { takePhoto() } //todo CAM optimise layout
-        binding.cameraFlipButton.setSafeOnClickListener { flipCamera() } //todo CAM hideif only one camera
+        //todo CAM handle orientation change and rotate flip camera button on landscape
+        binding.cameraCaptureButton.setSafeOnClickListener { takePhoto() }
+        binding.cameraFlipButton.setSafeOnClickListener { flipCamera() } //todo CAM hide if only one camera
         binding.cameraCloseButton.setSafeOnClickListener {
             requireActivity().onBackPressedDispatcher.onBackPressed()
         }
@@ -103,6 +109,12 @@ class CameraXFragment : Fragment() {
         cameraProviderFuture.addListener({
             val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
 
+            // hide flip button if we  only have one camera
+            val hasBack  = cameraProvider.hasCamera(CameraSelector.DEFAULT_BACK_CAMERA)
+            val hasFront = cameraProvider.hasCamera(CameraSelector.DEFAULT_FRONT_CAMERA)
+            binding.cameraFlipButton.visibility =
+                if (hasBack && hasFront) View.VISIBLE else View.GONE
+
             val preview = Preview.Builder().build().also {
                 it.setSurfaceProvider(binding.previewView.surfaceProvider)
             }
@@ -124,75 +136,38 @@ class CameraXFragment : Fragment() {
     }
 
     private fun takePhoto() {
-        val imageCapture = imageCapture ?: return
+        val capture = imageCapture ?: return
+        capture.takePicture(
+            cameraExecutor,
+            object : ImageCapture.OnImageCapturedCallback() {
+                override fun onCaptureSuccess(image: ImageProxy) {
+                    try {
+                        val buffer = image.planes[0].buffer
+                        val bytes  = ByteArray(buffer.remaining()).also { buffer.get(it) }
+                        val w = image.width
+                        val h = image.height
+                        image.close()
 
-        val contentValues = ContentValues().apply {
-            put(MediaStore.MediaColumns.DISPLAY_NAME, System.currentTimeMillis())
-            put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/TempCameraX")
-            }
-        }
+                        val blobUri = BlobProvider.getInstance()
+                            .forData(bytes)
+                            .withMimeType(MediaTypes.IMAGE_JPEG)
+                            .createForSingleSessionOnDisk(requireContext()) {
+                                Log.w(TAG, "Blob write failed", it)
+                            }.get()
 
-        val outputOptions = ImageCapture.OutputFileOptions
-            .Builder(
-                requireContext().contentResolver,
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                contentValues
-            ).build()
-
-        imageCapture.takePicture(
-            outputOptions,
-            ContextCompat.getMainExecutor(requireContext()),
-            object : ImageCapture.OnImageSavedCallback {
-
-                override fun onError(exc: ImageCaptureException) {
-                    Log.e(TAG, "Photo capture failed: ${exc.message}", exc)
-                    controller?.onCameraError()
+                        controller?.onImageCaptured(blobUri, bytes.size.toLong(), w, h)
+                    } catch (t: Throwable) {
+                        Log.e(TAG, "Capture pipeline failed", t)
+                        controller?.onCameraError()
+                    }
                 }
 
-                override fun onImageSaved(result: ImageCapture.OutputFileResults) {
-                    val tempUri = result.savedUri ?: run {
-                        controller?.onCameraError(); return
-                    }
-
-                    cameraExecutor.execute { wrapInBlobAndReturn(tempUri) }
+                override fun onError(e: ImageCaptureException) {
+                    Log.e(TAG, "Photo capture failed", e)
+                    controller?.onCameraError()
                 }
             }
         )
-    }
-
-    private fun wrapInBlobAndReturn(tempUri: Uri) {
-        try {
-            val resolver = requireContext().contentResolver
-            val size = resolver.openAssetFileDescriptor(tempUri, "r")?.use { it.length } ?: -1L
-
-            val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-            resolver.openInputStream(tempUri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
-
-            val width  = bounds.outWidth
-            val height = bounds.outHeight
-
-            val input  = resolver.openInputStream(tempUri) ?: throw IOException("open failed")
-            val blobUri = BlobProvider.getInstance()
-                .forData(input, size)
-                .withMimeType(MediaTypes.IMAGE_JPEG)
-                .createForSingleSessionOnDisk(requireContext()) { e: IOException? ->
-                    org.session.libsignal.utilities.Log.w(TAG, "Failed to write to disk.", e)
-                }
-                .get()
-
-            resolver.delete(tempUri, null, null)
-
-            controller?.onImageCaptured(
-                blobUri,
-                width,
-                height
-            )
-        } catch (t: Throwable) {
-            Log.e(TAG, "wrapInBlob failed", t)
-            controller?.onCameraError()
-        }
     }
 
     private fun flipCamera() {
@@ -200,6 +175,8 @@ class CameraXFragment : Fragment() {
             CameraSelector.DEFAULT_FRONT_CAMERA
         else
             CameraSelector.DEFAULT_BACK_CAMERA
+
+        prefs.setPreferredCameraDirection(cameraSelector)
 
         startCamera()
     }

@@ -235,7 +235,7 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
         finish()
     }
 
-    override fun onImageCaptured(imageUri: Uri, width: Int, height: Int) {
+    override fun onImageCaptured(imageUri: Uri, size: Long, width: Int, height: Int) {
         Log.i(TAG, "Camera image captured.")
         SimpleTask.run(lifecycle, {
             try {
@@ -246,7 +246,7 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
                     System.currentTimeMillis(),
                     width,
                     height,
-                    BlobProvider.getFileSize(imageUri) ?: 0L,
+                    size,
                     Media.ALL_MEDIA_BUCKET_ID,
                     null
                 )
