@@ -105,6 +105,7 @@ import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LargeItemButton
 import org.thoughtcrime.securesms.ui.LargeItemButtonWithDrawable
+import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.components.BaseBottomSheet
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineCopyButton
@@ -120,6 +121,7 @@ import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
+import org.thoughtcrime.securesms.ui.theme.primaryTextButtonColors
 import org.thoughtcrime.securesms.util.FileProviderUtil
 import org.thoughtcrime.securesms.util.applyCommonWindowInsetsOnViews
 import org.thoughtcrime.securesms.util.push
@@ -174,10 +176,10 @@ class SettingsActivity : ScreenLockActionBarActivity() {
             viewModel.permanentlyHidePassword()
         }
     }
-
-    private var showAvatarDialog: Boolean by mutableStateOf(false)
-    private var showAvatarPickerOptionCamera: Boolean by mutableStateOf(false)
-    private var showAvatarPickerOptions: Boolean by mutableStateOf(false)
+     private var showDonateDialog: Boolean by mutableStateOf(false)
+     private var showAvatarDialog: Boolean by mutableStateOf(false)
+     private var showAvatarPickerOptionCamera: Boolean by mutableStateOf(false)
+     private var showAvatarPickerOptions: Boolean by mutableStateOf(false)
 
      private val bgColor by lazy { getColorFromAttr(android.R.attr.colorPrimary) }
      private val txtColor by lazy { getColorFromAttr(android.R.attr.textColorPrimary) }
@@ -203,12 +205,14 @@ class SettingsActivity : ScreenLockActionBarActivity() {
         // set the compose dialog content
         binding.composeLayout.setThemedContent {
             SettingsComposeContent(
+                showDonateDialog = showDonateDialog,
                 showAvatarDialog = showAvatarDialog,
                 startAvatarSelection = ::startAvatarSelection,
                 saveAvatar = viewModel::saveAvatar,
                 removeAvatar = viewModel::removeAvatar,
                 showAvatarPickerOptions = showAvatarPickerOptions,
                 showCamera = showAvatarPickerOptionCamera,
+                hideDonateDialog = { showDonateDialog = false },
                 onSheetDismissRequest = { showAvatarPickerOptions = false },
                 onGalleryPicked = {
                     pickPhotoLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
@@ -528,6 +532,17 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                     }
                     Divider()
 
+                    // Donate
+                    LargeItemButton(
+                        textId = R.string.donate,
+                        icon = R.drawable.ic_heart,
+                        modifier = Modifier.qaTag(R.string.qa_settings_item_donate),
+                                colors = primaryTextButtonColors()
+                    ) {
+                        showDonateDialog = true
+                    }
+                    Divider()
+
                     LargeItemButton(R.string.sessionPrivacy, R.drawable.ic_lock_keyhole) { push<PrivacySettingsActivity>() }
                     Divider()
 
@@ -604,10 +619,12 @@ class SettingsActivity : ScreenLockActionBarActivity() {
 
     @Composable
     fun SettingsComposeContent(
+        showDonateDialog: Boolean,
         showAvatarDialog: Boolean,
         startAvatarSelection: ()->Unit,
         saveAvatar: ()->Unit,
         removeAvatar: ()->Unit,
+        hideDonateDialog: ()->Unit,
         showAvatarPickerOptions: Boolean,
         showCamera: Boolean,
         onSheetDismissRequest: () -> Unit,
@@ -620,6 +637,14 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                 startAvatarSelection = startAvatarSelection,
                 saveAvatar = saveAvatar,
                 removeAvatar = removeAvatar
+            )
+        }
+
+        // donate confirmationAdd commentMore actions
+        if(showDonateDialog){
+            OpenURLAlertDialog(
+                url =  "https://session.foundation/donate#app",
+                onDismissRequest = hideDonateDialog
             )
         }
 
