@@ -627,7 +627,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                 removeAvatar = removeAvatar
             )
         }
-        
+
         // donate confirmation
         if(showDonateDialog){
             OpenURLAlertDialog(
