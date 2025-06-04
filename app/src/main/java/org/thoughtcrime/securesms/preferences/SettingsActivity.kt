@@ -90,6 +90,7 @@ import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.debugmenu.DebugActivity
 import org.thoughtcrime.securesms.home.PathActivity
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
+import org.thoughtcrime.securesms.openUrl
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.NoAvatar
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.TempAvatar
@@ -125,6 +126,7 @@ import org.thoughtcrime.securesms.ui.theme.primaryTextButtonColors
 import org.thoughtcrime.securesms.util.FileProviderUtil
 import org.thoughtcrime.securesms.util.applyCommonWindowInsetsOnViews
 import org.thoughtcrime.securesms.util.push
+import org.thoughtcrime.securesms.util.setSafeOnClickListener
 
  @AndroidEntryPoint
 class SettingsActivity : ScreenLockActionBarActivity() {
@@ -267,6 +269,10 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                     update(it.recipient)
                 }
             }
+        }
+
+        binding.sentLogoImageView.setSafeOnClickListener {
+            openUrl("https://token.getsession.org")
         }
 
         applyCommonWindowInsetsOnViews(mainScrollView = binding.scrollView)
