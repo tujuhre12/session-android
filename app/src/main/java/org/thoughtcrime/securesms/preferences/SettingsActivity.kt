@@ -510,18 +510,45 @@ class SettingsActivity : ScreenLockActionBarActivity() {
 
             val hasPaths by OnionRequestAPI.hasPath.collectAsState()
 
+            // Add the debug menu in non release builds
+            if (BuildConfig.BUILD_TYPE != "release") {
+                Cell{
+                    LargeItemButton(
+                        "Debug Menu",
+                        R.drawable.ic_settings,
+                        shape = getCellTopShape()
+                    ) { push<DebugActivity>() }
+                }
+
+                Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
+            }
+
             Cell {
                 Column {
-                    // Add the debug menu in non release builds
-                    if (BuildConfig.BUILD_TYPE != "release") {
-                        LargeItemButton(
-                            "Debug Menu",
-                            R.drawable.ic_settings,
-                            shape = getCellTopShape()
-                        ) { push<DebugActivity>() }
-                        Divider()
+                    // Donate
+                    LargeItemButton(
+                        textId = R.string.donate,
+                        icon = R.drawable.ic_heart,
+                        modifier = Modifier.qaTag(R.string.qa_settings_item_donate),
+                        colors = primaryTextButtonColors()
+                    ) {
+                        showDonateDialog = true
                     }
+                    Divider()
 
+                    // Invite a friend
+                    LargeItemButton(
+                        R.string.sessionInviteAFriend,
+                        R.drawable.ic_user_round_plus,
+                        Modifier.contentDescription(R.string.AccessibilityId_sessionInviteAFriend)
+                    ) { sendInvitationToUseSession() }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
+
+            Cell {
+                Column {
                     Crossfade(if (hasPaths) R.drawable.ic_status else R.drawable.ic_path_yellow, label = "path") {
                         LargeItemButtonWithDrawable(
                             R.string.onionRoutingPath,
@@ -530,39 +557,6 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                             else getCellTopShape()
                         ) { push<PathActivity>() }
                     }
-                    Divider()
-
-                    // Donate
-                    LargeItemButton(
-                        textId = R.string.donate,
-                        icon = R.drawable.ic_heart,
-                        modifier = Modifier.qaTag(R.string.qa_settings_item_donate),
-                                colors = primaryTextButtonColors()
-                    ) {
-                        showDonateDialog = true
-                    }
-                    Divider()
-
-                    LargeItemButton(R.string.sessionPrivacy, R.drawable.ic_lock_keyhole) { push<PrivacySettingsActivity>() }
-                    Divider()
-
-                    LargeItemButton(R.string.sessionNotifications, R.drawable.ic_volume_2, Modifier.contentDescription(R.string.AccessibilityId_notifications)) { push<NotificationSettingsActivity>() }
-                    Divider()
-
-                    LargeItemButton(R.string.sessionConversations, R.drawable.ic_message_square, Modifier.contentDescription(R.string.AccessibilityId_sessionConversations)) { push<ChatSettingsActivity>() }
-                    Divider()
-
-                    LargeItemButton(R.string.sessionMessageRequests, R.drawable.ic_message_square_warning, Modifier.contentDescription(R.string.AccessibilityId_sessionMessageRequests)) { push<MessageRequestsActivity>() }
-                    Divider()
-
-                    LargeItemButton(R.string.sessionAppearance, R.drawable.ic_paintbrush_vertical, Modifier.contentDescription(R.string.AccessibilityId_sessionAppearance)) { push<AppearanceSettingsActivity>() }
-                    Divider()
-
-                    LargeItemButton(
-                        R.string.sessionInviteAFriend,
-                        R.drawable.ic_user_round_plus,
-                        Modifier.contentDescription(R.string.AccessibilityId_sessionInviteAFriend)
-                    ) { sendInvitationToUseSession() }
                     Divider()
 
                     // Add the token page option.
@@ -588,8 +582,33 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                         annotatedStringText = sessionNetworkAS,
                         icon = R.drawable.session_network_logo
                     ) { push<TokenPageActivity>() }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
+
+            Cell {
+                Column {
+                    LargeItemButton(R.string.sessionPrivacy, R.drawable.ic_lock_keyhole) { push<PrivacySettingsActivity>() }
                     Divider()
 
+                    LargeItemButton(R.string.sessionNotifications, R.drawable.ic_volume_2, Modifier.contentDescription(R.string.AccessibilityId_notifications)) { push<NotificationSettingsActivity>() }
+                    Divider()
+
+                    LargeItemButton(R.string.sessionConversations, R.drawable.ic_message_square, Modifier.contentDescription(R.string.AccessibilityId_sessionConversations)) { push<ChatSettingsActivity>() }
+                    Divider()
+
+                    LargeItemButton(R.string.sessionAppearance, R.drawable.ic_paintbrush_vertical, Modifier.contentDescription(R.string.AccessibilityId_sessionAppearance)) { push<AppearanceSettingsActivity>() }
+                    Divider()
+
+                    LargeItemButton(R.string.sessionMessageRequests, R.drawable.ic_message_square_warning, Modifier.contentDescription(R.string.AccessibilityId_sessionMessageRequests)) { push<MessageRequestsActivity>() }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
+
+            Cell {
+                Column {
                     // Only show the recovery password option if the user has not chosen to permanently hide it
                     if (!recoveryHidden) {
                         LargeItemButton(
