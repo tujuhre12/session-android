@@ -171,6 +171,7 @@
     <string name="AccessibilityId_setButton">Set button</string>
     <string name="AccessibilityId_displayName">Display name</string>
     <string name="qa_settings_item_session_network">session-network-menu-item</string>
+    <string name="qa_settings_item_donate">donate-menu-item</string>
 
     <!-- Misc. -->
     <string name="AccessibilityId_navigateBack">Navigate back</string>
