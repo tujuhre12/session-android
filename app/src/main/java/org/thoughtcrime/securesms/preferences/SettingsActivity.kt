@@ -82,6 +82,7 @@ import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.debugmenu.DebugActivity
 import org.thoughtcrime.securesms.home.PathActivity
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
+import org.thoughtcrime.securesms.openUrl
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.NoAvatar
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.TempAvatar
@@ -116,6 +117,7 @@ import org.thoughtcrime.securesms.ui.theme.primaryTextButtonColors
 import org.thoughtcrime.securesms.util.FileProviderUtil
 import org.thoughtcrime.securesms.util.applyCommonWindowInsetsOnViews
 import org.thoughtcrime.securesms.util.push
+import org.thoughtcrime.securesms.util.setSafeOnClickListener
 import java.io.File
 import javax.inject.Inject
 
@@ -252,6 +254,10 @@ class SettingsActivity : ScreenLockActionBarActivity() {
             viewModel.showLoader.collect {
                 binding.loader.isVisible = it
             }
+        }
+
+        binding.sentLogoImageView.setSafeOnClickListener {
+            openUrl("https://token.getsession.org")
         }
 
         applyCommonWindowInsetsOnViews(mainScrollView = binding.scrollView)
@@ -489,28 +495,21 @@ class SettingsActivity : ScreenLockActionBarActivity() {
 
             val hasPaths by OnionRequestAPI.hasPath.collectAsState()
 
+            // Add the debug menu in non release builds
+            if (BuildConfig.BUILD_TYPE != "release") {
+                Cell{
+                    LargeItemButton(
+                        "Debug Menu",
+                        R.drawable.ic_settings,
+                        shape = getCellTopShape()
+                    ) { push<DebugActivity>() }
+                }
+
+                Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
+            }
+
             Cell {
                 Column {
-                    // Add the debug menu in non release builds
-                    if (BuildConfig.BUILD_TYPE != "release") {
-                        LargeItemButton(
-                            "Debug Menu",
-                            R.drawable.ic_settings,
-                            shape = getCellTopShape()
-                        ) { push<DebugActivity>() }
-                        Divider()
-                    }
-
-                    Crossfade(if (hasPaths) R.drawable.ic_status else R.drawable.ic_path_yellow, label = "path") {
-                        LargeItemButtonWithDrawable(
-                            R.string.onionRoutingPath,
-                            it,
-                            shape = if (BuildConfig.BUILD_TYPE != "release") RectangleShape
-                            else getCellTopShape()
-                        ) { push<PathActivity>() }
-                    }
-                    Divider()
-
                     // Donate
                     LargeItemButton(
                         textId = R.string.donate,
@@ -522,7 +521,43 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                     }
                     Divider()
 
-                    LargeItemButton(R.string.sessionPrivacy, R.drawable.ic_lock_keyhole, Modifier.qaTag(R.string.AccessibilityId_sessionPrivacy)) { push<PrivacySettingsActivity>() }
+                    // Invite a friend
+                    LargeItemButton(
+                        R.string.sessionInviteAFriend,
+                        R.drawable.ic_user_round_plus,
+                        Modifier.qaTag(R.string.AccessibilityId_sessionInviteAFriend)
+                    ) { sendInvitationToUseSession() }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
+
+            Cell {
+                Column {
+                    Crossfade(if (hasPaths) R.drawable.ic_status else R.drawable.ic_path_yellow, label = "path") {
+                        LargeItemButtonWithDrawable(
+                            R.string.onionRoutingPath,
+                            it,
+                            shape = if (BuildConfig.BUILD_TYPE != "release") RectangleShape
+                            else getCellTopShape()
+                        ) { push<PathActivity>() }
+                    }
+                    Divider()
+
+                    // Add the token page option.
+                    LargeItemButton(
+                        modifier = Modifier.qaTag(R.string.qa_settings_item_session_network),
+                        text = NETWORK_NAME,
+                        icon = R.drawable.session_network_logo
+                    ) { push<TokenPageActivity>() }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
+
+            Cell {
+                Column {
+                    LargeItemButton(R.string.sessionPrivacy, R.drawable.ic_lock_keyhole) { push<PrivacySettingsActivity>() }
                     Divider()
 
                     LargeItemButton(R.string.sessionNotifications, R.drawable.ic_volume_2, Modifier.qaTag(R.string.AccessibilityId_notifications)) { push<NotificationSettingsActivity>() }
@@ -531,27 +566,17 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                     LargeItemButton(R.string.sessionConversations, R.drawable.ic_message_square, Modifier.qaTag(R.string.AccessibilityId_sessionConversations)) { push<ChatSettingsActivity>() }
                     Divider()
 
-                    LargeItemButton(R.string.sessionMessageRequests, R.drawable.ic_message_square_warning, Modifier.qaTag(R.string.AccessibilityId_sessionMessageRequests)) { push<MessageRequestsActivity>() }
-                    Divider()
-
                     LargeItemButton(R.string.sessionAppearance, R.drawable.ic_paintbrush_vertical, Modifier.qaTag(R.string.AccessibilityId_sessionAppearance)) { push<AppearanceSettingsActivity>() }
                     Divider()
 
-                    LargeItemButton(
-                        R.string.sessionInviteAFriend,
-                        R.drawable.ic_user_round_plus,
-                        Modifier.qaTag(R.string.AccessibilityId_sessionInviteAFriend)
-                    ) { sendInvitationToUseSession() }
-                    Divider()
+                    LargeItemButton(R.string.sessionMessageRequests, R.drawable.ic_message_square_warning, Modifier.qaTag(R.string.AccessibilityId_sessionMessageRequests)) { push<MessageRequestsActivity>() }
+                }
+            }
 
-                    // Network page
-                    LargeItemButton(
-                        modifier = Modifier.qaTag(R.string.qa_settings_item_session_network),
-                        text = NETWORK_NAME,
-                        icon = R.drawable.session_network_logo
-                    ) { push<TokenPageActivity>() }
-                    Divider()
+            Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
 
+            Cell {
+                Column {
                     // Only show the recovery password option if the user has not chosen to permanently hide it
                     if (!recoveryHidden) {
                         LargeItemButton(
