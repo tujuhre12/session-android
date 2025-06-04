@@ -38,8 +38,7 @@ class CameraXFragment : Fragment() {
         fun onCameraError()
     }
 
-    private var _binding: CameraxFragmentBinding? = null
-    private val binding get() = _binding!!
+    private lateinit var binding: CameraxFragmentBinding
 
     private var callbacks: Controller? = null
 
@@ -63,7 +62,7 @@ class CameraXFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View {
-        _binding = CameraxFragmentBinding.inflate(inflater, container, false)
+        binding = CameraxFragmentBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -216,7 +215,6 @@ class CameraXFragment : Fragment() {
     }
 
     override fun onDestroyView() {
-        _binding = null
         cameraExecutor.shutdown()
         super.onDestroyView()
     }
