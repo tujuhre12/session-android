@@ -7,14 +7,15 @@ import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.OrientationEventListener
+import android.view.Surface
 import android.view.View
 import android.view.ViewGroup
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.ImageProxy
-import androidx.camera.core.Preview
-import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.LifecycleCameraController
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -40,11 +41,14 @@ class CameraXFragment : Fragment() {
     private var _binding: CameraxFragmentBinding? = null
     private val binding get() = _binding!!
 
-    private var controller: Controller? = null
+    private var callbacks: Controller? = null
 
-    private var imageCapture: ImageCapture? = null
-    private lateinit var cameraSelector: CameraSelector
+    private lateinit var cameraController: LifecycleCameraController
     private lateinit var cameraExecutor: ExecutorService
+
+
+    private lateinit var orientationListener: OrientationEventListener
+    private var lastRotation: Int = Surface.ROTATION_0
 
     @Inject
     lateinit var prefs: TextSecurePreferences
@@ -64,10 +68,7 @@ class CameraXFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        cameraSelector = prefs.getPreferredCameraDirection()
         cameraExecutor = Executors.newSingleThreadExecutor()
-
-        prefs.getPreferredCameraDirection()
 
         if (allPermissionsGranted()) {
             startCamera()
@@ -79,22 +80,63 @@ class CameraXFragment : Fragment() {
 
         binding.cameraControlsSafeArea.applySafeInsetsMargins()
 
-        //todo CAM handle orientation change and rotate flip camera button on landscape
         binding.cameraCaptureButton.setSafeOnClickListener { takePhoto() }
-        binding.cameraFlipButton.setSafeOnClickListener { flipCamera() } //todo CAM hide if only one camera
+        binding.cameraFlipButton.setSafeOnClickListener { flipCamera() }
         binding.cameraCloseButton.setSafeOnClickListener {
             requireActivity().onBackPressedDispatcher.onBackPressed()
         }
+
+        // keep track of orientation changes
+        orientationListener = object : OrientationEventListener(requireContext()) {
+            override fun onOrientationChanged(degrees: Int) {
+                if (degrees == ORIENTATION_UNKNOWN) return
+
+                val newRotation = when {
+                    degrees in  45..134  -> Surface.ROTATION_270
+                    degrees in 135..224  -> Surface.ROTATION_180
+                    degrees in 225..314  -> Surface.ROTATION_90
+                    else                 -> Surface.ROTATION_0
+                }
+
+                if (newRotation != lastRotation) {
+                    lastRotation = newRotation
+                    updateUiForRotation(newRotation)
+                }
+            }
+        }
     }
 
+    override fun onResume() {
+        super.onResume()
+        orientationListener.enable()
+    }
+
+    override fun onPause() {
+        orientationListener.disable()
+        super.onPause()
+    }
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
         if (context is Controller) {
-            controller = context
+            callbacks = context
         } else {
             throw RuntimeException("$context must implement CameraXFragment.Controller")
         }
+    }
+
+    private fun updateUiForRotation(rotation: Int = lastRotation) {
+        val angle = when (rotation) {
+            Surface.ROTATION_0   -> 0f
+            Surface.ROTATION_90  -> 90f
+            Surface.ROTATION_180 -> 180f
+            else                 -> 270f
+        }
+
+        binding.cameraFlipButton.animate()
+            .rotation(angle)
+            .setDuration(150)
+            .start()
     }
 
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
@@ -104,86 +146,78 @@ class CameraXFragment : Fragment() {
     }
 
     private fun startCamera() {
-        val cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext())
+        // set up camera
+        cameraController = LifecycleCameraController(requireContext()).apply {
+            cameraSelector = prefs.getPreferredCameraDirection()
+            setImageCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+            setTapToFocusEnabled(true)
+            setPinchToZoomEnabled(true)
+        }
 
-        cameraProviderFuture.addListener({
-            val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
+        // attach it to the view
+        binding.previewView.controller = cameraController
+        cameraController.bindToLifecycle(viewLifecycleOwner)
 
-            // hide flip button if we  only have one camera
-            val hasBack  = cameraProvider.hasCamera(CameraSelector.DEFAULT_BACK_CAMERA)
-            val hasFront = cameraProvider.hasCamera(CameraSelector.DEFAULT_FRONT_CAMERA)
+        // wait for initialisation to complete
+        cameraController.initializationFuture.addListener({
+            val hasFront = cameraController.hasCamera(CameraSelector.DEFAULT_FRONT_CAMERA)
+            val hasBack  = cameraController.hasCamera(CameraSelector.DEFAULT_BACK_CAMERA)
+
             binding.cameraFlipButton.visibility =
-                if (hasBack && hasFront) View.VISIBLE else View.GONE
-
-            val preview = Preview.Builder().build().also {
-                it.setSurfaceProvider(binding.previewView.surfaceProvider)
-            }
-
-            imageCapture = ImageCapture.Builder()
-                .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
-                .build()
-
-            try {
-                cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(
-                    viewLifecycleOwner, cameraSelector, preview, imageCapture
-                )
-            } catch (exc: Exception) {
-                Log.e(TAG, "Use case binding failed", exc)
-            }
-
+                if (hasFront && hasBack) View.VISIBLE else View.GONE
         }, ContextCompat.getMainExecutor(requireContext()))
     }
 
     private fun takePhoto() {
-        val capture = imageCapture ?: return
-        capture.takePicture(
+        cameraController.takePicture(
             cameraExecutor,
             object : ImageCapture.OnImageCapturedCallback() {
-                override fun onCaptureSuccess(image: ImageProxy) {
+                override fun onCaptureSuccess(img: ImageProxy) {
                     try {
-                        val buffer = image.planes[0].buffer
-                        val bytes  = ByteArray(buffer.remaining()).also { buffer.get(it) }
-                        val w = image.width
-                        val h = image.height
-                        image.close()
+                        val buffer   = img.planes[0].buffer
+                        val bytes = ByteArray(buffer.remaining()).also { buffer.get(it) }
+                        val w = img.width; val h = img.height
+                        img.close()
 
-                        val blobUri = BlobProvider.getInstance()
+                        val uri = BlobProvider.getInstance()
                             .forData(bytes)
                             .withMimeType(MediaTypes.IMAGE_JPEG)
-                            .createForSingleSessionOnDisk(requireContext()) {
-                                Log.w(TAG, "Blob write failed", it)
-                            }.get()
+                            .createForSingleSessionInMemory()
 
-                        controller?.onImageCaptured(blobUri, bytes.size.toLong(), w, h)
+                        callbacks?.onImageCaptured(uri, bytes.size.toLong(), w, h)
                     } catch (t: Throwable) {
-                        Log.e(TAG, "Capture pipeline failed", t)
-                        controller?.onCameraError()
+                        Log.e(TAG, "capture failed", t)
+                        callbacks?.onCameraError()
                     }
                 }
-
                 override fun onError(e: ImageCaptureException) {
-                    Log.e(TAG, "Photo capture failed", e)
-                    controller?.onCameraError()
+                    Log.e(TAG, "takePicture error", e)
+                    callbacks?.onCameraError()
                 }
             }
         )
     }
 
     private fun flipCamera() {
-        cameraSelector = if (cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA)
-            CameraSelector.DEFAULT_FRONT_CAMERA
-        else
-            CameraSelector.DEFAULT_BACK_CAMERA
+        val newSelector =
+            if (cameraController.cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA)
+                CameraSelector.DEFAULT_FRONT_CAMERA
+            else
+                CameraSelector.DEFAULT_BACK_CAMERA
 
-        prefs.setPreferredCameraDirection(cameraSelector)
+        cameraController.cameraSelector = newSelector
+        prefs.setPreferredCameraDirection(newSelector)
 
-        startCamera()
+        // animate icon
+        binding.cameraFlipButton.animate()
+            .rotationBy(-180f)
+            .setDuration(200)
+            .start()
     }
 
     override fun onDestroyView() {
-        super.onDestroyView()
         _binding = null
         cameraExecutor.shutdown()
+        super.onDestroyView()
     }
 }
