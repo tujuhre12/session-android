@@ -17,8 +17,10 @@ import androidx.activity.viewModels
 import androidx.core.view.ViewGroupCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
+import androidx.lifecycle.lifecycleScope
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.databinding.MediasendActivityBinding
 import org.session.libsession.utilities.Address.Companion.fromSerialized
@@ -230,9 +232,11 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
     }
 
     override fun onCameraError() {
-        Toast.makeText(this, R.string.cameraErrorUnavailable, Toast.LENGTH_SHORT).show()
-        setResult(RESULT_CANCELED, Intent())
-        finish()
+        lifecycleScope.launch {
+            Toast.makeText(applicationContext, R.string.cameraErrorUnavailable, Toast.LENGTH_SHORT).show()
+            setResult(RESULT_CANCELED, Intent())
+            finish()
+        }
     }
 
     override fun onImageCaptured(imageUri: Uri, size: Long, width: Int, height: Int) {

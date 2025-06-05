@@ -3,9 +3,12 @@ package org.thoughtcrime.securesms.mediasend
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import android.util.Size
 import android.view.LayoutInflater
 import android.view.OrientationEventListener
 import android.view.Surface
@@ -15,6 +18,8 @@ import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.ImageProxy
+import androidx.camera.core.resolutionselector.ResolutionSelector
+import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.view.LifecycleCameraController
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -26,6 +31,7 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.providers.BlobProvider
 import org.thoughtcrime.securesms.util.applySafeInsetsMargins
 import org.thoughtcrime.securesms.util.setSafeOnClickListener
+import java.io.ByteArrayOutputStream
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import javax.inject.Inject
@@ -145,12 +151,25 @@ class CameraXFragment : Fragment() {
     }
 
     private fun startCamera() {
+        // work out a resolution
+        val resolutionSelector = ResolutionSelector.Builder()
+            .setResolutionStrategy(
+                ResolutionStrategy(
+                    Size(1920, 1440),
+                    ResolutionStrategy.FALLBACK_RULE_CLOSEST_LOWER_THEN_HIGHER
+                )
+            )
+            .build()
+
         // set up camera
         cameraController = LifecycleCameraController(requireContext()).apply {
             cameraSelector = prefs.getPreferredCameraDirection()
             setImageCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
             setTapToFocusEnabled(true)
             setPinchToZoomEnabled(true)
+
+            // Configure image capture resolution
+            setImageCaptureResolutionSelector(resolutionSelector)
         }
 
         // attach it to the view
@@ -168,22 +187,36 @@ class CameraXFragment : Fragment() {
     }
 
     private fun takePhoto() {
+        val isFrontCamera = cameraController.cameraSelector == CameraSelector.DEFAULT_FRONT_CAMERA
         cameraController.takePicture(
             cameraExecutor,
             object : ImageCapture.OnImageCapturedCallback() {
                 override fun onCaptureSuccess(img: ImageProxy) {
                     try {
-                        val buffer   = img.planes[0].buffer
-                        val bytes = ByteArray(buffer.remaining()).also { buffer.get(it) }
-                        val w = img.width; val h = img.height
+                        val buffer = img.planes[0].buffer
+                        val originalBytes = ByteArray(buffer.remaining()).also { buffer.get(it) }
+                        val w = img.width
+                        val h = img.height
+                        val rotationDegrees = img.imageInfo.rotationDegrees
                         img.close()
 
+                        // Decode, rotate, mirror if needed
+                        val bitmap = BitmapFactory.decodeByteArray(originalBytes, 0, originalBytes.size)
+                        var correctedBitmap = rotateBitmap(bitmap, rotationDegrees.toFloat())
+                        if (isFrontCamera) {
+                            correctedBitmap = mirrorBitmap(correctedBitmap)
+                        }
+
+                        val outputStream = ByteArrayOutputStream()
+                        correctedBitmap.compress(Bitmap.CompressFormat.JPEG, 80, outputStream)
+                        val compressedBytes = outputStream.toByteArray()
+
                         val uri = BlobProvider.getInstance()
-                            .forData(bytes)
+                            .forData(compressedBytes)
                             .withMimeType(MediaTypes.IMAGE_JPEG)
                             .createForSingleSessionInMemory()
 
-                        callbacks?.onImageCaptured(uri, bytes.size.toLong(), w, h)
+                        callbacks?.onImageCaptured(uri, compressedBytes.size.toLong(), correctedBitmap.width, correctedBitmap.height)
                     } catch (t: Throwable) {
                         Log.e(TAG, "capture failed", t)
                         callbacks?.onCameraError()
@@ -195,6 +228,17 @@ class CameraXFragment : Fragment() {
                 }
             }
         )
+    }
+
+    private fun mirrorBitmap(src: Bitmap): Bitmap {
+        val matrix = android.graphics.Matrix().apply { preScale(-1f, 1f) }
+        return Bitmap.createBitmap(src, 0, 0, src.width, src.height, matrix, true)
+    }
+
+    private fun rotateBitmap(src: Bitmap, degrees: Float): Bitmap {
+        if (degrees == 0f) return src
+        val matrix = android.graphics.Matrix().apply { postRotate(degrees) }
+        return Bitmap.createBitmap(src, 0, 0, src.width, src.height, matrix, true)
     }
 
     private fun flipCamera() {
