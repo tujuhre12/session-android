@@ -1,7 +1,6 @@
  package org.thoughtcrime.securesms.preferences
 
 import android.Manifest
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
@@ -36,7 +35,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -90,6 +88,7 @@ import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.debugmenu.DebugActivity
 import org.thoughtcrime.securesms.home.PathActivity
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
+import org.thoughtcrime.securesms.openUrl
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.NoAvatar
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.TempAvatar
@@ -105,6 +104,7 @@ import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LargeItemButton
 import org.thoughtcrime.securesms.ui.LargeItemButtonWithDrawable
+import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.components.BaseBottomSheet
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineCopyButton
@@ -120,9 +120,11 @@ import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
+import org.thoughtcrime.securesms.ui.theme.primaryTextButtonColors
 import org.thoughtcrime.securesms.util.FileProviderUtil
 import org.thoughtcrime.securesms.util.applyCommonWindowInsetsOnViews
 import org.thoughtcrime.securesms.util.push
+import org.thoughtcrime.securesms.util.setSafeOnClickListener
 
  @AndroidEntryPoint
 class SettingsActivity : ScreenLockActionBarActivity() {
@@ -174,10 +176,10 @@ class SettingsActivity : ScreenLockActionBarActivity() {
             viewModel.permanentlyHidePassword()
         }
     }
-
-    private var showAvatarDialog: Boolean by mutableStateOf(false)
-    private var showAvatarPickerOptionCamera: Boolean by mutableStateOf(false)
-    private var showAvatarPickerOptions: Boolean by mutableStateOf(false)
+     private var urlToOPen: String? by mutableStateOf(null)
+     private var showAvatarDialog: Boolean by mutableStateOf(false)
+     private var showAvatarPickerOptionCamera: Boolean by mutableStateOf(false)
+     private var showAvatarPickerOptions: Boolean by mutableStateOf(false)
 
      private val bgColor by lazy { getColorFromAttr(android.R.attr.colorPrimary) }
      private val txtColor by lazy { getColorFromAttr(android.R.attr.textColorPrimary) }
@@ -203,12 +205,14 @@ class SettingsActivity : ScreenLockActionBarActivity() {
         // set the compose dialog content
         binding.composeLayout.setThemedContent {
             SettingsComposeContent(
+                showUrlDialog = urlToOPen,
                 showAvatarDialog = showAvatarDialog,
                 startAvatarSelection = ::startAvatarSelection,
                 saveAvatar = viewModel::saveAvatar,
                 removeAvatar = viewModel::removeAvatar,
                 showAvatarPickerOptions = showAvatarPickerOptions,
                 showCamera = showAvatarPickerOptionCamera,
+                hideUrlDialog = { urlToOPen = null },
                 onSheetDismissRequest = { showAvatarPickerOptions = false },
                 onGalleryPicked = {
                     pickPhotoLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
@@ -263,6 +267,10 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                     update(it.recipient)
                 }
             }
+        }
+
+        binding.sentLogoImageView.setSafeOnClickListener {
+            urlToOPen = "https://token.getsession.org"
         }
 
         applyCommonWindowInsetsOnViews(mainScrollView = binding.scrollView)
@@ -506,18 +514,45 @@ class SettingsActivity : ScreenLockActionBarActivity() {
 
             val hasPaths by OnionRequestAPI.hasPath.collectAsState()
 
+            // Add the debug menu in non release builds
+            if (BuildConfig.BUILD_TYPE != "release") {
+                Cell{
+                    LargeItemButton(
+                        "Debug Menu",
+                        R.drawable.ic_settings,
+                        shape = getCellTopShape()
+                    ) { push<DebugActivity>() }
+                }
+
+                Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
+            }
+
             Cell {
                 Column {
-                    // Add the debug menu in non release builds
-                    if (BuildConfig.BUILD_TYPE != "release") {
-                        LargeItemButton(
-                            "Debug Menu",
-                            R.drawable.ic_settings,
-                            shape = getCellTopShape()
-                        ) { push<DebugActivity>() }
-                        Divider()
+                    // Donate
+                    LargeItemButton(
+                        textId = R.string.donate,
+                        icon = R.drawable.ic_heart,
+                        modifier = Modifier.qaTag(R.string.qa_settings_item_donate),
+                        colors = primaryTextButtonColors()
+                    ) {
+                        urlToOPen = "https://session.foundation/donate#app"
                     }
+                    Divider()
 
+                    // Invite a friend
+                    LargeItemButton(
+                        R.string.sessionInviteAFriend,
+                        R.drawable.ic_user_round_plus,
+                        Modifier.contentDescription(R.string.AccessibilityId_sessionInviteAFriend)
+                    ) { sendInvitationToUseSession() }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
+
+            Cell {
+                Column {
                     Crossfade(if (hasPaths) R.drawable.ic_status else R.drawable.ic_path_yellow, label = "path") {
                         LargeItemButtonWithDrawable(
                             R.string.onionRoutingPath,
@@ -526,28 +561,6 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                             else getCellTopShape()
                         ) { push<PathActivity>() }
                     }
-                    Divider()
-
-                    LargeItemButton(R.string.sessionPrivacy, R.drawable.ic_lock_keyhole) { push<PrivacySettingsActivity>() }
-                    Divider()
-
-                    LargeItemButton(R.string.sessionNotifications, R.drawable.ic_volume_2, Modifier.contentDescription(R.string.AccessibilityId_notifications)) { push<NotificationSettingsActivity>() }
-                    Divider()
-
-                    LargeItemButton(R.string.sessionConversations, R.drawable.ic_message_square, Modifier.contentDescription(R.string.AccessibilityId_sessionConversations)) { push<ChatSettingsActivity>() }
-                    Divider()
-
-                    LargeItemButton(R.string.sessionMessageRequests, R.drawable.ic_message_square_warning, Modifier.contentDescription(R.string.AccessibilityId_sessionMessageRequests)) { push<MessageRequestsActivity>() }
-                    Divider()
-
-                    LargeItemButton(R.string.sessionAppearance, R.drawable.ic_paintbrush_vertical, Modifier.contentDescription(R.string.AccessibilityId_sessionAppearance)) { push<AppearanceSettingsActivity>() }
-                    Divider()
-
-                    LargeItemButton(
-                        R.string.sessionInviteAFriend,
-                        R.drawable.ic_user_round_plus,
-                        Modifier.contentDescription(R.string.AccessibilityId_sessionInviteAFriend)
-                    ) { sendInvitationToUseSession() }
                     Divider()
 
                     // Add the token page option.
@@ -573,8 +586,33 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                         annotatedStringText = sessionNetworkAS,
                         icon = R.drawable.session_network_logo
                     ) { push<TokenPageActivity>() }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
+
+            Cell {
+                Column {
+                    LargeItemButton(R.string.sessionPrivacy, R.drawable.ic_lock_keyhole) { push<PrivacySettingsActivity>() }
                     Divider()
 
+                    LargeItemButton(R.string.sessionNotifications, R.drawable.ic_volume_2, Modifier.contentDescription(R.string.AccessibilityId_notifications)) { push<NotificationSettingsActivity>() }
+                    Divider()
+
+                    LargeItemButton(R.string.sessionConversations, R.drawable.ic_users_round, Modifier.contentDescription(R.string.AccessibilityId_sessionConversations)) { push<ChatSettingsActivity>() }
+                    Divider()
+
+                    LargeItemButton(R.string.sessionAppearance, R.drawable.ic_paintbrush_vertical, Modifier.contentDescription(R.string.AccessibilityId_sessionAppearance)) { push<AppearanceSettingsActivity>() }
+                    Divider()
+
+                    LargeItemButton(R.string.sessionMessageRequests, R.drawable.ic_message_square_warning, Modifier.contentDescription(R.string.AccessibilityId_sessionMessageRequests)) { push<MessageRequestsActivity>() }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
+
+            Cell {
+                Column {
                     // Only show the recovery password option if the user has not chosen to permanently hide it
                     if (!recoveryHidden) {
                         LargeItemButton(
@@ -604,10 +642,12 @@ class SettingsActivity : ScreenLockActionBarActivity() {
 
     @Composable
     fun SettingsComposeContent(
+        showUrlDialog: String?,
         showAvatarDialog: Boolean,
         startAvatarSelection: ()->Unit,
         saveAvatar: ()->Unit,
         removeAvatar: ()->Unit,
+        hideUrlDialog: ()->Unit,
         showAvatarPickerOptions: Boolean,
         showCamera: Boolean,
         onSheetDismissRequest: () -> Unit,
@@ -620,6 +660,14 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                 startAvatarSelection = startAvatarSelection,
                 saveAvatar = saveAvatar,
                 removeAvatar = removeAvatar
+            )
+        }
+
+        // donate confirmationAdd commentMore actions
+        if(showUrlDialog != null){
+            OpenURLAlertDialog(
+                url = showUrlDialog,
+                onDismissRequest = hideUrlDialog
             )
         }
 
