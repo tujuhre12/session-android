@@ -172,15 +172,15 @@ class SettingsActivity : ScreenLockActionBarActivity() {
         }
     }
 
-    private var showDonateDialog: Boolean by mutableStateOf(false)
+    private var urlToOPen: String? by mutableStateOf(null)
     private var showAvatarDialog: Boolean by mutableStateOf(false)
     private var showAvatarPickerOptionCamera: Boolean by mutableStateOf(false)
     private var showAvatarPickerOptions: Boolean by mutableStateOf(false)
 
-     private val bgColor by lazy { getColorFromAttr(android.R.attr.colorPrimary) }
-     private val txtColor by lazy { getColorFromAttr(android.R.attr.textColorPrimary) }
-     private val imageScrim by lazy { ContextCompat.getColor(this, R.color.avatar_background) }
-     private val activityTitle by lazy { getString(R.string.image) }
+    private val bgColor by lazy { getColorFromAttr(android.R.attr.colorPrimary) }
+    private val txtColor by lazy { getColorFromAttr(android.R.attr.textColorPrimary) }
+    private val imageScrim by lazy { ContextCompat.getColor(this, R.color.avatar_background) }
+    private val activityTitle by lazy { getString(R.string.image) }
 
     companion object {
         private const val SCROLL_STATE = "SCROLL_STATE"
@@ -201,14 +201,14 @@ class SettingsActivity : ScreenLockActionBarActivity() {
         // set the compose dialog content
         binding.composeLayout.setThemedContent {
             SettingsComposeContent(
-                showDonateDialog = showDonateDialog,
+                showUrlDialog = urlToOPen,
                 showAvatarDialog = showAvatarDialog,
                 startAvatarSelection = ::startAvatarSelection,
                 saveAvatar = viewModel::saveAvatar,
                 removeAvatar = viewModel::removeAvatar,
                 showAvatarPickerOptions = showAvatarPickerOptions,
                 showCamera = showAvatarPickerOptionCamera,
-                hideDonateDialog = { showDonateDialog = false },
+                hideUrlDialog = { urlToOPen = null },
                 onSheetDismissRequest = { showAvatarPickerOptions = false },
                 onGalleryPicked = {
                     pickPhotoLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
@@ -257,7 +257,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
         }
 
         binding.sentLogoImageView.setSafeOnClickListener {
-            openUrl("https://token.getsession.org")
+            urlToOPen = "https://token.getsession.org"
         }
 
         applyCommonWindowInsetsOnViews(mainScrollView = binding.scrollView)
@@ -517,7 +517,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                         modifier = Modifier.qaTag(R.string.qa_settings_item_donate),
                         colors = primaryTextButtonColors()
                     ) {
-                        showDonateDialog = true
+                        urlToOPen = "https://session.foundation/donate#app"
                     }
                     Divider()
 
@@ -563,7 +563,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                     LargeItemButton(R.string.sessionNotifications, R.drawable.ic_volume_2, Modifier.qaTag(R.string.AccessibilityId_notifications)) { push<NotificationSettingsActivity>() }
                     Divider()
 
-                    LargeItemButton(R.string.sessionConversations, R.drawable.ic_message_square, Modifier.qaTag(R.string.AccessibilityId_sessionConversations)) { push<ChatSettingsActivity>() }
+                    LargeItemButton(R.string.sessionConversations, R.drawable.ic_users_round, Modifier.qaTag(R.string.AccessibilityId_sessionConversations)) { push<ChatSettingsActivity>() }
                     Divider()
 
                     LargeItemButton(R.string.sessionAppearance, R.drawable.ic_paintbrush_vertical, Modifier.qaTag(R.string.AccessibilityId_sessionAppearance)) { push<AppearanceSettingsActivity>() }
@@ -607,12 +607,12 @@ class SettingsActivity : ScreenLockActionBarActivity() {
 
     @Composable
     fun SettingsComposeContent(
-        showDonateDialog: Boolean,
+        showUrlDialog: String?,
         showAvatarDialog: Boolean,
         startAvatarSelection: ()->Unit,
         saveAvatar: ()->Unit,
         removeAvatar: ()->Unit,
-        hideDonateDialog: ()->Unit,
+        hideUrlDialog: ()->Unit,
         showAvatarPickerOptions: Boolean,
         showCamera: Boolean,
         onSheetDismissRequest: () -> Unit,
@@ -629,10 +629,10 @@ class SettingsActivity : ScreenLockActionBarActivity() {
         }
 
         // donate confirmation
-        if(showDonateDialog){
+        if(showUrlDialog != null){
             OpenURLAlertDialog(
-                url = "https://session.foundation/donate#app",
-                onDismissRequest = hideDonateDialog
+                url = showUrlDialog,
+                onDismissRequest = hideUrlDialog
             )
         }
 
