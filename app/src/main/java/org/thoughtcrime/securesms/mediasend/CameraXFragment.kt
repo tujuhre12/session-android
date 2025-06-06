@@ -156,7 +156,7 @@ class CameraXFragment : Fragment() {
             .setResolutionStrategy(
                 ResolutionStrategy(
                     Size(1920, 1440),
-                    ResolutionStrategy.FALLBACK_RULE_CLOSEST_LOWER_THEN_HIGHER
+                    ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER
                 )
             )
             .build()

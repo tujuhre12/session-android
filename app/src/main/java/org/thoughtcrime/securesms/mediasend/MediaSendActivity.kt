@@ -381,6 +381,8 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
                     )
                     .addToBackStack(null)
                     .commit()
+
+                viewModel.onCameraStarted()
             }
             .onAnyDenied {
                 Toast.makeText(
