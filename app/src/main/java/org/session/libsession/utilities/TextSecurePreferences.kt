@@ -6,6 +6,7 @@ import android.net.Uri
 import android.provider.Settings
 import androidx.annotation.ArrayRes
 import androidx.annotation.StyleRes
+import androidx.camera.core.CameraSelector
 import androidx.core.app.NotificationCompat
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager.getDefaultSharedPreferences
@@ -97,8 +98,8 @@ interface TextSecurePreferences {
     fun getProfilePictureURL(): String?
     fun getNotificationPriority(): Int
     fun getMessageBodyTextSize(): Int
-    fun setDirectCaptureCameraId(value: Int)
-    fun getDirectCaptureCameraId(): Int
+    fun setPreferredCameraDirection(value: CameraSelector)
+    fun getPreferredCameraDirection(): CameraSelector
     fun getNotificationPrivacy(): NotificationPrivacyPreference
     fun getRepeatAlertsCount(): Int
     fun getLocalRegistrationId(): Int
@@ -568,26 +569,6 @@ interface TextSecurePreferences {
         @JvmStatic
         fun getProfilePictureURL(context: Context): String? {
             return getStringPreference(context, PROFILE_AVATAR_URL_PREF, null)
-        }
-
-        @JvmStatic
-        fun getNotificationPriority(context: Context): Int {
-            return getStringPreference(context, NOTIFICATION_PRIORITY_PREF, NotificationCompat.PRIORITY_HIGH.toString())!!.toInt()
-        }
-
-        @JvmStatic
-        fun getMessageBodyTextSize(context: Context): Int {
-            return getStringPreference(context, MESSAGE_BODY_TEXT_SIZE_PREF, "16")!!.toInt()
-        }
-
-        @JvmStatic
-        fun setDirectCaptureCameraId(context: Context, value: Int) {
-            setIntegerPreference(context, DIRECT_CAPTURE_CAMERA_ID, value)
-        }
-
-        @JvmStatic
-        fun getDirectCaptureCameraId(context: Context): Int {
-            return getIntegerPreference(context, DIRECT_CAPTURE_CAMERA_ID, Camera.CameraInfo.CAMERA_FACING_BACK)
         }
 
         @JvmStatic
@@ -1227,12 +1208,19 @@ class AppTextSecurePreferences @Inject constructor(
         return getStringPreference(TextSecurePreferences.MESSAGE_BODY_TEXT_SIZE_PREF, "16")!!.toInt()
     }
 
-    override fun setDirectCaptureCameraId(value: Int) {
-        setIntegerPreference(TextSecurePreferences.DIRECT_CAPTURE_CAMERA_ID, value)
+    override fun setPreferredCameraDirection(value: CameraSelector) {
+        setIntegerPreference(TextSecurePreferences.DIRECT_CAPTURE_CAMERA_ID,
+            when(value){
+                CameraSelector.DEFAULT_FRONT_CAMERA -> Camera.CameraInfo.CAMERA_FACING_FRONT
+                else -> Camera.CameraInfo.CAMERA_FACING_BACK
+            })
     }
 
-    override fun getDirectCaptureCameraId(): Int {
-        return getIntegerPreference(TextSecurePreferences.DIRECT_CAPTURE_CAMERA_ID, Camera.CameraInfo.CAMERA_FACING_BACK)
+    override fun getPreferredCameraDirection(): CameraSelector {
+        return when(getIntegerPreference(TextSecurePreferences.DIRECT_CAPTURE_CAMERA_ID, Camera.CameraInfo.CAMERA_FACING_BACK)){
+            Camera.CameraInfo.CAMERA_FACING_FRONT -> CameraSelector.DEFAULT_FRONT_CAMERA
+            else -> CameraSelector.DEFAULT_BACK_CAMERA
+        }
     }
 
     override fun getNotificationPrivacy(): NotificationPrivacyPreference {
