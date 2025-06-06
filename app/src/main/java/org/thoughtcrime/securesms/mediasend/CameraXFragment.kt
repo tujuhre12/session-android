@@ -75,6 +75,8 @@ class CameraXFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         cameraExecutor = Executors.newSingleThreadExecutor()
 
+        // permissions should be handled prior to landing in this fragment
+        // but this is added for safety
         if (allPermissionsGranted()) {
             startCamera()
         } else {
