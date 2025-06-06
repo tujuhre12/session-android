@@ -151,11 +151,20 @@ class CameraXFragment : Fragment() {
     }
 
     private fun startCamera() {
-        // work out a resolution
+        // work out a resolution based on available memory
+        val activityManager = requireContext().getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
+        val memoryClassMb = activityManager.memoryClass  // e.g. 128, 256, etc.
+        val preferredResolution: Size = when {
+            memoryClassMb >= 256 -> Size(1920, 1440)
+            memoryClassMb >= 128 -> Size(1280, 960)
+            else -> Size(640, 480)
+        }
+        Log.d(TAG, "Selected resolution: $preferredResolution based on memory class: $memoryClassMb MB")
+
         val resolutionSelector = ResolutionSelector.Builder()
             .setResolutionStrategy(
                 ResolutionStrategy(
-                    Size(1920, 1440),
+                    preferredResolution,
                     ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER
                 )
             )
@@ -195,8 +204,6 @@ class CameraXFragment : Fragment() {
                     try {
                         val buffer = img.planes[0].buffer
                         val originalBytes = ByteArray(buffer.remaining()).also { buffer.get(it) }
-                        val w = img.width
-                        val h = img.height
                         val rotationDegrees = img.imageInfo.rotationDegrees
                         img.close()
 
@@ -210,6 +217,10 @@ class CameraXFragment : Fragment() {
                         val outputStream = ByteArrayOutputStream()
                         correctedBitmap.compress(Bitmap.CompressFormat.JPEG, 80, outputStream)
                         val compressedBytes = outputStream.toByteArray()
+
+                        // Recycle bitmaps
+                        bitmap.recycle()
+                        if (correctedBitmap !== bitmap) correctedBitmap.recycle()
 
                         val uri = BlobProvider.getInstance()
                             .forData(compressedBytes)
