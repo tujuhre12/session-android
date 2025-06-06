@@ -112,7 +112,10 @@ class ConversationViewModel(
 ) : ViewModel() {
 
     val showSendAfterApprovalText: Boolean
-        get() = recipient?.run { isContactRecipient && !isLocalNumber && !hasApprovedMe() } ?: false
+        get() = recipient?.run {
+            // if the contact is a 1on1 or a blinded 1on1 that doesn't block requests - and is not the current user - and has not yet approved us
+            (getBlindedRecipient(recipient)?.blocksCommunityMessageRequests == false || isContactRecipient) && !isLocalNumber && !hasApprovedMe()
+        } ?: false
 
     private val _uiState = MutableStateFlow(ConversationUiState())
     val uiState: StateFlow<ConversationUiState> get() = _uiState

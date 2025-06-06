@@ -288,12 +288,20 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
                 mainOptions.addAll(listOf(
                     optionCopyAccountId,
-                    optionSearch,
-                    optionDisappearingMessage(disappearingSubtitle),
-                    if(pinned) optionUnpin else optionPin,
-                    optionNotifications(notificationIconRes, notificationSubtitle),
-                    optionAttachments,
+                    optionSearch
                 ))
+
+                // these options are only for users who aren't blocked
+                if(!conversation.isBlocked) {
+                    mainOptions.addAll(listOf(
+                        optionDisappearingMessage(disappearingSubtitle),
+                        if(pinned) optionUnpin else optionPin,
+                        optionNotifications(notificationIconRes, notificationSubtitle),
+                    ))
+                }
+
+                // finally add attachments
+                mainOptions.add(optionAttachments)
 
                 dangerOptions.addAll(listOf(
                     if(recipient?.isBlocked == true) optionUnblock else optionBlock,
