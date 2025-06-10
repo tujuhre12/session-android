@@ -501,6 +501,7 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
     try {
       return adapter.getMediaItemFor(binding.mediaPager.getCurrentItem());
     } catch (Exception e) {
+      Log.w(TAG, "Error getting current media item", e);
       return null;
     }
   }
