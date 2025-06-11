@@ -14,19 +14,11 @@
         android:layout_height="wrap_content"
         android:theme="@style/Widget.Session.ActionBar"/>
 
-    <org.thoughtcrime.securesms.components.ObservableTouchEventFrameLayout
-        android:id="@+id/observe_touch_event_frame"
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/media_pager"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <androidx.viewpager2.widget.ViewPager2
-            android:id="@+id/media_pager"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:clickable="true" />
-
-    </org.thoughtcrime.securesms.components.ObservableTouchEventFrameLayout>
-
+        android:layout_height="match_parent"
+        android:clickable="true" />
 
     <LinearLayout
         android:id="@+id/media_preview_details_container"

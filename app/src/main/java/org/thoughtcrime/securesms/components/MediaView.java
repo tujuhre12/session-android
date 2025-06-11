@@ -28,6 +28,14 @@ public class MediaView extends FrameLayout {
   private ZoomingImageView  imageView;
   private Stub<VideoPlayer> videoView;
 
+  public interface FullscreenToggleListener {
+    void toggleFullscreen();
+    void setFullscreen(boolean displayFullscreen);
+  }
+
+  @Nullable
+  private FullscreenToggleListener fullscreenToggleListener = null;
+
   public MediaView(@NonNull Context context) {
     super(context);
     initialize();
@@ -56,16 +64,34 @@ public class MediaView extends FrameLayout {
                   @NonNull String mediaType,
                   long size,
                   boolean autoplay)
-      throws IOException
+          throws IOException
   {
     if (mediaType.startsWith("image/")) {
       imageView.setVisibility(View.VISIBLE);
       if (videoView.resolved()) videoView.get().setVisibility(View.GONE);
       imageView.setImageUri(glideRequests, sourceUri, mediaType);
+
+      // handle fullscreen toggle based on image tap
+      imageView.setInteractor(new ZoomingImageView.ZoomImageInteractions() {
+        @Override
+        public void onImageTapped() {
+          if (fullscreenToggleListener != null) fullscreenToggleListener.toggleFullscreen();
+        }
+      });
     } else if (mediaType.startsWith("video/")) {
       imageView.setVisibility(View.GONE);
       videoView.get().setVisibility(View.VISIBLE);
       videoView.get().setWindow(window);
+
+      // react to callbacks from video players and pass it on to the fullscreen handling
+      videoView.get().setInteractor(new VideoPlayer.VideoPlayerInteractions() {
+        @Override
+        public void onControllerVisibilityChanged(boolean visible) {
+          // go fullscreen once the controls are hidden
+          if(fullscreenToggleListener != null) fullscreenToggleListener.setFullscreen(!visible);
+        }
+      });
+
 
       Context context = getContext();
       String filename = FilenameUtils.getFilenameFromUri(context, sourceUri);
@@ -80,6 +106,10 @@ public class MediaView extends FrameLayout {
     if (this.videoView.resolved()){
       this.videoView.get().pause();
     }
+  }
+
+  public void setFullscreenToggleListener(FullscreenToggleListener listener) {
+    this.fullscreenToggleListener = listener;
   }
 
   public void cleanup() {

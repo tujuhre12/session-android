@@ -18,6 +18,7 @@ package org.thoughtcrime.securesms.video;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
@@ -37,6 +38,7 @@ import androidx.media3.ui.PlayerView;
 import org.session.libsession.utilities.ViewUtil;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.attachments.AttachmentServer;
+import org.thoughtcrime.securesms.components.ZoomingImageView;
 import org.thoughtcrime.securesms.mms.PartAuthority;
 import org.thoughtcrime.securesms.mms.VideoSlide;
 
@@ -55,6 +57,13 @@ public class VideoPlayer extends FrameLayout {
   @Nullable private       AttachmentServer    attachmentServer;
   @Nullable private       Window              window;
 
+  public interface VideoPlayerInteractions {
+    void onControllerVisibilityChanged(boolean visible);
+  }
+
+  @Nullable
+  private VideoPlayerInteractions interactor = null;
+
   public VideoPlayer(Context context) {
     this(context, null);
   }
@@ -72,7 +81,19 @@ public class VideoPlayer extends FrameLayout {
     this.exoView   = ViewUtil.findById(this, R.id.video_view);
     exoView.setControllerShowTimeoutMs(2000);
 
+    // listen to changes in the controller visibility
+      exoView.setControllerVisibilityListener(new PlayerView.ControllerVisibilityListener() {
+        @Override
+        public void onVisibilityChanged(int visibility) {
+          if (interactor != null) interactor.onControllerVisibilityChanged(visibility == View.VISIBLE);
+        }
+      });
+
     this.videoView = null;
+  }
+
+  public void setInteractor(@Nullable VideoPlayerInteractions interactor) {
+    this.interactor = interactor;
   }
 
   public void setVideoSource(@NonNull VideoSlide videoSource, boolean autoplay)
