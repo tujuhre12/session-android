@@ -6,15 +6,22 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.view.Window;
 import android.widget.FrameLayout;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.OptIn;
+import androidx.media3.common.util.UnstableApi;
+
 import com.bumptech.glide.RequestManager;
-import java.io.IOException;
-import network.loki.messenger.R;
+
 import org.session.libsession.utilities.Stub;
 import org.thoughtcrime.securesms.mms.VideoSlide;
 import org.thoughtcrime.securesms.util.FilenameUtils;
 import org.thoughtcrime.securesms.video.VideoPlayer;
+
+import java.io.IOException;
+
+import network.loki.messenger.R;
 
 public class MediaView extends FrameLayout {
 
@@ -73,19 +80,6 @@ public class MediaView extends FrameLayout {
     if (this.videoView.resolved()){
       this.videoView.get().pause();
     }
-  }
-
-  public void hideControls() {
-    if (this.videoView.resolved()){
-      this.videoView.get().hideControls();
-    }
-  }
-
-  public @Nullable View getPlaybackControls() {
-    if (this.videoView.resolved()){
-      return this.videoView.get().getControlView();
-    }
-    return null;
   }
 
   public void cleanup() {

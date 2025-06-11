@@ -71,12 +71,6 @@
             android:layout_marginBottom="8dp"
             tools:layout_height="64dp"/>
 
-        <FrameLayout
-            android:id="@+id/media_preview_playback_controls_container"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:animateLayoutChanges="true"/>
-
     </LinearLayout>
 
 </FrameLayout>

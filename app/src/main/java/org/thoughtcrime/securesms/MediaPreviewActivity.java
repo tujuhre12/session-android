@@ -276,10 +276,6 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
     ActionBar actionBar = getSupportActionBar();
     actionBar.setDisplayHomeAsUpEnabled(true);
     actionBar.setHomeButtonEnabled(true);
-
-    binding.mediaPager.setOnClickListener((v) -> {
-      toggleFullscreen();
-    });
   }
 
   private void initializeResources() {
@@ -305,9 +301,8 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
         return;
       }
 
-      View playbackControls = ((MediaItemAdapter) binding.mediaPager.getAdapter()).getPlaybackControls(binding.mediaPager.getCurrentItem());
-
-      if (previewData.getAlbumThumbnails().isEmpty() && previewData.getCaption() == null && playbackControls == null) {
+      //todo VIDEO we currently don't handle videos in the image picker but we used to. Might need a flag here once we add it back in
+      if (previewData.getAlbumThumbnails().isEmpty() && previewData.getCaption() == null){// && playbackControls == null) {
         binding.mediaPreviewDetailsContainer.setVisibility(View.GONE);
       } else {
         binding.mediaPreviewDetailsContainer.setVisibility(View.VISIBLE);
@@ -320,15 +315,6 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
       binding.mediaPreviewCaptionContainer.setVisibility(previewData.getCaption() == null ? View.GONE : View.VISIBLE);
       binding.mediaPreviewCaption.setText(previewData.getCaption());
 
-      if (playbackControls != null) {
-        ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        playbackControls.setLayoutParams(params);
-
-        binding.mediaPreviewPlaybackControlsContainer.removeAllViews();
-        binding.mediaPreviewPlaybackControlsContainer.addView(playbackControls);
-      } else {
-        binding.mediaPreviewPlaybackControlsContainer.removeAllViews();
-      }
     });
   }
 
@@ -642,11 +628,6 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
 
     @Override
     public void pause(int position) { /* Do nothing */ }
-
-    @Override
-    public @Nullable View getPlaybackControls(int position) {
-      return null;
-    }
   }
 
   private static class CursorPagerAdapter extends MediaItemAdapter {
@@ -693,7 +674,6 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
       MediaRecord mediaRecord = MediaRecord.from(context, cursor);
 
       try {
-        //noinspection ConstantConditions
         binding.mediaView.set(glideRequests, window, mediaRecord.getAttachment().getDataUri(),
                 mediaRecord.getAttachment().getContentType(), mediaRecord.getAttachment().getSize(), autoplay);
       } catch (IOException e) {
@@ -729,13 +709,6 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
       if (mediaView != null) mediaView.pause();
     }
 
-    @Override
-    public @Nullable View getPlaybackControls(int position) {
-      MediaView mediaView = mediaViews.get(position);
-      if (mediaView != null) return mediaView.getPlaybackControls();
-      return null;
-    }
-
     private int getCursorPosition(int position) {
         int unclamped = leftIsRecent ? position : cursor.getCount() - 1 - position;
         return Math.max(Math.min(unclamped, cursor.getCount() - 1), 0);
@@ -769,6 +742,5 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
   abstract static class MediaItemAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     abstract MediaItem getMediaItemFor(int position);
     abstract void pause(int position);
-    @Nullable abstract View getPlaybackControls(int position);
   }
 }
