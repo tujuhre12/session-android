@@ -29,12 +29,10 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -136,6 +134,11 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
   private final Handler hideHandler = new Handler(Looper.myLooper());
 
   @Inject DateUtils dateUtils;
+
+  @Override
+  public boolean getApplyDefaultWindowInsets() {
+    return false;
+  }
 
   private final Runnable showRunnable = () -> {
     getSupportActionBar().show();
@@ -313,6 +316,7 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
       //todo VIDEO handle edge to edge better on this screen
       //todo VIDEO handle rotation for video (maybe images) full view
       //todo VIDEO see if we can add back videos from the image picker in convo and if so checks that it works fine across all steps, including the edit screen
+      //todo sharing from outside session brings up video in the edit media screen (might be broken)
 
       //todo VIDEO we currently don't handle videos in the image picker but we used to. Might need a flag here once we add it back in
       if (previewData.getAlbumThumbnails().isEmpty() && previewData.getCaption() == null){// && playbackControls == null) {
