@@ -102,9 +102,17 @@ public class MediaView extends FrameLayout {
     }
   }
 
-  public void pause() {
+  public Long pause() {
     if (this.videoView.resolved()){
-      this.videoView.get().pause();
+       return this.videoView.get().pause();
+    }
+
+    return 0L;
+  }
+
+  public void seek(Long position){
+    if (this.videoView.resolved()){
+      this.videoView.get().seek(position);
     }
   }
 

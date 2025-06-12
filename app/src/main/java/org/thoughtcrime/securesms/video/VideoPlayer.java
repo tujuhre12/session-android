@@ -22,8 +22,6 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
-import android.widget.Toast;
-import android.widget.VideoView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -36,10 +34,6 @@ import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.ui.PlayerView;
 
 import org.session.libsession.utilities.ViewUtil;
-import org.session.libsignal.utilities.Log;
-import org.thoughtcrime.securesms.attachments.AttachmentServer;
-import org.thoughtcrime.securesms.components.ZoomingImageView;
-import org.thoughtcrime.securesms.mms.PartAuthority;
 import org.thoughtcrime.securesms.mms.VideoSlide;
 
 import java.io.IOException;
@@ -50,11 +44,9 @@ public class VideoPlayer extends FrameLayout {
 
   private static final String TAG = VideoPlayer.class.getSimpleName();
 
-  @Nullable private final VideoView           videoView;
   @Nullable private final PlayerView exoView;
 
   @Nullable private ExoPlayer exoPlayer;
-  @Nullable private       AttachmentServer    attachmentServer;
   @Nullable private       Window              window;
 
   public interface VideoPlayerInteractions {
@@ -88,8 +80,6 @@ public class VideoPlayer extends FrameLayout {
           if (interactor != null) interactor.onControllerVisibilityChanged(visibility == View.VISIBLE);
         }
       });
-
-    this.videoView = null;
   }
 
   public void setInteractor(@Nullable VideoPlayerInteractions interactor) {
@@ -102,19 +92,21 @@ public class VideoPlayer extends FrameLayout {
     setExoViewSource(videoSource, autoplay);
   }
 
-  public void pause() {
-    if (this.attachmentServer != null && this.videoView != null) {
-      this.videoView.stopPlayback();
-    } else if (this.exoPlayer != null) {
+  public Long pause() {
+    if (this.exoPlayer != null) {
       this.exoPlayer.setPlayWhenReady(false);
+      // return last playback position
+      return exoPlayer.getCurrentPosition();
     }
+
+    return 0L;
+  }
+
+  public void seek(Long position){
+    if (exoPlayer != null) exoPlayer.seekTo(position);
   }
 
   public void cleanup() {
-    if (this.attachmentServer != null) {
-      this.attachmentServer.stop();
-    }
-
     if (this.exoPlayer != null) {
       this.exoPlayer.release();
     }
@@ -142,32 +134,6 @@ public class VideoPlayer extends FrameLayout {
 
     exoPlayer.prepare();
     exoPlayer.setPlayWhenReady(autoplay);
-  }
-
-  private void setVideoViewSource(@NonNull VideoSlide videoSource, boolean autoplay)
-    throws IOException
-  {
-    if (this.attachmentServer != null) {
-      this.attachmentServer.stop();
-    }
-
-    if (videoSource.getUri() != null && PartAuthority.isLocalUri(videoSource.getUri())) {
-      Log.i(TAG, "Starting video attachment server for part provider Uri...");
-      this.attachmentServer = new AttachmentServer(getContext(), videoSource.asAttachment());
-      this.attachmentServer.start();
-
-      //noinspection ConstantConditions
-      this.videoView.setVideoURI(this.attachmentServer.getUri());
-    } else if (videoSource.getUri() != null) {
-      Log.i(TAG, "Playing video directly from non-local Uri...");
-      //noinspection ConstantConditions
-      this.videoView.setVideoURI(videoSource.getUri());
-    } else {
-      Toast.makeText(getContext(), getContext().getString(R.string.videoErrorPlay), Toast.LENGTH_LONG).show();
-      return;
-    }
-
-    if (autoplay) this.videoView.start();
   }
 
   @UnstableApi

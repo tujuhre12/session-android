@@ -42,6 +42,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.lifecycle.Observer
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.loader.app.LoaderManager
 import androidx.loader.content.Loader
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -114,8 +115,6 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
     @Inject
     lateinit var deprecationManager: LegacyGroupDeprecationManager
 
-    private var restartItem = -1
-
     private var isFullscreen = false
 
     @Inject
@@ -137,6 +136,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
         initializeViews()
         initializeResources()
         initializeObservers()
+        initializeMedia()
 
         // make the toolbar translucent so that the video can be seen below in landscape - 70% of regular toolbar color
         binding.toolbar.backgroundTintList = ColorStateList.valueOf(
@@ -198,8 +198,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
     }
 
     private fun updateActionBar() {
-        val mediaItem =
-            currentMediaItem
+        val mediaItem = currentMediaItem
 
         if (mediaItem != null) {
             val relativeTimeSpan: CharSequence = if (mediaItem.date > 0) {
@@ -217,20 +216,29 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
         }
     }
 
-    public override fun onResume() {
-        super.onResume()
-        initializeMedia()
-    }
-
     public override fun onPause() {
         super.onPause()
-        restartItem = cleanupMedia()
+
+        adapter?.pause(binding.mediaPager.currentItem)
+    }
+
+    override fun onDestroy() {
+        adapter?.cleanUp()
+        super.onDestroy()
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
         initializeResources()
+    }
+
+    fun onMediaPaused(videoUri: Uri, position: Long){
+        viewModel.savePlaybackPosition(videoUri, position)
+    }
+
+    fun getLastPlaybackPosition(videoUri: Uri): Long {
+        return viewModel.getSavedPlaybackPosition(videoUri)
     }
 
     private fun initializeViews() {
@@ -262,7 +270,6 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
         initialMediaSize = intent.getLongExtra(SIZE_EXTRA, 0)
         initialCaption = intent.getStringExtra(CAPTION_EXTRA)
         leftIsRecent = intent.getBooleanExtra(LEFT_IS_RECENT_EXTRA, false)
-        restartItem = -1
 
         conversationRecipient = if (address != null) {
             Recipient.from(
@@ -293,26 +300,14 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
                     return@Observer
                 }
 
-                //todo VIDEO handle rotation for video (maybe images) full view
                 //todo VIDEO see if we can add back videos from the image picker in convo and if so checks that it works fine across all steps, including the edit screen
                 //todo VIDEO sharing from outside session brings up video in the edit media screen (might be broken)
-                //todo VIDEO Leaving the app and coming back while in the player comes back to a blank screen
-
-                //todo VIDEO we currently don't handle videos in the image picker but we used to. Might need a flag here once we add it back in
-                if (previewData.albumThumbnails.isEmpty() && previewData.caption == null) { // && playbackControls == null) {
-                    binding.mediaPreviewDetailsContainer.visibility = View.GONE
-                } else {
-                    binding.mediaPreviewDetailsContainer.visibility = View.VISIBLE
-                }
-
-                binding.mediaPreviewAlbumRail.visibility =
+                //todo VIDEO When a rail is present, the video scrubber is not hidden behind it and not interactable - Maybe place controls above rails AND hide rail in fullscreen
+                
+                binding.mediaPreviewAlbumRailContainer.visibility =
                     if (previewData.albumThumbnails.isEmpty()) View.GONE else View.VISIBLE
                 albumRailAdapter?.setMedia(previewData.albumThumbnails, previewData.activePosition)
                 binding.mediaPreviewAlbumRail.smoothScrollToPosition(previewData.activePosition)
-
-                binding.mediaPreviewCaptionContainer.visibility =
-                    if (previewData.caption == null) View.GONE else View.VISIBLE
-                binding.mediaPreviewCaption.text = previewData.caption
             })
     }
 
@@ -339,22 +334,12 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
         }
     }
 
-    private fun cleanupMedia(): Int {
-        val restartItem = binding.mediaPager.currentItem
-
-        binding.mediaPager.removeAllViews()
-        binding.mediaPager.adapter = null
-
-        return restartItem
-    }
-
     private fun showOverview() {
         conversationRecipient?.address?.let { startActivity(createIntent(this, it)) }
     }
 
     private fun forward() {
-        val mediaItem =
-            currentMediaItem
+        val mediaItem = currentMediaItem
 
         if (mediaItem != null) {
             val composeIntent = Intent(
@@ -369,8 +354,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
 
     @SuppressLint("InlinedApi")
     private fun saveToDisk() {
-        val mediaItem =
-            currentMediaItem
+        val mediaItem = currentMediaItem
         if (mediaItem == null) {
             Log.w(TAG, "Cannot save a null MediaItem to disk - bailing.")
             return
@@ -446,8 +430,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
 
     @SuppressLint("StaticFieldLeak")
     private fun deleteMedia() {
-        val mediaItem =
-            currentMediaItem
+        val mediaItem = currentMediaItem
         if (mediaItem?.attachment == null) {
             return
         }
@@ -539,10 +522,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
 
         viewModel.setCursor(this, data.first, leftIsRecent)
 
-        val item =
-            if (restartItem >= 0 && restartItem < adapter!!.itemCount) restartItem else max(
-                min(data.second, adapter!!.itemCount - 1), 0
-            )
+        val item = max(min(data.second, adapter!!.itemCount - 1), 0)
 
         viewPagerListener = ViewPagerListener()
         binding.mediaPager.registerOnPageChangeCallback(viewPagerListener!!)
@@ -551,8 +531,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
             binding.mediaPager.setCurrentItem(item, false)
         } catch (e: CursorIndexOutOfBoundsException) {
             throw RuntimeException(
-                "restartItem = " + restartItem + ", data.second = " + data.second + " leftIsRecent = " + leftIsRecent,
-                e
+                "data.second = " + data.second + " leftIsRecent = " + leftIsRecent, e
             )
         }
 
@@ -642,6 +621,10 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
             try {
                 if (mediaRecord.attachment.dataUri == null) throw AssertionError()
                 binding.mediaView.set(glideRequests, window, mediaRecord.attachment.dataUri!!, mediaRecord.attachment.contentType, mediaRecord.attachment.size, autoplay)
+
+                // try to resume where we were if we have a saved playback position
+                val playbackPosition = (context as? MediaPreviewActivity)?.getLastPlaybackPosition(mediaRecord.attachment.dataUri!!)
+                if(playbackPosition != 0L) binding.mediaView.seek(playbackPosition)
             } catch (e: IOException) {
                 Log.w(TAG, e)
             }
@@ -672,7 +655,15 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
 
         override fun pause(position: Int) {
             val mediaView = mediaViews[position]
-            mediaView?.pause()
+            val playbackPosition = mediaView?.pause() ?: 0L
+            // save the last playback position on pause
+            (context as? MediaPreviewActivity)?.onMediaPaused(getMediaItemFor(position).uri, playbackPosition)
+        }
+
+        override fun cleanUp() {
+            mediaViews.forEach{
+                it.value.cleanup()
+            }
         }
 
         fun getCursorPosition(position: Int): Int {
@@ -694,6 +685,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
         RecyclerView.Adapter<RecyclerView.ViewHolder?>() {
         abstract fun getMediaItemFor(position: Int): MediaItem
         abstract fun pause(position: Int)
+        abstract fun cleanUp()
     }
 
     companion object {
