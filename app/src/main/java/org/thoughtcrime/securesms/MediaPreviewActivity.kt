@@ -20,6 +20,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.database.Cursor
 import android.database.CursorIndexOutOfBoundsException
@@ -27,8 +28,6 @@ import android.net.Uri
 import android.os.AsyncTask
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
@@ -37,6 +36,7 @@ import android.view.ViewGroup
 import android.view.Window
 import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.core.graphics.ColorUtils
 import androidx.core.util.Pair
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -63,6 +63,7 @@ import org.session.libsession.snode.SnodeAPI.nowWithOffset
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.Util.runOnMain
+import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientModifiedListener
 import org.session.libsignal.utilities.Log
@@ -136,6 +137,11 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
         initializeViews()
         initializeResources()
         initializeObservers()
+
+        // make the toolbar translucent so that the video can be seen below in landscape - 70% of regular toolbar color
+        binding.toolbar.backgroundTintList = ColorStateList.valueOf(
+            ColorUtils.setAlphaComponent(getColorFromAttr(android.R.attr.colorPrimary),  (0.7f * 255).toInt())
+        )
 
         // handle edge to edge display
         findViewById<View>(android.R.id.content).applySafeInsetsPaddings(
@@ -290,9 +296,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
                 //todo VIDEO handle rotation for video (maybe images) full view
                 //todo VIDEO see if we can add back videos from the image picker in convo and if so checks that it works fine across all steps, including the edit screen
                 //todo VIDEO sharing from outside session brings up video in the edit media screen (might be broken)
-                //todo VIDEO maybe hide the bar that remains once the controls hide
                 //todo VIDEO Leaving the app and coming back while in the player comes back to a blank screen
-                //todo VIDEO maybe make status and toolbar translucent
 
                 //todo VIDEO we currently don't handle videos in the image picker but we used to. Might need a flag here once we add it back in
                 if (previewData.albumThumbnails.isEmpty() && previewData.caption == null) { // && playbackControls == null) {
