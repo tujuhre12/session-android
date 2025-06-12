@@ -286,7 +286,6 @@
         <activity
             android:name="org.thoughtcrime.securesms.MediaPreviewActivity"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
-            android:screenOrientation="portrait"
             android:theme="@style/Theme.Session.DayNight.NoActionBar"
             android:launchMode="singleTask"
             android:windowSoftInputMode="stateHidden" />

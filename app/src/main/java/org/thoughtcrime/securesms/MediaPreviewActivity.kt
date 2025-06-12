@@ -20,6 +20,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.database.Cursor
 import android.database.CursorIndexOutOfBoundsException
 import android.net.Uri
@@ -268,6 +269,16 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
         }
     }
 
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        // Re-apply fullscreen if we were already in it
+        if (isFullscreen) {
+            enterFullscreen()
+        } else {
+            exitFullscreen()
+        }
+    }
+
     private fun initializeObservers() {
         viewModel.previewData.observe(
             this,
@@ -275,10 +286,13 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
                 if (previewData == null || binding == null || binding.mediaPager.adapter == null) {
                     return@Observer
                 }
-                //todo VIDEO handle edge to edge better on this screen
+
                 //todo VIDEO handle rotation for video (maybe images) full view
                 //todo VIDEO see if we can add back videos from the image picker in convo and if so checks that it works fine across all steps, including the edit screen
-                //todo sharing from outside session brings up video in the edit media screen (might be broken)
+                //todo VIDEO sharing from outside session brings up video in the edit media screen (might be broken)
+                //todo VIDEO maybe hide the bar that remains once the controls hide
+                //todo VIDEO Leaving the app and coming back while in the player comes back to a blank screen
+                //todo VIDEO maybe make status and toolbar translucent
 
                 //todo VIDEO we currently don't handle videos in the image picker but we used to. Might need a flag here once we add it back in
                 if (previewData.albumThumbnails.isEmpty() && previewData.caption == null) { // && playbackControls == null) {
