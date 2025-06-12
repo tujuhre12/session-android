@@ -39,6 +39,7 @@ import androidx.activity.viewModels
 import androidx.core.util.Pair
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.lifecycle.Observer
 import androidx.loader.app.LoaderManager
 import androidx.loader.content.Loader
@@ -83,6 +84,7 @@ import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.FilenameUtils.getFilenameFromUri
 import org.thoughtcrime.securesms.util.SaveAttachmentTask
 import org.thoughtcrime.securesms.util.SaveAttachmentTask.Companion.showOneTimeWarningDialogOrSave
+import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
 import java.io.IOException
 import java.util.Locale
 import java.util.WeakHashMap
@@ -133,6 +135,16 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
         initializeViews()
         initializeResources()
         initializeObservers()
+
+        // handle edge to edge display
+        findViewById<View>(android.R.id.content).applySafeInsetsPaddings(
+            applyTop = false,
+            applyBottom = false,
+            alsoApply = { insets ->
+                binding.toolbar.updatePadding(top = insets.top)
+                binding.mediaPreviewAlbumRail.updatePadding(bottom = insets.bottom)
+            }
+        )
     }
 
     override fun toggleFullscreen() {
@@ -227,7 +239,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
             )
         binding.mediaPreviewAlbumRail.adapter = albumRailAdapter
 
-        setSupportActionBar(findViewById(R.id.search_toolbar))
+        setSupportActionBar(findViewById(R.id.toolbar))
 
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.setHomeButtonEnabled(true)
@@ -421,7 +433,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
         if (mediaItem?.attachment == null) {
             return
         }
-        //todo VIDEO test this out
+
         DeleteMediaPreviewDialog.show(this){
             AttachmentUtil.deleteAttachment(applicationContext, mediaItem.attachment)
             finish()
