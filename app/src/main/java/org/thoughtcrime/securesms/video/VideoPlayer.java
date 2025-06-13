@@ -124,7 +124,7 @@ public class VideoPlayer extends FrameLayout {
     exoPlayer.addListener(new ExoPlayerListener(window));
     exoPlayer.setAudioAttributes(AudioAttributes.DEFAULT, true);
     //noinspection ConstantConditions
-    exoView.setPlayer(exoPlayer);
+    exoView.setPlayer(exoPlayer); //todo this should be optimised as it creates a small lag in the viewpager
     //noinspection ConstantConditions
 
     if(videoSource.getUri() != null){
