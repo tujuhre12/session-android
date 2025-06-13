@@ -12,8 +12,8 @@
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        style="@style/Widget.Session.ActionBar"/>
 
-        android:theme="@style/Widget.Session.ActionBar"/>
 
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/media_pager"

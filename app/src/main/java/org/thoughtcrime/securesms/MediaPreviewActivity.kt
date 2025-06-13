@@ -24,6 +24,7 @@ import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.database.Cursor
 import android.database.CursorIndexOutOfBoundsException
+import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.AsyncTask
 import android.os.Build
@@ -94,6 +95,7 @@ import java.util.WeakHashMap
 import javax.inject.Inject
 import kotlin.math.max
 import kotlin.math.min
+import androidx.core.graphics.drawable.toDrawable
 
 /**
  * Activity for displaying media attachments in-app
@@ -139,9 +141,12 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
         initializeMedia()
 
         // make the toolbar translucent so that the video can be seen below in landscape - 70% of regular toolbar color
-        binding.toolbar.backgroundTintList = ColorStateList.valueOf(
-            ColorUtils.setAlphaComponent(getColorFromAttr(android.R.attr.colorPrimary),  (0.7f * 255).toInt())
-        )
+        supportActionBar?.setBackgroundDrawable(
+            ColorUtils.setAlphaComponent(
+                getColorFromAttr(
+                    android.R.attr.colorPrimary
+                ), (0.7f * 255).toInt()
+            ).toDrawable())
 
         // handle edge to edge display
         findViewById<View>(android.R.id.content).applySafeInsetsPaddings(
@@ -303,8 +308,6 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
                 //todo VIDEO see if we can add back videos from the image picker in convo and if so checks that it works fine across all steps, including the edit screen
                 //todo VIDEO sharing from outside session brings up video in the edit media screen (might be broken)
                 //todo VIDEO When a rail is present, the video scrubber is not hidden behind it and not interactable - Maybe place controls above rails AND hide rail in fullscreen
-                //todo VIDEO looks like the menu items are not translucent which looks wrong with the toolbar opacitiy..  Should I just hide them completely in landscape?
-                //todo VIDEO apparently I can't tap images when there is a rail
 
                 binding.mediaPreviewAlbumRailContainer.visibility =
                     if (previewData.albumThumbnails.isEmpty()) View.GONE else View.VISIBLE
