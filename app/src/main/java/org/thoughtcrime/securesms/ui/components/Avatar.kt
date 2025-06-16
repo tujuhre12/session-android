@@ -39,6 +39,7 @@ import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
+import org.thoughtcrime.securesms.ui.theme.classicDark3
 import org.thoughtcrime.securesms.ui.theme.classicLight1
 import org.thoughtcrime.securesms.ui.theme.primaryBlue
 import org.thoughtcrime.securesms.ui.theme.primaryGreen
@@ -148,7 +149,7 @@ private fun AvatarElement(
     Box(
         modifier = modifier.size(size)
             .background(
-                color = data.color ?: classicLight1, //todo UCS verify with tema if right color - also update the xml version if this changed
+                color = data.color ?: classicDark3,
                 shape = clip,
             )
             .clip(clip),

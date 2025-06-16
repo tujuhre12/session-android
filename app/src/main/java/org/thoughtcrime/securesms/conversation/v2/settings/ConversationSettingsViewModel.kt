@@ -886,7 +886,6 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         }
     }
 
-    //todo UCS verufy with the team that this is what we want
     /**
      * This returns the number of visible glyphs in a string, instead of its underlying length
      * For example: 👨🏻‍❤️‍💋‍👨🏻 has a length of 15 as a string, but would return 1 here as it is only one visible element
