@@ -319,6 +319,8 @@ class ConfigFactory @Inject constructor(
     }
 
     override fun removeContact(accountId: String) {
+        if(!accountId.startsWith(IdPrefix.STANDARD.value)) return
+
         withMutableUserConfigs {
             it.contacts.erase(accountId)
         }
