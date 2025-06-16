@@ -897,7 +897,7 @@ fun ExpandableText(
 
     val density = LocalDensity.current
 
-    val enableScrolling = expanded && maxHeight != Dp.Unspecified
+    val enableScrolling = expanded && maxHeight != Dp.Unspecified && expandedMaxLines != Int.MAX_VALUE
 
     BaseExpandableText(
         text = text,
@@ -932,7 +932,7 @@ fun ExpandableText(
 private fun PreviewExpandedTextShort() {
     PreviewTheme {
         ExpandableText(
-            text = "This is a short description"
+            text = "This"
         )
     }
 }
@@ -1035,6 +1035,18 @@ private fun PreviewBaseExpandedTextShort() {
     PreviewTheme {
         BaseExpandableText(
             text = "This is a short description"
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PreviewBaseExpandedTextShortWithButton() {
+    PreviewTheme {
+        BaseExpandableText(
+            text = "Aaa",
+            showButton = true,
+            expanded = true
         )
     }
 }
