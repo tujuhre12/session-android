@@ -4,6 +4,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.icu.text.BreakIterator
 import android.widget.Toast
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
@@ -65,6 +66,7 @@ import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.dependencies.ConfigFactory.Companion.MAX_GROUP_DESCRIPTION_BYTES
 import org.thoughtcrime.securesms.dependencies.ConfigFactory.Companion.MAX_NAME_BYTES
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.home.HomeActivity
@@ -884,6 +886,20 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         }
     }
 
+    /**
+     * This returns the number of visible glyphs in a string, instead of its underlying length
+     * For example: 👨🏻‍❤️‍💋‍👨🏻 has a length of 15 as a string, but would return 1 here as it is only one visible element
+     */
+    private fun getDisplayedCharacterSize(text: String): Int {
+        val iterator = BreakIterator.getCharacterInstance()
+        iterator.setText(text)
+        var count = 0
+        while (iterator.next() != BreakIterator.DONE) {
+            count++
+        }
+        return count
+    }
+
     fun onCommand(command: Commands) {
         when (command) {
             is Commands.CopyAccountId -> copyAccountId()
@@ -968,7 +984,11 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 val trimmedDescription = command.description.trim()
 
                 val error: String? = when {
-                    trimmedDescription.length > 200 -> context.getString(R.string.updateGroupInformationEnterShorterDescription)
+                    // description should be less than 200 characters
+                    getDisplayedCharacterSize(trimmedDescription) > 200 -> context.getString(R.string.updateGroupInformationEnterShorterDescription)
+
+                    // description should be less than max bytes
+                    trimmedDescription.textSizeInBytes() > MAX_GROUP_DESCRIPTION_BYTES -> context.getString(R.string.updateGroupInformationEnterShorterDescription)
 
                     else -> null
                 }
