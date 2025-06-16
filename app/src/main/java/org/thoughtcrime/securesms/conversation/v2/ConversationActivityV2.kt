@@ -1449,6 +1449,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private fun callRecipient() {
         if(viewModel.recipient == null) return
 
+        // if the user is blocked, show unblock modal
+        if(viewModel.recipient?.isBlocked == true){
+            unblock()
+            return
+        }
+
         // if the user has not enabled voice/video calls
         if (!TextSecurePreferences.isCallNotificationsEnabled(this)) {
             showSessionDialog {
