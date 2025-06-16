@@ -977,8 +977,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                     it.copy(
                         groupEditDialog = it.groupEditDialog?.copy(
                             inputtedDescription = command.description,
-                            saveEnabled = trimmedDescription.isNotEmpty() && // can save if we have an input
-                                    trimmedDescription != it.groupEditDialog.currentName && // ... and it isn't the same as what is already saved
+                            saveEnabled = trimmedDescription != it.groupEditDialog.currentName && // ... and it isn't the same as what is already saved
                                     error == null && // ... and there are no description errors
                                     it.groupEditDialog.inputName?.trim()?.isNotEmpty() ==  true && // ... and there is a name input
                                     it.groupEditDialog.errorName == null, // ... and there are no name errors
@@ -1004,10 +1003,10 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                     }
 
                     // save description if needed
-                    if(dialogData.inputtedDescription != dialogData.currentDescription && dialogData.inputtedDescription?.isNotEmpty() == true) {
+                    if(dialogData.inputtedDescription != dialogData.currentDescription) {
                         groupManager.setDescription(
                             AccountId(groupData.groupAccountId),
-                            dialogData.inputtedDescription
+                            dialogData.inputtedDescription ?: ""
                         )
                     }
 
