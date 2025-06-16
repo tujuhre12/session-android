@@ -14,12 +14,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -34,6 +36,8 @@ import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
+import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
+import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.classicLight1
 import org.thoughtcrime.securesms.ui.theme.primaryBlue
 import org.thoughtcrime.securesms.ui.theme.primaryGreen
@@ -171,7 +175,7 @@ private fun AvatarElement(
                     ),
                     text = data.name,
                     style = LocalType.current.base.copy(
-                        color = LocalColors.current.text,
+                        color = Color.White,
                         textAlign = TextAlign.Center,
                     ),
                     maxLines = 1
@@ -189,8 +193,10 @@ private fun AvatarElement(
 
 @Preview
 @Composable
-fun PreviewAvatarElement(){
-    PreviewTheme {
+fun PreviewAvatarElement(
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
+){
+    PreviewTheme(colors) {
         AvatarElement(
             size = LocalDimensions.current.iconLarge,
             data = AvatarUIElement(
