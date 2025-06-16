@@ -70,7 +70,6 @@ fun InviteContacts(
     onSearchQueryClear: () -> Unit,
     onDoneClicked: () -> Unit,
     onBack: () -> Unit,
-    @StringRes okButtonResId: Int = android.R.string.ok,
     banner: @Composable ()->Unit = {}
 ) {
     Scaffold(
@@ -136,10 +135,10 @@ fun InviteContacts(
                     onClick = onDoneClicked,
                     modifier = Modifier
                         .padding(vertical = LocalDimensions.current.spacing)
-                        .qaTag(R.string.AccessibilityId_selectContactConfirm),
+                        .qaTag(R.string.qa_invite_button), SEND COMMENT IN JIRA AND MARK THOSE TICKETS AS PROGRESS
                 ) {
                     Text(
-                        stringResource(id = okButtonResId)
+                        stringResource(id = R.string.membersInviteTitle)
                     )
                 }
             }
