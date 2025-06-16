@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.components
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.PointF
 import android.net.Uri
 import android.os.AsyncTask
 import android.util.AttributeSet
@@ -9,8 +10,6 @@ import android.util.Pair
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.widget.FrameLayout
-import android.widget.ImageView
-import androidx.core.view.doOnLayout
 import com.bumptech.glide.RequestManager
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.request.target.Target
@@ -20,7 +19,6 @@ import com.davemorrissey.labs.subscaleview.decoder.DecoderFactory
 import com.github.chrisbanes.photoview.PhotoView
 import network.loki.messenger.R
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.components.ZoomingImageView
 import org.thoughtcrime.securesms.components.subsampling.AttachmentBitmapDecoder
 import org.thoughtcrime.securesms.components.subsampling.AttachmentRegionDecoder
 import org.thoughtcrime.securesms.mms.DecryptableStreamUriLoader.DecryptableUri
@@ -57,18 +55,6 @@ class ZoomingImageView @JvmOverloads constructor(
 
     fun setInteractor(interactor: ZoomImageInteractions?) {
         this.interactor = interactor
-    }
-
-    private val gestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
-        override fun onSingleTapUp(e: MotionEvent): Boolean {
-            interactor?.onImageTapped()
-            return true
-        }
-    })
-
-    override fun dispatchTouchEvent(event: MotionEvent): Boolean {
-        gestureDetector.onTouchEvent(event)
-        return super.dispatchTouchEvent(event)
     }
 
     @SuppressLint("StaticFieldLeak")
@@ -118,6 +104,10 @@ class ZoomingImageView @JvmOverloads constructor(
         photoView.visibility = VISIBLE
         subsamplingImageView.visibility = GONE
 
+        photoView.setOnViewTapListener { _, _, _ ->
+            if (interactor != null) interactor!!.onImageTapped()
+        }
+
         glideRequests.load(DecryptableUri(uri))
             .diskCacheStrategy(DiskCacheStrategy.NONE)
             .dontTransform()
@@ -125,6 +115,7 @@ class ZoomingImageView @JvmOverloads constructor(
             .into(photoView)
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private fun setSubsamplingImageViewUri(uri: Uri) {
         subsamplingImageView.setBitmapDecoderFactory(AttachmentBitmapDecoderFactory())
         subsamplingImageView.setRegionDecoderFactory(AttachmentRegionDecoderFactory())
@@ -132,7 +123,20 @@ class ZoomingImageView @JvmOverloads constructor(
         subsamplingImageView.visibility = VISIBLE
         photoView.visibility = GONE
 
+        val gestureDetector = GestureDetector(
+            context,
+            object : GestureDetector.SimpleOnGestureListener() {
+                override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
+                    interactor?.onImageTapped()
+                    return true
+                }
+            }
+        )
+
         subsamplingImageView.setImage(ImageSource.uri(uri))
+        subsamplingImageView.setOnTouchListener { v, event ->
+            gestureDetector.onTouchEvent(event)
+        }
     }
 
     fun cleanup() {

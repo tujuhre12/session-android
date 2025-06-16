@@ -18,6 +18,7 @@ package org.thoughtcrime.securesms.video;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.TypedValue;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -26,6 +27,7 @@ import android.widget.FrameLayout;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.OptIn;
+import androidx.core.graphics.ColorUtils;
 import androidx.media3.common.AudioAttributes;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.Player;
@@ -73,7 +75,14 @@ public class VideoPlayer extends FrameLayout {
     this.exoView   = ViewUtil.findById(this, R.id.video_view);
     exoView.setControllerShowTimeoutMs(2000);
 
-    // listen to changes in the controller visibility
+    TypedValue tv = new TypedValue();
+    getContext().getTheme().resolveAttribute(android.R.attr.colorPrimary, tv, true);
+    int bgColor = tv.data;
+    findViewById(R.id.custom_controls).setBackgroundColor(
+            ColorUtils.setAlphaComponent(bgColor, (int) (0.7f * 255))
+    );
+
+      // listen to changes in the controller visibility
       exoView.setControllerVisibilityListener(new PlayerView.ControllerVisibilityListener() {
         @Override
         public void onVisibilityChanged(int visibility) {
@@ -86,6 +95,8 @@ public class VideoPlayer extends FrameLayout {
     this.interactor = interactor;
   }
 
+//todo video style controls properly and work out their proper position dynamically based on rail
+  
   public void setVideoSource(@NonNull VideoSlide videoSource, boolean autoplay)
       throws IOException
   {

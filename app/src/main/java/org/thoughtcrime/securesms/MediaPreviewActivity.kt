@@ -20,11 +20,9 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.database.Cursor
 import android.database.CursorIndexOutOfBoundsException
-import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.AsyncTask
 import android.os.Build
@@ -38,12 +36,13 @@ import android.view.Window
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.core.graphics.ColorUtils
+import androidx.core.graphics.drawable.toDrawable
 import androidx.core.util.Pair
+import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.lifecycle.Observer
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.loader.app.LoaderManager
 import androidx.loader.content.Loader
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -71,7 +70,6 @@ import org.session.libsession.utilities.recipients.RecipientModifiedListener
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ShareActivity
 import org.thoughtcrime.securesms.components.MediaView
-import org.thoughtcrime.securesms.components.MediaView.FullscreenToggleListener
 import org.thoughtcrime.securesms.components.dialogs.DeleteMediaPreviewDialog
 import org.thoughtcrime.securesms.database.MediaDatabase.MediaRecord
 import org.thoughtcrime.securesms.database.loaders.PagingMediaLoader
@@ -88,14 +86,12 @@ import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.FilenameUtils.getFilenameFromUri
 import org.thoughtcrime.securesms.util.SaveAttachmentTask
 import org.thoughtcrime.securesms.util.SaveAttachmentTask.Companion.showOneTimeWarningDialogOrSave
-import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
 import java.io.IOException
 import java.util.Locale
 import java.util.WeakHashMap
 import javax.inject.Inject
 import kotlin.math.max
 import kotlin.math.min
-import androidx.core.graphics.drawable.toDrawable
 
 /**
  * Activity for displaying media attachments in-app
@@ -103,7 +99,7 @@ import androidx.core.graphics.drawable.toDrawable
 @AndroidEntryPoint
 class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedListener,
     LoaderManager.LoaderCallbacks<Pair<Cursor, Int>?>,
-    RailItemListener, FullscreenToggleListener {
+    RailItemListener, MediaView.FullscreenToggleListener {
     private lateinit var binding: MediaPreviewActivityBinding
     private var initialMediaUri: Uri? = null
     private var initialMediaType: String? = null
@@ -149,18 +145,39 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
             ).toDrawable())
 
         // handle edge to edge display
-        findViewById<View>(android.R.id.content).applySafeInsetsPaddings(
-            applyTop = false,
-            applyBottom = false,
-            alsoApply = { insets ->
-                binding.toolbar.updatePadding(top = insets.top)
-                binding.mediaPreviewAlbumRail.updatePadding(bottom = insets.bottom)
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById<View>(android.R.id.content)) { view, windowInsets ->
+            val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime())
+
+            binding.toolbar.updatePadding(top = insets.top)
+
+            //todo video apply padding at the bottom of the rail butit would be good to keep it the same with or without fs
+            //todo video calculate amount needed for the video controls so they appear justs above the rail IF there is a rail
+
+            // on older android version this acts as a safety when the system intercepts the first tap and only
+            // shows the system bars but ignores our code to show the toolbar and rail back
+            val systemBarsVisible: Boolean = windowInsets.isVisible(WindowInsetsCompat.Type.systemBars())
+            if (systemBarsVisible && isFullscreen) {
+                exitFullscreen()
             }
-        )
+
+            windowInsets.inset(insets)
+        }
+
+
+        // Set up system UI visibility listener
+        window.decorView.setOnSystemUiVisibilityChangeListener { visibility ->
+            // Check if system bars became visible
+            val systemBarsVisible = (visibility and View.SYSTEM_UI_FLAG_FULLSCREEN) == 0
+            if (systemBarsVisible && isFullscreen) {
+                // System bars appeared - exit fullscreen and show our UI
+                exitFullscreen()
+            }
+        }
     }
 
     override fun toggleFullscreen() {
         if (isFullscreen) exitFullscreen() else enterFullscreen()
+        //todo VIDEO now that I control the fs visibility directly here, I should probably propagate the video control visibility otherwise I can get in a state where the app is fs but the controls show
     }
 
     override fun setFullscreen(displayFullscreen: Boolean) {
@@ -169,16 +186,40 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
 
     private fun enterFullscreen() {
         supportActionBar?.hide()
+        hideAlbumRail()
         isFullscreen = true
         WindowCompat.getInsetsController(window, window.decorView)
             .hide(WindowInsetsCompat.Type.systemBars())
     }
 
     private fun exitFullscreen() {
+        supportActionBar?.show()
+        showAlbumRail()
         WindowCompat.getInsetsController(window, window.decorView)
             .show(WindowInsetsCompat.Type.systemBars())
         isFullscreen = false
-        supportActionBar?.show()
+    }
+
+    private fun hideAlbumRail() {
+        val rail = binding.mediaPreviewAlbumRailContainer
+        rail.animate().cancel()
+        rail.animate()
+            .translationY(rail.height.toFloat())
+            .alpha(0f)
+            .setDuration(250)
+            .withEndAction { rail.visibility = View.GONE }
+            .start()
+    }
+
+    private fun showAlbumRail() {
+        val rail = binding.mediaPreviewAlbumRailContainer
+        rail.animate().cancel()
+        rail.visibility = View.VISIBLE
+        rail.animate()
+            .translationY(0f)
+            .alpha(1f)
+            .setDuration(250)
+            .start()
     }
 
     @SuppressLint("MissingSuperCall")
@@ -308,6 +349,11 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
                 //todo VIDEO see if we can add back videos from the image picker in convo and if so checks that it works fine across all steps, including the edit screen
                 //todo VIDEO sharing from outside session brings up video in the edit media screen (might be broken)
                 //todo VIDEO When a rail is present, the video scrubber is not hidden behind it and not interactable - Maybe place controls above rails AND hide rail in fullscreen
+                //todo VIDEO now that I have the tap detection here it messes with double taps on zoom image... Can I ignore it somehow if double tapping?
+                //todo VIDEO test older version
+                //todo VIDEO test older version > emulator 26 seems to have a visual glitch in the appbar when it reappears from fs - does it happen on a real device? (can i fix it by animating the toolbar instead of the supportActionBar if it does?)
+                //todo VIDEO maybe always hide rail in landscape
+                //todo VIDEO investigate broken "share from outside" session - the video doesn't show nor play there, but it does upload fine
 
                 binding.mediaPreviewAlbumRailContainer.visibility =
                     if (previewData.albumThumbnails.isEmpty()) View.GONE else View.VISIBLE

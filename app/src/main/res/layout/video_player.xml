@@ -11,6 +11,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="center"
-        android:gravity="center"/>
+        android:gravity="center"
+        app:animation_enabled="false"
+        app:controller_layout_id="@layout/custom_player_controller"/>
 
 </FrameLayout>
