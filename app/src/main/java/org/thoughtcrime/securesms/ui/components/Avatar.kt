@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalDensity
@@ -147,11 +148,12 @@ private fun AvatarElement(
     Box(
         modifier = modifier.size(size)
             .background(
-                color = data.color ?: classicLight1,
+                color = data.color ?: classicLight1, //todo UCS verify with tema if right color - also update the xml version if this changed
                 shape = clip,
             )
             .clip(clip),
     ) {
+        // first attempt to display the custom image if there is one
         if(data.contactPhoto != null){
             val maxSizePx = with(LocalDensity.current) { maxSizeLoad.toPx().toInt() }
             GlideImage(
@@ -163,7 +165,16 @@ private fun AvatarElement(
                     it.avatarOptions(maxSizePx)
                 }
             )
-        } else if(!data.name.isNullOrEmpty()){
+        } // second attemot to use the custom icon if there is one
+        else if(data.icon != null){
+            Image(
+                modifier = Modifier.fillMaxSize().padding(size * 0.2f),
+                painter = painterResource(id = data.icon),
+                colorFilter = ColorFilter.tint(Color.White),
+                contentDescription = null,
+            )
+        } // third, try to use the name if there is one
+        else if(!data.name.isNullOrEmpty()){
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -259,6 +270,40 @@ fun PreviewAvatarSingleUnknown(){
                 color = null,
                 contactPhoto = null
             )))
+        )
+    }
+}
+
+@Preview
+@Composable
+fun PreviewAvatarIconNoName(){
+    PreviewTheme {
+        Avatar(
+            size = LocalDimensions.current.iconLarge,
+            data = AvatarUIData(
+                listOf(AvatarUIElement(
+                    name = "",
+                    icon = R.drawable.session_logo,
+                    color = null,
+                    contactPhoto = null
+                )))
+        )
+    }
+}
+
+@Preview
+@Composable
+fun PreviewAvatarIconWithName(){
+    PreviewTheme {
+        Avatar(
+            size = LocalDimensions.current.iconLarge,
+            data = AvatarUIData(
+                listOf(AvatarUIElement(
+                    name = "TO",
+                    icon = R.drawable.session_logo,
+                    color = null,
+                    contactPhoto = null
+                )))
         )
     }
 }
