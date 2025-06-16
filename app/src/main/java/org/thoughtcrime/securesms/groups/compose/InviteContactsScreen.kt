@@ -135,7 +135,7 @@ fun InviteContacts(
                     onClick = onDoneClicked,
                     modifier = Modifier
                         .padding(vertical = LocalDimensions.current.spacing)
-                        .qaTag(R.string.qa_invite_button), SEND COMMENT IN JIRA AND MARK THOSE TICKETS AS PROGRESS
+                        .qaTag(R.string.qa_invite_button),
                 ) {
                     Text(
                         stringResource(id = R.string.membersInviteTitle)
