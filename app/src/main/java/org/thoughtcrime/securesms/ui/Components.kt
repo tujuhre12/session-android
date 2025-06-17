@@ -622,12 +622,13 @@ fun Arc(
 }
 
 @Composable
-fun RowScope.SessionShieldIcon() {
+fun SessionShieldIcon(
+    modifier: Modifier = Modifier
+) {
     Icon(
         painter = painterResource(R.drawable.ic_recovery_password_custom),
         contentDescription = null,
-        modifier = Modifier
-            .align(Alignment.CenterVertically)
+        modifier = modifier
             .size(16.dp)
             .wrapContentSize(unbounded = true)
     )
