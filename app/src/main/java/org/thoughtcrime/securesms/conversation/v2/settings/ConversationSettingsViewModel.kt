@@ -790,7 +790,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         viewModelScope.launch {
             showLoading()
             try {
-                val messagesDeleted = withContext(Dispatchers.Default) {
+                withContext(Dispatchers.Default) {
                     conversationRepository.clearAllMessages(
                         threadId,
                         if (clearForEveryoneGroupsV2 && groupV2 != null) AccountId(groupV2!!.groupAccountId) else null
@@ -799,8 +799,8 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
                 Toast.makeText(context, context.resources.getQuantityString(
                     R.plurals.deleteMessageDeleted,
-                    messagesDeleted,
-                    messagesDeleted
+                    2, // as per the ACs, we decided to always show this message as plural
+                    2
                 ), Toast.LENGTH_LONG).show()
             } catch (e: Exception){
                 Toast.makeText(context, context.resources.getQuantityString(
