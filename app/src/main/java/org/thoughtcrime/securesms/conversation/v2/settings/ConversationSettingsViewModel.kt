@@ -71,6 +71,7 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory.Companion.MAX_NAME_
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.repository.ConversationRepository
+import org.thoughtcrime.securesms.ui.components.iconExternalLink
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
@@ -237,7 +238,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 dmTypeString,
                 TIME_KEY to durationAbbreviated
             )
-        } else null
+        } else context.getString(R.string.off)
 
         val pinned = threadDb.isPinned(threadId)
 
