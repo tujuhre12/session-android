@@ -105,7 +105,7 @@ fun InviteContacts(
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
             BottomFadingEdgeBox(modifier = Modifier.weight(1f)) { bottomContentPadding ->
-                if(contacts.isEmpty()){
+                if(contacts.isEmpty() && searchQuery.isEmpty()){
                     Text(
                         text = stringResource(id = R.string.contactNone),
                         modifier = Modifier.padding(top = LocalDimensions.current.spacing)
@@ -190,6 +190,25 @@ private fun PreviewSelectEmptyContacts() {
             contacts = contacts,
             onContactItemClicked = {},
             searchQuery = "",
+            onSearchQueryChanged = {},
+            onSearchQueryClear = {},
+            onDoneClicked = {},
+            onBack = {},
+            banner = { GroupMinimumVersionBanner() }
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PreviewSelectEmptyContactsWithSearch() {
+    val contacts = emptyList<ContactItem>()
+
+    PreviewTheme {
+        InviteContacts(
+            contacts = contacts,
+            onContactItemClicked = {},
+            searchQuery = "Test",
             onSearchQueryChanged = {},
             onSearchQueryClear = {},
             onDoneClicked = {},
