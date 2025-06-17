@@ -344,6 +344,7 @@ class ConversationViewModel(
         // update state on recipient changes
         viewModelScope.launch(Dispatchers.Default) {
             recipientChangeSource.changes().collect {
+                updateAppBarData(recipient)
                 _uiState.update {
                     it.copy(
                         shouldExit = recipient == null,
