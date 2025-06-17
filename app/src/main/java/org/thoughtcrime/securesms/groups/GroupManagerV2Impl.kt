@@ -1238,7 +1238,7 @@ class GroupManagerV2Impl @Inject constructor(
                 .format()
 
         } else if (groupData.hasAdminKey()) {
-            message = Phrase.from(application, R.string.groupLeaveDescriptionAdmin)
+            message = Phrase.from(application, R.string.groupDeleteDescription)
                 .put(GROUP_NAME_KEY, name)
                 .format()
         } else {
