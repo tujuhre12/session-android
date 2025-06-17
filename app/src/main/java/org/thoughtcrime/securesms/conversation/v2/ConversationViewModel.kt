@@ -481,6 +481,7 @@ class ConversationViewModel(
                 pagerData = pagerData,
                 showCall = conversation?.showCallMenu() ?: false,
                 showAvatar = showOptionsMenu,
+                showSearch = _appBarData.value.showSearch,
                 avatarUIData = avatarData
             )
             // also preload the larger version of the avatar in case the user goes to the settings
