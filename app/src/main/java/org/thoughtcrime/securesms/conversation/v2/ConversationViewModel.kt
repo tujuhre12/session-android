@@ -246,8 +246,17 @@ class ConversationViewModel(
             return !recipient.isLocalNumber && !recipient.isLegacyGroupRecipient && !recipient.isCommunityRecipient && !recipient.isApproved
         }
 
+    /**
+     * returns true for outgoing message request, whether they are for 1 on 1 conversations or community outgoing MR
+     */
+    val isOutgoingMessageRequest: Boolean
+        get() {
+            val recipient = recipient ?: return false
+            return (recipient.is1on1 || recipient.isCommunityInboxRecipient) && !recipient.hasApprovedMe()
+        }
+
     val showOptionsMenu: Boolean
-        get() = !isMessageRequestThread && !isDeprecatedLegacyGroup && recipient?.hasApprovedMe() == true
+        get() = !isMessageRequestThread && !isDeprecatedLegacyGroup && !isOutgoingMessageRequest
 
     private val isDeprecatedLegacyGroup: Boolean
         get() = recipient?.isLegacyGroupRecipient == true && legacyGroupDeprecationManager.isDeprecated
