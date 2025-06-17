@@ -334,6 +334,7 @@ fun ConversationSettingsSubCategory(
                     text = option.name,
                     subtitle = option.subtitle,
                     subtitleQaTag = option.subtitleQaTag,
+                    enabled = option.enabled,
                     icon = option.icon,
                     shape = when (index) {
                         0 -> getCellTopShape()

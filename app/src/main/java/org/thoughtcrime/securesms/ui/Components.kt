@@ -213,6 +213,7 @@ fun LargeItemButton(
     modifier: Modifier = Modifier,
     subtitle: String? = null,
     @StringRes subtitleQaTag: Int? = null,
+    enabled: Boolean = true,
     colors: ButtonColors = transparentButtonColors(),
     shape: Shape = RectangleShape,
     onClick: () -> Unit
@@ -223,6 +224,7 @@ fun LargeItemButton(
         modifier = modifier,
         subtitle = subtitle,
         subtitleQaTag = subtitleQaTag,
+        enabled = enabled,
         minHeight = LocalDimensions.current.minLargeItemButtonHeight,
         textStyle = LocalType.current.h8,
         colors = colors,
@@ -238,6 +240,7 @@ fun LargeItemButton(
     modifier: Modifier = Modifier,
     subtitle: String? = null,
     @StringRes subtitleQaTag: Int? = null,
+    enabled: Boolean = true,
     colors: ButtonColors = transparentButtonColors(),
     shape: Shape = RectangleShape,
     onClick: () -> Unit
@@ -248,6 +251,7 @@ fun LargeItemButton(
         modifier = modifier,
         subtitle = subtitle,
         subtitleQaTag = subtitleQaTag,
+        enabled = enabled,
         minHeight = LocalDimensions.current.minLargeItemButtonHeight,
         textStyle = LocalType.current.h8,
         colors = colors,
@@ -261,6 +265,7 @@ fun LargeItemButton(
     annotatedStringText: AnnotatedString,
     @DrawableRes icon: Int,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     colors: ButtonColors = transparentButtonColors(),
     shape: Shape = RectangleShape,
     onClick: () -> Unit
@@ -269,6 +274,7 @@ fun LargeItemButton(
         modifier = modifier,
         annotatedStringText = annotatedStringText,
         icon = icon,
+        enabled = enabled,
         minHeight = LocalDimensions.current.minLargeItemButtonHeight,
         textStyle = LocalType.current.h8,
         colors = colors,
@@ -284,6 +290,7 @@ fun ItemButton(
     modifier: Modifier,
     subtitle: String? = null,
     @StringRes subtitleQaTag: Int? = null,
+    enabled: Boolean = true,
     minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
     textStyle: TextStyle = LocalType.current.xl,
     colors: ButtonColors = transparentButtonColors(),
@@ -306,6 +313,7 @@ fun ItemButton(
         colors = colors,
         subtitle = subtitle,
         subtitleQaTag = subtitleQaTag,
+        enabled = enabled,
         onClick = onClick,
     )
 }
@@ -320,6 +328,7 @@ fun ItemButton(
     modifier: Modifier = Modifier,
     subtitle: String? = null,
     @StringRes subtitleQaTag: Int? = null,
+    enabled: Boolean = true,
     minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
     textStyle: TextStyle = LocalType.current.xl,
     colors: ButtonColors = transparentButtonColors(),
@@ -336,6 +345,7 @@ fun ItemButton(
         colors = colors,
         subtitle = subtitle,
         subtitleQaTag = subtitleQaTag,
+        enabled = enabled,
         onClick = onClick
     )
 }
@@ -347,6 +357,7 @@ fun ItemButton(
     modifier: Modifier,
     subtitle: String? = null,
     @StringRes subtitleQaTag: Int? = null,
+    enabled: Boolean = true,
     minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
     textStyle: TextStyle = LocalType.current.xl,
     colors: ButtonColors = transparentButtonColors(),
@@ -358,6 +369,7 @@ fun ItemButton(
         modifier = modifier,
         subtitle = subtitle,
         subtitleQaTag = subtitleQaTag,
+        enabled = enabled,
         icon = {
             Icon(
                 painter = painterResource(id = icon),
@@ -386,6 +398,7 @@ fun ItemButton(
     modifier: Modifier = Modifier,
     subtitle: String? = null,
     @StringRes subtitleQaTag: Int? = null,
+    enabled: Boolean = true,
     minHeight: Dp = LocalDimensions.current.minLargeItemButtonHeight,
     textStyle: TextStyle = LocalType.current.xl,
     colors: ButtonColors = transparentButtonColors(),
@@ -397,6 +410,7 @@ fun ItemButton(
         colors = colors,
         onClick = onClick,
         contentPadding = PaddingValues(),
+        enabled = enabled,
         shape = shape,
     ) {
         Box(

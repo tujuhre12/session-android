@@ -71,7 +71,6 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory.Companion.MAX_NAME_
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.repository.ConversationRepository
-import org.thoughtcrime.securesms.ui.components.iconExternalLink
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
@@ -1429,6 +1428,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         @StringRes val qaTag: Int? = null,
         val subtitle: String? = null,
         @StringRes val subtitleQaTag: Int? = null,
+        val enabled: Boolean = true,
         val onClick: () -> Unit
     )
 
