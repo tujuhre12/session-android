@@ -550,7 +550,13 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
     private val currentMediaItem: MediaItem?
         get() {
             if (adapter == null) return null
-            return adapter!!.getMediaItemFor(binding.mediaPager.currentItem)
+
+            try {
+                return adapter!!.getMediaItemFor(binding.mediaPager.currentItem)
+            } catch (e: Exception) {
+                Log.w(TAG, "Error getting current media item", e)
+                return null
+            }
         }
 
     override fun onCreateLoader(id: Int, args: Bundle?): Loader<Pair<Cursor, Int>?> {
@@ -603,10 +609,14 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
 
             if (adapter == null) return
 
-            val item = adapter!!.getMediaItemFor(position)
-            if (item.recipient != null) item.recipient.addListener(this@MediaPreviewActivity)
-            viewModel.setActiveAlbumRailItem(this@MediaPreviewActivity, position)
-            updateActionBar()
+            try {
+                val item = adapter!!.getMediaItemFor(position)
+                if (item.recipient != null) item.recipient.addListener(this@MediaPreviewActivity)
+                viewModel.setActiveAlbumRailItem(this@MediaPreviewActivity, position)
+                updateActionBar()
+            } catch (e: Exception){
+                finish()
+            }
         }
 
 
@@ -618,6 +628,8 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
                 if (item.recipient != null) item.recipient.removeListener(this@MediaPreviewActivity)
             } catch (e: CursorIndexOutOfBoundsException) {
                 throw RuntimeException("position = $position leftIsRecent = $leftIsRecent", e)
+            } catch (e: Exception){
+                finish()
             }
 
             adapter!!.pause(position)
