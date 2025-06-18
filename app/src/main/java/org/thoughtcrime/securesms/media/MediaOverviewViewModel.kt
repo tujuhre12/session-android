@@ -95,7 +95,6 @@ class MediaOverviewViewModel @AssistedInject constructor(
         .map { recipient ->
             when {
                 recipient.isLocalNumber -> application.getString(R.string.noteToSelf)
-
                 else -> recipient.name
             }
         }
