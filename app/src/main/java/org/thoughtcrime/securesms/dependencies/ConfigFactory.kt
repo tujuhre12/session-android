@@ -85,6 +85,7 @@ class ConfigFactory @Inject constructor(
         private const val CONFIG_CHANGE_BUFFER_PERIOD: Long = 2 * 60 * 1000L
 
         const val MAX_NAME_BYTES = 100 // max size in bytes for names
+        const val MAX_GROUP_DESCRIPTION_BYTES = 600 // max size in bytes for group descriptions
     }
 
     init {
@@ -291,6 +292,7 @@ class ConfigFactory @Inject constructor(
 
     private fun <T> doWithMutableGroupConfigs(
         groupId: AccountId,
+        fromMerge: Boolean,
         cb: (GroupConfigsImpl) -> Pair<T, Boolean>): T {
         val (lock, configs) = ensureGroupConfigsInitialized(groupId)
         val (result, changed) = lock.write {
@@ -301,7 +303,7 @@ class ConfigFactory @Inject constructor(
             coroutineScope.launch {
                 // Config change notifications are important so we must use suspend version of
                 // emit (not tryEmit)
-                _configUpdateNotifications.emit(ConfigUpdateNotification.GroupConfigsUpdated(groupId))
+                _configUpdateNotifications.emit(ConfigUpdateNotification.GroupConfigsUpdated(groupId, fromMerge = fromMerge))
             }
         }
 
@@ -312,12 +314,14 @@ class ConfigFactory @Inject constructor(
         groupId: AccountId,
         cb: (MutableGroupConfigs) -> T
     ): T {
-        return doWithMutableGroupConfigs(groupId = groupId) {
+        return doWithMutableGroupConfigs(groupId = groupId, fromMerge = false) {
             cb(it) to it.dumpIfNeeded(clock)
         }
     }
 
     override fun removeContact(accountId: String) {
+        if(!accountId.startsWith(IdPrefix.STANDARD.value)) return
+
         withMutableUserConfigs {
             it.contacts.erase(accountId)
         }
@@ -361,7 +365,7 @@ class ConfigFactory @Inject constructor(
         info: List<ConfigMessage>,
         members: List<ConfigMessage>
     ) {
-        val changed = doWithMutableGroupConfigs(groupId) { configs ->
+        val changed = doWithMutableGroupConfigs(groupId, fromMerge = true) { configs ->
             // Keys must be loaded first as they are used to decrypt the other config messages
             val keysLoaded = keys.fold(false) { acc, msg ->
                 configs.groupKeys.loadKey(msg.data, msg.hash, msg.timestamp, configs.groupInfo.pointer, configs.groupMembers.pointer) || acc
@@ -431,7 +435,7 @@ class ConfigFactory @Inject constructor(
             return
         }
 
-        doWithMutableGroupConfigs(groupId) { configs ->
+        doWithMutableGroupConfigs(groupId, fromMerge = false) { configs ->
             members?.let { (push, result) -> configs.groupMembers.confirmPushed(push.seqNo, result.hashes.toTypedArray()) }
             info?.let { (push, result) -> configs.groupInfo.confirmPushed(push.seqNo, result.hashes.toTypedArray()) }
             keysPush?.let { (hashes, timestamp) ->
