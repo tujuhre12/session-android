@@ -177,7 +177,6 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
 
     override fun toggleFullscreen() {
         if (isFullscreen) exitFullscreen() else enterFullscreen()
-        //todo VIDEO now that I control the fs visibility directly here, I should probably propagate the video control visibility otherwise I can get in a state where the app is fs but the controls show
     }
 
     override fun setFullscreen(displayFullscreen: Boolean) {
@@ -212,6 +211,9 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
     }
 
     private fun showAlbumRail() {
+        // never show the rail in landscape
+        if(isLandscape()) return
+
         val rail = binding.mediaPreviewAlbumRailContainer
         rail.animate().cancel()
         rail.visibility = View.VISIBLE
@@ -330,12 +332,25 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
+        // always hide the rail in landscape
+        if (isLandscape()) {
+            hideAlbumRail()
+        } else {
+            if (!isFullscreen) {
+                showAlbumRail()
+            }
+        }
+
         // Re-apply fullscreen if we were already in it
         if (isFullscreen) {
             enterFullscreen()
         } else {
             exitFullscreen()
         }
+    }
+
+    private fun isLandscape(): Boolean {
+        return resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
     }
 
     private fun initializeObservers() {
@@ -347,12 +362,8 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
                 }
 
                 //todo VIDEO see if we can add back videos from the image picker in convo and if so checks that it works fine across all steps, including the edit screen
-                //todo VIDEO sharing from outside session brings up video in the edit media screen (might be broken)
-                //todo VIDEO When a rail is present, the video scrubber is not hidden behind it and not interactable - Maybe place controls above rails AND hide rail in fullscreen
-                //todo VIDEO now that I have the tap detection here it messes with double taps on zoom image... Can I ignore it somehow if double tapping?
                 //todo VIDEO test older version
                 //todo VIDEO test older version > emulator 26 seems to have a visual glitch in the appbar when it reappears from fs - does it happen on a real device? (can i fix it by animating the toolbar instead of the supportActionBar if it does?)
-                //todo VIDEO maybe always hide rail in landscape
                 //todo VIDEO investigate broken "share from outside" session - the video doesn't show nor play there, but it does upload fine
 
                 binding.mediaPreviewAlbumRailContainer.visibility =

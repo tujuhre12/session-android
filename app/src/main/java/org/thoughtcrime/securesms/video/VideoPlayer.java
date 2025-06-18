@@ -73,7 +73,7 @@ public class VideoPlayer extends FrameLayout {
     inflate(context, R.layout.video_player, this);
 
     this.exoView   = ViewUtil.findById(this, R.id.video_view);
-    exoView.setControllerShowTimeoutMs(2000);
+    exoView.setControllerShowTimeoutMs(3000);
 
     TypedValue tv = new TypedValue();
     getContext().getTheme().resolveAttribute(android.R.attr.colorPrimary, tv, true);

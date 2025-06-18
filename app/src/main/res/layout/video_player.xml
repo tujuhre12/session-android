@@ -13,6 +13,7 @@
         android:layout_gravity="center"
         android:gravity="center"
         app:animation_enabled="false"
+        app:shutter_background_color="?colorPrimary"
         app:controller_layout_id="@layout/custom_player_controller"/>
 
 </FrameLayout>
