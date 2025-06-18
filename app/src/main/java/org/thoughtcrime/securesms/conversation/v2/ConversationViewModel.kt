@@ -1291,12 +1291,9 @@ class ConversationViewModel(
 
     fun onResume() {
         // when resuming we want to check if the app bar has notification status data, if so update it if it has changed
-        Log.w("", "*** ON RESUME")
         if(currentAppBarNotificationState != null && recipient!= null){
-            Log.w("", "*** WE HAVE NOTIFICATIO DATA")
             val newAppBarNotificationState = getNotificationStatusTitle(recipient!!)
             if(currentAppBarNotificationState != newAppBarNotificationState){
-                Log.w("", "*** DIFFERENT! UPADTE~")
                 updateAppBarData(recipient)
             }
         }
