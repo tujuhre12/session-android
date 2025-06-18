@@ -29,7 +29,6 @@ import org.session.libsession.messaging.jobs.MessageSendJob
 import org.session.libsession.messaging.jobs.RetrieveProfileAvatarJob
 import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.Message
-import org.session.libsession.messaging.messages.control.ConfigurationMessage
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
 import org.session.libsession.messaging.messages.signal.IncomingEncryptedMessage
@@ -1168,9 +1167,7 @@ open class Storage @Inject constructor(
         sessionContactDatabase.setContact(contact)
         val address = fromSerialized(contact.accountID)
         if (!getRecipientApproved(address)) return
-        val recipientHash = profileManager.contactUpdatedInternal(contact)
-        val recipient = Recipient.from(context, address, false)
-        setRecipientHash(recipient, recipientHash)
+        profileManager.contactUpdatedInternal(contact)
     }
 
     override fun deleteContactAndSyncConfig(accountId: String) {
@@ -1229,7 +1226,6 @@ open class Storage @Inject constructor(
                 val (url, key) = contact.profilePicture
                 if (key.data.size != ProfileKeyUtil.PROFILE_KEY_BYTES) return@forEach
                 profileManager.setProfilePicture(context, recipient, url, key.data)
-                profileManager.setUnidentifiedAccessMode(context, recipient, Recipient.UnidentifiedAccessMode.UNKNOWN)
             } else {
                 profileManager.setProfilePicture(context, recipient, null, null)
             }
@@ -1250,7 +1246,6 @@ open class Storage @Inject constructor(
                     )
                 }
             }
-            setRecipientHash(recipient, contact.hashCode().toString())
         }
 
         // if we have contacts locally but that are missing from the config, remove their corresponding thread
@@ -1270,48 +1265,6 @@ open class Storage @Inject constructor(
         }
     }
 
-    override fun addContacts(contacts: List<ConfigurationMessage.Contact>) {
-        val recipientDatabase = recipientDatabase
-        val threadDatabase = threadDatabase
-        val mappingDb = blindedIdMappingDatabase
-        val moreContacts = contacts.filter { contact ->
-            val id = AccountId(contact.publicKey)
-            id.prefix != IdPrefix.BLINDED || mappingDb.getBlindedIdMapping(contact.publicKey).none { it.accountId != null }
-        }
-        for (contact in moreContacts) {
-            val address = fromSerialized(contact.publicKey)
-            val recipient = Recipient.from(context, address, true)
-            if (!contact.profilePicture.isNullOrEmpty()) {
-                recipientDatabase.setProfileAvatar(recipient, contact.profilePicture)
-            }
-            if (contact.profileKey?.isNotEmpty() == true) {
-                recipientDatabase.setProfileKey(recipient, contact.profileKey)
-            }
-            if (contact.name.isNotEmpty()) {
-                recipientDatabase.setProfileName(recipient, contact.name)
-            }
-            recipientDatabase.setProfileSharing(recipient, true)
-            recipientDatabase.setRegistered(recipient, Recipient.RegisteredState.REGISTERED)
-            // create Thread if needed
-            val threadId = threadDatabase.getThreadIdIfExistsFor(recipient)
-            if (contact.didApproveMe == true) {
-                recipientDatabase.setApprovedMe(recipient, true)
-            }
-            if (contact.isApproved == true && threadId != -1L) {
-                setRecipientApproved(recipient, true)
-                threadDatabase.setHasSent(threadId, true)
-            }
-
-            val contactIsBlocked: Boolean? = contact.isBlocked
-            if (contactIsBlocked != null && recipient.isBlocked != contactIsBlocked) {
-                setBlocked(listOf(recipient), contactIsBlocked, fromConfigUpdate = true)
-            }
-        }
-        if (contacts.isNotEmpty()) {
-            threadDatabase.notifyConversationListListeners()
-        }
-    }
-
     override fun shouldAutoDownloadAttachments(recipient: Recipient): Boolean {
         return recipient.autoDownloadAttachments
     }
@@ -1322,11 +1275,6 @@ open class Storage @Inject constructor(
     ) {
         val recipientDb = recipientDatabase
         recipientDb.setAutoDownloadAttachments(recipient, shouldAutoDownloadAttachments)
-    }
-
-    override fun setRecipientHash(recipient: Recipient, recipientHash: String?) {
-        val recipientDb = recipientDatabase
-        recipientDb.setRecipientHash(recipient, recipientHash)
     }
 
     override fun getLastUpdated(threadID: Long): Long {
@@ -1565,7 +1513,6 @@ open class Storage @Inject constructor(
 
                 if ((profileKeyValid && profileKeyChanged) || (profileKeyValid && needsProfilePicture)) {
                     profileManager.setProfilePicture(context, sender, profile.profilePictureURL!!, newProfileKey!!)
-                    profileManager.setUnidentifiedAccessMode(context, sender, Recipient.UnidentifiedAccessMode.UNKNOWN)
                 }
             }
             
