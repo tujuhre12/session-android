@@ -724,6 +724,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             true,
             screenshotObserver
         )
+
+        viewModel.onResume()
     }
 
     override fun onPause() {

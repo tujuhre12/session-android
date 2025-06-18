@@ -143,6 +143,47 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         }
     }
 
+    fun onResume(){
+        // check the mute timing in case it has changed when coming back to the screen
+        val conversation = recipient ?: return
+
+        // Check if notification item exists first
+        val hasNotificationItem = _uiState.value.categories
+            .flatMap { it.items }
+            .flatMap { it.items }
+            .firstOrNull { it.qaTag == R.string.qa_conversation_settings_notifications }
+
+        // no need to do anything if the state doesn't have any notification item
+        if (hasNotificationItem == null) return
+
+        // get the new values
+        val (notificationIconRes, notificationSubtitle) = getNotificationsData(conversation)
+
+        // if they are the same as what we already have, no need to go further
+        if (notificationIconRes == hasNotificationItem.icon &&
+            notificationSubtitle == hasNotificationItem.subtitle) return
+
+        // otherwise update the text
+        _uiState.update { currentState ->
+            // Update the item
+            currentState.copy(
+                categories = currentState.categories.map { category ->
+                    category.copy(
+                        items = category.items.map { subCategory ->
+                            subCategory.copy(
+                                items = subCategory.items.map { item ->
+                                    if (item.qaTag == R.string.qa_conversation_settings_notifications) {
+                                        item.copy(subtitle = notificationSubtitle, icon = notificationIconRes)
+                                    } else item
+                                }
+                            )
+                        }
+                    )
+                }
+            )
+        }
+    }
+
     private suspend fun getStateFromRecipient(){
         val conversation = recipient ?: return
         val configContact = configFactory.withUserConfigs { configs ->
@@ -241,12 +282,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
         val pinned = threadDb.isPinned(threadId)
 
-        val (notificationIconRes, notificationSubtitle) = when{
-            conversation.isMuted -> R.drawable.ic_volume_off to context.getString(R.string.notificationsMuted)
-            conversation.notifyType == RecipientDatabase.NOTIFY_TYPE_MENTIONS ->
-                R.drawable.ic_at_sign to context.getString(R.string.notificationsMentionsOnly)
-            else -> R.drawable.ic_volume_2 to context.getString(R.string.notificationsAllMessages)
-        }
+        val (notificationIconRes, notificationSubtitle) = getNotificationsData(conversation)
 
         // organise the setting options
         val optionData = options@when {
@@ -478,6 +514,15 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             Glide.with(context).load(it)
                 .avatarOptions(loadSize)
                 .preload(loadSize, loadSize)
+        }
+    }
+
+    private fun getNotificationsData(conversation: Recipient): Pair<Int, String> {
+        return when{
+            conversation.isMuted -> R.drawable.ic_volume_off to context.getString(R.string.notificationsMuted)
+            conversation.notifyType == RecipientDatabase.NOTIFY_TYPE_MENTIONS ->
+                R.drawable.ic_at_sign to context.getString(R.string.notificationsMentionsOnly)
+            else -> R.drawable.ic_volume_2 to context.getString(R.string.notificationsAllMessages)
         }
     }
 
