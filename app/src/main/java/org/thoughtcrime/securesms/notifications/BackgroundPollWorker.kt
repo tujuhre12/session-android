@@ -13,8 +13,13 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
@@ -102,7 +107,10 @@ class BackgroundPollWorker @AssistedInject constructor(
 
         try {
             Log.v(TAG, "Performing background poll for ${requestTargets.joinToString { it.name }}.")
-            supervisorScope {
+            // The polling process is independent from the worker's lifecycle, once it's started
+            // it can't be safely cancelled.
+            // This is fixed on dev and we can discard the workaround.
+            GlobalScope.async(SupervisorJob()) {
                 val tasks = mutableListOf<Deferred<*>>()
 
                 // DMs
@@ -115,6 +123,7 @@ class BackgroundPollWorker @AssistedInject constructor(
 
                         // FIXME: Using a job here seems like a bad idea...
                         BatchMessageReceiveJob(params).executeAsync("background")
+                        Log.d(TAG, "Polling messages finished.")
                     }
                 }
 
@@ -127,6 +136,7 @@ class BackgroundPollWorker @AssistedInject constructor(
                             async {
                                 Log.d(TAG, "Polling legacy group ${key.substring(0, 8)}...")
                                 poller.poll(key)
+                                Log.d(TAG, "Polling legacy group finished.")
                             }
                         }
                 }
@@ -142,6 +152,7 @@ class BackgroundPollWorker @AssistedInject constructor(
                                     .apply { hasStarted = true }
                                     .poll()
                                     .await()
+                                Log.d(TAG, "Polling Open group finished.")
                             }
                         }
                 }
@@ -151,6 +162,7 @@ class BackgroundPollWorker @AssistedInject constructor(
                     tasks += async {
                         Log.d(TAG, "Polling all groups.")
                         groupPollerManager.pollAllGroupsOnce()
+                        Log.d(TAG, "Polling groups finished.")
                     }
                 }
 
@@ -168,10 +180,14 @@ class BackgroundPollWorker @AssistedInject constructor(
                 if (caughtException != null) {
                     throw caughtException
                 }
-            }
+            }.await()
 
             return Result.success()
-        } catch (exception: Exception) {
+        } catch (c: CancellationException) {
+            Log.v(TAG, "Background poll cancelled")
+            throw c
+        }
+        catch (exception: Exception) {
             Log.e(TAG, "Background poll failed due to error: ${exception.message}.", exception)
             return Result.retry()
         }
