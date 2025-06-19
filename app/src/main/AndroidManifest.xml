@@ -381,7 +381,7 @@
             android:exported="false" />
 
         <provider
-            android:name="org.thoughtcrime.securesms.providers.PartProvider"
+            android:name="org.thoughtcrime.securesms.providers.PartAndBlobProvider"
             android:authorities="network.loki.provider.securesms"
             android:exported="false"
             android:grantUriPermissions="true" />

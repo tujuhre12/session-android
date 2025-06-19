@@ -93,7 +93,7 @@ import org.thoughtcrime.securesms.migration.DatabaseMigrationManager
 import org.thoughtcrime.securesms.notifications.BackgroundPollManager
 import org.thoughtcrime.securesms.notifications.NotificationChannels
 import org.thoughtcrime.securesms.notifications.PushRegistrationHandler
-import org.thoughtcrime.securesms.providers.BlobProvider
+import org.thoughtcrime.securesms.providers.BlobUtils
 import org.thoughtcrime.securesms.service.ExpiringMessageManager
 import org.thoughtcrime.securesms.service.KeyCachingService
 import org.thoughtcrime.securesms.sskenvironment.ReadReceiptManager
@@ -442,7 +442,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
 
     private fun initializeBlobProvider() {
         AsyncTask.THREAD_POOL_EXECUTOR.execute {
-            BlobProvider.getInstance().onSessionStart(this)
+            BlobUtils.getInstance().onSessionStart(this)
         }
     }
 
