@@ -94,13 +94,15 @@ public class VideoPlayer extends FrameLayout {
   public void setInteractor(@Nullable VideoPlayerInteractions interactor) {
     this.interactor = interactor;
   }
-
-//todo video style controls properly and work out their proper position dynamically based on rail
   
   public void setVideoSource(@NonNull VideoSlide videoSource, boolean autoplay)
       throws IOException
   {
     setExoViewSource(videoSource, autoplay);
+  }
+
+  public void setControlsYPosition(int yPosition){
+    org.thoughtcrime.securesms.conversation.v2.ViewUtil.setBottomMargin(findViewById(R.id.custom_controls), yPosition);
   }
 
   public Long pause() {

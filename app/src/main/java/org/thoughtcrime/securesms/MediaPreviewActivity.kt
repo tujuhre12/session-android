@@ -32,6 +32,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewTreeObserver
 import android.view.Window
 import android.widget.Toast
 import androidx.activity.viewModels
@@ -71,6 +72,7 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ShareActivity
 import org.thoughtcrime.securesms.components.MediaView
 import org.thoughtcrime.securesms.components.dialogs.DeleteMediaPreviewDialog
+import org.thoughtcrime.securesms.conversation.v2.DimensionUnit
 import org.thoughtcrime.securesms.database.MediaDatabase.MediaRecord
 import org.thoughtcrime.securesms.database.loaders.PagingMediaLoader
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
@@ -124,6 +126,9 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
     private var adapter: CursorPagerAdapter? = null
     private var albumRailAdapter: MediaRailAdapter? = null
 
+    private var windowInsetBottom = 0
+    private var railHeight = 0
+
     override fun onCreate(bundle: Bundle?, ready: Boolean) {
         binding = MediaPreviewActivityBinding.inflate(
             layoutInflater
@@ -147,11 +152,12 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
         // handle edge to edge display
         ViewCompat.setOnApplyWindowInsetsListener(findViewById<View>(android.R.id.content)) { view, windowInsets ->
             val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime())
+            windowInsetBottom = insets.bottom
 
             binding.toolbar.updatePadding(top = insets.top)
+            binding.mediaPreviewAlbumRailContainer.updatePadding(bottom = max(insets.bottom, binding.mediaPreviewAlbumRailContainer.paddingBottom))
 
-            //todo video apply padding at the bottom of the rail butit would be good to keep it the same with or without fs
-            //todo video calculate amount needed for the video controls so they appear justs above the rail IF there is a rail
+            updateControlsPosition()
 
             // on older android version this acts as a safety when the system intercepts the first tap and only
             // shows the system bars but ignores our code to show the toolbar and rail back
@@ -173,6 +179,20 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
                 exitFullscreen()
             }
         }
+    }
+
+    /**
+     * Updates the media controls' position based on the rail's position
+     */
+    private fun updateControlsPosition() {
+        // the ypos of the controls is either the window bottom inset, or the rail height if there is a rail
+        // since the rail height takes the window inset into account with its padding
+        val totalBottomPadding = max(
+            windowInsetBottom,
+            railHeight + resources.getDimensionPixelSize(R.dimen.medium_spacing)
+        )
+
+        adapter?.setControlsYPosition(totalBottomPadding)
     }
 
     override fun toggleFullscreen() {
@@ -205,7 +225,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
         rail.animate()
             .translationY(rail.height.toFloat())
             .alpha(0f)
-            .setDuration(250)
+            .setDuration(200)
             .withEndAction { rail.visibility = View.GONE }
             .start()
     }
@@ -220,7 +240,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
         rail.animate()
             .translationY(0f)
             .alpha(1f)
-            .setDuration(250)
+            .setDuration(200)
             .start()
     }
 
@@ -365,10 +385,27 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
                 //todo VIDEO test older version
                 //todo VIDEO test older version > emulator 26 seems to have a visual glitch in the appbar when it reappears from fs - does it happen on a real device? (can i fix it by animating the toolbar instead of the supportActionBar if it does?)
                 //todo VIDEO investigate broken "share from outside" session - the video doesn't show nor play there, but it does upload fine
+                //todo video sync visibility state when changing page: for example I can hide the rail in an image and go back to a video which is paused and therefore should show the rail.. or is that discrepancy ok?
 
                 binding.mediaPreviewAlbumRailContainer.visibility =
                     if (previewData.albumThumbnails.isEmpty()) View.GONE else View.VISIBLE
                 albumRailAdapter?.setMedia(previewData.albumThumbnails, previewData.activePosition)
+
+                // recalculate controls position if we have rail data
+                if(previewData.albumThumbnails.isNotEmpty()) {
+                    binding.mediaPreviewAlbumRailContainer.viewTreeObserver.addOnGlobalLayoutListener(
+                        object : ViewTreeObserver.OnGlobalLayoutListener {
+                            override fun onGlobalLayout() {
+                                binding.mediaPreviewAlbumRailContainer.viewTreeObserver.removeOnGlobalLayoutListener(
+                                    this
+                                )
+                                railHeight = binding.mediaPreviewAlbumRailContainer.height
+                                updateControlsPosition()
+                            }
+                        }
+                    )
+                }
+
                 binding.mediaPreviewAlbumRail.smoothScrollToPosition(previewData.activePosition)
             })
     }
@@ -588,6 +625,8 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
         )
         binding.mediaPager.adapter = adapter
 
+        updateControlsPosition()
+
         viewModel.setCursor(this, data.first, leftIsRecent)
 
         val item = max(min(data.second, adapter!!.itemCount - 1), 0)
@@ -667,6 +706,8 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
 
         private val context: Context = context
 
+        private var controlsYPosition: Int = 0
+
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
             return object : RecyclerView.ViewHolder(
                 MediaViewPageBinding.inflate(
@@ -695,6 +736,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
             try {
                 if (mediaRecord.attachment.dataUri == null) throw AssertionError()
                 binding.mediaView.set(glideRequests, window, mediaRecord.attachment.dataUri!!, mediaRecord.attachment.contentType, mediaRecord.attachment.size, autoplay)
+                binding.mediaView.setControlsYPosition(controlsYPosition)
 
                 // try to resume where we were if we have a saved playback position
                 val playbackPosition = (context as? MediaPreviewActivity)?.getLastPlaybackPosition(mediaRecord.attachment.dataUri!!)
@@ -744,6 +786,15 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
             val unclamped = if (leftIsRecent) position else cursor.count - 1 - position
             return max(min(unclamped, cursor.count - 1), 0)
         }
+
+        override fun setControlsYPosition(position: Int){
+            controlsYPosition = position
+
+            // Update all existing MediaViews immediately
+            mediaViews.values.forEach { mediaView ->
+                mediaView.setControlsYPosition(position)
+            }
+        }
     }
 
     class MediaItem(
@@ -760,6 +811,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
         abstract fun getMediaItemFor(position: Int): MediaItem
         abstract fun pause(position: Int)
         abstract fun cleanUp()
+        abstract fun setControlsYPosition(position: Int)
     }
 
     companion object {
