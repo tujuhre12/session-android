@@ -573,7 +573,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
         updateUnreadCountIndicator()
         updatePlaceholder()
-        setUpBlockedBanner()
         setUpExpiredGroupBanner()
         binding.searchBottomBar.setEventListener(this)
         updateSendAfterApprovalText()
@@ -971,13 +970,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private fun tearDownRecipientObserver() = viewModel.recipient?.removeListener(this)
 
     // called from onCreate
-    private fun setUpBlockedBanner() {
-        val recipient = viewModel.recipient?.takeUnless { it.isGroupOrCommunityRecipient } ?: return
-        binding.conversationHeader.blockedBannerTextView.text = applicationContext.getString(R.string.blockBlockedDescription)
-        binding.conversationHeader.blockedBanner.isVisible = recipient.isBlocked
-        binding.conversationHeader.blockedBanner.setOnClickListener { unblock() }
-    }
-
     private fun setUpExpiredGroupBanner() {
         lifecycleScope.launch {
             viewModel.showExpiredGroupBanner
@@ -1178,10 +1170,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         viewModel.updateRecipient()
 
         runOnUiThread {
-            val threadRecipient = viewModel.recipient ?: return@runOnUiThread
-            if (threadRecipient.isContactRecipient) {
-                binding.conversationHeader.blockedBanner.isVisible = threadRecipient.isBlocked
-            }
             invalidateOptionsMenu()
             updateSendAfterApprovalText()
         }
