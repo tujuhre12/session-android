@@ -150,7 +150,7 @@ private fun RecoveryPassword(mnemonic: String) {
             .padding(LocalDimensions.current.spacing),
         textAlign = TextAlign.Center,
         style = LocalType.current.extraSmall.monospace(),
-        color = LocalColors.current.run { if (isLight) text else primary },
+        color = LocalColors.current.run { if (isLight) text else accent },
     )
 }
 

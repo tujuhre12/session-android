@@ -55,7 +55,7 @@ import org.thoughtcrime.securesms.ui.LoadingDialog
 import org.thoughtcrime.securesms.ui.components.ActionSheet
 import org.thoughtcrime.securesms.ui.components.ActionSheetItemData
 import org.thoughtcrime.securesms.ui.components.BackAppBar
-import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
+import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -158,7 +158,7 @@ fun EditGroup(
                 )
 
                 if (showAddMembers) {
-                    PrimaryOutlineButton(
+                    AccentOutlineButton(
                         stringResource(R.string.membersInvite),
                         onClick = onAddMemberClick,
                         modifier = Modifier.qaTag(R.string.AccessibilityId_membersInvite)

@@ -42,7 +42,7 @@ import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.components.OutlineButton
-import org.thoughtcrime.securesms.ui.components.PrimaryFillButton
+import org.thoughtcrime.securesms.ui.components.AccentFillButton
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -139,7 +139,7 @@ private fun DatabaseMigration(
                         Spacer(Modifier.size(LocalDimensions.current.spacing))
 
                         Row {
-                            PrimaryFillButton(
+                            AccentFillButton(
                                 text = stringResource(R.string.retry),
                                 onClick = onRetry
                             )

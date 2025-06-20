@@ -116,7 +116,7 @@ fun QRScannerScreen(
                     textAlign = TextAlign.Center
                 )
                 Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-                PrimaryOutlineButton(
+                AccentOutlineButton(
                     stringResource(R.string.cameraGrantAccess),
                     modifier = Modifier.fillMaxWidth(),
                     onClick = {
