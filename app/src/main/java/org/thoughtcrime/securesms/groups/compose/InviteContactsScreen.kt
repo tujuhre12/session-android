@@ -133,6 +133,7 @@ fun InviteContacts(
             ) {
                 PrimaryOutlineButton(
                     onClick = onDoneClicked,
+                    enabled = contacts.any { it.selected },
                     modifier = Modifier
                         .padding(vertical = LocalDimensions.current.spacing)
                         .qaTag(R.string.qa_invite_button),

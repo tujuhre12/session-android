@@ -202,7 +202,7 @@ object MessageReceiver {
         // If the message failed to process the first time around we retry it later (if the error is retryable). In this case the timestamp
         // will already be in the database but we don't want to treat the message as a duplicate. The isRetry flag is a simple workaround
         // for this issue.
-        if (groupPublicKey != null && groupPublicKey !in (currentClosedGroups ?: emptySet()) && groupPublicKey?.startsWith(IdPrefix.GROUP.value) != true) {
+        if (groupPublicKey != null && groupPublicKey !in (currentClosedGroups ?: emptySet()) && IdPrefix.fromValue(groupPublicKey) != IdPrefix.GROUP) {
             throw Error.NoGroupThread
         }
         if (storage.isDuplicateMessage(envelope.timestamp)) { throw Error.DuplicateMessage }
