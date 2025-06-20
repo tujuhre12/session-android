@@ -234,20 +234,6 @@ class MediaSendFragment : Fragment(), RailItemListener,
             binding?.mediasendPager?.setCurrentItem(position, true)
             mediaRailAdapter?.setActivePosition(position)
             binding?.mediasendMediaRail?.smoothScrollToPosition(position)
-
-            //todo VIDEO when we add back videos from gallery, check if this needs to be added back
-           /* val playbackControls = fragmentPagerAdapter?.getPlaybackControls(position)
-            if (playbackControls != null) {
-                val params = ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-                )
-                playbackControls.layoutParams = params
-                binding?.mediasendPlaybackControlsContainer?.removeAllViews()
-                binding?.mediasendPlaybackControlsContainer?.addView(playbackControls)
-            } else {
-                binding?.mediasendPlaybackControlsContainer?.removeAllViews()
-            }*/
         }
 
         viewModel.getBucketId().observe(this) { bucketId: String? ->

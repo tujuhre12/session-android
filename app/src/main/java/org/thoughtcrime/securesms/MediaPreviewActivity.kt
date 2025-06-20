@@ -381,11 +381,8 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
                     return@Observer
                 }
 
-                //todo VIDEO see if we can add back videos from the image picker in convo and if so checks that it works fine across all steps, including the edit screen
                 //todo VIDEO test older version
                 //todo VIDEO test older version > emulator 26 seems to have a visual glitch in the appbar when it reappears from fs - does it happen on a real device? (can i fix it by animating the toolbar instead of the supportActionBar if it does?)
-                //todo VIDEO investigate broken "share from outside" session - the video doesn't show nor play there, but it does upload fine
-                //todo video sync visibility state when changing page: for example I can hide the rail in an image and go back to a video which is paused and therefore should show the rail.. or is that discrepancy ok?
 
                 binding.mediaPreviewAlbumRailContainer.visibility =
                     if (previewData.albumThumbnails.isEmpty()) View.GONE else View.VISIBLE
