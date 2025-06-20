@@ -380,10 +380,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
                 if (previewData == null || binding == null || binding.mediaPager.adapter == null) {
                     return@Observer
                 }
-
-                //todo VIDEO test older version
-                //todo VIDEO test older version > emulator 26 seems to have a visual glitch in the appbar when it reappears from fs - does it happen on a real device? (can i fix it by animating the toolbar instead of the supportActionBar if it does?)
-
+                
                 binding.mediaPreviewAlbumRailContainer.visibility =
                     if (previewData.albumThumbnails.isEmpty()) View.GONE else View.VISIBLE
                 albumRailAdapter?.setMedia(previewData.albumThumbnails, previewData.activePosition)
