@@ -187,6 +187,8 @@ class ConversationViewModel(
             getBlindedRecipient(recipient)
         }
 
+    private var currentAppBarNotificationState: String? = null
+
     private fun getBlindedRecipient(recipient: Recipient?): Recipient? =
         when {
             recipient?.isCommunityOutboxRecipient == true -> recipient
@@ -443,17 +445,18 @@ class ConversationViewModel(
                     )
                 }
 
+                currentAppBarNotificationState = null
                 if (conversation.isMuted || conversation.notifyType == RecipientDatabase.NOTIFY_TYPE_MENTIONS) {
+                    currentAppBarNotificationState = getNotificationStatusTitle(conversation)
                     pagerData += ConversationAppBarPagerData(
-                        title = if(conversation.isMuted) application.getString(R.string.notificationsHeaderMute)
-                        else application.getString(R.string.notificationsHeaderMentionsOnly),
+                        title = currentAppBarNotificationState!!,
                         action = {
                             showNotificationSettings()
                         }
                     )
                 }
 
-                if (conversation.isGroupOrCommunityRecipient) {
+                if (conversation.isGroupOrCommunityRecipient && conversation.isApproved) {
                     val title = if (conversation.isCommunityRecipient) {
                         val userCount = openGroup?.let { lokiAPIDb.getUserCount(it.room, it.server) } ?: 0
                         application.resources.getQuantityString(R.plurals.membersActive, userCount, userCount)
@@ -492,6 +495,11 @@ class ConversationViewModel(
                     .preload(loadSize, loadSize)
             }
         }
+    }
+
+    private fun getNotificationStatusTitle(conversation: Recipient): String{
+        return if(conversation.isMuted) application.getString(R.string.notificationsHeaderMute)
+        else application.getString(R.string.notificationsHeaderMentionsOnly)
     }
 
     /**
@@ -1279,6 +1287,16 @@ class ConversationViewModel(
 
     private fun showNotificationSettings() {
         _uiEvents.tryEmit(ConversationUiEvent.ShowNotificationSettings(threadId))
+    }
+
+    fun onResume() {
+        // when resuming we want to check if the app bar has notification status data, if so update it if it has changed
+        if(currentAppBarNotificationState != null && recipient!= null){
+            val newAppBarNotificationState = getNotificationStatusTitle(recipient!!)
+            if(currentAppBarNotificationState != newAppBarNotificationState){
+                updateAppBarData(recipient)
+            }
+        }
     }
 
     @dagger.assisted.AssistedFactory
