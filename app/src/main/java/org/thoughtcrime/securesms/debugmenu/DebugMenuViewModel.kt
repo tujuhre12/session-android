@@ -69,6 +69,9 @@ class DebugMenuViewModel @Inject constructor(
             availableDeprecationState = listOf(null) + LegacyGroupDeprecationManager.DeprecationState.entries.toList(),
             deprecatedTime = deprecationManager.deprecatedTime.value,
             deprecatingStartTime = deprecationManager.deprecatingStartTime.value,
+            forceCurrentUserAsPro = textSecurePreferences.forceCurrentUserAsPro(),
+            forceIncomingMessagesAsPro = textSecurePreferences.forceIncomingMessagesAsPro(),
+            forcePostPro = textSecurePreferences.forcePostPro(),
         )
     )
     val uiState: StateFlow<UIState>
@@ -200,6 +203,18 @@ class DebugMenuViewModel @Inject constructor(
                     _uiState.update { it.copy(showLoadingDialog = false) }
                 }
             }
+
+            is Commands.ForceCurrentUserAsPro -> {
+                textSecurePreferences.setForceCurrentUserAsPro(command.set)
+            }
+
+            is Commands.ForceIncomingMessagesAsPro -> {
+                textSecurePreferences.setForceIncomingMessagesAsPro(command.set)
+            }
+
+            is Commands.ForcePostPro -> {
+                textSecurePreferences.setForcePostPro(command.set)
+            }
         }
     }
 
@@ -291,6 +306,9 @@ class DebugMenuViewModel @Inject constructor(
         val showDeprecatedStateWarningDialog: Boolean,
         val hideMessageRequests: Boolean,
         val hideNoteToSelf: Boolean,
+        val forceCurrentUserAsPro: Boolean,
+        val forceIncomingMessagesAsPro: Boolean,
+        val forcePostPro: Boolean,
         val forceDeprecationState: LegacyGroupDeprecationManager.DeprecationState?,
         val availableDeprecationState: List<LegacyGroupDeprecationManager.DeprecationState?>,
         val deprecatedTime: ZonedDateTime,
@@ -306,6 +324,9 @@ class DebugMenuViewModel @Inject constructor(
         object CopyAccountId : Commands()
         data class HideMessageRequest(val hide: Boolean) : Commands()
         data class HideNoteToSelf(val hide: Boolean) : Commands()
+        data class ForceCurrentUserAsPro(val set: Boolean) : Commands()
+        data class ForceIncomingMessagesAsPro(val set: Boolean) : Commands()
+        data class ForcePostPro(val set: Boolean) : Commands()
         data class ShowDeprecationChangeDialog(val state: LegacyGroupDeprecationManager.DeprecationState?) : Commands()
         object HideDeprecationChangeDialog : Commands()
         object OverrideDeprecationState : Commands()

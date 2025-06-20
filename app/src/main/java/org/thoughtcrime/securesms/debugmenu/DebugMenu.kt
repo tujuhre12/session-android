@@ -203,6 +203,33 @@ fun DebugMenu(
                 )
             }
 
+            // Session Pro
+            DebugCell("Session Pro") {
+                DebugSwitchRow(
+                    text = "Set current user as Pro",
+                    checked = uiState.forceCurrentUserAsPro,
+                    onCheckedChange = {
+                        sendCommand(DebugMenuViewModel.Commands.HideMessageRequest(it))
+                    }
+                )
+
+                DebugSwitchRow(
+                    text = "Set all incoming messages as Pro",
+                    checked = uiState.forceIncomingMessagesAsPro,
+                    onCheckedChange = {
+                        sendCommand(DebugMenuViewModel.Commands.HideNoteToSelf(it))
+                    }
+                )
+
+                DebugSwitchRow(
+                    text = "Set app as post Pro launch",
+                    checked = uiState.forcePostPro,
+                    onCheckedChange = {
+                        sendCommand(DebugMenuViewModel.Commands.HideNoteToSelf(it))
+                    }
+                )
+            }
+
             // Fake contacts
             DebugCell("Generate fake contacts") {
                 var prefix by remember { mutableStateOf("User-") }
@@ -530,7 +557,10 @@ fun PreviewDebugMenu() {
                 forceDeprecationState = null,
                 deprecatedTime = ZonedDateTime.now(),
                 availableDeprecationState = emptyList(),
-                deprecatingStartTime = ZonedDateTime.now()
+                deprecatingStartTime = ZonedDateTime.now(),
+                forceCurrentUserAsPro = false,
+                forceIncomingMessagesAsPro = false,
+                forcePostPro = false,
             ),
             sendCommand = {},
             onClose = {}

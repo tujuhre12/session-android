@@ -1273,6 +1273,7 @@ class ConversationViewModel(
                     positiveStyleDanger = false,
                     onPositive = ::hideSimpleDialog
                      */
+                    //todo PRO check final style. Ok vs Okay? 'x' button?
                 )
             )
         }
@@ -1293,6 +1294,7 @@ class ConversationViewModel(
                     positiveStyleDanger = false,
                     onPositive = ::hideSimpleDialog
                      */
+                    //todo PRO check final style. Ok vs Okay? 'x' button?
                 )
             )
         }
@@ -1313,6 +1315,7 @@ class ConversationViewModel(
                     positiveStyleDanger = false,
                     onPositive = ::hideSimpleDialog
                      */
+                    //todo PRO check final style. Ok vs Okay? 'x' button?
                 )
             )
         }
