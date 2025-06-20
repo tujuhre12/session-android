@@ -65,13 +65,14 @@ data class DialogButtonData(
 data class SimpleDialogData(
     val title: String,
     val message: CharSequence,
-    val positiveText: String,
+    val positiveText: String? = null,
     val positiveStyleDanger: Boolean = true,
-    val negativeText: String,
-    val positiveQaTag: String?,
-    val negativeQaTag: String?,
-    val onPositive: () -> Unit,
-    val onNegative: () -> Unit
+    val showXIcon: Boolean = false,
+    val negativeText: String? = null,
+    val positiveQaTag: String? = null,
+    val negativeQaTag: String? = null,
+    val onPositive: () -> Unit = {},
+    val onNegative: () -> Unit = {}
 )
 
 @Composable
@@ -171,9 +172,9 @@ fun AlertDialog(
                         }
                         content()
                     }
-                    buttons?.takeIf { it.isNotEmpty() }?.let {
+                    if(buttons?.isNotEmpty() == true) {
                         Row(Modifier.height(IntrinsicSize.Min)) {
-                            it.forEach {
+                            buttons.forEach {
                                 DialogButton(
                                     text = it.text(),
                                     modifier = Modifier
@@ -188,6 +189,8 @@ fun AlertDialog(
                                 }
                             }
                         }
+                    } else {
+                        Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
                     }
                 }
             }
@@ -373,6 +376,19 @@ fun PreviewXCloseDialog() {
                     onClick = {}
                 )
             ),
+            onDismissRequest = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+fun PreviewXCloseNoButtonsDialog() {
+    PreviewTheme {
+        AlertDialog(
+            title = stringResource(R.string.urlOpen),
+            text = stringResource(R.string.urlOpenBrowser),
+            showCloseButton = true, // display the 'x' button
             onDismissRequest = {}
         )
     }

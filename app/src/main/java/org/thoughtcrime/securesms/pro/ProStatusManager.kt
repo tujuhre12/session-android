@@ -16,5 +16,6 @@ class ProStatusManager {
         const val READ_MORE = "Read more"
         const val PRO_URL = "https://getsession.org/"
         const val PRO = "Session Pro"
+        const val OK = "Ok"
     }
 }

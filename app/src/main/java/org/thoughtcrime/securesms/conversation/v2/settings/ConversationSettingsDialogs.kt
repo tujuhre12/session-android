@@ -42,6 +42,28 @@ fun ConversationSettingsDialogs(
 
     //  Simple dialogs
     if (dialogsState.showSimpleDialog != null) {
+        val buttons = mutableListOf<DialogButtonData>()
+        if(dialogsState.showSimpleDialog.positiveText != null) {
+            buttons.add(
+                DialogButtonData(
+                    text = GetString(dialogsState.showSimpleDialog.positiveText),
+                    color = if (dialogsState.showSimpleDialog.positiveStyleDanger) LocalColors.current.danger
+                    else LocalColors.current.text,
+                    qaTag = dialogsState.showSimpleDialog.positiveQaTag,
+                    onClick = dialogsState.showSimpleDialog.onPositive
+                )
+            )
+        }
+        if(dialogsState.showSimpleDialog.negativeText != null){
+            buttons.add(
+                DialogButtonData(
+                    text = GetString(dialogsState.showSimpleDialog.negativeText),
+                    qaTag = dialogsState.showSimpleDialog.negativeQaTag,
+                    onClick = dialogsState.showSimpleDialog.onNegative
+                )
+            )
+        }
+
         AlertDialog(
             onDismissRequest = {
                 // hide dialog
@@ -49,18 +71,8 @@ fun ConversationSettingsDialogs(
             },
             title = annotatedStringResource(dialogsState.showSimpleDialog.title),
             text = annotatedStringResource(dialogsState.showSimpleDialog.message),
-            buttons = listOf(
-                DialogButtonData(
-                    text = GetString(dialogsState.showSimpleDialog.positiveText),
-                    color = if(dialogsState.showSimpleDialog.positiveStyleDanger) LocalColors.current.danger
-                    else LocalColors.current.text,
-                    onClick = dialogsState.showSimpleDialog.onPositive
-                ),
-                DialogButtonData(
-                    text = GetString(dialogsState.showSimpleDialog.negativeText),
-                    onClick = dialogsState.showSimpleDialog.onNegative
-                )
-            )
+            showCloseButton = dialogsState.showSimpleDialog.showXIcon,
+            buttons = buttons
         )
     }
 

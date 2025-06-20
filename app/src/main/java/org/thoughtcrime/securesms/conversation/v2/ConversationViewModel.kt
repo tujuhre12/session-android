@@ -44,7 +44,10 @@ import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAt
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ExpirationUtil
+import org.session.libsession.utilities.StringSubstitutionConstants.COUNT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.LIMIT_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UsernameUtils
@@ -71,7 +74,9 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.groups.ExpiredGroupManager
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.mms.AudioSlide
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
+import org.thoughtcrime.securesms.ui.SimpleDialogData
 import org.thoughtcrime.securesms.ui.components.ConversationAppBarData
 import org.thoughtcrime.securesms.ui.components.ConversationAppBarPagerData
 import org.thoughtcrime.securesms.ui.getSubbedString
@@ -1169,6 +1174,10 @@ class ConversationViewModel(
 
     fun onCommand(command: Commands) {
         when (command) {
+            is Commands.HideSimpleDialog -> {
+                hideSimpleDialog()
+            }
+
             is Commands.ShowOpenUrlDialog -> {
                 _dialogsState.update {
                     it.copy(openLinkDialogUrl = command.url)
@@ -1240,6 +1249,78 @@ class ConversationViewModel(
             is Commands.NavigateToConversation -> {
                 _uiEvents.tryEmit(ConversationUiEvent.NavigateToConversation(command.threadId))
             }
+        }
+    }
+
+    fun showMessageLengthDialog(){
+        _dialogsState.update {
+            it.copy(
+                showSimpleDialog = SimpleDialogData(
+                    title = ProStatusManager.DIALOG_TITLE_LGTH,
+                    message = Phrase.from(
+                        application.resources.getQuantityString(
+                            R.plurals.proCTALengthBody,
+                            2,//todo PRO get number from characters left, which might be held here in the VM later
+                            2 //todo PRO get number from characters left, which might be held here in the VM later
+                        ))
+                        .put(LIMIT_KEY, 2000) //todo PRO get number from a centralised place
+                        .put(COUNT_KEY, 2) //todo PRO get number from characters left, which might be held here in the VM later
+                        .format(),
+                    showXIcon = true,
+                    positiveStyleDanger = false,
+                    /*
+                    positiveText = application.getString(ProStatusManager.OK),
+                    positiveStyleDanger = false,
+                    onPositive = ::hideSimpleDialog
+                     */
+                )
+            )
+        }
+    }
+
+    fun showMessageTooLongDialog(){
+        _dialogsState.update {
+            it.copy(
+                showSimpleDialog = SimpleDialogData(
+                    title = ProStatusManager.DIALOG_TITLE_LONG,
+                    message = Phrase.from(ProStatusManager.DIALOG_BODY_LONG)
+                        .put(LIMIT_KEY, 2000) //todo PRO get number from a centralised place
+                        .format(),
+                    showXIcon = true,
+                    positiveStyleDanger = false,
+                    /*
+                    positiveText = application.getString(ProStatusManager.OK),
+                    positiveStyleDanger = false,
+                    onPositive = ::hideSimpleDialog
+                     */
+                )
+            )
+        }
+    }
+
+    fun showMessageTooLongSendDialog(){
+        _dialogsState.update {
+            it.copy(
+                showSimpleDialog = SimpleDialogData(
+                    title = ProStatusManager.DIALOG_TITLE_LONG,
+                    message = Phrase.from(ProStatusManager.SEND_BODY_LONG)
+                        .put(LIMIT_KEY, 2000) //todo PRO get number from a centralised place
+                        .format(),
+                    showXIcon = true,
+                    positiveStyleDanger = false,
+                    /*
+                    positiveText = application.getString(ProStatusManager.OK),
+                    positiveStyleDanger = false,
+                    onPositive = ::hideSimpleDialog
+                     */
+                )
+            )
+        }
+    }
+
+    private fun hideSimpleDialog(){
+        _dialogsState.update {
+            it.copy(showSimpleDialog = null)
         }
     }
 
@@ -1373,6 +1454,7 @@ class ConversationViewModel(
     }
 
     data class DialogsState(
+        val showSimpleDialog: SimpleDialogData? = null,
         val openLinkDialogUrl: String? = null,
         val clearAllEmoji: ClearAllEmoji? = null,
         val deleteEveryone: DeleteForEveryoneDialogData? = null,
@@ -1406,6 +1488,7 @@ class ConversationViewModel(
 
         data object HideDeleteEveryoneDialog : Commands
         data object HideClearEmoji : Commands
+        data object HideSimpleDialog : Commands
 
         data class MarkAsDeletedLocally(val messages: Set<MessageRecord>): Commands
         data class MarkAsDeletedForEveryone(val data: DeleteForEveryoneDialogData): Commands

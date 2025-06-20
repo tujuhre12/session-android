@@ -40,6 +40,7 @@ import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.MarkAsDeletedForEveryone
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.MarkAsDeletedLocally
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.ShowOpenUrlDialog
+import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.HideSimpleDialog
 import org.thoughtcrime.securesms.groups.compose.CreateGroupScreen
 import org.thoughtcrime.securesms.openUrl
 import org.thoughtcrime.securesms.pro.ProStatusManager
@@ -49,9 +50,10 @@ import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.RadioOption
+import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
 import org.thoughtcrime.securesms.ui.components.DialogTitledRadioButton
-import org.thoughtcrime.securesms.ui.components.PrimaryFillButtonRect
 import org.thoughtcrime.securesms.ui.components.TertiaryFillButtonRect
+import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -73,6 +75,42 @@ fun ConversationV2Dialogs(
                     // hide dialog
                     sendCommand(ShowOpenUrlDialog(null))
                 }
+            )
+        }
+
+        //  Simple dialogs
+        if (dialogsState.showSimpleDialog != null) {
+            val buttons = mutableListOf<DialogButtonData>()
+            if(dialogsState.showSimpleDialog.positiveText != null) {
+                buttons.add(
+                    DialogButtonData(
+                        text = GetString(dialogsState.showSimpleDialog.positiveText),
+                        color = if (dialogsState.showSimpleDialog.positiveStyleDanger) LocalColors.current.danger
+                        else LocalColors.current.text,
+                        qaTag = dialogsState.showSimpleDialog.positiveQaTag,
+                        onClick = dialogsState.showSimpleDialog.onPositive
+                    )
+                )
+            }
+            if(dialogsState.showSimpleDialog.negativeText != null){
+                buttons.add(
+                    DialogButtonData(
+                        text = GetString(dialogsState.showSimpleDialog.negativeText),
+                        qaTag = dialogsState.showSimpleDialog.negativeQaTag,
+                        onClick = dialogsState.showSimpleDialog.onNegative
+                    )
+                )
+            }
+
+            AlertDialog(
+                onDismissRequest = {
+                    // hide dialog
+                    sendCommand(HideSimpleDialog)
+                },
+                title = annotatedStringResource(dialogsState.showSimpleDialog.title),
+                text = annotatedStringResource(dialogsState.showSimpleDialog.message),
+                showCloseButton = dialogsState.showSimpleDialog.showXIcon,
+                buttons = buttons
             )
         }
 
@@ -253,7 +291,6 @@ fun SessionProCTA(
         },
         content = {
             DialogBg {
-
                 Column(modifier = Modifier.fillMaxWidth()) {
                     // hero image
                     Image(
@@ -314,7 +351,7 @@ fun SessionProCTA(
                             Modifier.height(IntrinsicSize.Min),
                             horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xsSpacing),
                         ) {
-                            PrimaryFillButtonRect(
+                            AccentFillButtonRect(
                                 modifier = Modifier.weight(1f),
                                 text = ProStatusManager.UPGRADE,
                                 onClick = {
@@ -352,7 +389,7 @@ fun ProCTAFeature(
     ) {
         Image(
             painter = painterResource(id = R.drawable.ic_circle_check),
-            colorFilter = ColorFilter.tint(LocalColors.current.primary),
+            colorFilter = ColorFilter.tint(LocalColors.current.accent),
             contentDescription = null,
             modifier = Modifier.align(Alignment.CenterVertically)
         )
