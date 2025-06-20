@@ -58,7 +58,7 @@ import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.ShowEnvi
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.GenerateContacts
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.Cell
-import org.thoughtcrime.securesms.ui.DialogButtonModel
+import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LoadingDialog
 import org.thoughtcrime.securesms.ui.components.BackAppBar
@@ -127,11 +127,11 @@ fun DebugMenu(
                 text = "This will restart the app...",
                 showCloseButton = false, // don't display the 'x' button
                 buttons = listOf(
-                    DialogButtonModel(
+                    DialogButtonData(
                         text = GetString(R.string.cancel),
                         onClick = { sendCommand(HideDeprecationChangeDialog) }
                     ),
-                    DialogButtonModel(
+                    DialogButtonData(
                         text = GetString(android.R.string.ok),
                         onClick = { sendCommand(OverrideDeprecationState) }
                     )
@@ -146,11 +146,11 @@ fun DebugMenu(
                 text = "Changing this setting will result in all conversations and Snode data being cleared...",
                 showCloseButton = false, // don't display the 'x' button
                 buttons = listOf(
-                    DialogButtonModel(
+                    DialogButtonData(
                         text = GetString(R.string.cancel),
                         onClick = { sendCommand(HideEnvironmentWarningDialog) }
                     ),
-                    DialogButtonModel(
+                    DialogButtonData(
                         text = GetString(android.R.string.ok),
                         onClick = { sendCommand(ChangeEnvironment) }
                     )
@@ -394,14 +394,14 @@ fun DebugMenu(
                 },
                 title = "Set Time",
                 buttons = listOf(
-                    DialogButtonModel(
+                    DialogButtonData(
                         text = GetString(R.string.cancel),
                         onClick = {
                             showingDeprecatedTimePicker = false
                             showingDeprecatingStartTimePicker = false
                         }
                     ),
-                    DialogButtonModel(
+                    DialogButtonData(
                         text = GetString(android.R.string.ok),
                         onClick = {
                             if (showingDeprecatedTimePicker) {

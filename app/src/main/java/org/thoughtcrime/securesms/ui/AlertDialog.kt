@@ -50,13 +50,28 @@ import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.bold
 
-class DialogButtonModel(
+data class DialogButtonData(
     val text: GetString,
     val qaTag: String? = null,
     val color: Color = Color.Unspecified,
     val dismissOnClick: Boolean = true,
     val enabled: Boolean = true,
     val onClick: () -> Unit = {},
+)
+
+/**
+ * Data to display a simple dialog
+ */
+data class SimpleDialogData(
+    val title: String,
+    val message: CharSequence,
+    val positiveText: String,
+    val positiveStyleDanger: Boolean = true,
+    val negativeText: String,
+    val positiveQaTag: String?,
+    val negativeQaTag: String?,
+    val onPositive: () -> Unit,
+    val onNegative: () -> Unit
 )
 
 @Composable
@@ -66,7 +81,7 @@ fun AlertDialog(
     title: String? = null,
     text: String? = null,
     maxLines:  Int? = null,
-    buttons: List<DialogButtonModel>? = null,
+    buttons: List<DialogButtonData>? = null,
     showCloseButton: Boolean = false,
     content: @Composable () -> Unit = {}
 ) {
@@ -90,7 +105,7 @@ fun AlertDialog(
     title: AnnotatedString? = null,
     text: AnnotatedString? = null,
     maxLines: Int? = null,
-    buttons: List<DialogButtonModel>? = null,
+    buttons: List<DialogButtonData>? = null,
     showCloseButton: Boolean = false,
     content: @Composable () -> Unit = {}
 ) {
@@ -199,12 +214,12 @@ fun OpenURLAlertDialog(
         maxLines = 5,
         showCloseButton = true, // display the 'x' button
         buttons = listOf(
-            DialogButtonModel(
+            DialogButtonData(
                 text = GetString(R.string.open),
                 color = LocalColors.current.danger,
                 onClick = { context.openUrl(url) }
             ),
-            DialogButtonModel(
+            DialogButtonData(
                 text = GetString(android.R.string.copyUrl),
                 onClick = {
                     context.copyURLToClipboard(url)
@@ -327,12 +342,12 @@ fun PreviewSimpleDialog() {
             title = stringResource(R.string.warning),
             text = stringResource(R.string.onboardingBackAccountCreation),
             buttons = listOf(
-                DialogButtonModel(
+                DialogButtonData(
                     GetString(stringResource(R.string.cancel)),
                     color = LocalColors.current.danger,
                     onClick = { }
                 ),
-                DialogButtonModel(
+                DialogButtonData(
                     GetString(stringResource(android.R.string.ok))
                 )
             )
@@ -349,11 +364,11 @@ fun PreviewXCloseDialog() {
             text = stringResource(R.string.urlOpenBrowser),
             showCloseButton = true, // display the 'x' button
             buttons = listOf(
-                DialogButtonModel(
+                DialogButtonData(
                     text = GetString(R.string.onboardingTos),
                     onClick = {}
                 ),
-                DialogButtonModel(
+                DialogButtonData(
                     text = GetString(R.string.onboardingPrivacy),
                     onClick = {}
                 )
