@@ -179,8 +179,6 @@ class InputBar @JvmOverloads constructor(
         delegate?.inputBarEditTextContentChanged(text)
     }
 
-    override fun inputBarEditTextHeightChanged(newValue: Int) { }
-
     override fun commitInputContent(contentUri: Uri) { delegate?.commitInputContent(contentUri) }
 
     private fun toggleAttachmentOptions() { delegate?.toggleAttachmentOptions() }

@@ -26,30 +26,30 @@
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:padding="4dp">
+            android:paddingVertical="8dp"
+            android:paddingHorizontal="16dp">
 
             <RelativeLayout
                 android:id="@+id/attachmentsButtonContainer"
                 android:layout_width="@dimen/input_bar_button_expanded_size"
                 android:layout_height="@dimen/input_bar_button_expanded_size"
                 android:layout_alignParentStart="true"
-                android:layout_centerVertical="true"
-                android:layout_marginStart="@dimen/small_spacing"
+                android:layout_alignParentTop="true"
                 android:contentDescription="@string/AccessibilityId_attachmentsButton" />
 
             <org.thoughtcrime.securesms.conversation.v2.input_bar.InputBarEditText
                 android:id="@+id/inputBarEditText"
                 android:layout_width="match_parent"
-                android:layout_height="40dp"
+                android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
                 android:layout_marginStart="64dp"
                 android:layout_marginEnd="64dp"
                 android:background="@null"
                 android:contentDescription="@string/AccessibilityId_inputBox"
                 android:gravity="center_vertical"
+                android:maxLines="6"
                 android:hint="@string/message"
                 android:inputType="text|textCapSentences|textMultiLine|textAutoComplete"
-                android:maxLength="@integer/max_input_chars"
                 android:textColor="?input_bar_text_user"
                 android:textColorHint="?attr/input_bar_text_hint"
                 android:textSize="@dimen/medium_font_size" />
@@ -59,8 +59,7 @@
                 android:layout_width="@dimen/input_bar_button_expanded_size"
                 android:layout_height="@dimen/input_bar_button_expanded_size"
                 android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
-                android:layout_marginEnd="@dimen/small_spacing" />
+                android:layout_alignParentTop="true" />
 
         </RelativeLayout>
 
