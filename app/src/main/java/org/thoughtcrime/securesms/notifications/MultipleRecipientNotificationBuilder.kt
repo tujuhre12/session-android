@@ -16,7 +16,6 @@ import org.session.libsession.utilities.StringSubstitutionConstants.MESSAGE_COUN
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.Util.getBoldedString
 import org.session.libsession.utilities.recipients.Recipient
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent.Companion.get
 import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.ui.getSubbedString
 import java.util.LinkedList
@@ -81,11 +80,6 @@ class MultipleRecipientNotificationBuilder(context: Context, privacy: Notificati
             messageBodies.add(builder)
         } else if (privacy.isDisplayContact) {
             messageBodies.add(getBoldedString(displayName))
-        }
-
-        // TODO: What on earth is this? Why is it commented out? It's also commented out in dev... remove? -ACL 2024-08-29
-        if (privacy.isDisplayContact && sender.contactUri != null) {
-//      addPerson(sender.getContactUri().toString());
         }
     }
 

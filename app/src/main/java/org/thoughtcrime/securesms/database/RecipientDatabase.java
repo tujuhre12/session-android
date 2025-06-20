@@ -10,11 +10,8 @@ import androidx.annotation.Nullable;
 import com.annimon.stream.Stream;
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 import org.session.libsession.utilities.Address;
-import org.session.libsession.utilities.MaterialColor;
-import org.session.libsession.utilities.Util;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsession.utilities.recipients.Recipient.RecipientSettings;
-import org.session.libsession.utilities.recipients.Recipient.RegisteredState;
 import org.session.libsignal.utilities.Base64;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.guava.Optional;
@@ -36,28 +33,41 @@ public class RecipientDatabase extends Database {
           static final String BLOCK                    = "block";
           static final String APPROVED                 = "approved";
   private static final String APPROVED_ME              = "approved_me";
+  @Deprecated(forRemoval = true)
   private static final String NOTIFICATION             = "notification";
+  @Deprecated(forRemoval = true)
   private static final String VIBRATE                  = "vibrate";
   private static final String MUTE_UNTIL               = "mute_until";
+  @Deprecated(forRemoval = true)
   private static final String COLOR                    = "color";
   private static final String SEEN_INVITE_REMINDER     = "seen_invite_reminder";
+  @Deprecated(forRemoval = true)
   private static final String DEFAULT_SUBSCRIPTION_ID  = "default_subscription_id";
           static final String EXPIRE_MESSAGES          = "expire_messages";
-  private static final String DISAPPEARING_STATE       = "disappearing_state";
+  @Deprecated(forRemoval = true)
+          private static final String DISAPPEARING_STATE       = "disappearing_state";
+  @Deprecated(forRemoval = true)
   private static final String REGISTERED               = "registered";
   private static final String PROFILE_KEY              = "profile_key";
   private static final String SYSTEM_DISPLAY_NAME      = "system_display_name";
+  @Deprecated(forRemoval = true)
   private static final String SYSTEM_PHOTO_URI         = "system_contact_photo";
+  @Deprecated(forRemoval = true)
   private static final String SYSTEM_PHONE_LABEL       = "system_phone_label";
+  @Deprecated(forRemoval = true)
   private static final String SYSTEM_CONTACT_URI       = "system_contact_uri";
   private static final String SIGNAL_PROFILE_NAME      = "signal_profile_name";
   private static final String SESSION_PROFILE_AVATAR = "signal_profile_avatar";
+  @Deprecated(forRemoval = true)
   private static final String PROFILE_SHARING          = "profile_sharing_approval";
+  @Deprecated(forRemoval = true)
   private static final String CALL_RINGTONE            = "call_ringtone";
+  @Deprecated(forRemoval = true)
   private static final String CALL_VIBRATE             = "call_vibrate";
   private static final String NOTIFICATION_CHANNEL     = "notification_channel";
   @Deprecated(forRemoval = true)
   private static final String UNIDENTIFIED_ACCESS_MODE = "unidentified_access_mode";
+  @Deprecated(forRemoval = true)
   private static final String FORCE_SMS_SELECTION      = "force_sms_selection";
   private static final String NOTIFY_TYPE              = "notify_type"; // all, mentions only, none
   @Deprecated(forRemoval = true)
@@ -83,7 +93,7 @@ public class RecipientDatabase extends Database {
           ADDRESS + " TEXT UNIQUE, " +
           BLOCK + " INTEGER DEFAULT 0," +
           NOTIFICATION + " TEXT DEFAULT NULL, " +
-          VIBRATE + " INTEGER DEFAULT " + Recipient.VibrateState.DEFAULT.getId() + ", " +
+          VIBRATE + " INTEGER DEFAULT 0, " +
           MUTE_UNTIL + " INTEGER DEFAULT 0, " +
           COLOR + " TEXT DEFAULT NULL, " +
           SEEN_INVITE_REMINDER + " INTEGER DEFAULT 0, " +
@@ -96,10 +106,10 @@ public class RecipientDatabase extends Database {
           SYSTEM_CONTACT_URI + " TEXT DEFAULT NULL, " +
           PROFILE_KEY + " TEXT DEFAULT NULL, " +
           SIGNAL_PROFILE_NAME + " TEXT DEFAULT NULL, " +
-              SESSION_PROFILE_AVATAR + " TEXT DEFAULT NULL, " +
+          SESSION_PROFILE_AVATAR + " TEXT DEFAULT NULL, " +
           PROFILE_SHARING + " INTEGER DEFAULT 0, " +
           CALL_RINGTONE + " TEXT DEFAULT NULL, " +
-          CALL_VIBRATE + " INTEGER DEFAULT " + Recipient.VibrateState.DEFAULT.getId() + ", " +
+          CALL_VIBRATE + " INTEGER DEFAULT 0, " +
           NOTIFICATION_CHANNEL + " TEXT DEFAULT NULL, " +
           UNIDENTIFIED_ACCESS_MODE + " INTEGER DEFAULT 0, " +
           FORCE_SMS_SELECTION + " INTEGER DEFAULT 0);";
@@ -197,39 +207,18 @@ public class RecipientDatabase extends Database {
     boolean blocked                 = cursor.getInt(cursor.getColumnIndexOrThrow(BLOCK))                == 1;
     boolean approved                = cursor.getInt(cursor.getColumnIndexOrThrow(APPROVED))             == 1;
     boolean approvedMe              = cursor.getInt(cursor.getColumnIndexOrThrow(APPROVED_ME))          == 1;
-    String  messageRingtone         = cursor.getString(cursor.getColumnIndexOrThrow(NOTIFICATION));
-    String  callRingtone            = cursor.getString(cursor.getColumnIndexOrThrow(CALL_RINGTONE));
-    int     disappearingState       = cursor.getInt(cursor.getColumnIndexOrThrow(DISAPPEARING_STATE));
-    int     messageVibrateState     = cursor.getInt(cursor.getColumnIndexOrThrow(VIBRATE));
-    int     callVibrateState        = cursor.getInt(cursor.getColumnIndexOrThrow(CALL_VIBRATE));
     long    muteUntil               = cursor.getLong(cursor.getColumnIndexOrThrow(MUTE_UNTIL));
     int     notifyType              = cursor.getInt(cursor.getColumnIndexOrThrow(NOTIFY_TYPE));
     boolean autoDownloadAttachments = cursor.getInt(cursor.getColumnIndexOrThrow(AUTO_DOWNLOAD))        == 1;
-    String  serializedColor         = cursor.getString(cursor.getColumnIndexOrThrow(COLOR));
-    int     defaultSubscriptionId   = cursor.getInt(cursor.getColumnIndexOrThrow(DEFAULT_SUBSCRIPTION_ID));
     int     expireMessages          = cursor.getInt(cursor.getColumnIndexOrThrow(EXPIRE_MESSAGES));
-    int     registeredState         = cursor.getInt(cursor.getColumnIndexOrThrow(REGISTERED));
     String  profileKeyString        = cursor.getString(cursor.getColumnIndexOrThrow(PROFILE_KEY));
     String  systemDisplayName       = cursor.getString(cursor.getColumnIndexOrThrow(SYSTEM_DISPLAY_NAME));
-    String  systemContactPhoto      = cursor.getString(cursor.getColumnIndexOrThrow(SYSTEM_PHOTO_URI));
-    String  systemPhoneLabel        = cursor.getString(cursor.getColumnIndexOrThrow(SYSTEM_PHONE_LABEL));
-    String  systemContactUri        = cursor.getString(cursor.getColumnIndexOrThrow(SYSTEM_CONTACT_URI));
     String  signalProfileName       = cursor.getString(cursor.getColumnIndexOrThrow(SIGNAL_PROFILE_NAME));
     String  signalProfileAvatar     = cursor.getString(cursor.getColumnIndexOrThrow(SESSION_PROFILE_AVATAR));
-    boolean profileSharing          = cursor.getInt(cursor.getColumnIndexOrThrow(PROFILE_SHARING))      == 1;
     String  notificationChannel     = cursor.getString(cursor.getColumnIndexOrThrow(NOTIFICATION_CHANNEL));
-    boolean forceSmsSelection       = cursor.getInt(cursor.getColumnIndexOrThrow(FORCE_SMS_SELECTION))  == 1;
     boolean blocksCommunityMessageRequests = cursor.getInt(cursor.getColumnIndexOrThrow(BLOCKS_COMMUNITY_MESSAGE_REQUESTS)) == 1;
 
-    MaterialColor color;
     byte[] profileKey = null;
-
-    try {
-      color = serializedColor == null ? null : MaterialColor.fromSerialized(serializedColor);
-    } catch (MaterialColor.UnknownColorException e) {
-      Log.w(TAG, e);
-      color = null;
-    }
 
     if (profileKeyString != null) {
       try {
@@ -241,18 +230,12 @@ public class RecipientDatabase extends Database {
     }
 
     return Optional.of(new RecipientSettings(blocked, approved, approvedMe, muteUntil,
-                                             notifyType, autoDownloadAttachments,
-                                             Recipient.DisappearingState.fromId(disappearingState),
-                                             Recipient.VibrateState.fromId(messageVibrateState),
-                                             Recipient.VibrateState.fromId(callVibrateState),
-                                             Util.uri(messageRingtone), Util.uri(callRingtone),
-                                             color, defaultSubscriptionId, expireMessages,
-                                             Recipient.RegisteredState.fromId(registeredState),
-                                             profileKey, systemDisplayName, systemContactPhoto,
-                                             systemPhoneLabel, systemContactUri,
-                                             signalProfileName, signalProfileAvatar, profileSharing,
-                                             notificationChannel,
-                                             forceSmsSelection, blocksCommunityMessageRequests));
+            notifyType, autoDownloadAttachments,
+            expireMessages,
+            profileKey, systemDisplayName,
+            signalProfileName, signalProfileAvatar,
+            notificationChannel,
+            blocksCommunityMessageRequests));
   }
 
   public boolean isAutoDownloadFlagSet(Recipient recipient) {
@@ -269,30 +252,6 @@ public class RecipientDatabase extends Database {
     }
     // negate result (is flag set)
     return !flagUnset;
-  }
-
-  public void setColor(@NonNull Recipient recipient, @NonNull MaterialColor color) {
-    ContentValues values = new ContentValues();
-    values.put(COLOR, color.serialize());
-    updateOrInsert(recipient.getAddress(), values);
-    recipient.resolve().setColor(color);
-    notifyRecipientListeners();
-  }
-
-  public void setDefaultSubscriptionId(@NonNull Recipient recipient, int defaultSubscriptionId) {
-    ContentValues values = new ContentValues();
-    values.put(DEFAULT_SUBSCRIPTION_ID, defaultSubscriptionId);
-    updateOrInsert(recipient.getAddress(), values);
-    recipient.resolve().setDefaultSubscriptionId(Optional.of(defaultSubscriptionId));
-    notifyRecipientListeners();
-  }
-
-  public void setForceSmsSelection(@NonNull Recipient recipient, boolean forceSmsSelection) {
-    ContentValues contentValues = new ContentValues(1);
-    contentValues.put(FORCE_SMS_SELECTION, forceSmsSelection ? 1 : 0);
-    updateOrInsert(recipient.getAddress(), contentValues);
-    recipient.resolve().setForceSmsSelection(forceSmsSelection);
-    notifyRecipientListeners();
   }
 
   public boolean getApproved(@NonNull Address address) {
@@ -408,27 +367,11 @@ public class RecipientDatabase extends Database {
     notifyRecipientListeners();
   }
 
-  public void setProfileSharing(@NonNull Recipient recipient, boolean enabled) {
-    ContentValues contentValues = new ContentValues(1);
-    contentValues.put(PROFILE_SHARING, enabled ? 1 : 0);
-    updateOrInsert(recipient.getAddress(), contentValues);
-    recipient.setProfileSharing(enabled);
-    notifyRecipientListeners();
-  }
-
   public void setNotificationChannel(@NonNull Recipient recipient, @Nullable String notificationChannel) {
     ContentValues contentValues = new ContentValues(1);
     contentValues.put(NOTIFICATION_CHANNEL, notificationChannel);
     updateOrInsert(recipient.getAddress(), contentValues);
     recipient.setNotificationChannel(notificationChannel);
-    notifyRecipientListeners();
-  }
-
-  public void setRegistered(@NonNull Recipient recipient, RegisteredState registeredState) {
-    ContentValues contentValues = new ContentValues(1);
-    contentValues.put(REGISTERED, registeredState.getId());
-    updateOrInsert(recipient.getAddress(), contentValues);
-    recipient.setRegistered(registeredState);
     notifyRecipientListeners();
   }
 
@@ -494,14 +437,6 @@ public class RecipientDatabase extends Database {
 
     reader.close();
     return returnList;
-  }
-
-  public void setDisappearingState(@NonNull Recipient recipient, @NonNull Recipient.DisappearingState disappearingState) {
-    ContentValues values = new ContentValues();
-    values.put(DISAPPEARING_STATE, disappearingState.getId());
-    updateOrInsert(recipient.getAddress(), values);
-    recipient.resolve().setDisappearingState(disappearingState);
-    notifyRecipientListeners();
   }
 
   public static class RecipientReader implements Closeable {

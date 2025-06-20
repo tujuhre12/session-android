@@ -15,7 +15,6 @@ import org.session.libsession.utilities.NotificationPrivacyPreference;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.Util;
 import org.session.libsession.utilities.recipients.Recipient;
-import org.session.libsession.utilities.recipients.Recipient.VibrateState;
 
 import network.loki.messenger.R;
 
@@ -49,18 +48,12 @@ public abstract class AbstractNotificationBuilder extends NotificationCompat.Bui
     return builder;
   }
 
-  public void setAlarms(@Nullable Uri ringtone, VibrateState vibrate) {
+  public void setAlarms(@Nullable Uri ringtone) {
     Uri     defaultRingtone = NotificationChannels.getMessageRingtone(context);
     boolean defaultVibrate  = NotificationChannels.getMessageVibrate(context);
 
     if      (ringtone == null && !TextUtils.isEmpty(defaultRingtone.toString())) setSound(defaultRingtone);
     else if (ringtone != null && !ringtone.toString().isEmpty())                 setSound(ringtone);
-
-    if (vibrate == VibrateState.ENABLED ||
-        (vibrate == VibrateState.DEFAULT && defaultVibrate))
-    {
-      setDefaults(Notification.DEFAULT_VIBRATE);
-    }
   }
 
   private void setLed() {

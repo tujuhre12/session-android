@@ -374,17 +374,6 @@ fun MessageReceiver.handleVisibleMessage(
         if (userPublicKey != messageSender && !isUserBlindedSender) {
             context.storage.setBlocksCommunityMessageRequests(recipient, message.blocksMessageRequests)
         }
-
-        // update the disappearing / legacy banner for the sender
-        val disappearingState = when {
-            proto.dataMessage.expireTimer > 0 && !proto.hasExpirationType() -> Recipient.DisappearingState.LEGACY
-            else -> Recipient.DisappearingState.UPDATED
-        }
-        context.storage.updateDisappearingState(
-            messageSender,
-            context.threadId,
-            disappearingState
-        )
     }
     // Handle group invite response if new closed group
     if (context.threadRecipient?.isGroupV2Recipient == true) {

@@ -78,10 +78,6 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
     if (privacy.isDisplayContact()) {
       setContentTitle(recipient.getName());
 
-      if (recipient.getContactUri() != null) {
-        addPerson(recipient.getContactUri().toString());
-      }
-
       ContactPhoto contactPhoto = recipient.getContactPhoto();
       if (contactPhoto != null) {
         try {

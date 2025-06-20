@@ -17,24 +17,18 @@
 package org.session.libsession.utilities.recipients;
 
 import android.content.Context;
-import android.net.Uri;
 import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import network.loki.messenger.R;
 import org.session.libsession.messaging.MessagingModuleConfiguration;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.GroupRecord;
 import org.session.libsession.utilities.ListenableFutureTask;
-import org.session.libsession.utilities.MaterialColor;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.Util;
-import org.session.libsession.utilities.recipients.Recipient.DisappearingState;
 import org.session.libsession.utilities.recipients.Recipient.RecipientSettings;
-import org.session.libsession.utilities.recipients.Recipient.RegisteredState;
-import org.session.libsession.utilities.recipients.Recipient.VibrateState;
 import org.session.libsignal.utilities.guava.Optional;
 
 import java.util.LinkedList;
@@ -43,6 +37,8 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+
+import network.loki.messenger.R;
 
 class RecipientProvider {
 
@@ -150,34 +146,21 @@ class RecipientProvider {
 
   static class RecipientDetails {
     @Nullable final String                 name;
-    @Nullable final String                 customLabel;
-    @Nullable final Uri                    systemContactPhoto;
-    @Nullable final Uri                    contactUri;
     @Nullable final Long                   groupAvatarId;
-    @Nullable final MaterialColor          color;
-    @Nullable final Uri                    messageRingtone;
-    @Nullable final Uri                    callRingtone;
               final long                   mutedUntil;
               final int                    notifyType;
-    @Nullable final DisappearingState      disappearingState;
               final boolean                autoDownloadAttachments;
-    @Nullable final VibrateState           messageVibrateState;
-    @Nullable final VibrateState           callVibrateState;
               final boolean                blocked;
               final boolean                approved;
               final boolean                approvedMe;
               final int                    expireMessages;
     @NonNull  final List<Recipient>        participants;
     @Nullable final String                 profileName;
-              final Optional<Integer>      defaultSubscriptionId;
-    @NonNull  final RegisteredState        registered;
     @Nullable final byte[]                 profileKey;
     @Nullable final String                 profileAvatar;
-              final boolean                profileSharing;
               final boolean                systemContact;
               final boolean                isLocalNumber;
     @Nullable final String                 notificationChannel;
-              final boolean                forceSmsSelection;
               final boolean                blocksCommunityMessageRequests;
 
     RecipientDetails(@Nullable String name, @Nullable Long groupAvatarId,
@@ -185,33 +168,20 @@ class RecipientProvider {
                      @Nullable List<Recipient> participants)
     {
       this.groupAvatarId                   = groupAvatarId;
-      this.systemContactPhoto              = settings     != null ? Util.uri(settings.getSystemContactPhotoUri()) : null;
-      this.customLabel                     = settings     != null ? settings.getSystemPhoneLabel() : null;
-      this.contactUri                      = settings     != null ? Util.uri(settings.getSystemContactUri()) : null;
-      this.color                           = settings     != null ? settings.getColor() : null;
-      this.messageRingtone                 = settings     != null ? settings.getMessageRingtone() : null;
-      this.callRingtone                    = settings     != null ? settings.getCallRingtone() : null;
       this.mutedUntil                      = settings     != null ? settings.getMuteUntil() : 0;
       this.notifyType                      = settings     != null ? settings.getNotifyType() : 0;
       this.autoDownloadAttachments         = settings     != null && settings.getAutoDownloadAttachments();
-      this.disappearingState               = settings     != null ? settings.getDisappearingState() : null;
-      this.messageVibrateState             = settings     != null ? settings.getMessageVibrateState() : null;
-      this.callVibrateState                = settings     != null ? settings.getCallVibrateState() : null;
       this.blocked                         = settings     != null && settings.isBlocked();
       this.approved                        = settings     != null && settings.isApproved();
       this.approvedMe                      = settings     != null && settings.hasApprovedMe();
       this.expireMessages                  = settings     != null ? settings.getExpireMessages() : 0;
       this.participants                    = participants == null ? new LinkedList<>() : participants;
       this.profileName                     = settings     != null ? settings.getProfileName() : null;
-      this.defaultSubscriptionId           = settings     != null ? settings.getDefaultSubscriptionId() : Optional.absent();
-      this.registered                      = settings     != null ? settings.getRegistered() : RegisteredState.UNKNOWN;
       this.profileKey                      = settings     != null ? settings.getProfileKey() : null;
       this.profileAvatar                   = settings     != null ? settings.getProfileAvatar() : null;
-      this.profileSharing                  = settings     != null && settings.isProfileSharing();
       this.systemContact                   = systemContact;
       this.isLocalNumber                   = isLocalNumber;
       this.notificationChannel             = settings     != null ? settings.getNotificationChannel() : null;
-      this.forceSmsSelection               = settings     != null && settings.isForceSmsSelection();
       this.blocksCommunityMessageRequests  = settings     != null && settings.getBlocksCommunityMessageRequests();
 
       if (name == null && settings != null) this.name = settings.getSystemDisplayName();

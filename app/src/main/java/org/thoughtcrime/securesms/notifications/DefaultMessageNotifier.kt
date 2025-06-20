@@ -336,7 +336,7 @@ class DefaultMessageNotifier(
         }
 
         if (signal) {
-            builder.setAlarms(notificationState.getRingtone(context), notificationState.vibrate)
+            builder.setAlarms(notificationState.getRingtone(context))
             builder.setTicker(
                 notifications[0].individualRecipient,
                 notifications[0].text
@@ -416,7 +416,7 @@ class DefaultMessageNotifier(
         }
 
         if (signal) {
-            builder.setAlarms(notificationState.getRingtone(context), notificationState.vibrate)
+            builder.setAlarms(notificationState.getRingtone(context))
             val text = notifications[0].text
             builder.setTicker(
                 notifications[0].individualRecipient,

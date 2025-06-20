@@ -656,8 +656,6 @@ public class ThreadDatabase extends Database {
         }
 
         if (created) {
-          DatabaseComponent.get(context).recipientDatabase().setProfileSharing(recipient, true);
-
           if (updateListener != null) {
               updateListener.threadCreated(recipient.getAddress(), threadId);
           }

@@ -374,7 +374,6 @@ class ConfigToDatabaseSync @Inject constructor(
                 val title = group.name
                 val formationTimestamp = (group.joinedAtSecs * 1000L)
                 storage.createGroup(groupId, title, admins + members, null, null, admins, formationTimestamp)
-                storage.setProfileSharing(fromSerialized(groupId), true)
                 // Add the group to the user's set of public keys to poll for
                 storage.addClosedGroupPublicKey(group.accountId)
                 // Store the encryption key pair

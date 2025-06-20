@@ -176,9 +176,6 @@ interface StorageProtocol {
     // Groups
     fun getAllGroups(includeInactive: Boolean): List<GroupRecord>
 
-    // Settings
-    fun setProfileSharing(address: Address, value: Boolean)
-
     // Thread
     fun getOrCreateThreadIdFor(address: Address): Long
     fun getThreadIdFor(publicKey: String, groupPublicKey: String?, openGroupID: String?, createThread: Boolean): Long?
@@ -274,11 +271,6 @@ interface StorageProtocol {
     fun getExpirationConfiguration(threadId: Long): ExpirationConfiguration?
     fun setExpirationConfiguration(config: ExpirationConfiguration)
     fun getExpiringMessages(messageIds: List<Long> = emptyList()): List<Pair<Long, Long>>
-    fun updateDisappearingState(
-        messageSender: String,
-        threadID: Long,
-        disappearingState: Recipient.DisappearingState
-    )
 
     // Shared configs
     fun conversationInConfig(publicKey: String?, groupPublicKey: String?, openGroupId: String?, visibleOnly: Boolean): Boolean

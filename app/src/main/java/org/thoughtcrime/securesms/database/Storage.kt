@@ -1097,11 +1097,6 @@ open class Storage @Inject constructor(
         return jobDatabase.hasBackgroundGroupAddJob(groupJoinUrl)
     }
 
-    override fun setProfileSharing(address: Address, value: Boolean) {
-        val recipient = Recipient.from(context, address, false)
-        recipientDatabase.setProfileSharing(recipient, value)
-    }
-
     override fun getOrCreateThreadIdFor(address: Address): Long {
         val recipient = Recipient.from(context, address, false)
         return threadDatabase.getOrCreateThreadIdFor(recipient)
@@ -1927,27 +1922,5 @@ open class Storage @Inject constructor(
             }
         }
         return expiringMessages
-    }
-
-    override fun updateDisappearingState(
-        messageSender: String,
-        threadID: Long,
-        disappearingState: Recipient.DisappearingState
-    ) {
-        val threadDb = threadDatabase
-        val lokiDb = lokiAPIDatabase
-        val recipient = threadDb.getRecipientForThreadId(threadID) ?: return
-        val recipientAddress = recipient.address.toString()
-        recipientDatabase
-            .setDisappearingState(recipient, disappearingState);
-        val currentLegacyRecipient = lokiDb.getLastLegacySenderAddress(recipientAddress)
-        val currentExpiry = getExpirationConfiguration(threadID)
-        if (disappearingState == DisappearingState.LEGACY
-            && currentExpiry?.isEnabled == true
-            && ExpirationConfiguration.isNewConfigEnabled) { // only set "this person is legacy" if new config enabled
-            lokiDb.setLastLegacySenderAddress(recipientAddress, messageSender)
-        } else if (messageSender == currentLegacyRecipient) {
-            lokiDb.setLastLegacySenderAddress(recipientAddress, null)
-        }
     }
 }

@@ -512,10 +512,6 @@ public class SmsDatabase extends MessagingDatabase {
         DatabaseComponent.get(context).threadDatabase().update(threadId, true);
       }
 
-      if (message.getSubscriptionId() != -1) {
-        DatabaseComponent.get(context).recipientDatabase().setDefaultSubscriptionId(recipient, message.getSubscriptionId());
-      }
-
       notifyConversationListeners(threadId);
 
       return Optional.of(new InsertResult(messageId, threadId));

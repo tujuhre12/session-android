@@ -31,7 +31,6 @@ import org.session.libsession.avatars.ContactColors;
 import org.session.libsession.avatars.ContactPhoto;
 import org.session.libsession.avatars.GroupRecordContactPhoto;
 import org.session.libsession.avatars.ProfileContactPhoto;
-import org.session.libsession.avatars.SystemContactPhoto;
 import org.session.libsession.avatars.TransparentContactPhoto;
 import org.session.libsession.messaging.MessagingModuleConfiguration;
 import org.session.libsession.messaging.contacts.Contact;
@@ -48,6 +47,7 @@ import org.session.libsession.utilities.Util;
 import org.session.libsession.utilities.recipients.RecipientProvider.RecipientDetails;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.guava.Optional;
+import org.thoughtcrime.securesms.database.model.NotifyType;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -71,35 +71,22 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
 
   private final     Context context;
   private @Nullable String  name;
-  private @Nullable String  customLabel;
   private           boolean resolving;
   private           boolean isLocalNumber;
 
-  private @Nullable Uri                  systemContactPhoto;
   private @Nullable Long                 groupAvatarId;
-  private           Uri                  contactUri;
-  private @Nullable Uri                  messageRingtone         = null;
-  private @Nullable Uri                  callRingtone            = null;
   public            long                 mutedUntil              = 0;
+  @NotifyType
   public            int                  notifyType              = 0;
   private           boolean              autoDownloadAttachments = false;
   private           boolean              blocked                 = false;
   private           boolean              approved                = false;
   private           boolean              approvedMe              = false;
-  private           DisappearingState    disappearingState     = null;
-  private           VibrateState         messageVibrate          = VibrateState.DEFAULT;
-  private           VibrateState         callVibrate             = VibrateState.DEFAULT;
-  private           int                  expireMessages          = 0;
-  private           Optional<Integer>    defaultSubscriptionId   = Optional.absent();
-  private @NonNull  RegisteredState      registered              = RegisteredState.UNKNOWN;
 
-  private @Nullable MaterialColor  color;
   private @Nullable byte[]         profileKey;
   private @Nullable String         profileName;
   private @Nullable String         profileAvatar;
-  private           boolean        profileSharing;
   private           String         notificationChannel;
-  private           boolean        forceSmsSelection;
   private           boolean        blocksCommunityMessageRequests;
 
   @SuppressWarnings("ConstantConditions")
@@ -131,36 +118,21 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
   {
     this.context   = context.getApplicationContext();
     this.address   = address;
-    this.color     = null;
     this.resolving = true;
 
     if (stale != null) {
       this.name                   = stale.name;
-      this.contactUri             = stale.contactUri;
-      this.systemContactPhoto     = stale.systemContactPhoto;
       this.groupAvatarId          = stale.groupAvatarId;
       this.isLocalNumber          = stale.isLocalNumber;
-      this.color                  = stale.color;
-      this.customLabel            = stale.customLabel;
-      this.messageRingtone        = stale.messageRingtone;
-      this.callRingtone           = stale.callRingtone;
       this.mutedUntil             = stale.mutedUntil;
       this.blocked                = stale.blocked;
       this.approved               = stale.approved;
       this.approvedMe             = stale.approvedMe;
-      this.messageVibrate         = stale.messageVibrate;
-      this.callVibrate            = stale.callVibrate;
-      this.expireMessages         = stale.expireMessages;
-      this.defaultSubscriptionId  = stale.defaultSubscriptionId;
-      this.registered             = stale.registered;
       this.notificationChannel    = stale.notificationChannel;
       this.profileKey             = stale.profileKey;
       this.profileName            = stale.profileName;
       this.profileAvatar          = stale.profileAvatar;
-      this.profileSharing         = stale.profileSharing;
-      this.forceSmsSelection      = stale.forceSmsSelection;
       this.notifyType             = stale.notifyType;
-      this.disappearingState      = stale.disappearingState;
       this.autoDownloadAttachments = stale.autoDownloadAttachments;
 
       this.participants.clear();
@@ -169,31 +141,19 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
 
     if (details.isPresent()) {
       this.name                    = details.get().name;
-      this.systemContactPhoto      = details.get().systemContactPhoto;
       this.groupAvatarId           = details.get().groupAvatarId;
       this.isLocalNumber           = details.get().isLocalNumber;
-      this.color                   = details.get().color;
-      this.messageRingtone         = details.get().messageRingtone;
-      this.callRingtone            = details.get().callRingtone;
       this.mutedUntil              = details.get().mutedUntil;
       this.blocked                 = details.get().blocked;
       this.approved                = details.get().approved;
       this.approvedMe              = details.get().approvedMe;
-      this.messageVibrate          = details.get().messageVibrateState;
-      this.callVibrate             = details.get().callVibrateState;
-      this.expireMessages          = details.get().expireMessages;
-      this.defaultSubscriptionId   = details.get().defaultSubscriptionId;
-      this.registered              = details.get().registered;
       this.notificationChannel     = details.get().notificationChannel;
       this.profileKey              = details.get().profileKey;
       this.profileName             = details.get().profileName;
       this.profileAvatar           = details.get().profileAvatar;
-      this.profileSharing          = details.get().profileSharing;
-      this.forceSmsSelection       = details.get().forceSmsSelection;
       this.notifyType              = details.get().notifyType;
       this.autoDownloadAttachments = details.get().autoDownloadAttachments;
       this.blocksCommunityMessageRequests = details.get().blocksCommunityMessageRequests;
-      this.disappearingState      = details.get().disappearingState;
 
       this.participants.clear();
       this.participants.addAll(details.get().participants);
@@ -205,31 +165,17 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
         if (result != null) {
           synchronized (Recipient.this) {
             Recipient.this.name                   = result.name;
-            Recipient.this.contactUri             = result.contactUri;
-            Recipient.this.systemContactPhoto     = result.systemContactPhoto;
             Recipient.this.groupAvatarId          = result.groupAvatarId;
             Recipient.this.isLocalNumber          = result.isLocalNumber;
-            Recipient.this.color                  = result.color;
-            Recipient.this.customLabel            = result.customLabel;
-            Recipient.this.messageRingtone        = result.messageRingtone;
-            Recipient.this.callRingtone           = result.callRingtone;
             Recipient.this.mutedUntil             = result.mutedUntil;
             Recipient.this.blocked                = result.blocked;
             Recipient.this.approved               = result.approved;
             Recipient.this.approvedMe             = result.approvedMe;
-            Recipient.this.messageVibrate         = result.messageVibrateState;
-            Recipient.this.callVibrate            = result.callVibrateState;
-            Recipient.this.expireMessages         = result.expireMessages;
-            Recipient.this.defaultSubscriptionId  = result.defaultSubscriptionId;
-            Recipient.this.registered             = result.registered;
             Recipient.this.notificationChannel    = result.notificationChannel;
             Recipient.this.profileKey             = result.profileKey;
             Recipient.this.profileName            = result.profileName;
             Recipient.this.profileAvatar          = result.profileAvatar;
-            Recipient.this.profileSharing         = result.profileSharing;
-            Recipient.this.forceSmsSelection      = result.forceSmsSelection;
             Recipient.this.notifyType             = result.notifyType;
-            Recipient.this.disappearingState      = result.disappearingState;
             Recipient.this.autoDownloadAttachments = result.autoDownloadAttachments;
             Recipient.this.blocksCommunityMessageRequests = result.blocksCommunityMessageRequests;
 
@@ -259,32 +205,19 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
   Recipient(@NonNull Context context, @NonNull Address address, @NonNull RecipientDetails details) {
     this.context                = context.getApplicationContext();
     this.address                = address;
-    this.contactUri             = details.contactUri;
     this.name                   = details.name;
-    this.systemContactPhoto     = details.systemContactPhoto;
     this.groupAvatarId          = details.groupAvatarId;
     this.isLocalNumber          = details.isLocalNumber;
-    this.color                  = details.color;
-    this.customLabel            = details.customLabel;
-    this.messageRingtone        = details.messageRingtone;
-    this.callRingtone           = details.callRingtone;
     this.mutedUntil             = details.mutedUntil;
     this.notifyType             = details.notifyType;
     this.autoDownloadAttachments = details.autoDownloadAttachments;
     this.blocked                = details.blocked;
     this.approved               = details.approved;
     this.approvedMe             = details.approvedMe;
-    this.messageVibrate         = details.messageVibrateState;
-    this.callVibrate            = details.callVibrateState;
-    this.expireMessages         = details.expireMessages;
-    this.defaultSubscriptionId  = details.defaultSubscriptionId;
-    this.registered             = details.registered;
     this.notificationChannel    = details.notificationChannel;
     this.profileKey             = details.profileKey;
     this.profileName            = details.profileName;
     this.profileAvatar          = details.profileAvatar;
-    this.profileSharing         = details.profileSharing;
-    this.forceSmsSelection      = details.forceSmsSelection;
     this.blocksCommunityMessageRequests = details.blocksCommunityMessageRequests;
 
     this.participants.addAll(details.participants);
@@ -293,23 +226,6 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
 
   public boolean isLocalNumber() {
     return isLocalNumber;
-  }
-
-  public synchronized @Nullable Uri getContactUri() {
-    return this.contactUri;
-  }
-
-  public void setContactUri(@Nullable Uri contactUri) {
-    boolean notify = false;
-
-    synchronized (this) {
-      if (!Util.equals(contactUri, this.contactUri)) {
-        this.contactUri = contactUri;
-        notify = true;
-      }
-    }
-
-    if (notify) notifyListeners();
   }
 
   public synchronized @NonNull String getName() {
@@ -360,50 +276,12 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
 
   public synchronized @NonNull MaterialColor getColor() {
     if      (isGroupOrCommunityRecipient()) return MaterialColor.GROUP;
-    else if (color != null)      return color;
     else if (name != null)       return ContactColors.generateFor(name);
     else                         return ContactColors.UNKNOWN_COLOR;
   }
 
-  public void setColor(@NonNull MaterialColor color) {
-    synchronized (this) {
-      this.color = color;
-    }
-
-    notifyListeners();
-  }
-
   public @NonNull Address getAddress() {
     return address;
-  }
-
-  public synchronized @Nullable String getCustomLabel() {
-    return customLabel;
-  }
-
-  public void setCustomLabel(@Nullable String customLabel) {
-    boolean notify = false;
-
-    synchronized (this) {
-      if (!Util.equals(customLabel, this.customLabel)) {
-        this.customLabel = customLabel;
-        notify = true;
-      }
-    }
-
-    if (notify) notifyListeners();
-  }
-
-  public synchronized Optional<Integer> getDefaultSubscriptionId() {
-    return defaultSubscriptionId;
-  }
-
-  public void setDefaultSubscriptionId(Optional<Integer> defaultSubscriptionId) {
-    synchronized (this) {
-      this.defaultSubscriptionId = defaultSubscriptionId;
-    }
-
-    notifyListeners();
   }
 
   public synchronized @Nullable String getProfileName() {
@@ -429,18 +307,6 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
 
     notifyListeners();
     EventBus.getDefault().post(new ProfilePictureModifiedEvent(this));
-  }
-
-  public synchronized boolean isProfileSharing() {
-    return profileSharing;
-  }
-
-  public void setProfileSharing(boolean value) {
-    synchronized (this) {
-      this.profileSharing = value;
-    }
-
-    notifyListeners();
   }
 
   public boolean isGroupOrCommunityRecipient() {
@@ -517,22 +383,8 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
   public synchronized @Nullable ContactPhoto getContactPhoto() {
     if      (isLocalNumber)                               return new ProfileContactPhoto(address, String.valueOf(TextSecurePreferences.getProfileAvatarId(context)));
     else if (isGroupOrCommunityRecipient() && groupAvatarId != null) return new GroupRecordContactPhoto(address, groupAvatarId);
-    else if (systemContactPhoto != null)                  return new SystemContactPhoto(address, systemContactPhoto, 0);
     else if (profileAvatar != null)                       return new ProfileContactPhoto(address, profileAvatar);
     else                                                  return null;
-  }
-
-  public void setSystemContactPhoto(@Nullable Uri systemContactPhoto) {
-    boolean notify = false;
-
-    synchronized (this) {
-      if (!Util.equals(systemContactPhoto, this.systemContactPhoto)) {
-        this.systemContactPhoto = systemContactPhoto;
-        notify = true;
-      }
-    }
-
-    if (notify) notifyListeners();
   }
 
   public void setGroupAvatarId(@Nullable Long groupAvatarId) {
@@ -553,38 +405,6 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
     return groupAvatarId;
   }
 
-  public synchronized @Nullable Uri getMessageRingtone() {
-    if (messageRingtone != null && messageRingtone.getScheme() != null && messageRingtone.getScheme().startsWith("file")) {
-      return null;
-    }
-
-    return messageRingtone;
-  }
-
-  public void setMessageRingtone(@Nullable Uri ringtone) {
-    synchronized (this) {
-      this.messageRingtone = ringtone;
-    }
-
-    notifyListeners();
-  }
-
-  public synchronized @Nullable Uri getCallRingtone() {
-    if (callRingtone != null && callRingtone.getScheme() != null && callRingtone.getScheme().startsWith("file")) {
-      return null;
-    }
-
-    return callRingtone;
-  }
-
-  public void setCallRingtone(@Nullable Uri ringtone) {
-    synchronized (this) {
-      this.callRingtone = ringtone;
-    }
-
-    notifyListeners();
-  }
-
   public synchronized boolean isMuted() {
     return System.currentTimeMillis() <= mutedUntil;
   }
@@ -597,7 +417,7 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
     notifyListeners();
   }
 
-  public void setNotifyType(int notifyType) {
+  public void setNotifyType(@NotifyType int notifyType) {
     synchronized (this) {
       this.notifyType = notifyType;
     }
@@ -653,73 +473,6 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
     notifyListeners();
   }
 
-  public synchronized VibrateState getMessageVibrate() {
-    return messageVibrate;
-  }
-
-  public void setMessageVibrate(VibrateState vibrate) {
-    synchronized (this) {
-      this.messageVibrate = vibrate;
-    }
-
-    notifyListeners();
-  }
-
-  public synchronized  VibrateState getCallVibrate() {
-    return callVibrate;
-  }
-
-  public void setCallVibrate(VibrateState vibrate) {
-    synchronized (this) {
-      this.callVibrate = vibrate;
-    }
-
-    notifyListeners();
-  }
-
-  public synchronized int getExpireMessages() {
-    return expireMessages;
-  }
-
-  public void setExpireMessages(int expireMessages) {
-    synchronized (this) {
-      this.expireMessages = expireMessages;
-    }
-
-    notifyListeners();
-  }
-
-  public synchronized DisappearingState getDisappearingState() {
-    return disappearingState;
-  }
-
-  public void setDisappearingState(DisappearingState disappearingState) {
-    synchronized (this) {
-      this.disappearingState = disappearingState;
-    }
-
-    notifyListeners();
-  }
-
-  public synchronized RegisteredState getRegistered() {
-    if      (isPushGroupRecipient()) return RegisteredState.REGISTERED;
-
-    return registered;
-  }
-
-  public void setRegistered(@NonNull RegisteredState value) {
-    boolean notify = false;
-
-    synchronized (this) {
-      if (this.registered != value) {
-        this.registered = value;
-        notify = true;
-      }
-    }
-
-    if (notify) notifyListeners();
-  }
-
   public synchronized @Nullable String getNotificationChannel() {
     return notificationChannel;
   }
@@ -735,18 +488,6 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
     }
 
     if (notify) notifyListeners();
-  }
-
-  public boolean isForceSmsSelection() {
-    return forceSmsSelection;
-  }
-
-  public void setForceSmsSelection(boolean value) {
-    synchronized (this) {
-      this.forceSmsSelection = value;
-    }
-
-    notifyListeners();
   }
 
   public synchronized @Nullable byte[] getProfileKey() {
@@ -781,10 +522,8 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
             && blocked == recipient.blocked
             && approved == recipient.approved
             && approvedMe == recipient.approvedMe
-            && expireMessages == recipient.expireMessages
             && address.equals(recipient.address)
             && Objects.equals(name, recipient.name)
-            && Objects.equals(customLabel, recipient.customLabel)
             && Objects.equals(groupAvatarId, recipient.groupAvatarId)
             && Arrays.equals(profileKey, recipient.profileKey)
             && Objects.equals(profileName, recipient.profileName)
@@ -797,7 +536,6 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
     int result = Objects.hash(
             address,
             name,
-            customLabel,
             resolving,
             groupAvatarId,
             mutedUntil,
@@ -805,7 +543,6 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
             blocked,
             approved,
             approvedMe,
-            expireMessages,
             profileName,
             profileAvatar,
             blocksCommunityMessageRequests
@@ -834,24 +571,6 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
     return resolving;
   }
 
-  public enum VibrateState {
-    DEFAULT(0), ENABLED(1), DISABLED(2);
-
-    private final int id;
-
-    VibrateState(int id) {
-      this.id = id;
-    }
-
-    public int getId() {
-      return id;
-    }
-
-    public static VibrateState fromId(int id) {
-      return values()[id];
-    }
-  }
-
   public enum DisappearingState {
     LEGACY(0), UPDATED(1);
 
@@ -870,24 +589,6 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
     }
   }
 
-  public enum RegisteredState {
-    UNKNOWN(0), REGISTERED(1), NOT_REGISTERED(2);
-
-    private final int id;
-
-    RegisteredState(int id) {
-      this.id = id;
-    }
-
-    public int getId() {
-      return id;
-    }
-
-    public static RegisteredState fromId(int id) {
-      return values()[id];
-    }
-  }
-
   public static class RecipientSettings {
     private final boolean                blocked;
     private final boolean                approved;
@@ -895,49 +596,23 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
     private final long                   muteUntil;
     private final int                    notifyType;
     private final boolean                autoDownloadAttachments;
-    private final DisappearingState      disappearingState;
-    private final VibrateState           messageVibrateState;
-    private final VibrateState           callVibrateState;
-    private final Uri                    messageRingtone;
-    private final Uri                    callRingtone;
-    private final MaterialColor          color;
-    private final int                    defaultSubscriptionId;
     private final int                    expireMessages;
-    private final RegisteredState        registered;
     private final byte[]                 profileKey;
     private final String                 systemDisplayName;
-    private final String                 systemContactPhoto;
-    private final String                 systemPhoneLabel;
-    private final String                 systemContactUri;
     private final String                 signalProfileName;
     private final String                 signalProfileAvatar;
-    private final boolean                profileSharing;
     private final String                 notificationChannel;
-    private final boolean                forceSmsSelection;
     private final boolean                blocksCommunityMessageRequests;
 
     public RecipientSettings(boolean blocked, boolean approved, boolean approvedMe, long muteUntil,
                              int notifyType,
                              boolean autoDownloadAttachments,
-                      @NonNull DisappearingState disappearingState,
-                      @NonNull VibrateState messageVibrateState,
-                      @NonNull VibrateState callVibrateState,
-                      @Nullable Uri messageRingtone,
-                      @Nullable Uri callRingtone,
-                      @Nullable MaterialColor color,
-                      int defaultSubscriptionId,
-                      int expireMessages,
-                      @NonNull RegisteredState registered,
-                      @Nullable byte[] profileKey,
-                      @Nullable String systemDisplayName,
-                      @Nullable String systemContactPhoto,
-                      @Nullable String systemPhoneLabel,
-                      @Nullable String systemContactUri,
-                      @Nullable String signalProfileName,
-                      @Nullable String signalProfileAvatar,
-                      boolean profileSharing,
-                      @Nullable String notificationChannel,
-                      boolean forceSmsSelection,
+                             int expireMessages,
+                             @Nullable byte[] profileKey,
+                             @Nullable String systemDisplayName,
+                             @Nullable String signalProfileName,
+                             @Nullable String signalProfileAvatar,
+                             @Nullable String notificationChannel,
                              boolean blocksCommunityMessageRequests
     )
     {
@@ -947,30 +622,13 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
       this.muteUntil               = muteUntil;
       this.notifyType              = notifyType;
       this.autoDownloadAttachments = autoDownloadAttachments;
-      this.disappearingState      = disappearingState;
-      this.messageVibrateState     = messageVibrateState;
-      this.callVibrateState        = callVibrateState;
-      this.messageRingtone         = messageRingtone;
-      this.callRingtone            = callRingtone;
-      this.color                   = color;
-      this.defaultSubscriptionId   = defaultSubscriptionId;
       this.expireMessages          = expireMessages;
-      this.registered              = registered;
       this.profileKey              = profileKey;
       this.systemDisplayName       = systemDisplayName;
-      this.systemContactPhoto      = systemContactPhoto;
-      this.systemPhoneLabel        = systemPhoneLabel;
-      this.systemContactUri        = systemContactUri;
       this.signalProfileName       = signalProfileName;
       this.signalProfileAvatar     = signalProfileAvatar;
-      this.profileSharing          = profileSharing;
       this.notificationChannel     = notificationChannel;
-      this.forceSmsSelection       = forceSmsSelection;
       this.blocksCommunityMessageRequests = blocksCommunityMessageRequests;
-    }
-
-    public @Nullable MaterialColor getColor() {
-      return color;
     }
 
     public boolean isBlocked() {
@@ -989,44 +647,17 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
       return muteUntil;
     }
 
+    @NotifyType
     public int getNotifyType() {
       return notifyType;
-    }
-
-    public @NonNull DisappearingState getDisappearingState() {
-      return disappearingState;
     }
 
     public boolean getAutoDownloadAttachments() {
       return autoDownloadAttachments;
     }
 
-    public @NonNull VibrateState getMessageVibrateState() {
-      return messageVibrateState;
-    }
-
-    public @NonNull VibrateState getCallVibrateState() {
-      return callVibrateState;
-    }
-
-    public @Nullable Uri getMessageRingtone() {
-      return messageRingtone;
-    }
-
-    public @Nullable Uri getCallRingtone() {
-      return callRingtone;
-    }
-
-    public Optional<Integer> getDefaultSubscriptionId() {
-      return defaultSubscriptionId != -1 ? Optional.of(defaultSubscriptionId) : Optional.absent();
-    }
-
     public int getExpireMessages() {
       return expireMessages;
-    }
-
-    public RegisteredState getRegistered() {
-      return registered;
     }
 
     public @Nullable byte[] getProfileKey() {
@@ -1037,18 +668,6 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
       return systemDisplayName;
     }
 
-    public @Nullable String getSystemContactPhotoUri() {
-      return systemContactPhoto;
-    }
-
-    public @Nullable String getSystemPhoneLabel() {
-      return systemPhoneLabel;
-    }
-
-    public @Nullable String getSystemContactUri() {
-      return systemContactUri;
-    }
-
     public @Nullable String getProfileName() {
       return signalProfileName;
     }
@@ -1057,16 +676,8 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
       return signalProfileAvatar;
     }
 
-    public boolean isProfileSharing() {
-      return profileSharing;
-    }
-
     public @Nullable String getNotificationChannel() {
       return notificationChannel;
-    }
-
-    public boolean isForceSmsSelection() {
-      return forceSmsSelection;
     }
 
     public boolean getBlocksCommunityMessageRequests() {
