@@ -7,10 +7,10 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.jobs.RetrieveProfileAvatarJob
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.upsertContact
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
@@ -30,7 +30,7 @@ class ProfileManager @Inject constructor(
     private val preferences: TextSecurePreferences,
 ) : SSKEnvironment.ProfileManagerProtocol {
 
-    override fun setNickname(context: Context, recipient: Recipient, nickname: String?) {
+    override fun setNickname(context: Context, recipient: Address, nickname: String?) {
         if (recipient.isLocalNumber) return
         val accountID = recipient.address.toString()
         var contact = contactDatabase.getContactWithAccountID(accountID)
@@ -43,7 +43,7 @@ class ProfileManager @Inject constructor(
         contactUpdatedInternal(contact)
     }
 
-    override fun setName(context: Context, recipient: Recipient, name: String?) {
+    override fun setName(context: Context, recipient: Address, name: String?) {
         // New API
         if (recipient.isLocalNumber) return
         val accountID = recipient.address.toString()
@@ -62,7 +62,7 @@ class ProfileManager @Inject constructor(
 
     override fun setProfilePicture(
         context: Context,
-        recipient: Recipient,
+        recipient: Address,
         profilePictureURL: String?,
         profileKey: ByteArray?
     ) {

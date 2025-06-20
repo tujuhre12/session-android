@@ -264,31 +264,28 @@ public class RecipientDatabase extends Database {
     return false;
   }
 
-  public void setApproved(@NonNull Recipient recipient, boolean approved) {
+  public void setApproved(@NonNull Address recipient, boolean approved) {
     ContentValues values = new ContentValues();
     values.put(APPROVED, approved ? 1 : 0);
-    updateOrInsert(recipient.getAddress(), values);
-    recipient.resolve().setApproved(approved);
+    updateOrInsert(recipient, values);
     notifyRecipientListeners();
   }
 
-  public void setApprovedMe(@NonNull Recipient recipient, boolean approvedMe) {
+  public void setApprovedMe(@NonNull Address recipient, boolean approvedMe) {
     ContentValues values = new ContentValues();
     values.put(APPROVED_ME, approvedMe ? 1 : 0);
-    updateOrInsert(recipient.getAddress(), values);
-    recipient.resolve().setHasApprovedMe(approvedMe);
+    updateOrInsert(recipient, values);
     notifyRecipientListeners();
   }
 
-  public void setBlocked(@NonNull Iterable<Recipient> recipients, boolean blocked) {
+  public void setBlocked(@NonNull Iterable<Address> recipients, boolean blocked) {
     SQLiteDatabase db = getWritableDatabase();
     db.beginTransaction();
     try {
       ContentValues values = new ContentValues();
       values.put(BLOCK, blocked ? 1 : 0);
-      for (Recipient recipient : recipients) {
-        db.update(TABLE_NAME, values, ADDRESS + " = ?", new String[]{recipient.getAddress().toString()});
-        recipient.resolve().setBlocked(blocked);
+      for (Address recipient : recipients) {
+        db.update(TABLE_NAME, values, ADDRESS + " = ?", new String[]{recipient.toString()});
       }
       db.setTransactionSuccessful();
     } finally {
@@ -342,19 +339,17 @@ public class RecipientDatabase extends Database {
     notifyRecipientListeners();
   }
 
-  public void setProfileKey(@NonNull Recipient recipient, @Nullable byte[] profileKey) {
+  public void setProfileKey(@NonNull Address recipient, @Nullable byte[] profileKey) {
     ContentValues values = new ContentValues(1);
     values.put(PROFILE_KEY, profileKey == null ? null : Base64.encodeBytes(profileKey));
-    updateOrInsert(recipient.getAddress(), values);
-    recipient.resolve().setProfileKey(profileKey);
+    updateOrInsert(recipient, values);
     notifyRecipientListeners();
   }
 
-  public void setProfileAvatar(@NonNull Recipient recipient, @Nullable String profileAvatar) {
+  public void setProfileAvatar(@NonNull Address recipient, @Nullable String profileAvatar) {
     ContentValues contentValues = new ContentValues(1);
     contentValues.put(SESSION_PROFILE_AVATAR, profileAvatar);
-    updateOrInsert(recipient.getAddress(), contentValues);
-    recipient.resolve().setProfileAvatar(profileAvatar);
+    updateOrInsert(recipient, contentValues);
     notifyRecipientListeners();
   }
 
@@ -375,11 +370,10 @@ public class RecipientDatabase extends Database {
     notifyRecipientListeners();
   }
 
-  public void setBlocksCommunityMessageRequests(@NonNull Recipient recipient, boolean isBlocked) {
+  public void setBlocksCommunityMessageRequests(@NonNull Address recipient, boolean isBlocked) {
     ContentValues contentValues = new ContentValues(1);
     contentValues.put(BLOCKS_COMMUNITY_MESSAGE_REQUESTS, isBlocked ? 1 : 0);
-    updateOrInsert(recipient.getAddress(), contentValues);
-    recipient.resolve().setBlocksCommunityMessageRequests(isBlocked);
+    updateOrInsert(recipient, contentValues);
     notifyRecipientListeners();
   }
 

@@ -567,7 +567,7 @@ public class SmsDatabase extends MessagingDatabase {
     if (forceSms)                        type |= Types.MESSAGE_FORCE_SMS_BIT;
     if (message.isOpenGroupInvitation()) type |= Types.OPEN_GROUP_INVITATION_BIT;
 
-    Address            address               = message.getRecipient().getAddress();
+    Address            address               = message.getRecipient();
     Map<Address, Long> earlyDeliveryReceipts = earlyDeliveryReceiptCache.remove(date);
     Map<Address, Long> earlyReadReceipts     = earlyReadReceiptCache.remove(date);
 
@@ -708,7 +708,7 @@ public class SmsDatabase extends MessagingDatabase {
   private boolean isDuplicate(OutgoingTextMessage message, long threadId) {
     SQLiteDatabase database = getReadableDatabase();
     Cursor         cursor   = database.query(TABLE_NAME, null, DATE_SENT + " = ? AND " + ADDRESS + " = ? AND " + THREAD_ID + " = ?",
-            new String[]{String.valueOf(message.getSentTimestampMillis()), message.getRecipient().getAddress().toString(), String.valueOf(threadId)},
+            new String[]{String.valueOf(message.getSentTimestampMillis()), message.getRecipient().toString(), String.valueOf(threadId)},
             null, null, null, "1");
 
     try {

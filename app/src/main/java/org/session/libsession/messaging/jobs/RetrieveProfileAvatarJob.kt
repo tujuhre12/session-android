@@ -1,6 +1,6 @@
 package org.session.libsession.messaging.jobs
 
-import network.loki.messenger.libsession_util.SessionEncrypt
+import kotlinx.coroutines.flow.first
 import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.utilities.Data
@@ -10,12 +10,10 @@ import org.session.libsession.utilities.DownloadUtilities.downloadFromFileServer
 import org.session.libsession.utilities.TextSecurePreferences.Companion.setProfileAvatarId
 import org.session.libsession.utilities.TextSecurePreferences.Companion.setProfilePictureURL
 import org.session.libsession.utilities.Util.equals
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Util.SECURE_RANDOM
-import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.ConcurrentSkipListSet
 
@@ -46,7 +44,7 @@ class RetrieveProfileAvatarJob(
         if (profileAvatar != null && profileAvatar in errorUrls) return delegate.handleJobFailed(this, dispatcherName, Exception("Profile URL 404'd this app instance"))
         val context = MessagingModuleConfiguration.shared.context
         val storage = MessagingModuleConfiguration.shared.storage
-        val recipient = Recipient.from(context, recipientAddress, true)
+        val recipient = storage.observeRecipient(recipientAddress).first()
 
         if (profileKey == null || (profileKey.size != 32 && profileKey.size != 16)) {
             return delegate.handleJobFailedPermanently(this, dispatcherName, Exception("Recipient profile key is gone!"))
@@ -56,23 +54,23 @@ class RetrieveProfileAvatarJob(
         // it's now limited to just the current user case
         if (
                 recipient.isLocalNumber &&
-                AvatarHelper.avatarFileExists(context, recipient.resolve().address) &&
-                equals(profileAvatar, recipient.resolve().profileAvatar)
+                AvatarHelper.avatarFileExists(context, recipientAddress) &&
+                equals(profileAvatar, recipient.profileAvatar)
         ) {
             Log.w(TAG, "Already retrieved profile avatar: $profileAvatar")
             return
         }
 
         if (profileAvatar.isNullOrEmpty()) {
-            Log.w(TAG, "Removing profile avatar for: " + recipient.address.toString())
+            Log.w(TAG, "Removing profile avatar for: $recipientAddress" )
 
             if (recipient.isLocalNumber) {
                 setProfileAvatarId(context, SECURE_RANDOM.nextInt())
                 setProfilePictureURL(context, null)
             }
 
-            AvatarHelper.delete(context, recipient.address)
-            storage.setProfilePicture(recipient, null, null)
+            AvatarHelper.delete(context, recipientAddress)
+            storage.setProfilePicture(recipientAddress, null, null)
             return
         }
 
@@ -86,7 +84,7 @@ class RetrieveProfileAvatarJob(
                 symmetricKey = profileKey
             )
 
-            FileOutputStream(AvatarHelper.getAvatarFile(context, recipient.address)).use { out ->
+            FileOutputStream(AvatarHelper.getAvatarFile(context, recipientAddress)).use { out ->
                 out.write(decrypted)
             }
 
@@ -95,7 +93,7 @@ class RetrieveProfileAvatarJob(
                 setProfilePictureURL(context, profileAvatar)
             }
 
-            storage.setProfilePicture(recipient, profileAvatar, profileKey)
+            storage.setProfilePicture(recipientAddress, profileAvatar, profileKey)
         }
         catch (e: NonRetryableException){
             Log.e("Loki", "Failed to download profile avatar from non-retryable error", e)

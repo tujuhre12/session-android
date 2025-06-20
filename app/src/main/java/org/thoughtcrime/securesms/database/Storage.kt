@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.Flow
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_PINNED
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
@@ -64,7 +65,7 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsession.utilities.recipients.Recipient.DisappearingState
+import org.session.libsession.utilities.recipients.RecipientV2
 import org.session.libsession.utilities.upsertContact
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
@@ -220,27 +221,24 @@ open class Storage @Inject constructor(
         return Profile(displayName, profileKey, profilePictureUrl)
     }
 
-    override fun setProfilePicture(recipient: Recipient, newProfilePicture: String?, newProfileKey: ByteArray?) {
+    override fun setProfilePicture(recipient: Address, newProfilePicture: String?, newProfileKey: ByteArray?) {
         val db = recipientDatabase
         db.setProfileAvatar(recipient, newProfilePicture)
         db.setProfileKey(recipient, newProfileKey)
     }
 
-    override fun setBlocksCommunityMessageRequests(recipient: Recipient, blocksMessageRequests: Boolean) {
+    override fun setBlocksCommunityMessageRequests(recipient: Address, blocksMessageRequests: Boolean) {
         val db = recipientDatabase
         db.setBlocksCommunityMessageRequests(recipient, blocksMessageRequests)
     }
 
     override fun setUserProfilePicture(newProfilePicture: String?, newProfileKey: ByteArray?) {
-        val ourRecipient = fromSerialized(getUserPublicKey()!!).let {
-            Recipient.from(context, it, false)
-        }
-        ourRecipient.resolve().profileKey = newProfileKey
+        val ourRecipient = fromSerialized(getUserPublicKey()!!)
         preferences.setProfileKey(newProfileKey?.let { Base64.encodeBytes(it) })
         preferences.setProfilePictureURL(newProfilePicture)
 
         if (newProfileKey != null) {
-            JobQueue.shared.add(RetrieveProfileAvatarJob(newProfilePicture, ourRecipient.address, newProfileKey))
+            JobQueue.shared.add(RetrieveProfileAvatarJob(newProfilePicture, ourRecipient, newProfileKey))
         }
     }
 
@@ -251,6 +249,14 @@ open class Storage @Inject constructor(
             TextSecurePreferences.setLocalRegistrationId(context, registrationID)
         }
         return registrationID
+    }
+
+    override fun observeRecipient(address: Address): Flow<RecipientV2> {
+        TODO("Not yet implemented")
+    }
+
+    override fun getRecipientSync(address: Address): RecipientV2 {
+        TODO("Not yet implemented")
     }
 
     override fun getAttachmentsForMessage(mmsMessageId: Long): List<DatabaseAttachment> {
@@ -398,15 +404,14 @@ open class Storage @Inject constructor(
         } else {
             senderAddress
         }
-        val targetRecipient = Recipient.from(context, targetAddress, false)
-        if (!targetRecipient.isGroupOrCommunityRecipient) {
+        if (!targetAddress.isGroupOrCommunity) {
             if (isUserSender || isUserBlindedSender) {
-                setRecipientApproved(targetRecipient, true)
+                setRecipientApproved(targetAddress, true)
             } else {
-                setRecipientApprovedMe(targetRecipient, true)
+                setRecipientApprovedMe(targetAddress, true)
             }
         }
-        if (message.threadID == null && !targetRecipient.isCommunityRecipient) {
+        if (message.threadID == null && !targetAddress.isCommunity) {
             // open group recipients should explicitly create threads
             message.threadID = getOrCreateThreadIdFor(targetAddress)
         }
@@ -436,7 +441,7 @@ open class Storage @Inject constructor(
 
                 val mediaMessage = OutgoingMediaMessage.from(
                     message,
-                    targetRecipient,
+                    targetAddress,
                     pointers,
                     quote.orNull(),
                     linkPreviews.orNull()?.firstOrNull(),
@@ -459,8 +464,8 @@ open class Storage @Inject constructor(
             val isOpenGroupInvitation = (message.openGroupInvitation != null)
 
             val insertResult = if (isUserSender || isUserBlindedSender) {
-                val textMessage = if (isOpenGroupInvitation) OutgoingTextMessage.fromOpenGroupInvitation(message.openGroupInvitation, targetRecipient, message.sentTimestamp, expiresInMillis, expireStartedAt)
-                else OutgoingTextMessage.from(message, targetRecipient, expiresInMillis, expireStartedAt)
+                val textMessage = if (isOpenGroupInvitation) OutgoingTextMessage.fromOpenGroupInvitation(message.openGroupInvitation, targetAddress, message.sentTimestamp, expiresInMillis, expireStartedAt)
+                else OutgoingTextMessage.from(message, targetAddress, expiresInMillis, expireStartedAt)
                 smsDatabase.insertMessageOutbox(message.threadID ?: -1, textMessage, message.sentTimestamp!!, runThreadUpdate)
             } else {
                 val textMessage = if (isOpenGroupInvitation) IncomingTextMessage.fromOpenGroupInvitation(message.openGroupInvitation, senderAddress, message.sentTimestamp, expiresInMillis, expireStartedAt)
@@ -544,7 +549,7 @@ open class Storage @Inject constructor(
 
     override fun clearUserPic(clearConfig: Boolean) {
         val userPublicKey = getUserPublicKey() ?: return Log.w(TAG, "No user public key when trying to clear user pic")
-        val recipient = Recipient.from(context, fromSerialized(userPublicKey), false)
+        val recipient = fromSerialized(userPublicKey)
 
         // Clear details related to the user's profile picture
         preferences.setProfileKey(null)
@@ -856,7 +861,7 @@ open class Storage @Inject constructor(
 
     override fun insertOutgoingInfoMessage(context: Context, groupID: String, type: SignalServiceGroup.Type, name: String, members: Collection<String>, admins: Collection<String>, threadID: Long, sentTimestamp: Long): Long? {
         val userPublicKey = getUserPublicKey()!!
-        val recipient = Recipient.from(context, fromSerialized(groupID), false)
+        val recipient = fromSerialized(groupID)
         val updateData = UpdateMessageData.buildGroupUpdate(type, name, members)?.toJSON() ?: ""
         val infoMessage = OutgoingGroupMediaMessage(recipient, updateData, groupID, null, sentTimestamp, 0, 0, true, null, listOf(), listOf())
         val mmsDB = mmsDatabase
@@ -1000,7 +1005,7 @@ open class Storage @Inject constructor(
 
     private fun insertUpdateControlMessage(updateData: UpdateMessageData, sentTimestamp: Long, senderPublicKey: String?, closedGroup: AccountId): MessageId? {
         val userPublicKey = getUserPublicKey()!!
-        val recipient = Recipient.from(context, fromSerialized(closedGroup.hexString), false)
+        val recipient = fromSerialized(closedGroup.hexString)
         val threadDb = threadDatabase
         val threadID = threadDb.getThreadIdIfExistsFor(recipient)
         val expirationConfig = getExpirationConfiguration(threadID)
@@ -1098,25 +1103,24 @@ open class Storage @Inject constructor(
     }
 
     override fun getOrCreateThreadIdFor(address: Address): Long {
-        val recipient = Recipient.from(context, address, false)
-        return threadDatabase.getOrCreateThreadIdFor(recipient)
+        return threadDatabase.getOrCreateThreadIdFor(address)
     }
 
     override fun getThreadIdFor(publicKey: String, groupPublicKey: String?, openGroupID: String?, createThread: Boolean): Long? {
         val database = threadDatabase
         return if (!openGroupID.isNullOrEmpty()) {
-            val recipient = Recipient.from(context, fromSerialized(GroupUtil.getEncodedOpenGroupID(openGroupID.toByteArray())), false)
+            val recipient = fromSerialized(GroupUtil.getEncodedOpenGroupID(openGroupID.toByteArray()))
             database.getThreadIdIfExistsFor(recipient).let { if (it == -1L) null else it }
         } else if (!groupPublicKey.isNullOrEmpty() && !groupPublicKey.startsWith(IdPrefix.GROUP.value)) {
-            val recipient = Recipient.from(context, fromSerialized(GroupUtil.doubleEncodeGroupID(groupPublicKey)), false)
+            val recipient = fromSerialized(GroupUtil.doubleEncodeGroupID(groupPublicKey))
             if (createThread) database.getOrCreateThreadIdFor(recipient)
             else database.getThreadIdIfExistsFor(recipient).let { if (it == -1L) null else it }
         } else if (!groupPublicKey.isNullOrEmpty()) {
-            val recipient = Recipient.from(context, fromSerialized(groupPublicKey), false)
+            val recipient = fromSerialized(groupPublicKey)
             if (createThread) database.getOrCreateThreadIdFor(recipient)
             else database.getThreadIdIfExistsFor(recipient).let { if (it == -1L) null else it }
         } else {
-            val recipient = Recipient.from(context, fromSerialized(publicKey), false)
+            val recipient = fromSerialized(publicKey)
             if (createThread) database.getOrCreateThreadIdFor(recipient)
             else database.getThreadIdIfExistsFor(recipient).let { if (it == -1L) null else it }
         }
@@ -1132,12 +1136,7 @@ open class Storage @Inject constructor(
     }
 
     override fun getThreadId(address: Address): Long? {
-        val recipient = Recipient.from(context, address, false)
-        return getThreadId(recipient)
-    }
-
-    override fun getThreadId(recipient: Recipient): Long? {
-        val threadID = threadDatabase.getThreadIdIfExistsFor(recipient)
+        val threadID = threadDatabase.getThreadIdIfExistsFor(address)
         return if (threadID < 0) null else threadID
     }
 
@@ -1202,27 +1201,26 @@ open class Storage @Inject constructor(
         }
         moreContacts.forEach { contact ->
             val address = fromSerialized(contact.id)
-            val recipient = Recipient.from(context, address, false)
-            setBlocked(listOf(recipient), contact.blocked, fromConfigUpdate = true)
-            setRecipientApproved(recipient, contact.approved)
-            setRecipientApprovedMe(recipient, contact.approvedMe)
+            setBlocked(listOf(address), contact.blocked, fromConfigUpdate = true)
+            setRecipientApproved(address, contact.approved)
+            setRecipientApprovedMe(address, contact.approvedMe)
             if (contact.name.isNotEmpty()) {
-                profileManager.setName(context, recipient, contact.name)
+                profileManager.setName(context, address, contact.name)
             } else {
-                profileManager.setName(context, recipient, null)
+                profileManager.setName(context, address, null)
             }
             if (contact.nickname.isNotEmpty()) {
-                profileManager.setNickname(context, recipient, contact.nickname)
+                profileManager.setNickname(context, address, contact.nickname)
             } else {
-                profileManager.setNickname(context, recipient, null)
+                profileManager.setNickname(context, address, null)
             }
 
             if (contact.profilePicture != UserPic.DEFAULT) {
                 val (url, key) = contact.profilePicture
                 if (key.data.size != ProfileKeyUtil.PROFILE_KEY_BYTES) return@forEach
-                profileManager.setProfilePicture(context, recipient, url, key.data)
+                profileManager.setProfilePicture(context, address, url, key.data)
             } else {
-                profileManager.setProfilePicture(context, recipient, null, null)
+                profileManager.setProfilePicture(context, address, null, null)
             }
             if (contact.priority == PRIORITY_HIDDEN) {
                 getThreadId(fromSerialized(contact.id))?.let(::deleteConversation)
@@ -1234,7 +1232,7 @@ open class Storage @Inject constructor(
                 ).also { setPinned(it, contact.priority == PRIORITY_PINNED) }
             }
             if (timestamp != null) {
-                getThreadId(recipient)?.let {
+                getThreadId(address)?.let {
                     setExpirationConfiguration(
                         getExpirationConfiguration(it)?.takeIf { it.updatedTimestampMs > timestamp }
                             ?: ExpirationConfiguration(it, contact.expiryMode, timestamp)
@@ -1438,10 +1436,10 @@ open class Storage @Inject constructor(
 
     override fun insertDataExtractionNotificationMessage(senderPublicKey: String, message: DataExtractionNotificationInfoMessage, sentTimestamp: Long) {
         val address = fromSerialized(senderPublicKey)
-        val recipient = Recipient.from(context, address, false)
+        val recipient = getRecipientSync(address)
 
-        if (recipient.isBlocked) return
-        val threadId = getThreadId(recipient) ?: return
+        if (recipient.blocked) return
+        val threadId = getThreadId(address) ?: return
         val expirationConfig = getExpirationConfiguration(threadId)
         val expiryMode = expirationConfig?.expiryMode ?: ExpiryMode.NONE
         val expiresInMillis = expiryMode.expiryMillis
@@ -1487,13 +1485,13 @@ open class Storage @Inject constructor(
         ) return
 
         if (userPublicKey == senderPublicKey) {
-            val requestRecipient = Recipient.from(context, fromSerialized(recipientPublicKey), false)
+            val requestRecipient = fromSerialized(recipientPublicKey)
             recipientDatabase.setApproved(requestRecipient, true)
             val threadId = threadDatabase.getOrCreateThreadIdFor(requestRecipient)
             threadDatabase.setHasSent(threadId, true)
         } else {
-            val sender = Recipient.from(context, fromSerialized(senderPublicKey), false)
-            val threadId = getOrCreateThreadIdFor(sender.address)
+            val sender = fromSerialized(senderPublicKey)
+            val threadId = getOrCreateThreadIdFor(sender)
             val profile = response.profile
             if (profile != null) {
                 val name = profile.displayName!!
@@ -1502,7 +1500,7 @@ open class Storage @Inject constructor(
                 }
                 val newProfileKey = profile.profileKey
 
-                val needsProfilePicture = !AvatarHelper.avatarFileExists(context, sender.address)
+                val needsProfilePicture = !AvatarHelper.avatarFileExists(context, sender)
                 val profileKeyValid = newProfileKey?.isNotEmpty() == true && (newProfileKey.size == 16 || newProfileKey.size == 32) && profile.profilePictureURL?.isNotEmpty() == true
                 val profileKeyChanged = (sender.profileKey == null || !MessageDigest.isEqual(sender.profileKey, newProfileKey))
 
@@ -1538,7 +1536,7 @@ open class Storage @Inject constructor(
                 }
                 mappingDb.addBlindedIdMapping(mapping.value.copy(accountId = senderPublicKey))
 
-                val blindedThreadId = threadDatabase.getOrCreateThreadIdFor(Recipient.from(context, fromSerialized(mapping.key), false))
+                val blindedThreadId = threadDatabase.getOrCreateThreadIdFor(fromSerialized(mapping.key))
                 mmsDatabase.updateThreadId(blindedThreadId, threadId)
                 smsDatabase.updateThreadId(blindedThreadId, threadId)
                 deleteConversation(blindedThreadId)
@@ -1547,7 +1545,7 @@ open class Storage @Inject constructor(
             var alreadyApprovedMe: Boolean = false
             configFactory.withUserConfigs {
                 // check is the person had not yet approvedMe
-                alreadyApprovedMe = it.contacts.get(sender.address.toString())?.approvedMe ?: false
+                alreadyApprovedMe = it.contacts.get(sender.toString())?.approvedMe ?: false
             }
 
             setRecipientApprovedMe(sender, true)
@@ -1555,7 +1553,7 @@ open class Storage @Inject constructor(
             // only show the message if wasn't already approvedMe before
             if(!alreadyApprovedMe) {
                 val message = IncomingMediaMessage(
-                    sender.address,
+                    sender,
                     response.sentTimestamp!!,
                     -1,
                     0,
@@ -1610,11 +1608,11 @@ open class Storage @Inject constructor(
         return address.isGroupV2 || recipientDatabase.getApproved(address)
     }
 
-    override fun setRecipientApproved(recipient: Recipient, approved: Boolean) {
-        recipientDatabase.setApproved(recipient, approved)
-        if (recipient.isLocalNumber || !recipient.isContactRecipient) return
+    override fun setRecipientApproved(address: Address, approved: Boolean) {
+        recipientDatabase.setApproved(address, approved)
+        if (!address.isContact || address.toString() == getUserPublicKey()) return
         configFactory.withMutableUserConfigs {
-            it.contacts.upsertContact(recipient.address.toString()) {
+            it.contacts.upsertContact(address.toString()) {
                 // if the contact wasn't approved before but is approved now, make sure it's visible
                 if(approved && !this.approved) this.priority = PRIORITY_VISIBLE
 
@@ -1624,11 +1622,11 @@ open class Storage @Inject constructor(
         }
     }
 
-    override fun setRecipientApprovedMe(recipient: Recipient, approvedMe: Boolean) {
-        recipientDatabase.setApprovedMe(recipient, approvedMe)
-        if (recipient.isLocalNumber || !recipient.isContactRecipient) return
+    override fun setRecipientApprovedMe(address: Address, approvedMe: Boolean) {
+        recipientDatabase.setApprovedMe(address, approvedMe)
+        if (!address.isContact || address.toString() == getUserPublicKey()) return
         configFactory.withMutableUserConfigs {
-            it.contacts.upsertContact(recipient.address.toString()) {
+            it.contacts.upsertContact(address.toString()) {
                 this.approvedMe = approvedMe
             }
         }
@@ -1636,8 +1634,7 @@ open class Storage @Inject constructor(
 
     override fun insertCallMessage(senderPublicKey: String, callMessageType: CallMessageType, sentTimestamp: Long) {
         val address = fromSerialized(senderPublicKey)
-        val recipient = Recipient.from(context, address, false)
-        val threadId = threadDatabase.getOrCreateThreadIdFor(recipient)
+        val threadId = threadDatabase.getOrCreateThreadIdFor(address)
         val expirationConfig = getExpirationConfiguration(threadId)
         val expiryMode = expirationConfig?.expiryMode?.coerceSendToRead() ?: ExpiryMode.NONE
         val expiresInMillis = expiryMode.expiryMillis
@@ -1808,15 +1805,16 @@ open class Storage @Inject constructor(
         )
     }
 
-    override fun setBlocked(recipients: Iterable<Recipient>, isBlocked: Boolean, fromConfigUpdate: Boolean) {
+    override fun setBlocked(recipients: Iterable<Address>, isBlocked: Boolean, fromConfigUpdate: Boolean) {
         val recipientDb = recipientDatabase
         recipientDb.setBlocked(recipients, isBlocked)
 
         if (!fromConfigUpdate) {
+            val currentUserKey = getUserPublicKey()
             configFactory.withMutableUserConfigs { configs ->
-                recipients.filter { it.isContactRecipient && !it.isLocalNumber }
+                recipients.filter { it.isContact && (it.toString() != currentUserKey) }
                     .forEach { recipient ->
-                        configs.contacts.upsertContact(recipient.address.toString()) {
+                        configs.contacts.upsertContact(recipient.toString()) {
                             this.blocked = isBlocked
                         }
                     }

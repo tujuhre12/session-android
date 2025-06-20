@@ -614,12 +614,12 @@ public class ThreadDatabase extends Database {
     }
   }
 
-  public long getThreadIdIfExistsFor(Recipient recipient) {
-    return getThreadIdIfExistsFor(recipient.getAddress().toString());
+  public long getThreadIdIfExistsFor(Address address) {
+    return getThreadIdIfExistsFor(address.toString());
   }
 
-  public long getOrCreateThreadIdFor(Recipient recipient) {
-    return getOrCreateThreadIdFor(recipient, DistributionTypes.DEFAULT);
+  public long getOrCreateThreadIdFor(Address address) {
+    return getOrCreateThreadIdFor(address, DistributionTypes.DEFAULT);
   }
 
   public void setThreadArchived(long threadId) {
@@ -633,10 +633,10 @@ public class ThreadDatabase extends Database {
     notifyConversationListeners(threadId);
   }
 
-  public long getOrCreateThreadIdFor(Recipient recipient, int distributionType) {
+  public long getOrCreateThreadIdFor(Address address, int distributionType) {
     SQLiteDatabase db            = getReadableDatabase();
     String         where         = ADDRESS + " = ?";
-    String[]       recipientsArg = new String[]{recipient.getAddress().toString()};
+    String[]       recipientsArg = new String[]{address.toString()};
     Cursor         cursor        = null;
 
     boolean created = false;
@@ -650,14 +650,14 @@ public class ThreadDatabase extends Database {
             if (cursor != null && cursor.moveToFirst()) {
               threadId = cursor.getLong(cursor.getColumnIndexOrThrow(ID));
             } else {
-              threadId = createThreadForRecipient(recipient.getAddress(), recipient.isGroupOrCommunityRecipient(), distributionType);
+              threadId = createThreadForRecipient(address, address.isGroupOrCommunity(), distributionType);
               created = true;
             }
         }
 
         if (created) {
           if (updateListener != null) {
-              updateListener.threadCreated(recipient.getAddress(), threadId);
+              updateListener.threadCreated(address, threadId);
           }
         }
 

@@ -3,6 +3,7 @@ package org.session.libsession.messaging.messages.signal;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.DistributionTypes;
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment;
 import org.session.libsession.utilities.Contact;
@@ -18,7 +19,7 @@ public class OutgoingGroupMediaMessage extends OutgoingSecureMediaMessage {
   private final String groupID;
   private final boolean isUpdateMessage;
 
-  public OutgoingGroupMediaMessage(@NonNull Recipient recipient,
+  public OutgoingGroupMediaMessage(@NonNull Address recipient,
                                    @NonNull String body,
                                    @Nullable String groupId,
                                    @Nullable final Attachment avatar,

@@ -12,8 +12,6 @@ import android.view.ViewGroup.MarginLayoutParams
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.core.os.bundleOf
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
@@ -51,7 +49,6 @@ import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_K
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsession.utilities.wasKickedFromGroupV2
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
@@ -165,7 +162,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                     }
 
                     is GlobalSearchAdapter.Model.GroupConversation -> model.groupId
-                        .let { Recipient.from(this, Address.fromSerialized(it), false) }
+                        .let { Address.fromSerialized(it) }
                         .let(threadDb::getThreadIdIfExistsFor)
                         .takeIf { it >= 0 }
                         ?.let {
@@ -559,7 +556,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 Toast.makeText(this, R.string.copied, Toast.LENGTH_SHORT).show()
             }
             else if (thread.recipient.isCommunityRecipient) {
-                val threadId = threadDb.getThreadIdIfExistsFor(thread.recipient)
+                val threadId = threadDb.getThreadIdIfExistsFor(thread.recipient.address)
                 val openGroup = lokiThreadDatabase.getOpenGroupChat(threadId) ?: return@onCopyConversationId Unit
 
                 val clip = ClipData.newPlainText("Community URL", openGroup.joinURL)
@@ -619,7 +616,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 .format())
             dangerButton(R.string.block, R.string.AccessibilityId_blockConfirm) {
                 lifecycleScope.launch(Dispatchers.Default) {
-                    storage.setBlocked(listOf(thread.recipient), true)
+                    storage.setBlocked(listOf(thread.recipient.address), true)
 
                     withContext(Dispatchers.Main) {
                         binding.conversationsRecyclerView.adapter!!.notifyDataSetChanged()
@@ -639,7 +636,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
             text(Phrase.from(context, R.string.blockUnblockName).put(NAME_KEY, thread.recipient.name).format())
             dangerButton(R.string.blockUnblock, R.string.AccessibilityId_unblockConfirm) {
                 lifecycleScope.launch(Dispatchers.Default) {
-                    storage.setBlocked(listOf(thread.recipient), false)
+                    storage.setBlocked(listOf(thread.recipient.address), false)
                     withContext(Dispatchers.Main) {
                         binding.conversationsRecyclerView.adapter!!.notifyDataSetChanged()
                     }

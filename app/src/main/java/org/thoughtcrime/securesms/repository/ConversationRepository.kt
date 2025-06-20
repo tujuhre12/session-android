@@ -56,12 +56,12 @@ interface ConversationRepository {
     fun saveDraft(threadId: Long, text: String)
     fun getDraft(threadId: Long): String?
     fun clearDrafts(threadId: Long)
-    fun inviteContactsToCommunity(threadId: Long, contacts: List<Recipient>)
-    fun setBlocked(recipient: Recipient, blocked: Boolean)
+    fun inviteContactsToCommunity(threadId: Long, contacts: List<Address>)
+    fun setBlocked(recipient: Address, blocked: Boolean)
     fun markAsDeletedLocally(messages: Set<MessageRecord>, displayedMessage: String)
     fun deleteMessages(messages: Set<MessageRecord>, threadId: Long)
     fun deleteAllLocalMessagesInThreadFromSenderOfMessage(messageRecord: MessageRecord)
-    fun setApproved(recipient: Recipient, isApproved: Boolean)
+    fun setApproved(recipient: Address, isApproved: Boolean)
     fun isGroupReadOnly(recipient: Recipient): Boolean
     fun getLastSentMessageID(threadId: Long): Flow<MessageId?>
 
@@ -88,7 +88,7 @@ interface ConversationRepository {
     suspend fun deleteThread(threadId: Long): Result<Unit>
     suspend fun deleteMessageRequest(thread: ThreadRecord): Result<Unit>
     suspend fun clearAllMessageRequests(block: Boolean): Result<Unit>
-    suspend fun acceptMessageRequest(threadId: Long, recipient: Recipient): Result<Unit>
+    suspend fun acceptMessageRequest(threadId: Long, recipient: Address): Result<Unit>
     suspend fun declineMessageRequest(threadId: Long, recipient: Recipient): Result<Unit>
     fun hasReceived(threadId: Long): Boolean
     fun getInvitingAdmin(threadId: Long): Recipient?
@@ -161,7 +161,7 @@ class DefaultConversationRepository @Inject constructor(
         draftDb.clearDrafts(threadId)
     }
 
-    override fun inviteContactsToCommunity(threadId: Long, contacts: List<Recipient>) {
+    override fun inviteContactsToCommunity(threadId: Long, contacts: List<Address>) {
         val openGroup = lokiThreadDb.getOpenGroupChat(threadId) ?: return
         for (contact in contacts) {
             val message = VisibleMessage()
@@ -182,7 +182,7 @@ class DefaultConversationRepository @Inject constructor(
                 expireStartedAt
             )
             smsDb.insertMessageOutbox(-1, outgoingTextMessage, message.sentTimestamp!!, true)
-            MessageSender.send(message, contact.address)
+            MessageSender.send(message, contact)
         }
     }
 
@@ -209,8 +209,8 @@ class DefaultConversationRepository @Inject constructor(
     }
 
     // This assumes that recipient.isContactRecipient is true
-    override fun setBlocked(recipient: Recipient, blocked: Boolean) {
-        if (recipient.isContactRecipient) {
+    override fun setBlocked(recipient: Address, blocked: Boolean) {
+        if (recipient.isContact) {
             storage.setBlocked(listOf(recipient), blocked)
         }
     }
@@ -277,7 +277,7 @@ class DefaultConversationRepository @Inject constructor(
         }
     }
 
-    override fun setApproved(recipient: Recipient, isApproved: Boolean) {
+    override fun setApproved(recipient: Address, isApproved: Boolean) {
         storage.setRecipientApproved(recipient, isApproved)
     }
 
@@ -419,7 +419,7 @@ class DefaultConversationRepository @Inject constructor(
                     deleteMessageRequest(reader.current)
                     val recipient = reader.current.recipient
                     if (block && !recipient.isGroupV2Recipient) {
-                        setBlocked(recipient, true)
+                        setBlocked(recipient.address, true)
                     }
                 }
             }
@@ -441,18 +441,18 @@ class DefaultConversationRepository @Inject constructor(
         }
     }
 
-    override suspend fun acceptMessageRequest(threadId: Long, recipient: Recipient) = runCatching {
+    override suspend fun acceptMessageRequest(threadId: Long, recipient: Address) = runCatching {
         withContext(Dispatchers.Default) {
             storage.setRecipientApproved(recipient, true)
-            if (recipient.isGroupV2Recipient) {
+            if (recipient.isGroupV2) {
                 groupManager.respondToInvitation(
-                    AccountId(recipient.address.toString()),
+                    AccountId(recipient.toString()),
                     approved = true
                 )
             } else {
                 val message = MessageRequestResponse(true)
 
-                MessageSender.send(message = message, address = recipient.address)
+                MessageSender.send(message = message, address = recipient)
 
                 // add a control message for our user
                 storage.insertMessageRequestResponseFromYou(threadId)

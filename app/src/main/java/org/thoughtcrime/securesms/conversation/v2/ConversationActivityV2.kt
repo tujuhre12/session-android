@@ -298,8 +298,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     } else {
                         it
                     }
-                    val recipient = Recipient.from(this, address, false)
-                    threadId = storage.getOrCreateThreadIdFor(recipient.address)
+                    threadId = storage.getOrCreateThreadIdFor(address)
                 }
             } ?: finish()
         }
@@ -2027,7 +2026,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val expireStartedAt = if (viewModel.expirationConfiguration?.expiryMode is ExpiryMode.AfterSend) {
             message.sentTimestamp
         } else 0
-        val outgoingTextMessage = OutgoingTextMessage.from(message, recipient, expiresInMillis, expireStartedAt!!)
+        val outgoingTextMessage = OutgoingTextMessage.from(message, recipient.address, expiresInMillis, expireStartedAt!!)
 
         // Clear the input bar
         binding.inputBar.text = ""

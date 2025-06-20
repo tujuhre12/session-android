@@ -59,6 +59,8 @@ import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.ExecutionException;
 
+import kotlinx.coroutines.flow.Flow;
+
 public class Recipient implements RecipientModifiedListener, Cloneable {
 
   private static final String            TAG      = Recipient.class.getSimpleName();
@@ -90,15 +92,15 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
   private           boolean        blocksCommunityMessageRequests;
 
   @SuppressWarnings("ConstantConditions")
-  public static @NonNull Recipient from(@NonNull Context context, @NonNull Address address, boolean asynchronous) {
+  public static @NonNull Flow<RecipientV2> from(@NonNull Context context, @NonNull Address address, boolean asynchronous) {
     if (address == null) throw new AssertionError(address);
-    return provider.getRecipient(context, address, Optional.absent(), Optional.absent(), asynchronous);
+    throw new UnsupportedOperationException();
   }
 
   @SuppressWarnings("ConstantConditions")
-  public static @NonNull Recipient from(@NonNull Context context, @NonNull Address address, @NonNull Optional<RecipientSettings> settings, @NonNull Optional<GroupRecord> groupRecord, boolean asynchronous) {
+  public static @NonNull Flow<RecipientV2> from(@NonNull Context context, @NonNull Address address, @NonNull Optional<RecipientSettings> settings, @NonNull Optional<GroupRecord> groupRecord, boolean asynchronous) {
     if (address == null) throw new AssertionError(address);
-    return provider.getRecipient(context, address, settings, groupRecord, asynchronous);
+    throw new UnsupportedOperationException();
   }
 
   public static void applyCached(@NonNull Address address, Consumer<Recipient> consumer) {

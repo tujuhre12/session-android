@@ -2,6 +2,7 @@ package org.session.libsession.database
 
 import android.content.Context
 import android.net.Uri
+import kotlinx.coroutines.flow.Flow
 import network.loki.messenger.libsession_util.util.KeyPair
 import org.session.libsession.messaging.BlindedIdMapping
 import org.session.libsession.messaging.calls.CallMessageType
@@ -30,6 +31,7 @@ import org.session.libsession.utilities.GroupDisplayInfo
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.Recipient.RecipientSettings
+import org.session.libsession.utilities.recipients.RecipientV2
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceAttachmentPointer
 import org.session.libsignal.messages.SignalServiceGroup
@@ -48,12 +50,17 @@ interface StorageProtocol {
     fun getUserX25519KeyPair(): ECKeyPair
     fun getUserBlindedAccountId(serverPublicKey: String): AccountId?
     fun getUserProfile(): Profile
-    fun setProfilePicture(recipient: Recipient, newProfilePicture: String?, newProfileKey: ByteArray?)
-    fun setBlocksCommunityMessageRequests(recipient: Recipient, blocksMessageRequests: Boolean)
+    fun setProfilePicture(recipient: Address, newProfilePicture: String?, newProfileKey: ByteArray?)
+    fun setBlocksCommunityMessageRequests(recipient: Address, blocksMessageRequests: Boolean)
     fun setUserProfilePicture(newProfilePicture: String?, newProfileKey: ByteArray?)
     fun clearUserPic(clearConfig: Boolean = true)
     // Signal
     fun getOrGenerateRegistrationID(): Int
+
+    // Recipient
+    fun observeRecipient(address: Address): Flow<RecipientV2>
+    @Deprecated("Use observeRecipient instead", ReplaceWith("observeRecipient(address)"))
+    fun getRecipientSync(address: Address): RecipientV2
 
     // Jobs
     fun persistJob(job: Job)
@@ -182,7 +189,6 @@ interface StorageProtocol {
     fun getThreadId(publicKeyOrOpenGroupID: String): Long?
     fun getThreadId(openGroup: OpenGroup): Long?
     fun getThreadId(address: Address): Long?
-    fun getThreadId(recipient: Recipient): Long?
     fun getThreadIdForMms(mmsId: Long): Long
     fun getLastUpdated(threadID: Long): Long
     fun trimThread(threadID: Long, threadLimit: Int)
@@ -225,9 +231,9 @@ interface StorageProtocol {
     fun insertDataExtractionNotificationMessage(senderPublicKey: String, message: DataExtractionNotificationInfoMessage, sentTimestamp: Long)
     fun insertMessageRequestResponseFromContact(response: MessageRequestResponse)
     fun insertMessageRequestResponseFromYou(threadId: Long)
-    fun setRecipientApproved(recipient: Recipient, approved: Boolean)
+    fun setRecipientApproved(recipient: Address, approved: Boolean)
     fun getRecipientApproved(address: Address): Boolean
-    fun setRecipientApprovedMe(recipient: Recipient, approvedMe: Boolean)
+    fun setRecipientApprovedMe(recipient: Address, approvedMe: Boolean)
     fun insertCallMessage(senderPublicKey: String, callMessageType: CallMessageType, sentTimestamp: Long)
     fun conversationHasOutgoing(userPublicKey: String): Boolean
     fun deleteMessagesByHash(threadId: Long, hashes: List<String>)
@@ -266,7 +272,7 @@ interface StorageProtocol {
     fun updateReactionIfNeeded(message: Message, sender: String, openGroupSentTimestamp: Long)
     fun deleteReactions(messageId: MessageId)
     fun deleteReactions(messageIds: List<Long>, mms: Boolean)
-    fun setBlocked(recipients: Iterable<Recipient>, isBlocked: Boolean, fromConfigUpdate: Boolean = false)
+    fun setBlocked(recipients: Iterable<Address>, isBlocked: Boolean, fromConfigUpdate: Boolean = false)
     fun blockedContacts(): List<Recipient>
     fun getExpirationConfiguration(threadId: Long): ExpirationConfiguration?
     fun setExpirationConfiguration(config: ExpirationConfiguration)

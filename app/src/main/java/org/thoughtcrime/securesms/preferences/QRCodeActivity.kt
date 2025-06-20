@@ -73,11 +73,11 @@ class QRCodeActivity : ScreenLockActionBarActivity() {
         if (!PublicKeyValidation.isValid(string)) {
             errors.tryEmit(getString(R.string.qrNotAccountId))
         } else if (!isFinishing) {
-            val recipient = Recipient.from(this, Address.fromSerialized(string), false)
+            val address = Address.fromSerialized(string)
             start<ConversationActivityV2> {
-                putExtra(ConversationActivityV2.ADDRESS, recipient.address)
+                putExtra(ConversationActivityV2.ADDRESS, address)
                 setDataAndType(intent.data, intent.type)
-                val existingThread = threadDatabase().getThreadIdIfExistsFor(recipient)
+                val existingThread = threadDatabase().getThreadIdIfExistsFor(address)
                 putExtra(ConversationActivityV2.THREAD_ID, existingThread)
             }
             finish()

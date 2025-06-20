@@ -62,7 +62,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
     private val context: ApplicationContext,
     private val avatarUtils: AvatarUtils,
     messageDataProvider: MessageDataProvider,
-    storage: Storage
+    private val storage: Storage
 ) : ViewModel() {
     private val state = MutableStateFlow(MessageDetailsState())
     val stateFlow = state.asStateFlow()

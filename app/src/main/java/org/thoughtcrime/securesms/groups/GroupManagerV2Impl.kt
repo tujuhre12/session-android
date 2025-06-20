@@ -793,8 +793,7 @@ class GroupManagerV2Impl @Inject constructor(
         inviteMessageTimestamp: Long,
         inviteMessageHash: String,
     ) {
-        val recipient =
-            Recipient.from(application, Address.fromSerialized(groupId.hexString), false)
+        val address = Address.fromSerialized(groupId.hexString)
 
         val shouldAutoApprove =
             storage.getRecipientApproved(Address.fromSerialized(inviter.hexString))
@@ -814,10 +813,10 @@ class GroupManagerV2Impl @Inject constructor(
             it.userGroups.set(closedGroupInfo)
         }
 
-        profileManager.setName(application, recipient, groupName)
-        val groupThreadId = storage.getOrCreateThreadIdFor(recipient.address)
-        storage.setRecipientApprovedMe(recipient, true)
-        storage.setRecipientApproved(recipient, shouldAutoApprove)
+        profileManager.setName(application, address, groupName)
+        val groupThreadId = storage.getOrCreateThreadIdFor(address)
+        storage.setRecipientApprovedMe(address, true)
+        storage.setRecipientApproved(address, shouldAutoApprove)
 
         if (shouldAutoApprove) {
             approveGroupInvite(closedGroupInfo, inviteMessageHash)

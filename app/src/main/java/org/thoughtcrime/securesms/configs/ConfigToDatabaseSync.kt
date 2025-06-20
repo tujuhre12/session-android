@@ -34,7 +34,6 @@ import org.session.libsession.utilities.SSKEnvironment.ProfileManagerProtocol.Co
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.getGroup
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.crypto.ecc.DjbECPrivateKey
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
@@ -125,12 +124,12 @@ class ConfigToDatabaseSync @Inject constructor(
     private fun updateUser(userProfile: UpdateUserInfo, messageTimestamp: Long?) {
         val userPublicKey = storage.getUserPublicKey() ?: return
         // would love to get rid of recipient and context from this
-        val recipient = Recipient.from(context, fromSerialized(userPublicKey), false)
+        val address = fromSerialized(userPublicKey)
 
         // Update profile name
         userProfile.name?.takeUnless { it.isEmpty() }?.truncate(NAME_PADDED_LENGTH)?.let {
             preferences.setProfileName(it)
-            profileManager.setName(context, recipient, it)
+            profileManager.setName(context, address, it)
         }
 
         // Update profile picture
@@ -147,7 +146,6 @@ class ConfigToDatabaseSync @Inject constructor(
             preferences.setHasHiddenNoteToSelf(true)
         } else {
             // create note to self thread if needed (?)
-            val address = recipient.address
             val ourThread = storage.getThreadId(address) ?: storage.getOrCreateThreadIdFor(address).also {
                 storage.setThreadCreationDate(it, 0)
             }
@@ -158,10 +156,10 @@ class ConfigToDatabaseSync @Inject constructor(
 
         // Set or reset the shared library to use latest expiration config
         if (messageTimestamp != null) {
-            storage.getThreadId(recipient)?.let { theadId ->
+            storage.getThreadId(address)?.let { threadId ->
                 storage.setExpirationConfiguration(
-                    storage.getExpirationConfiguration(theadId)?.takeIf { it.updatedTimestampMs > messageTimestamp } ?:
-                    ExpirationConfiguration(theadId, userProfile.ntsExpiry, messageTimestamp)
+                    storage.getExpirationConfiguration(threadId)?.takeIf { it.updatedTimestampMs > messageTimestamp } ?:
+                    ExpirationConfiguration(threadId, userProfile.ntsExpiry, messageTimestamp)
                 )
             }
         }
@@ -186,11 +184,11 @@ class ConfigToDatabaseSync @Inject constructor(
     }
 
     private fun updateGroup(groupInfoConfig: UpdateGroupInfo) {
-        val threadId = storage.getThreadId(fromSerialized(groupInfoConfig.id.hexString)) ?: return
-        val recipient = storage.getRecipientForThread(threadId) ?: return
-        profileManager.setName(context, recipient, groupInfoConfig.name.orEmpty())
+        val address = fromSerialized(groupInfoConfig.id.hexString)
+        val threadId = storage.getThreadId(address) ?: return
+        profileManager.setName(context, address, groupInfoConfig.name.orEmpty())
         profileManager.setProfilePicture(
-            context, recipient,
+            context, address,
             profilePictureURL = groupInfoConfig.profilePic?.url,
             profileKey = groupInfoConfig.profilePic?.key?.data
         )
@@ -325,11 +323,11 @@ class ConfigToDatabaseSync @Inject constructor(
         val groupThreadsToKeep = hashMapOf<AccountId, Long>()
 
         for (closedGroup in userGroups.closedGroupInfo) {
-            val recipient = Recipient.from(context, fromSerialized(closedGroup.groupAccountId), false)
-            storage.setRecipientApprovedMe(recipient, true)
-            storage.setRecipientApproved(recipient, !closedGroup.invited)
-            profileManager.setName(context, recipient, closedGroup.name)
-            val threadId = storage.getOrCreateThreadIdFor(recipient.address)
+            val address = fromSerialized(closedGroup.groupAccountId)
+            storage.setRecipientApprovedMe(address, true)
+            storage.setRecipientApproved(address, !closedGroup.invited)
+            profileManager.setName(context, address, closedGroup.name)
+            val threadId = storage.getOrCreateThreadIdFor(address)
 
             // If we don't already have a date and the config has a date, use it
             if (closedGroup.joinedAtSecs > 0L && threadDatabase.getLastUpdated(threadId) <= 0L) {

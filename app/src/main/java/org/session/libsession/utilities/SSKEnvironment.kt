@@ -5,7 +5,6 @@ import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
-import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.database.model.MessageId
 
 class SSKEnvironment(
@@ -31,9 +30,9 @@ class SSKEnvironment(
             const val NAME_PADDED_LENGTH = 100
         }
 
-        fun setNickname(context: Context, recipient: Recipient, nickname: String?)
-        fun setName(context: Context, recipient: Recipient, name: String?)
-        fun setProfilePicture(context: Context, recipient: Recipient, profilePictureURL: String?, profileKey: ByteArray?)
+        fun setNickname(context: Context, recipient: Address, nickname: String?)
+        fun setName(context: Context, recipient: Address, name: String?)
+        fun setProfilePicture(context: Context, recipient: Address, profilePictureURL: String?, profileKey: ByteArray?)
         fun contactUpdatedInternal(contact: Contact): String?
     }
 

@@ -566,7 +566,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         val conversation = recipient ?: return
         viewModelScope.launch {
             if (conversation.isContactRecipient || conversation.isGroupV2Recipient) {
-                repository.setBlocked(conversation, true)
+                repository.setBlocked(conversation.address, true)
             }
 
             if (conversation.isGroupV2Recipient) {
@@ -578,7 +578,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private fun unblockUser() {
         if(recipient == null) return
         viewModelScope.launch {
-            repository.setBlocked(recipient!!, false)
+            repository.setBlocked(recipient!!.address, false)
         }
     }
 
@@ -1123,7 +1123,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             try {
                 withContext(Dispatchers.Default) {
                     val recipients = contacts.map { contact ->
-                        Recipient.from(context, fromSerialized(contact.hexString), true)
+                        fromSerialized(contact.hexString)
                     }
 
                     repository.inviteContactsToCommunity(threadId, recipients)

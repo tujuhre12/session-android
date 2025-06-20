@@ -59,15 +59,13 @@ import org.session.libsignal.utilities.guava.Optional
 import org.thoughtcrime.securesms.database.ConfigDatabase
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.ReactionRecord
-import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import java.security.MessageDigest
 import java.security.SignatureException
 import kotlin.math.min
 
 internal fun MessageReceiver.isBlocked(publicKey: String): Boolean {
-    val context = MessagingModuleConfiguration.shared.context
-    val recipient = Recipient.from(context, Address.fromSerialized(publicKey), false)
-    return recipient.isBlocked
+    val recipient = MessagingModuleConfiguration.shared.storage.getRecipientSync(Address.fromSerialized(publicKey))
+    return recipient.blocked
 }
 
 fun MessageReceiver.handle(message: Message, proto: SignalServiceProtos.Content, threadId: Long, openGroupID: String?, groupv2Id: AccountId?) {
@@ -349,30 +347,31 @@ fun MessageReceiver.handleVisibleMessage(
     if (MessageReceiver.messageIsOutdated(message, context.threadId, context.openGroupID)) { return null }
 
     // Update profile if needed
-    val recipient = Recipient.from(context.context, Address.fromSerialized(messageSender!!), false)
+    val address = Address.fromSerialized(messageSender!!)
+    val recipient = context.storage.getRecipientSync(address)
     if (runProfileUpdate) {
         val profile = message.profile
         val isUserBlindedSender = messageSender == context.userBlindedKey
         if (profile != null && userPublicKey != messageSender && !isUserBlindedSender) {
             val name = profile.displayName!!
             if (name.isNotEmpty()) {
-                context.profileManager.setName(context.context, recipient, name)
+                context.profileManager.setName(context.context, address, name)
             }
             val newProfileKey = profile.profileKey
 
             val needsProfilePicture = !AvatarHelper.avatarFileExists(context.context, Address.fromSerialized(messageSender))
             val profileKeyValid = newProfileKey?.isNotEmpty() == true && (newProfileKey.size == 16 || newProfileKey.size == 32) && profile.profilePictureURL?.isNotEmpty() == true
-            val profileKeyChanged = (recipient.profileKey == null || !MessageDigest.isEqual(recipient.profileKey, newProfileKey))
+            val profileKeyChanged = (recipient.profileKey == null || !MessageDigest.isEqual(recipient.profileKey.data, newProfileKey))
 
             if ((profileKeyValid && profileKeyChanged) || (profileKeyValid && needsProfilePicture)) {
-                context.profileManager.setProfilePicture(context.context, recipient, profile.profilePictureURL, newProfileKey)
+                context.profileManager.setProfilePicture(context.context, address, profile.profilePictureURL, newProfileKey)
             } else if (newProfileKey == null || newProfileKey.isEmpty() || profile.profilePictureURL.isNullOrEmpty()) {
-                context.profileManager.setProfilePicture(context.context, recipient, null, null)
+                context.profileManager.setProfilePicture(context.context, address, null, null)
             }
         }
 
         if (userPublicKey != messageSender && !isUserBlindedSender) {
-            context.storage.setBlocksCommunityMessageRequests(recipient, message.blocksMessageRequests)
+            context.storage.setBlocksCommunityMessageRequests(address, message.blocksMessageRequests)
         }
     }
     // Handle group invite response if new closed group
@@ -587,13 +586,13 @@ private fun MessageReceiver.handleGroupUpdated(message: GroupUpdated, closedGrou
     // Update profile if needed
     if (message.profile != null && !message.isSenderSelf) {
         val profile = message.profile
-        val recipient = Recipient.from(MessagingModuleConfiguration.shared.context, Address.fromSerialized(message.sender!!), false)
+        val address = Address.fromSerialized(message.sender!!)
         val profileManager = SSKEnvironment.shared.profileManager
         if (profile.displayName?.isNotEmpty() == true) {
-            profileManager.setName(MessagingModuleConfiguration.shared.context, recipient, profile.displayName)
+            profileManager.setName(MessagingModuleConfiguration.shared.context, address, profile.displayName)
         }
         if (profile.profileKey?.isNotEmpty() == true && !profile.profilePictureURL.isNullOrEmpty()) {
-            profileManager.setProfilePicture(MessagingModuleConfiguration.shared.context, recipient, profile.profilePictureURL, profile.profileKey)
+            profileManager.setProfilePicture(MessagingModuleConfiguration.shared.context, address, profile.profilePictureURL, profile.profileKey)
         }
     }
 

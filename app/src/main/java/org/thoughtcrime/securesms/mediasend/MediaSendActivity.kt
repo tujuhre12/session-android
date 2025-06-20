@@ -23,6 +23,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.databinding.MediasendActivityBinding
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.MediaTypes
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
@@ -50,7 +51,7 @@ import java.io.IOException
 class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragment.Controller,
     MediaPickerItemFragment.Controller, MediaSendFragment.Controller,
     ImageEditorFragment.Controller, CameraXFragment.Controller{
-    private var recipient: Recipient? = null
+    private var recipient: Address? = null
     private val viewModel: MediaSendViewModel by viewModels()
 
     private lateinit var binding: MediasendActivityBinding
@@ -76,10 +77,8 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
         // Apply windowInsets for our own UI (not the fragment ones because they will want to do their own things)
         binding.mediasendBottomBar.applySafeInsetsPaddings()
 
-        recipient = Recipient.from(
-            this, fromSerialized(
-                intent.getStringExtra(KEY_ADDRESS)!!
-            ), true
+        recipient = fromSerialized(
+            intent.getStringExtra(KEY_ADDRESS)!!
         )
 
         viewModel.onBodyChanged(intent.getStringExtra(KEY_BODY)!!)

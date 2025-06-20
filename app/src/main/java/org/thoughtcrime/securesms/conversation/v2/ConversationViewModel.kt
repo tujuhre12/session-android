@@ -41,7 +41,6 @@ import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
-import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ExpirationUtil
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
@@ -51,6 +50,7 @@ import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.RecipientV2
 import org.session.libsession.utilities.recipients.getType
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Hex
@@ -628,7 +628,7 @@ class ConversationViewModel(
         val recipient = invitingAdmin ?: recipient ?: return Log.w("Loki", "Recipient was null for block action")
         if (recipient.isContactRecipient || recipient.isGroupV2Recipient) {
             viewModelScope.launch {
-                repository.setBlocked(recipient, true)
+                repository.setBlocked(recipient.address, true)
             }
         }
 
@@ -643,7 +643,7 @@ class ConversationViewModel(
         val recipient = recipient ?: return Log.w("Loki", "Recipient was null for unblock action")
         if (recipient.isContactRecipient) {
             viewModelScope.launch {
-                repository.setBlocked(recipient, false)
+                repository.setBlocked(recipient.address, false)
             }
         }
     }
@@ -1073,7 +1073,7 @@ class ConversationViewModel(
             it.copy(messageRequestState = MessageRequestUiState.Pending(currentState))
         }
 
-        repository.acceptMessageRequest(threadId, recipient)
+        repository.acceptMessageRequest(threadId, recipient.address)
             .onSuccess {
                 _uiState.update {
                     it.copy(messageRequestState = MessageRequestUiState.Invisible)
@@ -1120,8 +1120,8 @@ class ConversationViewModel(
         updateAppBarData(recipient)
     }
 
-    fun legacyBannerRecipient(context: Context): Recipient? = recipient?.run {
-        storage.getLastLegacyRecipient(address.toString())?.let { Recipient.from(context, Address.fromSerialized(it), false) }
+    fun legacyBannerRecipient(context: Context): RecipientV2? = recipient?.run {
+        storage.getLastLegacyRecipient(address.toString())?.let { storage.getRecipientSync(fromSerialized(it)) }
     }
 
     fun downloadPendingAttachment(attachment: DatabaseAttachment) {
@@ -1148,7 +1148,7 @@ class ConversationViewModel(
             return acceptMessageRequest()
         } else if (recipient?.isApproved == false) {
             // edge case for new outgoing thread on new recipient without sending approval messages
-            repository.setApproved(recipient, true)
+            repository.setApproved(recipient.address, true)
         }
         return null
     }

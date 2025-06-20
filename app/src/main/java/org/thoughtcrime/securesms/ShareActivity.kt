@@ -242,10 +242,9 @@ class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
         return MediaUtil.getJpegCorrectedMimeTypeIfRequired(intent.type)
     }
 
-    override fun onContactSelected(number: String?) {
-        val recipient = Recipient.from(this, fromExternal(this, number), true)
-        val existingThread = get(this).threadDatabase().getThreadIdIfExistsFor(recipient)
-        createConversation(existingThread, recipient.address, DistributionTypes.DEFAULT)
+    override fun onContactSelected(number: String) {
+        val existingThread = get(this).threadDatabase().getThreadIdIfExistsFor(number)
+        createConversation(existingThread, fromExternal(this, number), DistributionTypes.DEFAULT)
     }
 
     override fun onContactDeselected(number: String?) { /* Nothing */ }
