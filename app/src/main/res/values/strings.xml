@@ -646,6 +646,10 @@
         <item quantity="one">You\'ve got a new message.</item>
         <item quantity="other">You\'ve got %1$d new messages.</item>
     </plurals>
+    <plurals name="proCTALengthBody">
+        <item quantity="one">Messages have a character limit of {limit} characters. You have {count} character remaining.</item>
+        <item quantity="other">Messages have a character limit of {limit} characters. You have {count} characters remaining.</item>
+    </plurals>
     <plurals name="messageNewYouveGotGroup">
         <item quantity="one">You\'ve got a new message in %1$s.</item>
         <item quantity="other">You\'ve got %1$d new messages in %2$s.</item>

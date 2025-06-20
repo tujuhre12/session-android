@@ -1116,6 +1116,12 @@ class ConversationViewModel(
         }
     }
 
+    fun showSessionProCTA(){
+        _dialogsState.update {
+            it.copy(sessionProCTA = true)
+        }
+    }
+
     fun messageShown(messageId: Long) {
         _uiState.update { currentUiState ->
             val messages = currentUiState.uiMessages.filterNot { it.id == messageId }
@@ -1222,6 +1228,12 @@ class ConversationViewModel(
             Commands.HideRecreateGroup -> {
                 _dialogsState.update {
                     it.copy(recreateGroupData = null)
+                }
+            }
+
+            Commands.HideSessionProCTA -> {
+                _dialogsState.update {
+                    it.copy(sessionProCTA = false)
                 }
             }
 
@@ -1366,6 +1378,7 @@ class ConversationViewModel(
         val deleteEveryone: DeleteForEveryoneDialogData? = null,
         val recreateGroupConfirm: Boolean = false,
         val recreateGroupData: RecreateGroupDialogData? = null,
+        val sessionProCTA: Boolean = false
     )
 
     data class RecreateGroupDialogData(
@@ -1401,6 +1414,7 @@ class ConversationViewModel(
         data object ConfirmRecreateGroup : Commands
         data object HideRecreateGroupConfirm : Commands
         data object HideRecreateGroup : Commands
+        data object HideSessionProCTA : Commands
         data class NavigateToConversation(val threadId: Long) : Commands
     }
 }

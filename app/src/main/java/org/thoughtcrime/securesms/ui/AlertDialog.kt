@@ -25,6 +25,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.takeOrElse
@@ -263,6 +264,7 @@ fun DialogBg(
                 color = LocalColors.current.borders,
                 shape = MaterialTheme.shapes.small
             )
+            .clip(MaterialTheme.shapes.small)
 
     ) {
         content()

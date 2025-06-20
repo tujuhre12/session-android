@@ -1,7 +1,21 @@
 package org.thoughtcrime.securesms.conversation.v2
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -10,9 +24,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import com.squareup.phrase.Phrase
@@ -27,12 +48,21 @@ import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.MarkAsDeletedLocally
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.groups.compose.CreateGroupScreen
+import org.thoughtcrime.securesms.openUrl
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.ui.AlertDialog
+import org.thoughtcrime.securesms.ui.DialogBg
+import org.thoughtcrime.securesms.ui.DialogButton
 import org.thoughtcrime.securesms.ui.DialogButtonModel
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.RadioOption
+import org.thoughtcrime.securesms.ui.components.ButtonType
 import org.thoughtcrime.securesms.ui.components.DialogTitledRadioButton
+import org.thoughtcrime.securesms.ui.components.FillButtonRect
+import org.thoughtcrime.securesms.ui.components.PrimaryFillButtonRect
+import org.thoughtcrime.securesms.ui.components.TertiaryFillButtonRect
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -209,6 +239,149 @@ fun ConversationV2Dialogs(
                 )
             }
         }
+
+        // Pro CTA
+        if (dialogsState.sessionProCTA) {
+            SessionProCTA(
+                sendCommand = sendCommand
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SessionProCTA(
+    modifier: Modifier = Modifier,
+    sendCommand: (ConversationViewModel.Commands) -> Unit
+){
+    val context = LocalContext.current
+
+    BasicAlertDialog(
+        modifier = modifier,
+        onDismissRequest = {
+            sendCommand(ConversationViewModel.Commands.HideSessionProCTA)
+        },
+        content = {
+            DialogBg {
+
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    // hero image
+                    Image(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentScale = ContentScale.FillWidth,
+                        painter = painterResource(id = R.drawable.pro_cta),
+                        contentDescription = null,
+                    )
+
+                    // content
+                    Column(
+                        modifier = Modifier.fillMaxWidth()
+                            .padding(LocalDimensions.current.smallSpacing)
+                    ) {
+                        // title
+                        Row(
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)
+
+                        ) {
+                            Text(
+                                text = ProStatusManager.UPDATETP,
+                                style = LocalType.current.h5
+                            )
+
+                            Image(
+                                painter = painterResource(id = R.drawable.ic_pro_badge),
+                                contentScale = ContentScale.FillHeight,
+                                contentDescription = ProStatusManager.PRO,
+                            )
+                        }
+
+                        Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
+
+                        // main message
+                        Text(
+                            text = ProStatusManager.CTA_TXT,
+                            textAlign = TextAlign.Center,
+                            style = LocalType.current.base.copy(
+                                color = LocalColors.current.textSecondary
+                            )
+                        )
+
+                        Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
+
+                        // features
+                        ProCTAFeature(text = ProStatusManager.CTA_FEAT1)
+                        Spacer(Modifier.height(LocalDimensions.current.xsSpacing))
+                        ProCTAFeature(text = ProStatusManager.CTA_FEAT2)
+                        Spacer(Modifier.height(LocalDimensions.current.xsSpacing))
+                        ProCTAFeature(text = ProStatusManager.CTA_FEAT3)
+
+                        Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
+
+                        // buttons
+                        Row(
+                            Modifier.height(IntrinsicSize.Min),
+                            horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xsSpacing),
+                        ) {
+                            PrimaryFillButtonRect(
+                                modifier = Modifier.weight(1f),
+                                text = ProStatusManager.UPGRADE,
+                                onClick = {
+                                    sendCommand(ConversationViewModel.Commands.HideSessionProCTA)
+                                    context.openUrl(ProStatusManager.PRO_URL)
+                                }
+
+                            )
+
+                            TertiaryFillButtonRect(
+                                modifier = Modifier.weight(1f),
+                                text = stringResource(R.string.cancel),
+                                onClick = {
+                                    sendCommand(ConversationViewModel.Commands.HideSessionProCTA)
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    )
+}
+
+@Composable
+fun ProCTAFeature(
+    text: String,
+    modifier: Modifier = Modifier
+){
+    Row(
+        modifier = modifier.fillMaxWidth()
+            .padding(horizontal = LocalDimensions.current.xxxsSpacing),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxsSpacing)
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.ic_circle_check),
+            colorFilter = ColorFilter.tint(LocalColors.current.primary),
+            contentDescription = null,
+            modifier = Modifier.align(Alignment.CenterVertically)
+        )
+
+        Text(
+            text = text,
+            style = LocalType.current.base
+        )
+    }
+}
+
+@Preview
+@Composable
+fun PreviewSessionProCTA(){
+    PreviewTheme {
+        SessionProCTA(
+            sendCommand = {}
+        )
     }
 }
 
