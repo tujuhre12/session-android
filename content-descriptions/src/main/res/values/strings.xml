@@ -223,10 +223,6 @@
     <!-- Modals -->
     <string name="AccessibilityId_modalTitle">Modal heading</string>
     <string name="AccessibilityId_modalMessage">Modal description</string>
-    <!-- Delete message modal-->
-    <string name="AccessibilityId_deleteMessageCancel">Cancel deletion</string>
-    <string name="AccessibilityId_deleteMessageEveryone">Delete for everyone</string>   <!-- ACL: Perhaps should be "AccessibilityId_clearMessagesForEveryone"? -->
-    <string name="AccessibilityId_deleteMessageDeviceOnly">Delete just for me</string>  <!-- ACL: Perhaps should be "AccessibilityId_clearMessagesForMe"?       -->
     <!--Settings Page-->
     <string name="AccessibilityId_sessionAppearance">Appearance</string>
     <string name="AccessibilityId_apply">Apply</string>
@@ -259,5 +255,8 @@
     <string name="AccessibilityId_remove">Remove</string>
     <string name="qa_input_error">error-message</string>
     <string name="qa_button_submit">submit-button</string>
+    <string name="qa_blocked_banner">blocked-banner</string>
+    <string name="qa_delete_message_device_only">delete-only-on-this-device</string>
+    <string name="qa_delete_message_everyone">delete-for-everyone</string>
 
 </resources>
