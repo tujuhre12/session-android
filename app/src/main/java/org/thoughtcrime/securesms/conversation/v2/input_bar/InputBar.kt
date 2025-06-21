@@ -307,6 +307,15 @@ class InputBar @JvmOverloads constructor(
 
         // handle buttons state
         allowAttachMultimediaButtons = state.enableAttachMediaControls
+
+        // handle char limit
+        if(state.charLimitState != null){
+            binding.characterLimitText.text = state.charLimitState.count.toString()
+            binding.characterLimitText.setTextColor(state.charLimitState.color)
+            binding.characterLimitContainer.isVisible = true
+        } else {
+            binding.characterLimitContainer.isVisible = false
+        }
     }
 }
 

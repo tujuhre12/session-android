@@ -1234,6 +1234,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             }.show(supportFragmentManager, "Link Preview Dialog")
             textSecurePreferences.setHasSeenLinkPreviewSuggestionDialog()
         }
+
+        viewModel.onTextChanged(newContent)
     }
 
     override fun toggleAttachmentOptions() {

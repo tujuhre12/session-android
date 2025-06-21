@@ -1,6 +1,14 @@
 package org.thoughtcrime.securesms.pro
 
-class ProStatusManager {
+import org.session.libsession.utilities.TextSecurePreferences
+import org.thoughtcrime.securesms.database.model.MessageId
+import javax.inject.Inject
+import javax.inject.Singleton
+
+@Singleton
+class ProStatusManager @Inject constructor(
+    private val prefs: TextSecurePreferences
+){
     companion object {
         //todo PRO TEMPORARY STRINGS ONLY!!!
         const val UPDATETP = "Upgrade to"
@@ -17,5 +25,33 @@ class ProStatusManager {
         const val PRO_URL = "https://getsession.org/"
         const val PRO = "Session Pro"
         const val OK = "Ok"
+    }
+
+    private val MAX_CHARACTER_PRO = 10000
+    private val MAX_CHARACTER_NORMAL = 2000
+
+    fun isCurrentUserPro(): Boolean {
+        // if the debug is set, return that
+        if (prefs.forceCurrentUserAsPro()) return true
+
+        // otherwise return the true value
+        return false //todo PRO implement real logic once it's in
+    }
+
+    fun isIncomingMessagesPro(messageId: MessageId): Boolean {
+        // if the debug is set, return that
+        if (prefs.forceIncomingMessagesAsPro()) return true
+
+        // otherwise return the true value
+        return false //todo PRO implement real logic once it's in
+    }
+
+    // Temporary method and concept that we should remove once Pro is out
+    fun isPostPro(): Boolean {
+        return prefs.forcePostPro()
+    }
+
+    fun getCharacterLimit(): Int {
+        return if (isCurrentUserPro()) MAX_CHARACTER_PRO else MAX_CHARACTER_NORMAL
     }
 }

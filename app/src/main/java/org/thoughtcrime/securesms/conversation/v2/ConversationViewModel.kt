@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import android.widget.Toast
 import androidx.annotation.StringRes
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -50,6 +51,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.LIMIT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.MessageType
@@ -114,6 +116,7 @@ class ConversationViewModel(
     private val avatarUtils: AvatarUtils,
     private val recipientChangeSource: RecipientChangeSource,
     private val openGroupManager: OpenGroupManager,
+    private val proStatusManager: ProStatusManager,
 ) : ViewModel() {
 
     val showSendAfterApprovalText: Boolean
@@ -145,6 +148,17 @@ class ConversationViewModel(
         )
     ))
     val appBarData: StateFlow<ConversationAppBarData> = _appBarData
+
+    // the amount of character left at which point we should show an indicator
+    private val CHARACTER_LIMIT_THRESHOLD = 200
+
+    private val textColor: Int by lazy {
+        ThemeUtil.getThemedColor(application, android.R.attr.textColorPrimary)
+    }
+
+    private val dangerColor: Int by lazy {
+        ThemeUtil.getThemedColor(application, R.attr.danger)
+    }
 
     private var _recipient: RetrieveOnce<Recipient> = RetrieveOnce {
         val conversation = repository.maybeGetRecipientForThreadId(threadId)
@@ -1395,6 +1409,30 @@ class ConversationViewModel(
         }
     }
 
+    fun onTextChanged(text: CharSequence) {
+        // check the character limit
+        val maxChars = proStatusManager.getCharacterLimit()
+        val charsLeft = maxChars - text.length
+
+        // update the char limit state based on characters left
+        val charLimitState = if(charsLeft <= CHARACTER_LIMIT_THRESHOLD){
+            InputBarCharLimitState(
+                count = charsLeft,
+                color = if(charsLeft < 0) dangerColor else dangerColor SORT OUT TEXT COLOR PORPERLY -- ADD RIPPLE TO CHAR CLICK
+            )
+        } else {
+            null
+        }
+
+        _uiState.update {
+            it.copy(
+                inputBarState = it.inputBarState.copy(
+                    charLimitState = charLimitState
+                )
+            )
+        }
+    }
+
     @dagger.assisted.AssistedFactory
     interface AssistedFactory {
         fun create(threadId: Long, edKeyPair: KeyPair?): Factory
@@ -1426,6 +1464,7 @@ class ConversationViewModel(
         private val avatarUtils: AvatarUtils,
         private val recipientChangeSource: RecipientChangeSource,
         private val openGroupManager: OpenGroupManager,
+        private val proStatusManager: ProStatusManager,
     ) : ViewModelProvider.Factory {
 
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -1452,6 +1491,7 @@ class ConversationViewModel(
                 avatarUtils = avatarUtils,
                 recipientChangeSource = recipientChangeSource,
                 openGroupManager = openGroupManager,
+                proStatusManager = proStatusManager,
             ) as T
         }
     }
@@ -1512,7 +1552,6 @@ data class ConversationUiState(
     val messageRequestState: MessageRequestUiState = MessageRequestUiState.Invisible,
     val shouldExit: Boolean = false,
     val inputBarState: InputBarState = InputBarState(),
-
     val showLoader: Boolean = false,
 )
 
@@ -1522,6 +1561,12 @@ data class InputBarState(
     // or record voice messages to be sent to a recipient - they are NOT things like video or audio
     // playback controls.
     val enableAttachMediaControls: Boolean = true,
+    val charLimitState: InputBarCharLimitState? = null,
+)
+
+data class InputBarCharLimitState(
+    val count: Int,
+    val color: Int
 )
 
 sealed interface InputBarContentState {

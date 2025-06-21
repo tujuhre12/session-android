@@ -213,7 +213,7 @@ class DebugMenuViewModel @Inject constructor(
             }
 
             is Commands.ForcePostPro -> {
-                textSecurePreferences.setForcePostPro(command.set)
+                textSecurePreferences.setForcePostPro(command.set) 
             }
         }
     }
