@@ -93,6 +93,7 @@ import org.thoughtcrime.securesms.migration.DatabaseMigrationManager
 import org.thoughtcrime.securesms.notifications.BackgroundPollManager
 import org.thoughtcrime.securesms.notifications.NotificationChannels
 import org.thoughtcrime.securesms.notifications.PushRegistrationHandler
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.providers.BlobUtils
 import org.thoughtcrime.securesms.service.ExpiringMessageManager
 import org.thoughtcrime.securesms.service.KeyCachingService
@@ -187,6 +188,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
     @Inject lateinit var cleanupInvitationHandler: Lazy<CleanupInvitationHandler>
     @Inject lateinit var usernameUtils: Lazy<UsernameUtils>
     @Inject lateinit var pollerManager: Lazy<PollerManager>
+    @Inject lateinit var proStatusManager: Lazy<ProStatusManager>
 
     @Inject
     lateinit var backgroundPollManager: Lazy<BackgroundPollManager> // Exists here only to start upon app starts
@@ -284,7 +286,8 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
             clock = snodeClock.get(),
             preferences = textSecurePreferences.get(),
             deprecationManager = legacyGroupDeprecationManager.get(),
-            usernameUtils = usernameUtils.get()
+            usernameUtils = usernameUtils.get(),
+            proStatusManager = proStatusManager.get()
         )
 
         startKovenant()
