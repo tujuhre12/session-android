@@ -53,6 +53,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.UsernameUtils
+import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
@@ -151,14 +152,6 @@ class ConversationViewModel(
 
     // the amount of character left at which point we should show an indicator
     private val CHARACTER_LIMIT_THRESHOLD = 200
-
-    private val textColor: Int by lazy {
-        ThemeUtil.getThemedColor(application, android.R.attr.textColorPrimary)
-    }
-
-    private val dangerColor: Int by lazy {
-        ThemeUtil.getThemedColor(application, R.attr.danger)
-    }
 
     private var _recipient: RetrieveOnce<Recipient> = RetrieveOnce {
         val conversation = repository.maybeGetRecipientForThreadId(threadId)
@@ -1418,7 +1411,7 @@ class ConversationViewModel(
         val charLimitState = if(charsLeft <= CHARACTER_LIMIT_THRESHOLD){
             InputBarCharLimitState(
                 count = charsLeft,
-                color = if(charsLeft < 0) dangerColor else dangerColor SORT OUT TEXT COLOR PORPERLY -- ADD RIPPLE TO CHAR CLICK
+                danger = charsLeft < 0
             )
         } else {
             null
@@ -1566,7 +1559,7 @@ data class InputBarState(
 
 data class InputBarCharLimitState(
     val count: Int,
-    val color: Int
+    val danger: Boolean
 )
 
 sealed interface InputBarContentState {

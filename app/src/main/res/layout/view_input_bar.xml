@@ -68,6 +68,7 @@
                 android:focusable="true"
                 android:clickable="true"
                 tools:visibility="visible"
+                android:background="@drawable/bg_round_transparent"
                 tools:background="@color/classic_dark_3">
                 <TextView
                     android:id="@+id/characterLimitText"
