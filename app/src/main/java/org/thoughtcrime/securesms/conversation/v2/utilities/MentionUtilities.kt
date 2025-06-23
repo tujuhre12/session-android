@@ -8,10 +8,10 @@ import android.text.style.ForegroundColorSpan
 import android.text.style.StyleSpan
 import android.util.Range
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import nl.komponents.kovenant.combine.Tuple2
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.open_groups.OpenGroup
-import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.getColorFromAttr
@@ -23,7 +23,7 @@ import java.util.regex.Pattern
 
 object MentionUtilities {
 
-    private val pattern by lazy { Pattern.compile("@[0-9a-fA-F]*") }
+    private val pattern by lazy { Pattern.compile("@[0-9a-fA-F]{66}") }
 
     /**
      * Highlights mentions in a given text.
@@ -65,7 +65,7 @@ object MentionUtilities {
                 } else {
                     val contact = DatabaseComponent.get(context).sessionContactDatabase().getContactWithAccountID(publicKey)
                     @Suppress("NAME_SHADOWING") val context = if (openGroup != null) Contact.ContactContext.OPEN_GROUP else Contact.ContactContext.REGULAR
-                    contact?.displayName(context) ?: truncateIdForDisplay(publicKey)
+                    contact?.displayName(context)
                 }
                 if (userDisplayName != null) {
                     val mention = "@$userDisplayName"
@@ -158,7 +158,13 @@ object MentionUtilities {
     }
 
     private fun isYou(mentionedPublicKey: String, userPublicKey: String, openGroup: OpenGroup?): Boolean {
-        val isUserBlindedPublicKey = openGroup?.let { SodiumUtilities.accountId(userPublicKey, mentionedPublicKey, it.publicKey) } ?: false
+        val isUserBlindedPublicKey = openGroup?.let {
+            BlindKeyAPI.sessionIdMatchesBlindedId(
+                sessionId = userPublicKey,
+                blindedId = mentionedPublicKey,
+                serverPubKey = it.publicKey
+            )
+        } ?: false
         return mentionedPublicKey.equals(userPublicKey, ignoreCase = true) || isUserBlindedPublicKey
     }
 }

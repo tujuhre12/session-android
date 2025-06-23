@@ -10,6 +10,7 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.libsession_util.ConfigBase
 import network.loki.messenger.libsession_util.Contacts
 import network.loki.messenger.libsession_util.ConversationVolatileConfig
+import network.loki.messenger.libsession_util.Curve25519
 import network.loki.messenger.libsession_util.GroupInfoConfig
 import network.loki.messenger.libsession_util.GroupKeysConfig
 import network.loki.messenger.libsession_util.GroupMembersConfig
@@ -25,10 +26,10 @@ import network.loki.messenger.libsession_util.util.ConfigPush
 import network.loki.messenger.libsession_util.util.Contact
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
-import network.loki.messenger.libsession_util.util.Sodium
+import network.loki.messenger.libsession_util.util.MultiEncrypt
 import network.loki.messenger.libsession_util.util.UserPic
+import okio.ByteString.Companion.decodeBase64
 import org.session.libsession.database.StorageProtocol
-import org.session.libsession.messaging.messages.control.ConfigurationMessage
 import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.snode.SwarmAuth
@@ -82,6 +83,9 @@ class ConfigFactory @Inject constructor(
         // before `lastConfigMessage.timestamp - configChangeBufferPeriod` will not  actually have
         // it's changes applied (control text will still be added though)
         private const val CONFIG_CHANGE_BUFFER_PERIOD: Long = 2 * 60 * 1000L
+
+        const val MAX_NAME_BYTES = 100 // max size in bytes for names
+        const val MAX_GROUP_DESCRIPTION_BYTES = 600 // max size in bytes for group descriptions
     }
 
     init {
@@ -102,7 +106,7 @@ class ConfigFactory @Inject constructor(
         })
 
     private fun requiresCurrentUserED25519SecKey(): ByteArray =
-        requireNotNull(storage.get().getUserED25519KeyPair()?.secretKey?.asBytes) {
+        requireNotNull(storage.get().getUserED25519KeyPair()?.secretKey?.data) {
             "No logged in user"
         }
 
@@ -288,6 +292,7 @@ class ConfigFactory @Inject constructor(
 
     private fun <T> doWithMutableGroupConfigs(
         groupId: AccountId,
+        fromMerge: Boolean,
         cb: (GroupConfigsImpl) -> Pair<T, Boolean>): T {
         val (lock, configs) = ensureGroupConfigsInitialized(groupId)
         val (result, changed) = lock.write {
@@ -298,7 +303,7 @@ class ConfigFactory @Inject constructor(
             coroutineScope.launch {
                 // Config change notifications are important so we must use suspend version of
                 // emit (not tryEmit)
-                _configUpdateNotifications.emit(ConfigUpdateNotification.GroupConfigsUpdated(groupId))
+                _configUpdateNotifications.emit(ConfigUpdateNotification.GroupConfigsUpdated(groupId, fromMerge = fromMerge))
             }
         }
 
@@ -309,12 +314,14 @@ class ConfigFactory @Inject constructor(
         groupId: AccountId,
         cb: (MutableGroupConfigs) -> T
     ): T {
-        return doWithMutableGroupConfigs(groupId = groupId) {
+        return doWithMutableGroupConfigs(groupId = groupId, fromMerge = false) {
             cb(it) to it.dumpIfNeeded(clock)
         }
     }
 
     override fun removeContact(accountId: String) {
+        if(!accountId.startsWith(IdPrefix.STANDARD.value)) return
+
         withMutableUserConfigs {
             it.contacts.erase(accountId)
         }
@@ -342,13 +349,13 @@ class ConfigFactory @Inject constructor(
         domain: String,
         closedGroupSessionId: AccountId
     ): ByteArray? {
-        return Sodium.decryptForMultipleSimple(
+        return MultiEncrypt.decryptForMultipleSimple(
             encoded = encoded,
-            ed25519SecretKey = requireNotNull(storage.get().getUserED25519KeyPair()?.secretKey?.asBytes) {
+            ed25519SecretKey = requireNotNull(storage.get().getUserED25519KeyPair()?.secretKey?.data) {
                 "No logged in user"
             },
             domain = domain,
-            senderPubKey = Sodium.ed25519PkToCurve25519(closedGroupSessionId.pubKeyBytes)
+            senderPubKey = Curve25519.pubKeyFromED25519(closedGroupSessionId.pubKeyBytes)
         )
     }
 
@@ -358,7 +365,7 @@ class ConfigFactory @Inject constructor(
         info: List<ConfigMessage>,
         members: List<ConfigMessage>
     ) {
-        val changed = doWithMutableGroupConfigs(groupId) { configs ->
+        val changed = doWithMutableGroupConfigs(groupId, fromMerge = true) { configs ->
             // Keys must be loaded first as they are used to decrypt the other config messages
             val keysLoaded = keys.fold(false) { acc, msg ->
                 configs.groupKeys.loadKey(msg.data, msg.hash, msg.timestamp, configs.groupInfo.pointer, configs.groupMembers.pointer) || acc
@@ -428,7 +435,7 @@ class ConfigFactory @Inject constructor(
             return
         }
 
-        doWithMutableGroupConfigs(groupId) { configs ->
+        doWithMutableGroupConfigs(groupId, fromMerge = false) { configs ->
             members?.let { (push, result) -> configs.groupMembers.confirmPushed(push.seqNo, result.hashes.toTypedArray()) }
             info?.let { (push, result) -> configs.groupInfo.confirmPushed(push.seqNo, result.hashes.toTypedArray()) }
             keysPush?.let { (hashes, timestamp) ->
@@ -658,12 +665,10 @@ private fun MutableUserProfile.initFrom(storage: StorageProtocol,
 ) {
     val ownPublicKey = storage.getUserPublicKey() ?: return
     val displayName = usernameUtils.getCurrentUsername() ?: return
-    val profilePicture = textSecurePreferences.getProfilePictureURL()
-    val config = ConfigurationMessage.getCurrent(displayName, profilePicture, listOf()) ?: return
-    setName(config.displayName)
-    val picUrl = config.profilePicture
-    val picKey = config.profileKey
-    if (!picUrl.isNullOrEmpty() && picKey.isNotEmpty()) {
+    val picUrl = textSecurePreferences.getProfilePictureURL()
+    val picKey = textSecurePreferences.getProfileKey()?.decodeBase64()?.toByteArray()
+    setName(displayName)
+    if (!picUrl.isNullOrEmpty() && picKey != null && picKey.isNotEmpty()) {
         setPic(UserPic(picUrl, picKey))
     }
     val ownThreadId = storage.getThreadId(Address.fromSerialized(ownPublicKey))

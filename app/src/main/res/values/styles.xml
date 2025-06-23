@@ -4,6 +4,7 @@
     <!-- Session -->
     <style name="Widget.Session.ActionBar" parent="Widget.AppCompat.Light.ActionBar.Solid">
         <item name="android:background">?colorPrimary</item>
+        <item name="actionBarItemBackground">@null</item>
         <item name="android:elevation">1dp</item>
         <item name="elevation">1dp</item>
         <item name="titleTextStyle">@style/TextAppearance.Session.DarkActionBar.TitleTextStyle</item>
@@ -299,6 +300,11 @@
 
     <style name="PopupMenu.MessageRequests" parent="@style/Widget.AppCompat.PopupMenu">
         <item name="android:background">?backgroundSecondary</item>
+    </style>
+
+    <style name="circleImageView" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
     </style>
 
 </resources>

@@ -36,7 +36,7 @@ import javax.inject.Provider;
 
 /**
  * @deprecated This database table management is only used for
- * legacy group management. It is not used in groupv2. For group v2 data, you generally need
+ * legacy group and community management. It is not used in groupv2. For group v2 data, you generally need
  * to query config system directly. The Storage class may also be more up-to-date.
  *
  */
@@ -279,7 +279,12 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
                                                 new String[] {groupID});
 
     Recipient recipient = Recipient.from(context, Address.fromSerialized(groupID), false);
+    final boolean nameChanged = !newValue.equals(recipient.getName());
     recipient.setName(newValue);
+
+    if (nameChanged) {
+      notifyConversationListListeners();
+    }
   }
 
   public void updateProfilePicture(String groupID, Bitmap newValue) {

@@ -13,25 +13,14 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
-import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
-import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
-import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
-import org.session.libsession.messaging.jobs.MessageReceiveParameters
-import org.session.libsession.messaging.sending_receiving.pollers.LegacyClosedGroupPollerV2
-import org.session.libsession.messaging.sending_receiving.pollers.OpenGroupPoller
-import org.session.libsession.snode.SnodeAPI
-import org.session.libsession.snode.utilities.await
+import org.session.libsession.messaging.sending_receiving.pollers.OpenGroupPollerManager
+import org.session.libsession.messaging.sending_receiving.pollers.PollerManager
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.groups.GroupPollerManager
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.minutes
@@ -41,13 +30,12 @@ class BackgroundPollWorker @AssistedInject constructor(
     @Assisted val context: Context,
     @Assisted params: WorkerParameters,
     private val storage: StorageProtocol,
-    private val deprecationManager: LegacyGroupDeprecationManager,
-    private val lokiThreadDatabase: LokiThreadDatabase,
     private val groupPollerManager: GroupPollerManager,
+    private val openGroupPollerManager: OpenGroupPollerManager,
+    private val pollerManager: PollerManager,
 ) : CoroutineWorker(context, params) {
     enum class Target {
         ONE_TO_ONE,
-        LEGACY_GROUPS,
         GROUPS,
         OPEN_GROUPS
     }
@@ -107,54 +95,23 @@ class BackgroundPollWorker @AssistedInject constructor(
 
         try {
             Log.v(TAG, "Performing background poll for ${requestTargets.joinToString { it.name }}.")
-            // The polling process is independent from the worker's lifecycle, once it's started
-            // it can't be safely cancelled.
-            // This is fixed on dev and we can discard the workaround.
-            GlobalScope.async(SupervisorJob()) {
+            supervisorScope {
                 val tasks = mutableListOf<Deferred<*>>()
 
                 // DMs
                 if (requestTargets.contains(Target.ONE_TO_ONE)) {
                     tasks += async {
                         Log.d(TAG, "Polling messages.")
-                        val params = SnodeAPI.getMessages(userAuth).await().map { (envelope, serverHash) ->
-                            MessageReceiveParameters(envelope.toByteArray(), serverHash, null)
-                        }
-
-                        // FIXME: Using a job here seems like a bad idea...
-                        BatchMessageReceiveJob(params).executeAsync("background")
-                        Log.d(TAG, "Polling messages finished.")
+                        pollerManager.pollOnce()
                     }
-                }
-
-                // Legacy groups
-                if (requestTargets.contains(Target.LEGACY_GROUPS)) {
-                    val poller = LegacyClosedGroupPollerV2(storage, deprecationManager)
-
-                    storage.getAllLegacyGroupPublicKeys()
-                        .mapTo(tasks) { key ->
-                            async {
-                                Log.d(TAG, "Polling legacy group ${key.substring(0, 8)}...")
-                                poller.poll(key)
-                                Log.d(TAG, "Polling legacy group finished.")
-                            }
-                        }
                 }
 
                 // Open groups
                 if (requestTargets.contains(Target.OPEN_GROUPS)) {
-                    lokiThreadDatabase.getAllOpenGroups()
-                        .mapTo(hashSetOf()) { it.value.server }
-                        .mapTo(tasks) { server ->
-                            async {
-                                Log.d(TAG, "Polling open group server $server.")
-                                OpenGroupPoller(server, null)
-                                    .apply { hasStarted = true }
-                                    .poll()
-                                    .await()
-                                Log.d(TAG, "Polling Open group finished.")
-                            }
-                        }
+                    tasks += async {
+                        Log.d(TAG, "Polling open groups.")
+                        openGroupPollerManager.pollAllOpenGroupsOnce()
+                    }
                 }
 
                 // Close group
@@ -162,7 +119,6 @@ class BackgroundPollWorker @AssistedInject constructor(
                     tasks += async {
                         Log.d(TAG, "Polling all groups.")
                         groupPollerManager.pollAllGroupsOnce()
-                        Log.d(TAG, "Polling groups finished.")
                     }
                 }
 
@@ -172,7 +128,7 @@ class BackgroundPollWorker @AssistedInject constructor(
                             result.await()
                             acc
                         } catch (ec: Exception) {
-                            Log.e(TAG, "Failed to poll group due to error.", ec)
+                            Log.e(TAG, "Failed to poll due to error.", ec)
                             acc?.also { it.addSuppressed(ec) } ?: ec
                         }
                     }
@@ -180,14 +136,10 @@ class BackgroundPollWorker @AssistedInject constructor(
                 if (caughtException != null) {
                     throw caughtException
                 }
-            }.await()
+            }
 
             return Result.success()
-        } catch (c: CancellationException) {
-            Log.v(TAG, "Background poll cancelled")
-            throw c
-        }
-        catch (exception: Exception) {
+        } catch (exception: Exception) {
             Log.e(TAG, "Background poll failed due to error: ${exception.message}.", exception)
             return Result.retry()
         }

@@ -70,12 +70,12 @@ class MarkReadReceiver : BroadcastReceiver() {
 
             // start disappear after read messages except TimerUpdates in groups.
             markedReadMessages
+                .asSequence()
                 .filter { it.expiryType == ExpiryType.AFTER_READ }
-                .map { it.syncMessageId }
-                .filter { mmsSmsDatabase.getMessageForTimestamp(it.timetamp)?.run {
+                .filter { mmsSmsDatabase.getMessageById(it.expirationInfo.id)?.run {
                     isExpirationTimerUpdate && threadDb.getRecipientForThreadId(threadId)?.isGroupOrCommunityRecipient == true } == false
                 }
-                .forEach { messageExpirationManager.startDisappearAfterRead(it.timetamp, it.address.toString()) }
+                .forEach { messageExpirationManager.startExpiringNow(it.expirationInfo.id) }
 
             hashToDisappearAfterReadMessage(context, markedReadMessages)?.let { hashToMessages ->
                 GlobalScope.launch {
@@ -97,7 +97,7 @@ class MarkReadReceiver : BroadcastReceiver() {
 
             return markedReadMessages
                 .filter { it.expiryType == ExpiryType.AFTER_READ }
-                .associateByNotNull { it.expirationInfo.run { loki.getMessageServerHash(id, isMms) } }
+                .associateByNotNull { it.expirationInfo.run { loki.getMessageServerHash(id) } }
                 .takeIf { it.isNotEmpty() }
         }
 
@@ -156,13 +156,12 @@ class MarkReadReceiver : BroadcastReceiver() {
             val expireStarted = expirationInfo.expireStarted
 
             if (expirationInfo.isDisappearAfterRead() && expireStarted == 0L || now < expireStarted) {
-                val db = DatabaseComponent.get(context).run { if (expirationInfo.isMms) mmsDatabase() else smsDatabase() }
-                db.markExpireStarted(expirationInfo.id, now)
+                val db = DatabaseComponent.get(context).run { if (expirationInfo.id.mms) mmsDatabase() else smsDatabase() }
+                db.markExpireStarted(expirationInfo.id.id, now)
             }
 
             ApplicationContext.getInstance(context).expiringMessageManager.get().scheduleDeletion(
                 expirationInfo.id,
-                expirationInfo.isMms,
                 now,
                 expiresIn
             )
