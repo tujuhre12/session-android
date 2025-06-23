@@ -688,6 +688,7 @@
     <string name="modalMessageTooLongDescription">Please shorten your message to {count} characters or less.</string>
     <string name="modalMessageTooLongTitle">Your message is too long</string>
     <string name="next">Next</string>
+    <string name="TEMP_READ_MORE">Read More</string>
     <string name="nicknameDescription">Choose a nickname for <b>{name}</b>. This will appear to you in your one-to-one and group conversations.</string>
     <string name="nicknameEnter">Enter nickname</string>
     <string name="nicknameErrorShorter">Please enter a shorter nickname</string>

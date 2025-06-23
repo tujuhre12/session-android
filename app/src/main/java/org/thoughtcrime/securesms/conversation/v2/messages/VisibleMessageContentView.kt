@@ -4,7 +4,6 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.res.ColorStateList
-import android.graphics.Color
 import android.graphics.Rect
 import android.text.Spannable
 import android.text.style.BackgroundColorSpan
@@ -15,6 +14,7 @@ import android.util.AttributeSet
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewTreeObserver
 import android.widget.Toast
 import androidx.annotation.ColorInt
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -22,6 +22,7 @@ import androidx.core.graphics.ColorUtils
 import androidx.core.text.getSpans
 import androidx.core.text.toSpannable
 import androidx.core.view.children
+import androidx.core.view.doOnLayout
 import androidx.core.view.isVisible
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
@@ -32,6 +33,7 @@ import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.getColorFromAttr
+import org.session.libsession.utilities.isEllipsized
 import org.session.libsession.utilities.modifyLayoutParams
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
@@ -57,6 +59,8 @@ class VisibleMessageContentView : ConstraintLayout {
     var onContentDoubleTap: (() -> Unit)? = null
     var delegate: VisibleMessageViewDelegate? = null
     var indexInAdapter: Int = -1
+
+    private val MAX_COLLAPSED_LINE_COUNT = 25
 
     // region Lifecycle
     constructor(context: Context) : super(context)
@@ -115,6 +119,7 @@ class VisibleMessageContentView : ConstraintLayout {
             binding.deletedMessageView.root.isVisible = true
             binding.deletedMessageView.root.bind(message, getTextColor(context, message))
             binding.bodyTextView.isVisible = false
+            binding.readMore.isVisible = false
             binding.quoteView.root.isVisible = false
             binding.linkPreviewView.root.isVisible = false
             binding.voiceMessageView.root.isVisible = false
@@ -324,6 +329,12 @@ class VisibleMessageContentView : ConstraintLayout {
         }
 
         binding.bodyTextView.isVisible = message.body.isNotEmpty() && !hideBody
+        // set a max lines
+        binding.bodyTextView.maxLines = MAX_COLLAPSED_LINE_COUNT
+
+        binding.readMore.isVisible = false // hide by default - will show further down if necessary
+        onContentClick.remove(onReadMoreClick)
+
         binding.contentParent.apply { isVisible = children.any { it.isVisible } }
 
         if (message.body.isNotEmpty() && !hideBody) {
@@ -336,6 +347,15 @@ class VisibleMessageContentView : ConstraintLayout {
                 binding.bodyTextView.getIntersectedModalSpans(e).iterator().forEach { span ->
                     span.onClick(binding.bodyTextView)
                 }
+            }
+
+            if (binding.bodyTextView.isEllipsized()) {
+                // show the "Read mode" button
+                binding.readMore.setTextColor(color)
+                binding.readMore.isVisible = true
+
+                // add read more click listener
+                onContentClick.add(onReadMoreClick)
             }
         }
 
@@ -408,6 +428,15 @@ class VisibleMessageContentView : ConstraintLayout {
             (!message.hasAttachmentUri() && message.slideDeck.asAttachments().all { it.isDone }))
 
     private val onContentClick: MutableList<((event: MotionEvent) -> Unit)> = mutableListOf()
+
+    private val onReadMoreClick: ((event: MotionEvent) -> Unit) by lazy {{ event ->
+        val r = Rect()
+        binding.readMore.getGlobalVisibleRect(r)
+        if (r.contains(event.rawX.roundToInt(), event.rawY.roundToInt())) {
+            binding.bodyTextView.maxLines = Int.MAX_VALUE
+            binding.readMore.isVisible = false
+        }
+    }}
 
     fun onContentClick(event: MotionEvent) {
         onContentClick.forEach { clickHandler -> clickHandler.invoke(event) }

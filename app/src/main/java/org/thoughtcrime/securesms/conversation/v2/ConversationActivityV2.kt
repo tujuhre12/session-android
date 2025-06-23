@@ -214,7 +214,6 @@ import org.thoughtcrime.securesms.webrtc.WebRtcCallActivity
 import org.thoughtcrime.securesms.webrtc.WebRtcCallActivity.Companion.ACTION_START_CALL
 import org.thoughtcrime.securesms.webrtc.WebRtcCallBridge.Companion.EXTRA_RECIPIENT_ADDRESS
 import java.io.File
-import java.lang.ref.WeakReference
 import java.util.LinkedList
 import java.util.Locale
 import java.util.concurrent.ExecutionException
@@ -358,18 +357,14 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         MnemonicCodec(loadFileContents).encode(hexEncodedSeed, MnemonicCodec.Language.Configuration.english)
     }
 
-    // There is a bug when initially joining a community where all messages will immediately be marked
-    // as read if we reverse the message list so this is now hard-coded to false
-    private val reverseMessageList = false
-
     private val adapter by lazy {
-        val cursor = mmsSmsDb.getConversation(viewModel.threadId, reverseMessageList)
+        val cursor = mmsSmsDb.getConversation(viewModel.threadId, false)
         val adapter = ConversationAdapter(
             this,
             cursor,
             viewModel.recipient,
             storage.getLastSeen(viewModel.threadId),
-            reverseMessageList,
+            false,
             onItemPress = { message, position, view, event ->
                 handlePress(message, position, view, event)
             },
@@ -468,11 +463,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
     }
 
-    // Properties related to the conversation recycler view's scroll state and position
-    private var previousLastVisibleRecyclerViewIndex: Int = RecyclerView.NO_POSITION
-    private var currentLastVisibleRecyclerViewIndex:  Int = RecyclerView.NO_POSITION
-    private var recyclerScrollState: Int = RecyclerView.SCROLL_STATE_IDLE
-
     private val isScrolledToBottom: Boolean
         get() = binding.conversationRecyclerView.isScrolledToBottom
 
@@ -555,7 +545,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
         binding.scrollToBottomButton.setOnClickListener {
             val layoutManager = binding.conversationRecyclerView.layoutManager as LinearLayoutManager
-            val targetPosition = if (reverseMessageList) 0 else adapter.itemCount
+            val targetPosition = adapter.itemCount
 
             // If we are currently in the process of smooth scrolling then we'll use `scrollToPosition` to quick-jump..
             if (layoutManager.isSmoothScrolling) {
@@ -578,42 +568,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         updateSendAfterApprovalText()
         setUpMessageRequests()
 
-        val weakActivity = WeakReference(this)
-
-        lifecycleScope.launch(Dispatchers.IO) {
-            // Note: We are accessing the `adapter` property because we want it to be loaded on
-            // the background thread to avoid blocking the UI thread and potentially hanging when
-            // transitioning to the activity
-            weakActivity.get()?.adapter ?: return@launch
-
-            // 'Get' instead of 'GetAndSet' here because we want to trigger the highlight in 'onFirstLoad'
-            // by triggering 'jumpToMessage' using these values
-            val messageTimestamp = messageToScrollTimestamp.get()
-            val author = messageToScrollAuthor.get()
-
-            val targetPosition = if (author != null && messageTimestamp >= 0) {
-                mmsSmsDb.getMessagePositionInConversation(viewModel.threadId, messageTimestamp, author, reverseMessageList)
-            } else {
-                -1
-            }
-
-            withContext(Dispatchers.Main) {
-                setUpRecyclerView()
-                setUpTypingObserver()
-                setUpRecipientObserver()
-                setUpSearchResultObserver()
-                scrollToFirstUnreadMessageIfNeeded()
-                setUpOutdatedClientBanner()
-                setUpLegacyGroupUI()
-
-                if (author != null && messageTimestamp >= 0 && targetPosition >= 0) {
-                    binding.conversationRecyclerView.scrollToPosition(targetPosition)
-                }
-                else {
-                    scrollToFirstUnreadMessageIfNeeded(true)
-                }
-            }
-        }
+        setUpRecyclerView()
+        setUpTypingObserver()
+        setUpRecipientObserver()
+        setUpSearchResultObserver()
+        setUpOutdatedClientBanner()
+        setUpLegacyGroupUI()
 
         val reactionOverlayStub: Stub<ConversationReactionOverlay> =
             ViewUtil.findStubById(this, R.id.conversation_reaction_scrubber_stub)
@@ -746,7 +706,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     override fun onCreateLoader(id: Int, bundle: Bundle?): Loader<Cursor> {
-        return ConversationLoader(viewModel.threadId, reverseMessageList, this@ConversationActivityV2)
+        return ConversationLoader(viewModel.threadId, false, this@ConversationActivityV2)
     }
 
     override fun onLoadFinished(loader: Loader<Cursor>, cursor: Cursor?) {
@@ -771,7 +731,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             if (author != null && messageTimestamp >= 0) {
                 jumpToMessage(author, messageTimestamp, firstLoad.get(), null)
             } else {
-                if (firstLoad.getAndSet(false)) scrollToFirstUnreadMessageIfNeeded(true)
+                if (firstLoad.getAndSet(false)) scrollToFirstUnreadMessageOrBottom()
                 handleRecyclerViewScrolled()
             }
         }
@@ -786,23 +746,17 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     // called from onCreate
     private fun setUpRecyclerView() {
         binding.conversationRecyclerView.adapter = adapter
-        val layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, reverseMessageList)
+        val layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
         binding.conversationRecyclerView.layoutManager = layoutManager
         // Workaround for the fact that CursorRecyclerViewAdapter doesn't auto-update automatically (even though it says it will)
         LoaderManager.getInstance(this).restartLoader(0, null, this)
         binding.conversationRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
 
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                // The unreadCount check is to prevent us scrolling to the bottom when we first enter a conversation.
-                if (recyclerScrollState == RecyclerView.SCROLL_STATE_IDLE && unreadCount != Int.MAX_VALUE) {
-                    scrollToMostRecentMessageIfWeShould()
-                }
                 handleRecyclerViewScrolled()
             }
 
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-                recyclerScrollState = newState
-
                 // If we were scrolling towards a specific message to highlight when scrolling stops then do so
                 if (newState == RecyclerView.SCROLL_STATE_IDLE) {
                     pendingHighlightMessagePosition?.let { position ->
@@ -827,39 +781,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 .lastSeenMessageId
                 .collectLatest { adapter.lastSentMessageId = it }
         }
-    }
-
-    private fun scrollToMostRecentMessageIfWeShould() {
-        //don't do anything during search - it still needs to happen when starting the search when the keyboard opens
-        // so we check the state of the query as an indication that we are scrolling due to search
-        if(!searchViewModel.searchQuery.value.isNullOrEmpty()) return
-
-        val lm = layoutManager ?: return Log.w(TAG, "Cannot scroll recycler view without a layout manager - bailing.")
-
-        // Grab an initial 'previous' last visible message..
-        if (previousLastVisibleRecyclerViewIndex == RecyclerView.NO_POSITION) {
-            previousLastVisibleRecyclerViewIndex = lm.findLastVisibleItemPosition()
-        }
-
-        // ..and grab the 'current' last visible message.
-        currentLastVisibleRecyclerViewIndex = lm.findLastVisibleItemPosition()
-
-        // If the current last visible message index is less than the previous one (i.e. we've
-        // lost visibility of one or more messages due to showing the IME keyboard) AND we're
-        // at the bottom of the message feed..
-        val atBottomAndTrueLastNoLongerVisible = currentLastVisibleRecyclerViewIndex <= previousLastVisibleRecyclerViewIndex &&
-                                                 !binding.scrollToBottomButton.isVisible
-
-        // ..OR we're at the last message or have received a new message..
-        val atLastOrReceivedNewMessage = currentLastVisibleRecyclerViewIndex == (adapter.itemCount - 1)
-
-        // ..then scroll the recycler view to the last message on resize.
-        if (atBottomAndTrueLastNoLongerVisible || atLastOrReceivedNewMessage) {
-            binding.conversationRecyclerView.smoothScrollToPosition(adapter.itemCount)
-        }
-
-        // Update our previous last visible view index to the current one
-        previousLastVisibleRecyclerViewIndex = currentLastVisibleRecyclerViewIndex
     }
 
     // called from onCreate
@@ -1125,23 +1046,18 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             }
         }
     }
-
-    private fun scrollToFirstUnreadMessageIfNeeded(isFirstLoad: Boolean = false, shouldHighlight: Boolean = false): Int {
-        val lastSeenTimestamp = threadDb.getLastSeenAndHasSent(viewModel.threadId).first()
-        val lastSeenItemPosition = adapter.findLastSeenItemPosition(lastSeenTimestamp) ?: return -1
-
-        // If this is triggered when first opening a conversation then we want to position the top
-        // of the first unread message in the middle of the screen
-        if (isFirstLoad && !reverseMessageList) {
-            layoutManager?.scrollToPositionWithOffset(lastSeenItemPosition, ((layoutManager?.height ?: 0) / 2))
-            if (shouldHighlight) { highlightViewAtPosition(lastSeenItemPosition) }
-            return lastSeenItemPosition
+//todo PRO need to add scroll when bringing up the keyboard if we are at the bottom of the screen - double check scrolling behaviour (seem to see a tiny jump when entering some conversations?)
+    private fun scrollToFirstUnreadMessageOrBottom() {
+        // if there are no unread messages, go straight to the very bottom of the list
+        if(unreadCount == 0){
+            layoutManager?.scrollToPositionWithOffset(adapter.itemCount -1, Int.MIN_VALUE)
+            return
         }
 
-        if (lastSeenItemPosition <= 3) { return lastSeenItemPosition }
+        val lastSeenTimestamp = threadDb.getLastSeenAndHasSent(viewModel.threadId).first()
+        val lastSeenItemPosition = adapter.findLastSeenItemPosition(lastSeenTimestamp) ?: return
 
-        binding.conversationRecyclerView.scrollToPosition(lastSeenItemPosition)
-        return lastSeenItemPosition
+        layoutManager?.scrollToPositionWithOffset(lastSeenItemPosition, ((layoutManager?.height ?: 0) / 2))
     }
 
     private fun highlightViewAtPosition(position: Int) {
@@ -1333,7 +1249,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         binding.typingIndicatorViewContainer.isVisible = wasTypingIndicatorVisibleBefore && isScrolledToBottom
 
         showScrollToBottomButtonIfApplicable()
-        val maybeTargetVisiblePosition = if (reverseMessageList) layoutManager?.findFirstVisibleItemPosition() else layoutManager?.findLastVisibleItemPosition()
+        val maybeTargetVisiblePosition = layoutManager?.findLastVisibleItemPosition()
         val targetVisiblePosition = maybeTargetVisiblePosition ?: RecyclerView.NO_POSITION
         if (!firstLoad.get() && targetVisiblePosition != RecyclerView.NO_POSITION) {
             adapter.getTimestampForItemAt(targetVisiblePosition)?.let { visibleItemTimestamp ->
@@ -1343,13 +1259,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             }
         }
 
-        if (reverseMessageList) {
-            unreadCount = min(unreadCount, targetVisiblePosition).coerceAtLeast(0)
-        } else {
-            val layoutUnreadCount = layoutManager?.let { (it.itemCount - 1) - it.findLastVisibleItemPosition() }
-                ?: RecyclerView.NO_POSITION
-            unreadCount = min(unreadCount, layoutUnreadCount).coerceAtLeast(0)
-        }
+        val layoutUnreadCount = layoutManager?.let { (it.itemCount - 1) - it.findLastVisibleItemPosition() }
+            ?: RecyclerView.NO_POSITION
+        unreadCount = min(unreadCount, layoutUnreadCount).coerceAtLeast(0)
+
         updateUnreadCountIndicator()
     }
 
@@ -2678,7 +2591,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     private fun jumpToMessage(author: Address, timestamp: Long, highlight: Boolean, onMessageNotFound: Runnable?) {
         SimpleTask.run(lifecycle, {
-            mmsSmsDb.getMessagePositionInConversation(viewModel.threadId, timestamp, author, reverseMessageList)
+            mmsSmsDb.getMessagePositionInConversation(viewModel.threadId, timestamp, author, false)
         }) { p: Int -> moveToMessagePosition(p, highlight, onMessageNotFound) }
     }
 
