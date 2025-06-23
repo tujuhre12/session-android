@@ -325,6 +325,8 @@ class InputBar @JvmOverloads constructor(
                 delegate?.onCharLimitTapped()
             }
 
+            binding.badgePro.isVisible = state.charLimitState.showProBadge
+
             binding.characterLimitContainer.isVisible = true
         } else {
             binding.characterLimitContainer.setOnClickListener(null)

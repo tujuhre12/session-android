@@ -1435,7 +1435,8 @@ class ConversationViewModel(
         val charLimitState = if(charsLeft <= CHARACTER_LIMIT_THRESHOLD){
             InputBarCharLimitState(
                 count = charsLeft,
-                danger = charsLeft < 0
+                danger = charsLeft < 0,
+                showProBadge = proStatusManager.isPostPro() && !proStatusManager.isCurrentUserPro() // only show the badge for non pro users POST pro launch
             )
         } else {
             null
@@ -1583,7 +1584,8 @@ data class InputBarState(
 
 data class InputBarCharLimitState(
     val count: Int,
-    val danger: Boolean
+    val danger: Boolean,
+    val showProBadge: Boolean
 )
 
 sealed interface InputBarContentState {

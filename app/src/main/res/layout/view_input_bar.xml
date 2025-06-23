@@ -58,7 +58,7 @@
                 tools:lines="6"/>
 
 
-            <FrameLayout
+            <LinearLayout
                 android:id="@+id/characterLimitContainer"
                 android:layout_width="@dimen/input_bar_button_expanded_size"
                 android:layout_height="@dimen/input_bar_button_expanded_size"
@@ -69,16 +69,29 @@
                 android:clickable="true"
                 tools:visibility="visible"
                 android:background="@drawable/bg_round_transparent"
+                android:orientation="vertical"
                 tools:background="@color/classic_dark_3">
                 <TextView
                     android:id="@+id/characterLimitText"
                     android:textColor="?input_bar_text_user"
                     android:textSize="@dimen/small_font_size"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="bottom|center_horizontal"
                     tools:text="199"/>
-            </FrameLayout>
+
+                <ImageView android:id="@+id/badgePro"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_pro_badge"
+                    android:contentDescription="null"
+                    android:layout_marginTop="4dp"
+                    android:layout_weight="1"
+                    android:visibility="gone"
+                    tools:visibility="visible"
+                    android:gravity="bottom|center_horizontal"/>
+            </LinearLayout>
 
             <RelativeLayout
                 android:id="@+id/microphoneOrSendButtonContainer"
