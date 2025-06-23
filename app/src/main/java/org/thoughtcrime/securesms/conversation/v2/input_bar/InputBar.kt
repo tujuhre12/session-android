@@ -321,8 +321,13 @@ class InputBar @JvmOverloads constructor(
         if(state.charLimitState != null){
             binding.characterLimitText.text = state.charLimitState.count.toString()
             binding.characterLimitText.setTextColor(if(state.charLimitState.danger) dangerColor else textColor)
+            binding.characterLimitContainer.setOnClickListener {
+                delegate?.onCharLimitTapped()
+            }
+
             binding.characterLimitContainer.isVisible = true
         } else {
+            binding.characterLimitContainer.setOnClickListener(null)
             binding.characterLimitContainer.isVisible = false
         }
     }
@@ -338,4 +343,5 @@ interface InputBarDelegate {
     fun onMicrophoneButtonUp(event: MotionEvent)
     fun sendMessage()
     fun commitInputContent(contentUri: Uri)
+    fun onCharLimitTapped()
 }

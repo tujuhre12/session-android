@@ -206,14 +206,23 @@ class DebugMenuViewModel @Inject constructor(
 
             is Commands.ForceCurrentUserAsPro -> {
                 textSecurePreferences.setForceCurrentUserAsPro(command.set)
+                _uiState.update {
+                    it.copy(forceCurrentUserAsPro = command.set)
+                }
             }
 
             is Commands.ForceIncomingMessagesAsPro -> {
                 textSecurePreferences.setForceIncomingMessagesAsPro(command.set)
+                _uiState.update {
+                    it.copy(forceIncomingMessagesAsPro = command.set)
+                }
             }
 
             is Commands.ForcePostPro -> {
-                textSecurePreferences.setForcePostPro(command.set) 
+                textSecurePreferences.setForcePostPro(command.set)
+                _uiState.update {
+                    it.copy(forcePostPro = command.set)
+                }
             }
         }
     }

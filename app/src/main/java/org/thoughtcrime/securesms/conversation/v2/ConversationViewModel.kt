@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.Context
 import android.widget.Toast
 import androidx.annotation.StringRes
-import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -48,12 +47,9 @@ import org.session.libsession.utilities.ExpirationUtil
 import org.session.libsession.utilities.StringSubstitutionConstants.COUNT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.LIMIT_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.UsernameUtils
-import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
@@ -1259,28 +1255,66 @@ class ConversationViewModel(
         }
     }
 
+    fun onCharLimitTapped(){
+        // we currently have different logic for PRE and POST Pro launch
+        // which we can remove once Pro is out - currently we can switch this fro the debug menu
+        if(!proStatusManager.isPostPro() || proStatusManager.isCurrentUserPro()){
+            handleCharLimitTappedForProUser()
+        } else {
+            handleCharLimitTappedForRegularUser()
+        }
+    }
+
+    fun validateMessageLength(): Boolean {
+        // the message is too long if we have a negative char left in the input state
+        val charsLeft = _uiState.value.inputBarState.charLimitState?.count ?: 0
+        return if(charsLeft < 0){
+            // the user is trying to send a message that is too long - we should display a dialog
+            // we currently have different logic for PRE and POST Pro launch
+            // which we can remove once Pro is out - currently we can switch this fro the debug menu
+            if(!proStatusManager.isPostPro() || proStatusManager.isCurrentUserPro()){
+                showMessageTooLongSendDialog()
+            } else {
+                showSessionProCTA()
+            }
+
+            false
+        } else {
+            true
+        }
+    }
+
+    private fun handleCharLimitTappedForProUser(){
+        if((_uiState.value.inputBarState.charLimitState?.count ?: 0) < 0){
+            showMessageTooLongDialog()
+        } else {
+            showMessageLengthDialog()
+        }
+    }
+
+    private fun handleCharLimitTappedForRegularUser(){
+        showSessionProCTA()
+    }
+
     fun showMessageLengthDialog(){
         _dialogsState.update {
+            val charsLeft = _uiState.value.inputBarState.charLimitState?.count ?: 0
             it.copy(
                 showSimpleDialog = SimpleDialogData(
                     title = ProStatusManager.DIALOG_TITLE_LGTH,
                     message = Phrase.from(
                         application.resources.getQuantityString(
                             R.plurals.proCTALengthBody,
-                            2,//todo PRO get number from characters left, which might be held here in the VM later
-                            2 //todo PRO get number from characters left, which might be held here in the VM later
+                            charsLeft,
+                            charsLeft
                         ))
-                        .put(LIMIT_KEY, 2000) //todo PRO get number from a centralised place
-                        .put(COUNT_KEY, 2) //todo PRO get number from characters left, which might be held here in the VM later
+                        .put(LIMIT_KEY, proStatusManager.getCharacterLimit())
+                        .put(COUNT_KEY, charsLeft)
                         .format(),
-                    showXIcon = true,
                     positiveStyleDanger = false,
-                    /*
-                    positiveText = application.getString(ProStatusManager.OK),
-                    positiveStyleDanger = false,
+                    positiveText = application.getString(R.string.okay),
                     onPositive = ::hideSimpleDialog
-                     */
-                    //todo PRO check final style. Ok vs Okay? 'x' button?
+
                 )
             )
         }
@@ -1292,16 +1326,11 @@ class ConversationViewModel(
                 showSimpleDialog = SimpleDialogData(
                     title = ProStatusManager.DIALOG_TITLE_LONG,
                     message = Phrase.from(ProStatusManager.DIALOG_BODY_LONG)
-                        .put(LIMIT_KEY, 2000) //todo PRO get number from a centralised place
+                        .put(LIMIT_KEY, proStatusManager.getCharacterLimit())
                         .format(),
-                    showXIcon = true,
                     positiveStyleDanger = false,
-                    /*
-                    positiveText = application.getString(ProStatusManager.OK),
-                    positiveStyleDanger = false,
+                    positiveText = application.getString(R.string.okay),
                     onPositive = ::hideSimpleDialog
-                     */
-                    //todo PRO check final style. Ok vs Okay? 'x' button?
                 )
             )
         }
@@ -1313,16 +1342,11 @@ class ConversationViewModel(
                 showSimpleDialog = SimpleDialogData(
                     title = ProStatusManager.DIALOG_TITLE_LONG,
                     message = Phrase.from(ProStatusManager.SEND_BODY_LONG)
-                        .put(LIMIT_KEY, 2000) //todo PRO get number from a centralised place
+                        .put(LIMIT_KEY, proStatusManager.getCharacterLimit())
                         .format(),
-                    showXIcon = true,
                     positiveStyleDanger = false,
-                    /*
-                    positiveText = application.getString(ProStatusManager.OK),
-                    positiveStyleDanger = false,
+                    positiveText = application.getString(R.string.okay),
                     onPositive = ::hideSimpleDialog
-                     */
-                    //todo PRO check final style. Ok vs Okay? 'x' button?
                 )
             )
         }

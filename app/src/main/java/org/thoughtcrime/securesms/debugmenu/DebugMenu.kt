@@ -209,7 +209,7 @@ fun DebugMenu(
                     text = "Set current user as Pro",
                     checked = uiState.forceCurrentUserAsPro,
                     onCheckedChange = {
-                        sendCommand(DebugMenuViewModel.Commands.HideMessageRequest(it))
+                        sendCommand(DebugMenuViewModel.Commands.ForceCurrentUserAsPro(it))
                     }
                 )
 
@@ -217,7 +217,7 @@ fun DebugMenu(
                     text = "Set all incoming messages as Pro",
                     checked = uiState.forceIncomingMessagesAsPro,
                     onCheckedChange = {
-                        sendCommand(DebugMenuViewModel.Commands.HideNoteToSelf(it))
+                        sendCommand(DebugMenuViewModel.Commands.ForceIncomingMessagesAsPro(it))
                     }
                 )
 
@@ -225,7 +225,7 @@ fun DebugMenu(
                     text = "Set app as post Pro launch",
                     checked = uiState.forcePostPro,
                     onCheckedChange = {
-                        sendCommand(DebugMenuViewModel.Commands.HideNoteToSelf(it))
+                        sendCommand(DebugMenuViewModel.Commands.ForcePostPro(it))
                     }
                 )
             }

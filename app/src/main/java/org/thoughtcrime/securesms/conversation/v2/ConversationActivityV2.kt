@@ -1888,6 +1888,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
     }
 
+    override fun onCharLimitTapped() {
+        viewModel.onCharLimitTapped()
+    }
+
     private fun isValidLockViewLocation(x: Int, y: Int): Boolean {
         // We can be anywhere above the lock view and a bit to the side of it (at most `lockViewHitMargin`
         // to the side)
@@ -1959,10 +1963,16 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun sendMessage() {
         val recipient = viewModel.recipient ?: return
+
+        // show the unblock dialog when trying to send a message to a blocked contact
         if (recipient.isContactRecipient && recipient.isBlocked) {
             BlockedDialog(recipient, viewModel.getUsername(recipient.address.toString())).show(supportFragmentManager, "Blocked Dialog")
             return
         }
+
+        // validate message length before sending
+        if(!viewModel.validateMessageLength()) return
+
         val sentMessageInfo = if (binding.inputBar.linkPreview != null || binding.inputBar.quote != null) {
             sendAttachments(listOf(), getMessageBody(), binding.inputBar.quote, binding.inputBar.linkPreview)
         } else {
