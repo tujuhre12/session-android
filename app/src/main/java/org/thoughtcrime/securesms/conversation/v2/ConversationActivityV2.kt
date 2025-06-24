@@ -206,7 +206,7 @@ import org.thoughtcrime.securesms.util.drawToBitmap
 import org.thoughtcrime.securesms.util.fadeIn
 import org.thoughtcrime.securesms.util.fadeOut
 import org.thoughtcrime.securesms.util.isFullyScrolled
-import org.thoughtcrime.securesms.util.isScrolledToBottom
+import org.thoughtcrime.securesms.util.isNearBottom
 import org.thoughtcrime.securesms.util.push
 import org.thoughtcrime.securesms.util.toPx
 import org.thoughtcrime.securesms.webrtc.WebRtcCallActivity
@@ -465,7 +465,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     private val isScrolledToBottom: Boolean
-        get() = binding.conversationRecyclerView.isScrolledToBottom
+        get() = binding.conversationRecyclerView.isNearBottom
 
     // When the user clicks on the original message in a reply then we scroll to and highlight that original
     // message. To do this we keep track of the replied-to message's location in the recycler view.
@@ -616,7 +616,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 if (keyboardVisible) {
                     // when showing the keyboard, we should auto scroll the conversation recyclerview
                     // if we are near the bottom (within 50dp of bottom)
-                    if (binding.conversationRecyclerView.isScrolledToBottom) {
+                    if (binding.conversationRecyclerView.isNearBottom) {
                         binding.conversationRecyclerView.smoothScrollToPosition(adapter.itemCount)
                     }
                 }
@@ -2651,7 +2651,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         override fun onChanged() {
             super.onChanged()
             // scrolled to bottom has a leniency of 50dp, so if we are within the 50dp but not fully at the bottom, scroll down
-            if (recyclerView.isScrolledToBottom && !recyclerView.isFullyScrolled) {
+            if (recyclerView.isNearBottom && !recyclerView.isFullyScrolled) {
                 recyclerView.smoothScrollToPosition(adapter.itemCount)
             }
         }

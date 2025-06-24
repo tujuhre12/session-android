@@ -1,8 +1,6 @@
 package org.thoughtcrime.securesms.util
 
 import android.content.res.Resources
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.RecyclerView
 import kotlin.math.roundToInt
 
@@ -24,7 +22,10 @@ fun toDp(px: Float, resources: Resources): Float {
     return (px / scale)
 }
 
-val RecyclerView.isScrolledToBottom: Boolean
+/**
+ * Returns true if the recyclerview is scrolled within 50dp of the bottom
+ */
+val RecyclerView.isNearBottom: Boolean
     get() = computeVerticalScrollOffset().coerceAtLeast(0) +
             computeVerticalScrollExtent() +
             toPx(50, resources) >= computeVerticalScrollRange()
