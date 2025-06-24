@@ -37,7 +37,6 @@ import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.UNKNOWN
-import org.session.libsession.utilities.Address.Companion.fromExternal
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.Contact
 import org.session.libsession.utilities.IdentityKeyMismatch
@@ -1410,7 +1409,7 @@ class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper
             )
             return Quote(
                 quoteId,
-                fromExternal(context, quoteAuthor),
+                fromSerialized(quoteAuthor),
                 quoteText,
                 quoteMissing,
                 quoteDeck

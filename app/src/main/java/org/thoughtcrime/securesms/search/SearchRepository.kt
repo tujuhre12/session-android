@@ -6,7 +6,6 @@ import android.database.MergeCursor
 import com.annimon.stream.Stream
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.Address.Companion.fromExternal
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocalNumber
@@ -133,7 +132,7 @@ class SearchRepository(
         query: String,
     ): CursorList<GroupRecord> {
         val numbers = contactAccessor.getNumbersForThreadSearchFilter(context, query)
-        val addresses = numbers.map { fromExternal(context, it) }
+        val addresses = numbers.map { fromSerialized(it) }
 
         val conversations = threadDatabase.getFilteredConversationList(addresses)
         return if (conversations != null)

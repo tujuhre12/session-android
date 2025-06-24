@@ -32,7 +32,6 @@ import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.Address.Companion.fromExternal
 import org.session.libsession.utilities.DistributionTypes
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.ViewUtil
@@ -244,7 +243,7 @@ class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
 
     override fun onContactSelected(number: String) {
         val existingThread = get(this).threadDatabase().getThreadIdIfExistsFor(number)
-        createConversation(existingThread, fromExternal(this, number), DistributionTypes.DEFAULT)
+        createConversation(existingThread, Address.fromSerialized(number), DistributionTypes.DEFAULT)
     }
 
     override fun onContactDeselected(number: String?) { /* Nothing */ }
