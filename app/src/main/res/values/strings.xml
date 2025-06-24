@@ -647,10 +647,6 @@
         <item quantity="one">You\'ve got a new message.</item>
         <item quantity="other">You\'ve got %1$d new messages.</item>
     </plurals>
-    <plurals name="proCTALengthBody">
-        <item quantity="one">Messages have a character limit of {limit} characters. You have {count} character remaining.</item>
-        <item quantity="other">Messages have a character limit of {limit} characters. You have {count} characters remaining.</item>
-    </plurals>
     <plurals name="messageNewYouveGotGroup">
         <item quantity="one">You\'ve got a new message in %1$s.</item>
         <item quantity="other">You\'ve got %1$d new messages in %2$s.</item>
@@ -696,7 +692,6 @@
     <string name="modalMessageTooLongDescription">Please shorten your message to {limit} characters or less.</string>
     <string name="modalMessageTooLongTitle">Message Too Long</string>
     <string name="next">Next</string>
-    <string name="TEMP_READ_MORE">Read More</string>
     <string name="nicknameDescription">Choose a nickname for <b>{name}</b>. This will appear to you in your one-to-one and group conversations.</string>
     <string name="nicknameEnter">Enter nickname</string>
     <string name="nicknameErrorShorter">Please enter a shorter nickname</string>

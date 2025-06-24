@@ -17,14 +17,7 @@ class ProStatusManager @Inject constructor(
         const val CTA_FEAT2 = "Share files beyond the 10MB limit"
         const val CTA_FEAT3 = "Heaps more exclusive features"
         const val UPGRADE = "Upgrade"
-        const val DIALOG_TITLE_LGTH = "Message Length"
-        const val DIALOG_TITLE_LONG = "Message Too Long"
-        const val DIALOG_BODY_LONG = "You have exceeded the character limit for this message. Please shorten your message to {limit} characters or less."
-        const val SEND_BODY_LONG = "Please shorten your message to {limit} characters or less."
-        const val READ_MORE = "Read more"
         const val PRO_URL = "https://getsession.org/"
-        const val PRO = "Session Pro"
-        const val OK = "Ok"
     }
 
     private val MAX_CHARACTER_PRO = 10000

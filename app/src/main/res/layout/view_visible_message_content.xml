@@ -81,7 +81,7 @@
         <TextView android:id="@+id/readMore"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/TEMP_READ_MORE"
+            android:text="@string/messageBubbleReadMore"
             android:textSize="14sp"
             android:textStyle="bold"
             android:includeFontPadding="false"

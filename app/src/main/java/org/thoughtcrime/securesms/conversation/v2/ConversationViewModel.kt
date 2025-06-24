@@ -1301,10 +1301,10 @@ class ConversationViewModel(
             val charsLeft = _uiState.value.inputBarState.charLimitState?.count ?: 0
             it.copy(
                 showSimpleDialog = SimpleDialogData(
-                    title = ProStatusManager.DIALOG_TITLE_LGTH,
+                    title = application.getString(R.string.modalMessageCharacterDisplayTitle),
                     message = Phrase.from(
                         application.resources.getQuantityString(
-                            R.plurals.proCTALengthBody,
+                            R.plurals.modalMessageCharacterDisplayDescription,
                             charsLeft,
                             charsLeft
                         ))
@@ -1324,8 +1324,8 @@ class ConversationViewModel(
         _dialogsState.update {
             it.copy(
                 showSimpleDialog = SimpleDialogData(
-                    title = ProStatusManager.DIALOG_TITLE_LONG,
-                    message = Phrase.from(ProStatusManager.DIALOG_BODY_LONG)
+                    title = application.getString(R.string.modalMessageTooLongTitle),
+                    message = Phrase.from(application.getString(R.string.modalMessageCharacterTooLongDescription))
                         .put(LIMIT_KEY, proStatusManager.getCharacterLimit())
                         .format(),
                     positiveStyleDanger = false,
@@ -1340,8 +1340,8 @@ class ConversationViewModel(
         _dialogsState.update {
             it.copy(
                 showSimpleDialog = SimpleDialogData(
-                    title = ProStatusManager.DIALOG_TITLE_LONG,
-                    message = Phrase.from(ProStatusManager.SEND_BODY_LONG)
+                    title =application.getString(R.string.modalMessageTooLongTitle),
+                    message = Phrase.from(application.getString(R.string.modalMessageTooLongDescription))
                         .put(LIMIT_KEY, proStatusManager.getCharacterLimit())
                         .format(),
                     positiveStyleDanger = false,
