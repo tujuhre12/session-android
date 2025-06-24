@@ -2,7 +2,6 @@ package org.session.libsession.database
 
 import android.content.Context
 import android.net.Uri
-import kotlinx.coroutines.flow.Flow
 import network.loki.messenger.libsession_util.util.KeyPair
 import org.session.libsession.messaging.BlindedIdMapping
 import org.session.libsession.messaging.calls.CallMessageType
@@ -31,7 +30,6 @@ import org.session.libsession.utilities.GroupDisplayInfo
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.Recipient.RecipientSettings
-import org.session.libsession.utilities.recipients.RecipientV2
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceAttachmentPointer
 import org.session.libsignal.messages.SignalServiceGroup
@@ -56,11 +54,6 @@ interface StorageProtocol {
     fun clearUserPic(clearConfig: Boolean = true)
     // Signal
     fun getOrGenerateRegistrationID(): Int
-
-    // Recipient
-    fun observeRecipient(address: Address): Flow<RecipientV2>
-    @Deprecated("Use observeRecipient instead", ReplaceWith("observeRecipient(address)"))
-    fun getRecipientSync(address: Address): RecipientV2
 
     // Jobs
     fun persistJob(job: Job)
@@ -143,7 +136,6 @@ interface StorageProtocol {
     fun getZombieMembers(groupID: String): Set<String>
     fun removeMember(groupID: String, member: Address)
     fun updateMembers(groupID: String, members: List<Address>)
-    fun setZombieMembers(groupID: String, members: List<Address>)
     fun getAllLegacyGroupPublicKeys(): Set<String>
     fun getAllActiveClosedGroupPublicKeys(): Set<String>
     fun addClosedGroupPublicKey(groupPublicKey: String)

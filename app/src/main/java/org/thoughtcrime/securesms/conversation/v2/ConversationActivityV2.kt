@@ -1957,7 +1957,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     override fun sendMessage() {
         val recipient = viewModel.recipient ?: return
         if (recipient.isContactRecipient && recipient.isBlocked) {
-            BlockedDialog(recipient, viewModel.getUsername(recipient.address.toString())).show(supportFragmentManager, "Blocked Dialog")
+            BlockedDialog(recipient.address, viewModel.getUsername(recipient.address.toString())).show(supportFragmentManager, "Blocked Dialog")
             return
         }
         val sentMessageInfo = if (binding.inputBar.linkPreview != null || binding.inputBar.quote != null) {
@@ -2076,7 +2076,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val expireStartedAtMs = if (viewModel.expirationConfiguration?.expiryMode is ExpiryMode.AfterSend) {
             sentTimestamp
         } else 0
-        val outgoingTextMessage = OutgoingMediaMessage.from(message, recipient, attachments, localQuote, linkPreview, expiresInMs, expireStartedAtMs)
+        val outgoingTextMessage = OutgoingMediaMessage.from(message, recipient.address, attachments, localQuote, linkPreview, expiresInMs, expireStartedAtMs)
 
         // Clear the input bar
         binding.inputBar.text = ""

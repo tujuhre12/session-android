@@ -155,6 +155,12 @@ suspend fun ConfigFactoryProtocol.waitUntilUserConfigsPushed(timeoutMills: Long 
 }
 
 /**
+ * Flow that emits when the user configs are modified or merged.
+ */
+fun ConfigFactoryProtocol.userConfigsChanged(): Flow<*> =
+    configUpdateNotifications.filter { it is ConfigUpdateNotification.UserConfigsModified || it is ConfigUpdateNotification.UserConfigsMerged }
+
+/**
  * Wait until all configs of given group are pushed to the server.
  *
  * This function is not essential to the pushing of the configs, the config push will schedule

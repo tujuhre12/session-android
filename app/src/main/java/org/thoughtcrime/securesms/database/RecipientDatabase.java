@@ -23,6 +23,21 @@ import java.util.List;
 
 import javax.inject.Provider;
 
+import kotlinx.coroutines.channels.BufferOverflow;
+import kotlinx.coroutines.flow.MutableSharedFlow;
+import kotlinx.coroutines.flow.SharedFlow;
+import kotlinx.coroutines.flow.SharedFlowKt;
+
+/**
+ * The database(table) where some recipient data is stored, including names, avatars, notification settings, etc.
+ *
+ * Note: We have moved a large chunk of recipient data into the config system, so most of the time you
+ * should really get them from {@link org.session.libsession.utilities.ConfigFactoryProtocol} instead.
+ *
+ * This database is only used for data that is not in the config system, such as blinded contacts,
+ * the people who are not your contacts or not your blinded convo, such as unknown people in groups,
+ * communities, etc. Their data will be stored here instead.
+ */
 public class RecipientDatabase extends Database {
 
   private static final String TAG = RecipientDatabase.class.getSimpleName();
@@ -178,8 +193,15 @@ public class RecipientDatabase extends Database {
   public static final int NOTIFY_TYPE_MENTIONS = 1;
   public static final int NOTIFY_TYPE_NONE = 2;
 
+  private final MutableSharedFlow<Address> updateNotifications = SharedFlowKt.MutableSharedFlow(0, 256, BufferOverflow.DROP_OLDEST);
+
   public RecipientDatabase(Context context, Provider<SQLCipherOpenHelper> databaseHelper) {
     super(context, databaseHelper);
+  }
+
+  @NonNull
+  public SharedFlow<Address> getUpdateNotifications() {
+    return updateNotifications;
   }
 
   public RecipientReader getRecipientsWithNotificationChannels() {
@@ -269,6 +291,8 @@ public class RecipientDatabase extends Database {
     values.put(APPROVED, approved ? 1 : 0);
     updateOrInsert(recipient, values);
     notifyRecipientListeners();
+
+    updateNotifications.tryEmit(recipient);
   }
 
   public void setApprovedMe(@NonNull Address recipient, boolean approvedMe) {
@@ -276,6 +300,8 @@ public class RecipientDatabase extends Database {
     values.put(APPROVED_ME, approvedMe ? 1 : 0);
     updateOrInsert(recipient, values);
     notifyRecipientListeners();
+
+    updateNotifications.tryEmit(recipient);
   }
 
   public void setBlocked(@NonNull Iterable<Address> recipients, boolean blocked) {
@@ -292,6 +318,8 @@ public class RecipientDatabase extends Database {
       db.endTransaction();
     }
     notifyRecipientListeners();
+
+    recipients.forEach(updateNotifications::tryEmit);
   }
 
   // Delete a recipient with the given address from the database
@@ -302,27 +330,27 @@ public class RecipientDatabase extends Database {
     notifyRecipientListeners();
   }
 
-  public void setAutoDownloadAttachments(@NonNull Recipient recipient, boolean shouldAutoDownloadAttachments) {
+  public void setAutoDownloadAttachments(@NonNull Address recipient, boolean shouldAutoDownloadAttachments) {
     SQLiteDatabase db = getWritableDatabase();
     db.beginTransaction();
     try {
       ContentValues values = new ContentValues();
       values.put(AUTO_DOWNLOAD, shouldAutoDownloadAttachments ? 1 : 0);
-      db.update(TABLE_NAME, values, ADDRESS+ " = ?", new String[]{recipient.getAddress().toString()});
-      recipient.resolve().setAutoDownloadAttachments(shouldAutoDownloadAttachments);
+      db.update(TABLE_NAME, values, ADDRESS+ " = ?", new String[]{recipient.toString()});
       db.setTransactionSuccessful();
     } finally {
       db.endTransaction();
     }
     notifyRecipientListeners();
+    updateNotifications.tryEmit(recipient);
   }
 
-  public void setMuted(@NonNull Recipient recipient, long until) {
+  public void setMuted(@NonNull Address recipient, long until) {
     ContentValues values = new ContentValues();
     values.put(MUTE_UNTIL, until);
-    updateOrInsert(recipient.getAddress(), values);
-    recipient.resolve().setMuted(until);
+    updateOrInsert(recipient, values);
     notifyRecipientListeners();
+    updateNotifications.tryEmit(recipient);
   }
 
   /**
@@ -330,13 +358,13 @@ public class RecipientDatabase extends Database {
    * @param recipient to modify notifications for
    * @param notifyType the new notification type {@link #NOTIFY_TYPE_ALL}, {@link #NOTIFY_TYPE_MENTIONS} or {@link #NOTIFY_TYPE_NONE}
    */
-  public void setNotifyType(@NonNull Recipient recipient, int notifyType) {
+  public void setNotifyType(@NonNull Address recipient, int notifyType) {
     ContentValues values = new ContentValues();
     values.put(NOTIFY_TYPE, notifyType);
-    updateOrInsert(recipient.getAddress(), values);
-    recipient.resolve().setNotifyType(notifyType);
+    updateOrInsert(recipient, values);
     notifyConversationListListeners();
     notifyRecipientListeners();
+    updateNotifications.tryEmit(recipient);
   }
 
   public void setProfileKey(@NonNull Address recipient, @Nullable byte[] profileKey) {
@@ -344,6 +372,7 @@ public class RecipientDatabase extends Database {
     values.put(PROFILE_KEY, profileKey == null ? null : Base64.encodeBytes(profileKey));
     updateOrInsert(recipient, values);
     notifyRecipientListeners();
+    updateNotifications.tryEmit(recipient);
   }
 
   public void setProfileAvatar(@NonNull Address recipient, @Nullable String profileAvatar) {
@@ -351,23 +380,23 @@ public class RecipientDatabase extends Database {
     contentValues.put(SESSION_PROFILE_AVATAR, profileAvatar);
     updateOrInsert(recipient, contentValues);
     notifyRecipientListeners();
+    updateNotifications.tryEmit(recipient);
   }
 
-  public void setProfileName(@NonNull Recipient recipient, @Nullable String profileName) {
+  public void setProfileName(@NonNull Address recipient, @Nullable String profileName) {
     ContentValues contentValues = new ContentValues(1);
     contentValues.put(SYSTEM_DISPLAY_NAME, profileName);
-    updateOrInsert(recipient.getAddress(), contentValues);
-    recipient.resolve().setName(profileName);
-    recipient.resolve().setProfileName(profileName);
+    updateOrInsert(recipient, contentValues);
     notifyRecipientListeners();
+    updateNotifications.tryEmit(recipient);
   }
 
-  public void setNotificationChannel(@NonNull Recipient recipient, @Nullable String notificationChannel) {
+  public void setNotificationChannel(@NonNull Address recipient, @Nullable String notificationChannel) {
     ContentValues contentValues = new ContentValues(1);
     contentValues.put(NOTIFICATION_CHANNEL, notificationChannel);
-    updateOrInsert(recipient.getAddress(), contentValues);
-    recipient.setNotificationChannel(notificationChannel);
+    updateOrInsert(recipient, contentValues);
     notifyRecipientListeners();
+    updateNotifications.tryEmit(recipient);
   }
 
   public void setBlocksCommunityMessageRequests(@NonNull Address recipient, boolean isBlocked) {
@@ -375,6 +404,7 @@ public class RecipientDatabase extends Database {
     contentValues.put(BLOCKS_COMMUNITY_MESSAGE_REQUESTS, isBlocked ? 1 : 0);
     updateOrInsert(recipient, contentValues);
     notifyRecipientListeners();
+    updateNotifications.tryEmit(recipient);
   }
 
   private void updateOrInsert(Address address, ContentValues contentValues) {

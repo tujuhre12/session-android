@@ -36,6 +36,7 @@ import android.view.ViewTreeObserver
 import android.view.Window
 import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.core.content.IntentCompat
 import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.util.Pair
@@ -72,11 +73,10 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ShareActivity
 import org.thoughtcrime.securesms.components.MediaView
 import org.thoughtcrime.securesms.components.dialogs.DeleteMediaPreviewDialog
-import org.thoughtcrime.securesms.conversation.v2.DimensionUnit
 import org.thoughtcrime.securesms.database.MediaDatabase.MediaRecord
 import org.thoughtcrime.securesms.database.loaders.PagingMediaLoader
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
-import org.thoughtcrime.securesms.media.MediaOverviewActivity.Companion.createIntent
+import org.thoughtcrime.securesms.media.MediaOverviewActivity
 import org.thoughtcrime.securesms.mediapreview.MediaPreviewViewModel
 import org.thoughtcrime.securesms.mediapreview.MediaPreviewViewModel.PreviewData
 import org.thoughtcrime.securesms.mediapreview.MediaRailAdapter
@@ -107,7 +107,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
     private var initialMediaType: String? = null
     private var initialMediaSize: Long = 0
     private var initialCaption: String? = null
-    private var conversationRecipient: Recipient? = null
+    private var conversationRecipient: Address? = null
     private var leftIsRecent = false
     private val viewModel: MediaPreviewViewModel by viewModels()
     private var viewPagerListener: ViewPagerListener? = null
@@ -329,8 +329,9 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
     }
 
     private fun initializeResources() {
-        val address = intent.getParcelableExtra<Address>(
-            ADDRESS_EXTRA
+        conversationRecipient = IntentCompat.getParcelableExtra(intent,
+            ADDRESS_EXTRA,
+            Address::class.java
         )
 
         initialMediaUri = intent.data
@@ -338,16 +339,6 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
         initialMediaSize = intent.getLongExtra(SIZE_EXTRA, 0)
         initialCaption = intent.getStringExtra(CAPTION_EXTRA)
         leftIsRecent = intent.getBooleanExtra(LEFT_IS_RECENT_EXTRA, false)
-
-        conversationRecipient = if (address != null) {
-            Recipient.from(
-                this,
-                address,
-                true
-            )
-        } else {
-            null
-        }
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
@@ -428,7 +419,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
     }
 
     private fun showOverview() {
-        conversationRecipient?.address?.let { startActivity(createIntent(this, it)) }
+        conversationRecipient?.let { startActivity(MediaOverviewActivity.createIntent(this, it)) }
     }
 
     private fun forward() {
@@ -512,13 +503,13 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
             .format().toString()
 
     private fun sendMediaSavedNotificationIfNeeded() {
-        if (conversationRecipient == null || conversationRecipient?.isGroupOrCommunityRecipient == true) return
+        if (conversationRecipient == null || conversationRecipient?.isGroupOrCommunity == true) return
         val message = DataExtractionNotification(
             MediaSaved(
                 nowWithOffset
             )
         )
-        send(message, conversationRecipient!!.address)
+        send(message, conversationRecipient!!)
     }
 
     @SuppressLint("StaticFieldLeak")
@@ -542,7 +533,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
         inflater.inflate(R.menu.media_preview, menu)
 
         val isDeprecatedLegacyGroup = conversationRecipient != null &&
-                conversationRecipient?.isLegacyGroupRecipient ==  true &&
+                conversationRecipient?.isLegacyGroup == true &&
                 deprecationManager.deprecationState.value == LegacyGroupDeprecationManager.DeprecationState.DEPRECATED
 
         if (!isMediaInDb || isDeprecatedLegacyGroup) {

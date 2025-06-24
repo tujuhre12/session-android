@@ -458,7 +458,6 @@ class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper
                     .asSequence()
                     .filterNot { obj: DatabaseAttachment -> obj.isQuote || contactAttachments.contains(obj) || previewAttachments.contains(obj) }
                     .toList()
-                val recipient = Recipient.from(context, fromSerialized(address), false)
                 var networkFailures: List<NetworkFailure?>? = LinkedList()
                 var mismatches: List<IdentityKeyMismatch?>? = LinkedList()
                 var quote: QuoteModel? = null
@@ -490,7 +489,7 @@ class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper
                     }
                 }
                 val message = OutgoingMediaMessage(
-                    recipient,
+                    fromSerialized(address),
                     body,
                     attachments,
                     timestamp,
@@ -740,7 +739,7 @@ class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper
         contentValues.put(SUBSCRIPTION_ID, message.subscriptionId)
         contentValues.put(EXPIRES_IN, message.expiresIn)
         contentValues.put(EXPIRE_STARTED, message.expireStartedAt)
-        contentValues.put(ADDRESS, message.recipient.address.toString())
+        contentValues.put(ADDRESS, message.recipient.toString())
         contentValues.put(
             DELIVERY_RECEIPT_COUNT,
             Stream.of(earlyDeliveryReceipts.values).mapToLong { obj: Long -> obj }
@@ -768,9 +767,9 @@ class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper
             message.linkPreviews,
             contentValues,
         )
-        if (message.recipient.address.isGroupOrCommunity) {
+        if (message.recipient.isGroupOrCommunity) {
             val members = get(context).groupDatabase()
-                .getGroupMembers(message.recipient.address.toGroupString(), false)
+                .getGroupMembers(message.recipient.toGroupString(), false)
             val receiptDatabase = get(context).groupReceiptDatabase()
             receiptDatabase.insert(Stream.of(members).map { obj: Recipient -> obj.address }
                 .toList(),

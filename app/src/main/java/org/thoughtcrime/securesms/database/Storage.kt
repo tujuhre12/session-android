@@ -840,10 +840,6 @@ open class Storage @Inject constructor(
         groupDatabase.updateMembers(groupID, members)
     }
 
-    override fun setZombieMembers(groupID: String, members: List<Address>) {
-        groupDatabase.updateZombieMembers(groupID, members)
-    }
-
     override fun insertIncomingInfoMessage(context: Context, senderPublicKey: String, groupID: String, type: SignalServiceGroup.Type, name: String, members: Collection<String>, admins: Collection<String>, sentTimestamp: Long): Long? {
         val group = SignalServiceGroup(type, GroupUtil.getDecodedGroupIDAsData(groupID), SignalServiceGroup.GroupType.SIGNAL, name, members.toList(), null, admins.toList())
         val m = IncomingTextMessage(fromSerialized(senderPublicKey), 1, sentTimestamp, "", Optional.of(group), 0, 0, true, false)
