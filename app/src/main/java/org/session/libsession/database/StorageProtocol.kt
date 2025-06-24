@@ -200,12 +200,10 @@ interface StorageProtocol {
     fun getAllContacts(): Set<Contact>
     fun setContact(contact: Contact)
     fun deleteContactAndSyncConfig(accountId: String)
-    fun getRecipientForThread(threadId: Long): Recipient?
+    fun getRecipientForThread(threadId: Long): Address?
     fun getRecipientSettings(address: Address): RecipientSettings?
     fun syncLibSessionContacts(contacts: List<LibSessionContact>, timestamp: Long?)
-    fun hasAutoDownloadFlagBeenSet(recipient: Recipient): Boolean
-    fun shouldAutoDownloadAttachments(recipient: Recipient): Boolean
-    fun setAutoDownloadAttachments(recipient: Recipient, shouldAutoDownloadAttachments: Boolean)
+    fun setAutoDownloadAttachments(recipient: Address, shouldAutoDownloadAttachments: Boolean)
 
     // Attachments
     fun getAttachmentDataUri(attachmentId: AttachmentId): Uri

@@ -179,14 +179,14 @@ class VisibleMessageView : FrameLayout {
         replyDisabled = message.isOpenGroupInvitation
         val threadID = message.threadId
         val thread = threadDb.getRecipientForThreadId(threadID) ?: return
-        val isGroupThread = thread.isGroupOrCommunityRecipient
+        val isGroupThread = thread.isGroupOrCommunity
         val isStartOfMessageCluster = isStartOfMessageCluster(message, previous, isGroupThread)
         val isEndOfMessageCluster = isEndOfMessageCluster(message, next, isGroupThread)
         // Show profile picture and sender name if this is a group thread AND the message is incoming
         binding.moderatorIconImageView.isVisible = false
         binding.profilePictureView.visibility = when {
-            thread.isGroupOrCommunityRecipient && !message.isOutgoing && isEndOfMessageCluster -> View.VISIBLE
-            thread.isGroupOrCommunityRecipient -> View.INVISIBLE
+            thread.isGroupOrCommunity && !message.isOutgoing && isEndOfMessageCluster -> View.VISIBLE
+            thread.isGroupOrCommunity -> View.INVISIBLE
             else -> View.GONE
         }
 
@@ -208,7 +208,7 @@ class VisibleMessageView : FrameLayout {
                 binding.profilePictureView.publicKey = senderAccountID
                 binding.profilePictureView.update(message.individualRecipient)
                 binding.profilePictureView.setOnClickListener {
-                    if (thread.isCommunityRecipient) {
+                    if (thread.isCommunity) {
                         val openGroup = lokiThreadDb.getOpenGroupChat(threadID)
                         if (IdPrefix.fromValue(senderAccountID) == IdPrefix.BLINDED && openGroup?.canWrite == true) {
                             // TODO: support v2 soon
@@ -221,7 +221,7 @@ class VisibleMessageView : FrameLayout {
                         maybeShowUserDetails(senderAccountID, threadID)
                     }
                 }
-                if (thread.isCommunityRecipient) {
+                if (thread.isCommunity) {
                     val openGroup = lokiThreadDb.getOpenGroupChat(threadID) ?: return
                     var standardPublicKey = ""
                     var blindedPublicKey: String? = null
@@ -237,14 +237,14 @@ class VisibleMessageView : FrameLayout {
                     )
                     binding.moderatorIconImageView.isVisible = isModerator
                 }
-                else if (thread.isLegacyGroupRecipient) { // legacy groups
-                    val groupRecord = groupDb.getGroup(thread.address.toGroupString()).orNull()
+                else if (thread.isLegacyGroup) { // legacy groups
+                    val groupRecord = groupDb.getGroup(thread.toGroupString()).orNull()
                     val isAdmin: Boolean = groupRecord?.admins?.contains(fromSerialized(senderAccountID)) ?: false
 
                     binding.moderatorIconImageView.isVisible = isAdmin
                 }
-                else if (thread.isGroupV2Recipient) { // groups v2
-                    val isAdmin = configFactory.withGroupConfigs(AccountId(thread.address.toString())) {
+                else if (thread.isGroupV2) { // groups v2
+                    val isAdmin = configFactory.withGroupConfigs(AccountId(thread.toString())) {
                         it.groupMembers.getOrNull(senderAccountID)?.admin == true
                     }
 
@@ -254,7 +254,7 @@ class VisibleMessageView : FrameLayout {
         }
         binding.senderNameTextView.isVisible = !message.isOutgoing && (isStartOfMessageCluster && (isGroupThread || snIsSelected))
         val contactContext =
-            if (thread.isCommunityRecipient) ContactContext.OPEN_GROUP else ContactContext.REGULAR
+            if (thread.isCommunity) ContactContext.OPEN_GROUP else ContactContext.REGULAR
         binding.senderNameTextView.text = usernameUtils.getContactNameWithAccountID(
             contact = contact,
             accountID = senderAccountID,

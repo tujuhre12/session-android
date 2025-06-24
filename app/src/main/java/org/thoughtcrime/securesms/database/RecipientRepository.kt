@@ -17,7 +17,6 @@ import network.loki.messenger.libsession_util.ReadableGroupInfoConfig
 import network.loki.messenger.libsession_util.util.Contact
 import network.loki.messenger.libsession_util.util.GroupInfo
 import network.loki.messenger.libsession_util.util.UserPic
-import org.session.libsession.database.StorageProtocol
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigUpdateNotification
@@ -90,35 +89,30 @@ class RecipientRepository @Inject constructor(
     }
 
     private suspend fun fetchRecipient(address: Address): Pair<RecipientV2?, Flow<*>>? {
-        val changeSource: Flow<*>
-        val value: RecipientV2?
         val myAddress by lazy { preferences.getLocalNumber()?.let(Address::fromSerialized) }
 
+        // Short-circuit for our own address.
+        if (address.isContact && address == myAddress) {
+            return configFactory.withUserConfigs {
+                createLocalRecipient(
+                    address,
+                    it.userProfile.getName().orEmpty(),
+                    it.userProfile.getPic()
+                )
+            } to configFactory.userConfigsChanged()
+        }
+
+        val changeSource: Flow<*>
+        val value: RecipientV2?
+
+        // We'll always try to fetch the recipient settings from the database first
+        val settings: RecipientSettings? = withContext(Dispatchers.Default) {
+            recipientDatabase.getRecipientSettings(address).orNull()
+        }
+
         when {
-            address.isContact && address == myAddress -> {
-                // Ourselves
-                changeSource = configFactory.userConfigsChanged()
-                value = configFactory.withUserConfigs {
-                    createLocalRecipient(
-                        address,
-                        it.userProfile.getName().orEmpty(),
-                        it.userProfile.getPic()
-                    )
-                }
-            }
-
-            address.isContact -> {
-                // When an address is said to be a "contact", it doesn't mean it is the user's contact,
-                // it just means the type of address is a person really.
-                // So we'll need to look it up in the contacts config first, if it's not there,
-                // we'll look it up in the recipient database.
-                val accountId = AccountId.fromStringOrNull(address.address)
-                if (accountId == null || accountId.prefix != IdPrefix.STANDARD) {
-                    // When it's impossible to create a normal AccountId from the address, we
-                    // have exhausted all options, so we bail and never be able recover.
-                    return null
-                }
-
+            // Address is a legit 05 person (not necessarily a "real" contact)
+            address.isContact && AccountId.fromStringOrNull(address.address)?.prefix == IdPrefix.STANDARD -> {
                 // We know this address can be looked up in the contacts config or the recipient database.
                 changeSource = merge(
                     configFactory.userConfigsChanged(),
@@ -126,11 +120,7 @@ class RecipientRepository @Inject constructor(
                 )
 
                 val contactInConfig = configFactory.withUserConfigs { configs ->
-                    configs.contacts.get(accountId.hexString)
-                }
-
-                val settings: RecipientSettings? = withContext(Dispatchers.Default) {
-                    recipientDatabase.getRecipientSettings(address).orNull()
+                    configs.contacts.get(address.address)
                 }
 
                 value = if (contactInConfig != null) {
@@ -150,10 +140,6 @@ class RecipientRepository @Inject constructor(
                     value = null
                     changeSource = configFactory.userConfigsChanged()
                 } else {
-                    val settings: RecipientSettings? = withContext(Dispatchers.Default) {
-                        recipientDatabase.getRecipientSettings(address).orNull()
-                    }
-
                     value = configFactory.withGroupConfigs(groupId) { configs ->
                         createGroupV2Recipient(address, group, configs.groupInfo, settings)
                     }
@@ -162,28 +148,24 @@ class RecipientRepository @Inject constructor(
                         configFactory.userConfigsChanged(),
                         configFactory.configUpdateNotifications
                             .filterIsInstance<ConfigUpdateNotification.GroupConfigsUpdated>()
-                            .filter { it.groupId.hexString == address.address }
+                            .filter { it.groupId.hexString == address.address },
+                        recipientDatabase.updateNotifications.filter { it == address }
                     )
                 }
             }
 
             address.isCommunity || address.isLegacyGroup -> {
-                changeSource = groupDatabase.updateNotification
+                changeSource = merge(
+                    groupDatabase.updateNotification,
+                    recipientDatabase.updateNotifications.filter { it == address }
+                )
 
                 val group: GroupRecord? = groupDatabase.getGroup(address.toGroupString()).orNull()
-                val settings: RecipientSettings? = withContext(Dispatchers.Default) {
-                    recipientDatabase.getRecipientSettings(address).orNull()
-                }
-
                 value = group?.let { createCommunityOrLegacyGroupRecipient(address, it, settings) }
             }
 
             else -> {
                 changeSource = recipientDatabase.updateNotifications.filter { it == address }
-                val settings: RecipientSettings? = withContext(Dispatchers.Default) {
-                    recipientDatabase.getRecipientSettings(address).orNull()
-                }
-
                 value = settings?.let { createGenericRecipient(address, it) }
             }
         }
@@ -256,7 +238,7 @@ class RecipientRepository @Inject constructor(
                 blocked = false,
                 mutedUntil = settings?.muteUntilDate,
                 notifyType = settings?.notifyType ?: RecipientDatabase.NOTIFY_TYPE_ALL,
-                autoDownloadAttachments = settings?.autoDownloadAttachments == true,
+                autoDownloadAttachments = settings?.autoDownloadAttachments,
             )
 
         }
@@ -279,7 +261,7 @@ class RecipientRepository @Inject constructor(
                 approvedMe = contactInConfig.approvedMe,
                 blocked = contactInConfig.blocked,
                 mutedUntil = fallbackSettings?.muteUntilDate,
-                autoDownloadAttachments = fallbackSettings?.autoDownloadAttachments == true,
+                autoDownloadAttachments = fallbackSettings?.autoDownloadAttachments,
                 notifyType = fallbackSettings?.notifyType
                     ?: RecipientDatabase.NOTIFY_TYPE_ALL,
             )
@@ -300,7 +282,7 @@ class RecipientRepository @Inject constructor(
                 approvedMe = true,
                 blocked = false,
                 mutedUntil = settings?.muteUntilDate,
-                autoDownloadAttachments = settings?.autoDownloadAttachments == true,
+                autoDownloadAttachments = settings?.autoDownloadAttachments,
                 notifyType = settings?.notifyType ?: RecipientDatabase.NOTIFY_TYPE_ALL
             )
         }
@@ -336,7 +318,7 @@ class RecipientRepository @Inject constructor(
                 approvedMe = false,
                 blocked = false,
                 mutedUntil = null,
-                autoDownloadAttachments = false,
+                autoDownloadAttachments = null,
                 notifyType = RecipientDatabase.NOTIFY_TYPE_ALL,
                 avatar = null
             )

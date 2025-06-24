@@ -69,6 +69,7 @@ import org.session.libsession.utilities.Util.runOnMain
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientModifiedListener
+import org.session.libsession.utilities.recipients.RecipientV2
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ShareActivity
 import org.thoughtcrime.securesms.components.MediaView
@@ -99,7 +100,7 @@ import kotlin.math.min
  * Activity for displaying media attachments in-app
  */
 @AndroidEntryPoint
-class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedListener,
+class MediaPreviewActivity : ScreenLockActionBarActivity(),
     LoaderManager.LoaderCallbacks<Pair<Cursor, Int>?>,
     RailItemListener, MediaView.FullscreenToggleListener {
     private lateinit var binding: MediaPreviewActivityBinding
@@ -251,10 +252,6 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
         grantResults: IntArray
     ) {
         Permissions.onRequestPermissionsResult(this, requestCode, permissions, grantResults)
-    }
-
-    override fun onModified(recipient: Recipient) {
-        runOnMain { this.updateActionBar() }
     }
 
     override fun onRailItemClicked(distanceFromActive: Int) {
@@ -783,7 +780,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
     }
 
     class MediaItem(
-        val recipient: Recipient?,
+        val recipient: RecipientV2?,
         val attachment: DatabaseAttachment?,
         val uri: Uri,
         val mimeType: String,
@@ -812,7 +809,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
         fun getPreviewIntent(context: Context?, args: MediaPreviewArgs): Intent? {
             return getPreviewIntent(
                 context, args.slide,
-                args.mmsRecord, args.thread
+                args.mmsRecord, args.thread.address
             )
         }
 
@@ -820,14 +817,14 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
             context: Context?,
             slide: Slide,
             mms: MmsMessageRecord,
-            threadRecipient: Recipient
+            threadRecipient: Address
         ): Intent? {
             var previewIntent: Intent? = null
             if (isContentTypeSupported(slide.contentType) && slide.uri != null) {
                 previewIntent = Intent(context, MediaPreviewActivity::class.java)
                 previewIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                     .setDataAndType(slide.uri, slide.contentType)
-                    .putExtra(ADDRESS_EXTRA, threadRecipient.address)
+                    .putExtra(ADDRESS_EXTRA, threadRecipient)
                     .putExtra(OUTGOING_EXTRA, mms.isOutgoing)
                     .putExtra(DATE_EXTRA, mms.timestamp)
                     .putExtra(SIZE_EXTRA, slide.asAttachment().size)

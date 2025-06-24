@@ -26,6 +26,7 @@ import org.session.libsession.utilities.Contact;
 import org.session.libsession.utilities.IdentityKeyMismatch;
 import org.session.libsession.utilities.NetworkFailure;
 import org.session.libsession.utilities.recipients.Recipient;
+import org.session.libsession.utilities.recipients.RecipientV2;
 import org.thoughtcrime.securesms.database.SmsDatabase.Status;
 import org.thoughtcrime.securesms.mms.SlideDeck;
 
@@ -42,8 +43,8 @@ import java.util.List;
 public class MediaMmsMessageRecord extends MmsMessageRecord {
   private final int partCount;
 
-  public MediaMmsMessageRecord(long id, Recipient conversationRecipient,
-                               Recipient individualRecipient, int recipientDeviceId,
+  public MediaMmsMessageRecord(long id, RecipientV2 conversationRecipient,
+                               RecipientV2 individualRecipient, int recipientDeviceId,
                                long dateSent, long dateReceived, int deliveryReceiptCount,
                                long threadId, String body,
                                @NonNull SlideDeck slideDeck,

@@ -32,10 +32,12 @@ import org.session.libsession.messaging.calls.CallMessageType;
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage;
 import org.session.libsession.messaging.utilities.UpdateMessageBuilder;
 import org.session.libsession.messaging.utilities.UpdateMessageData;
+import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.IdentityKeyMismatch;
 import org.session.libsession.utilities.NetworkFailure;
 import org.session.libsession.utilities.ThemeUtil;
 import org.session.libsession.utilities.recipients.Recipient;
+import org.session.libsession.utilities.recipients.RecipientV2;
 import org.session.libsignal.utilities.AccountId;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 
@@ -50,7 +52,7 @@ import network.loki.messenger.R;
  *
  */
 public abstract class MessageRecord extends DisplayRecord {
-  private final Recipient                 individualRecipient;
+  private final RecipientV2                 individualRecipient;
   private final List<IdentityKeyMismatch> mismatches;
   private final List<NetworkFailure>      networkFailures;
   private final long                      expiresIn;
@@ -73,8 +75,8 @@ public abstract class MessageRecord extends DisplayRecord {
     return new MessageId(getId(), isMms());
   }
 
-  MessageRecord(long id, String body, Recipient conversationRecipient,
-    Recipient individualRecipient,
+  MessageRecord(long id, String body, RecipientV2 conversationRecipient,
+                RecipientV2 individualRecipient,
     long dateSent, long dateReceived, long threadId,
     int deliveryStatus, int deliveryReceiptCount, long type,
     List<IdentityKeyMismatch> mismatches,
@@ -100,7 +102,7 @@ public abstract class MessageRecord extends DisplayRecord {
   public long getTimestamp() {
     return getDateSent();
   }
-  public Recipient getIndividualRecipient() {
+  public RecipientV2 getIndividualRecipient() {
     return individualRecipient;
   }
   public long getType() {
@@ -136,7 +138,7 @@ public abstract class MessageRecord extends DisplayRecord {
   public CharSequence getDisplayBody(@NonNull Context context) {
     if (isGroupUpdateMessage()) {
       UpdateMessageData updateMessageData = getGroupUpdateMessage();
-      Recipient groupRecipient = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(getThreadId());
+      Address groupRecipient = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(getThreadId());
 
       if (updateMessageData == null || groupRecipient == null) {
         return "";
@@ -144,7 +146,7 @@ public abstract class MessageRecord extends DisplayRecord {
 
       SpannableString text = new SpannableString(UpdateMessageBuilder.buildGroupUpdateMessage(
               context,
-              groupRecipient.isGroupV2Recipient() ? new AccountId(groupRecipient.getAddress().toString()) : null, // accountId is only used for GroupsV2
+              groupRecipient.isGroupV2() ? new AccountId(groupRecipient.toString()) : null, // accountId is only used for GroupsV2
               updateMessageData,
               MessagingModuleConfiguration.getShared().getConfigFactory(),
               isOutgoing(),
@@ -161,7 +163,7 @@ public abstract class MessageRecord extends DisplayRecord {
       return text;
     } else if (isExpirationTimerUpdate()) {
       int seconds = (int) (getExpiresIn() / 1000);
-      boolean isGroup = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(getThreadId()).isGroupOrCommunityRecipient();
+      boolean isGroup = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(getThreadId()).isGroupOrCommunity();
       return new SpannableString(UpdateMessageBuilder.INSTANCE.buildExpirationTimerMessage(context, seconds, isGroup, getIndividualRecipient().getAddress().toString(), isOutgoing(), getTimestamp(), expireStarted));
     } else if (isDataExtractionNotification()) {
       if (isScreenshotNotification()) return new SpannableString((UpdateMessageBuilder.INSTANCE.buildDataExtractionMessage(context, DataExtractionNotificationInfoMessage.Kind.SCREENSHOT, getIndividualRecipient().getAddress().toString())));

@@ -17,6 +17,7 @@ import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.RecipientV2
 import org.session.libsession.utilities.truncateIdForDisplay
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.database.SessionContactDatabase
@@ -66,7 +67,7 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
     // endregion
 
     // region Updating
-    fun bind(authorPublicKey: String, body: String?, attachments: SlideDeck?, thread: Recipient,
+    fun bind(authorPublicKey: String, body: String?, attachments: SlideDeck?, thread: RecipientV2,
         isOutgoingMessage: Boolean, isOpenGroupInvitation: Boolean, threadID: Long,
         isOriginalMissing: Boolean, glide: RequestManager) {
         // Author

@@ -27,12 +27,14 @@ import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAt
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.RecipientV2
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.MediaPreviewArgs
 import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -62,7 +64,8 @@ class MessageDetailsViewModel @AssistedInject constructor(
     private val context: ApplicationContext,
     private val avatarUtils: AvatarUtils,
     messageDataProvider: MessageDataProvider,
-    private val storage: Storage
+    private val storage: Storage,
+    private val recipientRepository: RecipientRepository,
 ) : ViewModel() {
     private val state = MutableStateFlow(MessageDetailsState())
     val stateFlow = state.asStateFlow()
@@ -112,7 +115,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
             state.value = messageRecord.run {
                 val slides = mmsRecord?.slideDeck?.slides ?: emptyList()
 
-                val conversation = threadDb.getRecipientForThreadId(threadId)!!
+                val conversation = recipientRepository.getRecipient(threadDb.getRecipientForThreadId(threadId)!!)
                 val isDeprecatedLegacyGroup = conversation.isLegacyGroupRecipient &&
                         deprecationManager.isDeprecated
 
@@ -130,7 +133,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
                 }
 
                 val sender = if(messageRecord.isOutgoing){
-                    Recipient.from(context, Address.fromSerialized(prefs.getLocalNumber() ?: ""), false)
+                    recipientRepository.getRecipient(Address.fromSerialized(prefs.getLocalNumber()!!))!!
                 } else individualRecipient
 
                 val attachments = slides.map(::Attachment)
@@ -250,7 +253,7 @@ data class MessageDetailsState(
     val status: MessageStatus? = null,
     val senderInfo: TitledText? = null,
     val senderAvatarData: AvatarUIData? = null,
-    val thread: Recipient? = null,
+    val thread: RecipientV2? = null,
     val readOnly: Boolean = false,
 ) {
     val fromTitle = GetString(R.string.from)

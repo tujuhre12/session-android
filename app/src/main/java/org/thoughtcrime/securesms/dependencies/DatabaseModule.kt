@@ -78,9 +78,6 @@ object DatabaseModule {
     @Singleton
     fun provideMediaDatbase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = MediaDatabase(context, openHelper)
 
-    @Provides
-    @Singleton
-    fun provideThread(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = ThreadDatabase(context,openHelper)
 
     @Provides
     @Singleton

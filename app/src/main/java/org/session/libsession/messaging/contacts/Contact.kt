@@ -3,6 +3,7 @@ package org.session.libsession.messaging.contacts
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.RecipientV2
 import org.session.libsession.utilities.truncateIdForDisplay
 
 @Parcelize
@@ -69,7 +70,7 @@ class Contact(
     }
 
     companion object {
-        fun contextForRecipient(recipient: Recipient): ContactContext {
+        fun contextForRecipient(recipient: RecipientV2): ContactContext {
             return if (recipient.isCommunityRecipient) ContactContext.OPEN_GROUP else ContactContext.REGULAR
         }
     }

@@ -71,6 +71,7 @@ import org.thoughtcrime.securesms.components.TypingStatusSender
 import org.thoughtcrime.securesms.configs.ConfigUploader
 import org.thoughtcrime.securesms.database.EmojiSearchDatabase
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.model.EmojiSearchData
 import org.thoughtcrime.securesms.debugmenu.DebugActivity
@@ -188,6 +189,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
     @Inject lateinit var cleanupInvitationHandler: Lazy<CleanupInvitationHandler>
     @Inject lateinit var usernameUtils: Lazy<UsernameUtils>
     @Inject lateinit var pollerManager: Lazy<PollerManager>
+    @Inject lateinit var recipientRepository: Lazy<RecipientRepository>
 
     @Inject
     lateinit var backgroundPollManager: Lazy<BackgroundPollManager> // Exists here only to start upon app starts
@@ -285,7 +287,8 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
             clock = snodeClock.get(),
             preferences = textSecurePreferences.get(),
             deprecationManager = legacyGroupDeprecationManager.get(),
-            usernameUtils = usernameUtils.get()
+            usernameUtils = usernameUtils.get(),
+            recipientRepository = recipientRepository.get(),
         )
 
         startKovenant()

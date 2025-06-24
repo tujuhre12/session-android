@@ -39,6 +39,7 @@ import org.session.libsession.LocalisedTimeUtil.toShortTwoPartString
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_LARGE_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocalNumber
@@ -542,7 +543,7 @@ class ConversationReactionOverlay : FrameLayout {
             .firstOrNull()
             ?.let(ReactionRecord::emoji)
 
-    private fun getMenuActionItems(message: MessageRecord, recipient: Recipient): List<ActionItem> {
+    private fun getMenuActionItems(message: MessageRecord, recipient: Address): List<ActionItem> {
         val items: MutableList<ActionItem> = ArrayList()
 
         // Prepare
@@ -552,7 +553,7 @@ class ConversationReactionOverlay : FrameLayout {
         val openGroup = lokiThreadDatabase.getOpenGroupChat(message.threadId)
         val userPublicKey = textSecurePreferences.getLocalNumber()!!
 
-        val isDeprecatedLegacyGroup = recipient.isLegacyGroupRecipient &&
+        val isDeprecatedLegacyGroup = recipient.isLegacyGroup &&
                 deprecationManager.isDeprecated
 
         // control messages and "marked as deleted" messages can only delete
@@ -579,7 +580,7 @@ class ConversationReactionOverlay : FrameLayout {
             items += ActionItem(R.attr.menu_copy_icon, R.string.copy, { handleActionItemClicked(Action.COPY_MESSAGE) })
         }
         // Copy Account ID
-        if (!recipient.isCommunityRecipient && message.isIncoming && !isDeleteOnly) {
+        if (!recipient.isCommunity && message.isIncoming && !isDeleteOnly) {
             items += ActionItem(R.attr.menu_copy_icon, R.string.accountIDCopy, { handleActionItemClicked(Action.COPY_ACCOUNT_ID) })
         }
         // Delete message

@@ -1,10 +1,8 @@
 package org.thoughtcrime.securesms.repository
 
 import android.content.ContentResolver
-import android.content.Context
 import app.cash.copper.Query
 import app.cash.copper.flow.observeQuery
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -35,7 +33,6 @@ import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.DraftDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
-import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.SessionJobDatabase
 import org.thoughtcrime.securesms.database.SmsDatabase
@@ -49,10 +46,9 @@ import org.thoughtcrime.securesms.util.observeChanges
 import javax.inject.Inject
 
 interface ConversationRepository {
-    fun maybeGetRecipientForThreadId(threadId: Long): Recipient?
-    fun maybeGetBlindedRecipient(recipient: Recipient): Recipient?
+    fun maybeGetRecipientForThreadId(threadId: Long): Address?
+    fun maybeGetBlindedRecipient(address: Address): Address?
     fun changes(threadId: Long): Flow<Query>
-    fun recipientUpdateFlow(threadId: Long): Flow<Recipient?>
     fun saveDraft(threadId: Long, text: String)
     fun getDraft(threadId: Long): String?
     fun clearDrafts(threadId: Long)
@@ -83,15 +79,15 @@ interface ConversationRepository {
 
     suspend fun deleteGroupV2MessagesRemotely(recipient: Recipient, messages: Set<MessageRecord>)
 
-    suspend fun banUser(threadId: Long, recipient: Recipient): Result<Unit>
-    suspend fun banAndDeleteAll(threadId: Long, recipient: Recipient): Result<Unit>
+    suspend fun banUser(threadId: Long, recipient: Address): Result<Unit>
+    suspend fun banAndDeleteAll(threadId: Long, recipient: Address): Result<Unit>
     suspend fun deleteThread(threadId: Long): Result<Unit>
     suspend fun deleteMessageRequest(thread: ThreadRecord): Result<Unit>
     suspend fun clearAllMessageRequests(block: Boolean): Result<Unit>
     suspend fun acceptMessageRequest(threadId: Long, recipient: Address): Result<Unit>
-    suspend fun declineMessageRequest(threadId: Long, recipient: Recipient): Result<Unit>
+    suspend fun declineMessageRequest(threadId: Long, recipient: Address): Result<Unit>
     fun hasReceived(threadId: Long): Boolean
-    fun getInvitingAdmin(threadId: Long): Recipient?
+    fun getInvitingAdmin(threadId: Long): Address?
 
     /**
      * This will delete all messages from the database.
@@ -105,14 +101,12 @@ interface ConversationRepository {
 }
 
 class DefaultConversationRepository @Inject constructor(
-    @ApplicationContext private val context: Context,
     private val textSecurePreferences: TextSecurePreferences,
     private val messageDataProvider: MessageDataProvider,
     private val threadDb: ThreadDatabase,
     private val draftDb: DraftDatabase,
     private val lokiThreadDb: LokiThreadDatabase,
     private val smsDb: SmsDatabase,
-    private val mmsDb: MmsDatabase,
     private val mmsSmsDb: MmsSmsDatabase,
     private val storage: Storage,
     private val lokiMessageDb: LokiMessageDatabase,
@@ -123,27 +117,17 @@ class DefaultConversationRepository @Inject constructor(
     private val clock: SnodeClock,
 ) : ConversationRepository {
 
-    override fun maybeGetRecipientForThreadId(threadId: Long): Recipient? {
+    override fun maybeGetRecipientForThreadId(threadId: Long): Address? {
         return threadDb.getRecipientForThreadId(threadId)
     }
 
-    override fun maybeGetBlindedRecipient(recipient: Recipient): Recipient? {
-        if (!recipient.isCommunityInboxRecipient) return null
-        return Recipient.from(
-            context,
-            Address.fromSerialized(GroupUtil.getDecodedOpenGroupInboxAccountId(recipient.address.toString())),
-            false
-        )
+    override fun maybeGetBlindedRecipient(address: Address): Address? {
+        if (!address.isCommunityInbox) return null
+        return Address.fromSerialized(GroupUtil.getDecodedOpenGroupInboxAccountId(address.toString()))
     }
 
     override fun changes(threadId: Long): Flow<Query> =
         contentResolver.observeQuery(DatabaseContentProviders.Conversation.getUriForThread(threadId))
-
-    override fun recipientUpdateFlow(threadId: Long): Flow<Recipient?> {
-        return contentResolver.observeQuery(DatabaseContentProviders.Conversation.getUriForThread(threadId)).map {
-            maybeGetRecipientForThreadId(threadId)
-        }
-    }
 
     override fun saveDraft(threadId: Long, text: String) {
         if (text.isEmpty()) return
@@ -181,10 +165,8 @@ class DefaultConversationRepository @Inject constructor(
                 expiresInMillis,
                 expireStartedAt
             )
-            message.id = MessageId(
-                smsDb.insertMessageOutbox(-1, outgoingTextMessage, message.sentTimestamp!!, true),
-                false
-            )
+            message.id = smsDb.insertMessageOutbox(-1, outgoingTextMessage, message.sentTimestamp!!, true).orNull()
+                ?.let { MessageId(it.messageId, false) }
 
             MessageSender.send(message, contact)
         }
@@ -392,18 +374,16 @@ class DefaultConversationRepository @Inject constructor(
         )
     }
 
-    override suspend fun banUser(threadId: Long, recipient: Recipient): Result<Unit> = runCatching {
-        val accountID = recipient.address.toString()
+    override suspend fun banUser(threadId: Long, recipient: Address): Result<Unit> = runCatching {
         val openGroup = lokiThreadDb.getOpenGroupChat(threadId)!!
-        OpenGroupApi.ban(accountID, openGroup.room, openGroup.server).await()
+        OpenGroupApi.ban(recipient.toString(), openGroup.room, openGroup.server).await()
     }
 
-    override suspend fun banAndDeleteAll(threadId: Long, recipient: Recipient) = runCatching {
+    override suspend fun banAndDeleteAll(threadId: Long, recipient: Address) = runCatching {
         // Note: This accountId could be the blinded Id
-        val accountID = recipient.address.toString()
         val openGroup = lokiThreadDb.getOpenGroupChat(threadId)!!
 
-        OpenGroupApi.banAndDeleteAll(accountID, openGroup.room, openGroup.server).await()
+        OpenGroupApi.banAndDeleteAll(recipient.toString(), openGroup.room, openGroup.server).await()
     }
 
     override suspend fun deleteThread(threadId: Long) = runCatching {
@@ -414,7 +394,7 @@ class DefaultConversationRepository @Inject constructor(
     }
 
     override suspend fun deleteMessageRequest(thread: ThreadRecord)
-        = declineMessageRequest(thread.threadId, thread.recipient)
+        = declineMessageRequest(thread.threadId, thread.recipient.address)
 
     override suspend fun clearAllMessageRequests(block: Boolean) = runCatching {
         withContext(Dispatchers.Default) {
@@ -466,16 +446,16 @@ class DefaultConversationRepository @Inject constructor(
         }
     }
 
-    override suspend fun declineMessageRequest(threadId: Long, recipient: Recipient): Result<Unit> = runCatching {
+    override suspend fun declineMessageRequest(threadId: Long, recipient: Address): Result<Unit> = runCatching {
         withContext(Dispatchers.Default) {
             sessionJobDb.cancelPendingMessageSendJobs(threadId)
-            if (recipient.isGroupV2Recipient) {
+            if (recipient.isGroupV2) {
                 groupManager.respondToInvitation(
-                    AccountId(recipient.address.toString()),
+                    AccountId(recipient.toString()),
                     approved = false
                 )
             } else {
-                storage.deleteContactAndSyncConfig(recipient.address.toString())
+                storage.deleteContactAndSyncConfig(recipient.toString())
             }
         }
     }
@@ -491,9 +471,7 @@ class DefaultConversationRepository @Inject constructor(
     }
 
     // Only call this with a closed group thread ID
-    override fun getInvitingAdmin(threadId: Long): Recipient? {
-        return lokiMessageDb.groupInviteReferrer(threadId)?.let { id ->
-            Recipient.from(context, Address.fromSerialized(id), false)
-        }
+    override fun getInvitingAdmin(threadId: Long): Address? {
+        return lokiMessageDb.groupInviteReferrer(threadId)?.let(Address::fromSerialized)
     }
 }

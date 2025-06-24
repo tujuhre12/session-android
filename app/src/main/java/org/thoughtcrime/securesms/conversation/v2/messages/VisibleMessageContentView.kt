@@ -30,10 +30,12 @@ import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.modifyLayoutParams
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.RecipientV2
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.messages.AttachmentControlView.AttachmentType.AUDIO
 import org.thoughtcrime.securesms.conversation.v2.messages.AttachmentControlView.AttachmentType.DOCUMENT
@@ -70,7 +72,7 @@ class VisibleMessageContentView : ConstraintLayout {
         isStartOfMessageCluster: Boolean = true,
         isEndOfMessageCluster: Boolean = true,
         glide: RequestManager = Glide.with(this),
-        thread: Recipient,
+        thread: RecipientV2,
         searchQuery: String? = null,
         downloadPendingAttachment: (DatabaseAttachment) -> Unit,
         retryFailedAttachments: (List<DatabaseAttachment>) -> Unit,
@@ -297,7 +299,7 @@ class VisibleMessageContentView : ConstraintLayout {
                             binding.albumThumbnailView.root.calculateHitObject(
                                 event,
                                 message,
-                                thread,
+                                thread.address,
                                 downloadPendingAttachment
                             )
                         }
@@ -359,7 +361,7 @@ class VisibleMessageContentView : ConstraintLayout {
     }
 
     private fun showAttachmentControl(
-        thread: Recipient,
+        thread: RecipientV2,
         message: MmsMessageRecord,
         attachments: List<DatabaseAttachment>,
         type: AttachmentControlView.AttachmentType,

@@ -4,7 +4,6 @@ import android.content.Context
 import android.net.Uri
 import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.flow.Flow
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_PINNED
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
@@ -65,7 +64,6 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsession.utilities.recipients.RecipientV2
 import org.session.libsession.utilities.upsertContact
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
@@ -131,6 +129,7 @@ open class Storage @Inject constructor(
     private val preferences: TextSecurePreferences,
     private val usernameUtils: UsernameUtils,
     private val openGroupManager: Lazy<OpenGroupManager>,
+    private val recipientRepository: RecipientRepository,
 ) : Database(context, helper), StorageProtocol, ThreadDatabase.ConversationThreadUpdateListener {
 
     init {
@@ -251,14 +250,6 @@ open class Storage @Inject constructor(
         return registrationID
     }
 
-    override fun observeRecipient(address: Address): Flow<RecipientV2> {
-        TODO("Not yet implemented")
-    }
-
-    override fun getRecipientSync(address: Address): RecipientV2 {
-        TODO("Not yet implemented")
-    }
-
     override fun getAttachmentsForMessage(mmsMessageId: Long): List<DatabaseAttachment> {
         return attachmentDatabase.getAttachmentsForMessage(mmsMessageId)
     }
@@ -318,26 +309,26 @@ open class Storage @Inject constructor(
         getRecipientForThread(threadId)?.let { recipient ->
             val currentLastRead = threadDb.getLastSeenAndHasSent(threadId).first()
             // don't set the last read in the volatile if we didn't set it in the DB
-            if (!threadDb.markAllAsRead(threadId, recipient.isGroupOrCommunityRecipient, lastSeenTime, force) && !force) return
+            if (!threadDb.markAllAsRead(threadId, recipient.isGroupOrCommunity, lastSeenTime, force) && !force) return
 
             // don't process configs for inbox recipients
-            if (recipient.isCommunityInboxRecipient) return
+            if (recipient.isCommunityInbox) return
 
             configFactory.withMutableUserConfigs { configs ->
                 val config = configs.convoInfoVolatile
                 val convo = when {
                     // recipient closed group
-                    recipient.isLegacyGroupRecipient -> config.getOrConstructLegacyGroup(GroupUtil.doubleDecodeGroupId(recipient.address.toString()))
-                    recipient.isGroupV2Recipient -> config.getOrConstructClosedGroup(recipient.address.toString())
+                    recipient.isLegacyGroup -> config.getOrConstructLegacyGroup(GroupUtil.doubleDecodeGroupId(recipient.address.toString()))
+                    recipient.isGroupV2 -> config.getOrConstructClosedGroup(recipient.address.toString())
                     // recipient is open group
-                    recipient.isCommunityRecipient -> {
+                    recipient.isCommunity -> {
                         val openGroupJoinUrl = getOpenGroup(threadId)?.joinURL ?: return@withMutableUserConfigs
                         BaseCommunityInfo.parseFullUrl(openGroupJoinUrl)?.let { (base, room, pubKey) ->
                             config.getOrConstructCommunity(base, room, pubKey)
                         } ?: return@withMutableUserConfigs
                     }
                     // otherwise recipient is one to one
-                    recipient.isContactRecipient -> {
+                    recipient.isContact -> {
                         // don't process non-standard account IDs though
                         if (IdPrefix.fromValue(recipient.address.toString()) != IdPrefix.STANDARD) return@withMutableUserConfigs
                         config.getOrConstructOneToOne(recipient.address.toString())
@@ -1177,16 +1168,12 @@ open class Storage @Inject constructor(
         notifyRecipientListeners()
     }
 
-    override fun getRecipientForThread(threadId: Long): Recipient? {
+    override fun getRecipientForThread(threadId: Long): Address? {
         return threadDatabase.getRecipientForThreadId(threadId)
     }
 
     override fun getRecipientSettings(address: Address): Recipient.RecipientSettings? {
         return recipientDatabase.getRecipientSettings(address).orNull()
-    }
-
-    override fun hasAutoDownloadFlagBeenSet(recipient: Recipient): Boolean {
-        return recipientDatabase.isAutoDownloadFlagSet(recipient)
     }
 
     override fun syncLibSessionContacts(contacts: List<LibSessionContact>, timestamp: Long?) {
@@ -1253,13 +1240,9 @@ open class Storage @Inject constructor(
             deleteContact(it.address.toString())
         }
     }
-    
-    override fun shouldAutoDownloadAttachments(recipient: Recipient): Boolean {
-        return recipient.autoDownloadAttachments
-    }
 
     override fun setAutoDownloadAttachments(
-        recipient: Recipient,
+        recipient: Address,
         shouldAutoDownloadAttachments: Boolean
     ) {
         val recipientDb = recipientDatabase
@@ -1289,32 +1272,33 @@ open class Storage @Inject constructor(
     override fun setPinned(threadID: Long, isPinned: Boolean) {
         val threadDB = threadDatabase
         threadDB.setPinned(threadID, isPinned)
-        val threadRecipient = getRecipientForThread(threadID) ?: return
+        val address = getRecipientForThread(threadID) ?: return
+        val isLocalNumber = address == getUserPublicKey()?.let { fromSerialized(it) }
         configFactory.withMutableUserConfigs { configs ->
-            if (threadRecipient.isLocalNumber) {
+            if (isLocalNumber) {
                 configs.userProfile.setNtsPriority(if (isPinned) PRIORITY_PINNED else PRIORITY_VISIBLE)
-            } else if (threadRecipient.isContactRecipient) {
-                configs.contacts.upsertContact(threadRecipient.address.toString()) {
+            } else if (address.isContact) {
+                configs.contacts.upsertContact(address.toString()) {
                     priority = if (isPinned) PRIORITY_PINNED else PRIORITY_VISIBLE
                 }
-            } else if (threadRecipient.isGroupOrCommunityRecipient) {
+            } else if (address.isGroupOrCommunity) {
                 when {
-                    threadRecipient.isLegacyGroupRecipient -> {
-                        threadRecipient.address.toString()
+                    address.isLegacyGroup -> {
+                        address.toString()
                             .let(GroupUtil::doubleDecodeGroupId)
                             .let(configs.userGroups::getOrConstructLegacyGroupInfo)
                             .copy(priority = if (isPinned) PRIORITY_PINNED else PRIORITY_VISIBLE)
                             .let(configs.userGroups::set)
                     }
 
-                    threadRecipient.isGroupV2Recipient -> {
+                    address.isGroupV2 -> {
                         val newGroupInfo = configs.userGroups
-                            .getOrConstructClosedGroup(threadRecipient.address.toString())
+                            .getOrConstructClosedGroup(address.toString())
                             .copy(priority = if (isPinned) PRIORITY_PINNED else PRIORITY_VISIBLE)
                         configs.userGroups.set(newGroupInfo)
                     }
 
-                    threadRecipient.isCommunityRecipient -> {
+                    address.isCommunity -> {
                         val openGroup = getOpenGroup(threadID) ?: return@withMutableUserConfigs
                         val (baseUrl, room, pubKeyHex) = BaseCommunityInfo.parseFullUrl(openGroup.joinURL)
                             ?: return@withMutableUserConfigs
@@ -1351,7 +1335,7 @@ open class Storage @Inject constructor(
         val threadDB = threadDatabase
         val groupDB = groupDatabase
 
-        val recipientAddress = getRecipientForThread(threadID)?.address
+        val recipientAddress = getRecipientForThread(threadID)
 
         // Delete the conversation and its messages
         smsDatabase.deleteThread(threadID)
@@ -1828,19 +1812,19 @@ open class Storage @Inject constructor(
         val dbExpirationMetadata = expirationConfigurationDatabase.getExpirationConfiguration(threadId)
         return when {
             recipient.isLocalNumber -> configFactory.withUserConfigs { it.userProfile.getNtsExpiry() }
-            recipient.isContactRecipient -> {
+            recipient.isContact -> {
                 // read it from contacts config if exists
                 recipient.address.toString().takeIf { it.startsWith(IdPrefix.STANDARD.value) }
                     ?.let { configFactory.withUserConfigs { configs -> configs.contacts.get(it)?.expiryMode } }
             }
-            recipient.isGroupV2Recipient -> {
+            recipient.isGroupV2 -> {
                 configFactory.withGroupConfigs(AccountId(recipient.address.toString())) { configs ->
                     configs.groupInfo.getExpiryTimer()
                 }.let {
                     if (it == 0L) ExpiryMode.NONE else ExpiryMode.AfterSend(it)
                 }
             }
-            recipient.isLegacyGroupRecipient -> {
+            recipient.isLegacyGroup -> {
                 // read it from group config if exists
                 GroupUtil.doubleDecodeGroupId(recipient.address.toString())
                     .let { id -> configFactory.withUserConfigs { it.userGroups.getLegacyGroupInfo(id) } }

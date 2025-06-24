@@ -597,7 +597,8 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
     private final boolean                approvedMe;
     private final long                   muteUntil;
     private final int                    notifyType;
-    private final boolean                autoDownloadAttachments;
+    @Nullable
+    private final Boolean                autoDownloadAttachments;
     private final int                    expireMessages;
     private final byte[]                 profileKey;
     private final String                 systemDisplayName;
@@ -608,7 +609,7 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
 
     public RecipientSettings(boolean blocked, boolean approved, boolean approvedMe, long muteUntil,
                              int notifyType,
-                             boolean autoDownloadAttachments,
+                             @Nullable Boolean autoDownloadAttachments,
                              int expireMessages,
                              @Nullable byte[] profileKey,
                              @Nullable String systemDisplayName,

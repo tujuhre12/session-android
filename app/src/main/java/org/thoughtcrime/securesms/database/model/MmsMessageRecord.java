@@ -7,11 +7,10 @@ import org.session.libsession.messaging.sending_receiving.link_preview.LinkPrevi
 import org.session.libsession.utilities.Contact;
 import org.session.libsession.utilities.IdentityKeyMismatch;
 import org.session.libsession.utilities.NetworkFailure;
-import org.session.libsession.utilities.recipients.Recipient;
+import org.session.libsession.utilities.recipients.RecipientV2;
 import org.thoughtcrime.securesms.mms.Slide;
 import org.thoughtcrime.securesms.mms.SlideDeck;
 
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -21,8 +20,8 @@ public abstract class MmsMessageRecord extends MessageRecord {
   private final @NonNull  List<Contact>     contacts     = new LinkedList<>();
   private final @NonNull  List<LinkPreview> linkPreviews = new LinkedList<>();
 
-  MmsMessageRecord(long id, String body, Recipient conversationRecipient,
-    Recipient individualRecipient, long dateSent,
+  MmsMessageRecord(long id, String body, RecipientV2 conversationRecipient,
+                   RecipientV2 individualRecipient, long dateSent,
     long dateReceived, long threadId, int deliveryStatus, int deliveryReceiptCount,
     long type, List<IdentityKeyMismatch> mismatches,
     List<NetworkFailure> networkFailures, long expiresIn,

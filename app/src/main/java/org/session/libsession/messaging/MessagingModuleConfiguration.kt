@@ -12,6 +12,7 @@ import org.session.libsession.utilities.Device
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.Toaster
 import org.session.libsession.utilities.UsernameUtils
+import org.thoughtcrime.securesms.database.RecipientRepository
 
 class MessagingModuleConfiguration(
     val context: Context,
@@ -25,7 +26,8 @@ class MessagingModuleConfiguration(
     val clock: SnodeClock,
     val preferences: TextSecurePreferences,
     val deprecationManager: LegacyGroupDeprecationManager,
-    val usernameUtils: UsernameUtils
+    val usernameUtils: UsernameUtils,
+    val recipientRepository: RecipientRepository,
 ) {
 
     companion object {

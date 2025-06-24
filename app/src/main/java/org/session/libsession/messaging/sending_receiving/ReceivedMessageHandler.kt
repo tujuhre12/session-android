@@ -57,6 +57,7 @@ import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
 import org.thoughtcrime.securesms.database.ConfigDatabase
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.ReactionRecord
 import java.security.MessageDigest
@@ -64,8 +65,8 @@ import java.security.SignatureException
 import kotlin.math.min
 
 internal fun MessageReceiver.isBlocked(publicKey: String): Boolean {
-    val recipient = MessagingModuleConfiguration.shared.storage.getRecipientSync(Address.fromSerialized(publicKey))
-    return recipient.blocked
+    val recipient = MessagingModuleConfiguration.shared.recipientRepository.getRecipientSync(Address.fromSerialized(publicKey))
+    return recipient?.blocked == true
 }
 
 fun MessageReceiver.handle(message: Message, proto: SignalServiceProtos.Content, threadId: Long, openGroupID: String?, groupv2Id: AccountId?) {
@@ -294,6 +295,7 @@ class VisibleMessageHandlerContext(
     val groupManagerV2: GroupManagerV2,
     val messageExpirationManager: SSKEnvironment.MessageExpirationManagerProtocol,
     val messageDataProvider: MessageDataProvider,
+    val recipientRepository: RecipientRepository,
 ) {
     constructor(module: MessagingModuleConfiguration, threadId: Long, openGroupID: String?):
             this(
@@ -304,7 +306,8 @@ class VisibleMessageHandlerContext(
                 profileManager = SSKEnvironment.shared.profileManager,
                 groupManagerV2 = module.groupManagerV2,
                 messageExpirationManager = SSKEnvironment.shared.messageExpirationManager,
-                messageDataProvider = module.messageDataProvider
+                messageDataProvider = module.messageDataProvider,
+                recipientRepository = module.recipientRepository,
             )
 
     val openGroup: OpenGroup? by lazy {
@@ -348,7 +351,7 @@ fun MessageReceiver.handleVisibleMessage(
 
     // Update profile if needed
     val address = Address.fromSerialized(messageSender!!)
-    val recipient = context.storage.getRecipientSync(address)
+    val recipient = context.recipientRepository.getRecipientSync(address)
     if (runProfileUpdate) {
         val profile = message.profile
         val isUserBlindedSender = messageSender == context.userBlindedKey

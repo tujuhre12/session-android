@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.util
 
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.RecipientV2
 import org.session.libsignal.messages.SignalServiceDataMessage
 
 object SessionMetaProtocol {
@@ -48,12 +49,12 @@ object SessionMetaProtocol {
     }
 
     @JvmStatic
-    fun shouldSendReadReceipt(recipient: Recipient): Boolean {
-        return !recipient.isGroupOrCommunityRecipient && recipient.isApproved && !recipient.isBlocked
+    fun shouldSendReadReceipt(recipient: RecipientV2): Boolean {
+        return !recipient.isGroupOrCommunityRecipient && recipient.approved && !recipient.blocked
     }
 
     @JvmStatic
-    fun shouldSendTypingIndicator(recipient: Recipient): Boolean {
-        return !recipient.isGroupOrCommunityRecipient && recipient.isApproved && !recipient.isBlocked
+    fun shouldSendTypingIndicator(recipient: RecipientV2): Boolean {
+        return !recipient.isGroupOrCommunityRecipient && recipient.approved && !recipient.blocked
     }
 }

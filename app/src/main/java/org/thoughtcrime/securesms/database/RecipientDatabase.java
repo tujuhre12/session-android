@@ -231,7 +231,12 @@ public class RecipientDatabase extends Database {
     boolean approvedMe              = cursor.getInt(cursor.getColumnIndexOrThrow(APPROVED_ME))          == 1;
     long    muteUntil               = cursor.getLong(cursor.getColumnIndexOrThrow(MUTE_UNTIL));
     int     notifyType              = cursor.getInt(cursor.getColumnIndexOrThrow(NOTIFY_TYPE));
-    boolean autoDownloadAttachments = cursor.getInt(cursor.getColumnIndexOrThrow(AUTO_DOWNLOAD))        == 1;
+    Boolean autoDownloadAttachments = switch (cursor.getInt(cursor.getColumnIndexOrThrow(AUTO_DOWNLOAD))) {
+        case 1 -> true;
+        case -1 -> null;
+        default -> false;
+    };
+
     int     expireMessages          = cursor.getInt(cursor.getColumnIndexOrThrow(EXPIRE_MESSAGES));
     String  profileKeyString        = cursor.getString(cursor.getColumnIndexOrThrow(PROFILE_KEY));
     String  systemDisplayName       = cursor.getString(cursor.getColumnIndexOrThrow(SYSTEM_DISPLAY_NAME));
@@ -258,22 +263,6 @@ public class RecipientDatabase extends Database {
             signalProfileName, signalProfileAvatar,
             notificationChannel,
             blocksCommunityMessageRequests));
-  }
-
-  public boolean isAutoDownloadFlagSet(Recipient recipient) {
-    SQLiteDatabase db = getReadableDatabase();
-    Cursor cursor = db.query(TABLE_NAME, new String[]{ AUTO_DOWNLOAD }, ADDRESS+" = ?", new String[]{ recipient.getAddress().toString() }, null, null, null);
-    boolean flagUnset = false;
-    try {
-      if (cursor.moveToFirst()) {
-        // flag isn't set if it is -1
-        flagUnset = cursor.getInt(cursor.getColumnIndexOrThrow(AUTO_DOWNLOAD)) == -1;
-      }
-    } finally {
-      cursor.close();
-    }
-    // negate result (is flag set)
-    return !flagUnset;
   }
 
   public boolean getApproved(@NonNull Address address) {

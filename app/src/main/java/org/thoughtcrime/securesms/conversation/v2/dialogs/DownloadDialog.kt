@@ -9,8 +9,8 @@ import network.loki.messenger.R
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.StringSubstitutionConstants.CONVERSATION_NAME_KEY
+import org.session.libsession.utilities.recipients.RecipientV2
 import org.thoughtcrime.securesms.createSessionDialog
 import org.thoughtcrime.securesms.database.SessionContactDatabase
 import org.thoughtcrime.securesms.util.createAndStartAttachmentDownload
@@ -19,7 +19,7 @@ import javax.inject.Inject
 /** Shown when receiving media from a contact for the first time, to confirm that
  * they are to be trusted and files sent by them are to be downloaded. */
 @AndroidEntryPoint
-class AutoDownloadDialog(private val threadRecipient: Recipient,
+class AutoDownloadDialog(private val threadRecipient: RecipientV2,
                      private val databaseAttachment: DatabaseAttachment
 ) : DialogFragment() {
 
@@ -42,7 +42,7 @@ class AutoDownloadDialog(private val threadRecipient: Recipient,
     }
 
     private fun setAutoDownload() {
-        storage.setAutoDownloadAttachments(threadRecipient, true)
+        storage.setAutoDownloadAttachments(threadRecipient.address, true)
         JobQueue.shared.createAndStartAttachmentDownload(databaseAttachment)
     }
 }

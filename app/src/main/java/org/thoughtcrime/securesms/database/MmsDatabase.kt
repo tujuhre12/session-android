@@ -48,7 +48,6 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.ThreadUtils.queue
-import org.session.libsignal.utilities.Util.SECURE_RANDOM
 import org.session.libsignal.utilities.guava.Optional
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
@@ -1232,8 +1231,6 @@ class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper
 
     fun readerFor(cursor: Cursor?, getQuote: Boolean = true) = Reader(cursor, getQuote)
 
-    fun readerFor(message: OutgoingMediaMessage?, threadId: Long) = OutgoingMessageReader(message, threadId)
-
     fun setQuoteMissing(messageId: Long): Int {
         val contentValues = ContentValues()
         contentValues.put(QUOTE_MISSING, 1)
@@ -1264,36 +1261,6 @@ class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper
         const val DOWNLOAD_INITIALIZED = 1
         const val DOWNLOAD_NO_CONNECTIVITY = 2
         const val DOWNLOAD_CONNECTING = 3
-    }
-
-    inner class OutgoingMessageReader(private val message: OutgoingMediaMessage?,
-                                      private val threadId: Long) {
-        private val id = SECURE_RANDOM.nextLong()
-        val current: MessageRecord
-            get() {
-                val slideDeck = SlideDeck(context, message!!.attachments)
-                return MediaMmsMessageRecord(
-                    id, message.recipient, message.recipient,
-                    1, SnodeAPI.nowWithOffset, SnodeAPI.nowWithOffset,
-                    0, threadId, message.body,
-                    slideDeck, slideDeck.slides.size,
-                    if (message.isSecure) MmsSmsColumns.Types.getOutgoingEncryptedMessageType() else MmsSmsColumns.Types.getOutgoingSmsMessageType(),
-                    LinkedList(),
-                    LinkedList(),
-                    message.subscriptionId,
-                    message.expiresIn,
-                    SnodeAPI.nowWithOffset, 0,
-                    if (message.outgoingQuote != null) Quote(
-                        message.outgoingQuote!!.id,
-                        message.outgoingQuote!!.author,
-                        message.outgoingQuote!!.text, // TODO: use the referenced message's content
-                        message.outgoingQuote!!.missing,
-                        SlideDeck(context, message.outgoingQuote!!.attachments!!)
-                    ) else null,
-                    message.sharedContacts, message.linkPreviews, listOf(), false
-                )
-            }
-
     }
 
     inner class Reader(private val cursor: Cursor?, private val getQuote: Boolean = true) : Closeable {
