@@ -70,6 +70,7 @@
         android:id="@+id/disabledBanner"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:contentDescription="@string/qa_blocked_banner"
         tools:visibility="visible"
         android:visibility="gone">
 
