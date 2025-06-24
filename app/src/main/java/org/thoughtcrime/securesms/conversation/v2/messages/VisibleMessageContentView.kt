@@ -82,7 +82,9 @@ class VisibleMessageContentView : ConstraintLayout {
         searchQuery: String? = null,
         downloadPendingAttachment: (DatabaseAttachment) -> Unit,
         retryFailedAttachments: (List<DatabaseAttachment>) -> Unit,
-        suppressThumbnails: Boolean = false
+        suppressThumbnails: Boolean = false,
+        isTextExpanded: Boolean = false,
+        onTextExpanded: ((Long) -> Unit)? = null
     ) {
         // Background
         val color = if (message.isOutgoing) context.getAccentColor()
@@ -334,10 +336,9 @@ class VisibleMessageContentView : ConstraintLayout {
 
         binding.bodyTextView.isVisible = message.body.isNotEmpty() && !hideBody
         // set a max lines
-        binding.bodyTextView.maxLines = MAX_COLLAPSED_LINE_COUNT
+        binding.bodyTextView.maxLines = if(isTextExpanded) Int.MAX_VALUE else MAX_COLLAPSED_LINE_COUNT
 
-        binding.readMore.isVisible = false // hide by default - will show further down if necessary
-        onContentClick.remove(onReadMoreClick)
+        binding.readMore.isVisible = !isTextExpanded
 
         binding.contentParent.apply { isVisible = children.any { it.isVisible } }
 
@@ -353,8 +354,8 @@ class VisibleMessageContentView : ConstraintLayout {
                 }
             }
 
-
-            if(binding.bodyTextView.needsCollapsing(
+            // if the text was already manually expanded, we can skip this logic
+            if(!isTextExpanded && binding.bodyTextView.needsCollapsing(
                     availableWidthPx = context.resources.getDimensionPixelSize(R.dimen.max_bubble_width),
                     maxLines = MAX_COLLAPSED_LINE_COUNT)
             ){
@@ -363,7 +364,16 @@ class VisibleMessageContentView : ConstraintLayout {
                 binding.readMore.isVisible = true
 
                 // add read more click listener
-                onContentClick.add(onReadMoreClick)
+                val readMoreClickHandler: (MotionEvent) -> Unit = { event ->
+                    val r = Rect()
+                    binding.readMore.getGlobalVisibleRect(r)
+                    if (r.contains(event.rawX.roundToInt(), event.rawY.roundToInt())) {
+                        binding.bodyTextView.maxLines = Int.MAX_VALUE
+                        binding.readMore.isVisible = false
+                        onTextExpanded?.invoke(message.id) // Notify that text was expanded
+                    }
+                }
+                onContentClick.add(readMoreClickHandler)
             } else {
                 binding.readMore.isVisible = false
             }
@@ -438,15 +448,6 @@ class VisibleMessageContentView : ConstraintLayout {
             (!message.hasAttachmentUri() && message.slideDeck.asAttachments().all { it.isDone }))
 
     private val onContentClick: MutableList<((event: MotionEvent) -> Unit)> = mutableListOf()
-
-    private val onReadMoreClick: ((event: MotionEvent) -> Unit) by lazy {{ event ->
-        val r = Rect()
-        binding.readMore.getGlobalVisibleRect(r)
-        if (r.contains(event.rawX.roundToInt(), event.rawY.roundToInt())) {
-            binding.bodyTextView.maxLines = Int.MAX_VALUE
-            binding.readMore.isVisible = false
-        }
-    }}
 
     fun onContentClick(event: MotionEvent) {
         onContentClick.forEach { clickHandler -> clickHandler.invoke(event) }

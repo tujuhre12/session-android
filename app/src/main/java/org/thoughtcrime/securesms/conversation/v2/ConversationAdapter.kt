@@ -71,6 +71,8 @@ class ConversationAdapter(
         AccountId(conversation.address.toString())
     else null
 
+    private val expandedMessageIds = mutableSetOf<Long>()
+
     init {
         lifecycleCoroutineScope.launch(IO) {
             while (isActive) {
@@ -140,6 +142,7 @@ class ConversationAdapter(
                     }
                 }
                 val contact = contactCache[senderIdHash]
+                val isExpanded = expandedMessageIds.contains(message.id)
 
                 visibleMessageView.bind(
                     message = message,
@@ -155,7 +158,11 @@ class ConversationAdapter(
                     lastSentMessageId = lastSentMessageId,
                     delegate = visibleMessageViewDelegate,
                     downloadPendingAttachment = downloadPendingAttachment,
-                    retryFailedAttachments = retryFailedAttachments
+                    retryFailedAttachments = retryFailedAttachments,
+                    isTextExpanded = isExpanded,
+                    onTextExpanded = { messageId ->
+                        expandedMessageIds.add(messageId)
+                    }
                 )
 
                 if (!message.isDeleted) {
