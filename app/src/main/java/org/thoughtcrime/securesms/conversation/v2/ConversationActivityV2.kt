@@ -1047,6 +1047,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
     }
 //todo PRO need to add scroll when bringing up the keyboard if we are at the bottom of the screen - double check scrolling behaviour (seem to see a tiny jump when entering some conversations?)
+//todo PRO remember tapped 'read more'
     private fun scrollToFirstUnreadMessageOrBottom() {
         // if there are no unread messages, go straight to the very bottom of the list
         if(unreadCount == 0){

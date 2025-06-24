@@ -5,7 +5,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.Rect
+import android.text.Layout
 import android.text.Spannable
+import android.text.StaticLayout
 import android.text.style.BackgroundColorSpan
 import android.text.style.ForegroundColorSpan
 import android.text.style.URLSpan
@@ -22,7 +24,9 @@ import androidx.core.graphics.ColorUtils
 import androidx.core.text.getSpans
 import androidx.core.text.toSpannable
 import androidx.core.view.children
+import androidx.core.view.doOnAttach
 import androidx.core.view.doOnLayout
+import androidx.core.view.doOnPreDraw
 import androidx.core.view.isVisible
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
@@ -33,8 +37,8 @@ import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.getColorFromAttr
-import org.session.libsession.utilities.isEllipsized
 import org.session.libsession.utilities.modifyLayoutParams
+import org.session.libsession.utilities.needsCollapsing
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.messages.AttachmentControlView.AttachmentType.AUDIO
@@ -349,13 +353,19 @@ class VisibleMessageContentView : ConstraintLayout {
                 }
             }
 
-            if (binding.bodyTextView.isEllipsized()) {
+
+            if(binding.bodyTextView.needsCollapsing(
+                    availableWidthPx = context.resources.getDimensionPixelSize(R.dimen.max_bubble_width),
+                    maxLines = MAX_COLLAPSED_LINE_COUNT)
+            ){
                 // show the "Read mode" button
                 binding.readMore.setTextColor(color)
                 binding.readMore.isVisible = true
 
                 // add read more click listener
                 onContentClick.add(onReadMoreClick)
+            } else {
+                binding.readMore.isVisible = false
             }
         }
 
