@@ -174,7 +174,7 @@ open class Storage @Inject constructor(
 
             address.isContact -> {
                 // non-standard contact prefixes: 15, 00 etc shouldn't be stored in config
-                if (AccountId(address.toString()).prefix != IdPrefix.STANDARD) return
+                if (IdPrefix.fromValue(address.toString()) != IdPrefix.STANDARD) return
                 // don't update our own address into the contacts DB
                 if (getUserPublicKey() != address.toString()) {
                     configFactory.withMutableUserConfigs { configs ->
@@ -339,7 +339,7 @@ open class Storage @Inject constructor(
                     // otherwise recipient is one to one
                     recipient.isContactRecipient -> {
                         // don't process non-standard account IDs though
-                        if (AccountId(recipient.address.toString()).prefix != IdPrefix.STANDARD) return@withMutableUserConfigs
+                        if (IdPrefix.fromValue(recipient.address.toString()) != IdPrefix.STANDARD) return@withMutableUserConfigs
                         config.getOrConstructOneToOne(recipient.address.toString())
                     }
                     else -> throw NullPointerException("Weren't expecting to have a convo with address ${recipient.address.toString()}")
@@ -1248,7 +1248,7 @@ open class Storage @Inject constructor(
         // which in the case of contacts we are messaging for the first time and who haven't yet approved us, it won't be the case
         // But that person is saved in the Recipient db. We might need to investigate how to clean the relationship between Recipients, Contacts and config Contacts.
         val removedContacts = recipientDatabase.allRecipients.filter { localContact ->
-            AccountId(localContact.address.toString()).prefix == IdPrefix.STANDARD && // only want standard address
+            IdPrefix.fromValue(localContact.address.toString()) == IdPrefix.STANDARD && // only want standard address
             localContact.is1on1 && // only for conversations
             localContact.address.toString() != currentUserKey && // we don't want to remove ourselves (ie, our Note to Self)
             moreContacts.none { it.id == localContact.address.toString() } // we don't want to remove contacts that are present in the config
@@ -1257,7 +1257,7 @@ open class Storage @Inject constructor(
             deleteContact(it.address.toString())
         }
     }
-
+    
     override fun shouldAutoDownloadAttachments(recipient: Recipient): Boolean {
         return recipient.autoDownloadAttachments
     }
