@@ -412,6 +412,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private val messageToScrollAuthor = AtomicReference<Address?>(null)
     private val firstLoad = AtomicBoolean(true)
 
+    private var isKeyboardVisible = false
+
     private lateinit var reactionDelegate: ConversationReactionDelegate
     private val reactWithAnyEmojiStartPage = -1
 
@@ -605,6 +607,20 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, windowInsets ->
             val systemBarsInsets =
                 windowInsets.getInsets(WindowInsetsCompat.Type.navigationBars() or WindowInsetsCompat.Type.ime())
+
+            val imeHeight = windowInsets.getInsets(WindowInsetsCompat.Type.ime()).bottom
+            val keyboardVisible = imeHeight > 0
+
+            if (keyboardVisible != isKeyboardVisible) {
+                isKeyboardVisible = keyboardVisible
+                if (keyboardVisible) {
+                    // when showing the keyboard, we should auto scroll the conversation recyclerview
+                    // if we are near the bottom (within 50dp of bottom)
+                    if (binding.conversationRecyclerView.isScrolledToBottom) {
+                        binding.conversationRecyclerView.smoothScrollToPosition(adapter.itemCount)
+                    }
+                }
+            }
 
             binding.bottomSpacer.updateLayoutParams<LayoutParams> {
                 height = systemBarsInsets.bottom
@@ -1045,7 +1061,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             }
         }
     }
-//todo PRO need to add scroll when bringing up the keyboard if we are at the bottom of the screen - double check scrolling behaviour (seem to see a tiny jump when entering some conversations?)
+
     private fun scrollToFirstUnreadMessageOrBottom() {
         // if there are no unread messages, go straight to the very bottom of the list
         if(unreadCount == 0){
@@ -2636,9 +2652,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             super.onChanged()
             // scrolled to bottom has a leniency of 50dp, so if we are within the 50dp but not fully at the bottom, scroll down
             if (recyclerView.isScrolledToBottom && !recyclerView.isFullyScrolled) {
-                // Note: The adapter itemCount is zero based - so calling this with the itemCount in
-                // a non-zero based manner scrolls us to the bottom of the last message (including
-                // to the bottom of long messages as required by Jira SES-789 / GitHub 1364).
                 recyclerView.smoothScrollToPosition(adapter.itemCount)
             }
         }
