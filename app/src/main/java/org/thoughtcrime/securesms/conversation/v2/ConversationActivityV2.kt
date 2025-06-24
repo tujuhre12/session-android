@@ -207,7 +207,6 @@ import org.thoughtcrime.securesms.util.fadeIn
 import org.thoughtcrime.securesms.util.fadeOut
 import org.thoughtcrime.securesms.util.isFullyScrolled
 import org.thoughtcrime.securesms.util.isScrolledToBottom
-import org.thoughtcrime.securesms.util.isScrolledToWithin30dpOfBottom
 import org.thoughtcrime.securesms.util.push
 import org.thoughtcrime.securesms.util.toPx
 import org.thoughtcrime.securesms.webrtc.WebRtcCallActivity
@@ -2635,7 +2634,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     inner class ConversationAdapterDataObserver(val recyclerView: ConversationRecyclerView, val adapter: ConversationAdapter) : RecyclerView.AdapterDataObserver() {
         override fun onChanged() {
             super.onChanged()
-            if (recyclerView.isScrolledToWithin30dpOfBottom && !recyclerView.isFullyScrolled) {
+            // scrolled to bottom has a leniency of 50dp, so if we are within the 50dp but not fully at the bottom, scroll down
+            if (recyclerView.isScrolledToBottom && !recyclerView.isFullyScrolled) {
                 // Note: The adapter itemCount is zero based - so calling this with the itemCount in
                 // a non-zero based manner scrolls us to the bottom of the last message (including
                 // to the bottom of long messages as required by Jira SES-789 / GitHub 1364).
