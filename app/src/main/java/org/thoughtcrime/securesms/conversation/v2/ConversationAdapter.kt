@@ -34,7 +34,7 @@ import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 
 class ConversationAdapter(
     context: Context,
-    cursor: Cursor,
+    cursor: Cursor?,
     conversation: Recipient?,
     originalLastSeen: Long,
     private val isReversed: Boolean,

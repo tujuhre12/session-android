@@ -356,11 +356,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         MnemonicCodec(loadFileContents).encode(hexEncodedSeed, MnemonicCodec.Language.Configuration.english)
     }
 
+    private var firstCursorLoad = false
+
     private val adapter by lazy {
-        val cursor = mmsSmsDb.getConversation(viewModel.threadId, false)
         val adapter = ConversationAdapter(
             this,
-            cursor,
+            null,
             viewModel.recipient,
             storage.getLastSeen(viewModel.threadId),
             false,
@@ -562,8 +563,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             startActivity(WebRtcCallActivity.getCallActivityIntent(this))
         }
 
-        updateUnreadCountIndicator()
-        updatePlaceholder()
         setUpExpiredGroupBanner()
         binding.searchBottomBar.setEventListener(this)
         updateSendAfterApprovalText()
@@ -573,7 +572,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         setUpTypingObserver()
         setUpRecipientObserver()
         setUpSearchResultObserver()
-        setUpOutdatedClientBanner()
         setUpLegacyGroupUI()
 
         val reactionOverlayStub: Stub<ConversationReactionOverlay> =
@@ -671,9 +669,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     private fun setupMentionView() {
-        binding?.conversationMentionCandidates?.let { view ->
-            view.adapter = mentionCandidateAdapter
-            view.itemAnimator = null
+        binding.conversationMentionCandidates.apply {
+            adapter = mentionCandidateAdapter
+            itemAnimator = null
         }
 
         lifecycleScope.launch {
@@ -686,7 +684,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             }
         }
 
-        binding?.inputBar?.setInputBarEditableFactory(mentionViewModel.editableFactory)
+        binding.inputBar.setInputBarEditableFactory(mentionViewModel.editableFactory)
     }
 
     override fun onResume() {
@@ -730,6 +728,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         adapter.changeCursor(cursor)
 
         if (cursor != null) {
+            firstCursorLoad = true
             val messageTimestamp = messageToScrollTimestamp.getAndSet(-1)
             val author = messageToScrollAuthor.getAndSet(null)
             val initialUnreadCount = mmsSmsDb.getUnreadCount(viewModel.threadId)
@@ -749,8 +748,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 if (firstLoad.getAndSet(false)) scrollToFirstUnreadMessageOrBottom()
                 handleRecyclerViewScrolled()
             }
+
+            updatePlaceholder()
         }
-        updatePlaceholder()
+
         viewModel.recipient?.let {
             setUpOutdatedClientBanner()
         }
@@ -1283,6 +1284,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     // Update placeholder / control messages in a conversation
     private fun updatePlaceholder() {
+        if(!firstCursorLoad) return
         val recipient = viewModel.recipient ?: return Log.w("Loki", "recipient was null in placeholder update")
         val blindedRecipient = viewModel.blindedRecipient
         val openGroup = viewModel.openGroup
