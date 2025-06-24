@@ -1218,7 +1218,7 @@ open class Storage @Inject constructor(
                 getThreadId(address)?.let {
                     setExpirationConfiguration(
                         getExpirationConfiguration(it)?.takeIf { it.updatedTimestampMs > timestamp }
-                            ?: ExpirationConfiguration(it, contact.expiryMode, timestamp)
+                            ?: ExpirationConfiguration(it, contact.expiryMode, timestamp),
                     )
                 }
             }
@@ -1839,13 +1839,13 @@ open class Storage @Inject constructor(
         ) }
     }
 
-    override fun setExpirationConfiguration(config: ExpirationConfiguration) {
-        val recipient = getRecipientForThread(config.threadId) ?: return
+    override fun setExpirationConfiguration(threadId: Long, expiryMode: ExpiryMode) {
+        val recipient = getRecipientForThread(threadId) ?: return
 
         val expirationDb = expirationConfigurationDatabase
-        val currentConfig = expirationDb.getExpirationConfiguration(config.threadId)
-        if (currentConfig != null && currentConfig.updatedTimestampMs >= config.updatedTimestampMs) return
-        val expiryMode = config.expiryMode
+        val currentConfig = expirationDb.getExpirationConfiguration(threadId.threadId)
+        if (currentConfig != null && currentConfig.updatedTimestampMs >= threadId.updatedTimestampMs) return
+        val expiryMode = threadId.expiryMode
 
         if (expiryMode == ExpiryMode.NONE) {
             // Clear the legacy recipients on updating config to be none
@@ -1877,7 +1877,7 @@ open class Storage @Inject constructor(
             }
         }
         expirationDb.setExpirationConfiguration(
-            config.run { copy(expiryMode = expiryMode) }
+            threadId.run { copy(expiryMode = expiryMode) }
         )
     }
 

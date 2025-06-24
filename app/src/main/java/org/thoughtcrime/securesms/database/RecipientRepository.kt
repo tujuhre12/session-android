@@ -15,6 +15,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.ReadableGroupInfoConfig
 import network.loki.messenger.libsession_util.util.Contact
+import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.utilities.Address
@@ -211,6 +212,7 @@ class RecipientRepository @Inject constructor(
                 notifyType = RecipientDatabase.NOTIFY_TYPE_ALL,
                 avatar = avatar?.toRecipientAvatar(),
                 nickname = null,
+                expiryMode = ExpiryMode.NONE,
             )
         }
 
@@ -221,12 +223,23 @@ class RecipientRepository @Inject constructor(
                 null
             }
 
+        private val ReadableGroupInfoConfig.expiryMode: ExpiryMode
+            get() {
+                val timer = getExpiryTimer()
+                return when {
+                    timer > 0 -> ExpiryMode.AfterSend(timer)
+                    else -> ExpiryMode.NONE
+                }
+            }
+
         private fun createGroupV2Recipient(
             address: Address,
             group: GroupInfo.ClosedGroupInfo,
             groupInfo: ReadableGroupInfoConfig,
             settings: RecipientSettings?
         ): RecipientV2 {
+            val timer = groupInfo.getExpiryTimer()
+
             return RecipientV2(
                 name = groupInfo.getName() ?: group.name,
                 address = address,
@@ -239,6 +252,7 @@ class RecipientRepository @Inject constructor(
                 mutedUntil = settings?.muteUntilDate,
                 notifyType = settings?.notifyType ?: RecipientDatabase.NOTIFY_TYPE_ALL,
                 autoDownloadAttachments = settings?.autoDownloadAttachments,
+                expiryMode = groupInfo.expiryMode,
             )
 
         }
@@ -264,6 +278,7 @@ class RecipientRepository @Inject constructor(
                 autoDownloadAttachments = fallbackSettings?.autoDownloadAttachments,
                 notifyType = fallbackSettings?.notifyType
                     ?: RecipientDatabase.NOTIFY_TYPE_ALL,
+                expiryMode = contactInConfig.expiryMode,
             )
         }
 
@@ -283,7 +298,8 @@ class RecipientRepository @Inject constructor(
                 blocked = false,
                 mutedUntil = settings?.muteUntilDate,
                 autoDownloadAttachments = settings?.autoDownloadAttachments,
-                notifyType = settings?.notifyType ?: RecipientDatabase.NOTIFY_TYPE_ALL
+                notifyType = settings?.notifyType ?: RecipientDatabase.NOTIFY_TYPE_ALL,
+                expiryMode = ExpiryMode.NONE,
             )
         }
 
@@ -304,7 +320,8 @@ class RecipientRepository @Inject constructor(
                 mutedUntil = settings.muteUntil.takeIf { it > 0 }
                     ?.let { ZonedDateTime.from(Instant.ofEpochMilli(it)) },
                 autoDownloadAttachments = settings.autoDownloadAttachments,
-                notifyType = settings.notifyType
+                notifyType = settings.notifyType,
+                expiryMode = ExpiryMode.NONE, // A generic recipient does not have an expiry mode
             )
         }
 
@@ -320,7 +337,8 @@ class RecipientRepository @Inject constructor(
                 mutedUntil = null,
                 autoDownloadAttachments = null,
                 notifyType = RecipientDatabase.NOTIFY_TYPE_ALL,
-                avatar = null
+                avatar = null,
+                expiryMode = ExpiryMode.NONE,
             )
         }
     }

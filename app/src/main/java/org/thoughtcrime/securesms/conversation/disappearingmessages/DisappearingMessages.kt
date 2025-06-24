@@ -1,10 +1,6 @@
 package org.thoughtcrime.securesms.conversation.disappearingmessages
 
 import android.content.Context
-import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.database.StorageProtocol
@@ -12,7 +8,6 @@ import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.sending_receiving.MessageSender
-import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ExpirationUtil
@@ -37,7 +32,7 @@ class DisappearingMessages @Inject constructor(
 ) {
     fun set(threadId: Long, address: Address, mode: ExpiryMode, isGroup: Boolean) {
         val expiryChangeTimestampMs = clock.currentTimeMills()
-        storage.setExpirationConfiguration(ExpirationConfiguration(threadId, mode, expiryChangeTimestampMs))
+        storage.setExpirationConfiguration(ExpirationConfiguration(threadId, mode, expiryChangeTimestampMs),)
 
         if (address.isGroupV2) {
             groupManagerV2.setExpirationTimer(AccountId(address.toString()), mode, expiryChangeTimestampMs)

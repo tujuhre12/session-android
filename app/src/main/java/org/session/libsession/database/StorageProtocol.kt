@@ -2,6 +2,7 @@ package org.session.libsession.database
 
 import android.content.Context
 import android.net.Uri
+import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.KeyPair
 import org.session.libsession.messaging.BlindedIdMapping
 import org.session.libsession.messaging.calls.CallMessageType
@@ -9,7 +10,6 @@ import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.jobs.AttachmentUploadJob
 import org.session.libsession.messaging.jobs.Job
 import org.session.libsession.messaging.jobs.MessageSendJob
-import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
@@ -264,8 +264,7 @@ interface StorageProtocol {
     fun deleteReactions(messageIds: List<Long>, mms: Boolean)
     fun setBlocked(recipients: Iterable<Address>, isBlocked: Boolean, fromConfigUpdate: Boolean = false)
     fun blockedContacts(): List<Recipient>
-    fun getExpirationConfiguration(threadId: Long): ExpirationConfiguration?
-    fun setExpirationConfiguration(config: ExpirationConfiguration)
+    fun setExpirationConfiguration(threadId: Long, expiryMode: ExpiryMode)
     fun getExpiringMessages(messageIds: List<Long> = emptyList()): List<Pair<Long, Long>>
 
     // Shared configs

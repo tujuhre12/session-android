@@ -159,7 +159,7 @@ class ConfigToDatabaseSync @Inject constructor(
             storage.getThreadId(address)?.let { threadId ->
                 storage.setExpirationConfiguration(
                     storage.getExpirationConfiguration(threadId)?.takeIf { it.updatedTimestampMs > messageTimestamp } ?:
-                    ExpirationConfiguration(threadId, userProfile.ntsExpiry, messageTimestamp)
+                    ExpirationConfiguration(threadId, userProfile.ntsExpiry, messageTimestamp),
                 )
             }
         }
@@ -392,7 +392,7 @@ class ConfigToDatabaseSync @Inject constructor(
                 storage.getThreadId(fromSerialized(groupId))?.let { theadId ->
                     storage.setExpirationConfiguration(
                         storage.getExpirationConfiguration(theadId)?.takeIf { it.updatedTimestampMs > messageTimestamp }
-                            ?: ExpirationConfiguration(theadId, afterSend(group.disappearingTimer), messageTimestamp)
+                            ?: ExpirationConfiguration(theadId, afterSend(group.disappearingTimer), messageTimestamp),
                     )
                 }
             }

@@ -186,7 +186,7 @@ private fun MessageReceiver.handleExpirationTimerUpdate(message: ExpirationTimer
                 threadId,
                 message.expiryMode,
                 message.sentTimestamp!!
-            )
+            ),
         )
     } catch (e: Exception) {
         Log.e("Loki", "Failed to update expiration configuration.")
