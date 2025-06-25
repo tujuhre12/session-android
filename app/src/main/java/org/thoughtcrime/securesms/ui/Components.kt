@@ -537,7 +537,7 @@ fun BottomFadingEdgeBox(
                 .background(
                     Brush.verticalGradient(
                         0f to Color.Transparent,
-                        1f to fadingColor,
+                        0.9f to fadingColor,
                         tileMode = TileMode.Repeated
                     )
                 )

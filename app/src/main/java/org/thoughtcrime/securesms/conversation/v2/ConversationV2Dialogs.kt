@@ -1,14 +1,17 @@
 package org.thoughtcrime.securesms.conversation.v2
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
@@ -29,6 +32,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
@@ -46,6 +50,7 @@ import org.thoughtcrime.securesms.groups.compose.CreateGroupScreen
 import org.thoughtcrime.securesms.openUrl
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.ui.AlertDialog
+import org.thoughtcrime.securesms.ui.BottomFadingEdgeBox
 import org.thoughtcrime.securesms.ui.DialogBg
 import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
@@ -294,11 +299,17 @@ fun SessionProCTA(
             DialogBg {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     // hero image
-                    Image(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentScale = ContentScale.FillWidth,
-                        painter = painterResource(id = R.drawable.pro_cta),
-                        contentDescription = null,
+                    BottomFadingEdgeBox(
+                        fadingEdgeHeight = 70.dp,
+                        fadingColor = LocalColors.current.backgroundSecondary,
+                        content = { _ ->
+                            Image(
+                                modifier = Modifier.fillMaxWidth().background(LocalColors.current.accent),
+                                contentScale = ContentScale.FillWidth,
+                                painter = painterResource(id = R.drawable.cta_hero_char_limit),
+                                contentDescription = null,
+                            )
+                        },
                     )
 
                     // content

@@ -517,6 +517,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         binding = ActivityConversationV2Binding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        setupWindowInsets()
+
         // set the compose dialog content
         binding.dialogOpenUrl.apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
@@ -598,7 +600,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
         setupMentionView()
         setupUiEventsObserver()
-        setupWindowInsets()
     }
 
     private fun setupWindowInsets() {
