@@ -338,7 +338,7 @@ class VisibleMessageContentView : ConstraintLayout {
         // set a max lines
         binding.bodyTextView.maxLines = if(isTextExpanded) Int.MAX_VALUE else MAX_COLLAPSED_LINE_COUNT
 
-        binding.readMore.isVisible = !isTextExpanded
+        binding.readMore.isVisible = false
 
         binding.contentParent.apply { isVisible = children.any { it.isVisible } }
 

@@ -1302,15 +1302,12 @@ class ConversationViewModel(
             it.copy(
                 showSimpleDialog = SimpleDialogData(
                     title = application.getString(R.string.modalMessageCharacterDisplayTitle),
-                    message = Phrase.from(
-                        application.resources.getQuantityString(
-                            R.plurals.modalMessageCharacterDisplayDescription,
-                            charsLeft,
-                            charsLeft
-                        ))
-                        .put(LIMIT_KEY, proStatusManager.getCharacterLimit())
-                        .put(COUNT_KEY, charsLeft)
-                        .format(),
+                    message = application.resources.getQuantityString(
+                        R.plurals.modalMessageCharacterDisplayDescription,
+                        charsLeft, // quantity for plural
+                        proStatusManager.getCharacterLimit(), // 1st arg: total character limit
+                        charsLeft, // 2nd arg: chars left
+                    ),
                     positiveStyleDanger = false,
                     positiveText = application.getString(R.string.okay),
                     onPositive = ::hideSimpleDialog
