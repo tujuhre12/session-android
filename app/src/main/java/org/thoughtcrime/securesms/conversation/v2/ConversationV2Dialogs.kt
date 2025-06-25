@@ -1,18 +1,6 @@
 package org.thoughtcrime.securesms.conversation.v2
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
@@ -22,43 +10,34 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
-import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.ClearEmoji
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.ConfirmRecreateGroup
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.HideClearEmoji
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.HideDeleteEveryoneDialog
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.HideRecreateGroupConfirm
+import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.HideSimpleDialog
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.MarkAsDeletedForEveryone
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.MarkAsDeletedLocally
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.ShowOpenUrlDialog
-import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.HideSimpleDialog
 import org.thoughtcrime.securesms.groups.compose.CreateGroupScreen
 import org.thoughtcrime.securesms.openUrl
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.ui.AlertDialog
-import org.thoughtcrime.securesms.ui.BottomFadingEdgeBox
-import org.thoughtcrime.securesms.ui.DialogBg
 import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.RadioOption
-import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
+import org.thoughtcrime.securesms.ui.SessionProCTA
 import org.thoughtcrime.securesms.ui.components.DialogTitledRadioButton
-import org.thoughtcrime.securesms.ui.components.TertiaryFillButtonRect
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -274,152 +253,27 @@ fun ConversationV2Dialogs(
         }
 
         // Pro CTA
-        if (dialogsState.sessionProCTA) {
+        if (dialogsState.sessionProCharLimitCTA) {
+            val context = LocalContext.current
+
             SessionProCTA(
-                sendCommand = sendCommand
-            )
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun SessionProCTA(
-    modifier: Modifier = Modifier,
-    sendCommand: (ConversationViewModel.Commands) -> Unit
-){
-    val context = LocalContext.current
-
-    BasicAlertDialog(
-        modifier = modifier,
-        onDismissRequest = {
-            sendCommand(ConversationViewModel.Commands.HideSessionProCTA)
-        },
-        content = {
-            DialogBg {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    // hero image
-                    BottomFadingEdgeBox(
-                        fadingEdgeHeight = 70.dp,
-                        fadingColor = LocalColors.current.backgroundSecondary,
-                        content = { _ ->
-                            Image(
-                                modifier = Modifier.fillMaxWidth().background(LocalColors.current.accent),
-                                contentScale = ContentScale.FillWidth,
-                                painter = painterResource(id = R.drawable.cta_hero_char_limit),
-                                contentDescription = null,
-                            )
-                        },
-                    )
-
-                    // content
-                    Column(
-                        modifier = Modifier.fillMaxWidth()
-                            .padding(LocalDimensions.current.smallSpacing)
-                    ) {
-                        // title
-                        Row(
-                            modifier = Modifier.align(Alignment.CenterHorizontally),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)
-
-                        ) {
-                            Text(
-                                text = ProStatusManager.UPDATETP,
-                                style = LocalType.current.h5
-                            )
-
-                            Image(
-                                painter = painterResource(id = R.drawable.ic_pro_badge),
-                                contentScale = ContentScale.FillHeight,
-                                contentDescription = NonTranslatableStringConstants.APP_PRO,
-                            )
-                        }
-
-                        Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
-
-                        // main message
-                        Text(
-                            text = ProStatusManager.CTA_TXT,
-                            textAlign = TextAlign.Center,
-                            style = LocalType.current.base.copy(
-                                color = LocalColors.current.textSecondary
-                            )
-                        )
-
-                        Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
-
-                        // features
-                        ProCTAFeature(text = ProStatusManager.CTA_FEAT1)
-                        Spacer(Modifier.height(LocalDimensions.current.xsSpacing))
-                        ProCTAFeature(text = ProStatusManager.CTA_FEAT2)
-                        Spacer(Modifier.height(LocalDimensions.current.xsSpacing))
-                        ProCTAFeature(text = ProStatusManager.CTA_FEAT3)
-
-                        Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
-
-                        // buttons
-                        Row(
-                            Modifier.height(IntrinsicSize.Min),
-                            horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xsSpacing),
-                        ) {
-                            AccentFillButtonRect(
-                                modifier = Modifier.weight(1f),
-                                text = ProStatusManager.UPGRADE,
-                                onClick = {
-                                    sendCommand(ConversationViewModel.Commands.HideSessionProCTA)
-                                    context.openUrl(ProStatusManager.PRO_URL)
-                                }
-
-                            )
-
-                            TertiaryFillButtonRect(
-                                modifier = Modifier.weight(1f),
-                                text = stringResource(R.string.cancel),
-                                onClick = {
-                                    sendCommand(ConversationViewModel.Commands.HideSessionProCTA)
-                                }
-                            )
-                        }
-                    }
+                heroImage = R.drawable.cta_hero_char_limit,
+                text = ProStatusManager.CTA_TXT,
+                features = listOf(
+                    ProStatusManager.CTA_FEAT1,
+                    ProStatusManager.CTA_FEAT2,
+                    ProStatusManager.CTA_FEAT3,
+                ),
+                onUpgrade = {
+                    sendCommand(ConversationViewModel.Commands.HideSessionProCTA)
+                    context.openUrl(ProStatusManager.PRO_URL)
+                },
+                onCancel = {
+                    sendCommand(ConversationViewModel.Commands.HideSessionProCTA)
                 }
-            }
+            )
+
         }
-    )
-}
-
-@Composable
-fun ProCTAFeature(
-    text: String,
-    modifier: Modifier = Modifier
-){
-    Row(
-        modifier = modifier.fillMaxWidth()
-            .padding(horizontal = LocalDimensions.current.xxxsSpacing),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxsSpacing)
-    ) {
-        Image(
-            painter = painterResource(id = R.drawable.ic_circle_check),
-            colorFilter = ColorFilter.tint(LocalColors.current.accent),
-            contentDescription = null,
-            modifier = Modifier.align(Alignment.CenterVertically)
-        )
-
-        Text(
-            text = text,
-            style = LocalType.current.base
-        )
-    }
-}
-
-@Preview
-@Composable
-fun PreviewSessionProCTA(){
-    PreviewTheme {
-        SessionProCTA(
-            sendCommand = {}
-        )
     }
 }
 

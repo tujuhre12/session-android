@@ -1126,7 +1126,7 @@ class ConversationViewModel(
 
     fun showSessionProCTA(){
         _dialogsState.update {
-            it.copy(sessionProCTA = true)
+            it.copy(sessionProCharLimitCTA = true)
         }
     }
 
@@ -1245,7 +1245,7 @@ class ConversationViewModel(
 
             Commands.HideSessionProCTA -> {
                 _dialogsState.update {
-                    it.copy(sessionProCTA = false)
+                    it.copy(sessionProCharLimitCTA = false)
                 }
             }
 
@@ -1521,7 +1521,7 @@ class ConversationViewModel(
         val deleteEveryone: DeleteForEveryoneDialogData? = null,
         val recreateGroupConfirm: Boolean = false,
         val recreateGroupData: RecreateGroupDialogData? = null,
-        val sessionProCTA: Boolean = false
+        val sessionProCharLimitCTA: Boolean = false
     )
 
     data class RecreateGroupDialogData(
