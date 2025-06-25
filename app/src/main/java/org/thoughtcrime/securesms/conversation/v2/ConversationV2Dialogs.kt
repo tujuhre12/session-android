@@ -138,6 +138,7 @@ fun ConversationV2Dialogs(
                         option = RadioOption(
                             value = Unit,
                             title = GetString(stringResource(R.string.deleteMessageDeviceOnly)),
+                            qaTag = GetString(stringResource(R.string.qa_delete_message_device_only)),
                             selected = !deleteForEveryone
                         )
                     ) {
@@ -148,6 +149,7 @@ fun ConversationV2Dialogs(
                         option = RadioOption(
                             value = Unit,
                             title = GetString(data.deleteForEveryoneLabel),
+                            qaTag = GetString(stringResource(R.string.qa_delete_message_everyone)),
                             selected = deleteForEveryone,
                             enabled = data.everyoneEnabled
                         )
