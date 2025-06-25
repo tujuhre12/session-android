@@ -18,10 +18,10 @@
         app:layout_constraintBottom_toTopOf="@+id/conversation_header"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
-    <!--
-    Add this to the below recycler view if you need to debug activity `adjustResize` issues:
-    android:background="@drawable/cross"
-    -->
+
+    <include android:id="@+id/shimmerLayout"
+        layout="@layout/shimmer_conversation_messages" />
+
     <org.thoughtcrime.securesms.conversation.v2.ConversationRecyclerView
         android:focusable="false"
         android:id="@+id/conversationRecyclerView"

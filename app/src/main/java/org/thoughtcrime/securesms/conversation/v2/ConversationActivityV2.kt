@@ -519,6 +519,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
         setupWindowInsets()
 
+        binding.shimmerLayout.shimmer.isVisible = true
+        binding.shimmerLayout.shimmer.startShimmer()
+
         // set the compose dialog content
         binding.dialogOpenUrl.apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
@@ -751,6 +754,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             }
 
             updatePlaceholder()
+        }
+
+        if(binding.shimmerLayout.shimmer.isVisible) {
+            binding.shimmerLayout.shimmer.isVisible = false
+            binding.shimmerLayout.shimmer.stopShimmer()
         }
 
         viewModel.recipient?.let {

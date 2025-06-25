@@ -364,6 +364,8 @@ dependencies {
     implementation(libs.zxing.core)
 
     implementation(libs.androidx.biometric)
+
+    implementation(libs.shimmer)
 }
 
 fun getLastCommitTimestamp(): String {

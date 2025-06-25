@@ -77,6 +77,7 @@ uiTestJunit4Version = "1.5.3"
 workRuntimeKtxVersion = "2.10.2"
 zxingVersion = "3.5.3"
 huaweiPushVersion = "6.7.0.300"
+shimmer = "0.5.0"
 
 [libraries]
 accompanist-drawablepainter = { module = "com.google.accompanist:accompanist-drawablepainter", version.ref = "accompanistThemeadapterAppcompatVersion" }
@@ -176,6 +177,7 @@ tooltips = { module = "com.tomergoldst.android:tooltips", version.ref = "tooltip
 truth = { module = "com.google.truth:truth", version.ref = "truthVersion" }
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbineVersion" }
 huawei-push = { module = 'com.huawei.hms:push', version.ref = 'huaweiPushVersion' }
+shimmer = { module = 'com.facebook.shimmer:shimmer', version.ref = 'shimmer' }
 
 
 [plugins]
