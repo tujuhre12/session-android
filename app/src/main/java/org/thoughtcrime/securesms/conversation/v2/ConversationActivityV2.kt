@@ -64,6 +64,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
@@ -340,6 +341,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private val EMOJI_REACTIONS_ALLOWED_PER_MINUTE = 20
     private val ONE_MINUTE_IN_MILLISECONDS = 1.minutes.inWholeMilliseconds
 
+    private var shimmerDisplayJob: Job? = null
+
     private val layoutManager: LinearLayoutManager?
         get() { return binding.conversationRecyclerView.layoutManager as LinearLayoutManager? }
 
@@ -519,8 +522,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
         setupWindowInsets()
 
-        binding.shimmerLayout.shimmer.isVisible = true
-        binding.shimmerLayout.shimmer.startShimmer()
+
+        startConversationLoaderWithDelay()
 
         // set the compose dialog content
         binding.dialogOpenUrl.apply {
@@ -603,6 +606,21 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
         setupMentionView()
         setupUiEventsObserver()
+    }
+
+    private fun startConversationLoaderWithDelay() {
+        shimmerDisplayJob = lifecycleScope.launch {
+            delay(700)
+            binding.conversationLoader.isVisible = true
+        }
+    }
+
+    private fun stopConversationLoader() {
+        // Cancel the delayed shimmer start
+        shimmerDisplayJob?.cancel()
+        shimmerDisplayJob = null
+
+        binding.conversationLoader.isVisible = false
     }
 
     private fun setupWindowInsets() {
@@ -756,10 +774,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             updatePlaceholder()
         }
 
-        if(binding.shimmerLayout.shimmer.isVisible) {
-            binding.shimmerLayout.shimmer.isVisible = false
-            binding.shimmerLayout.shimmer.stopShimmer()
-        }
+        stopConversationLoader()
 
         viewModel.recipient?.let {
             setUpOutdatedClientBanner()

@@ -19,8 +19,15 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
-    <include android:id="@+id/shimmerLayout"
-        layout="@layout/shimmer_conversation_messages" />
+    <com.google.android.material.progressindicator.LinearProgressIndicator
+        android:id="@+id/conversationLoader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@+id/conversationAppBar"
+        android:indeterminate="true"
+        android:visibility="gone"
+        app:indicatorColor="?colorAccent"
+        app:trackThickness="4dp"/>
 
     <org.thoughtcrime.securesms.conversation.v2.ConversationRecyclerView
         android:focusable="false"
