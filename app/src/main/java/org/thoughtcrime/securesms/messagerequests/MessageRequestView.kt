@@ -66,7 +66,7 @@ class MessageRequestView : LinearLayout {
         return if (recipient.isLocalNumber) {
             context.getString(R.string.noteToSelf)
         } else {
-            recipient.name // Internally uses the Contact API
+            recipient.displayName // Internally uses the Contact API
         }
     }
     // endregion

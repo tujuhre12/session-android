@@ -34,7 +34,6 @@ import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsession.database.StorageProtocol
-import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.utilities.Address.Companion.fromSerialized
@@ -227,10 +226,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         // name
         val name = when {
             conversation.isLocalNumber -> context.getString(R.string.noteToSelf)
-
-            conversation.isGroupV2Recipient -> getGroupName()
-
-            else -> conversation.name
+            else -> conversation.displayName
         }
 
         // account ID
@@ -552,7 +548,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 showSimpleDialog = Dialog(
                     title = context.getString(R.string.block),
                     message = Phrase.from(context, R.string.blockDescription)
-                        .put(NAME_KEY, recipient?.name ?: "")
+                        .put(NAME_KEY, recipient?.displayName ?: "")
                         .format(),
                     positiveText = context.getString(R.string.block),
                     negativeText = context.getString(R.string.cancel),
@@ -571,7 +567,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 showSimpleDialog = Dialog(
                     title = context.getString(R.string.blockUnblock),
                     message = Phrase.from(context, R.string.blockUnblockName)
-                        .put(NAME_KEY, recipient?.name ?: "")
+                        .put(NAME_KEY, recipient?.displayName ?: "")
                         .format(),
                     positiveText = context.getString(R.string.blockUnblock),
                     negativeText = context.getString(R.string.cancel),
@@ -667,8 +663,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 showSimpleDialog = Dialog(
                     title = context.getString(R.string.contactDelete),
                     message = Phrase.from(context, R.string.deleteContactDescription)
-                        .put(NAME_KEY, recipient?.name ?: "")
-                        .put(NAME_KEY, recipient?.name ?: "")
+                        .put(NAME_KEY, recipient?.displayName ?: "")
                         .format(),
                     positiveText = context.getString(R.string.delete),
                     negativeText = context.getString(R.string.cancel),
@@ -700,7 +695,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 showSimpleDialog = Dialog(
                     title = context.getString(R.string.conversationsDelete),
                     message = Phrase.from(context, R.string.deleteConversationDescription)
-                        .put(NAME_KEY, recipient?.name ?: "")
+                        .put(NAME_KEY, recipient?.displayName ?: "")
                         .format(),
                     positiveText = context.getString(R.string.delete),
                     negativeText = context.getString(R.string.cancel),
@@ -731,7 +726,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 showSimpleDialog = Dialog(
                     title = context.getString(R.string.communityLeave),
                     message = Phrase.from(context, R.string.groupLeaveDescription)
-                        .put(GROUP_NAME_KEY, recipient?.name ?: "")
+                        .put(GROUP_NAME_KEY, recipient?.displayName ?: "")
                         .format(),
                     positiveText = context.getString(R.string.leave),
                     negativeText = context.getString(R.string.cancel),
@@ -764,26 +759,26 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
         // default to 1on1
         var message: CharSequence = Phrase.from(context, R.string.clearMessagesChatDescriptionUpdated)
-            .put(NAME_KEY,conversation.name)
+            .put(NAME_KEY,conversation.displayName)
             .format()
 
         when{
             conversation.isGroupV2Recipient -> {
                 if(groupV2?.hasAdminKey() == true){
                     // group admin clearing messages have a dedicated custom dialog
-                    _dialogState.update { it.copy(groupAdminClearMessagesDialog = GroupAdminClearMessageDialog(getGroupName())) }
+                    _dialogState.update { it.copy(groupAdminClearMessagesDialog = GroupAdminClearMessageDialog(conversation.displayName)) }
                     return
 
                 } else {
                     message = Phrase.from(context, R.string.clearMessagesGroupDescriptionUpdated)
-                        .put(GROUP_NAME_KEY, getGroupName())
+                        .put(GROUP_NAME_KEY, conversation.displayName)
                         .format()
                 }
             }
 
             conversation.isCommunityRecipient -> {
                 message = Phrase.from(context, R.string.clearMessagesCommunityUpdated)
-                    .put(COMMUNITY_NAME_KEY, conversation.name)
+                    .put(COMMUNITY_NAME_KEY, conversation.displayName)
                     .format()
             }
 
@@ -836,15 +831,6 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         }
     }
 
-
-    private fun getGroupName(): String {
-        val conversation = recipient ?: return ""
-        val accountId = AccountId(conversation.address.toString())
-        return configFactory.withGroupConfigs(accountId) {
-            it.groupInfo.getName()
-        } ?: groupV2?.name ?: ""
-    }
-
     private fun confirmLeaveGroup(){
         val groupData = groupV2 ?: return
         _dialogState.update { state ->
@@ -883,7 +869,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 hideLoading()
 
                 val txt = Phrase.from(context, R.string.groupLeaveErrorFailed)
-                    .put(GROUP_NAME_KEY, getGroupName())
+                    .put(GROUP_NAME_KEY, conversation.displayName)
                     .format().toString()
                 Toast.makeText(context, txt, Toast.LENGTH_LONG).show()
             }

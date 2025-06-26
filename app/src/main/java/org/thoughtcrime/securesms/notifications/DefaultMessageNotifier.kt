@@ -32,11 +32,6 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.annimon.stream.Stream
 import com.squareup.phrase.Phrase
-import java.util.concurrent.Executor
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.concurrent.Volatile
 import me.leolin.shortcutbadger.ShortcutBadger
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
@@ -60,6 +55,7 @@ import org.session.libsignal.utilities.Util
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities.highlightMentions
 import org.thoughtcrime.securesms.crypto.KeyPairUtilities.getUserED25519KeyPair
+import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
@@ -71,11 +67,15 @@ import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.mms.SlideDeck
 import org.thoughtcrime.securesms.service.KeyCachingService
 import org.thoughtcrime.securesms.util.AvatarUtils
-import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.WEBRTC_NOTIFICATION
 import org.thoughtcrime.securesms.util.SessionMetaProtocol.canUserReplyToNotification
 import org.thoughtcrime.securesms.util.SpanUtil
+import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.WEBRTC_NOTIFICATION
+import java.util.concurrent.Executor
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
-import javax.inject.Singleton
+import kotlin.concurrent.Volatile
 
 /**
  * Handles posting system notifications for new messages.
@@ -88,6 +88,7 @@ class DefaultMessageNotifier @Inject constructor(
     private val threadDatabase: ThreadDatabase,
     private val recipientRepository: RecipientRepository,
     private val mmsSmsDatabase: MmsSmsDatabase,
+    private val lokiThreadDatabase: LokiThreadDatabase,
 ) : MessageNotifier {
     override fun setVisibleThread(threadId: Long) {
         visibleThread = threadId
@@ -385,7 +386,7 @@ class DefaultMessageNotifier @Inject constructor(
         val notifications = notificationState.notifications
 
         builder.setMessageCount(notificationState.notificationCount, notificationState.threadCount)
-        builder.setMostRecentSender(notifications[0].individualRecipient, notifications[0].recipient)
+        builder.setMostRecentSender(notifications[0].individualRecipient)
         builder.setGroup(NOTIFICATION_GROUP)
         builder.setDeleteIntent(notificationState.getDeleteIntent(context))
         builder.setOnlyAlertOnce(!signal)
@@ -410,8 +411,7 @@ class DefaultMessageNotifier @Inject constructor(
         while (iterator.hasPrevious()) {
             val item = iterator.previous()
             builder.addMessageBody(
-                item.individualRecipient, item.recipient,
-                highlightMentions(
+                item.individualRecipient, highlightMentions(
                     (if (item.text != null) item.text else "")!!,
                     false,
                     false,
@@ -560,9 +560,9 @@ class DefaultMessageNotifier @Inject constructor(
                 if (lastReact.isPresent) {
                     if (threadRecipients != null && !threadRecipients.isGroupOrCommunityRecipient) {
                         val reaction = lastReact.get()
-                        val reactor = Recipient.from(context, fromSerialized(reaction.author), false)
+                        val reactor = recipientRepository.getRecipientSyncOrEmpty(fromSerialized(reaction.author))
                         val emoji = Phrase.from(context, R.string.emojiReactsNotification).put(EMOJI_KEY, reaction.emoji).format().toString()
-                        notificationState.addNotification(NotificationItem(id, mms, reactor, reactor, threadRecipients, threadId, emoji, reaction.dateSent, slideDeck))
+                        notificationState.addNotification(NotificationItem(id, mms,reactor, reactor, threadRecipients, threadId, emoji, reaction.dateSent, slideDeck))
                     }
                 }
             }
@@ -573,7 +573,6 @@ class DefaultMessageNotifier @Inject constructor(
     }
 
     private fun generateBlindedId(threadId: Long, context: Context): String? {
-        val lokiThreadDatabase = get(context).lokiThreadDatabase()
         val openGroup = lokiThreadDatabase.getOpenGroupChat(threadId)
         val edKeyPair = getUserED25519KeyPair(context)
         if (openGroup != null && edKeyPair != null) {

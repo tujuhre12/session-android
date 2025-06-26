@@ -169,7 +169,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
                     status = status,
                     senderInfo = sender.run {
                         TitledText(
-                            if(messageRecord.isOutgoing) context.getString(R.string.you) else name,
+                            if(messageRecord.isOutgoing) context.getString(R.string.you) else displayName,
                             address.toString()
                         )
                     },

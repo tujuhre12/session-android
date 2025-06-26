@@ -8,14 +8,12 @@ import android.text.SpannableStringBuilder
 import androidx.core.app.NotificationCompat
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
-import org.session.libsession.messaging.MessagingModuleConfiguration
-import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.utilities.NotificationPrivacyPreference
 import org.session.libsession.utilities.StringSubstitutionConstants.CONVERSATION_COUNT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.MESSAGE_COUNT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.Util.getBoldedString
-import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.RecipientV2
 import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.ui.getSubbedString
 import java.util.LinkedList
@@ -38,21 +36,15 @@ class MultipleRecipientNotificationBuilder(context: Context, privacy: Notificati
         setNumber(messageCount)
     }
 
-    fun setMostRecentSender(recipient: Recipient, threadRecipient: Recipient) {
-        var displayName = recipient.name
-        if (threadRecipient.isGroupOrCommunityRecipient) {
-            displayName = getGroupDisplayName(recipient, threadRecipient.isCommunityRecipient)
-        }
+    fun setMostRecentSender(recipient: RecipientV2) {
         if (privacy.isDisplayContact) {
             val txt = Phrase.from(context, R.string.notificationsMostRecent)
-                .put(NAME_KEY, displayName)
+                .put(NAME_KEY, recipient.displayName)
                 .format().toString()
             setContentText(txt)
         }
 
-        if (recipient.notificationChannel != null) {
-            setChannelId(recipient.notificationChannel!!)
-        }
+        recipient.notificationChannel?.let(this::setChannelId)
     }
 
     fun addActions(markAsReadIntent: PendingIntent?) {
@@ -67,19 +59,15 @@ class MultipleRecipientNotificationBuilder(context: Context, privacy: Notificati
 
     fun putStringExtra(key: String?, value: String?) { extras.putString(key, value) }
 
-    fun addMessageBody(sender: Recipient, threadRecipient: Recipient, body: CharSequence?) {
-        var displayName = sender.name
-        if (threadRecipient.isGroupOrCommunityRecipient) {
-            displayName = getGroupDisplayName(sender, threadRecipient.isCommunityRecipient)
-        }
+    fun addMessageBody(sender: RecipientV2, body: CharSequence?) {
         if (privacy.isDisplayMessage) {
             val builder = SpannableStringBuilder()
-            builder.append(getBoldedString(displayName))
+            builder.append(getBoldedString(sender.displayName))
             builder.append(": ")
             builder.append(body ?: "")
             messageBodies.add(builder)
         } else if (privacy.isDisplayContact) {
-            messageBodies.add(getBoldedString(displayName))
+            messageBodies.add(getBoldedString(sender.displayName))
         }
     }
 
@@ -90,16 +78,5 @@ class MultipleRecipientNotificationBuilder(context: Context, privacy: Notificati
             setStyle(style)
         }
         return super.build()
-    }
-
-    /**
-     * @param recipient          the * individual * recipient for which to get the display name.
-     * @param openGroupRecipient whether in an open group context
-     */
-    private fun getGroupDisplayName(recipient: Recipient, openGroupRecipient: Boolean): String {
-        return MessagingModuleConfiguration.shared.usernameUtils.getContactNameWithAccountID(
-            accountID = recipient.address.toString(),
-            contactContext = if (openGroupRecipient) Contact.ContactContext.OPEN_GROUP else Contact.ContactContext.REGULAR
-        )
     }
 }

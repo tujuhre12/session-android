@@ -24,6 +24,7 @@ import network.loki.messenger.libsession_util.ReadableUserGroupsConfig
 import network.loki.messenger.libsession_util.ReadableUserProfile
 import network.loki.messenger.libsession_util.util.ConfigPush
 import network.loki.messenger.libsession_util.util.GroupInfo
+import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
@@ -110,6 +111,11 @@ enum class UserConfigType(val namespace: Int) {
     USER_PROFILE(Namespace.USER_PROFILE()),
     CONVO_INFO_VOLATILE(Namespace.CONVO_INFO_VOLATILE()),
     USER_GROUPS(Namespace.USER_GROUPS()),
+}
+
+val ConfigFactoryProtocol.currentUserName: String get() = withUserConfigs { it.userProfile.getName().orEmpty() }
+val ConfigFactoryProtocol.currentUserProfile: UserPic? get() = withUserConfigs { configs ->
+    configs.userProfile.getPic().takeIf { it.url.isNotBlank() }
 }
 
 /**

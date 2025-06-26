@@ -61,7 +61,6 @@ import org.session.libsession.utilities.SSKEnvironment.Companion.configure
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.pushSuffix
 import org.session.libsession.utilities.Toaster
-import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.WindowDebouncer
 import org.session.libsignal.utilities.HTTP.isConnectedToNetwork
 import org.session.libsignal.utilities.JsonUtil
@@ -186,7 +185,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
     @Inject lateinit var webRtcCallBridge: Lazy<WebRtcCallBridge>
     @Inject lateinit var legacyGroupDeprecationManager: Lazy<LegacyGroupDeprecationManager>
     @Inject lateinit var cleanupInvitationHandler: Lazy<CleanupInvitationHandler>
-    @Inject lateinit var usernameUtils: Lazy<UsernameUtils>
     @Inject lateinit var pollerManager: Lazy<PollerManager>
     @Inject lateinit var recipientRepository: Lazy<RecipientRepository>
 
@@ -289,7 +287,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
             clock = snodeClock.get(),
             preferences = textSecurePreferences.get(),
             deprecationManager = legacyGroupDeprecationManager.get(),
-            usernameUtils = usernameUtils.get(),
             recipientRepository = recipientRepository.get(),
         )
 
@@ -379,7 +376,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
         pollerManager.get()
         legacyGroupDeprecationManager.get()
         cleanupInvitationHandler.get()
-        usernameUtils.get()
         backgroundPollManager.get()
         appVisibilityManager.get()
         groupPollerManager.get()

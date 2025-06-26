@@ -10,7 +10,6 @@ import network.loki.messenger.R
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientV2
 import org.session.libsession.utilities.truncateIdForDisplay
 import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter.ContentView
@@ -138,7 +137,7 @@ fun ContentView.bindModel(query: String?, model: Message, dateUtils: DateUtils) 
     val textSpannable = SpannableStringBuilder()
     if (model.messageResult.conversationRecipient != model.messageResult.messageRecipient) {
         // group chat, bind
-        val text = "${model.messageResult.messageRecipient.name}: "
+        val text = "${model.messageResult.messageRecipient.displayName}: "
         textSpannable.append(text)
     }
     textSpannable.append(getHighlight(
@@ -152,7 +151,7 @@ fun ContentView.bindModel(query: String?, model: Message, dateUtils: DateUtils) 
 }
 
 fun RecipientV2.getSearchName(): String =
-    name.takeIf { it.isNotEmpty() && !it.looksLikeAccountId }
+    displayName.takeIf { it.isNotEmpty() && !it.looksLikeAccountId }
     ?: address.toString().let(::truncateIdForDisplay)
 
 fun Contact.getSearchName(): String =

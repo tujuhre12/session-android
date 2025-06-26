@@ -30,7 +30,7 @@ class ShareContactListLoader(
                     return@filter openGroup.canWrite
                 }
                 if (filter.isNullOrEmpty()) return@filter true
-                it.first.name.contains(filter.trim(), true) || it.first.address.toString().contains(filter.trim(), true)
+                it.first.displayName.contains(filter.trim(), true) || it.first.address.toString().contains(filter.trim(), true)
             }.sortedWith(
                 compareBy<Pair<RecipientV2, LastMessageSentTimestamp>> { !it.first.isLocalNumber } // NTS come first
                     .thenByDescending { it.second } // then order by last message time

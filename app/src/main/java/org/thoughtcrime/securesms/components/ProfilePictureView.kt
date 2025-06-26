@@ -21,8 +21,6 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.AppTextSecurePreferences
 import org.session.libsession.utilities.GroupUtil
-import org.session.libsession.utilities.UsernameUtils
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientAvatar
 import org.session.libsession.utilities.recipients.RecipientV2
 import org.session.libsession.utilities.truncateIdForDisplay
@@ -55,9 +53,6 @@ class ProfilePictureView @JvmOverloads constructor(
 
     @Inject
     lateinit var storage: StorageProtocol
-
-    @Inject
-    lateinit var usernameUtils: UsernameUtils
 
     @Inject
     lateinit var avatarUtils: AvatarUtils
@@ -105,8 +100,8 @@ class ProfilePictureView @JvmOverloads constructor(
         address: Address,
         profileViewDataType: ProfileViewDataType = ProfileViewDataType.OneOnOne
     ) {
-        fun getUserDisplayName(publicKey: String): String = prefs.takeIf { userPublicKey == publicKey }?.getProfileName()
-            ?: usernameUtils.getContactNameWithAccountID(publicKey)
+        fun getUserDisplayName(publicKey: String): String = recipientRepository.getRecipientDisplayNameSync(
+            Address.fromSerialized(publicKey))
 
         // group avatar
         if (profileViewDataType is ProfileViewDataType.GroupvV2 || profileViewDataType is ProfileViewDataType.LegacyGroup) {

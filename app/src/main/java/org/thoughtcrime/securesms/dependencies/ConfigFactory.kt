@@ -39,7 +39,6 @@ import org.session.libsession.utilities.MutableUserConfigs
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.UserConfigs
-import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.getGroup
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.utilities.AccountId
@@ -69,7 +68,6 @@ class ConfigFactory @Inject constructor(
     private val textSecurePreferences: TextSecurePreferences,
     private val clock: SnodeClock,
     private val configToDatabaseSync: Lazy<ConfigToDatabaseSync>,
-    private val usernameUtils: Lazy<UsernameUtils>
 ) : ConfigFactoryProtocol {
     companion object {
         // This is a buffer period within which we will process messages which would result in a

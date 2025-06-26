@@ -37,7 +37,7 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
-import org.session.libsession.utilities.UsernameUtils
+import org.session.libsession.utilities.currentUserName
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.ThreadDatabase
@@ -59,7 +59,6 @@ class HomeViewModel @Inject constructor(
     private val typingStatusRepository: TypingStatusRepository,
     private val configFactory: ConfigFactory,
     private val callManager: CallManager,
-    private val usernameUtils: UsernameUtils,
     private val storage: StorageProtocol,
     private val groupManager: GroupManagerV2
 ) : ViewModel() {
@@ -212,7 +211,7 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun getCurrentUsername() = usernameUtils.getCurrentUsernameWithAccountIdFallback()
+    fun getCurrentUsername() = configFactory.currentUserName
 
     fun blockContact(accountId: String) {
         viewModelScope.launch(Dispatchers.Default) {

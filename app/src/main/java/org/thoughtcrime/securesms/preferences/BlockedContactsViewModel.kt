@@ -53,7 +53,7 @@ class BlockedContactsViewModel @Inject constructor(private val storage: StorageP
         executor.launch(IO) {
             for (update in listUpdateChannel) {
                 val blockedContactState = state.copy(
-                    blockedContacts = storage.blockedContacts().sortedBy { it.name }
+                    blockedContacts = storage.blockedContacts().sortedBy { it.displayName }
                 )
                 withContext(Main) {
                     _state.value = blockedContactState
@@ -82,15 +82,15 @@ class BlockedContactsViewModel @Inject constructor(private val storage: StorageP
         return when (contactsToUnblock.size) {
             // Note: We do not have to handle 0 because if no contacts are chosen then the unblock button is deactivated
             1 -> Phrase.from(context, R.string.blockUnblockName)
-                .put(NAME_KEY, contactsToUnblock.elementAt(0).name)
+                .put(NAME_KEY, contactsToUnblock.elementAt(0).displayName)
                 .format()
             2 -> Phrase.from(context, R.string.blockUnblockNameTwo)
-                .put(NAME_KEY, contactsToUnblock.elementAt(0).name)
+                .put(NAME_KEY, contactsToUnblock.elementAt(0).displayName)
                 .format()
             else -> {
                 val othersCount = contactsToUnblock.size - 1
                 Phrase.from(context, R.string.blockUnblockNameMultiple)
-                    .put(NAME_KEY, contactsToUnblock.elementAt(0).name)
+                    .put(NAME_KEY, contactsToUnblock.elementAt(0).displayName)
                     .put(COUNT_KEY, othersCount)
                     .format()
             }

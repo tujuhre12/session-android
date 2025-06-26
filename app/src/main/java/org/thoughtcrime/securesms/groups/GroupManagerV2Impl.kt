@@ -47,6 +47,7 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.getGroup
+import org.session.libsession.utilities.recipients.BasicRecipient
 import org.session.libsession.utilities.recipients.RecipientV2
 import org.session.libsession.utilities.recipients.toUserPic
 import org.session.libsession.utilities.waitUntilGroupConfigsPushed
@@ -148,7 +149,9 @@ class GroupManagerV2Impl @Inject constructor(
             for (member in memberAsRecipients) {
                 newGroupConfigs.groupMembers.set(
                     newGroupConfigs.groupMembers.getOrConstruct(member.address.toString()).apply {
-                        setName(member.name)
+                        // Must use the contact's original name because we are setting this info
+                        // for other gorup members to see.
+                        setName((member.basic as? BasicRecipient.Contact)?.name.orEmpty())
                         setProfilePic(member.avatar?.toUserPic() ?: UserPic.DEFAULT)
                     }
                 )

@@ -59,7 +59,6 @@ import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.ProfileKeyUtil
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientV2
@@ -122,7 +121,6 @@ open class Storage @Inject constructor(
     private val messageExpirationManager: SSKEnvironment.MessageExpirationManagerProtocol,
     private val clock: SnodeClock,
     private val preferences: TextSecurePreferences,
-    private val usernameUtils: UsernameUtils,
     private val openGroupManager: Lazy<OpenGroupManager>,
     private val recipientRepository: RecipientRepository,
     private val profileUpdateHandler: ProfileUpdateHandler,
@@ -210,25 +208,19 @@ open class Storage @Inject constructor(
     }
 
     override fun getUserProfile(): Profile {
-        val displayName = usernameUtils.getCurrentUsername()
-        val profileKey = ProfileKeyUtil.getProfileKey(context)
-        val profilePictureUrl = TextSecurePreferences.getProfilePictureURL(context)
-        return Profile(displayName, profileKey, profilePictureUrl)
+        return configFactory.withUserConfigs { configs ->
+            val pic = configs.userProfile.getPic()
+            Profile(
+                displayName = configs.userProfile.getName(),
+                profilePictureURL = pic.url.takeIf { it.isNotBlank() },
+                profileKey = pic.key.data.takeIf { pic.url.isNotBlank() },
+            )
+        }
     }
 
     override fun setBlocksCommunityMessageRequests(recipient: Address, blocksMessageRequests: Boolean) {
         val db = recipientDatabase
         db.setBlocksCommunityMessageRequests(recipient, blocksMessageRequests)
-    }
-
-    override fun setUserProfilePicture(newProfilePicture: String?, newProfileKey: ByteArray?) {
-        val ourRecipient = fromSerialized(getUserPublicKey()!!)
-        preferences.setProfileKey(newProfileKey?.let { Base64.encodeBytes(it) })
-        preferences.setProfilePictureURL(newProfilePicture)
-
-        if (newProfileKey != null) {
-            JobQueue.shared.add(RetrieveProfileAvatarJob(newProfilePicture, ourRecipient, newProfileKey))
-        }
     }
 
     override fun getOrGenerateRegistrationID(): Int {
@@ -308,8 +300,8 @@ open class Storage @Inject constructor(
                 val config = configs.convoInfoVolatile
                 val convo = when {
                     // recipient closed group
-                    recipient.isLegacyGroup -> config.getOrConstructLegacyGroup(GroupUtil.doubleDecodeGroupId(recipient.address.toString()))
-                    recipient.isGroupV2 -> config.getOrConstructClosedGroup(recipient.address.toString())
+                    recipient.isLegacyGroup -> config.getOrConstructLegacyGroup(GroupUtil.doubleDecodeGroupId(recipient.toString()))
+                    recipient.isGroupV2 -> config.getOrConstructClosedGroup(recipient.toString())
                     // recipient is open group
                     recipient.isCommunity -> {
                         val openGroupJoinUrl = getOpenGroup(threadId)?.joinURL ?: return@withMutableUserConfigs
@@ -320,10 +312,10 @@ open class Storage @Inject constructor(
                     // otherwise recipient is one to one
                     recipient.isContact -> {
                         // don't process non-standard account IDs though
-                        if (IdPrefix.fromValue(recipient.address.toString()) != IdPrefix.STANDARD) return@withMutableUserConfigs
-                        config.getOrConstructOneToOne(recipient.address.toString())
+                        if (IdPrefix.fromValue(recipient.toString()) != IdPrefix.STANDARD) return@withMutableUserConfigs
+                        config.getOrConstructOneToOne(recipient.toString())
                     }
-                    else -> throw NullPointerException("Weren't expecting to have a convo with address ${recipient.address.toString()}")
+                    else -> throw NullPointerException("Weren't expecting to have a convo with address ${recipient.toString()}")
                 }
                 convo.lastRead = lastSeenTime
                 if (convo.unread) {
@@ -526,25 +518,6 @@ open class Storage @Inject constructor(
 
     override fun isCheckingCommunityRequests(): Boolean {
         return configFactory.withUserConfigs { it.userProfile.getCommunityMessageRequests() }
-    }
-
-    override fun clearUserPic(clearConfig: Boolean) {
-        val userPublicKey = getUserPublicKey() ?: return Log.w(TAG, "No user public key when trying to clear user pic")
-        val recipient = fromSerialized(userPublicKey)
-
-        // Clear details related to the user's profile picture
-        preferences.setProfileKey(null)
-        ProfileKeyUtil.setEncodedProfileKey(context, null)
-        recipientDatabase.setProfileAvatar(recipient, null)
-        preferences.setProfileAvatarId(0)
-        preferences.setProfilePictureURL(null)
-
-        Recipient.removeCached(fromSerialized(userPublicKey)) // ACL HERE?!?!?!
-        if (clearConfig) {
-            configFactory.withMutableUserConfigs {
-                it.userProfile.setPic(UserPic.DEFAULT)
-            }
-        }
     }
 
     override fun setAuthToken(room: String, server: String, newValue: String) {

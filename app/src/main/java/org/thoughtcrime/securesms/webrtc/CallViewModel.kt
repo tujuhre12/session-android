@@ -14,8 +14,9 @@ import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.stateIn
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.UsernameUtils
-import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsession.utilities.currentUserName
+import org.session.libsession.utilities.recipients.displayNameOrFallback
 import org.thoughtcrime.securesms.conversation.v2.ViewUtil
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_ANSWER_INCOMING
@@ -39,8 +40,8 @@ class CallViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val callManager: CallManager,
     private val rtcCallBridge: WebRtcCallBridge,
-    private val usernameUtils: UsernameUtils,
     private val recipientRepository: RecipientRepository,
+    private val configFactory: ConfigFactoryProtocol,
 ): ViewModel() {
 
     //todo PHONE Can we eventually remove this state and instead use the StateMachine.kt State?
@@ -201,9 +202,11 @@ class CallViewModel @Inject constructor(
 
     fun hangUp() = rtcCallBridge.handleLocalHangup(null)
 
-    fun getContactName(accountID: String) = usernameUtils.getContactNameWithAccountID(accountID)
+    fun getContactName(accountID: String) =
+        recipientRepository.getRecipientSync(Address.fromSerialized(accountID))
+            .displayNameOrFallback(address = accountID)
 
-    fun getCurrentUsername() = usernameUtils.getCurrentUsernameWithAccountIdFallback()
+    fun getCurrentUsername() = configFactory.currentUserName
 
     data class CallState(
         val callLabelTitle: String?,

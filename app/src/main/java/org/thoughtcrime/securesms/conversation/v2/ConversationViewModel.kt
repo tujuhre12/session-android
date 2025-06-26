@@ -46,10 +46,10 @@ import org.session.libsession.utilities.ExpirationUtil
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.RecipientV2
+import org.session.libsession.utilities.recipients.displayNameOrFallback
 import org.session.libsession.utilities.recipients.getType
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Hex
@@ -104,7 +104,6 @@ class ConversationViewModel @AssistedInject constructor(
     val legacyGroupDeprecationManager: LegacyGroupDeprecationManager,
     val dateUtils: DateUtils,
     private val expiredGroupManager: ExpiredGroupManager,
-    private val usernameUtils: UsernameUtils,
     private val avatarUtils: AvatarUtils,
     private val recipientChangeSource: RecipientChangeSource,
     private val openGroupManager: OpenGroupManager,
@@ -484,7 +483,7 @@ class ConversationViewModel @AssistedInject constructor(
             // calculate the main app bar data
             val avatarData = avatarUtils.getUIDataFromRecipient(conversation)
             _appBarData.value = ConversationAppBarData(
-                title = conversation.takeUnless { it?.isLocalNumber == true }?.name ?: application.getString(R.string.noteToSelf),
+                title = conversation.takeUnless { it?.isLocalNumber == true }?.displayName ?: application.getString(R.string.noteToSelf),
                 pagerData = pagerData,
                 showCall = conversation?.showCallMenu ?: false,
                 showAvatar = showOptionsMenu,
@@ -1259,7 +1258,9 @@ class ConversationViewModel @AssistedInject constructor(
         }
     }
 
-    fun getUsername(accountId: String) = usernameUtils.getContactNameWithAccountID(accountId)
+    fun getUsername(accountId: String) = recipientRepository
+        .getRecipientSync(fromSerialized(accountId))
+        .displayNameOrFallback(address = accountId)
 
     fun onSearchOpened(){
         _appBarData.update { _appBarData.value.copy(showSearch = true) }

@@ -20,6 +20,7 @@ import network.loki.messenger.R
 import network.loki.messenger.databinding.FragmentUserDetailsBottomSheetBinding
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.recipients.BasicRecipient
 import org.session.libsession.utilities.recipients.RecipientV2
 import org.session.libsession.utilities.upsertContact
 import org.session.libsignal.utilities.AccountId
@@ -89,11 +90,9 @@ class UserDetailsBottomSheet: BottomSheetDialogFragment() {
                     else -> return@setOnEditorActionListener false
                 }
             }
-            nameTextView.text = recipient.name
+            nameTextView.text = recipient.displayName
 
-            nameEditIcon.isVisible = recipient.isContactRecipient
-                    && !threadRecipient.isCommunityInboxRecipient
-                    && !threadRecipient.isCommunityOutboxRecipient
+            nameEditIcon.isVisible = recipient.basic is BasicRecipient.Contact
 
             publicKeyTextView.isVisible = !threadRecipient.isCommunityRecipient
                     && !threadRecipient.isCommunityInboxRecipient
@@ -149,7 +148,7 @@ class UserDetailsBottomSheet: BottomSheetDialogFragment() {
             }
         }
 
-        nameTextView.text = recipient.name
+        nameTextView.text = newNickName
 
         (parentFragment as? UserDetailsBottomSheetCallback)
             ?: (requireActivity() as? UserDetailsBottomSheetCallback)?.onNicknameSaved()

@@ -22,6 +22,7 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ProfileKeyUtil
 import org.session.libsession.utilities.ProfilePictureUtilities
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.currentUserName
 import org.session.libsignal.utilities.ExternalStorageUtil.getImageDir
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.NoExternalStorageException
@@ -93,9 +94,9 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun getDisplayName(): String = usernameUtils.getCurrentUsernameWithAccountIdFallback()
+    fun getDisplayName(): String = configFactory.currentUserName
 
-    fun hasAvatar() = prefs.getProfileAvatarId() != 0
+    fun hasAvatar() = configFactory.withUserConfigs { it.userProfile.getPic().url.isNotBlank() }
 
     fun createTempFile(): File? {
         try {
@@ -210,12 +211,13 @@ class SettingsViewModel @Inject constructor(
 
                 // When removing the profile picture the supplied ByteArray is empty so we'll clear the local data
                 if (profilePicture.isEmpty()) {
-                    MessagingModuleConfiguration.shared.storage.clearUserPic()
+                    configFactory.withMutableUserConfigs {
+                        it.userProfile.setPic(UserPic.DEFAULT)
+                    }
 
                     // update dialog state
                     _avatarDialogState.value = AvatarDialogState.NoAvatar
                 } else {
-                    prefs.setProfileAvatarId(SECURE_RANDOM.nextInt())
                     ProfileKeyUtil.setEncodedProfileKey(context, encodedProfileKey)
 
                     // Attempt to grab the details we require to update the profile picture
@@ -247,7 +249,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun updateName(displayName: String) {
-        usernameUtils.saveCurrentUserName(displayName)
+        configFactory.withMutableUserConfigs { it.userProfile.setName(displayName) }
     }
 
     fun permanentlyHidePassword() {

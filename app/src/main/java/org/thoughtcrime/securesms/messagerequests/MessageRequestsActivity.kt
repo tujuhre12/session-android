@@ -97,7 +97,7 @@ class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClick
         showSessionDialog {
             title(R.string.block)
             text(Phrase.from(context, R.string.blockDescription)
-                .put(NAME_KEY, thread.recipient.name)
+                .put(NAME_KEY, thread.recipient.displayName)
                 .format())
             dangerButton(R.string.block, R.string.AccessibilityId_blockConfirm) {
                 doBlock()

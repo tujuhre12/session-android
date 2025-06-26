@@ -4,79 +4,163 @@ import network.loki.messenger.libsession_util.util.Bytes
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.recipients.RecipientAvatar.EncryptedRemotePic
-import org.session.libsession.utilities.recipients.RecipientAvatar.Inline
+import org.session.libsession.utilities.truncateIdForDisplay
 import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.model.NotifyType
 import java.time.ZonedDateTime
 
 data class RecipientV2(
-    val isLocalNumber: Boolean,
-    val address: Address,
-    val nickname: String?,
-    val name: String,
-    val approved: Boolean,
-    val approvedMe: Boolean,
-    val blocked: Boolean,
+    val basic: BasicRecipient,
     val mutedUntil: ZonedDateTime?,
     val autoDownloadAttachments: Boolean?,
     @get:NotifyType
     val notifyType: Int,
-    val avatar: RecipientAvatar?,
-    val expiryMode: ExpiryMode,
     val acceptsCommunityMessageRequests: Boolean,
+    val notificationChannel: String? = null,
 ) {
-    val isGroupOrCommunityRecipient: Boolean get() = address.isGroupOrCommunity
-    val isCommunityRecipient: Boolean get() = address.isCommunity
-    val isCommunityInboxRecipient: Boolean get() = address.isCommunityInbox
-    val isCommunityOutboxRecipient: Boolean get() = address.isCommunityOutbox
-    val isGroupV2Recipient: Boolean get() = address.isGroupV2
-    val isLegacyGroupRecipient: Boolean get() = address.isLegacyGroup
-    val isContactRecipient: Boolean get() = address.isContact
-    val is1on1: Boolean get() = !isLocalNumber && address.isContact
-    val isGroupRecipient: Boolean get() = address.isGroup
+    val isLocalNumber: Boolean get() = basic.isLocalNumber
+    val address: Address get() = basic.address
+    val avatar: RecipientAvatar? get() = basic.avatar
 
-    val displayName: String
-        get() = nickname?.takeIf { it.isNotBlank() } ?: name
+    val isGroupOrCommunityRecipient: Boolean get() = basic.isGroupOrCommunityRecipient
+    val isCommunityRecipient: Boolean get() = basic.isCommunityRecipient
+    val isCommunityInboxRecipient: Boolean get() = basic.isCommunityInboxRecipient
+    val isCommunityOutboxRecipient: Boolean get() = basic.isCommunityOutboxRecipient
+    val isGroupV2Recipient: Boolean get() = basic.isGroupV2Recipient
+    val isLegacyGroupRecipient: Boolean get() = basic.isLegacyGroupRecipient
+    val isContactRecipient: Boolean get() = basic.isContactRecipient
+    val is1on1: Boolean get() = basic.is1on1
+    val isGroupRecipient: Boolean get() = basic.isGroupRecipient
+
+    val displayName: String get() = basic.displayName
+    val expiryMode: ExpiryMode get() = when (basic) {
+        is BasicRecipient.Self -> basic.expiryMode
+        is BasicRecipient.Contact -> basic.expiryMode
+        is BasicRecipient.Group -> basic.expiryMode
+        else -> ExpiryMode.NONE
+    }
+
+    val approved: Boolean get() = (basic as? BasicRecipient.Contact)?.approved ?: true
+    val approvedMe: Boolean get() = (basic as? BasicRecipient.Contact)?.approvedMe ?: true
+    val blocked: Boolean get() = when (basic) {
+        is BasicRecipient.Generic -> basic.blocked
+        is BasicRecipient.Contact -> basic.blocked
+        else -> false
+    }
 
     fun isMuted(now: ZonedDateTime = ZonedDateTime.now()): Boolean {
         return mutedUntil?.isAfter(now) == true
     }
 
     val showCallMenu: Boolean
-        get() = !isGroupOrCommunityRecipient && approvedMe && approved;
+        get() = !isGroupOrCommunityRecipient && approvedMe && approved
 
     val mutedUntilMills: Long?
         get() = mutedUntil?.toInstant()?.toEpochMilli()
 
     @Deprecated("Use `avatar` property instead", ReplaceWith("avatar"))
     val profileAvatar: String?
-        get() = (avatar as? EncryptedRemotePic)?.url
+        get() = (avatar as? RecipientAvatar.EncryptedRemotePic)?.url
 
     @Deprecated("Use `avatar` property instead", ReplaceWith("avatar?.toUserPic()"))
     val profileKey: ByteArray?
-        get() = (avatar as? EncryptedRemotePic)?.key?.data
+        get() = (avatar as? RecipientAvatar.EncryptedRemotePic)?.key?.data
 
     companion object {
         fun empty(address: Address): RecipientV2 {
             return RecipientV2(
-                isLocalNumber = false,
-                address = address,
-                nickname = null,
-                name = "",
-                approved = false,
-                approvedMe = false,
-                blocked = false,
+                basic = BasicRecipient.Generic(address),
                 mutedUntil = null,
                 autoDownloadAttachments = true,
                 notifyType = RecipientDatabase.NOTIFY_TYPE_ALL,
-                avatar = null,
-                expiryMode = ExpiryMode.NONE,
                 acceptsCommunityMessageRequests = false,
             )
         }
     }
 }
+
+sealed interface BasicRecipient {
+    val address: Address
+    val isLocalNumber: Boolean
+    val displayName: String
+    val avatar: RecipientAvatar?
+
+    /**
+     * A recipient that is backed by the config system.
+     */
+    sealed interface ConfigBasedRecipient : BasicRecipient
+
+    data class Generic(
+        override val address: Address,
+        override val displayName: String = "",
+        override val avatar: RecipientAvatar? = null,
+        override val isLocalNumber: Boolean = false,
+        val blocked: Boolean = false,
+    ) : BasicRecipient
+
+    /**
+     * Yourself.
+     */
+    data class Self(
+        val name: String,
+        override val address: Address,
+        override val avatar: RecipientAvatar.EncryptedRemotePic?,
+        val expiryMode: ExpiryMode,
+        val acceptsCommunityMessageRequests: Boolean,
+    ) : ConfigBasedRecipient {
+        override val displayName: String
+            get() = name
+
+        override val isLocalNumber: Boolean
+            get() = true
+    }
+
+    /**
+     * A recipient that is your **real** contact.
+     */
+    data class Contact(
+        override val address: Address,
+        val name: String,
+        val nickname: String?,
+        override val avatar: RecipientAvatar.EncryptedRemotePic?,
+        val approved: Boolean,
+        val approvedMe: Boolean,
+        val blocked: Boolean,
+        val expiryMode: ExpiryMode
+    ) : ConfigBasedRecipient {
+        override val displayName: String
+            get() = nickname?.takeIf { it.isNotBlank() } ?: name
+
+        override val isLocalNumber: Boolean
+            get() = false
+    }
+
+    /**
+     * A recipient that is a groupv2.
+     */
+    data class Group(
+        override val address: Address,
+        val name: String,
+        override val avatar: RecipientAvatar.EncryptedRemotePic?,
+        val expiryMode: ExpiryMode,
+    ) : ConfigBasedRecipient {
+        override val displayName: String
+            get() = name
+
+        override val isLocalNumber: Boolean
+            get() = false
+    }
+}
+
+val BasicRecipient.isGroupOrCommunityRecipient: Boolean get() = address.isGroupOrCommunity
+val BasicRecipient.isCommunityRecipient: Boolean get() = address.isCommunity
+val BasicRecipient.isCommunityInboxRecipient: Boolean get() = address.isCommunityInbox
+val BasicRecipient.isCommunityOutboxRecipient: Boolean get() = address.isCommunityOutbox
+val BasicRecipient.isGroupV2Recipient: Boolean get() = address.isGroupV2
+val BasicRecipient.isLegacyGroupRecipient: Boolean get() = address.isLegacyGroup
+val BasicRecipient.isContactRecipient: Boolean get() = address.isContact
+val BasicRecipient.is1on1: Boolean get() = !isLocalNumber && address.isContact
+val BasicRecipient.isGroupRecipient: Boolean get() = address.isGroup
 
 
 sealed interface RecipientAvatar {
@@ -84,7 +168,7 @@ sealed interface RecipientAvatar {
     data class Inline(val bytes: Bytes) : RecipientAvatar
 
     companion object {
-        fun UserPic.toRecipientAvatar(): RecipientAvatar? {
+        fun UserPic.toRecipientAvatar(): RecipientAvatar.EncryptedRemotePic? {
             return when {
                 url.isBlank() -> null
                 else ->  EncryptedRemotePic(
@@ -114,7 +198,13 @@ sealed interface RecipientAvatar {
 
 fun RecipientAvatar.toUserPic(): UserPic? {
     return when (this) {
-        is EncryptedRemotePic -> UserPic(url, key)
-        is Inline -> null
+        is RecipientAvatar.EncryptedRemotePic -> UserPic(url, key)
+        is RecipientAvatar.Inline -> null
     }
+}
+
+inline fun RecipientV2?.displayNameOrFallback(fallbackName: () -> String? = { null }, address: String): String {
+    return this?.displayName
+        ?: fallbackName()?.takeIf { it.isNotBlank() }
+        ?: truncateIdForDisplay(address)
 }

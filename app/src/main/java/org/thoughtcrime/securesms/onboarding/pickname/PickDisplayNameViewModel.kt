@@ -16,12 +16,14 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.messaging.messages.ProfileUpdateHandler
+import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
 
 @HiltViewModel(assistedFactory = PickDisplayNameViewModel.Factory::class)
 class PickDisplayNameViewModel @AssistedInject constructor(
     @Assisted private val loadFailed: Boolean,
     private val prefs: TextSecurePreferences,
+    private val configFactory: ConfigFactoryProtocol,
 ): ViewModel() {
     private val isCreateAccount = !loadFailed
 
@@ -46,8 +48,10 @@ class PickDisplayNameViewModel @AssistedInject constructor(
 
                 viewModelScope.launch(Dispatchers.IO) {
                     if (loadFailed) {
-                        prefs.setProfileName(displayName)
-                        usernameUtils.saveCurrentUserName(displayName)
+                        configFactory.withMutableUserConfigs {
+                            it.userProfile.setName(displayName)
+                        }
+
                         _events.emit(Event.LoadAccountComplete)
                     } else _events.emit(Event.CreateAccount(displayName))
                 }

@@ -41,7 +41,6 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ThemeUtil.getThemedColor
-import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.ViewUtil
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.modifyLayoutParams
@@ -87,7 +86,6 @@ class VisibleMessageView : FrameLayout {
     @Inject lateinit var mmsDb: MmsDatabase
     @Inject lateinit var dateUtils: DateUtils
     @Inject lateinit var configFactory: ConfigFactoryProtocol
-    @Inject lateinit var usernameUtils: UsernameUtils
     @Inject lateinit var openGroupManager: OpenGroupManager
     @Inject lateinit var recipientRepository: RecipientRepository
 
@@ -257,12 +255,7 @@ class VisibleMessageView : FrameLayout {
         binding.senderNameTextView.isVisible = !message.isOutgoing && (isStartOfMessageCluster && (isGroupThread || snIsSelected))
         val contactContext =
             if (thread.isCommunityRecipient) ContactContext.OPEN_GROUP else ContactContext.REGULAR
-        binding.senderNameTextView.text = usernameUtils.getContactNameWithAccountID(
-            contact = contact,
-            accountID = senderAccountID,
-            contactContext = contactContext,
-            groupId = groupId
-        )
+        binding.senderNameTextView.text = recipientRepository.getRecipientDisplayNameSync(Address.fromSerialized(senderAccountID))
 
         // Unread marker
         val shouldShowUnreadMarker = lastSeen != -1L && message.timestamp > lastSeen && (previous == null || previous.timestamp <= lastSeen) && !message.isOutgoing

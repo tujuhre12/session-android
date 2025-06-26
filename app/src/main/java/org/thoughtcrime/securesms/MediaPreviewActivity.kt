@@ -65,16 +65,14 @@ import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAt
 import org.session.libsession.snode.SnodeAPI.nowWithOffset
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
-import org.session.libsession.utilities.Util.runOnMain
 import org.session.libsession.utilities.getColorFromAttr
-import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsession.utilities.recipients.RecipientModifiedListener
 import org.session.libsession.utilities.recipients.RecipientV2
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ShareActivity
 import org.thoughtcrime.securesms.components.MediaView
 import org.thoughtcrime.securesms.components.dialogs.DeleteMediaPreviewDialog
 import org.thoughtcrime.securesms.database.MediaDatabase.MediaRecord
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.loaders.PagingMediaLoader
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.media.MediaOverviewActivity
@@ -120,6 +118,9 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
 
     @Inject
     lateinit var dateUtils: DateUtils
+
+    @Inject
+    lateinit var recipientRepository: RecipientRepository
 
     override val applyDefaultWindowInsets: Boolean
         get() = false
@@ -274,7 +275,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
 
             if (mediaItem.outgoing) supportActionBar?.title = getString(R.string.you)
             else if (mediaItem.recipient != null) supportActionBar?.title =
-                mediaItem.recipient.name
+                mediaItem.recipient.displayName
             else supportActionBar?.title = ""
 
             supportActionBar?.subtitle = relativeTimeSpan
@@ -643,7 +644,6 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
 
             try {
                 val item = adapter!!.getMediaItemFor(position)
-                if (item.recipient != null) item.recipient.addListener(this@MediaPreviewActivity)
                 viewModel.setActiveAlbumRailItem(this@MediaPreviewActivity, position)
                 updateActionBar()
             } catch (e: Exception){
@@ -657,7 +657,6 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
 
             try {
                 val item = adapter!!.getMediaItemFor(position)
-                if (item.recipient != null) item.recipient.removeListener(this@MediaPreviewActivity)
             } catch (e: CursorIndexOutOfBoundsException) {
                 throw RuntimeException("position = $position leftIsRecent = $leftIsRecent", e)
             } catch (e: Exception){
@@ -679,8 +678,9 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
         }
     }
 
-    private class CursorPagerAdapter(
-        context: Context, private val glideRequests: RequestManager,
+    private inner class CursorPagerAdapter(
+        context: Context,
+        private val glideRequests: RequestManager,
         private val window: Window, private val cursor: Cursor, private var autoPlayPosition: Int,
         private val leftIsRecent: Boolean
     ) : MediaItemAdapter() {
@@ -742,7 +742,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
             if (mediaRecord.attachment.dataUri == null) throw AssertionError()
 
             return MediaItem(
-                if (address != null) Recipient.from(context, address, true) else null,
+                address?.let(recipientRepository::getRecipientSync),
                 mediaRecord.attachment,
                 mediaRecord.attachment.dataUri!!,
                 mediaRecord.contentType,
@@ -809,7 +809,8 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
         fun getPreviewIntent(context: Context?, args: MediaPreviewArgs): Intent? {
             return getPreviewIntent(
                 context, args.slide,
-                args.mmsRecord, args.thread.address
+                args.mmsRecord,
+                args.thread
             )
         }
 

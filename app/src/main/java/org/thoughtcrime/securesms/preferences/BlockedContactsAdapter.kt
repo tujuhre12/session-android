@@ -48,7 +48,7 @@ class BlockedContactsAdapter(val viewModel: BlockedContactsViewModel) : ListAdap
         val binding = BlockedContactLayoutBinding.bind(itemView)
 
         fun bind(selectable: SelectableRecipient, toggle: (SelectableRecipient) -> Unit) {
-            binding.recipientName.text = selectable.item.name
+            binding.recipientName.text = selectable.item.displayName
             with (binding.profilePictureView) {
                 update(selectable.item)
             }

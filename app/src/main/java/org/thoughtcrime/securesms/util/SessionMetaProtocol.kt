@@ -34,7 +34,7 @@ object SessionMetaProtocol {
     }
 
     @JvmStatic
-    fun canUserReplyToNotification(recipient: Recipient): Boolean {
+    fun canUserReplyToNotification(recipient: RecipientV2): Boolean {
         // TODO return !recipient.address.isRSSFeed
         return true
     }
@@ -48,10 +48,6 @@ object SessionMetaProtocol {
         return hasBody || hasAttachment || hasLinkPreview
     }
 
-    @JvmStatic
-    fun shouldSendReadReceipt(recipient: RecipientV2): Boolean {
-        return !recipient.isGroupOrCommunityRecipient && recipient.approved && !recipient.blocked
-    }
 
     @JvmStatic
     fun shouldSendTypingIndicator(recipient: RecipientV2): Boolean {

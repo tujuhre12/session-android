@@ -48,8 +48,7 @@ interface StorageProtocol {
     fun getUserBlindedAccountId(serverPublicKey: String): AccountId?
     fun getUserProfile(): Profile
     fun setBlocksCommunityMessageRequests(recipient: Address, blocksMessageRequests: Boolean)
-    fun setUserProfilePicture(newProfilePicture: String?, newProfileKey: ByteArray?)
-    fun clearUserPic(clearConfig: Boolean = true)
+
     // Signal
     fun getOrGenerateRegistrationID(): Int
 

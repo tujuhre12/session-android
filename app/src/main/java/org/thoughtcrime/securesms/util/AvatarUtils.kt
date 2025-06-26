@@ -25,7 +25,6 @@ import org.session.libsession.avatars.ContactPhoto
 import org.session.libsession.avatars.ProfileContactPhoto
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientV2
 import org.session.libsignal.utilities.IdPrefix
@@ -40,7 +39,6 @@ import javax.inject.Singleton
 @Singleton
 class AvatarUtils @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val usernameUtils: UsernameUtils,
     private val groupDatabase: GroupDatabase, // for legacy groups
     private val storage: Lazy<StorageProtocol>,
     private val recipientRepository: RecipientRepository,
@@ -132,10 +130,9 @@ class AvatarUtils @Inject constructor(
         }
     }
 
-    private fun getUIElementForRecipient(recipient: Recipient): AvatarUIElement {
+    private fun getUIElementForRecipient(recipient: RecipientV2): AvatarUIElement {
         // name
-        val name = if(recipient.isLocalNumber) usernameUtils.getCurrentUsernameWithAccountIdFallback()
-        else recipient.name
+        val name = recipient.displayName
 
         val defaultColor = Color(getColorFromKey(recipient.address.toString()))
 

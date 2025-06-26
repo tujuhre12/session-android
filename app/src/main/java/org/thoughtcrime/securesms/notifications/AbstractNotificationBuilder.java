@@ -14,7 +14,8 @@ import androidx.core.app.NotificationCompat;
 import org.session.libsession.utilities.NotificationPrivacyPreference;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.Util;
-import org.session.libsession.utilities.recipients.Recipient;
+import org.session.libsession.utilities.recipients.RecipientV2;
+import org.session.libsession.utilities.recipients.RecipientV2;
 
 import network.loki.messenger.R;
 
@@ -39,9 +40,9 @@ public abstract class AbstractNotificationBuilder extends NotificationCompat.Bui
     setLed();
   }
 
-  protected CharSequence getStyledMessage(@NonNull Recipient recipient, @Nullable CharSequence message) {
+  protected CharSequence getStyledMessage(@NonNull RecipientV2 recipient, @Nullable CharSequence message) {
     SpannableStringBuilder builder = new SpannableStringBuilder();
-    builder.append(Util.getBoldedString(recipient.getName()));
+    builder.append(Util.getBoldedString(recipient.getDisplayName()));
     builder.append(": ");
     builder.append(message == null ? "" : message);
 
@@ -61,7 +62,7 @@ public abstract class AbstractNotificationBuilder extends NotificationCompat.Bui
     setLights(ledColor, 500,2000);
   }
 
-  public void setTicker(@NonNull Recipient recipient, @Nullable CharSequence message) {
+  public void setTicker(@NonNull RecipientV2 recipient, @Nullable CharSequence message) {
     if (privacy.isDisplayMessage()) {
       setTicker(getStyledMessage(recipient, trimToDisplayLength(message)));
     } else if (privacy.isDisplayContact()) {
