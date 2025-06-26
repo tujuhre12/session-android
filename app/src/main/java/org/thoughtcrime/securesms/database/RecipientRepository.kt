@@ -275,6 +275,10 @@ class RecipientRepository @Inject constructor(
         return getRecipientSync(address) ?: empty(address)
     }
 
+    suspend fun getRecipientOrEmpty(address: Address): RecipientV2 {
+        return getRecipient(address) ?: empty(address)
+    }
+
     companion object {
         private const val TAG = "RecipientRepository"
 

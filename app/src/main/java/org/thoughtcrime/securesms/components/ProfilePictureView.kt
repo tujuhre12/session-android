@@ -14,6 +14,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewProfilePictureBinding
 import org.session.libsession.avatars.ContactColors
+import org.session.libsession.avatars.ContactPhoto
 import org.session.libsession.avatars.PlaceholderAvatarPhoto
 import org.session.libsession.avatars.ProfileContactPhoto
 import org.session.libsession.avatars.ResourceContactPhoto
@@ -196,7 +197,7 @@ class ProfilePictureView @JvmOverloads constructor(
             if (profilePicturesCache[imageView] == recipient) return
             // recipient is mutable so without cloning it the line above always returns true as the changes to the underlying recipient happens on both shared instances
             profilePicturesCache[imageView] = recipient
-            val signalProfilePicture = recipient.contactPhoto
+            val signalProfilePicture: ContactPhoto? = null
             val avatar = (signalProfilePicture as? ProfileContactPhoto)?.avatarObject
 
             glide.clear(imageView)
@@ -218,7 +219,7 @@ class ProfilePictureView @JvmOverloads constructor(
                 glide.load(createUnknownRecipientDrawable(publicKey))
                     .centerCrop()
                     .into(imageView)
-            } else if (recipient.isCommunityRecipient && recipient.groupAvatarId == null) {
+            } else if (recipient.isCommunityRecipient && avatar == null) {
                 glide.load(unknownOpenGroupDrawable)
                     .centerCrop()
                     .into(imageView)

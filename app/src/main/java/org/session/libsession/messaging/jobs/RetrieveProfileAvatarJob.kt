@@ -72,7 +72,7 @@ class RetrieveProfileAvatarJob(
             }
 
             AvatarHelper.delete(context, recipientAddress)
-            storage.setProfilePicture(recipientAddress, null, null)
+//            storage.setProfilePicture(recipientAddress, null, null)
             return
         }
 
@@ -95,7 +95,7 @@ class RetrieveProfileAvatarJob(
                 setProfilePictureURL(context, profileAvatar)
             }
 
-            storage.setProfilePicture(recipientAddress, profileAvatar, profileKey)
+//            storage.setProfilePicture(recipientAddress, profileAvatar, profileKey)
         }
         catch (e: NonRetryableException){
             Log.e("Loki", "Failed to download profile avatar from non-retryable error", e)

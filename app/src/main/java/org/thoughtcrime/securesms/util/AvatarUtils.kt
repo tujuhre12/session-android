@@ -94,11 +94,7 @@ class AvatarUtils @Inject constructor(
                             // and the second should be the unknown icon with a colour based on the group id
                             elements.add(
                                 getUIElementForRecipient(
-                                    Recipient.from(
-                                        context, Address.fromSerialized(
-                                            members[0].toString()
-                                        ), false
-                                    )
+                                    recipientRepository.getRecipientOrEmpty(Address.fromSerialized(members[0].toString()))
                                 )
                             )
 
@@ -112,9 +108,7 @@ class AvatarUtils @Inject constructor(
                         else -> {
                             members.forEach {
                                 elements.add(
-                                    getUIElementForRecipient(
-                                        Recipient.from(context, it, false)
-                                    )
+                                    getUIElementForRecipient(recipientRepository.getRecipientOrEmpty(it))
                                 )
                             }
                         }
@@ -139,7 +133,7 @@ class AvatarUtils @Inject constructor(
         // custom image
         val (contactPhoto, customIcon, color) = when {
             // use custom image if there is one
-            hasAvatar(recipient.contactPhoto) -> Triple(recipient.contactPhoto, null, defaultColor)
+            hasAvatar(recipient.avatar as? ContactPhoto) -> Triple(recipient.avatar as? ContactPhoto, null, defaultColor)
 
             // communities without a custom image should use a default image
             recipient.isCommunityRecipient -> Triple(null, R.drawable.session_logo, null)
