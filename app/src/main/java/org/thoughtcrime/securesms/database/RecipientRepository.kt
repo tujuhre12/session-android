@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.ReadableGroupInfoConfig
+import network.loki.messenger.libsession_util.ReadableUserProfile
 import network.loki.messenger.libsession_util.util.Contact
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
@@ -74,32 +75,24 @@ class RecipientRepository @Inject constructor(
         return flow {
             while (true) {
                 val (value, changeSource) = fetchRecipient(address)
-                    ?: run {
-                        // In this case, we won't be able to fetch the recipient forever, so we
-                        // will emit null and stop the flow.
-                        emit(null)
-                        return@flow
-                    }
-
                 emit(value)
                 changeSource.first()
                 Log.d(TAG, "Recipient changed for ${address.address.substring(0..10)}")
             }
 
-        }.shareIn(GlobalScope, SharingStarted.WhileSubscribed(), replay = 1)
+        }.shareIn(GlobalScope,
+            // replay must be cleared one when no one is subscribed, so that if no one is subscribed,
+            // we will always fetch the latest data. The cache is only valid while there is at least one subscriber.
+            SharingStarted.WhileSubscribed(replayExpirationMillis = 0L), replay = 1)
     }
 
-    private suspend fun fetchRecipient(address: Address): Pair<RecipientV2?, Flow<*>>? {
+    private suspend fun fetchRecipient(address: Address): Pair<RecipientV2?, Flow<*>> {
         val myAddress by lazy { preferences.getLocalNumber()?.let(Address::fromSerialized) }
 
         // Short-circuit for our own address.
         if (address.isContact && address == myAddress) {
             return configFactory.withUserConfigs {
-                createLocalRecipient(
-                    address,
-                    it.userProfile.getName().orEmpty(),
-                    it.userProfile.getPic()
-                )
+                createLocalRecipient(address, it.userProfile)
             } to configFactory.userConfigsChanged()
         }
 
@@ -196,23 +189,36 @@ class RecipientRepository @Inject constructor(
         return runBlocking { flow.first() }
     }
 
+    /**
+     * Returns a recipient for the given address, or an empty recipient if not found.
+     * This is useful to avoid null checks in the UI.
+     */
+    @Deprecated(
+        "Use the suspend version of getRecipient instead",
+        ReplaceWith("getRecipient(address)")
+    )
+    fun getRecipientSyncOrEmpty(address: Address): RecipientV2 {
+        return getRecipientSync(address) ?: empty(address)
+    }
+
     companion object {
         private const val TAG = "RecipientRepository"
 
-        private fun createLocalRecipient(address: Address, name: String, avatar: UserPic?): RecipientV2 {
+        private fun createLocalRecipient(address: Address, config: ReadableUserProfile): RecipientV2 {
             return RecipientV2(
                 isLocalNumber = true,
                 address = address,
-                name = name,
+                name = config.getName().orEmpty(),
                 approved = true,
                 approvedMe = true,
                 blocked = false,
                 mutedUntil = null,
                 autoDownloadAttachments = true,
                 notifyType = RecipientDatabase.NOTIFY_TYPE_ALL,
-                avatar = avatar?.toRecipientAvatar(),
+                avatar = config.getPic().toRecipientAvatar(),
                 nickname = null,
-                expiryMode = ExpiryMode.NONE,
+                expiryMode = config.getNtsExpiry(),
+                acceptsCommunityMessageRequests = config.getCommunityMessageRequests(),
             )
         }
 
@@ -238,8 +244,6 @@ class RecipientRepository @Inject constructor(
             groupInfo: ReadableGroupInfoConfig,
             settings: RecipientSettings?
         ): RecipientV2 {
-            val timer = groupInfo.getExpiryTimer()
-
             return RecipientV2(
                 name = groupInfo.getName() ?: group.name,
                 address = address,
@@ -253,6 +257,7 @@ class RecipientRepository @Inject constructor(
                 notifyType = settings?.notifyType ?: RecipientDatabase.NOTIFY_TYPE_ALL,
                 autoDownloadAttachments = settings?.autoDownloadAttachments,
                 expiryMode = groupInfo.expiryMode,
+                acceptsCommunityMessageRequests = false,
             )
 
         }
@@ -262,8 +267,8 @@ class RecipientRepository @Inject constructor(
          */
         private fun createContactRecipient(
             address: Address,
-            contactInConfig: Contact,
-            fallbackSettings: RecipientSettings?
+            contactInConfig: Contact, // Config data
+            fallbackSettings: RecipientSettings?, // Local db data
         ): RecipientV2 {
             return RecipientV2(
                 isLocalNumber = false,
@@ -279,13 +284,14 @@ class RecipientRepository @Inject constructor(
                 notifyType = fallbackSettings?.notifyType
                     ?: RecipientDatabase.NOTIFY_TYPE_ALL,
                 expiryMode = contactInConfig.expiryMode,
+                acceptsCommunityMessageRequests = fallbackSettings?.blocksCommunityMessageRequests != true
             )
         }
 
         private fun createCommunityOrLegacyGroupRecipient(
             address: Address,
-            group: GroupRecord,
-            settings: RecipientSettings?
+            group: GroupRecord, // Local db data
+            settings: RecipientSettings?, // Local db data
         ): RecipientV2 {
             return RecipientV2(
                 isLocalNumber = false,
@@ -300,6 +306,7 @@ class RecipientRepository @Inject constructor(
                 autoDownloadAttachments = settings?.autoDownloadAttachments,
                 notifyType = settings?.notifyType ?: RecipientDatabase.NOTIFY_TYPE_ALL,
                 expiryMode = ExpiryMode.NONE,
+                acceptsCommunityMessageRequests = false,
             )
         }
 
@@ -322,6 +329,7 @@ class RecipientRepository @Inject constructor(
                 autoDownloadAttachments = settings.autoDownloadAttachments,
                 notifyType = settings.notifyType,
                 expiryMode = ExpiryMode.NONE, // A generic recipient does not have an expiry mode
+                acceptsCommunityMessageRequests = !settings.blocksCommunityMessageRequests
             )
         }
 
@@ -339,6 +347,7 @@ class RecipientRepository @Inject constructor(
                 notifyType = RecipientDatabase.NOTIFY_TYPE_ALL,
                 avatar = null,
                 expiryMode = ExpiryMode.NONE,
+                acceptsCommunityMessageRequests = false,
             )
         }
     }

@@ -567,13 +567,13 @@ class HomeActivity : ScreenLockActionBarActivity(),
         }
         bottomSheet.onBlockTapped = {
             bottomSheet.dismiss()
-            if (!thread.recipient.isBlocked) {
+            if (!thread.recipient.blocked) {
                 blockConversation(thread)
             }
         }
         bottomSheet.onUnblockTapped = {
             bottomSheet.dismiss()
-            if (thread.recipient.isBlocked) {
+            if (thread.recipient.blocked) {
                 unblockConversation(thread)
             }
         }

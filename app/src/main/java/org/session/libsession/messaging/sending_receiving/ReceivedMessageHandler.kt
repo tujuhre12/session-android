@@ -9,7 +9,6 @@ import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.ExpiryMode
-import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
@@ -17,9 +16,8 @@ import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.jobs.AttachmentDownloadJob
 import org.session.libsession.messaging.jobs.JobQueue
-import org.session.libsession.messaging.messages.ExpirationConfiguration
-import org.session.libsession.messaging.messages.ExpirationConfiguration.Companion.isNewConfigEnabled
 import org.session.libsession.messaging.messages.Message
+import org.session.libsession.messaging.messages.ProfileUpdateHandler
 import org.session.libsession.messaging.messages.control.CallMessage
 import org.session.libsession.messaging.messages.control.DataExtractionNotification
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
@@ -48,7 +46,7 @@ import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.GroupUtil.doubleEncodeGroupID
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.recipients.MessageType
-import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.RecipientV2
 import org.session.libsession.utilities.recipients.getType
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.AccountId
@@ -60,7 +58,6 @@ import org.thoughtcrime.securesms.database.ConfigDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.ReactionRecord
-import java.security.MessageDigest
 import java.security.SignatureException
 import kotlin.math.min
 
@@ -114,13 +111,13 @@ fun MessageReceiver.messageIsOutdated(message: Message, threadId: Long, openGrou
     val userPublicKey = storage.getUserPublicKey()!!
     val threadRecipient = storage.getRecipientForThread(threadId)
     val conversationVisibleInConfig = storage.conversationInConfig(
-        if (message.groupPublicKey == null) threadRecipient?.address?.toString() else null,
+        if (message.groupPublicKey == null) threadRecipient?.toString() else null,
         message.groupPublicKey,
         openGroupID,
         true
     )
     val canPerformChange = storage.canPerformConfigChange(
-        if (threadRecipient?.address?.toString() == userPublicKey) ConfigDatabase.USER_PROFILE_VARIANT else ConfigDatabase.CONTACTS_VARIANT,
+        if (threadRecipient?.toString() == userPublicKey) ConfigDatabase.USER_PROFILE_VARIANT else ConfigDatabase.CONTACTS_VARIANT,
         userPublicKey,
         message.sentTimestamp!!
     )
@@ -171,26 +168,6 @@ fun MessageReceiver.cancelTypingIndicatorsIfNeeded(senderPublicKey: String) {
 
 private fun MessageReceiver.handleExpirationTimerUpdate(message: ExpirationTimerUpdate) {
     SSKEnvironment.shared.messageExpirationManager.insertExpirationTimerMessage(message)
-
-    val isLegacyGroup = message.groupPublicKey != null && message.groupPublicKey?.startsWith(IdPrefix.GROUP.value) == false
-
-    if (isNewConfigEnabled && !isLegacyGroup) return
-
-    val module = MessagingModuleConfiguration.shared
-    try {
-        val threadId = Address.fromSerialized(message.groupPublicKey?.let(::doubleEncodeGroupID) ?: message.sender!!)
-            .let(module.storage::getOrCreateThreadIdFor)
-
-        module.storage.setExpirationConfiguration(
-            ExpirationConfiguration(
-                threadId,
-                message.expiryMode,
-                message.sentTimestamp!!
-            ),
-        )
-    } catch (e: Exception) {
-        Log.e("Loki", "Failed to update expiration configuration.")
-    }
 }
 
 private fun MessageReceiver.handleDataExtractionNotification(message: DataExtractionNotification) {
@@ -291,11 +268,11 @@ class VisibleMessageHandlerContext(
     val threadId: Long,
     val openGroupID: String?,
     val storage: StorageProtocol,
-    val profileManager: SSKEnvironment.ProfileManagerProtocol,
     val groupManagerV2: GroupManagerV2,
     val messageExpirationManager: SSKEnvironment.MessageExpirationManagerProtocol,
     val messageDataProvider: MessageDataProvider,
     val recipientRepository: RecipientRepository,
+    val profileUpdateHandler: ProfileUpdateHandler,
 ) {
     constructor(module: MessagingModuleConfiguration, threadId: Long, openGroupID: String?):
             this(
@@ -303,11 +280,11 @@ class VisibleMessageHandlerContext(
                 threadId = threadId,
                 openGroupID = openGroupID,
                 storage = module.storage,
-                profileManager = SSKEnvironment.shared.profileManager,
                 groupManagerV2 = module.groupManagerV2,
                 messageExpirationManager = SSKEnvironment.shared.messageExpirationManager,
                 messageDataProvider = module.messageDataProvider,
                 recipientRepository = module.recipientRepository,
+                profileUpdateHandler = SSKEnvironment.shared.profileUpdateHandler,
             )
 
     val openGroup: OpenGroup? by lazy {
@@ -331,8 +308,8 @@ class VisibleMessageHandlerContext(
         storage.getUserPublicKey()
     }
 
-    val threadRecipient: Recipient? by lazy {
-        storage.getRecipientForThread(threadId)
+    val threadRecipient: RecipientV2? by lazy {
+        storage.getRecipientForThread(threadId)?.let(recipientRepository::getRecipientSync)
     }
 }
 
@@ -351,31 +328,17 @@ fun MessageReceiver.handleVisibleMessage(
 
     // Update profile if needed
     val address = Address.fromSerialized(messageSender!!)
-    val recipient = context.recipientRepository.getRecipientSync(address)
     if (runProfileUpdate) {
-        val profile = message.profile
-        val isUserBlindedSender = messageSender == context.userBlindedKey
-        if (profile != null && userPublicKey != messageSender && !isUserBlindedSender) {
-            val name = profile.displayName!!
-            if (name.isNotEmpty()) {
-                context.profileManager.setName(context.context, address, name)
-            }
-            val newProfileKey = profile.profileKey
-
-            val needsProfilePicture = !AvatarHelper.avatarFileExists(context.context, Address.fromSerialized(messageSender))
-            val profileKeyValid = newProfileKey?.isNotEmpty() == true && (newProfileKey.size == 16 || newProfileKey.size == 32) && profile.profilePictureURL?.isNotEmpty() == true
-            val profileKeyChanged = (recipient.profileKey == null || !MessageDigest.isEqual(recipient.profileKey.data, newProfileKey))
-
-            if ((profileKeyValid && profileKeyChanged) || (profileKeyValid && needsProfilePicture)) {
-                context.profileManager.setProfilePicture(context.context, address, profile.profilePictureURL, newProfileKey)
-            } else if (newProfileKey == null || newProfileKey.isEmpty() || profile.profilePictureURL.isNullOrEmpty()) {
-                context.profileManager.setProfilePicture(context.context, address, null, null)
-            }
-        }
-
-        if (userPublicKey != messageSender && !isUserBlindedSender) {
-            context.storage.setBlocksCommunityMessageRequests(address, message.blocksMessageRequests)
-        }
+        context.profileUpdateHandler.handleProfileUpdate(
+            sender = address,
+            updates = ProfileUpdateHandler.Updates(
+                name = message.profile?.displayName,
+                picUrl = message.profile?.profilePictureURL,
+                picKey = message.profile?.profileKey,
+                acceptsCommunityRequests = !message.blocksMessageRequests
+            ),
+            communityServerPubKey = context.openGroup?.publicKey
+        )
     }
     // Handle group invite response if new closed group
     if (context.threadRecipient?.isGroupV2Recipient == true) {
@@ -587,17 +550,16 @@ private fun MessageReceiver.handleGroupUpdated(message: GroupUpdated, closedGrou
     }
 
     // Update profile if needed
-    if (message.profile != null && !message.isSenderSelf) {
-        val profile = message.profile
-        val address = Address.fromSerialized(message.sender!!)
-        val profileManager = SSKEnvironment.shared.profileManager
-        if (profile.displayName?.isNotEmpty() == true) {
-            profileManager.setName(MessagingModuleConfiguration.shared.context, address, profile.displayName)
-        }
-        if (profile.profileKey?.isNotEmpty() == true && !profile.profilePictureURL.isNullOrEmpty()) {
-            profileManager.setProfilePicture(MessagingModuleConfiguration.shared.context, address, profile.profilePictureURL, profile.profileKey)
-        }
-    }
+    SSKEnvironment.shared.profileUpdateHandler.handleProfileUpdate(
+        sender = Address.fromSerialized(message.sender!!),
+        updates = ProfileUpdateHandler.Updates(
+            name = message.profile?.displayName,
+            picUrl = message.profile?.profilePictureURL,
+            picKey = message.profile?.profileKey,
+            acceptsCommunityRequests = null,
+        ),
+        communityServerPubKey = null // Groupv2 is not a community
+    )
 
     when {
         inner.hasInviteMessage() -> handleNewLibSessionClosedGroupMessage(message)

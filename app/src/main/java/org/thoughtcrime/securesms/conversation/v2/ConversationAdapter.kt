@@ -23,6 +23,7 @@ import kotlinx.coroutines.launch
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.RecipientV2
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.v2.messages.ControlMessageView
 import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageView
@@ -35,7 +36,7 @@ import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 class ConversationAdapter(
     context: Context,
     cursor: Cursor,
-    conversation: Recipient?,
+    conversation: RecipientV2?,
     originalLastSeen: Long,
     private val isReversed: Boolean,
     private val onItemPress: (MessageRecord, Int, VisibleMessageView, MotionEvent) -> Unit,

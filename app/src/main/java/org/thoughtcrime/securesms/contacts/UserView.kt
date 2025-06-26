@@ -5,12 +5,11 @@ import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.LinearLayout
-import com.bumptech.glide.RequestManager
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewUserBinding
 import org.session.libsession.utilities.UsernameUtils
-import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.RecipientV2
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -49,7 +48,7 @@ class UserView : LinearLayout {
     // endregion
 
     // region Updating
-    fun bind(user: Recipient, actionIndicator: ActionIndicator, isSelected: Boolean = false, showCurrentUserAsNoteToSelf: Boolean = false) {
+    fun bind(user: RecipientV2, actionIndicator: ActionIndicator, isSelected: Boolean = false, showCurrentUserAsNoteToSelf: Boolean = false) {
         val isLocalUser = user.isLocalNumber
 
         fun getUserDisplayName(publicKey: String): String {

@@ -19,6 +19,7 @@ import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewConversationBinding
 import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.RecipientV2
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities.highlightMentions
 import org.thoughtcrime.securesms.database.RecipientDatabase.NOTIFY_TYPE_ALL
 import org.thoughtcrime.securesms.database.RecipientDatabase.NOTIFY_TYPE_NONE
@@ -65,7 +66,7 @@ class ConversationView : LinearLayout {
         }
 
         val unreadCount = thread.unreadCount
-        if (thread.recipient.isBlocked) {
+        if (thread.recipient.blocked) {
             binding.accentView.setBackgroundColor(ThemeUtil.getThemedColor(context, R.attr.danger))
             binding.accentView.visibility = View.VISIBLE
         } else {
@@ -98,9 +99,9 @@ class ConversationView : LinearLayout {
         ) }
 
         val recipient = thread.recipient
-        binding.muteIndicatorImageView.isVisible = recipient.isMuted || recipient.notifyType != NOTIFY_TYPE_ALL
+        binding.muteIndicatorImageView.isVisible = recipient.isMuted() || recipient.notifyType != NOTIFY_TYPE_ALL
 
-        val drawableRes = if (recipient.isMuted || recipient.notifyType == NOTIFY_TYPE_NONE) {
+        val drawableRes = if (recipient.isMuted() || recipient.notifyType == NOTIFY_TYPE_NONE) {
             R.drawable.ic_volume_off
         } else {
             R.drawable.ic_at_sign
@@ -145,7 +146,7 @@ class ConversationView : LinearLayout {
 
     fun recycle() { binding.profilePictureView.recycle() }
 
-    private fun getTitle(recipient: Recipient): String = when {
+    private fun getTitle(recipient: RecipientV2): String = when {
         recipient.isLocalNumber -> context.getString(R.string.noteToSelf)
         else -> recipient.name // Internally uses the Contact API
     }

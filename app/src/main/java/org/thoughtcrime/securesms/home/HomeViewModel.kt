@@ -102,7 +102,7 @@ class HomeViewModel @Inject constructor(
                     // or if the contact is blocked, do not add it
                     if (
                         thread.recipient.isLocalNumber && hideNoteToSelf ||
-                        thread.recipient.isBlocked
+                        thread.recipient.blocked
                     ) {
                         return@mapNotNullTo null
                     }

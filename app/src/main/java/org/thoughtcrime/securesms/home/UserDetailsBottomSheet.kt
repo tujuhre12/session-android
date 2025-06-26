@@ -19,19 +19,23 @@ import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.FragmentUserDetailsBottomSheetBinding
 import org.session.libsession.messaging.MessagingModuleConfiguration
-import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.RecipientV2
+import org.session.libsession.utilities.upsertContact
+import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
-import org.thoughtcrime.securesms.database.DatabaseContentProviders
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class UserDetailsBottomSheet: BottomSheetDialogFragment() {
 
     @Inject lateinit var threadDb: ThreadDatabase
+    @Inject lateinit var recipientRepository: RecipientRepository
+    @Inject lateinit var configFactory: ConfigFactory
 
     private lateinit var binding: FragmentUserDetailsBottomSheetBinding
 
@@ -53,8 +57,8 @@ class UserDetailsBottomSheet: BottomSheetDialogFragment() {
         super.onViewCreated(view, savedInstanceState)
         val publicKey = arguments?.getString(ARGUMENT_PUBLIC_KEY) ?: return dismiss()
         val threadID = arguments?.getLong(ARGUMENT_THREAD_ID) ?: return dismiss()
-        val recipient = Recipient.from(requireContext(), Address.fromSerialized(publicKey), false)
-        val threadRecipient = threadDb.getRecipientForThreadId(threadID) ?: return dismiss()
+        val threadRecipient = threadDb.getRecipientForThreadId(threadID)?.let(recipientRepository::getRecipientSync) ?: return dismiss()
+        val recipient = recipientRepository.getRecipientSync(Address.fromSerialized(publicKey)) ?: return dismiss()
         with(binding) {
             profilePictureView.publicKey = publicKey
             profilePictureView.update(recipient)
@@ -106,7 +110,7 @@ class UserDetailsBottomSheet: BottomSheetDialogFragment() {
                 true
             }
             messageButton.setOnClickListener {
-                val threadId = MessagingModuleConfiguration.shared.storage.getThreadId(recipient)
+                val threadId = MessagingModuleConfiguration.shared.storage.getThreadId(recipient.address)
                 val intent = Intent(
                     context,
                     ConversationActivityV2::class.java
@@ -126,21 +130,25 @@ class UserDetailsBottomSheet: BottomSheetDialogFragment() {
         window.setDimAmount(0.6f)
     }
 
-    fun saveNickName(recipient: Recipient) = with(binding) {
+    fun saveNickName(recipient: RecipientV2) = with(binding) {
         nicknameEditText.clearFocus()
         hideSoftKeyboard()
         nameTextViewContainer.visibility = View.VISIBLE
         nameEditTextContainer.visibility = View.INVISIBLE
-        var newNickName: String? = null
+        val newNickName: String?
         if (nicknameEditText.text.isNotEmpty() && nicknameEditText.text.trim().length != 0) {
             newNickName = nicknameEditText.text.toString()
         }
         else { newNickName = previousContactNickname }
-        val publicKey = recipient.address.toString()
-        val storage = MessagingModuleConfiguration.shared.storage
-        val contact = storage.getContactWithAccountID(publicKey) ?: Contact(publicKey)
-        contact.nickname = newNickName
-        storage.setContact(contact)
+
+        if (AccountId.fromStringOrNull(recipient.address.address)?.prefix == IdPrefix.STANDARD) {
+            configFactory.withMutableUserConfigs { configs ->
+                configs.contacts.upsertContact(recipient.address.address) {
+                    this.nickname = newNickName
+                }
+            }
+        }
+
         nameTextView.text = recipient.name
 
         (parentFragment as? UserDetailsBottomSheetCallback)

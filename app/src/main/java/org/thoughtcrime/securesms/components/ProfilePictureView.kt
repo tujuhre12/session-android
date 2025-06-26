@@ -23,9 +23,12 @@ import org.session.libsession.utilities.AppTextSecurePreferences
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.RecipientAvatar
+import org.session.libsession.utilities.recipients.RecipientV2
 import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.GroupDatabase
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.avatarOptions
 import javax.inject.Inject
@@ -45,7 +48,7 @@ class ProfilePictureView @JvmOverloads constructor(
     var displayName: String? = null
     var additionalPublicKey: String? = null
     var additionalDisplayName: String? = null
-    var recipient: Recipient? = null
+    var recipient: RecipientV2? = null
 
     @Inject
     lateinit var groupDatabase: GroupDatabase
@@ -59,14 +62,17 @@ class ProfilePictureView @JvmOverloads constructor(
     @Inject
     lateinit var avatarUtils: AvatarUtils
 
-    private val profilePicturesCache = mutableMapOf<View, Recipient>()
+    @Inject
+    lateinit var recipientRepository: RecipientRepository
+
+    private val profilePicturesCache = mutableMapOf<View, RecipientV2>()
     private val resourcePadding by lazy {
         context.resources.getDimensionPixelSize(R.dimen.normal_padding).toFloat()
     }
     private val unknownOpenGroupDrawable by lazy { ResourceContactPhoto(R.drawable.ic_notification)
         .asDrawable(context, ContactColors.UNKNOWN_COLOR.toConversationColor(context), false, resourcePadding) }
 
-    constructor(context: Context, sender: Recipient): this(context) {
+    constructor(context: Context, sender: RecipientV2): this(context) {
         update(sender)
     }
 
@@ -77,14 +83,14 @@ class ProfilePictureView @JvmOverloads constructor(
             .asDrawable(context, color, false, resourcePadding)
     }
 
-    fun update(recipient: Recipient) {
+    fun update(recipient: RecipientV2) {
         this.recipient = recipient
         recipient.run {
             update(
                 address = address,
                 profileViewDataType = when {
                     isGroupV2Recipient -> ProfileViewDataType.GroupvV2(
-                        customGroupImage = profileAvatar
+                        customGroupImage = (avatar as? RecipientAvatar.EncryptedRemotePic)?.url
                     )
                     isLegacyGroupRecipient -> ProfileViewDataType.LegacyGroup
                     isCommunityRecipient -> ProfileViewDataType.Community
@@ -187,13 +193,14 @@ class ProfilePictureView @JvmOverloads constructor(
                 this.recipient!!
             }
             else {
-                this.recipient = Recipient.from(context, Address.fromSerialized(publicKey), false)
+                val address = Address.fromSerialized(publicKey)
+                this.recipient = recipientRepository.getRecipientSync(address) ?: RecipientV2.empty(address)
                 this.recipient!!
             }
             
             if (profilePicturesCache[imageView] == recipient) return
             // recipient is mutable so without cloning it the line above always returns true as the changes to the underlying recipient happens on both shared instances
-            profilePicturesCache[imageView] = recipient.clone()
+            profilePicturesCache[imageView] = recipient
             val signalProfilePicture = recipient.contactPhoto
             val avatar = (signalProfilePicture as? ProfileContactPhoto)?.avatarObject
 

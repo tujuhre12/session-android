@@ -4,7 +4,7 @@ enum class MessageType {
     ONE_ON_ONE, LEGACY_GROUP, GROUPS_V2, NOTE_TO_SELF, COMMUNITY
 }
 
-fun Recipient.getType(): MessageType =
+fun RecipientV2.getType(): MessageType =
     when{
         isCommunityRecipient -> MessageType.COMMUNITY
         isLocalNumber -> MessageType.NOTE_TO_SELF

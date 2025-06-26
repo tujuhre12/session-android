@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.search.model;
 import androidx.annotation.NonNull;
 
 import org.session.libsession.utilities.recipients.Recipient;
+import org.session.libsession.utilities.recipients.RecipientV2;
 
 import java.util.Objects;
 
@@ -11,14 +12,14 @@ import java.util.Objects;
  */
 public class MessageResult {
 
-  public final Recipient conversationRecipient;
-  public final Recipient messageRecipient;
+  public final RecipientV2 conversationRecipient;
+  public final RecipientV2 messageRecipient;
   public final String    bodySnippet;
   public final long      threadId;
   public final long      sentTimestampMs;
 
-  public MessageResult(@NonNull Recipient conversationRecipient,
-                       @NonNull Recipient messageRecipient,
+  public MessageResult(@NonNull RecipientV2 conversationRecipient,
+                       @NonNull RecipientV2 messageRecipient,
                        @NonNull String bodySnippet,
                        long threadId,
                        long sentTimestampMs)
@@ -33,7 +34,7 @@ public class MessageResult {
   @Override
   public boolean equals(Object o) {
     if (!(o instanceof MessageResult that)) return false;
-      return threadId == that.threadId && sentTimestampMs == that.sentTimestampMs && Objects.equals(conversationRecipient, that.conversationRecipient) && Objects.equals(messageRecipient, that.messageRecipient) && Objects.equals(bodySnippet, that.bodySnippet);
+    return threadId == that.threadId && sentTimestampMs == that.sentTimestampMs && Objects.equals(conversationRecipient, that.conversationRecipient) && Objects.equals(messageRecipient, that.messageRecipient) && Objects.equals(bodySnippet, that.bodySnippet);
   }
 
   @Override

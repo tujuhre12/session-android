@@ -146,7 +146,7 @@ class AttachmentControlView: LinearLayout {
 
     // region Interaction
     fun showDownloadDialog(threadRecipient: RecipientV2, attachment: DatabaseAttachment) {
-        if (!threadRecipient.autoDownloadAttachments) {
+        if (threadRecipient.autoDownloadAttachments != true) {
             // just download
             (context.findActivity() as? ActivityDispatcher)?.showDialog(AutoDownloadDialog(threadRecipient, attachment))
         }

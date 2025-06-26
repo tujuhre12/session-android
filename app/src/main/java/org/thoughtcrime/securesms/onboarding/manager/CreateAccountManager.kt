@@ -23,8 +23,6 @@ class CreateAccountManager @Inject constructor(
         get() = SnodeModule.shared.storage
 
     fun createAccount(displayName: String) {
-        prefs.setProfileName(displayName)
-
         // This is here to resolve a case where the app restarts before a user completes onboarding
         // which can result in an invalid database state
         database.clearAllLastMessageHashes()

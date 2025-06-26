@@ -47,6 +47,7 @@ import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.MessagingModuleConfiguration.Companion.configure
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
+import org.session.libsession.messaging.messages.ProfileUpdateHandler
 import org.session.libsession.messaging.notifications.TokenFetcher
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.messaging.sending_receiving.pollers.OpenGroupPollerManager
@@ -57,7 +58,6 @@ import org.session.libsession.utilities.Device
 import org.session.libsession.utilities.Environment
 import org.session.libsession.utilities.ProfilePictureUtilities.resubmitProfilePictureIfNeeded
 import org.session.libsession.utilities.SSKEnvironment.Companion.configure
-import org.session.libsession.utilities.SSKEnvironment.ProfileManagerProtocol
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.pushSuffix
 import org.session.libsession.utilities.Toaster
@@ -151,7 +151,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
     @Inject lateinit var pushRegistrationHandler: Lazy<PushRegistrationHandler>
     @Inject lateinit var tokenFetcher: Lazy<TokenFetcher>
     @Inject lateinit var groupManagerV2: Lazy<GroupManagerV2>
-    @Inject lateinit var profileManager: Lazy<ProfileManagerProtocol>
     @Inject lateinit var callMessageProcessor: Lazy<CallMessageProcessor>
     private var messagingModuleConfiguration: MessagingModuleConfiguration? = null
 
@@ -205,6 +204,9 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
 
     @Inject
     lateinit var openGroupPollerManager: Lazy<OpenGroupPollerManager>
+
+    @Inject
+    lateinit var profileUpdateHandler: Lazy<ProfileUpdateHandler>
 
     @Volatile
     var isAppVisible: Boolean = false
@@ -302,8 +304,11 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
         val useTestNet = textSecurePreferences.get().getEnvironment() == Environment.TEST_NET
         configure(apiDB.get(), broadcaster!!, useTestNet)
         configure(
-            typingStatusRepository.get(), readReceiptManager.get(), profileManager.get(),
-            messageNotifier, expiringMessageManager.get()
+            typingIndicators = typingStatusRepository.get(),
+            readReceiptManager = readReceiptManager.get(),
+            notificationManager = messageNotifier,
+            messageExpirationManager = expiringMessageManager.get(),
+            profileUpdateHandler = profileUpdateHandler.get(),
         )
         initializeWebRtc()
         initializeBlobProvider()
@@ -355,7 +360,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
         pushRegistrationHandler.get()
         tokenFetcher.get()
         groupManagerV2.get()
-        profileManager.get()
         callMessageProcessor.get()
         configUploader.get()
         adminStateSync.get()

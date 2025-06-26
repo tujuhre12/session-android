@@ -2,10 +2,11 @@ package org.thoughtcrime.securesms.onboarding.pickname
 
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,14 +15,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
-import org.session.libsession.utilities.SSKEnvironment.ProfileManagerProtocol.Companion.NAME_PADDED_LENGTH
+import org.session.libsession.messaging.messages.ProfileUpdateHandler
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.UsernameUtils
 
-internal class PickDisplayNameViewModel(
-    private val loadFailed: Boolean,
+@HiltViewModel(assistedFactory = PickDisplayNameViewModel.Factory::class)
+class PickDisplayNameViewModel @AssistedInject constructor(
+    @Assisted private val loadFailed: Boolean,
     private val prefs: TextSecurePreferences,
-    private val usernameUtils: UsernameUtils,
 ): ViewModel() {
     private val isCreateAccount = !loadFailed
 
@@ -38,7 +38,7 @@ internal class PickDisplayNameViewModel(
 
         when {
             displayName.isEmpty() -> { _states.update { it.copy(isTextErrorColor = true, error = R.string.displayNameErrorDescription) } }
-            displayName.toByteArray().size > NAME_PADDED_LENGTH -> { _states.update { it.copy(isTextErrorColor = true, error = R.string.displayNameErrorDescriptionShorter) } }
+            displayName.toByteArray().size > ProfileUpdateHandler.MAX_PROFILE_NAME_LENGTH -> { _states.update { it.copy(isTextErrorColor = true, error = R.string.displayNameErrorDescriptionShorter) } }
             else -> {
                 // success - clear the error as we can still see it during the transition to the
                 // next screen.
@@ -75,21 +75,9 @@ internal class PickDisplayNameViewModel(
         _states.update { it.copy(showDialog = false) }
     }
 
-    @dagger.assisted.AssistedFactory
-    interface AssistedFactory {
-        fun create(loadFailed: Boolean): Factory
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    class Factory @AssistedInject constructor(
-        @Assisted private val loadFailed: Boolean,
-        private val prefs: TextSecurePreferences,
-        private val usernameUtils: UsernameUtils,
-    ) : ViewModelProvider.Factory {
-
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return PickDisplayNameViewModel(loadFailed, prefs, usernameUtils) as T
-        }
+    @AssistedFactory
+    interface Factory {
+        fun create(loadFailed: Boolean): PickDisplayNameViewModel
     }
 }
 

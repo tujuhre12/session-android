@@ -8,6 +8,8 @@ import android.database.Cursor;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.annimon.stream.Stream;
+import com.esotericsoftware.kryo.util.Null;
+
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.recipients.Recipient;
@@ -27,6 +29,7 @@ import kotlinx.coroutines.channels.BufferOverflow;
 import kotlinx.coroutines.flow.MutableSharedFlow;
 import kotlinx.coroutines.flow.SharedFlow;
 import kotlinx.coroutines.flow.SharedFlowKt;
+import network.loki.messenger.libsession_util.util.UserPic;
 
 /**
  * The database(table) where some recipient data is stored, including names, avatars, notification settings, etc.
@@ -317,6 +320,7 @@ public class RecipientDatabase extends Database {
     int rowCount = db.delete(TABLE_NAME, ADDRESS + " = ?", new String[] { recipientAddress });
     if (rowCount == 0) { Log.w(TAG, "Could not find to delete recipient with address: " + recipientAddress); }
     notifyRecipientListeners();
+    updateNotifications.tryEmit(Address.fromSerialized(recipientAddress));
   }
 
   public void setAutoDownloadAttachments(@NonNull Address recipient, boolean shouldAutoDownloadAttachments) {
@@ -380,6 +384,31 @@ public class RecipientDatabase extends Database {
     updateNotifications.tryEmit(recipient);
   }
 
+  public void updateProfile(@NonNull Address recipient,
+                            @Nullable String newName,
+                            @Nullable UserPic profilePic,
+                            @Nullable Boolean acceptsCommunityRequests) {
+    if (newName == null && profilePic == null) {
+      return; // nothing to update
+    }
+
+    ContentValues contentValues = new ContentValues(4);
+    if (newName != null) {
+      contentValues.put(SYSTEM_DISPLAY_NAME, newName);
+    }
+    if (profilePic != null) {
+      contentValues.put(SESSION_PROFILE_AVATAR, profilePic.getUrl());
+      contentValues.put(PROFILE_KEY, Base64.encodeBytes(profilePic.getKeyAsByteArray()));
+    }
+
+    if (acceptsCommunityRequests != null) {
+      contentValues.put(BLOCKS_COMMUNITY_MESSAGE_REQUESTS, acceptsCommunityRequests ? 0 : 1);
+    }
+
+    updateOrInsert(recipient, contentValues);
+    updateNotifications.tryEmit(recipient);
+  }
+
   public void setNotificationChannel(@NonNull Address recipient, @Nullable String notificationChannel) {
     ContentValues contentValues = new ContentValues(1);
     contentValues.put(NOTIFICATION_CHANNEL, notificationChannel);
@@ -413,20 +442,18 @@ public class RecipientDatabase extends Database {
     database.endTransaction();
   }
 
-  public List<Recipient> getBlockedContacts() {
+  public List<Address> getBlockedContacts() {
     SQLiteDatabase database = getReadableDatabase();
 
-    Cursor         cursor   = database.query(TABLE_NAME, new String[] {ID, ADDRESS}, BLOCK + " = 1",
-            null, null, null, null, null);
-
-    RecipientReader reader = new RecipientReader(context, cursor);
-    List<Recipient> returnList = new ArrayList<>();
-    Recipient current;
-    while ((current = reader.getNext()) != null) {
-      returnList.add(current);
+    try (Cursor         cursor   = database.query(TABLE_NAME, new String[] {ID, ADDRESS}, BLOCK + " = 1",
+            null, null, null, null, null)) {
+      List<Address> blockedContacts = new ArrayList<>(cursor.getCount());
+      while (cursor.moveToNext()) {
+          String serialized = cursor.getString(cursor.getColumnIndexOrThrow(ADDRESS));
+          blockedContacts.add(Address.fromSerialized(serialized));
+      }
+      return blockedContacts;
     }
-    reader.close();
-    return returnList;
   }
 
   /**

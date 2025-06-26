@@ -22,7 +22,7 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.COUNT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.database.StorageProtocol
-import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.RecipientV2
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.util.adapter.SelectableItem
 import javax.inject.Inject
@@ -68,7 +68,7 @@ class BlockedContactsViewModel @Inject constructor(private val storage: StorageP
         _state.value = state.copy(selectedItems = emptySet())
     }
 
-    fun select(selectedItem: Recipient, isSelected: Boolean) {
+    fun select(selectedItem: RecipientV2, isSelected: Boolean) {
         _state.value = state.run {
             if (isSelected) copy(selectedItems = selectedItems + selectedItem)
             else copy(selectedItems = selectedItems - selectedItem)
@@ -78,7 +78,7 @@ class BlockedContactsViewModel @Inject constructor(private val storage: StorageP
     fun getTitle(context: Context): String = context.getString(R.string.blockUnblock)
 
     // Method to get the appropriate text to display when unblocking 1, 2, or several contacts
-    fun getText(context: Context, contactsToUnblock: Set<Recipient>): CharSequence {
+    fun getText(context: Context, contactsToUnblock: Set<RecipientV2>): CharSequence {
         return when (contactsToUnblock.size) {
             // Note: We do not have to handle 0 because if no contacts are chosen then the unblock button is deactivated
             1 -> Phrase.from(context, R.string.blockUnblockName)
@@ -99,7 +99,7 @@ class BlockedContactsViewModel @Inject constructor(private val storage: StorageP
 
     fun getMessage(context: Context): String = context.getString(R.string.blockUnblock)
 
-    fun toggle(selectable: SelectableItem<Recipient>) {
+    fun toggle(selectable: SelectableItem<RecipientV2>) {
         _state.value = state.run {
             if (selectable.item in selectedItems) copy(selectedItems = selectedItems - selectable.item)
             else copy(selectedItems = selectedItems + selectable.item)
@@ -107,8 +107,8 @@ class BlockedContactsViewModel @Inject constructor(private val storage: StorageP
     }
 
     data class BlockedContactsViewState(
-        val blockedContacts: List<Recipient> = emptyList(),
-        val selectedItems: Set<Recipient> = emptySet()
+        val blockedContacts: List<RecipientV2> = emptyList(),
+        val selectedItems: Set<RecipientV2> = emptySet()
     ) {
         val items = blockedContacts.map { SelectableItem(it, it in selectedItems) }
 

@@ -10,6 +10,7 @@ import org.session.libsession.utilities.DownloadUtilities.downloadFromFileServer
 import org.session.libsession.utilities.TextSecurePreferences.Companion.setProfileAvatarId
 import org.session.libsession.utilities.TextSecurePreferences.Companion.setProfilePictureURL
 import org.session.libsession.utilities.Util.equals
+import org.session.libsession.utilities.recipients.RecipientV2
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.Log
@@ -44,7 +45,8 @@ class RetrieveProfileAvatarJob(
         if (profileAvatar != null && profileAvatar in errorUrls) return delegate.handleJobFailed(this, dispatcherName, Exception("Profile URL 404'd this app instance"))
         val context = MessagingModuleConfiguration.shared.context
         val storage = MessagingModuleConfiguration.shared.storage
-        val recipient = storage.observeRecipient(recipientAddress).first()
+        val recipient = MessagingModuleConfiguration.shared.recipientRepository.getRecipient(recipientAddress)
+            ?: RecipientV2.empty(recipientAddress)
 
         if (profileKey == null || (profileKey.size != 32 && profileKey.size != 16)) {
             return delegate.handleJobFailedPermanently(this, dispatcherName, Exception("Recipient profile key is gone!"))

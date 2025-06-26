@@ -22,6 +22,7 @@ import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.OFFER
 import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.PRE_OFFER
 import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.PROVISIONAL_ANSWER
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.webrtc.IceCandidate
 import javax.inject.Inject
@@ -32,7 +33,8 @@ class CallMessageProcessor @Inject constructor(
     @ApplicationContext private val context: Context,
     private val textSecurePreferences: TextSecurePreferences,
     private val storage: StorageProtocol,
-    private val webRtcBridge: WebRtcCallBridge
+    private val webRtcBridge: WebRtcCallBridge,
+    private val recipientRepository: RecipientRepository,
 ) {
 
     companion object {
@@ -46,7 +48,7 @@ class CallMessageProcessor @Inject constructor(
                 val nextMessage = WebRtcUtils.SIGNAL_QUEUE.receive()
                 Log.d("Loki", nextMessage.type?.name ?: "CALL MESSAGE RECEIVED")
                 val sender = nextMessage.sender ?: continue
-                val approvedContact = Recipient.from(context, Address.fromSerialized(sender), false).isApproved
+                val approvedContact = recipientRepository.getRecipient(Address.fromSerialized(sender))?.approved == true
                 Log.i("Loki", "Contact is approved?: $approvedContact")
                 if (!approvedContact && storage.getUserPublicKey() != sender) continue
 

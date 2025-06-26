@@ -51,6 +51,7 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.hasHidde
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isNotificationsEnabled
 import org.session.libsession.utilities.TextSecurePreferences.Companion.removeHasHiddenMessageRequests
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.RecipientV2
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
@@ -59,18 +60,22 @@ import org.session.libsignal.utilities.Util
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities.highlightMentions
 import org.thoughtcrime.securesms.crypto.KeyPairUtilities.getUserED25519KeyPair
+import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.RecipientDatabase
+import org.thoughtcrime.securesms.database.RecipientRepository
+import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.database.model.ReactionRecord
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent.Companion.get
 import org.thoughtcrime.securesms.mms.SlideDeck
 import org.thoughtcrime.securesms.service.KeyCachingService
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.WEBRTC_NOTIFICATION
 import org.thoughtcrime.securesms.util.SessionMetaProtocol.canUserReplyToNotification
 import org.thoughtcrime.securesms.util.SpanUtil
+import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * Handles posting system notifications for new messages.
@@ -78,8 +83,11 @@ import org.thoughtcrime.securesms.util.SpanUtil
  *
  * @author Moxie Marlinspike
  */
-class DefaultMessageNotifier(
-    val avatarUtils: AvatarUtils
+class DefaultMessageNotifier @Inject constructor(
+    val avatarUtils: AvatarUtils,
+    private val threadDatabase: ThreadDatabase,
+    private val recipientRepository: RecipientRepository,
+    private val mmsSmsDatabase: MmsSmsDatabase,
 ) : MessageNotifier {
     override fun setVisibleThread(threadId: Long) {
         visibleThread = threadId
@@ -171,17 +179,16 @@ class DefaultMessageNotifier(
     override fun updateNotification(context: Context, threadId: Long, signal: Boolean) {
         val isVisible = visibleThread == threadId
 
-        val threads = get(context).threadDatabase()
-        val recipient = threads.getRecipientForThreadId(threadId)
+        val recipient = threadDatabase.getRecipientForThreadId(threadId)?.let(recipientRepository::getRecipientSync)
 
-        if (recipient != null && !recipient.isGroupOrCommunityRecipient && threads.getMessageCount(threadId) == 1 &&
-            !(recipient.isApproved || threads.getLastSeenAndHasSent(threadId).second())
+        if (recipient != null && !recipient.isGroupOrCommunityRecipient && threadDatabase.getMessageCount(threadId) == 1 &&
+            !(recipient.approved || threadDatabase.getLastSeenAndHasSent(threadId).second())
         ) {
             removeHasHiddenMessageRequests(context)
         }
 
         if (!isNotificationsEnabled(context) ||
-            (recipient != null && recipient.isMuted)
+            (recipient != null && recipient.isMuted())
         ) {
             return
         }
@@ -206,7 +213,7 @@ class DefaultMessageNotifier(
         var telcoCursor: Cursor? = null
 
         try {
-            telcoCursor = get(context).mmsSmsDatabase().unread // TODO: add a notification specific lighter query here
+            telcoCursor = mmsSmsDatabase.unread // TODO: add a notification specific lighter query here
 
             if ((telcoCursor == null || telcoCursor.isAfterLast) || getLocalNumber(context) == null) {
                 updateBadge(context, 0)
@@ -452,13 +459,12 @@ class DefaultMessageNotifier(
 
     private fun constructNotificationState(context: Context, cursor: Cursor): NotificationState {
         val notificationState = NotificationState()
-        val reader = get(context).mmsSmsDatabase().readerFor(cursor)
+        val reader = mmsSmsDatabase.readerFor(cursor)
         if (reader == null) {
             Log.e(TAG, "No reader for cursor - aborting constructNotificationState")
             return NotificationState()
         }
 
-        val threadDatabase = get(context).threadDatabase()
         val cache: MutableMap<Long, String?> = HashMap()
 
         // CAREFUL: Do not put this loop back as `while ((reader.next.also { record = it }) != null) {` because it breaks with a Null Pointer Exception!
@@ -473,15 +479,15 @@ class DefaultMessageNotifier(
             val conversationRecipient = record.recipient
             val threadId = record.threadId
             var body: CharSequence = record.getDisplayBody(context)
-            var threadRecipients: Recipient? = null
+            var threadRecipients: RecipientV2? = null
             var slideDeck: SlideDeck? = null
             val timestamp = record.timestamp
             var messageRequest = false
 
             if (threadId != -1L) {
-                threadRecipients = threadDatabase.getRecipientForThreadId(threadId)
+                threadRecipients = threadDatabase.getRecipientForThreadId(threadId)?.let(recipientRepository::getRecipientSync)
                 messageRequest = threadRecipients != null && !threadRecipients.isGroupOrCommunityRecipient &&
-                        !threadRecipients.isApproved && !threadDatabase.getLastSeenAndHasSent(threadId).second()
+                        !threadRecipients.approved && !threadDatabase.getLastSeenAndHasSent(threadId).second()
                 if (messageRequest && (threadDatabase.getMessageCount(threadId) > 1 || !hasHiddenMessageRequests(context))) {
                     continue
                 }
@@ -522,7 +528,7 @@ class DefaultMessageNotifier(
                 blindedPublicKey = generateBlindedId(threadId, context)
                 cache[threadId] = blindedPublicKey
             }
-            if (threadRecipients == null || !threadRecipients.isMuted) {
+            if (threadRecipients == null || !threadRecipients.isMuted()) {
                 if(record.isIncomingCall || record.isOutgoingCall){
                     // do nothing here as we do not want to display a notification for incoming and outgoing calls,
                     // they will instead be handled independently by the pre offer

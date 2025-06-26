@@ -30,6 +30,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocalNumber
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.RecipientV2
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
@@ -259,7 +260,7 @@ class TokenPageViewModel @Inject constructor(
             // Grab the database and reader details we need to count the conversations / groups
             val threadDatabase = DatabaseComponent.get(context).threadDatabase()
             val cursor = threadDatabase.approvedConversationList
-            val result = mutableSetOf<Recipient>()
+            val result = mutableSetOf<RecipientV2>()
 
             // Look through the database to build up our conversation & group counts (still on Dispatchers.IO not the main thread)
             threadDatabase.readerFor(cursor).use { reader ->

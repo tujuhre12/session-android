@@ -17,6 +17,7 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.conversation.v2.ViewUtil
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_ANSWER_INCOMING
 import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_ANSWER_OUTGOING
 import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_CONNECTED
@@ -38,8 +39,8 @@ class CallViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val callManager: CallManager,
     private val rtcCallBridge: WebRtcCallBridge,
-    private val usernameUtils: UsernameUtils
-
+    private val usernameUtils: UsernameUtils,
+    private val recipientRepository: RecipientRepository,
 ): ViewModel() {
 
     //todo PHONE Can we eventually remove this state and instead use the StateMachine.kt State?
@@ -196,7 +197,7 @@ class CallViewModel @Inject constructor(
     fun denyCall() = rtcCallBridge.handleDenyCall()
 
     fun createCall(recipientAddress: Address) =
-        rtcCallBridge.handleOutgoingCall(Recipient.from(context, recipientAddress, true))
+        rtcCallBridge.handleOutgoingCall(recipientAddress)
 
     fun hangUp() = rtcCallBridge.handleLocalHangup(null)
 

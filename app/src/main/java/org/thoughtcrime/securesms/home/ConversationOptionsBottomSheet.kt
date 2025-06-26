@@ -78,8 +78,8 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
 
         if (!recipient.isGroupOrCommunityRecipient && !recipient.isLocalNumber) {
             binding.detailsTextView.visibility = View.VISIBLE
-            binding.unblockTextView.visibility = if (recipient.isBlocked) View.VISIBLE else View.GONE
-            binding.blockTextView.visibility = if (recipient.isBlocked) View.GONE else View.VISIBLE
+            binding.unblockTextView.visibility = if (recipient.blocked) View.VISIBLE else View.GONE
+            binding.blockTextView.visibility = if (recipient.blocked) View.GONE else View.VISIBLE
             binding.detailsTextView.setOnClickListener(this)
             binding.blockTextView.setOnClickListener(this)
             binding.unblockTextView.setOnClickListener(this)
@@ -99,7 +99,7 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
         binding.copyCommunityUrl.setOnClickListener(this)
 
         val notificationIconRes = when{
-            recipient.isMuted -> R.drawable.ic_volume_off
+            recipient.isMuted() -> R.drawable.ic_volume_off
             recipient.notifyType == RecipientDatabase.NOTIFY_TYPE_MENTIONS ->
                 R.drawable.ic_at_sign
             else -> R.drawable.ic_volume_2

@@ -20,7 +20,7 @@ import com.annimon.stream.Stream;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.ServiceUtil;
 import org.session.libsession.utilities.TextSecurePreferences;
-import org.session.libsession.utilities.recipients.Recipient;
+import org.session.libsession.utilities.recipients.RecipientV2;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.database.RecipientDatabase;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
@@ -107,12 +107,12 @@ public class NotificationChannels {
     return sound == null ? Uri.EMPTY : sound;
   }
 
-  public static synchronized @Nullable Uri getMessageRingtone(@NonNull Context context, @NonNull Recipient recipient) {
+  public static synchronized @Nullable Uri getMessageRingtone(@NonNull Context context, @NonNull RecipientV2 recipient) {
     NotificationManager notificationManager = ServiceUtil.getNotificationManager(context);
     NotificationChannel channel             = notificationManager.getNotificationChannel(recipient.getNotificationChannel());
 
     if (!channelExists(channel)) {
-      Log.w(TAG, "Recipient had no channel. Returning null.");
+      Log.w(TAG, "RecipientV2 had no channel. Returning null.");
       return null;
     }
 
@@ -151,12 +151,12 @@ public class NotificationChannels {
   public static synchronized void ensureCustomChannelConsistency(@NonNull Context context) {
     NotificationManager notificationManager = ServiceUtil.getNotificationManager(context);
     RecipientDatabase   db                  = DatabaseComponent.get(context).recipientDatabase();
-    List<Recipient>     customRecipients    = new ArrayList<>();
+    List<RecipientV2>     customRecipients    = new ArrayList<>();
     Set<String>         customChannelIds    = new HashSet<>();
     Set<String>         existingChannelIds  = Stream.of(notificationManager.getNotificationChannels()).map(NotificationChannel::getId).collect(Collectors.toSet());
 
     try (RecipientDatabase.RecipientReader reader = db.getRecipientsWithNotificationChannels()) {
-      Recipient recipient;
+      RecipientV2 recipient;
       while ((recipient = reader.getNext()) != null) {
         customRecipients.add(recipient);
         customChannelIds.add(recipient.getNotificationChannel());
@@ -171,7 +171,7 @@ public class NotificationChannels {
       }
     }
 
-    for (Recipient customRecipient : customRecipients) {
+    for (RecipientV2 customRecipient : customRecipients) {
       if (!existingChannelIds.contains(customRecipient.getNotificationChannel())) {
         db.setNotificationChannel(customRecipient, null);
       }

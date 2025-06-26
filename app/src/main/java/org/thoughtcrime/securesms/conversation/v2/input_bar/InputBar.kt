@@ -19,8 +19,10 @@ import com.bumptech.glide.RequestManager
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewInputBarBinding
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.RecipientV2
 import org.thoughtcrime.securesms.conversation.v2.InputBarContentState
 import org.thoughtcrime.securesms.conversation.v2.InputBarState
 import org.thoughtcrime.securesms.conversation.v2.components.LinkPreviewDraftView
@@ -190,7 +192,7 @@ class InputBar @JvmOverloads constructor(
         delegate?.startRecordingVoiceMessage()
     }
 
-    fun draftQuote(thread: Recipient, message: MessageRecord, glide: RequestManager) {
+    fun draftQuote(thread: RecipientV2, message: MessageRecord, glide: RequestManager) {
         quoteView?.let(binding.inputBarAdditionalContentContainer::removeView)
 
         quote = message

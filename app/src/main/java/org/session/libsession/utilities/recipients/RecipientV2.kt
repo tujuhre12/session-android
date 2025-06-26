@@ -3,8 +3,9 @@ package org.session.libsession.utilities.recipients
 import network.loki.messenger.libsession_util.util.Bytes
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.UserPic
-import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.recipients.RecipientAvatar.EncryptedRemotePic
+import org.session.libsession.utilities.recipients.RecipientAvatar.Inline
 import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.model.NotifyType
 import java.time.ZonedDateTime
@@ -23,6 +24,7 @@ data class RecipientV2(
     val notifyType: Int,
     val avatar: RecipientAvatar?,
     val expiryMode: ExpiryMode,
+    val acceptsCommunityMessageRequests: Boolean,
 ) {
     val isGroupOrCommunityRecipient: Boolean get() = address.isGroupOrCommunity
     val isCommunityRecipient: Boolean get() = address.isCommunity
@@ -30,6 +32,9 @@ data class RecipientV2(
     val isCommunityOutboxRecipient: Boolean get() = address.isCommunityOutbox
     val isGroupV2Recipient: Boolean get() = address.isGroupV2
     val isLegacyGroupRecipient: Boolean get() = address.isLegacyGroup
+    val isContactRecipient: Boolean get() = address.isContact
+    val is1on1: Boolean get() = !isLocalNumber && address.isContact
+    val isGroupRecipient: Boolean get() = address.isGroup
 
     val displayName: String
         get() = nickname?.takeIf { it.isNotBlank() } ?: name
@@ -38,8 +43,19 @@ data class RecipientV2(
         return mutedUntil?.isAfter(now) == true
     }
 
+    val showCallMenu: Boolean
+        get() = !isGroupOrCommunityRecipient && approvedMe && approved;
+
     val mutedUntilMills: Long?
         get() = mutedUntil?.toInstant()?.toEpochMilli()
+
+    @Deprecated("Use `avatar` property instead", ReplaceWith("avatar"))
+    val profileAvatar: String?
+        get() = (avatar as? EncryptedRemotePic)?.url
+
+    @Deprecated("Use `avatar` property instead", ReplaceWith("avatar?.toUserPic()"))
+    val profileKey: ByteArray?
+        get() = (avatar as? EncryptedRemotePic)?.key?.data
 
     companion object {
         fun empty(address: Address): RecipientV2 {
@@ -56,6 +72,7 @@ data class RecipientV2(
                 notifyType = RecipientDatabase.NOTIFY_TYPE_ALL,
                 avatar = null,
                 expiryMode = ExpiryMode.NONE,
+                acceptsCommunityMessageRequests = false,
             )
         }
     }
@@ -92,5 +109,12 @@ sealed interface RecipientAvatar {
                 Inline(Bytes(bytes))
             }
         }
+    }
+}
+
+fun RecipientAvatar.toUserPic(): UserPic? {
+    return when (this) {
+        is EncryptedRemotePic -> UserPic(url, key)
+        is Inline -> null
     }
 }

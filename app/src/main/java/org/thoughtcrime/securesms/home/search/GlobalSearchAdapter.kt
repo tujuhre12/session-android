@@ -11,8 +11,9 @@ import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewGlobalSearchHeaderBinding
 import network.loki.messenger.databinding.ViewGlobalSearchResultBinding
 import network.loki.messenger.databinding.ViewGlobalSearchSubheaderBinding
+import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.utilities.GroupRecord
-import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.RecipientV2
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.search.model.MessageResult
 import org.thoughtcrime.securesms.ui.GetString
@@ -180,8 +181,10 @@ class GlobalSearchAdapter(
                         groupId = groupRecord.encodedId,
                         title = groupRecord.title,
                         legacyMembersString = if (groupRecord.isLegacyGroup) {
-                            val recipients = groupRecord.members.map { Recipient.from(context, it, false) }
-                            recipients.joinToString(transform = Recipient::getSearchName)
+                            val recipients = groupRecord.members.map {
+                                MessagingModuleConfiguration.shared.recipientRepository.getRecipientSyncOrEmpty(it)
+                            }
+                            recipients.joinToString(transform = RecipientV2::getSearchName)
                         } else {
                             null
                         }

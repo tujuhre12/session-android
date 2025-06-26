@@ -26,7 +26,7 @@ import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.RecipientV2
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
@@ -58,26 +58,26 @@ interface ConversationRepository {
     fun deleteMessages(messages: Set<MessageRecord>, threadId: Long)
     fun deleteAllLocalMessagesInThreadFromSenderOfMessage(messageRecord: MessageRecord)
     fun setApproved(recipient: Address, isApproved: Boolean)
-    fun isGroupReadOnly(recipient: Recipient): Boolean
+    fun isGroupReadOnly(recipient: RecipientV2): Boolean
     fun getLastSentMessageID(threadId: Long): Flow<MessageId?>
 
     suspend fun deleteCommunityMessagesRemotely(threadId: Long, messages: Set<MessageRecord>)
     suspend fun delete1on1MessagesRemotely(
         threadId: Long,
-        recipient: Recipient,
+        recipient: Address,
         messages: Set<MessageRecord>
     )
     suspend fun deleteNoteToSelfMessagesRemotely(
         threadId: Long,
-        recipient: Recipient,
+        recipient: Address,
         messages: Set<MessageRecord>
     )
     suspend fun deleteLegacyGroupMessagesRemotely(
-        recipient: Recipient,
+        recipient: Address,
         messages: Set<MessageRecord>
     )
 
-    suspend fun deleteGroupV2MessagesRemotely(recipient: Recipient, messages: Set<MessageRecord>)
+    suspend fun deleteGroupV2MessagesRemotely(recipient: Address, messages: Set<MessageRecord>)
 
     suspend fun banUser(threadId: Long, recipient: Address): Result<Unit>
     suspend fun banAndDeleteAll(threadId: Long, recipient: Address): Result<Unit>
@@ -156,13 +156,12 @@ class DefaultConversationRepository @Inject constructor(
             }
             message.openGroupInvitation = openGroupInvitation
             val expirationConfig = threadDb.getOrCreateThreadIdFor(contact).let(storage::getExpirationConfiguration)
-            val expiresInMillis = expirationConfig?.expiryMode?.expiryMillis ?: 0
-            val expireStartedAt = if (expirationConfig?.expiryMode is ExpiryMode.AfterSend) message.sentTimestamp!! else 0
+            val expireStartedAt = if (expirationConfig is ExpiryMode.AfterSend) message.sentTimestamp!! else 0
             val outgoingTextMessage = OutgoingTextMessage.fromOpenGroupInvitation(
                 openGroupInvitation,
                 contact,
                 message.sentTimestamp,
-                expiresInMillis,
+                expirationConfig.expiryMillis,
                 expireStartedAt
             )
             message.id = smsDb.insertMessageOutbox(-1, outgoingTextMessage, message.sentTimestamp!!, true).orNull()
@@ -172,7 +171,7 @@ class DefaultConversationRepository @Inject constructor(
         }
     }
 
-    override fun isGroupReadOnly(recipient: Recipient): Boolean {
+    override fun isGroupReadOnly(recipient: RecipientV2): Boolean {
         // We only care about group v2 recipient
         if (!recipient.isGroupV2Recipient) {
             return false
@@ -282,11 +281,10 @@ class DefaultConversationRepository @Inject constructor(
 
     override suspend fun delete1on1MessagesRemotely(
         threadId: Long,
-        recipient: Recipient,
+        recipient: Address,
         messages: Set<MessageRecord>
     ) {
         // delete the messages remotely
-        val publicKey = recipient.address.toString()
         val userAddress: Address? =  textSecurePreferences.getLocalNumber()?.let { Address.fromSerialized(it) }
         val userAuth = requireNotNull(storage.userAuth) {
             "User auth is required to delete messages remotely"
@@ -296,7 +294,7 @@ class DefaultConversationRepository @Inject constructor(
             // delete from swarm
             messageDataProvider.getServerHashForMessage(message.messageId)
                 ?.let { serverHash ->
-                    SnodeAPI.deleteMessage(publicKey, userAuth, listOf(serverHash))
+                    SnodeAPI.deleteMessage(recipient.address, userAuth, listOf(serverHash))
                 }
 
             // send an UnsendRequest to user's swarm
@@ -306,34 +304,32 @@ class DefaultConversationRepository @Inject constructor(
 
             // send an UnsendRequest to recipient's swarm
             buildUnsendRequest(message).let { unsendRequest ->
-                MessageSender.send(unsendRequest, recipient.address)
+                MessageSender.send(unsendRequest, recipient)
             }
         }
     }
 
     override suspend fun deleteLegacyGroupMessagesRemotely(
-        recipient: Recipient,
+        recipient: Address,
         messages: Set<MessageRecord>
     ) {
-        if (recipient.isLegacyGroupRecipient) {
-            val publicKey = recipient.address
-
+        if (recipient.isLegacyGroup) {
             messages.forEach { message ->
                 // send an UnsendRequest to group's swarm
                 buildUnsendRequest(message).let { unsendRequest ->
-                    MessageSender.send(unsendRequest, publicKey)
+                    MessageSender.send(unsendRequest, recipient)
                 }
             }
         }
     }
 
     override suspend fun deleteGroupV2MessagesRemotely(
-        recipient: Recipient,
+        recipient: Address,
         messages: Set<MessageRecord>
     ) {
-        require(recipient.isGroupV2Recipient) { "Recipient is not a group v2 recipient" }
+        require(recipient.isGroupV2) { "Recipient is not a group v2 recipient" }
 
-        val groupId = AccountId(recipient.address.toString())
+        val groupId = AccountId(recipient.address)
         val hashes = messages.mapNotNullTo(mutableSetOf()) { msg ->
             messageDataProvider.getServerHashForMessage(msg.messageId)
         }
@@ -343,11 +339,10 @@ class DefaultConversationRepository @Inject constructor(
 
     override suspend fun deleteNoteToSelfMessagesRemotely(
         threadId: Long,
-        recipient: Recipient,
+        recipient: Address,
         messages: Set<MessageRecord>
     ) {
         // delete the messages remotely
-        val publicKey = recipient.address.toString()
         val userAddress: Address? =  textSecurePreferences.getLocalNumber()?.let { Address.fromSerialized(it) }
         val userAuth = requireNotNull(storage.userAuth) {
             "User auth is required to delete messages remotely"
@@ -357,7 +352,7 @@ class DefaultConversationRepository @Inject constructor(
             // delete from swarm
             messageDataProvider.getServerHashForMessage(message.messageId)
                 ?.let { serverHash ->
-                    SnodeAPI.deleteMessage(publicKey, userAuth, listOf(serverHash))
+                    SnodeAPI.deleteMessage(recipient.address, userAuth, listOf(serverHash))
                 }
 
             // send an UnsendRequest to user's swarm

@@ -20,6 +20,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
 import com.annimon.stream.Stream
+import dagger.hilt.android.qualifiers.ApplicationContext
 import org.apache.commons.lang3.StringUtils
 import org.json.JSONArray
 import org.json.JSONException
@@ -45,6 +46,7 @@ import org.session.libsession.utilities.NetworkFailure
 import org.session.libsession.utilities.NetworkFailureList
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isReadReceiptsEnabled
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.RecipientV2
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.ThreadUtils.queue
@@ -62,9 +64,16 @@ import org.thoughtcrime.securesms.util.asSequence
 import java.io.Closeable
 import java.io.IOException
 import java.util.LinkedList
+import javax.inject.Inject
 import javax.inject.Provider
+import javax.inject.Singleton
 
-class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper>) : MessagingDatabase(context, databaseHelper) {
+@Singleton
+class MmsDatabase @Inject constructor(
+    @ApplicationContext context: Context,
+    databaseHelper: Provider<SQLCipherOpenHelper>,
+    private val recipientRepository: RecipientRepository,
+) : MessagingDatabase(context, databaseHelper) {
     private val earlyDeliveryReceiptCache = EarlyReceiptCache()
     private val earlyReadReceiptCache = EarlyReceiptCache()
     override fun getTableName() = TABLE_NAME
@@ -1321,13 +1330,13 @@ class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper
             )
         }
 
-        private fun getRecipientFor(serialized: String?): Recipient {
+        private fun getRecipientFor(serialized: String?): RecipientV2 {
             val address: Address = if (serialized.isNullOrEmpty() || "insert-address-token" == serialized) {
                 UNKNOWN
             } else {
                 fromSerialized(serialized)
             }
-            return Recipient.from(context, address, true)
+            return recipientRepository.getRecipientSync(address) ?: RecipientV2.empty(address)
         }
 
         private fun getMismatchedIdentities(document: String?): List<IdentityKeyMismatch?>? {

@@ -26,7 +26,6 @@ import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientV2
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.MediaPreviewArgs
@@ -64,7 +63,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
     private val context: ApplicationContext,
     private val avatarUtils: AvatarUtils,
     messageDataProvider: MessageDataProvider,
-    private val storage: Storage,
+    storage: Storage,
     private val recipientRepository: RecipientRepository,
 ) : ViewModel() {
     private val state = MutableStateFlow(MessageDetailsState())
@@ -77,6 +76,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
         storage = storage,
         messageDataProvider = messageDataProvider,
         scope = viewModelScope,
+        recipientRepository = recipientRepository,
     )
 
     init {
@@ -115,9 +115,9 @@ class MessageDetailsViewModel @AssistedInject constructor(
             state.value = messageRecord.run {
                 val slides = mmsRecord?.slideDeck?.slides ?: emptyList()
 
-                val conversation = recipientRepository.getRecipient(threadDb.getRecipientForThreadId(threadId)!!)
-                val isDeprecatedLegacyGroup = conversation.isLegacyGroupRecipient &&
-                        deprecationManager.isDeprecated
+                val conversationAddress = threadDb.getRecipientForThreadId(threadId)!!
+                val conversation = recipientRepository.getRecipient(conversationAddress) ?: RecipientV2.empty(conversationAddress)
+                val isDeprecatedLegacyGroup = conversationAddress.isLegacyGroup && deprecationManager.isDeprecated
 
 
                 val errorString = lokiMessageDatabase.getErrorMessage(messageId)
@@ -224,7 +224,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
         if(state.thread == null) return
 
         viewModelScope.launch {
-            MediaPreviewArgs(slide, state.mmsRecord, state.thread)
+            MediaPreviewArgs(slide, state.mmsRecord, state.thread.address)
                 .let(Event::StartMediaPreview)
                 .let { event.send(it) }
         }

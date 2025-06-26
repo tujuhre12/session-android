@@ -29,9 +29,11 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import org.session.libsession.avatars.ContactPhoto;
 import org.session.libsession.messaging.MessagingModuleConfiguration;
 import org.session.libsession.messaging.contacts.Contact;
+import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.NotificationPrivacyPreference;
 import org.session.libsession.utilities.Util;
 import org.session.libsession.utilities.recipients.Recipient;
+import org.session.libsession.utilities.recipients.RecipientV2;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.mms.DecryptableStreamUriLoader;
 import org.thoughtcrime.securesms.mms.Slide;
@@ -71,7 +73,7 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
     setCategory(NotificationCompat.CATEGORY_MESSAGE);
   }
 
-  public void setThread(@NonNull Recipient recipient) {
+  public void setThread(@NonNull RecipientV2 recipient) {
     String channelId = recipient.getNotificationChannel();
     setChannelId(channelId != null ? channelId : NotificationChannels.getMessagesChannel(context));
 
@@ -111,15 +113,15 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
     setNumber(messageCount);
   }
 
-  public void setPrimaryMessageBody(@NonNull  Recipient threadRecipient,
-                                    @NonNull  Recipient individualRecipient,
+  public void setPrimaryMessageBody(@NonNull  RecipientV2 threadRecipient,
+                                    @NonNull  RecipientV2 individualRecipient,
                                     @NonNull  CharSequence message,
                                     @Nullable SlideDeck slideDeck)
   {
     SpannableStringBuilder stringBuilder = new SpannableStringBuilder();
 
     if (privacy.isDisplayContact() && threadRecipient.isGroupOrCommunityRecipient()) {
-      String displayName = getGroupDisplayName(individualRecipient, threadRecipient.isCommunityRecipient());
+      String displayName = getGroupDisplayName(individualRecipient.getAddress(), threadRecipient.isCommunityRecipient());
       stringBuilder.append(Util.getBoldedString(displayName + ": "));
     }
 
@@ -207,7 +209,7 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
     SpannableStringBuilder stringBuilder = new SpannableStringBuilder();
 
     if (privacy.isDisplayContact() && threadRecipient.isGroupOrCommunityRecipient()) {
-      String displayName = getGroupDisplayName(individualRecipient, threadRecipient.isCommunityRecipient());
+      String displayName = getGroupDisplayName(individualRecipient.getAddress(), threadRecipient.isCommunityRecipient());
       stringBuilder.append(Util.getBoldedString(displayName + ": "));
     }
 
@@ -319,9 +321,9 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
     return content;
   }
 
-  private static Drawable getPlaceholderDrawable(AvatarUtils avatarUtils, Recipient recipient) {
+  private static Drawable getPlaceholderDrawable(AvatarUtils avatarUtils, RecipientV2 recipient) {
     String publicKey = recipient.getAddress().toString();
-    String displayName = recipient.getName();
+    String displayName = recipient.getDisplayName();
     return avatarUtils.generateTextBitmap(ICON_SIZE, publicKey, displayName);
   }
 
@@ -329,9 +331,9 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
    * @param recipient          the * individual * recipient for which to get the display name.
    * @param openGroupRecipient whether in an open group context
    */
-  private String getGroupDisplayName(Recipient recipient, boolean openGroupRecipient) {
+  private String getGroupDisplayName(Address recipient, boolean openGroupRecipient) {
     return MessagingModuleConfiguration.getShared().getUsernameUtils().getContactNameWithAccountID(
-            recipient.getAddress().toString(),
+            recipient.getAddress(),
             null,
             openGroupRecipient ? Contact.ContactContext.OPEN_GROUP : Contact.ContactContext.REGULAR
         );

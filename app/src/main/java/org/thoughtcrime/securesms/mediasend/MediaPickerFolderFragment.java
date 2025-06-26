@@ -25,6 +25,7 @@ import com.bumptech.glide.Glide;
 import com.squareup.phrase.Phrase;
 
 import org.session.libsession.utilities.recipients.Recipient;
+import org.session.libsession.utilities.recipients.RecipientV2;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.guava.Optional;
 import org.thoughtcrime.securesms.util.ViewUtilitiesKt;
@@ -45,13 +46,9 @@ public class MediaPickerFolderFragment extends Fragment implements MediaPickerFo
   private Controller         controller;
   private GridLayoutManager  layoutManager;
 
-  public static @NonNull MediaPickerFolderFragment newInstance(@NonNull Recipient recipient) {
-    String name = Optional.fromNullable(recipient.getName())
-                          .or(Optional.fromNullable(recipient.getProfileName()))
-                          .or(recipient.getName());
-
+  public static @NonNull MediaPickerFolderFragment newInstance(@NonNull RecipientV2 recipient) {
     Bundle args = new Bundle();
-    args.putString(KEY_RECIPIENT_NAME, name);
+    args.putString(KEY_RECIPIENT_NAME, recipient.getDisplayName());
 
     MediaPickerFolderFragment fragment = new MediaPickerFolderFragment();
     fragment.setArguments(args);

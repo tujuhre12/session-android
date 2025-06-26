@@ -6,7 +6,6 @@ import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.KeyPair
 import org.session.libsession.messaging.BlindedIdMapping
 import org.session.libsession.messaging.calls.CallMessageType
-import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.jobs.AttachmentUploadJob
 import org.session.libsession.messaging.jobs.Job
 import org.session.libsession.messaging.jobs.MessageSendJob
@@ -28,8 +27,8 @@ import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupDisplayInfo
 import org.session.libsession.utilities.GroupRecord
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.Recipient.RecipientSettings
+import org.session.libsession.utilities.recipients.RecipientV2
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceAttachmentPointer
 import org.session.libsignal.messages.SignalServiceGroup
@@ -48,7 +47,6 @@ interface StorageProtocol {
     fun getUserX25519KeyPair(): ECKeyPair
     fun getUserBlindedAccountId(serverPublicKey: String): AccountId?
     fun getUserProfile(): Profile
-    fun setProfilePicture(recipient: Address, newProfilePicture: String?, newProfileKey: ByteArray?)
     fun setBlocksCommunityMessageRequests(recipient: Address, blocksMessageRequests: Boolean)
     fun setUserProfilePicture(newProfilePicture: String?, newProfileKey: ByteArray?)
     fun clearUserPic(clearConfig: Boolean = true)
@@ -130,7 +128,6 @@ interface StorageProtocol {
     fun getGroup(groupID: String): GroupRecord?
     fun createGroup(groupID: String, title: String?, members: List<Address>, avatar: SignalServiceAttachmentPointer?, relay: String?, admins: List<Address>, formationTimestamp: Long)
     fun createInitialConfigGroup(groupPublicKey: String, name: String, members: Map<String, Boolean>, formationTimestamp: Long, encryptionKeyPair: ECKeyPair, expirationTimer: Int)
-    fun updateGroupConfig(groupPublicKey: String)
     fun isGroupActive(groupPublicKey: String): Boolean
     fun setActive(groupID: String, value: Boolean)
     fun getZombieMembers(groupID: String): Set<String>
@@ -196,9 +193,6 @@ interface StorageProtocol {
     fun clearMedia(threadID: Long, fromUser: Address? = null): Boolean
 
     // Contacts
-    fun getContactWithAccountID(accountID: String): Contact?
-    fun getAllContacts(): Set<Contact>
-    fun setContact(contact: Contact)
     fun deleteContactAndSyncConfig(accountId: String)
     fun getRecipientForThread(threadId: Long): Address?
     fun getRecipientSettings(address: Address): RecipientSettings?
@@ -263,7 +257,8 @@ interface StorageProtocol {
     fun deleteReactions(messageId: MessageId)
     fun deleteReactions(messageIds: List<Long>, mms: Boolean)
     fun setBlocked(recipients: Iterable<Address>, isBlocked: Boolean, fromConfigUpdate: Boolean = false)
-    fun blockedContacts(): List<Recipient>
+    fun blockedContacts(): List<RecipientV2>
+    fun getExpirationConfiguration(threadId: Long): ExpiryMode
     fun setExpirationConfiguration(threadId: Long, expiryMode: ExpiryMode)
     fun getExpiringMessages(messageIds: List<Long> = emptyList()): List<Pair<Long, Long>>
 
