@@ -100,8 +100,8 @@ import org.thoughtcrime.securesms.ui.LargeItemButtonWithDrawable
 import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.BaseBottomSheet
-import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
-import org.thoughtcrime.securesms.ui.components.PrimaryOutlineCopyButton
+import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
+import org.thoughtcrime.securesms.ui.components.AcccentOutlineCopyButton
 import org.thoughtcrime.securesms.ui.getCellBottomShape
 import org.thoughtcrime.securesms.ui.getCellTopShape
 import org.thoughtcrime.securesms.ui.qaTag
@@ -113,7 +113,7 @@ import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
-import org.thoughtcrime.securesms.ui.theme.primaryTextButtonColors
+import org.thoughtcrime.securesms.ui.theme.accentTextButtonColors
 import org.thoughtcrime.securesms.util.FileProviderUtil
 import org.thoughtcrime.securesms.util.applyCommonWindowInsetsOnViews
 import org.thoughtcrime.securesms.util.push
@@ -483,13 +483,13 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                     .padding(top = LocalDimensions.current.xxsSpacing),
                 horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing),
             ) {
-                PrimaryOutlineButton(
+                AccentOutlineButton(
                     stringResource(R.string.share),
                     modifier = Modifier.weight(1f),
                     onClick = ::sendInvitationToUseSession
                 )
 
-                PrimaryOutlineCopyButton(
+                AcccentOutlineCopyButton(
                     modifier = Modifier.weight(1f),
                     onClick = ::copyPublicKey,
                 )
@@ -519,7 +519,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                         textId = R.string.donate,
                         icon = R.drawable.ic_heart,
                         modifier = Modifier.qaTag(R.string.qa_settings_item_donate),
-                        colors = primaryTextButtonColors()
+                        colors = accentTextButtonColors()
                     ) {
                         urlToOPen = "https://session.foundation/donate#app"
                     }
@@ -815,7 +815,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                             .size(LocalDimensions.current.spacing)
                             .background(
                                 shape = CircleShape,
-                                color = LocalColors.current.primary
+                                color = LocalColors.current.accent
                             )
                             .padding(LocalDimensions.current.xxxsSpacing)
                             .align(Alignment.BottomEnd)
