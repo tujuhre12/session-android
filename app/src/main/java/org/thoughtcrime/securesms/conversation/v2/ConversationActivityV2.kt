@@ -325,6 +325,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
     private val mentionCandidateAdapter = MentionCandidateAdapter {
         mentionViewModel.onCandidateSelected(it.member.publicKey)
+
+        // make sure to reverify text length here at the onTextChanged happens before this step
+        viewModel.onTextChanged(mentionViewModel.deconstructMessageMentions())
     }
     // Search
     val searchViewModel: SearchViewModel by viewModels()
@@ -1191,7 +1194,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             textSecurePreferences.setHasSeenLinkPreviewSuggestionDialog()
         }
 
-        viewModel.onTextChanged(newContent)
+        // use the normalised version of the text's body to get the characters amount with the
+        // mentions as their account id
+        viewModel.onTextChanged(mentionViewModel.deconstructMessageMentions())
     }
 
     override fun toggleAttachmentOptions() {
