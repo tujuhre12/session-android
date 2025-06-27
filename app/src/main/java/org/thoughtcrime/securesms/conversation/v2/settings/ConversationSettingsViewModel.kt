@@ -62,6 +62,8 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory.Companion.MAX_NAME_
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.repository.ConversationRepository
+import org.thoughtcrime.securesms.ui.DialogButtonData
+import org.thoughtcrime.securesms.ui.SimpleDialogData
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
@@ -545,7 +547,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private fun confirmBlockUser(){
         _dialogState.update {
             it.copy(
-                showSimpleDialog = Dialog(
+                showSimpleDialog = SimpleDialogData(
                     title = context.getString(R.string.block),
                     message = Phrase.from(context, R.string.blockDescription)
                         .put(NAME_KEY, recipient?.displayName ?: "")
@@ -564,7 +566,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private fun confirmUnblockUser(){
         _dialogState.update {
             it.copy(
-                showSimpleDialog = Dialog(
+                showSimpleDialog = SimpleDialogData(
                     title = context.getString(R.string.blockUnblock),
                     message = Phrase.from(context, R.string.blockUnblockName)
                         .put(NAME_KEY, recipient?.displayName ?: "")
@@ -603,7 +605,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private fun confirmHideNTS(){
         _dialogState.update {
             it.copy(
-                showSimpleDialog = Dialog(
+                showSimpleDialog = SimpleDialogData(
                     title = context.getString(R.string.noteToSelfHide),
                     message = context.getText(R.string.hideNoteToSelfDescription),
                     positiveText = context.getString(R.string.hide),
@@ -620,7 +622,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private fun confirmShowNTS(){
         _dialogState.update {
             it.copy(
-                showSimpleDialog = Dialog(
+                showSimpleDialog = SimpleDialogData(
                     title = context.getString(R.string.showNoteToSelf),
                     message = context.getText(R.string.showNoteToSelfDescription),
                     positiveText = context.getString(R.string.show),
@@ -660,7 +662,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private fun confirmDeleteContact(){
         _dialogState.update {
             it.copy(
-                showSimpleDialog = Dialog(
+                showSimpleDialog = SimpleDialogData(
                     title = context.getString(R.string.contactDelete),
                     message = Phrase.from(context, R.string.deleteContactDescription)
                         .put(NAME_KEY, recipient?.displayName ?: "")
@@ -692,7 +694,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private fun confirmDeleteConversation(){
         _dialogState.update {
             it.copy(
-                showSimpleDialog = Dialog(
+                showSimpleDialog = SimpleDialogData(
                     title = context.getString(R.string.conversationsDelete),
                     message = Phrase.from(context, R.string.deleteConversationDescription)
                         .put(NAME_KEY, recipient?.displayName ?: "")
@@ -723,7 +725,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private fun confirmLeaveCommunity(){
         _dialogState.update {
             it.copy(
-                showSimpleDialog = Dialog(
+                showSimpleDialog = SimpleDialogData(
                     title = context.getString(R.string.communityLeave),
                     message = Phrase.from(context, R.string.groupLeaveDescription)
                         .put(GROUP_NAME_KEY, recipient?.displayName ?: "")
@@ -789,7 +791,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
         _dialogState.update {
             it.copy(
-                showSimpleDialog = Dialog(
+                showSimpleDialog = SimpleDialogData(
                     title = context.getString(R.string.clearMessages),
                     message = message,
                     positiveText = context.getString(R.string.clear),
@@ -840,7 +842,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             ) ?: return
 
             state.copy(
-                showSimpleDialog = Dialog(
+                showSimpleDialog = SimpleDialogData(
                     title = dialogData.title,
                     message = dialogData.message,
                     positiveText = context.getString(dialogData.positiveText),
@@ -1409,21 +1411,6 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         val categories: List<OptionsCategory> = emptyList()
     )
 
-    /**
-     * Data to display a simple dialog
-     */
-    data class Dialog(
-        val title: String,
-        val message: CharSequence,
-        val positiveText: String,
-        val positiveStyleDanger: Boolean = true,
-        val negativeText: String,
-        val positiveQaTag: String?,
-        val negativeQaTag: String?,
-        val onPositive: () -> Unit,
-        val onNegative: () -> Unit
-    )
-
     data class OptionsCategory(
         val name: String? = null,
         val items: List<OptionsSubCategory> = emptyList()
@@ -1445,7 +1432,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     )
 
     data class DialogsState(
-        val showSimpleDialog: Dialog? = null,
+        val showSimpleDialog: SimpleDialogData? = null,
         val nicknameDialog: NicknameDialogData? = null,
         val groupEditDialog: GroupEditDialog? = null,
         val groupAdminClearMessagesDialog: GroupAdminClearMessageDialog? = null,

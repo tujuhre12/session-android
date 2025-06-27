@@ -12,6 +12,7 @@ import org.session.libsession.utilities.Device
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.Toaster
 import org.thoughtcrime.securesms.database.RecipientRepository
+import org.thoughtcrime.securesms.pro.ProStatusManager
 
 class MessagingModuleConfiguration(
     val context: Context,
@@ -26,6 +27,7 @@ class MessagingModuleConfiguration(
     val preferences: TextSecurePreferences,
     val deprecationManager: LegacyGroupDeprecationManager,
     val recipientRepository: RecipientRepository,
+    val proStatusManager: ProStatusManager,
 ) {
 
     companion object {

@@ -42,7 +42,9 @@ import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAt
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ExpirationUtil
+import org.session.libsession.utilities.StringSubstitutionConstants.COUNT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.LIMIT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getGroup
@@ -70,7 +72,9 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.groups.ExpiredGroupManager
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.mms.AudioSlide
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
+import org.thoughtcrime.securesms.ui.SimpleDialogData
 import org.thoughtcrime.securesms.ui.components.ConversationAppBarData
 import org.thoughtcrime.securesms.ui.components.ConversationAppBarPagerData
 import org.thoughtcrime.securesms.ui.getSubbedString
@@ -83,6 +87,9 @@ import org.thoughtcrime.securesms.webrtc.CallManager
 import org.thoughtcrime.securesms.webrtc.data.State
 import java.time.ZoneId
 import java.util.UUID
+
+// the amount of character left at which point we should show an indicator
+private const  val CHARACTER_LIMIT_THRESHOLD = 200
 
 @HiltViewModel(assistedFactory = ConversationViewModel.Factory::class)
 class ConversationViewModel @AssistedInject constructor(
@@ -106,6 +113,7 @@ class ConversationViewModel @AssistedInject constructor(
     private val avatarUtils: AvatarUtils,
     private val recipientChangeSource: RecipientChangeSource,
     private val openGroupManager: OpenGroupManager,
+    private val proStatusManager: ProStatusManager,
     private val recipientRepository: RecipientRepository,
 ) : ViewModel() {
 
@@ -1118,6 +1126,12 @@ class ConversationViewModel @AssistedInject constructor(
         }
     }
 
+    fun showSessionProCTA(){
+        _dialogsState.update {
+            it.copy(sessionProCharLimitCTA = true)
+        }
+    }
+
     fun messageShown(messageId: Long) {
         _uiState.update { currentUiState ->
             val messages = currentUiState.uiMessages.filterNot { it.id == messageId }
@@ -1165,6 +1179,10 @@ class ConversationViewModel @AssistedInject constructor(
 
     fun onCommand(command: Commands) {
         when (command) {
+            is Commands.HideSimpleDialog -> {
+                hideSimpleDialog()
+            }
+
             is Commands.ShowOpenUrlDialog -> {
                 _dialogsState.update {
                     it.copy(openLinkDialogUrl = command.url)
@@ -1227,9 +1245,115 @@ class ConversationViewModel @AssistedInject constructor(
                 }
             }
 
+            Commands.HideSessionProCTA -> {
+                _dialogsState.update {
+                    it.copy(sessionProCharLimitCTA = false)
+                }
+            }
+
             is Commands.NavigateToConversation -> {
                 _uiEvents.tryEmit(ConversationUiEvent.NavigateToConversation(command.threadId))
             }
+        }
+    }
+
+    fun onCharLimitTapped(){
+        // we currently have different logic for PRE and POST Pro launch
+        // which we can remove once Pro is out - currently we can switch this fro the debug menu
+        if(!proStatusManager.isPostPro() || proStatusManager.isCurrentUserPro()){
+            handleCharLimitTappedForProUser()
+        } else {
+            handleCharLimitTappedForRegularUser()
+        }
+    }
+
+    fun validateMessageLength(): Boolean {
+        // the message is too long if we have a negative char left in the input state
+        val charsLeft = _uiState.value.inputBarState.charLimitState?.count ?: 0
+        return if(charsLeft < 0){
+            // the user is trying to send a message that is too long - we should display a dialog
+            // we currently have different logic for PRE and POST Pro launch
+            // which we can remove once Pro is out - currently we can switch this fro the debug menu
+            if(!proStatusManager.isPostPro() || proStatusManager.isCurrentUserPro()){
+                showMessageTooLongSendDialog()
+            } else {
+                showSessionProCTA()
+            }
+
+            false
+        } else {
+            true
+        }
+    }
+
+    private fun handleCharLimitTappedForProUser(){
+        if((_uiState.value.inputBarState.charLimitState?.count ?: 0) < 0){
+            showMessageTooLongDialog()
+        } else {
+            showMessageLengthDialog()
+        }
+    }
+
+    private fun handleCharLimitTappedForRegularUser(){
+        showSessionProCTA()
+    }
+
+    fun showMessageLengthDialog(){
+        _dialogsState.update {
+            val charsLeft = _uiState.value.inputBarState.charLimitState?.count ?: 0
+            it.copy(
+                showSimpleDialog = SimpleDialogData(
+                    title = application.getString(R.string.modalMessageCharacterDisplayTitle),
+                    message = application.resources.getQuantityString(
+                        R.plurals.modalMessageCharacterDisplayDescription,
+                        charsLeft, // quantity for plural
+                        proStatusManager.getCharacterLimit(), // 1st arg: total character limit
+                        charsLeft, // 2nd arg: chars left
+                    ),
+                    positiveStyleDanger = false,
+                    positiveText = application.getString(R.string.okay),
+                    onPositive = ::hideSimpleDialog
+
+                )
+            )
+        }
+    }
+
+    fun showMessageTooLongDialog(){
+        _dialogsState.update {
+            it.copy(
+                showSimpleDialog = SimpleDialogData(
+                    title = application.getString(R.string.modalMessageTooLongTitle),
+                    message = Phrase.from(application.getString(R.string.modalMessageCharacterTooLongDescription))
+                        .put(LIMIT_KEY, proStatusManager.getCharacterLimit())
+                        .format(),
+                    positiveStyleDanger = false,
+                    positiveText = application.getString(R.string.okay),
+                    onPositive = ::hideSimpleDialog
+                )
+            )
+        }
+    }
+
+    fun showMessageTooLongSendDialog(){
+        _dialogsState.update {
+            it.copy(
+                showSimpleDialog = SimpleDialogData(
+                    title =application.getString(R.string.modalMessageTooLongTitle),
+                    message = Phrase.from(application.getString(R.string.modalMessageTooLongDescription))
+                        .put(LIMIT_KEY, proStatusManager.getCharacterLimit())
+                        .format(),
+                    positiveStyleDanger = false,
+                    positiveText = application.getString(R.string.okay),
+                    onPositive = ::hideSimpleDialog
+                )
+            )
+        }
+    }
+
+    private fun hideSimpleDialog(){
+        _dialogsState.update {
+            it.copy(showSimpleDialog = null)
         }
     }
 
@@ -1303,17 +1427,44 @@ class ConversationViewModel @AssistedInject constructor(
         }
     }
 
+    fun onTextChanged(text: CharSequence) {
+        // check the character limit
+        val maxChars = proStatusManager.getCharacterLimit()
+        val charsLeft = maxChars - text.length
+
+        // update the char limit state based on characters left
+        val charLimitState = if(charsLeft <= CHARACTER_LIMIT_THRESHOLD){
+            InputBarCharLimitState(
+                count = charsLeft,
+                danger = charsLeft < 0,
+                showProBadge = proStatusManager.isPostPro() && !proStatusManager.isCurrentUserPro() // only show the badge for non pro users POST pro launch
+            )
+        } else {
+            null
+        }
+
+        _uiState.update {
+            it.copy(
+                inputBarState = it.inputBarState.copy(
+                    charLimitState = charLimitState
+                )
+            )
+        }
+    }
+
     @AssistedFactory
     interface Factory {
         fun create(threadId: Long): ConversationViewModel
     }
 
     data class DialogsState(
+        val showSimpleDialog: SimpleDialogData? = null,
         val openLinkDialogUrl: String? = null,
         val clearAllEmoji: ClearAllEmoji? = null,
         val deleteEveryone: DeleteForEveryoneDialogData? = null,
         val recreateGroupConfirm: Boolean = false,
         val recreateGroupData: RecreateGroupDialogData? = null,
+        val sessionProCharLimitCTA: Boolean = false
     )
 
     data class RecreateGroupDialogData(
@@ -1341,6 +1492,7 @@ class ConversationViewModel @AssistedInject constructor(
 
         data object HideDeleteEveryoneDialog : Commands
         data object HideClearEmoji : Commands
+        data object HideSimpleDialog : Commands
 
         data class MarkAsDeletedLocally(val messages: Set<MessageRecord>): Commands
         data class MarkAsDeletedForEveryone(val data: DeleteForEveryoneDialogData): Commands
@@ -1349,6 +1501,7 @@ class ConversationViewModel @AssistedInject constructor(
         data object ConfirmRecreateGroup : Commands
         data object HideRecreateGroupConfirm : Commands
         data object HideRecreateGroup : Commands
+        data object HideSessionProCTA : Commands
         data class NavigateToConversation(val threadId: Long) : Commands
     }
 }
@@ -1360,7 +1513,6 @@ data class ConversationUiState(
     val messageRequestState: MessageRequestUiState = MessageRequestUiState.Invisible,
     val shouldExit: Boolean = false,
     val inputBarState: InputBarState = InputBarState(),
-
     val showLoader: Boolean = false,
 )
 
@@ -1370,6 +1522,13 @@ data class InputBarState(
     // or record voice messages to be sent to a recipient - they are NOT things like video or audio
     // playback controls.
     val enableAttachMediaControls: Boolean = true,
+    val charLimitState: InputBarCharLimitState? = null,
+)
+
+data class InputBarCharLimitState(
+    val count: Int,
+    val danger: Boolean,
+    val showProBadge: Boolean
 )
 
 sealed interface InputBarContentState {
