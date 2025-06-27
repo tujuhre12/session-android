@@ -26,7 +26,7 @@ import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.recipients.RecipientV2
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.upsertContact
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
@@ -60,7 +60,7 @@ interface ConversationRepository {
     fun deleteMessages(messages: Set<MessageRecord>, threadId: Long)
     fun deleteAllLocalMessagesInThreadFromSenderOfMessage(messageRecord: MessageRecord)
     fun setApproved(recipient: Address, isApproved: Boolean)
-    fun isGroupReadOnly(recipient: RecipientV2): Boolean
+    fun isGroupReadOnly(recipient: Recipient): Boolean
     fun getLastSentMessageID(threadId: Long): Flow<MessageId?>
 
     suspend fun deleteCommunityMessagesRemotely(threadId: Long, messages: Set<MessageRecord>)
@@ -173,7 +173,7 @@ class DefaultConversationRepository @Inject constructor(
         }
     }
 
-    override fun isGroupReadOnly(recipient: RecipientV2): Boolean {
+    override fun isGroupReadOnly(recipient: Recipient): Boolean {
         // We only care about group v2 recipient
         if (!recipient.isGroupV2Recipient) {
             return false

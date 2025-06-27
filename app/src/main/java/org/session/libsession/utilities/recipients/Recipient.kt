@@ -1,20 +1,17 @@
 package org.session.libsession.utilities.recipients
 
-import android.content.Context
-import android.graphics.drawable.Drawable
 import network.loki.messenger.libsession_util.util.Bytes
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.avatars.ContactPhoto
 import org.session.libsession.avatars.ProfileContactPhoto
-import org.session.libsession.avatars.TransparentContactPhoto
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.truncateIdForDisplay
 import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.model.NotifyType
 import java.time.ZonedDateTime
 
-data class RecipientV2(
+data class Recipient(
     val basic: BasicRecipient,
     val mutedUntil: ZonedDateTime?,
     val autoDownloadAttachments: Boolean?,
@@ -45,7 +42,12 @@ data class RecipientV2(
         else -> ExpiryMode.NONE
     }
 
-    val approved: Boolean get() = (basic as? BasicRecipient.Contact)?.approved ?: true
+    val approved: Boolean get() = when (basic) {
+        is BasicRecipient.Contact -> basic.approved
+        is BasicRecipient.Group -> basic.approved
+        else -> true
+    }
+
     val approvedMe: Boolean get() = (basic as? BasicRecipient.Contact)?.approvedMe ?: true
     val blocked: Boolean get() = when (basic) {
         is BasicRecipient.Generic -> basic.blocked
@@ -82,8 +84,8 @@ data class RecipientV2(
         get() = (avatar as? RecipientAvatar.EncryptedRemotePic)?.key?.data
 
     companion object {
-        fun empty(address: Address): RecipientV2 {
-            return RecipientV2(
+        fun empty(address: Address): Recipient {
+            return Recipient(
                 basic = BasicRecipient.Generic(address),
                 mutedUntil = null,
                 autoDownloadAttachments = true,
@@ -158,6 +160,7 @@ sealed interface BasicRecipient {
         val name: String,
         override val avatar: RecipientAvatar.EncryptedRemotePic?,
         val expiryMode: ExpiryMode,
+        val approved: Boolean,
     ) : ConfigBasedRecipient {
         override val displayName: String
             get() = name
@@ -243,7 +246,7 @@ fun RecipientAvatar.toUserPic(): UserPic? {
     }
 }
 
-inline fun RecipientV2?.displayNameOrFallback(fallbackName: () -> String? = { null }, address: String): String {
+inline fun Recipient?.displayNameOrFallback(fallbackName: () -> String? = { null }, address: String): String {
     return this?.displayName
         ?: fallbackName()?.takeIf { it.isNotBlank() }
         ?: truncateIdForDisplay(address)

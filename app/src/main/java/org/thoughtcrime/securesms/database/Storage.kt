@@ -58,7 +58,7 @@ import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.RecipientSettings
-import org.session.libsession.utilities.recipients.RecipientV2
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.upsertContact
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
@@ -1654,7 +1654,7 @@ open class Storage @Inject constructor(
         }
     }
 
-    override fun blockedContacts(): List<RecipientV2> {
+    override fun blockedContacts(): List<Recipient> {
         val allBlockedContacts = hashSetOf<Address>()
 
         // Source data from config first
@@ -1669,7 +1669,7 @@ open class Storage @Inject constructor(
         allBlockedContacts.addAll(recipientDatabase.blockedContacts)
 
         return allBlockedContacts.map {
-            recipientRepository.getRecipientSync(it) ?: RecipientV2.empty(it)
+            recipientRepository.getRecipientSync(it) ?: Recipient.empty(it)
         }
     }
 

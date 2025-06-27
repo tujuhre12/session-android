@@ -20,7 +20,7 @@ import android.content.Context;
 
 import androidx.annotation.NonNull;
 
-import org.session.libsession.utilities.recipients.RecipientV2;
+import org.session.libsession.utilities.recipients.Recipient;
 import org.thoughtcrime.securesms.database.MmsSmsColumns;
 import org.thoughtcrime.securesms.database.SmsDatabase;
 
@@ -34,7 +34,7 @@ import org.thoughtcrime.securesms.database.SmsDatabase;
 
 public abstract class DisplayRecord {
   protected final long type;
-  private final RecipientV2 recipient;
+  private final Recipient recipient;
   private final long       dateSent;
   private final long       dateReceived;
   private final long       threadId;
@@ -43,9 +43,9 @@ public abstract class DisplayRecord {
   private final int        deliveryReceiptCount;
   private final int        readReceiptCount;
 
-  DisplayRecord(String body, RecipientV2 recipient, long dateSent,
-    long dateReceived, long threadId, int deliveryStatus, int deliveryReceiptCount,
-    long type, int readReceiptCount)
+  DisplayRecord(String body, Recipient recipient, long dateSent,
+                long dateReceived, long threadId, int deliveryStatus, int deliveryReceiptCount,
+                long type, int readReceiptCount)
   {
     this.threadId             = threadId;
     this.recipient            = recipient;
@@ -62,7 +62,7 @@ public abstract class DisplayRecord {
     return body == null ? "" : body;
   }
   public abstract CharSequence getDisplayBody(@NonNull Context context);
-  public RecipientV2 getRecipient() { return recipient; }
+  public Recipient getRecipient() { return recipient; }
   public long getDateSent() { return dateSent; }
   public long getDateReceived() { return dateReceived; }
   public long getThreadId() { return threadId; }

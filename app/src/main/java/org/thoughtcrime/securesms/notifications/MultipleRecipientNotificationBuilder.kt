@@ -13,7 +13,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.CONVERSATION
 import org.session.libsession.utilities.StringSubstitutionConstants.MESSAGE_COUNT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.Util.getBoldedString
-import org.session.libsession.utilities.recipients.RecipientV2
+import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.ui.getSubbedString
 import java.util.LinkedList
@@ -36,7 +36,7 @@ class MultipleRecipientNotificationBuilder(context: Context, privacy: Notificati
         setNumber(messageCount)
     }
 
-    fun setMostRecentSender(recipient: RecipientV2) {
+    fun setMostRecentSender(recipient: Recipient) {
         if (privacy.isDisplayContact) {
             val txt = Phrase.from(context, R.string.notificationsMostRecent)
                 .put(NAME_KEY, recipient.displayName)
@@ -59,7 +59,7 @@ class MultipleRecipientNotificationBuilder(context: Context, privacy: Notificati
 
     fun putStringExtra(key: String?, value: String?) { extras.putString(key, value) }
 
-    fun addMessageBody(sender: RecipientV2, body: CharSequence?) {
+    fun addMessageBody(sender: Recipient, body: CharSequence?) {
         if (privacy.isDisplayMessage) {
             val builder = SpannableStringBuilder()
             builder.append(getBoldedString(sender.displayName))

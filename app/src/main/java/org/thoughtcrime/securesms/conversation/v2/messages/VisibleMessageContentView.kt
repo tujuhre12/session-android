@@ -4,7 +4,6 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.res.ColorStateList
-import android.graphics.Color
 import android.graphics.Rect
 import android.text.Spannable
 import android.text.style.BackgroundColorSpan
@@ -33,7 +32,7 @@ import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAt
 import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.modifyLayoutParams
-import org.session.libsession.utilities.recipients.RecipientV2
+import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.messages.AttachmentControlView.AttachmentType.AUDIO
 import org.thoughtcrime.securesms.conversation.v2.messages.AttachmentControlView.AttachmentType.DOCUMENT
@@ -70,7 +69,7 @@ class VisibleMessageContentView : ConstraintLayout {
         isStartOfMessageCluster: Boolean = true,
         isEndOfMessageCluster: Boolean = true,
         glide: RequestManager = Glide.with(this),
-        thread: RecipientV2,
+        thread: Recipient,
         searchQuery: String? = null,
         downloadPendingAttachment: (DatabaseAttachment) -> Unit,
         retryFailedAttachments: (List<DatabaseAttachment>) -> Unit,
@@ -359,7 +358,7 @@ class VisibleMessageContentView : ConstraintLayout {
     }
 
     private fun showAttachmentControl(
-        thread: RecipientV2,
+        thread: Recipient,
         message: MmsMessageRecord,
         attachments: List<DatabaseAttachment>,
         type: AttachmentControlView.AttachmentType,

@@ -1,7 +1,7 @@
 package org.thoughtcrime.securesms.util
 
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.recipients.RecipientV2
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.messages.SignalServiceDataMessage
 
 object SessionMetaProtocol {
@@ -33,7 +33,7 @@ object SessionMetaProtocol {
     }
 
     @JvmStatic
-    fun canUserReplyToNotification(recipient: RecipientV2): Boolean {
+    fun canUserReplyToNotification(recipient: Recipient): Boolean {
         // TODO return !recipient.address.isRSSFeed
         return true
     }
@@ -49,7 +49,7 @@ object SessionMetaProtocol {
 
 
     @JvmStatic
-    fun shouldSendTypingIndicator(recipient: RecipientV2): Boolean {
+    fun shouldSendTypingIndicator(recipient: Recipient): Boolean {
         return !recipient.isGroupOrCommunityRecipient && recipient.approved && !recipient.blocked
     }
 }

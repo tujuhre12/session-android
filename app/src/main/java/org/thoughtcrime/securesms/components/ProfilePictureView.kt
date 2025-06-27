@@ -23,7 +23,7 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.AppTextSecurePreferences
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.recipients.RecipientAvatar
-import org.session.libsession.utilities.recipients.RecipientV2
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.GroupDatabase
@@ -47,7 +47,7 @@ class ProfilePictureView @JvmOverloads constructor(
     var displayName: String? = null
     var additionalPublicKey: String? = null
     var additionalDisplayName: String? = null
-    var recipient: RecipientV2? = null
+    var recipient: Recipient? = null
 
     @Inject
     lateinit var groupDatabase: GroupDatabase
@@ -61,14 +61,14 @@ class ProfilePictureView @JvmOverloads constructor(
     @Inject
     lateinit var recipientRepository: RecipientRepository
 
-    private val profilePicturesCache = mutableMapOf<View, RecipientV2>()
+    private val profilePicturesCache = mutableMapOf<View, Recipient>()
     private val resourcePadding by lazy {
         context.resources.getDimensionPixelSize(R.dimen.normal_padding).toFloat()
     }
     private val unknownOpenGroupDrawable by lazy { ResourceContactPhoto(R.drawable.ic_notification)
         .asDrawable(context, ContactColors.UNKNOWN_COLOR.toConversationColor(context), false, resourcePadding) }
 
-    constructor(context: Context, sender: RecipientV2): this(context) {
+    constructor(context: Context, sender: Recipient): this(context) {
         update(sender)
     }
 
@@ -79,7 +79,7 @@ class ProfilePictureView @JvmOverloads constructor(
             .asDrawable(context, color, false, resourcePadding)
     }
 
-    fun update(recipient: RecipientV2) {
+    fun update(recipient: Recipient) {
         this.recipient = recipient
         recipient.run {
             update(
@@ -190,7 +190,7 @@ class ProfilePictureView @JvmOverloads constructor(
             }
             else {
                 val address = Address.fromSerialized(publicKey)
-                this.recipient = recipientRepository.getRecipientSync(address) ?: RecipientV2.empty(address)
+                this.recipient = recipientRepository.getRecipientSync(address) ?: Recipient.empty(address)
                 this.recipient!!
             }
             

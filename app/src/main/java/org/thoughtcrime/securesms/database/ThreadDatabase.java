@@ -43,7 +43,7 @@ import org.session.libsession.utilities.DelimiterUtil;
 import org.session.libsession.utilities.DistributionTypes;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.Util;
-import org.session.libsession.utilities.recipients.RecipientV2;
+import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.utilities.AccountId;
 import org.session.libsignal.utilities.IdPrefix;
 import org.session.libsignal.utilities.Log;
@@ -63,10 +63,8 @@ import org.thoughtcrime.securesms.notifications.MarkReadReceiver;
 import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.inject.Inject;
@@ -855,9 +853,9 @@ public class ThreadDatabase extends Database {
       int     distributionType = cursor.getInt(cursor.getColumnIndexOrThrow(ThreadDatabase.DISTRIBUTION_TYPE));
       Address address          = Address.fromSerialized(cursor.getString(cursor.getColumnIndexOrThrow(ThreadDatabase.ADDRESS)));
 
-      RecipientV2 recipient            = recipientRepository.get().getRecipientSync(address);
+      Recipient recipient            = recipientRepository.get().getRecipientSync(address);
       if (recipient == null) {
-        recipient = RecipientV2.Companion.empty(address);
+        recipient = Recipient.Companion.empty(address);
       }
       String             body                 = cursor.getString(cursor.getColumnIndexOrThrow(ThreadDatabase.SNIPPET));
       long               date                 = cursor.getLong(cursor.getColumnIndexOrThrow(ThreadDatabase.THREAD_CREATION_DATE));

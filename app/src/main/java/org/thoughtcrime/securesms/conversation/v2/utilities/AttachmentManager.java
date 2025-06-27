@@ -43,7 +43,6 @@ import java.util.List;
 import network.loki.messenger.R;
 
 import org.session.libsession.utilities.Address;
-import org.session.libsession.utilities.recipients.RecipientV2;
 import org.session.libsignal.utilities.ListenableFuture;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.SettableFuture;

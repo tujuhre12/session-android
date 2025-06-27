@@ -9,10 +9,10 @@ import androidx.recyclerview.widget.RecyclerView
 import network.loki.messenger.R
 import network.loki.messenger.databinding.BlockedContactLayoutBinding
 import com.bumptech.glide.Glide
-import org.session.libsession.utilities.recipients.RecipientV2
+import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.util.adapter.SelectableItem
 
-typealias SelectableRecipient = SelectableItem<RecipientV2>
+typealias SelectableRecipient = SelectableItem<Recipient>
 
 class BlockedContactsAdapter(val viewModel: BlockedContactsViewModel) : ListAdapter<SelectableRecipient,BlockedContactsAdapter.ViewHolder>(RecipientDiffer()) {
 

@@ -10,7 +10,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.TaskStackBuilder;
 
-import org.session.libsession.utilities.recipients.RecipientV2;
+import org.session.libsession.utilities.recipients.Recipient;
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2;
 import org.thoughtcrime.securesms.mms.SlideDeck;
 
@@ -18,18 +18,18 @@ public class NotificationItem {
 
   private final long                        id;
   private final boolean                     mms;
-  private final @NonNull  RecipientV2         conversationRecipient;
-  private final @NonNull  RecipientV2         individualRecipient;
-  private final @Nullable RecipientV2         threadRecipient;
+  private final @NonNull Recipient conversationRecipient;
+  private final @NonNull Recipient individualRecipient;
+  private final @Nullable Recipient threadRecipient;
   private final long                        threadId;
   private final @Nullable CharSequence      text;
   private final long                        timestamp;
   private final @Nullable SlideDeck         slideDeck;
 
   public NotificationItem(long id, boolean mms,
-                          @NonNull   RecipientV2 individualRecipient,
-                          @NonNull   RecipientV2 conversationRecipient,
-                          @Nullable  RecipientV2 threadRecipient,
+                          @NonNull Recipient individualRecipient,
+                          @NonNull Recipient conversationRecipient,
+                          @Nullable Recipient threadRecipient,
                           long threadId, @Nullable CharSequence text, long timestamp,
                           @Nullable SlideDeck slideDeck)
   {
@@ -44,11 +44,11 @@ public class NotificationItem {
     this.slideDeck             = slideDeck;
   }
 
-  public @NonNull  RecipientV2 getRecipient() {
+  public @NonNull Recipient getRecipient() {
     return threadRecipient == null ? conversationRecipient : threadRecipient;
   }
 
-  public @NonNull  RecipientV2 getIndividualRecipient() {
+  public @NonNull Recipient getIndividualRecipient() {
     return individualRecipient;
   }
 
@@ -70,7 +70,7 @@ public class NotificationItem {
 
   public PendingIntent getPendingIntent(Context context) {
     Intent     intent           = new Intent(context, ConversationActivityV2.class);
-    RecipientV2  notifyRecipients = threadRecipient != null ? threadRecipient : conversationRecipient;
+    Recipient notifyRecipients = threadRecipient != null ? threadRecipient : conversationRecipient;
     if (notifyRecipients != null) intent.putExtra(ConversationActivityV2.ADDRESS, notifyRecipients.getAddress());
 
     intent.putExtra(ConversationActivityV2.THREAD_ID, threadId);

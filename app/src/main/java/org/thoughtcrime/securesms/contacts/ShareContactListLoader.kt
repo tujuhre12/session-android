@@ -3,13 +3,13 @@ package org.thoughtcrime.securesms.contacts
 import android.content.Context
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
-import org.session.libsession.utilities.recipients.RecipientV2
+import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.util.AsyncLoader
 import org.thoughtcrime.securesms.util.ContactUtilities
 import org.thoughtcrime.securesms.util.LastMessageSentTimestamp
 
 sealed class ContactSelectionListItem {
-    class Contact(val recipient: RecipientV2) : ContactSelectionListItem()
+    class Contact(val recipient: Recipient) : ContactSelectionListItem()
 }
 
 class ShareContactListLoader(
@@ -32,7 +32,7 @@ class ShareContactListLoader(
                 if (filter.isNullOrEmpty()) return@filter true
                 it.first.displayName.contains(filter.trim(), true) || it.first.address.toString().contains(filter.trim(), true)
             }.sortedWith(
-                compareBy<Pair<RecipientV2, LastMessageSentTimestamp>> { !it.first.isLocalNumber } // NTS come first
+                compareBy<Pair<Recipient, LastMessageSentTimestamp>> { !it.first.isLocalNumber } // NTS come first
                     .thenByDescending { it.second } // then order by last message time
             )
             .map { it.first }.toList()
@@ -40,7 +40,7 @@ class ShareContactListLoader(
         return getItems(contacts)
     }
 
-    private fun getItems(contacts: List<RecipientV2>): List<ContactSelectionListItem> {
+    private fun getItems(contacts: List<Recipient>): List<ContactSelectionListItem> {
         val items = contacts.map {
             ContactSelectionListItem.Contact(it)
         }

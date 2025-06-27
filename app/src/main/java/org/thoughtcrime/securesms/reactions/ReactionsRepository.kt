@@ -5,7 +5,7 @@ import io.reactivex.ObservableEmitter
 import io.reactivex.schedulers.Schedulers
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.recipients.RecipientV2
+import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.components.emoji.EmojiUtil
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -32,7 +32,7 @@ class ReactionsRepository @Inject constructor(
         return reactions.map { reaction ->
             val authorAddress = Address.fromSerialized(reaction.author)
             ReactionDetails(
-                sender = recipientRepository.getRecipientSync(authorAddress) ?: RecipientV2.empty(authorAddress),
+                sender = recipientRepository.getRecipientSync(authorAddress) ?: Recipient.empty(authorAddress),
                 baseEmoji = EmojiUtil.getCanonicalRepresentation(reaction.emoji),
                 displayEmoji = reaction.emoji,
                 timestamp = reaction.dateReceived,

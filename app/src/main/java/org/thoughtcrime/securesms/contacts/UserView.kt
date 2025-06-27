@@ -8,7 +8,7 @@ import android.widget.LinearLayout
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewUserBinding
-import org.session.libsession.utilities.recipients.RecipientV2
+import org.session.libsession.utilities.recipients.Recipient
 
 @AndroidEntryPoint
 class UserView : LinearLayout {
@@ -43,7 +43,7 @@ class UserView : LinearLayout {
     // endregion
 
     // region Updating
-    fun bind(user: RecipientV2, actionIndicator: ActionIndicator, isSelected: Boolean = false, showCurrentUserAsNoteToSelf: Boolean = false) {
+    fun bind(user: Recipient, actionIndicator: ActionIndicator, isSelected: Boolean = false, showCurrentUserAsNoteToSelf: Boolean = false) {
         val isLocalUser = user.isLocalNumber
 
         fun getUserDisplayName(): String {

@@ -24,7 +24,7 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.recipients.RecipientV2
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
@@ -91,7 +91,7 @@ open class SelectContactsViewModel @AssistedInject constructor(
                         allContacts.filterNotTo(mutableSetOf()) { it in excludingAccountIDs }
                     }.map {
                         val address = Address.fromSerialized(it.hexString)
-                        recipientRepository.getRecipient(address) ?: RecipientV2.empty(address)
+                        recipientRepository.getRecipient(address) ?: Recipient.empty(address)
                     }
 
                     if(applyDefaultFiltering){
@@ -103,7 +103,7 @@ open class SelectContactsViewModel @AssistedInject constructor(
 
 
     private suspend fun filterContacts(
-        contacts: Collection<RecipientV2>,
+        contacts: Collection<Recipient>,
         query: String,
         selectedAccountIDs: Set<AccountId>
     ): List<ContactItem> {

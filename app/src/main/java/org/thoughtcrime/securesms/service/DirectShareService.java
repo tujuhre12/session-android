@@ -15,8 +15,7 @@ import android.service.chooser.ChooserTargetService;
 
 import androidx.annotation.NonNull;
 
-import org.session.libsession.utilities.recipients.RecipientV2;
-import org.session.libsession.utilities.recipients.RecipientV2Kt;
+import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.ShareActivity;
 import org.thoughtcrime.securesms.database.RecipientRepository;
@@ -55,7 +54,7 @@ public class DirectShareService extends ChooserTargetService {
           ThreadRecord record;
 
           while ((record = reader.getNext()) != null && results.size() < 10) {
-              RecipientV2 recipient = record.getRecipient();
+              Recipient recipient = record.getRecipient();
               String name = recipient.getDisplayName();
 
               Bitmap avatar;
@@ -95,7 +94,7 @@ public class DirectShareService extends ChooserTargetService {
       }
   }
 
-  private Bitmap getFallbackDrawable(@NonNull RecipientV2 recipient) {
+  private Bitmap getFallbackDrawable(@NonNull Recipient recipient) {
       //TODO: Use proper color
     return BitmapUtil.createFromDrawable(new ColorDrawable(Color.RED),
                                          getResources().getDimensionPixelSize(android.R.dimen.notification_large_icon_width),

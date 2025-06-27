@@ -21,7 +21,7 @@ import network.loki.messenger.databinding.FragmentUserDetailsBottomSheetBinding
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.BasicRecipient
-import org.session.libsession.utilities.recipients.RecipientV2
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.upsertContact
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
@@ -129,7 +129,7 @@ class UserDetailsBottomSheet: BottomSheetDialogFragment() {
         window.setDimAmount(0.6f)
     }
 
-    fun saveNickName(recipient: RecipientV2) = with(binding) {
+    fun saveNickName(recipient: Recipient) = with(binding) {
         nicknameEditText.clearFocus()
         hideSoftKeyboard()
         nameTextViewContainer.visibility = View.VISIBLE

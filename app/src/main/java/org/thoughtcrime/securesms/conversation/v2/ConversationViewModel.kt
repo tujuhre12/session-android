@@ -32,7 +32,6 @@ import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.ExpiryMode
-import network.loki.messenger.libsession_util.util.KeyPair
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
@@ -48,7 +47,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.MessageType
-import org.session.libsession.utilities.recipients.RecipientV2
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayNameOrFallback
 import org.session.libsession.utilities.recipients.getType
 import org.session.libsignal.utilities.AccountId
@@ -144,7 +143,7 @@ class ConversationViewModel @AssistedInject constructor(
     ))
     val appBarData: StateFlow<ConversationAppBarData> = _appBarData
 
-    private var _recipient: RetrieveOnce<RecipientV2> = RetrieveOnce {
+    private var _recipient: RetrieveOnce<Recipient> = RetrieveOnce {
         val conversation = repository.maybeGetRecipientForThreadId(threadId)?.let(recipientRepository::getRecipientSync)
 
         // set admin from current conversation
@@ -179,17 +178,17 @@ class ConversationViewModel @AssistedInject constructor(
         conversation
     }
 
-    val recipient: RecipientV2?
+    val recipient: Recipient?
         get() = _recipient.value
 
-    val blindedRecipient: RecipientV2?
+    val blindedRecipient: Recipient?
         get() = _recipient.value?.let { recipient ->
             getBlindedRecipient(recipient)
         }
 
     private var currentAppBarNotificationState: String? = null
 
-    private fun getBlindedRecipient(recipient: RecipientV2?): RecipientV2? =
+    private fun getBlindedRecipient(recipient: Recipient?): Recipient? =
         when {
             recipient?.isCommunityOutboxRecipient == true -> recipient
             recipient?.isCommunityInboxRecipient == true ->
@@ -203,7 +202,7 @@ class ConversationViewModel @AssistedInject constructor(
      *
      * null if this convo is not a group(v2) conversation, or error getting the info
      */
-    val invitingAdmin: RecipientV2?
+    val invitingAdmin: Recipient?
         get() {
             val recipient = recipient ?: return null
             if (!recipient.isGroupV2Recipient) return null
@@ -378,7 +377,7 @@ class ConversationViewModel @AssistedInject constructor(
     }
 
     private fun getInputBarState(
-        recipient: RecipientV2?,
+        recipient: Recipient?,
         community: OpenGroup?,
         deprecationState: LegacyGroupDeprecationManager.DeprecationState
     ): InputBarState {
@@ -417,7 +416,7 @@ class ConversationViewModel @AssistedInject constructor(
         }
     }
 
-    private fun updateAppBarData(conversation: RecipientV2?) {
+    private fun updateAppBarData(conversation: Recipient?) {
         viewModelScope.launch {
             // sort out the pager data, if any
             val pagerData: MutableList<ConversationAppBarPagerData> = mutableListOf()
@@ -500,7 +499,7 @@ class ConversationViewModel @AssistedInject constructor(
         }
     }
 
-    private fun getNotificationStatusTitle(conversation: RecipientV2): String{
+    private fun getNotificationStatusTitle(conversation: Recipient): String{
         return if(conversation.isMuted()) application.getString(R.string.notificationsHeaderMute)
         else application.getString(R.string.notificationsHeaderMentionsOnly)
     }
@@ -512,7 +511,7 @@ class ConversationViewModel @AssistedInject constructor(
      *  1. First time we send message to a person.
      *     Since we haven't been approved by them, we can't send them any media, only text
      */
-    private fun shouldEnableInputMediaControls(recipient: RecipientV2?): Boolean {
+    private fun shouldEnableInputMediaControls(recipient: Recipient?): Boolean {
 
         // Specifically disallow multimedia if we don't have a recipient to send anything to
         if (recipient == null) {
@@ -555,7 +554,7 @@ class ConversationViewModel @AssistedInject constructor(
      *  3. The legacy group is deprecated, OR
      *  4. Blinded recipient who have disabled message request from community members
      */
-    private fun shouldShowInput(recipient: RecipientV2?,
+    private fun shouldShowInput(recipient: Recipient?,
                                 community: OpenGroup?,
                                 deprecationState: LegacyGroupDeprecationManager.DeprecationState
     ): Boolean {
@@ -570,7 +569,7 @@ class ConversationViewModel @AssistedInject constructor(
         }
     }
 
-    private fun buildMessageRequestState(recipient: RecipientV2?): MessageRequestUiState {
+    private fun buildMessageRequestState(recipient: Recipient?): MessageRequestUiState {
         // The basic requirement of showing a message request is:
         // 1. The other party has not been approved by us, AND
         // 2. We haven't sent a message to them before (if we do, we would be the one requesting permission), AND
@@ -1131,7 +1130,7 @@ class ConversationViewModel @AssistedInject constructor(
         updateAppBarData(recipient)
     }
 
-    fun legacyBannerRecipient(context: Context): RecipientV2? = recipient?.run {
+    fun legacyBannerRecipient(context: Context): Recipient? = recipient?.run {
         storage.getLastLegacyRecipient(address.toString())?.let { recipientRepository.getRecipientSync(fromSerialized(it)) }
     }
 

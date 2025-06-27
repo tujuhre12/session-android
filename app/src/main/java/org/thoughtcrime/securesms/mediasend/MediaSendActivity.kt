@@ -29,7 +29,7 @@ import org.session.libsession.utilities.MediaTypes
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.Util.isEmpty
 import org.session.libsession.utilities.concurrent.SimpleTask
-import org.session.libsession.utilities.recipients.RecipientV2
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.database.RecipientRepository
@@ -50,7 +50,7 @@ import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
 class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragment.Controller,
     MediaPickerItemFragment.Controller, MediaSendFragment.Controller,
     ImageEditorFragment.Controller, CameraXFragment.Controller{
-    private var recipient: RecipientV2? = null
+    private var recipient: Recipient? = null
     private val viewModel: MediaSendViewModel by viewModels()
 
     private lateinit var binding: MediasendActivityBinding

@@ -3,7 +3,6 @@ package org.session.libsession.messaging.messages.signal;
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.DistributionTypes;
-import org.session.libsession.utilities.recipients.RecipientV2;
 
 import java.util.Collections;
 import java.util.LinkedList;

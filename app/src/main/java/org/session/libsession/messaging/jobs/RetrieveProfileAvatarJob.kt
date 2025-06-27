@@ -1,6 +1,5 @@
 package org.session.libsession.messaging.jobs
 
-import kotlinx.coroutines.flow.first
 import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.utilities.Data
@@ -10,7 +9,7 @@ import org.session.libsession.utilities.DownloadUtilities.downloadFromFileServer
 import org.session.libsession.utilities.TextSecurePreferences.Companion.setProfileAvatarId
 import org.session.libsession.utilities.TextSecurePreferences.Companion.setProfilePictureURL
 import org.session.libsession.utilities.Util.equals
-import org.session.libsession.utilities.recipients.RecipientV2
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.Log
@@ -46,7 +45,7 @@ class RetrieveProfileAvatarJob(
         val context = MessagingModuleConfiguration.shared.context
         val storage = MessagingModuleConfiguration.shared.storage
         val recipient = MessagingModuleConfiguration.shared.recipientRepository.getRecipient(recipientAddress)
-            ?: RecipientV2.empty(recipientAddress)
+            ?: Recipient.empty(recipientAddress)
 
         if (profileKey == null || (profileKey.size != 32 && profileKey.size != 16)) {
             return delegate.handleJobFailedPermanently(this, dispatcherName, Exception("Recipient profile key is gone!"))

@@ -15,7 +15,7 @@ import android.util.AttributeSet;
 
 import network.loki.messenger.R;
 
-import org.session.libsession.utilities.recipients.RecipientV2;
+import org.session.libsession.utilities.recipients.Recipient;
 import org.thoughtcrime.securesms.components.emoji.EmojiTextView;
 import org.thoughtcrime.securesms.util.ResUtil;
 import org.session.libsession.utilities.CenterAlignedRelativeSizeSpan;
@@ -32,11 +32,11 @@ public class FromTextView extends EmojiTextView {
     super(context, attrs);
   }
 
-  public void setText(RecipientV2 recipient) {
+  public void setText(Recipient recipient) {
     setText(recipient, true);
   }
 
-  public void setText(RecipientV2 recipient, boolean read) {
+  public void setText(Recipient recipient, boolean read) {
     String fromString = recipient.getDisplayName();
 
     int typeface;

@@ -28,7 +28,7 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupDisplayInfo
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.recipients.RecipientSettings
-import org.session.libsession.utilities.recipients.RecipientV2
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceAttachmentPointer
 import org.session.libsignal.messages.SignalServiceGroup
@@ -252,7 +252,7 @@ interface StorageProtocol {
     fun deleteReactions(messageId: MessageId)
     fun deleteReactions(messageIds: List<Long>, mms: Boolean)
     fun setBlocked(recipients: Iterable<Address>, isBlocked: Boolean, fromConfigUpdate: Boolean = false)
-    fun blockedContacts(): List<RecipientV2>
+    fun blockedContacts(): List<Recipient>
     fun getExpirationConfiguration(threadId: Long): ExpiryMode
     fun setExpirationConfiguration(threadId: Long, expiryMode: ExpiryMode)
     fun getExpiringMessages(messageIds: List<Long> = emptyList()): List<Pair<Long, Long>>

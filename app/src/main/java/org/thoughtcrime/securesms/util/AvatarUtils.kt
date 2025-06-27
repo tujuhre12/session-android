@@ -25,7 +25,7 @@ import org.session.libsession.avatars.ContactPhoto
 import org.session.libsession.avatars.ProfileContactPhoto
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.recipients.RecipientV2
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.IdPrefix
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
@@ -58,7 +58,7 @@ class AvatarUtils @Inject constructor(
             getUIDataFromRecipient(recipientRepository.getRecipient(Address.fromSerialized(accountId)))
         }
 
-    suspend fun getUIDataFromRecipient(recipient: RecipientV2?): AvatarUIData {
+    suspend fun getUIDataFromRecipient(recipient: Recipient?): AvatarUIData {
         if (recipient == null) {
             return AvatarUIData(elements = emptyList())
         }
@@ -123,7 +123,7 @@ class AvatarUtils @Inject constructor(
         }
     }
 
-    private fun getUIElementForRecipient(recipient: RecipientV2): AvatarUIElement {
+    private fun getUIElementForRecipient(recipient: Recipient): AvatarUIElement {
         // name
         val name = recipient.displayName
 

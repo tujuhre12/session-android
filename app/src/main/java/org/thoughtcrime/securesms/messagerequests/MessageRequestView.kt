@@ -10,11 +10,9 @@ import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewMessageRequestBinding
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities.highlightMentions
 import org.thoughtcrime.securesms.database.model.ThreadRecord
-import com.bumptech.glide.RequestManager
-import org.session.libsession.utilities.recipients.RecipientV2
+import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.util.DateUtils
 import java.util.Locale
-import javax.inject.Inject
 
 class MessageRequestView : LinearLayout {
     private lateinit var binding: ViewMessageRequestBinding
@@ -61,7 +59,7 @@ class MessageRequestView : LinearLayout {
         binding.profilePictureView.recycle()
     }
 
-    private fun getUserDisplayName(recipient: RecipientV2): String? {
+    private fun getUserDisplayName(recipient: Recipient): String? {
         return if (recipient.isLocalNumber) {
             context.getString(R.string.noteToSelf)
         } else {

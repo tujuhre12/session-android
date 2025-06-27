@@ -22,7 +22,7 @@ import network.loki.messenger.R
 import org.session.libsession.LocalisedTimeUtil
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_TIME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_LARGE_KEY
-import org.session.libsession.utilities.recipients.RecipientV2
+import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.RecipientDatabase.NOTIFY_TYPE_ALL
 import org.thoughtcrime.securesms.database.RecipientDatabase.NOTIFY_TYPE_MENTIONS
@@ -46,7 +46,7 @@ class NotificationSettingsViewModel @AssistedInject constructor(
     private val dateUtils: DateUtils,
     private val recipientRepository: RecipientRepository,
 ) : ViewModel() {
-    private var thread: RecipientV2? = null
+    private var thread: Recipient? = null
 
     private val durationForever: Long = Long.MAX_VALUE
 

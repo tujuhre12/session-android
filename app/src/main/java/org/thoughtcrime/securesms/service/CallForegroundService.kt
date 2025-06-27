@@ -10,7 +10,7 @@ import androidx.core.app.ServiceCompat
 import androidx.core.content.IntentCompat
 import dagger.hilt.android.AndroidEntryPoint
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.recipients.RecipientV2
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder
@@ -35,7 +35,7 @@ class CallForegroundService : Service() {
         }
     }
 
-    private fun getRemoteRecipient(intent: Intent): RecipientV2? {
+    private fun getRemoteRecipient(intent: Intent): Recipient? {
         val remoteAddress = IntentCompat.getParcelableExtra(intent,
             EXTRA_RECIPIENT_ADDRESS, Address::class.java)
             ?: return null
@@ -43,7 +43,7 @@ class CallForegroundService : Service() {
         return recipientRepository.getRecipientSync(remoteAddress)
     }
 
-    private fun startForeground(type: Int, recipient: RecipientV2?) {
+    private fun startForeground(type: Int, recipient: Recipient?) {
         if (CallNotificationBuilder.areNotificationsEnabled(this)) {
             try {
                 ServiceCompat.startForeground(

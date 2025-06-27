@@ -20,7 +20,7 @@ import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewInputBarBinding
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.recipients.RecipientV2
+import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.conversation.v2.InputBarContentState
 import org.thoughtcrime.securesms.conversation.v2.InputBarState
 import org.thoughtcrime.securesms.conversation.v2.components.LinkPreviewDraftView
@@ -31,7 +31,6 @@ import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.util.addTextChangedListener
 import org.thoughtcrime.securesms.util.contains
-import org.thoughtcrime.securesms.util.setSafeOnClickListener
 
 // TODO: A lot of the logic regarding voice messages is currently performed in the ConversationActivity
 // TODO: and here - it would likely be best to move this into the CA's ViewModel.
@@ -190,7 +189,7 @@ class InputBar @JvmOverloads constructor(
         delegate?.startRecordingVoiceMessage()
     }
 
-    fun draftQuote(thread: RecipientV2, message: MessageRecord, glide: RequestManager) {
+    fun draftQuote(thread: Recipient, message: MessageRecord, glide: RequestManager) {
         quoteView?.let(binding.inputBarAdditionalContentContainer::removeView)
 
         quote = message

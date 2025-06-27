@@ -27,12 +27,9 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
 import org.session.libsession.avatars.ContactPhoto;
-import org.session.libsession.messaging.MessagingModuleConfiguration;
-import org.session.libsession.messaging.contacts.Contact;
-import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.NotificationPrivacyPreference;
 import org.session.libsession.utilities.Util;
-import org.session.libsession.utilities.recipients.RecipientV2;
+import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.mms.DecryptableStreamUriLoader;
 import org.thoughtcrime.securesms.mms.Slide;
@@ -72,7 +69,7 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
     setCategory(NotificationCompat.CATEGORY_MESSAGE);
   }
 
-  public void setThread(@NonNull RecipientV2 recipient) {
+  public void setThread(@NonNull Recipient recipient) {
     String channelId = recipient.getNotificationChannel();
     setChannelId(channelId != null ? channelId : NotificationChannels.getMessagesChannel(context));
 
@@ -112,8 +109,8 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
     setNumber(messageCount);
   }
 
-  public void setPrimaryMessageBody(@NonNull  RecipientV2 threadRecipient,
-                                    @NonNull  RecipientV2 individualRecipient,
+  public void setPrimaryMessageBody(@NonNull Recipient threadRecipient,
+                                    @NonNull Recipient individualRecipient,
                                     @NonNull  CharSequence message,
                                     @Nullable SlideDeck slideDeck)
   {
@@ -200,8 +197,8 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
     extras.putString(key,value);
   }
 
-  public void addMessageBody(@NonNull RecipientV2 threadRecipient,
-                             @NonNull RecipientV2 individualRecipient,
+  public void addMessageBody(@NonNull Recipient threadRecipient,
+                             @NonNull Recipient individualRecipient,
                              @Nullable CharSequence messageBody)
   {
     SpannableStringBuilder stringBuilder = new SpannableStringBuilder();
@@ -318,7 +315,7 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
     return content;
   }
 
-  private static Drawable getPlaceholderDrawable(AvatarUtils avatarUtils, RecipientV2 recipient) {
+  private static Drawable getPlaceholderDrawable(AvatarUtils avatarUtils, Recipient recipient) {
     String publicKey = recipient.getAddress().toString();
     String displayName = recipient.getDisplayName();
     return avatarUtils.generateTextBitmap(ICON_SIZE, publicKey, displayName);

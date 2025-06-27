@@ -3,7 +3,7 @@ package org.session.libsession.messaging.groups
 import androidx.annotation.StringRes
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.messaging.messages.control.GroupUpdated
-import org.session.libsession.utilities.recipients.RecipientV2
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateDeleteMemberContentMessage
 import org.session.libsignal.utilities.AccountId
 
@@ -16,7 +16,7 @@ interface GroupManagerV2 {
         groupName: String,
         groupDescription: String,
         members: Set<AccountId>
-    ): RecipientV2
+    ): Recipient
 
     suspend fun inviteMembers(
         group: AccountId,

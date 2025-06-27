@@ -46,7 +46,7 @@ import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.GroupUtil.doubleEncodeGroupID
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.recipients.MessageType
-import org.session.libsession.utilities.recipients.RecipientV2
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.getType
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.AccountId
@@ -308,7 +308,7 @@ class VisibleMessageHandlerContext(
         storage.getUserPublicKey()
     }
 
-    val threadRecipient: RecipientV2? by lazy {
+    val threadRecipient: Recipient? by lazy {
         storage.getRecipientForThread(threadId)?.let(recipientRepository::getRecipientSync)
     }
 }

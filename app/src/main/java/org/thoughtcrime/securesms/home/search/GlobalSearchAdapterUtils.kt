@@ -10,7 +10,7 @@ import network.loki.messenger.R
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.recipients.RecipientV2
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.truncateIdForDisplay
 import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter.ContentView
 import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter.Model.GroupConversation
@@ -150,7 +150,7 @@ fun ContentView.bindModel(query: String?, model: Message, dateUtils: DateUtils) 
     searchResultSubtitle.isVisible = true
 }
 
-fun RecipientV2.getSearchName(): String =
+fun Recipient.getSearchName(): String =
     displayName.takeIf { it.isNotEmpty() && !it.looksLikeAccountId }
     ?: address.toString().let(::truncateIdForDisplay)
 

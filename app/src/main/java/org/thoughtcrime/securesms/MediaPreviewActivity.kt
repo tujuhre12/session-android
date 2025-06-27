@@ -66,9 +66,8 @@ import org.session.libsession.snode.SnodeAPI.nowWithOffset
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.getColorFromAttr
-import org.session.libsession.utilities.recipients.RecipientV2
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.ShareActivity
 import org.thoughtcrime.securesms.components.MediaView
 import org.thoughtcrime.securesms.components.dialogs.DeleteMediaPreviewDialog
 import org.thoughtcrime.securesms.database.MediaDatabase.MediaRecord
@@ -780,7 +779,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
     }
 
     class MediaItem(
-        val recipient: RecipientV2?,
+        val recipient: Recipient?,
         val attachment: DatabaseAttachment?,
         val uri: Uri,
         val mimeType: String,

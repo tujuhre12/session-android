@@ -19,14 +19,12 @@ import androidx.appcompat.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 
 import com.bumptech.glide.Glide;
 import com.squareup.phrase.Phrase;
 
-import org.session.libsession.utilities.recipients.RecipientV2;
+import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.utilities.Log;
-import org.session.libsignal.utilities.guava.Optional;
 import org.thoughtcrime.securesms.util.ViewUtilitiesKt;
 
 import dagger.hilt.android.AndroidEntryPoint;
@@ -45,7 +43,7 @@ public class MediaPickerFolderFragment extends Fragment implements MediaPickerFo
   private Controller         controller;
   private GridLayoutManager  layoutManager;
 
-  public static @NonNull MediaPickerFolderFragment newInstance(@NonNull RecipientV2 recipient) {
+  public static @NonNull MediaPickerFolderFragment newInstance(@NonNull Recipient recipient) {
     Bundle args = new Bundle();
     args.putString(KEY_RECIPIENT_NAME, recipient.getDisplayName());
 

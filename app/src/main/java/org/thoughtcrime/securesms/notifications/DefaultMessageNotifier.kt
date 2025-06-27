@@ -45,7 +45,7 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.getRepea
 import org.session.libsession.utilities.TextSecurePreferences.Companion.hasHiddenMessageRequests
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isNotificationsEnabled
 import org.session.libsession.utilities.TextSecurePreferences.Companion.removeHasHiddenMessageRequests
-import org.session.libsession.utilities.recipients.RecipientV2
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
@@ -474,7 +474,7 @@ class DefaultMessageNotifier @Inject constructor(
             val conversationRecipient = record.recipient
             val threadId = record.threadId
             var body: CharSequence = record.getDisplayBody(context)
-            var threadRecipients: RecipientV2? = null
+            var threadRecipients: Recipient? = null
             var slideDeck: SlideDeck? = null
             val timestamp = record.timestamp
             var messageRequest = false

@@ -34,7 +34,7 @@ import kotlin.Pair;
 import network.loki.messenger.R;
 import org.session.libsession.messaging.utilities.UpdateMessageData;
 import org.session.libsession.utilities.TextSecurePreferences;
-import org.session.libsession.utilities.recipients.RecipientV2;
+import org.session.libsession.utilities.recipients.Recipient;
 import org.thoughtcrime.securesms.database.MmsSmsColumns;
 import org.thoughtcrime.securesms.database.SmsDatabase;
 import org.thoughtcrime.securesms.ui.UtilKt;
@@ -65,7 +65,7 @@ public class ThreadRecord extends DisplayRecord {
   private           final GroupThreadStatus groupThreadStatus;
 
   public ThreadRecord(@NonNull String body, @Nullable Uri snippetUri,
-                      @Nullable MessageRecord lastMessage, @NonNull RecipientV2 recipient, long date, long count, int unreadCount,
+                      @Nullable MessageRecord lastMessage, @NonNull Recipient recipient, long date, long count, int unreadCount,
                       int unreadMentionCount, long threadId, int deliveryReceiptCount, int status,
                       long snippetType, int distributionType, boolean archived, long expiresIn,
                       long lastSeen, int readReceiptCount, boolean pinned, String invitingAdminId,
@@ -193,7 +193,7 @@ public class ThreadRecord extends DisplayRecord {
      * Logic to get the body for non control messages
      */
     public CharSequence getNonControlMessageDisplayBody(@NonNull Context context) {
-        RecipientV2 recipient = getRecipient();
+        Recipient recipient = getRecipient();
         // The logic will differ depending on the type.
         // 1-1, note to self and control messages (we shouldn't have any in here, but leaving the
         // logic to be safe) do not need author details

@@ -15,7 +15,7 @@ import com.bumptech.glide.Glide
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.databinding.ShareContactListFragmentBinding
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
-import org.session.libsession.utilities.recipients.RecipientV2
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import javax.inject.Inject
 
@@ -118,15 +118,15 @@ class ShareContactListFragment : Fragment(), LoaderManager.LoaderCallbacks<List<
         binding.emptyStateContainer.visibility = if (items.isEmpty()) View.VISIBLE else View.GONE
     }
 
-    override fun onContactClick(contact: RecipientV2) {
+    override fun onContactClick(contact: Recipient) {
         listAdapter.onContactClick(contact)
     }
 
-    override fun onContactSelected(contact: RecipientV2) {
+    override fun onContactSelected(contact: Recipient) {
         onContactSelectedListener?.onContactSelected(contact.address.toString())
     }
 
-    override fun onContactDeselected(contact: RecipientV2) {
+    override fun onContactDeselected(contact: Recipient) {
         onContactSelectedListener?.onContactDeselected(contact.address.toString())
     }
 }

@@ -44,11 +44,10 @@ import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.snode.model.BatchResponse
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.BasicRecipient
-import org.session.libsession.utilities.recipients.RecipientV2
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.toUserPic
 import org.session.libsession.utilities.waitUntilGroupConfigsPushed
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage
@@ -115,7 +114,7 @@ class GroupManagerV2Impl @Inject constructor(
         groupName: String,
         groupDescription: String,
         members: Set<AccountId>
-    ): RecipientV2 = withContext(dispatcher) {
+    ): Recipient = withContext(dispatcher) {
         val ourAccountId =
             requireNotNull(storage.getUserPublicKey()) { "Our account ID is not available" }
         val ourProfile = storage.getUserProfile()

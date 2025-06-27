@@ -26,7 +26,7 @@ import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.recipients.RecipientV2
+import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.MediaPreviewArgs
 import org.thoughtcrime.securesms.database.AttachmentDatabase
@@ -116,7 +116,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
                 val slides = mmsRecord?.slideDeck?.slides ?: emptyList()
 
                 val conversationAddress = threadDb.getRecipientForThreadId(threadId)!!
-                val conversation = recipientRepository.getRecipient(conversationAddress) ?: RecipientV2.empty(conversationAddress)
+                val conversation = recipientRepository.getRecipient(conversationAddress) ?: Recipient.empty(conversationAddress)
                 val isDeprecatedLegacyGroup = conversationAddress.isLegacyGroup && deprecationManager.isDeprecated
 
 
@@ -253,7 +253,7 @@ data class MessageDetailsState(
     val status: MessageStatus? = null,
     val senderInfo: TitledText? = null,
     val senderAvatarData: AvatarUIData? = null,
-    val thread: RecipientV2? = null,
+    val thread: Recipient? = null,
     val readOnly: Boolean = false,
 ) {
     val fromTitle = GetString(R.string.from)

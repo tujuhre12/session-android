@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.shareIn
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.ReadableGroupInfoConfig
 import network.loki.messenger.libsession_util.util.ExpiryMode
@@ -28,7 +27,7 @@ import org.session.libsession.utilities.recipients.BasicRecipient
 import org.session.libsession.utilities.recipients.RecipientAvatar
 import org.session.libsession.utilities.recipients.RecipientAvatar.Companion.toRecipientAvatar
 import org.session.libsession.utilities.recipients.RecipientSettings
-import org.session.libsession.utilities.recipients.RecipientV2
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayNameOrFallback
 import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.AccountId
@@ -56,9 +55,9 @@ class RecipientRepository @Inject constructor(
     private val recipientDatabase: RecipientDatabase,
     private val preferences: TextSecurePreferences,
 ) {
-    private val recipientCache = HashMap<Address, WeakReference<SharedFlow<RecipientV2?>>>()
+    private val recipientCache = HashMap<Address, WeakReference<SharedFlow<Recipient?>>>()
 
-    fun observeRecipient(address: Address): Flow<RecipientV2?> {
+    fun observeRecipient(address: Address): Flow<Recipient?> {
         synchronized(recipientCache) {
             var cached = recipientCache[address]?.get()
             if (cached == null) {
@@ -73,7 +72,7 @@ class RecipientRepository @Inject constructor(
     // This function creates a flow that emits the recipient information for the given address,
     // the function itself must be fast, not directly access db and lock free, as it is called from a locked context.
     @OptIn(FlowPreview::class)
-    private fun createRecipientFlow(address: Address): SharedFlow<RecipientV2?> {
+    private fun createRecipientFlow(address: Address): SharedFlow<Recipient?> {
         return flow {
             while (true) {
                 val (value, changeSource) = fetchRecipient(address) {
@@ -97,11 +96,11 @@ class RecipientRepository @Inject constructor(
             SharingStarted.WhileSubscribed(replayExpirationMillis = 0L), replay = 1)
     }
 
-    private inline fun fetchRecipient(address: Address, settingsFetcher: (address: Address) -> RecipientSettings?): Pair<RecipientV2?, Flow<*>>? {
+    private inline fun fetchRecipient(address: Address, settingsFetcher: (address: Address) -> RecipientSettings?): Pair<Recipient?, Flow<*>>? {
         val basicRecipient = getBasicRecipientFast(address)
 
         val changeSource: Flow<*>
-        val value: RecipientV2?
+        val value: Recipient?
 
         when (basicRecipient) {
             is BasicRecipient.Self -> {
@@ -169,7 +168,7 @@ class RecipientRepository @Inject constructor(
         return value to changeSource
     }
 
-    suspend fun getRecipient(address: Address): RecipientV2? {
+    suspend fun getRecipient(address: Address): Recipient? {
         return observeRecipient(address).first()
     }
 
@@ -177,11 +176,11 @@ class RecipientRepository @Inject constructor(
         "Use the suspend version of getRecipient instead",
         ReplaceWith("getRecipient(address)")
     )
-    fun getRecipientSync(address: Address): RecipientV2? {
+    fun getRecipientSync(address: Address): Recipient? {
         val flow = observeRecipient(address)
 
         // If the flow is a SharedFlow, we might be able to access its last cached value directly.
-        if (flow is SharedFlow<RecipientV2?>) {
+        if (flow is SharedFlow<Recipient?>) {
             val lastCacheValue = flow.replayCache.lastOrNull()
             if (lastCacheValue != null) {
                 return lastCacheValue
@@ -262,7 +261,8 @@ class RecipientRepository @Inject constructor(
                         address = address,
                         avatar = configs.groupInfo.getProfilePic().toRecipientAvatar(),
                         expiryMode = configs.groupInfo.expiryMode,
-                        name = configs.groupInfo.getName() ?: groupInfo.name
+                        name = configs.groupInfo.getName() ?: groupInfo.name,
+                        approved = !groupInfo.invited
                     )
                 }
             }
@@ -283,19 +283,19 @@ class RecipientRepository @Inject constructor(
         "Use the suspend version of getRecipient instead",
         ReplaceWith("getRecipient(address)")
     )
-    fun getRecipientSyncOrEmpty(address: Address): RecipientV2 {
+    fun getRecipientSyncOrEmpty(address: Address): Recipient {
         return getRecipientSync(address) ?: empty(address)
     }
 
-    suspend fun getRecipientOrEmpty(address: Address): RecipientV2 {
+    suspend fun getRecipientOrEmpty(address: Address): Recipient {
         return getRecipient(address) ?: empty(address)
     }
 
     companion object {
         private const val TAG = "RecipientRepository"
 
-        private fun createLocalRecipient(basic: BasicRecipient.Self): RecipientV2 {
-            return RecipientV2(
+        private fun createLocalRecipient(basic: BasicRecipient.Self): Recipient {
+            return Recipient(
                 basic = basic,
                 mutedUntil = null,
                 autoDownloadAttachments = true,
@@ -323,8 +323,8 @@ class RecipientRepository @Inject constructor(
         private fun createGroupV2Recipient(
             basic: BasicRecipient.Group,
             settings: RecipientSettings?
-        ): RecipientV2 {
-            return RecipientV2(
+        ): Recipient {
+            return Recipient(
                 basic = basic,
                 mutedUntil = settings?.muteUntilDate,
                 notifyType = settings?.notifyType ?: RecipientDatabase.NOTIFY_TYPE_ALL,
@@ -340,8 +340,8 @@ class RecipientRepository @Inject constructor(
         private fun createContactRecipient(
             basic: BasicRecipient.Contact,
             fallbackSettings: RecipientSettings?, // Local db data
-        ): RecipientV2 {
-            return RecipientV2(
+        ): Recipient {
+            return Recipient(
                 basic = basic,
                 mutedUntil = fallbackSettings?.muteUntilDate,
                 autoDownloadAttachments = fallbackSettings?.autoDownloadAttachments,
@@ -354,8 +354,8 @@ class RecipientRepository @Inject constructor(
             address: Address,
             group: GroupRecord, // Local db data
             settings: RecipientSettings?, // Local db data
-        ): RecipientV2 {
-            return RecipientV2(
+        ): Recipient {
+            return Recipient(
                 basic = BasicRecipient.Generic(
                     address = address,
                     displayName = group.title,
@@ -372,8 +372,8 @@ class RecipientRepository @Inject constructor(
          * Creates a RecipientV2 instance from the provided Address and RecipientSettings.
          * Note that this method assumes the recipient is not ourselves.
          */
-        private fun createGenericRecipient(address: Address, settings: RecipientSettings): RecipientV2 {
-            return RecipientV2(
+        private fun createGenericRecipient(address: Address, settings: RecipientSettings): Recipient {
+            return Recipient(
                 basic = BasicRecipient.Generic(
                     address = address,
                     displayName = settings.systemDisplayName?.takeIf { it.isNotBlank() } ?: settings.profileName.orEmpty(),
@@ -389,8 +389,8 @@ class RecipientRepository @Inject constructor(
             )
         }
 
-        fun empty(address: Address): RecipientV2 {
-            return RecipientV2(
+        fun empty(address: Address): Recipient {
+            return Recipient(
                 basic = BasicRecipient.Generic(address = address),
                 mutedUntil = null,
                 autoDownloadAttachments = null,

@@ -45,7 +45,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getGroup
-import org.session.libsession.utilities.recipients.RecipientV2
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.upsertContact
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Hex
@@ -100,7 +100,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private val _dialogState: MutableStateFlow<DialogsState> = MutableStateFlow(DialogsState())
     val dialogState: StateFlow<DialogsState> = _dialogState
 
-    private var recipient: RecipientV2? = null
+    private var recipient: Recipient? = null
 
     private var groupV2: GroupInfo.ClosedGroupInfo? = null
 
@@ -490,7 +490,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         }
     }
 
-    private fun getNotificationsData(conversation: RecipientV2): Pair<Int, String> {
+    private fun getNotificationsData(conversation: Recipient): Pair<Int, String> {
         return when{
             conversation.isMuted() -> R.drawable.ic_volume_off to context.getString(R.string.notificationsMuted)
             conversation.notifyType == RecipientDatabase.NOTIFY_TYPE_MENTIONS ->

@@ -9,7 +9,7 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.concurrent.SignalExecutors
-import org.session.libsession.utilities.recipients.RecipientV2
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.contacts.ContactAccessor
 import org.thoughtcrime.securesms.database.CursorList
@@ -216,8 +216,8 @@ class SearchRepository @Inject constructor(
                 fromSerialized(cursor.getString(cursor.getColumnIndexOrThrow(SearchDatabase.CONVERSATION_ADDRESS)))
             val messageAddress =
                 fromSerialized(cursor.getString(cursor.getColumnIndexOrThrow(SearchDatabase.MESSAGE_ADDRESS)))
-            val conversationRecipient = recipientRepository.getRecipientSync(conversationAddress) ?: RecipientV2.empty(conversationAddress)
-            val messageRecipient = recipientRepository.getRecipientSync(messageAddress) ?: RecipientV2.empty(messageAddress)
+            val conversationRecipient = recipientRepository.getRecipientSync(conversationAddress) ?: Recipient.empty(conversationAddress)
+            val messageRecipient = recipientRepository.getRecipientSync(messageAddress) ?: Recipient.empty(messageAddress)
             val body = cursor.getString(cursor.getColumnIndexOrThrow(SearchDatabase.SNIPPET))
             val sentMs =
                 cursor.getLong(cursor.getColumnIndexOrThrow(MmsSmsColumns.NORMALIZED_DATE_SENT))

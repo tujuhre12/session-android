@@ -45,7 +45,7 @@ import org.session.libsession.utilities.IdentityKeyMismatchList
 import org.session.libsession.utilities.NetworkFailure
 import org.session.libsession.utilities.NetworkFailureList
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isReadReceiptsEnabled
-import org.session.libsession.utilities.recipients.RecipientV2
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.ThreadUtils.queue
@@ -1328,13 +1328,13 @@ class MmsDatabase @Inject constructor(
             )
         }
 
-        private fun getRecipientFor(serialized: String?): RecipientV2 {
+        private fun getRecipientFor(serialized: String?): Recipient {
             val address: Address = if (serialized.isNullOrEmpty() || "insert-address-token" == serialized) {
                 UNKNOWN
             } else {
                 fromSerialized(serialized)
             }
-            return recipientRepository.getRecipientSync(address) ?: RecipientV2.empty(address)
+            return recipientRepository.getRecipientSync(address) ?: Recipient.empty(address)
         }
 
         private fun getMismatchedIdentities(document: String?): List<IdentityKeyMismatch?>? {

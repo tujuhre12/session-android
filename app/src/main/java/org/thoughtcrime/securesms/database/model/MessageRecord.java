@@ -36,7 +36,7 @@ import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.IdentityKeyMismatch;
 import org.session.libsession.utilities.NetworkFailure;
 import org.session.libsession.utilities.ThemeUtil;
-import org.session.libsession.utilities.recipients.RecipientV2;
+import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.utilities.AccountId;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 
@@ -51,7 +51,7 @@ import network.loki.messenger.R;
  *
  */
 public abstract class MessageRecord extends DisplayRecord {
-  private final RecipientV2                 individualRecipient;
+  private final Recipient individualRecipient;
   private final List<IdentityKeyMismatch> mismatches;
   private final List<NetworkFailure>      networkFailures;
   private final long                      expiresIn;
@@ -74,14 +74,14 @@ public abstract class MessageRecord extends DisplayRecord {
     return new MessageId(getId(), isMms());
   }
 
-  MessageRecord(long id, String body, RecipientV2 conversationRecipient,
-                RecipientV2 individualRecipient,
-    long dateSent, long dateReceived, long threadId,
-    int deliveryStatus, int deliveryReceiptCount, long type,
-    List<IdentityKeyMismatch> mismatches,
-    List<NetworkFailure> networkFailures,
-    long expiresIn, long expireStarted,
-    int readReceiptCount, List<ReactionRecord> reactions, boolean hasMention)
+  MessageRecord(long id, String body, Recipient conversationRecipient,
+                Recipient individualRecipient,
+                long dateSent, long dateReceived, long threadId,
+                int deliveryStatus, int deliveryReceiptCount, long type,
+                List<IdentityKeyMismatch> mismatches,
+                List<NetworkFailure> networkFailures,
+                long expiresIn, long expireStarted,
+                int readReceiptCount, List<ReactionRecord> reactions, boolean hasMention)
   {
     super(body, conversationRecipient, dateSent, dateReceived,
       threadId, deliveryStatus, deliveryReceiptCount, type, readReceiptCount);
@@ -101,7 +101,7 @@ public abstract class MessageRecord extends DisplayRecord {
   public long getTimestamp() {
     return getDateSent();
   }
-  public RecipientV2 getIndividualRecipient() {
+  public Recipient getIndividualRecipient() {
     return individualRecipient;
   }
   public long getType() {

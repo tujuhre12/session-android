@@ -4,11 +4,11 @@ import android.content.Context
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.RequestManager
-import org.session.libsession.utilities.recipients.RecipientV2
+import org.session.libsession.utilities.recipients.Recipient
 
 class ContactSelectionListAdapter(private val context: Context, private val multiSelect: Boolean) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     lateinit var glide: RequestManager
-    val selectedContacts = mutableSetOf<RecipientV2>()
+    val selectedContacts = mutableSetOf<Recipient>()
     var items = listOf<ContactSelectionListItem>()
         set(value) { field = value; notifyDataSetChanged() }
     var contactClickListener: ContactClickListener? = null
@@ -53,7 +53,7 @@ class ContactSelectionListAdapter(private val context: Context, private val mult
         }
     }
 
-    fun onContactClick(recipient: RecipientV2) {
+    fun onContactClick(recipient: Recipient) {
         if (selectedContacts.contains(recipient)) {
             selectedContacts.remove(recipient)
             contactClickListener?.onContactDeselected(recipient)
@@ -71,7 +71,7 @@ class ContactSelectionListAdapter(private val context: Context, private val mult
 }
 
 interface ContactClickListener {
-    fun onContactClick(contact: RecipientV2)
-    fun onContactSelected(contact: RecipientV2)
-    fun onContactDeselected(contact: RecipientV2)
+    fun onContactClick(contact: Recipient)
+    fun onContactSelected(contact: Recipient)
+    fun onContactDeselected(contact: Recipient)
 }

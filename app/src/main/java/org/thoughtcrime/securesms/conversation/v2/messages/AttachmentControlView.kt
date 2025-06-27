@@ -16,7 +16,7 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.StringSubstitutionConstants.FILE_TYPE_KEY
-import org.session.libsession.utilities.recipients.RecipientV2
+import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.conversation.v2.ViewUtil
 import org.thoughtcrime.securesms.conversation.v2.dialogs.AutoDownloadDialog
 import org.thoughtcrime.securesms.mms.Slide
@@ -144,7 +144,7 @@ class AttachmentControlView: LinearLayout {
     // endregion
 
     // region Interaction
-    fun showDownloadDialog(threadRecipient: RecipientV2, attachment: DatabaseAttachment) {
+    fun showDownloadDialog(threadRecipient: Recipient, attachment: DatabaseAttachment) {
         if (threadRecipient.autoDownloadAttachments != true) {
             // just download
             (context.findActivity() as? ActivityDispatcher)?.showDialog(AutoDownloadDialog(threadRecipient, attachment))
