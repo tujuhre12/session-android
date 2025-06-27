@@ -24,7 +24,6 @@ import android.view.WindowManager;
 import com.bumptech.glide.Glide;
 import com.squareup.phrase.Phrase;
 
-import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsession.utilities.recipients.RecipientV2;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.guava.Optional;

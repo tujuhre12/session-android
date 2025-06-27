@@ -21,7 +21,7 @@ import android.content.Context;
 
 import androidx.annotation.NonNull;
 import org.session.libsession.utilities.IdentityKeyMismatch;
-import org.session.libsession.utilities.recipients.Recipient;
+import org.session.libsession.utilities.recipients.RecipientV2;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -35,8 +35,8 @@ import java.util.List;
 public class SmsMessageRecord extends MessageRecord {
 
   public SmsMessageRecord(long id,
-    String body, Recipient recipient,
-    Recipient individualRecipient,
+    String body, RecipientV2 recipient,
+    RecipientV2 individualRecipient,
     long dateSent, long dateReceived,
     int deliveryReceiptCount,
     long type, long threadId,

@@ -13,7 +13,6 @@ import network.loki.messenger.libsession_util.util.Bytes
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import network.loki.messenger.libsession_util.util.KeyPair
-import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.BlindedIdMapping
@@ -24,7 +23,6 @@ import org.session.libsession.messaging.jobs.Job
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.jobs.MessageReceiveJob
 import org.session.libsession.messaging.jobs.MessageSendJob
-import org.session.libsession.messaging.jobs.RetrieveProfileAvatarJob
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.ProfileUpdateHandler
 import org.session.libsession.messaging.messages.control.GroupUpdated
@@ -56,11 +54,10 @@ import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.GroupDisplayInfo
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.GroupUtil
-import org.session.libsession.utilities.ProfileKeyUtil
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getGroup
-import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.RecipientSettings
 import org.session.libsession.utilities.recipients.RecipientV2
 import org.session.libsession.utilities.upsertContact
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
@@ -68,7 +65,6 @@ import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceAttachmentPointer
 import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.utilities.AccountId
-import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.KeyHelper
@@ -750,10 +746,6 @@ open class Storage @Inject constructor(
         groupDatabase.setActive(groupID, value)
     }
 
-    override fun getZombieMembers(groupID: String): Set<String> {
-        return groupDatabase.getGroupZombieMembers(groupID).map { it.address.toString() }.toHashSet()
-    }
-
     override fun removeMember(groupID: String, member: Address) {
         groupDatabase.removeMember(groupID, member)
     }
@@ -1086,8 +1078,8 @@ open class Storage @Inject constructor(
         return threadDatabase.getRecipientForThreadId(threadId)
     }
 
-    override fun getRecipientSettings(address: Address): Recipient.RecipientSettings? {
-        return recipientDatabase.getRecipientSettings(address).orNull()
+    override fun getRecipientSettings(address: Address): RecipientSettings? {
+        return recipientDatabase.getRecipientSettings(address)
     }
 
     override fun syncLibSessionContacts(contacts: List<LibSessionContact>, timestamp: Long?) {
@@ -1117,13 +1109,13 @@ open class Storage @Inject constructor(
         // which in the case of contacts we are messaging for the first time and who haven't yet approved us, it won't be the case
         // But that person is saved in the Recipient db. We might need to investigate how to clean the relationship between Recipients, Contacts and config Contacts.
         val removedContacts = recipientDatabase.allRecipients.filter { localContact ->
-            IdPrefix.fromValue(localContact.address.toString()) == IdPrefix.STANDARD && // only want standard address
-            localContact.is1on1 && // only for conversations
-            localContact.address.toString() != currentUserKey && // we don't want to remove ourselves (ie, our Note to Self)
-            moreContacts.none { it.id == localContact.address.toString() } // we don't want to remove contacts that are present in the config
+            IdPrefix.fromValue(localContact.toString()) == IdPrefix.STANDARD && // only want standard address
+            localContact.isContact && // only for conversations
+            localContact.address != currentUserKey && // we don't want to remove ourselves (ie, our Note to Self)
+            moreContacts.none { it.id == localContact.address } // we don't want to remove contacts that are present in the config
         }
         removedContacts.forEach {
-            deleteContact(it.address.toString())
+            deleteContact(it.address)
         }
     }
 

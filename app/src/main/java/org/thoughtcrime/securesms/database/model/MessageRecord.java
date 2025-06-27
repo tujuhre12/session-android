@@ -36,7 +36,6 @@ import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.IdentityKeyMismatch;
 import org.session.libsession.utilities.NetworkFailure;
 import org.session.libsession.utilities.ThemeUtil;
-import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsession.utilities.recipients.RecipientV2;
 import org.session.libsignal.utilities.AccountId;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;

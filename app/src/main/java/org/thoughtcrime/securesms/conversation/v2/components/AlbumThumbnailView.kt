@@ -18,8 +18,6 @@ import network.loki.messenger.databinding.AlbumThumbnailViewBinding
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.COUNT_KEY
-import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsession.utilities.recipients.RecipientV2
 import org.thoughtcrime.securesms.MediaPreviewActivity
 import org.thoughtcrime.securesms.components.CornerMask
 import org.thoughtcrime.securesms.conversation.v2.utilities.ThumbnailView

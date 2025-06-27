@@ -16,7 +16,6 @@ import network.loki.messenger.databinding.ViewQuoteBinding
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getColorFromAttr
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientV2
 import org.session.libsession.utilities.truncateIdForDisplay
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities

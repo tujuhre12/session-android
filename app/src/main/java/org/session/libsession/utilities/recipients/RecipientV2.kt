@@ -1,8 +1,13 @@
 package org.session.libsession.utilities.recipients
 
+import android.content.Context
+import android.graphics.drawable.Drawable
 import network.loki.messenger.libsession_util.util.Bytes
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.UserPic
+import org.session.libsession.avatars.ContactPhoto
+import org.session.libsession.avatars.ProfileContactPhoto
+import org.session.libsession.avatars.TransparentContactPhoto
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.truncateIdForDisplay
 import org.thoughtcrime.securesms.database.RecipientDatabase
@@ -48,6 +53,7 @@ data class RecipientV2(
         else -> false
     }
 
+    @JvmOverloads
     fun isMuted(now: ZonedDateTime = ZonedDateTime.now()): Boolean {
         return mutedUntil?.isAfter(now) == true
     }
@@ -57,6 +63,15 @@ data class RecipientV2(
 
     val mutedUntilMills: Long?
         get() = mutedUntil?.toInstant()?.toEpochMilli()
+
+    @Deprecated("use avatar instead")
+    //TODO: Not working
+    val contactPhoto: ContactPhoto?
+        get() = when (val a = avatar) {
+            is RecipientAvatar.EncryptedRemotePic -> ProfileContactPhoto(address, a.url)
+            is RecipientAvatar.Inline -> null
+            else -> null
+        }
 
     @Deprecated("Use `avatar` property instead", ReplaceWith("avatar"))
     val profileAvatar: String?
@@ -195,6 +210,24 @@ sealed interface RecipientAvatar {
         }
     }
 }
+
+/**
+ * Represents local database data for a recipient.
+ */
+class RecipientSettings(
+    val blocked: Boolean,
+    val approved: Boolean,
+    val approvedMe: Boolean,
+    val muteUntil: Long,
+    val notifyType: Int,
+    val autoDownloadAttachments: Boolean?,
+    val expireMessages: Int,
+    val profileKey: ByteArray?,
+    val systemDisplayName: String?,
+    val profileName: String?,
+    val profileAvatar: String?,
+    val blocksCommunityMessagesRequests: Boolean
+)
 
 fun RecipientAvatar.toUserPic(): UserPic? {
     return when (this) {

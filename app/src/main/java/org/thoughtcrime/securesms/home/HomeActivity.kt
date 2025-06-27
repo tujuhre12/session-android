@@ -35,8 +35,6 @@ import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityHomeBinding
 import org.greenrobot.eventbus.EventBus
-import org.greenrobot.eventbus.Subscribe
-import org.greenrobot.eventbus.ThreadMode
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
@@ -44,11 +42,9 @@ import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.ProfilePictureModifiedEvent
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
@@ -497,15 +493,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
     // endregion
 
     // region Updating
-    @Subscribe(threadMode = ThreadMode.MAIN)
-    fun onUpdateProfileEvent(event: ProfilePictureModifiedEvent) {
-        if (event.recipient.isLocalNumber) {
-            updateProfileButton()
-        } else {
-            homeViewModel.tryReload()
-        }
-    }
-
     private fun updateProfileButton() {
         binding.profileButton.publicKey = publicKey
         binding.profileButton.displayName = homeViewModel.getCurrentUsername()

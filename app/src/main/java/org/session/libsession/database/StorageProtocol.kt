@@ -27,7 +27,7 @@ import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupDisplayInfo
 import org.session.libsession.utilities.GroupRecord
-import org.session.libsession.utilities.recipients.Recipient.RecipientSettings
+import org.session.libsession.utilities.recipients.RecipientSettings
 import org.session.libsession.utilities.recipients.RecipientV2
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceAttachmentPointer
@@ -129,7 +129,6 @@ interface StorageProtocol {
     fun createInitialConfigGroup(groupPublicKey: String, name: String, members: Map<String, Boolean>, formationTimestamp: Long, encryptionKeyPair: ECKeyPair, expirationTimer: Int)
     fun isGroupActive(groupPublicKey: String): Boolean
     fun setActive(groupID: String, value: Boolean)
-    fun getZombieMembers(groupID: String): Set<String>
     fun removeMember(groupID: String, member: Address)
     fun updateMembers(groupID: String, members: List<Address>)
     fun getAllLegacyGroupPublicKeys(): Set<String>

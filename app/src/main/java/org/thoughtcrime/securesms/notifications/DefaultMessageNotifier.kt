@@ -45,7 +45,6 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.getRepea
 import org.session.libsession.utilities.TextSecurePreferences.Companion.hasHiddenMessageRequests
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isNotificationsEnabled
 import org.session.libsession.utilities.TextSecurePreferences.Companion.removeHasHiddenMessageRequests
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientV2
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Hex
@@ -100,10 +99,6 @@ class DefaultMessageNotifier @Inject constructor(
 
     override fun setLastDesktopActivityTimestamp(timestamp: Long) {
         lastDesktopActivityTimestamp = timestamp
-    }
-
-    override fun notifyMessageDeliveryFailed(context: Context?, recipient: Recipient?, threadId: Long) {
-        // We do not provide notifications for message delivery failure.
     }
 
     override fun cancelDelayedNotifications() {

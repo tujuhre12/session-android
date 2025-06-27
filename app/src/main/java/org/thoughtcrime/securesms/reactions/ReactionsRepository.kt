@@ -5,7 +5,6 @@ import io.reactivex.ObservableEmitter
 import io.reactivex.schedulers.Schedulers
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientV2
 import org.thoughtcrime.securesms.components.emoji.EmojiUtil
 import org.thoughtcrime.securesms.database.RecipientRepository

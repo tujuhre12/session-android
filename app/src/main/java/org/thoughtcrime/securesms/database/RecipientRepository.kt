@@ -23,9 +23,9 @@ import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.BasicRecipient
-import org.session.libsession.utilities.recipients.Recipient.RecipientSettings
 import org.session.libsession.utilities.recipients.RecipientAvatar
 import org.session.libsession.utilities.recipients.RecipientAvatar.Companion.toRecipientAvatar
+import org.session.libsession.utilities.recipients.RecipientSettings
 import org.session.libsession.utilities.recipients.RecipientV2
 import org.session.libsession.utilities.recipients.displayNameOrFallback
 import org.session.libsession.utilities.userConfigsChanged
@@ -73,7 +73,12 @@ class RecipientRepository @Inject constructor(
     private fun createRecipientFlow(address: Address): SharedFlow<RecipientV2?> {
         return flow {
             while (true) {
-                val (value, changeSource) = fetchRecipient(address)
+                val (value, changeSource) = fetchRecipient(address) ?: run {
+                    // If we don't have a recipient for this address, emit null and terminate the flow.
+                    emit(null)
+                    return@flow
+                }
+
                 emit(value)
                 changeSource.first()
                 Log.d(TAG, "Recipient changed for ${address.address.substring(0..10)}")
@@ -85,7 +90,7 @@ class RecipientRepository @Inject constructor(
             SharingStarted.WhileSubscribed(replayExpirationMillis = 0L), replay = 1)
     }
 
-    private suspend fun fetchRecipient(address: Address): Pair<RecipientV2?, Flow<*>> {
+    private suspend fun fetchRecipient(address: Address): Pair<RecipientV2?, Flow<*>>? {
         val basicRecipient = getBasicRecipientFast(address)
 
         val changeSource: Flow<*>
@@ -101,7 +106,7 @@ class RecipientRepository @Inject constructor(
                 value = createContactRecipient(
                     basic = basicRecipient,
                     fallbackSettings = withContext(Dispatchers.Default) {
-                        recipientDatabase.getRecipientSettings(address).orNull()
+                        recipientDatabase.getRecipientSettings(address)
                     }
                 )
 
@@ -115,7 +120,7 @@ class RecipientRepository @Inject constructor(
                 value = createGroupV2Recipient(
                     basic = basicRecipient,
                     settings = withContext(Dispatchers.Default) {
-                        recipientDatabase.getRecipientSettings(address).orNull()
+                        recipientDatabase.getRecipientSettings(address)
                     }
                 )
 
@@ -133,7 +138,7 @@ class RecipientRepository @Inject constructor(
                 // local database.
 
                 val settings = withContext(Dispatchers.Default) {
-                    recipientDatabase.getRecipientSettings(address).orNull()
+                    recipientDatabase.getRecipientSettings(address)
                 }
 
                 when {
@@ -147,9 +152,14 @@ class RecipientRepository @Inject constructor(
                         value = group?.let { createCommunityOrLegacyGroupRecipient(address, it, settings) }
                     }
 
-                    else -> {
+                    settings != null -> {
                         value = createGenericRecipient(address, settings)
                         changeSource = recipientDatabase.updateNotifications.filter { it == address }
+                    }
+
+                    else -> {
+                        Log.w(TAG, "No recipient found for address: ${address.debugString}")
+                        return null
                     }
                 }
             }
@@ -334,7 +344,7 @@ class RecipientRepository @Inject constructor(
                 mutedUntil = fallbackSettings?.muteUntilDate,
                 autoDownloadAttachments = fallbackSettings?.autoDownloadAttachments,
                 notifyType = fallbackSettings?.notifyType ?: RecipientDatabase.NOTIFY_TYPE_ALL,
-                acceptsCommunityMessageRequests = fallbackSettings?.blocksCommunityMessageRequests != true
+                acceptsCommunityMessageRequests = fallbackSettings?.blocksCommunityMessagesRequests == false,
             )
         }
 
@@ -367,13 +377,13 @@ class RecipientRepository @Inject constructor(
                     displayName = settings.systemDisplayName?.takeIf { it.isNotBlank() } ?: settings.profileName.orEmpty(),
                     avatar = settings.profileAvatar?.let { RecipientAvatar.from(it, settings.profileKey) },
                     isLocalNumber = false,
-                    blocked = settings.isBlocked
+                    blocked = settings.blocked
                 ),
                 mutedUntil = settings.muteUntil.takeIf { it > 0 }
                     ?.let { ZonedDateTime.from(Instant.ofEpochMilli(it)) },
                 autoDownloadAttachments = settings.autoDownloadAttachments,
                 notifyType = settings.notifyType,
-                acceptsCommunityMessageRequests = !settings.blocksCommunityMessageRequests
+                acceptsCommunityMessageRequests = !settings.blocksCommunityMessagesRequests
             )
         }
 

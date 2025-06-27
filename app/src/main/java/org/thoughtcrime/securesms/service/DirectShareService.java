@@ -5,6 +5,8 @@ import android.content.ComponentName;
 import android.content.IntentFilter;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Icon;
 import android.os.Bundle;
 import android.os.Parcel;
@@ -13,9 +15,11 @@ import android.service.chooser.ChooserTargetService;
 
 import androidx.annotation.NonNull;
 
-import org.session.libsession.utilities.recipients.Recipient;
+import org.session.libsession.utilities.recipients.RecipientV2;
+import org.session.libsession.utilities.recipients.RecipientV2Kt;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.ShareActivity;
+import org.thoughtcrime.securesms.database.RecipientRepository;
 import org.thoughtcrime.securesms.database.ThreadDatabase;
 import org.thoughtcrime.securesms.database.model.ThreadRecord;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
@@ -26,7 +30,15 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class DirectShareService extends ChooserTargetService {
+  @Inject
+  RecipientRepository recipientRepository;
+
 
   private static final String TAG = DirectShareService.class.getSimpleName();
 
@@ -43,8 +55,8 @@ public class DirectShareService extends ChooserTargetService {
           ThreadRecord record;
 
           while ((record = reader.getNext()) != null && results.size() < 10) {
-              Recipient recipient = Recipient.from(this, record.getRecipient().getAddress(), false);
-              String name = recipient.getName();
+              RecipientV2 recipient = record.getRecipient();
+              String name = recipient.getDisplayName();
 
               Bitmap avatar;
 
@@ -83,8 +95,9 @@ public class DirectShareService extends ChooserTargetService {
       }
   }
 
-  private Bitmap getFallbackDrawable(@NonNull Recipient recipient) {
-    return BitmapUtil.createFromDrawable(recipient.getFallbackContactPhotoDrawable(this, false),
+  private Bitmap getFallbackDrawable(@NonNull RecipientV2 recipient) {
+      //TODO: Use proper color
+    return BitmapUtil.createFromDrawable(new ColorDrawable(Color.RED),
                                          getResources().getDimensionPixelSize(android.R.dimen.notification_large_icon_width),
                                          getResources().getDimensionPixelSize(android.R.dimen.notification_large_icon_height));
   }

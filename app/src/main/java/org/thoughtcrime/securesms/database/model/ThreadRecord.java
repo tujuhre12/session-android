@@ -34,7 +34,6 @@ import kotlin.Pair;
 import network.loki.messenger.R;
 import org.session.libsession.messaging.utilities.UpdateMessageData;
 import org.session.libsession.utilities.TextSecurePreferences;
-import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsession.utilities.recipients.RecipientV2;
 import org.thoughtcrime.securesms.database.MmsSmsColumns;
 import org.thoughtcrime.securesms.database.SmsDatabase;
@@ -90,9 +89,8 @@ public class ThreadRecord extends DisplayRecord {
   }
 
     private String getName() {
-        return getRecipient().getName();
+        return getRecipient().getDisplayName();
     }
-
 
     @Override
     public CharSequence getDisplayBody(@NonNull Context context) {
@@ -209,7 +207,7 @@ public class ThreadRecord extends DisplayRecord {
                 prefix = context.getString(R.string.you);
             }
             else if(lastMessage != null){
-                prefix = lastMessage.getIndividualRecipient().getName();
+                prefix = lastMessage.getIndividualRecipient().getDisplayName();
             }
 
             return Phrase.from(context.getString(R.string.messageSnippetGroup))

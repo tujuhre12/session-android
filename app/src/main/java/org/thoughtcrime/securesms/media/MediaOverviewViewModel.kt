@@ -34,8 +34,6 @@ import org.session.libsession.messaging.messages.control.DataExtractionNotificat
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsession.utilities.recipients.RecipientV2
 import org.thoughtcrime.securesms.MediaPreviewActivity
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.MediaDatabase
@@ -49,7 +47,6 @@ import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.MediaUtil
 import org.thoughtcrime.securesms.util.SaveAttachmentTask
 import org.thoughtcrime.securesms.util.asSequence
-import org.thoughtcrime.securesms.util.observeChanges
 
 @HiltViewModel(assistedFactory = MediaOverviewViewModel.Factory::class)
 class MediaOverviewViewModel @AssistedInject constructor(

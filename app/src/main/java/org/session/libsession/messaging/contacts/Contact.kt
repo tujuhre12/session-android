@@ -2,7 +2,6 @@ package org.session.libsession.messaging.contacts
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientV2
 import org.session.libsession.utilities.truncateIdForDisplay
 

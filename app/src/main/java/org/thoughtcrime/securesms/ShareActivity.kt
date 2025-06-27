@@ -35,7 +35,6 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.DistributionTypes
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.ViewUtil
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.components.SearchToolbar
 import org.thoughtcrime.securesms.components.SearchToolbar.SearchListener

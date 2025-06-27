@@ -11,7 +11,6 @@ import androidx.core.util.Pair;
 
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentId;
 import org.session.libsession.utilities.Address;
-import org.session.libsession.utilities.recipients.Recipient;
 import org.thoughtcrime.securesms.database.AttachmentDatabase;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 import org.thoughtcrime.securesms.mms.PartAuthority;

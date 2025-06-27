@@ -11,7 +11,6 @@ import network.loki.messenger.R
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
-import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.createSessionDialog
 import org.thoughtcrime.securesms.ui.getSubbedCharSequence
 

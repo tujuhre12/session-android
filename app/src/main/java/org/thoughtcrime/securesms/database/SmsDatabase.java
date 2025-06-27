@@ -17,7 +17,6 @@
  */
 package org.thoughtcrime.securesms.database;
 
-import static org.session.libsignal.utilities.Util.SECURE_RANDOM;
 import static org.thoughtcrime.securesms.database.MmsSmsColumns.Types.GROUP_UPDATE_MESSAGE_BIT;
 
 import android.content.ContentValues;
@@ -41,7 +40,7 @@ import org.session.libsession.utilities.IdentityKeyMismatch;
 import org.session.libsession.utilities.IdentityKeyMismatchList;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.Util;
-import org.session.libsession.utilities.recipients.Recipient;
+import org.session.libsession.utilities.recipients.RecipientV2;
 import org.session.libsignal.utilities.JsonUtil;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.guava.Optional;
@@ -54,19 +53,21 @@ import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 
 /**
  * Database for storage of SMS messages.
  *
  * @author Moxie Marlinspike
  */
+@Singleton
 public class SmsDatabase extends MessagingDatabase {
 
   private static final String TAG = SmsDatabase.class.getSimpleName();
@@ -150,8 +151,12 @@ public class SmsDatabase extends MessagingDatabase {
   private static final EarlyReceiptCache earlyDeliveryReceiptCache = new EarlyReceiptCache();
   private static final EarlyReceiptCache earlyReadReceiptCache     = new EarlyReceiptCache();
 
-  public SmsDatabase(Context context, Provider<SQLCipherOpenHelper> databaseHelper) {
+  private final RecipientRepository recipientRepository;
+
+  @Inject
+  public SmsDatabase(Context context, Provider<SQLCipherOpenHelper> databaseHelper, RecipientRepository recipientRepository) {
     super(context, databaseHelper);
+    this.recipientRepository = recipientRepository;
   }
 
   protected String getTableName() {
@@ -443,14 +448,14 @@ public class SmsDatabase extends MessagingDatabase {
   }
 
   protected Optional<InsertResult> insertMessageInbox(IncomingTextMessage message, long type, long serverTimestamp, boolean runThreadUpdate) {
-    Recipient recipient = Recipient.from(context, message.getSender(), true);
+    Address recipient = message.getSender();
 
-    Recipient groupRecipient;
+    Address groupRecipient;
 
     if (message.getGroupId() == null) {
       groupRecipient = null;
     } else {
-      groupRecipient = Recipient.from(context, message.getGroupId(), true);
+      groupRecipient = message.getGroupId();
     }
 
     boolean    unread     = (message.isSecureMessage() || message.isGroup() || message.isUnreadCallMessage());
@@ -782,33 +787,6 @@ public class SmsDatabase extends MessagingDatabase {
     return new Reader(cursor);
   }
 
-  public OutgoingMessageReader readerFor(OutgoingTextMessage message, long threadId) {
-    return new OutgoingMessageReader(message, threadId);
-  }
-
-  public class OutgoingMessageReader {
-
-    private final OutgoingTextMessage message;
-    private final long                id;
-    private final long                threadId;
-
-    public OutgoingMessageReader(OutgoingTextMessage message, long threadId) {
-      this.message  = message;
-      this.threadId = threadId;
-      this.id       = SECURE_RANDOM.nextLong();
-    }
-
-    public MessageRecord getCurrent() {
-      return new SmsMessageRecord(id, message.getMessageBody(),
-                                  message.getRecipient(), message.getRecipient(),
-                                  SnodeAPI.getNowWithOffset(), SnodeAPI.getNowWithOffset(),
-                                  0, message.isSecureMessage() ? MmsSmsColumns.Types.getOutgoingEncryptedMessageType() : MmsSmsColumns.Types.getOutgoingSmsMessageType(),
-                                  threadId, 0, new LinkedList<IdentityKeyMismatch>(),
-                                  message.getExpiresIn(),
-                                  SnodeAPI.getNowWithOffset(), 0, Collections.emptyList(), false);
-    }
-  }
-
   public class Reader implements Closeable {
 
     private final Cursor cursor;
@@ -852,7 +830,7 @@ public class SmsDatabase extends MessagingDatabase {
       }
 
       List<IdentityKeyMismatch> mismatches = getMismatches(mismatchDocument);
-      Recipient                 recipient  = Recipient.from(context, address, true);
+      RecipientV2 recipient  = recipientRepository.getRecipientSyncOrEmpty(address);
       List<ReactionRecord>      reactions  = DatabaseComponent.get(context).reactionDatabase().getReactions(cursor);
 
       return new SmsMessageRecord(messageId, body, recipient,

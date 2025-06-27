@@ -15,7 +15,7 @@ import android.util.AttributeSet;
 
 import network.loki.messenger.R;
 
-import org.session.libsession.utilities.recipients.Recipient;
+import org.session.libsession.utilities.recipients.RecipientV2;
 import org.thoughtcrime.securesms.components.emoji.EmojiTextView;
 import org.thoughtcrime.securesms.util.ResUtil;
 import org.session.libsession.utilities.CenterAlignedRelativeSizeSpan;
@@ -32,12 +32,12 @@ public class FromTextView extends EmojiTextView {
     super(context, attrs);
   }
 
-  public void setText(Recipient recipient) {
+  public void setText(RecipientV2 recipient) {
     setText(recipient, true);
   }
 
-  public void setText(Recipient recipient, boolean read) {
-    String fromString = recipient.getName();
+  public void setText(RecipientV2 recipient, boolean read) {
+    String fromString = recipient.getDisplayName();
 
     int typeface;
 
@@ -56,8 +56,8 @@ public class FromTextView extends EmojiTextView {
 
     if (recipient.isLocalNumber()) {
       builder.append(getContext().getString(R.string.noteToSelf));
-    } else if (!TextUtils.isEmpty(recipient.getProfileName())) {
-      SpannableString profileName = new SpannableString(" (~" + recipient.getProfileName() + ") ");
+    } else if (!TextUtils.isEmpty(recipient.getDisplayName())) {
+      SpannableString profileName = new SpannableString(" (~" + recipient.getDisplayName() + ") ");
       profileName.setSpan(new CenterAlignedRelativeSizeSpan(0.75f), 0, profileName.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
       profileName.setSpan(new TypefaceSpan("sans-serif-light"), 0, profileName.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
       profileName.setSpan(new ForegroundColorSpan(ResUtil.getColor(getContext(), R.attr.conversation_list_item_subject_color)), 0, profileName.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -75,7 +75,7 @@ public class FromTextView extends EmojiTextView {
 
     setText(builder);
 
-    if      (recipient.isBlocked()) setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_user_round_x, 0, 0, 0);
+    if      (recipient.getBlocked()) setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_user_round_x, 0, 0, 0);
     else if (recipient.isMuted())   setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_volume_off, 0, 0, 0);
     else                            setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
   }

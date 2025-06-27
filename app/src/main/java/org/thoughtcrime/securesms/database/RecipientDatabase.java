@@ -8,17 +8,15 @@ import android.database.Cursor;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.annimon.stream.Stream;
-import com.esotericsoftware.kryo.util.Null;
 
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 import org.session.libsession.utilities.Address;
-import org.session.libsession.utilities.recipients.Recipient;
-import org.session.libsession.utilities.recipients.Recipient.RecipientSettings;
+import org.session.libsession.utilities.recipients.RecipientSettings;
 import org.session.libsignal.utilities.Base64;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.guava.Optional;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
-import java.io.Closeable;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -82,6 +80,7 @@ public class RecipientDatabase extends Database {
   private static final String CALL_RINGTONE            = "call_ringtone";
   @Deprecated(forRemoval = true)
   private static final String CALL_VIBRATE             = "call_vibrate";
+  @Deprecated(forRemoval = true)
   private static final String NOTIFICATION_CHANNEL     = "notification_channel";
   @Deprecated(forRemoval = true)
   private static final String UNIDENTIFIED_ACCESS_MODE = "unidentified_access_mode";
@@ -207,15 +206,8 @@ public class RecipientDatabase extends Database {
     return updateNotifications;
   }
 
-  public RecipientReader getRecipientsWithNotificationChannels() {
-    SQLiteDatabase database = getReadableDatabase();
-    Cursor         cursor   = database.query(TABLE_NAME, new String[] {ID, ADDRESS}, NOTIFICATION_CHANNEL  + " NOT NULL",
-                                             null, null, null, null, null);
-
-    return new RecipientReader(context, cursor);
-  }
-
-  public Optional<RecipientSettings> getRecipientSettings(@NonNull Address address) {
+  @Nullable
+  public RecipientSettings getRecipientSettings(@NonNull Address address) {
     SQLiteDatabase database = getReadableDatabase();
 
     try (Cursor cursor = database.query(TABLE_NAME, null, ADDRESS + " = ?", new String[]{address.toString()}, null, null, null)) {
@@ -224,11 +216,12 @@ public class RecipientDatabase extends Database {
         return getRecipientSettings(cursor);
       }
 
-      return Optional.absent();
+      return null;
     }
   }
 
-  Optional<RecipientSettings> getRecipientSettings(@NonNull Cursor cursor) {
+  @NonNull
+  RecipientSettings getRecipientSettings(@NonNull Cursor cursor) {
     boolean blocked                 = cursor.getInt(cursor.getColumnIndexOrThrow(BLOCK))                == 1;
     boolean approved                = cursor.getInt(cursor.getColumnIndexOrThrow(APPROVED))             == 1;
     boolean approvedMe              = cursor.getInt(cursor.getColumnIndexOrThrow(APPROVED_ME))          == 1;
@@ -245,7 +238,6 @@ public class RecipientDatabase extends Database {
     String  systemDisplayName       = cursor.getString(cursor.getColumnIndexOrThrow(SYSTEM_DISPLAY_NAME));
     String  signalProfileName       = cursor.getString(cursor.getColumnIndexOrThrow(SIGNAL_PROFILE_NAME));
     String  signalProfileAvatar     = cursor.getString(cursor.getColumnIndexOrThrow(SESSION_PROFILE_AVATAR));
-    String  notificationChannel     = cursor.getString(cursor.getColumnIndexOrThrow(NOTIFICATION_CHANNEL));
     boolean blocksCommunityMessageRequests = cursor.getInt(cursor.getColumnIndexOrThrow(BLOCKS_COMMUNITY_MESSAGE_REQUESTS)) == 1;
 
     byte[] profileKey = null;
@@ -259,13 +251,12 @@ public class RecipientDatabase extends Database {
       }
     }
 
-    return Optional.of(new RecipientSettings(blocked, approved, approvedMe, muteUntil,
+    return new RecipientSettings(blocked, approved, approvedMe, muteUntil,
             notifyType, autoDownloadAttachments,
             expireMessages,
             profileKey, systemDisplayName,
             signalProfileName, signalProfileAvatar,
-            notificationChannel,
-            blocksCommunityMessageRequests));
+            blocksCommunityMessageRequests);
   }
 
   public boolean getApproved(@NonNull Address address) {
@@ -360,30 +351,6 @@ public class RecipientDatabase extends Database {
     updateNotifications.tryEmit(recipient);
   }
 
-  public void setProfileKey(@NonNull Address recipient, @Nullable byte[] profileKey) {
-    ContentValues values = new ContentValues(1);
-    values.put(PROFILE_KEY, profileKey == null ? null : Base64.encodeBytes(profileKey));
-    updateOrInsert(recipient, values);
-    notifyRecipientListeners();
-    updateNotifications.tryEmit(recipient);
-  }
-
-  public void setProfileAvatar(@NonNull Address recipient, @Nullable String profileAvatar) {
-    ContentValues contentValues = new ContentValues(1);
-    contentValues.put(SESSION_PROFILE_AVATAR, profileAvatar);
-    updateOrInsert(recipient, contentValues);
-    notifyRecipientListeners();
-    updateNotifications.tryEmit(recipient);
-  }
-
-  public void setProfileName(@NonNull Address recipient, @Nullable String profileName) {
-    ContentValues contentValues = new ContentValues(1);
-    contentValues.put(SYSTEM_DISPLAY_NAME, profileName);
-    updateOrInsert(recipient, contentValues);
-    notifyRecipientListeners();
-    updateNotifications.tryEmit(recipient);
-  }
-
   public void updateProfile(@NonNull Address recipient,
                             @Nullable String newName,
                             @Nullable UserPic profilePic,
@@ -461,49 +428,17 @@ public class RecipientDatabase extends Database {
    *
    * @return A list of all recipients
    */
-  public List<Recipient> getAllRecipients() {
+  public List<Address> getAllRecipients() {
     SQLiteDatabase database = getReadableDatabase();
 
-    Cursor cursor = database.query(TABLE_NAME, new String[] {ID, ADDRESS}, null,
-            null, null, null, null, null);
-
-    RecipientReader reader = new RecipientReader(context, cursor);
-    List<Recipient> returnList = new ArrayList<>();
-    Recipient current;
-
-    while ((current = reader.getNext()) != null) {
-      returnList.add(current);
-    }
-
-    reader.close();
-    return returnList;
-  }
-
-  public static class RecipientReader implements Closeable {
-
-    private final Context context;
-    private final Cursor  cursor;
-
-    RecipientReader(Context context, Cursor cursor) {
-      this.context = context;
-      this.cursor  = cursor;
-    }
-
-    public @NonNull Recipient getCurrent() {
-      String serialized = cursor.getString(cursor.getColumnIndexOrThrow(ADDRESS));
-      return Recipient.from(context, Address.fromSerialized(serialized), false);
-    }
-
-    public @Nullable Recipient getNext() {
-      if (cursor != null && !cursor.moveToNext()) {
-        return null;
+    try(final Cursor cursor = database.query(TABLE_NAME, new String[] {ADDRESS}, null,
+            null, null, null, null, null)) {
+      final List<Address> recipients = new ArrayList<>(cursor.getCount());
+      while (cursor.moveToNext()) {
+          String serialized = cursor.getString(cursor.getColumnIndexOrThrow(ADDRESS));
+          recipients.add(Address.fromSerialized(serialized));
       }
-
-      return getCurrent();
-    }
-
-    public void close() {
-      cursor.close();
+      return recipients;
     }
   }
 }

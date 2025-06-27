@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.util
 
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientV2
 import org.session.libsignal.messages.SignalServiceDataMessage
 

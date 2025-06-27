@@ -19,7 +19,6 @@ import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.GroupRecord;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.Util;
-import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.database.LokiOpenGroupDatabaseProtocol;
 import org.session.libsignal.messages.SignalServiceAttachmentPointer;
 import org.session.libsignal.utilities.guava.Optional;
@@ -27,6 +26,7 @@ import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
 import org.thoughtcrime.securesms.util.BitmapUtil;
 
 import java.io.Closeable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -165,20 +165,20 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
     return groups;
   }
 
-  public @NonNull List<Recipient> getGroupMembers(String groupId, boolean includeSelf) {
+  public @NonNull List<Address> getGroupMembers(String groupId, boolean includeSelf) {
     List<Address>   members     = getCurrentMembers(groupId, false);
-    List<Recipient> recipients  = new LinkedList<>();
+    List<Address> filtered = new ArrayList<>();
 
     for (Address member : members) {
       if (!includeSelf && Util.isOwnNumber(context, member.toString()))
         continue;
 
       if (member.isContact()) {
-        recipients.add(Recipient.from(context, member, false));
+        filtered.add(member);
       }
     }
 
-    return recipients;
+    return filtered;
   }
 
   public @NonNull List<Address> getGroupMemberAddresses(String groupId, boolean includeSelf) {
@@ -193,17 +193,6 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
       }
     }
     return members;
-  }
-
-  public @NonNull List<Recipient> getGroupZombieMembers(String groupId) {
-    List<Address>   members     = getCurrentZombieMembers(groupId);
-    List<Recipient> recipients  = new LinkedList<>();
-
-    for (Address member : members) {
-        recipients.add(Recipient.from(context, member, false));
-    }
-
-    return recipients;
   }
 
   public long create(@NonNull String groupId, @Nullable String title, @NonNull List<Address> members,
@@ -235,12 +224,6 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
 
     long threadId = getWritableDatabase().insert(TABLE_NAME, null, contentValues);
 
-    Recipient.applyCached(Address.fromSerialized(groupId), recipient -> {
-      recipient.setName(title);
-      recipient.setGroupAvatarId(avatar != null ? avatar.getId() : null);
-      recipient.setParticipants(Stream.of(members).map(memberAddress -> Recipient.from(context, memberAddress, true)).toList());
-    });
-
     notifyConversationListeners(threadId);
     notifyConversationListListeners();
 
@@ -253,7 +236,6 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
     int result = getWritableDatabase().delete(TABLE_NAME, GROUP_ID + " = ?", new String[]{groupId});
 
     if (result > 0) {
-      Recipient.removeCached(Address.fromSerialized(groupId));
       notifyConversationListListeners();
       updateNotification.tryEmit(groupId);
       return true;
@@ -278,13 +260,7 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
                                                 GROUP_ID + " = ?",
                                                 new String[] {groupId});
 
-    Recipient.applyCached(Address.fromSerialized(groupId), recipient -> {
-      recipient.setName(title);
-      recipient.setGroupAvatarId(avatar != null ? avatar.getId() : null);
-    });
-
     updateNotification.tryEmit(groupId);
-
     notifyConversationListListeners();
   }
 
@@ -295,15 +271,8 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
     getWritableDatabase().update(TABLE_NAME, contentValues, GROUP_ID +  " = ?",
                                                 new String[] {groupID});
 
-    Recipient recipient = Recipient.from(context, Address.fromSerialized(groupID), false);
-    final boolean nameChanged = !newValue.equals(recipient.getName());
-    recipient.setName(newValue);
-
-    if (nameChanged) {
-      notifyConversationListListeners();
-
-      updateNotification.tryEmit(groupId);
-    }
+    updateNotification.tryEmit(groupID);
+    notifyConversationListListeners();
   }
 
   public void updateProfilePicture(String groupID, Bitmap newValue) {
@@ -325,7 +294,6 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
     getWritableDatabase().update(TABLE_NAME, contentValues, GROUP_ID +  " = ?",
                                                 new String[] {groupID});
 
-    Recipient.applyCached(Address.fromSerialized(groupID), recipient -> recipient.setGroupAvatarId(avatarId == 0 ? null : avatarId));
     notifyConversationListListeners();
     updateNotification.tryEmit(groupID);
   }
@@ -345,7 +313,6 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
                     GROUP_ID + " = ?",
             new String[] {groupID});
 
-    Recipient.applyCached(Address.fromSerialized(groupID), recipient -> recipient.setGroupAvatarId(null));
     notifyConversationListListeners();
     updateNotification.tryEmit(groupID);
   }
@@ -372,10 +339,6 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
 
     getWritableDatabase().update(TABLE_NAME, contents, GROUP_ID + " = ?",
                                                 new String[] {groupId});
-
-    Recipient.applyCached(Address.fromSerialized(groupId), recipient -> {
-      recipient.setParticipants(Stream.of(members).map(a -> Recipient.from(context, a, false)).toList());
-    });
 
     updateNotification.tryEmit(groupId);
   }
@@ -406,14 +369,6 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
 
     getWritableDatabase().update(TABLE_NAME, contents, GROUP_ID + " = ?",
                                                 new String[] {groupId});
-
-    Recipient.applyCached(Address.fromSerialized(groupId), recipient -> {
-      List<Recipient> current = recipient.getParticipants();
-      Recipient       removal = Recipient.from(context, source, false);
-
-      current.remove(removal);
-      recipient.setParticipants(current);
-    });
 
     updateNotification.tryEmit(groupId);
   }

@@ -44,7 +44,6 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.DialogFragment
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
@@ -106,8 +105,6 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOTIFICATIONS_ENABLED
 import org.session.libsession.utilities.concurrent.SimpleTask
 import org.session.libsession.utilities.getColorFromAttr
-import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsession.utilities.recipients.RecipientModifiedListener
 import org.session.libsignal.crypto.MnemonicCodec
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
@@ -126,7 +123,6 @@ import org.thoughtcrime.securesms.conversation.disappearingmessages.Disappearing
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnActionSelectedListener
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnReactionSelectedListener
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.ShowOpenUrlDialog
-import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.MESSAGE_ID
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_COPY
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_DELETE
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_REPLY
@@ -239,7 +235,7 @@ private const val TAG = "ConversationActivityV2"
 @AndroidEntryPoint
 class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     InputBarRecordingViewDelegate, AttachmentManager.AttachmentListener, ActivityDispatcher,
-    ConversationActionModeCallbackDelegate, VisibleMessageViewDelegate, RecipientModifiedListener,
+    ConversationActionModeCallbackDelegate, VisibleMessageViewDelegate,
     SearchBottomBar.EventListener, LoaderManager.LoaderCallbacks<Cursor>,
     OnReactionSelectedListener, ReactWithAnyEmojiDialogFragment.Callback, ReactionsDialogFragment.Callback,
     UserDetailsBottomSheet.UserDetailsBottomSheetCallback {
@@ -1166,14 +1162,15 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     // endregion
 
     // region Animation & Updating
-    override fun onModified(recipient: Recipient) {
-        viewModel.updateRecipient()
-
-        runOnUiThread {
-            invalidateOptionsMenu()
-            updateSendAfterApprovalText()
-        }
-    }
+    //TODO test recipient update
+//    override fun onModified(recipient: Recipient) {
+//        viewModel.updateRecipient()
+//
+//        runOnUiThread {
+//            invalidateOptionsMenu()
+//            updateSendAfterApprovalText()
+//        }
+//    }
 
     private fun updateSendAfterApprovalText() {
         binding.textSendAfterApproval.isVisible = viewModel.showSendAfterApprovalText

@@ -8,7 +8,6 @@ import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.Contact;
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview;
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel;
-import org.session.libsession.utilities.recipients.Recipient;
 
 import java.util.Collections;
 import java.util.List;

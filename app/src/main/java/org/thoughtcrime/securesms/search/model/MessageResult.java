@@ -2,7 +2,6 @@ package org.thoughtcrime.securesms.search.model;
 
 import androidx.annotation.NonNull;
 
-import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsession.utilities.recipients.RecipientV2;
 
 import java.util.Objects;

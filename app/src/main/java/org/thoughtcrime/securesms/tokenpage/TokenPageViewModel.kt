@@ -29,7 +29,6 @@ import org.session.libsession.utilities.StringSubstitutionConstants.RELATIVE_TIM
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocalNumber
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientV2
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode

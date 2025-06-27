@@ -63,10 +63,6 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideSmsDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = SmsDatabase(context, openHelper)
-
-    @Provides
-    @Singleton
     fun provideAttachmentDatabase(@ApplicationContext context: Context,
                                   openHelper: Provider<SQLCipherOpenHelper>,
                                   attachmentSecret: AttachmentSecret) = AttachmentDatabase(context, openHelper, attachmentSecret)
