@@ -90,6 +90,9 @@ import java.time.ZoneId
 import java.util.UUID
 
 
+// the amount of character left at which point we should show an indicator
+private const  val CHARACTER_LIMIT_THRESHOLD = 200
+
 class ConversationViewModel(
     val threadId: Long,
     val edKeyPair: KeyPair?,
@@ -145,9 +148,6 @@ class ConversationViewModel(
         )
     ))
     val appBarData: StateFlow<ConversationAppBarData> = _appBarData
-
-    // the amount of character left at which point we should show an indicator
-    private val CHARACTER_LIMIT_THRESHOLD = 200
 
     private var _recipient: RetrieveOnce<Recipient> = RetrieveOnce {
         val conversation = repository.maybeGetRecipientForThreadId(threadId)
