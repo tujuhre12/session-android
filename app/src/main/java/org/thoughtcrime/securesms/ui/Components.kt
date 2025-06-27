@@ -95,6 +95,9 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideSubcomposition
+import com.bumptech.glide.integration.compose.RequestState
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -589,7 +592,7 @@ private fun BottomFadingEdgeBoxPreview() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SessionProCTA(
-    @DrawableRes heroImage: Int,
+    content: @Composable () -> Unit,
     text: String,
     features: List<String>,
     modifier: Modifier = Modifier,
@@ -607,12 +610,7 @@ fun SessionProCTA(
                         fadingEdgeHeight = 70.dp,
                         fadingColor = LocalColors.current.backgroundSecondary,
                         content = { _ ->
-                            Image(
-                                modifier = Modifier.fillMaxWidth().background(LocalColors.current.accent),
-                                contentScale = ContentScale.FillWidth,
-                                painter = painterResource(id = heroImage),
-                                contentDescription = null,
-                            )
+                            content()
                         },
                     )
 
@@ -688,13 +686,83 @@ fun SessionProCTA(
     )
 }
 
+@Composable
+fun SimpleSessionProCTA(
+    @DrawableRes heroImage: Int,
+    text: String,
+    features: List<String>,
+    modifier: Modifier = Modifier,
+    onUpgrade: () -> Unit,
+    onCancel: () -> Unit,
+){
+    SessionProCTA(
+        modifier = modifier,
+        text = text,
+        features = features,
+        onUpgrade = onUpgrade,
+        onCancel = onCancel,
+        content = {
+        Image(
+            modifier = Modifier.fillMaxWidth().background(LocalColors.current.accent),
+            contentScale = ContentScale.FillWidth,
+            painter = painterResource(id = heroImage),
+            contentDescription = null,
+        )
+    })
+}
+
+@OptIn(ExperimentalGlideComposeApi::class)
+@Composable
+fun AnimatedSessionProCTA(
+    @DrawableRes heroImageBg: Int,
+    @DrawableRes heroImageAnimatedFg: Int,
+    text: String,
+    features: List<String>,
+    modifier: Modifier = Modifier,
+    onUpgrade: () -> Unit,
+    onCancel: () -> Unit,
+){
+    SessionProCTA(
+        modifier = modifier,
+        text = text,
+        features = features,
+        onUpgrade = onUpgrade,
+        onCancel = onCancel,
+        content = {
+            Image(
+                modifier = Modifier.fillMaxWidth().background(LocalColors.current.accent),
+                contentScale = ContentScale.FillWidth,
+                painter = painterResource(id = heroImageBg),
+                contentDescription = null,
+            )
+
+            GlideSubcomposition(
+                modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+                model = heroImageAnimatedFg,
+            ){
+                when (state) {
+                    is RequestState.Success -> {
+                        Image(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentScale = ContentScale.FillWidth,
+                            painter = painter,
+                            contentDescription = null,
+                        )
+                    }
+
+                    else -> {}
+                }
+            }
+        })
+}
+
 @Preview
 @Composable
 private fun PreviewProCTA(
     @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
 ) {
     PreviewTheme(colors) {
-        SessionProCTA(
+        SimpleSessionProCTA(
             heroImage = R.drawable.cta_hero_char_limit,
             text = "This is a description of this Pro feature",
             features = listOf(
