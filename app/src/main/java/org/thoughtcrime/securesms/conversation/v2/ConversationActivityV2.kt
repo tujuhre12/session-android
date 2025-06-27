@@ -326,7 +326,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private val mentionCandidateAdapter = MentionCandidateAdapter {
         mentionViewModel.onCandidateSelected(it.member.publicKey)
 
-        // make sure to reverify text length here at the onTextChanged happens before this step
+        // make sure to reverify text length here as the onTextChanged happens before this step
         viewModel.onTextChanged(mentionViewModel.deconstructMessageMentions())
     }
     // Search
