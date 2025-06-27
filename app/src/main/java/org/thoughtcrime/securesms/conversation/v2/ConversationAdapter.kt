@@ -142,7 +142,7 @@ class ConversationAdapter(
                     }
                 }
                 val contact = contactCache[senderIdHash]
-                val isExpanded = expandedMessageIds.contains(message.id)
+                val isExpanded = expandedMessageIds.contains(message.messageId)
 
                 visibleMessageView.bind(
                     message = message,
