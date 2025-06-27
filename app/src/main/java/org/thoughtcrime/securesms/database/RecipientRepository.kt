@@ -2,10 +2,12 @@ package org.thoughtcrime.securesms.database
 
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
@@ -70,6 +72,7 @@ class RecipientRepository @Inject constructor(
 
     // This function creates a flow that emits the recipient information for the given address,
     // the function itself must be fast, not directly access db and lock free, as it is called from a locked context.
+    @OptIn(FlowPreview::class)
     private fun createRecipientFlow(address: Address): SharedFlow<RecipientV2?> {
         return flow {
             while (true) {
@@ -82,8 +85,10 @@ class RecipientRepository @Inject constructor(
                 }
 
                 emit(value)
-                changeSource.first()
-                Log.d(TAG, "Recipient changed for ${address.address.substring(0..10)}")
+                val evt = changeSource
+                    .debounce(1000) // Debounce to avoid too frequent updates
+                    .first()
+                Log.d(TAG, "Recipient changed for ${address.debugString}, triggering event: $evt")
             }
 
         }.shareIn(GlobalScope,

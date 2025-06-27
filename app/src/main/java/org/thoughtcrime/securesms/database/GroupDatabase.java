@@ -268,11 +268,14 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
   public void updateTitle(String groupID, String newValue) {
     ContentValues contentValues = new ContentValues();
     contentValues.put(TITLE, newValue);
-    getWritableDatabase().update(TABLE_NAME, contentValues, GROUP_ID +  " = ?",
-                                                new String[] {groupID});
 
-    updateNotification.tryEmit(groupID);
-    notifyConversationListListeners();
+    // Only notify if the title is actually changed. This is more a performance optimization rather
+    // than functional.
+    if (getWritableDatabase().update(TABLE_NAME, contentValues, GROUP_ID +  " = ? AND " + TITLE + " != ?",
+                                                new String[] {groupID, newValue}) > 0) {
+      updateNotification.tryEmit(groupID);
+      notifyConversationListListeners();
+    }
   }
 
   public void updateProfilePicture(String groupID, Bitmap newValue) {

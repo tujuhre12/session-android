@@ -7,6 +7,7 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.sending_receiving.MessageSender
+import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ExpirationUtil
 import org.session.libsession.utilities.SSKEnvironment.MessageExpirationManagerProtocol
@@ -25,7 +26,8 @@ class DisappearingMessages @Inject constructor(
     private val textSecurePreferences: TextSecurePreferences,
     private val messageExpirationManager: MessageExpirationManagerProtocol,
     private val storage: StorageProtocol,
-    private val groupManagerV2: GroupManagerV2
+    private val groupManagerV2: GroupManagerV2,
+    private val clock: SnodeClock,
 ) {
     fun set(threadId: Long, address: Address, mode: ExpiryMode, isGroup: Boolean) {
         storage.setExpirationConfiguration(threadId, mode)
@@ -38,6 +40,7 @@ class DisappearingMessages @Inject constructor(
                 sender = textSecurePreferences.getLocalNumber()
                 isSenderSelf = true
                 recipient = address.toString()
+                sentTimestamp = clock.currentTimeMills()
             }
 
             messageExpirationManager.insertExpirationTimerMessage(message)

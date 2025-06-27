@@ -1665,7 +1665,7 @@ open class Storage @Inject constructor(
             .mapTo(allBlockedContacts) { Address.fromSerialized(it.id) }
 
         // Source data from the local database. This might contain something that is not synced
-        // to the config system.
+        // to the config system.e
         allBlockedContacts.addAll(recipientDatabase.blockedContacts)
 
         return allBlockedContacts.map {
