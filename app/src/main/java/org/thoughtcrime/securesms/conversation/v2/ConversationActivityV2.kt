@@ -253,7 +253,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     @Inject lateinit var lokiMessageDb: LokiMessageDatabase
     @Inject lateinit var storage: StorageProtocol
     @Inject lateinit var reactionDb: ReactionDatabase
-    @Inject lateinit var viewModelFactory: ConversationViewModel.Factory
     @Inject lateinit var mentionViewModelFactory: MentionViewModel.AssistedFactory
     @Inject lateinit var dateUtils: DateUtils
     @Inject lateinit var configFactory: ConfigFactory

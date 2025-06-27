@@ -1,5 +1,6 @@
 package org.session.libsession.messaging.messages
 
+import dagger.Lazy
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.database.StorageProtocol
@@ -28,7 +29,7 @@ class ProfileUpdateHandler @Inject constructor(
     private val recipientDatabase: RecipientDatabase,
     private val blindedIdMappingDatabase: BlindedIdMappingDatabase,
     private val prefs: TextSecurePreferences,
-    private val storage: StorageProtocol,
+    private val storage: Lazy<StorageProtocol>,
 ) {
 
     fun handleProfileUpdate(sender: Address, updates: Updates, communityServerPubKey: String?) {
@@ -43,7 +44,7 @@ class ProfileUpdateHandler @Inject constructor(
 
     fun handleProfileUpdate(sender: AccountId, updates: Updates, communityServerPubKey: String?) {
         if (sender.hexString == prefs.getLocalNumber() ||
-            (communityServerPubKey != null && storage.getUserBlindedAccountId(communityServerPubKey) == sender)
+            (communityServerPubKey != null && storage.get().getUserBlindedAccountId(communityServerPubKey) == sender)
         ) {
             Log.w(TAG, "Ignoring profile update for local number")
             return

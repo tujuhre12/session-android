@@ -73,7 +73,7 @@ public class ReactionsViewModel extends ViewModel {
   }
 
   @AssistedFactory
-  interface Factory {
+  public interface Factory {
 
     ReactionsViewModel create(@NonNull MessageId messageId);
   }

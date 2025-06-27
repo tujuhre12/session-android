@@ -62,6 +62,8 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
+import dagger.hilt.android.qualifiers.ApplicationContext;
+
 /**
  * Database for storage of SMS messages.
  *
@@ -154,7 +156,9 @@ public class SmsDatabase extends MessagingDatabase {
   private final RecipientRepository recipientRepository;
 
   @Inject
-  public SmsDatabase(Context context, Provider<SQLCipherOpenHelper> databaseHelper, RecipientRepository recipientRepository) {
+  public SmsDatabase(@ApplicationContext Context context,
+                     Provider<SQLCipherOpenHelper> databaseHelper,
+                     RecipientRepository recipientRepository) {
     super(context, databaseHelper);
     this.recipientRepository = recipientRepository;
   }

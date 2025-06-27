@@ -25,8 +25,6 @@ private const val EXTRA_LOAD_FAILED = "extra_load_failed"
 class PickDisplayNameActivity : BaseActionBarActivity() {
 
     @Inject
-    internal lateinit var viewModelFactory: PickDisplayNameViewModel.Factory
-    @Inject
     internal lateinit var prefs: TextSecurePreferences
 
     private val viewModel: PickDisplayNameViewModel by viewModels(extrasProducer = {

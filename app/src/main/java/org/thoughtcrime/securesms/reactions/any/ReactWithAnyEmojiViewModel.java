@@ -109,7 +109,7 @@ public final class ReactWithAnyEmojiViewModel extends ViewModel {
   }
 
   @AssistedFactory
-  interface Factory {
+  public interface Factory {
     ReactWithAnyEmojiViewModel create(@NonNull MessageId messageId);
   }
 
