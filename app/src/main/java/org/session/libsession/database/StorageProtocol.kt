@@ -213,9 +213,6 @@ interface StorageProtocol {
     fun insertDataExtractionNotificationMessage(senderPublicKey: String, message: DataExtractionNotificationInfoMessage, sentTimestamp: Long)
     fun insertMessageRequestResponseFromContact(response: MessageRequestResponse)
     fun insertMessageRequestResponseFromYou(threadId: Long)
-    fun setRecipientApproved(recipient: Address, approved: Boolean)
-    fun getRecipientApproved(address: Address): Boolean
-    fun setRecipientApprovedMe(recipient: Address, approvedMe: Boolean)
     fun insertCallMessage(senderPublicKey: String, callMessageType: CallMessageType, sentTimestamp: Long)
     fun conversationHasOutgoing(userPublicKey: String): Boolean
     fun deleteMessagesByHash(threadId: Long, hashes: List<String>)

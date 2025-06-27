@@ -34,7 +34,6 @@ import kotlinx.coroutines.withContext
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityHomeBinding
-import org.greenrobot.eventbus.EventBus
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
@@ -319,7 +318,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 }.collectLatest(globalSearchAdapter::setNewData)
             }
         }
-        EventBus.getDefault().register(this@HomeActivity)
         if (isFromOnboarding) {
             if (Build.VERSION.SDK_INT >= 33 &&
                 (getSystemService(NOTIFICATION_SERVICE) as NotificationManager).areNotificationsEnabled().not()) {
@@ -479,11 +477,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
     override fun onPause() {
         super.onPause()
         ApplicationContext.getInstance(this).messageNotifier.setHomeScreenVisible(false)
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        EventBus.getDefault().unregister(this)
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {

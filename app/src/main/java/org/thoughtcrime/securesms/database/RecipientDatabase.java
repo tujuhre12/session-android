@@ -7,6 +7,8 @@ import android.content.Context;
 import android.database.Cursor;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.collection.LruCache;
+
 import com.annimon.stream.Stream;
 
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
@@ -20,6 +22,7 @@ import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import javax.inject.Provider;
 
@@ -195,7 +198,11 @@ public class RecipientDatabase extends Database {
   public static final int NOTIFY_TYPE_MENTIONS = 1;
   public static final int NOTIFY_TYPE_NONE = 2;
 
+  @NonNull
   private final MutableSharedFlow<Address> updateNotifications = SharedFlowKt.MutableSharedFlow(0, 256, BufferOverflow.DROP_OLDEST);
+
+  @NonNull
+  private final LruCache<Address, RecipientSettings> recipientSettingsCache = new LruCache<>(512);
 
   public RecipientDatabase(Context context, Provider<SQLCipherOpenHelper> databaseHelper) {
     super(context, databaseHelper);
@@ -208,12 +215,19 @@ public class RecipientDatabase extends Database {
 
   @Nullable
   public RecipientSettings getRecipientSettings(@NonNull Address address) {
+    final RecipientSettings cachedSettings = recipientSettingsCache.get(address);
+    if (cachedSettings != null) {
+      return cachedSettings;
+    }
+
     SQLiteDatabase database = getReadableDatabase();
 
     try (Cursor cursor = database.query(TABLE_NAME, null, ADDRESS + " = ?", new String[]{address.toString()}, null, null, null)) {
 
       if (cursor != null && cursor.moveToNext()) {
-        return getRecipientSettings(cursor);
+        RecipientSettings settings = getRecipientSettings(cursor);
+        recipientSettingsCache.put(address, settings);
+        return settings;
       }
 
       return null;
@@ -221,7 +235,7 @@ public class RecipientDatabase extends Database {
   }
 
   @NonNull
-  RecipientSettings getRecipientSettings(@NonNull Cursor cursor) {
+  private RecipientSettings getRecipientSettings(@NonNull Cursor cursor) {
     boolean blocked                 = cursor.getInt(cursor.getColumnIndexOrThrow(BLOCK))                == 1;
     boolean approved                = cursor.getInt(cursor.getColumnIndexOrThrow(APPROVED))             == 1;
     boolean approvedMe              = cursor.getInt(cursor.getColumnIndexOrThrow(APPROVED_ME))          == 1;
@@ -259,14 +273,8 @@ public class RecipientDatabase extends Database {
             blocksCommunityMessageRequests);
   }
 
-  public boolean getApproved(@NonNull Address address) {
-    SQLiteDatabase db = getReadableDatabase();
-    try (Cursor cursor = db.query(TABLE_NAME, new String[]{APPROVED}, ADDRESS + " = ?", new String[]{address.toString()}, null, null, null)) {
-      if (cursor != null && cursor.moveToNext()) {
-        return cursor.getInt(cursor.getColumnIndexOrThrow(APPROVED)) == 1;
-      }
-    }
-    return false;
+  private void invalidateCache(@NonNull Address recipient) {
+    recipientSettingsCache.remove(recipient);
   }
 
   public void setApproved(@NonNull Address recipient, boolean approved) {
@@ -275,6 +283,7 @@ public class RecipientDatabase extends Database {
     updateOrInsert(recipient, values);
     notifyRecipientListeners();
 
+    invalidateCache(recipient);
     updateNotifications.tryEmit(recipient);
   }
 
@@ -284,6 +293,7 @@ public class RecipientDatabase extends Database {
     updateOrInsert(recipient, values);
     notifyRecipientListeners();
 
+    invalidateCache(recipient);
     updateNotifications.tryEmit(recipient);
   }
 
@@ -300,18 +310,25 @@ public class RecipientDatabase extends Database {
     } finally {
       db.endTransaction();
     }
-    notifyRecipientListeners();
 
-    recipients.forEach(updateNotifications::tryEmit);
+    for (Address recipient : recipients) {
+        invalidateCache(recipient);
+        updateNotifications.tryEmit(recipient);
+    }
+
+    notifyRecipientListeners();
   }
 
   // Delete a recipient with the given address from the database
   public void deleteRecipient(@NonNull String recipientAddress) {
+    Address address = Address.fromSerialized(recipientAddress);
     SQLiteDatabase db = getWritableDatabase();
     int rowCount = db.delete(TABLE_NAME, ADDRESS + " = ?", new String[] { recipientAddress });
     if (rowCount == 0) { Log.w(TAG, "Could not find to delete recipient with address: " + recipientAddress); }
+
+    invalidateCache(address);
     notifyRecipientListeners();
-    updateNotifications.tryEmit(Address.fromSerialized(recipientAddress));
+    updateNotifications.tryEmit(address);
   }
 
   public void setAutoDownloadAttachments(@NonNull Address recipient, boolean shouldAutoDownloadAttachments) {
@@ -325,6 +342,8 @@ public class RecipientDatabase extends Database {
     } finally {
       db.endTransaction();
     }
+
+    invalidateCache(recipient);
     notifyRecipientListeners();
     updateNotifications.tryEmit(recipient);
   }
@@ -346,6 +365,8 @@ public class RecipientDatabase extends Database {
     ContentValues values = new ContentValues();
     values.put(NOTIFY_TYPE, notifyType);
     updateOrInsert(recipient, values);
+
+    invalidateCache(recipient);
     notifyConversationListListeners();
     notifyRecipientListeners();
     updateNotifications.tryEmit(recipient);
@@ -357,6 +378,18 @@ public class RecipientDatabase extends Database {
                             @Nullable Boolean acceptsCommunityRequests) {
     if (newName == null && profilePic == null) {
       return; // nothing to update
+    }
+
+    // This call could be called with a lot of same data so it's worth checking if we
+    // actually need to update the database.
+    final RecipientSettings cached = recipientSettingsCache.get(recipient);
+    if (cached != null &&
+            Objects.equals(cached.getSystemDisplayName(), newName) &&
+            Objects.equals(cached.getProfilePic(), profilePic) &&
+            (acceptsCommunityRequests == null || !cached.getBlocksCommunityMessagesRequests() == acceptsCommunityRequests)
+    ) {
+        Log.w(TAG, "No changes to update for recipient: " + recipient);
+        return;
     }
 
     ContentValues contentValues = new ContentValues(4);
@@ -373,6 +406,7 @@ public class RecipientDatabase extends Database {
     }
 
     updateOrInsert(recipient, contentValues);
+    invalidateCache(recipient);
     updateNotifications.tryEmit(recipient);
   }
 
@@ -380,6 +414,7 @@ public class RecipientDatabase extends Database {
     ContentValues contentValues = new ContentValues(1);
     contentValues.put(NOTIFICATION_CHANNEL, notificationChannel);
     updateOrInsert(recipient, contentValues);
+    invalidateCache(recipient);
     notifyRecipientListeners();
     updateNotifications.tryEmit(recipient);
   }
@@ -388,6 +423,7 @@ public class RecipientDatabase extends Database {
     ContentValues contentValues = new ContentValues(1);
     contentValues.put(BLOCKS_COMMUNITY_MESSAGE_REQUESTS, isBlocked ? 1 : 0);
     updateOrInsert(recipient, contentValues);
+    invalidateCache(recipient);
     notifyRecipientListeners();
     updateNotifications.tryEmit(recipient);
   }

@@ -227,7 +227,14 @@ class RecipientSettings(
     val profileName: String?,
     val profileAvatar: String?,
     val blocksCommunityMessagesRequests: Boolean
-)
+) {
+    val profilePic: UserPic? get() =
+        if (!profileAvatar.isNullOrBlank() && profileKey != null) {
+            UserPic(profileAvatar, profileKey)
+        } else {
+            null
+        }
+}
 
 fun RecipientAvatar.toUserPic(): UserPic? {
     return when (this) {

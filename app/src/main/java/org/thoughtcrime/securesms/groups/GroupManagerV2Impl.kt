@@ -791,9 +791,9 @@ class GroupManagerV2Impl @Inject constructor(
         inviteMessageHash: String,
     ) {
         val address = Address.fromSerialized(groupId.hexString)
+        val inviterRecipient = recipientRepository.getBasicRecipientFast(Address.fromSerialized(inviter.hexString))
 
-        val shouldAutoApprove =
-            storage.getRecipientApproved(Address.fromSerialized(inviter.hexString))
+        val shouldAutoApprove = (inviterRecipient as? BasicRecipient.Contact)?.approved == true
         val closedGroupInfo = GroupInfo.ClosedGroupInfo(
             groupAccountId = groupId.hexString,
             adminKey = authDataOrAdminSeed.takeIf { fromPromotion }?.let { GroupInfo.ClosedGroupInfo.adminKeyFromSeed(it) }?.toBytes(),
@@ -811,8 +811,6 @@ class GroupManagerV2Impl @Inject constructor(
         }
 
         val groupThreadId = storage.getOrCreateThreadIdFor(address)
-        storage.setRecipientApprovedMe(address, true)
-        storage.setRecipientApproved(address, shouldAutoApprove)
 
         if (shouldAutoApprove) {
             approveGroupInvite(closedGroupInfo, inviteMessageHash)

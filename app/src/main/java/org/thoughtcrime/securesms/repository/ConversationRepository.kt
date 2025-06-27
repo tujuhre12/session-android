@@ -27,7 +27,9 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.RecipientV2
+import org.session.libsession.utilities.upsertContact
 import org.session.libsignal.utilities.AccountId
+import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.DraftDatabase
@@ -263,7 +265,15 @@ class DefaultConversationRepository @Inject constructor(
     }
 
     override fun setApproved(recipient: Address, isApproved: Boolean) {
-        storage.setRecipientApproved(recipient, isApproved)
+        if (IdPrefix.fromValue(recipient.address) == IdPrefix.STANDARD) {
+            configFactory.withMutableUserConfigs { configs ->
+                configs.contacts.upsertContact(recipient.address) {
+                    approved = isApproved
+                }
+            }
+        } else {
+            // Can not approve anything that is not a standard contact
+        }
     }
 
     override suspend fun deleteCommunityMessagesRemotely(
@@ -422,7 +432,7 @@ class DefaultConversationRepository @Inject constructor(
 
     override suspend fun acceptMessageRequest(threadId: Long, recipient: Address) = runCatching {
         withContext(Dispatchers.Default) {
-            storage.setRecipientApproved(recipient, true)
+            setApproved(recipient, true)
             if (recipient.isGroupV2) {
                 groupManager.respondToInvitation(
                     AccountId(recipient.toString()),

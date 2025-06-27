@@ -128,7 +128,8 @@ open class Storage @Inject constructor(
 
     override fun threadCreated(address: Address, threadId: Long) {
         val localUserAddress = getUserPublicKey() ?: return
-        if (!getRecipientApproved(address) && localUserAddress != address.toString()) return // don't store unapproved / message requests
+        val approved = recipientRepository.getRecipientSyncOrEmpty(address).approved
+        if (!approved && localUserAddress != address.toString()) return // don't store unapproved / message requests
 
         when {
             address.isLegacyGroup -> {
@@ -373,11 +374,15 @@ open class Storage @Inject constructor(
         } else {
             senderAddress
         }
-        if (!targetAddress.isGroupOrCommunity) {
-            if (isUserSender || isUserBlindedSender) {
-                setRecipientApproved(targetAddress, true)
-            } else {
-                setRecipientApprovedMe(targetAddress, true)
+        if (!targetAddress.isGroupOrCommunity && IdPrefix.fromValue(targetAddress.address) == IdPrefix.STANDARD) {
+            configFactory.withMutableUserConfigs { configs ->
+                configs.contacts.upsertContact(targetAddress.address) {
+                    if (isUserSender || isUserBlindedSender) {
+                        approved = true
+                    } else {
+                        approvedMe = true
+                    }
+                }
             }
         }
         if (message.threadID == null && !targetAddress.isCommunity) {
@@ -1394,13 +1399,15 @@ open class Storage @Inject constructor(
                 deleteConversation(blindedThreadId)
             }
 
-            var alreadyApprovedMe: Boolean = false
-            configFactory.withUserConfigs {
-                // check is the person had not yet approvedMe
-                alreadyApprovedMe = it.contacts.get(sender.toString())?.approvedMe ?: false
-            }
+            var alreadyApprovedMe = false
 
-            setRecipientApprovedMe(sender, true)
+            // Update the contact's approval status
+            configFactory.withMutableUserConfigs { configs ->
+                configs.contacts.upsertContact(sender.toString()) {
+                    alreadyApprovedMe = approvedMe
+                    approvedMe = true
+                }
+            }
 
             // only show the message if wasn't already approvedMe before
             if(!alreadyApprovedMe) {
@@ -1454,34 +1461,6 @@ open class Storage @Inject constructor(
             Optional.absent()
         )
         mmsDatabase.insertSecureDecryptedMessageInbox(message, threadId, runThreadUpdate = false)
-    }
-
-    override fun getRecipientApproved(address: Address): Boolean {
-        return address.isGroupV2 || recipientDatabase.getApproved(address)
-    }
-
-    override fun setRecipientApproved(address: Address, approved: Boolean) {
-        recipientDatabase.setApproved(address, approved)
-        if (!address.isContact || address.toString() == getUserPublicKey()) return
-        configFactory.withMutableUserConfigs {
-            it.contacts.upsertContact(address.toString()) {
-                // if the contact wasn't approved before but is approved now, make sure it's visible
-                if(approved && !this.approved) this.priority = PRIORITY_VISIBLE
-
-                // update approval
-                this.approved = approved
-            }
-        }
-    }
-
-    override fun setRecipientApprovedMe(address: Address, approvedMe: Boolean) {
-        recipientDatabase.setApprovedMe(address, approvedMe)
-        if (!address.isContact || address.toString() == getUserPublicKey()) return
-        configFactory.withMutableUserConfigs {
-            it.contacts.upsertContact(address.toString()) {
-                this.approvedMe = approvedMe
-            }
-        }
     }
 
     override fun insertCallMessage(senderPublicKey: String, callMessageType: CallMessageType, sentTimestamp: Long) {

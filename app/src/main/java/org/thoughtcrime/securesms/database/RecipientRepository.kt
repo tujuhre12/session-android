@@ -73,7 +73,9 @@ class RecipientRepository @Inject constructor(
     private fun createRecipientFlow(address: Address): SharedFlow<RecipientV2?> {
         return flow {
             while (true) {
-                val (value, changeSource) = fetchRecipient(address) ?: run {
+                val (value, changeSource) = fetchRecipient(address) {
+                    withContext(Dispatchers.Default) { recipientDatabase.getRecipientSettings(it) }
+                } ?: run {
                     // If we don't have a recipient for this address, emit null and terminate the flow.
                     emit(null)
                     return@flow
@@ -90,7 +92,7 @@ class RecipientRepository @Inject constructor(
             SharingStarted.WhileSubscribed(replayExpirationMillis = 0L), replay = 1)
     }
 
-    private suspend fun fetchRecipient(address: Address): Pair<RecipientV2?, Flow<*>>? {
+    private inline fun fetchRecipient(address: Address, settingsFetcher: (address: Address) -> RecipientSettings?): Pair<RecipientV2?, Flow<*>>? {
         val basicRecipient = getBasicRecipientFast(address)
 
         val changeSource: Flow<*>
@@ -105,9 +107,7 @@ class RecipientRepository @Inject constructor(
             is BasicRecipient.Contact -> {
                 value = createContactRecipient(
                     basic = basicRecipient,
-                    fallbackSettings = withContext(Dispatchers.Default) {
-                        recipientDatabase.getRecipientSettings(address)
-                    }
+                    fallbackSettings = settingsFetcher(address)
                 )
 
                 changeSource = merge(
@@ -119,9 +119,7 @@ class RecipientRepository @Inject constructor(
             is BasicRecipient.Group -> {
                 value = createGroupV2Recipient(
                     basic = basicRecipient,
-                    settings = withContext(Dispatchers.Default) {
-                        recipientDatabase.getRecipientSettings(address)
-                    }
+                    settings = settingsFetcher(address)
                 )
 
                 changeSource = merge(
@@ -137,9 +135,7 @@ class RecipientRepository @Inject constructor(
                 // Given address is not backed by the config system so we'll get them from
                 // local database.
 
-                val settings = withContext(Dispatchers.Default) {
-                    recipientDatabase.getRecipientSettings(address)
-                }
+                val settings = settingsFetcher(address)
 
                 when {
                     address.isLegacyGroup || address.isCommunity -> {
@@ -187,7 +183,8 @@ class RecipientRepository @Inject constructor(
             }
         }
 
-        return runBlocking { flow.first() }
+        // Otherwise, we might have to go to the database to get the recipient..
+        return fetchRecipient(address, recipientDatabase::getRecipientSettings)?.first
     }
 
     /**

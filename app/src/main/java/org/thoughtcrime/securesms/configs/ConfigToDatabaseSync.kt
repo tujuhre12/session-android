@@ -287,8 +287,6 @@ class ConfigToDatabaseSync @Inject constructor(
 
         for (closedGroup in userGroups.closedGroupInfo) {
             val address = fromSerialized(closedGroup.groupAccountId)
-            storage.setRecipientApprovedMe(address, true)
-            storage.setRecipientApproved(address, !closedGroup.invited)
             val threadId = storage.getOrCreateThreadIdFor(address)
 
             // If we don't already have a date and the config has a date, use it
