@@ -3,8 +3,6 @@ package org.session.libsession.utilities.recipients
 import network.loki.messenger.libsession_util.util.Bytes
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.UserPic
-import org.session.libsession.avatars.ContactPhoto
-import org.session.libsession.avatars.ProfileContactPhoto
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.truncateIdForDisplay
 import org.thoughtcrime.securesms.database.RecipientDatabase
@@ -22,7 +20,7 @@ data class Recipient(
 ) {
     val isLocalNumber: Boolean get() = basic.isLocalNumber
     val address: Address get() = basic.address
-    val avatar: RecipientAvatar? get() = basic.avatar
+    val avatar: RemoteFile? get() = basic.avatar
 
     val isGroupOrCommunityRecipient: Boolean get() = basic.isGroupOrCommunityRecipient
     val isCommunityRecipient: Boolean get() = basic.isCommunityRecipient
@@ -65,24 +63,7 @@ data class Recipient(
 
     val mutedUntilMills: Long?
         get() = mutedUntil?.toInstant()?.toEpochMilli()
-
-    @Deprecated("use avatar instead")
-    //TODO: Not working
-    val contactPhoto: ContactPhoto?
-        get() = when (val a = avatar) {
-            is RecipientAvatar.EncryptedRemotePic -> ProfileContactPhoto(address, a.url)
-            is RecipientAvatar.Inline -> null
-            else -> null
-        }
-
-    @Deprecated("Use `avatar` property instead", ReplaceWith("avatar"))
-    val profileAvatar: String?
-        get() = (avatar as? RecipientAvatar.EncryptedRemotePic)?.url
-
-    @Deprecated("Use `avatar` property instead", ReplaceWith("avatar?.toUserPic()"))
-    val profileKey: ByteArray?
-        get() = (avatar as? RecipientAvatar.EncryptedRemotePic)?.key?.data
-
+    
     companion object {
         fun empty(address: Address): Recipient {
             return Recipient(
@@ -100,7 +81,7 @@ sealed interface BasicRecipient {
     val address: Address
     val isLocalNumber: Boolean
     val displayName: String
-    val avatar: RecipientAvatar?
+    val avatar: RemoteFile?
 
     /**
      * A recipient that is backed by the config system.
@@ -110,7 +91,7 @@ sealed interface BasicRecipient {
     data class Generic(
         override val address: Address,
         override val displayName: String = "",
-        override val avatar: RecipientAvatar? = null,
+        override val avatar: RemoteFile? = null,
         override val isLocalNumber: Boolean = false,
         val blocked: Boolean = false,
     ) : BasicRecipient
@@ -121,7 +102,7 @@ sealed interface BasicRecipient {
     data class Self(
         val name: String,
         override val address: Address,
-        override val avatar: RecipientAvatar.EncryptedRemotePic?,
+        override val avatar: RemoteFile.Encrypted?,
         val expiryMode: ExpiryMode,
         val acceptsCommunityMessageRequests: Boolean,
     ) : ConfigBasedRecipient {
@@ -139,7 +120,7 @@ sealed interface BasicRecipient {
         override val address: Address,
         val name: String,
         val nickname: String?,
-        override val avatar: RecipientAvatar.EncryptedRemotePic?,
+        override val avatar: RemoteFile.Encrypted?,
         val approved: Boolean,
         val approvedMe: Boolean,
         val blocked: Boolean,
@@ -158,7 +139,7 @@ sealed interface BasicRecipient {
     data class Group(
         override val address: Address,
         val name: String,
-        override val avatar: RecipientAvatar.EncryptedRemotePic?,
+        override val avatar: RemoteFile.Encrypted?,
         val expiryMode: ExpiryMode,
         val approved: Boolean,
     ) : ConfigBasedRecipient {
@@ -181,34 +162,28 @@ val BasicRecipient.is1on1: Boolean get() = !isLocalNumber && address.isContact
 val BasicRecipient.isGroupRecipient: Boolean get() = address.isGroup
 
 
-sealed interface RecipientAvatar {
-    data class EncryptedRemotePic(val url: String, val key: Bytes) : RecipientAvatar
-    data class Inline(val bytes: Bytes) : RecipientAvatar
-
+/**
+ * Represents a remote file that can be downloaded.
+ */
+sealed interface RemoteFile {
+    data class Encrypted(val url: String, val key: Bytes) : RemoteFile
+    data class Community(val communityServerBaseUrl: String, val fileId: Long) : RemoteFile
     companion object {
-        fun UserPic.toRecipientAvatar(): RecipientAvatar.EncryptedRemotePic? {
+        fun UserPic.toRecipientAvatar(): Encrypted? {
             return when {
                 url.isBlank() -> null
-                else ->  EncryptedRemotePic(
+                else ->  Encrypted(
                     url = url,
                     key = key
                 )
             }
         }
 
-        fun from(url: String, bytes: ByteArray?): RecipientAvatar? {
+        fun from(url: String, bytes: ByteArray?): RemoteFile? {
             return if (url.isNotBlank() && bytes != null && bytes.isNotEmpty()) {
-                EncryptedRemotePic(url, Bytes(bytes))
+                Encrypted(url, Bytes(bytes))
             } else {
                 null
-            }
-        }
-
-        fun fromBytes(bytes: ByteArray?): RecipientAvatar? {
-            return if (bytes == null || bytes.isEmpty()) {
-                null
-            } else {
-                Inline(Bytes(bytes))
             }
         }
     }
@@ -239,10 +214,10 @@ class RecipientSettings(
         }
 }
 
-fun RecipientAvatar.toUserPic(): UserPic? {
+fun RemoteFile.toUserPic(): UserPic? {
     return when (this) {
-        is RecipientAvatar.EncryptedRemotePic -> UserPic(url, key)
-        is RecipientAvatar.Inline -> null
+        is RemoteFile.Encrypted -> UserPic(url, key)
+        is RemoteFile.Community -> null
     }
 }
 

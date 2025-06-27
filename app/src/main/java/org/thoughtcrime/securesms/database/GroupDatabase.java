@@ -44,7 +44,6 @@ import kotlinx.coroutines.flow.SharedFlowKt;
  * to query config system directly. The Storage class may also be more up-to-date.
  *
  */
-@Deprecated
 public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProtocol {
 
   @SuppressWarnings("unused")

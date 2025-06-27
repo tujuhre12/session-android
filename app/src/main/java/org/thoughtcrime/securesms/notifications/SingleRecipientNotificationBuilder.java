@@ -26,7 +26,6 @@ import androidx.core.content.ContextCompat;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
-import org.session.libsession.avatars.ContactPhoto;
 import org.session.libsession.utilities.NotificationPrivacyPreference;
 import org.session.libsession.utilities.Util;
 import org.session.libsession.utilities.recipients.Recipient;
@@ -76,14 +75,14 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
     if (privacy.isDisplayContact()) {
       setContentTitle(recipient.getDisplayName());
 
-      ContactPhoto contactPhoto = recipient.getContactPhoto();
-      if (contactPhoto != null) {
+      Object avatar = recipient.getAvatar();
+      if (avatar != null) {
         try {
           // AC: For some reason, if not use ".asBitmap()" method, the returned BitmapDrawable
           // wraps a recycled bitmap and leads to a crash.
           Bitmap iconBitmap = Glide.with(context.getApplicationContext())
                   .asBitmap()
-                  .load(contactPhoto)
+                  .load(avatar)
                   .diskCacheStrategy(DiskCacheStrategy.NONE)
                   .circleCrop()
                   .submit(context.getResources().getDimensionPixelSize(android.R.dimen.notification_large_icon_width),

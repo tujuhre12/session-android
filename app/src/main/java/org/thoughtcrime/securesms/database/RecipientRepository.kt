@@ -24,8 +24,8 @@ import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.BasicRecipient
-import org.session.libsession.utilities.recipients.RecipientAvatar
-import org.session.libsession.utilities.recipients.RecipientAvatar.Companion.toRecipientAvatar
+import org.session.libsession.utilities.recipients.RemoteFile
+import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRecipientAvatar
 import org.session.libsession.utilities.recipients.RecipientSettings
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayNameOrFallback
@@ -359,7 +359,14 @@ class RecipientRepository @Inject constructor(
                 basic = BasicRecipient.Generic(
                     address = address,
                     displayName = group.title,
-                    avatar = group.avatar?.let { RecipientAvatar.fromBytes(it) }
+                    avatar = if (group.url != null && group.avatarId != null) {
+                        RemoteFile.Community(
+                            communityServerBaseUrl = group.url,
+                            fileId = group.avatarId
+                        )
+                    } else {
+                        null
+                    }
                 ),
                 mutedUntil = settings?.muteUntilDate,
                 autoDownloadAttachments = settings?.autoDownloadAttachments,
@@ -377,7 +384,7 @@ class RecipientRepository @Inject constructor(
                 basic = BasicRecipient.Generic(
                     address = address,
                     displayName = settings.systemDisplayName?.takeIf { it.isNotBlank() } ?: settings.profileName.orEmpty(),
-                    avatar = settings.profileAvatar?.let { RecipientAvatar.from(it, settings.profileKey) },
+                    avatar = settings.profileAvatar?.let { RemoteFile.from(it, settings.profileKey) },
                     isLocalNumber = false,
                     blocked = settings.blocked
                 ),

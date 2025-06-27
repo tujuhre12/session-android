@@ -14,15 +14,13 @@ import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewProfilePictureBinding
 import org.session.libsession.avatars.ContactColors
-import org.session.libsession.avatars.ContactPhoto
 import org.session.libsession.avatars.PlaceholderAvatarPhoto
-import org.session.libsession.avatars.ProfileContactPhoto
 import org.session.libsession.avatars.ResourceContactPhoto
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.AppTextSecurePreferences
 import org.session.libsession.utilities.GroupUtil
-import org.session.libsession.utilities.recipients.RecipientAvatar
+import org.session.libsession.utilities.recipients.RemoteFile
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.utilities.Log
@@ -61,7 +59,6 @@ class ProfilePictureView @JvmOverloads constructor(
     @Inject
     lateinit var recipientRepository: RecipientRepository
 
-    private val profilePicturesCache = mutableMapOf<View, Recipient>()
     private val resourcePadding by lazy {
         context.resources.getDimensionPixelSize(R.dimen.normal_padding).toFloat()
     }
@@ -86,7 +83,7 @@ class ProfilePictureView @JvmOverloads constructor(
                 address = address,
                 profileViewDataType = when {
                     isGroupV2Recipient -> ProfileViewDataType.GroupvV2(
-                        customGroupImage = (avatar as? RecipientAvatar.EncryptedRemotePic)?.url
+                        customGroupImage = (avatar as? RemoteFile.Encrypted)?.url
                     )
                     isLegacyGroupRecipient -> ProfileViewDataType.LegacyGroup
                     isCommunityRecipient -> ProfileViewDataType.Community
@@ -194,12 +191,6 @@ class ProfilePictureView @JvmOverloads constructor(
                 this.recipient!!
             }
             
-            if (profilePicturesCache[imageView] == recipient) return
-            // recipient is mutable so without cloning it the line above always returns true as the changes to the underlying recipient happens on both shared instances
-            profilePicturesCache[imageView] = recipient
-            val signalProfilePicture: ContactPhoto? = null
-            val avatar = (signalProfilePicture as? ProfileContactPhoto)?.avatarObject
-
             glide.clear(imageView)
 
             val placeholder = PlaceholderAvatarPhoto(
@@ -208,9 +199,11 @@ class ProfilePictureView @JvmOverloads constructor(
                 avatarUtils.generateTextBitmap(128, publicKey, displayName)
             )
 
-            if (signalProfilePicture != null && avatar != "0" && avatar != "") {
+            val avatar = recipient.avatar
+
+            if (avatar != null) {
                 val maxSizePx = context.resources.getDimensionPixelSize(R.dimen.medium_profile_picture_size)
-                glide.load(signalProfilePicture)
+                glide.load(avatar)
                     .avatarOptions(maxSizePx)
                     .placeholder(createUnknownRecipientDrawable())
                     .error(glide.load(placeholder))
@@ -238,7 +231,6 @@ class ProfilePictureView @JvmOverloads constructor(
     }
 
     fun recycle() {
-        profilePicturesCache.clear()
     }
     // endregion
 

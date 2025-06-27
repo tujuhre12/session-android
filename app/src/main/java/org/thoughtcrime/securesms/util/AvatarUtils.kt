@@ -21,8 +21,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
-import org.session.libsession.avatars.ContactPhoto
-import org.session.libsession.avatars.ProfileContactPhoto
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
@@ -72,7 +70,7 @@ class AvatarUtils @Inject constructor(
                 // if the group has a custom image, use that
                 // other wise make up a double avatar from the first two members
                 // if there is only one member then use that member + an unknown icon coloured based on the group id
-                if (recipient.profileAvatar != null) {
+                if (recipient.avatar != null) {
                     elements.add(getUIElementForRecipient(recipient))
                 } else {
                     val members = if (recipient.isLegacyGroupRecipient) {
@@ -132,7 +130,7 @@ class AvatarUtils @Inject constructor(
         // custom image
         val (contactPhoto, customIcon, color) = when {
             // use custom image if there is one
-            hasAvatar(recipient.avatar as? ContactPhoto) -> Triple(recipient.avatar as? ContactPhoto, null, defaultColor)
+            recipient.avatar != null -> Triple(recipient.avatar!!, null, defaultColor)
 
             // communities without a custom image should use a default image
             recipient.isCommunityRecipient -> Triple(null, R.drawable.session_logo, null)
@@ -145,11 +143,6 @@ class AvatarUtils @Inject constructor(
             icon = customIcon,
             contactPhoto = contactPhoto
         )
-    }
-
-    private fun hasAvatar(contactPhoto: ContactPhoto?): Boolean {
-        val avatar = (contactPhoto as? ProfileContactPhoto)?.avatarObject
-        return contactPhoto != null && avatar != "0" && avatar != ""
     }
 
     fun getColorFromKey(hashString: String): Int {
@@ -252,7 +245,7 @@ data class AvatarUIElement(
     val name: String? = null,
     val color: Color? = null,
     @DrawableRes val icon: Int? = null,
-    val contactPhoto: ContactPhoto? = null,
+    val contactPhoto: Any? = null,
 )
 
 sealed class AvatarBadge(@DrawableRes val icon: Int){

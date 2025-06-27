@@ -59,11 +59,11 @@ public class DirectShareService extends ChooserTargetService {
 
               Bitmap avatar;
 
-              if (recipient.getContactPhoto() != null) {
+              if (recipient.getAvatar() != null) {
                   try {
                       avatar = Glide.with(this)
                               .asBitmap()
-                              .load(recipient.getContactPhoto())
+                              .load(recipient.getAvatar())
                               .circleCrop()
                               .submit(getResources().getDimensionPixelSize(android.R.dimen.notification_large_icon_width),
                                       getResources().getDimensionPixelSize(android.R.dimen.notification_large_icon_width))
