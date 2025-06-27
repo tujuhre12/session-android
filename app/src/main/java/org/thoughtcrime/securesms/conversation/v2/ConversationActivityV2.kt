@@ -344,7 +344,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private val EMOJI_REACTIONS_ALLOWED_PER_MINUTE = 20
     private val ONE_MINUTE_IN_MILLISECONDS = 1.minutes.inWholeMilliseconds
 
-    private var shimmerDisplayJob: Job? = null
+    private var conversationLoadAnimationJob: Job? = null
 
     private val layoutManager: LinearLayoutManager?
         get() { return binding.conversationRecyclerView.layoutManager as LinearLayoutManager? }
@@ -612,16 +612,16 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     private fun startConversationLoaderWithDelay() {
-        shimmerDisplayJob = lifecycleScope.launch {
+        conversationLoadAnimationJob = lifecycleScope.launch {
             delay(700)
             binding.conversationLoader.isVisible = true
         }
     }
 
     private fun stopConversationLoader() {
-        // Cancel the delayed shimmer start
-        shimmerDisplayJob?.cancel()
-        shimmerDisplayJob = null
+        // Cancel the delayed load animation
+        conversationLoadAnimationJob?.cancel()
+        conversationLoadAnimationJob = null
 
         binding.conversationLoader.isVisible = false
     }
