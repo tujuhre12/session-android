@@ -828,6 +828,11 @@
     <string name="pinUnpin">Unpin</string>
     <string name="pinUnpinConversation">Unpin Conversation</string>
     <string name="preview">Preview</string>
+    <string name="proCallToActionLongerMessages">Want to send longer messages? Send more text and unlock premium features with Session Pro</string>
+    <string name="proFeatureListLargerGroups">Larger group chats up to 300 members</string>
+    <string name="proFeatureListLoadsMore">Plus loads more exclusive features</string>
+    <string name="proFeatureListLongerMessages">Messages up to 10,000 characters</string>
+    <string name="proSendMore">Send more with</string>
     <string name="profile">Profile</string>
     <string name="profileDisplayPicture">Display Picture</string>
     <string name="profileDisplayPictureRemoveError">Failed to remove display picture.</string>
@@ -983,6 +988,7 @@
     <string name="updateSession">{app_name} Update</string>
     <string name="updateVersion">Version {version}</string>
     <string name="updated">Last updated {relative_time} ago</string>
+    <string name="upgradeTo">Upgrade to</string>
     <string name="uploading">Uploading</string>
     <string name="urlCopy">Copy URL</string>
     <string name="urlOpen">Open URL</string>
