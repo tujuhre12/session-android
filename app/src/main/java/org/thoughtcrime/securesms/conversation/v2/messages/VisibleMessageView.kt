@@ -172,7 +172,7 @@ class VisibleMessageView : FrameLayout {
         downloadPendingAttachment: (DatabaseAttachment) -> Unit,
         retryFailedAttachments: (List<DatabaseAttachment>) -> Unit,
         isTextExpanded: Boolean = false,
-        onTextExpanded: ((Long) -> Unit)? = null
+        onTextExpanded: ((MessageId) -> Unit)? = null
     ) {
         clipToPadding = false
         clipChildren = false

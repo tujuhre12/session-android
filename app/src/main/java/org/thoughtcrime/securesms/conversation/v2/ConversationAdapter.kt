@@ -71,7 +71,7 @@ class ConversationAdapter(
         AccountId(conversation.address.toString())
     else null
 
-    private val expandedMessageIds = mutableSetOf<Long>()
+    private val expandedMessageIds = mutableSetOf<MessageId>()
 
     init {
         lifecycleCoroutineScope.launch(IO) {

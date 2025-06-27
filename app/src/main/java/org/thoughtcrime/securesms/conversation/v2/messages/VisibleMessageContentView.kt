@@ -49,6 +49,7 @@ import org.thoughtcrime.securesms.conversation.v2.messages.AttachmentControlView
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.conversation.v2.utilities.ModalURLSpan
 import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.getIntersectedModalSpans
+import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.mms.PartAuthority
@@ -84,7 +85,7 @@ class VisibleMessageContentView : ConstraintLayout {
         retryFailedAttachments: (List<DatabaseAttachment>) -> Unit,
         suppressThumbnails: Boolean = false,
         isTextExpanded: Boolean = false,
-        onTextExpanded: ((Long) -> Unit)? = null
+        onTextExpanded: ((MessageId) -> Unit)? = null
     ) {
         // Background
         val color = if (message.isOutgoing) context.getAccentColor()
@@ -370,7 +371,7 @@ class VisibleMessageContentView : ConstraintLayout {
                     if (r.contains(event.rawX.roundToInt(), event.rawY.roundToInt())) {
                         binding.bodyTextView.maxLines = Int.MAX_VALUE
                         binding.readMore.isVisible = false
-                        onTextExpanded?.invoke(message.id) // Notify that text was expanded
+                        onTextExpanded?.invoke(message.messageId) // Notify that text was expanded
                     }
                 }
                 onContentClick.add(readMoreClickHandler)
