@@ -1,6 +1,7 @@
  package org.thoughtcrime.securesms.preferences
 
 import android.Manifest
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
@@ -82,7 +83,6 @@ import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.debugmenu.DebugActivity
 import org.thoughtcrime.securesms.home.PathActivity
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
-import org.thoughtcrime.securesms.openUrl
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.NoAvatar
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.TempAvatar
@@ -211,7 +211,11 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                 hideUrlDialog = { urlToOPen = null },
                 onSheetDismissRequest = { showAvatarPickerOptions = false },
                 onGalleryPicked = {
-                    pickPhotoLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                    try {
+                        pickPhotoLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                    } catch (e: ActivityNotFoundException) {
+                        Toast.makeText(this, R.string.errorUnknown, Toast.LENGTH_SHORT).show()
+                    }
                 },
                 onCameraPicked = {
                     viewModel.createTempFile()?.let{
