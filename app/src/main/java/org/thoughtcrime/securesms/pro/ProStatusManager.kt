@@ -9,17 +9,6 @@ import javax.inject.Singleton
 class ProStatusManager @Inject constructor(
     private val prefs: TextSecurePreferences
 ){
-    companion object {
-        //todo PRO TEMPORARY STRINGS ONLY!!!
-        const val UPDATETP = "Upgrade to"
-        const val CTA_TXT = "Want to send longer messages? Upgrade to Session Pro to send longer messages up to 10,000 characters"
-        const val CTA_FEAT1 = "Send messages up to 10k characters"
-        const val CTA_FEAT2 = "Share files beyond the 10MB limit"
-        const val CTA_FEAT3 = "Heaps more exclusive features"
-        const val UPGRADE = "Upgrade"
-        const val PRO_URL = "https://getsession.org/"
-    }
-
     private val MAX_CHARACTER_PRO = 10000
     private val MAX_CHARACTER_REGULAR = 2000
 

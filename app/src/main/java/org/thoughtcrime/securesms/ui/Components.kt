@@ -627,7 +627,7 @@ fun SessionProCTA(
 
                         ) {
                             Text(
-                                text = ProStatusManager.UPDATETP,
+                                text = stringResource(R.string.upgradeTo),
                                 style = LocalType.current.h5
                             )
 
@@ -638,7 +638,7 @@ fun SessionProCTA(
                             )
                         }
 
-                        Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
+                        Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
 
                         // main message
                         Text(
@@ -650,7 +650,7 @@ fun SessionProCTA(
                             )
                         )
 
-                        Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
+                        Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
 
                         // features
                         features.forEachIndexed { index, feature ->
@@ -660,7 +660,7 @@ fun SessionProCTA(
                             }
                         }
 
-                        Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
+                        Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
 
                         // buttons
                         Row(
@@ -669,7 +669,7 @@ fun SessionProCTA(
                         ) {
                             AccentFillButtonRect(
                                 modifier = Modifier.weight(1f),
-                                text = ProStatusManager.UPGRADE,
+                                text = stringResource(R.string.upgradeTo),
                                 onClick = onUpgrade
                             )
 

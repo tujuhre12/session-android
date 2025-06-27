@@ -18,6 +18,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
+import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.ClearEmoji
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.ConfirmRecreateGroup
@@ -36,7 +37,7 @@ import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.RadioOption
-import org.thoughtcrime.securesms.ui.SessionProCTA
+import org.thoughtcrime.securesms.ui.SimpleSessionProCTA
 import org.thoughtcrime.securesms.ui.components.DialogTitledRadioButton
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -258,17 +259,17 @@ fun ConversationV2Dialogs(
         if (dialogsState.sessionProCharLimitCTA) {
             val context = LocalContext.current
 
-            SessionProCTA(
+            SimpleSessionProCTA(
                 heroImage = R.drawable.cta_hero_char_limit,
-                text = ProStatusManager.CTA_TXT,
+                text = stringResource(R.string.proCallToActionLongerMessages),
                 features = listOf(
-                    ProStatusManager.CTA_FEAT1,
-                    ProStatusManager.CTA_FEAT2,
-                    ProStatusManager.CTA_FEAT3,
+                    stringResource(R.string.proFeatureListLongerMessages),
+                    stringResource(R.string.proFeatureListLargerGroups),
+                    stringResource(R.string.proFeatureListLoadsMore),
                 ),
                 onUpgrade = {
                     sendCommand(ConversationViewModel.Commands.HideSessionProCTA)
-                    context.openUrl(ProStatusManager.PRO_URL)
+                    context.openUrl(NonTranslatableStringConstants.SESSION_DOWNLOAD_URL) //todo PRO get the proper UR: once we have it
                 },
                 onCancel = {
                     sendCommand(ConversationViewModel.Commands.HideSessionProCTA)
