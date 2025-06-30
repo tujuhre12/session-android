@@ -1,7 +1,7 @@
 package org.thoughtcrime.securesms.glide
 
 import android.content.Context
-import androidx.work.await
+import androidx.work.WorkInfo
 import com.bumptech.glide.Priority
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.Key
@@ -13,35 +13,40 @@ import com.bumptech.glide.load.model.MultiModelLoaderFactory
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.session.libsession.messaging.file_server.FileServerApi
 import org.session.libsession.utilities.AESGCM
 import org.session.libsession.utilities.recipients.RemoteFile
 import org.session.libsignal.exceptions.NonRetryableException
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.crypto.AttachmentSecretProvider
+import java.io.ByteArrayInputStream
+import java.io.InputStream
 import java.security.MessageDigest
 
 class RemoteFileLoader(
     private val context: Context,
-) : ModelLoader<RemoteFile, ByteArray> {
+) : ModelLoader<RemoteFile, InputStream> {
     override fun buildLoadData(
         model: RemoteFile,
         width: Int,
         height: Int,
         options: Options
-    ): ModelLoader.LoadData<ByteArray> {
+    ): ModelLoader.LoadData<InputStream> {
         return ModelLoader.LoadData(
             RemoteFileKey(model),
             RemoteFileDataFetcher(model)
         )
     }
 
-    private inner class RemoteFileDataFetcher(private val file: RemoteFile) : DataFetcher<ByteArray> {
+    private inner class RemoteFileDataFetcher(private val file: RemoteFile) :
+        DataFetcher<InputStream> {
         private var job: Job? = null
 
         override fun loadData(
             priority: Priority,
-            callback: DataFetcher.DataCallback<in ByteArray>
+            callback: DataFetcher.DataCallback<in InputStream>
         ) {
             job = GlobalScope.launch {
                 try {
@@ -60,13 +65,13 @@ class RemoteFileLoader(
                                 fileId
                             )
 
-                            if (!files.permanentErrorMarkerFile.exists() && files.completedFile.exists()) {
+                            if (!files.permanentErrorMarkerFile.exists() && !files.completedFile.exists()) {
                                 // Files not exists, enqueue a download
                                 EncryptedFileDownloadWorker.enqueue(
                                     context = context,
                                     fileId = fileId,
                                     cacheFolderName = RecipientAvatarDownloadManager.CACHE_FOLDER_NAME
-                                ).await()
+                                ).first { it?.state == WorkInfo.State.FAILED || it?.state == WorkInfo.State.SUCCEEDED }
                             }
 
                             encryptionKey = file.key.data
@@ -75,9 +80,10 @@ class RemoteFileLoader(
                         is RemoteFile.Community -> {
                             files = CommunityFileDownloadWorker.getFileForUrl(context, file)
 
-                            if (!files.permanentErrorMarkerFile.exists() && files.completedFile.exists()) {
+                            if (!files.permanentErrorMarkerFile.exists() && !files.completedFile.exists()) {
                                 // Files not exists, enqueue a download
-                                CommunityFileDownloadWorker.enqueue(context, file).await()
+                                CommunityFileDownloadWorker.enqueue(context, file)
+                                    .first { it?.state == WorkInfo.State.FAILED || it?.state == WorkInfo.State.SUCCEEDED }
                             }
 
                             encryptionKey = AttachmentSecretProvider.getInstance(context)
@@ -94,11 +100,20 @@ class RemoteFileLoader(
                         "File not downloaded but no reason is given. Most likely a bug in the download worker."
                     }
 
-                    callback.onDataReady(AESGCM.decrypt(files.completedFile.readBytes(), symmetricKey = encryptionKey))
+                    val encrypted = files.completedFile.readBytes()
+                    Log.d(TAG, "About to decrypt file with size: ${encrypted.size} bytes")
+
+                    callback.onDataReady(
+                        ByteArrayInputStream(
+                            AESGCM.decrypt(encrypted, symmetricKey = encryptionKey)
+                        )
+                    )
 
                 } catch (e: CancellationException) {
+                    Log.i(TAG, "Download cancelled for file: $file")
                     throw e
                 } catch (e: Exception) {
+                    Log.e(TAG, "Error downloading file: $file", e)
                     callback.onLoadFailed(e)
                 }
             }
@@ -113,7 +128,7 @@ class RemoteFileLoader(
             cleanup()
         }
 
-        override fun getDataClass(): Class<ByteArray> = ByteArray::class.java
+        override fun getDataClass(): Class<InputStream> = InputStream::class.java
         override fun getDataSource(): DataSource = DataSource.REMOTE
     }
 
@@ -136,11 +151,15 @@ class RemoteFileLoader(
 
     override fun handles(model: RemoteFile): Boolean = true
 
-    class Factory(private val context: Context) : ModelLoaderFactory<RemoteFile, ByteArray> {
-        override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<RemoteFile, ByteArray> {
+    class Factory(private val context: Context) : ModelLoaderFactory<RemoteFile, InputStream> {
+        override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<RemoteFile, InputStream> {
             return RemoteFileLoader(context)
         }
 
         override fun teardown() {}
+    }
+
+    companion object {
+        private const val TAG = "RemoteFileLoader"
     }
 }

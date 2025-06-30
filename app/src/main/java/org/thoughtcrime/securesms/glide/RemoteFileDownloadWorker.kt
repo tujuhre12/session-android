@@ -6,9 +6,11 @@ import androidx.work.WorkerParameters
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.ByteArraySlice
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.util.getRootCause
 import java.io.File
 
 /**
@@ -50,10 +52,11 @@ abstract class RemoteFileDownloadWorker(
 
             Result.success()
         } catch (e: CancellationException) {
+            Log.i(TAG, "Download cancelled for file $debugName")
             throw e
         } catch (e: Exception) {
             Log.e(TAG, "Failed to download file $debugName", e)
-            if (e is NonRetryableException) {
+            if (e is NonRetryableException || (e.getRootCause<OnionRequestAPI.HTTPRequestFailedAtDestinationException>())?.statusCode == 404) {
                 files.permanentErrorMarkerFile.parentFile?.mkdirs()
                 if (!files.permanentErrorMarkerFile.createNewFile()) {
                     Log.w(TAG, "Failed to create permanent error marker file: ${files.permanentErrorMarkerFile}")

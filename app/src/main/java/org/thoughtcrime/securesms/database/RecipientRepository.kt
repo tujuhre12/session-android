@@ -187,10 +187,7 @@ class RecipientRepository @Inject constructor(
                             recipientDatabase.updateNotifications.filter { it == address }
                     }
 
-                    else -> {
-                        Log.w(TAG, "No recipient found for address: ${address.debugString}")
-                        return null
-                    }
+                    else -> return null // No recipient found for this address
                 }
             }
         }
@@ -305,13 +302,7 @@ class RecipientRepository @Inject constructor(
             }
 
             // Otherwise, there's no fast way to get a basic recipient
-            else -> {
-                Log.w(
-                    TAG,
-                    "No fast way to get a basic recipient for address: ${address.debugString}"
-                )
-                null
-            }
+            else -> null
         }
     }
 

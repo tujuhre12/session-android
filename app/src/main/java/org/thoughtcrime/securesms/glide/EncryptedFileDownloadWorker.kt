@@ -9,10 +9,12 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.Operation
+import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.flow.Flow
 import org.session.libsession.messaging.file_server.FileServerApi
 import org.session.libsession.snode.utilities.await
 import org.session.libsignal.utilities.ByteArraySlice
@@ -47,8 +49,8 @@ class EncryptedFileDownloadWorker @AssistedInject constructor(
     override fun saveDownloadedFile(from: ByteArraySlice, out: File) {
         // Write the downloaded bytes to a temporary file then move it to the final location.
         // This is done to ensure that the file is fully written before being used.
-        val tmpOut = File.createTempFile("download-remote-", null, context.cacheDir)
-        FileOutputStream(out).use { it.write(from) }
+        val tmpOut = File.createTempFile("downloaded-", null, out.parentFile)
+        FileOutputStream(tmpOut).use { it.write(from) }
 
         require(tmpOut.renameTo(out)) {
             "Failed to rename temporary file ${tmpOut.absolutePath} to ${out.absolutePath}"
@@ -90,7 +92,7 @@ class EncryptedFileDownloadWorker @AssistedInject constructor(
             )
         }
 
-        fun enqueue(context: Context, fileId: String, cacheFolderName: String): Operation {
+        fun enqueue(context: Context, fileId: String, cacheFolderName: String): Flow<WorkInfo?> {
             val request = OneTimeWorkRequestBuilder<EncryptedFileDownloadWorker>()
                 .setConstraints(Constraints(requiredNetworkType = NetworkType.CONNECTED))
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, Duration.ofSeconds(5))
@@ -103,12 +105,16 @@ class EncryptedFileDownloadWorker @AssistedInject constructor(
                 )
                 .build()
 
-            return WorkManager.getInstance(context)
+            val workName = uniqueWorkName(fileId, cacheFolderName)
+            WorkManager.getInstance(context)
                 .enqueueUniqueWork(
-                    uniqueWorkName(fileId, cacheFolderName),
-                    ExistingWorkPolicy.REPLACE,
+                    workName,
+                    ExistingWorkPolicy.KEEP,
                     request
                 )
+
+            return WorkManager.getInstance(context)
+                .getWorkInfoByIdFlow(request.id)
         }
     }
 }

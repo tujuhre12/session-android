@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.database
 import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
+import androidx.collection.LruCache
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -35,6 +36,8 @@ class LokiThreadDatabase @Inject constructor(
 
     val changeNotification: SharedFlow<Unit> get() = mutableChangeNotification
 
+    private val cacheByThreadId = LruCache<Long, OpenGroup>(32)
+
     fun getAllOpenGroups(): Map<Long, OpenGroup> {
         val database = readableDatabase
         var cursor: Cursor? = null
@@ -52,6 +55,12 @@ class LokiThreadDatabase @Inject constructor(
         } finally {
             cursor?.close()
         }
+
+        // Update the cache with the results
+        for ((id, group) in result) {
+            cacheByThreadId.put(id, group)
+        }
+
         return result
     }
 
@@ -59,6 +68,12 @@ class LokiThreadDatabase @Inject constructor(
         if (threadID < 0) {
             return null
         }
+
+        // Check the cache first
+        cacheByThreadId[threadID]?.let {
+            return it
+        }
+
         val database = readableDatabase
         return database.get(publicChatTable, "${Companion.threadID} = ?", arrayOf(threadID.toString())) { cursor ->
             val json = cursor.getString(publicChat)
@@ -66,17 +81,19 @@ class LokiThreadDatabase @Inject constructor(
         }
     }
 
-    fun getThreadId(openGroup: OpenGroup): Long? {
-        val database = readableDatabase
-        return database.get(publicChatTable, "$publicChat = ?", arrayOf(JsonUtil.toJson(openGroup.toJson()))) { cursor ->
-            cursor.getLong(threadID)
-        }
-    }
-
     fun setOpenGroupChat(openGroup: OpenGroup, threadID: Long) {
         if (threadID < 0) {
             return
         }
+
+        // Check if the group has really changed
+        val cache = cacheByThreadId[threadID]
+        if (cache == openGroup) {
+            return
+        } else {
+            cacheByThreadId.put(threadID, openGroup)
+        }
+
         val database = writableDatabase
         val contentValues = ContentValues(2)
         contentValues.put(Companion.threadID, threadID)
@@ -91,6 +108,7 @@ class LokiThreadDatabase @Inject constructor(
         val database = writableDatabase
         database.delete(publicChatTable,"${Companion.threadID} = ?", arrayOf(threadID.toString()))
 
+        cacheByThreadId.remove(threadID)
         mutableChangeNotification.tryEmit(Unit)
     }
 
