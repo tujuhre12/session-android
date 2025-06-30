@@ -532,12 +532,11 @@ open class Storage @Inject constructor(
     }
 
     override fun getOpenGroup(threadId: Long): OpenGroup? {
-        if (threadId.toInt() < 0) { return null }
-        val database = readableDatabase
-        return database.get(LokiThreadDatabase.publicChatTable, "${LokiThreadDatabase.threadID} = ?", arrayOf( threadId.toString() )) { cursor ->
-            val publicChatAsJson = cursor.getString(LokiThreadDatabase.publicChat)
-            OpenGroup.fromJSON(publicChatAsJson)
-        }
+        return lokiThreadDatabase.getOpenGroupChat(threadId)
+    }
+
+    override fun getOpenGroup(address: Address): OpenGroup? {
+        return getThreadId(address)?.let(lokiThreadDatabase::getOpenGroupChat)
     }
 
     override fun getOpenGroupPublicKey(server: String): String? {

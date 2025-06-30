@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.hilt.work.HiltWorker
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
-import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
@@ -14,91 +13,50 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.session.libsession.messaging.file_server.FileServerApi
 import org.session.libsession.snode.utilities.await
-import org.session.libsignal.exceptions.NonRetryableException
+import org.session.libsignal.utilities.ByteArraySlice
 import org.session.libsignal.utilities.ByteArraySlice.Companion.write
-import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.toHexString
 import java.io.File
 import java.io.FileOutputStream
 import java.security.MessageDigest
 import java.time.Duration
 
-/**
- * A worker that downloads files from Session's file server.
- */
 @HiltWorker
 class EncryptedFileDownloadWorker @AssistedInject constructor(
-    @Assisted val context: Context,
-    @Assisted val params: WorkerParameters
-) : CoroutineWorker(context, params) {
-    override suspend fun doWork(): Result = withContext(Dispatchers.Default) {
-        val fileId = requireNotNull(inputData.getString(ARG_FILE_ID)) {
-            "EncryptedFileDownloadWorker requires a URL to download"
+    @Assisted private val context: Context,
+    @Assisted params: WorkerParameters
+) : RemoteFileDownloadWorker(context, params) {
+    private val fileId: String
+        get() = requireNotNull(inputData.getString(ARG_FILE_ID)) {
+            "EncryptedFileDownloadWorker requires a file ID to download"
         }
 
-        val folderName = requireNotNull(inputData.getString(ARG_FOLDER)) {
+    private val folderName: String
+        get() = requireNotNull(inputData.getString(ARG_FOLDER)) {
             "EncryptedFileDownloadWorker requires a cache folder name"
         }
 
-        val files = getFileForUrl(applicationContext, folderName, fileId)
+    override suspend fun downloadFile(): ByteArraySlice {
+        return FileServerApi.download(fileId).await()
+    }
 
-        if (files.completedFile.exists()) {
-            Log.i(TAG, "File already downloaded: ${files.completedFile}")
-            return@withContext Result.success()
-        }
+    override fun getFilesFromInputData(): DownloadedFiles = getFileForUrl(context, folderName, fileId)
 
-        if (files.permanentErrorMarkerFile.exists()) {
-            Log.w(TAG, "Skipping downloading $fileId due to it being marked as a permanent error")
-            return@withContext Result.failure()
-        }
+    override fun saveDownloadedFile(from: ByteArraySlice, out: File) {
+        // Write the downloaded bytes to a temporary file then move it to the final location.
+        // This is done to ensure that the file is fully written before being used.
+        val tmpOut = File.createTempFile("download-remote-", null, context.cacheDir)
+        FileOutputStream(out).use { it.write(from) }
 
-        Log.d(TAG, "Start downloading file from $fileId onto ${files.completedFile}")
-
-        // Make sure the parent directory exists for the completed file.
-        files.completedFile.parentFile?.mkdirs()
-
-        try {
-            val bytes = FileServerApi.download(fileId).await()
-            Log.d(TAG, "Downloaded ${bytes.len} bytes from file server: $fileId")
-
-            // Write the downloaded bytes to a temporary file then move it to the final location.
-            // This is done to ensure that the file is fully written before being used.
-            val output = File.createTempFile("download-encrypted-", null, context.cacheDir)
-            FileOutputStream(output).use { out ->
-                out.write(bytes)
-            }
-
-            require(output.renameTo(files.completedFile)) {
-                "Failed to rename temporary file ${output.absolutePath} to ${files.completedFile.absolutePath}"
-            }
-
-            Result.success()
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to download file $fileId", e)
-            if (e is NonRetryableException) {
-                files.permanentErrorMarkerFile.parentFile?.mkdirs()
-                if (!files.permanentErrorMarkerFile.createNewFile()) {
-                    Log.w(TAG, "Failed to create permanent error marker file: ${files.permanentErrorMarkerFile}")
-                }
-
-                Result.failure()
-            } else {
-                Result.retry()
-            }
+        require(tmpOut.renameTo(out)) {
+            "Failed to rename temporary file ${tmpOut.absolutePath} to ${out.absolutePath}"
         }
     }
 
-    data class DownloadedFiles(
-        val completedFile: File,
-        val permanentErrorMarkerFile: File,
-    )
+    override val debugName: String
+        get() = "EncryptedFile(id=$fileId)"
 
     companion object {
         private const val TAG = "EncryptedFileDownloadWorker"
@@ -114,8 +72,7 @@ class EncryptedFileDownloadWorker @AssistedInject constructor(
                 .toHexString()
 
             return DownloadedFiles(
-                completedFile = File(context.cacheDir, "$folderName/$hash"),
-                permanentErrorMarkerFile = File(context.cacheDir, "$folderName/$hash.error")
+                completedFile = File(context.cacheDir, "$folderName/$hash")
             )
         }
 

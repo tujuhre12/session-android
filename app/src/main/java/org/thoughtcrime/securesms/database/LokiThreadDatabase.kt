@@ -3,16 +3,25 @@ package org.thoughtcrime.securesms.database
 import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsignal.utilities.JsonUtil
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
+import javax.inject.Inject
 import javax.inject.Provider
+import javax.inject.Singleton
 
-class LokiThreadDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) : Database(context, helper) {
+@Singleton
+class LokiThreadDatabase @Inject constructor(
+    @ApplicationContext context: Context,
+    helper: Provider<SQLCipherOpenHelper>
+) : Database(context, helper) {
 
     companion object {
         private val sessionResetTable = "loki_thread_session_reset_database"
-        val publicChatTable = "loki_public_chat_database"
+        private val publicChatTable = "loki_public_chat_database"
         val threadID = "thread_id"
         private val sessionResetStatus = "session_reset_status"
         val publicChat = "public_chat"
@@ -21,6 +30,10 @@ class LokiThreadDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>
         @JvmStatic
         val createPublicChatTableCommand = "CREATE TABLE $publicChatTable ($threadID INTEGER PRIMARY KEY, $publicChat TEXT);"
     }
+
+    private val mutableChangeNotification = MutableSharedFlow<Unit>()
+
+    val changeNotification: SharedFlow<Unit> get() = mutableChangeNotification
 
     fun getAllOpenGroups(): Map<Long, OpenGroup> {
         val database = readableDatabase
@@ -69,6 +82,7 @@ class LokiThreadDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>
         contentValues.put(Companion.threadID, threadID)
         contentValues.put(publicChat, JsonUtil.toJson(openGroup.toJson()))
         database.insertOrUpdate(publicChatTable, contentValues, "${Companion.threadID} = ?", arrayOf(threadID.toString()))
+        mutableChangeNotification.tryEmit(Unit)
     }
 
     fun removeOpenGroupChat(threadID: Long) {
@@ -76,6 +90,8 @@ class LokiThreadDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>
 
         val database = writableDatabase
         database.delete(publicChatTable,"${Companion.threadID} = ?", arrayOf(threadID.toString()))
+
+        mutableChangeNotification.tryEmit(Unit)
     }
 
 }

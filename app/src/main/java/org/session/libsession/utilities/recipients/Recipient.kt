@@ -167,7 +167,7 @@ val BasicRecipient.isGroupRecipient: Boolean get() = address.isGroup
  */
 sealed interface RemoteFile {
     data class Encrypted(val url: String, val key: Bytes) : RemoteFile
-    data class Community(val communityServerBaseUrl: String, val fileId: Long) : RemoteFile
+    data class Community(val communityServerBaseUrl: String, val roomId: String, val fileId: String) : RemoteFile
     companion object {
         fun UserPic.toRecipientAvatar(): Encrypted? {
             return when {

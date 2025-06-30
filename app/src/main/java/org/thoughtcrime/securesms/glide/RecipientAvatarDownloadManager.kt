@@ -60,9 +60,9 @@ class RecipientAvatarDownloadManager @Inject constructor(
                                 )
                             }
                             is AvatarFile.Community -> {
-                                CommunityFileDownloadWorker.enqueueIfNeeded(
+                                CommunityFileDownloadWorker.enqueue(
                                     context = application,
-                                    avatar = file.avatar,
+                                    file = file.avatar,
                                 )
                             }
                         }

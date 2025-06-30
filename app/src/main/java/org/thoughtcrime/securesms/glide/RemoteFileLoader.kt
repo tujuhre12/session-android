@@ -16,9 +16,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.session.libsession.messaging.file_server.FileServerApi
 import org.session.libsession.utilities.AESGCM
-import org.session.libsession.utilities.Conversions
 import org.session.libsession.utilities.recipients.RemoteFile
 import org.session.libsignal.exceptions.NonRetryableException
+import org.thoughtcrime.securesms.crypto.AttachmentSecretProvider
 import java.security.MessageDigest
 
 class RemoteFileLoader(
@@ -45,13 +45,16 @@ class RemoteFileLoader(
         ) {
             job = GlobalScope.launch {
                 try {
+                    val files: RemoteFileDownloadWorker.DownloadedFiles
+                    val encryptionKey: ByteArray
+
                     when (file) {
                         is RemoteFile.Encrypted -> {
                             val fileId = requireNotNull(FileServerApi.getFileIdFromUrl(file.url)) {
                                 "Target URL is not supported, must be a session file server url but got: ${file.url}"
                             }
 
-                            val files = EncryptedFileDownloadWorker.getFileForUrl(
+                            files = EncryptedFileDownloadWorker.getFileForUrl(
                                 context,
                                 RecipientAvatarDownloadManager.CACHE_FOLDER_NAME,
                                 fileId
@@ -66,19 +69,33 @@ class RemoteFileLoader(
                                 ).await()
                             }
 
-                            if (files.permanentErrorMarkerFile.exists()) {
-                                throw NonRetryableException("Requested file is marked as a permanent error:")
-                            }
-
-                            check(files.completedFile.exists()) {
-                                "File not downloaded but no reason is given. Most likely a bug in the download worker."
-                            }
-
-                            callback.onDataReady(AESGCM.decrypt(files.completedFile.readBytes(), symmetricKey = file.key.data))
+                            encryptionKey = file.key.data
                         }
 
-                        is RemoteFile.Community -> TODO("Community file download not implemented yet")
+                        is RemoteFile.Community -> {
+                            files = CommunityFileDownloadWorker.getFileForUrl(context, file)
+
+                            if (!files.permanentErrorMarkerFile.exists() && files.completedFile.exists()) {
+                                // Files not exists, enqueue a download
+                                CommunityFileDownloadWorker.enqueue(context, file).await()
+                            }
+
+                            encryptionKey = AttachmentSecretProvider.getInstance(context)
+                                .orCreateAttachmentSecret.modernKey
+                        }
                     }
+
+
+                    if (files.permanentErrorMarkerFile.exists()) {
+                        throw NonRetryableException("Requested file is marked as a permanent error:")
+                    }
+
+                    check(files.completedFile.exists()) {
+                        "File not downloaded but no reason is given. Most likely a bug in the download worker."
+                    }
+
+                    callback.onDataReady(AESGCM.decrypt(files.completedFile.readBytes(), symmetricKey = encryptionKey))
+
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
@@ -105,7 +122,8 @@ class RemoteFileLoader(
             when (file) {
                 is RemoteFile.Community -> {
                     messageDigest.update(file.communityServerBaseUrl.toByteArray())
-                    messageDigest.update(Conversions.longToByteArray(file.fileId))
+                    messageDigest.update(file.roomId.toByteArray())
+                    messageDigest.update(file.fileId.toByteArray())
                 }
 
                 is RemoteFile.Encrypted -> {

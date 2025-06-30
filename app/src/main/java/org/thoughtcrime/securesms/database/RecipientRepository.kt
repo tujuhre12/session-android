@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.database
 
+import dagger.Lazy
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
@@ -17,6 +18,8 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.ReadableGroupInfoConfig
 import network.loki.messenger.libsession_util.util.ExpiryMode
+import org.session.libsession.database.StorageProtocol
+import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigUpdateNotification
@@ -54,6 +57,8 @@ class RecipientRepository @Inject constructor(
     private val groupDatabase: GroupDatabase,
     private val recipientDatabase: RecipientDatabase,
     private val preferences: TextSecurePreferences,
+    private val lokiThreadDatabase: LokiThreadDatabase,
+    private val storage: Lazy<StorageProtocol>,
 ) {
     private val recipientCache = HashMap<Address, WeakReference<SharedFlow<Recipient?>>>()
 
@@ -75,9 +80,15 @@ class RecipientRepository @Inject constructor(
     private fun createRecipientFlow(address: Address): SharedFlow<Recipient?> {
         return flow {
             while (true) {
-                val (value, changeSource) = fetchRecipient(address) {
-                    withContext(Dispatchers.Default) { recipientDatabase.getRecipientSettings(it) }
-                } ?: run {
+                val (value, changeSource) = fetchRecipient(
+                    address = address,
+                    settingsFetcher = {
+                        withContext(Dispatchers.Default) { recipientDatabase.getRecipientSettings(it) }
+                    },
+                    openGroupFetcher = {
+                        withContext(Dispatchers.Default) { storage.get().getOpenGroup(it) }
+                    }
+                )  ?: run {
                     // If we don't have a recipient for this address, emit null and terminate the flow.
                     emit(null)
                     return@flow
@@ -90,13 +101,19 @@ class RecipientRepository @Inject constructor(
                 Log.d(TAG, "Recipient changed for ${address.debugString}, triggering event: $evt")
             }
 
-        }.shareIn(GlobalScope,
+        }.shareIn(
+            GlobalScope,
             // replay must be cleared one when no one is subscribed, so that if no one is subscribed,
             // we will always fetch the latest data. The cache is only valid while there is at least one subscriber.
-            SharingStarted.WhileSubscribed(replayExpirationMillis = 0L), replay = 1)
+            SharingStarted.WhileSubscribed(replayExpirationMillis = 0L), replay = 1
+        )
     }
 
-    private inline fun fetchRecipient(address: Address, settingsFetcher: (address: Address) -> RecipientSettings?): Pair<Recipient?, Flow<*>>? {
+    private inline fun fetchRecipient(
+        address: Address,
+        settingsFetcher: (address: Address) -> RecipientSettings?,
+        openGroupFetcher: (address: Address) -> OpenGroup?
+    ): Pair<Recipient?, Flow<*>>? {
         val basicRecipient = getBasicRecipientFast(address)
 
         val changeSource: Flow<*>
@@ -142,19 +159,32 @@ class RecipientRepository @Inject constructor(
                 val settings = settingsFetcher(address)
 
                 when {
-                    address.isLegacyGroup || address.isCommunity -> {
+                    address.isLegacyGroup -> {
                         changeSource = merge(
                             groupDatabase.updateNotification,
                             recipientDatabase.updateNotifications.filter { it == address }
                         )
 
-                        val group: GroupRecord? = groupDatabase.getGroup(address.toGroupString()).orNull()
-                        value = group?.let { createCommunityOrLegacyGroupRecipient(address, it, settings) }
+                        val group: GroupRecord? =
+                            groupDatabase.getGroup(address.toGroupString()).orNull()
+
+                        value = group?.let { createLegacyGroupRecipient(address, it, settings) }
+                    }
+
+                    address.isCommunity -> {
+                        value = openGroupFetcher(address)
+                            ?.let { createCommunityRecipient(address, it, settings) }
+
+                        changeSource = merge(
+                            lokiThreadDatabase.changeNotification,
+                            recipientDatabase.updateNotifications.filter { it == address }
+                        )
                     }
 
                     settings != null -> {
                         value = createGenericRecipient(address, settings)
-                        changeSource = recipientDatabase.updateNotifications.filter { it == address }
+                        changeSource =
+                            recipientDatabase.updateNotifications.filter { it == address }
                     }
 
                     else -> {
@@ -188,7 +218,11 @@ class RecipientRepository @Inject constructor(
         }
 
         // Otherwise, we might have to go to the database to get the recipient..
-        return fetchRecipient(address, recipientDatabase::getRecipientSettings)?.first
+        return fetchRecipient(
+            address = address,
+            settingsFetcher = recipientDatabase::getRecipientSettings,
+            openGroupFetcher = storage.get()::getOpenGroup
+        )?.first
     }
 
     /**
@@ -200,7 +234,10 @@ class RecipientRepository @Inject constructor(
      * [getBasicRecipientFast] instead.
      */
     @DelicateCoroutinesApi
-    inline fun getRecipientDisplayNameSync(address: Address, fallbackName: () -> String? = { null }): String {
+    inline fun getRecipientDisplayNameSync(
+        address: Address,
+        fallbackName: () -> String? = { null }
+    ): String {
         val basic = getBasicRecipientFast(address)
         if (basic != null) {
             return basic.displayName
@@ -269,7 +306,10 @@ class RecipientRepository @Inject constructor(
 
             // Otherwise, there's no fast way to get a basic recipient
             else -> {
-                Log.w(TAG, "No fast way to get a basic recipient for address: ${address.debugString}")
+                Log.w(
+                    TAG,
+                    "No fast way to get a basic recipient for address: ${address.debugString}"
+                )
                 null
             }
         }
@@ -350,7 +390,32 @@ class RecipientRepository @Inject constructor(
             )
         }
 
-        private fun createCommunityOrLegacyGroupRecipient(
+        private fun createCommunityRecipient(
+            address: Address,
+            community: OpenGroup,
+            settings: RecipientSettings?,
+        ): Recipient {
+            return Recipient(
+                basic = BasicRecipient.Generic(
+                    address = address,
+                    displayName = community.name,
+                    avatar = community.imageId?.let {
+                        RemoteFile.Community(
+                            communityServerBaseUrl = community.server,
+                            roomId = community.room,
+                            fileId = it,
+                        )
+                    },
+                ),
+                mutedUntil = settings?.muteUntilDate,
+                autoDownloadAttachments = settings?.autoDownloadAttachments,
+                notifyType = settings?.notifyType ?: RecipientDatabase.NOTIFY_TYPE_ALL,
+                acceptsCommunityMessageRequests = false,
+                notificationChannel = null,
+            )
+        }
+
+        private fun createLegacyGroupRecipient(
             address: Address,
             group: GroupRecord, // Local db data
             settings: RecipientSettings?, // Local db data
@@ -362,7 +427,8 @@ class RecipientRepository @Inject constructor(
                     avatar = if (group.url != null && group.avatarId != null) {
                         RemoteFile.Community(
                             communityServerBaseUrl = group.url,
-                            fileId = group.avatarId
+                            roomId = "",
+                            fileId = group.avatarId.toString()
                         )
                     } else {
                         null
@@ -379,12 +445,21 @@ class RecipientRepository @Inject constructor(
          * Creates a RecipientV2 instance from the provided Address and RecipientSettings.
          * Note that this method assumes the recipient is not ourselves.
          */
-        private fun createGenericRecipient(address: Address, settings: RecipientSettings): Recipient {
+        private fun createGenericRecipient(
+            address: Address,
+            settings: RecipientSettings
+        ): Recipient {
             return Recipient(
                 basic = BasicRecipient.Generic(
                     address = address,
-                    displayName = settings.systemDisplayName?.takeIf { it.isNotBlank() } ?: settings.profileName.orEmpty(),
-                    avatar = settings.profileAvatar?.let { RemoteFile.from(it, settings.profileKey) },
+                    displayName = settings.systemDisplayName?.takeIf { it.isNotBlank() }
+                        ?: settings.profileName.orEmpty(),
+                    avatar = settings.profileAvatar?.let {
+                        RemoteFile.from(
+                            it,
+                            settings.profileKey
+                        )
+                    },
                     isLocalNumber = false,
                     blocked = settings.blocked
                 ),
