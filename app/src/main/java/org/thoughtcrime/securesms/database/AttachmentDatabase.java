@@ -157,7 +157,7 @@ public class AttachmentDatabase extends Database {
     "CREATE INDEX IF NOT EXISTS part_sticker_pack_id_index ON " + TABLE_NAME + " (" + STICKER_PACK_ID + ");",
   };
 
-  private final ExecutorService thumbnailExecutor = Util.newSingleThreadedLifoExecutor();
+  final ExecutorService thumbnailExecutor = Util.newSingleThreadedLifoExecutor();
 
   private final AttachmentSecret attachmentSecret;
 
@@ -464,21 +464,24 @@ public class AttachmentDatabase extends Database {
     database.update(TABLE_NAME, values, PART_ID_WHERE, id.toStrings());
   }
 
-  @NonNull Map<Attachment, AttachmentId> insertAttachmentsForMessage(long mmsId, @NonNull List<Attachment> attachments, @NonNull List<Attachment> quoteAttachment)
-      throws MmsException
-  {
+  @NonNull Map<Attachment, AttachmentId> insertAttachmentsForMessage(
+          long mmsId,
+          @NonNull List<Attachment> attachments,
+          @NonNull List<Attachment> quoteAttachment,
+          @NonNull List<AttachmentId> thumbnailJobsCollector
+  ) throws MmsException {
     Log.d(TAG, "insertParts(" + attachments.size() + ")");
 
     Map<Attachment, AttachmentId> insertedAttachments = new HashMap<>();
 
     for (Attachment attachment : attachments) {
-      AttachmentId attachmentId = insertAttachment(mmsId, attachment, attachment.isQuote());
+      AttachmentId attachmentId = insertAttachment(mmsId, attachment, attachment.isQuote(), thumbnailJobsCollector);
       insertedAttachments.put(attachment, attachmentId);
       Log.i(TAG, "Inserted attachment at ID: " + attachmentId);
     }
 
     for (Attachment attachment : quoteAttachment) {
-      AttachmentId attachmentId = insertAttachment(mmsId, attachment, true);
+      AttachmentId attachmentId = insertAttachment(mmsId, attachment, true, thumbnailJobsCollector);
       insertedAttachments.put(attachment, attachmentId);
       Log.i(TAG, "Inserted quoted attachment at ID: " + attachmentId);
     }
@@ -725,9 +728,12 @@ public class AttachmentDatabase extends Database {
   }
 
 
-  private AttachmentId insertAttachment(long mmsId, Attachment attachment, boolean quote)
-      throws MmsException
-  {
+  private AttachmentId insertAttachment(
+          long mmsId,
+          Attachment attachment,
+          boolean quote,
+          @NonNull List<AttachmentId> thumbnailJobsCollector
+  ) throws MmsException {
     Log.d(TAG, "Inserting attachment for mms id: " + mmsId);
 
     SQLiteDatabase database = getWritableDatabase();
@@ -782,28 +788,30 @@ public class AttachmentDatabase extends Database {
           dimens = BitmapUtil.getDimensions(attachmentStream);
         }
         updateAttachmentThumbnail(attachmentId,
-                                  PartAuthority.getAttachmentStream(context, thumbnailUri),
-                                  (float) dimens.first / (float) dimens.second);
+                PartAuthority.getAttachmentStream(context, thumbnailUri),
+                (float) dimens.first / (float) dimens.second);
         hasThumbnail = true;
       } catch (IOException | BitmapDecodingException e) {
         Log.w(TAG, "Failed to save existing thumbnail.", e);
       }
     }
 
+    // collect the job
     if (!hasThumbnail && dataInfo != null) {
       if (MediaUtil.hasVideoThumbnail(attachment.getDataUri())) {
         Bitmap bitmap = MediaUtil.getVideoThumbnail(context, attachment.getDataUri());
-
         if (bitmap != null) {
           ThumbnailData thumbnailData = new ThumbnailData(bitmap);
           updateAttachmentThumbnail(attachmentId, thumbnailData.toDataStream(), thumbnailData.getAspectRatio());
         } else {
           Log.w(TAG, "Retrieving video thumbnail failed, submitting thumbnail generation job...");
-          thumbnailExecutor.submit(new ThumbnailFetchCallable(attachmentId));
+          // Collect for later processing instead of immediate submission
+          thumbnailJobsCollector.add(attachmentId);
         }
       } else {
         Log.i(TAG, "Submitting thumbnail generation job...");
-        thumbnailExecutor.submit(new ThumbnailFetchCallable(attachmentId));
+        // Collect for later processing
+        thumbnailJobsCollector.add(attachmentId);
       }
     }
 
@@ -887,7 +895,6 @@ public class AttachmentDatabase extends Database {
     return alteredRows > 0;
   }
 
-  @VisibleForTesting
   class ThumbnailFetchCallable implements Callable<InputStream> {
 
     private final AttachmentId attachmentId;
