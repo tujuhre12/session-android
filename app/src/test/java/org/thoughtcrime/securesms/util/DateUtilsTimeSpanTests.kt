@@ -246,7 +246,7 @@ class DateUtilsTimeSpanTest {
 
         val millis = timestampToday.toEpochMilli()
 
-        val result   = dateUtils.getDisplayFormattedTimeSpanString(Locale.US, millis)
+        val result   = dateUtils.getDisplayFormattedTimeSpanString(millis, Locale.US)
         val expected = DateTimeFormatter.ofPattern("HH:mm", Locale.US)
             .withZone(zone)
             .format(timestampToday)
@@ -263,7 +263,7 @@ class DateUtilsTimeSpanTest {
         // 2 years ago
         val twoYearsAgo = createRelativeTimestamp(fixedNow, -2, 0, 0)
 
-        val result = dateUtils.getDisplayFormattedTimeSpanString(Locale.US, twoYearsAgo)
+        val result = dateUtils.getDisplayFormattedTimeSpanString(twoYearsAgo, Locale.US)
 
         // Should show the full date format (e.g., "15/04/2021")
         assertEquals("15/04/2021", result)
@@ -281,7 +281,7 @@ class DateUtilsTimeSpanTest {
         // Any moment from today – 1 minute ago is safe
         val timestampToday = System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(1)
 
-        val result   = twelveHourDateUtils.getDisplayFormattedTimeSpanString(Locale.US, timestampToday)
+        val result   = twelveHourDateUtils.getDisplayFormattedTimeSpanString(timestampToday, Locale.US)
         val expected = DateTimeFormatter.ofPattern("h:mm", Locale.US)
             .withZone(ZoneId.systemDefault())
             .format(Instant.ofEpochMilli(timestampToday))

@@ -2382,7 +2382,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             if (TextUtils.isEmpty(body)) { continue }
             if (messageSize > 1) {
                 val formattedTimestamp = dateUtils.getDisplayFormattedTimeSpanString(
-                    Locale.getDefault(),
                     message.timestamp
                 )
                 builder.append("$formattedTimestamp: ")

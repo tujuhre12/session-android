@@ -62,8 +62,13 @@ class DateUtils @Inject constructor(
             textSecurePreferences.setStringPreference(DATE_FORMAT_PREF, value)
         }
 
+    // The user time format is the one chosen by the user,if they chose one from the ui (not yet available but coming later)
+    // Or we check for the system preference setting for 12 vs 24h format
     private var userTimeFormat: String
-        get() = textSecurePreferences.getStringPreference(TIME_FORMAT_PREF, defaultTimeFormat)!!
+        get() = textSecurePreferences.getStringPreference(
+            TIME_FORMAT_PREF,
+            if (DateFormat.is24HourFormat(context)) defaultTimeFormat else twelveHourFormat
+        )!!
         private set(value) {
             textSecurePreferences.setStringPreference(TIME_FORMAT_PREF, value)
         }
@@ -151,7 +156,7 @@ class DateUtils @Inject constructor(
 
     // Note: Date patterns are in TR-35 format.
     // See: https://www.unicode.org/reports/tr35/tr35-dates.html#Date_Format_Patterns
-    fun getDisplayFormattedTimeSpanString(locale: Locale, timestamp: Long): String =
+    fun getDisplayFormattedTimeSpanString(timestamp: Long, locale: Locale = Locale.getDefault()): String =
         when {
             // If it's within the last 24 hours we just give the time in 24-hour format, such as "13:27" for 1:27pm
             isToday(timestamp) -> formatTime(timestamp, userTimeFormat, locale)
