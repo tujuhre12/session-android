@@ -38,6 +38,8 @@ class DateUtils @Inject constructor(
     private val twelveHourFormat = "h:mm a"
     private val defaultDateTimeFormat = "d MMM YYYY hh:mm a"
 
+    private val messageDateTimeFormat = "h:mm a EEE, MM/dd/yyyy"
+
     // System defaults and patterns
     private val systemDefaultPattern by lazy {
         DateFormat.getBestDateTimePattern(Locale.getDefault(), "yyyyMMdd")
@@ -168,6 +170,8 @@ class DateUtils @Inject constructor(
 
     fun getMediumDateTimeFormatter(): DateTimeFormatter =
         DateTimeFormatter.ofPattern(defaultDateTimeFormat)
+
+    fun getMessageDateTimeFormattedString(timestamp: Long): String = getLocaleFormattedDate(timestamp, messageDateTimeFormat)
 
     // Method to get the String for a relative day in a locale-aware fashion, including using the
     // auto-localised words for "today" and "yesterday" as appropriate.
